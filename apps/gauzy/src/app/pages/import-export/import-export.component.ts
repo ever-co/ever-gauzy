@@ -4,13 +4,24 @@ import { Router, UrlSerializer } from '@angular/router';
 import { concatMap, filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ITenant, IAuthResponse, IOrganization, IOrganizationCreateInput, IUser, IUserRegistrationInput, PermissionsEnum, BonusTypeEnum, CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/contracts';
+import { 
+	ITenant,
+	IAuthResponse,
+	IOrganization,
+	IOrganizationCreateInput,
+	IUser,
+	IUserRegistrationInput,
+	PermissionsEnum,
+	BonusTypeEnum,
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	ImportTypeEnum 
+} from '@gauzy/contracts';
 import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
 import { Environment } from './../../../environments/model';
 import { GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { ImportTypeEnum } from './import/import.component';
 import { of as observableOf } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
@@ -158,14 +169,14 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		const { currency, defaultValueDateType, bonusType, imageUrl, id } = organization;
 		return {
 			...organization,
-			id,
 			imageUrl,
 			tenant,
 			tenantId: tenant.id,
 			currency: currency as CurrenciesEnum, 
 			defaultValueDateType: defaultValueDateType as DefaultValueDateTypeEnum, 
 			bonusType: bonusType as BonusTypeEnum,
-			isImporting: true
+			isImporting: true,
+			sourceId: id
 		}
 	}
 }

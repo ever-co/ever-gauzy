@@ -9,7 +9,8 @@ export interface IImportRecord extends IBasePerTenantEntityModel {
 
 export interface IImportHistory extends IBasePerTenantEntityModel {
 	file: string;
-	size: string;
+	path: string;
+	size: number;
 	status: string;
 	importDate: Date;
 }
@@ -20,4 +21,15 @@ export interface IEntityModel {
 	checked: boolean;
 	isGroup: boolean;
 	entities: IEntityModel[];
+}
+
+export enum ImportTypeEnum {
+	MERGE = 'merge',
+	CLEAN = 'clean',
+}
+
+export enum ImportHistoryStatusEnum {
+	SUCCESS = 'Success',
+	FAILED = 'Failed',
+	CANCELLED = 'Cancelled'
 }

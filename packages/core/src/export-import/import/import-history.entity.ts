@@ -12,8 +12,12 @@ export class ImportHistory extends TenantBaseEntity implements IImportHistory {
 	file: string;
 
 	@ApiProperty({ type: () => String })
+	@Column({ nullable: false })
+	path: string;
+
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
-	size: string;
+	size: number;
 
     @ApiProperty({ type: () => String })
 	@Column({ nullable: false })

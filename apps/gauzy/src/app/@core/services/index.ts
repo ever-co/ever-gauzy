@@ -43,6 +43,7 @@ export * from './expense-categories-store.service';
 export * from './expense-categories.service';
 export * from './expenses.service';
 export * from './export-all.service';
+export * from './import.service';
 export * from './feature/feature-store.service';
 export * from './feature/feature.service';
 export * from './goal-settings.service';

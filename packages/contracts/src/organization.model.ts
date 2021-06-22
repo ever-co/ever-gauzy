@@ -154,6 +154,7 @@ export interface IOrganizationCreateInput extends IContact {
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
 	isImporting?: boolean;
+	sourceId?: string;
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {

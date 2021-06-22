@@ -662,6 +662,7 @@
 			"IMPORT_EXPORT_DATA": "Импорт / Экспорт данных",
 			"IMPORT": "Импорт",
 			"IMPORT_HISTORY": "История импорта",
+			"IMPORT_DATE_TIME": "Imported Date & Time",
 			"EXPORT": "Экспорт",
 			"MERGE": "объединение данных",
 			"CLEAN_UP": "очистить перед импортом",

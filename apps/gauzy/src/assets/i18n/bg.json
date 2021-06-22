@@ -662,6 +662,7 @@
 			"IMPORT_EXPORT_DATA": "Import / Export Data",
 			"IMPORT": "Import",
 			"IMPORT_HISTORY": "Import History",
+			"IMPORT_DATE_TIME": "Imported Date & Time",
 			"EXPORT": "Export",
 			"MERGE": "Merge data",
 			"CLEAN_UP": "Clean up before import",

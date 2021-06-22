@@ -17,6 +17,7 @@ import { ImportRoutingModule } from './import-routing.module';
 import { ExportAllService } from '../../../@core/services/export-all.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { SharedModule } from '../../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -33,7 +34,8 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		HttpClientModule,
 		NbToastrModule.forRoot(),
 		TranslateModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		SharedModule
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],

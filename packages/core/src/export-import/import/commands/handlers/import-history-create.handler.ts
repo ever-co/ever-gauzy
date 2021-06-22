@@ -13,6 +13,6 @@ export class ImportHistoryCreateHandler implements ICommandHandler<ImportHistory
 
 	public async execute(event: ImportHistoryCreateCommand) {
 		const { input } = event;
-		console.log(input);
+		return this._importHistoryService.create(input);
 	}
 }

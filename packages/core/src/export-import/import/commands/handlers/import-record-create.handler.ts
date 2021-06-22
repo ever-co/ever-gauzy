@@ -13,6 +13,6 @@ export class ImportRecordCreateHandler implements ICommandHandler<ImportRecordCr
 
 	public async execute(event: ImportRecordCreateCommand) {
 		const { input } = event;
-		console.log(input, this._importRecordService);
+		return this._importRecordService.create(input);
 	}
 }

@@ -9,6 +9,7 @@ import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { RequestContext } from '../../../core/context';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
+import { ImportRecordCreateCommand } from './../../../export-import/import/commands';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
@@ -87,6 +88,20 @@ export class OrganizationCreateHandler
 		await this.commandBus.execute(
 			new ReportOrganizationCreateCommand(organization)
 		);
+
+		//7. Create Import Records while migrating for relative organization.
+		if (input.sourceId) {
+			const { sourceId } = input;
+			await this.commandBus.execute(
+				new ImportRecordCreateCommand({
+					entityType: 'organization',
+					sourceId,
+					destinationId: organization.id,
+					importDate: new Date(),
+					tenantId
+				})
+			);
+		}
 
 		return await this.organizationService.findOne(id);
 	}
