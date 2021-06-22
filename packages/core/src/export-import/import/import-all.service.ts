@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { getConnection, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CommandBus } from '@nestjs/cqrs';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
@@ -136,6 +137,8 @@ import {
 	WarehouseProductVariant
 } from './../../core/entities/internal';
 import { RequestContext } from './../../core';
+import { ImportRecordFieldMapperCommand, ImportRecordFirstOrCreateCommand } from './commands';
+import { ImportRecordService } from './import-record.service';
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -146,8 +149,9 @@ export interface IRepositoryModel<T> {
 	nameFile: string;
 	tenantBase?: boolean;
 	relations?: IColumnRelationMetadata[];
-	condition?: any;
-	isCleanUp?: boolean
+	conditions?: any;
+	isMigrate?: boolean
+	isRecord?: boolean
 }
 
 @Injectable()
@@ -523,7 +527,9 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
 
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly commandBus: CommandBus,
+		private readonly _importRecordService: ImportRecordService
 	) {}
 
 	async onModuleInit() {
@@ -560,7 +566,7 @@ export class ImportAllService implements OnModuleInit {
 		*/
 		const tenantId = RequestContext.currentTenantId();
 		for await (const item of this.repositories) {
-			const { repository, nameFile, tenantBase = true, isCleanUp = true } = item;
+			const { repository, nameFile, tenantBase = true, isMigrate = true, isRecord = true } = item;
 			const csvPath = path.join(this._extractPath, `${nameFile}.csv`);
 			
 			if (!fs.existsSync(csvPath)) {
@@ -572,7 +578,7 @@ export class ImportAllService implements OnModuleInit {
 				try {
 					/**
 					* This will first collect all the data and then insert
-					* If cleanup flag is set then it will also truncate the database table with CASCADE
+					* If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
 					*/
 					let results = [];
 					fs.createReadStream(csvPath, 'utf8')
@@ -580,13 +586,19 @@ export class ImportAllService implements OnModuleInit {
 							reject(error);
 						})
 						.pipe(csv())
-						.on('data', (data) => {
-							data = this.mappedFields(data);
-							results.push(data);
+						.on('data', async (data) => {
+							if (isRecord) {
+								await this.mappedImportRecord(
+									item, 
+									data
+								);
+							}
+							const row = await this.mappedFields(data);
+							results.push(row);
 						})
 						.on('end', async () => {
 							results = results.filter(isNotEmpty);
-							if (results.length) {
+							if (results.length && isMigrate) {
 								const masterTable = repository.metadata.tableName;
 								if (cleanup) {
 									try {
@@ -595,25 +607,55 @@ export class ImportAllService implements OnModuleInit {
 											sql += ` WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
 										}
 										await repository.query(sql);
+										console.log(`Success to clean up process for table: ${masterTable}`);
 									} catch (error) {
 										console.log(`Failed to clean up process for table: ${masterTable}`, error);
 										reject(error);
 									}
 								}
 								try {
-									console.log(results);
 									await repository.insert(results);
-									resolve(csvPath);
+									console.log(`Success to inserts data for table: ${masterTable}`);
 								} catch (error) {
 									console.log(`Failed to inserts data for table: ${masterTable}`, error);
 									reject(error);
 								}
 							}
+							resolve(results);
 						});
 				} catch (error) {
 					reject(error);
 				}
 			});
+		}
+	}
+
+	async mappedImportRecord(
+		item: IRepositoryModel<any>,
+		row: any
+	) { 
+		const { repository, conditions } = item;
+		const where = [];
+		if (isNotEmpty(conditions) && conditions instanceof Array) {
+			for (const condition of conditions) {
+				where.push({
+					[condition.column] : row[condition.column]
+				});
+			}
+		}
+		const desination = await this.commandBus.execute(
+			new ImportRecordFieldMapperCommand(repository, where)
+		);
+		if (desination) {
+			const entityType = repository.metadata.tableName;
+			await this.commandBus.execute(
+				new ImportRecordFirstOrCreateCommand({
+					tenantId: RequestContext.currentTenantId(),
+					sourceId: row.id,
+					destinationId: desination.id,
+					entityType
+				})
+			);
 		}
 	}
 
@@ -676,658 +718,663 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.reportCategoryRepository,
 				nameFile: 'report_category',
 				tenantBase: false,
-				isCleanUp: false
+				isMigrate: false,
+				conditions: [ { column: 'name' } ]
 			},
 			{
 				repository: this.reportRepository,
 				nameFile: 'report',
 				tenantBase: false,
-				isCleanUp: false
-			},
-			/**
-			* These entities need TENANT
-			*/
-			{
-				repository: this.tenantSettingRepository,
-				nameFile: 'tenant_setting'
-			},
-			{
-				repository: this.roleRepository,
-				nameFile: 'role'
-			},
-			{
-				repository: this.rolePermissionsRepository,
-				nameFile: 'role_permission'
-			},
-			{
-				repository: this.organizationRepository,
-				nameFile: 'organization'
-			},
-			/**
-			* These entities need TENANT and ORGANIZATION
-			*/
-			{ 
-				repository: this.userRepository,
-				nameFile: 'user'
-			},
-			{
-				repository: this.userOrganizationRepository,
-				nameFile: 'user_organization'
-			},
-			{
-				repository: this.candidateRepository,
-				nameFile: 'candidate',
-				relations: [
-					{ joinTableName: 'candidate_department' },
-					{ joinTableName: 'candidate_employment_type' },
+				isMigrate: false,
+				conditions: [ 
+					{ column: 'name' }, 
+					{ column: 'slug' } 
 				]
 			},
-			{
-				repository: this.contactRepository,
-				nameFile: 'contact',
-			},
-			{
-				repository: this.customSmtpRepository,
-				nameFile: 'custom_smtp'
-			},
-			{
-				repository: this.reportOrganizationRepository,
-				nameFile: 'report_organization'
-			},
-			{
-				repository: this.jobPresetRepository,
-				nameFile: 'job_preset'
-			},
-			{
-				repository: this.jobSearchCategoryRepository,
-				nameFile: 'job_search_category'
-			},
-			{
-				repository: this.jobSearchOccupationRepository,
-				nameFile: 'job_search_occupation'
-			},
-			{
-				repository: this.jobPresetUpworkJobSearchCriterionRepository,
-				nameFile: 'job_preset_upwork_job_search_criterion'
-			},
-			/**
-			* These entities need TENANT, ORGANIZATION & USER
-			*/
-			{
-				repository: this.employeeRepository,
-				nameFile: 'employee',
-				relations: [
-					{ joinTableName: 'employee_job_preset' },
-				]
-			},
-			/**
-			* These entities need TENANT, ORGANIZATION & CANDIDATE
-			*/
-			{
-				repository: this.candidateCriterionsRatingRepository,
-				nameFile: 'candidate_criterion_rating'
-			},
-			{
-				repository: this.candidateDocumentRepository,
-				nameFile: 'candidate_document'
-			},
-			{
-				repository: this.candidateEducationRepository,
-				nameFile: 'candidate_education'
-			},
-			{
-				repository: this.candidateExperienceRepository,
-				nameFile: 'candidate_experience'
-			},
-			{
-				repository: this.candidateFeedbackRepository,
-				nameFile: 'candidate_feedback'
-			},
-			{
-				repository: this.candidateInterviewersRepository,
-				nameFile: 'candidate_interviewer'
-			},
-			{
-				repository: this.candidateInterviewRepository,
-				nameFile: 'candidate_interview'
-			},
-			{
-				repository: this.candidatePersonalQualitiesRepository,
-				nameFile: 'candidate_personal_quality'
-			},
-			{
-				repository: this.candidateSkillRepository,
-				nameFile: 'candidate_skill'
-			},
-			{
-				repository: this.candidateSourceRepository,
-				nameFile: 'candidate_source'
-			},
-			{
-				repository: this.candidateTechnologiesRepository,
-				nameFile: 'candidate_technology'
-			},
-			/**
-			* These entities need TENANT and ORGANIZATION
-			*/
-			{
-				repository: this.skillRepository,
-				nameFile: 'skill',
-				relations: [
-					{ joinTableName: 'skill_employee' },
-					{ joinTableName: 'skill_organization' }
-				]
-			},
-			{
-				repository: this.accountingTemplateRepository,
-				nameFile: 'accounting_template'
-			},
-			{
-				repository: this.activityRepository,
-				nameFile: 'activity'
-			},
-			{
-				repository: this.approvalPolicyRepository,
-				nameFile: 'approval_policy'
-			},
-			{
-				repository: this.availabilitySlotsRepository,
-				nameFile: 'availability_slot'
-			},
-			{
-				repository: this.appointmentEmployeesRepository,
-				nameFile: 'appointment_employee'
-			},
-			{
-				repository: this.dealRepository,
-				nameFile: 'deal'
-			},
-			/*
-			* Email & Template  
-			*/
-			{ 
-				repository: this.emailTemplateRepository,
-				nameFile: 'email_template'
-			},
-			{
-				repository: this.emailRepository,
-				nameFile: 'email'
-			},
-			{
-				repository: this.estimateEmailRepository,
-				nameFile: 'estimate_email'
-			},
-			/*
-			* Employee & Related Entities 
-			*/
-			{ 
-				repository: this.employeeAppointmentRepository,
-				nameFile: 'employee_appointment'
-			},
-			{
-				repository: this.employeeAwardRepository,
-				nameFile: 'employee_award'
-			},
-			{
-				repository: this.employeeProposalTemplateRepository,
-				nameFile: 'employee_proposal_template'
-			},
-			{
-				repository: this.employeeRecurringExpenseRepository,
-				nameFile: 'employee_recurring_expense'
-			},
-			{
-				repository: this.employeeSettingRepository,
-				nameFile: 'employee_setting'
-			},
-			{
-				repository: this.employeeUpworkJobsSearchCriterionRepository,
-				nameFile: 'employee_upwork_job_search_criterion'
-			},
-			{
-				repository: this.employeeLevelRepository,
-				nameFile: 'organization_employee_level'
-			},
-			/*
-			* Equipment & Related Entities 
-			*/
-			{ 
-				repository: this.equipmentSharingPolicyRepository,
-				nameFile: 'equipment_sharing_policy'
-			},
-			{
-				repository: this.equipmentRepository,
-				nameFile: 'equipment'
-			},
-			{
-				repository: this.equipmentSharingRepository,
-				nameFile: 'equipment_sharing',
-				relations: [
-					{ joinTableName: 'equipment_shares_employees' },
-					{ joinTableName: 'equipment_shares_teams' }
-				]
-			},
-			/*
-			* Event Type & Related Entities 
-			*/
-			{ 
-				repository: this.eventTypeRepository,
-				nameFile: 'event_type'
-			},
-			/*
-			* Expense & Related Entities 
-			*/
-			{
-				repository: this.expenseCategoryRepository,
-				nameFile: 'expense_category'
-			},
-			{
-				repository: this.expenseRepository,
-				nameFile: 'expense'
-			},
-			/*
-			* Feature & Related Entities 
-			*/
-			{ 
-				repository: this.featureRepository,
-				nameFile: 'feature',
-				tenantBase: false,
-				isCleanUp: false
-			},
-			{
-				repository: this.featureOrganizationRepository,
-				nameFile: 'feature_organization'
-			},
-			/*
-			* Goal KPI & Related Entities 
-			*/
-			{ 
-				repository: this.goalKpiRepository,
-				nameFile: 'goal_kpi'
-			},
-			{
-				repository: this.goalKpiTemplateRepository,
-				nameFile: 'goal_kpi_template'
-			},
-			{
-				repository: this.goalRepository,
-				nameFile: 'goal'
-			},
-			{
-				repository: this.goalTemplateRepository,
-				nameFile: 'goal_template'
-			},
-			{
-				repository: this.goalTimeFrameRepository,
-				nameFile: 'goal_time_frame'
-			},
-			{
-				repository: this.goalGeneralSettingRepository,
-				nameFile: 'goal_general_setting'
-			},
-			/*
-			* Income
-			*/
-			{ 
-				repository: this.incomeRepository,
-				nameFile: 'income'
-			},
-			/*
-			* Integration & Related Entities
-			*/
-			{
-				repository: this.integrationRepository,
-				nameFile: 'integration',
-				tenantBase: false
-			},
-			{
-				repository: this.integrationTypeRepository,
-				nameFile: 'integration_type',
-				relations: [
-					{ joinTableName: 'integration_integration_type' }
-				]
-			},
-			{
-				repository: this.integrationEntitySettingRepository,
-				nameFile: 'integration_entity_setting'
-			},
-			{
-				repository: this.integrationEntitySettingTiedEntityRepository,
-				nameFile: 'integration_entity_setting_tied_entity'
-			},
-			{
-				repository: this.integrationMapRepository,
-				nameFile: 'integration_map'
-			},
-			{
-				repository: this.integrationSettingRepository,
-				nameFile: 'integration_setting'
-			},
-			{
-				repository: this.integrationTenantRepository,
-				nameFile: 'integration_tenant'
-			},
-			/*
-			* Invite & Related Entities
-			*/
-			{ 
-				repository: this.inviteRepository,
-				nameFile: 'invite',
-				relations: [
-					{ joinTableName: 'invite_organization_contact' },
-					{ joinTableName: 'invite_organization_department' },
-					{ joinTableName: 'invite_organization_project' }
-				]
-			},
-			/*
-			* Invoice & Related Entities
-			*/
-			{ 
-				repository: this.invoiceRepository,
-				nameFile: 'invoice'
-			},
-			{
-				repository: this.invoiceItemRepository,
-				nameFile: 'invoice_item'
-			},
-			{
-				repository: this.invoiceEstimateHistoryRepository,
-				nameFile: 'invoice_estimate_history'
-			},
-			/*
-			* Key Result & Related Entities
-			*/
-			{ 
-				repository: this.keyResultRepository,
-				nameFile: 'key_result'
-			},
-			{
-				repository: this.keyResultTemplateRepository,
-				nameFile: 'key_result_template'
-			},
-			{
-				repository: this.keyResultUpdateRepository,
-				nameFile: 'key_result_update'
-			},
-			/*
-			* Organization & Related Entities
-			*/
-			{ 
-				repository: this.organizationAwardsRepository,
-				nameFile: 'organization_award'
-			},
-			{
-				repository: this.organizationContactRepository,
-				nameFile: 'organization_contact',
-				relations: [
-					{ joinTableName: 'organization_contact_employee' }
-				]
-			},
-			{
-				repository: this.organizationDepartmentRepository,
-				nameFile: 'organization_department',
-				relations: [
-					{ joinTableName: 'organization_department_employee' }
-				]
-			},
-			{
-				repository: this.organizationDocumentRepository,
-				nameFile: 'organization_document'
-			},
-			{
-				repository: this.organizationEmploymentTypeRepository,
-				nameFile: 'organization_employment_type',
-				relations: [
-					{ joinTableName: 'organization_employment_type_employee' }
-				]
-			},
-			{
-				repository: this.organizationLanguagesRepository,
-				nameFile: 'organization_language'
-			},
-			{
-				repository: this.organizationPositionsRepository,
-				nameFile: 'organization_position'
-			},
-			{
-				repository: this.organizationProjectsRepository,
-				nameFile: 'organization_project',
-				relations: [
-					{ joinTableName: 'organization_project_employee' }
-				]
-			},
-			{
-				repository: this.organizationRecurringExpenseRepository,
-				nameFile: 'organization_recurring_expense'
-			},
-			{
-				repository: this.organizationSprintRepository,
-				nameFile: 'organization_sprint'
-			},
-			{
-				repository: this.organizationTeamEmployeeRepository,
-				nameFile: 'organization_team_employee'
-			},
-			{
-				repository: this.organizationTeamRepository,
-				nameFile: 'organization_team'
-			},
-			{
-				repository: this.organizationVendorsRepository,
-				nameFile: 'organization_vendor'
-			},
-			/*
-			* Pipeline & Stage Entities
-			*/
-			{ 
-				repository: this.pipelineRepository,
-				nameFile: 'pipeline'
-			},
-			{
-				repository: this.pipelineStageRepository,
-				nameFile: 'pipeline_stage'
-			},
-			/*
-			* Product & Related Entities
-			*/
-			{ 
-				repository: this.productCategoryRepository,
-				nameFile: 'product_category'
-			},
-			{
-				repository: this.productCategoryTranslationRepository,
-				nameFile: 'product_category_translation'
-			},
-			{
-				repository: this.productTypeRepository,
-				nameFile: 'product_type'
-			},
-			{
-				repository: this.productTypeTranslationRepository,
-				nameFile: 'product_type_translation'
-			},
-			{
-				repository: this.productOptionRepository,
-				nameFile: 'product_option'
-			},
-			{
-				repository: this.productOptionTranslationRepository,
-				nameFile: 'product_option_translation'
-			},
-			{
-				repository: this.productOptionGroupRepository,
-				nameFile: 'product_option_group'
-			},
-			{
-				repository: this.productOptionGroupTranslationRepository,
-				nameFile: 'product_option_group_translation'
-			},
-			{
-				repository: this.productRepository,
-				nameFile: 'product',
-				relations: [
-					{ joinTableName: 'product_gallery_item' }
-				]
-			},
-			{
-				repository: this.productTranslationRepository,
-				nameFile: 'product_translation'
-			},
-			{
-				repository: this.productVariantRepository,
-				nameFile: 'product_variant',
-				relations: [
-					{ joinTableName: 'product_variant_options_product_option' }
-				]
-			},
-			{
-				repository: this.productVariantPriceRepository,
-				nameFile: 'product_variant_price'
-			},
-			{
-				repository: this.productVariantSettingsRepository,
-				nameFile: 'product_variant_setting'
-			},
-			{
-				repository: this.warehouseRepository,
-				nameFile: 'warehouse'
-			},
-			{
-				repository: this.merchantRepository,
-				nameFile: 'merchant',
-				relations: [
-					{ joinTableName: 'warehouse_merchant' }
-				]
-			},
-			{
-				repository: this.warehouseProductRepository,
-				nameFile: 'warehouse_product'
-			},
-			{
-				repository: this.warehouseProductVariantRepository,
-				nameFile: 'warehouse_product_variant'
-			},
-			{
-				repository: this.imageAssetRepository,
-				nameFile: 'image_asset'
-			},
-			/*
-			* Proposal & Related Entities
-			*/
-			{
-				repository: this.proposalRepository,
-				nameFile: 'proposal'
-			},
-			/*
-			* Payment & Related Entities
-			*/
-			{
-				repository: this.paymentRepository,
-				nameFile: 'payment'
-			},
-			/*
-			* Request Approval & Related Entities
-			*/
-			{
-				repository: this.requestApprovalRepository,
-				nameFile: 'request_approval'
-			},
-			{
-				repository: this.requestApprovalEmployeeRepository,
-				nameFile: 'request_approval_employee'
-			},
-			{
-				repository: this.requestApprovalTeamRepository,
-				nameFile: 'request_approval_team'
-			},
-			/*
-			* Tasks & Related Entities
-			*/
-			{
-				repository: this.taskRepository,
-				nameFile: 'task',
-				relations: [
-					{ joinTableName: 'task_employee' },
-					{ joinTableName: 'task_team' },
-				]
-			},
-			/*
-			* Timesheet & Related Entities
-			*/
-			{
-				repository: this.timeSheetRepository,
-				nameFile: 'timesheet'
-			},
-			{
-				repository: this.timeLogRepository,
-				nameFile: 'time_log',
-				relations: [
-					{ joinTableName: 'time_slot_time_logs' }
-				]
-			},
-			{
-				repository: this.timeSlotRepository,
-				nameFile: 'time_slot'
-			},
-			{
-				repository: this.timeSlotMinuteRepository,
-				nameFile: 'time_slot_minute'
-			},
-			{
-				repository: this.screenShotRepository,
-				nameFile: 'screenshot'
-			},
-			/*
-			* Timeoff & Related Entities
-			*/
-			{
-				repository: this.timeOffPolicyRepository,
-				nameFile: 'time_off_policy',
-				relations: [
-					{ joinTableName: 'time_off_policy_employee' }
-				]
-			},
-			{
-				repository: this.timeOffRequestRepository,
-				nameFile: 'time_off_request',
-				relations: [
-					{ joinTableName: 'time_off_request_employee' }
-				]
-			},
-			/*
-			* Tag & Related Entities
-			*/
-			{
-				repository: this.tagRepository,
-				nameFile: 'tag',
-				relations: [
-					{ joinTableName: 'tag_candidate' },
-					{ joinTableName: 'tag_employee' },
-					{ joinTableName: 'tag_equipment' },
-					{ joinTableName: 'tag_event_type' },
-					{ joinTableName: 'tag_expense' },
-					{ joinTableName: 'tag_income' },
-					{ joinTableName: 'tag_integration' },
-					{ joinTableName: 'tag_invoice' },
-					{ joinTableName: 'tag_merchant' },
-					{ joinTableName: 'tag_organization_contact' },
-					{ joinTableName: 'tag_organization_department' },
-					{ joinTableName: 'tag_organization_employee_level' },
-					{ joinTableName: 'tag_organization_employment_type' },
-					{ joinTableName: 'tag_organization_expense_category' },
-					{ joinTableName: 'tag_organization_position' },
-					{ joinTableName: 'tag_organization_project' },
-					{ joinTableName: 'tag_organization_team' },
-					{ joinTableName: 'tag_organization_vendor' },
-					{ joinTableName: 'tag_organization' },
-					{ joinTableName: 'tag_payment' },
-					{ joinTableName: 'tag_product' },
-					{ joinTableName: 'tag_proposal' },
-					{ joinTableName: 'tag_request_approval' },
-					{ joinTableName: 'tag_task' },
-					{ joinTableName: 'tag_warehouse' },
-				]
-			},
+			// /**
+			// * These entities need TENANT
+			// */
+			// {
+			// 	repository: this.tenantSettingRepository,
+			// 	nameFile: 'tenant_setting'
+			// },
+			// {
+			// 	repository: this.roleRepository,
+			// 	nameFile: 'role'
+			// },
+			// {
+			// 	repository: this.rolePermissionsRepository,
+			// 	nameFile: 'role_permission'
+			// },
+			// {
+			// 	repository: this.organizationRepository,
+			// 	nameFile: 'organization'
+			// },
+			// /**
+			// * These entities need TENANT and ORGANIZATION
+			// */
+			// { 
+			// 	repository: this.userRepository,
+			// 	nameFile: 'user'
+			// },
+			// {
+			// 	repository: this.userOrganizationRepository,
+			// 	nameFile: 'user_organization'
+			// },
+			// {
+			// 	repository: this.candidateRepository,
+			// 	nameFile: 'candidate',
+			// 	relations: [
+			// 		{ joinTableName: 'candidate_department' },
+			// 		{ joinTableName: 'candidate_employment_type' },
+			// 	]
+			// },
+			// {
+			// 	repository: this.contactRepository,
+			// 	nameFile: 'contact',
+			// },
+			// {
+			// 	repository: this.customSmtpRepository,
+			// 	nameFile: 'custom_smtp'
+			// },
+			// {
+			// 	repository: this.reportOrganizationRepository,
+			// 	nameFile: 'report_organization'
+			// },
+			// {
+			// 	repository: this.jobPresetRepository,
+			// 	nameFile: 'job_preset'
+			// },
+			// {
+			// 	repository: this.jobSearchCategoryRepository,
+			// 	nameFile: 'job_search_category'
+			// },
+			// {
+			// 	repository: this.jobSearchOccupationRepository,
+			// 	nameFile: 'job_search_occupation'
+			// },
+			// {
+			// 	repository: this.jobPresetUpworkJobSearchCriterionRepository,
+			// 	nameFile: 'job_preset_upwork_job_search_criterion'
+			// },
+			// /**
+			// * These entities need TENANT, ORGANIZATION & USER
+			// */
+			// {
+			// 	repository: this.employeeRepository,
+			// 	nameFile: 'employee',
+			// 	relations: [
+			// 		{ joinTableName: 'employee_job_preset' },
+			// 	]
+			// },
+			// /**
+			// * These entities need TENANT, ORGANIZATION & CANDIDATE
+			// */
+			// {
+			// 	repository: this.candidateCriterionsRatingRepository,
+			// 	nameFile: 'candidate_criterion_rating'
+			// },
+			// {
+			// 	repository: this.candidateDocumentRepository,
+			// 	nameFile: 'candidate_document'
+			// },
+			// {
+			// 	repository: this.candidateEducationRepository,
+			// 	nameFile: 'candidate_education'
+			// },
+			// {
+			// 	repository: this.candidateExperienceRepository,
+			// 	nameFile: 'candidate_experience'
+			// },
+			// {
+			// 	repository: this.candidateFeedbackRepository,
+			// 	nameFile: 'candidate_feedback'
+			// },
+			// {
+			// 	repository: this.candidateInterviewersRepository,
+			// 	nameFile: 'candidate_interviewer'
+			// },
+			// {
+			// 	repository: this.candidateInterviewRepository,
+			// 	nameFile: 'candidate_interview'
+			// },
+			// {
+			// 	repository: this.candidatePersonalQualitiesRepository,
+			// 	nameFile: 'candidate_personal_quality'
+			// },
+			// {
+			// 	repository: this.candidateSkillRepository,
+			// 	nameFile: 'candidate_skill'
+			// },
+			// {
+			// 	repository: this.candidateSourceRepository,
+			// 	nameFile: 'candidate_source'
+			// },
+			// {
+			// 	repository: this.candidateTechnologiesRepository,
+			// 	nameFile: 'candidate_technology'
+			// },
+			// /**
+			// * These entities need TENANT and ORGANIZATION
+			// */
+			// {
+			// 	repository: this.skillRepository,
+			// 	nameFile: 'skill',
+			// 	relations: [
+			// 		{ joinTableName: 'skill_employee' },
+			// 		{ joinTableName: 'skill_organization' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.accountingTemplateRepository,
+			// 	nameFile: 'accounting_template'
+			// },
+			// {
+			// 	repository: this.activityRepository,
+			// 	nameFile: 'activity'
+			// },
+			// {
+			// 	repository: this.approvalPolicyRepository,
+			// 	nameFile: 'approval_policy'
+			// },
+			// {
+			// 	repository: this.availabilitySlotsRepository,
+			// 	nameFile: 'availability_slot'
+			// },
+			// {
+			// 	repository: this.appointmentEmployeesRepository,
+			// 	nameFile: 'appointment_employee'
+			// },
+			// {
+			// 	repository: this.dealRepository,
+			// 	nameFile: 'deal'
+			// },
+			// /*
+			// * Email & Template  
+			// */
+			// { 
+			// 	repository: this.emailTemplateRepository,
+			// 	nameFile: 'email_template'
+			// },
+			// {
+			// 	repository: this.emailRepository,
+			// 	nameFile: 'email'
+			// },
+			// {
+			// 	repository: this.estimateEmailRepository,
+			// 	nameFile: 'estimate_email'
+			// },
+			// /*
+			// * Employee & Related Entities 
+			// */
+			// { 
+			// 	repository: this.employeeAppointmentRepository,
+			// 	nameFile: 'employee_appointment'
+			// },
+			// {
+			// 	repository: this.employeeAwardRepository,
+			// 	nameFile: 'employee_award'
+			// },
+			// {
+			// 	repository: this.employeeProposalTemplateRepository,
+			// 	nameFile: 'employee_proposal_template'
+			// },
+			// {
+			// 	repository: this.employeeRecurringExpenseRepository,
+			// 	nameFile: 'employee_recurring_expense'
+			// },
+			// {
+			// 	repository: this.employeeSettingRepository,
+			// 	nameFile: 'employee_setting'
+			// },
+			// {
+			// 	repository: this.employeeUpworkJobsSearchCriterionRepository,
+			// 	nameFile: 'employee_upwork_job_search_criterion'
+			// },
+			// {
+			// 	repository: this.employeeLevelRepository,
+			// 	nameFile: 'organization_employee_level'
+			// },
+			// /*
+			// * Equipment & Related Entities 
+			// */
+			// { 
+			// 	repository: this.equipmentSharingPolicyRepository,
+			// 	nameFile: 'equipment_sharing_policy'
+			// },
+			// {
+			// 	repository: this.equipmentRepository,
+			// 	nameFile: 'equipment'
+			// },
+			// {
+			// 	repository: this.equipmentSharingRepository,
+			// 	nameFile: 'equipment_sharing',
+			// 	relations: [
+			// 		{ joinTableName: 'equipment_shares_employees' },
+			// 		{ joinTableName: 'equipment_shares_teams' }
+			// 	]
+			// },
+			// /*
+			// * Event Type & Related Entities 
+			// */
+			// { 
+			// 	repository: this.eventTypeRepository,
+			// 	nameFile: 'event_type'
+			// },
+			// /*
+			// * Expense & Related Entities 
+			// */
+			// {
+			// 	repository: this.expenseCategoryRepository,
+			// 	nameFile: 'expense_category'
+			// },
+			// {
+			// 	repository: this.expenseRepository,
+			// 	nameFile: 'expense'
+			// },
+			// /*
+			// * Feature & Related Entities 
+			// */
+			// { 
+			// 	repository: this.featureRepository,
+			// 	nameFile: 'feature',
+			// 	tenantBase: false,
+			// 	isMigrate: false
+			// },
+			// {
+			// 	repository: this.featureOrganizationRepository,
+			// 	nameFile: 'feature_organization'
+			// },
+			// /*
+			// * Goal KPI & Related Entities 
+			// */
+			// { 
+			// 	repository: this.goalKpiRepository,
+			// 	nameFile: 'goal_kpi'
+			// },
+			// {
+			// 	repository: this.goalKpiTemplateRepository,
+			// 	nameFile: 'goal_kpi_template'
+			// },
+			// {
+			// 	repository: this.goalRepository,
+			// 	nameFile: 'goal'
+			// },
+			// {
+			// 	repository: this.goalTemplateRepository,
+			// 	nameFile: 'goal_template'
+			// },
+			// {
+			// 	repository: this.goalTimeFrameRepository,
+			// 	nameFile: 'goal_time_frame'
+			// },
+			// {
+			// 	repository: this.goalGeneralSettingRepository,
+			// 	nameFile: 'goal_general_setting'
+			// },
+			// /*
+			// * Income
+			// */
+			// { 
+			// 	repository: this.incomeRepository,
+			// 	nameFile: 'income'
+			// },
+			// /*
+			// * Integration & Related Entities
+			// */
+			// {
+			// 	repository: this.integrationRepository,
+			// 	nameFile: 'integration',
+			// 	tenantBase: false
+			// },
+			// {
+			// 	repository: this.integrationTypeRepository,
+			// 	nameFile: 'integration_type',
+			// 	relations: [
+			// 		{ joinTableName: 'integration_integration_type' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.integrationEntitySettingRepository,
+			// 	nameFile: 'integration_entity_setting'
+			// },
+			// {
+			// 	repository: this.integrationEntitySettingTiedEntityRepository,
+			// 	nameFile: 'integration_entity_setting_tied_entity'
+			// },
+			// {
+			// 	repository: this.integrationMapRepository,
+			// 	nameFile: 'integration_map'
+			// },
+			// {
+			// 	repository: this.integrationSettingRepository,
+			// 	nameFile: 'integration_setting'
+			// },
+			// {
+			// 	repository: this.integrationTenantRepository,
+			// 	nameFile: 'integration_tenant'
+			// },
+			// /*
+			// * Invite & Related Entities
+			// */
+			// { 
+			// 	repository: this.inviteRepository,
+			// 	nameFile: 'invite',
+			// 	relations: [
+			// 		{ joinTableName: 'invite_organization_contact' },
+			// 		{ joinTableName: 'invite_organization_department' },
+			// 		{ joinTableName: 'invite_organization_project' }
+			// 	]
+			// },
+			// /*
+			// * Invoice & Related Entities
+			// */
+			// { 
+			// 	repository: this.invoiceRepository,
+			// 	nameFile: 'invoice'
+			// },
+			// {
+			// 	repository: this.invoiceItemRepository,
+			// 	nameFile: 'invoice_item'
+			// },
+			// {
+			// 	repository: this.invoiceEstimateHistoryRepository,
+			// 	nameFile: 'invoice_estimate_history'
+			// },
+			// /*
+			// * Key Result & Related Entities
+			// */
+			// { 
+			// 	repository: this.keyResultRepository,
+			// 	nameFile: 'key_result'
+			// },
+			// {
+			// 	repository: this.keyResultTemplateRepository,
+			// 	nameFile: 'key_result_template'
+			// },
+			// {
+			// 	repository: this.keyResultUpdateRepository,
+			// 	nameFile: 'key_result_update'
+			// },
+			// /*
+			// * Organization & Related Entities
+			// */
+			// { 
+			// 	repository: this.organizationAwardsRepository,
+			// 	nameFile: 'organization_award'
+			// },
+			// {
+			// 	repository: this.organizationContactRepository,
+			// 	nameFile: 'organization_contact',
+			// 	relations: [
+			// 		{ joinTableName: 'organization_contact_employee' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.organizationDepartmentRepository,
+			// 	nameFile: 'organization_department',
+			// 	relations: [
+			// 		{ joinTableName: 'organization_department_employee' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.organizationDocumentRepository,
+			// 	nameFile: 'organization_document'
+			// },
+			// {
+			// 	repository: this.organizationEmploymentTypeRepository,
+			// 	nameFile: 'organization_employment_type',
+			// 	relations: [
+			// 		{ joinTableName: 'organization_employment_type_employee' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.organizationLanguagesRepository,
+			// 	nameFile: 'organization_language'
+			// },
+			// {
+			// 	repository: this.organizationPositionsRepository,
+			// 	nameFile: 'organization_position'
+			// },
+			// {
+			// 	repository: this.organizationProjectsRepository,
+			// 	nameFile: 'organization_project',
+			// 	relations: [
+			// 		{ joinTableName: 'organization_project_employee' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.organizationRecurringExpenseRepository,
+			// 	nameFile: 'organization_recurring_expense'
+			// },
+			// {
+			// 	repository: this.organizationSprintRepository,
+			// 	nameFile: 'organization_sprint'
+			// },
+			// {
+			// 	repository: this.organizationTeamEmployeeRepository,
+			// 	nameFile: 'organization_team_employee'
+			// },
+			// {
+			// 	repository: this.organizationTeamRepository,
+			// 	nameFile: 'organization_team'
+			// },
+			// {
+			// 	repository: this.organizationVendorsRepository,
+			// 	nameFile: 'organization_vendor'
+			// },
+			// /*
+			// * Pipeline & Stage Entities
+			// */
+			// { 
+			// 	repository: this.pipelineRepository,
+			// 	nameFile: 'pipeline'
+			// },
+			// {
+			// 	repository: this.pipelineStageRepository,
+			// 	nameFile: 'pipeline_stage'
+			// },
+			// /*
+			// * Product & Related Entities
+			// */
+			// { 
+			// 	repository: this.productCategoryRepository,
+			// 	nameFile: 'product_category'
+			// },
+			// {
+			// 	repository: this.productCategoryTranslationRepository,
+			// 	nameFile: 'product_category_translation'
+			// },
+			// {
+			// 	repository: this.productTypeRepository,
+			// 	nameFile: 'product_type'
+			// },
+			// {
+			// 	repository: this.productTypeTranslationRepository,
+			// 	nameFile: 'product_type_translation'
+			// },
+			// {
+			// 	repository: this.productOptionRepository,
+			// 	nameFile: 'product_option'
+			// },
+			// {
+			// 	repository: this.productOptionTranslationRepository,
+			// 	nameFile: 'product_option_translation'
+			// },
+			// {
+			// 	repository: this.productOptionGroupRepository,
+			// 	nameFile: 'product_option_group'
+			// },
+			// {
+			// 	repository: this.productOptionGroupTranslationRepository,
+			// 	nameFile: 'product_option_group_translation'
+			// },
+			// {
+			// 	repository: this.productRepository,
+			// 	nameFile: 'product',
+			// 	relations: [
+			// 		{ joinTableName: 'product_gallery_item' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.productTranslationRepository,
+			// 	nameFile: 'product_translation'
+			// },
+			// {
+			// 	repository: this.productVariantRepository,
+			// 	nameFile: 'product_variant',
+			// 	relations: [
+			// 		{ joinTableName: 'product_variant_options_product_option' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.productVariantPriceRepository,
+			// 	nameFile: 'product_variant_price'
+			// },
+			// {
+			// 	repository: this.productVariantSettingsRepository,
+			// 	nameFile: 'product_variant_setting'
+			// },
+			// {
+			// 	repository: this.warehouseRepository,
+			// 	nameFile: 'warehouse'
+			// },
+			// {
+			// 	repository: this.merchantRepository,
+			// 	nameFile: 'merchant',
+			// 	relations: [
+			// 		{ joinTableName: 'warehouse_merchant' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.warehouseProductRepository,
+			// 	nameFile: 'warehouse_product'
+			// },
+			// {
+			// 	repository: this.warehouseProductVariantRepository,
+			// 	nameFile: 'warehouse_product_variant'
+			// },
+			// {
+			// 	repository: this.imageAssetRepository,
+			// 	nameFile: 'image_asset'
+			// },
+			// /*
+			// * Proposal & Related Entities
+			// */
+			// {
+			// 	repository: this.proposalRepository,
+			// 	nameFile: 'proposal'
+			// },
+			// /*
+			// * Payment & Related Entities
+			// */
+			// {
+			// 	repository: this.paymentRepository,
+			// 	nameFile: 'payment'
+			// },
+			// /*
+			// * Request Approval & Related Entities
+			// */
+			// {
+			// 	repository: this.requestApprovalRepository,
+			// 	nameFile: 'request_approval'
+			// },
+			// {
+			// 	repository: this.requestApprovalEmployeeRepository,
+			// 	nameFile: 'request_approval_employee'
+			// },
+			// {
+			// 	repository: this.requestApprovalTeamRepository,
+			// 	nameFile: 'request_approval_team'
+			// },
+			// /*
+			// * Tasks & Related Entities
+			// */
+			// {
+			// 	repository: this.taskRepository,
+			// 	nameFile: 'task',
+			// 	relations: [
+			// 		{ joinTableName: 'task_employee' },
+			// 		{ joinTableName: 'task_team' },
+			// 	]
+			// },
+			// /*
+			// * Timesheet & Related Entities
+			// */
+			// {
+			// 	repository: this.timeSheetRepository,
+			// 	nameFile: 'timesheet'
+			// },
+			// {
+			// 	repository: this.timeLogRepository,
+			// 	nameFile: 'time_log',
+			// 	relations: [
+			// 		{ joinTableName: 'time_slot_time_logs' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.timeSlotRepository,
+			// 	nameFile: 'time_slot'
+			// },
+			// {
+			// 	repository: this.timeSlotMinuteRepository,
+			// 	nameFile: 'time_slot_minute'
+			// },
+			// {
+			// 	repository: this.screenShotRepository,
+			// 	nameFile: 'screenshot'
+			// },
+			// /*
+			// * Timeoff & Related Entities
+			// */
+			// {
+			// 	repository: this.timeOffPolicyRepository,
+			// 	nameFile: 'time_off_policy',
+			// 	relations: [
+			// 		{ joinTableName: 'time_off_policy_employee' }
+			// 	]
+			// },
+			// {
+			// 	repository: this.timeOffRequestRepository,
+			// 	nameFile: 'time_off_request',
+			// 	relations: [
+			// 		{ joinTableName: 'time_off_request_employee' }
+			// 	]
+			// },
+			// /*
+			// * Tag & Related Entities
+			// */
+			// {
+			// 	repository: this.tagRepository,
+			// 	nameFile: 'tag',
+			// 	relations: [
+			// 		{ joinTableName: 'tag_candidate' },
+			// 		{ joinTableName: 'tag_employee' },
+			// 		{ joinTableName: 'tag_equipment' },
+			// 		{ joinTableName: 'tag_event_type' },
+			// 		{ joinTableName: 'tag_expense' },
+			// 		{ joinTableName: 'tag_income' },
+			// 		{ joinTableName: 'tag_integration' },
+			// 		{ joinTableName: 'tag_invoice' },
+			// 		{ joinTableName: 'tag_merchant' },
+			// 		{ joinTableName: 'tag_organization_contact' },
+			// 		{ joinTableName: 'tag_organization_department' },
+			// 		{ joinTableName: 'tag_organization_employee_level' },
+			// 		{ joinTableName: 'tag_organization_employment_type' },
+			// 		{ joinTableName: 'tag_organization_expense_category' },
+			// 		{ joinTableName: 'tag_organization_position' },
+			// 		{ joinTableName: 'tag_organization_project' },
+			// 		{ joinTableName: 'tag_organization_team' },
+			// 		{ joinTableName: 'tag_organization_vendor' },
+			// 		{ joinTableName: 'tag_organization' },
+			// 		{ joinTableName: 'tag_payment' },
+			// 		{ joinTableName: 'tag_product' },
+			// 		{ joinTableName: 'tag_proposal' },
+			// 		{ joinTableName: 'tag_request_approval' },
+			// 		{ joinTableName: 'tag_task' },
+			// 		{ joinTableName: 'tag_warehouse' },
+			// 	]
+			// },
 			...this.dynamicEntitiesClassMap
 		] as IRepositoryModel<any>[];
 	}

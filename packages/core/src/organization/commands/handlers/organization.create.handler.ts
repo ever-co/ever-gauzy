@@ -1,15 +1,17 @@
 import { IOrganization, RolesEnum } from '@gauzy/contracts';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import * as faker from 'faker';
+import { getManager } from 'typeorm';
 import { RoleService } from '../../../role/role.service';
 import { UserService } from '../../../user/user.service';
-import { UserOrganization } from '../../../user-organization/user-organization.entity';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { RequestContext } from '../../../core/context';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
-import { ImportRecordCreateCommand } from './../../../export-import/import/commands';
+import { ImportRecordFirstOrCreateCommand } from './../../../export-import/import/commands';
+import { Organization, UserOrganization } from './../../../core/entities/internal';
+
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
@@ -89,12 +91,14 @@ export class OrganizationCreateHandler
 			new ReportOrganizationCreateCommand(organization)
 		);
 
+
 		//7. Create Import Records while migrating for relative organization.
 		if (input.sourceId) {
 			const { sourceId } = input;
+			const entityType = getManager().getRepository(Organization).metadata.tableName;
 			await this.commandBus.execute(
-				new ImportRecordCreateCommand({
-					entityType: 'organization',
+				new ImportRecordFirstOrCreateCommand({
+					entityType,
 					sourceId,
 					destinationId: organization.id,
 					importDate: new Date(),

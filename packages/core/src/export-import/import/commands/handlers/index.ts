@@ -1,7 +1,9 @@
 import { ImportHistoryCreateHandler } from "./import-history-create.handler";
-import { ImportRecordCreateHandler } from "./import-record-create.handler";
+import { ImportRecordFieldMapperHandler } from "./import-record-field-mapper.handler";
+import { ImportRecordFirstOrCreateHandler } from "./import-record-first-or-create.handler";
 
 export const CommandHandlers = [
     ImportHistoryCreateHandler,
-    ImportRecordCreateHandler
+    ImportRecordFirstOrCreateHandler,
+    ImportRecordFieldMapperHandler
 ];

@@ -76,7 +76,6 @@ export class ImportAllController {
 			file: file.originalname,
 			path: file.key,
 			size: file.size,
-			importDate: new Date(),
 			tenantId: RequestContext.currentTenantId()
 		}
 		try {

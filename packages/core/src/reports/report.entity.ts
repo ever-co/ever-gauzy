@@ -18,8 +18,8 @@ import {
 
 @Entity('report')
 export class Report extends BaseEntity implements IReport {
-	@ApiProperty({ type: () => ReportOrganization })
 	
+	@ApiProperty({ type: () => ReportOrganization })
 	@OneToMany(() => ReportOrganization, (reportOrganization) => reportOrganization.report, {
 		cascade: true
 	})
