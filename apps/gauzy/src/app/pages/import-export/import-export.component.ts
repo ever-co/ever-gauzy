@@ -115,12 +115,12 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 					}),
 					concatMap(async (tenant: ITenant) => {
 						for await (const organization of this.organizations) {
-							await this.gauzyCloudService.migrateOrganization(
-								{ ...this.mapOrganization(organization, tenant) }, 
+							await this.gauzyCloudService.migrateOrganization({ 
+								...this.mapOrganization(organization, tenant) }, 
 								this.token
 							).toPromise();
 						}
-						return observableOf(tenant);
+						return await observableOf(tenant).toPromise();
 					}),
 					tap(() => {
 						this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
@@ -146,7 +146,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						}
 						setTimeout(() => {
 							this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]);
-						}, 1000);	
+						}, 1500);	
 					}),
 					untilDestroyed(this),
 				)
@@ -167,6 +167,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		tenant: ITenant
 	): IOrganizationCreateInput {
 		const { currency, defaultValueDateType, bonusType, imageUrl, id: sourceId } = organization;
+		delete organization['id'];
+
 		return {
 			...organization,
 			imageUrl,
