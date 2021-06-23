@@ -134,7 +134,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 							queryParams: { 
 								token: this.token,
 								userId: this.gauzyUser.id,
-								importType: ImportTypeEnum.CLEAN
+								importType: ImportTypeEnum.MERGE
 							} 
 						});
 

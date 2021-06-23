@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
 	BaseEntity,
 	FeatureOrganization,
+	ImportRecord,
 	Organization,
 	RolePermissions
 } from '../core/entities/internal';
@@ -11,7 +12,8 @@ import {
 	ITenant,
 	IOrganization,
 	IRolePermission,
-	IFeatureOrganization
+	IFeatureOrganization,
+	IImportRecord
 } from '@gauzy/contracts';
 
 @Entity('tenant')
@@ -38,4 +40,10 @@ export class Tenant extends BaseEntity implements ITenant {
 		(featureOrganization) => featureOrganization.tenant
 	)
 	featureOrganizations?: IFeatureOrganization[];
+
+	@ApiProperty({ type: () => ImportRecord })
+	@OneToMany(() => ImportRecord, (importRecord) => importRecord.tenant, {
+		cascade: true
+	})
+	importRecords?: IImportRecord[];
 }

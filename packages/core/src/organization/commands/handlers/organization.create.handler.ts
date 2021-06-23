@@ -28,6 +28,7 @@ export class OrganizationCreateHandler
 		command: OrganizationCreateCommand
 	): Promise<IOrganization> {
 		const { input } = command;
+		const { isImporting = false, sourceId = null } = input;
 
 		//1. Get roleId for Super Admin user of the Tenant
 		const { id: roleId } = await this.roleService.findOne({
@@ -93,7 +94,7 @@ export class OrganizationCreateHandler
 
 
 		//7. Create Import Records while migrating for relative organization.
-		if (input.sourceId) {
+		if (isImporting && sourceId) {
 			const { sourceId } = input;
 			const entityType = getManager().getRepository(Organization).metadata.tableName;
 			await this.commandBus.execute(
@@ -101,7 +102,6 @@ export class OrganizationCreateHandler
 					entityType,
 					sourceId,
 					destinationId: organization.id,
-					importDate: new Date(),
 					tenantId
 				})
 			);
