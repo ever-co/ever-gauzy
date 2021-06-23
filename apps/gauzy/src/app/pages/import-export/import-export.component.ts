@@ -166,7 +166,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		organization: IOrganization,
 		tenant: ITenant
 	): IOrganizationCreateInput {
-		const { currency, defaultValueDateType, bonusType, imageUrl, id } = organization;
+		const { currency, defaultValueDateType, bonusType, imageUrl, id: sourceId } = organization;
 		return {
 			...organization,
 			imageUrl,
@@ -176,7 +176,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			defaultValueDateType: defaultValueDateType as DefaultValueDateTypeEnum, 
 			bonusType: bonusType as BonusTypeEnum,
 			isImporting: true,
-			sourceId: id
+			sourceId
 		}
 	}
 }

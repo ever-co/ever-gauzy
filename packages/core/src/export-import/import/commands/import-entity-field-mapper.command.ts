@@ -1,8 +1,7 @@
 import { ICommand } from '@nestjs/cqrs';
 import { Repository } from 'typeorm';
 
-
-export class ImportRecordFieldMapperCommand implements ICommand {
+export class ImportEntityFieldMapperCommand implements ICommand {
 	static readonly type = '[Import Record] Field Mapper';
 
 	constructor(

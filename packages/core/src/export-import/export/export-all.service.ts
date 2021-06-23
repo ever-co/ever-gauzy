@@ -641,7 +641,6 @@ export class ExportAllService implements OnModuleInit {
 		}
 
 		const { repository } = item;
-		console.log(repository.metadata.tableName);
 		const [ items, count ] = await repository.findAndCount(conditions);
 		if (count > 0) {
 			return await this.csvWriter(item.nameFile, items);
@@ -788,7 +787,6 @@ export class ExportAllService implements OnModuleInit {
 	async exportSpecificTables(names: string[]) {
 		return new Promise(async (resolve, reject) => {
 			try {
-				let count = this.repositories.length;
 				for await (const repository of this.repositories) {
 					const { nameFile } = repository;
 					if (names.includes(nameFile)) {
@@ -798,14 +796,12 @@ export class ExportAllService implements OnModuleInit {
 
 						// export pivot relational tables
 						if (isNotEmpty(repository.relations)) {
-							count = count + repository.relations.length;
 							await this.exportRelationalTables(repository, { 
 								tenantId: RequestContext.currentTenantId() 
 							});
 						}
 					}
 				}
-				console.log(count);
 				resolve(true);
 			} catch (error) {
 				reject(error)
@@ -845,7 +841,7 @@ export class ExportAllService implements OnModuleInit {
 					}
 
 					const items = await getManager().query(sql);
-					if (items.length > 0) {
+					if (isNotEmpty(items)) {
 						await this.csvWriter(referencTableName, items);
 					}
 				}
@@ -999,12 +995,12 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.countryRepository,
 				nameFile: 'country',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{
 				repository: this.currencyRepository,
 				nameFile: 'currency',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{ 
 				repository: this.dealRepository,

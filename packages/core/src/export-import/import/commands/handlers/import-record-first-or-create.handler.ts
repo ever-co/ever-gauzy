@@ -32,8 +32,7 @@ export class ImportRecordFirstOrCreateHandler
 				tenantId,
 				sourceId,
 				destinationId,
-				entityType,
-				importDate: new Date()
+				entityType
 			});
 			return { ...record, wasCreated: true }; 
 		}

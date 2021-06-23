@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { getConnection, Repository } from 'typeorm';
+import { getConnection, InsertResult, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import * as fs from 'fs';
@@ -79,6 +79,7 @@ import {
 	KeyResult,
 	KeyResultTemplate,
 	KeyResultUpdate,
+	Language,
 	Merchant,
 	Organization,
 	OrganizationAwards,
@@ -137,8 +138,9 @@ import {
 	WarehouseProductVariant
 } from './../../core/entities/internal';
 import { RequestContext } from './../../core';
-import { ImportRecordFieldMapperCommand, ImportRecordFirstOrCreateCommand } from './commands';
+import { ImportEntityFieldMapperCommand, ImportRecordFirstOrCreateCommand } from './commands';
 import { ImportRecordService } from './import-record.service';
+import { json } from 'express';
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -150,6 +152,8 @@ export interface IRepositoryModel<T> {
 	tenantBase?: boolean;
 	relations?: IColumnRelationMetadata[];
 	conditions?: any;
+
+	isStatic?: boolean;
 	isMigrate?: boolean
 	isRecord?: boolean
 }
@@ -352,6 +356,9 @@ export class ImportAllService implements OnModuleInit {
 
 		@InjectRepository(KeyResultUpdate)
 		private readonly keyResultUpdateRepository: Repository<KeyResultUpdate>,
+
+		@InjectRepository(Language)
+		private readonly languageRepository: Repository<Language>,
 
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>,
@@ -566,7 +573,7 @@ export class ImportAllService implements OnModuleInit {
 		*/
 		const tenantId = RequestContext.currentTenantId();
 		for await (const item of this.repositories) {
-			const { repository, nameFile, tenantBase = true, isMigrate = true, isRecord = true } = item;
+			const { repository, nameFile, tenantBase = true, isStatic = false, isRecord = true } = item;
 			const csvPath = path.join(this._extractPath, `${nameFile}.csv`);
 			
 			if (!fs.existsSync(csvPath)) {
@@ -574,12 +581,27 @@ export class ImportAllService implements OnModuleInit {
 				continue;
 			}
 
-			await new Promise((resolve, reject) => {
+			await new Promise(async (resolve, reject) => {
 				try {
 					/**
 					* This will first collect all the data and then insert
 					* If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
 					*/
+					const masterTable = repository.metadata.tableName;
+					if (cleanup) {
+						try {
+							let sql = `DELETE FROM ${masterTable}`; 
+							if (tenantBase !== false) {
+								sql += ` WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
+							}
+							await repository.query(sql);
+							console.log(`Success to clean up process for table: ${masterTable}`);
+						} catch (error) {
+							console.log(`Failed to clean up process for table: ${masterTable}`, error);
+							reject(error);
+						}
+					}
+
 					let results = [];
 					fs.createReadStream(csvPath, 'utf8')
 						.on('error', (error) => {
@@ -587,40 +609,31 @@ export class ImportAllService implements OnModuleInit {
 						})
 						.pipe(csv())
 						.on('data', async (data) => {
-							if (isRecord) {
-								await this.mappedImportRecord(
+							if (isStatic) {
+								await this.mappedStaticImportRecord(
 									item, 
 									data
 								);
-							}
-							const row = await this.mappedFields(data);
-							results.push(row);
-						})
-						.on('end', async () => {
-							results = results.filter(isNotEmpty);
-							if (results.length && isMigrate) {
-								const masterTable = repository.metadata.tableName;
-								if (cleanup) {
+							} else if (isRecord) {
+								if (isNotEmpty(data)) {
 									try {
-										let sql = `DELETE FROM ${masterTable}`; 
-										if (tenantBase !== false) {
-											sql += ` WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
-										}
-										await repository.query(sql);
-										console.log(`Success to clean up process for table: ${masterTable}`);
+										const raw = JSON.parse(JSON.stringify(data));
+										const result = await repository.insert(await this.mappedFields(data)) as InsertResult; 
+										await this.mappedDynamicImportRecord(
+											item,
+											result, 
+											raw
+										);
+										console.log(`Success to inserts data for table: ${masterTable}`);
 									} catch (error) {
-										console.log(`Failed to clean up process for table: ${masterTable}`, error);
+										console.log(`Failed to inserts data for table: ${masterTable}`, error);
 										reject(error);
 									}
 								}
-								try {
-									await repository.insert(results);
-									console.log(`Success to inserts data for table: ${masterTable}`);
-								} catch (error) {
-									console.log(`Failed to inserts data for table: ${masterTable}`, error);
-									reject(error);
-								}
 							}
+						})
+						.on('end', async () => {
+							results = results.filter(isNotEmpty);
 							resolve(results);
 						});
 				} catch (error) {
@@ -630,7 +643,7 @@ export class ImportAllService implements OnModuleInit {
 		}
 	}
 
-	async mappedImportRecord(
+	async mappedStaticImportRecord(
 		item: IRepositoryModel<any>,
 		row: any
 	) { 
@@ -644,8 +657,28 @@ export class ImportAllService implements OnModuleInit {
 			}
 		}
 		const desination = await this.commandBus.execute(
-			new ImportRecordFieldMapperCommand(repository, where)
+			new ImportEntityFieldMapperCommand(repository, where)
 		);
+		if (desination) {
+			const entityType = repository.metadata.tableName;
+			await this.commandBus.execute(
+				new ImportRecordFirstOrCreateCommand({
+					tenantId: RequestContext.currentTenantId(),
+					sourceId: row.id,
+					destinationId: desination.id,
+					entityType
+				})
+			);
+		}
+	}
+
+	async mappedDynamicImportRecord(
+		item: IRepositoryModel<any>,
+		insert: InsertResult,
+		row: any
+	) {
+		const { repository } = item;
+		const desination = insert['identifiers'][0];
 		if (desination) {
 			const entityType = repository.metadata.tableName;
 			await this.commandBus.execute(
@@ -717,31 +750,57 @@ export class ImportAllService implements OnModuleInit {
 			{
 				repository: this.reportCategoryRepository,
 				nameFile: 'report_category',
-				tenantBase: false,
-				isMigrate: false,
-				conditions: [ { column: 'name' } ]
+				isStatic: true,
+				conditions: [ 
+					{ column: 'name' } 
+				]
 			},
 			{
 				repository: this.reportRepository,
 				nameFile: 'report',
-				tenantBase: false,
-				isMigrate: false,
-				conditions: [ 
-					{ column: 'name' }, 
-					{ column: 'slug' } 
+				isStatic: true,
+				conditions: [
+					{ column: 'name' },
+					{ column: 'slug' }
 				]
 			},
-			// /**
-			// * These entities need TENANT
-			// */
-			// {
-			// 	repository: this.tenantSettingRepository,
-			// 	nameFile: 'tenant_setting'
-			// },
-			// {
-			// 	repository: this.roleRepository,
-			// 	nameFile: 'role'
-			// },
+			{
+				repository: this.featureRepository,
+				nameFile: 'feature',
+				isStatic: true,
+				conditions: [
+					{ column: 'name' },
+					{ column: 'code' }
+				]
+			},
+			{
+				repository: this.languageRepository,
+				nameFile: 'language',
+				isStatic: true,
+				conditions: [
+					{ column: 'name' },
+					{ column: 'code' }
+				]
+			},
+			{
+				repository: this.integrationRepository,
+				nameFile: 'integration',
+				isStatic: true,
+				conditions: [ 
+					{ column: 'name' } 
+				]
+			},
+			/**
+			* These entities need TENANT
+			*/
+			{
+				repository: this.tenantSettingRepository,
+				nameFile: 'tenant_setting'
+			},
+			{
+				repository: this.roleRepository,
+				nameFile: 'role'
+			},
 			// {
 			// 	repository: this.rolePermissionsRepository,
 			// 	nameFile: 'role_permission'
@@ -975,12 +1034,6 @@ export class ImportAllService implements OnModuleInit {
 			// /*
 			// * Feature & Related Entities 
 			// */
-			// { 
-			// 	repository: this.featureRepository,
-			// 	nameFile: 'feature',
-			// 	tenantBase: false,
-			// 	isMigrate: false
-			// },
 			// {
 			// 	repository: this.featureOrganizationRepository,
 			// 	nameFile: 'feature_organization'

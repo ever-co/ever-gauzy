@@ -370,13 +370,13 @@ export class SeedDataService {
 
 			// Seed data with mock / fake data for random tenants
 			await this.seedRandomData();
-
+			
 			// Seed jobs related data
 			await this.seedJobsData();
 
 			// Seed reports related data
 			await this.seedReportsData();
-			
+
 			// Disconnect to database
 			await this.closeConnection();
 
