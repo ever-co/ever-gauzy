@@ -1,9 +1,7 @@
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule, ActivatedRouteSnapshot, ActivatedRoute } from '@angular/router';
+import { Routes, RouterModule, ActivatedRouteSnapshot } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
-import { filter, tap } from 'rxjs/operators';
-import { Store } from '../../../@core/services';
 import { ImportComponent } from './import.component';
 
 const routes: Routes = [
@@ -32,20 +30,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ImportRoutingModule {
-
-	constructor(
-		private readonly _store: Store,
-		private readonly _activatedRoute: ActivatedRoute,
-	) {
-		_activatedRoute.queryParamMap
-			.pipe(
-				filter((params) => !!params && !!params.get('token')),
-				tap((params) => {
-					_store.token = params.get('token');
-            		_store.userId = params.get('userId');
-				})
-			)
-			.subscribe();
-	}
-}
+export class ImportRoutingModule { }

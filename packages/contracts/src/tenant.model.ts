@@ -1,3 +1,4 @@
+import { IImportRecord } from 'import-export.model';
 import { IFeatureOrganization } from './feature.model';
 import {
 	FileStorageProviderEnum,
@@ -16,6 +17,7 @@ export interface ITenant {
 	organizations?: IOrganization[];
 	rolePermissions?: IRolePermission[];
 	featureOrganizations?: IFeatureOrganization[];
+	importRecords?: IImportRecord[];
 }
 
 export interface ITenantCreateInput {
