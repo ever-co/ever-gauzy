@@ -8,6 +8,12 @@ export interface IImportRecord extends IBasePerTenantEntityModel {
 	wasCreated?: boolean;
 }
 
+export interface IImportRecordFind extends IBasePerTenantEntityModel {
+	entityType?: string;
+	sourceId?: string;
+	destinationId?: string;
+}
+
 export interface IImportHistory extends IBasePerTenantEntityModel {
 	file: string;
 	path: string;

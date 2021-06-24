@@ -3,6 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ImportRecordFirstOrCreateCommand } from '../import-record-first-or-create.command';
 import { ImportRecordService } from '../../import-record.service';
 import { ImportRecord } from './../../../../core/entities/internal';
+import { RequestContext } from 'core';
 
 @CommandHandler(ImportRecordFirstOrCreateCommand)
 export class ImportRecordFirstOrCreateHandler 
@@ -17,11 +18,10 @@ export class ImportRecordFirstOrCreateHandler
 		event: ImportRecordFirstOrCreateCommand
 	): Promise<ImportRecord> {
 		const { input } = event;
-		const { tenantId, sourceId, destinationId, entityType } = input;
-		
+		const { sourceId, destinationId, entityType } = input;
 		const { record } = await this._importRecordService.findOneOrFail({
 			where: {
-				tenantId,
+				tenantId: RequestContext.currentTenantId(),
 				sourceId,
 				destinationId,
 				entityType
@@ -29,7 +29,7 @@ export class ImportRecordFirstOrCreateHandler
 		});
 		if (!record) {
 			const record = await this._importRecordService.create({
-				tenantId,
+				tenantId: RequestContext.currentTenantId(),
 				sourceId,
 				destinationId,
 				entityType

@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { getConnection, InsertResult, Repository } from 'typeorm';
+import { getConnection, getManager, InsertResult, IsNull, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import * as fs from 'fs';
@@ -138,9 +138,7 @@ import {
 	WarehouseProductVariant
 } from './../../core/entities/internal';
 import { RequestContext } from './../../core';
-import { ImportEntityFieldMapperCommand, ImportRecordFirstOrCreateCommand } from './commands';
-import { ImportRecordService } from './import-record.service';
-import { json } from 'express';
+import { ImportEntityFieldMapperCommand, ImportRecordFindOrFailCommand, ImportRecordFirstOrCreateCommand } from './commands';
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -148,14 +146,13 @@ export interface IColumnRelationMetadata {
 
 export interface IRepositoryModel<T> {
 	repository: Repository<T>;
-	nameFile: string;
-	tenantBase?: boolean;
 	relations?: IColumnRelationMetadata[];
-	conditions?: any;
-
+	fieldMapper?: any;	
+	// additional condition
 	isStatic?: boolean;
 	isMigrate?: boolean
 	isRecord?: boolean
+	isCheckRelation?: boolean;
 }
 
 @Injectable()
@@ -385,10 +382,10 @@ export class ImportAllService implements OnModuleInit {
 		private readonly organizationLanguagesRepository: Repository<OrganizationLanguages>,
 
 		@InjectRepository(OrganizationPositions)
-		private readonly organizationPositionsRepository: Repository<OrganizationPositions>,
+		private readonly organizationPositionRepository: Repository<OrganizationPositions>,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
+		private readonly organizationProjectRepository: Repository<OrganizationProject>,
 
 		@InjectRepository(OrganizationRecurringExpense)
 		private readonly organizationRecurringExpenseRepository: Repository<OrganizationRecurringExpense>,
@@ -403,7 +400,7 @@ export class ImportAllService implements OnModuleInit {
 		private readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
 
 		@InjectRepository(OrganizationVendor)
-		private readonly organizationVendorsRepository: Repository<OrganizationVendor>,
+		private readonly organizationVendorRepository: Repository<OrganizationVendor>,
 
 		@InjectRepository(Payment)
 		private readonly paymentRepository: Repository<Payment>,
@@ -535,8 +532,7 @@ export class ImportAllService implements OnModuleInit {
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
 
 		private readonly configService: ConfigService,
-		private readonly commandBus: CommandBus,
-		private readonly _importRecordService: ImportRecordService
+		private readonly commandBus: CommandBus
 	) {}
 
 	async onModuleInit() {
@@ -573,7 +569,8 @@ export class ImportAllService implements OnModuleInit {
 		*/
 		const tenantId = RequestContext.currentTenantId();
 		for await (const item of this.repositories) {
-			const { repository, nameFile, tenantBase = true, isStatic = false, isRecord = true } = item;
+			const { repository, isStatic = false, isRecord = true, isMigrate = true } = item;
+			const nameFile = repository.metadata.tableName;
 			const csvPath = path.join(this._extractPath, `${nameFile}.csv`);
 			
 			if (!fs.existsSync(csvPath)) {
@@ -588,10 +585,11 @@ export class ImportAllService implements OnModuleInit {
 					* If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
 					*/
 					const masterTable = repository.metadata.tableName;
-					if (cleanup) {
+
+					if (cleanup && isMigrate === true) {
 						try {
 							let sql = `DELETE FROM ${masterTable}`; 
-							if (tenantBase !== false) {
+							if (isStatic !== true) {
 								sql += ` WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
 							}
 							await repository.query(sql);
@@ -602,28 +600,34 @@ export class ImportAllService implements OnModuleInit {
 						}
 					}
 
-					let results = [];
-					fs.createReadStream(csvPath, 'utf8')
-						.on('error', (error) => {
-							reject(error);
-						})
-						.pipe(csv())
-						.on('data', async (data) => {
-							if (isStatic) {
+					const results = [];
+					const rstream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
+					rstream.on('data', async (data) => { results.push(data); });
+					rstream.on('error', (error) => {
+						console.log(`Failer to parse CSV for table: ${masterTable}`, error);
+						reject(error);
+					});
+					rstream.on('end', async () => {
+						for await (const data of results) {
+							if ((isStatic) || (!isMigrate && isRecord)) {
 								await this.mappedStaticImportRecord(
 									item, 
 									data
 								);
-							} else if (isRecord) {
+								console.log(`Success to inserts import record for table: ${masterTable}`);
+							} else if (isMigrate) {
 								if (isNotEmpty(data)) {
 									try {
 										const raw = JSON.parse(JSON.stringify(data));
-										const result = await repository.insert(await this.mappedFields(data)) as InsertResult; 
-										await this.mappedDynamicImportRecord(
-											item,
-											result, 
-											raw
-										);
+										const result = await repository.insert(await this.mapFields(item, data)) as InsertResult;
+										
+										if (isRecord) {
+											await this.mappedImportRecord(
+												item,
+												result, 
+												raw
+											);
+										}
 										console.log(`Success to inserts data for table: ${masterTable}`);
 									} catch (error) {
 										console.log(`Failed to inserts data for table: ${masterTable}`, error);
@@ -631,11 +635,9 @@ export class ImportAllService implements OnModuleInit {
 									}
 								}
 							}
-						})
-						.on('end', async () => {
-							results = results.filter(isNotEmpty);
-							resolve(results);
-						});
+						}
+						resolve(true);
+					});
 				} catch (error) {
 					reject(error);
 				}
@@ -643,65 +645,102 @@ export class ImportAllService implements OnModuleInit {
 		}
 	}
 
+	/*
+	* Map static tables import record before insert data
+	*/
 	async mappedStaticImportRecord(
 		item: IRepositoryModel<any>,
 		row: any
-	) { 
-		const { repository, conditions } = item;
-		const where = [];
-		if (isNotEmpty(conditions) && conditions instanceof Array) {
-			for (const condition of conditions) {
-				where.push({
-					[condition.column] : row[condition.column]
-				});
+	): Promise<any> { 
+		return new Promise(async (resolve, reject) => {
+			try {
+				const { repository, fieldMapper } = item;
+				const where = [];
+				if (isNotEmpty(fieldMapper) && fieldMapper instanceof Array) {
+					for await (const item of fieldMapper) {
+						where.push({ [item.column] : row[item.column] });
+					}
+				}
+				const desination = await this.commandBus.execute(
+					new ImportEntityFieldMapperCommand(repository, where)
+				);
+				if (desination) {
+					await this.commandBus.execute(
+						new ImportRecordFirstOrCreateCommand({
+							sourceId: row.id,
+							destinationId: desination.id,
+							entityType: repository.metadata.tableName
+						})
+					);
+				}
+				resolve(true)
+			} catch (error) {
+				reject(error)
 			}
-		}
-		const desination = await this.commandBus.execute(
-			new ImportEntityFieldMapperCommand(repository, where)
-		);
-		if (desination) {
-			const entityType = repository.metadata.tableName;
-			await this.commandBus.execute(
-				new ImportRecordFirstOrCreateCommand({
-					tenantId: RequestContext.currentTenantId(),
-					sourceId: row.id,
-					destinationId: desination.id,
-					entityType
-				})
-			);
-		}
-	}
-
-	async mappedDynamicImportRecord(
-		item: IRepositoryModel<any>,
-		insert: InsertResult,
-		row: any
-	) {
-		const { repository } = item;
-		const desination = insert['identifiers'][0];
-		if (desination) {
-			const entityType = repository.metadata.tableName;
-			await this.commandBus.execute(
-				new ImportRecordFirstOrCreateCommand({
-					tenantId: RequestContext.currentTenantId(),
-					sourceId: row.id,
-					destinationId: desination.id,
-					entityType
-				})
-			);
-		}
+		});
 	}
 
 	/*
-	 * Add missing timestamps fields here
-	 */
-	mappedFields(data: any) {
+	* Map import record after insert data
+	*/
+	async mappedImportRecord(
+		item: IRepositoryModel<any>,
+		insert: InsertResult,
+		row: any
+	): Promise<any> {
+		return new Promise(async (resolve, reject) => {
+			try {
+				const { repository } = item;
+				const desination = insert['identifiers'][0];
+				if (desination) {
+					await this.commandBus.execute(
+						new ImportRecordFirstOrCreateCommand({
+							sourceId: row.id,
+							destinationId: desination.id,
+							entityType: repository.metadata.tableName
+						})
+					);
+				}
+				resolve(true);
+			} catch (error) {
+				reject(error)
+			}
+		});
+	}
+
+	/*
+	* Map tenant & organization base fields here
+	* Notice: Please add timestamp field here if missing
+	*/
+	async mapFields(
+		item: IRepositoryModel<any>,
+		data: any
+	) {
 		if ('id' in data && isNotEmpty(data['id'])) {
 			delete data['id'];
 		}
 		if ('tenantId' in data && isNotEmpty(data['tenantId'])) {
 			data['tenantId'] = RequestContext.currentTenantId();
 		}
+		if ('organizationId' in data && isNotEmpty(data['organizationId'])) {
+			const { record } = await this.commandBus.execute(
+				new ImportRecordFindOrFailCommand({
+					tenantId: RequestContext.currentTenantId(),
+					sourceId: data['organizationId'],
+					entityType: getManager().getRepository(Organization).metadata.tableName
+				})
+			);
+			data['organizationId'] = record.destinationId;
+		}
+		return await this.mapTimeStampsFields(
+			await this.mapRelationFields(item, data)
+		);
+	}
+	
+	/*
+	* Map timestamps fields here
+	*/
+	async mapTimeStampsFields(data: any) {
 		if ('createdAt' in data && isNotEmpty(data['createdAt'])) {
 			data['createdAt'] = convertToDatetime(data['createdAt']);
 		}
@@ -714,11 +753,43 @@ export class ImportAllService implements OnModuleInit {
 		if ('deletedAt' in data && isNotEmpty(data['deletedAt'])) {
 			data['deletedAt'] = convertToDatetime(data['deletedAt']);
 		}
-		return data;
+		return data; 
+	}
+
+	/*
+	* Map relation fields here
+	*/
+	async mapRelationFields(
+		item: IRepositoryModel<any>,
+		data: any
+	): Promise<any> {
+		return new Promise(async (resolve, reject) => {
+			try {
+				const { fieldMapper = [], isCheckRelation } = item;
+				if (isCheckRelation) {
+					if (isNotEmpty(fieldMapper) && fieldMapper instanceof Array) {
+						for await (const { column, entityType } of fieldMapper) {
+							const { record } = await this.commandBus.execute(
+								new ImportRecordFindOrFailCommand({ 
+									tenantId: RequestContext.currentTenantId(),
+									sourceId: data[column], 
+									entityType 
+								})
+							);
+							data[column] = record ? record.destinationId : IsNull().value; 
+						}
+					}
+				}
+				resolve(data);
+			} catch (error) {
+				console.log('Failed to map relation entity before insert', error);	
+				reject(error);
+			}
+		});
 	}
 
 	//load plugins entities for import data
-	 private async createDynamicInstanceForPluginEntities() {
+	private async createDynamicInstanceForPluginEntities() {
 		for await (const entity of getEntitiesFromPlugins(
 			this.configService.plugins
 		)) {
@@ -728,12 +799,10 @@ export class ImportAllService implements OnModuleInit {
 
 			const className = _.camelCase(entity.name);
 			const repository = getConnection().getRepository(entity);
-			const tableName = repository.metadata.tableName;
 
 			this[className] = repository;
 			this.dynamicEntitiesClassMap.push({
-				repository,
-				nameFile: tableName
+				repository
 			});
 		}
 	}
@@ -745,49 +814,39 @@ export class ImportAllService implements OnModuleInit {
 	private async registerCoreRepositories() {
 		this.repositories = [
 			/**
-			* These entities do not have any other dependency so need to be imported first
+			* These entities do not have any other dependency so need to be mapped first
 			*/
 			{
 				repository: this.reportCategoryRepository,
-				nameFile: 'report_category',
 				isStatic: true,
-				conditions: [ 
-					{ column: 'name' } 
-				]
+				fieldMapper: [ { column: 'name' } ]
 			},
 			{
 				repository: this.reportRepository,
-				nameFile: 'report',
 				isStatic: true,
-				conditions: [
-					{ column: 'name' },
-					{ column: 'slug' }
-				]
+				fieldMapper: [ { column: 'name' }, { column: 'slug' } ]
 			},
 			{
 				repository: this.featureRepository,
-				nameFile: 'feature',
 				isStatic: true,
-				conditions: [
-					{ column: 'name' },
-					{ column: 'code' }
-				]
+				fieldMapper:  [ { column: 'name' }, { column: 'code' } ]
 			},
 			{
 				repository: this.languageRepository,
-				nameFile: 'language',
 				isStatic: true,
-				conditions: [
-					{ column: 'name' },
-					{ column: 'code' }
-				]
+				fieldMapper: [ { column: 'name' }, { column: 'code' } ]
 			},
 			{
 				repository: this.integrationRepository,
-				nameFile: 'integration',
 				isStatic: true,
-				conditions: [ 
-					{ column: 'name' } 
+				fieldMapper: [ { column: 'name' } ]
+			},
+			{
+				repository: this.integrationTypeRepository,
+				isStatic: true,
+				fieldMapper: [ { column: 'name' }, { column: 'groupName' } ],
+				relations: [
+					{ joinTableName: 'integration_integration_type' }
 				]
 			},
 			/**
@@ -795,639 +854,873 @@ export class ImportAllService implements OnModuleInit {
 			*/
 			{
 				repository: this.tenantSettingRepository,
-				nameFile: 'tenant_setting'
 			},
 			{
 				repository: this.roleRepository,
-				nameFile: 'role'
 			},
-			// {
-			// 	repository: this.rolePermissionsRepository,
-			// 	nameFile: 'role_permission'
-			// },
-			// {
-			// 	repository: this.organizationRepository,
-			// 	nameFile: 'organization'
-			// },
-			// /**
-			// * These entities need TENANT and ORGANIZATION
-			// */
-			// { 
-			// 	repository: this.userRepository,
-			// 	nameFile: 'user'
-			// },
-			// {
-			// 	repository: this.userOrganizationRepository,
-			// 	nameFile: 'user_organization'
-			// },
-			// {
-			// 	repository: this.candidateRepository,
-			// 	nameFile: 'candidate',
-			// 	relations: [
-			// 		{ joinTableName: 'candidate_department' },
-			// 		{ joinTableName: 'candidate_employment_type' },
-			// 	]
-			// },
-			// {
-			// 	repository: this.contactRepository,
-			// 	nameFile: 'contact',
-			// },
-			// {
-			// 	repository: this.customSmtpRepository,
-			// 	nameFile: 'custom_smtp'
-			// },
-			// {
-			// 	repository: this.reportOrganizationRepository,
-			// 	nameFile: 'report_organization'
-			// },
-			// {
-			// 	repository: this.jobPresetRepository,
-			// 	nameFile: 'job_preset'
-			// },
-			// {
-			// 	repository: this.jobSearchCategoryRepository,
-			// 	nameFile: 'job_search_category'
-			// },
-			// {
-			// 	repository: this.jobSearchOccupationRepository,
-			// 	nameFile: 'job_search_occupation'
-			// },
-			// {
-			// 	repository: this.jobPresetUpworkJobSearchCriterionRepository,
-			// 	nameFile: 'job_preset_upwork_job_search_criterion'
-			// },
-			// /**
-			// * These entities need TENANT, ORGANIZATION & USER
-			// */
-			// {
-			// 	repository: this.employeeRepository,
-			// 	nameFile: 'employee',
-			// 	relations: [
-			// 		{ joinTableName: 'employee_job_preset' },
-			// 	]
-			// },
-			// /**
-			// * These entities need TENANT, ORGANIZATION & CANDIDATE
-			// */
-			// {
-			// 	repository: this.candidateCriterionsRatingRepository,
-			// 	nameFile: 'candidate_criterion_rating'
-			// },
-			// {
-			// 	repository: this.candidateDocumentRepository,
-			// 	nameFile: 'candidate_document'
-			// },
-			// {
-			// 	repository: this.candidateEducationRepository,
-			// 	nameFile: 'candidate_education'
-			// },
-			// {
-			// 	repository: this.candidateExperienceRepository,
-			// 	nameFile: 'candidate_experience'
-			// },
-			// {
-			// 	repository: this.candidateFeedbackRepository,
-			// 	nameFile: 'candidate_feedback'
-			// },
-			// {
-			// 	repository: this.candidateInterviewersRepository,
-			// 	nameFile: 'candidate_interviewer'
-			// },
-			// {
-			// 	repository: this.candidateInterviewRepository,
-			// 	nameFile: 'candidate_interview'
-			// },
-			// {
-			// 	repository: this.candidatePersonalQualitiesRepository,
-			// 	nameFile: 'candidate_personal_quality'
-			// },
-			// {
-			// 	repository: this.candidateSkillRepository,
-			// 	nameFile: 'candidate_skill'
-			// },
-			// {
-			// 	repository: this.candidateSourceRepository,
-			// 	nameFile: 'candidate_source'
-			// },
-			// {
-			// 	repository: this.candidateTechnologiesRepository,
-			// 	nameFile: 'candidate_technology'
-			// },
-			// /**
-			// * These entities need TENANT and ORGANIZATION
-			// */
-			// {
-			// 	repository: this.skillRepository,
-			// 	nameFile: 'skill',
-			// 	relations: [
-			// 		{ joinTableName: 'skill_employee' },
-			// 		{ joinTableName: 'skill_organization' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.accountingTemplateRepository,
-			// 	nameFile: 'accounting_template'
-			// },
-			// {
-			// 	repository: this.activityRepository,
-			// 	nameFile: 'activity'
-			// },
-			// {
-			// 	repository: this.approvalPolicyRepository,
-			// 	nameFile: 'approval_policy'
-			// },
-			// {
-			// 	repository: this.availabilitySlotsRepository,
-			// 	nameFile: 'availability_slot'
-			// },
-			// {
-			// 	repository: this.appointmentEmployeesRepository,
-			// 	nameFile: 'appointment_employee'
-			// },
-			// {
-			// 	repository: this.dealRepository,
-			// 	nameFile: 'deal'
-			// },
-			// /*
-			// * Email & Template  
-			// */
-			// { 
-			// 	repository: this.emailTemplateRepository,
-			// 	nameFile: 'email_template'
-			// },
-			// {
-			// 	repository: this.emailRepository,
-			// 	nameFile: 'email'
-			// },
-			// {
-			// 	repository: this.estimateEmailRepository,
-			// 	nameFile: 'estimate_email'
-			// },
-			// /*
-			// * Employee & Related Entities 
-			// */
-			// { 
-			// 	repository: this.employeeAppointmentRepository,
-			// 	nameFile: 'employee_appointment'
-			// },
-			// {
-			// 	repository: this.employeeAwardRepository,
-			// 	nameFile: 'employee_award'
-			// },
-			// {
-			// 	repository: this.employeeProposalTemplateRepository,
-			// 	nameFile: 'employee_proposal_template'
-			// },
-			// {
-			// 	repository: this.employeeRecurringExpenseRepository,
-			// 	nameFile: 'employee_recurring_expense'
-			// },
-			// {
-			// 	repository: this.employeeSettingRepository,
-			// 	nameFile: 'employee_setting'
-			// },
-			// {
-			// 	repository: this.employeeUpworkJobsSearchCriterionRepository,
-			// 	nameFile: 'employee_upwork_job_search_criterion'
-			// },
-			// {
-			// 	repository: this.employeeLevelRepository,
-			// 	nameFile: 'organization_employee_level'
-			// },
-			// /*
-			// * Equipment & Related Entities 
-			// */
-			// { 
-			// 	repository: this.equipmentSharingPolicyRepository,
-			// 	nameFile: 'equipment_sharing_policy'
-			// },
-			// {
-			// 	repository: this.equipmentRepository,
-			// 	nameFile: 'equipment'
-			// },
-			// {
-			// 	repository: this.equipmentSharingRepository,
-			// 	nameFile: 'equipment_sharing',
-			// 	relations: [
-			// 		{ joinTableName: 'equipment_shares_employees' },
-			// 		{ joinTableName: 'equipment_shares_teams' }
-			// 	]
-			// },
-			// /*
-			// * Event Type & Related Entities 
-			// */
-			// { 
-			// 	repository: this.eventTypeRepository,
-			// 	nameFile: 'event_type'
-			// },
-			// /*
-			// * Expense & Related Entities 
-			// */
-			// {
-			// 	repository: this.expenseCategoryRepository,
-			// 	nameFile: 'expense_category'
-			// },
-			// {
-			// 	repository: this.expenseRepository,
-			// 	nameFile: 'expense'
-			// },
-			// /*
-			// * Feature & Related Entities 
-			// */
-			// {
-			// 	repository: this.featureOrganizationRepository,
-			// 	nameFile: 'feature_organization'
-			// },
-			// /*
-			// * Goal KPI & Related Entities 
-			// */
-			// { 
-			// 	repository: this.goalKpiRepository,
-			// 	nameFile: 'goal_kpi'
-			// },
-			// {
-			// 	repository: this.goalKpiTemplateRepository,
-			// 	nameFile: 'goal_kpi_template'
-			// },
-			// {
-			// 	repository: this.goalRepository,
-			// 	nameFile: 'goal'
-			// },
-			// {
-			// 	repository: this.goalTemplateRepository,
-			// 	nameFile: 'goal_template'
-			// },
-			// {
-			// 	repository: this.goalTimeFrameRepository,
-			// 	nameFile: 'goal_time_frame'
-			// },
-			// {
-			// 	repository: this.goalGeneralSettingRepository,
-			// 	nameFile: 'goal_general_setting'
-			// },
-			// /*
-			// * Income
-			// */
-			// { 
-			// 	repository: this.incomeRepository,
-			// 	nameFile: 'income'
-			// },
-			// /*
-			// * Integration & Related Entities
-			// */
-			// {
-			// 	repository: this.integrationRepository,
-			// 	nameFile: 'integration',
-			// 	tenantBase: false
-			// },
-			// {
-			// 	repository: this.integrationTypeRepository,
-			// 	nameFile: 'integration_type',
-			// 	relations: [
-			// 		{ joinTableName: 'integration_integration_type' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.integrationEntitySettingRepository,
-			// 	nameFile: 'integration_entity_setting'
-			// },
-			// {
-			// 	repository: this.integrationEntitySettingTiedEntityRepository,
-			// 	nameFile: 'integration_entity_setting_tied_entity'
-			// },
-			// {
-			// 	repository: this.integrationMapRepository,
-			// 	nameFile: 'integration_map'
-			// },
-			// {
-			// 	repository: this.integrationSettingRepository,
-			// 	nameFile: 'integration_setting'
-			// },
-			// {
-			// 	repository: this.integrationTenantRepository,
-			// 	nameFile: 'integration_tenant'
-			// },
-			// /*
-			// * Invite & Related Entities
-			// */
-			// { 
-			// 	repository: this.inviteRepository,
-			// 	nameFile: 'invite',
-			// 	relations: [
-			// 		{ joinTableName: 'invite_organization_contact' },
-			// 		{ joinTableName: 'invite_organization_department' },
-			// 		{ joinTableName: 'invite_organization_project' }
-			// 	]
-			// },
-			// /*
-			// * Invoice & Related Entities
-			// */
-			// { 
-			// 	repository: this.invoiceRepository,
-			// 	nameFile: 'invoice'
-			// },
-			// {
-			// 	repository: this.invoiceItemRepository,
-			// 	nameFile: 'invoice_item'
-			// },
-			// {
-			// 	repository: this.invoiceEstimateHistoryRepository,
-			// 	nameFile: 'invoice_estimate_history'
-			// },
-			// /*
-			// * Key Result & Related Entities
-			// */
-			// { 
-			// 	repository: this.keyResultRepository,
-			// 	nameFile: 'key_result'
-			// },
-			// {
-			// 	repository: this.keyResultTemplateRepository,
-			// 	nameFile: 'key_result_template'
-			// },
-			// {
-			// 	repository: this.keyResultUpdateRepository,
-			// 	nameFile: 'key_result_update'
-			// },
-			// /*
-			// * Organization & Related Entities
-			// */
-			// { 
-			// 	repository: this.organizationAwardsRepository,
-			// 	nameFile: 'organization_award'
-			// },
-			// {
-			// 	repository: this.organizationContactRepository,
-			// 	nameFile: 'organization_contact',
-			// 	relations: [
-			// 		{ joinTableName: 'organization_contact_employee' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.organizationDepartmentRepository,
-			// 	nameFile: 'organization_department',
-			// 	relations: [
-			// 		{ joinTableName: 'organization_department_employee' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.organizationDocumentRepository,
-			// 	nameFile: 'organization_document'
-			// },
-			// {
-			// 	repository: this.organizationEmploymentTypeRepository,
-			// 	nameFile: 'organization_employment_type',
-			// 	relations: [
-			// 		{ joinTableName: 'organization_employment_type_employee' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.organizationLanguagesRepository,
-			// 	nameFile: 'organization_language'
-			// },
-			// {
-			// 	repository: this.organizationPositionsRepository,
-			// 	nameFile: 'organization_position'
-			// },
-			// {
-			// 	repository: this.organizationProjectsRepository,
-			// 	nameFile: 'organization_project',
-			// 	relations: [
-			// 		{ joinTableName: 'organization_project_employee' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.organizationRecurringExpenseRepository,
-			// 	nameFile: 'organization_recurring_expense'
-			// },
-			// {
-			// 	repository: this.organizationSprintRepository,
-			// 	nameFile: 'organization_sprint'
-			// },
-			// {
-			// 	repository: this.organizationTeamEmployeeRepository,
-			// 	nameFile: 'organization_team_employee'
-			// },
-			// {
-			// 	repository: this.organizationTeamRepository,
-			// 	nameFile: 'organization_team'
-			// },
-			// {
-			// 	repository: this.organizationVendorsRepository,
-			// 	nameFile: 'organization_vendor'
-			// },
-			// /*
-			// * Pipeline & Stage Entities
-			// */
-			// { 
-			// 	repository: this.pipelineRepository,
-			// 	nameFile: 'pipeline'
-			// },
-			// {
-			// 	repository: this.pipelineStageRepository,
-			// 	nameFile: 'pipeline_stage'
-			// },
-			// /*
-			// * Product & Related Entities
-			// */
-			// { 
-			// 	repository: this.productCategoryRepository,
-			// 	nameFile: 'product_category'
-			// },
-			// {
-			// 	repository: this.productCategoryTranslationRepository,
-			// 	nameFile: 'product_category_translation'
-			// },
-			// {
-			// 	repository: this.productTypeRepository,
-			// 	nameFile: 'product_type'
-			// },
-			// {
-			// 	repository: this.productTypeTranslationRepository,
-			// 	nameFile: 'product_type_translation'
-			// },
-			// {
-			// 	repository: this.productOptionRepository,
-			// 	nameFile: 'product_option'
-			// },
-			// {
-			// 	repository: this.productOptionTranslationRepository,
-			// 	nameFile: 'product_option_translation'
-			// },
-			// {
-			// 	repository: this.productOptionGroupRepository,
-			// 	nameFile: 'product_option_group'
-			// },
-			// {
-			// 	repository: this.productOptionGroupTranslationRepository,
-			// 	nameFile: 'product_option_group_translation'
-			// },
-			// {
-			// 	repository: this.productRepository,
-			// 	nameFile: 'product',
-			// 	relations: [
-			// 		{ joinTableName: 'product_gallery_item' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.productTranslationRepository,
-			// 	nameFile: 'product_translation'
-			// },
-			// {
-			// 	repository: this.productVariantRepository,
-			// 	nameFile: 'product_variant',
-			// 	relations: [
-			// 		{ joinTableName: 'product_variant_options_product_option' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.productVariantPriceRepository,
-			// 	nameFile: 'product_variant_price'
-			// },
-			// {
-			// 	repository: this.productVariantSettingsRepository,
-			// 	nameFile: 'product_variant_setting'
-			// },
-			// {
-			// 	repository: this.warehouseRepository,
-			// 	nameFile: 'warehouse'
-			// },
-			// {
-			// 	repository: this.merchantRepository,
-			// 	nameFile: 'merchant',
-			// 	relations: [
-			// 		{ joinTableName: 'warehouse_merchant' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.warehouseProductRepository,
-			// 	nameFile: 'warehouse_product'
-			// },
-			// {
-			// 	repository: this.warehouseProductVariantRepository,
-			// 	nameFile: 'warehouse_product_variant'
-			// },
-			// {
-			// 	repository: this.imageAssetRepository,
-			// 	nameFile: 'image_asset'
-			// },
-			// /*
-			// * Proposal & Related Entities
-			// */
-			// {
-			// 	repository: this.proposalRepository,
-			// 	nameFile: 'proposal'
-			// },
-			// /*
-			// * Payment & Related Entities
-			// */
-			// {
-			// 	repository: this.paymentRepository,
-			// 	nameFile: 'payment'
-			// },
-			// /*
-			// * Request Approval & Related Entities
-			// */
-			// {
-			// 	repository: this.requestApprovalRepository,
-			// 	nameFile: 'request_approval'
-			// },
-			// {
-			// 	repository: this.requestApprovalEmployeeRepository,
-			// 	nameFile: 'request_approval_employee'
-			// },
-			// {
-			// 	repository: this.requestApprovalTeamRepository,
-			// 	nameFile: 'request_approval_team'
-			// },
-			// /*
-			// * Tasks & Related Entities
-			// */
-			// {
-			// 	repository: this.taskRepository,
-			// 	nameFile: 'task',
-			// 	relations: [
-			// 		{ joinTableName: 'task_employee' },
-			// 		{ joinTableName: 'task_team' },
-			// 	]
-			// },
-			// /*
-			// * Timesheet & Related Entities
-			// */
-			// {
-			// 	repository: this.timeSheetRepository,
-			// 	nameFile: 'timesheet'
-			// },
-			// {
-			// 	repository: this.timeLogRepository,
-			// 	nameFile: 'time_log',
-			// 	relations: [
-			// 		{ joinTableName: 'time_slot_time_logs' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.timeSlotRepository,
-			// 	nameFile: 'time_slot'
-			// },
-			// {
-			// 	repository: this.timeSlotMinuteRepository,
-			// 	nameFile: 'time_slot_minute'
-			// },
-			// {
-			// 	repository: this.screenShotRepository,
-			// 	nameFile: 'screenshot'
-			// },
-			// /*
-			// * Timeoff & Related Entities
-			// */
-			// {
-			// 	repository: this.timeOffPolicyRepository,
-			// 	nameFile: 'time_off_policy',
-			// 	relations: [
-			// 		{ joinTableName: 'time_off_policy_employee' }
-			// 	]
-			// },
-			// {
-			// 	repository: this.timeOffRequestRepository,
-			// 	nameFile: 'time_off_request',
-			// 	relations: [
-			// 		{ joinTableName: 'time_off_request_employee' }
-			// 	]
-			// },
-			// /*
-			// * Tag & Related Entities
-			// */
-			// {
-			// 	repository: this.tagRepository,
-			// 	nameFile: 'tag',
-			// 	relations: [
-			// 		{ joinTableName: 'tag_candidate' },
-			// 		{ joinTableName: 'tag_employee' },
-			// 		{ joinTableName: 'tag_equipment' },
-			// 		{ joinTableName: 'tag_event_type' },
-			// 		{ joinTableName: 'tag_expense' },
-			// 		{ joinTableName: 'tag_income' },
-			// 		{ joinTableName: 'tag_integration' },
-			// 		{ joinTableName: 'tag_invoice' },
-			// 		{ joinTableName: 'tag_merchant' },
-			// 		{ joinTableName: 'tag_organization_contact' },
-			// 		{ joinTableName: 'tag_organization_department' },
-			// 		{ joinTableName: 'tag_organization_employee_level' },
-			// 		{ joinTableName: 'tag_organization_employment_type' },
-			// 		{ joinTableName: 'tag_organization_expense_category' },
-			// 		{ joinTableName: 'tag_organization_position' },
-			// 		{ joinTableName: 'tag_organization_project' },
-			// 		{ joinTableName: 'tag_organization_team' },
-			// 		{ joinTableName: 'tag_organization_vendor' },
-			// 		{ joinTableName: 'tag_organization' },
-			// 		{ joinTableName: 'tag_payment' },
-			// 		{ joinTableName: 'tag_product' },
-			// 		{ joinTableName: 'tag_proposal' },
-			// 		{ joinTableName: 'tag_request_approval' },
-			// 		{ joinTableName: 'tag_task' },
-			// 		{ joinTableName: 'tag_warehouse' },
-			// 	]
-			// },
+			{
+				repository: this.rolePermissionsRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'roleId', entityType: this.roleRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.organizationRepository,
+				isMigrate: false,
+				isRecord: true,
+				fieldMapper:  [ { column: 'name' }, { column: 'profile_link' } ]
+			},
+			/**
+			* These entities need TENANT and ORGANIZATION
+			*/
+			{ 
+				repository: this.userRepository,
+			 	isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'roleId', entityType: this.roleRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.userOrganizationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'userId', entityType: this.userRepository.metadata.tableName }
+				]
+			},
+			//Organization & Related Entities
+			{
+				repository: this.organizationPositionRepository,
+			},
+			{
+				repository: this.organizationTeamRepository,
+			},
+			{ 
+				repository: this.organizationAwardsRepository,
+			},
+			{
+				repository: this.organizationVendorRepository,
+			},
+			{
+				repository: this.organizationDepartmentRepository,
+				relations: [
+					{ joinTableName: 'organization_department_employee' }
+				]
+			},
+			{
+				repository: this.organizationDocumentRepository,
+			},
+			{
+				repository: this.organizationLanguagesRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'languageId', entityType: this.languageRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.organizationEmploymentTypeRepository,
+				relations: [
+					{ joinTableName: 'organization_employment_type_employee' }
+				]
+			},
+			{
+				repository: this.organizationContactRepository,
+				relations: [
+					{ joinTableName: 'organization_contact_employee' }
+				]
+			},
+			{
+				repository: this.organizationProjectRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'organizationContactId', entityType: this.organizationContactRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'organization_project_employee' }
+				]
+			},
+			{
+				repository: this.organizationSprintRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.organizationRecurringExpenseRepository,
+			},
+			{
+				repository: this.contactRepository
+			},
+			{
+				repository: this.customSmtpRepository,
+			},
+			{
+				repository: this.reportOrganizationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'reportId', entityType: this.reportRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.jobPresetRepository,
+			},
+			{
+				repository: this.jobSearchCategoryRepository,
+			},
+			{
+				repository: this.jobSearchOccupationRepository,
+			},
+			{
+				repository: this.jobPresetUpworkJobSearchCriterionRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'jobPresetId', entityType: this.jobPresetRepository.metadata.tableName },
+					{ column: 'occupationId', entityType: this.jobSearchOccupationRepository.metadata.tableName },
+					{ column: 'categoryId', entityType: this.jobSearchCategoryRepository.metadata.tableName }
+				]
+			},
+			/**
+			* These entities need TENANT, ORGANIZATION & USER
+			*/
+			{
+				repository: this.employeeRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'userId', entityType: this.userRepository.metadata.tableName },
+					{ column: 'contactId', entityType: this.contactRepository.metadata.tableName },
+					{ column: 'organizationPositionId', entityType: this.organizationPositionRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'employee_job_preset' },
+				]
+			},
+			/**
+			* These entities need TENANT, ORGANIZATION & CANDIDATE
+			*/
+			{
+				repository: this.candidateRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'organizationId', entityType: this.organizationRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'candidate_department' },
+					{ joinTableName: 'candidate_employment_type' },
+				]
+			},
+			{
+				repository: this.candidateDocumentRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'candidateId', entityType: this.candidateRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateEducationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'candidateId', entityType: this.candidateRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateSkillRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'candidateId', entityType: this.candidateRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateSourceRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'candidateId', entityType: this.candidateRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateInterviewRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'candidateId', entityType: this.candidateRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateInterviewersRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'interviewId', entityType: this.candidateInterviewRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateExperienceRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'candidateId', entityType: this.candidateRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateFeedbackRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'candidateId', entityType: this.candidateRepository.metadata.tableName },
+					{ column: 'interviewId', entityType: this.candidateInterviewRepository.metadata.tableName },
+					{ column: 'interviewerId', entityType: this.candidateInterviewersRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidatePersonalQualitiesRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'interviewId', entityType: this.candidateInterviewRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateTechnologiesRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'interviewId', entityType: this.candidateInterviewRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.candidateCriterionsRatingRepository
+			},
+			/**
+			* These entities need TENANT and ORGANIZATION
+			*/
+			{
+				repository: this.skillRepository,
+				relations: [
+					{ joinTableName: 'skill_employee' },
+					{ joinTableName: 'skill_organization' }
+				]
+			},
+			{
+				repository: this.accountingTemplateRepository,
+			},
+			{
+				repository: this.approvalPolicyRepository,
+			},
+			{
+				repository: this.availabilitySlotsRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			{ 
+				repository: this.employeeAppointmentRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.appointmentEmployeesRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'employeeAppointmentId', entityType: this.employeeAppointmentRepository.metadata.tableName },
+				]
+			},
+			/*
+			* Email & Template  
+			*/
+			{ 
+				repository: this.emailTemplateRepository,
+			},
+			{
+				repository: this.emailRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'emailTemplateId', entityType: this.emailTemplateRepository.metadata.tableName },
+					{ column: 'userId', entityType: this.userRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.estimateEmailRepository,
+			},
+			/*
+			* Employee & Related Entities 
+			*/
+			{
+				repository: this.employeeAwardRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.employeeProposalTemplateRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.employeeRecurringExpenseRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.employeeSettingRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.employeeUpworkJobsSearchCriterionRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'jobPresetId', entityType: this.jobPresetRepository.metadata.tableName },
+					{ column: 'occupationId', entityType: this.jobSearchOccupationRepository.metadata.tableName },
+					{ column: 'categoryId', entityType: this.jobSearchCategoryRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.employeeLevelRepository,
+			},
+			/*
+			* Equipment & Related Entities 
+			*/
+			{ 
+				repository: this.equipmentSharingPolicyRepository,
+			},
+			{
+				repository: this.equipmentRepository,
+			},
+			{
+				repository: this.equipmentSharingRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'equipmentId', entityType: this.equipmentRepository.metadata.tableName },
+					{ column: 'equipmentSharingPolicyId', entityType: this.equipmentSharingPolicyRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'equipment_shares_employees' },
+					{ joinTableName: 'equipment_shares_teams' }
+				]
+			},
+			/*
+			* Event Type & Related Entities 
+			*/
+			{ 
+				repository: this.eventTypeRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			/*
+			* Invoice & Related Entities
+			*/
+			{ 
+				repository: this.invoiceRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'organizationContactId', entityType: this.organizationContactRepository.metadata.tableName },
+					{ column: 'fromOrganizationId', entityType: this.organizationRepository.metadata.tableName },
+					{ column: 'toContactId', entityType: this.organizationContactRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.invoiceItemRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'invoiceId', entityType: this.invoiceRepository.metadata.tableName },
+					{ column: 'taskId', entityType: this.taskRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
+					{ column: 'productId', entityType: this.productRepository.metadata.tableName },
+					{ column: 'expenseId', entityType: this.expenseRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.invoiceEstimateHistoryRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'userId', entityType: this.userRepository.metadata.tableName },
+					{ column: 'invoiceId', entityType: this.invoiceRepository.metadata.tableName },
+				]
+			},
+			/*
+			* Expense & Related Entities 
+			*/
+			{
+				repository: this.expenseCategoryRepository,
+			},
+			{
+				repository: this.expenseRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'vendorId', entityType: this.organizationVendorRepository.metadata.tableName },
+					{ column: 'categoryId', entityType: this.expenseCategoryRepository.metadata.tableName },
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName }
+				]
+			},
+			/*
+			* Income
+			*/
+			{ 
+				repository: this.incomeRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			/*
+			* Feature & Related Entities 
+			*/
+			{
+				repository: this.featureOrganizationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'featureId', entityType: this.featureRepository.metadata.tableName }
+				]
+			},
+			/*
+			* Key Result & Related Entities
+			*/
+			{ 
+				repository: this.keyResultRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
+					{ column: 'taskId', entityType: this.taskRepository.metadata.tableName },
+					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'ownerId', entityType: this.employeeRepository.metadata.tableName },
+				]
+			},
+			{
+				repository: this.keyResultTemplateRepository,
+			},
+			{
+				repository: this.keyResultUpdateRepository,
+			},
+
+			/*
+			* Goal KPI & Related Entities 
+			*/
+			{ 
+				repository: this.goalKpiRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.goalKpiTemplateRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.goalRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'alignedKeyResultId', entityType: this.keyResultRepository.metadata.tableName },
+					{ column: 'ownerTeamId', entityType: this.organizationTeamRepository.metadata.tableName },
+					{ column: 'ownerEmployeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.goalTemplateRepository,
+			},
+
+			{
+				repository: this.goalTimeFrameRepository,
+			},
+			{
+				repository: this.goalGeneralSettingRepository,
+			},
+			/*
+			* Integration & Related Entities
+			*/
+			{
+				repository: this.integrationTenantRepository,
+			},
+			{
+				repository: this.integrationSettingRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'integrationId', entityType: this.integrationTenantRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.integrationMapRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'integrationId', entityType: this.integrationTenantRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.integrationEntitySettingRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'integrationId', entityType: this.integrationTenantRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.integrationEntitySettingTiedEntityRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'integrationEntitySettingId', entityType: this.integrationEntitySettingRepository.metadata.tableName }
+				]
+			},
+			/*
+			* Invite & Related Entities
+			*/
+			{ 
+				repository: this.inviteRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'roleId', entityType: this.roleRepository.metadata.tableName },
+					{ column: 'invitedById', entityType: this.userRepository.metadata.tableName },
+					{ column: 'organizationContactId', entityType: this.organizationContactRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'invite_organization_contact' },
+					{ joinTableName: 'invite_organization_department' },
+					{ joinTableName: 'invite_organization_project' }
+				]
+			},
+			{
+				repository: this.organizationTeamEmployeeRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'organizationTeamId', entityType: this.organizationTeamRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'roleId', entityType: this.roleRepository.metadata.tableName }
+				]
+			},
+			/*
+			* Pipeline & Stage Entities
+			*/
+			{ 
+				repository: this.pipelineRepository,
+			},
+			{
+				repository: this.pipelineStageRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'pipelineId', entityType: this.pipelineRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.dealRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'createdByUserId', entityType: this.userRepository.metadata.tableName },
+					{ column: 'stageId', entityType: this.pipelineStageRepository.metadata.tableName },
+					{ column: 'clientId', entityType: this.organizationContactRepository.metadata.tableName },
+				]
+			},
+			/*
+			* Product & Related Entities
+			*/
+			{ 
+				repository: this.productCategoryRepository,
+			},
+			{
+				repository: this.productCategoryTranslationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'referenceId', entityType: this.productCategoryRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.productTypeRepository,
+			},
+			{
+				repository: this.productTypeTranslationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'referenceId', entityType: this.productTypeRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.productOptionGroupRepository,
+			},
+			{
+				repository: this.productOptionRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'groupId', entityType: this.productOptionGroupRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.productOptionTranslationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'referenceId', entityType: this.productOptionRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.productOptionGroupTranslationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'referenceId', entityType: this.productOptionGroupRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.imageAssetRepository
+			},
+			{
+				repository: this.productRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'featuredImageId', entityType: this.imageAssetRepository.metadata.tableName },
+					{ column: 'typeId', entityType: this.productTypeRepository.metadata.tableName },
+					{ column: 'categoryId', entityType: this.productCategoryRepository.metadata.tableName },
+				],
+				relations: [
+					{ joinTableName: 'product_gallery_item' }
+				]
+			},
+			{
+				repository: this.productTranslationRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'referenceId', entityType: this.productRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.productVariantPriceRepository,
+				isCheckRelation: true
+			},
+			{
+				repository: this.productVariantSettingsRepository,
+			},
+			{
+				repository: this.productVariantRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'productId', entityType: this.productRepository.metadata.tableName },
+					{ column: 'imageId', entityType: this.imageAssetRepository.metadata.tableName },
+					{ column: 'priceId', entityType: this.productVariantPriceRepository.metadata.tableName },
+					{ column: 'settingsId', entityType: this.productVariantSettingsRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'product_variant_options_product_option' }
+				]
+			},
+			{
+				repository: this.warehouseRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'logoId', entityType: this.imageAssetRepository.metadata.tableName },
+					{ column: 'contactId', entityType: this.contactRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.merchantRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'logoId', entityType: this.imageAssetRepository.metadata.tableName },
+					{ column: 'contactId', entityType: this.contactRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'warehouse_merchant' }
+				]
+			},
+			{
+				repository: this.warehouseProductRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'warehouseId', entityType: this.warehouseRepository.metadata.tableName },
+					{ column: 'productId', entityType: this.productRepository.metadata.tableName }
+				],
+			},
+			{
+				repository: this.warehouseProductVariantRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'variantId', entityType: this.productVariantRepository.metadata.tableName },
+					{ column: 'warehouseProductId', entityType: this.warehouseProductRepository.metadata.tableName }
+				],
+			},
+			/*
+			* Proposal & Related Entities
+			*/
+			{
+				repository: this.proposalRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'organizationContactId', entityType: this.organizationContactRepository.metadata.tableName },
+				]
+			},
+			/*
+			* Payment & Related Entities
+			*/
+			{
+				repository: this.paymentRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'invoiceId', entityType: this.invoiceRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'recordedById', entityType: this.userRepository.metadata.tableName },
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
+					{ column: 'contactId', entityType: this.organizationContactRepository.metadata.tableName }
+				]
+			},
+			/*
+			* Request Approval & Related Entities
+			*/
+			{
+				repository: this.requestApprovalRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'approvalPolicyId', entityType: this.approvalPolicyRepository.metadata.tableName }
+				],
+			},
+			{
+				repository: this.requestApprovalEmployeeRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'requestApprovalId', entityType: this.requestApprovalRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
+				],
+			},
+			{
+				repository: this.requestApprovalTeamRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'requestApprovalId', entityType: this.requestApprovalRepository.metadata.tableName },
+					{ column: 'teamId', entityType: this.organizationTeamEmployeeRepository.metadata.tableName }
+				],
+			},
+			/*
+			* Tasks & Related Entities
+			*/
+			{
+				repository: this.taskRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
+					{ column: 'creatorId', entityType: this.userRepository.metadata.tableName },
+					{ column: 'organizationSprintId', entityType: this.organizationSprintRepository.metadata.tableName },
+				],
+				relations: [
+					{ joinTableName: 'task_employee' },
+					{ joinTableName: 'task_team' },
+				]
+			},
+			/*
+			* Timesheet & Related Entities
+			*/
+			{
+				repository: this.timeSheetRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'approvedById', entityType: this.employeeRepository.metadata.tableName }
+				],
+			},
+			{
+				repository: this.timeLogRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'timesheetId', entityType: this.timeSheetRepository.metadata.tableName },
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
+					{ column: 'taskId', entityType: this.taskRepository.metadata.tableName },
+					{ column: 'organizationContactId', entityType: this.organizationContactRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'time_slot_time_logs' }
+				]
+			},
+			{
+				repository: this.timeSlotRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.timeSlotMinuteRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'timeSlotId', entityType: this.timeSlotRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.screenShotRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'timeSlotId', entityType: this.timeSlotRepository.metadata.tableName }
+				]
+			},
+			{
+				repository: this.activityRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'employeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
+					{ column: 'timeSlotId', entityType: this.timeSlotRepository.metadata.tableName },
+					{ column: 'taskId', entityType: this.taskRepository.metadata.tableName }
+				]
+			},
+			/*
+			* Timeoff & Related Entities
+			*/
+			{
+				repository: this.timeOffPolicyRepository,
+				relations: [
+					{ joinTableName: 'time_off_policy_employee' }
+				]
+			},
+			{
+				repository: this.timeOffRequestRepository,
+				isCheckRelation: true,
+				fieldMapper: [
+					{ column: 'policyId', entityType: this.timeOffPolicyRepository.metadata.tableName }
+				],
+				relations: [
+					{ joinTableName: 'time_off_request_employee' }
+				]
+			},
+			/*
+			* Tag & Related Entities
+			*/
+			{
+				repository: this.tagRepository,
+				relations: [
+					{ joinTableName: 'tag_candidate' },
+					{ joinTableName: 'tag_employee' },
+					{ joinTableName: 'tag_equipment' },
+					{ joinTableName: 'tag_event_type' },
+					{ joinTableName: 'tag_expense' },
+					{ joinTableName: 'tag_income' },
+					{ joinTableName: 'tag_integration' },
+					{ joinTableName: 'tag_invoice' },
+					{ joinTableName: 'tag_merchant' },
+					{ joinTableName: 'tag_organization_contact' },
+					{ joinTableName: 'tag_organization_department' },
+					{ joinTableName: 'tag_organization_employee_level' },
+					{ joinTableName: 'tag_organization_employment_type' },
+					{ joinTableName: 'tag_organization_expense_category' },
+					{ joinTableName: 'tag_organization_position' },
+					{ joinTableName: 'tag_organization_project' },
+					{ joinTableName: 'tag_organization_team' },
+					{ joinTableName: 'tag_organization_vendor' },
+					{ joinTableName: 'tag_organization' },
+					{ joinTableName: 'tag_payment' },
+					{ joinTableName: 'tag_product' },
+					{ joinTableName: 'tag_proposal' },
+					{ joinTableName: 'tag_request_approval' },
+					{ joinTableName: 'tag_task' },
+					{ joinTableName: 'tag_warehouse' }
+				]
+			},
 			...this.dynamicEntitiesClassMap
 		] as IRepositoryModel<any>[];
 	}

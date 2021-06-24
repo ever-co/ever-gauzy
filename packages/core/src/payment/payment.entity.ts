@@ -53,7 +53,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	invoice?: IInvoice;
 
 	@ApiProperty({ type: () => String })
-	@RelationId((expense: Payment) => expense.employee)
+	@RelationId((payment: Payment) => payment.employee)
 	@Column({ nullable: true })
 	employeeId?: string;
 
