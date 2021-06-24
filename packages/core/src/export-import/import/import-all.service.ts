@@ -138,7 +138,11 @@ import {
 	WarehouseProductVariant
 } from './../../core/entities/internal';
 import { RequestContext } from './../../core';
-import { ImportEntityFieldMapperCommand, ImportRecordFindOrFailCommand, ImportRecordFirstOrCreateCommand } from './commands';
+import {
+	ImportEntityFieldMapOrCreateCommand,
+	ImportRecordFindOrFailCommand,
+	ImportRecordFirstOrCreateCommand
+} from './commands';
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -147,11 +151,12 @@ export interface IColumnRelationMetadata {
 export interface IRepositoryModel<T> {
 	repository: Repository<T>;
 	relations?: IColumnRelationMetadata[];
-	fieldMapper?: any;	
+	fieldMapper?: any;
+
 	// additional condition
 	isStatic?: boolean;
-	isMigrate?: boolean
-	isRecord?: boolean
+	isMigrate?: boolean;
+	isRecord?: boolean;
 	isCheckRelation?: boolean;
 }
 
@@ -569,23 +574,24 @@ export class ImportAllService implements OnModuleInit {
 		*/
 		const tenantId = RequestContext.currentTenantId();
 		for await (const item of this.repositories) {
+			
 			const { repository, isStatic = false, isRecord = true, isMigrate = true } = item;
 			const nameFile = repository.metadata.tableName;
 			const csvPath = path.join(this._extractPath, `${nameFile}.csv`);
-			
+			const masterTable = repository.metadata.tableName;
+
 			if (!fs.existsSync(csvPath)) {
 				console.log(`File Does Not Exist, Skipping: ${nameFile}`);
 				continue;
 			}
 
+			console.log(`Importing process start for table: ${masterTable}`);
 			await new Promise(async (resolve, reject) => {
 				try {
 					/**
 					* This will first collect all the data and then insert
 					* If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
 					*/
-					const masterTable = repository.metadata.tableName;
-
 					if (cleanup && isMigrate === true) {
 						try {
 							let sql = `DELETE FROM ${masterTable}`; 
@@ -619,12 +625,13 @@ export class ImportAllService implements OnModuleInit {
 								if (isNotEmpty(data)) {
 									try {
 										const raw = JSON.parse(JSON.stringify(data));
-										const result = await repository.insert(await this.mapFields(item, data)) as InsertResult;
-										
+										const insert = await repository.insert(await this.mapFields(item, data)) as InsertResult;
+										const desination = insert['identifiers'][0];
+
 										if (isRecord) {
 											await this.mappedImportRecord(
 												item,
-												result, 
+												desination, 
 												raw
 											);
 										}
@@ -650,27 +657,31 @@ export class ImportAllService implements OnModuleInit {
 	*/
 	async mappedStaticImportRecord(
 		item: IRepositoryModel<any>,
-		row: any
+		entity: any
 	): Promise<any> { 
 		return new Promise(async (resolve, reject) => {
 			try {
-				const { repository, fieldMapper } = item;
+				const { repository, fieldMapper, isRecord } = item;
+				const raw = JSON.parse(JSON.stringify(entity));
+
 				const where = [];
 				if (isNotEmpty(fieldMapper) && fieldMapper instanceof Array) {
 					for await (const item of fieldMapper) {
-						where.push({ [item.column] : row[item.column] });
+						where.push({ [item.column] : entity[item.column] });
 					}
 				}
 				const desination = await this.commandBus.execute(
-					new ImportEntityFieldMapperCommand(repository, where)
+					new ImportEntityFieldMapOrCreateCommand(
+						repository, 
+						where, 
+						await this.mapFields(item, entity)
+					)
 				);
-				if (desination) {
-					await this.commandBus.execute(
-						new ImportRecordFirstOrCreateCommand({
-							sourceId: row.id,
-							destinationId: desination.id,
-							entityType: repository.metadata.tableName
-						})
+				if (desination && isRecord) {
+					await this.mappedImportRecord(
+						item,
+						desination, 
+						raw
 					);
 				}
 				resolve(true)
@@ -681,17 +692,16 @@ export class ImportAllService implements OnModuleInit {
 	}
 
 	/*
-	* Map import record after insert data
+	* Map import record after find or insert data
 	*/
 	async mappedImportRecord(
 		item: IRepositoryModel<any>,
-		insert: InsertResult,
+		desination: any,
 		row: any
 	): Promise<any> {
 		return new Promise(async (resolve, reject) => {
 			try {
 				const { repository } = item;
-				const desination = insert['identifiers'][0];
 				if (desination) {
 					await this.commandBus.execute(
 						new ImportRecordFirstOrCreateCommand({
@@ -730,7 +740,7 @@ export class ImportAllService implements OnModuleInit {
 					entityType: getManager().getRepository(Organization).metadata.tableName
 				})
 			);
-			data['organizationId'] = record.destinationId;
+			data['organizationId'] = record ? record.destinationId : IsNull().value;
 		}
 		return await this.mapTimeStampsFields(
 			await this.mapRelationFields(item, data)
@@ -868,7 +878,6 @@ export class ImportAllService implements OnModuleInit {
 			{
 				repository: this.organizationRepository,
 				isMigrate: false,
-				isRecord: true,
 				fieldMapper:  [ { column: 'name' }, { column: 'profile_link' } ]
 			},
 			/**
