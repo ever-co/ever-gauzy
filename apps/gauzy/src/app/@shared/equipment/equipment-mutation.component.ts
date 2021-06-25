@@ -59,10 +59,7 @@ export class EquipmentMutationComponent
 		this.image = this.equipment?.image || null;
 
 		this.store.selectedOrganization$
-			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				untilDestroyed(this)
-			)
+			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;

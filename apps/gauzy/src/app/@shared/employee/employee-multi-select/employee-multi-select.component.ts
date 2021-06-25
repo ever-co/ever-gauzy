@@ -11,7 +11,7 @@ import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter } from 'rxjs/operators';
+import { debounceTime } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
 
@@ -107,10 +107,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 				this.employeeId = value;
 			});
 		this.store.selectedOrganization$
-			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				untilDestroyed(this)
-			)
+			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;

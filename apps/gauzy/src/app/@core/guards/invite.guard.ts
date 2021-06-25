@@ -1,8 +1,8 @@
 import { Store } from './../services/store.service';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { filter, first } from 'rxjs/operators';
-import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { first } from 'rxjs/operators';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy()
@@ -25,11 +25,7 @@ export class InviteGuard implements CanActivate {
 			);
 		});
 		this.store.selectedOrganization$
-			.pipe(
-				filter((organization: IOrganization) => !!organization), 
-				first(), 
-				untilDestroyed(this)
-			)
+			.pipe(first(), untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationInvitesAllowed =
