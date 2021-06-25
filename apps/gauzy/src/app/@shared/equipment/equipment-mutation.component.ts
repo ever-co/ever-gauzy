@@ -9,7 +9,7 @@ import { Store } from '../../@core/services/store.service';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
-import { filter, first } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ImageAssetService, ToastrService } from '../../@core';
