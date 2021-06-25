@@ -55,13 +55,9 @@ export class CandidateFeedback
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
 
-	@OneToMany(
-		() => CandidateCriterionsRating,
-		(criterionsRating) => criterionsRating.feedback,
-		{
-			cascade: true
-		}
-	)
+	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.feedback, { 
+		cascade: true 
+	})
 	@JoinColumn()
 	criterionsRating?: ICandidateCriterionsRating[];
 

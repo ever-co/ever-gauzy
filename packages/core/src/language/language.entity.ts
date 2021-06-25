@@ -30,7 +30,7 @@ export class Language extends BaseEntity implements ILanguage {
 	color?: string;
 
 	@OneToMany(() => OrganizationLanguages, (organizationLanguages) => organizationLanguages.language, { 
-		onDelete: 'CASCADE' 
+		cascade: true 
 	})
 	@JoinColumn()
 	organizationLanguages?: IOrganizationLanguages[]

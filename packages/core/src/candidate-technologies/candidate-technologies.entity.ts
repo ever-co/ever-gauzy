@@ -1,10 +1,12 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { ICandidateTechnologies, ICandidateInterview } from '@gauzy/contracts';
+import { ICandidateTechnologies, ICandidateInterview, ICandidateCriterionsRating } from '@gauzy/contracts';
 import {
+	CandidateCriterionsRating,
 	CandidateInterview,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { IsString } from 'class-validator';
 
 @Entity('candidate_technology')
 export class CandidateTechnologies
@@ -14,20 +16,25 @@ export class CandidateTechnologies
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
-	interviewId?: string;
-
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
 
-	@ManyToOne(
-		() => CandidateInterview,
-		(interview) => interview.technologies,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
+	@ApiProperty({ type: () => String })
+	@RelationId((it: CandidateTechnologies) => it.interview)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	interviewId?: string;
+
+	@ManyToOne(() => CandidateInterview, (interview) => interview.technologies, { 
+		onDelete: 'CASCADE' 
+	})
 	interview: ICandidateInterview;
+
+	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.technology, { 
+		cascade: true 
+	})
+	@JoinColumn()
+	criterionsRatings?: ICandidateCriterionsRating[];
 }

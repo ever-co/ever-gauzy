@@ -624,6 +624,7 @@ export class ImportAllService implements OnModuleInit {
 									console.log(`Success to inserts data for table: ${masterTable}`);
 								}
 							} catch (error) {
+								console.log(data);
 								console.log(`Failed to inserts data for table: ${masterTable}`, error);
 								reject(error);
 							}
@@ -851,10 +852,10 @@ export class ImportAllService implements OnModuleInit {
 			*/
 			{
 				repository: this.tenantSettingRepository,
-				uniqueIdentifier: [ { column: 'name' }, { column: 'value' } ],
+				uniqueIdentifier: [ { column: 'name' }, { column: 'value' } ]
 			},
 			{
-				repository: this.roleRepository,
+				repository: this.roleRepository
 			},
 			{
 				repository: this.rolePermissionsRepository,
@@ -888,16 +889,16 @@ export class ImportAllService implements OnModuleInit {
 			},
 			//Organization & Related Entities
 			{
-				repository: this.organizationPositionRepository,
+				repository: this.organizationPositionRepository
 			},
 			{
-				repository: this.organizationTeamRepository,
+				repository: this.organizationTeamRepository
 			},
 			{ 
-				repository: this.organizationAwardsRepository,
+				repository: this.organizationAwardsRepository
 			},
 			{
-				repository: this.organizationVendorRepository,
+				repository: this.organizationVendorRepository
 			},
 			{
 				repository: this.organizationDepartmentRepository,
@@ -906,14 +907,10 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.organizationDocumentRepository,
+				repository: this.organizationDocumentRepository
 			},
 			{
-				repository: this.organizationLanguagesRepository,
-				isCheckRelation: true,
-				relationMapper: [
-					{ column: 'languageId', entityType: this.languageRepository.metadata.tableName }
-				]
+				repository: this.organizationLanguagesRepository
 			},
 			{
 				repository: this.organizationEmploymentTypeRepository,
@@ -941,17 +938,17 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.organizationSprintRepository,
 				isCheckRelation: true,
 				relationMapper: [
-					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
+					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName }
 				]
 			},
 			{
-				repository: this.organizationRecurringExpenseRepository,
+				repository: this.organizationRecurringExpenseRepository
 			},
 			{
 				repository: this.contactRepository
 			},
 			{
-				repository: this.customSmtpRepository,
+				repository: this.customSmtpRepository
 			},
 			{
 				repository: this.reportOrganizationRepository,
@@ -961,13 +958,13 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.jobPresetRepository,
+				repository: this.jobPresetRepository
 			},
 			{
-				repository: this.jobSearchCategoryRepository,
+				repository: this.jobSearchCategoryRepository
 			},
 			{
-				repository: this.jobSearchOccupationRepository,
+				repository: this.jobSearchOccupationRepository
 			},
 			{
 				repository: this.jobPresetUpworkJobSearchCriterionRepository,
@@ -990,7 +987,7 @@ export class ImportAllService implements OnModuleInit {
 					{ column: 'organizationPositionId', entityType: this.organizationPositionRepository.metadata.tableName }
 				],
 				relations: [
-					{ joinTableName: 'employee_job_preset' },
+					{ joinTableName: 'employee_job_preset' }
 				]
 			},
 			/**
@@ -1004,7 +1001,7 @@ export class ImportAllService implements OnModuleInit {
 				],
 				relations: [
 					{ joinTableName: 'candidate_department' },
-					{ joinTableName: 'candidate_employment_type' },
+					{ joinTableName: 'candidate_employment_type' }
 				]
 			},
 			{
@@ -1081,7 +1078,13 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.candidateCriterionsRatingRepository
+				repository: this.candidateCriterionsRatingRepository,
+				isCheckRelation: true,
+				relationMapper: [
+					{ column: 'feedbackId', entityType: this.candidateFeedbackRepository.metadata.tableName },
+					{ column: 'technologyId', entityType: this.candidateTechnologiesRepository.metadata.tableName },
+					{ column: 'personalQualityId', entityType: this.candidatePersonalQualitiesRepository.metadata.tableName },
+				]
 			},
 			/**
 			* These entities need TENANT and ORGANIZATION
@@ -1095,10 +1098,10 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.accountingTemplateRepository,
+				repository: this.accountingTemplateRepository
 			},
 			{
-				repository: this.approvalPolicyRepository,
+				repository: this.approvalPolicyRepository
 			},
 			{
 				repository: this.availabilitySlotsRepository,
@@ -1119,25 +1122,25 @@ export class ImportAllService implements OnModuleInit {
 				isCheckRelation: true,
 				relationMapper: [
 					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
-					{ column: 'employeeAppointmentId', entityType: this.employeeAppointmentRepository.metadata.tableName },
+					{ column: 'employeeAppointmentId', entityType: this.employeeAppointmentRepository.metadata.tableName }
 				]
 			},
 			/*
 			* Email & Template  
 			*/
 			{ 
-				repository: this.emailTemplateRepository,
+				repository: this.emailTemplateRepository
 			},
 			{
 				repository: this.emailRepository,
 				isCheckRelation: true,
 				relationMapper: [
 					{ column: 'emailTemplateId', entityType: this.emailTemplateRepository.metadata.tableName },
-					{ column: 'userId', entityType: this.userRepository.metadata.tableName },
+					{ column: 'userId', entityType: this.userRepository.metadata.tableName }
 				]
 			},
 			{
-				repository: this.estimateEmailRepository,
+				repository: this.estimateEmailRepository
 			},
 			/*
 			* Employee & Related Entities 
@@ -1146,28 +1149,28 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.employeeAwardRepository,
 				isCheckRelation: true,
 				relationMapper: [
-					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
 				]
 			},
 			{
 				repository: this.employeeProposalTemplateRepository,
 				isCheckRelation: true,
 				relationMapper: [
-					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
 				]
 			},
 			{
 				repository: this.employeeRecurringExpenseRepository,
 				isCheckRelation: true,
 				relationMapper: [
-					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
 				]
 			},
 			{
 				repository: this.employeeSettingRepository,
 				isCheckRelation: true,
 				relationMapper: [
-					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
 				]
 			},
 			{
@@ -1181,16 +1184,16 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.employeeLevelRepository,
+				repository: this.employeeLevelRepository
 			},
 			/*
 			* Equipment & Related Entities 
 			*/
 			{ 
-				repository: this.equipmentSharingPolicyRepository,
+				repository: this.equipmentSharingPolicyRepository
 			},
 			{
-				repository: this.equipmentRepository,
+				repository: this.equipmentRepository
 			},
 			{
 				repository: this.equipmentSharingRepository,
@@ -1223,7 +1226,7 @@ export class ImportAllService implements OnModuleInit {
 				relationMapper: [
 					{ column: 'organizationContactId', entityType: this.organizationContactRepository.metadata.tableName },
 					{ column: 'fromOrganizationId', entityType: this.organizationRepository.metadata.tableName },
-					{ column: 'toContactId', entityType: this.organizationContactRepository.metadata.tableName },
+					{ column: 'toContactId', entityType: this.organizationContactRepository.metadata.tableName }
 				]
 			},
 			{
@@ -1235,7 +1238,7 @@ export class ImportAllService implements OnModuleInit {
 					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
 					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
 					{ column: 'productId', entityType: this.productRepository.metadata.tableName },
-					{ column: 'expenseId', entityType: this.expenseRepository.metadata.tableName },
+					{ column: 'expenseId', entityType: this.expenseRepository.metadata.tableName }
 				]
 			},
 			{
@@ -1243,14 +1246,14 @@ export class ImportAllService implements OnModuleInit {
 				isCheckRelation: true,
 				relationMapper: [
 					{ column: 'userId', entityType: this.userRepository.metadata.tableName },
-					{ column: 'invoiceId', entityType: this.invoiceRepository.metadata.tableName },
+					{ column: 'invoiceId', entityType: this.invoiceRepository.metadata.tableName }
 				]
 			},
 			/*
 			* Expense & Related Entities 
 			*/
 			{
-				repository: this.expenseCategoryRepository,
+				repository: this.expenseCategoryRepository
 			},
 			{
 				repository: this.expenseRepository,
@@ -1292,14 +1295,14 @@ export class ImportAllService implements OnModuleInit {
 					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
 					{ column: 'taskId', entityType: this.taskRepository.metadata.tableName },
 					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName },
-					{ column: 'ownerId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'ownerId', entityType: this.employeeRepository.metadata.tableName }
 				]
 			},
 			{
-				repository: this.keyResultTemplateRepository,
+				repository: this.keyResultTemplateRepository
 			},
 			{
-				repository: this.keyResultUpdateRepository,
+				repository: this.keyResultUpdateRepository
 			},
 
 			/*
@@ -1330,20 +1333,20 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.goalTemplateRepository,
+				repository: this.goalTemplateRepository
 			},
 
 			{
-				repository: this.goalTimeFrameRepository,
+				repository: this.goalTimeFrameRepository
 			},
 			{
-				repository: this.goalGeneralSettingRepository,
+				repository: this.goalGeneralSettingRepository
 			},
 			/*
 			* Integration & Related Entities
 			*/
 			{
-				repository: this.integrationTenantRepository,
+				repository: this.integrationTenantRepository
 			},
 			{
 				repository: this.integrationSettingRepository,
@@ -1403,7 +1406,7 @@ export class ImportAllService implements OnModuleInit {
 			* Pipeline & Stage Entities
 			*/
 			{ 
-				repository: this.pipelineRepository,
+				repository: this.pipelineRepository
 			},
 			{
 				repository: this.pipelineStageRepository,
@@ -1418,14 +1421,14 @@ export class ImportAllService implements OnModuleInit {
 				relationMapper: [
 					{ column: 'createdByUserId', entityType: this.userRepository.metadata.tableName },
 					{ column: 'stageId', entityType: this.pipelineStageRepository.metadata.tableName },
-					{ column: 'clientId', entityType: this.organizationContactRepository.metadata.tableName },
+					{ column: 'clientId', entityType: this.organizationContactRepository.metadata.tableName }
 				]
 			},
 			/*
 			* Product & Related Entities
 			*/
 			{ 
-				repository: this.productCategoryRepository,
+				repository: this.productCategoryRepository
 			},
 			{
 				repository: this.productCategoryTranslationRepository,
@@ -1435,7 +1438,7 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.productTypeRepository,
+				repository: this.productTypeRepository
 			},
 			{
 				repository: this.productTypeTranslationRepository,
@@ -1445,7 +1448,7 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.productOptionGroupRepository,
+				repository: this.productOptionGroupRepository
 			},
 			{
 				repository: this.productOptionRepository,
@@ -1477,7 +1480,7 @@ export class ImportAllService implements OnModuleInit {
 				relationMapper: [
 					{ column: 'featuredImageId', entityType: this.imageAssetRepository.metadata.tableName },
 					{ column: 'typeId', entityType: this.productTypeRepository.metadata.tableName },
-					{ column: 'categoryId', entityType: this.productCategoryRepository.metadata.tableName },
+					{ column: 'categoryId', entityType: this.productCategoryRepository.metadata.tableName }
 				],
 				relations: [
 					{ joinTableName: 'product_gallery_item' }
@@ -1495,7 +1498,7 @@ export class ImportAllService implements OnModuleInit {
 				isCheckRelation: true
 			},
 			{
-				repository: this.productVariantSettingsRepository,
+				repository: this.productVariantSettingsRepository
 			},
 			{
 				repository: this.productVariantRepository,
@@ -1553,7 +1556,7 @@ export class ImportAllService implements OnModuleInit {
 				isCheckRelation: true,
 				relationMapper: [
 					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
-					{ column: 'organizationContactId', entityType: this.organizationContactRepository.metadata.tableName },
+					{ column: 'organizationContactId', entityType: this.organizationContactRepository.metadata.tableName }
 				]
 			},
 			/*
@@ -1578,7 +1581,7 @@ export class ImportAllService implements OnModuleInit {
 				isCheckRelation: true,
 				relationMapper: [
 					{ column: 'approvalPolicyId', entityType: this.approvalPolicyRepository.metadata.tableName }
-				],
+				]
 			},
 			{
 				repository: this.requestApprovalEmployeeRepository,
@@ -1586,7 +1589,7 @@ export class ImportAllService implements OnModuleInit {
 				relationMapper: [
 					{ column: 'requestApprovalId', entityType: this.requestApprovalRepository.metadata.tableName },
 					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
-				],
+				]
 			},
 			{
 				repository: this.requestApprovalTeamRepository,
@@ -1594,7 +1597,7 @@ export class ImportAllService implements OnModuleInit {
 				relationMapper: [
 					{ column: 'requestApprovalId', entityType: this.requestApprovalRepository.metadata.tableName },
 					{ column: 'teamId', entityType: this.organizationTeamEmployeeRepository.metadata.tableName }
-				],
+				]
 			},
 			/*
 			* Tasks & Related Entities
@@ -1605,7 +1608,7 @@ export class ImportAllService implements OnModuleInit {
 				relationMapper: [
 					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
 					{ column: 'creatorId', entityType: this.userRepository.metadata.tableName },
-					{ column: 'organizationSprintId', entityType: this.organizationSprintRepository.metadata.tableName },
+					{ column: 'organizationSprintId', entityType: this.organizationSprintRepository.metadata.tableName }
 				],
 				relations: [
 					{ joinTableName: 'task_employee' },
@@ -1621,7 +1624,7 @@ export class ImportAllService implements OnModuleInit {
 				relationMapper: [
 					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
 					{ column: 'approvedById', entityType: this.employeeRepository.metadata.tableName }
-				],
+				]
 			},
 			{
 				repository: this.timeLogRepository,

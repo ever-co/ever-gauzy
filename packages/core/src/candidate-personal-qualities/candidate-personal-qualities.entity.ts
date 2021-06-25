@@ -1,10 +1,12 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidatePersonalQualities,
-	ICandidateInterview
+	ICandidateInterview,
+	ICandidateCriterionsRating
 } from '@gauzy/contracts';
 import {
+	CandidateCriterionsRating,
 	CandidateInterview,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
@@ -25,12 +27,14 @@ export class CandidatePersonalQualities
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
 
-	@ManyToOne(
-		() => CandidateInterview,
-		(interview) => interview.personalQualities,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
+	@ManyToOne(() => CandidateInterview, (interview) => interview.personalQualities, { 
+		onDelete: 'CASCADE' 
+	})
 	interview: ICandidateInterview;
+
+	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.personalQuality, { 
+		cascade: true 
+	})
+	@JoinColumn()
+	criterionsRatings?: ICandidateCriterionsRating[];
 }

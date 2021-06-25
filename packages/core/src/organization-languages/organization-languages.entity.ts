@@ -1,6 +1,6 @@
-import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IOrganizationLanguages } from '@gauzy/contracts';
 import {
 	Language,
@@ -21,8 +21,12 @@ export class OrganizationLanguages
 	language: Language;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((self: OrganizationLanguages) => self.language)
-	readonly languageCode: string;
+	@RelationId((it: OrganizationLanguages) => it.language)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: false })
+	languageCode: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
