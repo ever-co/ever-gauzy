@@ -45,14 +45,6 @@ export class ImportComponent
 	}
 
 	ngOnInit() {
-		this.route.queryParamMap
-			.pipe(
-				filter((params) => !!params),
-				tap((params) => this.importType = params.get('importType') as ImportTypeEnum),
-				tap(() => this.initUploader()),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
@@ -71,6 +63,14 @@ export class ImportComponent
 	}
 
 	ngAfterViewInit() {
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && !!params.get('importType')),
+				tap((params) => this.importType = params.get('importType') as ImportTypeEnum),
+				tap(() => this.initUploader()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.subject$.next();
 	}
 
@@ -96,6 +96,7 @@ export class ImportComponent
 
 	onImportTypeChange(e: ImportTypeEnum) {
 		this.importType = e;
+		this.initUploader();
 	}
 
 	public dropFile(e: any) {

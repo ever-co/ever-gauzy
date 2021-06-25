@@ -86,16 +86,20 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		const { 
 			firstName,
 			lastName,
+			username,
+			thirdPartyId,
 			email,
 			imageUrl,
 			preferredComponentLayout,
 			preferredLanguage,
-			tenant: { name } 
+			tenant: { name }
 		} = this.user;
 		const register: IUserRegistrationInput = {
-			user: { 
+			user: {
 				firstName, 
-				lastName, 
+				lastName,
+				username,
+				thirdPartyId,
 				email,
 				preferredComponentLayout,
 				preferredLanguage,

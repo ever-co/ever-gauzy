@@ -51,7 +51,7 @@ export class OrganizationController extends CrudController<Organization> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Organization>> {
 		const { relations, findInput } = data;
-		return this.organizationService.findAll({
+		return await this.organizationService.findAll({
 			where: findInput,
 			relations
 		});
@@ -82,7 +82,7 @@ export class OrganizationController extends CrudController<Organization> {
 		if (relations) {
 			findObj['relations'] = relations;
 		}
-		return this.organizationService.findOne(id, findObj);
+		return await this.organizationService.findOne(id, findObj);
 	}
 
 	@ApiOperation({ summary: 'Find Organization by profile link.' })

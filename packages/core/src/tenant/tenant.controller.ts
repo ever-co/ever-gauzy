@@ -47,14 +47,14 @@ export class TenantController extends CrudController<Tenant> {
 		if (user.tenantId || user.roleId) {
 			throw new BadRequestException('Tenant already exists');
 		}
-		return this.tenantService.onboardTenant(entity, user);
+		return await this.tenantService.onboardTenant(entity, user);
 	}
 
 	@ApiOperation({
 		summary: 'Delete tenant',
 		security: [
 			{
-				role: [RolesEnum.ADMIN]
+				role: [RolesEnum.SUPER_ADMIN]
 			}
 		]
 	})
@@ -71,6 +71,6 @@ export class TenantController extends CrudController<Tenant> {
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Delete(':id')
 	async delete(@Param('id') id: string) {
-		return this.tenantService.delete(id);
+		return await this.tenantService.delete(id);
 	}
 }

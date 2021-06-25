@@ -1,11 +1,11 @@
-import { Entity, Column, Unique } from 'typeorm';
-import { ILanguage } from '@gauzy/contracts';
+import { Entity, Column, Unique, OneToMany, JoinColumn } from 'typeorm';
+import { ILanguage, IOrganizationLanguages } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
-import { BaseEntity } from '../core/entities/internal';
+import { BaseEntity, OrganizationLanguages } from '../core/entities/internal';
 
 @Entity('language')
-@Unique(['name'])
+@Unique(['code'])
 export class Language extends BaseEntity implements ILanguage {
 	@ApiProperty({ type: () => String })
 	@Column()
@@ -28,4 +28,10 @@ export class Language extends BaseEntity implements ILanguage {
 	@ApiProperty({ type: () => String })
 	@Column()
 	color?: string;
+
+	@OneToMany(() => OrganizationLanguages, (organizationLanguages) => organizationLanguages.language, { 
+		onDelete: 'CASCADE' 
+	})
+	@JoinColumn()
+	organizationLanguages?: IOrganizationLanguages[]
 }
