@@ -621,11 +621,10 @@ export class ImportAllService implements OnModuleInit {
 										item, 
 										data
 									);
-									console.log(`Success to inserts data for table: ${masterTable}`);
 								}
+								console.log(`Success to inserts data for table: ${masterTable}`);
 							} catch (error) {
-								console.log(data);
-								console.log(`Failed to inserts data for table: ${masterTable}`, error);
+								console.log(`Failed to inserts data for table: ${masterTable}`, error.details, data);
 								reject(error);
 							}
 						}
@@ -645,14 +644,14 @@ export class ImportAllService implements OnModuleInit {
 		item: IRepositoryModel<any>,
 		entity: any
 	): Promise<any> { 
-		return new Promise(async (resolve, reject) => {
+		await new Promise(async (resolve, reject) => {
 			try {
 				const { repository, uniqueIdentifier } = item;
 				const raw = JSON.parse(JSON.stringify(entity));
 
 				const where = [];
 				if (isNotEmpty(uniqueIdentifier) && uniqueIdentifier instanceof Array) {
-					for await (const item of uniqueIdentifier) {
+					for (const item of uniqueIdentifier) {
 						where.push({ 
 							[item.column] : entity[item.column] 
 						});
@@ -687,7 +686,7 @@ export class ImportAllService implements OnModuleInit {
 		desination: any,
 		row: any
 	): Promise<any> {
-		return new Promise(async (resolve, reject) => {
+		await new Promise(async (resolve, reject) => {
 			try {
 				const { repository } = item;
 				if (desination) {

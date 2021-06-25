@@ -1,5 +1,6 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { isNotEmpty } from '@gauzy/common';
 import { ImportEntityFieldMapOrCreateCommand } from '../import-entity-field-map-or-create.command';
 
 @CommandHandler(ImportEntityFieldMapOrCreateCommand)
@@ -13,9 +14,12 @@ export class ImportEntityFieldMapOrCreateHandler
 	): Promise<any> {
 		const { repository, where, entity } = event;
 		try {
-			return await repository.findOneOrFail({
-				where
-			});
+			if (isNotEmpty(where)) {
+				return await repository.findOneOrFail({
+					where
+				});
+			}
+			throw new NotFoundException();
 		} catch (error) {
 			const obj = repository.create(entity);
 			try {

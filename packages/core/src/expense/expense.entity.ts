@@ -72,14 +72,15 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	typeOfExpense: string;
 
 	@ApiProperty({ type: () => OrganizationVendor })
-	@ManyToOne(() => OrganizationVendor, {
-		nullable: false
-	})
+	@ManyToOne(() => OrganizationVendor, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn()
 	vendor: IOrganizationVendor;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((expense: Expense) => expense.vendor)
+	@RelationId((it: Expense) => it.vendor)
+	@IsString()
+	@Index()
+	@Column({ nullable: false })
 	readonly vendorId: string;
 
 	@ApiProperty({ type: () => ExpenseCategory })
@@ -90,7 +91,10 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	category: IExpenseCategory;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((expense: Expense) => expense.category)
+	@RelationId((it: Expense) => it.category)
+	@IsString()
+	@Index()
+	@Column({ nullable: false })
 	readonly categoryId: string;
 
 	@ApiPropertyOptional({ type: () => String })
