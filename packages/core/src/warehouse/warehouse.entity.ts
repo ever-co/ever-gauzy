@@ -77,7 +77,6 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	contactId: string;
 
 	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.warehouse, {
-		onDelete: 'SET NULL', 
 		cascade: true 
 	})
 	@JoinColumn()

@@ -5,7 +5,7 @@ import {
 	Column,
 	OneToMany
 } from 'typeorm';
-import { IWarehouseProduct } from '@gauzy/contracts';
+import { IWarehouse, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	TenantBaseEntity,
@@ -23,9 +23,11 @@ export class WarehouseProduct
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	warehouse: Warehouse;
+	warehouse: IWarehouse;
 
-	@ManyToOne(() => Product)
+	@ManyToOne(() => Product, (product) => product.warehouses, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	product: Product;
 
@@ -33,10 +35,9 @@ export class WarehouseProduct
 	@Column({ nullable: true, type: 'numeric', default: 0 })
 	quantity: number;
 
-	@OneToMany(
-		() => WarehouseProductVariant,
-		(warehouseProductVariant) => warehouseProductVariant.warehouseProduct
-	)
+	@OneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.warehouseProduct, {
+		cascade: true
+	})
 	@JoinColumn()
-	variants: WarehouseProductVariant[];
+	variants: IWarehouseProductVariant[];
 }
