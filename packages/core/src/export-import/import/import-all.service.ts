@@ -624,7 +624,7 @@ export class ImportAllService implements OnModuleInit {
 								}
 								console.log(`Success to inserts data for table: ${masterTable}`);
 							} catch (error) {
-								console.log(`Failed to inserts data for table: ${masterTable}`, error.details, data);
+								console.log(`Failed to inserts data for table: ${masterTable}`, error, data);
 								reject(error);
 							}
 						}
@@ -996,7 +996,8 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.candidateRepository,
 				isCheckRelation: true,
 				relationMapper: [
-					{ column: 'organizationId', entityType: this.organizationRepository.metadata.tableName }
+					{ column: 'userId', entityType: this.userRepository.metadata.tableName },
+					{ column: 'organizationPositionId', entityType: this.organizationPositionRepository.metadata.tableName }
 				],
 				relations: [
 					{ joinTableName: 'candidate_department' },

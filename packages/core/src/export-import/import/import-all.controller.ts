@@ -72,14 +72,15 @@ export class ImportAllController {
 		@Body() { importType }, 
 		@UploadedFileStorage() file: UploadedFile
 	) {
+		const { key, originalname, size } = file;
 		const history = {
-			file: file.originalname,
-			path: file.key,
-			size: file.size,
+			file: originalname,
+			path: key,
+			size: size,
 			tenantId: RequestContext.currentTenantId()
 		}
 		try {
-			await this.importAllService.unzipAndParse(file.key, importType === 'clean');
+			await this.importAllService.unzipAndParse(key, importType === 'clean');
 			this.importAllService.removeExtractedFiles();
 			return await this.commandBus.execute(
 				new ImportHistoryCreateCommand({ 

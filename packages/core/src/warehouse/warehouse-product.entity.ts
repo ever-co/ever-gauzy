@@ -3,23 +3,25 @@ import {
 	ManyToOne,
 	JoinColumn,
 	Column,
-	JoinTable,
 	OneToMany
 } from 'typeorm';
+import { IWarehouseProduct } from '@gauzy/contracts';
+import { ApiProperty } from '@nestjs/swagger';
 import {
 	TenantBaseEntity,
 	Product,
-	Warehouse
+	Warehouse,
+	WarehouseProductVariant
 } from '../core/entities/internal';
-import { IWarehouseProduct } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
-import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 
 @Entity('warehouse_product')
 export class WarehouseProduct
 	extends TenantBaseEntity
 	implements IWarehouseProduct {
-	@ManyToOne(() => Warehouse, (warehouse) => warehouse.products)
+
+	@ManyToOne(() => Warehouse, (warehouse) => warehouse.products, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	warehouse: Warehouse;
 

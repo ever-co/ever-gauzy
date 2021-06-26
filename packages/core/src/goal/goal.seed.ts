@@ -20,31 +20,29 @@ export const createDefaultGoals = async (
 		OrganizationTeam
 	);
 
-	organizations.forEach((organization, index) => {
+	for await (const organization of organizations) {
 		DEFAULT_GOALS.forEach((goalData) => {
 			const goal = new Goal();
 			goal.name = goalData.name;
 			goal.progress = 0;
 			goal.level = goalData.level;
+
 			if (goal.level === GoalLevelEnum.EMPLOYEE) {
 				goal.ownerEmployee = faker.random.arrayElement(employees);
 			} else if (goal.level === GoalLevelEnum.TEAM) {
 				goal.ownerTeam = faker.random.arrayElement(orgTeams);
-			} else if (goal.level === GoalLevelEnum.ORGANIZATION) {
-				goal.organization = organization;
 			}
+
 			goal.lead = faker.random.arrayElement(employees);
-			goal.tenant = tenant;
-			goal.description = ' ';
+			goal.description = faker.name.jobDescriptor();
 			goal.deadline = faker.random.arrayElement(goalTimeFrames).name;
+			goal.tenant = tenant;
 			goal.organization = organization;
-			goal.organizationId = organization.id;
 			defaultGoals.push(goal);
 		});
-	});
+	}
 
 	await insertDefaultGoals(connection, defaultGoals);
-
 	return defaultGoals;
 };
 
@@ -116,40 +114,32 @@ export const createRandomGoal = async (
 
 	const goals: Goal[] = [];
 
-	for (const tenant of tenants) {
+	for await (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		for (const tenantOrg of tenantOrgs) {
-			const organizationTeams = await connection.manager.find(
-				OrganizationTeam,
-				{
-					where: [{ organizationId: tenantOrg.id }]
-				}
-			);
+		for await (const organization of tenantOrgs) {
+			const organizationTeams = await connection.manager.find(OrganizationTeam, {
+				where: [
+					{ organizationId: organization.id }
+				]
+			});
 
 			const goal = new Goal();
-
 			goal.name = faker.name.jobTitle();
 			goal.progress = 0;
-			goal.level = faker.random.arrayElement([
-				'Organization',
-				'Team',
-				'Employee'
-			]);
+			goal.level = faker.random.arrayElement(Object.values(GoalLevelEnum));
+
 			if (goal.level === GoalLevelEnum.EMPLOYEE) {
 				goal.ownerEmployee = faker.random.arrayElement(tenantEmployees);
 			} else if (goal.level === GoalLevelEnum.TEAM) {
 				goal.ownerTeam = faker.random.arrayElement(organizationTeams);
-			} else if (goal.level === GoalLevelEnum.ORGANIZATION) {
-				goal.organization = tenantOrg;
 			}
+
 			goal.lead = faker.random.arrayElement(tenantEmployees);
-			goal.tenant = tenant;
 			goal.description = faker.name.jobDescriptor();
 			goal.deadline = faker.random.arrayElement(goalTimeFrames).name;
-			goal.organization = tenantOrg;
-			goal.organizationId = tenantOrg.id;
-
+			goal.tenant = tenant;
+			goal.organization = organization;
 			goals.push(goal);
 		}
 	}
