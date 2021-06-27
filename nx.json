@@ -45,6 +45,15 @@
 		},
 		"desktop-timer": {
 			"tags": []
+		},
+		"gauzy-server": {
+			"tags": []
+		},
+		"gauzy-server-ui": {
+			"tags": []
+		},
+		"gauzy-server-api": {
+			"tags": []
 		}
 	}
 }

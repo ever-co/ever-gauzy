@@ -1,0 +1,65 @@
+{
+	"name": "@gauzy/server",
+	"version": "0.1.0",
+	"description": "Gauzy Server App",
+	"license": "AGPL-3.0",
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ever-co/gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/gauzy/issues"
+	},
+	"private": true,
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"scripts": {},
+	"devDependencies": {
+		"electron": "12.0.5",
+		"electron-builder": "^22.11.5",
+		"electron-installer-dmg": "~3.0.0",
+		"electron-packager": "~15.2.0",
+		"electron-rebuild": "~2.3.5 ",
+		"electron-reload": "~1.5.0"
+	},
+	"dependencies": {
+		"@nestjs/typeorm": "^7.1.4",
+		"electron-store": "^8.0.0",
+		"electron-log": "^4.3.5",
+		"form-data": "^3.0.0",
+		"knex": "^0.21.6",
+		"mac-screen-capture-permissions": "https://github.com/ever-co/mac-screen-capture-permissions.git",
+		"moment": "^2.29.0",
+		"node-fetch": "^2.6.1",
+		"node-notifier": "^8.0.0",
+		"screenshot-desktop": "^1.12.2",
+		"app-root-path": "^3.0.0",
+		"consolidate": "^0.16.0",
+		"squirrelly": "^8.0.8",
+		"twing": "^5.0.2",
+		"typeorm": "^0.2.32",
+		"typeorm-express-query-builder": "^1.2.0",
+		"typeorm-aurora-data-api-driver": "^2.1.0",
+		"electron-updater": "~4.3.8",
+		"pg": "^8.6.0",
+		"pg-query-stream": "^4.1.0",
+		"ngx-electron": "^2.2.0",
+		"@nebular/bootstrap": "^7.0.0",
+		"@nebular/eva-icons": "^7.0.0",
+		"@nebular/auth": "^7.0.0",
+		"@nebular/security": "^7.0.0",
+		"@nebular/theme": "^7.0.0",
+		"@ng-select/ng-select": "5.1.0",
+		"@angular/cdk": "^11.1.1",
+		"sound-play": "1.1.0",
+		"auto-launch": "5.0.5",
+		"@sentry/electron": "2.4.0",
+		"@gauzy/desktop-ui-lib": "^0.1.0",
+		"node-windows": "^1.0.0-beta.5",
+		"node-static": "^0.7.11"
+	}
+}
