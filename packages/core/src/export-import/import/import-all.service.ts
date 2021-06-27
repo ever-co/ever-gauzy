@@ -8,6 +8,8 @@ import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
 import * as _ from 'lodash';
 import * as path from 'path';
+import * as moment from 'moment';
+import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction, isNotEmpty } from '@gauzy/common';
@@ -143,6 +145,7 @@ import {
 	ImportRecordFindOrFailCommand,
 	ImportRecordFirstOrCreateCommand
 } from './commands';
+import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -644,7 +647,7 @@ export class ImportAllService implements OnModuleInit {
 		item: IRepositoryModel<any>,
 		entity: any
 	): Promise<any> { 
-		await new Promise(async (resolve, reject) => {
+		return await new Promise(async (resolve, reject) => {
 			try {
 				const { repository, uniqueIdentifier } = item;
 				const raw = JSON.parse(JSON.stringify(entity));
@@ -686,7 +689,7 @@ export class ImportAllService implements OnModuleInit {
 		desination: any,
 		row: any
 	): Promise<any> {
-		await new Promise(async (resolve, reject) => {
+		return await new Promise(async (resolve, reject) => {
 			try {
 				const { repository } = item;
 				if (desination) {
@@ -730,25 +733,27 @@ export class ImportAllService implements OnModuleInit {
 			data['organizationId'] = record ? record.destinationId : IsNull().value;
 		}
 		return await this.mapTimeStampsFields(
-			await this.mapRelationFields(item, data)
+			item, await this.mapRelationFields(item, data)
 		);
 	}
 	
 	/*
 	* Map timestamps fields here
 	*/
-	async mapTimeStampsFields(data: any) {
-		if ('createdAt' in data && isNotEmpty(data['createdAt'])) {
-			data['createdAt'] = convertToDatetime(data['createdAt']);
-		}
-		if ('updatedAt' in data && isNotEmpty(data['updatedAt'])) {
-			data['updatedAt'] = convertToDatetime(data['updatedAt']);
-		}
-		if ('recordedAt' in data && isNotEmpty(data['recordedAt'])) {
-			data['recordedAt'] = convertToDatetime(data['recordedAt']);
-		}
-		if ('deletedAt' in data && isNotEmpty(data['deletedAt'])) {
-			data['deletedAt'] = convertToDatetime(data['deletedAt']);
+	async mapTimeStampsFields(item: IRepositoryModel<any>, data: any) {
+		const { repository } = item;
+		for await (const column of repository.metadata.columns as ColumnMetadata[]) {
+			if (column.type === 'datetime') {
+				if (`${column.propertyName}` in data && isNotEmpty(data[`${column.propertyName}`])) {
+					data[`${column.propertyName}`] = convertToDatetime(data[`${column.propertyName}`]);
+				}
+			}
+			if (
+				data[`${column.propertyName}`] === 'true' || 
+				data[`${column.propertyName}`] === 'false'
+			) {
+				data[`${column.propertyName}`] = Boolean(data[`${column.propertyName}`]);
+			}
 		}
 		return data; 
 	}
@@ -760,7 +765,7 @@ export class ImportAllService implements OnModuleInit {
 		item: IRepositoryModel<any>,
 		data: any
 	): Promise<any> {
-		return new Promise(async (resolve, reject) => {
+		return await new Promise(async (resolve, reject) => {
 			try {
 				const { relationMapper = [], isCheckRelation } = item;
 				if (isCheckRelation) {
