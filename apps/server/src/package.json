@@ -1,16 +1,16 @@
 {
-	"name": "gauzy-desktop",
-	"productName": "gauzy-desktop",
+	"name": "gauzy-server",
+	"productName": "gauzy-server",
 	"version": "0.1.0",
-	"description": "Gauzy Desktop",
+	"description": "Gauzy Server",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ever-co/gauzy.git"
+		"url": "git+https://github.com/ever-co/ever-gauzy.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/gauzy/issues"
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"private": true,
 	"author": {
@@ -37,8 +37,8 @@
 		]
 	},
 	"build": {
-		"appId": "com.company.gauzydesktop",
-		"productName": "Gauzy Desktop",
+		"appId": "com.company.gauzyserver",
+		"productName": "Gauzy Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
@@ -80,8 +80,8 @@
 				"tar.gz"
 			],
 			"executableName": "gauzy",
-			"artifactName": "gauzy-desktop-${version}.${ext}",
-			"synopsis": "Desktop",
+			"artifactName": "gauzy-server-${version}.${ext}",
+			"synopsis": "Server",
 			"category": "Development"
 		},
 		"nsis": {
