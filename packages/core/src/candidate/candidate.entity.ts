@@ -13,10 +13,11 @@ import {
 	IOrganizationEmploymentType,
 	IOrganizationDepartment,
 	IContact,
-	ITag
+	ITag,
+	IUser
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional, IsEnum } from 'class-validator';
+import { IsDate, IsOptional, IsEnum, IsString } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -26,7 +27,8 @@ import {
 	ManyToOne,
 	OneToOne,
 	RelationId,
-	OneToMany
+	OneToMany,
+	Index
 } from 'typeorm';
 import {
 	CandidateDocument,
@@ -65,7 +67,11 @@ export class Candidate
 	contact: IContact;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.contact)
+	@RelationId((it: Candidate) => it.contact)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
 	readonly contactId?: string;
 
 	@OneToMany(() => CandidateEducation, (education) => education.candidate, {
@@ -80,13 +86,9 @@ export class Candidate
 	@JoinColumn()
 	interview?: ICandidateInterview[];
 
-	@OneToMany(
-		() => CandidateExperience,
-		(experience) => experience.candidate,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
+	@OneToMany(() => CandidateExperience, (experience) => experience.candidate, { 
+		onDelete: 'SET NULL' 
+	})
 	@JoinColumn()
 	experience: ICandidateExperience[];
 
@@ -122,10 +124,13 @@ export class Candidate
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	user: User;
+    user: IUser;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.user)
+	@RelationId((it: Candidate) => it.user)
+	@IsString()
+	@Index()
+	@Column()
 	readonly userId: string;
 
 	@ApiPropertyOptional({ type: () => Number })
@@ -134,12 +139,16 @@ export class Candidate
 	rating?: number;
 
 	@ApiProperty({ type: () => OrganizationPositions })
-	@ManyToOne((type) => OrganizationPositions, { nullable: true })
+	@ManyToOne(() => OrganizationPositions, { nullable: true })
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.organizationPosition)
+	@RelationId((it: Candidate) => it.organizationPosition)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
 	readonly organizationPositionId?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
@@ -172,29 +181,11 @@ export class Candidate
 	@Column({ nullable: true })
 	rejectDate?: Date;
 
-	@ManyToMany(
-		() => OrganizationDepartment,
-		(department) => department.candidates,
-		{
-			cascade: true
-		}
-	)
-	@JoinTable({
-		name: 'candidate_department'
-	})
-	organizationDepartments?: IOrganizationDepartment[];
+	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates)
+    organizationDepartments?: IOrganizationDepartment[];
 
-	@ManyToMany(
-		() => OrganizationEmploymentType,
-		(employmentType) => employmentType.candidates,
-		{
-			cascade: true
-		}
-	)
-	@JoinTable({
-		name: 'candidate_employment_type'
-	})
-	organizationEmploymentTypes?: IOrganizationEmploymentType[];
+	@ManyToMany(() => OrganizationEmploymentType, (employmentType) => employmentType.candidates)
+    organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()

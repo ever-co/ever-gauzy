@@ -8,8 +8,6 @@ import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
 import * as _ from 'lodash';
 import * as path from 'path';
-import * as moment from 'moment';
-import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction, isNotEmpty } from '@gauzy/common';

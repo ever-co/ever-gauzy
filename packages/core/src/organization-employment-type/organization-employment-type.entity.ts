@@ -22,27 +22,20 @@ export class OrganizationEmploymentType
 	@Column()
 	name: string;
 
-	@ManyToMany(
-		() => Employee,
-		(employee) => employee.organizationEmploymentTypes,
-		{
-			cascade: ['update']
-		}
-	)
+	@ManyToMany(() => Employee, (employee) => employee.organizationEmploymentTypes, { 
+		cascade: ['update'] 
+	})
 	@JoinTable({
 		name: 'organization_employment_type_employee'
 	})
 	members?: Employee[];
 
-	@ManyToMany(
-		() => Candidate,
-		(candidate) => candidate.organizationEmploymentTypes,
-		{
-			cascade: ['update']
-		}
-	)
-	@JoinTable({
+	@ManyToMany(() => Candidate, (candidate) => candidate.organizationEmploymentTypes, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
+    @JoinTable({
 		name: 'candidate_employment_type'
 	})
-	candidates?: ICandidate[];
+    candidates?: ICandidate[];
 }

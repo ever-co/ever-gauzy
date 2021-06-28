@@ -6,11 +6,18 @@ import { CandidateUpdateCommand } from '../candidate.update.command';
 @CommandHandler(CandidateUpdateCommand)
 export class CandidateUpdateHandler
 	implements ICommandHandler<CandidateUpdateCommand> {
-	constructor(private readonly candidateService: CandidateService) {}
+
+	constructor(
+		private readonly candidateService: CandidateService
+	) {}
 
 	public async execute(command: CandidateUpdateCommand): Promise<ICandidate> {
 		const { input } = command;
 		const { id } = input;
-		return await this.candidateService.create({ id, ...input });
+		
+		return await this.candidateService.create({ 
+			id, 
+			...input
+		});
 	}
 }
