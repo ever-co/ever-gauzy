@@ -2,7 +2,7 @@
 	"projectId": "2n3iur",
 	"fileServerFolder": ".",
 	"fixturesFolder": "./src/fixtures",
-	"integrationFolder": "./src/integration",
+	"integrationFolder": "./src/support",
 	"pluginsFile": "./src/plugins/index.ts",
 	"supportFile": "./src/support/index.ts",
 	"video": true,
@@ -10,5 +10,8 @@
 	"screenshotsFolder": "../../dist/cypress/apps/gauzy-e2e/screenshots",
 	"chromeWebSecurity": false,
 	"viewportWidth": 1920,
-	"viewportHeight": 1080
+	"viewportHeight": 1080,
+	"baseUrl": "http://localhost:4200/",
+	"ignoreTestFiles": "*.ts",
+	"testFiles": "**/*.feature"
 }
