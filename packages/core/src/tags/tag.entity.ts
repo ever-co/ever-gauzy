@@ -11,6 +11,7 @@ import {
 	IIncome,
 	IIntegration,
 	IInvoice,
+	IMerchant,
 	IOrganizationContact,
 	IOrganizationDepartment,
 	IOrganizationEmploymentType,
@@ -24,7 +25,8 @@ import {
 	IRequestApproval,
 	ITag,
 	ITask,
-	IUser
+	IUser,
+	IWarehouse
 } from '@gauzy/contracts';
 import {
 	Candidate,
@@ -37,6 +39,7 @@ import {
 	Income,
 	Integration,
 	Invoice,
+	Merchant,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
@@ -50,7 +53,8 @@ import {
 	RequestApproval,
 	Task,
 	TenantOrganizationBaseEntity,
-	User
+	User,
+	Warehouse
 } from '../core/entities/internal';
 
 @Entity('tag')
@@ -172,4 +176,10 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 		name: 'tag_integration'
 	})
 	integrations?: IIntegration[];
+
+	@ManyToMany(() => Merchant, (merchant) => merchant.tags)
+	merchants?: IMerchant[];
+
+	@ManyToMany(() => Warehouse, (warehouse) => warehouse.tags)
+	warehouses?: IWarehouse[];
 }

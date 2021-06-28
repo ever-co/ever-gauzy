@@ -39,7 +39,12 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	active: boolean;
 
 	@ApiProperty()
-	@ManyToOne(() => Contact, {
+	@IsEnum(CurrenciesEnum)
+	@Column({ default: CurrenciesEnum.USD })
+	currency: string;
+
+	@ApiProperty()
+	@OneToOne(() => Contact, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -68,16 +73,14 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@Column()
 	logoId: string;
 
-	@ManyToMany(() => Tag)
+	@ManyToMany(() => Tag, (tag) => tag.merchants, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
 	@JoinTable({
 		name: 'tag_merchant'
 	})
 	tags: ITag[];
-
-	@ApiProperty()
-	@IsEnum(CurrenciesEnum)
-	@Column({ default: CurrenciesEnum.USD })
-	currency: string;
 
 	@ManyToMany(() => Warehouse)
 	@JoinTable({

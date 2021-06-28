@@ -62,7 +62,6 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	@ApiProperty({ type: () => Contact })
 	@OneToOne(() => Contact, {
-		eager: true,
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -82,7 +81,12 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@JoinColumn()
 	products: WarehouseProduct[];
 
-	@ManyToMany(() => Tag, { eager: true })
-	@JoinTable({ name: 'tag_warehouse' })
+	@ManyToMany(() => Tag, (tag) => tag.merchants, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
+	@JoinTable({
+		name: 'tag_warehouse'
+	})
 	tags: ITag[];
 }
