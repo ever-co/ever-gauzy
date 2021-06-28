@@ -10,7 +10,12 @@ import {
 import {
 	IKeyResult,
 	KeyResultTypeEnum,
-	KeyResultDeadlineEnum
+	KeyResultDeadlineEnum,
+	IEmployee,
+	IGoal,
+	IOrganizationProject,
+	ITask,
+	IKPI
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString } from 'class-validator';
@@ -94,7 +99,7 @@ export class KeyResult
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
-	owner: Employee;
+	owner: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: KeyResult) => it.owner)
@@ -107,7 +112,7 @@ export class KeyResult
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
-	lead?: Employee;
+	lead?: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: KeyResult) => it.lead)
@@ -121,7 +126,7 @@ export class KeyResult
 	@ManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn({ name: 'projectId' })
 	@IsOptional()
-	project?: OrganizationProject;
+	project?: IOrganizationProject;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: KeyResult) => it.project)
@@ -135,7 +140,7 @@ export class KeyResult
 	@ManyToOne(() => Task, { nullable: true })
 	@JoinColumn({ name: 'taskId' })
 	@IsOptional()
-	task?: Task;
+	task?: ITask;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: KeyResult) => it.task)
@@ -149,7 +154,7 @@ export class KeyResult
 	@ManyToOne(() => GoalKPI, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
-	kpi?: GoalKPI;
+	kpi?: IKPI;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: KeyResult) => it.kpi)
@@ -164,7 +169,7 @@ export class KeyResult
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })
-	goal: Goal;
+	goal: IGoal;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: KeyResult) => it.goal)

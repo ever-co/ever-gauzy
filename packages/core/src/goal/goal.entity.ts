@@ -1,7 +1,7 @@
 import { IGoal, GoalLevelEnum, IKeyResult } from '@gauzy/contracts';
-import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn, Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsEnum } from 'class-validator';
+import { IsOptional, IsEnum, IsString } from 'class-validator';
 import {
 	Employee,
 	KeyResult,
@@ -11,6 +11,7 @@ import {
 
 @Entity('goal')
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {
+	
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -19,22 +20,6 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@Column()
 	@IsOptional()
 	description?: string;
-
-	@ManyToOne(() => OrganizationTeam)
-	@JoinColumn()
-	ownerTeam?: OrganizationTeam;
-
-	@ManyToOne(() => Employee)
-	@JoinColumn()
-	ownerEmployee?: Employee;
-
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, {
-		nullable: true
-	})
-	@JoinColumn()
-	@IsOptional()
-	lead?: Employee;
 
 	@ApiProperty({ type: () => String })
 	@Column()
@@ -48,6 +33,45 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@ApiProperty({ type: () => Number })
 	@Column()
 	progress: number;
+
+	@ManyToOne(() => OrganizationTeam)
+	@JoinColumn()
+	ownerTeam?: OrganizationTeam;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Goal) => it.ownerTeam)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	ownerTeamId?: string;
+
+	@ManyToOne(() => Employee)
+	@JoinColumn()
+	ownerEmployee?: Employee;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Goal) => it.ownerEmployee)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	ownerEmployeeId?: string;
+
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, {
+		nullable: true
+	})
+	@JoinColumn()
+	lead?: Employee;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Goal) => it.lead)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	leadId?: string;
 
 	@ApiProperty({ type: () => KeyResult })
 	@OneToMany(() => KeyResult, (keyResult) => keyResult.goal)

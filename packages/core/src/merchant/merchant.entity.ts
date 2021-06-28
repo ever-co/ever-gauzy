@@ -1,22 +1,18 @@
-import { IMerchant, CurrenciesEnum } from '@gauzy/contracts';
+import { IMerchant, CurrenciesEnum, IImageAsset, ITag, IWarehouse, IContact } from '@gauzy/contracts';
 import {
 	TenantOrganizationBaseEntity, ImageAsset, Tag, Contact, Warehouse,
 } from '../core/entities/internal';
-import { Entity, Column, ManyToOne, JoinColumn, JoinTable, ManyToMany, OneToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, JoinTable, ManyToMany, OneToOne, Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString } from 'class-validator';
 
-
-
 @Entity('merchant')
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
-
 
 	@ApiProperty()
 	@IsString()
 	@Column()
 	name: string;
-
 
 	@ApiProperty()
 	@IsString()
@@ -34,18 +30,28 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	phone: string;
 
 	@ApiProperty()
-	@OneToOne(() => Contact, {
-		eager: true,
+	@IsString()
+	@Column({ nullable: true })
+	description: string;
+
+	@ApiProperty()
+	@Column({ default: true })
+	active: boolean;
+
+	@ApiProperty()
+	@ManyToOne(() => Contact, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	contact: Contact;
+	contact: IContact;
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Merchant) => it.contact)
 	@IsString()
-	@Column({ nullable: true })
-	description: string;
+	@Index()
+	@Column()
+	contactId: string;
 
 	@ApiProperty()
 	@ManyToOne(
@@ -53,29 +59,29 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 		{ cascade: true }
 	)
 	@JoinColumn()
-	logo: ImageAsset;
+	logo: IImageAsset;
 
-
-	@ApiProperty()
-	@Column({ default: true })
-	active: boolean;
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Merchant) => it.logo)
+	@IsString()
+	@Index()
+	@Column()
+	logoId: string;
 
 	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_merchant'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty()
 	@IsEnum(CurrenciesEnum)
 	@Column({ default: CurrenciesEnum.USD })
 	currency: string;
 
-
 	@ManyToMany(() => Warehouse)
 	@JoinTable({
 		name: 'warehouse_merchant'
 	})
-	warehouses: Warehouse[];
-
+	warehouses: IWarehouse[];
 }

@@ -258,8 +258,10 @@ export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	code: string;
 	contact: IContact;
+	contactId?: string;
 	description: string;
 	logo: IImageAsset;
+	logoId: string;
 	email: string;
 	phone: string;
 	tags: ITag[];

@@ -1288,6 +1288,15 @@ export class ImportAllService implements OnModuleInit {
 					{ column: 'featureId', entityType: this.featureRepository.metadata.tableName }
 				]
 			},
+			{
+				repository: this.goalRepository,
+				isCheckRelation: true,
+				relationMapper: [
+					{ column: 'ownerTeamId', entityType: this.organizationTeamRepository.metadata.tableName },
+					{ column: 'ownerEmployeeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName }
+				]
+			},
 			/*
 			* Key Result & Related Entities
 			*/
@@ -1298,7 +1307,8 @@ export class ImportAllService implements OnModuleInit {
 					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
 					{ column: 'taskId', entityType: this.taskRepository.metadata.tableName },
 					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName },
-					{ column: 'ownerId', entityType: this.employeeRepository.metadata.tableName }
+					{ column: 'ownerId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'goalId', entityType: this.goalRepository.metadata.tableName }
 				]
 			},
 			{
@@ -1307,7 +1317,6 @@ export class ImportAllService implements OnModuleInit {
 			{
 				repository: this.keyResultUpdateRepository
 			},
-
 			/*
 			* Goal KPI & Related Entities 
 			*/
@@ -1325,16 +1334,7 @@ export class ImportAllService implements OnModuleInit {
 					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName }
 				]
 			},
-			{
-				repository: this.goalRepository,
-				isCheckRelation: true,
-				relationMapper: [
-					{ column: 'alignedKeyResultId', entityType: this.keyResultRepository.metadata.tableName },
-					{ column: 'ownerTeamId', entityType: this.organizationTeamRepository.metadata.tableName },
-					{ column: 'ownerEmployeeId', entityType: this.employeeRepository.metadata.tableName },
-					{ column: 'leadId', entityType: this.employeeRepository.metadata.tableName }
-				]
-			},
+			
 			{
 				repository: this.goalTemplateRepository
 			},
