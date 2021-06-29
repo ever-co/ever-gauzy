@@ -8,7 +8,7 @@ import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
 import * as _ from 'lodash';
 import * as path from 'path';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction, isNotEmpty } from '@gauzy/common';
@@ -749,9 +749,10 @@ export class ImportAllService implements OnModuleInit {
 	*/
 	async mapTimeStampsFields(item: IRepositoryModel<any>, data: any) {
 		const { repository } = item;
-		for await (const { propertyName, type } of repository.metadata.columns as ColumnMetadata[]) {
+		for await (const column of repository.metadata.columns as ColumnMetadata[]) {
+			const { propertyName, type } = column;
 			if (`${propertyName}` in data && isNotEmpty(data[`${propertyName}`])) {
-				if (type === 'datetime') {
+				if (type === 'datetime' || type.valueOf() === Date) {
 					data[`${propertyName}`] = convertToDatetime(data[`${propertyName}`]);
 				}
 				if (data[`${propertyName}`] === 'true' || data[`${propertyName}`] === 'false') {

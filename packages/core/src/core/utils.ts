@@ -74,9 +74,14 @@ export function unixTimestampToDate(
 /*
  * To convert any datetime to any datetime format
  */
-export function convertToDatetime(datetime, format = 'YYYY-MM-DD HH:mm:ss') {
+export function convertToDatetime(datetime) {
 	if (moment(new Date(datetime)).isValid()) {
-		return moment(new Date(datetime)).format(format);
+		const dbType = getConfig().dbConnectionOptions.type || 'sqlite';		
+		if (dbType === 'sqlite') {
+			return moment(new Date(datetime)).format();
+		} else {
+			return moment(new Date(datetime)).toDate();
+		}
 	}
 	return null;
 }
