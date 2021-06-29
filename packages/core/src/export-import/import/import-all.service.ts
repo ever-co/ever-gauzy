@@ -608,7 +608,7 @@ export class ImportAllService implements OnModuleInit {
 
 					let results = [];
 					const rstream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
-					rstream.on('data', async (data) => { results.push(data); });
+					rstream.on('data', (data) => { results.push(data); });
 					rstream.on('error', (error) => {
 						console.log(`Failer to parse CSV for table: ${masterTable}`, error);
 						reject(error);
@@ -632,6 +632,7 @@ export class ImportAllService implements OnModuleInit {
 						resolve(true);
 					});
 				} catch (error) {
+					console.log(`Failed to read file for table: ${masterTable}`, error);
 					reject(error);
 				}
 			});
@@ -779,7 +780,6 @@ export class ImportAllService implements OnModuleInit {
 									entityType 
 								})
 							);
-							console.log(record, 'record');
 							data[column] = record ? record.destinationId : IsNull().value; 
 						}
 					}
@@ -1600,14 +1600,14 @@ export class ImportAllService implements OnModuleInit {
 					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName }
 				]
 			},
-			// {
-			// 	repository: this.requestApprovalTeamRepository,
-			// 	isCheckRelation: true,
-			// 	relationMapper: [
-			// 		{ column: 'requestApprovalId', entityType: this.requestApprovalRepository.metadata.tableName },
-			// 		{ column: 'teamId', entityType: this.organizationTeamEmployeeRepository.metadata.tableName }
-			// 	]
-			// },
+			{
+				repository: this.requestApprovalTeamRepository,
+				isCheckRelation: true,
+				relationMapper: [
+					{ column: 'requestApprovalId', entityType: this.requestApprovalRepository.metadata.tableName },
+					{ column: 'teamId', entityType: this.organizationTeamEmployeeRepository.metadata.tableName }
+				]
+			},
 			/*
 			* Tasks & Related Entities
 			*/
@@ -1674,7 +1674,7 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.activityRepository,
 				isCheckRelation: true,
 				relationMapper: [
-					{ column: 'employeId', entityType: this.employeeRepository.metadata.tableName },
+					{ column: 'employeeId', entityType: this.employeeRepository.metadata.tableName },
 					{ column: 'projectId', entityType: this.organizationProjectRepository.metadata.tableName },
 					{ column: 'timeSlotId', entityType: this.timeSlotRepository.metadata.tableName },
 					{ column: 'taskId', entityType: this.taskRepository.metadata.tableName }

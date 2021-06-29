@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { IOrganization, CrudActionEnum } from '@gauzy/contracts';
-import { Store } from './../../../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
-import { UsersOrganizationsService } from './../../../../../@core/services/users-organizations.service';
-import { OrganizationEditStore } from './../../../../../@core/services/organization-edit-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { isNotEmpty } from '@gauzy/common-angular';
+import { uniq } from 'underscore';
+import { OrganizationEditStore, Store, UsersOrganizationsService } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,18 +37,19 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 
 	private async loadOrganizations(): Promise<void> {
 		const { tenantId } = this.store.user;
-		const { items = [] } = await this.userOrganizationService.getAll(
-			[
-				'organization',
-				'organization.featureOrganizations',
-				'organization.featureOrganizations.feature'
-			],
-			{ userId: this.store.userId, tenantId }
-		);
-		this.organizations = items.map((userOrg) => userOrg.organization);
+		const { userId } = this.store;
+		
+		const { items = [] } = await this.userOrganizationService.getAll([
+			'organization',
+			'organization.featureOrganizations',
+			'organization.featureOrganizations.feature'
+		], { userId, tenantId });
+
+		this.organizations = uniq(items.map((userOrg) => userOrg.organization));
+
 		if (this.organizations.length > 0) {
-			const [ firstOrganization ] = this.organizations;
 			const defaultOrganization = this.organizations.find((organization: IOrganization) => organization.isDefault);
+			const [ firstOrganization ] = this.organizations;
 	
 			if (this.store.organizationId) {
 				const organization = this.organizations.find(

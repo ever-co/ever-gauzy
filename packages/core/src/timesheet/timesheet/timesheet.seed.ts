@@ -187,7 +187,7 @@ export const createRandomTimesheet = async (
 
 	try {
 		console.log(chalk.green(`SEEDING Random TimeLogs & Activities`));
-		for (const tenant of tenants) {
+		for await (const tenant of tenants) {
 			const createdTimesheets = await connection.getRepository(Timesheet).find({
 				where: {
 					tenant

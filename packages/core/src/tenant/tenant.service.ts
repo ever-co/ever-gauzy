@@ -8,10 +8,10 @@ import {
 	ITenantCreateInput,
 	RolesEnum,
 	ITenant,
-	IUser,
-	IRole
+	IUser
 } from '@gauzy/contracts';
 import { UserService } from '../user/user.service';
+import { RoleService } from 'role/role.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
 import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
 
@@ -21,6 +21,7 @@ export class TenantService extends CrudService<Tenant> {
 		@InjectRepository(Tenant)
 		private readonly tenantRepository: Repository<Tenant>,
 		private readonly userService: UserService,
+		private readonly roleService: RoleService,
 		private readonly commandBus: CommandBus
 	) {
 		super(tenantRepository);
@@ -38,15 +39,18 @@ export class TenantService extends CrudService<Tenant> {
 			new TenantFeatureOrganizationCreateCommand([tenant])
 		);
 
-		//3. Create Role/Permissions for relative tenants.
-		const roles = await this.commandBus.execute(
+		//3. Create Role/Permissions to relative tenants.
+		await this.commandBus.execute(
 			new TenantRoleBulkCreateCommand([tenant])
 		);
 
-		const role = roles.find(
-			(defaultRole: IRole) => defaultRole.name === RolesEnum.SUPER_ADMIN
-		);
+		//4. Find SUPER_ADMIN role to relative tenant.
+		const role = await this.roleService.findOne({
+			tenant,
+			name: RolesEnum.SUPER_ADMIN
+		});
 
+		//5. Assign tenant and role to user.
 		await this.userService.update(user.id, {
 			tenant: {
 				id: tenant.id

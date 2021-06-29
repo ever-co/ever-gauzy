@@ -1,17 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
-import { UserOrganization } from './user-organization.entity';
-import { User } from '../user/user.entity';
 import { RolesEnum } from '@gauzy/contracts';
-import { Organization } from '../organization/organization.entity';
+import { CrudService } from '../core/crud/crud.service';
+import { Organization, User, UserOrganization } from './../core/entities/internal';
 
 @Injectable()
 export class UserOrganizationService extends CrudService<UserOrganization> {
 	constructor(
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
+
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>
 	) {
@@ -31,7 +30,7 @@ export class UserOrganizationService extends CrudService<UserOrganization> {
 		entity.organizationId = organizationId;
 		entity.tenantId = user.tenantId;
 		entity.userId = user.id;
-		return this.create(entity);
+		return await this.create(entity);
 	}
 
 	private async _addUserToAllOrganizations(
@@ -45,14 +44,13 @@ export class UserOrganizationService extends CrudService<UserOrganization> {
 		});
 		const entities: UserOrganization[] = [];
 
-		organizations.forEach((organization) => {
+		for await (const organization of organizations) {
 			const entity: UserOrganization = new UserOrganization();
 			entity.organizationId = organization.id;
 			entity.tenantId = tenantId;
 			entity.userId = userId;
 			entities.push(entity);
-		});
-
-		return this.repository.save(entities);
+		}
+		return await this.repository.save(entities);
 	}
 }
