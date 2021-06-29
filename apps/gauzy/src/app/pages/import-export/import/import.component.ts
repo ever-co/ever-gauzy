@@ -14,7 +14,7 @@ import { ImportService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-download',
+	selector: 'ngx-import',
 	templateUrl: './import.component.html',
 	styleUrls: ['./import.component.scss']
 })

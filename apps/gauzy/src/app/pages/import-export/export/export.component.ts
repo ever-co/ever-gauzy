@@ -12,7 +12,7 @@ import { ExportAllService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-download',
+	selector: 'ngx-export',
 	templateUrl: './export.component.html',
 	styleUrls: ['./export.component.scss']
 })
