@@ -163,7 +163,7 @@ When('User click on Edit level button', () => {
 	addEmployeeLevelPage.clickEditEmployeeLevelButton();
 });
 
-Then('User can verify that new level was created', () => {
+Then('User can verify that new levelE was created', () => {
 	addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelE);
 });
 
@@ -225,7 +225,7 @@ When('User click on Edit level button', () => {
 	addEmployeeLevelPage.clickEditEmployeeLevelButton();
 });
 
-Then('User can verify that new level was created', () => {
+Then('User can verify that new levelF was created', () => {
 	addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelF);
 });
 
@@ -238,11 +238,11 @@ And('User can cancel editing by clicking on cancel button', () => {
 });
 
 // Delete employee level
-And('User can see Add new level button', () => {
+And('User can see Add new level button again', () => {
 	addEmployeeLevelPage.addNewLevelButtonVisible();
 });
 
-When('User click on Add new level button', () => {
+When('User click on Add new level button again', () => {
 	addEmployeeLevelPage.clickAddNewLevelButton();
 });
 
