@@ -1,4 +1,4 @@
-Feature: Login
+Feature: Add employee level
   Scenario: Login with email test
     Given Visit home page as unauthorised user
     Then User can see login text
@@ -38,7 +38,7 @@ Feature: Login
     Then User will see notification message
     And User can see Edit level button
     When User click on Edit level button
-    Then User can verify that new level was created
+    Then User can verify that new levelE was created
     And User can see cancel edit button
     And User can cancel editing by clicking on cancel button
   Scenario: Edit employee level
@@ -54,12 +54,12 @@ Feature: Login
     Then User will see notification message
     And User can see Edit level button
     When User click on Edit level button
-    Then User can verify that new level was created
+    Then User can verify that new levelF was created
     And User can see cancel edit button
     And User can cancel editing by clicking on cancel button
   Scenario: Delete employee level
-    And User can see Add new level button
-    When User click on Add new level button
+    And User can see Add new level button again
+    When User click on Add new level button again
     Then User will see new level input
     And User can enter another level name
     And User can see tags multiselect

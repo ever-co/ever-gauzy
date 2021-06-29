@@ -41,6 +41,9 @@ Then('User will see Create button', () => {
 
 // Logout
 When('User click on username', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	dashboardPage.clickUserName();
 });
 
