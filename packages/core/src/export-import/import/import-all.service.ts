@@ -8,6 +8,7 @@ import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
 import * as _ from 'lodash';
 import * as path from 'path';
+import chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction, isNotEmpty } from '@gauzy/common';
@@ -585,7 +586,8 @@ export class ImportAllService implements OnModuleInit {
 				continue;
 			}
 
-			console.log(`Importing process start for table: ${masterTable}`);
+			console.log(chalk.magenta(`Importing process start for table: ${masterTable}`));
+			
 			await new Promise(async (resolve, reject) => {
 				try {
 					/**
@@ -599,9 +601,9 @@ export class ImportAllService implements OnModuleInit {
 								sql += ` WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
 							}
 							await repository.query(sql);
-							console.log(`Success to clean up process for table: ${masterTable}`);
+							console.log(chalk.green(`Success to clean up process for table: ${masterTable}`));
 						} catch (error) {
-							console.log(`Failed to clean up process for table: ${masterTable}`, error);
+							console.log(chalk.red(`Failed to clean up process for table: ${masterTable}`, error));
 							reject(error);
 						}
 					}
@@ -610,7 +612,7 @@ export class ImportAllService implements OnModuleInit {
 					const rstream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
 					rstream.on('data', (data) => { results.push(data); });
 					rstream.on('error', (error) => {
-						console.log(`Failer to parse CSV for table: ${masterTable}`, error);
+						console.log(chalk.red(`Failer to parse CSV for table: ${masterTable}`, error));
 						reject(error);
 					});
 					rstream.on('end', async () => {
@@ -623,16 +625,16 @@ export class ImportAllService implements OnModuleInit {
 										data
 									);
 								}
-								console.log(`Success to inserts data for table: ${masterTable}`);
+								console.log(chalk.green(`Success to inserts data for table: ${masterTable}`));
 							} catch (error) {
-								console.log(`Failed to inserts data for table: ${masterTable}`, error, data);
+								console.log(chalk.red(`Failed to inserts data for table: ${masterTable}`, error, data));
 								reject(error);
 							}
 						}
 						resolve(true);
 					});
 				} catch (error) {
-					console.log(`Failed to read file for table: ${masterTable}`, error);
+					console.log(chalk.red(`Failed to read file for table: ${masterTable}`, error));
 					reject(error);
 				}
 			});
@@ -676,7 +678,7 @@ export class ImportAllService implements OnModuleInit {
 				}
 				resolve(true)
 			} catch (error) {
-				console.log(`Failed to migrate import entity data for table: ${masterTable}`, error, entity);
+				console.log(chalk.red(`Failed to migrate import entity data for table: ${masterTable}`, error, entity));
 				reject(error)
 			}
 		});
@@ -707,7 +709,7 @@ export class ImportAllService implements OnModuleInit {
 				}
 				resolve(true);
 			} catch (error) {
-				console.log(`Failed to map import record for table: ${masterTable}`, error);
+				console.log(chalk.red(`Failed to map import record for table: ${masterTable}`, error));
 				reject(error)
 			}
 		});
@@ -786,7 +788,7 @@ export class ImportAllService implements OnModuleInit {
 				}
 				resolve(data);
 			} catch (error) {
-				console.log('Failed to map relation entity before insert', error);	
+				console.log(chalk.red('Failed to map relation entity before insert', error));	
 				reject(error);
 			}
 		});

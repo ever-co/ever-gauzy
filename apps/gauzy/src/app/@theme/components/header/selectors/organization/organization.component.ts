@@ -45,8 +45,9 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			'organization.featureOrganizations.feature'
 		], { userId, tenantId });
 
-		this.organizations = uniq(items.map((userOrg) => userOrg.organization));
-
+		const organizations = items.map(({ organization }) => organization);
+		this.organizations = uniq(organizations, (item) => item.id);
+		
 		if (this.organizations.length > 0) {
 			const defaultOrganization = this.organizations.find((organization: IOrganization) => organization.isDefault);
 			const [ firstOrganization ] = this.organizations;
