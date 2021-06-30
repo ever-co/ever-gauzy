@@ -684,7 +684,7 @@ export class ImportAllService implements OnModuleInit {
 									const fields = await this.mapRelationFields(item, data);
 									const sql = `INSERT INTO "${joinTableName}" (${'"' + Object.keys(fields).join(`", "`) + '"'}) VALUES ("$1", "$2")`;
 									// const items = await getManager().query(sql, Object.values(fields));
-									// console.log(sql);
+									console.log(sql);
 									// console.log(chalk.green(`Success to inserts data for table: ${joinTableName}`));
 								}
 							} catch (error) {
