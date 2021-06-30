@@ -84,7 +84,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	onMigrateIntoCloud(password: string) {
 		this.loading = true;
 		const {
-			id: sourceId
+			id: sourceId,
 			firstName,
 			lastName,
 			username,
