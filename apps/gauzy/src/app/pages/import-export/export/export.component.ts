@@ -720,6 +720,15 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.INTEGRATION_TYPE'
+				),
+				value: 'integration_type',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING'
 				),
 				value: 'integration_entity_setting',
