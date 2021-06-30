@@ -927,9 +927,9 @@ export class ImportAllService implements OnModuleInit {
 					}
 				]
 			},
-			// /**
-			// * These entities need TENANT
-			// */
+			/**
+			* These entities need TENANT
+			*/
 			{
 				repository: this.tenantSettingRepository
 			},
@@ -945,7 +945,8 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.organizationRepository
+				repository: this.organizationRepository,
+				uniqueIdentifier: [ { column: 'name' }, { column: 'profile_link' } ]
 			},
 			/**
 			* These entities need TENANT and ORGANIZATION

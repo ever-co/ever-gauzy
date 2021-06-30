@@ -18,10 +18,10 @@ export class ImportRecordFirstOrCreateHandler
 		event: ImportRecordFirstOrCreateCommand
 	): Promise<ImportRecord> {
 		const { input } = event;
-		const { sourceId, destinationId, entityType } = input;
+		const { sourceId, destinationId, entityType, tenantId } = input;
 		const { record } = await this._importRecordService.findOneOrFail({
 			where: {
-				tenantId: RequestContext.currentTenantId(),
+				tenantId: tenantId || RequestContext.currentTenantId(),
 				sourceId,
 				destinationId,
 				entityType
@@ -29,7 +29,7 @@ export class ImportRecordFirstOrCreateHandler
 		});
 		if (!record) {
 			const record = await this._importRecordService.create({
-				tenantId: RequestContext.currentTenantId(),
+				tenantId: tenantId || RequestContext.currentTenantId(),
 				sourceId,
 				destinationId,
 				entityType
