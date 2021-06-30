@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { getManager, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { Tenant } from './tenant.entity';
 import {
@@ -14,6 +14,7 @@ import { UserService } from '../user/user.service';
 import { RoleService } from 'role/role.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
 import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
+import { ImportRecordFirstOrCreateCommand } from './../export-import/import/commands';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -31,6 +32,8 @@ export class TenantService extends CrudService<Tenant> {
 		entity: ITenantCreateInput,
 		user: IUser
 	): Promise<ITenant> {
+		const { isImporting = false, sourceId = null } = entity;
+
 		//1. Create Tenant of user.
 		const tenant = await this.create(entity);
 
@@ -59,6 +62,20 @@ export class TenantService extends CrudService<Tenant> {
 				id: role.id
 			}
 		});
+
+		//6. Create Import Records while migrating for relative tenant.
+		if (isImporting && sourceId) {
+			const { sourceId } = entity;
+			await this.commandBus.execute(
+				new ImportRecordFirstOrCreateCommand({
+					entityType: getManager().getRepository(Tenant).metadata.tableName,
+					sourceId,
+					destinationId: tenant.id,
+					tenantId: tenant.id
+				})
+			);
+		}
+
 		return tenant;
 	}
 }

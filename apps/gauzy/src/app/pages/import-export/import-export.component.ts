@@ -93,7 +93,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			imageUrl,
 			preferredComponentLayout,
 			preferredLanguage,
-			tenant: { name }
+			tenant: { id: tenantId, name }
 		} = this.user;
 		const register: IUserRegistrationInput = {
 			user: {
@@ -104,10 +104,10 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 				email,
 				preferredComponentLayout,
 				preferredLanguage,
-				imageUrl,
-				isImporting: true,
-				sourceId
+				imageUrl
 			},
+			isImporting: true,
+			sourceId,
 			password
 		}
 
@@ -118,7 +118,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						const { token, user } = response;
 						this.token = token;
 						this.gauzyUser = user;
-						return this.gauzyCloudService.migrateTenant({ name }, token);
+						return this.gauzyCloudService.migrateTenant({ name, isImporting: true, sourceId: tenantId }, token);
 					}),
 					delay(1000),
 					concatMap(async (tenant: ITenant) => {
