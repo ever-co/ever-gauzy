@@ -57,7 +57,7 @@
 		"semantic-release": "semantic-release",
 		"test": "yarn run postinstall.web && yarn run config:dev && yarn ng test",
 		"lint": "yarn run config:dev && yarn ng lint && yarn ng lint",
-		"e2e": "yarn run postinstall.web && yarn run config:dev && yarn ng e2e",
+		"e2e": "yarn run postinstall.web && yarn run config:dev && yarn ng e2e --browser chrome",
 		"e2e:ci": "yarn run postinstall.web && yarn run config:prod && yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci e2e -c=production --prod --headless",
 		"affected:apps": "yarn nx affected:apps",
 		"affected:libs": "yarn nx affected:libs",
@@ -143,7 +143,6 @@
 		"copy-files-gauzy-server": "copyfiles -f  packages/core/src/**/*.gql dist/apps/gauzy-server/data/",
 		"build:gauzy-server:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/gauzy-server",
 		"quick:build:gauzy-server": "yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/gauzy-server"
-
 	},
 	"config": {
 		"commitizen": {

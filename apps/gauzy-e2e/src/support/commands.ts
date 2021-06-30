@@ -25,7 +25,7 @@
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
 
 export const CustomCommands = {
-	login: (loginPage: any, LoginPageData: any, dashboradPage: any) => {
+	login: (loginPage: any, LoginPageData: any, dashboardPage: any) => {
 		cy.visit('/');
 		loginPage.verifyTitle();
 		loginPage.verifyLoginText();
@@ -34,7 +34,7 @@ export const CustomCommands = {
 		loginPage.clearPasswordField();
 		loginPage.enterPassword(LoginPageData.password);
 		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		dashboardPage.verifyCreateButton();
 	},
 	addTag: (organizationTagsUserPage: any, OrganizationTagsPageData: any) => {
 		cy.visit('/#/pages/organization/tags');
