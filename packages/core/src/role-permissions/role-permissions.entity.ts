@@ -30,6 +30,8 @@ export class RolePermissions
 	@Column({ nullable: true, default: false })
 	enabled: boolean;
 
-	@ManyToOne(() => Role, (role) => role.rolePermissions)
+	@ManyToOne(() => Role, (role) => role.rolePermissions, {
+		onDelete: 'CASCADE'
+	})
 	role!: Role;
 }

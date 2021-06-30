@@ -7,6 +7,7 @@ export class ImportEntityFieldMapOrCreateCommand implements ICommand {
 	constructor(
 		public readonly repository: Repository<any>,
 		public readonly where: any,
-		public readonly entity: any
+		public readonly entity: any,
+		public readonly sourceId: string
 	) {}
 }

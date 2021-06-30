@@ -49,6 +49,8 @@ export interface IUserRegistrationInput {
 	originalUrl?: string;
 	organizationId?: string;
 	createdById?: string;
+	isImporting?: boolean;
+	sourceId?: string;
 }
 
 export interface IAuthLoginInput {

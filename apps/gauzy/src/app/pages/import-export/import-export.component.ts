@@ -83,7 +83,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	*/
 	onMigrateIntoCloud(password: string) {
 		this.loading = true;
-		const { 
+		const {
+			id: sourceId
 			firstName,
 			lastName,
 			username,
@@ -103,7 +104,9 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 				email,
 				preferredComponentLayout,
 				preferredLanguage,
-				imageUrl
+				imageUrl,
+				isImporting: true,
+				sourceId
 			},
 			password
 		}
