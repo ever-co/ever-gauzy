@@ -74,11 +74,9 @@ export class Employee
 	@RelationId((employee: Employee) => employee.contact)
 	readonly contactId?: string;
 
+	@ApiProperty({ type: () => Skill })
 	@ManyToMany(() => Skill, (skill) => skill.employees)
-	@JoinTable({
-		name: 'skill_employee'
-	})
-	skills: ISkill[];
+    skills: ISkill[];
 
 	@ApiProperty({ type: () => User })
 	@OneToOne(() => User, {

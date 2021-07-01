@@ -1,8 +1,9 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
-import { IEmployee, ISkill } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ISkill } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	Employee,
+	Organization,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 
@@ -20,9 +21,28 @@ export class Skill extends TenantOrganizationBaseEntity implements ISkill {
 	@Column()
 	color?: string;
 
-	@ManyToMany(() => Employee, (employee) => employee.skills)
-	@JoinTable({
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+   // employees skills
+	@ManyToMany(() => Employee, (employee) => employee.skills, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
+    @JoinTable({
 		name: 'skill_employee'
 	})
-	employees?: IEmployee[];
+    employees?: IEmployee[];
+
+	// organizations skills
+	@ManyToMany(() => Organization, (organization) => organization.skills, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
+    @JoinTable({
+		name: 'skill_organization'
+	})
+    organizations?: IOrganization[];
 }
