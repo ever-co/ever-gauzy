@@ -11,7 +11,7 @@ export class ImportEntityFieldMapOrCreateHandler
 	implements ICommandHandler<ImportEntityFieldMapOrCreateCommand> {
 	
 	constructor(
-		private readonly commandBus: CommandBus
+		private readonly _commandBus: CommandBus
 	) {}
 
 	public async execute(
@@ -27,7 +27,7 @@ export class ImportEntityFieldMapOrCreateHandler
 			throw new NotFoundException();
 		} catch (error) {
 			try {
-				const { record, success } = await this.commandBus.execute(
+				const { record, success } = await this._commandBus.execute(
 					new ImportRecordFindOrFailCommand({
 						tenantId: RequestContext.currentTenantId(),
 						sourceId,
@@ -36,19 +36,22 @@ export class ImportEntityFieldMapOrCreateHandler
 				);
 				if (success && record) {
 					const { destinationId } = record;
-					await repository.update(destinationId, entity);
-					return await repository.findOne(record.destinationId);
+					return await this._create(repository, { id: destinationId, ...entity });
 				}
 				throw new NotFoundException(`The import record was not found`);
 			} catch (error) {
-				const obj = repository.create(entity);
-				try {
-					// https://github.com/Microsoft/TypeScript/issues/21592
-					return await repository.save(obj as any);
-				} catch (err) {
-					throw new BadRequestException(err);
-				}
+				return await this._create(repository, entity);
 			}
+		}
+	}
+
+	private async _create(repository, entity) {
+		try {
+			const obj = repository.create(entity);
+			// https://github.com/Microsoft/TypeScript/issues/21592
+			return await repository.save(obj as any);
+		} catch (err) {
+			throw new BadRequestException(err);
 		}
 	}
 }
