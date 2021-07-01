@@ -818,9 +818,10 @@ export class ImportAllService implements OnModuleInit {
 					data[`${propertyName}`] = convertToDatetime(data[`${propertyName}`]);
 				} else if (type === 'datetime') {
 					data[`${propertyName}`] = convertToDatetime(data[`${propertyName}`]);
-				}
-				if (data[`${propertyName}`] === 'true' || data[`${propertyName}`] === 'false') {
-					data[`${propertyName}`] = Boolean(data[`${propertyName}`]);
+				} else if (data[`${propertyName}`] === 'true') {
+					data[`${propertyName}`] = true;
+				} else if (data[`${propertyName}`] === 'false') {
+					data[`${propertyName}`] = false;
 				}
 			}
 		}
@@ -1357,6 +1358,7 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.invoiceRepository,
 				isCheckRelation: true,
 				foreignKeys: [
+					{ column: 'sendTo', repository: this.organizationContactRepository },
 					{ column: 'organizationContactId', repository: this.organizationContactRepository },
 					{ column: 'fromOrganizationId', repository: this.organizationRepository },
 					{ column: 'toContactId', repository: this.organizationContactRepository }

@@ -37,14 +37,14 @@ export class TenantService extends CrudService<Tenant> {
 		//1. Create Tenant of user.
 		const tenant = await this.create(entity);
 
-		//2. Create Enabled/Disabled features for relative tenants.
-		await this.commandBus.execute(
-			new TenantFeatureOrganizationCreateCommand([tenant])
-		);
-
-		//3. Create Role/Permissions to relative tenants.
+		//2. Create Role/Permissions to relative tenants.
 		await this.commandBus.execute(
 			new TenantRoleBulkCreateCommand([tenant])
+		);
+
+		//3. Create Enabled/Disabled features for relative tenants.
+		await this.commandBus.execute(
+			new TenantFeatureOrganizationCreateCommand([tenant])
 		);
 
 		//4. Find SUPER_ADMIN role to relative tenant.

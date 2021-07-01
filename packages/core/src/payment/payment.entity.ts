@@ -5,7 +5,8 @@ import {
 	JoinColumn,
 	JoinTable,
 	ManyToMany,
-	RelationId
+	RelationId,
+	Index
 } from 'typeorm';
 import {
 	IPayment,
@@ -39,36 +40,7 @@ import {
 
 @Entity('payment')
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	invoiceId?: string;
-
-	@ApiPropertyOptional({ type: () => Invoice })
-	@ManyToOne(() => Invoice, (invoice) => invoice.payments, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	invoice?: IInvoice;
-
-	@ApiProperty({ type: () => String })
-	@RelationId((payment: Payment) => payment.employee)
-	@Column({ nullable: true })
-	employeeId?: string;
-
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	employee?: IEmployee;
-
-	@ApiPropertyOptional({ type: () => User })
-	@ManyToOne(() => User)
-	@JoinColumn()
-	recordedBy?: IUser;
-
+	
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
@@ -102,6 +74,52 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@IsBoolean()
 	@Column({ nullable: true })
 	overdue?: boolean;
+	
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Payment) => it.employee)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	employeeId?: string;
+
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: Payment) => it.invoice)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	invoiceId?: string;
+
+	@ApiPropertyOptional({ type: () => Invoice })
+	@ManyToOne(() => Invoice, (invoice) => invoice.payments, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	invoice?: IInvoice;
+
+	@ApiPropertyOptional({ type: () => User })
+	@ManyToOne(() => User)
+	@JoinColumn()
+	recordedBy?: IUser;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Payment) => it.recordedBy)
+	@IsString()
+	@Index()
+	@Column()
+	recordedById?: string;
 
 	@ApiPropertyOptional({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, (project) => project.payments, {
@@ -111,8 +129,10 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	project?: IOrganizationProject;
 
 	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: Payment) => it.project)
 	@IsString()
 	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	projectId?: string;
 
@@ -124,11 +144,18 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	contact?: IOrganizationContact;
 
 	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: Payment) => it.contact)
 	@IsString()
 	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	contactId?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
 	@ManyToMany(() => Tag, (tag) => tag.payment)
 	@JoinTable({
 		name: 'tag_payment'

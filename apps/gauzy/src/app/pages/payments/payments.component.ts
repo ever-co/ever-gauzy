@@ -213,22 +213,26 @@ export class PaymentsComponent
 				...request,
 				...this.filters.where
 			},
-			resultMap: (payment: IPayment) => {
-				const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
-				let organizationContactName: string;
-				if (invoice && invoice.toContact) {
-					organizationContactName = invoice.toContact.name;
-				} else if (contact) {
-					organizationContactName = contact.name;
+			resultMap: async (payment: IPayment) => {
+				try {
+					const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
+					let organizationContactName: string;
+					if (contact) {
+						organizationContactName = contact.name;
+					} else if (invoice && invoice.toContact) {
+						organizationContactName = invoice.toContact.name;
+					}
+					return Object.assign({}, payment, {
+						displayOverdue: this.statusMapper(overdue),
+						invoiceNumber: invoice ? invoice.invoiceNumber : null,
+						projectName: project ? project.name : null,
+						recordedBy: recordedBy ? `${recordedBy.name}`: null,
+						displayPaymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
+						organizationContactName,
+					});
+				} catch (error) {
+					return Object.assign({}, payment);
 				}
-				return Object.assign({}, payment, {
-					displayOverdue: this.statusMapper(overdue),
-					invoiceNumber: invoice ? invoice.invoiceNumber : null,
-					projectName: project ? project.name : null,
-					organizationContactName,
-					recordedBy: `${recordedBy.firstName} ${recordedBy.lastName}`,
-					displayPaymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
-				});
 			},
 			finalize: () => {
 				this.loading = false;
