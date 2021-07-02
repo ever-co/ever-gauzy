@@ -1,0 +1,21 @@
+name: Cypress Tests
+
+on:
+    push:
+        branches: [develop]
+
+jobs:    
+    e2e-tests:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Cypress run
+            uses: cypress-io/github-action@v2
+            with:
+                install: yarn bootstrap
+                build: yarn build:package:all
+                start: yarn start:api
+                wait-on: 'http://localhost:3000/api'
+                browser: chrome
