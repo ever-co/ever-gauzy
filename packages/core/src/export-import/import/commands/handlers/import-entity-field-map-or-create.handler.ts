@@ -3,8 +3,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CommandBus } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from './../../../../core';
+import { ImportRecordFindOrFailCommand } from './../../../import-record';
 import { ImportEntityFieldMapOrCreateCommand } from './../import-entity-field-map-or-create.command';
-import { ImportRecordFindOrFailCommand } from './../import-record-find-or-fail.command';
 
 @CommandHandler(ImportEntityFieldMapOrCreateCommand)
 export class ImportEntityFieldMapOrCreateHandler 

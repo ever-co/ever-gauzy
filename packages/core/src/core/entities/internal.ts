@@ -132,8 +132,9 @@ export * from '../../user/user.entity';
 export * from '../../warehouse/warehouse.entity';
 export * from '../../warehouse/warehouse-product.entity';
 export * from '../../warehouse/warehouse-product-variant.entity';
-export * from './../../export-import/import/import-record.entity';
-export * from './../../export-import/import/import-history.entity';
+
+export * from './../../export-import/import-record/import-record.entity';
+export * from './../../export-import/import-history/import-history.entity';
 
 //core subscribers
 export * from './../../candidate/candidate.subscriber';

@@ -9,8 +9,8 @@ import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { RequestContext } from '../../../core/context';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
-import { ImportRecordFirstOrCreateCommand } from './../../../export-import/import/commands';
 import { Organization, UserOrganization } from './../../../core/entities/internal';
+import { ImportRecordFirstOrCreateCommand } from './../../../export-import/import-record';
 
 
 @CommandHandler(OrganizationCreateCommand)

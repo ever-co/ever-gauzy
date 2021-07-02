@@ -14,17 +14,18 @@ import { UserService } from '../user/user.service';
 import { RoleService } from 'role/role.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
 import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
-import { ImportRecordFirstOrCreateCommand, ImportRecordService } from './../export-import/import';
+import { ImportRecordFirstOrCreateCommand, ImportRecordService } from './../export-import/import-record';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
 	constructor(
 		@InjectRepository(Tenant)
 		private readonly tenantRepository: Repository<Tenant>,
+		
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
+		private readonly importRecordService: ImportRecordService,
 		private readonly commandBus: CommandBus,
-		private readonly importRecordService: ImportRecordService
 	) {
 		super(tenantRepository);
 	}

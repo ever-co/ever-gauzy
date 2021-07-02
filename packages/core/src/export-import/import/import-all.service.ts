@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { getConnection, getManager, IsNull, Repository } from 'typeorm';
+import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import * as fs from 'fs';
@@ -139,12 +140,8 @@ import {
 	WarehouseProductVariant
 } from './../../core/entities/internal';
 import { RequestContext } from './../../core';
-import {
-	ImportEntityFieldMapOrCreateCommand,
-	ImportRecordFindOrFailCommand,
-	ImportRecordFirstOrCreateCommand
-} from './commands';
-import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
+import { ImportEntityFieldMapOrCreateCommand } from './commands';
+import { ImportRecordFindOrFailCommand, ImportRecordFirstOrCreateCommand } from './../import-record';
 
 export interface IForeignKey<T> {
 	column: string;

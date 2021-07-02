@@ -15,7 +15,7 @@ import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { getManager } from 'typeorm';
-import { ImportRecordFirstOrCreateCommand } from './../export-import/import/commands';
+import { ImportRecordFirstOrCreateCommand } from './../export-import/import-record';
 
 @Injectable()
 export class AuthService extends SocialAuthService {

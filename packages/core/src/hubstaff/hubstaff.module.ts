@@ -27,6 +27,7 @@ import { UserModule } from '../user/user.module';
 import { RoleModule } from '../role/role.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
 import { RouterModule } from 'nest-router';
+import { TenantModule } from './../tenant';
 
 @Module({
 	imports: [
@@ -36,7 +37,6 @@ import { RouterModule } from 'nest-router';
 		HttpModule,
 		TypeOrmModule.forFeature([
 			IntegrationTenant,
-			Tenant,
 			IntegrationSetting,
 			IntegrationMap,
 			OrganizationProject,
@@ -49,13 +49,13 @@ import { RouterModule } from 'nest-router';
 		CqrsModule,
 		RoleModule,
 		UserModule,
-		RolePermissionsModule
+		RolePermissionsModule,
+		TenantModule
 	],
 	controllers: [HubstaffController],
 	providers: [
 		HubstaffService,
 		IntegrationTenantService,
-		TenantService,
 		IntegrationSettingService,
 		IntegrationMapService,
 		OrganizationProjectsService,

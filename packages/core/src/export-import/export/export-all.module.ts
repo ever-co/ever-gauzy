@@ -117,6 +117,7 @@ import { JobSearchCategoryService } from '../../employee-job-preset/job-search-c
 import { KeyresultTemplateService } from '../../keyresult-template/keyresult-template.service';
 import { ReportService } from '../../reports/report.service';
 import { ReportCategoryService } from '../../reports/report-category.service';
+import { ImportRecordModule } from './../../export-import/import-record';
 
 @Module({
 	imports: [
@@ -127,7 +128,8 @@ import { ReportCategoryService } from '../../reports/report-category.service';
 		TypeOrmModule.forFeature([
 			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
-		])
+		]),
+		ImportRecordModule
 	],
 	controllers: [ExportAllController],
 	providers: [
