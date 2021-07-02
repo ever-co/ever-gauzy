@@ -141,7 +141,7 @@ import {
 } from './../../core/entities/internal';
 import { RequestContext } from './../../core';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
-import { ImportRecordFindOrFailCommand, ImportRecordFirstOrCreateCommand } from './../import-record';
+import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from './../import-record';
 
 export interface IForeignKey<T> {
 	column: string;
@@ -759,7 +759,7 @@ export class ImportAllService implements OnModuleInit {
 			try {
 				if (desination) {
 					await this.commandBus.execute(
-						new ImportRecordFirstOrCreateCommand({
+						new ImportRecordUpdateOrCreateCommand({
 							sourceId: row.id,
 							destinationId: desination.id,
 							entityType

@@ -14,7 +14,8 @@ import { UserService } from '../user/user.service';
 import { RoleService } from 'role/role.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
 import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
-import { ImportRecordFirstOrCreateCommand, ImportRecordService } from './../export-import/import-record';
+import { ImportRecordUpdateOrCreateCommand, ImportRecordService } from './../export-import/import-record';
+import { User } from './../core/entities/internal';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -69,14 +70,24 @@ export class TenantService extends CrudService<Tenant> {
 		if (isImporting && sourceId) {
 			const { sourceId, userSourceId } = entity;
 			await this.commandBus.execute(
-				new ImportRecordFirstOrCreateCommand({
+				new ImportRecordUpdateOrCreateCommand({
 					entityType: getManager().getRepository(Tenant).metadata.tableName,
 					sourceId,
 					destinationId: tenant.id,
 					tenantId: tenant.id
 				})
 			);
-			console.log(this.importRecordService, userSourceId);
+			if (userSourceId) {
+				await this.commandBus.execute(
+					new ImportRecordUpdateOrCreateCommand({
+						entityType: getManager().getRepository(User).metadata.tableName,
+						sourceId: userSourceId,
+						destinationId: user.id
+					}, {
+						tenantId: tenant.id
+					})
+				);
+			}
 		}
 
 		return tenant;

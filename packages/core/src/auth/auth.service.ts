@@ -15,7 +15,7 @@ import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { getManager } from 'typeorm';
-import { ImportRecordFirstOrCreateCommand } from './../export-import/import-record';
+import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -149,7 +149,7 @@ export class AuthService extends SocialAuthService {
 		if (isImporting && sourceId) {
 			const { sourceId } = input;
 			await this.commandBus.execute(
-				new ImportRecordFirstOrCreateCommand({
+				new ImportRecordUpdateOrCreateCommand({
 					entityType: getManager().getRepository(User).metadata.tableName,
 					sourceId,
 					destinationId: user.id

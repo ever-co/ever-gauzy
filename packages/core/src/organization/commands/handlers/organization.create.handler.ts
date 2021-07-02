@@ -10,7 +10,7 @@ import { OrganizationCreateCommand } from '../organization.create.command';
 import { RequestContext } from '../../../core/context';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
 import { Organization, UserOrganization } from './../../../core/entities/internal';
-import { ImportRecordFirstOrCreateCommand } from './../../../export-import/import-record';
+import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
 
 
 @CommandHandler(OrganizationCreateCommand)
@@ -104,7 +104,7 @@ export class OrganizationCreateHandler
 			const { sourceId } = input;
 			const entityType = getManager().getRepository(Organization).metadata.tableName;
 			await this.commandBus.execute(
-				new ImportRecordFirstOrCreateCommand({
+				new ImportRecordUpdateOrCreateCommand({
 					entityType,
 					sourceId,
 					destinationId: organization.id,
