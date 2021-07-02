@@ -5,6 +5,7 @@ import {
 	IRolePermission,
 	IAuthResponse
 } from '@gauzy/contracts';
+import { CommandBus } from '@nestjs/cqrs';
 import { SocialAuthService } from '@gauzy/auth';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
@@ -13,13 +14,16 @@ import { EmailService } from '../email/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
+import { getManager } from 'typeorm';
+import { ImportRecordFirstOrCreateCommand } from './../export-import/import/commands';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
 	constructor(
 		private readonly userService: UserService,
 		private emailService: EmailService,
-		private userOrganizationService: UserOrganizationService
+		private userOrganizationService: UserOrganizationService,
+		private readonly commandBus: CommandBus
 	) {
 		super();
 	}
@@ -123,7 +127,7 @@ export class AuthService extends SocialAuthService {
 			tenant = creatingUser.tenant;
 		}
 
-		const user = this.userService.create({
+		const user = await this.userService.create({
 			...input.user,
 			tenant,
 			...(input.password
@@ -135,8 +139,21 @@ export class AuthService extends SocialAuthService {
 
 		if (input.organizationId) {
 			await this.userOrganizationService.addUserToOrganization(
-				await user,
+				user,
 				input.organizationId
+			);
+		}
+
+		//6. Create Import Records while migrating for relative user.
+		const { isImporting = false, sourceId = null } = input;
+		if (isImporting && sourceId) {
+			const { sourceId } = input;
+			await this.commandBus.execute(
+				new ImportRecordFirstOrCreateCommand({
+					entityType: getManager().getRepository(User).metadata.tableName,
+					sourceId,
+					destinationId: user.id
+				})
 			);
 		}
 
@@ -266,7 +283,6 @@ export class AuthService extends SocialAuthService {
 		} else {
 			payload.role = null;
 		}
-
 		const token: string = sign(payload, env.JWT_SECRET, {});
 		return { token };
 	}

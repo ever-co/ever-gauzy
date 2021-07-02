@@ -13,6 +13,8 @@ export class Role extends TenantBaseEntity implements IRole {
 	@Column()
 	name: string;
 
-	@OneToMany(() => RolePermissions, (rolePermission) => rolePermission.role)
+	@OneToMany(() => RolePermissions, (rolePermission) => rolePermission.role, {
+		cascade: true
+	})
 	rolePermissions: IRolePermission[];
 }

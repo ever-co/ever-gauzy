@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
-import { IProductTranslatable } from '@gauzy/contracts';
+import { IProductTranslatable, IWarehouse } from '@gauzy/contracts';
 import {
 	ImageAsset,
 	InvoiceItem,
@@ -20,7 +20,8 @@ import {
 	ProductVariant,
 	Tag,
 	TranslatableBase,
-	ProductOptionGroup
+	ProductOptionGroup,
+	WarehouseProduct
 } from '../core/entities/internal';
 
 @Entity('product')
@@ -111,4 +112,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 		name: 'product_gallery_item'
 	})
 	gallery: ImageAsset[];
+
+	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.product, {
+		cascade: true 
+	})
+	@JoinColumn()
+	warehouses?: IWarehouse[];
 }

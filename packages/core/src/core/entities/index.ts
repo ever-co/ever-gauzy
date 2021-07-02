@@ -123,7 +123,9 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant
+	WarehouseProductVariant,
+	ImportRecord,
+	ImportHistory
 } from './internal';
 
 export const coreEntities = [
@@ -187,6 +189,8 @@ export const coreEntities = [
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
+	ImportRecord,
+	ImportHistory,
 	JobPreset,
 	JobPresetUpworkJobSearchCriterion,
 	JobSearchCategory,

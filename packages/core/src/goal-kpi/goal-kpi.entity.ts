@@ -14,7 +14,7 @@ export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String, enum: KpiMetricEnum })

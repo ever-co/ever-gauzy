@@ -17,7 +17,8 @@ import {
 	NbSelectModule,
 	NbCardModule,
 	NbIconModule,
-	NbCheckboxModule
+	NbCheckboxModule,
+	NbFormFieldModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -39,7 +40,8 @@ const components = [AlertComponent, ConfirmComponent, PromptComponent];
 		NbSelectModule,
 		NbCardModule,
 		NbIconModule,
-		TranslateModule
+		TranslateModule,
+		NbFormFieldModule
 	],
 	declarations: [...components, ...directives],
 	exports: [...directives],

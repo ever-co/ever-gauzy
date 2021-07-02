@@ -22,5 +22,5 @@ export const HumanResourcesPageData = {
 	profitTableHeaderDateText: 'Date',
 	profitTableHeaderExpensesText: 'Expenses',
 	profitTableHeaderIncomeText: 'Income',
-	profitTableHeaderDescriptionText: 'Desctiption'
+	profitTableHeaderDescriptionText: 'Description'
 };

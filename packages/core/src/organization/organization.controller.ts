@@ -15,7 +15,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { UUIDValidationPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
@@ -48,10 +48,10 @@ export class OrganizationController extends CrudController<Organization> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAllOrganizations(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Organization>> {
-		const { relations, findInput } = JSON.parse(data);
-		return this.organizationService.findAll({
+		const { relations, findInput } = data;
+		return await this.organizationService.findAll({
 			where: findInput,
 			relations
 		});
@@ -82,7 +82,7 @@ export class OrganizationController extends CrudController<Organization> {
 		if (relations) {
 			findObj['relations'] = relations;
 		}
-		return this.organizationService.findOne(id, findObj);
+		return await this.organizationService.findOne(id, findObj);
 	}
 
 	@ApiOperation({ summary: 'Find Organization by profile link.' })
@@ -125,7 +125,7 @@ export class OrganizationController extends CrudController<Organization> {
 	async create(
 		@Body() entity: IOrganizationCreateInput
 	): Promise<Organization> {
-		return this.commandBus.execute(new OrganizationCreateCommand(entity));
+		return await this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
 
 	@Put(':id')
@@ -134,6 +134,6 @@ export class OrganizationController extends CrudController<Organization> {
 		@Body() entity: IOrganizationCreateInput,
 		...options: any[]
 	): Promise<Organization> {
-		return this.commandBus.execute(new OrganizationUpdateCommand({ id, ...entity }));
+		return await this.commandBus.execute(new OrganizationUpdateCommand({ id, ...entity }));
 	}
 }

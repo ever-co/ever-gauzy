@@ -44,15 +44,12 @@ export class OrganizationDepartment
 	})
 	members?: IEmployee[];
 
-	@ManyToMany(
-		() => Candidate,
-		(candidate) => candidate.organizationDepartments,
-		{
-			cascade: ['update']
-		}
-	)
-	@JoinTable({
+	@ManyToMany(() => Candidate, (candidate) => candidate.organizationDepartments, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
+    @JoinTable({
 		name: 'candidate_department'
 	})
-	candidates?: ICandidate[];
+    candidates?: ICandidate[];
 }

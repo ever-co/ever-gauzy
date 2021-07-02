@@ -1,3 +1,3 @@
 export const AddExistingUserPageData = {
-	defaultUser: 'Admin Local'
+	defaultUser: 'Local Admin'
 };

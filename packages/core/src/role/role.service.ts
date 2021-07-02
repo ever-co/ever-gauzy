@@ -17,16 +17,15 @@ export class RoleService extends TenantAwareCrudService<Role> {
 	async createBulk(tenants: ITenant[]): Promise<IRole[]> {
 		const roles: IRole[] = [];
 		const rolesNames = Object.values(RolesEnum);
-
-		tenants.forEach((tenant: ITenant) => {
-			for (const name of rolesNames) {
+		
+		for await (const tenant of tenants) {
+			for await (const name of rolesNames) {
 				const role = new Role();
 				role.name = name;
 				role.tenant = tenant;
 				roles.push(role);
 			}
-		});
-
+		}
 		await this.roleRepository.save(roles);
 		return roles;
 	}

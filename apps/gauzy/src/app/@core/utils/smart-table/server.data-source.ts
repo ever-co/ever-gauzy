@@ -50,10 +50,15 @@ export class ServerDataSource extends LocalDataSource {
     protected extractDataFromResponse(res: any): Array<any> {
         const rawData = res.body;
         const data = !!this.conf.dataKey ? rawData[this.conf.dataKey] : rawData;
-        if (data instanceof Array) {
-            return this.conf.resultMap ? data.map(this.conf.resultMap) : data;
+        try {
+            if (data instanceof Array) {
+                return this.conf.resultMap ? data.map(this.conf.resultMap) : data;
+            }
+            throw new Error(`Data must be an array. Please check that data extracted from the server response by the key '${this.conf.dataKey}' exists and is array.`);
+        } catch (error) {
+            console.log(`Failed to extract data from response: ${error}`);
+            return data;
         }
-        throw new Error(`Data must be an array. Please check that data extracted from the server response by the key '${this.conf.dataKey}' exists and is array.`);
     }
 
     /**

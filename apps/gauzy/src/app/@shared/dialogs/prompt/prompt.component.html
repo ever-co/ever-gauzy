@@ -1,95 +1,128 @@
-<form class="dialog-from" (ngSubmit)="submit()" [formGroup]="form">
-	<nb-card class="confirm-dialog">
-		<nb-card-header>
+<nb-card class="confirm-dialog">
+	<nb-card-header class="d-flex">
+		<h6> {{ data?.title }} </h6>
+		<nb-icon class="ml-auto mt-1 close" (click)="close()" icon="close-outline"></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="custom-scroll">
+		<form class="dialog-from" #formDirective="ngForm" (ngSubmit)="submit()" [formGroup]="form">
 			<div class="row">
-				<div class="col">
-					{{ data?.title }}
-				</div>
-				<button
-					class="col-auto"
-					nbButton
-					ghost
-					(click)="close()"
-					type="button"
-				>
-					<nb-icon icon="close-outline"></nb-icon>
-				</button>
-			</div>
-		</nb-card-header>
-		<nb-card-body class="custom-scroll">
-			<label>{{ data?.message }}</label>
-			<ng-template
-				[ngIf]="
-					data?.inputType == 'checkbox' || data?.inputType == 'radio'
-				"
-				[ngIfElse]="textInput"
-			>
-				<nb-list *ngIf="data?.inputType == 'checkbox'">
-					<nb-list-item *ngFor="let option of data?.options">
-						<nb-checkbox [value]="option.value">{{
-							option.label
-						}}</nb-checkbox>
-					</nb-list-item>
-				</nb-list>
-
-				<nb-radio-group
-					formControlName="input"
-					*ngIf="data.inputType == 'radio'"
-				>
-					<nb-radio
-						*ngFor="let option of data?.options"
-						[value]="option.value"
-					>
-						{{ option.label }}
-					</nb-radio>
-				</nb-radio-group>
-			</ng-template>
-
-			<ng-template #textInput>
-				<div class="form-group">
-					<input
-						*ngIf="
-							data?.inputType == 'text' ||
-							data?.inputType == 'password' ||
-							data?.inputType == 'email'
-						"
-						class="form-control"
-						[placeholder]="data?.placeholder"
-						[type]="data?.inputType"
-						formControlName="input"
-						nbInput
-						required
-					/>
-					<textarea
-						*ngIf="data?.inputType == 'textarea'"
-						class="form-control"
-						[placeholder]="data?.placeholder"
-						formControlName="input"
-						nbInput
-						required
-					></textarea>
-					<nb-select
-						class="form-control"
-						*ngIf="data?.inputType == 'select'"
-						[placeholder]="data?.placeholder"
-						formControlName="input"
-					>
-						<nb-option
-							*ngFor="let option of data?.options"
-							[value]="option.value"
-							>{{ option.label }}</nb-option
+				<div class="col-12">
+					<label>{{ data?.label }}</label>
+					<ng-template [ngIf]=" data?.inputType == 'checkbox' || data?.inputType == 'radio' " [ngIfElse]="textInput">
+						<nb-list *ngIf="data?.inputType == 'checkbox'">
+							<nb-list-item *ngFor="let option of data?.options">
+								<nb-checkbox [value]="option.value">{{
+									option.label
+								}}</nb-checkbox>
+							</nb-list-item>
+						</nb-list>
+						<nb-radio-group
+							formControlName="input"
+							*ngIf="data.inputType == 'radio'"
 						>
-					</nb-select>
+							<nb-radio
+								*ngFor="let option of data?.options"
+								[value]="option.value"
+							>
+								{{ option.label }}
+							</nb-radio>
+						</nb-radio-group>
+					</ng-template>
+					<ng-template #textInput>
+						<div class="form-group">
+							<ng-container *ngIf=" data?.inputType == 'text' || data?.inputType == 'email'">
+								<nb-form-field>
+									<input
+										class="form-control"
+										[placeholder]="data?.placeholder"
+										[type]="data?.inputType"
+										formControlName="input"
+										nbInput
+										fullWidth
+										required
+										[status]="
+											isInvalidControl('input') ? 'danger' : 'basic'
+										"
+									/>
+								</nb-form-field>
+							</ng-container>
+							<ng-container *ngIf=" data?.inputType == 'password'">
+								<nb-form-field>
+									<input 
+										class="form-control"
+										[placeholder]="data?.placeholder"
+										[type]="getInputType()"
+										formControlName="input"
+										nbInput
+										fullWidth
+										required
+										[status]="
+											isInvalidControl('input') ? 'danger' : 'basic'
+										"
+									>
+									<button type="button" nbSuffix nbButton ghost>
+										<nb-icon 
+											(click)="toggleShowPassword()"
+											[icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'"
+											pack="eva"
+											[attr.aria-label]="showPassword ? 'hide password' : 'show password'"
+										></nb-icon>
+									</button>
+								</nb-form-field>
+							</ng-container>
+							<ng-container *ngIf="data?.inputType == 'textarea'">
+								<nb-form-field>
+									<textarea
+										class="form-control"
+										[placeholder]="data?.placeholder"
+										formControlName="input"
+										nbInput
+										required
+										[status]="
+											isInvalidControl('input') ? 'danger' : 'basic'
+										"
+									></textarea>
+								</nb-form-field>
+							</ng-container>
+							<ng-container *ngIf="data?.inputType == 'select'">
+								<nb-select
+									class="form-control"
+									[placeholder]="data?.placeholder"
+									formControlName="input"
+									required
+									[status]="
+										isInvalidControl('input') ? 'danger' : 'basic'
+									"
+								>
+									<nb-option
+										*ngFor="let option of data?.options"
+										[value]="option.value"
+										>{{ option.label }}</nb-option
+									>
+								</nb-select>
+							</ng-container>
+						</div>
+					</ng-template>
 				</div>
-			</ng-template>
-		</nb-card-body>
-		<nb-card-footer>
-			<button class="mr-2" nbButton status="primary">
-				{{ data?.okText || ('BUTTONS.OK' | translate) }}
-			</button>
-			<button class="mr-2" nbButton type="button" (click)="close()">
-				{{ data?.cancelText || ('BUTTONS.CANCEL' | translate) }}
-			</button>
-		</nb-card-footer>
-	</nb-card>
-</form>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button 
+			class="mr-2"
+			status="success"
+			nbButton
+			(click)="formDirective.ngSubmit.emit()"
+		>
+			{{ data?.okText || ('BUTTONS.OK' | translate) }}
+		</button>
+		<button 
+			(click)="close()" 
+			status="danger" 
+			class="mr-2" 
+			nbButton
+		>
+			{{ data?.cancelText || ('BUTTONS.CANCEL' | translate) }}
+		</button>
+	</nb-card-footer>
+</nb-card>

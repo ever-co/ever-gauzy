@@ -4,7 +4,7 @@ import { ILanguage, ILanguageFindInput } from './language.model';
 export interface IOrganizationLanguages
 	extends IBasePerTenantAndOrganizationEntityModel {
 	language: ILanguage;
-	languageId: string;
+	languageCode: string;
 	level: string;
 	name: string;
 }

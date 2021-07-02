@@ -1,62 +1,62 @@
-import { Component, OnInit } from '@angular/core';
-import { ExportAllService } from '../../../@core/services/export-all.service';
-import { filter } from 'rxjs/operators';
-import { IOrganization } from '@gauzy/contracts';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { saveAs } from 'file-saver';
-import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as _ from 'underscore';
-
-export interface IEntityModel {
-	name: string;
-	value?: string;
-	checked: boolean;
-	isGroup?: boolean;
-	entities?: IEntityModel[];
-}
+import { Subject } from 'rxjs/internal/Subject';
+import { finalize, tap } from 'rxjs/operators';
+import { IEntityModel } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { ExportAllService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-download',
+	selector: 'ngx-export',
 	templateUrl: './export.component.html',
 	styleUrls: ['./export.component.scss']
 })
 export class ExportComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements AfterViewInit, OnInit {
+
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
 	selectedModels: Array<IEntityModel> = [];
-	checkedAll = true;
-	organization: IOrganization;
+	checkedAll: boolean;
+	subject$: Subject<any> = new Subject();
+	loading: boolean;
 
 	constructor(
-		private exportAll: ExportAllService,
-		private store: Store,
+		private readonly exportAll: ExportAllService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.getEntities();
-		this.onCheckboxChangeAll(this.checkedAll);
-
-		this.store.selectedOrganization$
+		this.subject$
 			.pipe(
-				filter((organization) => !!organization),
+				tap(() => this.checkedAll = true),
+				tap(() => this.getEntities()),
+				tap(() => this.onCheckboxChangeAll(this.checkedAll)),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				this.organization = organization;
-			});
+			.subscribe();
+		this.subject$.next();
+	}
+
+	ngAfterViewInit() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	onCheckboxChangeAll(checked: boolean) {
-		this.entities.forEach((entity) => {
+		this.entities.forEach((entity: IEntityModel) => {
 			entity.checked = checked;
 			if (entity.isGroup) {
 				this.onCheckboxChange(checked, entity);
@@ -64,12 +64,11 @@ export class ExportComponent
 		});
 	}
 
-	onCheckboxChange(checked: boolean, entity) {
+	onCheckboxChange(checked: boolean, entity: IEntityModel) {
 		entity.checked = checked;
-		if (entity.isGroup && entity.entities.length > 0) {
+		if (entity.isGroup && isNotEmpty(entity.entities)) {
 			entity.entities.forEach((t: IEntityModel) => (t.checked = checked));
 		}
-
 		this.selectedCheckboxes();
 	}
 
@@ -96,7 +95,7 @@ export class ExportComponent
 
 		multipleArray.forEach((item: any) => {
 			this.selectedModels.push(...item.entities);
-			if (item.hasOwnProperty('entities')) {
+			if ('entities' in item) {
 				delete item.entities;
 			}
 
@@ -115,34 +114,22 @@ export class ExportComponent
 	}
 
 	onSubmit() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
+		this.loading = true;
 		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificData(entities, {
-				organizationId,
-				tenantId
-			})
-			.pipe(untilDestroyed(this))
-			.subscribe((data) => saveAs(data, `export.zip`));
-	}
-
-	onDownloadAll() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		this.exportAll
-			.downloadAllData({ organizationId, tenantId })
-			.pipe(untilDestroyed(this))
-			.subscribe((data) => saveAs(data, `export.zip`));
+			.downloadSpecificData(entities)
+			.pipe(
+				finalize(() => this.loading = false),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => saveAs(data, `archive.zip`));
 	}
 
 	getEntities() {
 		this.entities = [
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.ACTIVITY'),
-				value: 'activity',
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ACCOUNTING_TEMPLATE'),
+				value: 'accounting_template',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -173,6 +160,13 @@ export class ExportComponent
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.CONTACT'),
 				value: 'contact',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CUSTOM_SMTP'),
+				value: 'custom_smtp',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -221,7 +215,7 @@ export class ExportComponent
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.EVENT_TYPES'),
-				value: 'event_types',
+				value: 'event_type',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -232,6 +226,13 @@ export class ExportComponent
 				checked: true,
 				isGroup: true,
 				entities: this.getExpenseEntities()
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.FEATURE'),
+				value: 'feature',
+				checked: true,
+				isGroup: true,
+				entities: this.getFeatureEntities()
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.GOAL'),
@@ -259,7 +260,7 @@ export class ExportComponent
 				value: 'invite',
 				checked: true,
 				isGroup: false,
-				entities: this.getInviteEntities()
+				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.INVOICE'),
@@ -283,7 +284,7 @@ export class ExportComponent
 				entities: this.getKeyResultEntities()
 			},
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.KNOWLAGE_BASE'),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.KNOWLEDGE_BASE'),
 				value: 'knowledge_base',
 				checked: true,
 				isGroup: true,
@@ -293,6 +294,7 @@ export class ExportComponent
 				name: this.getTranslation('MENU.IMPORT_EXPORT.LANGUAGE'),
 				value: 'language',
 				checked: true,
+				isGroup: false,
 				entities: []
 			},
 			{
@@ -313,8 +315,8 @@ export class ExportComponent
 				name: this.getTranslation('MENU.IMPORT_EXPORT.PIPELINE'),
 				value: 'pipeline',
 				checked: true,
-				isGroup: false,
-				entities: []
+				isGroup: true,
+				entities: this.getPipelineEntities()
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT'),
@@ -343,7 +345,7 @@ export class ExportComponent
 				),
 				value: 'request_approval',
 				checked: true,
-				isGroup: false,
+				isGroup: true,
 				entities: this.getRequestApprovalEntities()
 			},
 			{
@@ -358,13 +360,6 @@ export class ExportComponent
 				value: 'skill',
 				checked: true,
 				isGroup: false,
-				entities: this.getSkillEntities()
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.STAGE'),
-				value: 'pipeline_stage',
-				checked: true,
-				isGroup: false,
 				entities: []
 			},
 			{
@@ -372,28 +367,28 @@ export class ExportComponent
 				value: 'tag',
 				checked: true,
 				isGroup: false,
-				entities: this.getTagEntities()
+				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK'),
 				value: 'task',
 				checked: true,
 				isGroup: false,
-				entities: this.getTaskEntities()
+				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TENANT'),
 				value: 'tenant',
 				checked: true,
-				isGroup: false,
-				entities: []
+				isGroup: true,
+				entities: this.getTenantEntities()
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TIME_OFF_POLICY'),
 				value: 'time_off_policy',
 				checked: true,
 				isGroup: true,
-				entities: this.getTimeoffEntities()
+				entities: this.getTimeOffEntities()
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TIME_SHEET'),
@@ -416,9 +411,9 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_CREATION_RATING'
+					'MENU.IMPORT_EXPORT.CANDIDATE_CRITERION_RATING'
 				),
-				value: 'candidate_creation_rating',
+				value: 'candidate_criterion_rating',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -518,7 +513,7 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_AWARDS'
+					'MENU.IMPORT_EXPORT.ORGANIZATION_AWARD'
 				),
 				value: 'organization_award',
 				checked: true,
@@ -534,7 +529,6 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Organization Contact Employee', value: 'organization_contact_employee', checked: true, isGroup: false, entities: [] },
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.ORGANIZATION_DEPARTMENT'
@@ -544,7 +538,6 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Organization Department Employee', value: 'organization_department_employee', checked: true, isGroup: false, entities: [] },
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.ORGANIZATION_DOCUMENT'
@@ -572,12 +565,11 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Organization Employment Type Employee', value: 'organization_employment_type_employee', checked: true, isGroup: false, entities: [] },
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.ORGANIZATION_LANGUAGES'
 				),
-				value: 'organization_languages',
+				value: 'organization_language',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -600,7 +592,6 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Organization Project Employee', value: 'organization_project_employee', checked: true, isGroup: false, entities: [] },
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.ORGANIZATION_RECURRING_EXPENSE'
@@ -670,7 +661,6 @@ export class ExportComponent
 
 	getEmployeeEntities(): IEntityModel[] {
 		return [
-			// { name: 'Appointment Employees', value: 'appointment_employee', checked: true, isGroup: false, entities: [] },
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.EMPLOYEE_APPOINTMENT'
@@ -713,12 +703,30 @@ export class ExportComponent
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.EMPLOYEE_UPWORK_JOB_SEARCH_CRITERION'
+				),
+				value: 'employee_upwork_job_search_criterion',
+				checked: true,
+				isGroup: false,
+				entities: []
 			}
 		];
 	}
 
 	getIntegrationEntities(): IEntityModel[] {
 		return [
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.INTEGRATION_TYPE'
+				),
+				value: 'integration_type',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING'
@@ -737,7 +745,6 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Integration Integration Type', value: 'integration_integration_type', checked: true, isGroup: false, entities: [] },
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_MAP'),
 				value: 'integration_map',
@@ -763,39 +770,6 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			}
-			// { name: 'Integration Type', value: 'integration_type', checked: true, isGroup: false, entities: [] },
-		];
-	}
-
-	getInviteEntities(): IEntityModel[] {
-		return [
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INVITE_ORGANIZATION_CONTACT'
-				),
-				value: 'invite_organization_contact',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INVITE_ORGANIZATION_DEPARTMENT'
-				),
-				value: 'invite_organization_department',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INVITE_ORGANIZATION_PROJECT'
-				),
-				value: 'invite_organization_project',
-				checked: true,
-				isGroup: false,
-				entities: []
-			}
 		];
 	}
 
@@ -810,10 +784,53 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Product Category Translation', value: 'product_category_translation', checked: true, isGroup: false, entities: [] },
+			{ 	
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.PRODUCT_CATEGORY_TRANSLATION'
+				),
+				value: 'product_category_translation',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_OPTION'),
 				value: 'product_option',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_OPTION_GROUP'),
+				value: 'product_option_group',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_OPTION_GROUP_TRANSLATION'),
+				value: 'product_option_group_translation',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_OPTION_TRANSLATION'),
+				value: 'product_option_translation',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_STORE'),
+				value: 'product_store',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_TRANSLATION'),
+				value: 'product_translation',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -825,7 +842,13 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Product Type Translation', value: 'product_type_translation', checked: true, isGroup: false, entities: [] },
+			{ 	
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_TYPE_TRANSLATION'),
+				value: 'product_type_translation', 
+				checked: true, 
+				isGroup: false, 
+				entities: [] 
+			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_VARIANT'),
 				value: 'product_variant',
@@ -833,7 +856,6 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Product Variant Options Product Option', value: 'product_variant_options_product_option', checked: true, isGroup: false, entities: [] },
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.PRODUCT_VARIANT_PRICE'
@@ -851,6 +873,49 @@ export class ExportComponent
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.PRODUCT_IMAGE_ASSET'
+				),
+				value: 'image_asset',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.WAREHOUSE'
+				),
+				value: 'warehouse',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.MERCHANT'),
+				value: 'merchant',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.WAREHOUSE_PRODUCT'
+				),
+				value: 'warehouse_product',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.WAREHOUSE_PRODUCT_VARIANT'
+				),
+				value: 'warehouse_product_variant',
+				checked: true,
+				isGroup: false,
+				entities: []
 			}
 		];
 	}
@@ -863,21 +928,19 @@ export class ExportComponent
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.REPORT_ORGANIZATION'),
+				value: 'report_organization',
+				checked: true,
+				isGroup: false,
+				entities: []
 			}
 		];
 	}
 
 	getRequestApprovalEntities(): IEntityModel[] {
 		return [
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.REQUEST_APPROVAL_TAG'
-				),
-				value: 'tag_request_approval',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.REQUEST_APPROVAL_EMPLOYEE'
@@ -899,229 +962,8 @@ export class ExportComponent
 		];
 	}
 
-	getSkillEntities(): IEntityModel[] {
-		return [
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.SKILL_EMPLOYEE'),
-				value: 'skill_employee',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.SKILL_ORGANIZATION'
-				),
-				value: 'skill_organization',
-				checked: true,
-				isGroup: false,
-				entities: []
-			}
-		];
-	}
-
-	getTagEntities(): IEntityModel[] {
-		return [
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_CANDIDATE'),
-				value: 'tag_candidate',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_EMPLOYEE'),
-				value: 'tag_employee',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_EQUIPMENT'),
-				value: 'tag_equipment',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_EVENT_TYPE'),
-				value: 'tag_event_type',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_EXPENSE'),
-				value: 'tag_expense',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_ICNOME'),
-				value: 'tag_income',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_INVOICE'),
-				value: 'tag_invoice',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_CONTACT'
-				),
-				value: 'tag_organization_contact',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_DEPARTMENT'
-				),
-				value: 'tag_organization_department',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_EMPLOYEE_LEVEL'
-				),
-				value: 'tag_organization_employee_level',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_EMPLOYEE_TYPE'
-				),
-				value: 'tag_organization_employment_type',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_EXPENSES_CATEGORY'
-				),
-				value: 'tag_organization_expense_category',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_POSITION'
-				),
-				value: 'tag_organization_position',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_PROJECT'
-				),
-				value: 'tag_organization_project',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_TEAM'
-				),
-				value: 'tag_organization_team',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATION_VENDOR'
-				),
-				value: 'tag_organization_vendor',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TAG_ORGANIZATIONS'
-				),
-				value: 'tag_organization',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_PAYMENT'),
-				value: 'tag_payment',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_PRODUCT'),
-				value: 'tag_product',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_PROPOSAL'),
-				value: 'tag_proposal',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_TASK'),
-				value: 'tag_task',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_USER'),
-				value: 'tag_user',
-				checked: true,
-				isGroup: false,
-				entities: []
-			}
-		];
-	}
-
-	getTaskEntities(): IEntityModel[] {
-		return [
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_EMPLOYEE'),
-				value: 'task_employee',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_TEAM'),
-				value: 'task_team',
-				checked: true,
-				isGroup: false,
-				entities: []
-			}
-		];
-	}
-
 	getEquipmentEntities(): IEntityModel[] {
 		return [
-			// { name: 'Equipment Shares Employees', value: 'equipment_shares_employees', checked: true, isGroup: false, entities: [] },
-			// { name: 'Equipment Shares Teams', value: 'equipment_shares_teams', checked: true, isGroup: false, entities: [] },
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.EQUIPMENT_SHARING'
@@ -1130,8 +972,16 @@ export class ExportComponent
 				checked: true,
 				isGroup: false,
 				entities: []
-			}
-			// { name: 'Equipment Sharing Policy', value: 'equipment_sharing_policy', checked: true, isGroup: false, entities: [] },
+			},
+			{ 
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.EQUIPMENT_SHARE_POLICY'
+				), 
+				value: 'equipment_sharing_policy', 
+				checked: true, 
+				isGroup: false, 
+				entities: [] 
+			},
 		];
 	}
 
@@ -1149,9 +999,29 @@ export class ExportComponent
 		];
 	}
 
+	getFeatureEntities(): IEntityModel[] {
+		return [
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.FEATURE_ORGANIZATION'
+				),
+				value: 'feature_organization',
+				checked: true,
+				isGroup: false,
+				entities: []
+			}
+		];
+	}
+
 	getGoalEntities(): IEntityModel[] {
 		return [
-			// { name: 'Goal General Setting', value: 'goal_general_setting', checked: true, isGroup: false, entities: [] },
+			{ 
+				name: this.getTranslation('MENU.IMPORT_EXPORT.GOAL_GENERAL_SETTING'), 
+				value: 'goal_general_setting', 
+				checked: true, 
+				isGroup: false, 
+				entities: [] 
+			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.GOAL_KPI'),
 				value: 'goal_kpi',
@@ -1189,7 +1059,7 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KNOWLAGE_BASE_ARTICLE'
+					'MENU.IMPORT_EXPORT.KNOWLEDGE_BASE_ARTICLE'
 				),
 				value: 'knowledge_base_article',
 				checked: true,
@@ -1198,7 +1068,7 @@ export class ExportComponent
 			},
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KNOWLAGE_BASE_AUTHOR'
+					'MENU.IMPORT_EXPORT.KNOWLEDGE_BASE_AUTHOR'
 				),
 				value: 'knowledge_base_author',
 				checked: true,
@@ -1234,6 +1104,13 @@ export class ExportComponent
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.JOB_PRESET'),
 				value: 'job_preset',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.JOB_PRESET_UPWORK_SEARCH_CRITERION'),
+				value: 'job_preset_upwork_job_search_criterion',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -1285,7 +1162,7 @@ export class ExportComponent
 	getRoleEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.ROLE_PREMISSION'),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ROLE_PERMISSION'),
 				value: 'role_permission',
 				checked: true,
 				isGroup: false,
@@ -1294,31 +1171,13 @@ export class ExportComponent
 		];
 	}
 
-	getTimeoffEntities(): IEntityModel[] {
+	getTimeOffEntities(): IEntityModel[] {
 		return [
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TIME_OFF_POLICY_EMPLOYEE'
-				),
-				value: 'time_off_policy_employee',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
 			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.TIME_OFF_REQUEST'
 				),
 				value: 'time_off_request',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TIME_OFF_REQUEST_EMPLOYEE'
-				),
-				value: 'time_off_request_employee',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -1328,6 +1187,13 @@ export class ExportComponent
 
 	getTimesheetEntities(): IEntityModel[] {
 		return [
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ACTIVITY'),
+				value: 'activity',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.SCREENSHOT'),
 				value: 'screenshot',
@@ -1353,16 +1219,7 @@ export class ExportComponent
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.TIME_SLOT_MINUTES'
 				),
-				value: 'time_slot_minutes',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TIME_SLOT_TIME_LOGOS'
-				),
-				value: 'time_slot_time_logs',
+				value: 'time_slot_minute',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -1374,9 +1231,37 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.USER_ORGANIIZATION'
+					'MENU.IMPORT_EXPORT.USER_ORGANIZATION'
 				),
 				value: 'user_organization',
+				checked: true,
+				isGroup: false,
+				entities: []
+			}
+		];
+	}
+
+	getPipelineEntities(): IEntityModel[] {
+		return [
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.PIPELINE_STAGE'
+				),
+				value: 'pipeline_stage',
+				checked: true,
+				isGroup: false,
+				entities: []
+			}
+		];
+	}
+
+	getTenantEntities(): IEntityModel[] {
+		return [
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.TENANT_SETTING'
+				),
+				value: 'tenant_setting',
 				checked: true,
 				isGroup: false,
 				entities: []

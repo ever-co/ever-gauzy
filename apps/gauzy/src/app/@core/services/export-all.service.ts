@@ -8,11 +8,10 @@ import { API_PREFIX } from '../constants/app.constants';
 export class ExportAllService {
 	constructor(private http: HttpClient) {}
 
-	downloadAllData(findInput) {
-		const data = JSON.stringify({ findInput });
+	downloadAllData() {
 		return this.http.get(`${API_PREFIX}/download`, {
 			responseType: 'blob',
-			params: { data }
+			params: {}
 		});
 	}
 
@@ -22,8 +21,8 @@ export class ExportAllService {
 		});
 	}
 
-	downloadSpecificData(names: string[], findInput) {
-		const data = JSON.stringify({ entities: { names }, findInput });
+	downloadSpecificData(names: string[]) {
+		const data = JSON.stringify({ entities: { names } });
 		return this.http.get(`${API_PREFIX}/download/filter`, {
 			responseType: 'blob',
 			params: { data }

@@ -129,7 +129,8 @@ import { resolveServeStaticPath } from './helper';
 import { AccountingTemplateModule } from './accounting-template/accounting-template.module';
 import { SeederModule } from './core/seeds/seeder.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
-import { MerchantModule } from 'merchant/merchant.module';
+import { MerchantModule } from './merchant/merchant.module';
+import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -309,7 +310,8 @@ if (process.env.DB_TYPE === 'postgres') {
 		AccountingTemplateModule,
 		SeederModule,
 		WarehouseModule,
-		MerchantModule
+		MerchantModule,
+		GauzyCloudModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

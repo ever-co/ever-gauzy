@@ -32,7 +32,7 @@ const providers = [
 			}
 		]),
 		SocialAuthModule.registerAsync({
-			imports: [AuthModule],
+			imports: [AuthModule, CqrsModule],
 			useClass: AuthService
 		}),
 		TypeOrmModule.forFeature([User, UserOrganization, Organization]),

@@ -41,7 +41,7 @@ export class FileStorageComponent
 
 	submit() {
 		this.tenantService.saveSettings(this.settings).then(() => {
-			this.toastrService.success('TOASTR.MESSAGE.SETTINS_SAVED');
+			this.toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		});
 	}
 }

@@ -1,18 +1,67 @@
 import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
-import { Router } from '@angular/router';
+import { Router, UrlSerializer } from '@angular/router';
+import { concatMap, delay, filter, finalize, switchMap, tap } from 'rxjs/operators';
+import { of as observableOf } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { 
+	ITenant,
+	IAuthResponse,
+	IOrganization,
+	IOrganizationCreateInput,
+	IUser,
+	IUserRegistrationInput,
+	PermissionsEnum,
+	BonusTypeEnum,
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	ImportTypeEnum 
+} from '@gauzy/contracts';
 import { ExportAllService } from '../../@core/services/export-all.service';
+import { environment } from './../../../environments/environment';
+import { Environment } from './../../../environments/model';
+import { GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-import-export',
 	templateUrl: './import-export.html'
 })
-export class ImportExportComponent implements OnInit {
-	constructor(private exportAll: ExportAllService, private router: Router) {}
+export class ImportExportComponent extends TranslationBaseComponent implements OnInit {
 
-	ngOnInit() {}
+	user: IUser;
+	environment: Environment = environment;
+	permissionsEnum = PermissionsEnum;
+	loading: boolean;
+	token: string;
+	gauzyUser: IUser;
+	organizations: IOrganization[] = [];
+
+	constructor(
+		private readonly exportAll: ExportAllService,
+		private readonly gauzyCloudService: GauzyCloudService,
+		private readonly userOrganizationService: UsersOrganizationsService,
+		private readonly router: Router,
+		private readonly store: Store,
+		readonly translateService: TranslateService,
+		private readonly toastrService: ToastrService,
+		private readonly serializer: UrlSerializer
+	) {
+		super(translateService);
+	}
+
+	ngOnInit() {
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				tap(() => this.getOrganizations()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	importPage() {
 		this.router.navigate(['/pages/settings/import-export/import']);
@@ -26,6 +75,118 @@ export class ImportExportComponent implements OnInit {
 		this.exportAll
 			.downloadTemplates()
 			.pipe(untilDestroyed(this))
-			.subscribe((data) => saveAs(data, `template.zip`));
+			.subscribe((data) => saveAs(data, `archive.zip`));
+	}
+
+	/*
+	* Migrate Self Hosted to Gauzy Cloud Hosted
+	*/
+	onMigrateIntoCloud(password: string) {
+		this.loading = true;
+		const {
+			id: sourceId,
+			firstName,
+			lastName,
+			username,
+			thirdPartyId,
+			email,
+			imageUrl,
+			preferredComponentLayout,
+			preferredLanguage,
+			tenant: { id: tenantId, name }
+		} = this.user;
+		const register: IUserRegistrationInput = {
+			user: {
+				firstName, 
+				lastName,
+				username,
+				thirdPartyId,
+				email,
+				preferredComponentLayout,
+				preferredLanguage,
+				imageUrl
+			},
+			isImporting: true,
+			sourceId,
+			password
+		}
+
+		try {
+			this.gauzyCloudService.migrateIntoCloud(register)
+				.pipe(
+					switchMap((response: IAuthResponse) => {
+						const { token, user } = response;
+						this.token = token;
+						this.gauzyUser = user;
+						return this.gauzyCloudService.migrateTenant({ name, isImporting: true, sourceId: tenantId }, token);
+					}),
+					delay(1000),
+					concatMap(async (tenant: ITenant) => {
+						for await (const organization of this.organizations) {
+							await this.gauzyCloudService.migrateOrganization({ 
+								...this.mapOrganization(organization, tenant) }, 
+								this.token
+							).toPromise();
+						}
+						return await observableOf(tenant).toPromise();
+					}),
+					tap(() => {
+						this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
+							tenant: name
+						});
+					}),
+					finalize(() => {
+						this.loading = false;
+						const externalUrl = environment.GAUZY_CLOUD_APP;
+						const tree = this.router.createUrlTree(['/pages/settings/import-export/import'], { 
+							queryParams: { 
+								token: this.token,
+								userId: this.gauzyUser.id,
+								importType: ImportTypeEnum.MERGE
+							} 
+						});
+
+						let redirect: string;
+						if (externalUrl.indexOf('#') !== -1) {
+							redirect = externalUrl + '' + this.serializer.serialize(tree);
+						} else {
+							redirect = externalUrl + '/#' + this.serializer.serialize(tree);
+						}
+						setTimeout(() => {
+							this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]);
+						}, 1500);	
+					}),
+					untilDestroyed(this),
+				)
+				.subscribe();
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	async getOrganizations() {
+		const { id: userId, tenantId } = this.user;
+		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], {  userId,  tenantId  });
+		this.organizations = items.map((item) => item.organization);
+	}
+
+	mapOrganization(
+		organization: IOrganization,
+		tenant: ITenant
+	): IOrganizationCreateInput {
+		const { currency, defaultValueDateType, bonusType, imageUrl, id: sourceId } = organization;
+		delete organization['id'];
+
+		return {
+			...organization,
+			imageUrl,
+			tenant,
+			tenantId: tenant.id,
+			currency: currency as CurrenciesEnum, 
+			defaultValueDateType: defaultValueDateType as DefaultValueDateTypeEnum, 
+			bonusType: bonusType as BonusTypeEnum,
+			isImporting: true,
+			sourceId
+		}
 	}
 }

@@ -4,7 +4,9 @@ import {
 	JoinColumn,
 	ManyToMany,
 	JoinTable,
-	ManyToOne
+	ManyToOne,
+	RelationId,
+	Index
 } from 'typeorm';
 import {
 	IEmployee,
@@ -30,12 +32,7 @@ import {
 export class TimeOffRequest
 	extends TenantOrganizationBaseEntity
 	implements ITimeOffRequest {
-	@ManyToMany(() => Employee, { cascade: true })
-	@JoinTable({
-		name: 'time_off_request_employee'
-	})
-	employees?: IEmployee[];
-
+	
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
@@ -47,15 +44,6 @@ export class TimeOffRequest
 	@IsOptional()
 	@Column({ nullable: true })
 	description?: string;
-
-	@ApiProperty({ type: () => TimeOffPolicy })
-	@IsOptional()
-	@ManyToOne(() => TimeOffPolicy, {
-		nullable: false,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	policy?: ITimeOffPolicy;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
@@ -87,4 +75,37 @@ export class TimeOffRequest
 	@IsOptional()
 	@Column({ nullable: true })
 	isArchived?: boolean;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	// TimeOff Policy
+	@ApiProperty({ type: () => TimeOffPolicy })
+	@IsOptional()
+	@ManyToOne(() => TimeOffPolicy, {
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	policy?: ITimeOffPolicy;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: TimeOffRequest) => it.policy)
+	@IsString()
+	@Index()
+	@Column({ nullable: false })
+	policyId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ManyToMany(() => Employee, { cascade: true })
+	@JoinTable({
+		name: 'time_off_request_employee'
+	})
+	employees?: IEmployee[];
 }

@@ -8,6 +8,7 @@
 			[size]="size"
 			[placeholder]=" placeholder || 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate" 
 			fullWidth
+			id="currencySelect"
 			[status]="formControl.invalid && formControl.touched ? 'danger' : 'basic'"
 			[(ngModel)]="currency"
 			[formControl]="formControl"

@@ -23,16 +23,22 @@ export const createRandomActivities = async (
 	tenant: ITenant,
 	timeSlots: ITimeSlot[]
 ): Promise<Activity[]> => {
-	const employees = await connection.getRepository(Employee).find();
-	const allActivities: Activity[] = [];
+	const employees = await connection.getRepository(Employee).find({
+		where: {
+			tenant
+		}
+	});
 
 	let query = connection
 		.getRepository(OrganizationProject)
 		.createQueryBuilder();
-	query = query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-	const projects: OrganizationProject[] = await query.getMany();
+	query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+	query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId: tenant.id });
 
+	const projects: OrganizationProject[] = await query.getMany();
+	
 	const appNames: string[] = _.shuffle(AppsNames);
+	const allActivities: Activity[] = [];
 
 	for (let day = 0; day < 5; day++) {
 		const date = moment().subtract(day, 'day').toDate();

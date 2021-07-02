@@ -12,56 +12,114 @@ import {
 } from '../prompt/prompt.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
 	selector: '[ngxPromptDialog]'
 })
-export class PromptDirective implements OnDestroy {
-	data: PromptDialogOptions;
-
-	@Input() set message(value) {
-		this.data.message = value;
+export class PromptDirective extends TranslationBaseComponent implements OnDestroy {
+	/*
+	* Getter & Setter for label
+	*/
+	_label: string;
+	get label(): string {
+		return this._label;
 	}
-	@Input() set title(value) {
-		this.data.title = value;
-	}
-
-	@Input() set okText(value) {
-		this.data.okText = value;
+	@Input() set label(value: string) {
+		this._label = value;
 	}
 
-	@Input() set cancelText(value) {
-		this.data.cancelText = value;
+	/*
+	* Getter & Setter for title
+	*/
+	_title: string;
+	get title(): string {
+		return this._title;
+	}
+	@Input() set title(value: string) {
+		this._title = value;
 	}
 
-	@Input() set placeholder(value) {
-		this.data.placeholder = value;
+	/*
+	* Getter & Setter for okText
+	*/
+	_okText: string = this.getTranslation('BUTTONS.OK'); 
+	get okText(): string {
+		return this._okText;
+	}
+	@Input() set okText(value: string) {
+		this._okText = value;
 	}
 
-	@Input() set inputType(value) {
-		this.data.inputType = value || 'text';
+	/*
+	* Getter & Setter for cancelText
+	*/
+	_cancelText: string = this.getTranslation('BUTTONS.CANCEL');
+	get cancelText(): string {
+		return this._cancelText;
+	}
+	@Input() set cancelText(value: string) {
+		this._cancelText = value;
+	}
+
+	/*
+	* Getter & Setter for placeholder
+	*/
+	_placeholder: string;
+	get placeholder(): string {
+		return this._placeholder;
+	}
+	@Input() set placeholder(value: string) {
+		this._placeholder = value;
+	}
+
+	/*
+	* Getter & Setter for inputType
+	*/
+	_inputType: PromptDialogOptions['inputType'] = 'text';
+	get inputType(): PromptDialogOptions['inputType'] {
+		return this._inputType;
+	}
+	@Input() set inputType(value: PromptDialogOptions['inputType']) {
+		this._inputType = value;
 	}
 
 	@Output() callback = new EventEmitter<string | string[]>();
 
-	constructor(private dialogService: NbDialogService) {}
+	constructor(
+		private readonly dialogService: NbDialogService,
+		readonly translateService: TranslateService,
+	) {
+		super(translateService);
+	}
 
-	@HostListener('click', ['$event']) onClick($event) {
+	@HostListener('click', ['$event']) onClick($event: any) {
 		$event.stopPropagation();
-
+		const { cancelText, inputType, label, okText, placeholder, title } = this;
 		const dialogRef = this.dialogService.open(PromptComponent, {
-			dialogClass: 'modal-sm',
+			dialogClass: 'modal-lg',
 			context: {
-				data: this.data
+				data: {
+					cancelText,
+					inputType,
+					label,
+					okText,
+					placeholder,
+					title
+				}
 			}
 		});
 
-		dialogRef.onClose.pipe(untilDestroyed(this)).subscribe((confirm) => {
-			if (confirm) {
-				this.callback.emit(confirm);
-			}
-		});
+		dialogRef.onClose
+			.pipe(
+				untilDestroyed(this)
+			).subscribe((confirm) => {
+				if (confirm) {
+					this.callback.emit(confirm);
+				}
+			});
 	}
 
 	ngOnDestroy(): void {}

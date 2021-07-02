@@ -26,7 +26,9 @@ import {
 	ManyToOne,
 	Unique,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	RelationId,
+	Index
 } from 'typeorm';
 import {
 	InvoiceEstimateHistory,
@@ -41,13 +43,7 @@ import {
 @Entity('invoice')
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
-	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.invoice)
-	@JoinTable({
-		name: 'tag_invoice'
-	})
-	tags?: Tag[];
-
+	
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
@@ -75,7 +71,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ nullable: true })
+	@Column({ type: Boolean, nullable: true })
 	paid: boolean;
 
 	@ApiProperty({ type: () => Number })
@@ -108,12 +104,12 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ nullable: true })
+	@Column({ type: Boolean, nullable: true })
 	isEstimate?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ nullable: true })
+	@Column({ type: Boolean, nullable: true })
 	isAccepted?: boolean;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
@@ -169,7 +165,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ nullable: true })
+	@Column({ type: Boolean, nullable: true })
 	hasRemainingAmountInvoiced?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -186,19 +182,46 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ nullable: true })
+	@Column({ type: Boolean, nullable: true })
 	isArchived?: boolean;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	// From Organization
 	@ApiPropertyOptional({ type: () => () => Organization })
 	@ManyToOne(() => Organization)
 	@JoinColumn()
 	fromOrganization?: IOrganization;
 
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Invoice) => it.fromOrganization)
+	@IsString()
+	@Index()
+	@Column()
+	fromOrganizationId?: string;
+
+	// To Contact
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
 	@ManyToOne(() => OrganizationContact)
 	@JoinColumn()
 	toContact?: IOrganizationContact;
 
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Invoice) => it.toContact)
+	@IsString()
+	@Index()
+	@Column()
+	toContactId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Invoice Estimate Items
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
 		onDelete: 'SET NULL'
@@ -206,6 +229,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
+   	// Invoice Estimate Payments
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
 	@OneToMany(() => Payment, (payment) => payment.invoice, {
 		onDelete: 'SET NULL'
@@ -213,14 +237,23 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@JoinColumn()
 	payments?: IPayment[];
 
+	// Invoice Estimate History
 	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
-	@OneToMany(
-		() => InvoiceEstimateHistory,
-		(invoiceEstimateHistory) => invoiceEstimateHistory.invoice,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
+	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.invoice, { 
+		cascade: true 
+	})
 	@JoinColumn()
 	historyRecords?: IInvoiceEstimateHistory[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Tag })
+	@ManyToMany(() => Tag, (tag) => tag.invoice)
+	@JoinTable({
+		name: 'tag_invoice'
+	})
+	tags?: Tag[];
 }

@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbRadioModule,
-	NbCheckboxModule
+	NbCheckboxModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ExportComponent } from './export.component';
@@ -27,6 +28,7 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		NbInputModule,
 		NbRadioModule,
 		NbCheckboxModule,
+		NbSpinnerModule,
 		ReactiveFormsModule,
 		FormsModule,
 		TranslateModule

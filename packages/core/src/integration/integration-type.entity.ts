@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
-import { IIntegrationType } from '@gauzy/contracts';
-import { BaseEntity } from '../core/entities/internal';
+import { Column, Entity, ManyToMany } from 'typeorm';
+import { IIntegration, IIntegrationType } from '@gauzy/contracts';
+import { BaseEntity, Integration } from '../core/entities/internal';
 
 @Entity('integration_type')
 export class IntegrationType extends BaseEntity implements IIntegrationType {
@@ -16,4 +16,7 @@ export class IntegrationType extends BaseEntity implements IIntegrationType {
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: false })
 	order: number;
+
+	@ManyToMany(() => Integration, (integration) => integration.integrationTypes)
+	integrations?: IIntegration[];
 }

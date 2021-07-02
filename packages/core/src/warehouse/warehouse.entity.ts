@@ -5,7 +5,10 @@ import {
 	JoinColumn,
 	ManyToMany,
 	JoinTable,
-	OneToOne
+	OneToOne,
+	Index,
+	RelationId,
+	OneToMany
 } from 'typeorm';
 import { IContact, ITag, IWarehouse } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -20,22 +23,20 @@ import {
 
 @Entity('warehouse')
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
+	
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	name: string;
 
-	@ApiProperty()
-	@ManyToOne(
-		() => ImageAsset,
-		{ cascade: true }
-	)
-	@JoinColumn()
-	logo: ImageAsset;
-
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
+	email: string;
+
+	@ApiProperty({ type: () => String })
+	@IsString()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
@@ -47,32 +48,43 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@Column()
 	code: string;
 
-	@ManyToOne(
-		() => WarehouseProduct,
-		(warehouseProduct) => warehouseProduct.warehouse,
-		{ onDelete: 'SET NULL',
-			cascade: true }
-	)
+	@ApiProperty()
+	@ManyToOne(() => ImageAsset, { cascade: true })
 	@JoinColumn()
-	products: WarehouseProduct[];
+	logo: ImageAsset;
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Warehouse) => it.logo)
 	@IsString()
-	@Column()
-	email: string;
+	@Index()
+	@Column({ nullable: false })
+	logoId: string;
 
 	@ApiProperty({ type: () => Contact })
 	@OneToOne(() => Contact, {
-		eager: true,
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	contact: IContact;
 
-	@ManyToMany(() => Tag, {
-		eager: true
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Warehouse) => it.contact)
+	@IsString()
+	@Index()
+	@Column({ nullable: false })
+	contactId: string;
+
+	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.warehouse, {
+		cascade: true 
 	})
+	@JoinColumn()
+	products: WarehouseProduct[];
+
+	@ManyToMany(() => Tag, (tag) => tag.merchants, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
 	@JoinTable({
 		name: 'tag_warehouse'
 	})

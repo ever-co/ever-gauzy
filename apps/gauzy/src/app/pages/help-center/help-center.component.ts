@@ -208,7 +208,7 @@ export class HelpCenterComponent
 		const data = await dialog.onClose.pipe(first()).toPromise();
 
 		if (data) {
-			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICALE_CREATED');
+			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICLE_CREATED');
 			this.loadArticles(this.categoryId);
 		}
 	}
@@ -221,7 +221,7 @@ export class HelpCenterComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICALE_DELETED', {
+			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICLE_DELETED', {
 				name: data.name
 			});
 			this.loadArticles(this.categoryId);
@@ -240,7 +240,7 @@ export class HelpCenterComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICALE_UPDATED', {
+			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICLE_UPDATED', {
 				name: data.name
 			});
 			this.loadArticles(this.categoryId);

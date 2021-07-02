@@ -70,7 +70,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsEmail()
 	@IsNotEmpty()
-	@Index({ unique: true })
+	@Index({ unique: false })
 	@IsOptional()
 	@Column({ nullable: true })
 	email?: string;
@@ -79,7 +79,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsAscii()
 	@MinLength(3)
 	@MaxLength(20)
-	@Index({ unique: true })
+	@Index({ unique: false })
 	@IsOptional()
 	@Column({ nullable: true })
 	username?: string;

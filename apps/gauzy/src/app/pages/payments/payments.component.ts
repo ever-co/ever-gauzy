@@ -214,21 +214,26 @@ export class PaymentsComponent
 				...this.filters.where
 			},
 			resultMap: (payment: IPayment) => {
-				const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
-				let organizationContactName: string;
-				if (invoice && invoice.toContact) {
-					organizationContactName = invoice.toContact.name;
-				} else if (contact) {
-					organizationContactName = contact.name;
+				try {
+					const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
+					let organizationContactName: string;
+					if (contact) {
+						organizationContactName = contact.name;
+					} else if (invoice && invoice.toContact) {
+						organizationContactName = invoice.toContact.name;
+					}
+					return Object.assign({}, payment, {
+						displayOverdue: this.statusMapper(overdue),
+						invoiceNumber: invoice ? invoice.invoiceNumber : null,
+						projectName: project ? project.name : null,
+						recordedByName: recordedBy ? recordedBy.name: null,
+						displayPaymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
+						organizationContactName: organizationContactName
+					});
+				} catch (error) {
+					console.log(error);
+					return Object.assign({}, payment);
 				}
-				return Object.assign({}, payment, {
-					displayOverdue: this.statusMapper(overdue),
-					invoiceNumber: invoice ? invoice.invoiceNumber : null,
-					projectName: project ? project.name : null,
-					organizationContactName,
-					recordedBy: `${recordedBy.firstName} ${recordedBy.lastName}`,
-					displayPaymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
-				});
 			},
 			finalize: () => {
 				this.loading = false;
@@ -416,7 +421,7 @@ export class PaymentsComponent
 						this.searchFilter();
 					}
 				},
-				recordedBy: {
+				recordedByName: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
 					type: 'text',
 					filter: false,

@@ -1,4 +1,8 @@
-<nb-card>
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header>
 		<span class="info-text">{{
 			'MENU.IMPORT_EXPORT.EXPORT_MESSAGE' | translate

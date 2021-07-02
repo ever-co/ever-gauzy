@@ -31,15 +31,12 @@ export class ExportAllController {
 		@Query('data', ParseJsonPipe) data: any,
 		@Res() res
 	): Promise<any> {
-		const { findInput = null } = data;
-
 		await this.exportService.createFolders();
-		await this.exportService.exportTables(findInput);
+		await this.exportService.exportTables();
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
-
-		this.exportService.deleteArchive();
+		await this.exportService.deleteArchive();
 	}
 
 	@ApiOperation({ summary: 'Exports all tables schemas.' })
@@ -56,11 +53,11 @@ export class ExportAllController {
 		@Res() res
 	): Promise<any> {
 		await this.exportService.createFolders();
-		await this.exportService.downloadSpecificTables();
+		await this.exportService.exportSpecificTablesSchema();
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
-		this.exportService.deleteArchive();
+		await this.exportService.deleteArchive();
 	}
 
 	@ApiOperation({ summary: 'Find exports by name' })
@@ -77,17 +74,12 @@ export class ExportAllController {
 		@Query('data', ParseJsonPipe) data: any,
 		@Res() res
 	): Promise<any> {
-		const {
-			entities: { names },
-			findInput = null
-		} = data;
-
+		const { entities: { names } } = data;
 		await this.exportService.createFolders();
-		await this.exportService.exportSpecificTables(names, findInput);
+		await this.exportService.exportSpecificTables(names);
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
-
-		this.exportService.deleteArchive();
+		await this.exportService.deleteArchive();
 	}
 }

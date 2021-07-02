@@ -65,7 +65,7 @@ export interface ICandidateUpdateInput {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
-	organizationDepartment?: IOrganizationDepartment[];
+	organizationDepartments?: IOrganizationDepartment[];
 	organizationPosition?: IOrganizationPosition;
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 	tags?: ITag[];

@@ -11,6 +11,6 @@ export class AuthLoginHandler implements ICommandHandler<AuthLoginCommand> {
 		const { input } = command;
 		const { findObj, password }: IAuthLoginInput = input;
 
-		return this.authService.login(findObj, password);
+		return await this.authService.login(findObj, password);
 	}
 }

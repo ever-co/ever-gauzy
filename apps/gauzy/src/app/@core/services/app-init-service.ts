@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { UsersService } from '../../@core/services';
-import { AuthStrategy } from '../../@core/auth/auth-strategy.service';
 import { IUser } from '@gauzy/contracts';
 import { Router } from '@angular/router';
+import { NgxPermissionsService } from 'ngx-permissions';
+import { UsersService } from '../../@core/services';
+import { AuthStrategy } from '../../@core/auth/auth-strategy.service';
 import { Store } from '../../@core/services/store.service';
 
 @Injectable({ providedIn: 'root' })
@@ -10,10 +11,11 @@ export class AppInitService {
 	user: IUser;
 
 	constructor(
-		private usersService: UsersService,
-		private authStrategy: AuthStrategy,
-		private router: Router,
-		private store: Store
+		private readonly usersService: UsersService,
+		private readonly authStrategy: AuthStrategy,
+		private readonly router: Router,
+		private readonly store: Store,
+		private readonly ngxPermissionsService: NgxPermissionsService
 	) {}
 
 	async init() {
@@ -53,6 +55,9 @@ export class AppInitService {
 				this.store.userRolePermissions = this.user.role.rolePermissions.filter(
 					(permission) => permission.enabled
 				);
+
+				const permissions = this.store.userRolePermissions.map(({ permission }) => permission);
+				this.ngxPermissionsService.loadPermissions(permissions);
 			}
 		} catch (error) {
 			console.log(error);

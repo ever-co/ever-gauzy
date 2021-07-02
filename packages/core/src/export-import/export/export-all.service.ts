@@ -1,17 +1,19 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, Repository } from 'typeorm';
+import { getConnection, getManager, Repository } from 'typeorm';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as _ from 'lodash';
 import * as archiver from 'archiver';
 import * as csv from 'csv-writer';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as fse from 'fs-extra';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { isFunction } from '@gauzy/common';
+import { isFunction, isNotEmpty } from '@gauzy/common';
 import {
+	AccountingTemplate,
 	Activity,
 	AppointmentEmployee,
 	ApprovalPolicy,
@@ -31,6 +33,7 @@ import {
 	Contact,
 	Country,
 	Currency,
+	CustomSmtp,
 	Deal,
 	Email,
 	EmailTemplate,
@@ -41,17 +44,23 @@ import {
 	EmployeeProposalTemplate,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
+	EmployeeUpworkJobsSearchCriterion,
 	Equipment,
 	EquipmentSharing,
+	EquipmentSharingPolicy,
 	EstimateEmail,
 	EventType,
 	Expense,
 	ExpenseCategory,
+	Feature,
+	FeatureOrganization,
 	Goal,
+	GoalGeneralSetting,
 	GoalKPI,
 	GoalKPITemplate,
 	GoalTemplate,
 	GoalTimeFrame,
+	ImageAsset,
 	Income,
 	Integration,
 	IntegrationEntitySetting,
@@ -59,17 +68,20 @@ import {
 	IntegrationMap,
 	IntegrationSetting,
 	IntegrationTenant,
+	IntegrationType,
 	Invite,
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
 	JobPreset,
+	JobPresetUpworkJobSearchCriterion,
 	JobSearchCategory,
 	JobSearchOccupation,
 	KeyResult,
 	KeyResultTemplate,
 	KeyResultUpdate,
 	Language,
+	Merchant,
 	Organization,
 	OrganizationAwards,
 	OrganizationContact,
@@ -89,15 +101,24 @@ import {
 	PipelineStage,
 	Product,
 	ProductCategory,
+	ProductCategoryTranslation,
 	ProductOption,
+	ProductOptionGroup,
+	ProductOptionGroupTranslation,
+	ProductOptionTranslation,
+	ProductTranslation,
 	ProductType,
+	ProductTypeTranslation,
 	ProductVariant,
 	ProductVariantPrice,
 	ProductVariantSettings,
 	Proposal,
 	Report,
 	ReportCategory,
+	ReportOrganization,
 	RequestApproval,
+	RequestApprovalEmployee,
+	RequestApprovalTeam,
 	Role,
 	RolePermissions,
 	Screenshot,
@@ -105,31 +126,47 @@ import {
 	Tag,
 	Task,
 	Tenant,
+	TenantSetting,
 	TimeLog,
 	TimeOffPolicy,
 	TimeOffRequest,
 	Timesheet,
 	TimeSlot,
+	TimeSlotMinute,
 	User,
-	UserOrganization
+	UserOrganization,
+	Warehouse,
+	WarehouseProduct,
+	WarehouseProductVariant
 } from './../../core/entities/internal';
+import { RequestContext } from './../../core/context/request-context';
+import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 
-export interface IRepositoryModel {
-	repository: any;
-	nameFile: string;
-	tenantOrganizationBase?: boolean;
+export interface IColumnRelationMetadata {
+	joinTableName: string;
+}
+export interface IRepositoryModel<T> {
+	repository: Repository<T>;
 	tenantBase?: boolean;
+	relations?: IColumnRelationMetadata[];
+	condition?: any;
 }
 
 @Injectable()
 export class ExportAllService implements OnModuleInit {
+	private _dirname: string;
+	private _basename = '/export';
+
 	public idZip = new BehaviorSubject<string>('');
 	public idCsv = new BehaviorSubject<string>('');
 
-	private dynamicEntitiesClassMap: IRepositoryModel[] = [];
-	private repositories: IRepositoryModel[] = [];
+	private dynamicEntitiesClassMap: IRepositoryModel<any>[] = [];
+	private repositories: IRepositoryModel<any>[] = [];
 
 	constructor(
+		@InjectRepository(AccountingTemplate)
+		private readonly accountingTemplateRepository: Repository<AccountingTemplate>,
+
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
 
@@ -162,6 +199,7 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(CandidateInterview)
 		private readonly candidateInterviewRepository: Repository<CandidateInterview>,
+
 		@InjectRepository(CandidateInterviewers)
 		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
 
@@ -185,6 +223,9 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(Currency)
 		private readonly currencyRepository: Repository<Currency>,
+
+		@InjectRepository(CustomSmtp)
+		private readonly customSmtpRepository: Repository<CustomSmtp>,
 
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
@@ -213,11 +254,17 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(EmployeeSetting)
 		private readonly employeeSettingRepository: Repository<EmployeeSetting>,
 
+		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
+		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
+
 		@InjectRepository(Equipment)
 		private readonly equipmentRepository: Repository<Equipment>,
 
 		@InjectRepository(EquipmentSharing)
 		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+
+		@InjectRepository(EquipmentSharingPolicy)
+		private readonly equipmentSharingPolicyRepository: Repository<EquipmentSharingPolicy>,
 
 		@InjectRepository(EstimateEmail)
 		private readonly estimateEmailRepository: Repository<EstimateEmail>,
@@ -230,6 +277,12 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(ExpenseCategory)
 		private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
+
+		@InjectRepository(Feature)
+		private readonly featureRepository: Repository<Feature>,
+
+		@InjectRepository(FeatureOrganization)
+		private readonly featureOrganizationRepository: Repository<FeatureOrganization>,
 
 		@InjectRepository(Goal)
 		private readonly goalRepository: Repository<Goal>,
@@ -246,11 +299,17 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(GoalTimeFrame)
 		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
 
+		@InjectRepository(GoalGeneralSetting)
+		private readonly goalGeneralSettingRepository: Repository<GoalGeneralSetting>,
+
 		@InjectRepository(Income)
 		private readonly incomeRepository: Repository<Income>,
 
 		@InjectRepository(Integration)
 		private readonly integrationRepository: Repository<Integration>,
+
+		@InjectRepository(IntegrationType)
+		private readonly integrationTypeRepository: Repository<IntegrationType>,
 
 		@InjectRepository(IntegrationEntitySetting)
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
@@ -281,6 +340,9 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(JobPreset)
 		private readonly jobPresetRepository: Repository<JobPreset>,
+
+		@InjectRepository(JobPresetUpworkJobSearchCriterion)
+		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
 
 		@InjectRepository(JobSearchCategory)
 		private readonly jobSearchCategoryRepository: Repository<JobSearchCategory>,
@@ -352,16 +414,31 @@ export class ExportAllService implements OnModuleInit {
 		private readonly pipelineRepository: Repository<Pipeline>,
 
 		@InjectRepository(PipelineStage)
-		private readonly stageRepository: Repository<PipelineStage>,
+		private readonly pipelineStageRepository: Repository<PipelineStage>,
 
 		@InjectRepository(Product)
 		private readonly productRepository: Repository<Product>,
 
+		@InjectRepository(ProductTranslation)
+		private readonly productTranslationRepository: Repository<ProductTranslation>,
+
 		@InjectRepository(ProductCategory)
 		private readonly productCategoryRepository: Repository<ProductCategory>,
 
+		@InjectRepository(ProductCategoryTranslation)
+		private readonly productCategoryTranslationRepository: Repository<ProductCategoryTranslation>,
+
 		@InjectRepository(ProductOption)
 		private readonly productOptionRepository: Repository<ProductOption>,
+
+		@InjectRepository(ProductOptionTranslation)
+		private readonly productOptionTranslationRepository: Repository<ProductOptionTranslation>,
+
+		@InjectRepository(ProductOptionGroup)
+		private readonly productOptionGroupRepository: Repository<ProductOptionGroup>,
+
+		@InjectRepository(ProductOptionGroupTranslation)
+		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>,
 
 		@InjectRepository(ProductVariantSettings)
 		private readonly productVariantSettingsRepository: Repository<ProductVariantSettings>,
@@ -369,11 +446,29 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(ProductType)
 		private readonly productTypeRepository: Repository<ProductType>,
 
+		@InjectRepository(ProductTypeTranslation)
+		private readonly productTypeTranslationRepository: Repository<ProductTypeTranslation>,
+
 		@InjectRepository(ProductVariant)
 		private readonly productVariantRepository: Repository<ProductVariant>,
 
 		@InjectRepository(ProductVariantPrice)
 		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>,
+
+		@InjectRepository(ImageAsset)
+		private readonly imageAssetRepository: Repository<ImageAsset>,
+
+		@InjectRepository(Warehouse)
+		private readonly warehouseRepository: Repository<Warehouse>,
+
+		@InjectRepository(Merchant)
+		private readonly merchantRepository: Repository<Merchant>,
+
+		@InjectRepository(WarehouseProduct)
+		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
+
+		@InjectRepository(WarehouseProductVariant)
+		private readonly warehouseProductVariantRepository: Repository<WarehouseProductVariant>,
 
 		@InjectRepository(Proposal)
 		private readonly proposalRepository: Repository<Proposal>,
@@ -387,6 +482,12 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
 
+		@InjectRepository(RequestApprovalEmployee)
+		private readonly requestApprovalEmployeeRepository: Repository<RequestApprovalEmployee>,
+
+		@InjectRepository(RequestApprovalTeam)
+		private readonly requestApprovalTeamRepository: Repository<RequestApprovalTeam>,
+
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
 
@@ -399,6 +500,9 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(ReportCategory)
 		private readonly reportCategoryRepository: Repository<ReportCategory>,
 
+		@InjectRepository(ReportOrganization)
+		private readonly reportOrganizationRepository: Repository<ReportOrganization>,
+
 		@InjectRepository(Tag)
 		private readonly tagRepository: Repository<Tag>,
 
@@ -408,6 +512,9 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(Tenant)
 		private readonly tenantRepository: Repository<Tenant>,
 
+		@InjectRepository(TenantSetting)
+		private readonly tenantSettingRepository: Repository<TenantSetting>,
+
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
 
@@ -416,6 +523,9 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
+		@InjectRepository(TimeSlotMinute)
+		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
 
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
@@ -428,24 +538,29 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
+
 		private readonly configService: ConfigService
 	) {}
 
 	async onModuleInit() {
-		this.createDynamicInstanceForPluginEntities();
-		this.registerCoreRepositories();
+		const public_path = this.configService.assetOptions.assetPublicPath || __dirname;
+		//base import csv directory path
+		this._dirname = path.join(public_path, this._basename);
+
+		await this.createDynamicInstanceForPluginEntities();
+		await this.registerCoreRepositories();
 	}
 
 	async createFolders(): Promise<any> {
 		return new Promise((resolve, reject) => {
 			const id = uuidv4();
 			this.idCsv.next(id);
-			fs.access(`./export/${id}/csv`, (error) => {
+			fs.access(`${this._dirname}/${id}/csv`, (error) => {
 				if (!error) {
 					return null;
 				} else {
 					fs.mkdir(
-						`./export/${id}/csv`,
+						`${this._dirname}/${id}/csv`,
 						{ recursive: true },
 						(err) => {
 							if (err) reject(err);
@@ -464,7 +579,7 @@ export class ExportAllService implements OnModuleInit {
 				const fileNameS = id + '_export.zip';
 				this.idZip.next(fileNameS);
 
-				const output = fs.createWriteStream(`./export/${fileNameS}`);
+				const output = fs.createWriteStream(`${this._dirname}/${fileNameS}`);
 
 				const archive = archiver('zip', {
 					zlib: { level: 9 }
@@ -496,39 +611,54 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				archive.pipe(output);
-				archive.directory(`./export/${id$}/csv`, false);
+				archive.directory(`${this._dirname}/${id$}/csv`, false);
 				archive.finalize();
 			}
 		});
 	}
 
 	async getAsCsv(
-		service_count: number,
-		findInput: {
-			organizationId: string;
-			tenantId: string;
-		}
+		item: IRepositoryModel<any>, 
+		where: { tenantId: string; }
 	): Promise<any> {
 		const conditions = {};
-		if (
-			this.repositories[service_count]['tenantOrganizationBase'] !== false
-		) {
-			conditions['where'] = findInput;
-		}
-		if (this.repositories[service_count]['tenantBase'] === true) {
+		if (item.tenantBase !== false) {
 			conditions['where'] = {
-				tenantId: findInput['tenantId']
-			};
+				tenantId: where['tenantId']
+			}
 		}
 
-		const [incomingData, count] = await this.repositories[
-			service_count
-		].repository.findAndCount(conditions);
+		/*
+		* Replace condition with default condition 
+		*/
+		if (isNotEmpty(item.condition) && isNotEmpty(conditions['where'])) {
+			const { condition : { replace = 'tenantId', column = 'id' } } = item;
+			if (`${replace}` in conditions['where']) {
+				delete conditions['where'][replace];
+				conditions['where'][column] = where[replace];
+			}
+		}
+
+		const { repository } = item;
+		const nameFile = repository.metadata.tableName;
+		
+		const [ items, count ] = await repository.findAndCount(conditions);
 		if (count > 0) {
-			return new Promise((resolve) => {
+			return await this.csvWriter(nameFile, items);
+		}
+
+		return false;
+	}
+
+	async csvWriter(
+		filename: string,
+		items: any[]
+	): Promise<boolean | any> {
+		return new Promise((resolve, reject) => {
+			try {
 				const createCsvWriter = csv.createObjectCsvWriter;
 				const dataIn = [];
-				const dataKeys = Object.keys(incomingData[0]);
+				const dataKeys = Object.keys(items[0]);
 
 				for (const count of dataKeys) {
 					dataIn.push({ id: count, title: count });
@@ -540,25 +670,23 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${this.repositories[service_count].nameFile}.csv`,
+					path: `${this._dirname}/${id$}/csv/${filename}.csv`,
 					header: dataIn
 				});
 
-				const data = incomingData;
-
-				csvWriter.writeRecords(data).then(() => {
-					resolve('');
+				csvWriter.writeRecords(items).then(() => {
+					resolve(items);
 				});
-			});
-		}
-		return false;
+			} catch (error) {
+				reject(error)
+			}
+		});
 	}
 
-	async downloadAsCsvFormat(
-		index: number
+	async csvTemplateWriter(
+		filename: string,
+		columns: any
 	): Promise<any> {
-		const columns = await this.repositories[index].repository.metadata.ownColumns.map(column => column.propertyName);
-
 		if (columns) {
 			return new Promise((resolve) => {
 				const createCsvWriter = csv.createObjectCsvWriter;
@@ -575,7 +703,7 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${this.repositories[index].nameFile}.csv`,
+					path: `${this._dirname}/${id$}/csv/${filename}.csv`,
 					header: dataIn
 				});
 
@@ -594,7 +722,8 @@ export class ExportAllService implements OnModuleInit {
 			this.idZip.subscribe((filename) => {
 				fileName = filename;
 			});
-			res.download(`./export/${fileName}`);
+
+			res.download(`${this._dirname}/${fileName}`);
 			resolve('');
 		});
 	}
@@ -607,9 +736,9 @@ export class ExportAllService implements OnModuleInit {
 				id$ = id;
 			});
 
-			fs.access(`./export/${id$}`, (error) => {
+			fs.access(`${this._dirname}/${id$}`, (error) => {
 				if (!error) {
-					fse.removeSync(`./export/${id$}`);
+					fse.removeSync(`${this._dirname}/${id$}`);
 					resolve('');
 				} else {
 					return null;
@@ -623,10 +752,9 @@ export class ExportAllService implements OnModuleInit {
 			this.idZip.subscribe((fileName$) => {
 				fileName = fileName$;
 			});
-
-			fs.access(`./export/${fileName}`, (error) => {
+			fs.access(`${this._dirname}/${fileName}`, (error) => {
 				if (!error) {
-					fse.removeSync(`./export/${fileName}`);
+					fse.removeSync(`${this._dirname}/${fileName}`);
 					resolve('');
 				} else {
 					return null;
@@ -635,52 +763,135 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 
-	async exportTables(findInput: {
-		organizationId: string;
-		tenantId: string;
-	}) {
-		return new Promise(async (resolve) => {
-			for (const [i] of this.repositories.entries()) {
-				await this.getAsCsv(i, findInput);
+	async exportTables() {
+		return new Promise(async (resolve, reject) => {
+			try {
+				for await (const item of this.repositories) {
+					await this.getAsCsv(item, { 
+						tenantId: RequestContext.currentTenantId() 
+					});
+
+					// export pivot relational tables
+					if (isNotEmpty(item.relations)) {
+						await this.exportRelationalTables(item, { 
+							tenantId: RequestContext.currentTenantId() 
+						});
+					}
+				}
+				resolve(true);
+			} catch (error) {
+				reject(error)
 			}
-			resolve('');
 		});
 	}
 
-	async exportSpecificTables(
-		names: string[],
-		findInput: {
-			organizationId: string;
-			tenantId: string;
-		}
-	) {
-		return new Promise(async (resolve) => {
-			for (let i = 0; i < this.repositories.length; i++) {
-				const name = names.find(
-					(n) => this.repositories[i].nameFile === n
-				);
-				if (name) {
-					await this.getAsCsv(i, findInput);
+	async exportSpecificTables(names: string[]) {
+		return new Promise(async (resolve, reject) => {
+			try {
+				for await (const item of this.repositories) {
+					const nameFile = item.repository.metadata.tableName;
+					if (names.includes(nameFile)) {
+						await this.getAsCsv(item, { 
+							tenantId: RequestContext.currentTenantId() 
+						});
+
+						// export pivot relational tables
+						if (isNotEmpty(item.relations)) {
+							await this.exportRelationalTables(item, { 
+								tenantId: RequestContext.currentTenantId() 
+							});
+						}
+					}
 				}
+				resolve(true);
+			} catch (error) {
+				reject(error)
 			}
-			resolve('');
 		});
 	}
-	
-	async downloadSpecificTables() {
-		return new Promise(async (resolve) => {
-			for (const [i] of this.repositories.entries()) {
-				await this.downloadAsCsvFormat(i);
+
+	/*
+	* Export Many To Many Pivot Table Using TypeORM Relations 
+	*/
+	async exportRelationalTables(
+		entity: IRepositoryModel<any>, 
+		where: { tenantId: string; }
+	) {
+		const { repository, relations } = entity;
+		const masterTable = repository.metadata.givenTableName as string;
+
+		for await (const item of repository.metadata.manyToManyRelations) {
+			const relation = relations.find((relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName);
+			if (relation) {
+				const [ joinColumn ] = item.joinColumns as ColumnMetadata[];
+				if (joinColumn) {
+					const { entityMetadata, propertyName, referencedColumn } = joinColumn;
+					
+					const referencColumn = referencedColumn.propertyName;
+					const referencTableName = entityMetadata.givenTableName;
+					let sql = `
+						SELECT 
+							${referencTableName}.* 
+						FROM 
+							${referencTableName} 
+						INNER JOIN ${masterTable} 
+							ON "${referencTableName}"."${propertyName}" = "${masterTable}"."${referencColumn}"
+					`;
+					if (entity.tenantBase !== false) {
+						sql += ` WHERE "${masterTable}"."tenantId" = '${where['tenantId']}'`;
+					}
+
+					const items = await getManager().query(sql);
+					if (isNotEmpty(items)) {
+						await this.csvWriter(referencTableName, items);
+					}
+				}
 			}
-			resolve('');
+		}
+	}
+	
+	async exportSpecificTablesSchema() {
+		return new Promise(async (resolve, reject) => {
+			try {
+				for await (const item of this.repositories) {
+					const { repository, relations } = item;
+					const nameFile = repository.metadata.tableName;
+					const columns = repository.metadata.ownColumns.map((column: ColumnMetadata) => column.propertyName);
+
+					await this.csvTemplateWriter(nameFile, columns);
+
+					// export pivot relational tables
+					if (isNotEmpty(relations)) {
+						await this.exportRelationalTablesSchema(item);
+					}
+				}
+				resolve(true);
+			} catch (error) {
+				reject(error)
+			}
 		});
+	}
+
+	async exportRelationalTablesSchema(
+		entity: IRepositoryModel<any>, 	
+	) {
+		const { repository, relations } = entity;
+		for await (const item of repository.metadata.manyToManyRelations) {
+			const relation = relations.find((relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName);
+			if (relation) {
+				const referencTableName = item.junctionEntityMetadata.givenTableName;
+				const columns = item.junctionEntityMetadata.columns.map((column: ColumnMetadata) => column.propertyName);
+
+				await this.csvTemplateWriter(referencTableName, columns);
+			}
+		}
 	}
 
 	/*
 	 * Load all plugins entities for export data
 	 */
-	private createDynamicInstanceForPluginEntities() {
-		for (const entity of getEntitiesFromPlugins(
+	private async createDynamicInstanceForPluginEntities() {
+		for await (const entity of getEntitiesFromPlugins(
 			this.configService.plugins
 		)) {
 			if (!isFunction(entity)) {
@@ -689,355 +900,517 @@ export class ExportAllService implements OnModuleInit {
 
 			const className = _.camelCase(entity.name);
 			const repository = getConnection().getRepository(entity);
-			const tableName = repository.metadata.tableName;
 
 			this[className] = repository;
-			this.dynamicEntitiesClassMap.push({
-				repository,
-				nameFile: tableName
-			});
+			this.dynamicEntitiesClassMap.push({ repository });
 		}
 	}
 
 	/*
 	 * Load all entities repository after create instance
 	 */
-	private registerCoreRepositories() {
+	private async registerCoreRepositories() {
 		this.repositories = [
-			{ repository: this.activityRepository, nameFile: 'activity' },
 			{
-				repository: this.appointmentEmployeesRepository,
-				nameFile: 'appointment_employee'
+				repository: this.accountingTemplateRepository
 			},
 			{
-				repository: this.approvalPolicyRepository,
-				nameFile: 'approval_policy'
+				repository: this.activityRepository
 			},
 			{
-				repository: this.availabilitySlotsRepository,
-				nameFile: 'availability_slot'
+				repository: this.appointmentEmployeesRepository
 			},
 			{
-				repository: this.candidateCriterionsRatingRepository,
-				nameFile: 'candidate_creation_rating'
+				repository: this.approvalPolicyRepository
 			},
 			{
-				repository: this.candidateDocumentRepository,
-				nameFile: 'candidate_document'
+				repository: this.availabilitySlotsRepository
 			},
 			{
-				repository: this.candidateEducationRepository,
-				nameFile: 'candidate_education'
+				repository: this.candidateRepository,
+				relations: [
+					{ joinTableName: 'candidate_department' },
+					{ joinTableName: 'candidate_employment_type' },
+					{ joinTableName: 'tag_candidate' }
+				]
 			},
 			{
-				repository: this.candidateExperienceRepository,
-				nameFile: 'candidate_experience'
+				repository: this.candidateCriterionsRatingRepository
 			},
 			{
-				repository: this.candidateFeedbackRepository,
-				nameFile: 'candidate_feedback'
+				repository: this.candidateDocumentRepository
 			},
 			{
-				repository: this.candidateInterviewersRepository,
-				nameFile: 'candidate_interviewer'
+				repository: this.candidateEducationRepository
 			},
 			{
-				repository: this.candidateInterviewRepository,
-				nameFile: 'candidate_interview'
+				repository: this.candidateExperienceRepository
 			},
 			{
-				repository: this.candidatePersonalQualitiesRepository,
-				nameFile: 'candidate_personal_quality'
-			},
-			{ repository: this.candidateRepository, nameFile: 'candidate' },
-			{
-				repository: this.candidateSkillRepository,
-				nameFile: 'candidate_skill'
+				repository: this.candidateFeedbackRepository
 			},
 			{
-				repository: this.candidateSourceRepository,
-				nameFile: 'candidate_source'
+				repository: this.candidateInterviewersRepository
 			},
 			{
-				repository: this.candidateTechnologiesRepository,
-				nameFile: 'candidate_technology'
+				repository: this.candidateInterviewRepository
 			},
-			{ repository: this.contactRepository, nameFile: 'contact' },
+			{
+				repository: this.candidatePersonalQualitiesRepository
+			},
+			{
+				repository: this.candidateSkillRepository
+			},
+			{
+				repository: this.candidateSourceRepository
+			},
+			{
+				repository: this.candidateTechnologiesRepository
+			},
+			{
+				repository: this.customSmtpRepository
+			},
+			{ 
+				repository: this.contactRepository
+			},
 			{
 				repository: this.countryRepository,
-				nameFile: 'country',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{
 				repository: this.currencyRepository,
-				nameFile: 'currency',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
-			{ repository: this.dealRepository, nameFile: 'deal' },
-			{ repository: this.emailRepository, nameFile: 'email' },
-			{
-				repository: this.emailTemplateRepository,
-				nameFile: 'email_template'
+			{ 
+				repository: this.dealRepository
 			},
-			{
-				repository: this.employeeAppointmentRepository,
-				nameFile: 'employee_appointment'
+			{ 
+				repository: this.emailRepository
 			},
 			{
-				repository: this.employeeAwardRepository,
-				nameFile: 'employee_award'
+				repository: this.emailTemplateRepository
+			},
+			{
+				repository: this.employeeAppointmentRepository
+			},
+			{
+				repository: this.employeeAwardRepository
 			},
 			{
 				repository: this.employeeLevelRepository,
-				nameFile: 'organization_employee_level'
+				relations: [
+					{ joinTableName: 'tag_organization_employee_level' }
+				]
 			},
 			{
-				repository: this.employeeProposalTemplateRepository,
-				nameFile: 'employee_proposal_template'
+				repository: this.employeeProposalTemplateRepository
 			},
 			{
-				repository: this.employeeRecurringExpenseRepository,
-				nameFile: 'employee_recurring_expense'
+				repository: this.employeeRecurringExpenseRepository
 			},
-			{ repository: this.employeeRepository, nameFile: 'employee' },
+			{ 
+				repository: this.employeeRepository,
+				relations: [
+					{ joinTableName: 'employee_job_preset' },
+					{ joinTableName: 'tag_employee' }
+				]
+			},
 			{
-				repository: this.employeeSettingRepository,
-				nameFile: 'employee_setting'
+				repository: this.employeeSettingRepository
 			},
-			{ repository: this.equipmentRepository, nameFile: 'equipment' },
+			{
+				repository: this.employeeUpworkJobsSearchCriterionRepository
+			},
+			{ 
+				repository: this.equipmentRepository,
+				relations: [
+					{ joinTableName: 'tag_equipment' }
+				]
+			},
 			{
 				repository: this.equipmentSharingRepository,
-				nameFile: 'equipment_sharing'
+				relations: [
+					{ joinTableName: 'equipment_shares_employees' },
+					{ joinTableName: 'equipment_shares_teams' }
+				]
 			},
 			{
-				repository: this.estimateEmailRepository,
-				nameFile: 'estimate_email'
+				repository: this.equipmentSharingPolicyRepository
 			},
-			{ repository: this.eventTypeRepository, nameFile: 'event_types' },
+			{
+				repository: this.estimateEmailRepository
+			},
+			{ 
+				repository: this.eventTypeRepository,
+				relations: [
+					{ joinTableName: 'tag_event_type' }
+				]
+			},
 			{
 				repository: this.expenseCategoryRepository,
-				nameFile: 'expense_category'
+				relations: [
+					{ joinTableName: 'tag_organization_expense_category' }
+				]
 			},
-			{ repository: this.expenseRepository, nameFile: 'expense' },
-			{ repository: this.goalKpiRepository, nameFile: 'goal_kpi' },
-			{
-				repository: this.goalKpiTemplateRepository,
-				nameFile: 'goal_kpi_template'
+			{ 
+				repository: this.expenseRepository,
+				relations: [
+					{ joinTableName: 'tag_expense' }
+				]
 			},
-			{ repository: this.goalRepository, nameFile: 'goal' },
-			{
-				repository: this.goalTemplateRepository,
-				nameFile: 'goal_template'
+			{ 
+				repository: this.featureRepository,
+				tenantBase: false
 			},
-			{
-				repository: this.goalTimeFrameRepository,
-				nameFile: 'goal_time_frame'
+			{ 
+				repository: this.featureOrganizationRepository
 			},
-			{ repository: this.incomeRepository, nameFile: 'income' },
-			{
-				repository: this.integrationEntitySettingRepository,
-				nameFile: 'integration_entity_setting'
+			{ 
+				repository: this.goalKpiRepository
 			},
 			{
-				repository: this.integrationEntitySettingTiedEntityRepository,
-				nameFile: 'integration_entity_setting_tied_entity'
+				repository: this.goalKpiTemplateRepository
+			},
+			{ 
+				repository: this.goalRepository
 			},
 			{
-				repository: this.integrationMapRepository,
-				nameFile: 'integration_map'
+				repository: this.goalTemplateRepository
+			},
+			{
+				repository: this.goalTimeFrameRepository
+			},
+			{
+				repository: this.goalGeneralSettingRepository
+			},
+			{ 
+				repository: this.incomeRepository,
+				relations: [
+					{ joinTableName: 'tag_income' }
+				]
+			},
+			{
+				repository: this.integrationEntitySettingRepository
+			},
+			{
+				repository: this.integrationEntitySettingTiedEntityRepository
+			},
+			{
+				repository: this.integrationMapRepository
 			},
 			{
 				repository: this.integrationRepository,
-				nameFile: 'integration',
-				tenantOrganizationBase: false
+				tenantBase: false,
+				relations: [
+					{ joinTableName: 'integration_integration_type' },
+					{ joinTableName: 'tag_integration' }
+				]
 			},
 			{
-				repository: this.integrationSettingRepository,
-				nameFile: 'integration_setting'
+				repository: this.integrationSettingRepository
 			},
 			{
-				repository: this.integrationTenantRepository,
-				nameFile: 'integration_tenant'
-			},
-			{ repository: this.inviteRepository, nameFile: 'invite' },
-			{
-				repository: this.invoiceEstimateHistoryRepository,
-				nameFile: 'invoice_estimate_history'
+				repository: this.integrationTypeRepository,
+				tenantBase: false
 			},
 			{
-				repository: this.invoiceItemRepository,
-				nameFile: 'invoice_item'
+				repository: this.integrationTenantRepository
 			},
-			{ repository: this.invoiceRepository, nameFile: 'invoice' },
-			{ repository: this.jobPresetRepository, nameFile: 'job_preset' },
-			{
-				repository: this.jobSearchCategoryRepository,
-				nameFile: 'job_search_category'
-			},
-			{
-				repository: this.jobSearchOccupationRepository,
-				nameFile: 'job_search_occupation'
-			},
-			{ repository: this.keyResultRepository, nameFile: 'key_result' },
-			{
-				repository: this.keyResultTemplateRepository,
-				nameFile: 'key_result_template'
+			{ 
+				repository: this.inviteRepository,
+				relations: [
+					{ joinTableName: 'invite_organization_contact' },
+					{ joinTableName: 'invite_organization_department' },
+					{ joinTableName: 'invite_organization_project' }
+				]
 			},
 			{
-				repository: this.keyResultUpdateRepository,
-				nameFile: 'key_result_update'
+				repository: this.invoiceEstimateHistoryRepository
+			},
+			{
+				repository: this.invoiceItemRepository
+			},
+			{ 
+				repository: this.invoiceRepository,
+				relations: [
+					{ joinTableName: 'tag_invoice' }
+				]
+			},
+			{ 
+				repository: this.jobPresetRepository
+			},
+			{ 
+				repository: this.jobPresetUpworkJobSearchCriterionRepository
+			},
+			{
+				repository: this.jobSearchCategoryRepository
+			},
+			{
+				repository: this.jobSearchOccupationRepository
+			},
+			{ 
+				repository: this.keyResultRepository
+			},
+			{
+				repository: this.keyResultTemplateRepository
+			},
+			{
+				repository: this.keyResultUpdateRepository
 			},
 			{
 				repository: this.languageRepository,
-				nameFile: 'language',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{
-				repository: this.organizationAwardsRepository,
-				nameFile: 'organization_award'
+				repository: this.organizationAwardsRepository
 			},
 			{
 				repository: this.organizationContactRepository,
-				nameFile: 'organization_contact'
+				relations: [
+					{ joinTableName: 'organization_contact_employee' },
+					{ joinTableName: 'tag_organization_contact' }
+				]
 			},
 			{
 				repository: this.organizationDepartmentRepository,
-				nameFile: 'organization_department'
+				relations: [
+					{ joinTableName: 'organization_department_employee' },
+					{ joinTableName: 'tag_organization_department' }
+				]
 			},
 			{
-				repository: this.organizationDocumentRepository,
-				nameFile: 'organization_document'
+				repository: this.organizationDocumentRepository
 			},
 			{
 				repository: this.organizationEmploymentTypeRepository,
-				nameFile: 'organization_employment_type'
+				relations: [
+					{ joinTableName: 'organization_employment_type_employee' },
+					{ joinTableName: 'tag_organization_employment_type' }
+				]
 			},
 			{
-				repository: this.organizationLanguagesRepository,
-				nameFile: 'organization_languages'
+				repository: this.organizationLanguagesRepository
 			},
 			{
 				repository: this.organizationPositionsRepository,
-				nameFile: 'organization_position'
+				relations: [
+					{ joinTableName: 'tag_organization_position' }
+				]
 			},
 			{
 				repository: this.organizationProjectsRepository,
-				nameFile: 'organization_project'
+				relations: [
+					{ joinTableName: 'organization_project_employee' },
+					{ joinTableName: 'tag_organization_project' }
+				]
 			},
 			{
-				repository: this.organizationRecurringExpenseRepository,
-				nameFile: 'organization_recurring_expense'
+				repository: this.organizationRecurringExpenseRepository
 			},
 			{
 				repository: this.organizationRepository,
-				nameFile: 'organization',
-				tenantOrganizationBase: false,
-				tenantBase: true
+				relations: [
+					{ joinTableName: 'tag_organization' }
+				]
 			},
 			{
-				repository: this.organizationSprintRepository,
-				nameFile: 'organization_sprint'
+				repository: this.organizationSprintRepository
 			},
 			{
-				repository: this.organizationTeamEmployeeRepository,
-				nameFile: 'organization_team_employee'
+				repository: this.organizationTeamEmployeeRepository
 			},
 			{
 				repository: this.organizationTeamRepository,
-				nameFile: 'organization_team'
+				relations: [
+					{ joinTableName: 'tag_organization_team' }
+				]
 			},
 			{
 				repository: this.organizationVendorsRepository,
-				nameFile: 'organization_vendor'
+				relations: [
+					{ joinTableName: 'tag_organization_vendor' }
+				]
 			},
-			{ repository: this.paymentRepository, nameFile: 'payment' },
-			{ repository: this.pipelineRepository, nameFile: 'pipeline' },
-			{
-				repository: this.productCategoryRepository,
-				nameFile: 'product_category'
+			{ 
+				repository: this.paymentRepository,
+				relations: [
+					{ joinTableName: 'tag_payment' }
+				]
 			},
-			{
-				repository: this.productOptionRepository,
-				nameFile: 'product_option'
-			},
-			{ repository: this.productRepository, nameFile: 'product' },
-			{
-				repository: this.productTypeRepository,
-				nameFile: 'product_type'
+			{ 
+				repository: this.pipelineRepository
 			},
 			{
-				repository: this.productVariantPriceRepository,
-				nameFile: 'product_variant_price'
+				repository: this.productCategoryRepository
+			},
+			{
+				repository: this.productCategoryTranslationRepository
+			},
+			{
+				repository: this.productOptionRepository
+			},
+			{
+				repository: this.productOptionGroupRepository
+			},
+			{
+				repository: this.productOptionGroupTranslationRepository
+			},
+			{
+				repository: this.productOptionTranslationRepository
+			},
+			{ 
+				repository: this.productRepository,
+				relations: [
+					{ joinTableName: 'product_gallery_item' },
+					{ joinTableName: 'tag_product' }
+				]
+			},
+			{
+				repository: this.productTranslationRepository
+			},
+			{
+				repository: this.productTypeRepository
+			},
+			{
+				repository: this.productTypeTranslationRepository
+			},
+			{
+				repository: this.productVariantPriceRepository
 			},
 			{
 				repository: this.productVariantRepository,
-				nameFile: 'product_variant'
+				relations: [
+					{ joinTableName: 'product_variant_options_product_option' }
+				]
 			},
 			{
-				repository: this.productVariantSettingsRepository,
-				nameFile: 'product_variant_setting'
+				repository: this.productVariantSettingsRepository
 			},
-			{ repository: this.proposalRepository, nameFile: 'proposal' },
+			{
+				repository: this.imageAssetRepository
+			},
+			{
+				repository: this.warehouseRepository,
+				relations: [
+					{ joinTableName: 'tag_warehouse' }
+				]
+			},
+			{
+				repository: this.merchantRepository,
+				relations: [
+					{ joinTableName: 'warehouse_merchant' },
+					{ joinTableName: 'tag_merchant' }
+				]
+			},
+			{
+				repository: this.warehouseProductRepository
+			},
+			{
+				repository: this.warehouseProductVariantRepository
+			},
+			{ 
+				repository: this.proposalRepository,
+				relations: [
+					{ joinTableName: 'tag_proposal' }
+				]
+			},
 			{
 				repository: this.reportCategoryRepository,
-				nameFile: 'report_category',
-				tenantOrganizationBase: false
+				tenantBase: false
+			},
+			{
+				repository: this.reportOrganizationRepository
 			},
 			{
 				repository: this.reportRepository,
-				nameFile: 'report',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{
 				repository: this.requestApprovalRepository,
-				nameFile: 'request_approval'
+				relations: [
+					{ joinTableName: 'tag_request_approval' }
+				]
 			},
 			{
-				repository: this.rolePermissionsRepository,
-				nameFile: 'role_permission',
-				tenantOrganizationBase: false
+				repository: this.requestApprovalEmployeeRepository
 			},
 			{
-				repository: this.roleRepository,
-				nameFile: 'role',
-				tenantOrganizationBase: false
+				repository: this.requestApprovalTeamRepository
 			},
-			{ repository: this.screenShotRepository, nameFile: 'screenshot' },
+			{
+				repository: this.rolePermissionsRepository
+			},
+			{
+				repository: this.roleRepository
+			},
+			{
+				repository: this.screenShotRepository
+			},
 			{
 				repository: this.skillRepository,
-				nameFile: 'skill',
-				tenantOrganizationBase: false
+				relations: [
+					{ joinTableName: 'skill_employee' },
+					{ joinTableName: 'skill_organization' }
+				]
 			},
-			{ repository: this.stageRepository, nameFile: 'pipeline_stage' },
-			{ repository: this.tagRepository, nameFile: 'tag' },
-			{ repository: this.taskRepository, nameFile: 'task' },
+			{ 
+				repository: this.pipelineStageRepository
+			},
+			{
+				repository: this.tagRepository
+			},
+			{
+				repository: this.taskRepository,
+				relations: [
+					{ joinTableName: 'task_employee' },
+					{ joinTableName: 'task_team' },
+					{ joinTableName: 'tag_task' },
+				]
+			},
 			{
 				repository: this.tenantRepository,
-				nameFile: 'tenant',
-				tenantOrganizationBase: false
+				condition: {
+					column: 'id',
+					replace: 'tenantId'
+				}
 			},
-			{ repository: this.timeLogRepository, nameFile: 'time_log' },
+			{
+				repository: this.tenantSettingRepository
+			},
+			{
+				repository: this.timeLogRepository,
+				relations: [
+					{ joinTableName: 'time_slot_time_logs' }
+				]
+			},
 			{
 				repository: this.timeOffPolicyRepository,
-				nameFile: 'time_off_policy'
+				relations: [
+					{ joinTableName: 'time_off_policy_employee' }
+				]
 			},
 			{
 				repository: this.timeOffRequestRepository,
-				nameFile: 'time_off_request'
-			},
-			{ repository: this.timeSheetRepository, nameFile: 'timesheet' },
-			{ repository: this.timeSlotRepository, nameFile: 'time_slot' },
-			{
-				repository: this.userOrganizationRepository,
-				nameFile: 'user_organization'
+				relations: [
+					{ joinTableName: 'time_off_request_employee' }
+				]
 			},
 			{
-				repository: this.userRepository,
-				nameFile: 'user',
-				tenantOrganizationBase: false,
-				tenantBase: true
+				repository: this.timeSheetRepository
+			},
+			{
+				repository: this.timeSlotRepository
+			},
+			{
+				repository: this.timeSlotMinuteRepository
+			},
+			{
+				repository: this.userOrganizationRepository
+			},
+			{
+				repository: this.userRepository
 			},
 			...this.dynamicEntitiesClassMap
-		] as IRepositoryModel[];
+		] as IRepositoryModel<any>[];
 	}
 }

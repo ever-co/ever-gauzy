@@ -6,11 +6,23 @@ import {
 	RelationId,
 	OneToMany,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	Index
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
-import { ITask, IUser, TaskStatusEnum } from '@gauzy/contracts';
+import { IsOptional, IsString } from 'class-validator';
+import {
+	IEmployee,
+	IInvoiceItem,
+	IOrganizationProject,
+	IOrganizationSprint,
+	IOrganizationTeam,
+	ITag,
+	ITask,
+	ITimeLog,
+	IUser,
+	TaskStatusEnum
+} from '@gauzy/contracts';
 import {
 	Employee,
 	InvoiceItem,
@@ -25,13 +37,7 @@ import {
 
 @Entity('task')
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.task)
-	@JoinTable({
-		name: 'tag_task'
-	})
-	tags?: Tag[];
-
+	
 	@ApiProperty({ type: () => String })
 	@Column()
 	title: string;
@@ -54,39 +60,29 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	dueDate?: Date;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	// Organization Project
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne((type) => OrganizationProject, {
+	@ManyToOne(() => OrganizationProject, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	project?: OrganizationProject;
-
-	@OneToMany(() => TimeLog, (timeLog) => timeLog.task)
-	timeLogs?: TimeLog[];
+	project?: IOrganizationProject;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((task: Task) => task.project)
+	@RelationId((it: Task) => it.project)
+	@IsString()
+	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	readonly projectId?: string;
 
-	@ManyToMany(() => Employee, { cascade: ['update'] })
-	@JoinTable({
-		name: 'task_employee'
-	})
-	readonly members?: Employee[];
-
-	@ManyToMany(() => OrganizationTeam, { cascade: ['update'] })
-	@JoinTable({
-		name: 'task_team'
-	})
-	teams?: OrganizationTeam[];
-
-	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.task)
-	@JoinColumn()
-	invoiceItems?: InvoiceItem[];
-
+   	// Creator
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
 		nullable: true,
@@ -96,14 +92,60 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	creator?: IUser;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((task: Task) => task.creator)
-	@Column()
+	@RelationId((it: Task) => it.creator)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
 	readonly creatorId?: string;
 
+	// Organization Sprint
 	@ApiProperty({ type: () => OrganizationSprint })
-	@ManyToOne(() => OrganizationSprint, {
-		onDelete: 'SET NULL'
-	})
+	@ManyToOne(() => OrganizationSprint, { onDelete: 'SET NULL' })
 	@JoinColumn()
-	organizationSprint?: OrganizationSprint;
+	organizationSprint?: IOrganizationSprint;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Task) => it.organizationSprint)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly organizationSprintId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Invoice Items
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
+	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.task)
+	@JoinColumn()
+	invoiceItems?: IInvoiceItem[];
+
+	// Timelogs
+	@OneToMany(() => TimeLog, (timeLog) => timeLog.task)
+	timeLogs?: ITimeLog[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Tags
+	@ApiProperty({ type: () => Tag })
+	@ManyToMany(() => Tag, (tag) => tag.task)
+	@JoinTable({ name: 'tag_task' })
+	tags?: ITag[];
+
+	// Members
+	@ManyToMany(() => Employee, { cascade: ['update'] })
+	@JoinTable({ name: 'task_employee' })
+	readonly members?: IEmployee[];
+
+	// Teams
+	@ManyToMany(() => OrganizationTeam, { cascade: ['update'] })
+	@JoinTable({ name: 'task_team' })
+	teams?: IOrganizationTeam[];
 }

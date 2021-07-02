@@ -8,6 +8,9 @@ import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { ImportAllController } from './import-all.controller';
 import { ImportAllService } from './import-all.service';
 import { coreEntities } from './../../core/entities';
+import { CommandHandlers } from './commands/handlers';
+import { ImportHistoryService } from './import-history.service';
+import { ImportRecordService } from './import-record.service';
 
 @Module({
 	imports: [
@@ -27,7 +30,12 @@ import { coreEntities } from './../../core/entities';
 		])
 	],
 	controllers: [ImportAllController],
-	providers: [ImportAllService],
+	providers: [
+		ImportAllService,
+		ImportHistoryService,
+		ImportRecordService,
+		...CommandHandlers
+	],
 	exports: [ImportAllService]
 })
 export class ImportAllModule {}

@@ -43,7 +43,7 @@ export class Integration extends BaseEntity implements IIntegration {
 	@Column({ nullable: true })
 	order?: number;
 
-	@ManyToMany(() => IntegrationType)
+	@ManyToMany(() => IntegrationType, (integrationType) => integrationType.integrations)
 	@JoinTable({
 		name: 'integration_integration_type'
 	})

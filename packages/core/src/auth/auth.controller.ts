@@ -39,7 +39,7 @@ export class AuthController {
 	@Get('/authenticated')
 	async authenticated(): Promise<boolean> {
 		const token = RequestContext.currentToken();
-		return this.authService.isAuthenticated(token);
+		return await this.authService.isAuthenticated(token);
 	}
 
 	@ApiOperation({ summary: 'Has role?' })
@@ -48,7 +48,7 @@ export class AuthController {
 	@Get('/role')
 	async hasRole(@Query('roles') roles: string[]): Promise<boolean> {
 		const token = RequestContext.currentToken();
-		return this.authService.hasRole(token, roles);
+		return await this.authService.hasRole(token, roles);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -71,7 +71,7 @@ export class AuthController {
 			entity.user.imageUrl = getUserDummyImage(entity.user);
 		}
 		entity.originalUrl = request.get('Origin');
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new AuthRegisterCommand(entity, languageCode)
 		);
 	}
@@ -81,7 +81,7 @@ export class AuthController {
 	async login(
 		@Body() entity: IAuthLoginInput
 	): Promise<IAuthResponse | null> {
-		return this.commandBus.execute(new AuthLoginCommand(entity));
+		return await this.commandBus.execute(new AuthLoginCommand(entity));
 	}
 
 	@Post('/reset-password')
