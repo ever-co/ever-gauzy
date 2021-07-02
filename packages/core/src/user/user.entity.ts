@@ -10,6 +10,7 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 import {
 	IsAscii,
 	IsEmail,
@@ -100,6 +101,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Column()
 	@IsOptional()
+	@Exclude()
 	@Column({ nullable: true })
 	hash?: string;
 

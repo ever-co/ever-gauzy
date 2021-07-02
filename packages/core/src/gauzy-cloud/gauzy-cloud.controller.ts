@@ -5,11 +5,11 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationCreateInput, ITenantCreateInput, IUserRegistrationInput } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { GauzyCloudUserMigrateCommand } from './commands/gauzy-cloud-user.migrate.command';
-import { TransformInterceptor } from './../core/interceptors/transform.interceptor';
+import { CloudMigrateInterceptor } from './../core/interceptors';
 import { GauzyCloudTenantMigrateCommand } from './commands/gauzy-cloud-tenant.migrate.command';
 import { GauzyCloudOrganizationMigrateCommand } from './commands/gauzy-cloud-organization.migrate.command';
 
-@UseInterceptors(TransformInterceptor)
+@UseInterceptors(CloudMigrateInterceptor)
 @Controller()
 export class GauzyCloudController {
 	

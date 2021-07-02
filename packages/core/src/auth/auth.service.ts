@@ -38,7 +38,6 @@ export class AuthService extends SocialAuthService {
 		}
 
 		const { token } = await this.createToken(user);
-		delete user.hash;
 
 		return {
 			user,
