@@ -4,8 +4,6 @@ import { HubstaffController } from './hubstaff.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { Tenant } from '../tenant/tenant.entity';
-import { TenantService } from '../tenant/tenant.service';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
