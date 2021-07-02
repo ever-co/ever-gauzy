@@ -118,7 +118,12 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						const { token, user } = response;
 						this.token = token;
 						this.gauzyUser = user;
-						return this.gauzyCloudService.migrateTenant({ name, isImporting: true, sourceId: tenantId }, token);
+						return this.gauzyCloudService.migrateTenant({ 
+							name, 
+							isImporting: true, 
+							sourceId: tenantId,
+							userSourceId: sourceId
+						}, token);
 					}),
 					delay(1000),
 					concatMap(async (tenant: ITenant) => {

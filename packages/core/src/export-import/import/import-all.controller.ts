@@ -16,8 +16,7 @@ import { IImportHistory, ImportHistoryStatusEnum, IPagination, UploadedFile } fr
 import { ImportAllService } from './import-all.service';
 import { RequestContext } from './../../core/context/request-context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
-import { ImportHistoryCreateCommand } from './commands';
-import { ImportHistoryService } from './import-history.service';
+import { ImportHistoryCreateCommand, ImportHistoryService } from './../import-history';
 
 @ApiTags('Import')
 @UseGuards(AuthGuard('jwt'))
@@ -25,14 +24,14 @@ import { ImportHistoryService } from './import-history.service';
 export class ImportAllController {
 	constructor(
 		private readonly importAllService: ImportAllService,
-		private readonly importHistory: ImportHistoryService,
+		private readonly importHistoryService: ImportHistoryService,
 		private readonly commandBus: CommandBus
 	) {}
 
-	@ApiOperation({ summary: 'Find all imports.' })
+	@ApiOperation({ summary: 'Find all imports history.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found tables'
+		description: 'Found import history'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -40,7 +39,7 @@ export class ImportAllController {
 	})
 	@Get()
 	async importAll(): Promise<IPagination<IImportHistory>> {
-		return this.importHistory.findAll({
+		return this.importHistoryService.findAll({
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			},

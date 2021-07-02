@@ -7,7 +7,8 @@ import {
 	HttpCode,
 	Delete,
 	Param,
-	Req
+	Req,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -22,9 +23,11 @@ import { UserOrganizationDeleteCommand } from './commands/user-organization.dele
 import { I18nLang } from 'nestjs-i18n';
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('UserOrganization')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class UserOrganizationController extends CrudController<IUserOrganization> {
 	constructor(

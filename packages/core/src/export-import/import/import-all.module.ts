@@ -9,8 +9,8 @@ import { ImportAllController } from './import-all.controller';
 import { ImportAllService } from './import-all.service';
 import { coreEntities } from './../../core/entities';
 import { CommandHandlers } from './commands/handlers';
-import { ImportHistoryService } from './import-history.service';
-import { ImportRecordService } from './import-record.service';
+import { ImportRecordModule } from './../import-record';
+import { ImportHistoryModule } from './../import-history';
 
 @Module({
 	imports: [
@@ -27,13 +27,13 @@ import { ImportRecordService } from './import-record.service';
 		TypeOrmModule.forFeature([
 			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
-		])
+		]),
+		ImportRecordModule,
+		ImportHistoryModule
 	],
 	controllers: [ImportAllController],
 	providers: [
 		ImportAllService,
-		ImportHistoryService,
-		ImportRecordService,
 		...CommandHandlers
 	],
 	exports: [ImportAllService]

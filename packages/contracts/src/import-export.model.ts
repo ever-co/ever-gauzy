@@ -1,9 +1,9 @@
 import { IBasePerTenantEntityModel } from "./base-entity.model";
 
 export interface IImportRecord extends IBasePerTenantEntityModel {
-	entityType: string;
-	sourceId: string;
-	destinationId : string;
+	entityType?: string;
+	sourceId?: string;
+	destinationId?: string;
 	importDate?: Date;
 	wasCreated?: boolean;
 }
