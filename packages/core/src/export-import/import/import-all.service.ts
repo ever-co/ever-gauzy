@@ -760,6 +760,7 @@ export class ImportAllService implements OnModuleInit {
 				if (desination) {
 					await this.commandBus.execute(
 						new ImportRecordUpdateOrCreateCommand({
+							tenantId: RequestContext.currentTenantId(),
 							sourceId: row.id,
 							destinationId: desination.id,
 							entityType
@@ -943,8 +944,7 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.organizationRepository,
-				uniqueIdentifier: [ { column: 'name' }, { column: 'profile_link' } ]
+				repository: this.organizationRepository
 			},
 			/**
 			* These entities need TENANT and ORGANIZATION
@@ -953,7 +953,6 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.userRepository,
 				isStatic: true,
 			 	isCheckRelation: true,
-				uniqueIdentifier: [ { column: 'email' }, { column: 'username' } ],
 				foreignKeys: [
 					{ column: 'roleId', repository: this.roleRepository }
 				]

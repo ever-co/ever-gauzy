@@ -153,8 +153,10 @@ export interface IOrganizationCreateInput extends IContact {
 	convertAcceptedEstimates?: boolean;
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
+
 	isImporting?: boolean;
 	sourceId?: string;
+	userOrganizationSourceId?: string;
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {

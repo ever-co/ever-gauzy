@@ -132,7 +132,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsString()
-	@Index({ unique: true })
+	@Index({ unique: false })
 	@IsOptional()
 	@Column({ nullable: true })
 	profile_link: string;

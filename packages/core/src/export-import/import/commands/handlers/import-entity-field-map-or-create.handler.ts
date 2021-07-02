@@ -36,7 +36,10 @@ export class ImportEntityFieldMapOrCreateHandler
 				);
 				if (success && record) {
 					const { destinationId } = record;
-					return await this._create(repository, { id: destinationId, ...entity });
+					return await repository.save({ 
+						id: destinationId, 
+						...entity 
+					});
 				}
 				throw new NotFoundException(`The import record was not found`);
 			} catch (error) {
