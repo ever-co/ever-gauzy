@@ -13,9 +13,9 @@ export class SocialAuthModule {
 	public static registerAsync(options: any): DynamicModule {
 		return {
 			module: SocialAuthModule,
-			providers: [...this.createConnectProviders(options)],
-			imports: options.imports,
-			exports: options.imports
+			providers: [...SocialAuthModule.createConnectProviders(options)],
+			imports: [...options.imports],
+			exports: [...options.imports]
 		} as DynamicModule;
 	}
 

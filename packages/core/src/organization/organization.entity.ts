@@ -395,10 +395,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	timeFormat?: 12 | 24;
 
 	@ApiProperty({ type: () => Skill })
-	@ManyToMany(() => Skill, (skill) => skill.organization)
-	@JoinTable({
-		name: 'skill_organization'
-	})
+	@ManyToMany(() => Skill, (skill) => skill.organizations)
 	skills: ISkill[];
 
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })

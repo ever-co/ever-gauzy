@@ -1,6 +1,6 @@
-import { CandidateSubscriber } from "candidate/candidate.subscriber";
 import { 
 	ActivitySubscriber,
+	CandidateSubscriber,
 	EmployeeSubscriber,
 	FeatureSubscriber,
 	OrganizationSubscriber,

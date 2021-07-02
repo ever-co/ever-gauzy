@@ -9,7 +9,7 @@ export const createDefaultCandidates = async (
 	users: IUser[]
 ): Promise<Candidate[]> => {
 	const candidates: Candidate[] = [];
-	for (const user of users) {
+	for await (const user of users) {
 		const candidate = new Candidate();
 		candidate.organization = organization;
 		candidate.user = user;
@@ -28,7 +28,7 @@ export const createRandomCandidates = async (
 	candidatesPerOrganization: number
 ): Promise<Map<ITenant, ICandidate[]>> => {
 	const candidateMap: Map<ITenant, ICandidate[]> = new Map();
-	for (const tenant of tenants) {
+	for await (const tenant of tenants) {
 		const candidates: Candidate[] = [];
 		const randomUsers = tenantUsersMap.get(tenant).candidateUsers;
 		const randomOrgs = tenantOrganizationsMap.get(tenant);
@@ -48,7 +48,7 @@ export const createRandomCandidates = async (
 			}
 			await insertCandidates(connection, candidates);
 		};
-		for (const org of randomOrgs) {
+		for await (const org of randomOrgs) {
 			if (randomUsers.length) {
 				await insertCandidatesInToOrganization(
 					candidatesPerOrganization,

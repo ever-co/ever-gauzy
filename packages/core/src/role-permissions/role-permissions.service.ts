@@ -78,18 +78,18 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 					defaultPermissions['defaultEnabledPermissions']
 				) {
 					const { defaultEnabledPermissions } = defaultPermissions;
-					defaultEnabledPermissions.forEach((p) => {
+					for await (const permission of defaultEnabledPermissions) {
 						const rolePermission = new RolePermissions();
 						rolePermission.roleId = role.id;
-						rolePermission.permission = p;
+						rolePermission.permission = permission;
 						rolePermission.enabled = true;
 						rolePermission.tenant = tenant;
 						rolesPermissions.push(rolePermission);
-					});
+					}
 				}
 			}
 		}
-
+		
 		await this.rolePermissionsRepository.save(rolesPermissions);
 		return rolesPermissions;
 	}

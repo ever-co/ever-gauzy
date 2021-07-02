@@ -1,14 +1,17 @@
 import { IOrganization, RolesEnum } from '@gauzy/contracts';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import * as faker from 'faker';
+import { getManager } from 'typeorm';
 import { RoleService } from '../../../role/role.service';
 import { UserService } from '../../../user/user.service';
-import { UserOrganization } from '../../../user-organization/user-organization.entity';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { RequestContext } from '../../../core/context';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
+import { ImportRecordFirstOrCreateCommand } from './../../../export-import/import/commands';
+import { Organization, UserOrganization } from './../../../core/entities/internal';
+
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
@@ -25,6 +28,7 @@ export class OrganizationCreateHandler
 		command: OrganizationCreateCommand
 	): Promise<IOrganization> {
 		const { input } = command;
+		const { isImporting = false, sourceId = null } = input;
 
 		//1. Get roleId for Super Admin user of the Tenant
 		const { id: roleId } = await this.roleService.findOne({
@@ -63,12 +67,18 @@ export class OrganizationCreateHandler
 		});
 
 		// 4. Take each super admin user and add him/her to created organization
-		for await (const superAdmin of superAdminUsers) {
-			const userOrganization = new UserOrganization();
-			userOrganization.organizationId = createdOrganization.id;
-			userOrganization.tenantId = tenantId;
-			userOrganization.userId = superAdmin.id;
-			await this.userOrganizationService.create(userOrganization);
+		try {
+			for await (const superAdmin of superAdminUsers) {
+				await this.userOrganizationService.create(
+					new UserOrganization({
+						organization: createdOrganization,
+						tenantId,
+						user: superAdmin
+					})
+				);
+			}
+		} catch (e) {
+			console.log('caught', e)
 		}
 
 		//5. Create contact details of created organization
@@ -87,6 +97,21 @@ export class OrganizationCreateHandler
 		await this.commandBus.execute(
 			new ReportOrganizationCreateCommand(organization)
 		);
+
+
+		//7. Create Import Records while migrating for relative organization.
+		if (isImporting && sourceId) {
+			const { sourceId } = input;
+			const entityType = getManager().getRepository(Organization).metadata.tableName;
+			await this.commandBus.execute(
+				new ImportRecordFirstOrCreateCommand({
+					entityType,
+					sourceId,
+					destinationId: organization.id,
+					tenantId
+				})
+			);
+		}
 
 		return await this.organizationService.findOne(id);
 	}

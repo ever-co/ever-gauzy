@@ -9,7 +9,7 @@ import {
 	JobPostStatusEnum,
 	JobPostTypeEnum
 } from '@gauzy/contracts';
-import { SEEDER_DB_CONNECTION } from '@gauzy/common';
+import { DEFAULT_DB_CONNECTION } from '@gauzy/common';
 import { getConnection } from 'typeorm';
 import { IPagination } from '../core';
 import { Country } from '../country';
@@ -19,7 +19,7 @@ export const getRandomEmployeeJobPosts = async (
 	page = 0,
 	limit = 10
 ): Promise<IPagination<IEmployeeJobPost>> => {
-	const countries: ICountry[] = await getConnection(SEEDER_DB_CONNECTION).manager.find(Country);
+	const countries: ICountry[] = await getConnection(DEFAULT_DB_CONNECTION).manager.find(Country);
 	const employeesJobs: EmployeeJobPost[] = [];
 
 	for (let i = 0; i < limit; i++) {

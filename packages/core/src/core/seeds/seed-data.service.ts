@@ -695,7 +695,6 @@ export class SeedDataService {
 			defaultAdminUsers
 		} = await createDefaultAdminUsers(
 			this.connection, 
-			this.roles, 
 			this.tenant
 		);
 		this.superAdminUsers.push(...defaultSuperAdminUsers as IUser[]);
@@ -704,7 +703,6 @@ export class SeedDataService {
 			defaultEmployeeUsers 
 		} = await createDefaultEmployeesUsers(
 			this.connection, 
-			this.roles, 
 			this.tenant
 		);
 
@@ -714,7 +712,6 @@ export class SeedDataService {
 				defaultCandidateUsers 
 			} = await createDefaultUsers(
 				this.connection, 
-				this.roles, 
 				this.tenant
 			);
 			this.defaultCandidateUsers.push(...defaultCandidateUsers);
@@ -1433,14 +1430,12 @@ export class SeedDataService {
 
 		const tenantSuperAdminsMap = await createRandomSuperAdminUsers(
 			this.connection,
-			roles,
 			tenants,
 			1
 		);
 
 		const tenantUsersMap = await createRandomUsers(
 			this.connection,
-			roles,
 			tenants,
 			randomSeedConfig.organizationsPerTenant || 1,
 			randomSeedConfig.employeesPerOrganization || 1,

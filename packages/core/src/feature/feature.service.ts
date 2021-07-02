@@ -92,23 +92,20 @@ export class FeatureService extends CrudService<Feature> {
 		if (!tenants.length) {
 			return;
 		}
-		const features: IFeature[] = await this.featureRepository.find();
-
+		
 		const featureOrganizations: IFeatureOrganization[] = [];
-		features.forEach(async (feature: IFeature) => {
-			tenants.forEach((tenant: ITenant) => {
+		const features: IFeature[] = await this.featureRepository.find();
+		for await (const feature of features) {
+			for await (const tenant of tenants) {
 				const { isEnabled } = feature;
-				const featureOrganization: IFeatureOrganization = new FeatureOrganization(
-					{
-						isEnabled,
-						tenant,
-						feature
-					}
-				);
+				const featureOrganization: IFeatureOrganization = new FeatureOrganization({
+					isEnabled,
+					tenant,
+					feature
+				});
 				featureOrganizations.push(featureOrganization);
-			});
-		});
-
+			}
+		}
 		return await this.featureOrganizationRepository.save(
 			featureOrganizations
 		);

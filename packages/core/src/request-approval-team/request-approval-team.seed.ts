@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import { IEmployee, IOrganization, IRequestApprovalTeam, ITenant } from '@gauzy/contracts';
 import { RequestApprovalTeam } from './request-approval-team.entity';
 import * as faker from 'faker';
 import { ApprovalPolicy, OrganizationTeam, RequestApproval } from './../core/entities/internal';
@@ -9,7 +9,7 @@ export const createRandomRequestApprovalTeam = async (
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
-): Promise<RequestApprovalTeam[]> => {
+): Promise<IRequestApprovalTeam[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
 			'Warning: tenantOrganizationsMap not found, Request Approval Team  will not be created'
@@ -23,53 +23,40 @@ export const createRandomRequestApprovalTeam = async (
 		return;
 	}
 
-	const requestApprovalEmployees: RequestApprovalTeam[] = [];
-
-	for (const tenant of tenants) {
-		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-
-		for (const tenantOrg of tenantOrgs) {
-			const approvalPolicies = await connection.manager.find(
-				ApprovalPolicy,
-				{
-					where: [{ organization: tenantOrg }]
+	const requestApprovalTeams: IRequestApprovalTeam[] = [];
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for await (const organization of organizations) {
+			const approvalPolicies = await connection.manager.find(ApprovalPolicy, {
+				where: {
+					organization
 				}
-			);
-
-			const organizationTeams = await connection.manager.find(
-				OrganizationTeam,
-				{
-					where: [{ organizationId: tenantOrg.id }]
+			});
+			const organizationTeams = await connection.manager.find(OrganizationTeam, {
+				where: {
+					organization
 				}
-			);
-
+			});
 			for (const approvalPolicy of approvalPolicies) {
-				const requestApprovals = await connection.manager.find(
-					RequestApproval,
-					{
-						where: [{ approvalPolicy: approvalPolicy }]
+				const requestApprovals = await connection.manager.find(RequestApproval, {
+					where: { 
+						approvalPolicy,
+						organization
 					}
-				);
-
-				for (const requestApproval of requestApprovals) {
-					for (const organizationTeam of organizationTeams) {
-						const requestApprovalEmployee = new RequestApprovalTeam();
-
-						requestApprovalEmployee.requestApprovalId =
-							requestApproval.id;
-						requestApprovalEmployee.requestApproval = requestApproval;
-						requestApprovalEmployee.teamId = organizationTeam.id;
-						requestApprovalEmployee.team = organizationTeam;
-						requestApprovalEmployee.tenant = tenant;
-						requestApprovalEmployee.organization = tenantOrg;
-						requestApprovalEmployee.status = faker.datatype.number(3);
-
-						requestApprovalEmployees.push(requestApprovalEmployee);
+				});
+				for await (const requestApproval of requestApprovals) {
+					for await (const organizationTeam of organizationTeams) {
+						const requestApprovalTeam = new RequestApprovalTeam();
+						requestApprovalTeam.requestApproval = requestApproval;
+						requestApprovalTeam.team = organizationTeam;
+						requestApprovalTeam.tenant = tenant;
+						requestApprovalTeam.organization = organization;
+						requestApprovalTeam.status = faker.datatype.number(3);
+						requestApprovalTeams.push(requestApprovalTeam);
 					}
 				}
 			}
 		}
 	}
-
-	await connection.manager.save(requestApprovalEmployees);
+	return await connection.manager.save(requestApprovalTeams);
 };

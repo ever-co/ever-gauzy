@@ -4,21 +4,30 @@ import {
 	Get,
 	Post,
 	UseInterceptors,
-	Injectable,
-	Body
+	Body,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
+import { AuthGuard } from '@nestjs/passport';
+import { CommandBus } from '@nestjs/cqrs';
+import { IImportHistory, ImportHistoryStatusEnum, IPagination, UploadedFile } from '@gauzy/contracts';
 import { ImportAllService } from './import-all.service';
-import { FileStorage } from '../../core/file-storage';
-import { UploadedFileStorage } from 'core/file-storage/uploaded-file-storage';
+import { RequestContext } from './../../core/context/request-context';
+import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
+import { ImportHistoryCreateCommand } from './commands';
+import { ImportHistoryService } from './import-history.service';
 
-@Injectable()
 @ApiTags('Import')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ImportAllController {
-	constructor(private importAllService: ImportAllService) {}
+	constructor(
+		private readonly importAllService: ImportAllService,
+		private readonly importHistory: ImportHistoryService,
+		private readonly commandBus: CommandBus
+	) {}
 
 	@ApiOperation({ summary: 'Find all imports.' })
 	@ApiResponse({
@@ -30,7 +39,16 @@ export class ImportAllController {
 		description: 'Record not found'
 	})
 	@Get()
-	async importAll() {}
+	async importAll(): Promise<IPagination<IImportHistory>> {
+		return this.importHistory.findAll({
+			where: {
+				tenantId: RequestContext.currentTenantId()
+			},
+			order: {
+				importDate: 'DESC'
+			}
+		});
+	}
 
 	@UseInterceptors(
 		FileInterceptor('file', {
@@ -50,16 +68,33 @@ export class ImportAllController {
 		description: 'Record not found'
 	})
 	@Post()
-	async parse(@Body() { importType }, @UploadedFileStorage() file) {
+	async parse(
+		@Body() { importType }, 
+		@UploadedFileStorage() file: UploadedFile
+	) {
+		const { key, originalname, size } = file;
+		const history = {
+			file: originalname,
+			path: key,
+			size: size,
+			tenantId: RequestContext.currentTenantId()
+		}
 		try {
+			await this.importAllService.unzipAndParse(key, importType === 'clean');
 			this.importAllService.removeExtractedFiles();
-			await this.importAllService.unzipAndParse(
-				file.key,
-				importType === 'clean'
+			return await this.commandBus.execute(
+				new ImportHistoryCreateCommand({ 
+					...history, 
+					status: ImportHistoryStatusEnum.SUCCESS 
+				})
 			);
-			return true;
 		} catch (error) {
-			return false;
+			return await this.commandBus.execute(
+				new ImportHistoryCreateCommand({ 
+					...history, 
+					status: ImportHistoryStatusEnum.FAILED 
+				})
+			);
 		}
 	}
 }

@@ -27,6 +27,9 @@ export interface IUser extends IBasePerTenantEntityModel {
 	paymentsId?: string;
 	preferredComponentLayout?: string;
 	fullName?: string;
+
+	isImporting?: boolean;
+	sourceId?: string;
 }
 
 export interface IUserFindInput {
@@ -49,6 +52,8 @@ export interface IUserRegistrationInput {
 	originalUrl?: string;
 	organizationId?: string;
 	createdById?: string;
+	isImporting?: boolean;
+	sourceId?: string;
 }
 
 export interface IAuthLoginInput {

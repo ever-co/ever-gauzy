@@ -4,5 +4,9 @@ public/screenshots/**/*.jpg
 public/screenshots/**/*.png
 public/invoices/pdf/*.pdf
 
+# Ignore Import/Export Path
+public/import/
+public/export/
+
 data/*
 report.*.json

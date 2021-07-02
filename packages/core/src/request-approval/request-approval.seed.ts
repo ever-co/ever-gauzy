@@ -31,53 +31,49 @@ export const createRandomRequestApproval = async (
 	noOfRequestsPerOrganizations: number
 ): Promise<any> => {
 	const requestApprovals: RequestApproval[] = [];
-	const policies: ApprovalPolicy[] = await connection.manager.find(
-		ApprovalPolicy
-	);
-
 	for await (const tenant of tenants || []) {
+		const policies: ApprovalPolicy[] = await connection.manager.find(ApprovalPolicy, {
+				where: {
+					tenant
+				}
+			}
+		);
 		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+			where: {
+				tenant
+			}
 		});
 
-		for (let i = 0; i < noOfRequestsPerOrganizations; i++) {
-			const tenantPolicy = faker.random.arrayElement(policies);
-			const employees = tenantEmployeeMap.get(tenant);
-			const specificEmployees = employees
-				.sort(() => Math.random() - Math.random())
-				.slice(0, 3);
+		for await (const organization of organizations) {
+			for (let i = 0; i < noOfRequestsPerOrganizations; i++) {
+				const tenantPolicy = faker.random.arrayElement(policies);
+				const employees = tenantEmployeeMap.get(tenant);
+				const specificEmployees = employees
+					.sort(() => Math.random() - Math.random())
+					.slice(0, 3);
+	
+				const requestApproval = new RequestApproval();
+				requestApproval.name = faker.random.arrayElement(approvalTypes);
+				requestApproval.status = faker.datatype.number({ min: 1, max: 3 });
+				requestApproval.approvalPolicy = tenantPolicy;
+				requestApproval.min_count = faker.datatype.number({ min: 1, max: 56 });
+				requestApproval.createdBy = faker.random.arrayElement(specificEmployees).id;
+	
+				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
+				for await (const employee of specificEmployees) {
+					const raEmployees = new RequestApprovalEmployee();
+					raEmployees.employee = employee;
+					raEmployees.tenant = tenant;
+					raEmployees.organization = organization;
+					raEmployees.status = requestApproval.status;
+					requestApprovalEmployees.push(raEmployees);
+				}
+				requestApproval.employeeApprovals = requestApprovalEmployees;
 
-			const requestApproval = new RequestApproval();
-			requestApproval.name = faker.random.arrayElement(approvalTypes);
-			requestApproval.status = faker.datatype.number({ min: 1, max: 3 });
-
-			// requestApproval.approvalPolicyId = tenantPolicy.id;
-			requestApproval.approvalPolicy = tenantPolicy;
-			requestApproval.min_count = faker.datatype.number({
-				min: 1,
-				max: 100
-			});
-			requestApproval.createdBy = faker.random.arrayElement(
-				specificEmployees
-			).id;
-
-			const organization = faker.random.arrayElement(organizations);
-
-			const requestApprovalEmployees: RequestApprovalEmployee[] = [];
-			specificEmployees.forEach((employee) => {
-				const raEmployees = new RequestApprovalEmployee();
-				raEmployees.employeeId = employee.id;
-				raEmployees.employee = employee;
-				raEmployees.tenant = organization;
-				raEmployees.organization = organization;
-				raEmployees.status = requestApproval.status;
-				requestApprovalEmployees.push(raEmployees);
-			});
-
-			requestApproval.employeeApprovals = requestApprovalEmployees;
-			requestApproval.tenant = tenant;
-			(requestApproval.organization = organization),
+				requestApproval.tenant = tenant;
+				requestApproval.organization = organization;
 				requestApprovals.push(requestApproval);
+			}
 		}
 	}
 

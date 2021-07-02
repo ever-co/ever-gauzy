@@ -29,7 +29,7 @@ export class CandidateFeedback
 	extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String })
@@ -55,13 +55,9 @@ export class CandidateFeedback
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
 
-	@OneToMany(
-		() => CandidateCriterionsRating,
-		(criterionsRating) => criterionsRating.feedback,
-		{
-			cascade: true
-		}
-	)
+	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.feedback, { 
+		cascade: true 
+	})
 	@JoinColumn()
 	criterionsRating?: ICandidateCriterionsRating[];
 

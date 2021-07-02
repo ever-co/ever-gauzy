@@ -3,27 +3,31 @@ import {
 	ManyToOne,
 	JoinColumn,
 	Column,
-	JoinTable,
 	OneToMany
 } from 'typeorm';
+import { IWarehouse, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
+import { ApiProperty } from '@nestjs/swagger';
 import {
 	TenantBaseEntity,
 	Product,
-	Warehouse
+	Warehouse,
+	WarehouseProductVariant
 } from '../core/entities/internal';
-import { IWarehouseProduct } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
-import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 
 @Entity('warehouse_product')
 export class WarehouseProduct
 	extends TenantBaseEntity
 	implements IWarehouseProduct {
-	@ManyToOne(() => Warehouse, (warehouse) => warehouse.products)
-	@JoinColumn()
-	warehouse: Warehouse;
 
-	@ManyToOne(() => Product)
+	@ManyToOne(() => Warehouse, (warehouse) => warehouse.products, {
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	warehouse: IWarehouse;
+
+	@ManyToOne(() => Product, (product) => product.warehouses, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	product: Product;
 
@@ -31,10 +35,9 @@ export class WarehouseProduct
 	@Column({ nullable: true, type: 'numeric', default: 0 })
 	quantity: number;
 
-	@OneToMany(
-		() => WarehouseProductVariant,
-		(warehouseProductVariant) => warehouseProductVariant.warehouseProduct
-	)
+	@OneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.warehouseProduct, {
+		cascade: true
+	})
 	@JoinColumn()
-	variants: WarehouseProductVariant[];
+	variants: IWarehouseProductVariant[];
 }

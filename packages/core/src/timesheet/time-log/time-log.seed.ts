@@ -109,7 +109,7 @@ export const createRandomTimeLogs = async (
 		const savedTimeLogs = await connection.getRepository(TimeLog).save(timeLogs);
 
 		const trackedTimeSlots: ITimeSlot[] = [];
-		for (const timeLog of savedTimeLogs) {
+		for await (const timeLog of savedTimeLogs) {
 			const { startedAt, stoppedAt, employeeId, organizationId, tenantId } = timeLog;
 			const newTimeSlots: ITimeSlot[] = createTimeSlots(startedAt, stoppedAt).map((timeSlot) => {
 				return {
@@ -127,7 +127,7 @@ export const createRandomTimeLogs = async (
 		* Saved Tracked Time Log & Time Slots and Related Screenshots 
 		*/
 		const newTrackedTimeSlots: ITimeSlot[] = [];
-		for (const timeSlot of trackedTimeSlots) {
+		for await (const timeSlot of trackedTimeSlots) {
 			const { tenantId, organizationId, startedAt, stoppedAt } = timeSlot;
 			const randomScreenshots = await createRandomScreenshot(
 				config, 

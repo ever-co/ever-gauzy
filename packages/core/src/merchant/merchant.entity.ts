@@ -1,22 +1,18 @@
-import { IMerchant, CurrenciesEnum } from '@gauzy/contracts';
+import { IMerchant, CurrenciesEnum, IImageAsset, ITag, IWarehouse, IContact } from '@gauzy/contracts';
 import {
 	TenantOrganizationBaseEntity, ImageAsset, Tag, Contact, Warehouse,
 } from '../core/entities/internal';
-import { Entity, Column, ManyToOne, JoinColumn, JoinTable, ManyToMany, OneToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, JoinTable, ManyToMany, OneToOne, Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString } from 'class-validator';
 
-
-
 @Entity('merchant')
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
-
 
 	@ApiProperty()
 	@IsString()
 	@Column()
 	name: string;
-
 
 	@ApiProperty()
 	@IsString()
@@ -34,18 +30,33 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	phone: string;
 
 	@ApiProperty()
+	@IsString()
+	@Column({ nullable: true })
+	description: string;
+
+	@ApiProperty()
+	@Column({ default: true })
+	active: boolean;
+
+	@ApiProperty()
+	@IsEnum(CurrenciesEnum)
+	@Column({ default: CurrenciesEnum.USD })
+	currency: string;
+
+	@ApiProperty()
 	@OneToOne(() => Contact, {
-		eager: true,
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	contact: Contact;
+	contact: IContact;
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Merchant) => it.contact)
 	@IsString()
+	@Index()
 	@Column()
-	description: string;
+	contactId: string;
 
 	@ApiProperty()
 	@ManyToOne(
@@ -53,29 +64,27 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 		{ cascade: true }
 	)
 	@JoinColumn()
-	logo: ImageAsset;
+	logo: IImageAsset;
 
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Merchant) => it.logo)
+	@IsString()
+	@Index()
+	@Column()
+	logoId: string;
 
-	@ApiProperty()
-	@Column({ default: true })
-	active: boolean;
-
-	@ManyToMany(() => Tag)
+	@ManyToMany(() => Tag, (tag) => tag.merchants, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
 	@JoinTable({
 		name: 'tag_merchant'
 	})
-	tags: Tag[];
-
-	@ApiProperty()
-	@IsEnum(CurrenciesEnum)
-	@Column({ default: CurrenciesEnum.USD })
-	currency: string;
-
+	tags: ITag[];
 
 	@ManyToMany(() => Warehouse)
 	@JoinTable({
 		name: 'warehouse_merchant'
 	})
-	warehouses: Warehouse[];
-
+	warehouses: IWarehouse[];
 }

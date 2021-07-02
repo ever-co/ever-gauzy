@@ -1,14 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { Router, UrlSerializer } from '@angular/router';
-import { concatMap, filter, finalize, switchMap, tap } from 'rxjs/operators';
+import { concatMap, delay, filter, finalize, switchMap, tap } from 'rxjs/operators';
+import { of as observableOf } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ITenant, IAuthResponse, IOrganization, IOrganizationCreateInput, IUser, IUserRegistrationInput, PermissionsEnum, BonusTypeEnum, CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/contracts';
+import { 
+	ITenant,
+	IAuthResponse,
+	IOrganization,
+	IOrganizationCreateInput,
+	IUser,
+	IUserRegistrationInput,
+	PermissionsEnum,
+	BonusTypeEnum,
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	ImportTypeEnum 
+} from '@gauzy/contracts';
 import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
 import { Environment } from './../../../environments/model';
-import { GauzyCloudService, Store, ToastrService } from '../../@core/services';
+import { GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -18,17 +31,18 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 })
 export class ImportExportComponent extends TranslationBaseComponent implements OnInit {
 
-	organization: IOrganization;
 	user: IUser;
 	environment: Environment = environment;
 	permissionsEnum = PermissionsEnum;
 	loading: boolean;
 	token: string;
 	gauzyUser: IUser;
+	organizations: IOrganization[] = [];
 
 	constructor(
 		private readonly exportAll: ExportAllService,
 		private readonly gauzyCloudService: GauzyCloudService,
+		private readonly userOrganizationService: UsersOrganizationsService,
 		private readonly router: Router,
 		private readonly store: Store,
 		readonly translateService: TranslateService,
@@ -43,13 +57,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			.pipe(
 				filter((user) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.getOrganizations()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -67,7 +75,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		this.exportAll
 			.downloadTemplates()
 			.pipe(untilDestroyed(this))
-			.subscribe((data) => saveAs(data, `template.zip`));
+			.subscribe((data) => saveAs(data, `archive.zip`));
 	}
 
 	/*
@@ -75,24 +83,31 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	*/
 	onMigrateIntoCloud(password: string) {
 		this.loading = true;
-		const { 
+		const {
+			id: sourceId,
 			firstName,
 			lastName,
+			username,
+			thirdPartyId,
 			email,
 			imageUrl,
 			preferredComponentLayout,
 			preferredLanguage,
-			tenant: { name } 
+			tenant: { id: tenantId, name }
 		} = this.user;
 		const register: IUserRegistrationInput = {
-			user: { 
+			user: {
 				firstName, 
-				lastName, 
+				lastName,
+				username,
+				thirdPartyId,
 				email,
 				preferredComponentLayout,
 				preferredLanguage,
 				imageUrl
 			},
+			isImporting: true,
+			sourceId,
 			password
 		}
 
@@ -103,13 +118,17 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						const { token, user } = response;
 						this.token = token;
 						this.gauzyUser = user;
-						return this.gauzyCloudService.migrateTenant({ name }, token);
+						return this.gauzyCloudService.migrateTenant({ name, isImporting: true, sourceId: tenantId }, token);
 					}),
-					concatMap((tenant: ITenant) => {
-						return this.gauzyCloudService.migrateOrganization(
-							{ ...this.mapOrganization(this.organization, tenant) }, 
-							this.token
-						);
+					delay(1000),
+					concatMap(async (tenant: ITenant) => {
+						for await (const organization of this.organizations) {
+							await this.gauzyCloudService.migrateOrganization({ 
+								...this.mapOrganization(organization, tenant) }, 
+								this.token
+							).toPromise();
+						}
+						return await observableOf(tenant).toPromise();
 					}),
 					tap(() => {
 						this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
@@ -119,10 +138,11 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 					finalize(() => {
 						this.loading = false;
 						const externalUrl = environment.GAUZY_CLOUD_APP;
-						const tree = this.router.createUrlTree([], { 
+						const tree = this.router.createUrlTree(['/pages/settings/import-export/import'], { 
 							queryParams: { 
 								token: this.token,
-								userId: this.gauzyUser.id
+								userId: this.gauzyUser.id,
+								importType: ImportTypeEnum.MERGE
 							} 
 						});
 
@@ -134,7 +154,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						}
 						setTimeout(() => {
 							this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]);
-						}, 1000);	
+						}, 1500);	
 					}),
 					untilDestroyed(this),
 				)
@@ -144,11 +164,19 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		}
 	}
 
+	async getOrganizations() {
+		const { id: userId, tenantId } = this.user;
+		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], {  userId,  tenantId  });
+		this.organizations = items.map((item) => item.organization);
+	}
+
 	mapOrganization(
 		organization: IOrganization,
 		tenant: ITenant
 	): IOrganizationCreateInput {
-		const { currency, defaultValueDateType, bonusType, imageUrl } = organization;
+		const { currency, defaultValueDateType, bonusType, imageUrl, id: sourceId } = organization;
+		delete organization['id'];
+
 		return {
 			...organization,
 			imageUrl,
@@ -157,6 +185,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			currency: currency as CurrenciesEnum, 
 			defaultValueDateType: defaultValueDateType as DefaultValueDateTypeEnum, 
 			bonusType: bonusType as BonusTypeEnum,
+			isImporting: true,
+			sourceId
 		}
 	}
 }

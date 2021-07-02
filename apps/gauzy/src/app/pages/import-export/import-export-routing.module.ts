@@ -46,7 +46,7 @@ const routes: Routes = [
 				route: ActivatedRouteSnapshot
 			) => {
                 const externalUrl = route.paramMap.get('redirect');
-				window.open(externalUrl, '_self');
+				window.open(externalUrl, '_blank');
             }
         },
     ],

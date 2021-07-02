@@ -4,7 +4,8 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	CreateDateColumn
+	CreateDateColumn,
+	Index
 } from 'typeorm';
 import {
 	IActivity,
@@ -30,48 +31,6 @@ const config = getConfig();
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
-
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee)
-	@JoinColumn()
-	employee?: IEmployee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((activity: Activity) => activity.employee)
-	@Column()
-	employeeId?: string;
-
-	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, { nullable: true })
-	project?: IOrganizationProject;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((activity: Activity) => activity.project)
-	@Column({ nullable: true })
-	projectId?: string;
-
-	@ApiProperty({ type: () => TimeSlot })
-	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
-		nullable: true,
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	timeSlot?: ITimeSlot;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((activity: Activity) => activity.timeSlot)
-	@Column({ nullable: true })
-	readonly timeSlotId?: string;
-
-	@ApiProperty({ type: () => Task })
-	@ManyToOne(() => Task, { nullable: true })
-	@JoinColumn()
-	task?: ITask;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((activity: Activity) => activity.task)
-	@Column({ nullable: true })
-	taskId?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -123,4 +82,67 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	// Employee
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, {
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Activity) => it.employee)
+	@IsString()
+	@Index()
+	@Column()
+	employeeId?: string;
+
+	// Organization Project
+	@ApiProperty({ type: () => OrganizationProject })
+	@ManyToOne(() => OrganizationProject, { nullable: true })
+	project?: IOrganizationProject;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Activity) => it.project)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	projectId?: string;
+
+	// TimeSlot
+	@ApiProperty({ type: () => TimeSlot })
+	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	timeSlot?: ITimeSlot;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Activity) => it.timeSlot)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly timeSlotId?: string;
+
+	// Task
+	@ApiProperty({ type: () => Task })
+	@ManyToOne(() => Task, { nullable: true })
+	@JoinColumn()
+	task?: ITask;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Activity) => it.task)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	taskId?: string;
 }

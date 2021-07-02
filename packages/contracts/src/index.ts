@@ -50,6 +50,7 @@ export * from './help-center.model';
 export * from './http-status.enum';
 export * from './hubstaff.model';
 export * from './income.model';
+export * from './import-export.model';
 export * from './integration.model';
 export * from './invite.model';
 export * from './invoice-estimate-history.model';

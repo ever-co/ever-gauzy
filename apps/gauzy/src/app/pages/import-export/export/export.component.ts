@@ -6,20 +6,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as _ from 'underscore';
 import { Subject } from 'rxjs/internal/Subject';
 import { finalize, tap } from 'rxjs/operators';
+import { IEntityModel } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { ExportAllService, Store } from '../../../@core/services';
-
-export interface IEntityModel {
-	name: string;
-	value?: string;
-	checked: boolean;
-	isGroup?: boolean;
-	entities?: IEntityModel[];
-}
+import { ExportAllService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-download',
+	selector: 'ngx-export',
 	templateUrl: './export.component.html',
 	styleUrls: ['./export.component.scss']
 })
@@ -30,13 +23,12 @@ export class ExportComponent
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
 	selectedModels: Array<IEntityModel> = [];
-	checkedAll = true;
+	checkedAll: boolean;
 	subject$: Subject<any> = new Subject();
 	loading: boolean;
 
 	constructor(
 		private readonly exportAll: ExportAllService,
-		private readonly store: Store,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -45,6 +37,7 @@ export class ExportComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
+				tap(() => this.checkedAll = true),
 				tap(() => this.getEntities()),
 				tap(() => this.onCheckboxChangeAll(this.checkedAll)),
 				untilDestroyed(this)
@@ -73,7 +66,7 @@ export class ExportComponent
 
 	onCheckboxChange(checked: boolean, entity: IEntityModel) {
 		entity.checked = checked;
-		if (entity.isGroup && entity.entities.length > 0) {
+		if (entity.isGroup && isNotEmpty(entity.entities)) {
 			entity.entities.forEach((t: IEntityModel) => (t.checked = checked));
 		}
 		this.selectedCheckboxes();
@@ -122,15 +115,14 @@ export class ExportComponent
 
 	onSubmit() {
 		this.loading = true;
-		const { tenantId } = this.store.user;
 		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificData(entities, { tenantId })
+			.downloadSpecificData(entities)
 			.pipe(
 				finalize(() => this.loading = false),
 				untilDestroyed(this)
 			)
-			.subscribe((data) => saveAs(data, `export.zip`));
+			.subscribe((data) => saveAs(data, `archive.zip`));
 	}
 
 	getEntities() {
@@ -180,6 +172,20 @@ export class ExportComponent
 				entities: []
 			},
 			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.COUNTRY'),
+				value: 'country',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CURRENCY'),
+				value: 'currency',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.DEAL'),
 				value: 'deal',
 				checked: true,
@@ -209,7 +215,7 @@ export class ExportComponent
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.EVENT_TYPES'),
-				value: 'event_types',
+				value: 'event_type',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -288,6 +294,7 @@ export class ExportComponent
 				name: this.getTranslation('MENU.IMPORT_EXPORT.LANGUAGE'),
 				value: 'language',
 				checked: true,
+				isGroup: false,
 				entities: []
 			},
 			{
@@ -373,8 +380,8 @@ export class ExportComponent
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TENANT'),
 				value: 'tenant',
 				checked: true,
-				isGroup: false,
-				entities: []
+				isGroup: true,
+				entities: this.getTenantEntities()
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TIME_OFF_POLICY'),
@@ -713,6 +720,15 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.INTEGRATION_TYPE'
+				),
+				value: 'integration_type',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING'
 				),
 				value: 'integration_entity_setting',
@@ -772,10 +788,10 @@ export class ExportComponent
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.PRODUCT_CATEGORY_TRANSLATION'
 				),
-				value: 'product_category_translation', 
-				checked: true, 
-				isGroup: false, 
-				entities: [] 
+				value: 'product_category_translation',
+				checked: true,
+				isGroup: false,
+				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_OPTION'),
@@ -880,6 +896,7 @@ export class ExportComponent
 				name: this.getTranslation('MENU.IMPORT_EXPORT.MERCHANT'),
 				value: 'merchant',
 				checked: true,
+				isGroup: false,
 				entities: []
 			},
 			{
@@ -1231,6 +1248,20 @@ export class ExportComponent
 					'MENU.IMPORT_EXPORT.PIPELINE_STAGE'
 				),
 				value: 'pipeline_stage',
+				checked: true,
+				isGroup: false,
+				entities: []
+			}
+		];
+	}
+
+	getTenantEntities(): IEntityModel[] {
+		return [
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.TENANT_SETTING'
+				),
+				value: 'tenant_setting',
 				checked: true,
 				isGroup: false,
 				entities: []
