@@ -14,7 +14,7 @@ import { UserService } from '../user/user.service';
 import { RoleService } from 'role/role.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
 import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
-import { ImportRecordFirstOrCreateCommand } from './../export-import/import/commands';
+import { ImportRecordFirstOrCreateCommand, ImportRecordService } from './../export-import/import';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -23,7 +23,8 @@ export class TenantService extends CrudService<Tenant> {
 		private readonly tenantRepository: Repository<Tenant>,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly importRecordService: ImportRecordService
 	) {
 		super(tenantRepository);
 	}
@@ -65,7 +66,7 @@ export class TenantService extends CrudService<Tenant> {
 
 		//6. Create Import Records while migrating for relative tenant.
 		if (isImporting && sourceId) {
-			const { sourceId } = entity;
+			const { sourceId, userSourceId } = entity;
 			await this.commandBus.execute(
 				new ImportRecordFirstOrCreateCommand({
 					entityType: getManager().getRepository(Tenant).metadata.tableName,
@@ -74,6 +75,7 @@ export class TenantService extends CrudService<Tenant> {
 					tenantId: tenant.id
 				})
 			);
+			console.log(this.importRecordService, userSourceId);
 		}
 
 		return tenant;

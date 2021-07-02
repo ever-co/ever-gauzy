@@ -213,7 +213,7 @@ export class PaymentsComponent
 				...request,
 				...this.filters.where
 			},
-			resultMap: async (payment: IPayment) => {
+			resultMap: (payment: IPayment) => {
 				try {
 					const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
 					let organizationContactName: string;
@@ -226,11 +226,12 @@ export class PaymentsComponent
 						displayOverdue: this.statusMapper(overdue),
 						invoiceNumber: invoice ? invoice.invoiceNumber : null,
 						projectName: project ? project.name : null,
-						recordedBy: recordedBy ? `${recordedBy.name}`: null,
+						recordedByName: recordedBy ? recordedBy.name: null,
 						displayPaymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
-						organizationContactName,
+						organizationContactName: organizationContactName
 					});
 				} catch (error) {
+					console.log(error);
 					return Object.assign({}, payment);
 				}
 			},
@@ -420,7 +421,7 @@ export class PaymentsComponent
 						this.searchFilter();
 					}
 				},
-				recordedBy: {
+				recordedByName: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
 					type: 'text',
 					filter: false,

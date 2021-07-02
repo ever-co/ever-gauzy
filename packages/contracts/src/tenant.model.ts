@@ -25,6 +25,7 @@ export interface ITenantCreateInput {
 	
 	isImporting?: boolean;
 	sourceId?: string;
+	userSourceId?: string;
 }
 
 export interface ITenantSetting extends S3FileStorageProviderConfig {
