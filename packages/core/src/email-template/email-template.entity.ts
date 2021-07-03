@@ -24,7 +24,7 @@ export class EmailTemplate
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@Column({ type: 'text', nullable: true })
 	@IsOptional()
 	mjml: string;
 

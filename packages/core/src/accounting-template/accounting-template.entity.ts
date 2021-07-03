@@ -28,7 +28,7 @@ export class AccountingTemplate
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ type: 'text', nullable: true })
 	mjml: string;
 
 	@ApiProperty({ type: () => String })

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
@@ -15,10 +15,11 @@ import { CommandHandlers } from './commands/handlers';
 			{ path: '/feature/toggle', module: FeatureModule }
 		]),
 		TypeOrmModule.forFeature([Feature, FeatureOrganization]),
-		TenantModule,
+		forwardRef(() => TenantModule),
 		CqrsModule
 	],
 	controllers: [FeaturesToggleController],
-	providers: [FeatureService, ...CommandHandlers]
+	providers: [FeatureService, ...CommandHandlers],
+	exports: [FeatureService]
 })
 export class FeatureModule {}
