@@ -28,7 +28,7 @@ export class OrganizationCreateHandler
 		command: OrganizationCreateCommand
 	): Promise<IOrganization> {
 		const { input } = command;
-		const { isImporting = false, sourceId = null } = input;
+		const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;
 
 		//1. Get roleId for Super Admin user of the Tenant
 		const { id: roleId } = await this.roleService.findOne({
@@ -69,13 +69,23 @@ export class OrganizationCreateHandler
 		// 4. Take each super admin user and add him/her to created organization
 		try {
 			for await (const superAdmin of superAdminUsers) {
-				await this.userOrganizationService.create(
+				const userOrganization = await this.userOrganizationService.create(
 					new UserOrganization({
 						organization: createdOrganization,
 						tenantId,
 						user: superAdmin
 					})
 				);
+				if (isImporting && userOrganizationSourceId) {
+					await this.commandBus.execute(
+						new ImportRecordUpdateOrCreateCommand({
+							entityType: getManager().getRepository(UserOrganization).metadata.tableName,
+							sourceId: userOrganizationSourceId,
+							destinationId: userOrganization.id,
+							tenantId
+						})
+					);
+				}
 			}
 		} catch (e) {
 			console.log('caught', e)
