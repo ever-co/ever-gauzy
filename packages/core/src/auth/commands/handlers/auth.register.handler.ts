@@ -15,20 +15,22 @@ export class AuthRegisterHandler
 
 	public async execute(command: AuthRegisterCommand): Promise<IUser> {
 		const { input, languageCode } = command;
-
 		if (
 			input.user &&
 			input.user.role &&
 			input.user.role.name === RolesEnum.SUPER_ADMIN
 		) {
-			if (!input.createdById) throw new BadRequestException();
+			if (!input.createdById) {
+				throw new BadRequestException()
+			};
 
 			const { role } = await this.userService.findOne(input.createdById, {
 				relations: ['role']
 			});
 
-			if (role.name !== RolesEnum.SUPER_ADMIN)
+			if (role.name !== RolesEnum.SUPER_ADMIN) {
 				throw new UnauthorizedException();
+			}
 		}
 		return await this.authService.register(input, languageCode);
 	}

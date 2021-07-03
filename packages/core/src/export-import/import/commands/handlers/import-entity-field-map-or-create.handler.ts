@@ -21,7 +21,10 @@ export class ImportEntityFieldMapOrCreateHandler
 		try {
 			if (isNotEmpty(where)) {
 				return await repository.findOneOrFail({
-					where
+					where,
+					order : {
+						createdAt: 'DESC'
+					}
 				});
 			}
 			throw new NotFoundException();
