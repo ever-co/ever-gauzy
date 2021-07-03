@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { switchMap } from 'rxjs/operators';
+import { of as observableOf } from 'rxjs/internal/observable/of';
+import { switchMap, catchError } from 'rxjs/operators';
 import { GauzyCloudService } from '../../gauzy-cloud.service';
 import { GauzyCloudUserMigrateCommand } from './../gauzy-cloud-user.migrate.command';
 
@@ -25,6 +26,10 @@ export class GauzyCloudUserMigrateHandler implements ICommandHandler<GauzyCloudU
 					}
 					return this.gauzyCloudService.extractToken(request);
 				}
+			}),
+			catchError((error) => {
+				console.log('Bad Promise:', error);
+				return observableOf(error)
 			})
 		);
 	}
