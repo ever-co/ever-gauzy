@@ -16,7 +16,8 @@ import {
 	BonusTypeEnum,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	ImportTypeEnum 
+	ImportTypeEnum, 
+	IUserOrganization
 } from '@gauzy/contracts';
 import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
@@ -37,7 +38,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	loading: boolean;
 	token: string;
 	gauzyUser: IUser;
-	organizations: IOrganization[] = [];
+	userOrganizations: IUserOrganization[] = [];
 
 	constructor(
 		private readonly exportAll: ExportAllService,
@@ -127,11 +128,14 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 					}),
 					delay(1000),
 					concatMap(async (tenant: ITenant) => {
-						for await (const organization of this.organizations) {
+						for await (const { id: userOrganizationSourceId, organization } of this.userOrganizations) {
 							await this.gauzyCloudService.migrateOrganization({ 
-								...this.mapOrganization(organization, tenant) }, 
-								this.token
-							).toPromise();
+								...this.mapOrganization(
+									organization, 
+									tenant,
+									userOrganizationSourceId
+								) 
+							}, this.token).toPromise();
 						}
 						return await observableOf(tenant).toPromise();
 					}),
@@ -172,12 +176,13 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	async getOrganizations() {
 		const { id: userId, tenantId } = this.user;
 		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], {  userId,  tenantId  });
-		this.organizations = items.map((item) => item.organization);
+		this.userOrganizations = items;
 	}
 
 	mapOrganization(
 		organization: IOrganization,
-		tenant: ITenant
+		tenant: ITenant,
+		userOrganizationSourceId: IUserOrganization['id']
 	): IOrganizationCreateInput {
 		const { currency, defaultValueDateType, bonusType, imageUrl, id: sourceId } = organization;
 		delete organization['id'];
@@ -191,7 +196,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			defaultValueDateType: defaultValueDateType as DefaultValueDateTypeEnum, 
 			bonusType: bonusType as BonusTypeEnum,
 			isImporting: true,
-			sourceId
+			sourceId,
+			userOrganizationSourceId
 		}
 	}
 }
