@@ -89,6 +89,7 @@ export const clickConfirmAddButton = () => {
 };
 
 export const verifyUserExists = (text) => {
+	cy.wait(3000);
 	verifyText(AddUserPage.verifyUserCss, text);
 };
 

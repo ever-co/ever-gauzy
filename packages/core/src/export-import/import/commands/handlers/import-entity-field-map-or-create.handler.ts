@@ -3,8 +3,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CommandBus } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from './../../../../core';
+import { ImportRecordFindOrFailCommand } from './../../../import-record';
 import { ImportEntityFieldMapOrCreateCommand } from './../import-entity-field-map-or-create.command';
-import { ImportRecordFindOrFailCommand } from './../import-record-find-or-fail.command';
 
 @CommandHandler(ImportEntityFieldMapOrCreateCommand)
 export class ImportEntityFieldMapOrCreateHandler 
@@ -21,7 +21,10 @@ export class ImportEntityFieldMapOrCreateHandler
 		try {
 			if (isNotEmpty(where)) {
 				return await repository.findOneOrFail({
-					where
+					where,
+					order : {
+						createdAt: 'DESC'
+					}
 				});
 			}
 			throw new NotFoundException();
@@ -36,7 +39,10 @@ export class ImportEntityFieldMapOrCreateHandler
 				);
 				if (success && record) {
 					const { destinationId } = record;
-					return await this._create(repository, { id: destinationId, ...entity });
+					return await repository.save({ 
+						id: destinationId, 
+						...entity 
+					});
 				}
 				throw new NotFoundException(`The import record was not found`);
 			} catch (error) {

@@ -13,7 +13,8 @@ import {
 	Post,
 	Body,
 	Put,
-	Delete
+	Delete,
+	UseInterceptors
 } from '@nestjs/common';
 import {
 	ApiOperation,
@@ -36,9 +37,11 @@ import { IUserCreateInput, IUserUpdateInput } from '@gauzy/contracts';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { DeleteAllDataService } from './delete-all-data/delete-all-data.service';
+import { TransformInterceptor } from './../core/interceptors/transform.interceptor';
 
 @ApiTags('User')
 @ApiBearerAuth()
+@UseInterceptors(TransformInterceptor)
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class UserController extends CrudController<User> {

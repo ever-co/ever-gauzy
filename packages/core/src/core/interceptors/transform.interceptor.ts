@@ -1,6 +1,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, HttpException } from '@nestjs/common';
 import { Observable, of as observableOf } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { classToPlain } from 'class-transformer';
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
@@ -12,12 +13,7 @@ export class TransformInterceptor implements NestInterceptor {
 		return next
 			.handle()
 			.pipe(
-				map((response) => {
-					if (response && response.data) {
-						return response.data;
-					}
-					return response;
-				}),
+				map((data) => classToPlain(data)),
 				catchError(
 					(error) => observableOf(
 						new HttpException(error.message, 404)

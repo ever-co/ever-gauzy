@@ -6,7 +6,8 @@ import {
 	Body,
 	Get,
 	Req,
-	Query
+	Query,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -24,8 +25,10 @@ import { getUserDummyImage } from '../core';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import { AuthLoginCommand } from './commands/auth.login.command';
+import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('Auth')
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class AuthController {
 	constructor(

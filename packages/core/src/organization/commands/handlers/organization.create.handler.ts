@@ -9,8 +9,8 @@ import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { RequestContext } from '../../../core/context';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
-import { ImportRecordFirstOrCreateCommand } from './../../../export-import/import/commands';
 import { Organization, UserOrganization } from './../../../core/entities/internal';
+import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
 
 
 @CommandHandler(OrganizationCreateCommand)
@@ -28,7 +28,7 @@ export class OrganizationCreateHandler
 		command: OrganizationCreateCommand
 	): Promise<IOrganization> {
 		const { input } = command;
-		const { isImporting = false, sourceId = null } = input;
+		const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;
 
 		//1. Get roleId for Super Admin user of the Tenant
 		const { id: roleId } = await this.roleService.findOne({
@@ -69,13 +69,23 @@ export class OrganizationCreateHandler
 		// 4. Take each super admin user and add him/her to created organization
 		try {
 			for await (const superAdmin of superAdminUsers) {
-				await this.userOrganizationService.create(
+				const userOrganization = await this.userOrganizationService.create(
 					new UserOrganization({
 						organization: createdOrganization,
 						tenantId,
 						user: superAdmin
 					})
 				);
+				if (isImporting && userOrganizationSourceId) {
+					await this.commandBus.execute(
+						new ImportRecordUpdateOrCreateCommand({
+							entityType: getManager().getRepository(UserOrganization).metadata.tableName,
+							sourceId: userOrganizationSourceId,
+							destinationId: userOrganization.id,
+							tenantId
+						})
+					);
+				}
 			}
 		} catch (e) {
 			console.log('caught', e)
@@ -104,7 +114,7 @@ export class OrganizationCreateHandler
 			const { sourceId } = input;
 			const entityType = getManager().getRepository(Organization).metadata.tableName;
 			await this.commandBus.execute(
-				new ImportRecordFirstOrCreateCommand({
+				new ImportRecordUpdateOrCreateCommand({
 					entityType,
 					sourceId,
 					destinationId: organization.id,

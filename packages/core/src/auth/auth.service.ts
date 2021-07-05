@@ -15,7 +15,7 @@ import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { getManager } from 'typeorm';
-import { ImportRecordFirstOrCreateCommand } from './../export-import/import/commands';
+import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -30,16 +30,15 @@ export class AuthService extends SocialAuthService {
 
 	async login(findObj: any, password: string): Promise<IAuthResponse | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role', 'role.rolePermissions', 'employee']
+			relations: ['role', 'role.rolePermissions', 'employee'],
+			order: {
+				createdAt: 'DESC'
+			}
 		});
-
 		if (!user || !(await bcrypt.compare(password, user.hash))) {
 			return null;
 		}
-
 		const { token } = await this.createToken(user);
-		delete user.hash;
-
 		return {
 			user,
 			token
@@ -149,7 +148,7 @@ export class AuthService extends SocialAuthService {
 		if (isImporting && sourceId) {
 			const { sourceId } = input;
 			await this.commandBus.execute(
-				new ImportRecordFirstOrCreateCommand({
+				new ImportRecordUpdateOrCreateCommand({
 					entityType: getManager().getRepository(User).metadata.tableName,
 					sourceId,
 					destinationId: user.id

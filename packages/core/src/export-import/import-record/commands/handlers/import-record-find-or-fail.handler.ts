@@ -1,6 +1,6 @@
 import { forwardRef, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ImportRecordService } from 'export-import/import/import-record.service';
+import { ImportRecordService } from './../../import-record.service';
 import { ImportRecordFindOrFailCommand } from './../import-record-find-or-fail.command';
 import { ITryRequest } from './../../../../core/crud/try-request';
 

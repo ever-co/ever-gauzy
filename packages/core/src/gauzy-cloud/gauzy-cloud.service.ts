@@ -1,8 +1,12 @@
 import { HttpService, Injectable } from "@nestjs/common";
-import { IAuthLoginInput, ITenantCreateInput, IUserRegistrationInput } from "@gauzy/contracts";
+import {
+    IAuthLoginInput,
+    IOrganizationCreateInput,
+    ITenantCreateInput,
+    IUserRegistrationInput
+} from "@gauzy/contracts";
 import { AxiosResponse } from 'axios';
 import { Observable } from "rxjs/internal/Observable";
-import { IOrganizationCreateInput } from "../../../contracts/dist";
 
 @Injectable()
 export class GauzyCloudService {

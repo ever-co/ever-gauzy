@@ -26,8 +26,6 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
-import { TenantService } from '../tenant/tenant.service';
-import { Tenant } from '../tenant/tenant.entity';
 import { RolePermissionsService } from '../role-permissions/role-permissions.service';
 import { RolePermissions } from '../role-permissions/role-permissions.entity';
 import { TenantModule } from '../tenant/tenant.module';
@@ -45,7 +43,6 @@ import { TenantModule } from '../tenant/tenant.module';
 			OrganizationContact,
 			OrganizationDepartment,
 			Organization,
-			Tenant,
 			RolePermissions
 		]),
 		SharedModule,
@@ -67,7 +64,6 @@ import { TenantModule } from '../tenant/tenant.module';
 		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationService,
-		TenantService,
 		RolePermissionsService
 	],
 	exports: [InviteService]
