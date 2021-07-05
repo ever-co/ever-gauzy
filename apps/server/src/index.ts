@@ -5,7 +5,7 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import { app, BrowserWindow, ipcMain, shell, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { environment } from './environments/environment';
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 
@@ -25,6 +25,8 @@ initSentry();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
+
+const docPath = app.getPath('userData');
 
 let setupWindow:BrowserWindow;
 const pathWindow: {
@@ -57,34 +59,54 @@ const initializeConfig = (val) => {
 	LocalStore.updateConfigSetting(val);
 }
 
-const createServerApi = () => {
+const createServer = (typeServer) => {
+	let fileServe = 'desktop-server-ui.js';
+	let serviceName = `GauzyServe${typeServer}`;
+	if (typeServer === 'Api') {
+		fileServe = 'desktop-server-api.js';
+	}
 	const platform = os.platform();
+	const serverPath = path.join(docPath, 'preload', fileServe);
+	console.log('server location', serverPath);
+	let Service:any | null = null;
+	let svc:any | null = null;
 	switch (platform) {
 		case 'win32':
-			const uiServer = path.join(__dirname, 'preload', 'desktop-server-api.js');
-			const Service = require('node-windows').Service;
-			let svc = new Service({
-				name: 'GauzyServerUi',
-				description: 'gauzy ui service',
-				script: uiServer
-			});
-			svc.on('install',function(){
-				console.log('on install');
-				svc.on('start', () => {
-					console.log('service start');
-				})
-				svc.start();
-			});
-			svc.on('error', () => {
-				console.log('service install error');
-			});
-			svc.on('invalidinstallation ', () => {
-				console.log('service invalid installation');
-			})
-			svc.install();
+			Service = require('node-windows').Service;
+			break;
+		case 'darwin':
+			Service = require('node-mac').Service;
 			break;
 		default:
 			break;
+	}
+
+	svc = new Service({
+		name: serviceName,
+		description: 'gauzy ui service',
+		script: serverPath
+	});
+	if (svc.exists) {
+		svc.on('uninstall',function(){
+			console.log('Uninstall complete.');
+			console.log('The service exists: ',svc.exists);
+		  });
+		svc.uninstall();
+	} else {
+		svc.on('install',function(){
+			console.log('on install');
+			svc.on('start', () => {
+				console.log('service start');
+			})
+			svc.start();
+		});
+		svc.on('error', () => {
+			console.log('service install error');
+		});
+		svc.on('invalidinstallation ', () => {
+			console.log('service invalid installation');
+		})
+		svc.install();
 	}
 }
 
@@ -93,7 +115,15 @@ ipcMain.on('save_config', (event, arg) => {
 })
 
 app.on('ready', () => {
-	createServerApi();
+	createServer('Ui');
+})
+
+ipcMain.on('run_server_ui', () => {
+	createServer('Ui');
+})
+
+ipcMain.on('run_server_api', () => {
+	createServer('Api');
 })
 
 ipcMain.on('quit', quit);
