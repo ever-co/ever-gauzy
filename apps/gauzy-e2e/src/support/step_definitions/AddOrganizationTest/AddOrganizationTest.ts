@@ -3,6 +3,7 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as addOrganizationPage from '../../Base/pages/AddOrganization.po';
 import * as faker from 'faker';
 import { AddOrganizationPageData } from '../../Base/pagedata/AddOrganizationPageData';
+import * as deleteOrganizationPage from '../../Base/pages/DeleteOrganization.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 
@@ -221,4 +222,33 @@ Then('Notification message will appear', () => {
 
 And('User can verify organization was created', () => {
 	addOrganizationPage.verifyOrganizationExists(organizationName);
+});
+
+// Delete organization
+Then('User can see grid button', () => {
+	deleteOrganizationPage.gridBtnExists();
+});
+
+And('User can click on grid button to change view', () => {
+	deleteOrganizationPage.gridBtnClick();
+});
+
+And('User can see delete button', () => {
+	deleteOrganizationPage.deleteBtnExists();
+});
+
+When('User click on delete button', () => {
+	deleteOrganizationPage.deleteBtnClick();
+});
+
+Then('User can see confirm delete button', () => {
+	deleteOrganizationPage.confirmBtnExists();
+});
+
+When('User click on confirm delete button', () => {
+	deleteOrganizationPage.confirmBtnClick();
+});
+
+Then('Notification message will appear', () => {
+	addOrganizationPage.waitMessageToHide();
 });
