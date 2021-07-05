@@ -32,6 +32,9 @@ jobs:
             - name: Run API in background
               run: yarn start:api &
 
+            - name: Run UI in background
+              run: yarn start:gauzy &
+
             - name: Cypress info
               run: npx cypress info
 
@@ -49,7 +52,10 @@ jobs:
                   record: false
                   # Cypress tests and config file are in "apps/gauzy-e2e" folder
                   working-directory: 'apps/gauzy-e2e'
-                  wait-on: 'http://localhost:3000/api'
+                  # We wait till both API and UI runs completely here
+                  wait-on: 'http://localhost:3000/api,http://localhost:4200'
+                  # wait for 2 minutes for the server to respond
+                  wait-on-timeout: 120
                   browser: chrome
                   config-file: cypress.json
               env:
