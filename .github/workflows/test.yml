@@ -19,3 +19,4 @@ jobs:
                   start: yarn start:api
                   wait-on: 'http://localhost:3000/api'
                   browser: chrome
+                  config-file: apps/gauzy-e2e/cypress.json
