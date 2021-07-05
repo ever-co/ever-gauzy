@@ -11,6 +11,7 @@ jobs:
             - name: Cypress run
               uses: cypress-io/github-action@v2
               with:
+                  working-directory: 'apps/gauzy-e2e'
                   install: yarn bootstrap
                   build: yarn build:package:all
                   start: yarn start:api
