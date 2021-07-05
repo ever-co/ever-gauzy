@@ -23,7 +23,20 @@
 	"scripts": {
 		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:common-angular && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core && yarn run build:package:plugin:knowledge-base && yarn run build:package:plugin:changelog && yarn build:package:desktop-libs && yarn build:package:plugin:integration-wakatime && yarn ng build desktop-ui-lib",
 		"bootstrap": "yarn install && yarn lerna bootstrap",
-		"start:api": "yarn ng serve api"
+		"start:api": "yarn ng serve api",
+		"build:package:contracts": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/contracts build",
+		"build:package:common-angular": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/common-angular build",
+		"build:package:config": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/config build",
+		"build:package:common": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/common build",
+		"build:package:plugin": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/plugin build",
+		"build:package:plugin:integration-wakatime": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/plugins/integration-wakatime build",
+		"build:package:desktop-libs": "yarn run build:package:desktop-window && cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/desktop-libs build",
+		"build:package:plugin:changelog": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/plugins/changelog build",
+		"build:package:plugin:knowledge-base": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/plugins/knowledge-base build",
+		"build:package:core": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/core build",
+		"build:package:auth": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/auth build",
+		"build:package:plugins": "yarn run build:package:plugin:integration-ai && yarn run build:package:plugin:integration-hubstaff && yarn run build:package:plugin:integration-upwork && yarn run build:package:plugin:product-reviews"
+
 	},
 	"resolutions": {
 		"@angular-devkit/build-angular": "~0.1101.2"
