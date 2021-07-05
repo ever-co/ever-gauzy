@@ -20,6 +20,11 @@
 	"dependencies": {
 		"resolve": "^1.20.0"
 	},
+	"scripts": {
+		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:common-angular && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core && yarn run build:package:plugin:knowledge-base && yarn run build:package:plugin:changelog && yarn build:package:desktop-libs && yarn build:package:plugin:integration-wakatime && yarn ng build desktop-ui-lib",
+		"bootstrap": "yarn install && yarn lerna bootstrap",
+		"start:api": "yarn ng serve api"
+	},
 	"resolutions": {
 		"@angular-devkit/build-angular": "~0.1101.2"
 	},
