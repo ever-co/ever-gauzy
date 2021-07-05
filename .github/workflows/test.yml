@@ -10,12 +10,14 @@ jobs:
               uses: actions/checkout@v2
             - name: Increase file limit
               run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+            - name: Build all packages
+              run: 'yarn build:package:all'  
             - name: Cypress run
               uses: cypress-io/github-action@v2
               with:
                   working-directory: 'apps/gauzy-e2e'
-                  install: yarn bootstrap
-                  build: yarn build:package:all
                   start: yarn start:api
                   wait-on: 'http://localhost:3000/api'
                   browser: chrome
