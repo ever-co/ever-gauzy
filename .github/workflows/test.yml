@@ -51,7 +51,7 @@ jobs:
                   working-directory: 'apps/gauzy-e2e'
                   wait-on: 'http://localhost:3000/api'
                   browser: chrome
-                  config-file: apps/gauzy-e2e/cypress.json
+                  config-file: cypress.json
               env:
                 CYPRESS_RECORD_KEY: ${{ secrets.RECORDING_KEY }}
 
