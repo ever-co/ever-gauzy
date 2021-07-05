@@ -13,7 +13,6 @@ jobs:
               with:
                   working-directory: 'apps/gauzy-e2e'
                   install: yarn bootstrap
-                  build: yarn build:package:all
                   start: yarn start:api
                   wait-on: 'http://localhost:3000/api'
                   browser: chrome
