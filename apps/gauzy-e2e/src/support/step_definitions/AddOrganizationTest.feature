@@ -48,3 +48,11 @@ Feature: Add Organization
     When User click on last Next button
     Then Notification message will appear
     And User can verify organization was created
+  Scenario: Delete organization
+    Then User can see grid button
+    And User can click on grid button to change view
+    And User can see delete button
+    When User click on delete button
+    Then User can see confirm delete button
+    When User click on confirm delete button
+    Then Notification message will appear
