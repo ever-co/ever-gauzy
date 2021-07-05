@@ -9,6 +9,7 @@ import {
 import { EditProfilePage } from '../pageobjects/EditProfilePageObject';
 
 export const firstNameInputVisible = () => {
+	cy.wait(3000);
 	verifyElementIsVisible(EditProfilePage.firstNameInputCss);
 };
 
