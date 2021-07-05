@@ -21,6 +21,8 @@
 		"resolve": "^1.20.0"
 	},
 	"scripts": {
+		"config": "yarn ts-node ./.scripts/configure.ts",
+		"config:dev": "yarn run config -- --environment=dev",
 		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:common-angular && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core && yarn run build:package:plugin:knowledge-base && yarn run build:package:plugin:changelog && yarn build:package:desktop-libs && yarn build:package:plugin:integration-wakatime && yarn ng build desktop-ui-lib",
 		"bootstrap": "yarn install && yarn lerna bootstrap",
 		"start:api": "yarn ng serve api",
@@ -35,8 +37,10 @@
 		"build:package:plugin:knowledge-base": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/plugins/knowledge-base build",
 		"build:package:core": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/core build",
 		"build:package:auth": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn --cwd ./packages/auth build",
-		"build:package:plugins": "yarn run build:package:plugin:integration-ai && yarn run build:package:plugin:integration-hubstaff && yarn run build:package:plugin:integration-upwork && yarn run build:package:plugin:product-reviews"
-
+		"build:package:plugins": "yarn run build:package:plugin:integration-ai && yarn run build:package:plugin:integration-hubstaff && yarn run build:package:plugin:integration-upwork && yarn run build:package:plugin:product-reviews",
+		"build": "yarn build:package:all && concurrently --raw \"yarn build:api\" \"yarn build:gauzy\"",
+		"build:api": "yarn ng build api",
+		"build:gauzy": "yarn run postinstall.web && yarn run config:dev && yarn ng build gauzy"
 	},
 	"resolutions": {
 		"@angular-devkit/build-angular": "~0.1101.2"
