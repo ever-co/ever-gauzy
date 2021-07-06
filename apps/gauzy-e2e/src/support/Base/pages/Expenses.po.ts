@@ -34,6 +34,7 @@ export const selectEmployeeDropdownVisible = () => {
 };
 
 export const clickEmployeeDropdown = () => {
+	cy.wait(3000);
 	clickButton(ExpensesPage.selectEmployeeDropdownCss);
 };
 
