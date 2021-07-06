@@ -17,7 +17,7 @@ import { UserModule } from './../user';
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => ({
 				baseURL: configService.get('gauzyCloudEndpoint') as string,
-				timeout: 60 * 1000,
+				timeout: 60 * 5 * 1000,
 				maxRedirects: 5,
 				headers: {
                     'Content-Type': 'application/json'
