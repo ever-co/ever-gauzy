@@ -36,18 +36,18 @@ export class RoleService extends TenantAwareCrudService<Role> {
 	}
 
 	async migrateRoles(): Promise<IRoleMigrateInput[]> {
-		const roles: IRole[] = await this.roleRepository.find({
+		const roles: IRole[] = await this.repository.find({
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			}
 		})
 		const payload: IRoleMigrateInput[] = []; 
 		for await (const role of roles) {
-			const { name, tenantId } = role;
+			const { id: sourceId } = role;
 			payload.push({
-				name,
-				tenantId,
-				isImporting: true
+				...role,
+				isImporting: true,
+				sourceId 
 			})
 		}
 		return payload;

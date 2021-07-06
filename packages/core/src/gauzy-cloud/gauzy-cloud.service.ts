@@ -4,10 +4,13 @@ import {
     IOrganizationCreateInput,
     ITenantCreateInput,
     IUserRegistrationInput,
-    IRoleMigrateInput
+    IRoleMigrateInput,
+    ITenant,
+    IRolePermissionCreateInput
 } from "@gauzy/contracts";
 import { AxiosResponse } from 'axios';
 import { Observable } from "rxjs/internal/Observable";
+import { RequestContext } from "./../core";
 
 @Injectable()
 export class GauzyCloudService {
@@ -52,12 +55,28 @@ export class GauzyCloudService {
 
     migrateRoles(
         payload: IRoleMigrateInput[], 
-        token: string
+        token: string,
+        tenant: ITenant
     ): Observable<AxiosResponse<any>> {
         const params = JSON.stringify(payload);
         return this._http.post('/api/role/import/migrate', params, { 
             headers: { 
-                'Authorization': `Bearer ${token}` 
+                'Authorization': `Bearer ${token}`,
+                'Tenant-Id': `${tenant.id}`
+            }
+        });
+    }
+
+    migrateRolePermissions(
+        payload: IRolePermissionCreateInput[], 
+        token: string,
+        tenant: ITenant
+    ): Observable<AxiosResponse<any>> {
+        const params = JSON.stringify(payload);
+        return this._http.post('/api/role-permissions/import/migrate', params, { 
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Tenant-Id': `${tenant.id}`
             }
         });
     }

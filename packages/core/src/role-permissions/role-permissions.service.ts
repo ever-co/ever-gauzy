@@ -4,9 +4,10 @@ import { Repository, FindConditions, UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RolePermissions } from './role-permissions.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { RolesEnum, ITenant, IRole, IRolePermission } from '@gauzy/contracts';
+import { RolesEnum, ITenant, IRole, IRolePermission, IRolePermissionCreateInput } from '@gauzy/contracts';
 import { Role } from '../role/role.entity';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class RolePermissionsService extends TenantAwareCrudService<RolePermissions> {
@@ -94,7 +95,25 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 		return rolesPermissions;
 	}
 
-	async migrateImportRecord(
+	public async migratePermissions(): Promise<IRolePermissionCreateInput[]> {
+		const permissions: IRolePermission[] = await this.repository.find({
+			where: {
+				tenantId: RequestContext.currentTenantId()
+			}
+		})
+		const payload: IRolePermissionCreateInput[] = []; 
+		for await (const permission of permissions) {
+			const { id: sourceId } = permission;
+			payload.push({
+				...permission,
+				isImporting: true,
+				sourceId
+			})
+		}
+		return payload;
+	}
+
+	public async migrateImportRecord(
 		permissions: any
 	) {
 		console.log(permissions);
