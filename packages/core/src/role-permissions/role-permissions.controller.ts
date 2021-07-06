@@ -96,4 +96,20 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	): Promise<any> {
 		return this.rolePermissionsService.update(id, entity);
 	}
+
+	@ApiOperation({ summary: 'Import role-permissions from self hosted to gauzy cloud hosted in bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Role Permissions have been successfully imported.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The request body may contain clues as to what went wrong'
+	})
+	@Post('import/migrate')
+	async importRole(
+		@Body() input: any
+	) {
+		return await this.rolePermissionsService.migrateImportRecord(input);
+	}
 }

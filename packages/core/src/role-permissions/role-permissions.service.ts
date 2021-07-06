@@ -93,4 +93,11 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 		await this.rolePermissionsRepository.save(rolesPermissions);
 		return rolesPermissions;
 	}
+
+	async migrateImportRecord(
+		permissions: any
+	) {
+		console.log(permissions);
+		return permissions;
+	}
 }

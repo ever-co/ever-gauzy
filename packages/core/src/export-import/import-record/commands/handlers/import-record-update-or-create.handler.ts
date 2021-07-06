@@ -16,7 +16,7 @@ export class ImportRecordUpdateOrCreateHandler
 
 	public async execute(
 		event: ImportRecordUpdateOrCreateCommand
-	): Promise<any> {
+	): Promise<IImportRecord> {
 		const { find = {} as IImportRecordFind, input = {} as IImportRecord } = event;
 		const { record } = await this._importRecordService.findOneOrFail({
 			where: {

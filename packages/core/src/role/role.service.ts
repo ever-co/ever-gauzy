@@ -1,17 +1,20 @@
-import { IRole, ITenant, RolesEnum } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { IRoleMigrateInput } from '@gauzy/contracts';
+import { CommandBus } from '@nestjs/cqrs';
+import { getManager, Repository } from 'typeorm';
+import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { Role } from './role.entity';
 import { RequestContext } from './../core/context';
+import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 
 @Injectable()
 export class RoleService extends TenantAwareCrudService<Role> {
 	constructor(
 		@InjectRepository(Role)
-		private readonly roleRepository: Repository<Role>
+		private readonly roleRepository: Repository<Role>,
+
+		private readonly _commandBus: CommandBus
 	) {
 		super(roleRepository);
 	}
@@ -48,5 +51,33 @@ export class RoleService extends TenantAwareCrudService<Role> {
 			})
 		}
 		return payload;
+	}
+
+	async migrateImportRecord(
+		roles: IRoleMigrateInput[]
+	) {
+		let records: IImportRecord[] = [];
+		if (roles.length > 0) {
+			for await (const role of roles) {
+				const { isImporting, sourceId, tenantId, name } = role;
+				if (isImporting && sourceId) {
+					const destinantion = await this.roleRepository.findOne({ 
+						tenantId, 
+						name 
+					}, { order: { createdAt: 'DESC' }});
+					records.push(
+						await this._commandBus.execute(
+							new ImportRecordUpdateOrCreateCommand({
+								entityType: getManager().getRepository(Role).metadata.tableName,
+								sourceId,
+								destinationId: destinantion.id,
+								tenantId: RequestContext.currentTenantId()
+							})
+						)
+					);
+				}
+			}
+		}
+		return records;
 	}
 }
