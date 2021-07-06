@@ -39,7 +39,7 @@ Feature: Event types test
     And User can see save button
     When User click on save button
     Then Notification message will appear
-  Scenario: Edit event type
+  Scenario: Delete event type
     And User can see events table
     When User click on first table row
     Then Delete button will become active
