@@ -6,6 +6,7 @@ import { GauzyCloudService } from './gauzy-cloud.service';
 import { RouterModule } from 'nest-router';
 import { TenantModule } from './../tenant';
 import { CommandHandlers } from './commands/handlers';
+import { RoleModule } from './../role/role.module';
 
 @Module({
 	imports: [
@@ -25,7 +26,8 @@ import { CommandHandlers } from './commands/handlers';
 			inject: [ConfigService],
 		}),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		RoleModule
 	],
 	controllers: [GauzyCloudController],
 	providers: [

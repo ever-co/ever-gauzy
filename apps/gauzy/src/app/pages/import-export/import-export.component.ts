@@ -152,7 +152,6 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 					}),
 					tap({
 						next: (x) => {
-							console.log(x);
 							this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
 								tenant: name
 							});
