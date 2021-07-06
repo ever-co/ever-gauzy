@@ -22,6 +22,23 @@ Feature: Add remove existing user
     When User click on confirm button
     Then User creation will be confirmed with notification message
     And Users table will be populated with new user
+  Scenario: Edit user
+    When User select table row by user name
+    Then User can see edit button
+    When User click on edit button
+    Then User can see edit first name input field
+    And User can enter value for editing first name
+    And User can see edit last name input field
+    And User can enter value for editing last name
+    And User can see edit password input field
+    And User can enter value for editing password
+    And User can see edit repeat password input field
+    And User can enter value for editing repeat password
+    And User can see edit email input field
+    And User can enter value for editing email
+    When User click on save button
+    Then Notification message will appear
+    And User can verify that data was edited
   Scenario: Remove existing user
     Then User can see add existing user button
     When User click add existing user button
