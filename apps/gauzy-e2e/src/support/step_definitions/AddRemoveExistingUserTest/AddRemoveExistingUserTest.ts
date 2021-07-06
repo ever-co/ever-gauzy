@@ -6,6 +6,8 @@ import { CustomCommands } from '../../commands';
 import * as faker from 'faker';
 import * as addUserPage from '../../Base/pages/AddUser.po';
 import { AddUserPageData } from '../../Base/pagedata/AddUserPageData';
+import * as editUserPage from '../../Base/pages/EditUser.po';
+import { EditUserPageData } from '../../Base/pagedata/EditUserPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -15,6 +17,8 @@ let username = faker.internet.userName();
 let email = faker.internet.email();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
+let editFirstName = faker.name.firstName();
+let editLastName = faker.name.lastName();
 
 // Login with email
 Given('Login with default credentials and visit Users page', () => {
@@ -103,6 +107,74 @@ And('Users table will be populated with new user', () => {
 	addUserPage.verifyUserExists(`${firstName} ${lastName}`);
 });
 
+// Edit user
+When('User select table row by user name', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
+	editUserPage.selectTableRow(`${firstName} ${lastName}`);
+});
+
+Then('User can see edit button', () => {
+	editUserPage.editButtonVisible();
+});
+
+When('User click on edit button', () => {
+	editUserPage.clickEditButton();
+});
+
+Then('User can see edit first name input field', () => {
+	editUserPage.firstNameInputVisible();
+});
+
+And('User can enter value for editing first name', () => {
+	editUserPage.enterFirstNameData(editFirstName);
+});
+
+And('User can see edit last name input field', () => {
+	editUserPage.lastNameInputVisible();
+});
+
+And('User can enter value for editing last name', () => {
+	editUserPage.enterLastNameData(editLastName);
+});
+
+And('User can see edit password input field', () => {
+	editUserPage.passwordInputVisible();
+});
+
+And('User can enter value for editing password', () => {
+	editUserPage.enterPasswordData(password);
+});
+
+And('User can see edit repeat password input field', () => {
+	editUserPage.repeatPasswordInputVisible();
+});
+
+And('User can enter value for editing repeat password', () => {
+	editUserPage.enterRepeatPasswordData(password);
+});
+
+And('User can see edit email input field', () => {
+	editUserPage.emailInputVisible();
+});
+
+And('User can enter value for editing email', () => {
+	editUserPage.enterEmailData(email);
+});
+
+When('User click on save button', () => {
+	editUserPage.saveBtnClick();
+});
+
+Then('Notification message will appear', () => {
+	addUserPage.waitMessageToHide();
+});
+
+And('User can verify that data was edited', () => {
+	addUserPage.verifyUserExists(`${editFirstName} ${editLastName}`);
+});
+
 // Remove existing user
 Then('User can see add existing user button', () => {
 	addExistingUserPage.addExistingUsersButtonVisible();
@@ -125,7 +197,7 @@ And('User can verify users table exist', () => {
 });
 
 When('User click on table row', () => {
-	addExistingUserPage.clickTableRow(`${firstName} ${lastName}`);
+	addExistingUserPage.clickTableRow(`${editFirstName} ${editLastName}`);
 });
 
 Then('Remove user button will became active', () => {
