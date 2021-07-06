@@ -7,7 +7,6 @@ import * as faker from 'faker';
 import * as addUserPage from '../../Base/pages/AddUser.po';
 import { AddUserPageData } from '../../Base/pagedata/AddUserPageData';
 import * as editUserPage from '../../Base/pages/EditUser.po';
-import { EditUserPageData } from '../../Base/pagedata/EditUserPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
