@@ -23,7 +23,7 @@ Feature: Add remove existing user
     Then User creation will be confirmed with notification message
     And Users table will be populated with new user
   Scenario: Remove existing user
-    Then User can see add existing usr button
+    Then User can see add existing user button
     When User click add existing user button
     Then User can see cancel button
     And User can click on cancel button

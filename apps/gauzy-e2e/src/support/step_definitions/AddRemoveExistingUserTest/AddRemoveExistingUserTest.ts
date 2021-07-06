@@ -104,7 +104,7 @@ And('Users table will be populated with new user', () => {
 });
 
 // Remove existing user
-Then('User can see add existing usr button', () => {
+Then('User can see add existing user button', () => {
 	addExistingUserPage.addExistingUsersButtonVisible();
 });
 
