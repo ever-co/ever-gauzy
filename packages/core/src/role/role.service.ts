@@ -54,7 +54,6 @@ export class RoleService extends TenantAwareCrudService<Role> {
 	}
 
 	async migrateImportRecord(roles: IRoleMigrateInput[]) {
-		console.log(roles);
 		let records: IImportRecord[] = [];
 		if (roles.length > 0) {
 			for await (const item of roles) {

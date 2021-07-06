@@ -118,7 +118,6 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 
 	public async migrateImportRecord(permissions: IRolePermissionMigrateInput[]) {
 		let records: IImportRecord[] = [];
-		console.log(permissions);
 		if (permissions.length > 0) {
 			for await (const item of permissions) {
 				const { isImporting, sourceId, permission } = item;

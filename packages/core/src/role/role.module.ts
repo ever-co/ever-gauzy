@@ -7,12 +7,14 @@ import { RoleService } from './role.service';
 import { RoleController } from './role.controller';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands/handlers';
+import { UserModule } from './../user';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([{ path: '/role', module: RoleModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([Role])),
 		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [RoleController],
