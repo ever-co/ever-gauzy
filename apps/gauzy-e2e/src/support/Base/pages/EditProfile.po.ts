@@ -53,11 +53,11 @@ export const enterEmailData = (data) => {
 };
 
 export const languageSelectVisible = () => {
-	verifyElementIsVisible(EditProfilePage.preferredLanguageCss);
+	verifyElementIsVisible(EditProfilePage.languageSelectCss);
 };
 
 export const chooseLanguage = (data) => {
-	clickButton(EditProfilePage.preferredLanguageCss);
+	clickButton(EditProfilePage.languageSelectCss);
 	clickElementByText(EditProfilePage.preferredLanguageOptionCss, data);
 };
 

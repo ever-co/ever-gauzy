@@ -143,50 +143,50 @@ Then('User can see home page', () => {
 });
 
 And('User can visit his profile page', () => {
-	cy.on('uncaught:exception', (err, runnable) => {
-		return false;
-	});
 	cy.visit('/#/pages/auth/profile');
 });
 
 // Edit user profile
-And('User can see first name input field', () => {
+And('User can see edit first name input field', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	editProfilePage.firstNameInputVisible();
 });
 
-And('User can enter value for first name', () => {
+And('User can enter value for editing first name', () => {
 	editProfilePage.enterFirstNameData(editFirstName);
 });
 
-And('User can see last name input field', () => {
+And('User can see edit last name input field', () => {
 	editProfilePage.lastNameInputVisible();
 });
 
-And('User can enter value for last name', () => {
+And('User can enter value for editing last name', () => {
 	editProfilePage.enterLastNameData(editLastName);
 });
 
-And('User can see password input field', () => {
+And('User can see edit password input field', () => {
 	editProfilePage.passwordInputVisible();
 });
 
-And('User can enter value for password', () => {
+And('User can enter value for editing password', () => {
 	editProfilePage.enterPasswordData(password);
 });
 
-And('User can see repeat password input field', () => {
+And('User can see edit repeat password input field', () => {
 	editProfilePage.repeatPasswordInputVisible();
 });
 
-And('User can enter value for repeat password', () => {
+And('User can enter value for editing repeat password', () => {
 	editProfilePage.enterRepeatPasswordData(password);
 });
 
-And('User can see email input field', () => {
+And('User can see edit email input field', () => {
 	editProfilePage.emailInputVisible();
 });
 
-And('User can enter value for email', () => {
+And('User can enter value for editing email', () => {
 	editProfilePage.enterEmailData(email);
 });
 
@@ -208,8 +208,4 @@ When('User click on save button', () => {
 
 Then('Notification message will appear', () => {
 	addUserPage.waitMessageToHide();
-});
-
-And('User cane verify that his data was edited', () => {
-	addUserPage.verifyUserExists(`${editFirstName} ${editLastName}`);
 });
