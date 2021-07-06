@@ -33,19 +33,18 @@ Feature: Edit profile test
     Then User can see home page
     And User can visit his profile page
   Scenario: Edit user profile
-    And User can see first name input field
-    And User can enter value for first name
-    And User can see last name input field
-    And User can enter value for last name
-    And User can see password input field
-    And User can enter value for password
-    And User can see repeat password input field
-    And User can enter value for repeat password
-    And User can see email input field
-    And User can enter value for email
+    And User can see edit first name input field
+    And User can enter value for editing first name
+    And User can see edit last name input field
+    And User can enter value for editing last name
+    And User can see edit password input field
+    And User can enter value for editing password
+    And User can see edit repeat password input field
+    And User can enter value for editing repeat password
+    And User can see edit email input field
+    And User can enter value for editing email
     And User can see language select
     And User can select language
     And User can see save button
     When User click on save button
     Then Notification message will appear
-    And User cane verify that his data was edited
