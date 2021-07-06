@@ -18,7 +18,6 @@ export enum RolesEnum {
 
 export interface IRoleMigrateInput extends IBasePerTenantEntityModel {
 	name: string;
-
-	isImporting?: boolean;
-	sourceId?: string;
+	isImporting: boolean;
+	sourceId: string;
 }

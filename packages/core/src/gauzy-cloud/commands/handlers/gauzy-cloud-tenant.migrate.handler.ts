@@ -22,8 +22,8 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 			tap(async (response: any) => {
 				if (response && response.data) {
 					const tenant = response.data;
-					await this.migrateRoles(tenant, token);
-					await this.migratePermissions(tenant, token);
+					this.migrateRoles(tenant, token);
+					this.migratePermissions(tenant, token);
 				}
 			}),
 			catchError((error) => {

@@ -6,11 +6,10 @@ import {
     IUserRegistrationInput,
     IRoleMigrateInput,
     ITenant,
-    IRolePermissionCreateInput
+    IRolePermissionMigrateInput
 } from "@gauzy/contracts";
 import { AxiosResponse } from 'axios';
 import { Observable } from "rxjs/internal/Observable";
-import { RequestContext } from "./../core";
 
 @Injectable()
 export class GauzyCloudService {
@@ -68,7 +67,7 @@ export class GauzyCloudService {
     }
 
     migrateRolePermissions(
-        payload: IRolePermissionCreateInput[], 
+        payload: IRolePermissionMigrateInput[], 
         token: string,
         tenant: ITenant
     ): Observable<AxiosResponse<any>> {
