@@ -6,8 +6,6 @@ import { EventTypePageData } from '../../Base/pagedata/EventTypesPageData';
 import { CustomCommands } from '../../commands';
 import * as faker from 'faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-import { AddOrganizationPageData } from '../../Base/pagedata/AddOrganizationPageData';
-import * as addOrganizationPage from '../../Base/pages/AddOrganization.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -17,10 +15,6 @@ let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
-
-let organizationName = faker.company.companyName();
-let taxId = faker.random.alphaNumeric();
-let street = faker.address.streetAddress();
 
 // Login with email
 Given('Login with default credentials', () => {
@@ -39,19 +33,6 @@ And('User can add new employee', () => {
 		imgUrl
 	);
 });
-
-// Add organization
-// And('User can add new organization', () => {
-// 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-// 	cy.visit('/#/pages/organizations');
-// 	CustomCommands.addOrganization(
-// 		addOrganizationPage,
-// 		organizationName,
-// 		AddOrganizationPageData,
-// 		taxId,
-// 		street
-// 	);
-// });
 
 // Add new event type
 And('User can visit Event types page', () => {
