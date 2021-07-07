@@ -110,7 +110,6 @@ export class ProposalTemplateSelectComponent implements OnInit {
 	}
 
 	onSelectedChange(selectedItem) {
-		console.log(selectedItem);
 		this.selectedChange.emit(selectedItem);
 	}
 

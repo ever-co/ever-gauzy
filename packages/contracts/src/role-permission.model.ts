@@ -10,6 +10,7 @@ export interface IRolePermission extends IBasePerTenantEntityModel {
 
 export interface IRolePermissionMigrateInput extends IBasePerTenantEntityModel {
 	permission: string;
+	role: string;
 	isImporting: boolean;
 	sourceId: string;
 }

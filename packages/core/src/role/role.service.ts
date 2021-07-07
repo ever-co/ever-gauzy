@@ -59,10 +59,9 @@ export class RoleService extends TenantAwareCrudService<Role> {
 			for await (const item of roles) {
 				const { isImporting, sourceId, name } = item;
 				if (isImporting && sourceId) {
-					const destinantion = await this.roleRepository.findOne({
-						tenantId: RequestContext.currentTenantId(),
-						name
-					}, { order: { createdAt: 'DESC' }});
+					const destinantion = await this.roleRepository.findOne({ tenantId: RequestContext.currentTenantId(), name }, { 
+						order: { createdAt: 'DESC' }
+					});
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
