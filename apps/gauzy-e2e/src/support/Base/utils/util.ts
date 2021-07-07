@@ -48,6 +48,10 @@ export const wait = (loc) => {
 	cy.wait(loc);
 };
 
+export const waitUntil = (time: number) => {
+	cy.wait(time);
+};
+
 export const clearField = (loc) => {
 	cy.get(loc).clear();
 };
@@ -101,7 +105,7 @@ export const waitElementToHide = (loc) => {
 };
 
 export const clickButtonWithDelay = (loc) => {
-	cy.wait(5000);
+	waitUntil(5000);
 	cy.get(loc, { timeout: 40000 }).click();
 };
 

@@ -934,8 +934,7 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.tenantSettingRepository
 			},
 			{
-				repository: this.roleRepository,
-				uniqueIdentifier: [ { column: 'name' } ]
+				repository: this.roleRepository
 			},
 			{
 				repository: this.rolePermissionsRepository,

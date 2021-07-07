@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
+import { RoleModule } from 'role/role.module';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationTeamEmployeeModule } from '../organization-team-employee/organization-team-employee.module';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
-import { Role } from '../role/role.entity';
-import { RoleService } from '../role/role.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
@@ -24,18 +23,17 @@ import { OrganizationTeamService } from './organization-team.service';
 			OrganizationTeam,
 			Employee,
 			User,
-			Role,
 			Organization
 		]),
 		OrganizationTeamEmployeeModule,
-		TenantModule
+		TenantModule,
+		RoleModule
 	],
 	controllers: [OrganizationTeamController],
 	providers: [
 		OrganizationTeamService,
 		UserService,
 		EmployeeService,
-		RoleService,
 		OrganizationService
 	],
 	exports: [OrganizationTeamService]

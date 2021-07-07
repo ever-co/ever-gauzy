@@ -21,7 +21,7 @@ export const ExpensesPage = {
 	cardBodyCss: 'nb-card-footer.text-right',
 	duplicateExpenseButtonCss: 'div.mb-3 > button[status="primary"]',
 	manageCategoriseButtonCss:
-		'div.header-selector-wrapper > button[status="primary"]',
+		'div.card-header-title > button[status="primary"]',
 	expenseNameInputCss: '[placeholder="Expense name"]',
 	saveCategorieButtonCss:
 		'div.justify-content-end > button[status="success"]',

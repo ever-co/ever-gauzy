@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
 import {
 	EmailTemplate,
@@ -10,21 +10,7 @@ import {
 
 @Entity('email_sent')
 export class Email extends TenantOrganizationBaseEntity implements IEmail {
-	@ApiProperty({ type: () => EmailTemplate })
-	@ManyToOne(() => EmailTemplate, {
-		nullable: false,
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	emailTemplate: IEmailTemplate;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	emailTemplateId: string;
-
+	
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -48,6 +34,11 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	@Column({ nullable: true })
 	isArchived?: boolean;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
 		nullable: true,
@@ -56,4 +47,26 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	})
 	@JoinColumn()
 	user?: IUser;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Email) => it.user)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	userId?: string;
+
+	@ApiProperty({ type: () => EmailTemplate })
+	@ManyToOne(() => EmailTemplate, (template) => template.emails, {
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
+	emailTemplate: IEmailTemplate;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: Email) => it.emailTemplate)
+	@IsString()
+	@IsNotEmpty()
+	@Column({ nullable: false })
+	emailTemplateId: string;
 }

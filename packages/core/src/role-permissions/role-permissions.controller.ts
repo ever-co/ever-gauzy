@@ -12,14 +12,14 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { RolePermissions } from './role-permissions.entity';
 import { RolePermissionsService } from './role-permissions.service';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Role')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -43,10 +43,9 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	})
 	@Get()
 	async findRolePermission(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<RolePermissions>> {
-		const { findInput } = JSON.parse(data);
-
+		const { findInput } = data;
 		return this.rolePermissionsService.findAll({ where: findInput });
 	}
 
@@ -90,10 +89,28 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: RolePermissions,
 		...options: any[]
 	): Promise<any> {
 		return this.rolePermissionsService.update(id, entity);
+	}
+
+	@ApiOperation({ summary: 'Import role-permissions from self hosted to gauzy cloud hosted in bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Role Permissions have been successfully imported.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The request body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
+	@Post('import/migrate')
+	async importRole(
+		@Body() input: any
+	) {
+		return await this.rolePermissionsService.migrateImportRecord(input);
 	}
 }
