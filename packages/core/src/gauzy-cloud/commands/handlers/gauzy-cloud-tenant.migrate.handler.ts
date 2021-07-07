@@ -43,7 +43,7 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 			token, 
 			tenant
 		)
-		.subscribe();
+		.toPromise();
 	}
 
 	private async migratePermissions(
@@ -55,6 +55,6 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 			token, 
 			tenant
 		)
-		.subscribe();
+		.toPromise();
 	}
 }
