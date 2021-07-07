@@ -8,7 +8,7 @@ metadata:
         service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
         service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
         # Replace with your Certificate Id. You can get a list of Ids with 'doctl compute certificate list'
-        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '3e7e0327-dd2d-4ffc-9b98-5c79eb4592d5'
+        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '4bf6d197-6dbb-4394-815b-a543761d94d2'
         service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
         service.beta.kubernetes.io/do-loadbalancer-hostname: 'demo.gauzy.co'
 spec:
@@ -30,7 +30,7 @@ metadata:
         service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
         service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
         # Replace with your Certificate Id. You can get a list of Ids with 'doctl compute certificate list'
-        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '3e7e0327-dd2d-4ffc-9b98-5c79eb4592d5'
+        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '4bf6d197-6dbb-4394-815b-a543761d94d2'
         service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
         service.beta.kubernetes.io/do-loadbalancer-hostname: 'apidemo.gauzy.co'
 spec:

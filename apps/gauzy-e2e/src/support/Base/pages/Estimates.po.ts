@@ -11,7 +11,8 @@ import {
 	verifyValue,
 	verifyTextNotExisting,
 	scrollDown,
-	verifyElementIsNotVisible
+	verifyElementIsNotVisible,
+	waitUntil
 } from '../utils/util';
 import { EstimatesPage } from '../pageobjects/EstimatesPageObject';
 
@@ -153,6 +154,7 @@ export const tableRowVisible = () => {
 };
 
 export const selectTableRow = (index) => {
+	waitUntil(3000);
 	clickButtonByIndex(EstimatesPage.tableRowCss, index);
 };
 
