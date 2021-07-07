@@ -180,7 +180,6 @@ And('User can verify expense', () => {
 // Edit expense
 When('User select first table row', () => {
 	expensesPage.selectTableRow(0);
-	expensesPage.selectTableRow(0);
 });
 
 Then('Edit button will become active', () => {
@@ -287,7 +286,6 @@ Then('Notification message will appear', () => {
 });
 
 When('User select first table row', () => {
-	expensesPage.selectTableRow(0);
 	expensesPage.selectTableRow(0);
 });
 

@@ -5,7 +5,8 @@ import {
 	clickElementByText,
 	clearField,
 	verifyText,
-	waitElementToHide
+	waitElementToHide,
+	waitUntil
 } from '../utils/util';
 import { AddUserPage } from '../pageobjects/AddUserPageObject';
 
@@ -89,7 +90,7 @@ export const clickConfirmAddButton = () => {
 };
 
 export const verifyUserExists = (text) => {
-	cy.wait(3000);
+	waitUntil(3000);
 	verifyText(AddUserPage.verifyUserCss, text);
 };
 

@@ -9,7 +9,8 @@ import {
 	clickElementByText,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	waitUntil
 } from '../utils/util';
 import { ExpensesPage } from '../pageobjects/ExpensesPageObject';
 
@@ -26,6 +27,7 @@ export const addExpenseButtonVisible = () => {
 };
 
 export const clickAddExpenseButton = () => {
+	waitUntil(3000);
 	clickButton(ExpensesPage.addExpenseButtonCss);
 };
 
@@ -34,7 +36,7 @@ export const selectEmployeeDropdownVisible = () => {
 };
 
 export const clickEmployeeDropdown = () => {
-	cy.wait(3000);
+	waitUntil(3000);
 	clickButton(ExpensesPage.selectEmployeeDropdownCss);
 };
 
