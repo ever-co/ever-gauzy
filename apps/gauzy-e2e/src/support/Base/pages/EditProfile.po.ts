@@ -4,12 +4,13 @@ import {
 	clickButton,
 	clickElementByText,
 	clearField,
-	verifyValue
+	verifyValue,
+	waitUntil
 } from '../utils/util';
 import { EditProfilePage } from '../pageobjects/EditProfilePageObject';
 
 export const firstNameInputVisible = () => {
-	cy.wait(3000);
+	waitUntil(3000);
 	verifyElementIsVisible(EditProfilePage.firstNameInputCss);
 };
 

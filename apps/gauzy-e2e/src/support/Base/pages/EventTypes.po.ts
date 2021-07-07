@@ -5,7 +5,8 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	waitElementToHide
+	waitElementToHide,
+	waitUntil
 } from '../utils/util';
 import { EventTypesPage } from '../pageobjects/EventTypesPageObject';
 
@@ -30,7 +31,7 @@ export const selectEmployeeDropdownVisible = () => {
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	cy.wait(3000);
+	waitUntil(3000);
 	clickButton(EventTypesPage.selectEmployeeDrodownCss);
 };
 
