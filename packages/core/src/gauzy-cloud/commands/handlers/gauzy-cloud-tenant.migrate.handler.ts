@@ -22,8 +22,9 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 			tap(async (response: any) => {
 				if (response && response.data) {
 					const tenant = response.data;
-					this.migrateRoles(tenant, token);
-					this.migratePermissions(tenant, token);
+
+					await this.migrateRoles(tenant, token);
+					await this.migratePermissions(tenant, token);
 				}
 			}),
 			catchError((error) => {
@@ -42,7 +43,7 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 			token, 
 			tenant
 		)
-		.subscribe();
+		.toPromise();
 	}
 
 	private async migratePermissions(
@@ -54,6 +55,6 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 			token, 
 			tenant
 		)
-		.subscribe();
+		.toPromise();
 	}
 }

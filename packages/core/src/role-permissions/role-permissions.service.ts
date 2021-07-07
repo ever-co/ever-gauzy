@@ -24,24 +24,17 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 
 	public async update(
 		id: string | number | FindConditions<RolePermissions>,
-		partialEntity: QueryDeepPartialEntity<RolePermissions>,
-		...options: any[]
+		partialEntity: QueryDeepPartialEntity<RolePermissions>
 	): Promise<UpdateResult | RolePermissions> {
 		try {
-			if (partialEntity['hash']) {
-				const hashPassword = await this.getPasswordHash(
-					partialEntity['hash']
-				);
-				partialEntity['hash'] = hashPassword;
-			}
-
 			const { role } = await this.repository.findOne({
 				where: { id },
 				relations: ['role']
 			});
 
-			if (role.name === RolesEnum.SUPER_ADMIN)
+			if (role.name === RolesEnum.SUPER_ADMIN) {
 				throw new Error('Cannot modify Permissions for Super Admin');
+			}
 
 			return await this.repository.update(id, partialEntity);
 		} catch (err /*: WriteError*/) {
@@ -99,33 +92,43 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 	}
 
 	public async migratePermissions(): Promise<IRolePermissionMigrateInput[]> {
-		const permissions: IRolePermission[] = await this.repository.find({
+		const permissions: IRolePermission[] = await this.rolePermissionsRepository.find({
 			where: {
 				tenantId: RequestContext.currentTenantId()
-			}
+			},
+			relations: ['role']
 		})
 		const payload: IRolePermissionMigrateInput[] = []; 
 		for await (const item of permissions) {
-			const { id: sourceId, permission } = item;
+			const { id: sourceId, permission, role: { name } } = item;
 			payload.push({
 				permission,
 				isImporting: true,
-				sourceId
+				sourceId,
+				role: name
 			})
 		}
 		return payload;
 	}
 
-	public async migrateImportRecord(permissions: IRolePermissionMigrateInput[]) {
+	public async migrateImportRecord(
+		permissions: IRolePermissionMigrateInput[]
+	) {
 		let records: IImportRecord[] = [];
-		if (permissions.length > 0) {
-			for await (const item of permissions) {
-				const { isImporting, sourceId, permission } = item;
-				if (isImporting && sourceId) {
-					const destinantion = await this.repository.findOne({ 
-						tenantId: RequestContext.currentTenantId(), 
-						permission 
-					}, {  order: { createdAt: 'DESC' }});
+		const roles: IRole[] = await getManager().getRepository(Role).find({
+			tenantId: RequestContext.currentTenantId(),
+		});
+		for await (const item of permissions) {
+			const { isImporting, sourceId } = item;
+			if (isImporting && sourceId) {
+				const { permission, role: name } = item;
+				const role = roles.find((role: IRole) => role.name === name);
+				const destinantion = await this.rolePermissionsRepository.findOne({
+					tenantId: RequestContext.currentTenantId(), 
+					permission,
+					role
+				});
+				if (destinantion) {
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({

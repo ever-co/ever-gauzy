@@ -17,6 +17,7 @@ import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { RolePermissions } from './role-permissions.entity';
 import { RolePermissionsService } from './role-permissions.service';
 
@@ -42,10 +43,9 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	})
 	@Get()
 	async findRolePermission(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<RolePermissions>> {
-		const { findInput } = JSON.parse(data);
-
+		const { findInput } = data;
 		return this.rolePermissionsService.findAll({ where: findInput });
 	}
 
@@ -89,7 +89,7 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: RolePermissions,
 		...options: any[]
 	): Promise<any> {
