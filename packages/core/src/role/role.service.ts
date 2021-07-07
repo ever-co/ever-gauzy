@@ -40,7 +40,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			}
-		})
+		});
 		const payload: IRoleMigrateInput[] = []; 
 		for await (const item of roles) {
 			const { id: sourceId, name } = item;
@@ -55,13 +55,13 @@ export class RoleService extends TenantAwareCrudService<Role> {
 
 	async migrateImportRecord(roles: IRoleMigrateInput[]) {
 		let records: IImportRecord[] = [];
-		if (roles.length > 0) {
-			for await (const item of roles) {
-				const { isImporting, sourceId, name } = item;
-				if (isImporting && sourceId) {
-					const destinantion = await this.roleRepository.findOne({ tenantId: RequestContext.currentTenantId(), name }, { 
-						order: { createdAt: 'DESC' }
-					});
+		for await (const item of roles) {
+			const { isImporting, sourceId, name } = item;
+			if (isImporting && sourceId) {
+				const destinantion = await this.roleRepository.findOne({ tenantId: RequestContext.currentTenantId(), name }, {
+					order: { createdAt: 'DESC' }
+				});
+				if (destinantion) {
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
