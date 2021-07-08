@@ -16,24 +16,19 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { EmployeesService } from '../../@core/services/employees.service';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { Store } from '../../@core/services/store.service';
+import { Subject } from 'rxjs/internal/Subject';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
-import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
-import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
-import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
-import { EmployeeStore } from '../../@core/services';
+import { EmployeesService, EmployeeStore, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
+import { EmployeeAverageIncomeComponent, EmployeeAverageExpensesComponent, EmployeeAverageBonusComponent, EmployeeWorkStatusComponent } from './table-components';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './employees.component.html',
@@ -42,12 +37,12 @@ import { EmployeeStore } from '../../@core/services';
 export class EmployeesComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedEmployee: EmployeeViewModel;
 	employeeData: EmployeeViewModel[];
-	selectedOrganization: IOrganization;
-	selectedOrganizationId: string;
+	organization: IOrganization;
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -66,7 +61,7 @@ export class EmployeesComponent
 	totalExpense = 0;
 	bonusForSelectedMonth = 0;
 	includeDeleted = false;
-	loading = true;
+	loading: boolean;
 	organizationInvitesAllowed = false;
 	month;
 	year;
@@ -78,15 +73,18 @@ export class EmployeesComponent
 			this.onChangedSource();
 		}
 	}
+
+	subject$: Subject<any> = new Subject();
+
 	constructor(
-		private employeesService: EmployeesService,
-		private dialogService: NbDialogService,
-		private store: Store,
-		private router: Router,
-		private toastrService: ToastrService,
-		private route: ActivatedRoute,
-		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService,
+		private readonly employeesService: EmployeesService,
+		private readonly dialogService: NbDialogService,
+		private readonly store: Store,
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
+		private readonly route: ActivatedRoute,
+		public readonly translate: TranslateService,
+		private readonly errorHandler: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore
 	) {
 		super(translate);
@@ -94,35 +92,37 @@ export class EmployeesComponent
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.selectedOrganization = organization;
-					this.selectedOrganizationId = organization.id;
-					this.organizationInvitesAllowed =
-						organization.invitesAllowed;
-					this.loadPage();
-				}
-			});
-
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 
-		this.route.queryParamMap
+		this.subject$
 			.pipe(
-				filter((params) => !!params),
-				debounceTime(1000),
+				tap(() => this.loading = true),
+				debounceTime(300),
+				tap(() => this.getEmployees()),
+				tap(() => this.clearItem()),
+				tap(() => this.loading = false),
 				untilDestroyed(this)
 			)
-			.subscribe((params) => {
-				if (params.get('openAddDialog') === 'true') {
-					this.add();
-				}
-			});
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				debounceTime(100),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization) => this.organization = organization),
+				tap(({ invitesAllowed }) => this.organizationInvitesAllowed = invitesAllowed),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.add()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -136,10 +136,11 @@ export class EmployeesComponent
 		this.viewComponentName = ComponentEnum.EMPLOYEES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -154,45 +155,44 @@ export class EmployeesComponent
 			.subscribe();
 	}
 
-	selectEmployeeTmp({ isSelected, data }) {
+	selectEmployee({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
 		if (this.selectedEmployee) {
-			const checkName = this.selectedEmployee.fullName.trim();
-			this.employeeName = checkName ? checkName : 'Employee';
+			this.employeeName = this.selectedEmployee.fullName.trim() || 'Employee';
 		}
 	}
 
 	async add() {
-		const dialog = this.dialogService.open(EmployeeMutationComponent);
-
-		const response = await dialog.onClose.pipe(first()).toPromise();
-		if (response) {
-			response.map((data) => {
-				if (data.user.firstName || data.user.lastName) {
-					this.employeeName =
-						data.user.firstName + ' ' + data.user.lastName;
-				}
-				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
-					name: this.employeeName.trim(),
-					organization: data.organization.name
-				});
-			});
-
-			this.loadPage();
+		try {
+			const dialog = this.dialogService.open(EmployeeMutationComponent);
+			const response = await dialog.onClose.pipe(first()).toPromise();
+			if (response) {
+				response.map((data: any) => {
+					if (data.user.firstName || data.user.lastName) {
+						this.employeeName = data.user.firstName + ' ' + data.user.lastName;
+					}
+					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
+						name: this.employeeName.trim(),
+						organization: data.organization.name
+					});
+				});	
+			}
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this.subject$.next();
 		}
 	}
 
 	edit(selectedItem?: EmployeeViewModel) {
 		if (selectedItem) {
-			this.selectEmployeeTmp({
+			this.selectEmployee({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		this.router.navigate([
-			'/pages/employees/edit/' + this.selectedEmployee.id
-		]);
+		this.router.navigate([ '/pages/employees/edit/', this.selectedEmployee.id ]);
 	}
 
 	manageInvites() {
@@ -200,21 +200,21 @@ export class EmployeesComponent
 	}
 
 	async invite() {
+		const { id: selectedOrganizationId } = this.organization;
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
 				invitationType: InvitationTypeEnum.EMPLOYEE,
-				selectedOrganizationId: this.selectedOrganizationId,
+				selectedOrganizationId,
 				currentUserId: this.store.userId,
-				selectedOrganization: this.selectedOrganization
+				selectedOrganization: this.organization
 			}
 		});
-
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 
 	async delete(selectedItem?: EmployeeViewModel) {
 		if (selectedItem) {
-			this.selectEmployeeTmp({
+			this.selectEmployee({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -228,27 +228,25 @@ export class EmployeesComponent
 						this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						await this.employeesService.setEmployeeAsInactive(
 							this.selectedEmployee.id
 						);
-
-						const employee: any = this.selectedEmployee;
 						this._employeeStore.employeeAction = {
 							action: CrudActionEnum.DELETED,
-							employee
+							employee: this.selectedEmployee as any
 						};
-
-						this.toastrService.success(
-							'TOASTR.MESSAGE.EMPLOYEE_INACTIVE',
-							{ name: this.employeeName.trim() }
-						);
-						this.loadPage();
+						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', { 
+							name: this.employeeName.trim() 
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this.subject$.next();
 					}
 				}
 			});
@@ -256,22 +254,20 @@ export class EmployeesComponent
 
 	async endWork(selectedItem?: EmployeeViewModel) {
 		if (selectedItem) {
-			this.selectEmployeeTmp({
+			this.selectEmployee({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
-			context: {
-				endWorkValue: this.selectedEmployee.endWork,
-				employeeFullName: this.selectedEmployee.fullName
-			}
-		});
-
-		const data = await dialog.onClose.pipe(first()).toPromise();
-
-		if (data) {
-			try {
+		try {
+			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
+				context: {
+					endWorkValue: this.selectedEmployee.endWork,
+					employeeFullName: this.selectedEmployee.fullName
+				}
+			});
+			const data = await dialog.onClose.pipe(first()).toPromise();
+			if (data) {
 				await this.employeesService.setEmployeeEndWork(
 					this.selectedEmployee.id,
 					data
@@ -279,32 +275,30 @@ export class EmployeesComponent
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
 					name: this.employeeName.trim()
 				});
-			} catch (error) {
-				this.errorHandler.handleError(error);
 			}
-			this.selectedEmployee = null;
-			this.loadPage();
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this.subject$.next();
 		}
 	}
 
 	async backToWork(selectedItem?: EmployeeViewModel) {
 		if (selectedItem) {
-			this.selectEmployeeTmp({
+			this.selectEmployee({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
-			context: {
-				backToWork: true,
-				employeeFullName: this.selectedEmployee.fullName
-			}
-		});
-
-		const data = await dialog.onClose.pipe(first()).toPromise();
-
-		if (data) {
-			try {
+		try {
+			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
+				context: {
+					backToWork: true,
+					employeeFullName: this.selectedEmployee.fullName
+				}
+			});
+			const data = await dialog.onClose.pipe(first()).toPromise();
+			if (data) {
 				await this.employeesService.setEmployeeEndWork(
 					this.selectedEmployee.id,
 					null
@@ -312,18 +306,21 @@ export class EmployeesComponent
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
 					name: this.employeeName.trim()
 				});
-			} catch (error) {
-				this.toastrService.danger(error.error.message || error.message);
 			}
-			this.selectedEmployee = null;
-			this.loadPage();
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this.subject$.next();
 		}
 	}
 
-	private async loadPage() {
-		this.selectedEmployee = null;
+	private async getEmployees() {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
 			.getAll(['user', 'tags'], { organizationId, tenantId })
 			.pipe(first())
@@ -331,29 +328,24 @@ export class EmployeesComponent
 
 		let employeesVm = [];
 		const result = [];
-		for (const emp of items) {
+		for (const employee of items) {
+			const { id, user, isActive, endWork, tags, averageIncome, averageExpenses, averageBonus, startedWorkOn } = employee;
 			result.push({
-				fullName: `${emp.user.firstName} ${emp.user.lastName}`,
-				email: emp.user.email,
-				id: emp.id,
-				isActive: emp.isActive,
-				endWork: emp.endWork ? new Date(emp.endWork) : '',
-				workStatus: emp.endWork
-					? new Date(emp.endWork).getDate() +
-					  ' ' +
-					  monthNames[new Date(emp.endWork).getMonth()] +
-					  ' ' +
-					  new Date(emp.endWork).getFullYear()
-					: '',
-				imageUrl: emp.user.imageUrl,
-				tags: emp.tags,
+				fullName: `${user.name}`,
+				email: user.email,
+				id,
+				isActive,
+				endWork: endWork ? new Date(endWork) : '',
+				workStatus: endWork ? new Date(endWork).getDate() + ' ' + monthNames[new Date(endWork).getMonth()] + ' ' + new Date(endWork).getFullYear() : '',
+				imageUrl: user.imageUrl,
+				tags,
 				// TODO: load real bonus and bonusDate
 				bonus: this.bonusForSelectedMonth,
-				averageIncome: Math.floor(emp.averageIncome),
-				averageExpenses: Math.floor(emp.averageExpenses),
-				averageBonus: Math.floor(emp.averageBonus),
+				averageIncome: Math.floor(averageIncome),
+				averageExpenses: Math.floor(averageExpenses),
+				averageBonus: Math.floor(averageBonus),
 				bonusDate: Date.now(),
-				startedWorkOn: emp.startedWorkOn
+				startedWorkOn
 			});
 		}
 		if (!this.includeDeleted) {
@@ -432,20 +424,23 @@ export class EmployeesComponent
 
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
-		this.loadPage();
+		this.subject$.next();
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this._loadSmartTableSettings();
-		});
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
 	 * Clear selected item
 	 */
 	clearItem() {
-		this.selectEmployeeTmp({
+		this.selectEmployee({
 			isSelected: false,
 			data: null
 		});
