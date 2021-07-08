@@ -34,11 +34,10 @@ import { LocationFormComponent } from '../../forms/location';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
-import { Store } from '../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
 import { retrieveNameFromEmail } from '@gauzy/common-angular';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,6 +50,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 })
 export class OrganizationsStepFormComponent
 	implements OnInit, OnDestroy, AfterViewInit {
+
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
@@ -83,8 +83,8 @@ export class OrganizationsStepFormComponent
 	createOrganization = new EventEmitter();
 
 	constructor(
-		private fb: FormBuilder,
-		private toastrService: ToastrService,
+		private readonly fb: FormBuilder,
+		private readonly toastrService: ToastrService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly store: Store
 	) {}
@@ -179,7 +179,7 @@ export class OrganizationsStepFormComponent
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
-		const bonusPercentageControl = this.orgBonusForm.get('bonusPercentage');
+		const bonusPercentageControl = this.orgBonusForm.get('bonusPercentage') as FormControl;
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
 				bonusPercentageControl.setValue(75);
@@ -196,8 +196,9 @@ export class OrganizationsStepFormComponent
 		}
 		bonusPercentageControl.updateValueAndValidity();
 	}
+
 	toggleExpiry(checked) {
-		const inviteExpiryControl = this.orgBonusForm.get('inviteExpiryPeriod');
+		const inviteExpiryControl = this.orgSettingsForm.get('inviteExpiryPeriod') as FormControl;
 		checked ? inviteExpiryControl.enable() : inviteExpiryControl.disable();
 	}
 
@@ -279,11 +280,12 @@ export class OrganizationsStepFormComponent
 	onCoordinatesChanges(
 		$event: google.maps.LatLng | google.maps.LatLngLiteral
 	) {
-		const {
-			loc: { coordinates }
-		} = this.locationFormDirective.getValue();
+		const { loc: { coordinates } } = this.locationFormDirective.getValue();
 		const [lat, lng] = coordinates;
-		this.leafletTemplate.addMarker(new LatLng(lat, lng));
+		
+		if (this.leafletTemplate) {
+			this.leafletTemplate.addMarker(new LatLng(lat, lng));
+		}
 	}
 
 	/*
