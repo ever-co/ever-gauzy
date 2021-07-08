@@ -29,6 +29,7 @@ Then('User can add new tag', () => {
 
 // Send invite
 Then('User can visit Employees candidates page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/candidates');
 });

@@ -9,9 +9,6 @@ Feature: Add employee position
     And User can click on second grid button to change view
     And User can see Add new position button
     When User click on Add new position button
-    Then User can see cancel button
-    And User can click on cancel button
-    When User click again on Add new position button
     Then User can see new position input
     And User can add data for new position
     And User can see tag multiselect
@@ -43,9 +40,6 @@ Feature: Add employee position
   Scenario: Delete employee position
     And User can see Add new position button
     When User click on Add new position button
-    Then User can see cancel button
-    And User can click on cancel button
-    When User click again on Add new position button
     Then User can see new position input
     And User can add data for new position
     And User can see tag multiselect

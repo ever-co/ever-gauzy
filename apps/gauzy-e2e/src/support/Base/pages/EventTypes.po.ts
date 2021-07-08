@@ -91,6 +91,7 @@ export const selectTableRowVisible = () => {
 };
 
 export const selectTableRow = (index) => {
+	waitUntil(3000);
 	clickButtonByIndex(EventTypesPage.selectTableRowCss, index);
 };
 

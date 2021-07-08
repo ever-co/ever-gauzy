@@ -42,6 +42,7 @@ Then('User can add new tag', () => {
 
 // Add employee
 And('User can add new employee', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
@@ -56,6 +57,7 @@ And('User can add new employee', () => {
 
 // Add project
 And('User can add new project', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
 		organizationProjectsPage,
@@ -65,6 +67,7 @@ And('User can add new project', () => {
 
 // Add contact
 And('User can add new contact', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addContact(
 		fullName,
@@ -80,6 +83,7 @@ And('User can add new contact', () => {
 
 // Add new estimate
 Then('User can visit Estimates page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/accounting/invoices/estimates');
 });

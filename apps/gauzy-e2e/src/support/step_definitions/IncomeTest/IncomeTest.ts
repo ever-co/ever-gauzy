@@ -37,6 +37,7 @@ And('User can add new employee', () => {
 
 // Add income
 Then('User can visit Income page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/accounting/income');
 });
