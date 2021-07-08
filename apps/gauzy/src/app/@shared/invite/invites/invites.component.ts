@@ -178,7 +178,7 @@ export class InvitesComponent
 				if(this.invitationType === InvitationTypeEnum.EMPLOYEE) {
 					return invite.role.name == RolesEnum.EMPLOYEE;
 				} else if (this.invitationType === InvitationTypeEnum.CANDIDATE) {
-					return invite.role.name !== RolesEnum.CANDIDATE;
+					return invite.role.name === RolesEnum.CANDIDATE;
 				} else {
 					return invite.role.name !== RolesEnum.EMPLOYEE;
 				}
