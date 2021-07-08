@@ -416,5 +416,14 @@ export const CustomCommands = {
 		inviteCandidatePage.clickAllCurrentCandidatesButton();
 		inviteCandidatePage.waitMessageToHide();
 		inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
+	},
+	clearCookies: () => {
+		// @ts-ignore
+		cy.clearCookies({ domain: null });
+		cy.clearLocalStorage();
+		cy.window().then((win) => {
+			win.sessionStorage.clear();
+		});
+		cy.reload();
 	}
 };

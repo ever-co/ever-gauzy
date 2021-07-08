@@ -36,6 +36,7 @@ And('User can add new employee', () => {
 
 // Add new event type
 And('User can visit Event types page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/event-types');
 });
@@ -119,7 +120,7 @@ And('User can see events table', () => {
 	eventTypesPage.selectTableRowVisible();
 });
 
-When('User click on first table row', () => {
+When('User click on table first row', () => {
 	eventTypesPage.selectTableRow(0);
 	eventTypesPage.selectTableRow(0);
 });
@@ -184,6 +185,7 @@ And('User can see events table', () => {
 });
 
 When('User click on first table row', () => {
+	eventTypesPage.selectTableRow(0);
 	eventTypesPage.selectTableRow(0);
 });
 
