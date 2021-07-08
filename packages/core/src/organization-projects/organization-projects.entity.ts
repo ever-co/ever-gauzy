@@ -168,8 +168,9 @@ export class OrganizationProject
 
 	@ApiPropertyOptional({ type: () => OrganizationContact })
 	@ManyToOne(() => OrganizationContact, (it) => it.projects, { 
-		nullable: true, 
-		onDelete: 'CASCADE' 
+		nullable: true,
+		onUpdate: 'CASCADE',
+		onDelete: 'SET NULL' 
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
@@ -235,9 +236,6 @@ export class OrganizationProject
 	tags: ITag[];
 
 	// Organization Project Employees
-	@ManyToMany(() => Employee, { cascade: ['update'] })
-	@JoinTable({
-		name: 'organization_project_employee'
-	})
+	@ManyToMany(() => Employee, (it) => it.projects)
 	members?: IEmployee[];
 }
