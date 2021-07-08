@@ -32,8 +32,10 @@ export class OrganizationCreateHandler
 
 		//1. Get roleId for Super Admin user of the Tenant
 		const { id: roleId } = await this.roleService.findOne({
-			name: RolesEnum.SUPER_ADMIN,
-			tenantId: RequestContext.currentTenantId()
+			where: {
+				name: RolesEnum.SUPER_ADMIN,
+				tenantId: RequestContext.currentTenantId()
+			}
 		});
 
 		// 2. Get all Super Admin Users of the Tenant

@@ -15,8 +15,8 @@
 					multiple="true"
 					bindLabel="emailAddress"
 					formControlName="emails"
-					placeholder="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
-					notFoundText="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
+					[placeholder]="'FORM.PLACEHOLDERS.EMAILS' | translate"
+					[notFoundText]="'FORM.PLACEHOLDERS.EMAILS' | translate"
 					[ngClass]="{
 						'item-invalid':
 							emails.invalid && (emails.dirty || emails.touched),
@@ -28,7 +28,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="row" *ngIf="invitationType !== 'CANDIDATE'">
+	<div class="row" *ngIf="invitationType !== invitationTypeEnum.CANDIDATE">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="startedWork" class="label">{{
@@ -57,7 +57,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="row" *ngIf="invitationType === 'CANDIDATE'">
+	<div class="row" *ngIf="invitationType === invitationTypeEnum.CANDIDATE">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="appliedDate" class="label">{{
@@ -76,7 +76,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
+	<div class="row" *ngIf="invitationType === invitationTypeEnum.EMPLOYEE">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="projectsSelect" class="label label-with-select"
@@ -108,8 +108,6 @@
 				</ng-select>
 			</div>
 		</div>
-	</div>
-	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="contactsSelect" class="label label-with-select"
@@ -144,7 +142,7 @@
 	</div>
 	<div
 		class="row"
-		*ngIf="invitationType === 'EMPLOYEE' || invitationType === 'CANDIDATE'"
+		*ngIf="invitationType === invitationTypeEnum.EMPLOYEE || invitationType === invitationTypeEnum.CANDIDATE"
 	>
 		<div class="col-sm-12">
 			<div class="form-group">
@@ -180,15 +178,15 @@
 			</div>
 		</div>
 	</div>
-	<div class="employee-padding"></div>
-	<div class="row" *ngIf="invitationType === 'USER'">
-		<div class="col-sm-6">
+	<div class="row" *ngIf="invitationType === invitationTypeEnum.USER">
+		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="startedWork" class="label">{{
 					'FORM.LABELS.ROLE' | translate
 				}}</label>
 				<nb-select
 					class="d-block"
+					fullWidth
 					placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
 					formControlName="roleName"
 					[ngClass]="{

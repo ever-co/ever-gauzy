@@ -1,6 +1,6 @@
 Feature: Add task
   Scenario: Login with email
-    Given Login with default credentials and visit Users page
+    Given Login with default credentials
   Scenario: Add new tag
     Then User can add new tag
   Scenario: Add new employee

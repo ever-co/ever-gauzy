@@ -25,7 +25,7 @@ Feature: Event types test
     Then Notification message will appear
   Scenario: Edit event type
     Then User can see events table
-    When User click on first table row
+    When User click on table first row
     Then Edit button will become active
     When User click on edit button
     Then User can see title input field

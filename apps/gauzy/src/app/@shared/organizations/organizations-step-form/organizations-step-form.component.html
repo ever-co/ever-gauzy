@@ -168,19 +168,20 @@
 								</div>
 							</div>
 						</div>
-						<div class="row">
-							<div class="col-6">
-								<ga-tags-color-input
-									[selectedTags]="tags"
-									(selectedTagsEvent)="
-										selectedTagsEvent($event)
-									"
-									[isTenantLevel]="true"
-								>
-								</ga-tags-color-input>
+						<ng-container *ngIf="!onboarding">
+							<div class="row">
+								<div class="col-6">
+									<ga-tags-color-input
+										[selectedTags]="tags"
+										(selectedTagsEvent)="
+											selectedTagsEvent($event)
+										"
+										[isTenantLevel]="true"
+									>
+									</ga-tags-color-input>
+								</div>
 							</div>
-						</div>
-
+						</ng-container>
 						<div class="" style="margin-top: 20px">
 							<button
 								[disabled]="orgMainForm.invalid"

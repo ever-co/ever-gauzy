@@ -13,7 +13,8 @@ import {
 	IOrganizationEmploymentType,
 	IInvoiceItem,
 	IRequestApprovalEmployee,
-	IPayment
+	IPayment,
+	IOrganizationProject
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -21,7 +22,8 @@ import {
 	IsEnum,
 	IsNumber,
 	IsOptional,
-	IsBoolean
+	IsBoolean,
+	IsString
 } from 'class-validator';
 import {
 	Column,
@@ -32,7 +34,8 @@ import {
 	ManyToOne,
 	OneToOne,
 	RelationId,
-	OneToMany
+	OneToMany,
+	Index
 } from 'typeorm';
 import {
 	Contact,
@@ -41,6 +44,7 @@ import {
 	OrganizationDepartment,
 	OrganizationEmploymentType,
 	OrganizationPositions,
+	OrganizationProject,
 	OrganizationTeamEmployee,
 	Payment,
 	RequestApprovalEmployee,
@@ -55,52 +59,7 @@ import {
 export class Employee
 	extends TenantOrganizationBaseEntity
 	implements IEmployee {
-	@ManyToMany(() => Tag, (tag) => tag.employee)
-	@JoinTable({
-		name: 'tag_employee'
-	})
-	tags: ITag[];
-
-	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.employees, {
-		nullable: true,
-		cascade: true,
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	contact: IContact;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((employee: Employee) => employee.contact)
-	readonly contactId?: string;
-
-	@ApiProperty({ type: () => Skill })
-	@ManyToMany(() => Skill, (skill) => skill.employees)
-    skills: ISkill[];
-
-	@ApiProperty({ type: () => User })
-	@OneToOne(() => User, {
-		nullable: false,
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	user: IUser;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((employee: Employee) => employee.user)
-	@Column()
-	readonly userId: string;
-
-	@ApiProperty({ type: () => OrganizationPositions })
-	@ManyToOne(() => OrganizationPositions, { nullable: true })
-	@JoinColumn()
-	organizationPosition?: IOrganizationPosition;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((employee: Employee) => employee.organizationPosition)
-	readonly organizationPositionId?: string;
-
+	
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
@@ -157,15 +116,6 @@ export class Employee
 	@Column({ nullable: true })
 	reWeeklyLimit?: number;
 
-	@OneToMany(
-		() => OrganizationTeamEmployee,
-		(organizationTeamEmployee) => organizationTeamEmployee.employee
-	)
-	teams?: IOrganizationTeam[];
-
-	@OneToMany(() => TimeLog, (timeLog) => timeLog.employee)
-	timeLogs?: ITimeLog[];
-
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
@@ -184,27 +134,6 @@ export class Employee
 	@Column({ nullable: true })
 	rejectDate?: Date;
 
-	@ManyToMany(
-		() => OrganizationDepartment,
-		(organizationDepartment) => organizationDepartment.members,
-		{
-			cascade: true
-		}
-	)
-	organizationDepartments?: IOrganizationDepartment[];
-
-	@ManyToMany(
-		() => OrganizationEmploymentType,
-		(organizationEmploymentType) => organizationEmploymentType.members,
-		{
-			cascade: true
-		}
-	)
-	organizationEmploymentTypes?: IOrganizationEmploymentType[];
-
-	@ManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
-	jobPresets?: JobPreset[];
-
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
@@ -213,24 +142,6 @@ export class Employee
 	@ApiPropertyOptional({ type: () => Boolean })
 	@Column({ nullable: true })
 	anonymousBonus?: boolean;
-
-	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.employee, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	invoiceItems?: IInvoiceItem[];
-
-	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (payments) => payments.recordedBy)
-	@JoinColumn()
-	payments?: IPayment[];
-
-	@OneToMany(
-		() => RequestApprovalEmployee,
-		(requestApprovals) => requestApprovals.employee
-	)
-	requestApprovals?: IRequestApprovalEmployee[];
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
@@ -354,4 +265,140 @@ export class Employee
 	jobSuccess?: number;
 
 	fullName?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => User })
+	@OneToOne(() => User, {
+		nullable: false,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	user: IUser;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Employee) => it.user)
+	@IsString()
+	@Index()
+	@Column()
+	readonly userId: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	// Employee Contact
+	@ApiProperty({ type: () => Contact })
+	@ManyToOne(() => Contact, (contact) => contact.employees, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	contact: IContact;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Employee) => it.contact)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	readonly contactId?: string;
+
+	// Employee Organization Position
+	@ApiProperty({ type: () => OrganizationPositions })
+	@ManyToOne(() => OrganizationPositions, { nullable: true })
+	@JoinColumn()
+	organizationPosition?: IOrganizationPosition;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Employee) => it.organizationPosition)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	readonly organizationPositionId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	// Employee Teams
+	@ApiPropertyOptional({ type: () => OrganizationTeamEmployee, isArray: true })
+	@OneToMany(() => OrganizationTeamEmployee, (it) => it.employee)
+	teams?: IOrganizationTeam[];
+
+	// Employee Time Logs
+	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
+	@OneToMany(() => TimeLog, (it) => it.employee)
+	timeLogs?: ITimeLog[];
+
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
+	@OneToMany(() => InvoiceItem, (it) => it.employee, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	invoiceItems?: IInvoiceItem[];
+
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
+	@OneToMany(() => Payment, (it) => it.recordedBy)
+	@JoinColumn()
+	payments?: IPayment[];
+
+	@ApiPropertyOptional({ type: () => RequestApprovalEmployee, isArray: true })
+	@OneToMany(() => RequestApprovalEmployee, (it) => it.employee)
+	requestApprovals?: IRequestApprovalEmployee[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	// Employee Organization Projects
+	@ManyToMany(() => OrganizationProject, (it) => it.members, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
+    @JoinTable({
+		name: 'organization_project_employee'
+	})
+    projects?: IOrganizationProject[];
+
+	// Employee Tags
+	@ManyToMany(() => Tag, (tag) => tag.employee)
+	@JoinTable({
+		name: 'tag_employee'
+	})
+	tags: ITag[];
+
+	// Employee Skills
+	@ApiProperty({ type: () => Skill })
+	@ManyToMany(() => Skill, (skill) => skill.employees)
+    skills: ISkill[];
+
+	// Organization Departments
+	@ApiProperty({ type: () => OrganizationDepartment })
+	@ManyToMany(() => OrganizationDepartment, (it) => it.members, { 
+		cascade: true 
+	})
+	organizationDepartments?: IOrganizationDepartment[];
+
+	// Organization Employment Types
+	@ApiProperty({ type: () => OrganizationEmploymentType })
+	@ManyToMany(() => OrganizationEmploymentType, (it) => it.members, { 
+		cascade: true 
+	})
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
+
+	// Employee Job Presets
+	@ApiProperty({ type: () => JobPreset })
+	@ManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
+	jobPresets?: JobPreset[];
 }

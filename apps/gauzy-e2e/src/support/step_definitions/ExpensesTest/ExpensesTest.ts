@@ -32,6 +32,7 @@ Then('User can add new tag', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
@@ -46,6 +47,7 @@ And('User can add new employee', () => {
 
 // Add project
 And('User can add new project', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
 		organizationProjectsPage,
@@ -55,6 +57,7 @@ And('User can add new project', () => {
 
 // Add new expense
 When('User visit Expenses page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/accounting/expenses');
 });
