@@ -48,44 +48,13 @@ import {
 export class OrganizationProject
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationProject {
-	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.organizationProject)
-	@JoinTable({
-		name: 'tag_organization_project'
-	})
-	tags: ITag[];
-
+	
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
-
-	@ApiPropertyOptional({ type: () => OrganizationContact })
-	@ManyToOne(
-		() => OrganizationContact,
-		(organizationContact) => organizationContact.projects,
-		{
-			nullable: true,
-			onDelete: 'CASCADE'
-		}
-	)
-	@JoinColumn()
-	organizationContact?: IOrganizationContact;
-
-	@ApiProperty({ type: () => String })
-	@RelationId((contact: OrganizationProject) => contact.organizationContact)
-	@Column({ nullable: true })
-	organizationContactId?: string;
-
-	@ApiProperty({ type: () => Task })
-	@OneToMany(() => Task, (task) => task.project)
-	@JoinColumn()
-	tasks?: ITask[];
-
-	@OneToMany(() => TimeLog, (timeLog) => timeLog.project)
-	timeLogs?: ITimeLog[];
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
@@ -117,41 +86,16 @@ export class OrganizationProject
 	@Column({ nullable: true })
 	public: boolean;
 
-	@ManyToMany(() => Employee, { cascade: ['update'] })
-	@JoinTable({
-		name: 'organization_project_employee'
-	})
-	members?: IEmployee[];
-
-	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.project, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	invoiceItems?: IInvoiceItem[];
-
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	owner: string;
 
-	@ApiPropertyOptional({ type: () => OrganizationSprint })
-	@OneToMany(() => OrganizationSprint, (sprints) => sprints.project)
-	@JoinColumn()
-	organizationSprints?: IOrganizationSprint[];
-
 	@ApiProperty({ type: () => String, enum: TaskListTypeEnum })
 	@IsEnum(TaskListTypeEnum)
 	@Column({ default: TaskListTypeEnum.GRID })
 	taskListType: string;
-
-	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (payment) => payment.project, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	payments?: IPayment[];
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
@@ -215,4 +159,85 @@ export class OrganizationProject
 		default: OrganizationProjectBudgetTypeEnum.COST
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiPropertyOptional({ type: () => OrganizationContact })
+	@ManyToOne(() => OrganizationContact, (it) => it.projects, { 
+		nullable: true, 
+		onDelete: 'CASCADE' 
+	})
+	@JoinColumn()
+	organizationContact?: IOrganizationContact;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: OrganizationProject) => it.organizationContact)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	organizationContactId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Organization Tasks
+	@ApiProperty({ type: () => Task })
+	@OneToMany(() => Task, (it) => it.project, {
+		onDelete: 'SET NULL'
+	})
+	tasks?: ITask[];
+
+	// Organization TimeLogs
+	@ApiPropertyOptional({ type: () => TimeLog })
+	@OneToMany(() => TimeLog, (it) => it.project, {
+		onDelete: 'SET NULL'
+	})
+	timeLogs?: ITimeLog[];
+
+	// Organization Invoice Items
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
+	@OneToMany(() => InvoiceItem, (it) => it.project, {
+		onDelete: 'SET NULL'
+	})
+	invoiceItems?: IInvoiceItem[];
+
+	// Organization Sprints
+	@ApiPropertyOptional({ type: () => OrganizationSprint })
+	@OneToMany(() => OrganizationSprint, (it) => it.project, {
+		onDelete: 'SET NULL'
+	})
+	organizationSprints?: IOrganizationSprint[];
+
+	// Organization Payments
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
+	@OneToMany(() => Payment, (it) => it.project, {
+		onDelete: 'SET NULL'
+	})
+	payments?: IPayment[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Organization Project Tags
+	@ApiProperty()
+	@ManyToMany(() => Tag, (tag) => tag.organizationProject)
+	@JoinTable({
+		name: 'tag_organization_project'
+	})
+	tags: ITag[];
+
+	// Organization Project Employees
+	@ManyToMany(() => Employee, { cascade: ['update'] })
+	@JoinTable({
+		name: 'organization_project_employee'
+	})
+	members?: IEmployee[];
 }

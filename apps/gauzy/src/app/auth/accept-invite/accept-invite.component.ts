@@ -1,11 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IInvite, RolesEnum, IUserRegistrationInput } from '@gauzy/contracts';
-import { InviteService } from '../../@core/services/invite.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SetLanguageBaseComponent } from '../../@shared/language-base/set-language-base.component';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { InviteService, ToastrService } from '../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	styleUrls: ['./accept-invite.component.scss'],
 	templateUrl: 'accept-invite.component.html'
@@ -13,66 +15,64 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class AcceptInvitePage
 	extends SetLanguageBaseComponent
 	implements OnInit, OnDestroy {
+
 	invitation: IInvite;
-	loading = true;
-	inviteLoadErrorMessage = '';
+	loading: boolean;
+	inviteLoadErrorMessage: string;
 
 	constructor(
 		private readonly router: Router,
-		private toastrService: ToastrService,
-		private inviteService: InviteService,
-		private route: ActivatedRoute,
+		private readonly toastrService: ToastrService,
+		private readonly inviteService: InviteService,
+		private readonly route: ActivatedRoute,
 		private translate: TranslateService
 	) {
 		super(translate);
 	}
 
 	ngOnInit(): void {
-		this.route.queryParams.subscribe(async ({ email, token }) => {
-			this.loadInvite(email, token);
-		});
+		this.route
+			.queryParams
+			.pipe(
+				tap(() => this.loading = true),
+				tap(({ email, token }) => this.loadInvite(email, token)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	loadInvite = async (email, token) => {
+	loadInvite = async (email: string, token: string) => {
 		try {
-			this.invitation = await this.inviteService.validateInvite(
-				['projects', 'organization', 'role'],
-				{
-					email,
-					token
-				}
-			);
-			this.inviteLoadErrorMessage = '';
+			this.invitation = await this.inviteService.validateInvite(['role', 'organization'], {
+				email,
+				token
+			});
 		} catch (error) {
-			this.inviteLoadErrorMessage = this.getTranslation(
-				'ACCEPT_INVITE.INVITATION_NO_LONGER_VALID'
-			);
+			this.inviteLoadErrorMessage = this.getTranslation('ACCEPT_INVITE.INVITATION_NO_LONGER_VALID');
 		}
 		this.loading = false;
 	};
 
-	submitForm = async (userRegistrationInput: IUserRegistrationInput) => {
+	submitForm = async (input: IUserRegistrationInput) => {
 		try {
-			const { organization } = this.invitation;
-
-			if (userRegistrationInput.user.role.name === RolesEnum.EMPLOYEE) {
-				await this.inviteService.acceptEmployeeInvite({
-					user: userRegistrationInput.user,
-					password: userRegistrationInput.password,
+			const { user, password } = input;
+			const { id: inviteId, role, organization } = this.invitation;
+			if (role.name === RolesEnum.EMPLOYEE) {
+				await this.inviteService.acceptEmployeeInvite({ 
+					user,
+					password,
 					organization,
-					inviteId: this.invitation.id
+					inviteId
 				});
 			} else {
-				await this.inviteService.acceptUserInvite({
-					user: userRegistrationInput.user,
-					password: userRegistrationInput.password,
+				await this.inviteService.acceptUserInvite({ 
+					user,
+					password,
 					organization,
-					inviteId: this.invitation.id
+					inviteId
 				});
 			}
-
 			this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
-
 			this.router.navigate(['/auth/login']);
 		} catch (error) {
 			this.toastrService.danger(

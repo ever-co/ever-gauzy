@@ -175,9 +175,13 @@ export class InvitesComponent
 				{ organizationId: this.selectedOrganizationId, tenantId }
 			);
 			invites = items.filter((invite) => {
-				return this.invitationType === InvitationTypeEnum.USER
-					? invite.role.name === RolesEnum.EMPLOYEE
-					: invite.role.name !== RolesEnum.EMPLOYEE;
+				if(this.invitationType === InvitationTypeEnum.EMPLOYEE) {
+					return invite.role.name == RolesEnum.EMPLOYEE;
+				} else if (this.invitationType === InvitationTypeEnum.CANDIDATE) {
+					return invite.role.name !== RolesEnum.CANDIDATE;
+				} else {
+					return invite.role.name !== RolesEnum.EMPLOYEE;
+				}
 			});
 		} catch (error) {
 			this.toastrService.danger('TOASTR.MESSAGE.INVITES_LOAD');

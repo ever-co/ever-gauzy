@@ -26,7 +26,6 @@ export class EditEmployeeComponent
 	selectedEmployee: IEmployee;
 	selectedDate: Date;
 	selectedEmployeeFromHeader: ISelectedEmployee;
-	employeeName = 'Employee';
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -68,19 +67,26 @@ export class EditEmployeeComponent
 				filter((params) => !!params.id)
 			)
 			.subscribe(async ({ id }) => {
-				const employee = await this.employeeService.getEmployeeById(id, ['user', 'organizationPosition', 'tags', 'skills']);
+				const employee = await this.employeeService.getEmployeeById(id, [
+					'user',
+					'organizationPosition',
+					'tags',
+					'skills'
+				]);
 				const checkUsername = employee.user.username;
-				this.employeeName = checkUsername ? checkUsername : 'Employee';
 				this.selectedEmployee = employee;
-				this.store.selectedEmployee = {
-					id: employee.id,
-					firstName: employee.user.firstName,
-					lastName: employee.user.lastName,
-					fullName: employee.user.name,
-					imageUrl: employee.user.imageUrl,
-					tags: employee.user.tags,
-					skills: employee.skills
-				};
+
+				if (employee.startedWorkOn) {
+					this.store.selectedEmployee = {
+						id: employee.id,
+						firstName: employee.user.firstName,
+						lastName: employee.user.lastName,
+						fullName: employee.user.name,
+						imageUrl: employee.user.imageUrl,
+						tags: employee.user.tags,
+						skills: employee.skills
+					};
+				}
 			});
 	}
 

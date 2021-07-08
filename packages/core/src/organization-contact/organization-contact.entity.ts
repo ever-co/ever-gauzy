@@ -44,28 +44,7 @@ import {
 export class OrganizationContact
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationContact {
-	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.organizationContact)
-	@JoinTable({
-		name: 'tag_organization_contact'
-	})
-	tags: ITag[];
-
-	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
-		cascade: true,
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	contact: IContact;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId(
-		(organizationContact: OrganizationContact) =>
-			organizationContact.contact
-	)
-	readonly contactId?: string;
-
+	
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -97,30 +76,11 @@ export class OrganizationContact
 	@Column({ nullable: true })
 	inviteStatus?: string;
 
-	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
-	@OneToMany(
-		() => OrganizationProject,
-		(project) => project.organizationContact
-	)
-	@JoinColumn()
-	projects?: IOrganizationProject[];
-
-	@ApiPropertyOptional({ type: () => Invoice, isArray: true })
-	@OneToMany((type) => Invoice, (invoices) => invoices.toContact)
-	@JoinColumn()
-	invoices?: IInvoice[];
-
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	notes?: string;
-
-	@ManyToMany((type) => Employee, { cascade: ['update'] })
-	@JoinTable({
-		name: 'organization_contact_employee'
-	})
-	members?: IEmployee[];
 
 	@ApiProperty({ type: () => String, enum: ContactType })
 	@IsEnum(ContactType)
@@ -132,18 +92,6 @@ export class OrganizationContact
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
-
-	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany((type) => Payment, (payment) => payment.contact, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	payments?: IPayment[];
-
-	@ApiPropertyOptional({ type: () => Proposal, isArray: true })
-	@OneToMany(() => Proposal, (proposal) => proposal.organizationContact)
-	@JoinColumn()
-	proposals?: IOrganizationProject[];
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
@@ -165,4 +113,75 @@ export class OrganizationContact
 	@IsOptional()
 	@Column({ nullable: true })
 	createdBy?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	// Client Contact 
+	@ApiProperty({ type: () => Contact })
+	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
+		cascade: true,
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	contact: IContact;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: OrganizationContact) => it.contact)
+	@IsString()
+	@Index()
+	@Column()
+	readonly contactId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Organization Projects
+	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
+	@OneToMany(() => OrganizationProject, (it) => it.organizationContact)
+	projects?: IOrganizationProject[];
+
+	// Organization Invoices
+	@ApiPropertyOptional({ type: () => Invoice, isArray: true })
+	@OneToMany(() => Invoice, (it) => it.toContact)
+	@JoinColumn()
+	invoices?: IInvoice[];
+
+	// Organization Payments
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
+	@OneToMany(() => Payment, (it) => it.contact, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: IPayment[];
+
+	// Organization Proposals
+	@ApiPropertyOptional({ type: () => Proposal, isArray: true })
+	@OneToMany(() => Proposal, (it) => it.organizationContact)
+	@JoinColumn()
+	proposals?: IOrganizationProject[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Organization Contact Tags
+	@ApiProperty()
+	@ManyToMany(() => Tag, (tag) => tag.organizationContact)
+	@JoinTable({
+		name: 'tag_organization_contact'
+	})
+	tags: ITag[];
+
+	// Organization Contact Employees
+	@ManyToMany(() => Employee, { cascade: ['update'] })
+	@JoinTable({
+		name: 'organization_contact_employee'
+	})
+	members?: IEmployee[];
 }

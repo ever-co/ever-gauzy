@@ -21,6 +21,7 @@ import { Store } from '../../../../@core/services/store.service';
 	styleUrls: ['email-invite-form.component.scss']
 })
 export class EmailInviteFormComponent implements OnInit {
+	
 	@Input() public organizationProjects: IOrganizationProject[];
 
 	@Input() public organizationContact: IOrganizationContact[];
@@ -35,6 +36,8 @@ export class EmailInviteFormComponent implements OnInit {
 
 	@Input()
 	invitationType: InvitationTypeEnum;
+
+	invitationTypeEnum = InvitationTypeEnum;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE

@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { Subject } from 'rxjs';
 import { IEmployee } from '@gauzy/contracts';
-import { takeUntil } from 'rxjs/operators';
-import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { EmployeeStore } from './../../../../../@core/services';
+import { CompareDateValidators } from './../../../../../@core/validators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-employee-hiring',
 	templateUrl: './edit-employee-hiring.component.html',
@@ -14,28 +15,39 @@ import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.
 	]
 })
 export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-	form: FormGroup;
 	selectedEmployee: IEmployee;
 
+	public form: FormGroup = EditEmployeeHiringComponent.buildForm(this.fb);
+	static buildForm(formBuilder: FormBuilder): FormGroup {
+		return formBuilder.group({
+			offerDate: [],
+			acceptDate: [],
+			rejectDate: []
+		}, { 
+			validators: [
+				CompareDateValidators.validateDate('offerDate', 'acceptDate'),
+				CompareDateValidators.validateDate('offerDate', 'rejectDate')
+			] 
+		});
+	}
+
 	constructor(
-		private fb: FormBuilder,
-		private employeeStore: EmployeeStore,
-		private validationService: ValidationService
+		private readonly fb: FormBuilder,
+		private readonly employeeStore: EmployeeStore
 	) {}
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((emp) => {
-				this.selectedEmployee = emp;
-				if (this.selectedEmployee) {
-					this._initializeForm(this.selectedEmployee);
-				}
-			});
+			.pipe(
+				filter((employee: IEmployee) => !!employee),
+				tap((employee: IEmployee) => this.selectedEmployee = employee),
+				tap((employee) => this._patchForm(employee)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	async submitForm() {
+	public submitForm() {
 		if (this.form.valid) {
 			this.employeeStore.employeeForm = {
 				...this.form.value
@@ -43,20 +55,14 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _initializeForm(employee: IEmployee) {
-		this.form = this.fb.group(
-			{
-				offerDate: [employee.offerDate],
-				acceptDate: [employee.acceptDate],
-				rejectDate: [employee.rejectDate]
-			},
-			{
-				validator: this.validationService.validateDate
-			}
-		);
+	private _patchForm(employee: IEmployee) {
+		const { offerDate, acceptDate, rejectDate } = employee;
+		this.form.patchValue({ 
+			offerDate: offerDate ? new Date(offerDate) : null,
+			acceptDate: acceptDate ? new Date(acceptDate) : null,
+			rejectDate: rejectDate ? new Date(rejectDate) : null
+		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-	}
+	ngOnDestroy() { }
 }
