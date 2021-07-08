@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
@@ -12,12 +12,11 @@
 							id="offerDateInput"
 							formControlName="offerDate"
 							nbInput
-							[nbDatepicker]="offertDatePicker"
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							[nbDatepicker]="offerDatePicker"
+							[placeholder]="'POP_UPS.PICK_DATE' | translate"
 							autocomplete="off"
 						/>
-
-						<nb-datepicker #offertDatePicker></nb-datepicker>
+						<nb-datepicker #offerDatePicker></nb-datepicker>
 					</div>
 				</div>
 				<div class="col">
@@ -31,18 +30,16 @@
 							formControlName="acceptDate"
 							nbInput
 							[nbDatepicker]="acceptDatePicker"
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							[placeholder]="'POP_UPS.PICK_DATE' | translate"
 							autocomplete="off"
-							[ngClass]="{
-								'status-danger': !form.controls['acceptDate']
-									.valid
-							}"
+							[status]="
+								form.get('acceptDate').invalid ? 'danger' : 'basic'
+							"
 						/>
 						<nb-datepicker #acceptDatePicker></nb-datepicker>
 					</div>
 				</div>
 			</div>
-
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
@@ -55,19 +52,17 @@
 							formControlName="rejectDate"
 							nbInput
 							[nbDatepicker]="rejectDatePicker"
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							[placeholder]="'POP_UPS.PICK_DATE' | translate"
 							autocomplete="off"
-							[ngClass]="{
-								'status-danger': !form.controls['rejectDate']
-									.valid
-							}"
+							[status]="
+								form.get('rejectDate').invalid ? 'danger' : 'basic'
+							"
 						/>
 						<nb-datepicker #rejectDatePicker></nb-datepicker>
 					</div>
 				</div>
 				<div class="col"></div>
 			</div>
-
 			<div class="actions">
 				<button
 					nbButton

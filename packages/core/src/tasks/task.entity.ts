@@ -67,11 +67,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
     */
 	// Organization Project
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, {
+	@ManyToOne(() => OrganizationProject, (it) => it.tasks,  {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
 	project?: IOrganizationProject;
 
 	@ApiProperty({ type: () => String, readOnly: true })

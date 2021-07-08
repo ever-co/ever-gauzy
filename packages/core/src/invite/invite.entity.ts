@@ -42,16 +42,6 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Column()
 	email: string;
 
-	@ApiProperty({ type: () => String })
-	@RelationId((invite: Invite) => invite.role)
-	@Column()
-	roleId: string;
-
-	@ApiProperty({ type: () => String })
-	@RelationId((invite: Invite) => invite.invitedBy)
-	@Column()
-	invitedById: string;
-
 	@ApiProperty({ type: () => String, enum: InviteStatusEnum })
 	@IsEnum(InviteStatusEnum)
 	@IsNotEmpty()
@@ -63,28 +53,58 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Column()
 	expireDate: Date;
 
-	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	role?: IRole;
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
 
+	// Invited By User
 	@ApiPropertyOptional({ type: () => User })
 	@ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	invitedBy?: IUser;
 
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Invite) => it.invitedBy)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	invitedById: string;
+
+	// Invited User Role
+	@ApiPropertyOptional({ type: () => Role })
+	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	role?: IRole;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((invite: Invite) => invite.role)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	roleId: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiPropertyOptional({ type: () => OrganizationProject })
 	@ManyToMany(() => OrganizationProject)
 	@JoinTable({
 		name: 'invite_organization_project'
 	})
 	projects?: IOrganizationProject[];
 
+	@ApiPropertyOptional({ type: () => OrganizationContact })
 	@ManyToMany(() => OrganizationContact)
 	@JoinTable({
 		name: 'invite_organization_contact'
 	})
 	organizationContact?: IOrganizationContact[];
 
+	@ApiPropertyOptional({ type: () => OrganizationDepartment })
 	@ManyToMany(() => OrganizationDepartment)
 	@JoinTable({
 		name: 'invite_organization_department'

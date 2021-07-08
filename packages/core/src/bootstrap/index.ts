@@ -22,15 +22,10 @@ export async function bootstrap(
 ): Promise<INestApplication> {
 	const config = await registerPluginConfig(pluginConfig);
 	
-	const bootstrapModule = await import('./bootstrap.module');
-	const [classname] = Object.keys(bootstrapModule);
-
-	const app = await NestFactory.create<NestExpressApplication>(
-		bootstrapModule[classname],
-		{
-			logger: ['error', 'warn']
-		}
-	);
+	const { BootstrapModule } = await import('./bootstrap.module');
+	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
+		logger: ['error', 'warn']
+	});
 
 	app.useLogger(app.get(SentryService));
 	app.use(json({ limit: '50mb' }));
