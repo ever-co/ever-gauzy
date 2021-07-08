@@ -36,6 +36,7 @@ And('User can add new employee', () => {
 
 // Book public appointment
 And('User can visit Employees appointments page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/appointments');
 });

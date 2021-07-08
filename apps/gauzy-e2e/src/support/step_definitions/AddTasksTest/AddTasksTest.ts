@@ -21,9 +21,8 @@ let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 
 // Login with email
-Given('Login with default credentials and visit Users page', () => {
+Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/users');
 });
 
 // Add new tag
@@ -33,6 +32,7 @@ Then('User can add new tag', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
@@ -47,6 +47,7 @@ And('User can add new employee', () => {
 
 // Add new project
 And('User can add new project', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
 		organizationProjectsPage,
@@ -56,6 +57,7 @@ And('User can add new project', () => {
 
 // Add new task
 When('User go to Tasks dashboard page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/tasks/dashboard');
 });

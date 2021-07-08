@@ -33,6 +33,7 @@ Then('User can add new tag', () => {
 
 // Add project
 And('User can add new project', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
 		organizationProjectsPage,
@@ -42,6 +43,7 @@ And('User can add new project', () => {
 
 // Add new client
 And('User can add new client', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addClient(
 		clientsPage,
