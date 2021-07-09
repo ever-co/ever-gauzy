@@ -28,7 +28,7 @@
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
-		"@nestjs/passport": "^7.1.5",
+		"@nestjs/passport": "^8.0.0",
 		"bcrypt": "^5.0.0",
 		"passport": "^0.4.1",
 		"passport-auth0": "^1.3.3",

@@ -1,10 +1,10 @@
 import {
 	Injectable,
-	HttpService,
 	BadRequestException,
 	HttpStatus,
 	UnauthorizedException
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios'
 import { map, catchError, switchMap } from 'rxjs/operators';
 import {
 	ICreateIntegrationDto,
@@ -82,10 +82,7 @@ export class HubstaffService {
 			Authorization: `Bearer ${token}`
 		};
 		try {
-			return await this._httpService
-				.get(url, { headers })
-				.pipe(map((response) => response.data))
-				.toPromise();
+			return this._httpService.get(url, { headers }).pipe(map((response) => response.data)).subscribe();
 		} catch (error) {
 			if (error.response.status === HttpStatus.UNAUTHORIZED) {
 				throw new UnauthorizedException();

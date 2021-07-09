@@ -28,7 +28,7 @@
 	},
 	"keywords": [],
 	"dependencies": {
-		"@apollo/client": "^3.2.1"
+		"@apollo/client": "^3.3.21"
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.22",

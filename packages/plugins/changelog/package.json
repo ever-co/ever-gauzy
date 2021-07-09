@@ -32,13 +32,13 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/cqrs": "^7.0.1",
-		"@nestjs/typeorm": "^7.1.5",
+		"@nestjs/cqrs": "^8.0.0",
+		"@nestjs/typeorm": "^8.0.1",
 		"faker": "^5.5.3",
 		"nest-router": "^1.0.9",
-		"typeorm": "^0.2.32",
-		"typeorm-express-query-builder": "^1.2.0",
-		"typeorm-aurora-data-api-driver": "^2.1.0"
+		"typeorm": "^0.2.34",
+		"typeorm-aurora-data-api-driver": "^2.2.0",
+		"typeorm-express-query-builder": "^1.2.0"
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.22",

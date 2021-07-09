@@ -30,7 +30,9 @@
 	"keywords": [],
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
-		"@gauzy/config": "^0.1.0"
+		"@gauzy/config": "^0.1.0",
+		"@nestjs/common": "^8.0.0",
+		"@nestjs/core": "^8.0.0"
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.22",

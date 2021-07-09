@@ -14,8 +14,6 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { mergeMap } from 'rxjs/operators';
-import { of, throwError } from 'rxjs';
 import { environment as env } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
 import { BaseEntity } from '../entities/internal';
@@ -23,6 +21,9 @@ import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import { ITryRequest } from './try-request';
 import { filterQuery } from './query-builder';
+import { mergeMap } from 'rxjs/operators';
+import { throwError } from 'rxjs/internal/observable/throwError';
+import { of } from 'rxjs/internal/observable/of';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -162,19 +163,19 @@ export abstract class CrudService<T extends BaseEntity>
 	/**
 	 * e.g., findOneById(id).pipe(map(entity => entity.id), entityNotFound())
 	 */
-	private entityNotFound() {
-		return (stream$) =>
-			stream$.pipe(
-				mergeMap((signal) => {
-					if (!signal) {
-						return throwError(
-							new NotFoundException(
-								`The requested record was not found`
-							)
-						);
-					}
-					return of(signal);
-				})
-			);
-	}
+	// private entityNotFound() {
+	// 	return (stream$) =>
+	// 		stream$.pipe(
+	// 			mergeMap((signal) => {
+	// 				if (!signal) {
+	// 					return throwError(() =>
+	// 						new NotFoundException(
+	// 							`The requested record was not found`
+	// 						)
+	// 					);
+	// 				}
+	// 				return of(signal);
+	// 			})
+	// 		);
+	// }
 }
