@@ -34,6 +34,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/cqrs": "^8.0.0",
 		"@nestjs/typeorm": "^8.0.1",
+		"@nestjs/swagger": "^5.0.0",
 		"faker": "^5.5.3",
 		"nest-router": "^1.0.9",
 		"typeorm": "^0.2.34",

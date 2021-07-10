@@ -163,19 +163,19 @@ export abstract class CrudService<T extends BaseEntity>
 	/**
 	 * e.g., findOneById(id).pipe(map(entity => entity.id), entityNotFound())
 	 */
-	// private entityNotFound() {
-	// 	return (stream$) =>
-	// 		stream$.pipe(
-	// 			mergeMap((signal) => {
-	// 				if (!signal) {
-	// 					return throwError(() =>
-	// 						new NotFoundException(
-	// 							`The requested record was not found`
-	// 						)
-	// 					);
-	// 				}
-	// 				return of(signal);
-	// 			})
-	// 		);
-	// }
+	private entityNotFound() {
+		return (stream$) =>
+			stream$.pipe(
+				mergeMap((signal) => {
+					if (!signal) {
+						return throwError(() =>
+							new NotFoundException(
+								`The requested record was not found`
+							)
+						);
+					}
+					return of(signal);
+				})
+			);
+	}
 }
