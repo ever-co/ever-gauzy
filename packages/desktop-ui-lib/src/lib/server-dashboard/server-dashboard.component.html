@@ -1,0 +1,57 @@
+<nb-layout>
+	<nb-layout-column class="top-bottom-space">
+		<nb-card>
+			<nb-card-body>
+                <div class="row content-body">
+                    <div class="col-12 text-center margin-content">
+                        <img [src]="gauzyIcon" class="margin-icon" />
+                    </div>
+                    <div class="col-12 text-center margin-content">
+                        <h4>GAUZY SERVER</h4>
+                    </div>
+                    <div class="col-12 text-center margin-content">
+                        <div class="row">
+                            <div class="col-10 text-center col-center">
+                                <p>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 text-center margin-content">
+                        <div class="row">
+                            <div class="col-4">
+                                <button
+                                    nbButton
+                                    status="primary"
+                                    class="button-big"
+                                    (click)="runServer()"
+                                    [disabled]="running"
+                                >
+                                    Run<nb-icon
+                                        icon="play-circle-outline"
+                                        class="icon-medium"
+                                    ></nb-icon>
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button
+                                    nbButton
+                                    status="primary"
+                                    class="button-big"
+                                    (click)="stopServer()"
+                                    [disabled]="!running"
+                                >
+                                    Stop<nb-icon
+                                        icon="stop-circle-outline"
+                                        class="icon-medium"
+                                    ></nb-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+			</nb-card-body>
+		</nb-card>
+	</nb-layout-column>
+</nb-layout>
