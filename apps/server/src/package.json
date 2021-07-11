@@ -57,7 +57,7 @@
 				"zip",
 				"dmg"
 			],
-			"artifactName": "gauzy-desktop-${version}.${ext}"
+			"artifactName": "gauzy-server-${version}.${ext}"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -92,7 +92,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "gauzy-desktop-${version}.${ext}",
+			"artifactName": "gauzy-server-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},

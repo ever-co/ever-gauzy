@@ -17,8 +17,8 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 })
 export class SettingsComponent implements OnInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
-	menus = ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
 	appName: string = this.electronService.remote.app.getName();
+	menus = this.appName === 'gauzy-server' ? ['Update', 'Advanced Setting'] : ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
 	gauzyIcon =
 		this.appName === 'gauzy-desktop-timer'
 			? './assets/images/logos/logo_Gauzy.svg'
