@@ -18,13 +18,11 @@ import {
 	ITag,
 	ITenant
 } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
-import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-accept-invite-form',
 	templateUrl: 'accept-invite-form.component.html',
@@ -33,7 +31,6 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 export class AcceptInviteFormComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private ngDestroy$ = new Subject<void>();
 
 	@Input()
 	invitation: IInvite;
@@ -56,7 +53,7 @@ export class AcceptInviteFormComponent
 	private validations = {
 		passwordControl: () => {
 			this.password.valueChanges
-				.pipe(takeUntil(this.ngDestroy$))
+				.pipe(untilDestroyed(this))
 				.subscribe(() => {
 					if (this.password.value === this.repeatPassword.value) {
 						this.matchPassword = true;
@@ -67,14 +64,13 @@ export class AcceptInviteFormComponent
 		},
 		repeatPasswordControl: () => {
 			this.repeatPassword.valueChanges
-				.pipe(takeUntil(this.ngDestroy$))
+				.pipe(untilDestroyed(this))
 				.subscribe(() => {
 					if (this.password.value === this.repeatPassword.value) {
 						this.matchPassword = true;
 					} else {
 						this.matchPassword = false;
 					}
-
 					this.repeatPasswordErrorMsg =
 						(this.repeatPassword.touched ||
 							this.repeatPassword.dirty) &&
@@ -89,8 +85,6 @@ export class AcceptInviteFormComponent
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private readonly inviteService: InviteService,
-		private readonly roleService: RoleService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -166,8 +160,5 @@ export class AcceptInviteFormComponent
 		}
 	}
 
-	ngOnDestroy(): void {
-		this.ngDestroy$.next();
-		this.ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

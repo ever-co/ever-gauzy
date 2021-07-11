@@ -26,7 +26,6 @@ export class EditEmployeeComponent
 	selectedEmployee: IEmployee;
 	selectedDate: Date;
 	selectedEmployeeFromHeader: ISelectedEmployee;
-	employeeName = 'Employee';
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -42,6 +41,7 @@ export class EditEmployeeComponent
 	ngOnInit() {
 		this.store.selectedDate$
 			.pipe(
+				filter((date) => !!date),
 				tap((date) => this.selectedDate = date),
 				untilDestroyed(this)
 			)
@@ -49,16 +49,12 @@ export class EditEmployeeComponent
 		this.store.selectedEmployee$
 			.pipe(
 				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				tap((employee) => this.selectedEmployeeFromHeader = employee),
 				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				this.selectedEmployeeFromHeader = employee;
-				this.cdr.detectChanges();		
-				if (employee.id) {
-					this.router.navigate([
-						'/pages/employees/edit/' + employee.id
-					]);
-				}
+			.subscribe(({ id }) => {
+				this.cdr.detectChanges();
+				this.router.navigate(['/pages/employees/edit/', id]);
 			});
 	}
 
@@ -68,19 +64,28 @@ export class EditEmployeeComponent
 				filter((params) => !!params.id)
 			)
 			.subscribe(async ({ id }) => {
-				const employee = await this.employeeService.getEmployeeById(id, ['user', 'organizationPosition', 'tags', 'skills']);
-				const checkUsername = employee.user.username;
-				this.employeeName = checkUsername ? checkUsername : 'Employee';
-				this.selectedEmployee = employee;
-				this.store.selectedEmployee = {
-					id: employee.id,
-					firstName: employee.user.firstName,
-					lastName: employee.user.lastName,
-					fullName: employee.user.name,
-					imageUrl: employee.user.imageUrl,
-					tags: employee.user.tags,
-					skills: employee.skills
-				};
+				try {
+					const employee = await this.employeeService.getEmployeeById(id, [
+						'user',
+						'organizationPosition',
+						'tags',
+						'skills'
+					]);
+					this.selectedEmployee = employee;
+					if (employee.startedWorkOn) {
+						this.store.selectedEmployee = {
+							id: employee.id,
+							firstName: employee.user.firstName,
+							lastName: employee.user.lastName,
+							fullName: employee.user.name,
+							imageUrl: employee.user.imageUrl,
+							tags: employee.user.tags,
+							skills: employee.skills
+						};
+					}	
+				} catch (error) {
+					this.router.navigate(['/pages/employees']);
+				}
 			});
 	}
 

@@ -14,7 +14,7 @@ import { UserService } from '../user/user.service';
 import { RoleService } from 'role/role.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
 import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
-import { ImportRecordUpdateOrCreateCommand, ImportRecordService } from './../export-import/import-record';
+import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { User } from './../core/entities/internal';
 
 @Injectable()
@@ -25,7 +25,6 @@ export class TenantService extends CrudService<Tenant> {
 		
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
-		private readonly importRecordService: ImportRecordService,
 		private readonly commandBus: CommandBus,
 	) {
 		super(tenantRepository);

@@ -21,6 +21,7 @@ Then('User can add new tag', () => {
 
 // Add new employee position
 Then('User can go to Employee postions page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/positions');
 });
@@ -38,18 +39,6 @@ And('User can see Add new position button', () => {
 });
 
 When('User click on Add new position button', () => {
-	addEmployeePositionPage.clickAddNewPositionButton();
-});
-
-Then('User can see cancel button', () => {
-	addEmployeePositionPage.cancelNewPositionButtonVisible();
-});
-
-And('User can click on cancel button', () => {
-	addEmployeePositionPage.clickCancelNewPositionButton();
-});
-
-When('User click again on Add new position button', () => {
 	addEmployeePositionPage.clickAddNewPositionButton();
 });
 
@@ -178,18 +167,6 @@ And('User can see Add new position button', () => {
 });
 
 When('User click on Add new position button', () => {
-	addEmployeePositionPage.clickAddNewPositionButton();
-});
-
-Then('User can see cancel button', () => {
-	addEmployeePositionPage.cancelNewPositionButtonVisible();
-});
-
-And('User can click on cancel button', () => {
-	addEmployeePositionPage.clickCancelNewPositionButton();
-});
-
-When('User click again on Add new position button', () => {
 	addEmployeePositionPage.clickAddNewPositionButton();
 });
 

@@ -65,7 +65,7 @@
 			[settings]="settingsSmartTable"
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			[source]="sourceSmartTable"
-			(userRowSelect)="selectEmployeeTmp($event)"
+			(userRowSelect)="selectEmployee($event)"
 			#employeesTable
 		>
 		</ng2-smart-table>

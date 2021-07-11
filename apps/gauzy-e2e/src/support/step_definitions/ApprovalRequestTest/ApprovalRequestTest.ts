@@ -30,6 +30,7 @@ Then('User can add new tag', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
@@ -44,6 +45,7 @@ And('User can add new employee', () => {
 
 // Add approval policy
 Then('User can visit Employees approvals page', () => {
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/approvals');
 });

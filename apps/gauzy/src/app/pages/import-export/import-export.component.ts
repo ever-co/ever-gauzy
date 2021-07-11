@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { Router, UrlSerializer } from '@angular/router';
-import { concatMap, delay, filter, finalize, switchMap, tap } from 'rxjs/operators';
-import { of as observableOf } from 'rxjs';
+import { catchError, concatMap, delay, filter, finalize, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, of as observableOf } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { 
@@ -16,12 +16,13 @@ import {
 	BonusTypeEnum,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	ImportTypeEnum 
+	ImportTypeEnum, 
+	IUserOrganization
 } from '@gauzy/contracts';
 import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
 import { Environment } from './../../../environments/model';
-import { GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
+import { ErrorHandlingService, GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -37,7 +38,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	loading: boolean;
 	token: string;
 	gauzyUser: IUser;
-	organizations: IOrganization[] = [];
+	userOrganizations: IUserOrganization[] = [];
 
 	constructor(
 		private readonly exportAll: ExportAllService,
@@ -47,7 +48,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		private readonly store: Store,
 		readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
-		private readonly serializer: UrlSerializer
+		private readonly serializer: UrlSerializer,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -114,53 +116,67 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		try {
 			this.gauzyCloudService.migrateIntoCloud(register)
 				.pipe(
+					catchError((error) => {
+						this._errorHandlingService.handleError(error);
+						return observableOf(EMPTY);
+					}),
 					switchMap((response: IAuthResponse) => {
-						const { token, user } = response;
-						this.token = token;
-						this.gauzyUser = user;
-						return this.gauzyCloudService.migrateTenant({ 
-							name, 
-							isImporting: true, 
-							sourceId: tenantId,
-							userSourceId: sourceId
-						}, token);
+						if (response) {
+							const { token, user } = response;
+							this.token = token;
+							this.gauzyUser = user;
+							return this.gauzyCloudService.migrateTenant({ 
+								name, 
+								isImporting: true, 
+								sourceId: tenantId,
+								userSourceId: sourceId
+							}, token);
+						}
+						return EMPTY;
 					}),
 					delay(1000),
 					concatMap(async (tenant: ITenant) => {
-						for await (const organization of this.organizations) {
-							await this.gauzyCloudService.migrateOrganization({ 
-								...this.mapOrganization(organization, tenant) }, 
-								this.token
-							).toPromise();
+						if (tenant) {
+							for await (const { id: userOrganizationSourceId, organization } of this.userOrganizations) {
+								await this.gauzyCloudService.migrateOrganization({ 
+									...this.mapOrganization(
+										organization, 
+										tenant,
+										userOrganizationSourceId
+									) 
+								}, this.token).toPromise();
+							}
+							return await observableOf(tenant).toPromise();
 						}
-						return await observableOf(tenant).toPromise();
+						return await observableOf(EMPTY).toPromise();						
 					}),
-					tap(() => {
-						this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
-							tenant: name
-						});
+					tap({
+						next: (x) => {
+							this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
+								tenant: name
+							});
+							const externalUrl = environment.GAUZY_CLOUD_APP;
+							const tree = this.router.createUrlTree(['/pages/settings/import-export/import'], { 
+								queryParams: { 
+									token: this.token,
+									userId: this.gauzyUser.id,
+									importType: ImportTypeEnum.MERGE
+								} 
+							});
+							let redirect: string;
+							if (externalUrl.indexOf('#') !== -1) {
+								redirect = externalUrl + '' + this.serializer.serialize(tree);
+							} else {
+								redirect = externalUrl + '/#' + this.serializer.serialize(tree);
+							}
+							setTimeout(() => { this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]); }, 1500);	
+						},
+						error: (err) => {
+							console.log('tap error', err);
+							this._errorHandlingService.handleError(err);
+						},
 					}),
-					finalize(() => {
-						this.loading = false;
-						const externalUrl = environment.GAUZY_CLOUD_APP;
-						const tree = this.router.createUrlTree(['/pages/settings/import-export/import'], { 
-							queryParams: { 
-								token: this.token,
-								userId: this.gauzyUser.id,
-								importType: ImportTypeEnum.MERGE
-							} 
-						});
-
-						let redirect: string;
-						if (externalUrl.indexOf('#') !== -1) {
-							redirect = externalUrl + '' + this.serializer.serialize(tree);
-						} else {
-							redirect = externalUrl + '/#' + this.serializer.serialize(tree);
-						}
-						setTimeout(() => {
-							this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]);
-						}, 1500);	
-					}),
+					finalize(() => this.loading = false),
 					untilDestroyed(this),
 				)
 				.subscribe();
@@ -172,12 +188,13 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	async getOrganizations() {
 		const { id: userId, tenantId } = this.user;
 		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], {  userId,  tenantId  });
-		this.organizations = items.map((item) => item.organization);
+		this.userOrganizations = items;
 	}
 
 	mapOrganization(
 		organization: IOrganization,
-		tenant: ITenant
+		tenant: ITenant,
+		userOrganizationSourceId: IUserOrganization['id']
 	): IOrganizationCreateInput {
 		const { currency, defaultValueDateType, bonusType, imageUrl, id: sourceId } = organization;
 		delete organization['id'];
@@ -191,7 +208,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			defaultValueDateType: defaultValueDateType as DefaultValueDateTypeEnum, 
 			bonusType: bonusType as BonusTypeEnum,
 			isImporting: true,
-			sourceId
+			sourceId,
+			userOrganizationSourceId
 		}
 	}
 }

@@ -16,7 +16,7 @@ export class UserOrganization
 	extends TenantOrganizationBaseEntity
 	implements IUserOrganization {
 	@ApiProperty({ type: () => User })
-	@ManyToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	user?: User;
 

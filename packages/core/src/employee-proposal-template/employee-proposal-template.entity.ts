@@ -1,4 +1,4 @@
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IEmployee, IEmployeeProposalTemplate } from '@gauzy/contracts';
@@ -11,14 +11,6 @@ import {
 export class EmployeeProposalTemplate
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeProposalTemplate {
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	employeeId?: string;
-
-	@ManyToOne(() => Employee, (employee) => employee.id)
-	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -31,7 +23,7 @@ export class EmployeeProposalTemplate
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column({ nullable: true })
+	@Column({ type: 'text', nullable: true })
 	content?: string;
 
 	@ApiProperty({ type: () => Boolean })
@@ -40,4 +32,23 @@ export class EmployeeProposalTemplate
 	@Index()
 	@Column({ default: false })
 	isDefault?: boolean;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, { 
+		onDelete: 'CASCADE' 
+	})
+	employee?: IEmployee;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: EmployeeProposalTemplate) => it.employee)
+	@IsString()
+	@Index()
+	@IsNotEmpty()
+	@Column()
+	employeeId?: string;
 }

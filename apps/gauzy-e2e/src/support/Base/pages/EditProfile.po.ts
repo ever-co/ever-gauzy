@@ -4,11 +4,13 @@ import {
 	clickButton,
 	clickElementByText,
 	clearField,
-	verifyValue
+	verifyValue,
+	waitUntil
 } from '../utils/util';
 import { EditProfilePage } from '../pageobjects/EditProfilePageObject';
 
 export const firstNameInputVisible = () => {
+	waitUntil(3000);
 	verifyElementIsVisible(EditProfilePage.firstNameInputCss);
 };
 
@@ -52,11 +54,11 @@ export const enterEmailData = (data) => {
 };
 
 export const languageSelectVisible = () => {
-	verifyElementIsVisible(EditProfilePage.preferredLanguageCss);
+	verifyElementIsVisible(EditProfilePage.languageSelectCss);
 };
 
 export const chooseLanguage = (data) => {
-	clickButton(EditProfilePage.preferredLanguageCss);
+	clickButton(EditProfilePage.languageSelectCss);
 	clickElementByText(EditProfilePage.preferredLanguageOptionCss, data);
 };
 

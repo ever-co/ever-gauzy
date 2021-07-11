@@ -31,20 +31,16 @@ import {
 	ApiExcludeEndpoint
 } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
-import { IPagination } from '../core';
-import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.command';
-import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
-import { InviteOrganizationContactCommand } from './commands/invite.organization-contact.command';
-import { Invite } from './invite.entity';
-import { InviteService } from './invite.service';
-import { InviteResendCommand } from './commands/invite.resend.command';
-import { Permissions } from './../shared/decorators/permissions';
-import { PermissionGuard } from './../shared/guards/auth/permission.guard';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
-import { InviteAcceptOrganizationContactCommand } from './commands/invite.accept-organization-contact.command';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { IPagination } from '../core';
+import { Invite } from './invite.entity';
+import { InviteService } from './invite.service';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { InviteAcceptEmployeeCommand, InviteAcceptOrganizationContactCommand, InviteAcceptUserCommand, InviteOrganizationContactCommand, InviteResendCommand } from './commands';
 
 @ApiTags('Invite')
 @Controller()
@@ -91,17 +87,14 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@Get('validate')
-	async validateInvite(@Query('data') data: string): Promise<Invite> {
-		const {
-			relations,
-			findInput: { email, token }
-		} = JSON.parse(data);
-
+	async validateInvite(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<Invite> {
+		const { relations, findInput: { email, token } } = data;
 		if (!email && !token) {
 			throw new BadRequestException('Email & Token Mandatory');
 		}
-
-		return this.inviteService.validate(relations, email, token);
+		return await this.inviteService.validate(relations, email, token);
 	}
 
 	@ApiOperation({ summary: 'Find all invites.' })

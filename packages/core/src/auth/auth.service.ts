@@ -30,15 +30,15 @@ export class AuthService extends SocialAuthService {
 
 	async login(findObj: any, password: string): Promise<IAuthResponse | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role', 'role.rolePermissions', 'employee']
+			relations: ['role', 'role.rolePermissions', 'employee'],
+			order: {
+				createdAt: 'DESC'
+			}
 		});
-
 		if (!user || !(await bcrypt.compare(password, user.hash))) {
 			return null;
 		}
-
 		const { token } = await this.createToken(user);
-
 		return {
 			user,
 			token

@@ -2,14 +2,14 @@ import { Body, Controller, HttpStatus, Param, Post, UseGuards, UseInterceptors }
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IOrganizationCreateInput, ITenantCreateInput, IUserRegistrationInput } from '@gauzy/contracts';
-import { TenantPermissionGuard } from './../shared/guards';
-import { GauzyCloudUserMigrateCommand } from './commands/gauzy-cloud-user.migrate.command';
+import { IOrganizationCreateInput, ITenantCreateInput, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts';
 import { CloudMigrateInterceptor } from './../core/interceptors';
-import { GauzyCloudTenantMigrateCommand } from './commands/gauzy-cloud-tenant.migrate.command';
-import { GauzyCloudOrganizationMigrateCommand } from './commands/gauzy-cloud-organization.migrate.command';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { GauzyCloudOrganizationMigrateCommand, GauzyCloudTenantMigrateCommand, GauzyCloudUserMigrateCommand } from './commands';
 
 @UseInterceptors(CloudMigrateInterceptor)
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class GauzyCloudController {
 	
@@ -27,7 +27,7 @@ export class GauzyCloudController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post()
 	async migrateToCloud(@Body() body: IUserRegistrationInput) {
 		return await this.commandBus.execute(
@@ -45,7 +45,7 @@ export class GauzyCloudController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post('tenant/:token')
 	async migrateTenant(
 		@Body() body: ITenantCreateInput,
@@ -66,7 +66,7 @@ export class GauzyCloudController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post('organization/:token')
 	async migrateOrgnaization(
 		@Body() body: IOrganizationCreateInput,

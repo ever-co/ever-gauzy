@@ -715,10 +715,11 @@ export class ImportAllService implements OnModuleInit {
 				const source = JSON.parse(JSON.stringify(entity));
 				const where = [];
 				if (isNotEmpty(uniqueIdentifier) && uniqueIdentifier instanceof Array) {
+					if ('tenantId' in entity && isNotEmpty(entity['tenantId'])) {
+						where.push({ tenantId: RequestContext.currentTenantId() });
+					}
 					for (const item of uniqueIdentifier) {
-						where.push({ 
-							[item.column] : entity[item.column] 
-						});
+						where.push({ [item.column] : entity[item.column] });
 					}
 				}
 				const desination = await this.commandBus.execute(
@@ -933,8 +934,7 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.tenantSettingRepository
 			},
 			{
-				repository: this.roleRepository,
-				isStatic: true
+				repository: this.roleRepository
 			},
 			{
 				repository: this.rolePermissionsRepository,

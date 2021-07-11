@@ -45,7 +45,6 @@ export class ProposalTemplateComponent
 	) {
 		if (content) {
 			this.proposalTemplateTable = content;
-			console.log(this.proposalTemplateTable);
 			this.onChangedSource();
 		}
 	}
@@ -68,8 +67,8 @@ export class ProposalTemplateComponent
 		this._loadSmartTableSettings();
 		this.subject$
 			.pipe(
-				debounceTime(500),
 				tap(() => this.loading = true),
+				debounceTime(300),
 				tap(() => this.clearItem()),
 				tap(() => this.getProposalTemplates()),
 				untilDestroyed(this), 
@@ -190,9 +189,11 @@ export class ProposalTemplateComponent
 						cell,
 						row: IEmployeeProposalTemplate
 					) => {
-						let value = this.nl2BrPipe.transform(row.content);
-						value = this.truncatePipe.transform(value, 500);
-						return value;
+						if (row.content) {
+							let value = this.nl2BrPipe.transform(row.content);
+							return this.truncatePipe.transform(value, 500);
+						}
+						return;
 					}
 				},
 				isDefault: {

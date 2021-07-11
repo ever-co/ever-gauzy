@@ -184,9 +184,9 @@
 								}}</label>
 								<ng-select
 									[addTag]="addNewProject"
-									[items]="selectedProject"
+									[items]="projects"
 									bindLabel="name"
-									[(ngModel)]="projects"
+									[multiple]="true"
 									[searchable]="true"
 									formControlName="projects"
 									[placeholder]="

@@ -7,7 +7,8 @@ import {
 	waitElementToHide,
 	clickElementByText,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	waitUntil
 } from '../utils/util';
 import { GoalsPage } from '../pageobjects/GoalsPageObject';
 
@@ -97,6 +98,7 @@ export const tableRowVisible = () => {
 };
 
 export const clickTableRow = (index) => {
+	waitUntil(3000);
 	clickButtonByIndex(GoalsPage.tableRowCss, index);
 };
 

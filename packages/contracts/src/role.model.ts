@@ -15,3 +15,9 @@ export enum RolesEnum {
 	MANAGER = 'MANAGER',
 	VIEWER = 'VIEWER'
 }
+
+export interface IRoleMigrateInput extends IBasePerTenantEntityModel {
+	name: string;
+	isImporting: boolean;
+	sourceId: string;
+}

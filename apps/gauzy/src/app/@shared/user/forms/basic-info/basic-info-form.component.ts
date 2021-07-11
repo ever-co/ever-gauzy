@@ -8,14 +8,11 @@ import {
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
 import { RolesEnum, ITag, ITenant, IUser } from '@gauzy/contracts';
-import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
-import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { AuthService, EmployeesService, RoleService, Store } from './../../../../@core/services';
+import { CompareDateValidators } from './../../../../@core/validators';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -67,7 +64,6 @@ export class BasicInfoFormComponent
 		private readonly roleService: RoleService,
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
-		private readonly validatorService: ValidationService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -136,17 +132,20 @@ export class BasicInfoFormComponent
 						? null
 						: Validators.required
 				],
-				offerDate: [''],
-				acceptDate: [''],
-				appliedDate: [''],
-				hiredDate: [''],
-				rejectDate: [''],
+				offerDate: [],
+				acceptDate: [],
+				appliedDate: [],
+				hiredDate: [],
+				rejectDate: [],
 				source: [''],
 				tags: [this.selectedTags],
 				createEmployee: [false]
 			},
-			{
-				validator: this.validatorService.validateDate
+			{ 
+				validators: [
+					CompareDateValidators.validateDate('offerDate', 'acceptDate'),
+					CompareDateValidators.validateDate('offerDate', 'rejectDate')
+				] 
 			}
 		);
 

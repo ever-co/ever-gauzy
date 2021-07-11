@@ -4,7 +4,9 @@ import {
 	clickButtonByIndex,
 	clearField,
 	enterInput,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	waitElementToHide,
+	waitUntil
 } from '../utils/util';
 import { EventTypesPage } from '../pageobjects/EventTypesPageObject';
 
@@ -29,6 +31,7 @@ export const selectEmployeeDropdownVisible = () => {
 };
 
 export const clickSelectEmployeeDropdown = () => {
+	waitUntil(3000);
 	clickButton(EventTypesPage.selectEmployeeDrodownCss);
 };
 
@@ -88,6 +91,7 @@ export const selectTableRowVisible = () => {
 };
 
 export const selectTableRow = (index) => {
+	waitUntil(3000);
 	clickButtonByIndex(EventTypesPage.selectTableRowCss, index);
 };
 
@@ -113,4 +117,8 @@ export const confirmDeleteEventTypeButtonVisible = () => {
 
 export const clickConfirmDeleteEventTypeButton = () => {
 	clickButton(EventTypesPage.confirmDeleteEventTypeButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(EventTypesPage.toastrMessageCss);
 };

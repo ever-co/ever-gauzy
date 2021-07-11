@@ -65,9 +65,7 @@ export class ContactMutationComponent
 	members: string[];
 	selectedMembers: IEmployee[];
 	selectedEmployeeIds: string[];
-	allProjects: IOrganizationProject[] = [];
 	tags: ITag[] = [];
-	selectedProject: Object[] = [];
 	contactTypes: ContactType[] = Object.values(ContactType);
 	hoverState: boolean;
 	country: string;
@@ -105,14 +103,6 @@ export class ContactMutationComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		this.allProjects = (
-			this.projectsWithoutOrganizationContact || []
-		).concat(
-			this.organizationContact
-				? this.organizationContact.selectedproject
-				: []
-		);
 		if (this.organizationContact) {
 			this.selectedEmployeeIds = this.organizationContact.members.map(
 				(member) => member.id
@@ -147,12 +137,7 @@ export class ContactMutationComponent
 			organizationId,
 			tenantId
 		});
-		items.forEach((i) => {
-			this.selectedProject = [
-				...this.selectedProject,
-				{ name: i.name, projectId: i.id }
-			];
-		});
+		this.projects = items;
 	}
 
 	private _initializeForm() {
@@ -192,9 +177,7 @@ export class ContactMutationComponent
 			],
 			projects: [
 				this.organizationContact
-					? (this.organizationContact.projects || []).map(
-							(m) => m.projectId
-					  )
+					? this.organizationContact.projects || []
 					: []
 			],
 			contactType: [

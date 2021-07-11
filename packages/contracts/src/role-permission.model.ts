@@ -1,6 +1,5 @@
 import { IBasePerTenantEntityModel } from './base-entity.model';
 import { IRole } from './role.model';
-import { ITenant } from './tenant.model';
 
 export interface IRolePermission extends IBasePerTenantEntityModel {
 	roleId: string;
@@ -9,11 +8,17 @@ export interface IRolePermission extends IBasePerTenantEntityModel {
 	enabled: boolean;
 }
 
-export interface IRolePermissionCreateInput {
+export interface IRolePermissionMigrateInput extends IBasePerTenantEntityModel {
+	permission: string;
+	role: string;
+	isImporting: boolean;
+	sourceId: string;
+}
+
+export interface IRolePermissionCreateInput extends IBasePerTenantEntityModel {
 	roleId: string;
 	permission: string;
 	enabled: boolean;
-	tenant: ITenant;
 }
 
 export interface IRolePermissionUpdateInput {

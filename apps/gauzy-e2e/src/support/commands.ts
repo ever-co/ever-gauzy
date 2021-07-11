@@ -24,6 +24,8 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
 
+import { waitUntil } from '../support/Base/utils/util';
+
 export const CustomCommands = {
 	login: (loginPage: any, LoginPageData: any, dashboardPage: any) => {
 		cy.visit('/');
@@ -216,7 +218,7 @@ export const CustomCommands = {
 		imgUrl: string
 	) => {
 		cy.visit('/#/pages/employees');
-		cy.wait(3000);
+		waitUntil(3000);
 		manageEmployeesPage.addEmployeeButtonVisible();
 		manageEmployeesPage.clickAddEmployeeButton();
 		manageEmployeesPage.firstNameInputVisible();
@@ -414,5 +416,14 @@ export const CustomCommands = {
 		inviteCandidatePage.clickAllCurrentCandidatesButton();
 		inviteCandidatePage.waitMessageToHide();
 		inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
+	},
+	clearCookies: () => {
+		// @ts-ignore
+		cy.clearCookies({ domain: null });
+		cy.clearLocalStorage();
+		cy.window().then((win) => {
+			win.sessionStorage.clear();
+		});
+		cy.reload();
 	}
 };

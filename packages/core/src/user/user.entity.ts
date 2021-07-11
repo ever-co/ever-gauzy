@@ -41,11 +41,6 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
-	@ManyToMany(() => Tag)
-	@JoinTable({
-		name: 'tag_user'
-	})
-	tags?: ITag[];
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
@@ -85,18 +80,6 @@ export class User extends TenantBaseEntity implements IUser {
 	@Column({ nullable: true })
 	username?: string;
 
-	@OneToOne('Employee', (employee: Employee) => employee.user)
-	employee?: IEmployee;
-
-	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	role?: IRole;
-
-	@ApiPropertyOptional({ type: () => String, readOnly: true })
-	@RelationId((user: User) => user.role)
-	readonly roleId?: string;
-
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
@@ -122,4 +105,45 @@ export class User extends TenantBaseEntity implements IUser {
 
 	name?: string;
 	employeeId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+    // Role
+	@ApiPropertyOptional({ type: () => Role })
+	@ManyToOne(() => Role, { 
+		nullable: true, 
+		onDelete: 'CASCADE' 
+	})
+	@JoinColumn()
+	role?: IRole;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: User) => it.role)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly roleId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+   	// Employee
+	@OneToOne(() => Employee, (employee: Employee) => employee.user)
+	employee?: IEmployee;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+    // Tags
+	@ManyToMany(() => Tag)
+	@JoinTable({ name: 'tag_user' })
+	tags?: ITag[];
 }

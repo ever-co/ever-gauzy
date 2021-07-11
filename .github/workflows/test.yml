@@ -4,15 +4,64 @@ on:
         branches: [develop]
 jobs:    
     e2e-tests:
+
         runs-on: ubuntu-latest
+
+        timeout-minutes: 360
+
         steps:
             - name: Checkout
               uses: actions/checkout@v2
+
+            - uses: actions/cache@v2
+              with:
+                path: |
+                  ~/.cache/Cypress
+                  node_modules
+                key: my-cache-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+            - name: Increase file limit
+              run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+
+            - name: Bootstrap Yarn
+              run: yarn bootstrap
+
+            - name: Build all packages
+              run: yarn build:package:all
+
+            - name: Run API in background
+              run: yarn start:api &
+
+            - name: Run UI in background
+              run: yarn start:gauzy &
+
+            - name: Cypress info
+              run: npx cypress info
+
             - name: Cypress run
               uses: cypress-io/github-action@v2
+              # let's give this action an ID so we can refer to its output values later
+              id: cypress
+              # Continue the build in case of an error, as we need to set the
+              # commit status in the next step, both in case of success and failure
+              continue-on-error: true
               with:
-                  install: yarn bootstrap
-                  build: yarn build:package:all
-                  start: yarn start:api
-                  wait-on: 'http://localhost:3000/api'
+                  # we have already installed all dependencies above
+                  install: false
+                  # TODO: switch to true after set correct RECORDING_KEY
+                  record: false
+                  # Cypress tests and config file are in "apps/gauzy-e2e" folder
+                  working-directory: 'apps/gauzy-e2e'
+                  # We wait till both API and UI runs completely here
+                  wait-on: 'http://localhost:3000/api,http://localhost:4200'
+                  # wait up to 20 minutes for the servers to respond
+                  wait-on-timeout: 1200
                   browser: chrome
+                  config-file: cypress.json
+              env:
+                CYPRESS_RECORD_KEY: ${{ secrets.RECORDING_KEY }}
+
+            - name: Print Dashboard URL
+              run: |
+                echo Cypress finished with: ${{ steps.cypress.outcome }}
+                echo See results at ${{ steps.cypress.outputs.dashboardUrl }} 

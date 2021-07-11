@@ -1,7 +1,6 @@
 import {
 	InviteStatusEnum,
 	IOrganization,
-	IRole,
 	RolesEnum
 } from '@gauzy/contracts';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -9,7 +8,6 @@ import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
 import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { OrganizationService } from '../../../organization/organization.service';
-import { RolePermissionsService } from '../../../role-permissions/role-permissions.service';
 import { TenantRoleBulkCreateCommand } from '../../../role/commands/tenant-role-bulk-create.command';
 import { RoleService } from '../../../role/role.service';
 import { Tenant } from '../../../tenant/tenant.entity';
@@ -28,7 +26,6 @@ export class InviteAcceptOrganizationContactHandler
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly tenantService: TenantService,
 		private readonly roleService: RoleService,
-		private readonly rolePermissionService: RolePermissionsService,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -52,34 +49,31 @@ export class InviteAcceptOrganizationContactHandler
 		});
 
 		// 2. Create Organization for the contact
-		const contactOrg: IOrganization = await this.organizationService.create(
-			{
-				...contactOrganization,
-				tenant
-			}
-		);
+		const organization: IOrganization = await this.organizationService.create({
+			...contactOrganization,
+			tenant
+		});
 
 		// 3. Create Role and Role Permissions for contact
-		const roles = await this.commandBus.execute(
+		await this.commandBus.execute(
 			new TenantRoleBulkCreateCommand([tenant])
 		);
 
-		const role = await roles.find(
-			(defaultRole: IRole) => defaultRole.name === RolesEnum.SUPER_ADMIN
-		);
+		// 4. Find SUPER_ADMIN role to relative tenant.
+		const role = await this.roleService.findOne({
+			tenant,
+			name: RolesEnum.SUPER_ADMIN
+		});
 
-		// 4. Create user account for contact and link role, tenant and organization
-		await this.authService.register(
-			{
-				user: { ...user, tenant, role },
-				password,
-				originalUrl,
-				organizationId: contactOrg.id
-			},
-			languageCode
-		);
+		// 5. Create user account for contact and link role, tenant and organization
+		await this.authService.register({
+			user: { ...user, tenant, role },
+			password,
+			originalUrl,
+			organizationId: organization.id
+		}, languageCode );
 
-		//4. Link newly created contact organization to organization contact invite
+		// 6. Link newly created contact organization to organization contact invite
 		const { organizationContact } = await this.inviteService.findOne(
 			inviteId,
 			{
@@ -92,7 +86,7 @@ export class InviteAcceptOrganizationContactHandler
 
 		await this.organizationContactService.update(organizationContactId, {
 			tenant: tenant,
-			organizationId: contactOrg.id,
+			organizationId: organization.id,
 			inviteStatus: InviteStatusEnum.ACCEPTED
 		});
 

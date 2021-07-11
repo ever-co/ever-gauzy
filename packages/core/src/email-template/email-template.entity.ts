@@ -1,8 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { IEmailTemplate } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Email, TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('email_template')
 export class EmailTemplate
@@ -24,7 +24,7 @@ export class EmailTemplate
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@Column({ type: 'text', nullable: true })
 	@IsOptional()
 	mjml: string;
 
@@ -33,4 +33,16 @@ export class EmailTemplate
 	@IsNotEmpty()
 	@Column()
 	hbs: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Emails
+	@ApiPropertyOptional({ type: () => Email })
+	@OneToMany(() => Email, (email) => email.emailTemplate, {
+		cascade: true
+	})
+	emails?: IEmailTemplate[];
 }
