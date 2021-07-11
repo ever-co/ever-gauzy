@@ -70,7 +70,7 @@ Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 ### Demo
 
 -   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`).
--   You can also download and try our Desktop Apps (Windows/Mac/Linux) from <https://github.com/ever-co/ever-gauzy/releases> (see more information about Desktop Apps below).
+-   You can also download and try our Server or Desktop Apps (Windows/Mac/Linux) from <https://github.com/ever-co/ever-gauzy/releases> (see more information about Desktop Apps / Server below).
 
 ### Production (SaaS, WIP)
 
@@ -80,21 +80,24 @@ Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) will be available later at <https://app.gauzy.dev>
 
-### Desktop Apps
+### Server & Desktop Apps
 
-We have 2 Desktop Apps (for Windows/Mac/Linux): 
+We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux): 
 
--   Ever® Gauzy™ Desktop App - includes Gauzy frontend (UI), Gauzy API, SQLite DB, etc., all-in-one! It allows to quickly run the whole Gauzy solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows to connect to the external database (e.g. PostgreSQL) or external API (if you have Gauzy API / DB installed on different computer or if you want to connect to our live API). 
+-   Ever® Gauzy™ Server - includes Gauzy API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run Gauzy Server for multiple clients (browser based or Desktop based). **Note: Gauzy Server is currently WIP and may not work as expected.**
+
+-   Ever® Gauzy™ Desktop App - includes Gauzy frontend (UI), Gauzy API, SQLite DB, etc., all-in-one! It allows to quickly run the whole Gauzy solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows to connect to the external database (e.g. PostgreSQL) or external API (if you have Gauzy Server with API / DB installed on different computer or if you want to connect to our live API). 
  
 -   Ever® Gauzy™ Desktop Timer App - allows to run Time & Activity Tracking for employees (agent) with screenshots and activity monitoring.
 
-More information about our Desktop Apps:
+More information about our Server & Desktop Apps:
 
 -   Download for your OS from <https://github.com/ever-co/ever-gauzy/releases>.
--   Setup Gauzy Desktop App or Gauzy Desktop Timer app with default choices in Setup Wizard and run it-   
+-   Setup Gauzy Server / Desktop App / Gauzy Desktop Timer App with default choices in Setup Wizard and run it.   
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Desktop App. Note: such Admin user is not an employee, so you will not be able to track time.
 -   You can login with `employee@ever.co` and password `123456` to check Employee related functionality in Gauzy UI or to run Desktop Timer from "Employee" perspective (such user is an Employee and can track time).
--   You can read more information about our Desktop Apps in the [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps)
+-   If you install Gauzy Server, it is possible to connect to it using browser or using Gauzy Desktop Apps.
+-   You can read more information about our Desktop Apps in the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and about our Server in the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
 
 ## Technology Stack and Requirements
 
