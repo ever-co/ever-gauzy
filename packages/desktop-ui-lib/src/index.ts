@@ -20,3 +20,5 @@ export * from './lib/updater/updater.component';
 export * from './lib/updater/updater.module';
 export * from './lib/splash-screen/splash-screen.module';
 export * from './lib/splash-screen/splash-screen.component';
+export * from './lib/server-dashboard/server-dashboard.component';
+export * from './lib/server-dashboard/server-dashboard.module';

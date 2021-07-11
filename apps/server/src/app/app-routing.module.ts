@@ -3,7 +3,8 @@ import { NgModule } from '@angular/core';
 import {
 	SettingsComponent,
 	SetupComponent,
-	UpdaterComponent
+	UpdaterComponent,
+	ServerDashboardComponent
 } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
@@ -22,6 +23,10 @@ const routes: Routes = [
 	{
 		path: 'updater',
 		component: UpdaterComponent
+	},
+	{
+		path: 'server-dashboard',
+		component: ServerDashboardComponent
 	}
 ];
 
