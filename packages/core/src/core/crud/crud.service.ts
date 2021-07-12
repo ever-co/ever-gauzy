@@ -22,8 +22,7 @@ import { IPagination } from './pagination';
 import { ITryRequest } from './try-request';
 import { filterQuery } from './query-builder';
 import { mergeMap } from 'rxjs/operators';
-import { throwError } from 'rxjs/internal/observable/throwError';
-import { of } from 'rxjs/internal/observable/of';
+import { of as observableOf, throwError } from 'rxjs';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -174,7 +173,7 @@ export abstract class CrudService<T extends BaseEntity>
 							)
 						);
 					}
-					return of(signal);
+					return observableOf(signal);
 				})
 			);
 	}

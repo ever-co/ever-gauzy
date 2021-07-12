@@ -10,7 +10,7 @@ import {
     IRolePermissionMigrateInput
 } from "@gauzy/contracts";
 import { AxiosResponse } from 'axios';
-import { Observable } from "rxjs/internal/Observable";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class GauzyCloudService {
