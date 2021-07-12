@@ -1,8 +1,8 @@
 export const EmailTemplatesPage = {
-	selectLanguageButtonCss: '#languageCode',
-	selectLanguageOptionCss: '.option-list nb-option',
+	selectLanguageButtonCss: 'ngx-language-selector > ng-select',
+	selectLanguageOptionCss: 'div.ng-option',
 	selectTemplateButtonCss: '#templateName',
 	selectTemplateOptionCss: '.option-list nb-option',
-	templatePageSubjectCss: '#previewSubject',
+	templatePageSubjectCss: 'nb-card-body > div.form-group > div[id="previewSubject"]',
 	templateButtonCss: 'tbody > tr > td > a[target="_blank"]'
 };

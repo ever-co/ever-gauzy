@@ -16,7 +16,8 @@ import { HttpClientModule } from '@angular/common/http';
 import {
 	UpdaterModule,
 	SettingsModule,
-	SetupModule
+	SetupModule,
+	ServerDashboardModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -38,7 +39,8 @@ import { RouterModule } from '@angular/router';
 		NgxElectronModule,
 		HttpClientModule,
 		SettingsModule,
-		UpdaterModule
+		UpdaterModule,
+		ServerDashboardModule
 	],
 	providers: [AppService, HttpClientModule, NbDialogService],
 	bootstrap: [AppComponent]

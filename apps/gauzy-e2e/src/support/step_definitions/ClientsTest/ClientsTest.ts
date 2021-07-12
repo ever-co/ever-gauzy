@@ -9,6 +9,7 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../../commands';
+import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -33,6 +34,7 @@ Then('User can add new tag', () => {
 
 // Add project
 And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
@@ -43,6 +45,7 @@ And('User can add new project', () => {
 
 // Add new client
 And('User can add new client', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addClient(

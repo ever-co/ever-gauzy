@@ -12,6 +12,7 @@ import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationPr
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
+import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -43,6 +44,7 @@ And('User can add new tag', () => {
 
 // Add employee
 And('User can add new employee', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
@@ -58,6 +60,7 @@ And('User can add new employee', () => {
 
 // Add project
 And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
@@ -68,6 +71,7 @@ And('User can add new project', () => {
 
 // Add contact
 And('User can add new contact', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addContact(
@@ -84,6 +88,7 @@ And('User can add new contact', () => {
 
 // Add new goal
 And('User can visit Goals page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/goals');
@@ -212,105 +217,15 @@ And('User can see confirm button', () => {
 });
 
 When('User click on confirm button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	goalsPage.clickConfirmButton();
 });
 
 Then('Notification message will appear', () => {
 	goalsPage.waitMessageToHide();
 });
-
-// Add new deadline
-// When('User click on first table row', () => {
-// 	cy.on('uncaught:exception', (err, runnable) => {
-// 		return false;
-// 	});
-// 	goalsPage.clickTableRow(0);
-// });
-
-// Then('View button will become active', () => {
-// 	goalsPage.viewButtonVisible();
-// });
-
-// When('User click on view button', () => {
-// 	goalsPage.clickViewButton(0);
-// });
-
-// Then('User can see add deadline button', () => {
-// 	goalsPage.addNewDeadlineButtonVisible();
-// });
-
-// When('User click on add deadline button', () => {
-// 	goalsPage.clickAddDeadlineButton();
-// });
-
-// Then('User can see updated value input field', () => {
-// 	goalsPage.updatedValueInputVisible();
-// });
-
-// And('User can enter data for updated value', () => {
-// 	goalsPage.enterUpdatedValueData(1);
-// });
-
-// And('User can see confirm button', () => {
-// 	goalsPage.confirmButtonVisible();
-// });
-
-// When('User click on confirm button', () => {
-// 	goalsPage.clickConfirmButton();
-// });
-
-// Then('User can see save deadline button', () => {
-// 	goalsPage.saveDeadlineButtonVisible();
-// });
-
-// When('User click on save deadline button', () => {
-// 	goalsPage.clickSaveDeadlineButton();
-// });
-
-// Then('Notification message will appear', () => {
-// 	goalsPage.waitMessageToHide();
-// });
-
-// Add weight parameter
-// And('User can see progress bar', () => {
-// 	goalsPage.progressBarVisible();
-// });
-
-// When('User click on progress bar', () => {
-// 	goalsPage.clickProgressBar(0);
-// });
-
-// Then('User can see weight button', () => {
-// 	goalsPage.weightTypeButtonVisible();
-// });
-
-// When('User click on weight button', () => {
-// 	goalsPage.clickWeightTypeButton(0);
-// });
-
-// Then('User can see weight parameter dropdown', () => {
-// 	goalsPage.weightParameterDropdwonVisible();
-// });
-
-// When('User click on weight parameter dropdown', () => {
-// 	goalsPage.clickWeightParameterDropdown();
-// });
-
-// Then('User can select parameter from dropdown options', () => {
-// 	goalsPage.selectWeightParameterFromDropdown(GoalsPageData.weightParameter);
-// });
-
-// And('User can see confirm button', () => {
-// 	goalsPage.confirmButtonVisible();
-// });
-
-// When('User click on confirm button', () => {
-// 	goalsPage.clickConfirmButton();
-// });
-
-// Then('Notification message will appear', () => {
-// 	goalsPage.waitMessageToHide();
-// });
 
 // Edit goal
 And('User can see edit goal button', () => {

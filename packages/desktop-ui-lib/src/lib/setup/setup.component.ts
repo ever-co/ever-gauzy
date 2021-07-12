@@ -93,12 +93,12 @@ export class SetupComponent implements OnInit {
 	awAPI: String = 'http://localhost:5600';
 	buttonSave = false;
 	gauzyIcon =
-		this.appName === 'gauzy-desktop-timer'
+		this.appName === 'gauzy-desktop-timer' || this.appName === 'gauzy-server'
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 	desktopFeatures: any = {
 		gauzyPlatform: this.appName === 'gauzy-desktop-timer' ? false : true,
-		timeTracking: true
+		timeTracking: this.appName === 'gauzy-server' ? false : true
 	};
 
 	connectivity: any = {

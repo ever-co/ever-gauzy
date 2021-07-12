@@ -5,7 +5,7 @@ export const EmailTemplatesPageData = {
 	russian: 'Russian',
 	//Subjects by Language
 	passwordResetSubjectEnglish: 'Welcome to Gauzy user@domain.com',
-	passwordResetSubjectBulgarian: 'Добре дошли в Gauzy user@domain.com',
+	passwordResetSubjectBulgarian: 'Добре дошли в Gauzy™ user@domain.com\n',
 	passwordResetSubjectHebrew: 'ברוך הבא לגוזי! user@domain.com',
 	passwordResetSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com',
 	appointmentConfirmationSubjectEnglish: 'Appointment Confirmed',

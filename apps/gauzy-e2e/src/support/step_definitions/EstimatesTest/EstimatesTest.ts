@@ -7,6 +7,7 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as faker from 'faker';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import { ContactsLeadsPageData } from '../../Base/pagedata/ContactsLeadsPageData';
 import * as contactsLeadsPage from '../../Base/pages/ContactsLeads.po';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
@@ -42,6 +43,7 @@ Then('User can add new tag', () => {
 
 // Add employee
 And('User can add new employee', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
@@ -57,6 +59,7 @@ And('User can add new employee', () => {
 
 // Add project
 And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
@@ -67,6 +70,7 @@ And('User can add new project', () => {
 
 // Add contact
 And('User can add new contact', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addContact(
@@ -83,6 +87,7 @@ And('User can add new contact', () => {
 
 // Add new estimate
 Then('User can visit Estimates page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/accounting/invoices/estimates');
