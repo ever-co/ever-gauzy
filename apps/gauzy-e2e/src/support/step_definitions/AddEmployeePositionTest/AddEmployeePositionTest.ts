@@ -1,5 +1,6 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as addEmployeePositionPage from '../../Base/pages/AddEmployeePosition.po';
 import { AddEmployeePositionPageData } from '../../Base/pagedata/AddEmployeePositionPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
@@ -21,6 +22,7 @@ Then('User can add new tag', () => {
 
 // Add new employee position
 Then('User can go to Employee postions page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/positions');

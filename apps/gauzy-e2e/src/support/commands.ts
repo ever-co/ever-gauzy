@@ -425,5 +425,10 @@ export const CustomCommands = {
 			win.sessionStorage.clear();
 		});
 		cy.reload();
+	},
+	logout: (dashboradPage: any, logoutPage: any, loginPage: any) => {
+		dashboradPage.clickUserName();
+		logoutPage.clickLogoutButton();
+		loginPage.verifyLoginText();
 	}
 };

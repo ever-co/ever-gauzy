@@ -9,6 +9,7 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../../commands';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
@@ -32,6 +33,7 @@ Then('User can add new tag', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
@@ -47,6 +49,7 @@ And('User can add new employee', () => {
 
 // Add project
 And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
@@ -57,6 +60,7 @@ And('User can add new project', () => {
 
 // Add new expense
 When('User visit Expenses page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/accounting/expenses');

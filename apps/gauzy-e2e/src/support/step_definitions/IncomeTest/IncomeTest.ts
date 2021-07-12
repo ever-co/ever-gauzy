@@ -5,6 +5,7 @@ import * as faker from 'faker';
 import { IncomePageData } from '../../Base/pagedata/IncomePageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
@@ -37,6 +38,7 @@ And('User can add new employee', () => {
 
 // Add income
 Then('User can visit Income page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/accounting/income');
