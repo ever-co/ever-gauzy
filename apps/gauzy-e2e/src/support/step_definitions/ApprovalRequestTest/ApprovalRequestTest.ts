@@ -5,6 +5,7 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { ApprovalRequestPageData } from '../../Base/pagedata/ApprovalRequestPageData';
 import { CustomCommands } from '../../commands';
 import * as faker from 'faker';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
@@ -30,6 +31,7 @@ Then('User can add new tag', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
@@ -45,6 +47,7 @@ And('User can add new employee', () => {
 
 // Add approval policy
 Then('User can visit Employees approvals page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/approvals');

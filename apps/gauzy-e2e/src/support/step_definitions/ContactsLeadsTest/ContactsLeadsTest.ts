@@ -9,6 +9,7 @@ import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationPr
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../../commands';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
@@ -40,6 +41,7 @@ Then('User can add new tag', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
@@ -55,6 +57,7 @@ And('User can add new employee', () => {
 
 // Add project
 And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
@@ -65,6 +68,7 @@ And('User can add new project', () => {
 
 // Add lead
 And('User can add new contact', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addContact(

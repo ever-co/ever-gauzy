@@ -1,5 +1,6 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as addEmployeeLevelPage from '../../Base/pages/AddEmployeeLevel.po';
 import { AddEmployeeLevelPageData } from '../../Base/pagedata/AddEmployeeLevelPageData';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -102,6 +103,8 @@ And('User can click on save tag button', () => {
 
 // Add new employee level
 When('User visit Add new employee level page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/employee-level');
 });
