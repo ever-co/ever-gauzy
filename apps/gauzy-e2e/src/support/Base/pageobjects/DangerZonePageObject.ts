@@ -1,5 +1,5 @@
 export const DangerZonePage = {
-	headerTextCss: 'div.header',
+	headerTextCss: 'div.card-header-title',
 	deleteButtonCss: 'ga-danger-zone.ng-star-inserted > button.btn-danger',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	confirmDeleteUserButtonCss: 'nb-card-footer > button[status="danger"]',

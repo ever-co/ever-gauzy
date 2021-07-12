@@ -3,7 +3,8 @@ import {
 	clickButton,
 	clearField,
 	enterInput,
-	verifyText
+	verifyText,
+	clickButtonByIndex
 } from '../utils/util';
 import { DangerZonePage } from '../pageobjects/DangerZonePageObject';
 
@@ -15,8 +16,8 @@ export const deleteButtonVisible = () => {
 	verifyElementIsVisible(DangerZonePage.deleteButtonCss);
 };
 
-export const clickDeleteButton = () => {
-	clickButton(DangerZonePage.deleteButtonCss);
+export const clickDeleteButton = (index) => {
+	clickButtonByIndex(DangerZonePage.deleteButtonCss, index);
 };
 
 export const verifyDeleteTextExist = (text) => {
