@@ -1,5 +1,5 @@
 export const RegisterPage = {
-	registerLinkCss: 'a.text-link',
+	registerLinkCss: 'section.another-action > a.text-link',
 	fullNameFieldCss: '#input-name',
 	emailAddressFieldCss: '#input-email',
 	passwordFieldCss: '#input-password',

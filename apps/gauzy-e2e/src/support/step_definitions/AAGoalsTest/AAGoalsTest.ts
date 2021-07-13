@@ -217,14 +217,7 @@ And('User can see confirm button', () => {
 });
 
 When('User click on confirm button', () => {
-	cy.on('uncaught:exception', (err, runnable) => {
-		return false;
-	});
 	goalsPage.clickConfirmButton();
-});
-
-Then('Notification message will appear', () => {
-	goalsPage.waitMessageToHide();
 });
 
 // Edit goal

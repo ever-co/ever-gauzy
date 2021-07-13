@@ -7,7 +7,7 @@ export const RegisterPageData = {
 	bonusPercentage: 75,
 	expiryPeriod: 7,
 	startOfWeek: 'Monday',
-	timeZone: '(EET+02:00) Sofia',
+	timeZone: '(EAT+03:00) Addis_Ababa',
 	region: 'English (United States)',
 	dateType: 'Today',
 	numberFormat: '$12,345.67'
