@@ -43,7 +43,6 @@ Feature: Goals test
     And U ser can click on toggle button
     And User can see confirm button
     When User click on confirm button
-    Then Notification message will appear
   Scenario: Edit goal
     And User can see edit goal button
     When User click on edit goal button

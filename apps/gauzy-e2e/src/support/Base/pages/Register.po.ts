@@ -1,6 +1,7 @@
 import {
 	clearField,
 	clickButton,
+	clickButtonByIndex,
 	clickElementByText,
 	enterInput,
 	getLastElement,
@@ -10,8 +11,12 @@ import {
 } from '../utils/util';
 import { RegisterPage } from '../pageobjects/RegisterPageObject';
 
-export const clickRegisterLink = () => {
-	clickButton(RegisterPage.registerLinkCss);
+export const registerLinkVisible = () => {
+	verifyElementIsVisible(RegisterPage.registerLinkCss);
+};
+
+export const clickRegisterLink = (index) => {
+	clickButtonByIndex(RegisterPage.registerLinkCss, index);
 };
 
 export const enterFullName = (data) => {
