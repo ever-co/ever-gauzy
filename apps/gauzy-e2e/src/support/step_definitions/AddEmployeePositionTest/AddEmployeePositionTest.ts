@@ -10,6 +10,8 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -25,7 +27,7 @@ Then('User can go to Employee postions page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees/positions');
+	cy.visit('/#/pages/employees/positions', { timeout: pageLoadTimeout });
 });
 
 And('User will see grid button', () => {

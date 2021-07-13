@@ -10,9 +10,11 @@ import { CustomCommands } from '../../../support/commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given('Visit home page as unauthorised user', () => {
-	cy.visit('/');
+	cy.visit('/', { timeout: pageLoadTimeout });
 	loginPage.verifyTitle();
 });
 
@@ -106,7 +108,7 @@ When('User visit Add new employee level page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees/employee-level');
+	cy.visit('/#/pages/employees/employee-level', { timeout: pageLoadTimeout });
 });
 
 Then('User can see grid button', () => {

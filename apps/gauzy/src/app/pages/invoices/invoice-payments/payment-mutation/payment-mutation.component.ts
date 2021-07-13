@@ -141,7 +141,7 @@ export class PaymentMutationComponent
 		} else {
 			this.form.patchValue({
 				invoice: this.invoice,
-				contact: this.invoice.toContact
+				contact: this.invoice.toContact || null
 			});
 		}
 	}
