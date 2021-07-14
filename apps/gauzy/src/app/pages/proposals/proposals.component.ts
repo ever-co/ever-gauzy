@@ -13,7 +13,7 @@ import {
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest, Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
