@@ -19,7 +19,6 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		TranslateModule
 	],
 	declarations: [CreateAppointmentComponent],
-	entryComponents: [CreateAppointmentComponent],
 	exports: [CreateAppointmentComponent],
 	providers: [EventTypeService, AvailabilitySlotsService]
 })

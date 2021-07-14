@@ -42,7 +42,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		HeaderTitleModule
 	],
 	providers: [EquipmentService],
-	entryComponents: [EquipmentMutationComponent, AutoApproveComponent],
 	declarations: [EquipmentComponent, AutoApproveComponent]
 })
 export class EquipmentModule {}

@@ -30,7 +30,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule
 	],
-	declarations: [RecurringExpensesEmployeeComponent],
-	entryComponents: []
+	declarations: [RecurringExpensesEmployeeComponent]
 })
 export class RecurringExpensesEmployeeModule {}

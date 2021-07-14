@@ -76,9 +76,6 @@ const NB_MODULES = [
         PaginationModule,
         CardGridModule
     ],
-    entryComponents: [
-        ProductTypeMutationComponent,
-    ],
     providers: [WarehouseService]
 })
 export class WarehousesModule { }

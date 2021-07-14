@@ -31,7 +31,6 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbTabsetModule
 	],
 	declarations: [EmployeeComponent],
-	entryComponents: [],
 	providers: []
 })
 export class EmployeeModule {}

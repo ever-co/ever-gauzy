@@ -31,7 +31,6 @@ import { TranslateModule } from '../translate/translate.module';
 		TranslateModule
 	],
 	declarations: [EquipmentSharingPolicyMutationComponent],
-	entryComponents: [],
 	providers: [EquipmentSharingPolicyService]
 })
 export class EquipmentSharingPolicyMutationModule {}

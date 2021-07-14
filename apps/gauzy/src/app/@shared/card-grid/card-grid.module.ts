@@ -10,7 +10,6 @@ import { TranslateModule } from '../translate/translate.module';
 	imports: [ThemeModule, NbCardModule, TranslateModule],
 	declarations: [CardGridComponent, CustomViewComponent],
 	exports: [CardGridComponent],
-	entryComponents: [],
 	providers: [Store]
 })
 export class CardGridModule {}

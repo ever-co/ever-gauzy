@@ -41,11 +41,6 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		OrganizationsMutationModule
 	],
 	declarations: [AcceptClientInvitePage, AcceptClientInviteFormComponent],
-	entryComponents: [
-		AcceptClientInvitePage,
-		AcceptClientInviteFormComponent,
-		OrganizationsMutationComponent
-	],
 	providers: [InviteService, RoleService, OrganizationsService]
 })
 export class OnboardOrganizationClientModule {}

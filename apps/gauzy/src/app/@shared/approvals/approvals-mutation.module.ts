@@ -37,7 +37,6 @@ import { TranslateModule } from '../translate/translate.module';
 		TranslateModule
 	],
 	declarations: [RequestApprovalMutationComponent],
-	entryComponents: [],
 	providers: [RequestApprovalService, ApprovalPolicyService, Store]
 })
 export class RequestApprovalMutationModule {}

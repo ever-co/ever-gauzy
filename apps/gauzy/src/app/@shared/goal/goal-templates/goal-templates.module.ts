@@ -23,7 +23,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		GoalCustomUnitModule,
 		TranslateModule
 	],
-	exports: [GoalTemplatesComponent],
-	entryComponents: [GoalTemplatesComponent]
+	exports: [GoalTemplatesComponent]
 })
 export class GoalTemplatesModule {}

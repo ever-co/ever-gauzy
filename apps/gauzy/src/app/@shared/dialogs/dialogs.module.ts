@@ -45,7 +45,6 @@ const components = [AlertComponent, ConfirmComponent, PromptComponent];
 	],
 	declarations: [...components, ...directives],
 	exports: [...directives],
-	entryComponents: [...components],
 	providers: []
 })
 export class DialogsModule {}

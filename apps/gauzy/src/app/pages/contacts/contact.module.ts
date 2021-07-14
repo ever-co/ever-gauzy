@@ -82,14 +82,6 @@ const COMPONENTS = [
 	],
 
 	declarations: [...COMPONENTS],
-	entryComponents: [
-		ContactComponent,
-		InviteContactComponent,
-		ContactMutationComponent,
-		ClientsComponent,
-		CustomersComponent,
-		LeadsComponent
-	],
 	providers: [
 		OrganizationContactService,
 		OrganizationProjectsService,

@@ -53,7 +53,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		ApprovalPolicyService,
 		EmployeesService
 	],
-	entryComponents: [EquipmentSharingMutationComponent],
 	declarations: [
 		EquipmentSharingComponent,
 		EquipmentSharingActionComponent,

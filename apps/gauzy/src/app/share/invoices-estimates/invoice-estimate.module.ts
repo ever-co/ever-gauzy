@@ -16,7 +16,6 @@ import { TranslateModule } from '@ngx-translate/core';
 		TranslateModule
 	],
 	declarations: [InvoiceEstimateComponent],
-	entryComponents: [InvoiceEstimateComponent],
 	exports: [InvoiceEstimateComponent],
 	providers: [InvoicesService]
 })

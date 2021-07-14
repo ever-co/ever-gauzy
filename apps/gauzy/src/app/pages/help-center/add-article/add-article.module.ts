@@ -31,7 +31,6 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		TranslateModule
 	],
 	providers: [HelpCenterArticleService],
-	entryComponents: [AddArticleComponent],
 	declarations: [AddArticleComponent],
 	exports: [AddArticleComponent]
 })

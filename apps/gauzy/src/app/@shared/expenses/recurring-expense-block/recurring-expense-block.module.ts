@@ -22,12 +22,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [RecurringExpenseBlockComponent],
 	declarations: [RecurringExpenseBlockComponent],
-	entryComponents: [
-		RecurringExpenseBlockComponent,
-		DateViewComponent,
-		IncomeExpenseAmountComponent,
-		PictureNameTagsComponent
-	],
 	providers: []
 })
 export class RecurringExpenseBlockModule {}

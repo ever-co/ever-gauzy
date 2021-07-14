@@ -23,7 +23,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		TranslateModule
 	],
 	exports: [CandidateInterviewInfoComponent],
-	declarations: [CandidateInterviewInfoComponent],
-	entryComponents: [CandidateInterviewInfoComponent]
+	declarations: [CandidateInterviewInfoComponent]
 })
 export class CandidateInterviewInfoModule {}

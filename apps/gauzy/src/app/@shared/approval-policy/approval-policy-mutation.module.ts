@@ -32,7 +32,6 @@ import { TranslateModule } from '../translate/translate.module';
 		TranslateModule
 	],
 	declarations: [ApprovalPolicyMutationComponent],
-	entryComponents: [],
 	providers: [ApprovalPolicyService, Store]
 })
 export class ApprovalPolicyMutationModule {}

@@ -18,7 +18,6 @@ import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.
 	],
 	exports: [TimezoneSelectorComponent],
 	declarations: [TimezoneSelectorComponent],
-	entryComponents: [TimezoneSelectorComponent],
 	providers: []
 })
 export class TimezoneSelectorModule {}

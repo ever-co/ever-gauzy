@@ -53,7 +53,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		LeafletMapModule
 	],
 	declarations: [OrganizationsStepFormComponent],
-	entryComponents: [OrganizationsStepFormComponent],
 	providers: [OrganizationDepartmentsService],
 	exports: [OrganizationsStepFormComponent]
 })

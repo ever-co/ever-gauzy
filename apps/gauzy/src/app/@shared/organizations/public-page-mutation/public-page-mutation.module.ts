@@ -50,7 +50,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		CKEditorModule
 	],
 	declarations: [PublicPageMutationComponent],
-	entryComponents: [PublicPageMutationComponent],
 	providers: [SkillsService, LanguagesService]
 })
 export class PublicPageMutationModule {}

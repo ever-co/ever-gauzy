@@ -42,7 +42,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		HeaderTitleModule
 	],
 	declarations: [PositionsComponent],
-	entryComponents: [],
 	providers: [OrganizationPositionsService]
 })
 export class PositionsModule {}

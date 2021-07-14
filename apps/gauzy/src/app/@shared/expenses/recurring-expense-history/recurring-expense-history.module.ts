@@ -18,11 +18,6 @@ import { RecurringExpenseHistoryComponent } from './recurring-expense-history.co
 	],
 	exports: [RecurringExpenseHistoryComponent],
 	declarations: [RecurringExpenseHistoryComponent],
-	entryComponents: [
-		RecurringExpenseHistoryComponent,
-		DateViewComponent,
-		IncomeExpenseAmountComponent
-	],
 	providers: []
 })
 export class RecurringExpenseHistoryModule {}

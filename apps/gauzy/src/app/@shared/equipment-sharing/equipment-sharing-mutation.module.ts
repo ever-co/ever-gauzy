@@ -37,7 +37,6 @@ import { TranslateModule } from '../translate/translate.module';
 		TranslateModule
 	],
 	declarations: [EquipmentSharingMutationComponent],
-	entryComponents: [],
 	providers: [
 		EquipmentSharingService,
 		Store,

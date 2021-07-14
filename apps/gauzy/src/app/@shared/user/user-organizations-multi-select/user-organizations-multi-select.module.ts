@@ -7,7 +7,6 @@ import { UserOrganizationsSelectComponent } from './user-organizations-multi-sel
 @NgModule({
 	imports: [ThemeModule, NbSelectModule, TranslateModule],
 	declarations: [UserOrganizationsSelectComponent],
-	entryComponents: [UserOrganizationsSelectComponent],
 	exports: [UserOrganizationsSelectComponent],
 	providers: []
 })

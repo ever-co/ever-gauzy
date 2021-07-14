@@ -49,7 +49,6 @@ const NB_MODULES = [
         CardGridModule,
         PaginationModule
     ],
-    providers: [ProductCategoryService],
-    entryComponents: [ProductCategoryMutationComponent]
+    providers: [ProductCategoryService]
 })
 export class ProductCategoriesModule { }

@@ -34,7 +34,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [EmployeeLocationComponent],
 	declarations: [EmployeeLocationComponent],
-	entryComponents: [EmployeeLocationComponent],
 	providers: [CandidateStore, EmployeeStore]
 })
 export class EmployeeLocationModule {}
