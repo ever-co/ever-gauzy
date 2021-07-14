@@ -6,10 +6,11 @@ import * as csv from 'csv-parser';
 import * as path from 'path';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
-import { Income } from './../core/entities/internal';
+import { Income, OrganizationContact } from './../core/entities/internal';
 
 export const createDefaultIncomes = async (
 	connection: Connection,
+	tenant: ITenant,
 	organizations: IOrganization[],
 	employees: IEmployee[]
 ): Promise<Income[]> => {
@@ -28,7 +29,14 @@ export const createDefaultIncomes = async (
 	const incomeFromFile = [];
 	let defaultIncomes = [];
 
-	for (const organization of organizations) {
+	for await (const organization of organizations) {
+		const organizationContacts = await connection.manager.find(OrganizationContact, { 
+			where: { 
+				tenant,
+				organization 
+			} 
+		}); 
+
 		fs.createReadStream(filePath)
 			.pipe(csv())
 			.on('data', (data) => incomeFromFile.push(data))
@@ -41,15 +49,15 @@ export const createDefaultIncomes = async (
 					income.organization = organization;
 					income.tenant = organization.tenant;
 					income.amount = seedIncome.amount;
-					income.clientId = faker.datatype
-						.number({ min: 10, max: 9999 })
-						.toString();
 					income.currency = seedIncome.currency || env.defaultCurrency;
 					income.valueDate = faker.date.between(
 						new Date(),
 						moment(new Date()).add(10, 'days').toDate()
 					);
 					income.notes = seedIncome.notes;
+					if (organizationContacts.length) {
+						income.client = faker.random.arrayElement(organizationContacts); 
+					}
 					return income;
 				});
 				await insertIncome(connection, defaultIncomes);

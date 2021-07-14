@@ -7,7 +7,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProposalViewModel,
-	ProposalStatusEnum
+	ProposalStatusEnum,
+	IOrganizationContact
 } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,7 +19,7 @@ import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
 import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { ErrorHandlingService, ProposalsService, Store, ToastrService } from '../../@core/services';
@@ -33,7 +34,7 @@ import { OrganizationContactFilterComponent } from '../../@shared/table-filters'
 	styleUrls: ['./proposals.component.scss']
 })
 export class ProposalsComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	proposalsTable: Ng2SmartTableComponent;
@@ -62,22 +63,6 @@ export class ProposalsComponent
 	disableButton = true;
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
-	pagination: any = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: 10
-	};
-
-	/*
-	* getter setter for filters 
-	*/
-	private _filters: any = {};
-	set filters(val: any) {
-		this._filters = val;
-	}
-	get filters() {
-		return this._filters;
-	}
 
 	constructor(
 		private readonly store: Store,
@@ -304,17 +289,7 @@ export class ProposalsComponent
 						component: InputFilterComponent,
 					},
 					filterFunction: (value: string) => {
-						if (isNotEmpty(value)) {
-							this.filters = {
-								where: { 
-									...this.filters.where,
-									jobPostContent: value
-								}
-							}
-						} else {
-							delete this.filters.where.jobPostContent;
-						}
-						this.subject$.next();
+						this.setFilter({ field: 'jobPostContent', search: value });
 					}
 				},
 				jobPostUrl: {
@@ -323,7 +298,7 @@ export class ProposalsComponent
 					width: '25%',
 					filter: false
 				},
-				displayStatus: {
+				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '10%',
@@ -339,20 +314,8 @@ export class ProposalsComponent
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
-					filterFunction: (value) => {
-						if (value) {
-							this.filters = {
-								where: { 
-									...this.filters.where, 
-									organizationContactId: value.id 
-								}
-							}
-						} else {
-							if ('organizationContactId' in this.filters.where) {
-								delete this.filters.where.organizationContactId;
-							}
-						}
-						this.subject$.next();
+					filterFunction: (value: IOrganizationContact| null) => {
+						this.setFilter({ field: 'organizationContactId', search: (value)?.id || null });
 					}
 				},
 				author: {
@@ -454,8 +417,7 @@ export class ProposalsComponent
 			jobPostContent: i.jobPostContent,
 			proposalContent: i.proposalContent,
 			tags: i.tags,
-			status: i.status,
-			displayStatus: this.statusMapper(i.status),
+			status: this.statusMapper(i.status),
 			author: i.employee ? i.employee.user ? i.employee.user.name : '' : '',
 			organizationContact: i.organizationContact ? i.organizationContact : null,
 			organizationContactName: i.organizationContact ? i.organizationContact.name : null
@@ -476,7 +438,6 @@ export class ProposalsComponent
 				);
 
 				await this.smartTableSource.getElements();
-
 				this.proposals = this.smartTableSource.getData();
 
 				const count = this.smartTableSource.count();
@@ -485,11 +446,6 @@ export class ProposalsComponent
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
-	}
-
-	onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
-		this.subject$.next();
 	}
 
 	private _applyTranslationOnSmartTable() {
@@ -520,13 +476,6 @@ export class ProposalsComponent
 			this.proposalsTable.grid.dataSet['willSelect'] = 'false';
 			this.proposalsTable.grid.dataSet.deselectAll();
 		}
-	}
-
-	/*
-	* refresh pagination
-	*/
-	refreshPagination() {
-		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy() {}
