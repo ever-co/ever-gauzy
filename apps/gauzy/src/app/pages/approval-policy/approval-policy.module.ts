@@ -52,7 +52,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		HeaderTitleModule
 	],
 	declarations: [ApprovalPolicyComponent],
-	entryComponents: [],
 	providers: [ApprovalPolicyService]
 })
 export class ApprovalPolicyModule {}

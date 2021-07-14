@@ -16,7 +16,6 @@ import { GalleryModule } from '../../../gallery/gallery.module';
 
 @NgModule({
 	declarations: [ViewScreenshotsModalComponent],
-	entryComponents: [ViewScreenshotsModalComponent],
 	exports: [ViewScreenshotsModalComponent],
 	imports: [
 		CommonModule,

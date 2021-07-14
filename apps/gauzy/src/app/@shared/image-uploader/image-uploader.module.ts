@@ -7,7 +7,6 @@ import { CommonModule } from '@angular/common';
 	imports: [FileUploadModule, CommonModule],
 	exports: [ImageUploaderComponent],
 	declarations: [ImageUploaderComponent],
-	entryComponents: [ImageUploaderComponent],
 	providers: []
 })
 export class ImageUploaderModule {}

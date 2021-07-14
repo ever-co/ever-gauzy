@@ -31,7 +31,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		GoalLevelSelectModule,
 		TranslateModule
 	],
-	exports: [GoalTemplateSelectComponent],
-	entryComponents: [GoalTemplateSelectComponent]
+	exports: [GoalTemplateSelectComponent]
 })
 export class GoalTemplateSelectModule {}

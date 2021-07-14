@@ -14,7 +14,6 @@ import { TranslateModule } from '../../translate/translate.module';
 @NgModule({
 	declarations: [GoalCustomUnitSelectComponent],
 	exports: [GoalCustomUnitSelectComponent],
-	entryComponents: [GoalCustomUnitSelectComponent],
 	imports: [
 		CommonModule,
 		NbSelectModule,

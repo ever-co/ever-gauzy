@@ -32,7 +32,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [EmployeeRatesComponent],
 	declarations: [EmployeeRatesComponent],
-	entryComponents: [EmployeeRatesComponent],
 	providers: [CandidateStore, EmployeeStore]
 })
 export class EmployeeRatesModule {}

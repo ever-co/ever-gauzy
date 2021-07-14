@@ -30,7 +30,6 @@ import { AccountingTemplatesComponent } from './accounting-templates.component';
 		LanguageSelectorModule,
 	],
 	providers: [],
-	entryComponents: [AccountingTemplatesComponent],
 	declarations: [AccountingTemplatesComponent]
 })
 export class AccountingTemplatesModule {}

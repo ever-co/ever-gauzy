@@ -38,7 +38,6 @@ import { LanguageSelectorModule } from '../../language/language-selector';
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],
-	entryComponents: [EditProfileFormComponent],
 	providers: [OrganizationsService, UsersService, RoleService]
 })
 export class EditProfileFormModule {}

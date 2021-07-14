@@ -53,7 +53,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		HeaderTitleModule
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
-	entryComponents: [],
 	providers: [RequestApprovalService]
 })
 export class ApprovalsModule {}

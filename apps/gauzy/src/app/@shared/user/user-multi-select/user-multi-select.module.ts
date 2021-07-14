@@ -7,7 +7,6 @@ import { UserSelectComponent } from './user-multi-select.component';
 @NgModule({
 	imports: [ThemeModule, NbSelectModule, TranslateModule],
 	declarations: [UserSelectComponent],
-	entryComponents: [UserSelectComponent],
 	exports: [UserSelectComponent],
 	providers: []
 })

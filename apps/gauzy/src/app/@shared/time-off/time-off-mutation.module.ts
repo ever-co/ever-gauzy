@@ -40,10 +40,6 @@ import { TranslateModule } from '../translate/translate.module';
 		TimeOffSettingsMutationComponent,
 		TimeOffRequestMutationComponent
 	],
-	entryComponents: [
-		TimeOffSettingsMutationComponent,
-		TimeOffRequestMutationComponent
-	],
 	providers: []
 })
 export class TimeOffMutationModule {}

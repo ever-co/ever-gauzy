@@ -15,7 +15,6 @@ import { OnboardingComponent } from './onboarding.component';
 		TranslateModule,
 		NbSpinnerModule
 	],
-	entryComponents: [],
 	declarations: [OnboardingComponent],
 	providers: [AuthService, RoleGuard]
 })

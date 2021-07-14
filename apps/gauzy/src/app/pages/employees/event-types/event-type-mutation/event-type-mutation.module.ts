@@ -39,7 +39,6 @@ import { TranslateModule } from '../../../../@shared/translate/translate.module'
 	],
 	exports: [EventTypeMutationComponent],
 	declarations: [EventTypeMutationComponent],
-	entryComponents: [EventTypeMutationComponent],
 	providers: []
 })
 export class EventTypeMutationModule {}

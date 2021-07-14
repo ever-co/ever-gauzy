@@ -26,7 +26,6 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		TranslateModule
 	],
 	declarations: [PickEmployeeComponent],
-	entryComponents: [PickEmployeeComponent],
 	providers: [EventTypeService]
 })
 export class PickEmployeeModule {}

@@ -80,7 +80,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		HeaderTitleModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
-	entryComponents: [],
 	providers: [OrganizationProjectsService, OrganizationContactService]
 })
 export class ProjectsModule {}

@@ -15,7 +15,6 @@ import { LabelModule } from '../../components/label/label.module';
 
 @NgModule({
 	declarations: [ViewTimeLogModalComponent],
-	entryComponents: [ViewTimeLogModalComponent],
 	exports: [ViewTimeLogModalComponent],
 	imports: [
 		CommonModule,

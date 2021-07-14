@@ -33,7 +33,6 @@ import { ImageAssetService } from '../../@core';
 		CurrencyModule
 	],
 	declarations: [EquipmentMutationComponent],
-	entryComponents: [],
 	providers: [EquipmentService, ImageAssetService, Store]
 })
 export class EquipmentMutationModule {}

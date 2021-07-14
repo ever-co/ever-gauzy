@@ -23,7 +23,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [InviteMutationComponent],
 	declarations: [InviteMutationComponent],
-	entryComponents: [InviteMutationComponent],
 	providers: [
 		OrganizationsService,
 		OrganizationProjectsService,

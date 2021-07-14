@@ -27,7 +27,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [EmployeeMutationComponent],
 	declarations: [EmployeeMutationComponent],
-	entryComponents: [EmployeeMutationComponent],
 	providers: [OrganizationsService, EmployeesService, RoleService]
 })
 export class EmployeeMutationModule {}

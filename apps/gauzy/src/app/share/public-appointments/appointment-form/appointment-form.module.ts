@@ -19,7 +19,6 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		TranslateModule
 	],
 	declarations: [AppointmentFormComponent],
-	entryComponents: [AppointmentFormComponent],
 	exports: [AppointmentFormComponent],
 	providers: []
 })

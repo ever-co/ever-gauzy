@@ -43,7 +43,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		HeaderTitleModule
 	],
 	declarations: [EmploymentTypesComponent],
-	entryComponents: [],
 	providers: [OrganizationEmploymentTypesService]
 })
 export class EmploymentTypesModule {}

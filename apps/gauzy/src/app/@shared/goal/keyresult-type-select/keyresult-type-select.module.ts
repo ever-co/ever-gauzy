@@ -21,7 +21,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbDialogModule,
 		TranslateModule
 	],
-	exports: [KeyresultTypeSelectComponent],
-	entryComponents: [KeyresultTypeSelectComponent]
+	exports: [KeyresultTypeSelectComponent]
 })
 export class KeyresultTypeSelectModule {}

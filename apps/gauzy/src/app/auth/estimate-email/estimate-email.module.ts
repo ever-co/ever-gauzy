@@ -9,7 +9,6 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 @NgModule({
 	imports: [CommonModule, NbCardModule, NbSpinnerModule, TranslateModule],
 	providers: [InvoicesService, EstimateEmailService],
-	entryComponents: [EstimateEmailComponent],
 	declarations: [EstimateEmailComponent]
 })
 export class EstimateEmailModule {}
