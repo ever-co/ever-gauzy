@@ -88,7 +88,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
             .pipe(
                 debounceTime(500),
                 distinctUntilChanged(),
-				tap((value) => this.setFilter([ { field: 'name', search: value } ])),
+				tap((value) => this.setFilter({ field: 'name', search: value })),
 				untilDestroyed(this)
             )
             .subscribe();
@@ -140,7 +140,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter([ { field: 'name', search: value } ]);
+						this.setFilter({ field: 'name', search: value });
 					}
 				},
 				description: {
@@ -151,10 +151,10 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter([ { field: 'description', search: value } ]);
+						this.setFilter({ field: 'description', search: value });
 					}
 				},
-				displayStatus: {
+				status: {
 					filter: false,
 					editor: false,
 					title: this.getTranslation('SM_TABLE.STATUS'),
@@ -193,7 +193,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			},
 			resultMap: (pipeline: IPipeline) => {
 				return Object.assign({}, pipeline, {
-					displayStatus: this.statusMapper(pipeline.isActive)
+					status: this.statusMapper(pipeline.isActive)
 				});
 			},
 			finalize: () => {

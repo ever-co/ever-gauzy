@@ -29,7 +29,6 @@ export abstract class RecurringExpenseEditHandler<
 		input: IRecurringExpenseEditInput
 	): Promise<any> {
 		const originalExpense: any = await this.crudService.findOne(id);
-
 		const { startDateUpdateType } = input;
 
 		switch (startDateUpdateType) {
@@ -72,7 +71,8 @@ export abstract class RecurringExpenseEditHandler<
 				input.startMonth,
 				input.startDay
 			),
-			value: input.value
+			value: input.value,
+			categoryName: input.categoryName,
 		};
 		return await this.crudService.update(id, updateObject);
 	};
