@@ -16,7 +16,6 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { EquipmentSharingComponent } from './equipment-sharing.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
-import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
 import { EquipmentSharingMutationModule } from '../../@shared/equipment-sharing/equipment-sharing-mutation.module';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
 import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';

@@ -16,7 +16,6 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { EquipmentComponent } from './equipment.component';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
-import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
