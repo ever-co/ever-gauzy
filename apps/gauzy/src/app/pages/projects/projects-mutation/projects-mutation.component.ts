@@ -117,16 +117,16 @@ export class ProjectsMutationComponent
 		this.defaultCurrency =
 			this.organization.currency || ENV.DEFAULT_CURRENCY;
 		this.form = this.fb.group({
-			tags: [this.project ? (this.tags = this.project.tags) : ''],
+			tags: [this.project ? (this.tags = this.project.tags) : null],
 			public: [this.project ? this.project.public : this.public],
 			billable: [this.project ? this.project.billable : this.billable],
-			name: [this.project ? this.project.name : '', Validators.required],
+			name: [this.project ? this.project.name : null, Validators.required],
 			organizationContact: [
 				this.project && this.project.organizationContact
 					? this.project.organizationContact
-					: ''
+					: null
 			],
-			billing: [this.project ? this.project.billing : 'RATE'],
+			billing: [this.project ? this.project.billing : ProjectBillingEnum.RATE],
 			currency: [
 				this.project ? this.project.currency : this.defaultCurrency
 			],
@@ -134,12 +134,12 @@ export class ProjectsMutationComponent
 				this.project ? new Date(this.project.startDate) : new Date()
 			],
 			endDate: [this.project ? this.project.endDate : null],
-			owner: [this.project ? this.project.owner : 'CLIENT'],
-			taskViewMode: [this.project ? this.project.taskListType : 'GRID'],
-			description: [this.project ? this.project.description : ''],
-			code: [this.project ? this.project.code : ''],
-			color: [this.project ? this.project.color : ''],
-			budget: [this.project ? this.project.budget : ''],
+			owner: [this.project ? this.project.owner : ProjectOwnerEnum.CLIENT],
+			taskViewMode: [this.project ? this.project.taskListType : TaskListTypeEnum.GRID],
+			description: [this.project ? this.project.description : null],
+			code: [this.project ? this.project.code : null],
+			color: [this.project ? this.project.color : null],
+			budget: [this.project ? this.project.budget : null],
 			budgetType: [
 				this.project
 					? this.project.budgetType
@@ -209,8 +209,8 @@ export class ProjectsMutationComponent
 						.filter((e) => !!e),
 					description: this.form.value['description'],
 					billingFlat:
-						this.form.value['billing'] === 'RATE' ||
-							this.form.value['billing'] === 'FLAT_FEE'
+						this.form.value['billing'] === ProjectBillingEnum.RATE ||
+							this.form.value['billing'] === ProjectBillingEnum.FLAT_FEE
 							? true
 							: false,
 					code: this.form.value['code'],
