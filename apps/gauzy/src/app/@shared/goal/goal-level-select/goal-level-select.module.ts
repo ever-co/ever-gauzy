@@ -16,7 +16,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		EmployeeMultiSelectModule,
 		TranslateModule
 	],
-	exports: [GoalLevelSelectComponent],
-	entryComponents: [GoalLevelSelectComponent]
+	exports: [GoalLevelSelectComponent]
 })
 export class GoalLevelSelectModule {}

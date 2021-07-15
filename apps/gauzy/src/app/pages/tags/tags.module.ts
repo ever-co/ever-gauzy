@@ -56,8 +56,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbSpinnerModule,
 		HeaderTitleModule
 	],
-
-	entryComponents: [TagsComponent, TagsColorComponent],
 	declarations: [TagsComponent, TagsColorComponent]
 })
 export class TagsModule {}

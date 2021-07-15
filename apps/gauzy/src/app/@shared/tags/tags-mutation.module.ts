@@ -31,7 +31,6 @@ import { TranslateModule } from '../translate/translate.module';
 		TranslateModule
 	],
 	declarations: [TagsMutationComponent],
-	entryComponents: [TagsMutationComponent],
 	providers: [TagsService]
 })
 export class TagsMutationModule {}

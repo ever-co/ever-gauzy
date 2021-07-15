@@ -59,7 +59,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		BackNavigationModule,
 		HeaderTitleModule
 	],
-	entryComponents: [EditRolesPermissionsComponent, DangerZoneComponent],
 	declarations: [
 		FileStorageComponent,
 		SettingsComponent,

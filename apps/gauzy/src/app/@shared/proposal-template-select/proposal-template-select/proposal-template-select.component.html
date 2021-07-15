@@ -8,7 +8,7 @@
 >
 	<nb-option
 		*ngFor="let proposalTemplate of proposalTemplates"
-		[value]="proposalTemplate"
+		[value]="proposalTemplate.id"
 	>
 		{{ proposalTemplate.name }}
 	</nb-option>

@@ -9,7 +9,6 @@ import { StarRatingInputComponent } from './star-rating-input.component';
 	imports: [ThemeModule, NbIconModule],
 	exports: [StarRatingInputComponent],
 	declarations: [StarRatingInputComponent],
-	entryComponents: [StarRatingInputComponent],
 	providers: [OrganizationsService, RoleService]
 })
 export class StarRatingInputModule {}

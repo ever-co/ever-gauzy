@@ -55,7 +55,7 @@ export class PaymentMutationComponent
 	public form: FormGroup = PaymentMutationComponent.buildForm(this.fb);
 	static buildForm( fb: FormBuilder): FormGroup {
 		return fb.group({
-			amount: [ '', Validators.compose([ 
+			amount: ['', Validators.compose([ 
 				Validators.required, 
 				Validators.min(1)
 			])],
@@ -138,11 +138,15 @@ export class PaymentMutationComponent
 				project: project || null,
 				tags
 			});
+			this.form.updateValueAndValidity();
 		} else {
-			this.form.patchValue({
-				invoice: this.invoice,
-				contact: this.invoice.toContact || null
-			});
+			if (this.invoice) {
+				this.form.patchValue({ invoice: this.invoice });
+				if (this.invoice.toContact) {
+					this.form.patchValue({ contact: this.invoice.toContact });
+				}
+				this.form.updateValueAndValidity();
+			}
 		}
 	}
 

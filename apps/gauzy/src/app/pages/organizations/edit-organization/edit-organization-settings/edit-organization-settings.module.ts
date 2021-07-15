@@ -102,7 +102,6 @@ import { TranslateModule } from '../../../../@shared/translate/translate.module'
 		EmployeeStore,
 		InviteService
 	],
-	entryComponents: [],
 	declarations: [
 		EditOrganizationSettingsComponent,
 		EditOrganizationMainComponent,

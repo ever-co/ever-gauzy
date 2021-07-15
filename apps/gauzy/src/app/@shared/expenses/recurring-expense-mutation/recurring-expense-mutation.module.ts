@@ -42,7 +42,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [RecurringExpenseMutationComponent],
 	declarations: [RecurringExpenseMutationComponent],
-	entryComponents: [RecurringExpenseMutationComponent],
 	providers: [OrganizationsService]
 })
 export class RecurringExpenseMutationModule {}

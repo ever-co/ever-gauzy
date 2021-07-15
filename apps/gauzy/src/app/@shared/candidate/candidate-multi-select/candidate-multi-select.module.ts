@@ -8,7 +8,6 @@ import { TranslateModule } from '../../translate/translate.module';
 @NgModule({
 	imports: [ThemeModule, NbSelectModule, SharedModule, TranslateModule],
 	declarations: [CandidateMultiSelectComponent],
-	entryComponents: [CandidateMultiSelectComponent],
 	exports: [CandidateMultiSelectComponent],
 	providers: []
 })

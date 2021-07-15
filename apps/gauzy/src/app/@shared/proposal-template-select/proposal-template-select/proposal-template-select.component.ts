@@ -9,12 +9,11 @@ import {
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IEmployeeProposalTemplate, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { ProposalTemplateService } from '../../../pages/jobs/proposal-template/proposal-template.service';
-
-const noop = () => {};
 
 @UntilDestroy()
 @Component({
@@ -30,29 +29,32 @@ const noop = () => {};
 	]
 })
 export class ProposalTemplateSelectComponent implements OnInit {
-	private _proposalTemplateId: string | string[];
-	private _employeeId: string;
-
+	
 	proposalTemplates: IEmployeeProposalTemplate[] = [];
 	organization: IOrganization;
-	loadProposalTemplates$: Subject<any> = new Subject();
-	onChange: any = noop;
-	onTouched: any = noop;
-	organizationId: string;
+	subject$: Subject<any> = new Subject();
+
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	@Output() selectedChange: EventEmitter<any> = new EventEmitter();
 
 	@Input() disabled = false;
 	@Input() multiple = false;
-	@Input()
-	public get employeeId() {
+
+	/*
+	* Getter & Setter for employeeId
+	*/
+	private  _employeeId: string;
+	public get employeeId(): string {
 		return this._employeeId;
 	}
-	public set employeeId(value) {
+	@Input() public set employeeId(value: string) {
 		this._employeeId = value;
-		this.loadProposalTemplates$.next();
+		this.subject$.next();
 	}
 
+	private _proposalTemplateId: string | string[];
 	set proposalTemplateId(val: string | string[]) {
 		this._proposalTemplateId = val;
 		this.onChange(val);
@@ -63,42 +65,27 @@ export class ProposalTemplateSelectComponent implements OnInit {
 	}
 
 	constructor(
-		private proposalTemplateService: ProposalTemplateService,
-		private store: Store
+		private readonly _proposalTemplateService: ProposalTemplateService,
+		private readonly _store: Store
 	) {}
 
 	ngOnInit() {
-		this.loadProposalTemplates$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(async () => {
-				const { tenantId } = this.store.user;
-				const { id: organizationId } = this.organization;
-
-				this.proposalTemplateService
-					.getAll({
-						where: {
-							...(this.employeeId
-								? { employeeId: this.employeeId }
-								: {}),
-							...(this.organizationId
-								? { organizationId, tenantId }
-								: {})
-						}
-					})
-					.then((resp) => {
-						this.proposalTemplates = resp.items;
-					});
-			});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.organizationId = organization.id;
-					this.loadProposalTemplates$.next();
-				}
-			});
+		this.subject$
+			.pipe(
+				debounceTime(500),
+				tap(() => this.getProposalTemplates()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	writeValue(value: string | string[]) {
@@ -109,8 +96,11 @@ export class ProposalTemplateSelectComponent implements OnInit {
 		}
 	}
 
-	onSelectedChange(selectedItem) {
-		this.selectedChange.emit(selectedItem);
+	onSelectedChange(selectedItem: IEmployeeProposalTemplate['id']) {
+		const proposalTemplate = this.proposalTemplates.find(
+			({ id }: IEmployeeProposalTemplate) => id === selectedItem
+		);
+		this.selectedChange.emit(proposalTemplate || null);
 	}
 
 	registerOnChange(fn: (rating: number) => void) {
@@ -123,5 +113,31 @@ export class ProposalTemplateSelectComponent implements OnInit {
 
 	setDisabledState(isDisabled: boolean) {
 		this.disabled = isDisabled;
+	}
+
+	getProposalTemplates() {
+		const { tenantId } = this._store.user;
+		const { id: organizationId } = this.organization;
+
+		this._proposalTemplateService
+			.getAll({
+				where: {
+					organizationId, 
+					tenantId,
+					...(this.employeeId ? { employeeId: this.employeeId } : {}),
+				}
+			})
+			.then(({ items }) => {
+				this.proposalTemplates = items;
+				this.defaultSelectedTemplate();
+			});
+	}
+
+	defaultSelectedTemplate() {
+		const proposalTemplate = this.proposalTemplates.find(
+			({ isDefault }: IEmployeeProposalTemplate) => isDefault === true
+		)
+		this.proposalTemplateId = (proposalTemplate)?.id || null;
+		this.onSelectedChange(this.proposalTemplateId);
 	}
 }

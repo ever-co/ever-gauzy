@@ -18,7 +18,6 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		TranslateModule
 	],
 	declarations: [EditAppointmentComponent],
-	entryComponents: [EditAppointmentComponent],
 	providers: [EmployeeAppointmentService]
 })
 export class EditAppointmentModule {}

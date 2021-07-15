@@ -29,7 +29,6 @@ import { TranslateModule } from '../translate/translate.module';
 		TranslateModule
 	],
 	declarations: [EntityWithMembersCardComponent],
-	entryComponents: [EntityWithMembersCardComponent],
 	exports: [EntityWithMembersCardComponent],
 	providers: []
 })

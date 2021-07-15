@@ -7,11 +7,13 @@ import {
 	IIncome,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IEmployee
+	IEmployee,
+	IOrganizationContact,
+	ITag
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs/internal/Subject';
 import { combineLatest } from 'rxjs';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -21,7 +23,7 @@ import * as moment from 'moment';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
@@ -34,7 +36,7 @@ import { OrganizationContactFilterComponent, TagsColorFilterComponent } from '..
 	styleUrls: ['./income.component.scss']
 })
 export class IncomeComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -50,11 +52,6 @@ export class IncomeComponent
 	selectedIncome: IIncome;
 	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
-	pagination: any = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: 10
-	};
 
 	incomeTable: Ng2SmartTableComponent;
 	@ViewChild('incomeTable') set content(content: Ng2SmartTableComponent) {
@@ -62,17 +59,6 @@ export class IncomeComponent
 			this.incomeTable = content;
 			this.onChangedSource();
 		}
-	}
-
-	/*
-	* getter setter for filters 
-	*/
-	private _filters: any = {};
-	set filters(val: any) {
-		this._filters = val;
-	}
-	get filters() {
-		return this._filters;
 	}
 
 	/*
@@ -196,26 +182,15 @@ export class IncomeComponent
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
-					filterFunction: (value) => {
-						if (value) {
-							this.filters = {
-								where: { 
-									...this.filters.where, 
-									clientId: value.id 
-								}
-							}
-						} else {
-							if ('clientId' in this.filters.where) {
-								delete this.filters.where.clientId;
-							}
-						}
-						this.searchFilter();
+					filterFunction: (value: IOrganizationContact| null) => {
+						this.setFilter({ field: 'clientId', search: (value)?.id || null });
 					}
 				},
 				employeeName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'string',
-					filter: false
+					filter: false,
+					sort: false
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -238,31 +213,14 @@ export class IncomeComponent
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},
-					filterFunction: (tags) => {
-						if (isNotEmpty(tags)) {
-							const tagIds = [];
-							for (const tag of tags) {
-								tagIds.push(tag.id)
-							}
-							this.filters = {
-								where: { 
-									...this.filters.where,
-									tags: tagIds
-								},
-								join: {
-									leftJoin: {
-										tags: 'income.tags'
-									}
-								}
-							}
-						} else {
-							if ('tags' in this.filters.where) {
-								delete this.filters.where.tags;
-								delete this.filters.join.leftJoin.tags;
-							}
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) { 
+							tagIds.push(tag.id);
 						}
-						this.searchFilter();
-					}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
+					sort: false
 				}
 			},
 			pager: {
@@ -409,22 +367,6 @@ export class IncomeComponent
 			});
 	}
 
-	searchFilter() {
-		const filters: any = {
-			where: {
-				...this.filters.where
-			},
-			join: {
-				alias: 'income',
-				...this.filters.join
-			}
-		}
-		if (isNotEmpty(filters)) {
-			this._filters = filters;
-			this.subject$.next();
-		}
-	}
-
 	/*
 	* Register Smart Table Source Config 
 	*/
@@ -448,7 +390,10 @@ export class IncomeComponent
 				'organization'
 			],
 			join: {
-				...(this.filters.join) ? this.filters.join : {}
+				alias: 'income',
+				leftJoin: {
+					tags: 'income.tags'
+				}
 			},
 			where: {
 				...{ organizationId, tenantId },
@@ -485,11 +430,6 @@ export class IncomeComponent
 		}
 	}
 
-	onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
-		this.subject$.next();
-	}
-
 	/*
 	 * Clear selected item
 	 */
@@ -515,13 +455,6 @@ export class IncomeComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
-	}
-
-	/*
-	* refresh pagination
-	*/
-	refreshPagination() {
-		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy() { }

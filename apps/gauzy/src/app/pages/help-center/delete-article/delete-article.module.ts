@@ -12,7 +12,6 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		NbButtonModule,
 		TranslateModule
 	],
-	entryComponents: [DeleteArticleComponent],
 	declarations: [DeleteArticleComponent],
 	exports: [DeleteArticleComponent]
 })

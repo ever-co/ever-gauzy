@@ -44,7 +44,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		HeaderTitleModule
 	],
 	declarations: [VendorsComponent],
-	entryComponents: [],
 	providers: [OrganizationVendorsService]
 })
 export class VendorsModule {}

@@ -18,7 +18,6 @@ import {
 import { CommonModule } from '@angular/common';
 import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
 import { ThemeModule } from './../../../../@theme/theme.module';
-import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { WarehousesTableComponent } from './warehouses-table/warehouses-table.component';
 import { WarehouseFormComponent } from './warehouse-form/warehouse-form.component';
 import { WarehousesComponent } from './warehouses.component';
@@ -75,9 +74,6 @@ const NB_MODULES = [
         TagsColorInputModule,
         PaginationModule,
         CardGridModule
-    ],
-    entryComponents: [
-        ProductTypeMutationComponent,
     ],
     providers: [WarehouseService]
 })

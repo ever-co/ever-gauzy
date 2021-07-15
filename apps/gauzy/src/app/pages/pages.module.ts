@@ -20,7 +20,6 @@ import { TranslateModule } from '../@shared/translate/translate.module';
 		NbSpinnerModule,
 		NgxFeatureToggleModule
 	],
-	entryComponents: [],
 	declarations: [PagesComponent],
 	providers: [AuthService, RoleGuard]
 })

@@ -61,7 +61,6 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbContextMenuModule,
 		BackNavigationModule,
 		TranslateModule
-	],
-	entryComponents: [SyncDataSelectionComponent]
+	]
 })
 export class UpworkModule {}

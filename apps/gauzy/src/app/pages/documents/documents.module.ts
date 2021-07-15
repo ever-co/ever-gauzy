@@ -51,7 +51,6 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [],
 	providers: []
 })
 export class DocumentsModule {}

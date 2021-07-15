@@ -55,13 +55,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		ArchiveConfirmationComponent,
 		CandidateActionConfirmationComponent
 	],
-	entryComponents: [
-		BasicInfoFormComponent,
-		DeleteConfirmationComponent,
-		ActionConfirmationComponent,
-		ArchiveConfirmationComponent,
-		CandidateActionConfirmationComponent
-	],
 	providers: [AuthService, RoleService, IncomeService, TagsService]
 })
 export class UserFormsModule {}

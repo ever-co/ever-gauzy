@@ -1077,7 +1077,8 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Incomes',
 			createDefaultIncomes(
-				this.connection, 
+				this.connection,
+				this.tenant,
 				this.organizations,
 				this.defaultEmployees
 			)

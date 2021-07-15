@@ -9,7 +9,6 @@ import { StarRatingOutputComponent } from './star-rating-output.component';
 	imports: [ThemeModule, NbIconModule],
 	exports: [StarRatingOutputComponent],
 	declarations: [StarRatingOutputComponent],
-	entryComponents: [StarRatingOutputComponent],
 	providers: [OrganizationsService, RoleService]
 })
 export class StarRatingOutputModule {}

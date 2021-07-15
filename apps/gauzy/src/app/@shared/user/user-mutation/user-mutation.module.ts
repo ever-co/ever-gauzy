@@ -19,7 +19,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [UserMutationComponent],
 	declarations: [UserMutationComponent],
-	entryComponents: [UserMutationComponent],
 	providers: [UsersService]
 })
 export class UserMutationModule {}

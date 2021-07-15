@@ -21,7 +21,6 @@ import { DialogsModule } from '../../dialogs';
 @NgModule({
 	declarations: [EditTimeLogModalComponent],
 	exports: [EditTimeLogModalComponent],
-	entryComponents: [EditTimeLogModalComponent],
 	imports: [
 		CommonModule,
 		TimerPickerModule,

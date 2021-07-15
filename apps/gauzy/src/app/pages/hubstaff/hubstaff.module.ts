@@ -55,7 +55,6 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		BackNavigationModule,
 		NbDialogModule.forChild(),
 		TranslateModule
-	],
-	entryComponents: [SettingsDialogComponent]
+	]
 })
 export class HubstaffModule {}

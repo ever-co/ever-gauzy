@@ -26,11 +26,9 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
-	entryComponents: [AddEditProposalTemplateComponent],
 	imports: [
 		CommonModule,
 		ProposalTemplateRoutingModule,
-
 		TranslateModule,
 		ReactiveFormsModule,
 		FormsModule,

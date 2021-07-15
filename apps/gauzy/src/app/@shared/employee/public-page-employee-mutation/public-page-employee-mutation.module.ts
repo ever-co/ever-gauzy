@@ -53,7 +53,6 @@ import { LanguageSelectorModule } from '../../language/language-selector';
 		LanguageSelectorModule,
 	],
 	declarations: [PublicPageEmployeeMutationComponent],
-	entryComponents: [PublicPageEmployeeMutationComponent],
 	providers: []
 })
 export class PublicPageEmployeeMutationModule {}

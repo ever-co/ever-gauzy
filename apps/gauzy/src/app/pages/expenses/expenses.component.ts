@@ -22,7 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { API_PREFIX } from '../../@core/constants';
@@ -37,7 +37,7 @@ import { ExpenseCategoryFilterComponent, VendorFilterComponent } from '../../@sh
 	styleUrls: ['./expenses.component.scss']
 })
 export class ExpensesComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
@@ -55,22 +55,7 @@ export class ExpensesComponent
 	disableButton = true;
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
-	pagination: any = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: 10
-	};
-	/*
-	* getter setter for filters 
-	*/
-	private _filters: any = {};
-	set filters(val: any) {
-		this._filters = val;
-	}
-	get filters() {
-		return this._filters;
-	}
-	
+
 	expensesTable: Ng2SmartTableComponent;
 	@ViewChild('expensesTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -188,22 +173,6 @@ export class ExpensesComponent
 		};
 	}
 
-	searchFilter() {
-		const filters: any = {
-			where: {
-				...this.filters.where
-			},
-			join: {
-				alias: 'expense',
-				...this.filters.join
-			}
-		}
-		if (isNotEmpty(filters)) {
-			this._filters = filters;
-			this.subject$.next();
-		}
-	}
-
 	_loadSettingsSmartTable() {
 		this.smartTableSettings = {
 			actions: false,
@@ -225,20 +194,9 @@ export class ExpensesComponent
 						component: VendorFilterComponent
 					},
 					filterFunction: (value: IOrganizationVendor) => {
-						if (value) {
-							this.filters = {
-								where: { 
-									...this.filters.where, 
-									vendorId: value.id
-								}
-							}
-						} else {
-							if ('vendorId' in this.filters.where) {
-								delete this.filters.where.vendorId;
-							}
-						}
-						this.searchFilter();
-					}
+						this.setFilter({ field: 'vendorId', search: (value)?.id || null });
+					},
+					sort: false
 				},
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
@@ -248,30 +206,21 @@ export class ExpensesComponent
 						component: ExpenseCategoryFilterComponent
 					},
 					filterFunction: (value: IExpenseCategory) => {
-						if (value) {
-							this.filters = {
-								where: { 
-									...this.filters.where, 
-									categoryId: value.id
-								}
-							}
-						} else {
-							if ('categoryId' in this.filters.where) {
-								delete this.filters.where.categoryId;
-							}
-						}
-						this.searchFilter();
-					}
+						this.setFilter({ field: 'categoryId', search: (value)?.id || null });
+					},
+					sort: false
 				},
 				employeeName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'string',
-					filter: false
+					filter: false,
+					sort: false
 				},
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
 					type: 'string',
-					filter: false
+					filter: false,
+					sort: false
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -290,7 +239,7 @@ export class ExpensesComponent
 					class: 'align-row',
 					renderComponent: NotesWithTagsComponent
 				},
-				displayStatus: {
+				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
@@ -505,12 +454,8 @@ export class ExpensesComponent
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.employeeId) {
-			request['employeeId'] = this.employeeId;
-		}
-		if (this.projectId) {
-			request['projectId'] = this.projectId;
-		}
+		if (this.employeeId) { request['employeeId'] = this.employeeId; }
+		if (this.projectId) { request['projectId'] = this.projectId; }
 		if (moment(this.selectedDate).isValid()) {
 			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
 		}
@@ -537,7 +482,7 @@ export class ExpensesComponent
 					employeeName: expense.employee ? expense.employee.fullName : null,
 					vendorName: expense.vendor ? expense.vendor.name : null,
 					categoryName: expense.category ? expense.category.name : null,
-					displayStatus: this.statusMapper(expense.status)
+					status: this.statusMapper(expense.status)
 				});
 			},
 			finalize: () => {
@@ -576,11 +521,6 @@ export class ExpensesComponent
 			.subscribe();
 	}
 
-	onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
-		this.subject$.next();
-	}
-
 	/*
 	* Clear selected item
 	*/
@@ -606,13 +546,6 @@ export class ExpensesComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
-	}
-
-	/*
-	* refresh pagination
-	*/
-	refreshPagination() {
-		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy() {}

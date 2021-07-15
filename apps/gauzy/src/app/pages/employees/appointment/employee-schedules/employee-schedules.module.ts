@@ -8,7 +8,6 @@ import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.
 	imports: [ThemeModule, NbCardModule, NbButtonModule, TranslateModule],
 	exports: [EmployeeSchedulesComponent],
 	declarations: [EmployeeSchedulesComponent],
-	entryComponents: [EmployeeSchedulesComponent],
 	providers: []
 })
 export class EmployeeSchedulesModule {}
