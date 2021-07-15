@@ -13,5 +13,8 @@
 	"viewportHeight": 1080,
 	"baseUrl": "http://localhost:4200/",
 	"ignoreTestFiles": "*.ts",
-	"testFiles": "**/*.feature"
+	"testFiles": "**/*.feature",
+	"defaultCommandTimeout": 300000,
+	"pageLoadTimeout": 300000,
+	"taskTimeout": 100000
 }

@@ -32,8 +32,8 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(PaymentsPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
-	clickButton(PaymentsPage.addTagsDropdownCss);
+export const clickTagsDropdwon = (index) => {
+	clickButtonByIndex(PaymentsPage.addTagsDropdownCss, index);
 };
 
 export const selectTagFromDropdown = (index) => {

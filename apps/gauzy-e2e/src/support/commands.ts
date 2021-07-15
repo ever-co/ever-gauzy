@@ -24,11 +24,11 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
 
-import { waitUntil } from '../support/Base/utils/util';
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 export const CustomCommands = {
 	login: (loginPage: any, LoginPageData: any, dashboardPage: any) => {
-		cy.visit('/');
+		cy.visit('/', { timeout: pageLoadTimeout });
 		loginPage.verifyTitle();
 		loginPage.verifyLoginText();
 		loginPage.clearEmailField();
@@ -39,7 +39,7 @@ export const CustomCommands = {
 		dashboardPage.verifyCreateButton();
 	},
 	addTag: (organizationTagsUserPage: any, OrganizationTagsPageData: any) => {
-		cy.visit('/#/pages/organization/tags');
+		cy.visit('/#/pages/organization/tags', { timeout: pageLoadTimeout });
 		organizationTagsUserPage.gridButtonVisible();
 		organizationTagsUserPage.clickGridButton(1);
 		organizationTagsUserPage.addTagButtonVisible();
@@ -69,7 +69,7 @@ export const CustomCommands = {
 		contactsLeadsPage: any,
 		ContactsLeadsPageData: any
 	) => {
-		cy.visit('/#/pages/contacts/leads');
+		cy.visit('/#/pages/contacts/leads', { timeout: pageLoadTimeout });
 		contactsLeadsPage.gridBtnExists();
 		contactsLeadsPage.gridBtnClick(1);
 		contactsLeadsPage.addButtonVisible();
@@ -116,7 +116,7 @@ export const CustomCommands = {
 		contactsLeadsPage.clickFinishButton();
 	},
 	addTeam: (organizationTeamsPage: any, OrganizationTeamsPageData: any) => {
-		cy.visit('/#/pages/organization/teams');
+		cy.visit('/#/pages/organization/teams', { timeout: pageLoadTimeout });
 		organizationTeamsPage.gridBtnExists();
 		organizationTeamsPage.gridBtnClick(1);
 		organizationTeamsPage.addTeamButtonVisible();
@@ -142,7 +142,9 @@ export const CustomCommands = {
 		organizationProjectsPage: any,
 		OrganizationProjectsPageData: any
 	) => {
-		cy.visit('/#/pages/organization/projects');
+		cy.visit('/#/pages/organization/projects', {
+			timeout: pageLoadTimeout
+		});
 		organizationProjectsPage.gridBtnExists();
 		organizationProjectsPage.gridBtnClick(1);
 		organizationProjectsPage.requestProjectButtonVisible();
@@ -169,7 +171,7 @@ export const CustomCommands = {
 		organizationProjectsPage.clickSaveProjectButton();
 	},
 	addTask: (addTaskPage: any, AddTasksPageData: any) => {
-		cy.visit('/#/pages/tasks/dashboard');
+		cy.visit('/#/pages/tasks/dashboard', { timeout: pageLoadTimeout });
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
 		addTaskPage.addTaskButtonVisible();
@@ -217,8 +219,7 @@ export const CustomCommands = {
 		password: string,
 		imgUrl: string
 	) => {
-		cy.visit('/#/pages/employees');
-		waitUntil(3000);
+		cy.visit('/#/pages/employees', { timeout: pageLoadTimeout });
 		manageEmployeesPage.addEmployeeButtonVisible();
 		manageEmployeesPage.clickAddEmployeeButton();
 		manageEmployeesPage.firstNameInputVisible();
@@ -257,7 +258,7 @@ export const CustomCommands = {
 		street: string,
 		ClientsData: any
 	) => {
-		cy.visit('/#/pages/contacts/clients');
+		cy.visit('/#/pages/contacts/clients', { timeout: pageLoadTimeout });
 		clientsPage.gridBtnExists();
 		clientsPage.gridBtnClick(1);
 		clientsPage.addButtonVisible();
@@ -306,7 +307,7 @@ export const CustomCommands = {
 		taxId: any,
 		street: string
 	) => {
-		cy.visit('/#/pages/organizations');
+		cy.visit('/#/pages/organizations', { timeout: pageLoadTimeout });
 		addOrganizationPage.addBtnExists();
 		addOrganizationPage.addBtnClick();
 		addOrganizationPage.enterOrganizationName(organizationName);
@@ -383,7 +384,7 @@ export const CustomCommands = {
 		password: string,
 		imgUrl: string
 	) => {
-		cy.visit('/#/pages/employees/candidates');
+		cy.visit('/#/pages/employees/candidates', { timeout: pageLoadTimeout });
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
 		});
