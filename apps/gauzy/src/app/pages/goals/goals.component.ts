@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
-import { first, filter, debounceTime, withLatestFrom } from 'rxjs/operators';
+import { first, filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
@@ -12,7 +12,8 @@ import {
 	IKeyResult,
 	IGoalGeneralSetting,
 	IOrganization,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IUser
 } from '@gauzy/contracts';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { GoalService } from '../../@core/services/goal.service';
@@ -99,14 +100,10 @@ export class GoalsComponent
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
+				tap((user: IUser) => this.isEmployee = !!user.employee),
 				untilDestroyed(this)
 			)
-			.subscribe((user) => {
-				if (user) {
-					this.isEmployee = !!user.employee;
-				}
-			});
-
+			.subscribe();
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
 		storeEmployee$
