@@ -5,22 +5,22 @@ export const gridBtnExists = () => {
 	verifyElementIsVisible(DeleteOrganizationPage.gridButtonCss);
 };
 
-export const gridBtnClick = () => {
-	clickButtonByIndex(DeleteOrganizationPage.gridButtonCss, 0);
+export const gridBtnClick = (index) => {
+	clickButtonByIndex(DeleteOrganizationPage.gridButtonCss, index);
 };
 
 export const deleteBtnExists = () => {
 	verifyElementIsVisible(DeleteOrganizationPage.deleteButtonCss);
 };
 
-export const deleteBtnClick = () => {
-	clickButtonByIndex(DeleteOrganizationPage.deleteButtonCss, 2);
+export const deleteBtnClick = (index) => {
+	clickButtonByIndex(DeleteOrganizationPage.deleteButtonCss, index);
 };
 
 export const confirmBtnExists = () => {
 	verifyElementIsVisible(DeleteOrganizationPage.confirmDeleteCss);
 };
 
-export const confirmBtnClick = () => {
-	clickButtonByIndex(DeleteOrganizationPage.confirmDeleteCss, 0);
+export const confirmBtnClick = (index) => {
+	clickButtonByIndex(DeleteOrganizationPage.confirmDeleteCss, index);
 };

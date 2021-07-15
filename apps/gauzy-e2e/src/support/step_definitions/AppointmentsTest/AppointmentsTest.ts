@@ -77,14 +77,6 @@ When('User click on book appontment button', () => {
 	appointmentsPage.clickBookAppointmentButton();
 });
 
-Then('User can see select button', () => {
-	appointmentsPage.selectButtonVisible();
-});
-
-When('User click on select button', () => {
-	appointmentsPage.clickSelectButton(0);
-});
-
 Then('User can verify header', () => {
 	appointmentsPage.verifyHeader(AppointmentsPageData.header);
 });

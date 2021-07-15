@@ -3,6 +3,7 @@ export const AddOrganizationPage = {
 	currencyFieldCss: '#currencySelect',
 	dropdownOptionCss: '.option-list nb-option',
 	officialNameFieldCss: '#officialNameInput',
+	gridButtonCss: 'div.layout-switch > button',
 	taxFieldCss: '#taxIdInput',
 	nextButtonCss: 'button[type="submit"]',
 	addButtonCss: 'nb-card-body > div > button[status="success"]',

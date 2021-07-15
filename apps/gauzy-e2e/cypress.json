@@ -14,7 +14,7 @@
 	"baseUrl": "http://localhost:4200/",
 	"ignoreTestFiles": "*.ts",
 	"testFiles": "**/*.feature",
-	"defaultCommandTimeout": 300000,
-	"pageLoadTimeout": 300000,
-	"taskTimeout": 100000
+	"defaultCommandTimeout": 60000,
+	"pageLoadTimeout": 60000,
+	"taskTimeout": 60000
 }
