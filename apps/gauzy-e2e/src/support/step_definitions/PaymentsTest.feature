@@ -1,8 +1,6 @@
 Feature: Payments test
   Scenario: Login with email
     Given Login with default credentials
-  Scenario: Add new tag
-    Then User can add new tag
   Scenario: Add employee
     And User can add new employee
   Scenario: Add project
@@ -13,7 +11,7 @@ Feature: Payments test
     And User can click on second grid button to change view
     And User can see add payment button
     When User click on add payment button
-    And User can see project dropdown
+    Then User can see project dropdown
     When User click on project dropdown
     Then User can select project from dropdown options
     And User can see date input field
@@ -28,16 +26,12 @@ Feature: Payments test
     And User can see save button
     When User click on save button
     Then Notification message will appear
-    And User can verify payment was created
   Scenario: Edit payment
     Then User can see payments table
     When User select table row
     Then Edit payment button will become active
     When User click on edit payment button
-    Then User can tags dropdown
-    When User click on tags dropdown
-    Then User can select tag from dropdown options
-    And User can see project dropdown
+    Then User can see project dropdown
     When User click on project dropdown
     Then User can select project from dropdown options
     And User can see date input field
@@ -51,10 +45,10 @@ Feature: Payments test
     And User can enter value for note
     And User can see save button
     When User click on save button
-    Then Notification message will appear
+    Then Notification message will appear again
   Scenario: Delete payment
-    Then User can see payments table
-    When User select table row
+    Then User can see again payments table
+    When User select table row again
     Then Delete payment button will become active
     When User can click on Delete payment button
     Then User can see confrim delete button

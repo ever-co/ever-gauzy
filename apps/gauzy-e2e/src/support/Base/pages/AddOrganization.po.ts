@@ -6,9 +6,18 @@ import {
 	verifyText,
 	waitElementToHide,
 	clearField,
-	getLastElement
+	getLastElement,
+	clickButtonByIndex
 } from '../utils/util';
 import { AddOrganizationPage } from '../pageobjects/AddOrganizationPageObject';
+
+export const gridBtnExists = () => {
+	verifyElementIsVisible(AddOrganizationPage.gridButtonCss);
+};
+
+export const gridBtnClick = (index) => {
+	clickButtonByIndex(AddOrganizationPage.gridButtonCss, index);
+};
 
 export const addBtnExists = () => {
 	verifyElementIsVisible(AddOrganizationPage.addButtonCss);

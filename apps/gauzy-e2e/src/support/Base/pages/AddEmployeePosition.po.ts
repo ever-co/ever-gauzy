@@ -41,7 +41,7 @@ export const newPositionInputVisible = () => {
 };
 
 export const enterNewPositionData = (data) => {
-	clearField(AddEmployeePositionPage.newPositionInputCss);
+	clickButton(AddEmployeePositionPage.newPositionInputCss);
 	enterInput(AddEmployeePositionPage.newPositionInputCss, data);
 };
 

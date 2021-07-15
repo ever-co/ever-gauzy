@@ -317,9 +317,6 @@ And('User can verify task was created', () => {
 
 // Delete task
 When('User click on table first row', () => {
-	cy.on('uncaught:exception', (err, runnable) => {
-		return false;
-	});
 	addTaskPage.selectTasksTableRow(0);
 });
 

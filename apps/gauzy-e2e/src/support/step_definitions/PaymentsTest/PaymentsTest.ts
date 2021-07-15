@@ -3,8 +3,6 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as paymentsPage from '../../Base/pages/Payments.po';
 import { PaymentsPageData } from '../../Base/pagedata/PaymentsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../../commands';
@@ -28,14 +26,8 @@ Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 });
 
-// Add new tag
-Then('User can add new tag', () => {
-	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
-});
-
 // Add employee
 And('User can add new employee', () => {
-	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
@@ -84,23 +76,7 @@ When('User click on add payment button', () => {
 	paymentsPage.clickAddPaymentButton();
 });
 
-// Then('User can tags dropdown', () => {
-// 	cy.on('uncaught:exception', (err, runnable) => {
-// 		return false;
-// 	});
-// 	paymentsPage.tagsDropdownVisible();
-// });
-
-// When('User click on tags dropdown', () => {
-// 	paymentsPage.clickTagsDropdwon(1);
-// });
-
-// Then('User can select tag from dropdown options', () => {
-// 	paymentsPage.selectTagFromDropdown(0);
-// 	paymentsPage.clickCardBody();
-// });
-
-And('User can see project dropdown', () => {
+Then('User can see project dropdown', () => {
 	paymentsPage.projectDropdownVisible();
 });
 
@@ -158,10 +134,6 @@ When('User click on save button', () => {
 
 Then('Notification message will appear', () => {
 	paymentsPage.waitMessageToHide();
-});
-
-And('User can verify payment was created', () => {
-	paymentsPage.verifyPaymentExists(PaymentsPageData.defaultNote);
 });
 
 // Edit payment
@@ -184,20 +156,7 @@ When('User click on edit payment button', () => {
 	paymentsPage.clickEditPaymentButton();
 });
 
-Then('User can tags dropdown', () => {
-	paymentsPage.tagsDropdownVisible();
-});
-
-When('User click on tags dropdown', () => {
-	paymentsPage.clickTagsDropdwon(1);
-});
-
-Then('User can select tag from dropdown options', () => {
-	paymentsPage.selectTagFromDropdown(0);
-	paymentsPage.clickCardBody();
-});
-
-And('User can see project dropdown', () => {
+Then('User can see project dropdown', () => {
 	paymentsPage.projectDropdownVisible();
 });
 
@@ -253,16 +212,16 @@ When('User click on save button', () => {
 	paymentsPage.clickSavePaymentButton();
 });
 
-Then('Notification message will appear', () => {
+Then('Notification message will appear again', () => {
 	paymentsPage.waitMessageToHide();
 });
 
 // Delete payment
-Then('User can see payments table', () => {
+Then('User can see again payments table', () => {
 	paymentsPage.tableRowVisible();
 });
 
-When('User select table row', () => {
+When('User select table row again', () => {
 	paymentsPage.selectTableRow(0);
 });
 

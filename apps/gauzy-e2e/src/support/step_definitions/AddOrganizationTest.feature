@@ -2,6 +2,8 @@ Feature: Add Organization
   Scenario: Login with email
     Given Login with default credentials and visit Organizations page
   Scenario: Add new organization
+    Then User can see grid button
+    And User can click on second grid button to change view
     Then User can see Add new organization button
     When User click on Add new organization button
     Then User can add value for organization name
@@ -47,7 +49,6 @@ Feature: Add Organization
     And User can enter value for expiry date
     When User click on last Next button
     Then Notification message will appear
-    And User can verify organization was created
   Scenario: Delete organization
     Then User can see grid button
     And User can click on grid button to change view
