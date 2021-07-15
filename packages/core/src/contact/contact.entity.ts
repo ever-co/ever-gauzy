@@ -58,11 +58,11 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@Column({ nullable: true })
 	address2?: string;
 
-	@ApiPropertyOptional({ type: () => Number })
-	@IsNumber()
+	@ApiPropertyOptional({ type: () => String })
+	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
-	postcode?: number;
+	postcode?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()

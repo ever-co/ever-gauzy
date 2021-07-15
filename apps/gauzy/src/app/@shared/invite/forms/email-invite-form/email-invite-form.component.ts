@@ -71,7 +71,7 @@ export class EmailInviteFormComponent implements OnInit {
 		this.loadFormData();
 	}
 
-	EmailListValidator(
+	emailListValidator(
 		control: AbstractControl
 	): { [key: string]: boolean } | null {
 		const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
@@ -84,11 +84,12 @@ export class EmailInviteFormComponent implements OnInit {
 	isEmployeeInvitation = () => {
 		return this.invitationType === InvitationTypeEnum.EMPLOYEE;
 	};
+
 	isCandidateInvitation = () => {
 		return this.invitationType === InvitationTypeEnum.CANDIDATE;
 	};
 
-	addTagFn(emailAddress) {
+	addTagFn(emailAddress: string) {
 		return { emailAddress: emailAddress, tag: true };
 	}
 
@@ -98,7 +99,7 @@ export class EmailInviteFormComponent implements OnInit {
 				'',
 				Validators.compose([
 					Validators.required,
-					this.EmailListValidator
+					this.emailListValidator
 				])
 			],
 			projects: [''],
@@ -148,6 +149,12 @@ export class EmailInviteFormComponent implements OnInit {
 	}
 
 	getRoleNameFromForm = () => {
+		if (this.isEmployeeInvitation()) {
+			return RolesEnum.EMPLOYEE;
+		}
+		if (this.isCandidateInvitation()) {
+			return RolesEnum.CANDIDATE;
+		}
 		return this.roleName.value || RolesEnum.VIEWER;
 	};
 
@@ -156,9 +163,7 @@ export class EmailInviteFormComponent implements OnInit {
 			const { tenantId } = this.store.user;
 			const role = await this.roleService
 				.getRoleByName({
-					name: this.isEmployeeInvitation()
-						? RolesEnum.EMPLOYEE
-						: this.getRoleNameFromForm(),
+					name: this.getRoleNameFromForm(),
 					tenantId
 				})
 				.pipe(first())
