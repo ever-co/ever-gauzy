@@ -102,11 +102,11 @@ export class EmailInviteFormComponent implements OnInit {
 					this.emailListValidator
 				])
 			],
-			projects: [''],
-			startedWorkOn: [''],
-			appliedDate: [''],
-			departments: [''],
-			organizationContacts: [''],
+			projects: [],
+			startedWorkOn: [],
+			appliedDate: [],
+			departments: [],
+			organizationContacts: [],
 			roleName: [
 				'',
 				this.isEmployeeInvitation() || this.isCandidateInvitation()
@@ -120,8 +120,6 @@ export class EmailInviteFormComponent implements OnInit {
 		this.organizationContacts = this.form.get('organizationContacts');
 		this.departments = this.form.get('departments');
 		this.roleName = this.form.get('roleName');
-		this.startedWorkOn = this.form.get('startedWork');
-		this.appliedDate = this.form.get('appliedDate');
 	};
 
 	selectAllProjects() {
@@ -168,9 +166,10 @@ export class EmailInviteFormComponent implements OnInit {
 				})
 				.pipe(first())
 				.toPromise();
-
+			
+			const { startedWorkOn, appliedDate } = this.form.value;
 			return this.inviteService.createWithEmails({
-				emailIds: this.emails.value.map((email) => email.emailAddress),
+				emailIds: this.emails.value.map((email: any) => email.emailAddress),
 				projectIds: this.projects.value,
 				departmentIds: this.departments.value,
 				organizationContactIds: this.organizationContacts.value,
@@ -179,7 +178,8 @@ export class EmailInviteFormComponent implements OnInit {
 				tenantId,
 				invitedById: this.currentUserId,
 				inviteType: this.router.url,
-				startedWorkOn: this.startedWorkOn
+				startedWorkOn: startedWorkOn ? new Date(startedWorkOn) : null,
+				appliedDate: appliedDate ? new Date(appliedDate) : null
 			});
 		}
 
