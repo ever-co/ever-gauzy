@@ -13,6 +13,7 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	invitedById: string;
 	status: string;
 	expireDate: Date;
+	actionDate?: Date;
 	role?: IRole;
 	invitedBy?: IUser;
 	projects?: IOrganizationProject[];
@@ -40,7 +41,8 @@ export interface ICreateEmailInvitesInput
 	roleId: string;
 	invitedById: string;
 	inviteType: any;
-	startedWorkOn: string;
+	startedWorkOn: Date;
+	appliedDate?: Date;
 }
 
 export interface ICreateOrganizationContactInviteInput

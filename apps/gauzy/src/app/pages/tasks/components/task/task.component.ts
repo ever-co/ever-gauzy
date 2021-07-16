@@ -298,7 +298,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter([ { field: 'title', search: value } ]);
+						this.setFilter({ field: 'title', search: value });
 					}
 				},
 				projectName: {
@@ -334,7 +334,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						component: TaskStatusFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter([ { field: 'status', search: value } ]);
+						this.setFilter({ field: 'status', search: value });
 					}
 				}
 			}
@@ -378,7 +378,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						component: OrganizationTeamFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter([ { field: 'members', search: value ? [value.id] : [] } ]);
+						this.setFilter({ field: 'members', search: value ? [value.id] : [] });
 					}
 				}
 			};

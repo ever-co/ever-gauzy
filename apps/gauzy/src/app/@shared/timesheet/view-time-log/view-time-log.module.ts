@@ -16,7 +16,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [ViewTimeLogComponent],
-	entryComponents: [ViewTimeLogComponent],
 	exports: [ViewTimeLogComponent],
 	imports: [
 		CommonModule,

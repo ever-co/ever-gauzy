@@ -43,7 +43,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		TranslateModule
 	],
 	declarations: [OrganizationsMutationComponent],
-	entryComponents: [OrganizationsMutationComponent],
 	providers: [OrganizationDepartmentsService],
 	exports: [OrganizationsMutationComponent]
 })

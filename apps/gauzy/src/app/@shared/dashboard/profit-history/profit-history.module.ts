@@ -22,11 +22,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		ExpenseTableComponent,
 		IncomeTableComponent
 	],
-	entryComponents: [
-		ProfitHistoryComponent,
-		ExpenseTableComponent,
-		IncomeTableComponent
-	],
 	providers: [ProfitHistoryComponent]
 })
 export class ProfitHistoryModule {}

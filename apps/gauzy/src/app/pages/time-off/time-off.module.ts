@@ -66,7 +66,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		RequestApprovalIcon,
 		PaidIcon
 	],
-	entryComponents: [TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],
 	providers: [OrganizationsService, TimeOffService]
 })
 export class TimeOffModule {}

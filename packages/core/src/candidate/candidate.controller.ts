@@ -8,7 +8,8 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	Post
+	Post,
+	UseInterceptors
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -34,9 +35,11 @@ import {
 import { I18nLang } from 'nestjs-i18n';
 import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('Candidate')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class CandidateController extends CrudController<Candidate> {
 	constructor(

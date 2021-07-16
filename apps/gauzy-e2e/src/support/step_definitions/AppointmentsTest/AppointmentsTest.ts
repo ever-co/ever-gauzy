@@ -5,6 +5,7 @@ import { AppointmentsPageData } from '../../Base/pagedata/AppointmentsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as faker from 'faker';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
@@ -36,6 +37,7 @@ And('User can add new employee', () => {
 
 // Book public appointment
 And('User can visit Employees appointments page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/appointments');
@@ -73,14 +75,6 @@ And('User can see book appontment button', () => {
 
 When('User click on book appontment button', () => {
 	appointmentsPage.clickBookAppointmentButton();
-});
-
-Then('User can see select button', () => {
-	appointmentsPage.selectButtonVisible();
-});
-
-When('User click on select button', () => {
-	appointmentsPage.clickSelectButton(0);
 });
 
 Then('User can verify header', () => {

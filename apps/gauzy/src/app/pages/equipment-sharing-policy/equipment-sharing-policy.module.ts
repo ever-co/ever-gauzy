@@ -50,7 +50,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		HeaderTitleModule
 	],
 	declarations: [EquipmentSharingPolicyComponent],
-	entryComponents: [],
 	providers: [EquipmentSharingPolicyService]
 })
 export class EquipmentSharingPolicyModule {}

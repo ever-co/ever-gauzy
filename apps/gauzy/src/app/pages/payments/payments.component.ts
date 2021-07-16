@@ -7,17 +7,19 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	ISelectedPayment,
-	IInvoice
+	IInvoice,
+	ITag,
+	IOrganizationContact
 } from '@gauzy/contracts';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
@@ -36,7 +38,7 @@ import { environment as ENV } from './../../../environments/environment';
 	styleUrls: ['./payments.component.scss']
 })
 export class PaymentsComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 		
 	settingsSmartTable: object;
@@ -53,21 +55,6 @@ export class PaymentsComponent
 	projectId: string | null;
 	selectedDate: Date;
 	subject$: Subject<any> = new Subject();
-	pagination: any = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: 10
-	};
-	/*
-	* getter setter for filters 
-	*/
-	private _filters: any = {};
-	set filters(val: any) {
-		this._filters = val;
-	}
-	get filters() {
-		return this._filters;
-	}
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -164,22 +151,6 @@ export class PaymentsComponent
 			.subscribe();
 	}
 
-	searchFilter() {
-		const filters: any = {
-			where: {
-				...this.filters.where
-			},
-			join: {
-				alias: 'payment',
-				...this.filters.join
-			}
-		}
-		if (isNotEmpty(filters)) {
-			this._filters = filters;
-			this.subject$.next();
-		}
-	}
-
 	/*
 	* Register Smart Table Source Config 
 	*/
@@ -206,6 +177,10 @@ export class PaymentsComponent
 				'tags'
 			],
 			join: {
+				alias: 'payment',
+				leftJoin: {
+					tags: 'payment.tags'
+				},
 				...(this.filters.join) ? this.filters.join : {}
 			},
 			where: {
@@ -223,11 +198,11 @@ export class PaymentsComponent
 						organizationContactName = invoice.toContact.name;
 					}
 					return Object.assign({}, payment, {
-						displayOverdue: this.statusMapper(overdue),
+						overdue: this.statusMapper(overdue),
 						invoiceNumber: invoice ? invoice.invoiceNumber : null,
 						projectName: project ? project.name : null,
 						recordedByName: recordedBy ? recordedBy.name: null,
-						displayPaymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
+						paymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
 						organizationContactName: organizationContactName
 					});
 				} catch (error) {
@@ -258,11 +233,6 @@ export class PaymentsComponent
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
-	}
-
-	onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
-		this.subject$.next();
 	}
 
 	async recordPayment() {
@@ -400,7 +370,7 @@ export class PaymentsComponent
 					width: '10%',
 					renderComponent: DateViewComponent
 				},
-				displayPaymentMethod: {
+				paymentMethod: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
 					width: '10%',
@@ -409,23 +379,15 @@ export class PaymentsComponent
 						component: PaymentMethodFilterComponent
 					},
 					filterFunction: (value) => {
-						if (value) {
-							this.filters = {
-								where: { ...this.filters.where, paymentMethod: value }
-							}
-						} else {
-							if ('paymentMethod' in this.filters.where) {
-								delete this.filters.where.paymentMethod;
-							}
-						}
-						this.searchFilter();
+						this.setFilter({ field: 'paymentMethod', search: value });
 					}
 				},
 				recordedByName: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
 					type: 'text',
 					filter: false,
-					width: '10%'
+					width: '10%',
+					sort: false
 				},
 				note: {
 					title: this.getTranslation('PAYMENTS_PAGE.NOTE'),
@@ -440,24 +402,17 @@ export class PaymentsComponent
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
-					filterFunction: (value) => {
-						if (value) {
-							this.filters = {
-								where: { ...this.filters.where, contactId: value.id }
-							}
-						} else {
-							if ('contactId' in this.filters.where) {
-								delete this.filters.where.contactId;
-							}
-						}
-						this.searchFilter();
-					}
+					filterFunction: (value: IOrganizationContact | null) => {
+						this.setFilter({ field: 'contactId', search: (value)?.id || null });
+					},
+					sort: false
 				},
 				projectName: {
 					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
 					width: '10%',
 					filter: false,
+					sort: false
 				},
 				tags: {
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
@@ -468,39 +423,23 @@ export class PaymentsComponent
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},
-					filterFunction: (tags) => {
-						if (isNotEmpty(tags)) {
-							const tagIds = [];
-							for (const tag of tags) {
-								tagIds.push(tag.id)
-							}
-							this.filters = {
-								where: { 
-									...this.filters.where,
-									tags: tagIds
-								},
-								join: {
-									leftJoin: {
-										tags: 'payment.tags'
-									}
-								}
-							}
-						} else {
-							if ('tags' in this.filters.where) {
-								delete this.filters.where.tags;
-								delete this.filters.join.leftJoin.tags;
-							}
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) { 
+							tagIds.push(tag.id);
 						}
-						this.searchFilter();
-					}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
+					sort: false
 				},
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'text',
 					filter: false,
-					width: '8%'
+					width: '8%',
+					sort: false
 				},
-				displayOverdue: {
+				overdue: {
 					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
 					type: 'custom',
 					width: '10%',
@@ -564,13 +503,6 @@ export class PaymentsComponent
 			organizationId,
 			tenantId
 		});
-	}
-
-	/*
-	* refresh pagination
-	*/
-	refreshPagination() {
-		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy() {}

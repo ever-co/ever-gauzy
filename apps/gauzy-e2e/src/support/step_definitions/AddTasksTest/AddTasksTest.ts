@@ -4,6 +4,7 @@ import * as addTaskPage from '../../Base/pages/AddTasks.po';
 import { AddTasksPageData } from '../../Base/pagedata/AddTasksPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../../commands';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -32,6 +33,7 @@ Then('User can add new tag', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
@@ -47,6 +49,7 @@ And('User can add new employee', () => {
 
 // Add new project
 And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
@@ -57,6 +60,7 @@ And('User can add new project', () => {
 
 // Add new task
 When('User go to Tasks dashboard page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/tasks/dashboard');
@@ -313,9 +317,6 @@ And('User can verify task was created', () => {
 
 // Delete task
 When('User click on table first row', () => {
-	cy.on('uncaught:exception', (err, runnable) => {
-		return false;
-	});
 	addTaskPage.selectTasksTableRow(0);
 });
 

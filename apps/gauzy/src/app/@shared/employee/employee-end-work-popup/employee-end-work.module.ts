@@ -26,7 +26,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [EmployeeEndWorkComponent],
 	declarations: [EmployeeEndWorkComponent],
-	entryComponents: [EmployeeEndWorkComponent],
 	providers: []
 })
 export class EmployeeEndWorkModule {}

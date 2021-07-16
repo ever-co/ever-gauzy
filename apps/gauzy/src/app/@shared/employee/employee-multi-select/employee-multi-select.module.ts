@@ -16,7 +16,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		TranslateModule
 	],
 	declarations: [EmployeeSelectComponent],
-	entryComponents: [EmployeeSelectComponent],
 	exports: [EmployeeSelectComponent],
 	providers: []
 })

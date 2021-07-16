@@ -55,7 +55,6 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [],
 	providers: [OrganizationDepartmentsService]
 })
 export class DepartmentsModule {}

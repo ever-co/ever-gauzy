@@ -92,7 +92,6 @@ const COMPONENTS = [
 		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [],
 	providers: [
 		OrganizationsService,
 		UsersOrganizationsService,

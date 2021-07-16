@@ -20,7 +20,6 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule
 	],
 	declarations: [PublicAppointmentsComponent],
-	entryComponents: [PublicAppointmentsComponent],
 	exports: [PublicAppointmentsComponent],
 	providers: [EventTypeService]
 })

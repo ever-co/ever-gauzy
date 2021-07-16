@@ -6,7 +6,7 @@ export interface ILocation {
 export interface IAddress {
 	country: string | null;
 	city: string | null;
-	postcode?: number | null;
+	postcode?: string | null;
 	address: string | null;
 	address2: string | null;
 }

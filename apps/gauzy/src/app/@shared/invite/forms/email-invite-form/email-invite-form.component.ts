@@ -71,7 +71,7 @@ export class EmailInviteFormComponent implements OnInit {
 		this.loadFormData();
 	}
 
-	EmailListValidator(
+	emailListValidator(
 		control: AbstractControl
 	): { [key: string]: boolean } | null {
 		const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
@@ -84,11 +84,12 @@ export class EmailInviteFormComponent implements OnInit {
 	isEmployeeInvitation = () => {
 		return this.invitationType === InvitationTypeEnum.EMPLOYEE;
 	};
+
 	isCandidateInvitation = () => {
 		return this.invitationType === InvitationTypeEnum.CANDIDATE;
 	};
 
-	addTagFn(emailAddress) {
+	addTagFn(emailAddress: string) {
 		return { emailAddress: emailAddress, tag: true };
 	}
 
@@ -98,14 +99,14 @@ export class EmailInviteFormComponent implements OnInit {
 				'',
 				Validators.compose([
 					Validators.required,
-					this.EmailListValidator
+					this.emailListValidator
 				])
 			],
-			projects: [''],
-			startedWorkOn: [''],
-			appliedDate: [''],
-			departments: [''],
-			organizationContacts: [''],
+			projects: [],
+			startedWorkOn: [],
+			appliedDate: [],
+			departments: [],
+			organizationContacts: [],
 			roleName: [
 				'',
 				this.isEmployeeInvitation() || this.isCandidateInvitation()
@@ -119,8 +120,6 @@ export class EmailInviteFormComponent implements OnInit {
 		this.organizationContacts = this.form.get('organizationContacts');
 		this.departments = this.form.get('departments');
 		this.roleName = this.form.get('roleName');
-		this.startedWorkOn = this.form.get('startedWork');
-		this.appliedDate = this.form.get('appliedDate');
 	};
 
 	selectAllProjects() {
@@ -148,6 +147,12 @@ export class EmailInviteFormComponent implements OnInit {
 	}
 
 	getRoleNameFromForm = () => {
+		if (this.isEmployeeInvitation()) {
+			return RolesEnum.EMPLOYEE;
+		}
+		if (this.isCandidateInvitation()) {
+			return RolesEnum.CANDIDATE;
+		}
 		return this.roleName.value || RolesEnum.VIEWER;
 	};
 
@@ -156,16 +161,15 @@ export class EmailInviteFormComponent implements OnInit {
 			const { tenantId } = this.store.user;
 			const role = await this.roleService
 				.getRoleByName({
-					name: this.isEmployeeInvitation()
-						? RolesEnum.EMPLOYEE
-						: this.getRoleNameFromForm(),
+					name: this.getRoleNameFromForm(),
 					tenantId
 				})
 				.pipe(first())
 				.toPromise();
-
+			
+			const { startedWorkOn, appliedDate } = this.form.value;
 			return this.inviteService.createWithEmails({
-				emailIds: this.emails.value.map((email) => email.emailAddress),
+				emailIds: this.emails.value.map((email: any) => email.emailAddress),
 				projectIds: this.projects.value,
 				departmentIds: this.departments.value,
 				organizationContactIds: this.organizationContacts.value,
@@ -174,7 +178,8 @@ export class EmailInviteFormComponent implements OnInit {
 				tenantId,
 				invitedById: this.currentUserId,
 				inviteType: this.router.url,
-				startedWorkOn: this.startedWorkOn
+				startedWorkOn: startedWorkOn ? new Date(startedWorkOn) : null,
+				appliedDate: appliedDate ? new Date(appliedDate) : null
 			});
 		}
 

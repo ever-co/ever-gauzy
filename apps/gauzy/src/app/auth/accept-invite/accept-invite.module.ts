@@ -37,7 +37,6 @@ import { AcceptInvitePage } from './accept-invite.component';
 		TranslateModule
 	],
 	declarations: [AcceptInvitePage, AcceptInviteFormComponent],
-	entryComponents: [AcceptInvitePage, AcceptInviteFormComponent],
 	providers: [InviteService, RoleService]
 })
 export class AcceptInviteModule {}

@@ -80,7 +80,8 @@ export class InviteAcceptEmployeeHandler
 			organization: input.organization,
 			tenant: {
 				id: organization.tenantId
-			}
+			},
+			startedWorkOn: invite.actionDate || null
 		});
 
 		this.updateEmployeeMemberships(invite, employee);

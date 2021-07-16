@@ -190,11 +190,6 @@ const COMPONENTS = [
 		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [
-		CandidateStatusComponent,
-		CandidateSourceComponent,
-		ManageCandidateInviteComponent
-	],
 	providers: [
 		OrganizationsService,
 		InviteGuard,

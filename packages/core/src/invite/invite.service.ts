@@ -104,7 +104,9 @@ export class InviteService extends CrudService<Invite> {
 			organizationContactIds,
 			departmentIds,
 			organizationId,
-			invitedById
+			invitedById,
+			startedWorkOn,
+			appliedDate
 		} = emailInvites;
 
 		const projects: IOrganizationProject[] = await this.organizationProjectsRepository.findByIds(
@@ -171,7 +173,7 @@ export class InviteService extends CrudService<Invite> {
 			invite.projects = projects;
 			invite.departments = departments;
 			invite.organizationContact = organizationContacts;
-
+			invite.actionDate = startedWorkOn || appliedDate;
 			invites.push(invite);
 		}
 

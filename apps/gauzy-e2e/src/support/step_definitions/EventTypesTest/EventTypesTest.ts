@@ -5,6 +5,7 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { EventTypePageData } from '../../Base/pagedata/EventTypesPageData';
 import { CustomCommands } from '../../commands';
 import * as faker from 'faker';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
@@ -36,6 +37,7 @@ And('User can add new employee', () => {
 
 // Add new event type
 And('User can visit Event types page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/event-types');

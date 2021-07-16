@@ -28,7 +28,6 @@ import { TasksSprintSettingsViewComponent } from './tasks-sprint-settings-view.c
 		GauzyEditableGridModule,
 		TranslateModule,
 		NbInputModule
-	],
-	entryComponents: [SprintDialogComponent]
+	]
 })
 export class TasksSprintSettingsViewModule {}

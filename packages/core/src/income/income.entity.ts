@@ -18,43 +18,23 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { IIncome, CurrenciesEnum } from '@gauzy/contracts';
+import { IIncome, CurrenciesEnum, IEmployee, ITag, IOrganizationContact } from '@gauzy/contracts';
 import {
 	Employee,
+	OrganizationContact,
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 
 @Entity('income')
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
-	@ManyToMany(() => Tag, (tag) => tag.income)
-	@JoinTable({
-		name: 'tag_income'
-	})
-	tags: Tag[];
-
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	employee: Employee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((income: Income) => income.employee)
-	@Column({ nullable: true })
-	readonly employeeId?: string;
-
+	
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
 	@Column({ type: 'numeric' })
 	amount: number;
-
-	@ApiPropertyOptional({ type: () => String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	clientId?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -92,4 +72,47 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsOptional()
 	@Column({ nullable: true })
 	reference?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	// Income Employee
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	employee: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Income) => it.employee)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly employeeId?: string;
+
+	// Client
+	@ApiPropertyOptional({ type: () => () => OrganizationContact })
+	@ManyToOne(() => OrganizationContact, { nullable: true })
+	@JoinColumn()
+	client: IOrganizationContact;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Income) => it.client)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	clientId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Tags
+	@ManyToMany(() => Tag, (tag) => tag.income)
+	@JoinTable({ name: 'tag_income' })
+	tags: ITag[];
 }

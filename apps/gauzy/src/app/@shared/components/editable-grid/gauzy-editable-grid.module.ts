@@ -23,7 +23,6 @@ const NbModules = [
 	imports: [ThemeModule, ...NbModules, TranslateModule],
 	declarations: [GauzyEditableGridComponent],
 	exports: [GauzyEditableGridComponent],
-	entryComponents: [],
 	providers: [Store]
 })
 export class GauzyEditableGridModule {}

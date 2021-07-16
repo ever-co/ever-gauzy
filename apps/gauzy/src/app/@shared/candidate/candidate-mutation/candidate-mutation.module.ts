@@ -29,7 +29,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [CandidateMutationComponent, CandidateCvComponent],
 	declarations: [CandidateMutationComponent, CandidateCvComponent],
-	entryComponents: [CandidateMutationComponent, CandidateCvComponent],
 	providers: [OrganizationsService, RoleService]
 })
 export class CandidateMutationModule {}

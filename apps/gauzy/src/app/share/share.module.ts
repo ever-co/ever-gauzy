@@ -18,7 +18,6 @@ import { TranslateModule } from '../@shared/translate/translate.module';
 		TranslateModule,
 		NbSpinnerModule
 	],
-	entryComponents: [],
 	declarations: [ShareComponent],
 	providers: [AuthService, RoleGuard]
 })

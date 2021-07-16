@@ -66,13 +66,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		CandidateNotificationFormComponent,
 		CandidateEmailComponent
 	],
-	entryComponents: [
-		CandidateInterviewMutationComponent,
-		CandidateInterviewFormComponent,
-		CandidateCriterionsFormComponent,
-		CandidateNotificationFormComponent,
-		CandidateEmailComponent
-	],
 	providers: [CandidateTechnologiesService]
 })
 export class CandidateInterviewMutationModule {}

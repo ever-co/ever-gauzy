@@ -25,7 +25,6 @@ import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-
 	],
 	exports: [EditEmployeeMembershipFormComponent],
 	declarations: [EditEmployeeMembershipFormComponent],
-	entryComponents: [EditEmployeeMembershipFormComponent],
 	providers: []
 })
 export class EditEmployeeMembershipFormModule {}

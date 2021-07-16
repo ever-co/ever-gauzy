@@ -122,6 +122,7 @@ export class OrganizationContact
 	// Client Contact 
 	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
+		nullable: true,
 		cascade: true,
 		onDelete: 'SET NULL'
 	})
@@ -132,7 +133,7 @@ export class OrganizationContact
 	@RelationId((it: OrganizationContact) => it.contact)
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	readonly contactId?: string;
 
 	/*

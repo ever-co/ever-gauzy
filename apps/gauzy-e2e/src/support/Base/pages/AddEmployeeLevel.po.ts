@@ -41,7 +41,7 @@ export const newLevelInputVisible = () => {
 };
 
 export const enterNewLevelData = (data) => {
-	clearField(AddEmployeeLevelPage.newLevelInputCss);
+	clickButton(AddEmployeeLevelPage.newLevelInputCss);
 	enterInput(AddEmployeeLevelPage.newLevelInputCss, data);
 };
 

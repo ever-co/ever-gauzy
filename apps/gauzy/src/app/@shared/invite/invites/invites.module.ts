@@ -63,12 +63,6 @@ const COMPONENTS = [
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS],
-	entryComponents: [
-		ProjectNamesComponent,
-		ClientNamesComponent,
-		DepartmentNamesComponent,
-		ResendConfirmationComponent
-	],
 	providers: []
 })
 export class InviteTableModule {}

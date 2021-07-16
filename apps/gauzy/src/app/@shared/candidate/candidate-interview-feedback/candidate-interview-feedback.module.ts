@@ -37,7 +37,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],
-	entryComponents: [CandidateInterviewFeedbackComponent],
 	providers: [
 		CandidateTechnologiesService,
 		CandidatePersonalQualitiesService,

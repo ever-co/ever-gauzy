@@ -11,7 +11,6 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 @NgModule({
 	declarations: [LayoutComponent],
 	exports: [],
-	entryComponents: [],
 	imports: [
 		CommonModule,
 		ScheduleRoutingModule,

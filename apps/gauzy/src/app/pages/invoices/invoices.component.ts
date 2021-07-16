@@ -45,7 +45,7 @@ import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
 import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
@@ -72,13 +72,13 @@ import { ServerDataSource } from '../../@core/utils/smart-table/server.data-sour
 	styleUrls: ['invoices.component.scss']
 })
 export class InvoicesComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedInvoice: IInvoice;
-	loading: boolean = false;
+	loading: boolean;
 	disableButton = true;
 	invoices: IInvoice[] = [];
 	organization: IOrganization;
@@ -95,11 +95,6 @@ export class InvoicesComponent
 	includeArchived = false;
 	subject$: Subject<any> = new Subject();
 	invoiceTabsEnum = InvoiceTabsEnum;
-	pagination: any = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: this.perPage
-	};
 
 	/*
 	* getter setter for check esitmate or invoice
@@ -110,17 +105,6 @@ export class InvoicesComponent
 	}
 	get isEstimate() {
 		return this._isEstimate;
-	}
-
-	/*
-	* getter setter for search tab filters 
-	*/
-	private _filters: any = {};
-	set filters(val: any) {
-		this._filters = val;
-	}
-	get filters() {
-		return this._filters;
 	}
 
 	invoicesTable: Ng2SmartTableComponent;
@@ -663,7 +647,14 @@ export class InvoicesComponent
 				'historyRecords',
 				'historyRecords.user'
 			],
-			join: this.filters.join,
+			join: {
+				alias: "invoice",
+				leftJoin: {
+					toContact: 'invoice.toContact',
+					tags: 'invoice.tags'
+				},
+				...(this.filters.join) ? this.filters.join : {}
+			},
 			where: {
 				organizationId,
 				tenantId,
@@ -674,7 +665,7 @@ export class InvoicesComponent
 			resultMap: (invoice: IInvoice) => {
 				return Object.assign({}, invoice, {
 					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
-					displayStatus: this.statusMapper(invoice.status),
+					status: this.statusMapper(invoice.status),
 					tax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
 					tax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax2}`,
 					discountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
@@ -883,7 +874,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
-			this.settingsSmartTable['columns']['displayStatus'] = {
+			this.settingsSmartTable['columns']['status'] = {
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
 				type: 'custom',
 				width: '5%',
@@ -931,7 +922,8 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
 				type: 'text',
 				width: '12%',
-				filter: false
+				filter: false,
+				sort: false
 			};
 		}
 		if (!this.isEstimate) {
@@ -979,54 +971,39 @@ export class InvoicesComponent
 			organizationContact,
 			tags = [] 
 		} = this.searchForm.value;
-		const filters: any = {
-			where: {},
-			join: {
-				alias: "invoice",
-				leftJoin: {}
-			},
-		}
+
 		if (invoiceNumber) {
-			filters.where.invoiceNumber = invoiceNumber;
+			this.setFilter({ field: 'invoiceNumber', search: invoiceNumber }, false);
 		}
 		if (invoiceDate) {
-			filters.where.invoiceDate = moment(invoiceDate).format('YYYY-MM-DD');
+			this.setFilter({ field: 'invoiceDate', search: moment(invoiceDate).format('YYYY-MM-DD') }, false);
 		}
 		if (dueDate) {
-			filters.where.dueDate = moment(dueDate).format('YYYY-MM-DD');
+			this.setFilter({ field: 'dueDate', search: moment(dueDate).format('YYYY-MM-DD') }, false);
 		}
 		if (totalValue) {
-			filters.where.totalValue = totalValue;
+			this.setFilter({ field: 'totalValue', search: totalValue }, false);
 		}
 		if (currency) {
-			filters.where.currency = currency;
+			this.setFilter({ field: 'currency', search: currency }, false);
 		}
 		if (status) {
-			filters.where.status = status;
+			this.setFilter({ field: 'status', search: status }, false);
 		}
 		if (organizationContact) {
-			filters.join.leftJoin.toContact = 'invoice.toContact'
-			filters.where['toContact'] = [organizationContact.id]
+			this.setFilter({ field: 'toContact', search: [organizationContact.id] }, false);
 		}
 		if (isNotEmpty(tags)) {
-			filters.join.leftJoin.tags = 'invoice.tags';
-			const tagId = [];
+			const tagIds = [];
 			for (const tag of tags) {
-				tagId.push(tag.id);
+				tagIds.push(tag.id);
 			}
-			filters.where.tags = tagId;
+			this.setFilter({ field: 'tags', search: tagIds });
 		}
-		if (isNotEmpty(filters)) {
-			this._filters = filters;
-
+		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();
-			this.subject$.next();
+			this.subject$.next();		
 		}
-	}
-
-	onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
-		this.subject$.next();
 	}
 
 	toggleIncludeArchived(event) {
@@ -1131,13 +1108,6 @@ export class InvoicesComponent
 			organizationId,
 			tenantId
 		});
-	}
-
-	/*
-	* refresh pagination
-	*/
-	refreshPagination() {
-		this.pagination['activePage'] = 1;
 	}
 
 	/*

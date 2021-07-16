@@ -8,7 +8,6 @@ import { NbIconModule, NbSpinnerModule } from '@nebular/theme';
 	imports: [Ng2SmartTableModule, IncomeModule, NbIconModule, NbSpinnerModule],
 	exports: [RecordsHistoryComponent],
 	declarations: [RecordsHistoryComponent],
-	entryComponents: [RecordsHistoryComponent],
 	providers: []
 })
 export class RecordsHistoryModule {}

@@ -335,13 +335,13 @@ export class LocationFormComponent
 			administrative_area_level_5: shortName
 		};
 
-		let addressInput = '';
-		let address2Input = ''; // is house number also
-		let country = '';
-		let postcode = '';
-		let city = '';
+		let addressInput: string = '';
+		let address2Input: string = ''; // is house number also
+		let country: string = '';
+		let postcode: string = '';
+		let city: string = '';
 
-		locationResult.address_components.forEach((address) => {
+		locationResult.address_components.forEach((address) => {			
 			const addressType = address.types[0];
 			const addressTypeKey = neededAddressTypes[addressType];
 			const val = address[addressTypeKey];
@@ -408,7 +408,13 @@ export class LocationFormComponent
 		}
 	}
 
-	private _setFormLocationValues(country, city, address, address2, postcode) {
+	private _setFormLocationValues(
+		country: string,
+		city: string,
+		address: string,
+		address2: string,
+		postcode: string
+	) {
 		if (!isEmpty(country)) {
 			const find = this.countries.find(
 				(item) => item.isoCode === country

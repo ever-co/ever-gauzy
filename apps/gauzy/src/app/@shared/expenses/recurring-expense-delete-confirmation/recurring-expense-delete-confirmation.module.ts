@@ -16,7 +16,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		TranslateModule
 	],
 	exports: [RecurringExpenseDeleteConfirmationComponent],
-	declarations: [RecurringExpenseDeleteConfirmationComponent],
-	entryComponents: [RecurringExpenseDeleteConfirmationComponent]
+	declarations: [RecurringExpenseDeleteConfirmationComponent]
 })
 export class RecurringExpenseDeleteConfirmationModule {}

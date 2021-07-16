@@ -31,7 +31,6 @@ import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.
 	],
 	exports: [EmailInviteFormComponent],
 	declarations: [EmailInviteFormComponent],
-	entryComponents: [EmailInviteFormComponent],
 	providers: [RoleService, InviteService]
 })
 export class InviteFormsModule {}

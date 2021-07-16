@@ -17,7 +17,6 @@ import { TranslateModule } from '../../translate/translate.module';
 		TranslateModule
 	],
 	exports: [CandidateCalendarInfoComponent],
-	declarations: [CandidateCalendarInfoComponent],
-	entryComponents: [CandidateCalendarInfoComponent]
+	declarations: [CandidateCalendarInfoComponent]
 })
 export class CandidateCalendarInfoModule {}

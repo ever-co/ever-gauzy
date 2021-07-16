@@ -28,7 +28,6 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		RecurringExpenseBlockModule,
 		HeaderTitleModule
 	],
-	declarations: [ExpenseRecurringComponent],
-	entryComponents: []
+	declarations: [ExpenseRecurringComponent]
 })
 export class ExpenseRecurringModule {}

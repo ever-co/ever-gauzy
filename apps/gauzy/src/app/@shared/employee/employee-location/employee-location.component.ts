@@ -1,14 +1,13 @@
 import { OnInit, OnDestroy, Component, Input, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { IEmployee, ICandidate } from '@gauzy/contracts';
-import { CandidateStore } from '../../../@core/services/candidate-store.service';
-import { EmployeeStore } from '../../../@core/services/employee-store.service';
-import { LocationFormComponent } from '../../forms/location';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter } from 'rxjs/operators';
-import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
 import { LatLng } from 'leaflet';
-import { Store } from '../../../@core/services/store.service';
+import { LocationFormComponent } from '../../forms/location';
+import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
+import { CandidateStore, EmployeeStore, Store } from '../../../@core/services';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-location',
@@ -40,26 +39,21 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 		this.employeeStore.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),
+				tap((employee) => this.selectedEmployee = employee),
+				tap(() => this.setValidator()),
+				tap((employee) => this._initializeForm(employee)),
 				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				this.selectedEmployee = employee;
-				if (this.selectedEmployee) {
-					this._initializeForm(this.selectedEmployee);
-				}
-			});
+			.subscribe();
 		this.candidateStore.selectedCandidate$
 			.pipe(
 				filter((candidate) => !!candidate),
+				tap((candidate) => this.selectedCandidate = candidate),
+				tap(() => this.setValidator()),
+				tap((candidate) => this._initializeForm(candidate)),
 				untilDestroyed(this)
 			)
-			.subscribe((candidate) => {
-				this.selectedCandidate = candidate;
-				if (this.selectedCandidate) {
-					this._initializeForm(this.selectedCandidate);
-				}
-			});
-		this.setValidator();
+			.subscribe();
 	}
 
 	ngOnDestroy() {}
@@ -92,13 +86,12 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	}
 
 	//Initialize form
-	private _initializeForm(employee: IEmployee | ICandidate) {
-		if (!employee.contact) {
+	private _initializeForm(user: IEmployee | ICandidate) {
+		if (!user.contact) {
 			return;
 		}
-
 		setTimeout(() => {
-			const { contact } = employee;
+			const { contact } = user;
 			if (contact) {
 				this.locationFormDirective.setValue({
 					country: contact.country,

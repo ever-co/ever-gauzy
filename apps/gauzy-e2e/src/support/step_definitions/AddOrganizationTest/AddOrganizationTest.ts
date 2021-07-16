@@ -19,6 +19,14 @@ Given('Login with default credentials and visit Organizations page', () => {
 	cy.visit('/#/pages/organizations');
 });
 
+Then('User can see grid button', () => {
+	addOrganizationPage.gridBtnExists();
+});
+
+And('User can click on second grid button to change view', () => {
+	addOrganizationPage.gridBtnClick(1);
+});
+
 // Add new organization
 Then('User can see Add new organization button', () => {
 	addOrganizationPage.addBtnExists();
@@ -220,17 +228,13 @@ Then('Notification message will appear', () => {
 	addOrganizationPage.waitMessageToHide();
 });
 
-And('User can verify organization was created', () => {
-	addOrganizationPage.verifyOrganizationExists(organizationName);
-});
-
 // Delete organization
 Then('User can see grid button', () => {
 	deleteOrganizationPage.gridBtnExists();
 });
 
 And('User can click on grid button to change view', () => {
-	deleteOrganizationPage.gridBtnClick();
+	deleteOrganizationPage.gridBtnClick(0);
 });
 
 And('User can see delete button', () => {
@@ -238,7 +242,7 @@ And('User can see delete button', () => {
 });
 
 When('User click on delete button', () => {
-	deleteOrganizationPage.deleteBtnClick();
+	deleteOrganizationPage.deleteBtnClick(1);
 });
 
 Then('User can see confirm delete button', () => {
@@ -246,7 +250,7 @@ Then('User can see confirm delete button', () => {
 });
 
 When('User click on confirm delete button', () => {
-	deleteOrganizationPage.confirmBtnClick();
+	deleteOrganizationPage.confirmBtnClick(0);
 });
 
 Then('Notification message will appear', () => {

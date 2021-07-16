@@ -15,14 +15,15 @@ import {
 	IEmployeeProposalTemplate,
 	IOrganizationContact
 } from '@gauzy/contracts';
+import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
-import { filter, tap } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -89,6 +90,7 @@ export class ProposalRegisterComponent
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
@@ -103,10 +105,12 @@ export class ProposalRegisterComponent
 		this.proposalTemplateId = null;
 	}
 
-	onProposalTemplateChange(item: IEmployeeProposalTemplate): void {
-		this.form.patchValue({
-			proposalContent: item.content
-		})
+	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
+		if (isNotEmpty(item)) {
+			this.form.patchValue({ proposalContent: item.content })
+		} else {
+			this.form.patchValue({ proposalContent: null })
+		}
 	}
 
 	ngAfterViewInit(): void {

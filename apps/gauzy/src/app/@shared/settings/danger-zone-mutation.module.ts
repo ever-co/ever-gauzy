@@ -36,7 +36,6 @@ import { TranslateModule } from '../translate/translate.module';
 	],
 	exports: [DangerZoneMutationComponent],
 	declarations: [DangerZoneMutationComponent],
-	entryComponents: [DangerZoneMutationComponent],
 	providers: [AuthService, RoleService, IncomeService]
 })
 export class DangerZoneMutationModule {}
