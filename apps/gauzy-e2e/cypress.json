@@ -16,5 +16,7 @@
 	"testFiles": "**/*.feature",
 	"defaultCommandTimeout": 60000,
 	"pageLoadTimeout": 60000,
-	"taskTimeout": 60000
+	"taskTimeout": 60000,
+	"requestTimeout": 5000,
+	"execTimeout": 3000
 }
