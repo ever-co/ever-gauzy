@@ -58,9 +58,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	@JoinTable({
-		name: 'time_slot_time_logs'
-	})
 	timeSlots?: ITimeSlot[];
 
 	@ApiProperty({ type: () => OrganizationProject })

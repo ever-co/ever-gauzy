@@ -19,6 +19,7 @@ import { isEmpty, toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import * as _ from 'underscore';
 import { GalleryService } from '../../../gallery/gallery.service';
+import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
 
 @Component({
 	selector: 'ngx-screenshots-item',
@@ -67,6 +68,8 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	public set lastScreenshot(screenshot: IScreenshot) {
 		this._lastScreenshot = screenshot;
 	}
+
+	fallbackSvg = DEFAULT_SVG;
 
 	constructor(
 		private readonly nbDialogService: NbDialogService,

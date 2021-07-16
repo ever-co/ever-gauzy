@@ -60,7 +60,10 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	public get taskId(): string {
-		return this.timeTrackerService.timerConfig.taskId;
+		if (this.timeTrackerService.timerConfig.taskId) {
+			return this.timeTrackerService.timerConfig.taskId;
+		}
+		return null;
 	}
 	public set taskId(value: string) {
 		this.timeTrackerService.timerConfig = {
@@ -70,7 +73,10 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	public get organizationContactId(): string {
-		return this.timeTrackerService.timerConfig.organizationContactId;
+		if (this.timeTrackerService.timerConfig.organizationContactId) {
+			return this.timeTrackerService.timerConfig.organizationContactId;
+		}
+		return null;
 	}
 	public set organizationContactId(value: string) {
 		this.timeTrackerService.timerConfig = {
@@ -80,7 +86,10 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	public get projectId(): string {
-		return this.timeTrackerService.timerConfig.projectId;
+		if (this.timeTrackerService.timerConfig.projectId) {
+			return this.timeTrackerService.timerConfig.projectId;
+		}
+		return null;
 	}
 	public set projectId(value: string) {
 		this.timeTrackerService.timerConfig = {
@@ -90,7 +99,10 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	public get description(): string {
-		return this.timeTrackerService.timerConfig.description;
+		if (this.timeTrackerService.timerConfig.description) {
+			return this.timeTrackerService.timerConfig.description;
+		}
+		return null;
 	}
 	public set description(value: string) {
 		this.timeTrackerService.timerConfig = {

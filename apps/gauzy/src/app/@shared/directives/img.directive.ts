@@ -1,5 +1,6 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { AVATAR_DEFAULT_SVG, DEFAULT_SVG } from '../../@core/constants/app.constants';
 
 @Directive({
 	// tslint:disable-next-line: directive-selector
@@ -15,13 +16,9 @@ export class ImgDirective implements OnDestroy, OnInit {
 
 	public defaultImg() {
 		if (this.type === 'user') {
-			return environment.IS_ELECTRON
-				? './assets/images/avatar-default.svg'
-				: '/assets/images/avatar-default.svg';
+			return environment.IS_ELECTRON ? `./${AVATAR_DEFAULT_SVG}` : `/${AVATAR_DEFAULT_SVG}`;
 		} else {
-			return environment.IS_ELECTRON
-				? './assets/images/default.svg'
-				: '/assets/images/default.svg';
+			return environment.IS_ELECTRON ? `./${DEFAULT_SVG}` : `/${DEFAULT_SVG}`;
 		}
 	}
 
@@ -37,15 +34,16 @@ export class ImgDirective implements OnDestroy, OnInit {
 
 	private onError() {
 		this.removeErrorEvent();
+		
 		this.el.style.opacity = '0';
+
 		const src = this.el.getAttribute('src');
 		this.el.setAttribute('src', this.defaultImg());
 		this.el.setAttribute('data-original-src', src);
+
 		const classList: any = this.el.classList;
-		this.el.setAttribute(
-			'class',
-			classList.value + ' default-image default-image-' + this.type
-		);
+		this.el.setAttribute('class', classList.value + ` default-image default-image-${this.type}`);
+
 		this.removeOnLoadEvent();
 	}
 
