@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { ICountry, IOrganization, ITenant } from '@gauzy/contracts';
+import { IContact, ICountry, IOrganization, ITenant } from '@gauzy/contracts';
 import { Contact, Country } from './../core/entities/internal';
 
 export const createRandomContacts = async (
@@ -10,10 +10,10 @@ export const createRandomContacts = async (
 	noOfRandomContacts: number
 ): Promise<Contact[]> => {
 	const countries: ICountry[] = await connection.manager.find(Country);
-	const contacts: Contact[] = [];
+	const contacts: IContact[] = [];
 	for (let i = 0; i < noOfRandomContacts; i++) {
 		for (const organization of organizations) {
-			const contact = new Contact();
+			const contact: IContact = new Contact();
 			contact.firstName = faker.name.firstName();
 			contact.lastName = faker.name.lastName();
 			contact.website = faker.internet.url();
@@ -24,6 +24,7 @@ export const createRandomContacts = async (
 			contact.name = contact.firstName + ' ' + contact.lastName;
 			contact.longitude = +faker.address.longitude();
 			contact.latitude = +faker.address.latitude();
+			contact.postcode = faker.address.zipCode();
 			contact.organization = organization;
 			contact.tenant = tenant;
 			contacts.push(contact);
