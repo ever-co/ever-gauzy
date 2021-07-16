@@ -79,7 +79,7 @@
 		"csv-parser": "^2.3.2",
 		"csv-writer": "^1.6.0",
 		"currency.js": "^2.0.3",
-		"date-fns": "^2.16.1",
+		"date-fns": "^2.22.1",
 		"email-templates": "^7.1.1",
 		"express-session": "^1.17.1",
 		"faker": "^5.5.3",
