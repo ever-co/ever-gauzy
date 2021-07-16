@@ -45,44 +45,45 @@ Feature: Add task
     Then Notification message will appear
   Scenario: Edit task
     And User can see tasks table again
-    When User click on table first row
+    When User select table first row
     Then Edit task button will become active
     When User click on edit task button
-    Then User will see project dropdown
-    When User click on project dropdown
-    Then User can select project from dropdown options
-    And User can see title input field
+    Then User will see edit project dropdown
+    When User click on edit project dropdown
+    Then User can select new project from dropdown options
+    And User can see edit title input field
     And User can add value for edit title
-    And User can see due date input field
-    And User can enter value for due date
-    And User can see estimate days input field
-    And User can enter value for estimate days
-    And User can see estimate hours input field
-    And User can add value for estimate hours
-    And User can see estimate minutes input field
-    And User can enter value for estimate minutes
-    And User can task description input field
-    And User can enter value for description
-    And User can see save task button
-    When User click on save task button
+    And User can see edit due date input field
+    And User can enter value for edit due date
+    And User can see edit estimate days input field
+    And User can enter value for estimate days edit
+    And User can see edit estimate hours input field
+    And User can add value for estimate hours edit
+    And User can see edit estimate minutes input field
+    And User can enter value for estimate minutes edit
+    And User can task edit description input field
+    And User can enter value for description edit
+    And User can see save edited task button
+    When User click on save edited task button
     Then Notification message will appear
-    And User can verify task was created
+    And User can verify task was edited
   Scenario: Delete task
-    When User click on table first row
+    And User can see table for tasks
+    When User click on first table row
     Then User can see duplicate or edit task button
     When User click on duplicate or edit task button
     Then User can see confirm button
     When User click on confirm button
     Then Notification message will appear
     And User can see tasks table again
-    When User click on table first row
+    When User click on first table row
     Then Delete task button will become active
     When User click on delete task button
     Then User can see confirm delete button
     When User click on confirm delete button
     Then Notification message will appear
     And User can verify task was deleted
-    When User click on table first row
+    When User click on first table row
     Then Delete button will become active again
     When User click on delete task button
     Then User will see confirm delte button again
