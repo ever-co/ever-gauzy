@@ -157,6 +157,7 @@
 			<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
 			<ga-project-selector
 				name="projectId"
+				[skipGlobalChange]="true"
 				[showAllOption]="false"
 				[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
 				[defaultSelected]="false"
