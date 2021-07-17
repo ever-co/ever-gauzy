@@ -1,5 +1,7 @@
 const defaultCommandTimeout = Cypress.config('defaultCommandTimeout');
 const taskTimeout = Cypress.config('taskTimeout');
+const requestTimeout = Cypress.config('requestTimeout');
+const execTimeout = Cypress.config('execTimeout');
 
 export const getTitle = () => {
 	return cy.title();
@@ -38,6 +40,7 @@ export const verifyTextByIndex = (loc, data, index) => {
 };
 
 export const clickButton = (loc) => {
+	cy.wait(execTimeout);
 	cy.get(loc, { timeout: taskTimeout }).click();
 };
 
@@ -70,9 +73,7 @@ export const verifyElementIsVisible = (loc) => {
 };
 
 export const clickButtonByIndex = (loc, index) => {
-	cy.get(loc, { timeout: taskTimeout })
-		.eq(index)
-		.click({ force: true });
+	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
 };
 
 export const enterInputConditionally = (loc, data) => {
@@ -114,6 +115,7 @@ export const getNotEqualElement = (loc, text) => {
 };
 
 export const waitElementToHide = (loc) => {
+	cy.wait(requestTimeout);
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.exist');
 };
 
