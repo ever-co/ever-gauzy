@@ -20,7 +20,7 @@ export class SettingsComponent implements OnInit {
 	appName: string = this.electronService.remote.app.getName();
 	menus = this.appName === 'gauzy-server' ? ['Update', 'Advanced Setting'] : ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
 	gauzyIcon =
-		this.appName === 'gauzy-desktop-timer'
+		this.appName === 'gauzy-desktop-timer' || this.appName === 'gauzy-server'
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
@@ -103,7 +103,9 @@ export class SettingsComponent implements OnInit {
 			this.minimizeOnStartup = setting.minimizeOnStartup;
 
 			this.selectPeriod(setting.timer.updatePeriod);
-			this.getUserDetails();
+			if (this.appName !== 'gauzy-server') {
+				this.getUserDetails();
+			}
 
 			this._cdr.detectChanges();
 		});

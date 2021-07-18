@@ -5,7 +5,7 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, nativeImage, Menu, shell } from 'electron';
 import { environment } from './environments/environment';
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 
@@ -18,10 +18,12 @@ import {
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
-	createServerWindow
+	createServerWindow,
+	createSettingsWindow
 } from '@gauzy/desktop-window';
 // import { initSentry } from './sentry';
 import os from 'os';
+import { readFileSync, writeFileSync } from 'fs';
 
 process.env.GAUZY_USER_PATH = app.getPath('userData');
 log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
@@ -36,12 +38,14 @@ const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 const docPath = app.getPath('userData');
 
 let setupWindow:BrowserWindow;
-let serverWindow:BrowserWindow
+let serverWindow:BrowserWindow;
+let settingsWindow: BrowserWindow;
+let tray:Tray;
 const pathWindow: {
 	gauzyUi: string,
 	ui: string
 } = {
-	gauzyUi: path.join(__dirname, './ui/index.html'),
+	gauzyUi: path.join(__dirname, '../../data/ui/index.html'),
 	ui: path.join(__dirname, 'index.html')
 };
 
@@ -74,7 +78,35 @@ const runMainWindow = () => {
 
 const initializeConfig = (val) => {
 	LocalStore.updateConfigSetting(val);
+	updateConfigUi(val);
 	runMainWindow();
+}
+
+const getApiBaseUrl = (config) => {
+	if (config.serverUrl) return config.serverUrl;
+	else {
+		return config.port
+			? `http://localhost:${config.port}`
+			: `http://localhost:${environment.API_DEFAULT_PORT}`;
+	}
+};
+
+const updateConfigUi = (config) => {
+	const apiBaseUrl = getApiBaseUrl(config);
+	let filestr = readFileSync(pathWindow.gauzyUi, 'utf8');
+	const configStr = `<script> window._env = { api: '${apiBaseUrl}' } </script>`;
+	const elementToReplace = '<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>'
+	filestr = filestr.replace(elementToReplace, `
+		${configStr}
+		${elementToReplace}
+	`);
+
+	// write file new html
+
+	writeFileSync(pathWindow.gauzyUi, filestr);
+
+	// console.log(filestr);
+	
 }
 
 const createServer = (typeServer) => {
@@ -151,6 +183,52 @@ const getEnvApi = () => {
 	}
 }
 
+const createTray = () => {
+	const iconNativePath = nativeImage.createFromPath(path.join(
+		__dirname,
+		'assets',
+		'icons',
+		'icon_16x16.png'
+	));
+	iconNativePath.resize({ width: 16, height: 16 });
+	tray = new Tray(iconNativePath);
+	const serverMenu = [
+		{
+			id: '1',
+			label: 'Open Gauzy In Browser',
+			click() {
+				shell.openExternal('http://localhost:8084')
+			}
+		},
+		{
+			id: '2',
+			label: 'Check For Update',
+			click() {
+				const appSetting = LocalStore.getStore('appSetting');
+				const config = LocalStore.getStore('configs');
+				settingsWindow.show();
+				setTimeout(() => {
+					settingsWindow.webContents.send('goto_update');
+				}, 100);
+				setTimeout(() => {
+					settingsWindow.webContents.send('app_setting', {
+						setting: appSetting,
+						config: config
+					});
+				}, 500);
+			}
+		},
+		{
+			id: '3',
+			label: 'Exit',
+			click() {
+				app.quit();
+			}
+		}
+	]
+	tray.setContextMenu(Menu.buildFromTemplate(serverMenu));
+}
+
 ipcMain.on('start_server', (event, arg) => {
 	initializeConfig(arg);
 })
@@ -184,7 +262,17 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 	} 
 })
 app.on('ready', () => {
+	LocalStore.setDefaultApplicationSetting();
 	appState();
+	if (!settingsWindow) {
+		settingsWindow = createSettingsWindow(
+			settingsWindow,
+			pathWindow.ui
+		);
+	}
+	if (!tray) {
+		createTray();
+	}
 })
 
 ipcMain.on('quit', quit);

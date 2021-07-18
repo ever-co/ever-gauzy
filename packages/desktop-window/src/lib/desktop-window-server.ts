@@ -35,7 +35,6 @@ export function createServerWindow(serverWindow, config, filePath) {
 }
 
 const windowSetting = () => {
-	const sizes = screen.getPrimaryDisplay().workAreaSize;
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: false,
@@ -49,7 +48,7 @@ const windowSetting = () => {
 		},
 		width: 800,
 		height: 600,
-		title: 'Gauzy Desktop',
+		title: '',
 		show: false
 	};
 	return mainWindowSettings;
