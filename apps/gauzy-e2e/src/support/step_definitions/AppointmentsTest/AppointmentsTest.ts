@@ -77,10 +77,6 @@ When('User click on book appontment button', () => {
 	appointmentsPage.clickBookAppointmentButton();
 });
 
-Then('User can verify header', () => {
-	appointmentsPage.verifyHeader(AppointmentsPageData.header);
-});
-
-And('User can verify employee', () => {
+Then('User can verify employee', () => {
 	appointmentsPage.verifyEmployee(`${firstName} ${lastName}`);
 });

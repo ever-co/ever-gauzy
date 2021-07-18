@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { AppService } from './app.service';
+import { AuthStrategy } from './auth/auth-strategy.service';
+import {
+	Router
+} from '@angular/router';
 
 @Component({
 	selector: 'gauzy-root',
@@ -10,7 +14,9 @@ import { AppService } from './app.service';
 export class AppComponent implements OnInit {
 	constructor(
 		private electronService: ElectronService,
-		private appService: AppService
+		private appService: AppService,
+		private authStrategy: AuthStrategy,
+		private router: Router
 	) {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) => {
 			this.appService
@@ -164,7 +170,7 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_time_log_stop',
 			(event, arg) => {
-				console.log('time log stop');
+				console.log('Time Log Stopped');
 				this.appService.updateTimeLog(arg);
 			}
 		);
@@ -208,7 +214,7 @@ export class AppComponent implements OnInit {
 			'upload_screen_shot',
 			(event, arg) => {
 				this.appService.uploadScreenCapture(arg).then((res) => {
-					console.log('screen upload', res);
+					console.log('Screenshot Uploaded', res);
 				});
 			}
 		);
@@ -237,6 +243,12 @@ export class AppComponent implements OnInit {
 
 		this.electronService.ipcRenderer.on('logout_timer', (event, arg) => {
 			console.log(event, arg);
+		});
+
+		this.electronService.ipcRenderer.on('logout', () => {
+			this.authStrategy.logout().toPromise().then(res => {				
+				this.electronService.ipcRenderer.send('navigate_to_login');
+			})
 		});
 	}
 

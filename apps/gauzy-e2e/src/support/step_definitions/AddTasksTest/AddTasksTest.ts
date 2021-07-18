@@ -60,6 +60,9 @@ And('User can add new project', () => {
 
 // Add new task
 When('User go to Tasks dashboard page', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -216,7 +219,7 @@ And('User can see tasks table again', () => {
 	addTaskPage.tasksTableVisible();
 });
 
-When('User click on table first row', () => {
+When('User select table first row', () => {
 	addTaskPage.selectTasksTableRow(0);
 });
 
@@ -228,21 +231,21 @@ When('User click on edit task button', () => {
 	addTaskPage.clickDuplicateOrEditTaskButton(1);
 });
 
-Then('User will see project dropdown', () => {
+Then('User will see edit project dropdown', () => {
 	addTaskPage.selectProjectDropdownVisible();
 });
 
-When('User click on project dropdown', () => {
+When('User click on edit project dropdown', () => {
 	addTaskPage.clickSelectProjectDropdown();
 });
 
-Then('User can select project from dropdown options', () => {
+Then('User can select new project from dropdown options', () => {
 	addTaskPage.selectProjectOptionDropdown(
 		AddTasksPageData.defaultTaskProject
 	);
 });
 
-And('User can see title input field', () => {
+And('User can see edit title input field', () => {
 	addTaskPage.addTitleInputVisible();
 });
 
@@ -250,60 +253,60 @@ And('User can add value for edit title', () => {
 	addTaskPage.enterTitleInputData(AddTasksPageData.editTaskTitle);
 });
 
-And('User can see due date input field', () => {
+And('User can see edit due date input field', () => {
 	addTaskPage.dueDateInputVisible();
 });
 
-And('User can enter value for due date', () => {
+And('User can enter value for edit due date', () => {
 	addTaskPage.enterDueDateData();
 	addTaskPage.clickKeyboardButtonByKeyCode(9);
 });
 
-And('User can see estimate days input field', () => {
+And('User can see edit estimate days input field', () => {
 	addTaskPage.estimateDaysInputVisible();
 });
 
-And('User can enter value for estimate days', () => {
+And('User can enter value for estimate days edit', () => {
 	addTaskPage.enterEstiamteDaysInputData(
 		AddTasksPageData.defaultTaskEstimateDays
 	);
 });
 
-And('User can see estimate hours input field', () => {
+And('User can see edit estimate hours input field', () => {
 	addTaskPage.estimateHoursInputVisible();
 });
 
-And('User can add value for estimate hours', () => {
+And('User can add value for estimate hours edit', () => {
 	addTaskPage.enterEstiamteHoursInputData(
 		AddTasksPageData.defaultTaskEstimateHours
 	);
 });
 
-And('User can see estimate minutes input field', () => {
+And('User can see edit estimate minutes input field', () => {
 	addTaskPage.estimateMinutesInputVisible();
 });
 
-And('User can enter value for estimate minutes', () => {
+And('User can enter value for estimate minutes edit', () => {
 	addTaskPage.enterEstimateMinutesInputData(
 		AddTasksPageData.defaultTaskEstimateMinutes
 	);
 });
 
-And('User can task description input field', () => {
+And('User can task edit description input field', () => {
 	addTaskPage.taskDecriptionTextareaVisible();
 });
 
-And('User can enter value for description', () => {
+And('User can enter value for description edit', () => {
 	addTaskPage.enterTaskDescriptionTextareaData(
 		AddTasksPageData.defaultTaskDescription
 	);
 });
 
-And('User can see save task button', () => {
+And('User can see save edited task button', () => {
 	addTaskPage.saveTaskButtonVisible();
 });
 
-When('User click on save task button', () => {
+When('User click on save edited task button', () => {
 	addTaskPage.clickSaveTaskButton();
 });
 
@@ -311,12 +314,16 @@ Then('Notification message will appear', () => {
 	addTaskPage.waitMessageToHide();
 });
 
-And('User can verify task was created', () => {
+And('User can verify task was edited', () => {
 	addTaskPage.verifyTaskExists(AddTasksPageData.editTaskTitle);
 });
 
 // Delete task
-When('User click on table first row', () => {
+And('User can see table for tasks', () => {
+	addTaskPage.tasksTableVisible();
+});
+
+When('User click on first table row', () => {
 	addTaskPage.selectTasksTableRow(0);
 });
 

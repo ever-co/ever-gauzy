@@ -82,6 +82,11 @@ export const createRandomIncomes = async (
 	];
 	const randomIncomes: Income[] = []
 	for (const tenant of tenants || []) {
+		const organizationContacts = await connection.manager.find(OrganizationContact, { 
+			where: { 
+				tenant 
+			} 
+		});
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const employee of employees || []) {
 			for (let index = 0; index < 100; index++) {
@@ -95,9 +100,9 @@ export const createRandomIncomes = async (
 				income.employee = employee;
 				income.clientName = clientsArray[currentIndex];
 				income.amount = faker.datatype.number({ min: 10, max: 9999 });
-				income.clientId = faker.datatype
-					.number({ min: 10, max: 9999 })
-					.toString();
+				if (organizationContacts.length) {
+					income.client = faker.random.arrayElement(organizationContacts); 
+				}
 				income.currency =
 					employee.organization.currency || env.defaultCurrency;
 				income.valueDate = faker.date.between(

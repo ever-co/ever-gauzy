@@ -380,6 +380,7 @@ export class GoalsComponent
 	async createObjective(goal, index) {
 		if (
 			!goal &&
+			this.goalGeneralSettings &&
 			this.goalGeneralSettings.maxObjectives <= this.allGoals.length
 		) {
 			this.toastrService.info(

@@ -13,5 +13,4 @@ Feature: Appointments test
     And User can choose employee from dropdown
     And User can see book appontment button
     When User click on book appontment button
-    Then User can verify header
-    And User can verify employee
+    Then User can verify employee

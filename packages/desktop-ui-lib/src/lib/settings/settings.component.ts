@@ -20,7 +20,7 @@ export class SettingsComponent implements OnInit {
 	appName: string = this.electronService.remote.app.getName();
 	menus = this.appName === 'gauzy-server' ? ['Update', 'Advanced Setting'] : ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
 	gauzyIcon =
-		this.appName === 'gauzy-desktop-timer'
+		this.appName === 'gauzy-desktop-timer' || this.appName === 'gauzy-server'
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
@@ -103,7 +103,9 @@ export class SettingsComponent implements OnInit {
 			this.minimizeOnStartup = setting.minimizeOnStartup;
 
 			this.selectPeriod(setting.timer.updatePeriod);
-			this.getUserDetails();
+			if (this.appName !== 'gauzy-server') {
+				this.getUserDetails();
+			}
 
 			this._cdr.detectChanges();
 		});
@@ -159,6 +161,11 @@ export class SettingsComponent implements OnInit {
 		electronService.ipcRenderer.on('goto_top_menu', () => {
 			this.selectMenu('Screen Capture');
 		});
+
+		electronService.ipcRenderer.on('logout_success', () => {
+			this.currentUser = null;
+			this._cdr.detectChanges();
+		})
 	}
 
 	ngOnInit(): void {
@@ -296,7 +303,9 @@ export class SettingsComponent implements OnInit {
 			apiHost: this.config.serverUrl
 		};
 		this.timeTrackerService.getUserDetail(request).then((res) => {
-			this.currentUser = res;
+			if (!this.authSetting.isLogout) {
+				this.currentUser = res;
+			}
 			this._cdr.detectChanges();
 		});
 	}
@@ -305,8 +314,8 @@ export class SettingsComponent implements OnInit {
 	 * Logout desktop timer
 	 */
 	logout() {
-		console.log('On Logout');
-		this.electronService.ipcRenderer.send('logout');
+		console.log('On Logout s');
+		this.electronService.ipcRenderer.send('logout_desktop');
 	}
 
 	onServerChange(val) {

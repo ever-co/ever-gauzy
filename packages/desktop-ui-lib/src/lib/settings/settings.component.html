@@ -460,7 +460,7 @@
 		</div>
 	</nb-layout-column>
 	<nb-layout-footer fixed>
-		<span *ngIf="currentUser">
+		<span *ngIf="currentUser && appName === 'gauzy-desktop-timer'">
 			<p>
 				Signed in as {{ currentUser?.name }} -
 				<a href="javascript:void(0);" (click)="logout()"> Sign Out </a>

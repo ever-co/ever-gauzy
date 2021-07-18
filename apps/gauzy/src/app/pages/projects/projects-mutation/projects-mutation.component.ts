@@ -183,6 +183,7 @@ export class ProjectsMutationComponent
 
 	async submitForm() {
 		if (this.form.valid) {
+			const { organizationContact } = this.form.value;
 			this.addOrEditProject.emit({
 				action: !this.project ? 'add' : 'edit',
 				project: {
@@ -192,9 +193,7 @@ export class ProjectsMutationComponent
 					id: this.project ? this.project.id : undefined,
 					organizationId: this.organization.id,
 					name: this.form.value['name'],
-					organizationContactId: this.form.value[
-						'organizationContact'
-					].id,
+					organizationContactId: organizationContact ? organizationContact.id : null,
 					billing: this.form.value['billing'],
 					budget: this.form.value.budget,
 					budgetType: this.form.value.budgetType,

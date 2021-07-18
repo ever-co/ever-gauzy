@@ -8,7 +8,9 @@ import {
 	NbThemeModule,
 	NbToastrModule,
 	NbDialogService,
-	NbLayoutModule
+	NbLayoutModule,
+	NbMenuModule,
+	NbSidebarModule
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -35,6 +37,8 @@ import { RouterModule } from '@angular/router';
 		RouterModule,
 		AppRoutingModule,
 		NbThemeModule.forRoot({ name: 'default' }),
+		NbMenuModule.forRoot(),
+		NbSidebarModule.forRoot(),
 		SetupModule,
 		NgxElectronModule,
 		HttpClientModule,
