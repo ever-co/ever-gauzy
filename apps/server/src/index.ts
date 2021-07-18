@@ -45,7 +45,7 @@ const pathWindow: {
 	gauzyUi: string,
 	ui: string
 } = {
-	gauzyUi: path.join(__dirname, '../../data/ui/index.html'),
+	gauzyUi: path.join(__dirname, '../data/ui/index.html'),
 	ui: path.join(__dirname, 'index.html')
 };
 
