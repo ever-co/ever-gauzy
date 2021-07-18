@@ -168,7 +168,8 @@ Notes:
 ### Production
 
 -   See [Setup Gauzy for Client Server](https://github.com/ever-co/ever-gauzy/wiki/Setup-Gauzy-for-Client-Server) for more information about production setup on your servers.
--   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project, it makes Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
+-   For simple deployments scenarious (e.g. for yourself or your own small organization), check our [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy demo into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
+-   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project, it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
 
 ## Contribute
 
