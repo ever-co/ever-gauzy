@@ -2,7 +2,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const static = require('node-static');
-const file = new(static.Server)(path.join(__dirname, '..', 'ui'));
+const dirUi = path.join(__dirname, '..', '..', 'data', 'ui');
+const file = new(static.Server)(dirUi);
 const url = require('url');
 console.log('server started');
 

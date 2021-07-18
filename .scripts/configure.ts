@@ -26,6 +26,7 @@ envFileContent = `// NOTE: Auto-generated file
 // The build system defaults to the dev environment which uses 'environment.ts', but if you do
 // 'ng build --env=prod' then 'environment.prod.ts' will be used instead.
 // The list of which env maps to which file can be found in '.angular-cli.json'.
+declare const window:any;
 
 import { Environment } from './model';
 import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
@@ -54,6 +55,16 @@ if (!env.IS_DOCKER) {
 		} catch(e) {
 		}
 	}
+
+	try {
+		if (window._env && window._env.api) {
+			API_BASE_URL= window._env.api;
+		}
+	
+		if (window._env && window._env.api) {
+			CLIENT_BASE_URL = window.location.origin;
+		}
+	} catch(e) {}
 
 	export const environment: Environment = 
 	{

@@ -270,6 +270,14 @@ export class TrayIcon {
 				}
 			},
 			{
+				id: '7',
+				label: 'Logout',
+				visible: app.getName() === 'gauzy-desktop-timer',
+				click() {
+					timeTrackerWindow.webContents.send('logout');
+				}
+			},
+			{
 				id: '5',
 				label: 'Exit',
 				click() {
@@ -332,7 +340,7 @@ export class TrayIcon {
 				});
 			}
 			store.set({
-				auth: arg
+				auth: {...arg, isLogout: false }
 			});
 			if (arg.employeeId) {
 				contextMenu = menuAuth;

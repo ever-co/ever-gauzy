@@ -932,7 +932,7 @@
             "customWebpackConfig": {
               "path": "apps/gauzy/config/custom-webpack.config.js"
             },
-            "outputPath": "dist/apps/gauzy-server/ui",
+            "outputPath": "dist/apps/gauzy-server/data/ui",
             "index": "apps/gauzy/src/index.html",
             "main": "apps/gauzy/src/main.ts",
             "polyfills": "apps/gauzy/src/polyfills.ts",

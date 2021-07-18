@@ -11,6 +11,9 @@ import {
 	openSystemPreferences
 } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
+import {
+	timeTrackerPage
+} from '@gauzy/desktop-window';
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -321,4 +324,17 @@ export function ipcTimer(
 		const settings = LocalStore.getStore('appSetting');
 		timeTrackerWindow.webContents.send('update_setting_value', settings);
 	});
+
+	ipcMain.on('logout_desktop', (event, arg) => {
+		console.log('masuk logout main');
+		timeTrackerWindow.webContents.send('logout');
+	})
+
+	ipcMain.on('navigate_to_login', () => {
+		timeTrackerWindow.loadURL(
+			timeTrackerPage(windowPath.timeTrackerUi)
+		);
+		LocalStore.updateAuthSetting({ isLogout: true })
+		settingWindow.webContents.send('logout_success');
+	})
 }
