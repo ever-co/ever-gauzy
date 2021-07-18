@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { AppService } from './app.service';
-
+import { AuthStrategy } from './auth/auth-strategy.service';
+import {
+	Router
+} from '@angular/router';
 @Component({
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
@@ -10,7 +13,9 @@ import { AppService } from './app.service';
 export class AppComponent implements OnInit {
 	constructor(
 		private electronService: ElectronService,
-		private appService: AppService
+		private appService: AppService,
+		private authStrategy: AuthStrategy,
+		private router: Router
 	) {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) => {
 			this.appService
@@ -237,6 +242,13 @@ export class AppComponent implements OnInit {
 
 		this.electronService.ipcRenderer.on('logout_timer', (event, arg) => {
 			console.log(event, arg);
+		});
+
+		this.electronService.ipcRenderer.on('logout', () => {
+			this.authStrategy.logout().toPromise().then(res => {
+				console.log(res);
+				this.electronService.ipcRenderer.send('navigate_to_login');
+			})
 		});
 	}
 

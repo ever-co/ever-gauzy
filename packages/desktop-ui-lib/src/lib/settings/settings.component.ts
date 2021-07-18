@@ -159,6 +159,11 @@ export class SettingsComponent implements OnInit {
 		electronService.ipcRenderer.on('goto_top_menu', () => {
 			this.selectMenu('Screen Capture');
 		});
+
+		electronService.ipcRenderer.on('logout_success', () => {
+			this.currentUser = null;
+			this._cdr.detectChanges();
+		})
 	}
 
 	ngOnInit(): void {
@@ -296,7 +301,9 @@ export class SettingsComponent implements OnInit {
 			apiHost: this.config.serverUrl
 		};
 		this.timeTrackerService.getUserDetail(request).then((res) => {
-			this.currentUser = res;
+			if (!this.authSetting.isLogout) {
+				this.currentUser = res;
+			}
 			this._cdr.detectChanges();
 		});
 	}
@@ -305,8 +312,8 @@ export class SettingsComponent implements OnInit {
 	 * Logout desktop timer
 	 */
 	logout() {
-		console.log('On Logout');
-		this.electronService.ipcRenderer.send('logout');
+		console.log('On Logout s');
+		this.electronService.ipcRenderer.send('logout_desktop');
 	}
 
 	onServerChange(val) {
