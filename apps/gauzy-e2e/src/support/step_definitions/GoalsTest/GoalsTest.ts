@@ -37,8 +37,6 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 And('User can add new tag', () => {
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 

@@ -142,6 +142,9 @@ export const CustomCommands = {
 		organizationProjectsPage: any,
 		OrganizationProjectsPageData: any
 	) => {
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
 		cy.visit('/#/pages/organization/projects', {
 			timeout: pageLoadTimeout
 		});
