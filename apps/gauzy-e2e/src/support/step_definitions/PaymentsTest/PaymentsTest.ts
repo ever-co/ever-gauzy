@@ -28,8 +28,6 @@ Given('Login with default credentials', () => {
 
 // Add employee
 And('User can add new employee', () => {
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
