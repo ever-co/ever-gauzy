@@ -19,6 +19,7 @@ import { IGetConflictTimeLogCommand } from '../time-log/commands/get-conflict-ti
 import { TimeLogCreateCommand } from '../time-log/commands/time-log-create.command';
 import { DeleteTimeSpanCommand } from '../time-log/commands/delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log/commands/time-log-update.command';
+import { getDateRange } from './../../core/utils';
 
 @Injectable()
 export class TimerService {
@@ -44,6 +45,7 @@ export class TimerService {
 		}
 
 		const { organizationId, id: employeeId } = employee;
+		const { start, end } = getDateRange();
 
 		// Get today's completed timelogs
 		const logs = await this.timeLogRepository.find({
@@ -51,10 +53,7 @@ export class TimerService {
 				deletedAt: IsNull(),
 				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
-				startedAt: Between(
-					moment().startOf('day').format(),
-					moment().endOf('day').format()
-				),
+				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
 				tenantId,
 				organizationId
@@ -71,10 +70,7 @@ export class TimerService {
 				deletedAt: IsNull(),
 				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
-				startedAt: Between(
-					moment().startOf('day').format(), 
-					moment().endOf('day').format()
-				),
+				startedAt: Between(start, end),
 				tenantId,
 				organizationId
 			},
@@ -104,7 +100,7 @@ export class TimerService {
 				status.running = false;
 			} else {
 				status.running = true;
-				status.duration = Math.abs((lastLog.startedAt.getTime() - new Date().getTime()) / 1000);
+				status.duration += Math.abs((lastLog.startedAt.getTime() - new Date().getTime()) / 1000);
 			}
 		}
 		return status;
