@@ -5,8 +5,7 @@ import {
 	ManyToOne,
 	JoinColumn,
 	AfterLoad,
-	ManyToMany,
-	JoinTable
+	ManyToMany
 } from 'typeorm';
 import {
 	ITimeLog,
