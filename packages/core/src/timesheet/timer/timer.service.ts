@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, Between } from 'typeorm';
+import { Repository, IsNull, Between, Not } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
 import {
@@ -43,40 +43,62 @@ export class TimerService {
 			throw new BadRequestException('Employee not found.');
 		}
 
-		const todayLog = await this.timeLogRepository.find({
+		const { organizationId, id: employeeId } = employee;
+
+		// Get today's completed timelogs
+		const logs = await this.timeLogRepository.find({
 			where: {
 				deletedAt: IsNull(),
-				employeeId: employee.id,
+				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
-				startedAt: Between(
-					moment().startOf('day'),
-					moment().endOf('day')
-				),
-				tenantId
+				startedAt: Between(moment().startOf('day'), moment().endOf('day')),
+				stoppedAt: Not(IsNull()),
+				tenantId,
+				organizationId
 			},
 			order: {
-				startedAt: 'DESC'
+				startedAt: 'DESC',
+				createdAt: 'DESC'
 			}
 		});
+
+		// Get today's last log (running or completed)
+		const lastLog = await this.timeLogRepository.findOne({
+			where: {
+				deletedAt: IsNull(),
+				employeeId,
+				source: request.source || TimeLogSourceEnum.BROWSER,
+				startedAt: Between(moment().startOf('day'), moment().endOf('day')),
+				tenantId,
+				organizationId
+			},
+			order: {
+				startedAt: 'DESC',
+				createdAt: 'DESC'
+			}
+		});
+
 		const status: ITimerStatus = {
 			duration: 0,
 			running: false,
 			lastLog: null
 		};
-		if (todayLog.length > 0) {
-			const lastLog = todayLog[0];
-			status.lastLog = lastLog;
 
+		// Calculate completed timelogs duration
+		if (logs.length > 0) {
+			for await (const log of logs) {
+				status.duration += log.duration;
+			}
+		}
+
+		// Calculate last timelog duration
+		if (lastLog) {
+			status.lastLog = lastLog;
 			if (lastLog.stoppedAt) {
 				status.running = false;
 			} else {
 				status.running = true;
-				status.duration = Math.abs(
-					(lastLog.startedAt.getTime() - new Date().getTime()) / 1000
-				);
-			}
-			for (let index = 0; index < todayLog.length; index++) {
-				status.duration += todayLog[index].duration;
+				status.duration = Math.abs((lastLog.startedAt.getTime() - new Date().getTime()) / 1000);
 			}
 		}
 		return status;
