@@ -8,15 +8,13 @@ import {
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { toUTC } from '@gauzy/common-angular';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { Store } from '../../../@core/services/store.service';
 import { NgForm } from '@angular/forms';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { filter } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { Observable } from 'rxjs/Observable';
+import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,7 +23,8 @@ import { Observable } from 'rxjs/Observable';
 	styleUrls: ['./time-tracker.component.scss']
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
-	isOpen = false;
+
+	isOpen: boolean = false;
 	employeeId: string;
 	time = '00:00:00';
 	current_time = '00:00:00';
@@ -36,17 +35,17 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	allowFutureDate: boolean;
-	@ViewChild(NgForm) form: NgForm;
 
+	@ViewChild(NgForm) form: NgForm;
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
 
 	constructor(
-		private timeTrackerService: TimeTrackerService,
-		private timesheetService: TimesheetService,
-		private toastrService: ToastrService,
-		private ngxPermissionsService: NgxPermissionsService,
-		private store: Store,
-		private _errorHandlingService: ErrorHandlingService
+		private readonly timeTrackerService: TimeTrackerService,
+		private readonly timesheetService: TimesheetService,
+		private readonly toastrService: ToastrService,
+		private readonly ngxPermissionsService: NgxPermissionsService,
+		private readonly store: Store,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {}
 
 	public get isBillable(): boolean {
@@ -60,8 +59,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	public get taskId(): string {
-		if (this.timeTrackerService.timerConfig.taskId) {
-			return this.timeTrackerService.timerConfig.taskId;
+		const { taskId } = this.timeTrackerService.timerConfig;
+		if (taskId) {
+			return taskId;
 		}
 		return null;
 	}
@@ -73,8 +73,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	public get organizationContactId(): string {
-		if (this.timeTrackerService.timerConfig.organizationContactId) {
-			return this.timeTrackerService.timerConfig.organizationContactId;
+		const { organizationContactId } = this.timeTrackerService.timerConfig;
+		if (organizationContactId) {
+			return organizationContactId;
 		}
 		return null;
 	}
@@ -86,8 +87,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	public get projectId(): string {
-		if (this.timeTrackerService.timerConfig.projectId) {
-			return this.timeTrackerService.timerConfig.projectId;
+		const { projectId } = this.timeTrackerService.timerConfig;
+		if (projectId) {
+			return projectId;
 		}
 		return null;
 	}
@@ -99,8 +101,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	public get description(): string {
-		if (this.timeTrackerService.timerConfig.description) {
-			return this.timeTrackerService.timerConfig.description;
+		const { description } = this.timeTrackerService.timerConfig;
+		if (description) {
+			return description;
 		}
 		return null;
 	}
@@ -120,7 +123,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 			});
-
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
@@ -130,31 +132,26 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				this.user = user;
 				this.employeeId = user.employeeId;
 			});
-
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
-
 		this.timeTrackerService.showTimerWindow$
 			.pipe(untilDestroyed(this))
 			.subscribe((isOpen) => {
 				this.isOpen = isOpen;
 			});
-
 		this.timeTrackerService.current_session_duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
-
 		this.timeTrackerService.$running
 			.pipe(untilDestroyed(this))
 			.subscribe((isRunning) => {
 				this.running = isRunning;
 			});
-
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
@@ -185,7 +182,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	toggleTimer() {
-		if (!this.running && !this.form.valid) {
+		if (!this.running && this.form.invalid) {
 			this.form.resetForm();
 			return;
 		}
@@ -200,45 +197,47 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	addTime() {
-		if (!this.form.valid) {
+		if (this.form.invalid) {
 			return;
 		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
 		const startedAt = toUTC(this.selectedRange.start).toDate();
 		const stoppedAt = toUTC(this.selectedRange.end).toDate();
-
-		const addRequestData = Object.assign(
+		const payload = Object.assign(
 			{
 				startedAt,
-				stoppedAt
+				stoppedAt,
+				organizationId,
+				tenantId
 			},
 			this.timeTrackerService.timerConfig
 		);
-		(addRequestData.organizationId = this.organization.id),
-			this.timesheetService
-				.addTime(addRequestData)
-				.then((timeLog) => {
-					const { tenantId } = this.user;
-					this.timesheetService.updateLogs(true);
-					this.timeTrackerService.checkTimerStatus(tenantId);
-					if (
-						moment
-							.utc(timeLog.startedAt)
-							.local()
-							.isSame(new Date(), 'day')
-					) {
-						this.timeTrackerService.duration =
-							this.timeTrackerService.duration + timeLog.duration;
-					}
-					this.form.resetForm();
-					//this.updateTimePickerLimit(new Date());
-					this.selectedRange = { start: null, end: null };
-					this.toastrService.success(
-						'TIMER_TRACKER.ADD_TIME_SUCCESS'
-					);
-				})
-				.catch((error) => {
-					this.toastrService.danger(error);
-				});
+		
+		this.timesheetService
+			.addTime(payload)
+			.then((timeLog) => {
+				this.timesheetService.updateLogs(true);
+				this.timeTrackerService.checkTimerStatus(tenantId);
+				if (
+					moment
+						.utc(timeLog.startedAt)
+						.local()
+						.isSame(new Date(), 'day')
+				) {
+					this.timeTrackerService.duration =
+						this.timeTrackerService.duration + timeLog.duration;
+				}
+
+				this.form.resetForm();
+				this.selectedRange = { start: null, end: null };
+
+				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
+			})
+			.catch((error) => {
+				this.toastrService.danger(error);
+			});
 	}
 
 	setTimeType(type: string) {
