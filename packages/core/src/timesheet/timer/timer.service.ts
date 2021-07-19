@@ -106,44 +106,37 @@ export class TimerService {
 
 	async startTimer(request: ITimerToggleInput): Promise<TimeLog> {
 		const user = RequestContext.currentUser();
-		const lastLog = await this.timeLogRepository.findOne({
-			where: {
-				deletedAt: IsNull(),
-				employeeId: user.employeeId,
-				stoppedAt: IsNull()
-			},
-			order: {
-				startedAt: 'DESC'
-			}
-		});
+		const tenantId = RequestContext.currentTenantId();
 
+		const employee = await this.employeeRepository.findOne({
+			userId: user.id,
+			tenantId
+		});
+		if (!employee) {
+			throw new BadRequestException('Employee not found for this tenant.');
+		}
+
+		const { organizationId, id: employeeId } = employee;
+		const lastLog = await this.getLastRunningLog();
+	
 		if (lastLog) {
 			await this.stopTimer(request);
 		}
 
-		let organizationId;
-		if (!request.organizationId) {
-			const employee = await this.employeeRepository.findOne(
-				user.employeeId
-			);
-			organizationId = employee.organizationId;
-		} else {
-			organizationId = request.organizationId;
-		}
-
+		const { source, projectId, taskId, organizationContactId, logType, description, isBillable } = request;
 		const newTimeLogInput = {
 			organizationId,
-			tenantId: RequestContext.currentTenantId(),
+			tenantId,
+			employeeId,
 			startedAt: moment.utc().toDate(),
 			duration: 0,
-			employeeId: user.employeeId,
-			source: request.source || TimeLogSourceEnum.BROWSER,
-			projectId: request.projectId || null,
-			taskId: request.taskId || null,
-			organizationContactId: request.organizationContactId || null,
-			logType: request.logType || TimeLogType.TRACKED,
-			description: request.description || '',
-			isBillable: request.isBillable || false
+			source: source || TimeLogSourceEnum.BROWSER,
+			projectId: projectId || null,
+			taskId: taskId || null,
+			organizationContactId: organizationContactId || null,
+			logType: logType || TimeLogType.TRACKED,
+			description: description || '',
+			isBillable: isBillable || false
 		};
 
 		return await this.commandBus.execute(
@@ -152,17 +145,10 @@ export class TimerService {
 	}
 
 	async stopTimer(request: ITimerToggleInput): Promise<TimeLog> {
-		const user = RequestContext.currentUser();
-		let lastLog = await this.timeLogRepository.findOne({
-			where: {
-				deletedAt: IsNull(),
-				employeeId: user.employeeId,
-				stoppedAt: IsNull()
-			},
-			order: {
-				startedAt: 'DESC'
-			}
-		});
+		const { organizationId } = request;
+		const tenantId = RequestContext.currentTenantId();
+
+		let lastLog = await this.getLastRunningLog();
 
 		const stoppedAt = new Date();
 		if (lastLog.startedAt === stoppedAt) {
@@ -182,7 +168,9 @@ export class TimerService {
 			ignoreId: lastLog.id,
 			startDate: lastLog.startedAt,
 			endDate: lastLog.stoppedAt,
-			employeeId: lastLog.employeeId
+			employeeId: lastLog.employeeId,
+			organizationId: organizationId || lastLog.organizationId,
+			tenantId
 		};
 
 		const conflict = await this.commandBus.execute(
@@ -203,22 +191,42 @@ export class TimerService {
 	}
 
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
-		const user = RequestContext.currentUser();
-		const lastLog = await this.timeLogRepository.findOne({
-			where: {
-				deletedAt: IsNull(),
-				employeeId: user.employeeId,
-				stoppedAt: IsNull()
-			},
-			order: {
-				startedAt: 'DESC'
-			}
-		});
-
+		const lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
 			return this.stopTimer(request);
 		}
+	}
+
+	/*
+	* Get employee last running timer 
+	*/
+	private async getLastRunningLog() {
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+
+		const employee = await this.employeeRepository.findOne({
+			userId: user.id,
+			tenantId
+		});
+		if (!employee) {
+			throw new BadRequestException('Employee not found for this tenant.');
+		}
+
+		const { organizationId, id: employeeId } = employee;
+		return await this.timeLogRepository.findOne({
+			where: {
+				deletedAt: IsNull(),
+				stoppedAt: IsNull(),
+				employeeId,
+				tenantId,
+				organizationId
+			},
+			order: {
+				startedAt: 'DESC',
+				createdAt: 'DESC'
+			}
+		});
 	}
 }
