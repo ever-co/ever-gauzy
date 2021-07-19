@@ -96,9 +96,9 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			this.hideOrg = true;
 		}
 		this.hideEmployee =
-			this.settings.canOwnObjectives === GoalOwnershipEnum.TEAMS;
+			this.settings && this.settings.canOwnObjectives === GoalOwnershipEnum.TEAMS;
 		this.hideTeam =
-			this.settings.canOwnObjectives === GoalOwnershipEnum.EMPLOYEES;
+			this.settings && this.settings.canOwnObjectives === GoalOwnershipEnum.EMPLOYEES;
 	}
 
 	async getTeams() {
