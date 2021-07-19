@@ -1,5 +1,5 @@
 export const FileStoragePage = {
-	headerTextCss: 'div.header > h4',
+	headerTextCss: 'div.card-header-title > h4',
 	subheaderTextCss: 'nb-card-header > h6',
 	selectDropdownCss:
 		'ga-file-storage > nb-card > nb-card-body > div.form-group > nb-select > button.select-button',
