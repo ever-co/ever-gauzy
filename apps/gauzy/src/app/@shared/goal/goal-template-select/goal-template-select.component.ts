@@ -191,7 +191,7 @@ export class GoalTemplateSelectComponent
 								description: ' ',
 								progress: 0,
 								update: keyResult.initialValue,
-								owner: this.employees[0].id,
+								ownerId: this.employees[0].id,
 								organizationId,
 								tenantId,
 								status: 'none',
