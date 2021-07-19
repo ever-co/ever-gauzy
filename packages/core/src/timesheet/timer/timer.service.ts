@@ -51,7 +51,10 @@ export class TimerService {
 				deletedAt: IsNull(),
 				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
-				startedAt: Between(moment().startOf('day'), moment().endOf('day')),
+				startedAt: Between(
+					moment().startOf('day').format(),
+					moment().endOf('day').format()
+				),
 				stoppedAt: Not(IsNull()),
 				tenantId,
 				organizationId
@@ -68,7 +71,10 @@ export class TimerService {
 				deletedAt: IsNull(),
 				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
-				startedAt: Between(moment().startOf('day'), moment().endOf('day')),
+				startedAt: Between(
+					moment().startOf('day').format(), 
+					moment().endOf('day').format()
+				),
 				tenantId,
 				organizationId
 			},
@@ -113,12 +119,12 @@ export class TimerService {
 			tenantId
 		});
 		if (!employee) {
-			throw new BadRequestException('Employee not found for this tenant.');
+			throw new BadRequestException('Employee not found.');
 		}
 
 		const { organizationId, id: employeeId } = employee;
 		const lastLog = await this.getLastRunningLog();
-	
+
 		if (lastLog) {
 			await this.stopTimer(request);
 		}
@@ -191,7 +197,7 @@ export class TimerService {
 	}
 
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
-		const lastLog = await this.getLastRunningLog();
+		const lastLog = await this.getLastRunningLog();		
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
@@ -211,7 +217,7 @@ export class TimerService {
 			tenantId
 		});
 		if (!employee) {
-			throw new BadRequestException('Employee not found for this tenant.');
+			throw new BadRequestException('Employee not found.');
 		}
 
 		const { organizationId, id: employeeId } = employee;

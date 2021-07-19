@@ -148,40 +148,42 @@
 								class="row"
 								*ngFor="let employee of timeSlotEmployees"
 							>
-								<div class="col">
-									<div
-										class="hour-lable mt-3"
-										*ngxPermissionsOnly="
-											PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-										"
-									>
-										<ngx-avatar
-											size="sm"
-											[name]="employee?.user?.name"
-											[src]="employee?.user?.imageUrl"
-											[caption]="
-												(employee?.timeSlots)[0]
-													?.startedAt | date
-											"
-										></ngx-avatar>
-									</div>
-									<div
-										class="row my-3 align-items-center justify-content-center"
-									>
+								<ng-container *ngIf="employee?.timeSlots?.length > 0">
+									<div class="col">
 										<div
-											class="col"
-											*ngFor="
-												let timeSlot of employee.timeSlots
+											class="hour-lable mt-3"
+											*ngxPermissionsOnly="
+												PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 											"
 										>
-											<ngx-screenshots-item
-												[timeSlot]="timeSlot"
-												(delete)="onDelete()"
+											<ngx-avatar
+												size="sm"
+												[name]="employee?.user?.name"
+												[src]="employee?.user?.imageUrl"
+												[caption]="
+													(employee?.timeSlots)[0]
+														?.startedAt | date
+												"
+											></ngx-avatar>
+										</div>
+										<div
+											class="row my-3 align-items-center justify-content-center"
+										>
+											<div
+												class="col"
+												*ngFor="
+													let timeSlot of employee.timeSlots
+												"
 											>
-											</ngx-screenshots-item>
+												<ngx-screenshots-item
+													[timeSlot]="timeSlot"
+													(delete)="onDelete()"
+												>
+												</ngx-screenshots-item>
+											</div>
 										</div>
 									</div>
-								</div>
+								</ng-container>
 							</div>
 						</ng-template>
 						<ng-template #noScreenshot>
