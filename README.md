@@ -126,35 +126,38 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 ### With Docker Compose
 
--   Clone repo
--   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install)
--   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images _(note: it uses latest images pre-build automatically from head of `master` branch using Github CI/CD)_
--   Run `docker-compose up`, if you want to build everything (code and Docker images) locally. _(note: this is extremely long process, option above is much faster)_
--   :coffee: time...
--   Open <http://localhost:4200> in your browser
--   Login with email `admin@ever.co` and password: `admin` for Super Admin user
--   Login with email `ruslan@ever.co` and password: `123456` for Employee user
--   Enjoy
+-   Clone repo.
+-   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install).
+-   Copy `.env.compose` file into `.env` file in the root of mono-repo (file contains default env variables definitions). Important: file `.env.compose` is different to `.env.sample` in some settings, please make sure you use correct one!
+-   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images. _(Note: it uses latest images pre-build automatically from head of `master` branch using Github CI/CD.)_
+-   Run `docker-compose up`, if you want to build everything (code and Docker images) locally. _(Note: this is extremely long process, option above is much faster.)_
+-   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuild Docker images.
+-   Open <http://localhost:4200> in your browser.
+-   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
+-   Login with email `employee@ever.co` and password: `123456` for Employee user.
+-   Enjoy!
 
-Note: together with Gauzy, Docker Compose will run following:
+Together with Gauzy, Docker Compose will run following:
 
--   Cross-platform client for PostgreSQL DBs [pgweb](https://github.com/sosedoff/pgweb), on <http://localhost:8081>
--   [Franchise](https://github.com/HVF/franchise), lightweight but powerful SQL tool with a notebook interface, on <http://localhost:8082>
+-   [PostgreSQL](https://www.postgresql.org)
+-   Cross-platform client for PostgreSQL DBs [pgweb](https://github.com/sosedoff/pgweb), on <http://localhost:8081>.
+-   [Franchise](https://github.com/HVF/franchise), lightweight but powerful SQL tool with a notebook interface, on <http://localhost:8082>.
 -   [OmniDb](https://github.com/OmniDB/OmniDB), on <http://localhost:8083> and using default credentials (admin:admin) configure connection string `postgres://postgres:root@db:5432/postgres?sslmode=disable`.
--   [Adminer](https://www.adminer.org) Database management in a single PHP file, on <http://localhost:8084>
+-   [Adminer](https://www.adminer.org) Database management in a single PHP file, on <http://localhost:8084>.
 
 ### Manually
 
--   Install [NodeJs](https://nodejs.org/en/download) LTS version, e.g. 14.x (note: at the moment Gauzy may not work with Node 15.x)
--   Optionally install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (note: version 13 is not supported yet). Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite for demo purposes.
--   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
--   Install NPM packages and boostrap solution using command `yarn bootstrap`
--   Copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and optionaly change default settings, e.g. database type, name, user, password, etc.
--   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`
--   Run both API and UI with single command: `yarn start`
--   Open Gauzy UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>)
--   Login with email `admin@ever.co` and password: `admin`
--   Enjoy
+-   Install [NodeJs](https://nodejs.org/en/download) LTS version, e.g. 14.x (note: at the moment Gauzy may not work with Node 15.x/16.x).
+-   Optionally install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (version 13 might not be supported yet). Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite for demo purposes.
+-   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
+-   Install NPM packages and bootstrap solution using command `yarn bootstrap`.
+-   Copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and optionally change default settings, e.g. database type, name, user, password, etc.
+-   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`.
+-   Run both API and UI with single command: `yarn start`.
+-   Open Gauzy UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>).
+-   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
+-   Login with email `employee@ever.co` and password: `123456` for Employee user.
+-   Enjoy!
 
 Notes:
 
@@ -165,7 +168,8 @@ Notes:
 ### Production
 
 -   See [Setup Gauzy for Client Server](https://github.com/ever-co/ever-gauzy/wiki/Setup-Gauzy-for-Client-Server) for more information about production setup on your servers.
--   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project, it makes Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
+-   For simple deployments scenarious (e.g. for yourself or your own small organization), check our [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy demo into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
+-   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project, it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
 
 ## Contribute
 
