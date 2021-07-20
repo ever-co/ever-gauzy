@@ -122,42 +122,43 @@
 	class="extra-actions"
 	*ngIf="showExtraActions"
 >
-	<div>
-		<h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
-	</div>
-
-	<ga-project-selector
-		*ngIf="showProjectsSelector"
-		class="header-selector project-selector"
-	>
-	</ga-project-selector>
-
-	<div>
-		<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>
-	</div>
-
-	<ga-employee-selector
-		*ngIf="showEmployeesSelector"
-		class="header-selector employee-selector"
-	></ga-employee-selector>
-
-	<div>
-		<h6>{{ 'HEADER.SELECT_A_DATE' | translate }}</h6>
-	</div>
-
-	<ga-date-selector
-		*ngIf="showDateSelector && showExtraActions"
-		class="date-selector"
-	></ga-date-selector>
-
-	<div>
-		<h6>{{ 'HEADER.SELECT_AN_ORGANIZATION' | translate }}</h6>
-	</div>
-
-	<ga-organization-selector
-		*ngIf="showOrganizationsSelector"
-		class="header-selector organization-selector"
-	></ga-organization-selector>
+	<ng-container *ngIf="selectorsVisibility?.project">
+		<div>
+			<h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
+		</div>
+		<ga-project-selector
+			*ngIf="showProjectsSelector"
+			class="header-selector project-selector"
+		>
+		</ga-project-selector>
+	</ng-container>
+	<ng-container *ngIf="selectorsVisibility?.employee">
+		<div>
+			<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>
+		</div>
+		<ga-employee-selector
+			*ngIf="showEmployeesSelector"
+			class="header-selector employee-selector"
+		></ga-employee-selector>
+	</ng-container>
+	<ng-container *ngIf="selectorsVisibility?.date">
+		<div>
+			<h6>{{ 'HEADER.SELECT_A_DATE' | translate }}</h6>
+		</div>
+		<ga-date-selector
+			*ngIf="showDateSelector"
+			class="date-selector"
+		></ga-date-selector>
+	</ng-container>
+	<ng-container *ngIf="selectorsVisibility?.organization">
+		<div>
+			<h6>{{ 'HEADER.SELECT_AN_ORGANIZATION' | translate }}</h6>
+		</div>
+		<ga-organization-selector
+			*ngIf="showOrganizationsSelector"
+			class="header-selector organization-selector"
+		></ga-organization-selector>
+	</ng-container>
 </div>
 
 <ng-template [ngIf]="user?.employee?.id">

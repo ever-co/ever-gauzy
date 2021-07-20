@@ -23,9 +23,14 @@ export class TimeLogCreateHandler
 
 	public async execute(command: TimeLogCreateCommand): Promise<TimeLog> {
 		const { input } = command;
+		const { startedAt, employeeId, organizationId } = input;
 
 		const timesheet = await this.commandBus.execute(
-			new TimesheetFirstOrCreateCommand(input.startedAt, input.employeeId)
+			new TimesheetFirstOrCreateCommand(
+				startedAt,
+				employeeId,
+				organizationId
+			)
 		);
 
 		const newTimeLog = new TimeLog({

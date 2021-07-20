@@ -1,10 +1,11 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { TimeLog } from '../../../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
-import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { ConfigService } from '@gauzy/config';
+import { TimeLog } from '../../../time-log.entity';
+import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
+import { RequestContext } from './../../../../core/context/request-context';
 
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler
@@ -19,15 +20,19 @@ export class GetConflictTimeLogHandler
 		command: IGetConflictTimeLogCommand
 	): Promise<TimeLog[]> {
 		const { input } = command;
+		
+		const tenantId = RequestContext.currentTenantId();
+		const { employeeId, organizationId } = input;
 
 		const startedAt = moment.utc(input.startDate).toISOString();
 		const stoppedAt = moment.utc(input.endDate).toISOString();
+
 		let conflictQuery = this.timeLogRepository.createQueryBuilder();
 
 		conflictQuery = conflictQuery
-			.where(`"${conflictQuery.alias}"."employeeId" = :employeeId`, {
-				employeeId: input.employeeId
-			})
+			.where(`"${conflictQuery.alias}"."employeeId" = :employeeId`, { employeeId })
+			.andWhere(`"${conflictQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${conflictQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(`"${conflictQuery.alias}"."deletedAt" IS null`)
 			.andWhere(
 				this.configService.dbConnectionOptions.type === 'sqlite'

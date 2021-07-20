@@ -759,51 +759,56 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
-		if (!request.startedAt || !request.stoppedAt) {
+		
+		const tenantId = RequestContext.currentTenantId();
+		const { employeeId, startedAt, stoppedAt, organizationId } = request;
+
+		if (!startedAt || !stoppedAt) {
 			throw new BadRequestException(
 				'Please select valid Date, start time and end time'
 			);
 		}
 
 		const employee = await this.employeeRepository.findOne(
-			request.employeeId,
+			employeeId,
 			{ relations: ['organization'] }
 		);
 
 		const isDateAllow = this.allowDate(
-			request.startedAt,
-			request.stoppedAt,
+			startedAt,
+			stoppedAt,
 			employee.organization
 		);
+		
 		if (!isDateAllow) {
 			throw new BadRequestException(
 				'Please select valid Date, start time and end time'
 			);
 		}
 
-		const conflict = await this.checkConflictTime({
-			employeeId: request.employeeId,
-			startDate: request.startedAt,
-			endDate: request.stoppedAt,
+		const conflicts = await this.checkConflictTime({
+			employeeId: employeeId,
+			startDate: startedAt,
+			endDate: stoppedAt,
+			organizationId,
+			tenantId,
 			...(request.id ? { ignoreId: request.id } : {})
 		});
 
 		const times: IDateRange = {
-			start: new Date(request.startedAt),
-			end: new Date(request.stoppedAt)
+			start: new Date(startedAt),
+			end: new Date(stoppedAt)
 		};
-
-		for (let index = 0; index < conflict.length; index++) {
+		
+		for await (const conflict of conflicts)  {
 			await this.commandBus.execute(
-				new DeleteTimeSpanCommand(times, conflict[index])
+				new DeleteTimeSpanCommand(times, conflict)
 			);
 		}
 
-		const timeLog = await this.commandBus.execute(
+		return await this.commandBus.execute(
 			new TimeLogCreateCommand(request)
 		);
-
-		return timeLog;
 	}
 
 	async updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {

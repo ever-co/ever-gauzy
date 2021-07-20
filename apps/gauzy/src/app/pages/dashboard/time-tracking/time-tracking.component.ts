@@ -57,8 +57,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	endDate: Date;
 	employeeId: string = null;
 	projectId: string = null;
-	tenantId: string;
-	organizationId: string;
+	tenantId: string = null;
+	organizationId: string = null;
 	isAllowedMembers: boolean;
 
 	constructor(
@@ -200,6 +200,7 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 				this.activitiesLoading = false;
 			});
 	}
+	
 	getProjects() {
 		const { tenantId, organizationId, employeeId, projectId } = this;
 		const projectRequest: IGetProjectsStatistics = {
