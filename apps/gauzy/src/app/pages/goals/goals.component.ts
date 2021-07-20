@@ -243,7 +243,7 @@ export class GoalsComponent
 	async addKeyResult(index, keyResult) {
 		if (
 			!keyResult &&
-			this.goalGeneralSettings.maxKeyResults <=
+			this.goalGeneralSettings?.maxKeyResults <=
 				this.goals[index].keyResults.length
 		) {
 			this.toastrService.info(

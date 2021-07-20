@@ -14,9 +14,9 @@
 					*ngFor="let type of keyResultTypeEnum | keyvalue"
 					[hidden]="
 						type.value == keyResultTypeEnum.KPI
-							? !settings.krTypeKPI
+							? !settings?.krTypeKPI
 							: type.value == keyResultTypeEnum.TASK
-							? !settings.krTypeTask
+							? !settings?.krTypeTask
 							: false
 					"
 					[value]="type.value"
