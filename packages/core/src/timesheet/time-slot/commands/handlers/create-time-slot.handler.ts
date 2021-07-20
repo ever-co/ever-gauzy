@@ -121,8 +121,8 @@ export class CreateTimeSlotHandler
 						qb.orWhere('"startedAt" <= :startedAt AND "stoppedAt" IS NULL', { startedAt });
 					})
 				);
-			console.log('Else Timelog Timeslot:', query.getQueryAndParameters());
 			timeSlot.timeLogs = await query.getMany();
+			console.log('Else Timelog Timeslot:', query.getQueryAndParameters(), timeSlot);
 		}
 
 		if (input.activities) {

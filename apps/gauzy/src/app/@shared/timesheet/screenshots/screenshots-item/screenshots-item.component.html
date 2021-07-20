@@ -54,7 +54,7 @@
 				<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
 			</ng-template>
 			<ng-template #noImageEl>
-				<img draggable="false" />
+				<img draggable="false" [src]="fallbackSvg" class="default-image" />
 				<span class="no-image p-3">
 					{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}
 				</span>
