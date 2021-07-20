@@ -38,10 +38,12 @@ export class TimeLogUpdateHandler
 
 		const updatedTimeLog = Object.assign({}, timeLog, input);
 		if (needToUpdateTimeSlots) {
+			const { employeeId, organizationId } = timeLog;
 			timesheet = await this.commandBus.execute(
 				new TimesheetFirstOrCreateCommand(
 					input.startedAt,
-					timeLog.employeeId
+					employeeId,
+					organizationId
 				)
 			);
 

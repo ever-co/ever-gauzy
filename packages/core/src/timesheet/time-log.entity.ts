@@ -5,8 +5,7 @@ import {
 	ManyToOne,
 	JoinColumn,
 	AfterLoad,
-	ManyToMany,
-	JoinTable
+	ManyToMany
 } from 'typeorm';
 import {
 	ITimeLog,
@@ -57,9 +56,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-	})
-	@JoinTable({
-		name: 'time_slot_time_logs'
 	})
 	timeSlots?: ITimeSlot[];
 

@@ -21,6 +21,8 @@ export class TimesheetFirstOrCreateHandler
 		command: TimesheetFirstOrCreateCommand
 	): Promise<Timesheet> {
 		const { date, employeeId } = command;
+		const tenantId = RequestContext.currentTenantId();
+		let { organizationId } = command;
 
 		const from_date = moment(date).startOf('week');
 		const to_date = moment(date).endOf('week');
@@ -32,18 +34,20 @@ export class TimesheetFirstOrCreateHandler
 			}
 		});
 
-		let organizationId: string;
-		if (!command.organizationId) {
-			const employee = await this.employeeRepository.findOne(employeeId);
+		if (!organizationId) {
+			const employee = await this.employeeRepository.findOne({
+				where: {
+					id: employeeId,
+					tenantId
+				}
+			});
 			organizationId = employee.organizationId;
-		} else {
-			organizationId = command.organizationId;
 		}
 
 		if (!timesheet) {
 			timesheet = await this.timeSheetRepository.save({
-				tenantId: RequestContext.currentTenantId(),
-				employeeId: employeeId,
+				tenantId,
+				employeeId,
 				organizationId,
 				startedAt: from_date.toISOString(),
 				stoppedAt: to_date.toISOString()

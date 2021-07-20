@@ -236,8 +236,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE((SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
-							: `COALESCE((SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
+							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
+							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
 					}`,
 					`duration`
 				)
@@ -308,8 +308,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE((SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
-							: `COALESCE((SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
+							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
+							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
 					}`,
 					`duration`
 				)
@@ -425,8 +425,8 @@ export class StatisticService {
 			.addSelect(
 				`${
 					this.configService.dbConnectionOptions.type === 'sqlite'
-						? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
-						: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
+						? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
+						: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
 				}`,
 				`duration`
 			)
@@ -477,8 +477,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE((SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
-							: `COALESCE((SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
+							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
+							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 					}`,
 					`duration`
 				)
@@ -552,8 +552,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE((SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
-							: `COALESCE((SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
+							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
+							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 					}`,
 					`duration`
 				)
@@ -649,8 +649,8 @@ export class StatisticService {
 						`${
 							this.configService.dbConnectionOptions.type ===
 							'sqlite'
-								? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
-								: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
+								? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
+								: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
 						}`,
 						`duration`
 					)
@@ -716,8 +716,8 @@ export class StatisticService {
 			.addSelect(
 				`${
 					this.configService.dbConnectionOptions.type === 'sqlite'
-						? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
-						: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
+						? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
+						: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
 				}`,
 				`duration`
 			)
@@ -785,8 +785,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
-							: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
+							? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
+							: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
 					}`,
 					`duration`
 				)
@@ -881,8 +881,8 @@ export class StatisticService {
 				.addSelect(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
-							: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
+							? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
+							: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
 					}`,
 					`duration`
 				)
@@ -921,8 +921,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
-							: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
+							? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
+							: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
 					}`,
 					`duration`
 				)

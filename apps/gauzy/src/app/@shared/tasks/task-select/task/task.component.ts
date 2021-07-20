@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit } from '@angular/core';
 import { ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from '../../../../@core/services/tasks.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
@@ -21,44 +21,70 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	]
 })
 export class TaskSelectorComponent
-	implements OnInit, OnDestroy, ControlValueAccessor {
-	private _employeeId;
-	private _projectId;
+	implements AfterViewInit, OnInit, OnDestroy, ControlValueAccessor {
+	
+	/*
+	* Getter & Setter for dynamic enabled/disabled element
+	*/
+	_disabled: boolean = false;
+	public get disabled(): boolean {
+		return this._disabled;
+	}
+	@Input() public set disabled(value: boolean) {
+		this._disabled = value;
+	}
 
-	@Input() disabled = false;
-	@Input() allowAddNew = true;
-	hasPermissionTaskEdit: boolean;
+	/*
+	* Getter & Setter for dynamic add task option
+	*/
+	_allowAddNew: boolean = true;
+	public get allowAddNew(): boolean {
+		return this._allowAddNew;
+	}
+	@Input() public set allowAddNew(value: boolean) {
+		this._allowAddNew = value;
+	}
 
-	@Input()
-	public get projectId() {
+	/*
+	* Getter & Setter for set projectId
+	*/
+	private _projectId: string;
+	public get projectId(): string {
 		return this._projectId;
 	}
-	public set projectId(value) {
+	@Input() public set projectId(value: string) {
 		this._projectId = value;
-		this.loadTasks$.next();
+		this.subject$.next();
 	}
 
-	@Input()
-	public get employeeId() {
+	/*
+	* Getter & Setter for set employeeId
+	*/
+	private _employeeId: string;
+	public get employeeId(): string {
 		return this._employeeId;
 	}
-	public set employeeId(value) {
+	@Input() public set employeeId(value: string) {
 		this._employeeId = value;
-		this.loadTasks$.next();
+		this.subject$.next();
 	}
 
-	set taskId(val: string) {
-		this.val = val;
-		this.onChange(val);
-		this.onTouched(val);
+	/*
+	* Getter & Setter for internal taskId
+	*/
+	private _taskId: string;
+	public get taskId(): string {
+		return this._taskId;
 	}
-	get taskId() {
-		return this.val;
+	public set taskId(value: string) {
+		this._taskId = value;
+		this.onChange(value);
+		this.onTouched(value);
 	}
 
+	public hasPermissionTaskEdit: boolean;
 	tasks: ITask[] = [];
-	val: any;
-	loadTasks$: Subject<any> = new Subject();
+	subject$: Subject<any> = new Subject();
 
 	constructor(
 		private tasksService: TasksService,
@@ -77,34 +103,23 @@ export class TaskSelectorComponent
 					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
 				);
 			});
+		this.subject$
+			.pipe(
+				debounceTime(500),
+				tap(() => this.getTasks()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
-		this.loadTasks$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(async () => {
-				if (this.employeeId) {
-					this.tasks = await this.tasksService.getAllTasksByEmployee(
-						this.employeeId,
-						{
-							where: {
-								projectId: this.projectId
-							}
-						}
-					);
-				} else {
-					const { items = [] } = await this.tasksService
-						.getAllTasks({
-							projectId: this.projectId
-						})
-						.toPromise();
-
-					this.tasks = items;
-				}
-			});
+	ngAfterViewInit() {
+		this.subject$.next();
 	}
 
 	writeValue(value: any) {
 		this.taskId = value;
 	}
+
 	registerOnChange(fn: (rating: number) => void): void {
 		this.onChange = fn;
 	}
@@ -123,7 +138,6 @@ export class TaskSelectorComponent
 			const member: any = {
 				id: this.employeeId || this.store.user.employeeId
 			};
-
 			const task = await this.tasksService
 				.createTask({
 					title,
@@ -133,13 +147,32 @@ export class TaskSelectorComponent
 					...(this.projectId ? { projectId: this.projectId } : {})
 				})
 				.toPromise();
-
 			this.tasks = this.tasks.concat(task);
 			this.taskId = task.id;
 		} catch (error) {
 			this.toastrService.error(error);
 		}
 	};
+
+	async getTasks() {
+		if (this.employeeId) {
+			this.tasks = await this.tasksService.getAllTasksByEmployee(
+				this.employeeId,
+				{
+					where: {
+						projectId: this.projectId
+					}
+				}
+			);
+		} else {
+			const { items = [] } = await this.tasksService
+				.getAllTasks({
+					projectId: this.projectId
+				})
+				.toPromise();
+			this.tasks = items;
+		}
+	}
 
 	ngOnDestroy() {}
 }

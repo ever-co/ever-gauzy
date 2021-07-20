@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, Between } from 'typeorm';
+import { Repository, IsNull, Between, Not } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
 import {
@@ -19,6 +19,7 @@ import { IGetConflictTimeLogCommand } from '../time-log/commands/get-conflict-ti
 import { TimeLogCreateCommand } from '../time-log/commands/time-log-create.command';
 import { DeleteTimeSpanCommand } from '../time-log/commands/delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log/commands/time-log-update.command';
+import { getDateRange } from './../../core/utils';
 
 @Injectable()
 export class TimerService {
@@ -43,40 +44,63 @@ export class TimerService {
 			throw new BadRequestException('Employee not found.');
 		}
 
-		const todayLog = await this.timeLogRepository.find({
+		const { organizationId, id: employeeId } = employee;
+		const { start, end } = getDateRange();
+
+		// Get today's completed timelogs
+		const logs = await this.timeLogRepository.find({
 			where: {
 				deletedAt: IsNull(),
-				employeeId: employee.id,
+				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
-				startedAt: Between(
-					moment().startOf('day'),
-					moment().endOf('day')
-				),
-				tenantId
+				startedAt: Between(start, end),
+				stoppedAt: Not(IsNull()),
+				tenantId,
+				organizationId
 			},
 			order: {
-				startedAt: 'DESC'
+				startedAt: 'DESC',
+				createdAt: 'DESC'
 			}
 		});
+
+		// Get today's last log (running or completed)
+		const lastLog = await this.timeLogRepository.findOne({
+			where: {
+				deletedAt: IsNull(),
+				employeeId,
+				source: request.source || TimeLogSourceEnum.BROWSER,
+				startedAt: Between(start, end),
+				tenantId,
+				organizationId
+			},
+			order: {
+				startedAt: 'DESC',
+				createdAt: 'DESC'
+			}
+		});
+
 		const status: ITimerStatus = {
 			duration: 0,
 			running: false,
 			lastLog: null
 		};
-		if (todayLog.length > 0) {
-			const lastLog = todayLog[0];
-			status.lastLog = lastLog;
 
+		// Calculate completed timelogs duration
+		if (logs.length > 0) {
+			for await (const log of logs) {
+				status.duration += log.duration;
+			}
+		}
+
+		// Calculate last timelog duration
+		if (lastLog) {
+			status.lastLog = lastLog;
 			if (lastLog.stoppedAt) {
 				status.running = false;
 			} else {
 				status.running = true;
-				status.duration = Math.abs(
-					(lastLog.startedAt.getTime() - new Date().getTime()) / 1000
-				);
-			}
-			for (let index = 0; index < todayLog.length; index++) {
-				status.duration += todayLog[index].duration;
+				status.duration += Math.abs((lastLog.startedAt.getTime() - new Date().getTime()) / 1000);
 			}
 		}
 		return status;
@@ -84,44 +108,37 @@ export class TimerService {
 
 	async startTimer(request: ITimerToggleInput): Promise<TimeLog> {
 		const user = RequestContext.currentUser();
-		const lastLog = await this.timeLogRepository.findOne({
-			where: {
-				deletedAt: IsNull(),
-				employeeId: user.employeeId,
-				stoppedAt: IsNull()
-			},
-			order: {
-				startedAt: 'DESC'
-			}
+		const tenantId = RequestContext.currentTenantId();
+
+		const employee = await this.employeeRepository.findOne({
+			userId: user.id,
+			tenantId
 		});
+		if (!employee) {
+			throw new BadRequestException('Employee not found.');
+		}
+
+		const { organizationId, id: employeeId } = employee;
+		const lastLog = await this.getLastRunningLog();
 
 		if (lastLog) {
 			await this.stopTimer(request);
 		}
 
-		let organizationId;
-		if (!request.organizationId) {
-			const employee = await this.employeeRepository.findOne(
-				user.employeeId
-			);
-			organizationId = employee.organizationId;
-		} else {
-			organizationId = request.organizationId;
-		}
-
+		const { source, projectId, taskId, organizationContactId, logType, description, isBillable } = request;
 		const newTimeLogInput = {
 			organizationId,
-			tenantId: RequestContext.currentTenantId(),
+			tenantId,
+			employeeId,
 			startedAt: moment.utc().toDate(),
 			duration: 0,
-			employeeId: user.employeeId,
-			source: request.source || TimeLogSourceEnum.BROWSER,
-			projectId: request.projectId || null,
-			taskId: request.taskId || null,
-			organizationContactId: request.organizationContactId || null,
-			logType: request.logType || TimeLogType.TRACKED,
-			description: request.description || '',
-			isBillable: request.isBillable || false
+			source: source || TimeLogSourceEnum.BROWSER,
+			projectId: projectId || null,
+			taskId: taskId || null,
+			organizationContactId: organizationContactId || null,
+			logType: logType || TimeLogType.TRACKED,
+			description: description || '',
+			isBillable: isBillable || false
 		};
 
 		return await this.commandBus.execute(
@@ -130,17 +147,10 @@ export class TimerService {
 	}
 
 	async stopTimer(request: ITimerToggleInput): Promise<TimeLog> {
-		const user = RequestContext.currentUser();
-		let lastLog = await this.timeLogRepository.findOne({
-			where: {
-				deletedAt: IsNull(),
-				employeeId: user.employeeId,
-				stoppedAt: IsNull()
-			},
-			order: {
-				startedAt: 'DESC'
-			}
-		});
+		const { organizationId } = request;
+		const tenantId = RequestContext.currentTenantId();
+
+		let lastLog = await this.getLastRunningLog();
 
 		const stoppedAt = new Date();
 		if (lastLog.startedAt === stoppedAt) {
@@ -160,7 +170,9 @@ export class TimerService {
 			ignoreId: lastLog.id,
 			startDate: lastLog.startedAt,
 			endDate: lastLog.stoppedAt,
-			employeeId: lastLog.employeeId
+			employeeId: lastLog.employeeId,
+			organizationId: organizationId || lastLog.organizationId,
+			tenantId
 		};
 
 		const conflict = await this.commandBus.execute(
@@ -181,22 +193,42 @@ export class TimerService {
 	}
 
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
-		const user = RequestContext.currentUser();
-		const lastLog = await this.timeLogRepository.findOne({
-			where: {
-				deletedAt: IsNull(),
-				employeeId: user.employeeId,
-				stoppedAt: IsNull()
-			},
-			order: {
-				startedAt: 'DESC'
-			}
-		});
-
+		const lastLog = await this.getLastRunningLog();		
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
 			return this.stopTimer(request);
 		}
+	}
+
+	/*
+	* Get employee last running timer 
+	*/
+	private async getLastRunningLog() {
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+
+		const employee = await this.employeeRepository.findOne({
+			userId: user.id,
+			tenantId
+		});
+		if (!employee) {
+			throw new BadRequestException('Employee not found.');
+		}
+
+		const { organizationId, id: employeeId } = employee;
+		return await this.timeLogRepository.findOne({
+			where: {
+				deletedAt: IsNull(),
+				stoppedAt: IsNull(),
+				employeeId,
+				tenantId,
+				organizationId
+			},
+			order: {
+				startedAt: 'DESC',
+				createdAt: 'DESC'
+			}
+		});
 	}
 }
