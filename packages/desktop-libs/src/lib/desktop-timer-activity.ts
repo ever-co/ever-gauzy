@@ -123,6 +123,15 @@ export const TimerData = {
 		return result;
 	},
 
+	getLastCaptureTimeSlot: async (knex, info) => {
+		const result = await knex('timer')
+			.where('userId', info.employeeId)
+			.where((qb) => qb.orWhereNotNull("timeSlotId"))
+			.orderBy('created_at', 'desc')
+			.limit(1);
+		return result;
+	},
+
 	saveFailedRequest: async (knex, value) => {
 		const result = await knex('failed-request')
 			.insert(

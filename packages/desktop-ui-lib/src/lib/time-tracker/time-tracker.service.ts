@@ -270,4 +270,22 @@ export class TimeTrackerService {
 			.pipe()
 			.toPromise();
 	}
+
+	getTimerStatus(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+
+		return this.http
+			.get(`${values.apiHost}/api/timesheet/timer/status`, {
+				params: {
+					source: 'DESKTOP',
+					tenantId: values.tenantId
+				},
+				headers: headers
+			})
+			.pipe()
+			.toPromise();
+	}
 }

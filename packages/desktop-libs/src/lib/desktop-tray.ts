@@ -168,18 +168,16 @@ export class TrayIcon {
 					} else {
 						timeTrackerWindow.show();
 						setTimeout(async () => {
-							const lastTime: any = await TimerData.getLastTimer(
+							const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
 								knex,
 								LocalStore.beforeRequestParams()
 							);
+							console.log('Last Capture Time Start Tracking Time (Desktop Try):', lastTime);
 							timeTrackerWindow.webContents.send(
 								'timer_tracker_show',
 								{
 									...LocalStore.beforeRequestParams(),
-									timeSlotId:
-										lastTime && lastTime.length > 0
-											? lastTime[0].timeSlotId
-											: null
+									timeSlotId: lastTime ? lastTime.timeSlotId : null
 								}
 							);
 						}, 1000);
@@ -206,18 +204,16 @@ export class TrayIcon {
 				click(menuItem) {
 					timeTrackerWindow.show();
 					setTimeout(async () => {
-						const lastTime: any = await TimerData.getLastTimer(
+						const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
 							knex,
 							LocalStore.beforeRequestParams()
 						);
+						console.log('Last Capture Time Open Time Tracker (Desktop Try):', lastTime);
 						timeTrackerWindow.webContents.send(
 							'timer_tracker_show',
 							{
 								...LocalStore.beforeRequestParams(),
-								timeSlotId:
-									lastTime && lastTime.length > 0
-										? lastTime[0].timeSlotId
-										: null
+								timeSlotId: lastTime ? lastTime.timeSlotId : null
 							}
 						);
 					}, 1000);
@@ -356,16 +352,14 @@ export class TrayIcon {
 				);
 				timeTrackerWindow.show();
 				setTimeout(async () => {
-					const lastTime: any = await TimerData.getLastTimer(
+					const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
 						knex,
 						LocalStore.beforeRequestParams()
 					);
+					console.log('Last Capture Time (Desktop Try):', lastTime);
 					timeTrackerWindow.webContents.send('timer_tracker_show', {
 						...LocalStore.beforeRequestParams(),
-						timeSlotId:
-							lastTime && lastTime.length > 0
-								? lastTime[0].timeSlotId
-								: null
+						timeSlotId: lastTime ? lastTime.timeSlotId : null
 					});
 				}, 1000);
 			}

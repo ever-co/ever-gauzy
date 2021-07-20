@@ -74,6 +74,10 @@ export default class Timerhandler {
 			(async () => {
 				await this.makeScreenshot(setupWindow, knex, false);
 			})();
+
+			timeTrackerWindow.webContents.send('timer_status', {
+				...LocalStore.beforeRequestParams()
+			});
 		})();
 	}
 
@@ -317,6 +321,10 @@ export default class Timerhandler {
 			 * Stop time interval after stop timer
 			 */
 			this.stopTimerIntervalPeriod();
+
+			timeTrackerWindow.webContents.send('timer_status', {
+				...LocalStore.beforeRequestParams()
+			});
 		})();
 	}
 
