@@ -41,8 +41,8 @@ export const clickOwnerDropdown = () => {
 	clickButton(GoalsPage.ownerDropdownCss);
 };
 
-export const selectOwnerFromDropdown = (text) => {
-	clickElementByText(GoalsPage.dropdownOptionCss, text);
+export const selectOwnerFromDropdown = (index) => {
+	clickButtonByIndex(GoalsPage.dropdownOptionCss, index);
 };
 
 export const leadDropdownVisible = () => {
