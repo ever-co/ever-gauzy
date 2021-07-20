@@ -68,6 +68,7 @@ export const createDefaultReport = async (
 			slug: 'apps-urls',
 			image: copyImage('apps-urls.png', config),
 			category: categoryByName['Time Tracking'],
+			iconClass: 'browser-outline',
 			description:
 				"See team members' apps used and URLs visited while working"
 		}),
@@ -111,6 +112,7 @@ export const createDefaultReport = async (
 			slug: 'weekly-limits',
 			image: copyImage('blank.png', config),
 			category: categoryByName['Time Off'],
+			iconClass: 'clock-outline',
 			description: "See team members' weekly limits usage"
 		}),
 		new Report({
