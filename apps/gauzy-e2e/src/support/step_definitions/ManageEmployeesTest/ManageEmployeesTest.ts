@@ -218,10 +218,6 @@ Then('Notification message will appear', () => {
 	manageEmployeesPage.waitMessageToHide();
 });
 
-And('User can verify employee was added', () => {
-	manageEmployeesPage.verifyEmployeeExists(`${firstName} ${lastName}`);
-});
-
 // Edit employee
 And('User can see employees table', () => {
 	manageEmployeesPage.tableRowVisible();
