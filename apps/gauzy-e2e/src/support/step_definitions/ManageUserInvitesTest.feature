@@ -1,4 +1,4 @@
-Feature: manage user invites test
+Feature: Manage user invites test
   Scenario: Login with email
     Given Login with default credentials and visit Users page
   Scenario: Copy invite
