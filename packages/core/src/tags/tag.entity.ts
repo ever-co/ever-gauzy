@@ -12,6 +12,7 @@ import {
 	IIntegration,
 	IInvoice,
 	IMerchant,
+	IOrganization,
 	IOrganizationContact,
 	IOrganizationDepartment,
 	IOrganizationEmploymentType,
@@ -40,6 +41,7 @@ import {
 	Integration,
 	Invoice,
 	Merchant,
+	Organization,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
@@ -97,6 +99,9 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	invoice?: IInvoice[];
 
 	@ManyToMany(() => Task, (task) => task.tags)
+	@JoinTable({
+		name: 'tag_task'
+	})
 	task?: ITask[];
 
 	@ManyToMany(() => Proposal, (proposal) => proposal.tags)
@@ -114,10 +119,13 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	)
 	organizationTeam?: IOrganizationTeam[];
 
-	@ManyToMany(
-		() => OrganizationProject,
-		(organizationProject) => organizationProject.tags
-	)
+	@ManyToMany(() => OrganizationProject, (organizationProject) => organizationProject.tags, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_organization_project'
+	})
 	organizationProject?: IOrganizationProject[];
 
 	@ManyToMany(
@@ -182,4 +190,11 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 
 	@ManyToMany(() => Warehouse, (warehouse) => warehouse.tags)
 	warehouses?: IWarehouse[];
+
+	// organizations Tags
+	@ManyToMany(() => Organization, (organization) => organization.tags)
+    @JoinTable({
+		name: 'tag_organization'
+	})
+    organizations?: IOrganization[];
 }

@@ -1,80 +1,85 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { ContactOrganizationInviteStatus, ContactType, IContact, IEmployee, IOrganization, ITag, ITenant } from '@gauzy/contracts';
+import { ContactOrganizationInviteStatus, ContactType, IContact, IEmployee, IOrganization, IOrganizationContact, ITag, ITenant } from '@gauzy/contracts';
 import * as _ from 'underscore';
 import { getDummyImage } from '../core';
-import { Contact, Employee, Organization, OrganizationContact, Tag } from './../core/entities/internal';
+import { Contact, Organization, OrganizationContact, Tag } from './../core/entities/internal';
 
 export const createDefaultOrganizationContact = async (
 	connection: Connection,
-	tenant: ITenant
-) => {
-	const organizationContacts: OrganizationContact[] = [];
-	const contacts = await connection.manager.find(Contact);
-	const organizations = await connection.getRepository(Organization).find({ 
-		where: { 
-			tenant: tenant 
-		}, 
-		relations: ['employees', 'tags'] 
-	});
-	for (const organization of organizations) {
-		for (let i = 0; i < faker.datatype.number({ min: 5, max: 6 }); i++) {
-			const contact = faker.random.arrayElement(contacts);
-			const { employees, tags } = organization;
-			const orgContact = await generateOrganizationContact(
-				tenant,
-				organization,
-				contact,
-				employees,
-				tags
-			)
-			organizationContacts.push(orgContact);
-		}
-	}
-	return await connection.manager.save(organizationContacts);
+	tenant: ITenant,
+	noOfContactsPerOrganization: number
+): Promise<IOrganizationContact[]> => {
+	return await createOrganizationContact(
+		connection,
+		tenant,
+		noOfContactsPerOrganization
+	)
 };
 
 export const createRandomOrganizationContact = async (
 	connection: Connection,
 	tenants: ITenant[],
-	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfContactsPerOrganization: number
-): Promise<OrganizationContact[]> => {
-	const organizationContacts: OrganizationContact[] = [];
-	const contacts = await connection.manager.find(Contact);
-	for (const tenant of tenants) {
-		const organizations = tenantOrganizationsMap.get(tenant);
-		for (const organization of organizations) {
-			const tags = await connection.manager.find(Tag, {
-				where: [{ organization: organization }]
-			});			
-			const employees = await connection.manager.find(Employee, {
-				where: [{ organization: organization }]
-			});			
-			for (let i = 0; i < noOfContactsPerOrganization; i++) {
-				const contact = faker.random.arrayElement(contacts);
-				const orgContact = await generateOrganizationContact(
-					tenant,
-					organization,
-					contact,
-					employees,
-					tags
-				)
-				organizationContacts.push(orgContact);
-			}
-		}
+) => {
+	for await (const tenant of tenants) {
+		await createOrganizationContact(
+			connection,
+			tenant,
+			noOfContactsPerOrganization
+		)
 	}
-	await connection.manager.save(organizationContacts);
-	return organizationContacts;
 };
+
+const createOrganizationContact = async (
+	connection: Connection,
+	tenant: ITenant,
+	noOfContactsPerOrganization: number
+) => {
+	const organizations = await connection.manager.find(Organization, { 
+		where: { 
+			tenant
+		}, 
+		relations: ['employees'] 
+	});
+	const allCrganizationContacts: IOrganizationContact[] = [];
+	for await (const organization of organizations) {
+		const { employees } = organization;
+		const organizationContacts: IOrganizationContact[] = [];
+		const contacts = await connection.manager.find(Contact, {
+			where: { tenant, organization }
+		});
+		const tags = await connection.manager.find(Tag, { 
+			where: { tenant, organization }
+		});
+		for (let i = 0; i < noOfContactsPerOrganization; i++) {
+			const contact = faker.random.arrayElement(contacts);
+			const orgContact = await generateOrganizationContact(
+				tenant,
+				organization,
+				contact,
+				tags
+			)
+			organizationContacts.push(orgContact);
+		}
+		await connection.manager.save(organizationContacts);
+		await assignOrganizationContactToEmployee(
+			connection,
+			tenant,
+			organization,
+			employees
+		);
+		allCrganizationContacts.push(...organizationContacts);
+	}
+	return allCrganizationContacts;
+}
 
 const generateOrganizationContact = async (
 	tenant: ITenant,
 	organization: IOrganization,
 	contact: IContact,
-	employees: IEmployee[],
 	tags: ITag[]
-): Promise<OrganizationContact> => {
+): Promise<IOrganizationContact> => {
 	const orgContact = new OrganizationContact();
 	orgContact.name = contact.name;
 	orgContact.organization = organization;
@@ -85,11 +90,7 @@ const generateOrganizationContact = async (
 	const email = faker.internet.email(contact.firstName, contact.lastName);
 	orgContact.emailAddresses = [email];
 	orgContact.inviteStatus = faker.random.arrayElement(Object.values(ContactOrganizationInviteStatus));
-	orgContact.members = _.chain(employees)
-		.shuffle()
-		.take(faker.datatype.number({ min: 1, max: 3 }))
-		.values()
-		.value();
+
 	const phone = faker.phone.phoneNumber();
 	orgContact.phones = [phone];
 	orgContact.primaryEmail = email;
@@ -101,4 +102,30 @@ const generateOrganizationContact = async (
 		.values()
 		.value();
 	return orgContact;
+};
+
+/*
+* Assign Organization Contact To Respective Employees
+*/
+export const assignOrganizationContactToEmployee = async (
+	connection: Connection,
+	tenant: ITenant,
+	organization: IOrganization,
+	employees: IEmployee[]
+) => {
+	const organizationContacts = await connection.manager.find(OrganizationContact, { 
+		where: {
+			tenant,
+			organization
+		} 
+	});
+	for await (const employee of employees) {
+		employee.organizationContacts = _.chain(organizationContacts)
+			.shuffle()
+			.take(faker.datatype.number({ min: 1, max: 3 }))
+			.unique()
+			.values()
+			.value();
+	}
+	await connection.manager.save(employees);
 };

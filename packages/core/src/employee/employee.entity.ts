@@ -14,7 +14,8 @@ import {
 	IInvoiceItem,
 	IRequestApprovalEmployee,
 	IPayment,
-	IOrganizationProject
+	IOrganizationProject,
+	IOrganizationContact
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -41,6 +42,7 @@ import {
 	Contact,
 	InvoiceItem,
 	JobPreset,
+	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
 	OrganizationPositions,
@@ -401,4 +403,15 @@ export class Employee
 	@ApiProperty({ type: () => JobPreset })
 	@ManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
 	jobPresets?: JobPreset[];
+
+
+	// Employee Organization Contacts
+	@ManyToMany(() => OrganizationContact, (it) => it.members, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
+    @JoinTable({
+		name: 'organization_contact_employee'
+	})
+    organizationContacts?: IOrganizationContact[];
 }

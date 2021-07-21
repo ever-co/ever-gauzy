@@ -25,5 +25,6 @@ export const randomSeedConfig = {
 	numberOfVariantPerProduct: 5, // number of product variant per product
 	numberOfInvoicePerOrganization: 50, // number of invoice per organizations
 	numberOfInvoiceItemPerInvoice: 20, // number of invoice item per invoices
-	noOfRandomContacts: 5 // number of random contact per organization
+	noOfRandomContacts: 10, // number of random contact per organization
+	noOfContactsPerOrganization: 10, // number of random organization contact
 };

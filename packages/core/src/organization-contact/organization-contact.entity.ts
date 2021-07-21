@@ -180,9 +180,9 @@ export class OrganizationContact
 	tags: ITag[];
 
 	// Organization Contact Employees
-	@ManyToMany(() => Employee, { cascade: ['update'] })
-	@JoinTable({
-		name: 'organization_contact_employee'
-	})
+	@ManyToMany(() => Employee, (it) => it.organizationContacts,  {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
 	members?: IEmployee[];
 }

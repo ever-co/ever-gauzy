@@ -5,7 +5,6 @@ import {
 	JoinColumn,
 	ManyToOne,
 	ManyToMany,
-	JoinTable,
 	OneToMany,
 	RelationId
 } from 'typeorm';
@@ -228,14 +227,11 @@ export class OrganizationProject
     |--------------------------------------------------------------------------
     */
 	// Organization Project Tags
-	@ApiProperty()
+	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.organizationProject)
-	@JoinTable({
-		name: 'tag_organization_project'
-	})
 	tags: ITag[];
 
 	// Organization Project Employees
-	@ManyToMany(() => Employee, (it) => it.projects)
+	@ManyToMany(() => Employee, (employee) => employee.projects)
 	members?: IEmployee[];
 }

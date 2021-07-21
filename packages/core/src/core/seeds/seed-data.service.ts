@@ -122,7 +122,10 @@ import {
 	createDefaultTimeSheet,
 	createRandomTimesheet
 } from '../../timesheet/timesheet/timesheet.seed';
-import { createDefaultTask, createRandomTask } from '../../tasks/task.seed';
+import {
+	createDefaultTask,
+	createRandomTask
+} from '../../tasks/task.seed';
 import {
 	createDefaultOrganizationProjects,
 	createRandomOrganizationProjects
@@ -846,6 +849,15 @@ export class SeedDataService {
 			)
 		);
 
+		await this.tryExecute(
+			'Default Tags',
+			createDefaultTags(
+				this.connection, 
+				this.tenant, 
+				this.organizations
+			)
+		);
+
 		// Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
 			'Default Expense Categories',
@@ -898,7 +910,8 @@ export class SeedDataService {
 			'Default Organization Contacts',
 			createDefaultOrganizationContact(
 				this.connection,
-				this.tenant
+				this.tenant,
+				randomSeedConfig.noOfContactsPerOrganization
 			)
 		);
 
@@ -963,15 +976,6 @@ export class SeedDataService {
 			createDefaultTimeFrames(
 				this.connection,
 				this.tenant,
-				this.organizations
-			)
-		);
-
-		await this.tryExecute(
-			'Default Tags',
-			createDefaultTags(
-				this.connection, 
-				this.tenant, 
 				this.organizations
 			)
 		);
@@ -1414,6 +1418,11 @@ export class SeedDataService {
 			)
 		);
 
+		await this.tryExecute(
+			'Tags', 
+			createTags(this.connection)
+		);
+
 		// Independent roles and role permissions for each tenant
 		const roles: IRole[] = await createRoles(
 			this.connection, 
@@ -1467,6 +1476,15 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Categories',
 			createRandomCategories(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		const tags = await this.tryExecute(
+			'Random Organization Tags',
+			createRandomOrganizationTags(
 				this.connection,
 				tenants,
 				tenantOrganizationsMap
@@ -1771,17 +1789,6 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute('Tags', createTags(this.connection));
-
-		const tags = await this.tryExecute(
-			'Random Organization Tags',
-			createRandomOrganizationTags(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
 		await this.tryExecute(
 			'Random Organization Projects',
 			createRandomOrganizationProjects(
@@ -1834,16 +1841,12 @@ export class SeedDataService {
 			)
 		);
 
-		
-
-		const noOfContactsPerOrganization = 10;
 		await this.tryExecute(
 			'Random Organization Contacts',
 			createRandomOrganizationContact(
 				this.connection,
 				tenants,
-				tenantOrganizationsMap,
-				noOfContactsPerOrganization
+				randomSeedConfig.noOfContactsPerOrganization
 			)
 		);
 
