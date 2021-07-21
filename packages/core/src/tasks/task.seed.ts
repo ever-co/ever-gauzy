@@ -35,8 +35,6 @@ export const createDefaultTask = async (
 	const teams = await connection.manager.find(OrganizationTeam);
 	const users = await connection.manager.find(User);
 
-	console.log(issues.length);
-
 	for (const issue of issues) {
 		let status = TaskStatusEnum.TODO;
 		if (issue.state === 'open') {
