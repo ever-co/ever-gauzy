@@ -110,16 +110,14 @@ export function ipcMainHandler(store, startServer, knex, config) {
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
 		if (auth) {
-			const lastTime: any = await TimerData.getLastTimer(
+			const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
 			);
+			console.log('Last Capture Time (Desktop IPC):', lastTime);
 			event.sender.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
-				timeSlotId:
-					lastTime && lastTime.length > 0
-						? lastTime[0].timeSlotId
-						: null
+				timeSlotId: lastTime ? lastTime.timeSlotId : null
 			});
 		}
 	});

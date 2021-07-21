@@ -121,7 +121,7 @@ When('User click on owner dropdown', () => {
 });
 
 Then('User can select owner from dropdown options', () => {
-	goalsPage.selectOwnerFromDropdown(GoalsPageData.owner);
+	goalsPage.selectOwnerFromDropdown(0);
 });
 
 And('User can see contact dropdown', () => {

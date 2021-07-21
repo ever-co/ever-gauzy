@@ -96,6 +96,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 		}
 	};
 
+	timerStatus: any;
+
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -250,6 +252,12 @@ export class TimeTrackerComponent implements AfterViewInit {
 			let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 			elBtn.click();
 		});
+
+		this.electronService.ipcRenderer.on('timer_status', (event, arg) => {
+			(async () => {
+				await this.getTimerStatus(arg);
+			})();
+		});
 	}
 
 	ngAfterViewInit(): void {
@@ -380,6 +388,14 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.organizationContacts = await this.timeTrackerService.getClient(
 			arg
 		);
+	}
+
+	/*
+	* Get last running/completed timer status 
+	*/
+	async getTimerStatus(arg) {
+		this.timerStatus = await this.timeTrackerService.getTimerStatus(arg);
+		console.log('Get Last Timer Status:', this.timerStatus);
 	}
 
 	async setClient(item, dialog) {
