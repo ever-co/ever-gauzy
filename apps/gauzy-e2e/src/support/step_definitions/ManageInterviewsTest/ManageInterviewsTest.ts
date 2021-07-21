@@ -85,7 +85,7 @@ When('User click on candidate dropdown', () => {
 
 Then('User can select candidate from dropdown options', () => {
 	manageInterviewsPage.candidateDropdownOptionVisible();
-	manageInterviewsPage.selectCandidateFromDropdown(0);
+	manageInterviewsPage.selectCandidateFromDropdown(`${firstName} ${lastName}`);
 });
 
 And('User can see title input field', () => {

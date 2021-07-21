@@ -7,7 +7,8 @@ import {
 	waitElementToHide,
 	verifyText,
 	clickKeyboardBtnByKeycode,
-	scrollDown
+	scrollDown,
+	clickElementByText
 } from '../utils/util';
 import { ManageInterviewsPage } from '../pageobjects/ManageInterviewsPageObject';
 
@@ -31,8 +32,8 @@ export const candidateDropdownOptionVisible = () => {
 	verifyElementIsVisible(ManageInterviewsPage.candidateDropdownOptionCss);
 };
 
-export const selectCandidateFromDropdown = (index) => {
-	clickButtonByIndex(ManageInterviewsPage.candidateDropdownOptionCss, index);
+export const selectCandidateFromDropdown = (text) => {
+	clickElementByText(ManageInterviewsPage.candidateDropdownOptionCss, text);
 };
 
 export const titleInputVisible = () => {
