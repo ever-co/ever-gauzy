@@ -122,7 +122,7 @@ export const assignOrganizationContactToEmployee = async (
 	for await (const employee of employees) {
 		employee.organizationContacts = _.chain(organizationContacts)
 			.shuffle()
-			.take(faker.datatype.number({ min: 1, max: 3 }))
+			.take(faker.datatype.number({ min: 2, max: 4 }))
 			.unique()
 			.values()
 			.value();

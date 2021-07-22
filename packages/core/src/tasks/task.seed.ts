@@ -2,8 +2,23 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
 import { HttpService } from '@nestjs/common';
-import { IOrganization, IOrganizationProject, ITag, ITask, ITenant, TaskStatusEnum } from '@gauzy/contracts';
-import { Organization, OrganizationProject, OrganizationTeam, Tag, Task, User } from './../core/entities/internal';
+import {
+	IOrganization,
+	IOrganizationProject,
+	ITag,
+	ITask,
+	ITenant,
+	TaskStatusEnum
+} from '@gauzy/contracts';
+import {
+	Organization,
+	OrganizationProject,
+	OrganizationTeam,
+	Tag,
+	Task,
+	User,
+	Employee 
+} from './../core/entities/internal';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
@@ -34,7 +49,9 @@ export const createDefaultTask = async (
 	const defaultProjects = await connection.manager.find(OrganizationProject);
 	const teams = await connection.manager.find(OrganizationTeam);
 	const users = await connection.manager.find(User);
+	const employees = await connection.manager.find(Employee);
 
+	let count = 0;
 	for (const issue of issues) {
 		let status = TaskStatusEnum.TODO;
 		if (issue.state === 'open') {
@@ -51,9 +68,17 @@ export const createDefaultTask = async (
 		task.estimate = null;
 		task.dueDate = faker.date.future(0.3);
 		task.project = project;
-		task.teams = [faker.random.arrayElement(teams)];
+
+		if (count % 2 === 0) {
+			task.members = faker.random.arrayElements(employees, 5);
+		} else {
+			task.teams = [faker.random.arrayElement(teams)];
+		}
+
 		task.creator = faker.random.arrayElement(users);
 		tasks.push(task);
+
+		count++;
 	}
 
 	await connection.manager.save(tasks);
@@ -97,36 +122,52 @@ export const createRandomTask = async (
 				tenant
 			}
 		});
-		const organizations = await connection.manager.find(Organization, {
-			where: {
-				tenant
-			}
-		});
 		const users = await connection.manager.find(User, {
 			where: {
 				tenant
 			}
 		});
-		issues.forEach((issue) => {
-			let status = TaskStatusEnum.TODO;
-			if (issue.state === 'open') {
-				status = TaskStatusEnum.IN_PROGRESS;
+		const organizations = await connection.manager.find(Organization, {
+			where: {
+				tenant
 			}
-
-			const task = new Task();
-			task.tags = _.filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
-			task.title = issue.title;
-			task.description = issue.body;
-			task.status = status;
-			task.estimate = null;
-			task.dueDate = null;
-			task.project = faker.random.arrayElement(projects);
-			task.teams = [faker.random.arrayElement(teams)];
-			task.creator = faker.random.arrayElement(users);
-			task.organization = faker.random.arrayElement(organizations),
-			task.tenant = tenant;
-			tasks.push(task);
 		});
+		for await (const organization of organizations) {
+			const employees = await connection.manager.find(Employee, {
+				tenant,
+				organization
+			});
+			let count = 0;
+			issues.forEach((issue) => {
+				let status = TaskStatusEnum.TODO;
+				if (issue.state === 'open') {
+					status = TaskStatusEnum.IN_PROGRESS;
+				}
+
+				const task = new Task();
+				task.tags = _.filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
+				task.title = issue.title;
+				task.description = issue.body;
+				task.status = status;
+				task.estimate = null;
+				task.dueDate = null;
+				task.project = faker.random.arrayElement(projects);
+
+				if (count % 2 === 0) {
+					task.members = faker.random.arrayElements(employees, 5);
+				} else {
+					task.teams = [faker.random.arrayElement(teams)];
+				}
+
+				task.teams = [faker.random.arrayElement(teams)];
+				task.creator = faker.random.arrayElement(users);
+				task.organization = organization,
+				task.tenant = tenant;
+				tasks.push(task);
+
+				count++;
+			});
+		}
 	}
 
 	await connection.manager.save(tasks);

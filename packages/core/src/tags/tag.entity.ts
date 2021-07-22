@@ -96,6 +96,9 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	expense?: IExpense[];
 
 	@ManyToMany(() => Invoice, (invoice) => invoice.tags)
+	@JoinTable({
+		name: 'tag_invoice'
+	})
 	invoice?: IInvoice[];
 
 	@ManyToMany(() => Task, (task) => task.tags)

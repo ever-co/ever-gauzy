@@ -1,19 +1,20 @@
 import { ComponentLayoutStyleEnum, LanguagesEnum } from '@gauzy/contracts';
 
-export const DEFAULT_EMPLOYEES = [
+export const DEFAULT_EMPLOYEES: any = [
 	{
 		email: 'employee@ever.co',
 		password: '123456',
 		firstName: 'Default',
 		lastName: 'Employee',
 		imageUrl: 'assets/images/avatar-default.svg',
+		startedWorkOn: '2018-03-20',
 		employeeLevel: 'A',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	}
 ];
 
-export const DEFAULT_EVER_EMPLOYEES = [
+export const DEFAULT_EVER_EMPLOYEES: any = [
 	{
 		email: 'ruslan@ever.co',
 		password: '123456',
