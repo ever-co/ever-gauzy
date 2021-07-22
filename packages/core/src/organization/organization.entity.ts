@@ -3,7 +3,6 @@ import {
 	Entity,
 	Index,
 	JoinColumn,
-	JoinTable,
 	ManyToMany,
 	ManyToOne,
 	OneToMany,
@@ -64,57 +63,6 @@ import {
 
 @Entity('organization')
 export class Organization extends TenantBaseEntity implements IOrganization {
-	@ApiProperty()
-	@ManyToMany(() => Tag)
-	@JoinTable({
-		name: 'tag_organization'
-	})
-	tags: ITag[];
-
-	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.organization, {
-		nullable: true,
-		cascade: true,
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	contact: IContact;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((organization: Organization) => organization.contact)
-	readonly contactId?: string;
-
-	@ApiPropertyOptional({ type: () => Invoice, isArray: true })
-	@OneToMany(() => Invoice, (invoices) => invoices.fromOrganization)
-	@JoinColumn()
-	invoices?: IInvoice[];
-
-	@ApiProperty({ type: () => Employee })
-	@OneToMany(() => Employee, (employee) => employee.organization)
-	@JoinColumn()
-	employees?: IEmployee[];
-
-	@ApiProperty({ type: () => Deal })
-	@OneToMany(() => Deal, (deal) => deal.organization)
-	@JoinColumn()
-	deals?: IDeal[];
-
-	@ApiProperty({ type: () => OrganizationAwards })
-	@OneToMany(() => OrganizationAwards, (award) => award.organization)
-	@JoinColumn()
-	awards?: IOrganizationAwards[];
-
-	@ApiProperty({ type: () => OrganizationLanguages })
-	@OneToMany(() => OrganizationLanguages, (language) => language.organization)
-	@JoinColumn()
-	languages?: IOrganizationLanguages[];
-
-	@ApiProperty({ type: () => FeatureOrganization })
-	@OneToMany(
-		() => FeatureOrganization,
-		(featureOrganization) => featureOrganization.organization
-	)
-	featureOrganizations?: IFeatureOrganization[];
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -394,38 +342,12 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ default: 12 })
 	timeFormat?: 12 | 24;
 
-	@ApiProperty({ type: () => Skill })
-	@ManyToMany(() => Skill, (skill) => skill.organizations)
-	skills: ISkill[];
-
-	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (payment) => payment.organization, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	payments?: IPayment[];
-
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	separateInvoiceItemTaxAndDiscount?: boolean;
 
-	@ApiPropertyOptional({ type: () => OrganizationSprint, isArray: true })
-	@OneToMany(() => OrganizationSprint, (sprints) => sprints.organization)
-	@JoinColumn()
-	organizationSprints?: IOrganizationSprint[];
-
-	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
-	@OneToMany(
-		() => InvoiceEstimateHistory,
-		(invoiceEstimateHistory) => invoiceEstimateHistory.organization,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
-	@JoinColumn()
-	invoiceEstimateHistories?: IInvoiceEstimateHistory[];
-
+	
 	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
@@ -474,14 +396,83 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	daysUntilDue?: number;
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	
+	// Contact
+	@ApiProperty({ type: () => Contact })
+	@ManyToOne(() => Contact, (contact) => contact.organization, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'SET NULL'
+	})
+	contact: IContact;
 
-	@OneToMany(
-		() => AccountingTemplate,
-		(accountingTemplate) => accountingTemplate.organization,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((organization: Organization) => organization.contact)
+	readonly contactId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiPropertyOptional({ type: () => Invoice, isArray: true })
+	@OneToMany(() => Invoice, (invoice) => invoice.fromOrganization)
+	@JoinColumn()
+	invoices?: IInvoice[];
+
+	@ApiProperty({ type: () => Employee })
+	@OneToMany(() => Employee, (employee) => employee.organization)
+	@JoinColumn()
+	employees?: IEmployee[];
+
+	@ApiProperty({ type: () => Deal })
+	@OneToMany(() => Deal, (deal) => deal.organization)
+	@JoinColumn()
+	deals?: IDeal[];
+
+	@ApiProperty({ type: () => OrganizationAwards })
+	@OneToMany(() => OrganizationAwards, (award) => award.organization)
+	@JoinColumn()
+	awards?: IOrganizationAwards[];
+
+	@ApiProperty({ type: () => OrganizationLanguages })
+	@OneToMany(() => OrganizationLanguages, (language) => language.organization)
+	@JoinColumn()
+	languages?: IOrganizationLanguages[];
+
+	@ApiProperty({ type: () => FeatureOrganization })
+	@OneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.organization)
+	featureOrganizations?: IFeatureOrganization[];
+
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
+	@OneToMany(() => Payment, (payment) => payment.organization, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: IPayment[];
+
+	@ApiPropertyOptional({ type: () => OrganizationSprint, isArray: true })
+	@OneToMany(() => OrganizationSprint, (sprint) => sprint.organization)
+	@JoinColumn()
+	organizationSprints?: IOrganizationSprint[];
+
+	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
+	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.organization, { 
+		onDelete: 'SET NULL' 
+	})
+	@JoinColumn()
+	invoiceEstimateHistories?: IInvoiceEstimateHistory[];
+
+	@ApiProperty({ type: () => AccountingTemplate })
+	@OneToMany(() => AccountingTemplate, (accountingTemplate) => accountingTemplate.organization, { 
+		onDelete: 'SET NULL' 
+	})
 	@JoinColumn()
 	accountingTemplates?: IAccountingTemplate[];
 
@@ -489,4 +480,18 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@OneToMany(() => ReportOrganization, (reportOrganization) => reportOrganization.organization)
 	@JoinColumn()
 	reportOrganizations?: IReportOrganization[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Tags
+	@ApiProperty({ type: () => Tag })
+	@ManyToMany(() => Tag, (it) => it.organizations)
+	tags: ITag[];
+
+	@ApiProperty({ type: () => Skill })
+	@ManyToMany(() => Skill, (skill) => skill.organizations)
+	skills: ISkill[];
 }

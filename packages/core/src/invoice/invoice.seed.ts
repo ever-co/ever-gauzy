@@ -91,7 +91,7 @@ const generateInvoice = async (
 	invoice.dueDate = faker.date.future(0.3);
 	
 	if (organizationContacts.length) {
-		invoice.organizationContactId = faker.random.arrayElement(organizationContacts ).id; 
+		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
 	}
 
 	invoice.sentTo = organization.id;
@@ -114,7 +114,6 @@ const generateInvoice = async (
 	invoice.tax2Type = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
 	invoice.invoiceType = faker.random.arrayElement(Object.values(InvoiceTypeEnum));
 	invoice.status = faker.random.arrayElement(Object.values(InvoiceStatusTypesEnum));
-	invoice.totalValue = faker.datatype.number({ min: 500, max: 3000 });
 
 	invoice.organization = organization;
 	invoice.tenant = tenant;

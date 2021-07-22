@@ -13,18 +13,7 @@ export const createDefaultTask = async (
 	organization: IOrganization
 ): Promise<ITask[]> => {
 	const httpService = new HttpService();
-
 	const tasks: ITask[] = [];
-
-	const teams = await connection
-		.getRepository(OrganizationTeam)
-		.createQueryBuilder()
-		.getMany();
-
-	const users = await connection
-		.getRepository(User)
-		.createQueryBuilder()
-		.getMany();
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
 	const issues: any[] = await httpService
@@ -42,26 +31,18 @@ export const createDefaultTask = async (
 	labels = _.uniq(labels, (label) => label.name);
 	const tags: ITag[] = await createTags(connection, labels);
 
-	const defaultProjects = await connection
-		.getRepository(OrganizationProject)
-		.createQueryBuilder()
-		.getMany();
+	const defaultProjects = await connection.manager.find(OrganizationProject);
+	const teams = await connection.manager.find(OrganizationTeam);
+	const users = await connection.manager.find(User);
 
-	// issues.forEach((issue) => {
 	for (const issue of issues) {
 		let status = TaskStatusEnum.TODO;
 		if (issue.state === 'open') {
 			status = TaskStatusEnum.IN_PROGRESS;
 		}
-
 		const project = faker.random.arrayElement(defaultProjects);
 		const task = new Task();
-		task.tags = _.filter(
-			tags,
-			(tag: ITag) =>
-				!!issue.labels.find((label: any) => label.name === tag.name)
-		);
-
+		task.tags = _.filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
 		task.tenant = tenant;
 		task.organization = organization;
 		task.title = issue.title;
@@ -73,9 +54,6 @@ export const createDefaultTask = async (
 		task.teams = [faker.random.arrayElement(teams)];
 		task.creator = faker.random.arrayElement(users);
 		tasks.push(task);
-
-		project.tasks = tasks;
-		await connection.manager.save(project);
 	}
 
 	await connection.manager.save(tasks);
@@ -96,15 +74,6 @@ export const createRandomTask = async (
 
 	const httpService = new HttpService();
 	const tasks: ITask[] = [];
-	const teams = await connection
-		.getRepository(OrganizationTeam)
-		.createQueryBuilder()
-		.getMany();
-
-	const users = await connection
-		.getRepository(User)
-		.createQueryBuilder()
-		.getMany();
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
 	const issues: any[] = await httpService
@@ -123,8 +92,20 @@ export const createRandomTask = async (
 	const tags: ITag[] = await createTags(connection, labels);
 
 	for await (const tenant of tenants || []) {
+		const teams = await connection.manager.find(OrganizationTeam, {
+			where: {
+				tenant
+			}
+		});
 		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+			where: {
+				tenant
+			}
+		});
+		const users = await connection.manager.find(User, {
+			where: {
+				tenant
+			}
 		});
 		issues.forEach((issue) => {
 			let status = TaskStatusEnum.TODO;
@@ -133,11 +114,7 @@ export const createRandomTask = async (
 			}
 
 			const task = new Task();
-			task.tags = _.filter(
-				tags,
-				(tag: ITag) =>
-					!!issue.labels.find((label: any) => label.name === tag.name)
-			);
+			task.tags = _.filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
 			task.title = issue.title;
 			task.description = issue.body;
 			task.status = status;
@@ -146,8 +123,8 @@ export const createRandomTask = async (
 			task.project = faker.random.arrayElement(projects);
 			task.teams = [faker.random.arrayElement(teams)];
 			task.creator = faker.random.arrayElement(users);
-			(task.organization = faker.random.arrayElement(organizations)),
-				(task.tenant = tenant);
+			task.organization = faker.random.arrayElement(organizations),
+			task.tenant = tenant;
 			tasks.push(task);
 		});
 	}

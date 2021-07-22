@@ -135,7 +135,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	// Tags
 	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.task)
-	@JoinTable({ name: 'tag_task' })
 	tags?: ITag[];
 
 	// Members
