@@ -146,7 +146,7 @@ export const assignOrganizationProjectToEmployee = async (
 		for await (const employee of employees) {
 			employee.projects = chain(organizationProjects)
 				.shuffle()
-				.take(faker.datatype.number({ min: 1, max: 3 }))
+				.take(faker.datatype.number({ min: 2, max: 4 }))
 				.unique()
 				.values()
 				.value();

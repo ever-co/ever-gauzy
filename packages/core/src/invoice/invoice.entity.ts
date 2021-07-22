@@ -224,7 +224,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	// Invoice Estimate Items
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
-		onDelete: 'SET NULL'
+		cascade: true
 	})
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
@@ -240,7 +240,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	// Invoice Estimate History
 	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
 	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.invoice, { 
-		cascade: true 
+		cascade: true
 	})
 	@JoinColumn()
 	historyRecords?: IInvoiceEstimateHistory[];
@@ -252,8 +252,5 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
     */
 	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.invoice)
-	@JoinTable({
-		name: 'tag_invoice'
-	})
 	tags?: Tag[];
 }

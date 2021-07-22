@@ -140,7 +140,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	// Members
 	@ManyToMany(() => Employee, { cascade: ['update'] })
 	@JoinTable({ name: 'task_employee' })
-	readonly members?: IEmployee[];
+	members?: IEmployee[];
 
 	// Teams
 	@ManyToMany(() => OrganizationTeam, { cascade: ['update'] })
