@@ -6,7 +6,8 @@ import {
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	waitElementToHide
 } from '../utils/util';
 import { OrganizationDepartmentsPage } from '../pageobjects/OrganizationDepartmentsPageObject';
 
@@ -18,7 +19,7 @@ export const gridBtnClick = (index) => {
 	clickButtonByIndex(OrganizationDepartmentsPage.gridButtonCss, index);
 };
 
-export const addDepaartmentButtonVisible = () => {
+export const addDepartmentButtonVisible = () => {
 	verifyElementIsVisible(OrganizationDepartmentsPage.addDepartmentButtonCss);
 };
 
@@ -123,4 +124,8 @@ export const verifyDepartmentIsDeleted = (text) => {
 		OrganizationDepartmentsPage.verifyDepartmentCss,
 		text
 	);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(OrganizationDepartmentsPage.toastrMessageCss);
 };
