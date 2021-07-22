@@ -7,7 +7,7 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationEmploymentTypesPage } from '../pageobjects/OrganizationEmploymentTypesPageObject';
 
@@ -32,9 +32,20 @@ export const nameInputVisible = () => {
 };
 
 export const enterNameInputData = (data) => {
+	clickButton(OrganizationEmploymentTypesPage.nameInputCss);
 	clearField(OrganizationEmploymentTypesPage.nameInputCss);
 	enterInput(OrganizationEmploymentTypesPage.nameInputCss, data);
 };
+
+export const editNameInputVisible = () => {
+	verifyElementIsVisible(OrganizationEmploymentTypesPage.editNameInputCss);
+};
+
+export const enterEditNameInputData = (data) => {
+	clickButton(OrganizationEmploymentTypesPage.editNameInputCss);
+	clearField(OrganizationEmploymentTypesPage.editNameInputCss);
+	enterInput(OrganizationEmploymentTypesPage.editNameInputCss, data);
+}
 
 export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationEmploymentTypesPage.addTagsDropdownCss);
@@ -101,6 +112,6 @@ export const verifyTypeExists = (text) => {
 	verifyText(OrganizationEmploymentTypesPage.verifyTextCss, text);
 };
 
-export const verifyTypeIsDeleted = () => {
-	verifyElementNotExist(OrganizationEmploymentTypesPage.verifyTextCss);
+export const verifyTypeIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationEmploymentTypesPage.verifyTextCss, text);
 };
