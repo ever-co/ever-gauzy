@@ -4,6 +4,9 @@ import * as organizationDocumentsPage from '../support/Base/pages/OrganizationDo
 import { OrganizationDocumentsPageData } from '../support/Base/pagedata/OrganizationDocumentsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
+import * as faker from 'faker';
+
+let url = faker.internet.url();
 
 describe('Organization documents test', () => {
 	before(() => {
@@ -20,9 +23,7 @@ describe('Organization documents test', () => {
 			OrganizationDocumentsPageData.documentName
 		);
 		organizationDocumentsPage.urlInputVisible();
-		organizationDocumentsPage.enterUrlInputData(
-			OrganizationDocumentsPageData.documentUrl
-		);
+		organizationDocumentsPage.enterUrlInputData(url);
 		organizationDocumentsPage.clickCardBody();
 		organizationDocumentsPage.saveButtonVisible();
 		organizationDocumentsPage.clickSaveButton();
