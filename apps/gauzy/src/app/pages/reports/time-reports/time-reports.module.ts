@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { TimeReportsRoutingModule } from './time-reports-routing.module';
 import { TimeReportsComponent } from './time-reports/time-reports.component';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -25,7 +24,6 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		SharedModule,
 		DailyGridModule,
 		DailyStatisticsModule,
-
 		TimeReportsRoutingModule,
 		LineChartModule,
 		TranslateModule,

@@ -4,16 +4,18 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { IGetExpenseInput } from '@gauzy/contracts';
+import { IGetExpenseInput, ReportGroupFilterEnum, ReportGroupByFilter } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from './../../../../@core/services/store.service';
-import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pluck } from 'underscore';
+import { Store } from './../../../../@core/services/store.service';
+import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
+import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-amounts-owed-report',
 	templateUrl: './amounts-owed-report.component.html',
@@ -24,15 +26,15 @@ export class AmountsOwedReportComponent
 	implements OnInit, AfterViewInit {
 	logRequest: IGetExpenseInput = this.request;
 	loading: boolean;
-	chartData: any;
-	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
+	chartData: IChartData;
+	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	filters: IGetExpenseInput;
 
 	constructor(
-		private timesheetService: TimesheetService,
-		private cd: ChangeDetectorRef,
-		protected store: Store,
-		readonly translateService: TranslateService
+		private readonly timesheetService: TimesheetService,
+		private readonly cd: ChangeDetectorRef,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService
 	) {
 		super(store, translateService);
 	}
@@ -40,7 +42,8 @@ export class AmountsOwedReportComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(1350),
+				debounceTime(300),
+				tap(() => this.loading = true),
 				tap(() => this.updateChartData()),
 				untilDestroyed(this)
 			)
@@ -61,22 +64,20 @@ export class AmountsOwedReportComponent
 		if (!this.organization || !this.logRequest) {
 			return;
 		}
-
 		const request: IGetExpenseInput = {
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		};
-
-		this.loading = true;
 		this.timesheetService
 			.getOwedAmountReportChartData(request)
 			.then((logs: any[]) => {
-				const datasets = [
-					{
-						label: this.getTranslation('REPORT_PAGE.AMOUNT'),
-						data: logs.map((log) => log.value)
-					}
-				];
+				const datasets = [{
+					label: this.getTranslation('REPORT_PAGE.AMOUNT'),
+					data: logs.map((log) => log.value),
+					borderColor: ChartUtil.CHART_COLORS.red,
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5),
+					borderWidth: 1
+				}];
 				this.chartData = {
 					labels: pluck(logs, 'date'),
 					datasets
