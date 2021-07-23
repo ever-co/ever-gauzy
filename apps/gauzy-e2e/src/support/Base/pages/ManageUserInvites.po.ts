@@ -18,8 +18,8 @@ export const gridButtonVisible = () => {
 	verifyElementIsVisible(ManageUserInvitesPage.gridButtonCss);
 };
 
-export const clickGridButton = () => {
-	clickButtonByIndex(ManageUserInvitesPage.gridButtonCss, 1);
+export const clickGridButton = (index) => {
+	clickButtonByIndex(ManageUserInvitesPage.gridButtonCss, index);
 };
 
 export const tableBodyExists = () => {

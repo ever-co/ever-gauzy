@@ -75,7 +75,7 @@ describe('Organization departments test', () => {
 		cy.visit('/#/pages/organization/departments');
 		organizationDepartmentsPage.gridBtnExists();
 		organizationDepartmentsPage.gridBtnClick(1);
-		organizationDepartmentsPage.addDepaartmentButtonVisible();
+		organizationDepartmentsPage.addDepartmentButtonVisible();
 		organizationDepartmentsPage.clickAddDepartmentButton();
 		organizationDepartmentsPage.nameInputVisible();
 		organizationDepartmentsPage.enterNameInputData(

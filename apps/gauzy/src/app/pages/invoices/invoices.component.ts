@@ -511,15 +511,9 @@ export class InvoicesComponent
 			.toPromise();
 
 		if (result) {
-			const { invoiceItems } = this.selectedInvoice;
-			await this.invoicesService.delete(this.selectedInvoice.id);
+			const { id } = this.selectedInvoice;
+			await this.invoicesService.delete(id);
 
-			for (const item of invoiceItems) {
-				await this.invoiceItemService.delete(item.id);
-			}
-			for (const history of this.histories) {
-				await this.invoiceEstimateHistoryService.delete(history.id);
-			}
 			if (this.isEstimate) {
 				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_ESTIMATE');
 			} else {

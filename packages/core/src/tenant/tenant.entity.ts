@@ -25,20 +25,28 @@ export class Tenant extends BaseEntity implements ITenant {
 	@Column({ nullable: false })
 	name?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
 	@ApiProperty({ type: () => Organization })
-	@OneToMany(() => Organization, (organization) => organization.tenant)
+	@OneToMany(() => Organization, (organization) => organization.tenant, {
+		cascade: true
+	})
 	@JoinColumn()
 	organizations?: IOrganization[];
 
 	@ApiProperty({ type: () => RolePermissions })
-	@OneToMany(() => RolePermissions, (rolePermission) => rolePermission.tenant)
+	@OneToMany(() => RolePermissions, (rolePermission) => rolePermission.tenant, {
+		cascade: true
+	})
 	rolePermissions?: IRolePermission[];
 
 	@ApiProperty({ type: () => FeatureOrganization })
-	@OneToMany(
-		() => FeatureOrganization,
-		(featureOrganization) => featureOrganization.tenant
-	)
+	@OneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.tenant, {
+		cascade: true
+	})
 	featureOrganizations?: IFeatureOrganization[];
 
 	@ApiProperty({ type: () => ImportRecord })

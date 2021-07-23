@@ -116,7 +116,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization, employee, project]) => !!organization && !!employee && !!project),
+				filter(([organization, employee]) => !!organization && !!employee),
 				distinctUntilChange(),
 				tap(([organization, employee, project]) => {
 					this.organization = organization;

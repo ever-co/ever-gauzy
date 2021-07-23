@@ -2,40 +2,26 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
+	OnDestroy,
 	OnInit
 } from '@angular/core';
-import { IGetActivitiesInput, IOrganization } from '@gauzy/contracts';
+import { IGetActivitiesInput } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-apps-urls-report',
 	templateUrl: './apps-urls-report.component.html',
 	styleUrls: ['./apps-urls-report.component.scss']
 })
-export class AppsUrlsReportComponent implements OnInit, AfterViewInit {
+export class AppsUrlsReportComponent implements OnInit, AfterViewInit, OnDestroy {
+	today: Date = new Date();
 	logRequest: IGetActivitiesInput = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate()
+		startDate: moment(this.today).startOf('week').toDate(),
+		endDate: moment(this.today).endOf('week').toDate()
 	};
-	updateLogs$: Subject<any> = new Subject();
-	organization: IOrganization;
-
-	loading: boolean;
-	chartData: any;
-
-	private _selectedDate: Date = new Date();
-	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
 	filters: IGetActivitiesInput;
 
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-	}
-
-	constructor(private cd: ChangeDetectorRef) {}
+	constructor(private readonly cd: ChangeDetectorRef) {}
 
 	ngOnInit() {}
 
@@ -46,6 +32,7 @@ export class AppsUrlsReportComponent implements OnInit, AfterViewInit {
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.updateLogs$.next();
 	}
+
+	ngOnDestroy() {}
 }

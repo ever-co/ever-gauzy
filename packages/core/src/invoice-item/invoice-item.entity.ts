@@ -1,11 +1,10 @@
-import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import {
 	IEmployee,
 	IExpense,
 	IInvoice,
 	IInvoiceItem,
 	IOrganizationProject,
-	IProduct,
 	IProductTranslatable,
 	ITask
 } from '@gauzy/contracts';
@@ -50,78 +49,6 @@ export class InvoiceItem
 	@Column({ type: 'numeric' })
 	totalValue: number;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	invoiceId?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	taskId?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	employeeId?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	projectId?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	productId?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	expenseId?: string;
-
-	@ApiPropertyOptional({ type: () => Expense })
-	@ManyToOne(() => Expense, (expense) => expense.invoiceItems, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	expense?: IExpense;
-
-	@ApiPropertyOptional({ type: () => Invoice })
-	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	invoice?: IInvoice;
-
-	@ApiPropertyOptional({ type: () => Task })
-	@ManyToOne(() => Task, (task) => task.invoiceItems, {
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	task?: ITask;
-
-	@ApiPropertyOptional({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.invoiceItems)
-	@JoinColumn()
-	employee?: IEmployee;
-
-	@ApiPropertyOptional({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (project) => project.invoiceItems)
-	@JoinColumn()
-	project?: IOrganizationProject;
-
-	@ApiPropertyOptional({ type: () => Product })
-	@ManyToOne(() => Product, (product) => product.invoiceItems)
-	@JoinColumn()
-	product?: IProductTranslatable;
-
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
@@ -131,4 +58,96 @@ export class InvoiceItem
 	@IsBoolean()
 	@Column({ nullable: true })
 	applyDiscount?: boolean;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	// Invoice Item Belongs to Expense
+	@ApiPropertyOptional({ type: () => Expense })
+	@ManyToOne(() => Expense, (expense) => expense.invoiceItems, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	expense?: IExpense;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: InvoiceItem) => it.expense)
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	expenseId?: string;
+
+	// Invoice Item Belongs to Invoice
+	@ApiPropertyOptional({ type: () => Invoice })
+	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	invoice?: IInvoice;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: InvoiceItem) => it.invoice)
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	invoiceId?: string;
+
+	// Invoice Item Belongs to Task
+	@ApiPropertyOptional({ type: () => Task })
+	@ManyToOne(() => Task, (task) => task.invoiceItems, {
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	task?: ITask;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: InvoiceItem) => it.task)
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	taskId?: string;
+
+	// Invoice Item Belongs to Employee
+	@ApiPropertyOptional({ type: () => Employee })
+	@ManyToOne(() => Employee, (employee) => employee.invoiceItems)
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: InvoiceItem) => it.employee)
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	employeeId?: string;
+
+	// Invoice Item Belongs to Project
+	@ApiPropertyOptional({ type: () => OrganizationProject })
+	@ManyToOne(() => OrganizationProject, (project) => project.invoiceItems, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	project?: IOrganizationProject;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: InvoiceItem) => it.project)
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	projectId?: string;
+
+	// Invoice Item Belongs to Product
+	@ApiPropertyOptional({ type: () => Product })
+	@ManyToOne(() => Product, (product) => product.invoiceItems)
+	@JoinColumn()
+	product?: IProductTranslatable;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: InvoiceItem) => it.product)
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	productId?: string;
 }

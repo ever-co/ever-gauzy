@@ -140,7 +140,7 @@ export class TimesheetService {
 			.toPromise();
 	}
 
-	getDailyReportChartData(request: IGetTimeLogReportInput) {
+	getDailyReportChart(request: IGetTimeLogReportInput) {
 		const params = toParams(request);
 		return this.http
 			.get(`${API_PREFIX}/timesheet/time-log/report/daily-chart`, {
@@ -149,7 +149,7 @@ export class TimesheetService {
 			.toPromise();
 	}
 
-	getWeeklyReport(request?: IGetTimeLogInput) {
+	getWeeklyReportChart(request?: IGetTimeLogInput) {
 		const params = toParams(request);
 		return this.http
 			.get(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })

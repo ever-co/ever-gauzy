@@ -10,7 +10,9 @@ import {
 	IGetTimeLogReportInput,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	ReportGroupByFilter,
+	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -38,7 +40,7 @@ export class ExpensesReportGridComponent
 	loading: boolean;
 
 	futureDateAllowed: boolean;
-	groupBy: 'date' | 'employee' | 'project' = 'date';
+	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
 	@Input()
 	set filters(value) {

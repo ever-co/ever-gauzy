@@ -1,6 +1,6 @@
 export const ManageUserInvitesPage = {
 	manageInvitesButtonCss:
-		'div.header-selector-wrapper > button[status="primary"]',
+		'div.card-header-title > div.mr-2 > button[status="primary"]',
 	gridButtonCss: 'div.layout-switch > button',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	copyLinkButtonCss: 'div.mb-3 > button[status="success"]',

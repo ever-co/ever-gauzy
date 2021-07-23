@@ -15,6 +15,7 @@ export const technologyInputVisible = () => {
 };
 
 export const enterTechonologyInputData = (data) => {
+	clickButton(ManageInterviewsCriterionsPage.nameInputCss);
 	clearField(ManageInterviewsCriterionsPage.nameInputCss);
 	enterInput(ManageInterviewsCriterionsPage.nameInputCss, data);
 };
@@ -66,6 +67,7 @@ export const qualityInputVisible = () => {
 };
 
 export const enterQualityInputData = (data) => {
+	clickButton(ManageInterviewsCriterionsPage.qualityInputCss);
 	clearField(ManageInterviewsCriterionsPage.qualityInputCss);
 	enterInput(ManageInterviewsCriterionsPage.qualityInputCss, data);
 };

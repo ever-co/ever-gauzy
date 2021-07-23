@@ -13,7 +13,7 @@ describe('Manage invites test', () => {
 		manageUserInvitesPage.manageInvitesButtonVisible();
 		manageUserInvitesPage.clickManageInvitesButton();
 		manageUserInvitesPage.gridButtonVisible();
-		manageUserInvitesPage.clickGridButton();
+		manageUserInvitesPage.clickGridButton(1);
 		manageUserInvitesPage.tableBodyExists();
 		manageUserInvitesPage.clickTableRow(0);
 		manageUserInvitesPage.copyLinkButtonVisible();

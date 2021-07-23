@@ -8,7 +8,9 @@ import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
 	IClientBudgetLimitReport,
-	OrganizationContactBudgetTypeEnum
+	OrganizationContactBudgetTypeEnum,
+	ReportGroupFilterEnum,
+	ReportGroupByFilter
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -30,7 +32,7 @@ export class ClientBudgetsReportComponent
 	logRequest: IGetPaymentInput = this.request;
 	OrganizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
 	loading: boolean;
-	groupBy: 'date' | 'employee' | 'client' | 'client' = 'date';
+	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	filters: IGetPaymentInput;
 	clients: IClientBudgetLimitReport[];
 

@@ -10,6 +10,8 @@ import { IRequestApprovalEmployee } from './request-approval-employee.model';
 import { ISkill } from './skill-entity.model';
 import { ITag } from './tag-entity.model';
 import { IUser, IUserFindInput } from './user.model';
+import { IOrganizationContact } from './organization-contact.model';
+import { IOrganizationProject } from './organization-projects.model';
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
@@ -27,6 +29,8 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	organizationDepartments?: IOrganizationDepartment[];
+	organizationContacts?: IOrganizationContact[];
+	projects?: IOrganizationProject[];
 	organizationPosition?: IOrganizationPosition;
 	tags: ITag[];
 	skills: ISkill[];

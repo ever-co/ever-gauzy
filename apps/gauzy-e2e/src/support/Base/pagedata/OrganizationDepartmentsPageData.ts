@@ -1,3 +1,4 @@
 export const OrganizationDepartmentsPageData = {
-	departmentName: 'Front-End Development'
+	departmentName: 'Front-End Development',
+	editDepartmentName: 'Back-End Development'
 };

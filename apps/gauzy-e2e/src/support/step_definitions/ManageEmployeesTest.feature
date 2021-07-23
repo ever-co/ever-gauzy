@@ -48,7 +48,6 @@ Feature: Manage employees test
     Then User will see last step button
     When User click on last step button
     Then Notification message will appear
-    And User can verify employee was added
   Scenario: Edit employee
     And User can see employees table
     When User click on emloyees table row

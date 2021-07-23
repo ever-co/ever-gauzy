@@ -3,6 +3,8 @@ import { Invoice } from './invoice.entity';
 import * as faker from 'faker';
 import {
 	DiscountTaxTypeEnum,
+	IInvoice,
+	IInvoiceEstimateHistory,
 	InvoiceStatusTypesEnum,
 	InvoiceTypeEnum,
 	IOrganization,
@@ -11,7 +13,8 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import * as _ from 'underscore';
-import { OrganizationContact, Tag } from './../core/entities/internal';
+import { InvoiceEstimateHistory, OrganizationContact, Tag, User } from './../core/entities/internal';
+import { randomSeedConfig } from './../core/seeds/random-seed-config';
 
 export const createDefaultInvoice = async (
 	connection: Connection,
@@ -19,7 +22,7 @@ export const createDefaultInvoice = async (
 	organizations: IOrganization[],
 	noOfInvoicePerOrganization: number
 ) => {
-	const invoices: Invoice[] = [];
+	const invoices: IInvoice[] = [];
 	for (const organization of organizations) {
 		const tags = await connection.manager.find(Tag, {
 			where: { 
@@ -34,6 +37,7 @@ export const createDefaultInvoice = async (
 		});
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 			const invoice = await generateInvoice(
+				connection,
 				tenant, 
 				organization, 
 				tags, 
@@ -53,7 +57,7 @@ export const createRandomInvoice = async (
 ) => {
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-		const invoices: Invoice[] = [];
+		const invoices: IInvoice[] = [];
 		for (const organization of organizations) {
 			const tags = await connection.manager.find(Tag, {
 				where: { organization }
@@ -65,7 +69,7 @@ export const createRandomInvoice = async (
 				} 
 			});
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
-				const invoice = await generateInvoice(tenant, organization, tags, organizationContacts)
+				const invoice = await generateInvoice(connection, tenant, organization, tags, organizationContacts)
 				invoices.push(invoice);
 			}
 		}
@@ -74,11 +78,12 @@ export const createRandomInvoice = async (
 };
 
 const generateInvoice = async (
+	connection: Connection,
 	tenant: ITenant,
 	organization: IOrganization,
 	tags: ITag[],
 	organizationContacts: IOrganizationContact[]
-): Promise<Invoice> => {
+): Promise<IInvoice> => {
 	
 	const invoice = new Invoice();
 	invoice.tags = _.chain(tags)
@@ -91,7 +96,7 @@ const generateInvoice = async (
 	invoice.dueDate = faker.date.future(0.3);
 	
 	if (organizationContacts.length) {
-		invoice.organizationContactId = faker.random.arrayElement(organizationContacts ).id; 
+		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
 	}
 
 	invoice.sentTo = organization.id;
@@ -114,11 +119,58 @@ const generateInvoice = async (
 	invoice.tax2Type = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
 	invoice.invoiceType = faker.random.arrayElement(Object.values(InvoiceTypeEnum));
 	invoice.status = faker.random.arrayElement(Object.values(InvoiceStatusTypesEnum));
-	invoice.totalValue = faker.datatype.number({ min: 500, max: 3000 });
 
 	invoice.organization = organization;
 	invoice.tenant = tenant;
 	invoice.isArchived = false;
 
+	invoice.historyRecords = await generateInvoiceHistory(
+		connection,
+		tenant,
+		organization,
+		invoice
+	);
 	return invoice;
 };
+
+/**
+* Updates invoice estimate records history
+* @param connection
+* @param tenant
+* @param organization
+* @param invoice 
+*/
+const generateInvoiceHistory = async (
+	connection: Connection,
+	tenant: ITenant,
+	organization: IOrganization,
+	invoice: IInvoice
+): Promise<IInvoiceEstimateHistory[]> => {
+	const historyRecords: IInvoiceEstimateHistory[] = [];
+	const users = await connection.manager.find(User, {
+		where: { 
+			tenant
+		}
+	});
+
+	historyRecords.push(
+		new InvoiceEstimateHistory({
+			user: faker.random.arrayElement(users),
+			action: invoice.isEstimate ? 'Estimated Added' : 'Invoice Added',
+			tenant,
+			organization
+		})
+	);
+
+	for (let i = 0; i < faker.datatype.number({ min: 2, max: randomSeedConfig.numberOfInvoiceHistoryPerInvoice }); i++) {
+		historyRecords.push(
+			new InvoiceEstimateHistory({
+				user: faker.random.arrayElement(users),
+				action: faker.name.jobTitle(),
+				tenant,
+				organization
+			})
+		);
+	}
+	return historyRecords;
+}

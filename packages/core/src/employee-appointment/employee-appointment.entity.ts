@@ -1,4 +1,4 @@
-import { IEmployeeAppointment } from '@gauzy/contracts';
+import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -28,7 +28,7 @@ export class EmployeeAppointment
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId(
