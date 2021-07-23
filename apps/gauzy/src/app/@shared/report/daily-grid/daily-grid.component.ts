@@ -11,7 +11,9 @@ import {
 	IReportDayData,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	ReportGroupByFilter,
+	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
@@ -47,7 +49,7 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 	selectedEmployeeId: string | null = null;
 	projectId: string | null = null;
 	futureDateAllowed: boolean;
-	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
+	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
 	private _selectedDate: Date = new Date();
 	public get selectedDate(): Date {

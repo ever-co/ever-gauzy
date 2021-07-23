@@ -54,3 +54,12 @@ export interface ReportDayData {
 	employee?: IEmployee;
 	dates: any;
 }
+
+export enum ReportGroupFilterEnum {
+    date = 'date',
+    employee = 'employee',
+    project = 'project',
+    client = 'client'
+}
+
+export type ReportGroupByFilter = keyof typeof ReportGroupFilterEnum;

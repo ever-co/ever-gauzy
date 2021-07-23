@@ -8,6 +8,8 @@ import {
 import {
 	IGetTimeLogReportInput,
 	ITimeLogFilters,
+	ReportGroupByFilter,
+	ReportGroupFilterEnum,
 	TimeLogType
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,6 +20,7 @@ import { Store } from './../../../../@core/services/store.service';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
+import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,8 +34,8 @@ export class TimeReportsComponent
 	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
 	loading: boolean;
-	chartData: any;
-	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
+	chartData: IChartData;
+	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,

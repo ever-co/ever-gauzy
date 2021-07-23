@@ -8,13 +8,11 @@ import {
 import {
 	IAmountOwedReport,
 	IGetTimeLogReportInput,
-	ISelectedEmployee,
 	ITimeLogFilters,
-	OrganizationPermissionsEnum,
-	PermissionsEnum
+	ReportGroupByFilter,
+	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { debounceTime, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
@@ -30,17 +28,9 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 export class AmountsOwedGridComponent
 	extends ReportBaseComponent
 	implements OnInit, AfterViewInit {
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	PermissionsEnum = PermissionsEnum;
-	today: Date = new Date();
 	logRequest: ITimeLogFilters = this.request;
-
-	weekDayList: string[] = [];
 	loading: boolean;
-
-	futureDateAllowed: boolean;
-	groupBy: 'date' | 'employee' | 'project' = 'date';
-	selectedEmployee: ISelectedEmployee;
+	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	dailyData: IAmountOwedReport[];
 
 	@Input()
@@ -50,11 +40,10 @@ export class AmountsOwedGridComponent
 	}
 
 	constructor(
-		private timesheetService: TimesheetService,
-		private ngxPermissionsService: NgxPermissionsService,
-		protected store: Store,
-		private cd: ChangeDetectorRef,
-		readonly translateService: TranslateService
+		private readonly timesheetService: TimesheetService,
+		protected readonly store: Store,
+		private readonly cd: ChangeDetectorRef,
+		public readonly translateService: TranslateService
 	) {
 		super(store, translateService);
 	}
@@ -62,18 +51,12 @@ export class AmountsOwedGridComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(1350),
+				debounceTime(300),
+				tap(() => this.loading = true),
 				tap(() => this.getExpenses()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.ngxPermissionsService.permissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(async () => {
-				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
-					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
-				);
-			});
 	}
 
 	ngAfterViewInit() {
@@ -82,6 +65,7 @@ export class AmountsOwedGridComponent
 
 	filtersChange($event) {
 		this.logRequest = $event;
+		this.filters = Object.assign({}, this.logRequest);
 		this.subject$.next();
 	}
 
@@ -93,13 +77,10 @@ export class AmountsOwedGridComponent
 		if (!this.organization || !this.logRequest) {
 			return;
 		}
-
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		};
-
-		this.loading = true;
 		this.timesheetService
 			.getOwedAmountReport(request)
 			.then((logs) => {
