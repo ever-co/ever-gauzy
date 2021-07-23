@@ -4,12 +4,12 @@ import { Subject } from 'rxjs/internal/Subject';
 import { filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { pick } from 'underscore';
-import { toUTC } from '@gauzy/common-angular';
+import { Store } from '../../../@core/services/store.service';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,6 +38,7 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 		const storeProject$ = this.store.selectedProject$;
 		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
+				distinctUntilChange(),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				tap(([organization, employee, project]) => {

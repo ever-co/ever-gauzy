@@ -2,6 +2,7 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
+	OnDestroy,
 	OnInit
 } from '@angular/core';
 import {
@@ -10,15 +11,15 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { debounceTime, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { pick, pluck } from 'underscore';
 import { Store } from './../../../../@core/services/store.service';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { debounceTime, tap } from 'rxjs/operators';
-import * as _ from 'underscore';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
-import { TranslateService } from '@ngx-translate/core';
-import { pick } from 'underscore';
+import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-reports',
 	templateUrl: './time-reports.component.html',
@@ -26,7 +27,7 @@ import { pick } from 'underscore';
 })
 export class TimeReportsComponent
 	extends ReportBaseComponent
-	implements OnInit, AfterViewInit {
+	implements OnInit, AfterViewInit, OnDestroy {
 	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
 	loading: boolean;
@@ -34,25 +35,25 @@ export class TimeReportsComponent
 	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
 
 	constructor(
-		private timesheetService: TimesheetService,
-		protected store: Store,
-		readonly translateService: TranslateService,
-		private cd: ChangeDetectorRef
+		private readonly timesheetService: TimesheetService,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly cd: ChangeDetectorRef
 	) {
 		super(store, translateService);
 	}
 
-	ngOnInit() {
+	ngOnInit() {}
+
+	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				debounceTime(1350),
-				tap(() => this.updateChartData()),
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.updateChart()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	ngAfterViewInit() {
 		this.cd.detectChanges();
 	}
 
@@ -62,7 +63,7 @@ export class TimeReportsComponent
 		this.subject$.next();
 	}
 
-	updateChartData() {
+	updateChart() {
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
@@ -74,34 +75,46 @@ export class TimeReportsComponent
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		};
-
-		this.loading = true;
 		this.timesheetService
-			.getDailyReportChartData(request)
+			.getDailyReportChart(request)
 			.then((logs: any[]) => {
 				const datasets = [
 					{
 						label: TimeLogType.MANUAL,
-						data: logs.map((log) => log.value[TimeLogType.MANUAL])
+						data: logs.map((log) => log.value[TimeLogType.MANUAL]),
+						borderColor: ChartUtil.CHART_COLORS.red,
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5),
+						borderWidth: 1
 					},
 					{
 						label: TimeLogType.TRACKED,
-						data: logs.map((log) => log.value[TimeLogType.TRACKED])
+						data: logs.map((log) => log.value[TimeLogType.TRACKED]),
+						borderColor: ChartUtil.CHART_COLORS.blue,
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.blue, 0.5),
+						borderWidth: 1
 					},
 					{
 						label: TimeLogType.IDEAL,
-						data: logs.map((log) => log.value[TimeLogType.IDEAL])
+						data: logs.map((log) => log.value[TimeLogType.IDEAL]),
+						borderColor: ChartUtil.CHART_COLORS.yellow,
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 0.5),
+						borderWidth: 1
 					},
 					{
 						label: TimeLogType.RESUMED,
-						data: logs.map((log) => log.value[TimeLogType.RESUMED])
+						data: logs.map((log) => log.value[TimeLogType.RESUMED]),
+						borderColor: ChartUtil.CHART_COLORS.green,
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 0.5),
+						borderWidth: 1
 					}
 				];
 				this.chartData = {
-					labels: _.pluck(logs, 'date'),
+					labels: pluck(logs, 'date'),
 					datasets
 				};
 			})
 			.finally(() => (this.loading = false));
 	}
+
+	ngOnDestroy(): void {}
 }

@@ -5,32 +5,27 @@ import {
 	OnInit
 } from '@angular/core';
 import {
-	ICountsStatistics,
-	IEmployee,
-	IGetCountsStatistics,
 	IGetTimeLogReportInput,
 	IOrganization,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	ReportDayData
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from './../../../../@core/services/store.service';
-import { TimesheetStatisticsService } from './../../../../@shared/timesheet/timesheet-statistics.service';
-import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { debounceTime } from 'rxjs/operators';
-import * as _ from 'underscore';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { debounceTime, tap } from 'rxjs/operators';
+import { pluck, pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from './../../../../@core/services/store.service';
+import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
+import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
+import * as randomColor from 'randomcolor';
 
-interface ReportDayData {
-	employee?: IEmployee;
-	dates: any;
-}
-
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-weekly-time-reports',
 	templateUrl: './weekly-time-reports.component.html',
@@ -39,32 +34,21 @@ interface ReportDayData {
 export class WeeklyTimeReportsComponent
 	extends ReportBaseComponent
 	implements OnInit, AfterViewInit {
+
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
 	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
 	organization: IOrganization;
-	counts: ICountsStatistics;
 	weekData: ReportDayData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
-	countsLoading: boolean;
-
 	futureDateAllowed: boolean;
-	chartData: {
-		labels: any[];
-		datasets: {
-			label: any;
-			backgroundColor: any;
-			borderWidth: any;
-			data: any;
-		}[];
-	};
+	chartData: IChartData;
 
 	constructor(
 		private timesheetService: TimesheetService,
 		private ngxPermissionsService: NgxPermissionsService,
-		private timesheetStatisticsService: TimesheetStatisticsService,
 		private cd: ChangeDetectorRef,
 		protected store: Store,
 		readonly translateService: TranslateService
@@ -74,12 +58,14 @@ export class WeeklyTimeReportsComponent
 
 	ngOnInit() {
 		this.subject$
-			.pipe(debounceTime(500), untilDestroyed(this))
-			.subscribe(() => {
-				this.getCounts();
-				this.getLogs();
-				this.updateWeekDayList();
-			});
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.getWeeklyLogs()),
+				tap(() => this.updateWeekDayList()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {
@@ -112,57 +98,53 @@ export class WeeklyTimeReportsComponent
 		this.subject$.next();
 	}
 
-	async getLogs() {
-		const request: IGetTimeLogReportInput = this.makeFilterRequest();
-		this.loading = true;
-		this.timesheetService
-			.getWeeklyReport(request)
-			.then((logs: any) => {
-				this.weekData = logs;
-
-				let employees = [];
-				const datasets = [];
-				logs.forEach((log) => {
-					employees = Object.keys(log.dates);
-					datasets.push({
-						label: log.employee.user.name,
-						data: _.pluck(log.dates, 'sum').map((val) =>
-							val ? parseFloat((val / 3600).toFixed(1)) : 0
-						)
-					});
-				});
-
-				this.chartData = {
-					labels: employees,
-					datasets: datasets
-				};
-			})
-			.finally(() => (this.loading = false));
-	}
-
-	getCounts() {
-		const request: IGetCountsStatistics = this.makeFilterRequest();
-		this.countsLoading = true;
-		this.timesheetStatisticsService
-			.getCounts(request)
-			.then((resp) => {
-				this.counts = resp;
-			})
-			.finally(() => {
-				this.countsLoading = false;
-			});
-	}
-
-	makeFilterRequest() {
-		const appliedFilter = _.pick(
+	getWeeklyLogs() {
+		const appliedFilter = pick(
 			this.logRequest,
 			'source',
 			'activityLevel',
 			'logType'
 		);
-		return {
+		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.logRequest)
+		};
+		this.timesheetService
+			.getWeeklyReportChart(request)
+			.then((logs: any) => {
+				this.weekData = logs;
+				this._mapLogs(logs);
+			})
+			.finally(() => (this.loading = false));
+	}
+
+	/**
+	* Weekly reports for employee logs
+	* @param logs 
+	*/
+	private _mapLogs(logs: any) {
+		let employees = [];
+		const datasets = [];
+
+		logs.forEach((log: any) => {
+			const color = randomColor({ 
+				luminosity: 'light',
+				format: 'rgba',
+				alpha: 0.5
+			});
+			employees = Object.keys(log.dates);
+			datasets.push({
+				label: log.employee.fullName,
+				data: pluck(log.dates, 'sum').map((val) => val ? parseFloat((val / 3600).toFixed(1)) : 0),
+				borderColor: color,
+				backgroundColor: ChartUtil.transparentize(color, 0.5),
+				borderWidth: 1
+			});
+		});
+
+		this.chartData = {
+			labels: employees,
+			datasets: datasets
 		};
 	}
 }

@@ -1,4 +1,6 @@
 import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee } from './employee.model';
+
 export interface IReport extends IBaseEntityModel {
 	categoryId?: string;
 	category?: IReportCategory;
@@ -18,6 +20,7 @@ export interface IReportCategory
 	iconClass?: string;
 	reports?: IReport[];
 }
+
 export interface IReportOrganization
 	extends IBasePerTenantAndOrganizationEntityModel {
 	report?: IReport;
@@ -35,12 +38,19 @@ export interface IGetReport extends IBasePerTenantAndOrganizationEntityModel {
 	relations?: string[];
 	where?: IReport;
 }
+
 export interface UpdateReportMenuInput 
 	extends IBasePerTenantAndOrganizationEntityModel {
 	reportId?: string;
 	isEnabled?: boolean;
 }
+
 export interface GetReportMenuItemsInput 
 	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationId?: string;
+}
+
+export interface ReportDayData {
+	employee?: IEmployee;
+	dates: any;
 }

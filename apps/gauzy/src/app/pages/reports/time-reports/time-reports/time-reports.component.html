@@ -1,4 +1,9 @@
-<nb-card class="card-scroll">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header>
 		<h4>
 			<ngx-header-title>
@@ -6,8 +11,8 @@
 			</ngx-header-title>
 		</h4>
 		<div>
-			{{ logRequest?.startDate | date }} -
-			{{ logRequest?.endDate | date }}
+			{{ logRequest?.startDate | dateFormat }} -
+			{{ logRequest?.endDate | dateFormat }}
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -21,12 +26,10 @@
 				(filtersChange)="filtersChange($event)"
 			></ngx-filters>
 		</div>
-
 		<ga-daily-statistics
 			class="mb-4"
 			[filters]="filters"
 		></ga-daily-statistics>
-
 		<div class="daily-time-report">
 			<nb-card>
 				<nb-card-body>
@@ -34,7 +37,6 @@
 				</nb-card-body>
 			</nb-card>
 		</div>
-
 		<ga-daily-grid [filters]="filters"></ga-daily-grid>
 	</nb-card-body>
 </nb-card>
