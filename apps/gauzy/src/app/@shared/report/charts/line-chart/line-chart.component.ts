@@ -7,13 +7,14 @@ import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ChartComponent } from 'angular2-chartjs';
 
-export interface ChartData {
-	labels?: string[];
+export interface IChartData {
+	labels?: any[];
 	datasets: {
 		label?: string;
 		backgroundColor?: string;
+		borderColor?: string;
 		borderWidth?: number;
-		data?: number[];
+		data?: any[];
 	}[];
 }
 
@@ -35,13 +36,13 @@ export class LineChartComponent implements OnInit, OnDestroy {
 
 	@ViewChild('chart') chart: ChartComponent;
 
-	private _data: ChartData;
+	private _data: IChartData;
 
 	@Input()
-	public get data(): ChartData {
+	public get data(): IChartData {
 		return this._data;
 	}
-	public set data(value: ChartData) {
+	public set data(value: IChartData) {
 		this._data = value;
 		if (this.chart && this.chart.chart) {
 			this.chart.chart.update();

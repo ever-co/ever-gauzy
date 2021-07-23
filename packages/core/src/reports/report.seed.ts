@@ -151,12 +151,18 @@ export const createDefaultReport = async (
 	return reports;
 };
 
-async function cleanReport(connection, config) {
+async function cleanReport(
+	connection: Connection,
+	config: IPluginConfig
+) {
+	const report = connection.getRepository(Report).metadata.tableName;
+	const reportCategory = connection.getRepository(ReportCategory).metadata.tableName;
+
 	if (config.dbConnectionOptions.type === 'sqlite') {
-		await connection.query('DELETE FROM report_category');
-		await connection.query('DELETE FROM report');
+		await connection.query(`DELETE FROM ${reportCategory}`);
+		await connection.query(`DELETE FROM ${report}`);
 	} else {
-		await connection.query('TRUNCATE TABLE report, report_category RESTART IDENTITY CASCADE');
+		await connection.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
