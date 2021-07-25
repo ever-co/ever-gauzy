@@ -159,7 +159,9 @@ export class SettingsComponent implements OnInit {
 		});
 
 		electronService.ipcRenderer.on('goto_top_menu', () => {
-			this.selectMenu('Screen Capture');
+			if (this.appName === 'gauzy-server') {
+				this.selectMenu('Advanced Setting');
+			} else this.selectMenu('Screen Capture');
 		});
 
 		electronService.ipcRenderer.on('logout_success', () => {

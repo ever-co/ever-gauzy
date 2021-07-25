@@ -14,7 +14,8 @@ require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 import {
 	LocalStore,
-	apiServer
+	apiServer,
+	AppMenu
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -45,7 +46,7 @@ const pathWindow: {
 	gauzyUi: string,
 	ui: string
 } = {
-	gauzyUi: path.join(__dirname, '../data/ui/index.html'),
+	gauzyUi: app.isPackaged ? path.join(__dirname, '../data/ui/index.html') : path.join(__dirname, './data/ui/index.html'),
 	ui: path.join(__dirname, 'index.html')
 };
 
@@ -165,7 +166,7 @@ const runServer = () => {
 	apiServer({
 		ui: path.join(__dirname, 'preload', 'ui-server.js'),
 		api: path.join(__dirname, 'api/main.js')
-	}, envVal);
+	}, envVal, serverWindow);
 }
 
 const getEnvApi = () => {
@@ -260,6 +261,7 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 			
 		}
 	} 
+	serverWindow.webContents.send('running_state', false);
 })
 app.on('ready', () => {
 	LocalStore.setDefaultApplicationSetting();
@@ -273,7 +275,25 @@ app.on('ready', () => {
 	if (!tray) {
 		createTray();
 	}
+
+	new AppMenu(
+		null,
+		settingsWindow,
+		null,
+		null,
+		pathWindow
+	);
+	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById(
+		'window-setting'
+	);
+	if (menuWindowSetting) menuWindowSetting.enabled = true;
 })
+
+ipcMain.on('restart_app', (event, arg) => {
+	console.log('restart app', arg);
+	LocalStore.updateConfigSetting(arg);
+	updateConfigUi(arg);
+});
 
 ipcMain.on('quit', quit);
 
@@ -321,6 +341,11 @@ function quit() {
 		app.quit();
 	}
 }
+
+app.on('before-quit', (e) => {
+	e.preventDefault();
+	app.exit(0);
+});
 
 app.on('window-all-closed', quit);
 

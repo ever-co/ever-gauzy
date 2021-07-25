@@ -21,7 +21,7 @@ export function createServerWindow(serverWindow, config, filePath) {
     serverWindow.loadURL(launchPath);
 
 	console.log('launched electron with:', launchPath);
-	// gauzyWindow.webContents.toggleDevTools();
+	// serverWindow.webContents.toggleDevTools();
 
 	serverWindow.on('close', (e) => {
 		// Dereference the window object, usually you would store windows
