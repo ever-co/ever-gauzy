@@ -128,7 +128,8 @@
 		"@sentry/node": "^5.30.0",
 		"@sentry/tracing": "^5.30.0",		
 		"node-static": "^0.7.11",
-		"pdfmake": "^0.1.70"
+		"pdfmake": "^0.1.70",
+		"htmlparser2": "^3.10.1"
 	},
   "optionalDependencies": {
     "node-windows": "^1.0.0-beta.5",
