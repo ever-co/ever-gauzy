@@ -454,7 +454,7 @@
 					(click)="restartApp()"
 					[disabled]="restartDisable || appSetting.timerStarted"
 				>
-					Restart App
+					{{ appName === 'gauzy-server' ? 'Save' : 'Restart App' }}
 				</button>
 			</div>
 		</div>
