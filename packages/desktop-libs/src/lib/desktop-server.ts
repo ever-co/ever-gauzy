@@ -1,8 +1,9 @@
 import { fork } from 'child_process';
+import { app } from 'electron';
 import {
     LocalStore
 } from './desktop-store';
-export async function apiServer(servicePath, envValue) {
+export async function apiServer(servicePath, envValue, serverWindow) {
 	try {
         console.log(envValue);
 		const uiService = fork(servicePath.api, { silent: true, env: {
@@ -18,7 +19,7 @@ export async function apiServer(servicePath, envValue) {
             const msgData = data.toString()
             console.log('SERVER API STATE LOGS -> ', msgData);
             if (msgData.indexOf('Listening at http') > -1) {
-                UiServerTask(servicePath.ui)
+                UiServerTask(servicePath.ui, serverWindow)
             }
             // uiService.unref();
             // process.exit(0);
@@ -35,14 +36,21 @@ export async function apiServer(servicePath, envValue) {
 	}
   }
 
-export async function UiServerTask(uiPath) {
+export async function UiServerTask(uiPath, serverWindow) {
 	try {
-        const uiService = fork(uiPath, { silent: true});
+        const uiService = fork(uiPath, { silent: true, env: {
+            ...process.env,
+            isPackaged: app.isPackaged.toString()
+        } });
         LocalStore.updateConfigSetting({
             uiPid: uiService.pid
         })
         uiService.stdout.on('data', (data) => {
-            console.log('SERVER UI STATE LOGS -> ', data.toString());
+            const msgLog = data.toString();
+            console.log('SERVER UI STATE LOGS -> ', msgLog);
+            if (msgLog.indexOf('listen ui on port') > -1) {
+                serverWindow.webContents.send('running_state', true);
+            }
             // uiService.unref();
             // process.exit(0);
         });

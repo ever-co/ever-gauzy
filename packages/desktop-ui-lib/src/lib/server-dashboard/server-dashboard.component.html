@@ -24,25 +24,13 @@
                                     nbButton
                                     status="primary"
                                     class="button-big"
-                                    (click)="runServer()"
-                                    [disabled]="running"
+                                    (click)="running ? stopServer() : runServer()"
+                                    [disabled]="loading"
+                                    [nbSpinner]="loading" 
+                                    nbSpinnerStatus="warning"
                                 >
-                                    Run<nb-icon
-                                        icon="play-circle-outline"
-                                        class="icon-medium"
-                                    ></nb-icon>
-                                </button>
-                            </div>
-                            <div class="col-4">
-                                <button
-                                    nbButton
-                                    status="primary"
-                                    class="button-big"
-                                    (click)="stopServer()"
-                                    [disabled]="!running"
-                                >
-                                    Stop<nb-icon
-                                        icon="stop-circle-outline"
+                                    {{btn.name}}<nb-icon
+                                        [icon]="btn.icon"
                                         class="icon-medium"
                                     ></nb-icon>
                                 </button>
