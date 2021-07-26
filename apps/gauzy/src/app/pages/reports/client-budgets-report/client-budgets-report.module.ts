@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { ClientBudgetsReportRoutingModule } from './client-budgets-report-routing.module';
 import { ClientBudgetsReportComponent } from './client-budgets-report/client-budgets-report.component';
 import { FormsModule } from '@angular/forms';

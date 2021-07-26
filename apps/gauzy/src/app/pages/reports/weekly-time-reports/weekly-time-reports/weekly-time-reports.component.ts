@@ -14,16 +14,15 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pluck, pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
+import * as randomColor from 'randomcolor';
 import { Store } from './../../../../@core/services/store.service';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
-import * as randomColor from 'randomcolor';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,15 +42,13 @@ export class WeeklyTimeReportsComponent
 	weekData: ReportDayData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
-	futureDateAllowed: boolean;
 	chartData: IChartData;
 
 	constructor(
-		private timesheetService: TimesheetService,
-		private ngxPermissionsService: NgxPermissionsService,
-		private cd: ChangeDetectorRef,
-		protected store: Store,
-		readonly translateService: TranslateService
+		private readonly timesheetService: TimesheetService,
+		private readonly cd: ChangeDetectorRef,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService
 	) {
 		super(store, translateService);
 	}
@@ -66,13 +63,6 @@ export class WeeklyTimeReportsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.ngxPermissionsService.permissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(async () => {
-				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
-					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
-				);
-			});
 	}
 
 	ngAfterViewInit() {

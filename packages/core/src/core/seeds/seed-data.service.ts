@@ -1369,8 +1369,7 @@ export class SeedDataService {
 				this.config,
 				this.tenant,
 				this.defaultOrganization,
-				this.defaultEmployees,
-				this.defaultProjects
+				this.defaultEmployees
 			)
 		);
 
@@ -1836,8 +1835,7 @@ export class SeedDataService {
 			'Random Tasks',
 			createRandomTask(
 				this.connection, 
-				tenants, 
-				this.defaultProjects
+				tenants
 			)
 		);
 
@@ -2124,8 +2122,7 @@ export class SeedDataService {
 			createRandomTimesheet(
 				this.connection,
 				this.config,
-				tenants,
-				this.defaultProjects
+				tenants
 			)
 		);
 

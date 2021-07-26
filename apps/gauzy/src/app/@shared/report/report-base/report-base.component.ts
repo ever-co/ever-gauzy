@@ -19,7 +19,9 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 	today: Date = new Date();
 	request: ITimeLogFilters = {
 		startDate: moment(this.today).startOf('week').toDate(),
-		endDate: moment(this.today).endOf('week').toDate()
+		endDate: moment(this.today).endOf('week').toDate(),
+		employeeIds: [],
+		projectIds: []
 	};
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
@@ -61,7 +63,7 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 			.subscribe();
 	}
 
-	getFilterRequest(request: ITimeLogFilters) {
+	getFilterRequest(request: ITimeLogFilters): ITimeLogFilters {
 		const { startDate, endDate } = request;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;

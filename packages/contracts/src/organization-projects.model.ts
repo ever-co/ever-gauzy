@@ -12,6 +12,7 @@ import { IOrganizationSprint } from './organization-sprint.model';
 import { IPayment } from './payment.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { CurrenciesEnum } from './currency.model';
+import { ITimeLog } from './timesheet.model';
 
 export interface IOrganizationProject extends IBaseEntityWithMembers {
 	name: string;
@@ -26,6 +27,7 @@ export interface IOrganizationProject extends IBaseEntityWithMembers {
 	tags: ITag[];
 	owner: string;
 	tasks?: ITask[];
+	timeLogs?: ITimeLog[];
 	organizationSprints?: IOrganizationSprint[];
 	taskListType: string;
 	payments?: IPayment[];

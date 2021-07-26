@@ -11,9 +11,11 @@ import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITag } from './tag-entity.model';
 import { IPaginationInput } from './core.model';
+import { ReportGroupByFilter } from './report.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
+	employeeId?: string;
 	approvedBy?: IEmployee;
 	timeLogs?: ITimeLog[];
 	duration?: number;
@@ -27,6 +29,7 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	lockedAt?: Date;
 	isBilled?: boolean;
 	status: string;
+	deletedAt?: Date;
 }
 
 export interface ITimesheetCreateInput
@@ -342,7 +345,7 @@ export interface IGetTimeLogInput extends ITimeLogFilters {
 }
 
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {
-	groupBy?: 'date' | 'employee' | 'project' | 'client';
+	groupBy?: ReportGroupByFilter;
 	relations?: string[];
 }
 

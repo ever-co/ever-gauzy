@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder } from 'typeorm';
+import { Repository, In, SelectQueryBuilder, Brackets, WhereExpression } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -20,7 +20,8 @@ import {
 	IProjectBudgetLimitReportInput,
 	IClientBudgetLimitReportInput,
 	OrganizationContactBudgetTypeEnum,
-	IClientBudgetLimitReport
+	IClientBudgetLimitReport,
+	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { CommandBus } from '@nestjs/cqrs';
@@ -34,15 +35,18 @@ import {
 	OrganizationContact,
 	OrganizationProject
 } from '../../core/entities/internal';
-import { TimeLogCreateCommand } from './commands/time-log-create.command';
-import { TimeLogUpdateCommand } from './commands/time-log-update.command';
-import { TimeLogDeleteCommand } from './commands/time-log-delete.command';
-import { DeleteTimeSpanCommand } from './commands/delete-time-span.command';
-import { IGetConflictTimeLogCommand } from './commands/get-conflict-time-log.command';
-import { GetTimeLogGroupByDateCommand } from './commands/get-time-log-group-by-date.command';
-import { GetTimeLogGroupByEmployeeCommand } from './commands/get-time-log-group-by-employee.command';
-import { GetTimeLogGroupByProjectCommand } from './commands/get-time-log-group-by-project.command';
-import { GetTimeLogGroupByClientCommand } from './commands/get-time-log-group-by-client.command';
+import {
+	DeleteTimeSpanCommand,
+	GetTimeLogGroupByClientCommand,
+	GetTimeLogGroupByDateCommand,
+	GetTimeLogGroupByEmployeeCommand,
+	GetTimeLogGroupByProjectCommand,
+	IGetConflictTimeLogCommand,
+	TimeLogCreateCommand,
+	TimeLogDeleteCommand,
+	TimeLogUpdateCommand
+} from './commands';
+
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
@@ -283,17 +287,17 @@ export class TimeLogService extends CrudService<TimeLog> {
 
 		let dailyLogs;
 		switch (request.groupBy) {
-			case 'employee':
+			case ReportGroupFilterEnum.employee:
 				dailyLogs = await this.commandBus.execute(
 					new GetTimeLogGroupByEmployeeCommand(logs)
 				);
 				break;
-			case 'project':
+			case ReportGroupFilterEnum.project:
 				dailyLogs = await this.commandBus.execute(
 					new GetTimeLogGroupByProjectCommand(logs)
 				);
 				break;
-			case 'client':
+			case ReportGroupFilterEnum.client:
 				dailyLogs = await this.commandBus.execute(
 					new GetTimeLogGroupByClientCommand(logs)
 				);
@@ -483,7 +487,11 @@ export class TimeLogService extends CrudService<TimeLog> {
 								? byEmployeeLogs[0].employee
 								: null;
 
-						let limit = employee.reWeeklyLimit * 60 * 60;
+						let limit = 0;
+						if (employee) {
+							limit = employee.reWeeklyLimit * 60 * 60;
+						}
+
 						if (request.duration === 'day') {
 							limit = limit / 5;
 						} else if (request.duration === 'month') {
@@ -491,7 +499,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 						}
 
 						const durationPercentage = (durationSum * 100) / limit;
-
 						return {
 							employee,
 							duration: durationSum,
@@ -531,14 +538,15 @@ export class TimeLogService extends CrudService<TimeLog> {
 		// 		this.getFilterTimeLogQuery(qb, request);
 		// 	}
 		// });
-
+		const { organizationId } = request;
+		const tenantId = RequestContext.currentTenantId();
 		const projects = await this.organizationProjectRepository.find({
 			relations: ['timeLogs', 'timeLogs.employee'],
 			where: {
-				organizationId: request.organizationId
+				organizationId,
+				tenantId
 			}
 		});
-
 		const projectTimeLogs = projects.map(
 			(project): IProjectBudgetLimitReport => {
 				let spent = 0;
@@ -572,9 +580,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 					);
 					spentPercentage = (spent * 100) / project.budget;
 				}
-
 				const reamingBudget = Math.max(project.budget - spent, 0);
-
 				return {
 					project,
 					budgetType: project.budgetType,
@@ -592,23 +598,33 @@ export class TimeLogService extends CrudService<TimeLog> {
 	async clientBudgetLimit(request: IClientBudgetLimitReportInput) {
 		const { organizationId } = request;
 		const tenantId = RequestContext.currentTenantId();
-
-		const organizationContacts = await this.organizationContactsRepository.find({
-			organizationId,
-			tenantId
-		});
-
-		const clientProjects = await this.organizationProjectRepository.find({
-			relations: ['timeLogs', 'timeLogs.employee'],
-			where: {
-				organizationContactId: pluck(organizationContacts, 'id')
-			}
-		});
-
+	
+		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
+		query.innerJoinAndSelect(`${query.alias}.organizationContact`, 'organizationContact');
+		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
+		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
+		query.andWhere(
+			new Brackets((qb: WhereExpression) => {
+				qb.where(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpression) => {
+				qb.where(`"organizationContact"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"organizationContact"."tenantId" =:tenantId`, { tenantId });
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpression) => {
+				qb.where(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
+			})
+		);
+		const clientProjects = await query.getMany();
 		const projects = clientProjects.map(
 			(project): IClientBudgetLimitReport => {
 				const organizationContact = project.organizationContact;
-
 				let spent = 0;
 				let spentPercentage = 0;
 				if (
@@ -621,8 +637,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 						},
 						0
 					);
-					spentPercentage =
-						(spent * 100) / organizationContact.budget;
+					spentPercentage = (spent * 100) / organizationContact.budget;
 				} else {
 					spent = project.timeLogs.reduce(
 						(iteratee: any, log: any) => {
@@ -638,15 +653,12 @@ export class TimeLogService extends CrudService<TimeLog> {
 						},
 						0
 					);
-					spentPercentage =
-						(spent * 100) / organizationContact.budget;
+					spentPercentage = (spent * 100) / organizationContact.budget;
 				}
-
 				const reamingBudget = Math.max(
 					organizationContact.budget - spent,
 					0
 				);
-
 				return {
 					organizationContact,
 					budgetType: organizationContact.budgetType,
@@ -657,7 +669,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				};
 			}
 		);
-
+	
 		return projects;
 	}
 
