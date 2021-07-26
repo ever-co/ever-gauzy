@@ -17,7 +17,7 @@ export const OrganizationEquipmentPage = {
 	deleteEquipmentButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	footerCss: 'nb-card-footer.text-right',
-	equipmentSharingButtonCss: 'div.mb-3 > button[status="primary"]',
+	equipmentSharingButtonCss: 'div.card-header-title > div.mr-2 > button[status="primary"]',
 	selectEqupmentDropdownCss: '[formcontrolname="equipment"]',
 	selectEquipmentDropdownOptionCss: '.option-list nb-option',
 	selectPolicyDropdownCss: '[formcontrolname="equipmentSharingPolicyId"]',
