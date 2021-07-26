@@ -113,7 +113,7 @@ export const clickEquipmentSharingButton = () => {
 	clickButton(OrganizationEquipmentPage.equipmentSharingButtonCss);
 };
 
-export const sharingpolicyButtonVisible = () => {
+export const sharingPolicyButtonVisible = () => {
 	verifyElementIsVisible(
 		OrganizationEquipmentPage.equipmentSharingPolicyButtonCss
 	);
