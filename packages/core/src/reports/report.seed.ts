@@ -11,6 +11,7 @@ import { IPluginConfig } from '@gauzy/common';
 import { getDefaultOrganizations } from './../organization/organization.seed';
 import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
 import { ReportOrganization } from './report-organization.entity';
+import { Organization } from './../core/entities/internal';
 
 export const createDefaultReport = async (
 	connection: Connection,
@@ -248,6 +249,38 @@ async function createDefaultOrganizationsReport(
 		}
 	}
 	return await connection.manager.save(reportOrganizations);
+}
+
+export async function createRandomTenantOrganizationsReport(
+	connection: Connection,
+	tenants: ITenant[]
+) {
+	try {
+		const reports = await connection.manager.find(Report);
+		for await (const tenant of tenants) {
+			const organizations = await connection.getRepository(Organization).find({
+				where: {
+					tenant,
+				}
+			});
+			console.log(organizations);
+			const reportOrganizations: IReportOrganization[] = [];
+			for await (const organization of organizations) {
+				for await (const report of reports) {
+					reportOrganizations.push(
+						new ReportOrganization({
+							report,
+							organization,
+							tenant
+						})
+					);
+				}
+			}
+			await connection.manager.save(reportOrganizations);
+		}
+	} catch (error) {
+		console.log(chalk.red(`SEEDING Random Reports`, error));
+	}
 }
 
 

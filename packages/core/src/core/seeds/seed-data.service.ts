@@ -300,7 +300,10 @@ import { createDefaultGoalKpiTemplate } from '../../goal-kpi-template/goal-kpi-t
 import { randomSeedConfig } from './random-seed-config';
 import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
 import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
-import { createDefaultReport } from '../../reports/report.seed';
+import {
+	createDefaultReport,
+	createRandomTenantOrganizationsReport
+} from '../../reports/report.seed';
 import { createCurrencies } from '../../currency/currency.seed';
 import {
 	createDefaultFeatureToggle,
@@ -484,6 +487,9 @@ export class SeedDataService {
 			// Connect to database
 			await this.createConnection();
 
+			// Seed reports related data
+			await this.seedReportsData();
+
 			// Seed default data
 			await this.seedDefaultData();
 
@@ -492,9 +498,6 @@ export class SeedDataService {
 			
 			// Seed jobs related data
 			await this.seedJobsData();
-
-			// Seed reports related data
-			await this.seedReportsData();
 
 			// Disconnect to database
 			await this.closeConnection();
@@ -1470,6 +1473,14 @@ export class SeedDataService {
 			tenantOrganizationsMap,
 			tenantUsersMap,
 			randomSeedConfig.employeesPerOrganization || 1
+		);
+
+		await this.tryExecute(
+			'Random Feature Reports',
+			createRandomTenantOrganizationsReport(
+				this.connection, 
+				tenants
+			)
 		);
 
 		await this.tryExecute(
