@@ -263,7 +263,6 @@ export async function createRandomTenantOrganizationsReport(
 					tenant,
 				}
 			});
-			console.log(organizations);
 			const reportOrganizations: IReportOrganization[] = [];
 			for await (const organization of organizations) {
 				for await (const report of reports) {

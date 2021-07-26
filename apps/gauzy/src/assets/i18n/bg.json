@@ -1784,7 +1784,8 @@
 		"CONTACT_TYPE": "Contact type",
 		"MAIN": "Основни",
 		"ADDRESS": "Address",
-		"MEMBERS": "Members"
+		"MEMBERS": "Members",
+		"BUDGET": "Budget"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
