@@ -1,5 +1,5 @@
 export const OrganizationRecurringExpensesPage = {
-	addButtonCss: 'div.body-header button[status="success"]',
+	addButtonCss: 'nb-card-body > div > button[status="success"]',
 	expenseDropdownCss: '#positionInput',
 	dropdownOptionCss: 'div.ng-option',
 	valueInputCss: '#valueInput',
