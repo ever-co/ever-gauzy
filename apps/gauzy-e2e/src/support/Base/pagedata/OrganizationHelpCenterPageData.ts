@@ -1,5 +1,5 @@
 export const OrganizationHelpCenterPageData = {
-	defaultLanguage: 'en',
+	defaultLanguage: 'English',
 	defaultColor: '#ffbf00',
 	defaultBaseName: 'Learning',
 	defaultBaseDescription: 'Employees source',
