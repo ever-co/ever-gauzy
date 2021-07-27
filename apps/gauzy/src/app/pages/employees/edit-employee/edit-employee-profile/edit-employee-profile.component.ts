@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
 import {
 	IEmployee,
@@ -7,11 +6,11 @@ import {
 	IUserUpdateInput
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { EmployeesService, EmployeeStore, ErrorHandlingService, ToastrService, UsersService } from './../../../../@core/services';
+import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,44 +25,57 @@ export class EditEmployeeProfileComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
-	form: FormGroup;
-	paramSubscription: Subscription;
-	hoverState: boolean;
 	routeParams: Params;
 	selectedEmployee: IEmployee;
-	employeeName = 'Employee';
-	tabs: any[];
+	employeeName: string;
+	tabs: any[] = [];
+	subject$: Subject<any> = new Subject();
 
 	constructor(
-		private route: ActivatedRoute,
-		private employeeService: EmployeesService,
-		private userService: UsersService,
-		private toastrService: ToastrService,
-		private employeeStore: EmployeeStore,
-		private errorHandler: ErrorHandlingService,
+		private readonly route: ActivatedRoute,
+		private readonly employeeService: EmployeesService,
+		private readonly userService: UsersService,
+		private readonly toastrService: ToastrService,
+		private readonly employeeStore: EmployeeStore,
+		private readonly errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.subject$
+			.pipe(
+				debounceTime(300),
+				tap(() => this._getEmployeeProfile()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.route.params
-			.pipe(untilDestroyed(this))
-			.subscribe(async (params) => {
-				this.routeParams = params;
-				await this._loadEmployeeData();
-				this.loadTabs();
-			});
+			.pipe(
+				filter((params) => !!params),
+				tap((params) => this.routeParams = params),
+				tap(() => this.loadTabs()),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.employeeStore.userForm$
-			.pipe(untilDestroyed(this))
-			.subscribe((value) => {
-				this.submitUserForm(value);
-			});
+			.pipe(
+				tap((value: IUserUpdateInput) => {
+					this.submitUserForm(value)
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.employeeStore.employeeForm$
-			.pipe(untilDestroyed(this))
-			.subscribe((value) => {
-				this.submitEmployeeForm(value);
-			});
+			.pipe(
+				tap((value: IEmployeeUpdateInput) => {
+					this.submitEmployeeForm(value)
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._applyTranslationOnTabs();
 	}
 
@@ -139,6 +151,7 @@ export class EditEmployeeProfileComponent
 			}
 		];
 	}
+
 	private async submitEmployeeForm(value: IEmployeeUpdateInput) {
 		if (value) {
 			try {
@@ -146,14 +159,14 @@ export class EditEmployeeProfileComponent
 					this.selectedEmployee.id,
 					value
 				);
-
 				this.toastrService.success(
 					'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
 					{ name: this.employeeName }
 				);
-				await this._loadEmployeeData();
 			} catch (error) {
 				this.errorHandler.handleError(error);
+			} finally {
+				this.subject$.next();
 			}
 		}
 	}
@@ -169,20 +182,19 @@ export class EditEmployeeProfileComponent
 					this.selectedEmployee.user.id,
 					value
 				);
-
 				this.toastrService.success(
 					'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
 					{ name: this.employeeName }
 				);
-
-				await this._loadEmployeeData();
 			} catch (error) {
 				this.errorHandler.handleError(error);
+			} finally {
+				this.subject$.next();
 			}
 		}
 	}
 
-	private async _loadEmployeeData() {
+	private async _getEmployeeProfile() {
 		const { id } = this.routeParams;
 		const employee = await this.employeeService.getEmployeeById(id, [
 			'user',
@@ -193,11 +205,8 @@ export class EditEmployeeProfileComponent
 			'skills',
 			'contact'
 		]);
-
-		this.selectedEmployee = employee;
-		const checkUsername = this.selectedEmployee.user.username;
-		this.employeeName = checkUsername ? checkUsername : 'Employee';
-		this.employeeStore.selectedEmployee = this.selectedEmployee;
+		this.employeeStore.selectedEmployee = this.selectedEmployee = employee;
+		this.employeeName = employee?.user?.name || employee?.user?.username || 'Employee';
 	}
 
 	ngOnDestroy() {}

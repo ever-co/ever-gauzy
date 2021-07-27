@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { patterns } from 'apps/gauzy/src/app/@shared/regex/regex-patterns.const';
+import { combineLatest } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { EmployeeStore, Store } from './../../../../../@core/services';
+import { UrlPatternValidator } from './../../../../../@core/validators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-employee-networks',
 	templateUrl: './edit-employee-networks.component.html',
@@ -15,87 +16,72 @@ import { patterns } from 'apps/gauzy/src/app/@shared/regex/regex-patterns.const'
 		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss'
 	]
 })
-export class EditEmployeeNetworksComponent implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
-	form: FormGroup;
+export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
-	selectedOrganization: IOrganization;
+	organization: IOrganization;
+
+	public form: FormGroup = EditEmployeeNetworksComponent.buildForm(this.fb);
+	static buildForm(formBuilder: FormBuilder): FormGroup {
+		const form = formBuilder.group({
+			linkedInUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
+			facebookUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
+			instagramUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
+			twitterUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
+			githubUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
+			gitlabUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
+			upworkUrl: ['', [UrlPatternValidator.urlAbstractValidator]]
+		});
+		return form;
+	}
 
 	constructor(
-		private fb: FormBuilder,
+		private readonly fb: FormBuilder,
 		private readonly store: Store,
-		private readonly employeeStore: EmployeeStore,
-		private readonly employeesService: EmployeesService
+		private readonly employeeStore: EmployeeStore
 	) {}
 
 	ngOnInit() {
-		this.employeeStore.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (emp) => {
-				this.selectedEmployee = emp;
-				if (this.selectedEmployee) {
-					this._initializeForm(this.selectedEmployee);
-				}
-
-				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((organization) => {
-						this.selectedOrganization = organization;
-					});
-			});
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.employeeStore.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
+			.pipe(
+				distinctUntilChange(),
+				filter(([organization, employee]) => !!organization && !!employee),
+				tap(([organization, employee]) => {
+					this.organization = organization;
+					this.selectedEmployee = employee;
+				}),
+				tap(() => this._patchForm(this.selectedEmployee)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	private _initializeForm(employee: IEmployee) {
-		this.form = this.fb.group({
-			linkedInUrl: [
-				employee.linkedInUrl,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			],
-			facebookUrl: [
-				employee.facebookUrl,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			],
-			instagramUrl: [
-				employee.instagramUrl,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			],
-			twitterUrl: [
-				employee.twitterUrl,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			],
-			githubUrl: [
-				employee.githubUrl,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			],
-			gitlabUrl: [
-				employee.gitlabUrl,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			],
-			upworkUrl: [
-				employee.upworkUrl,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			]
+	protected _patchForm(employee: IEmployee) {
+		if (!employee) {
+			return;
+		}
+		const { linkedInUrl, facebookUrl, instagramUrl, twitterUrl, githubUrl, gitlabUrl, upworkUrl } = employee;
+		this.form.patchValue({
+			linkedInUrl,
+			facebookUrl,
+			instagramUrl,
+			twitterUrl,
+			githubUrl,
+			gitlabUrl,
+			upworkUrl
 		});
 	}
 
-	async submitForm() {
-		await this.employeesService.update(
-			this.selectedEmployee.id,
-			this.form.value
-		);
+	submitForm() {
+		if (this.form.invalid) {
+			return;
+		}
+		this.employeeStore.employeeForm = {
+			...this.selectedEmployee,
+			...this.form.getRawValue()
+		};
 	}
+
+	ngOnDestroy() {}
 }
