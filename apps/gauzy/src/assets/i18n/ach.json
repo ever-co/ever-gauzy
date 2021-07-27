@@ -1565,6 +1565,7 @@
 		"EDIT_PUBLIC_PAGE": "crwdns3572:0crwdne3572:0",
 		"SELECT_ORGANIZATION": "crwdns8334:0crwdne8334:0",
 		"MAIN": "crwdns244:0crwdne244:0",
+		"DESCRIPTION": "crwdns10519:0crwdne10519:0",
 		"DEPARTMENTS": "crwdns246:0crwdne246:0",
 		"VENDORS": "crwdns252:0crwdne252:0",
 		"VENDOR": "crwdns9588:0crwdne9588:0",
@@ -1768,7 +1769,10 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "crwdns8748:0crwdne8748:0",
 			"ORG_JOB_MATCHING_VIEW": "crwdns8750:0crwdne8750:0",
 			"MIGRATE_GAUZY_CLOUD": "crwdns10480:0crwdne10480:0"
-		}
+		},
+		"BILLING": "crwdns10521:0crwdne10521:0",
+		"BUDGET": "crwdns10523:0crwdne10523:0",
+		"OPEN_SOURCE": "crwdns10525:0crwdne10525:0"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "crwdns7864:0crwdne7864:0",
@@ -1784,7 +1788,8 @@
 		"CONTACT_TYPE": "crwdns7926:0crwdne7926:0",
 		"MAIN": "crwdns8754:0crwdne8754:0",
 		"ADDRESS": "crwdns8756:0crwdne8756:0",
-		"MEMBERS": "crwdns8758:0crwdne8758:0"
+		"MEMBERS": "crwdns8758:0crwdne8758:0",
+		"BUDGET": "crwdns10527:0crwdne10527:0"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "crwdns4798:0crwdne4798:0",
