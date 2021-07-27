@@ -56,7 +56,7 @@ export class EmailService extends CrudService<IEmail> {
 			render: this.render
 		};
 
-		if (!env.production) {
+		if (!env.production && !env.demo) {
 			config.preview = {
 				open: {
 					app: 'firefox',
