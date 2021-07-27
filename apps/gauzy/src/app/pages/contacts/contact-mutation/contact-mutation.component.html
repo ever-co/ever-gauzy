@@ -165,7 +165,6 @@
 									'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
 								}}</label>
 								<input
-									pattern="[0-9]{0,30}"
 									type="text"
 									#phone
 									nbInput
@@ -399,6 +398,7 @@
 								></label>
 								<input
 									nbInput
+									type="number"
 									fullWidth
 									formControlName="budget"
 									[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
@@ -413,6 +413,7 @@
 								></label>
 								<input
 									nbInput
+									type="number"
 									fullWidth
 									formControlName="budget"
 									[placeholder]="'FORM.PLACEHOLDERS.COST' | translate"

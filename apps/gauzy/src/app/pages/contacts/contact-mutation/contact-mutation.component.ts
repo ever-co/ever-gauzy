@@ -19,13 +19,13 @@ import { NbStepperComponent } from '@nebular/theme';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
-import { isEmpty } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { LocationFormComponent } from '../../../@shared/forms/location';
 import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
 import { EmployeesService, ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
+import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -103,11 +103,9 @@ export class ContactMutationComponent
 	@ViewChild('stepper') stepper: NbStepperComponent;
 
 
-	defaultSelectedType: any;
 	members: string[];
 	selectedMembers: IEmployee[];
 	selectedEmployeeIds: string[];
-	tags: ITag[] = [];
 	contactTypes: ContactType[] = Object.values(ContactType);
 	hoverState: boolean;
 	country: string;
@@ -157,8 +155,15 @@ export class ContactMutationComponent
 	/*
 	* Getter form control value for budgetType
 	*/
-	get budgetType () {
+	get budgetType (): string {
 		return this.budgetForm.get('budgetType').value;
+	}
+
+	/*
+	* Getter form control value for budgetType
+	*/
+	get tags (): ITag[] {
+		return this.contMainForm.get('tags').value;
 	}
 
 	constructor(
@@ -181,7 +186,7 @@ export class ContactMutationComponent
 				debounceTime(200),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this._initializeForm()),
+				tap(() => this._patchForm()),
 				tap(() => this._getProjects()),
 				tap(() => this._getEmployees()),
 				untilDestroyed(this)
@@ -192,7 +197,6 @@ export class ContactMutationComponent
 				(member) => member.id
 			);
 		}
-		this.defaultSelectedType = this.contactType;
 	}
 
 	private async _getEmployees() {
@@ -224,17 +228,17 @@ export class ContactMutationComponent
 		this.projects = items;
 	}
 
-	private _initializeForm() {
+	private _patchForm() {
 		if (!this.organization) {
 			return;
 		}
 		this.contMainForm.patchValue({
 			imageUrl: this.organizationContact
 						? this.organizationContact.imageUrl
-						: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
+						: DUMMY_PROFILE_IMAGE,
 			tags: this.organizationContact
-					? (this.tags = this.organizationContact.tags)
-					: '',
+					? (this.organizationContact.tags)
+					: [],
 			name: this.organizationContact
 						? this.isGridEdit
 							? this.organizationContact.contact_name
@@ -251,7 +255,7 @@ export class ContactMutationComponent
 							: [],
 			contactType: this.organizationContact
 							? this.organizationContact.contactType
-							: '',
+							: this.contactType,
 			fax: this.organizationContact
 					? this.organizationContact.contact
 						? this.organizationContact.contact.fax
@@ -269,6 +273,17 @@ export class ContactMutationComponent
 									: ''
 		});
 		this.contMainForm.updateValueAndValidity();
+
+		this.budgetForm.patchValue({
+			budgetType: this.organizationContact
+							? this.organizationContact.budgetType
+							: OrganizationContactBudgetTypeEnum.HOURS,
+			budget: this.organizationContact 
+						? this.organizationContact.budget
+						: ''
+		});
+		this.budgetForm.updateValueAndValidity();
+
 		this._setLocationForm();
 	}
 
@@ -333,81 +348,63 @@ export class ContactMutationComponent
 	}
 
 	async submitForm() {
-		if (this.contMainForm.valid) {
-			let contactType = this.contMainForm.value['contactType'];
-			if (isEmpty(contactType)) {
-				contactType = this.defaultSelectedType;
-			}
-
-			let imgUrl = this.contMainForm.value.imageUrl;
-			imgUrl = imgUrl
-				? this.contMainForm.value['imageUrl']
-				: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text';
-
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-
-			const { budget, budgetType } = this.budgetForm.getRawValue();
-			const { name, primaryEmail, primaryPhone, projects = [], fax, fiscalInformation, website } = this.contMainForm.getRawValue();
-
-			const location = this.locationFormDirective.getValue();
-			const { coordinates } = location['loc'];
-			delete location['loc'];
-
-			const [latitude, longitude] = coordinates;
-			const contact = {
-				...{ organizationId, tenantId },
-				...location,
-				...{ latitude, longitude }
-			};
-
-			this.addOrEditOrganizationContact.emit({
-				tags: this.tags,
-				id: this.organizationContact
-					? this.organizationContact.id
-					: undefined,
-				organizationId,
-				tenantId,
-				budgetType,
-				budget,
-				name,
-				primaryEmail,
-				primaryPhone,
-				projects,
-				contactType,
-				imgUrl,
-				members: (this.members || this.selectedEmployeeIds || [])
-					.map((id) => this.employees.find((e) => e.id === id))
-					.filter((e) => !!e),
-				fax,
-				fiscalInformation,
-				website,
-				...contact
-			});
-
-			this.selectedEmployeeIds = [];
-			this.members = [];
-			this.contMainForm.reset({
-				name: '',
-				primaryEmail: '',
-				primaryPhone: '',
-				country: '',
-				city: '',
-				address: '',
-				address2: '',
-				postcode: null,
-				contactType: '',
-				imgUrl: '',
-				projects: [],
-				fax: '',
-				fiscalInformation: '',
-				website: ''
-			});
+		if (this.contMainForm.invalid) {
+			return;
 		}
+		const { fiscalInformation, website, contactType } = this.contMainForm.getRawValue();
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const { budget, budgetType } = this.budgetForm.getRawValue();
+		const { name, primaryEmail, primaryPhone, projects = [], fax, tags = [] } = this.contMainForm.getRawValue();
+
+		let { imageUrl } = this.contMainForm.getRawValue();
+		if (imageUrl === DUMMY_PROFILE_IMAGE) {
+			imageUrl = null;
+		}
+
+		const location = this.locationFormDirective.getValue();
+		const { coordinates } = location['loc'];
+		delete location['loc'];
+
+		const [latitude, longitude] = coordinates;
+		const contact = {
+			...{ organizationId, tenantId },
+			...location,
+			...{ latitude, longitude }
+		};
+
+		const members = (this.members || this.selectedEmployeeIds || [])
+						.map((id) => this.employees.find((e) => e.id === id))
+						.filter((e) => !!e);
+
+		this.addOrEditOrganizationContact.emit({
+			id: this.organizationContact
+				? this.organizationContact.id
+				: undefined,
+			organizationId,
+			tenantId,
+			budgetType,
+			budget,
+			name,
+			primaryEmail,
+			primaryPhone,
+			projects,
+			contactType,
+			imageUrl,
+			members,
+			tags,
+			fax,
+			fiscalInformation,
+			website,
+			...contact
+		});
 	}
 
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+	selectedTagsEvent(tags: ITag[]) {
+		this.contMainForm.patchValue({ tags });
+		this.contMainForm.updateValueAndValidity();
 	}
 
 	isInvalidControl(control: string) {
