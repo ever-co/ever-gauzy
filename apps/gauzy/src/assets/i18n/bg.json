@@ -1565,6 +1565,7 @@
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANIZATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
+		"DESCRIPTION": "Description",
 		"DEPARTMENTS": "Отдели",
 		"VENDORS": "Доставчици",
 		"VENDOR": "Доставчик",
@@ -1768,7 +1769,10 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "View Job Employees",
 			"ORG_JOB_MATCHING_VIEW": "View Job Matching",
 			"MIGRATE_GAUZY_CLOUD": "Migrate Into Gauzy Cloud"
-		}
+		},
+		"BILLING": "Billing",
+		"BUDGET": "Budget",
+		"OPEN_SOURCE": "Open-Source"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitors",
@@ -1784,7 +1788,8 @@
 		"CONTACT_TYPE": "Contact type",
 		"MAIN": "Основни",
 		"ADDRESS": "Address",
-		"MEMBERS": "Members"
+		"MEMBERS": "Members",
+		"BUDGET": "Budget"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

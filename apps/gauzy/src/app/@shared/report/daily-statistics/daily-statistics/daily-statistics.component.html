@@ -1,11 +1,11 @@
 <div class="row">
-	<ng-container *ngIf="!selectedEmployeeId">
+	<ng-container *ngIf="!request.employeeIds">
 		<div
 			class="col-sm-4 col-md-3 col-lg"
 			*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
 		>
 			<nb-card
-				[nbSpinner]="countsLoading"
+				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
 				class="mb-0"
@@ -21,10 +21,10 @@
 			</nb-card>
 		</div>
 	</ng-container>
-	<ng-container *ngIf="!projectId">
+	<ng-container *ngIf="!request.projectIds">
 		<div class="col-sm-4 col-md-3 col-lg">
 			<nb-card
-				[nbSpinner]="countsLoading"
+				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
 				class="mb-0"
@@ -42,7 +42,7 @@
 	</ng-container>
 	<div class="col-sm-4 col-md-3 col-lg">
 		<nb-card
-			[nbSpinner]="countsLoading"
+			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
 			class="mb-0"
@@ -57,7 +57,7 @@
 	</div>
 	<div class="col-sm-4 col-md-3 col-lg">
 		<nb-card
-			[nbSpinner]="countsLoading"
+			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
 			class="mb-0"

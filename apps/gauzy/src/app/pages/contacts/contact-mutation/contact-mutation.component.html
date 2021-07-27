@@ -10,7 +10,7 @@
 			<!-- Step 1 Contact Main Form -->
 			<nb-step
 				[stepControl]="contMainForm"
-				label="{{ 'CONTACTS_PAGE.MAIN' | translate }}"
+				[label]="'CONTACTS_PAGE.MAIN' | translate"
 			>
 				<ng-template #mainStep>
 					{{ 'CONTACTS_PAGE.MAIN' | translate }}
@@ -165,7 +165,6 @@
 									'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
 								}}</label>
 								<input
-									pattern="[0-9]{0,30}"
 									type="text"
 									#phone
 									nbInput
@@ -307,7 +306,7 @@
 			<!-- Step 2 Address Form -->
 			<nb-step
 				[stepControl]="locationForm"
-				label="{{ 'CONTACTS_PAGE.ADDRESS' | translate }}"
+				[label]="'CONTACTS_PAGE.ADDRESS' | translate"
 			>
 				<ng-template #addressStep>{{
 					'CONTACTS_PAGE.ADDRESS' | translate
@@ -367,8 +366,84 @@
 			</nb-step>
 			<!-- Step 2 Address Form End -->
 
-			<!-- Step 3 Members Form -->
-			<nb-step label="{{ 'CONTACTS_PAGE.MEMBERS' | translate }}">
+			<!-- Step 3 Budget Form -->
+			<nb-step
+				*ngIf="budgetForm"
+				[stepControl]="budgetForm"
+				[label]="'CONTACTS_PAGE.BUDGET' | translate"
+				(ngSubmit)="this.budgetForm.markAsDirty()"
+			>
+				<form [formGroup]="budgetForm">
+					<div class="row">
+						<div class="form-group col-6">
+							<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"></label>
+							<nb-select
+								fullWidth
+								[placeholder]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"
+								formControlName="budgetType"
+							>
+								<nb-option
+									*ngFor=" let budgetType of organizationContactBudgetTypeEnum | keyvalue "
+									[value]="budgetType.value"
+								>
+									{{ budgetType.value | titlecase }}
+								</nb-option>
+							</nb-select>
+						</div>
+						<ng-container *ngIf="budgetType === organizationContactBudgetTypeEnum.HOURS">
+							<div class="form-group col-6">
+								<label
+									class="label"
+									[innerHtml]="'FORM.PLACEHOLDERS.HOURS' | translate"
+								></label>
+								<input
+									nbInput
+									type="number"
+									fullWidth
+									formControlName="budget"
+									[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
+								/>
+							</div>
+						</ng-container>
+						<ng-container *ngIf="budgetType === organizationContactBudgetTypeEnum.COST">
+							<div class="form-group col-6">
+								<label
+									class="label"
+									[innerHtml]="'FORM.PLACEHOLDERS.COST' | translate"
+								></label>
+								<input
+									nbInput
+									type="number"
+									fullWidth
+									formControlName="budget"
+									[placeholder]="'FORM.PLACEHOLDERS.COST' | translate"
+								/>
+							</div>
+						</ng-container>
+					</div>
+					<div>
+						<button nbButton nbStepperPrevious class="mr-2">
+							{{ 'BUTTONS.PREVIOUS' | translate }}
+						</button>
+						<button
+							[disabled]="this.budgetForm.invalid"
+							nbButton
+							status="success"
+							class="mr-2"
+							nbStepperNext
+						>
+							{{ 'BUTTONS.NEXT' | translate }}
+						</button>
+						<button nbButton (click)="cancel()" status="danger">
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
+					</div>
+				</form>
+			</nb-step>
+			<!-- Step 3 Budget Form End -->
+
+			<!-- Step 4 Members Form -->
+			<nb-step [label]="'CONTACTS_PAGE.MEMBERS' | translate">
 				<ng-template #membersStep>{{
 					'CONTACTS_PAGE.MEMBERS' | translate
 				}}</ng-template>
@@ -427,7 +502,7 @@
 					</div>
 				</div>
 			</nb-step>
-			<!-- Step 3 Members Form End -->
+			<!-- Step 4 Members Form End -->
 		</nb-stepper>
 	</nb-card-body>
 </nb-card>

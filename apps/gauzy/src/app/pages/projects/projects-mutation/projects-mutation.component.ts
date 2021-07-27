@@ -46,8 +46,8 @@ export class ProjectsMutationComponent
 	OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 	TaskListTypeEnum = TaskListTypeEnum;
 	form: FormGroup;
-	members: string[];
-	selectedEmployeeIds: string[];
+	members: string[] = [];
+	selectedEmployeeIds: string[] = [];
 	billings: string[] = Object.values(ProjectBillingEnum);
 	defaultCurrency: string;
 	public: Boolean = true;
@@ -221,8 +221,6 @@ export class ProjectsMutationComponent
 					]
 				}
 			});
-			this.selectedEmployeeIds = [];
-			this.members = [];
 		}
 	}
 

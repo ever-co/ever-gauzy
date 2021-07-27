@@ -1,4 +1,4 @@
-import { Connection, In } from 'typeorm';
+import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
 import {
@@ -7,39 +7,42 @@ import {
 	ITimeSlot,
 	IOrganizationProject,
 	ITenant,
-	ITimesheet
+	ITimesheet,
+	ITimeLog
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { IPluginConfig } from '@gauzy/common';
+import { IPluginConfig, isEmpty } from '@gauzy/common';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
-import { OrganizationProject, Screenshot, TimeLog, Timesheet, TimeSlot } from './../../core/entities/internal';
+import { OrganizationProject, Screenshot, TimeLog, TimeSlot } from './../../core/entities/internal';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,
 	config: IPluginConfig,
 	tenant: ITenant,
-	timeSheets: ITimesheet[],
-	defaultProjects: IOrganizationProject[]
+	timeSheets: ITimesheet[]
 ) => {
-	let query = connection
-		.getRepository(OrganizationProject)
-		.createQueryBuilder()
-		.where({
-			id: In(_.pluck(defaultProjects, 'id'))
-		});
-	query = query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-	const projects = await query.getMany();
-
-	const timeSheetChunk = _.chunk(timeSheets, 5) as Array<Timesheet[]>;
+	const query = connection.getRepository(OrganizationProject).createQueryBuilder('organization_project');
+	const projects: IOrganizationProject[] = await query
+		.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks')
+		.leftJoinAndSelect(`${query.alias}.organizationContact`, 'organizationContact')
+		.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId: tenant.id })
+		.andWhere(`"tasks"."tenantId" =:tenantId`, { tenantId: tenant.id })
+		.getMany();
+	if (isEmpty(projects)) {
+		console.warn(
+			`Warning: projects not found for tenantId: ${tenant.id}, RandomTimesheet will not be created`
+		);
+		return;
+	}
+	const timeSheetChunk = _.chunk(timeSheets, 5) as Array<ITimesheet[]>;
 	const allTimeSlots: ITimeSlot[] = [];
-
 	for (
 		let timeSheetChunkIndex = 0;
 		timeSheetChunkIndex < timeSheetChunk.length;
 		timeSheetChunkIndex++
 	) {
-		const timeLogs: TimeLog[] = [];
+		const timeLogs: ITimeLog[] = [];
 		for (
 			let timeSheetIndex = 0;
 			timeSheetIndex < timeSheetChunk[timeSheetChunkIndex].length;
@@ -76,7 +79,6 @@ export const createRandomTimeLogs = async (
 						Object.keys(TimeLogSourceEnum)
 					) as TimeLogSourceEnum;
 
-				
 					let logType: TimeLogType = TimeLogType.TRACKED;
 					if (
 						source === TimeLogSourceEnum.WEB_TIMER ||

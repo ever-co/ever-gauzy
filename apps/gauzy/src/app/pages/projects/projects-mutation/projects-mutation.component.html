@@ -8,7 +8,7 @@
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<nb-tabset>
-				<nb-tab tabTitle="Main">
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate">
 					<div class="row">
 						<div class="form-group col-4">
 							<label for="name" class="label">{{
@@ -155,19 +155,27 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab tabTitle="Description">
-					<ckeditor formControlName="description" [config]="ckConfig">
-					</ckeditor>
-					<div class="form-group col-4">
-						<ga-tags-color-input
-							[selectedTags]="tags"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.DESCRIPTION' | translate">
+					<div class="row">
+						<div class="col-8">
+							<label
+								for="description"
+								class="label"
+								[innerHtml]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+							></label>
+							<ckeditor formControlName="description" [config]="ckConfig"></ckeditor>
+						</div>
+						<div class="col-4">
+							<ga-tags-color-input
+								[selectedTags]="tags"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
 					</div>
 				</nb-tab>
-				<nb-tab tabTitle="Billing">
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BILLING' | translate">
 					<div class="row">
 						<div class="form-group col-4">
 							<label for="billing" class="label">{{
@@ -198,7 +206,7 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab tabTitle="Budget">
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BUDGET' | translate">
 					<div class="row">
 						<div class="form-group col-4">
 							<label class="label">{{
@@ -262,7 +270,7 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab tabTitle="Open-Source">
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.OPEN_SOURCE' | translate">
 					<div class="row">
 						<div class="col-4 d-flex align-items-center">
 							<nb-toggle
@@ -300,7 +308,7 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab tabTitle="Settings">
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate">
 					<div class="row">
 						<div class="form-group col-3">
 							<label for="color" class="label">{{

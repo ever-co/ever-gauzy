@@ -12,23 +12,20 @@ import {
 	IOrganizationProject,
 	ITag,
 	ContactType,
-	IOrganization
+	IOrganization,
+	OrganizationContactBudgetTypeEnum
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { Store } from '../../../@core/services/store.service';
-import { LocationFormComponent } from '../../../@shared/forms/location';
-import { EmployeesService } from '../../../@core/services/employees.service';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { LatLng } from 'leaflet';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { LocationFormComponent } from '../../../@shared/forms/location';
 import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
-import { LatLng } from 'leaflet';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { isEmpty } from '@gauzy/common-angular';
+import { EmployeesService, ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
+import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,40 +36,135 @@ import { isEmpty } from '@gauzy/common-angular';
 export class ContactMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	@Input() organizationContact?: any;
-	@Input() projectsWithoutOrganizationContact: IOrganizationProject[];
-	@Input() isGridEdit: boolean;
-	@Input() contactType: string;
 
+	/*
+	* Getter & Setter for organizationContact element
+	*/
+	private _organizationContact: any;
+	get organizationContact(): any {
+		return this._organizationContact;
+	}
+	@Input() set organizationContact(value: any) {
+		this._organizationContact = value;
+	}
+
+	/*
+	* Getter & Setter for projectsWithoutOrganizationContact element
+	*/
+	private _projectsWithoutOrganizationContact: IOrganizationProject[];
+	get projectsWithoutOrganizationContact(): IOrganizationProject[] {
+		return this._projectsWithoutOrganizationContact;
+	}
+	@Input() set projectsWithoutOrganizationContact(value: IOrganizationProject[]) {
+		this._projectsWithoutOrganizationContact = value;
+	}
+
+	/*
+	* Getter & Setter for isGridEdit element
+	*/
+	private _isGridEdit: boolean;
+	get isGridEdit(): boolean {
+		return this._isGridEdit;
+	}
+	@Input() set isGridEdit(value: boolean) {
+		this._isGridEdit = value;
+	}
+
+	/*
+	* Getter & Setter for contactType element
+	*/
+	private _contactType: string;
+	get contactType(): string {
+		return this._contactType;
+	}
+	@Input() set contactType(value: string) {
+		this._contactType = value;
+	}
+
+	/*
+	* Output event emitter for cancel process event
+	*/
 	@Output()
 	canceled = new EventEmitter();
 
+	/*
+	* Output event emitter for add/edit organization contact event 
+	*/
 	@Output()
 	addOrEditOrganizationContact = new EventEmitter();
 
-	@ViewChild('leafletTemplate', { static: false })
-	leafletTemplate: LeafletMapComponent;
+	// leaflet map template
+	@ViewChild('leafletTemplate', { static: false }) leafletTemplate: LeafletMapComponent;
 
-	@ViewChild('locationFormDirective')
-	locationFormDirective: LocationFormComponent;
+	// leaflet location form directive
+	@ViewChild('locationFormDirective') locationFormDirective: LocationFormComponent;
 
+	// form stepper
 	@ViewChild('stepper') stepper: NbStepperComponent;
 
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
-	contMainForm: FormGroup;
-	defaultSelectedType: any;
 	members: string[];
 	selectedMembers: IEmployee[];
 	selectedEmployeeIds: string[];
-	tags: ITag[] = [];
 	contactTypes: ContactType[] = Object.values(ContactType);
 	hoverState: boolean;
 	country: string;
 	projects: IOrganizationProject[] = [];
 	employees: IEmployee[] = [];
-	organizationId: string;
 	organization: IOrganization;
+
+	organizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
+
+	/**
+	* Main Content Stepper Form Group 
+	*/
+	public contMainForm: FormGroup = ContactMutationComponent.buildMainForm(this.fb);
+	static buildMainForm(formBuilder: FormBuilder): FormGroup {
+		const form = formBuilder.group({
+			imageUrl: [],
+			tags: [],
+			name: ['', [Validators.required]],
+			primaryEmail: ['', [Validators.email]],
+			primaryPhone: [],
+			projects: [],
+			contactType: [],
+			fax: [],
+			website: [],
+			fiscalInformation: []
+		});
+		return form;
+	}
+
+	/**
+	* Location Stepper Form Group 
+	*/
+	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+
+	/**
+	* Budget Stepper Form Group 
+	*/
+	readonly budgetForm: FormGroup = ContactMutationComponent.buildBudgetForm(this.fb);
+	static buildBudgetForm(formBuilder: FormBuilder): FormGroup {
+		const form = formBuilder.group({
+			budget: [],
+			budgetType: []
+		});
+		return form;
+	}
+
+	/*
+	* Getter form control value for budgetType
+	*/
+	get budgetType (): string {
+		return this.budgetForm.get('budgetType').value;
+	}
+
+	/*
+	* Getter form control value for budgetType
+	*/
+	get tags (): ITag[] {
+		return this.contMainForm.get('tags').value;
+	}
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -91,15 +183,12 @@ export class ContactMutationComponent
 		const storeOrganization$ = this.store.selectedOrganization$;
 		storeOrganization$
 			.pipe(
-				filter((organization) => !!organization),
 				debounceTime(200),
-				tap((organization) => {
-					this.organization = organization;
-					this.organizationId = organization.id;
-					this._initializeForm();
-					this._getProjects();
-					this._getEmployees();
-				}),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._patchForm()),
+				tap(() => this._getProjects()),
+				tap(() => this._getEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -108,12 +197,11 @@ export class ContactMutationComponent
 				(member) => member.id
 			);
 		}
-		this.defaultSelectedType = this.contactType;
 	}
 
 	private async _getEmployees() {
 		const { tenantId } = this.store.user;
-		const { organizationId } = this;
+		const { id: organizationId } = this.organization;
 		const { items } = await this.employeesService
 			.getAll(['user'], {
 				organizationId,
@@ -122,7 +210,7 @@ export class ContactMutationComponent
 			.pipe(first())
 			.toPromise();
 		this.employees = items;
-		if (this.organizationId) {
+		if (organizationId) {
 			this.selectedMembers = this.filterArrayPipe.transform(
 				this.employees,
 				this.selectedEmployeeIds
@@ -132,7 +220,7 @@ export class ContactMutationComponent
 
 	private async _getProjects() {
 		const { tenantId } = this.store.user;
-		const { organizationId } = this;
+		const { id: organizationId } = this.organization;
 		const { items } = await this.organizationProjectsService.getAll([], {
 			organizationId,
 			tenantId
@@ -140,73 +228,61 @@ export class ContactMutationComponent
 		this.projects = items;
 	}
 
-	private _initializeForm() {
-		if (!this.organizationId) {
+	private _patchForm() {
+		if (!this.organization) {
 			return;
 		}
-
-		this.contMainForm = this.fb.group({
-			imageUrl: [
-				this.organizationContact
-					? this.organizationContact.imageUrl
-					: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
-			],
-			tags: [
-				this.organizationContact
-					? (this.tags = this.organizationContact.tags)
-					: ''
-			],
-			name: [
-				this.organizationContact
-					? this.isGridEdit
-						? this.organizationContact.contact_name
-						: this.organizationContact.name
-					: '',
-				Validators.required
-			],
-			primaryEmail: [
-				this.organizationContact
-					? this.organizationContact.primaryEmail
-					: '',
-				[Validators.email]
-			],
-			primaryPhone: [
-				this.organizationContact
-					? this.organizationContact.primaryPhone
-					: ''
-			],
-			projects: [
-				this.organizationContact
-					? this.organizationContact.projects || []
-					: []
-			],
-			contactType: [
-				this.organizationContact
-					? this.organizationContact.contactType
-					: ''
-			],
-			fax: [
-				this.organizationContact
+		this.contMainForm.patchValue({
+			imageUrl: this.organizationContact
+						? this.organizationContact.imageUrl
+						: DUMMY_PROFILE_IMAGE,
+			tags: this.organizationContact
+					? (this.organizationContact.tags)
+					: [],
+			name: this.organizationContact
+						? this.isGridEdit
+							? this.organizationContact.contact_name
+							: this.organizationContact.name
+						: '',
+			primaryEmail: this.organizationContact
+								? this.organizationContact.primaryEmail
+								: '',
+			primaryPhone: this.organizationContact
+								? this.organizationContact.primaryPhone
+								: '',
+			projects: this.organizationContact
+							? this.organizationContact.projects || []
+							: [],
+			contactType: this.organizationContact
+							? this.organizationContact.contactType
+							: this.contactType,
+			fax: this.organizationContact
 					? this.organizationContact.contact
 						? this.organizationContact.contact.fax
 						: ''
-					: ''
-			],
-			website: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.website
-						: ''
-					: ''
-			],
-			fiscalInformation: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.fiscalInformation
-						: ''
-					: ''
-			]
+					: '',
+			website: this.organizationContact
+						? this.organizationContact.contact
+							? this.organizationContact.contact.website
+							: ''
+						: '',
+			fiscalInformation: this.organizationContact
+									? this.organizationContact.contact
+										? this.organizationContact.contact.fiscalInformation
+										: ''
+									: ''
 		});
+		this.contMainForm.updateValueAndValidity();
+
+		this.budgetForm.patchValue({
+			budgetType: this.organizationContact
+							? this.organizationContact.budgetType
+							: OrganizationContactBudgetTypeEnum.HOURS,
+			budget: this.organizationContact 
+						? this.organizationContact.budget
+						: ''
+		});
+		this.budgetForm.updateValueAndValidity();
 
 		this._setLocationForm();
 	}
@@ -218,15 +294,7 @@ export class ContactMutationComponent
 		setTimeout(() => {
 			const { contact } = this.organizationContact;
 			if (contact) {
-				const {
-					country,
-					city,
-					postcode,
-					address,
-					address2,
-					latitude,
-					longitude
-				} = contact;
+				const { country, city, postcode, address, address2, latitude, longitude } = contact;
 				this.locationFormDirective.setValue({
 					country,
 					city,
@@ -249,7 +317,7 @@ export class ContactMutationComponent
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		try {
 			const { tenantId } = this.store.user;
-			const { organizationId } = this;
+			const { id: organizationId } = this.organization;
 			return this.organizationProjectsService
 				.create({
 					name,
@@ -257,12 +325,9 @@ export class ContactMutationComponent
 					tenantId
 				})
 				.then((project) => {
-					this.toastrService.success(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-						{
-							name: name
-						}
-					);
+					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
+						name 
+					});
 					return project;
 				});
 		} catch (error) {
@@ -283,78 +348,63 @@ export class ContactMutationComponent
 	}
 
 	async submitForm() {
-		if (this.contMainForm.valid) {
-			let contactType = this.contMainForm.value['contactType'];
-			if (isEmpty(contactType)) {
-				contactType = this.defaultSelectedType;
-			}
-
-			let imgUrl = this.contMainForm.value.imageUrl;
-			imgUrl = imgUrl
-				? this.contMainForm.value['imageUrl']
-				: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text';
-
-			const { tenantId } = this.store.user;
-			const { organizationId } = this;
-
-			const location = this.locationFormDirective.getValue();
-			const { coordinates } = location['loc'];
-			delete location['loc'];
-
-			const [latitude, longitude] = coordinates;
-			const contact = {
-				...{ organizationId, tenantId },
-				...location,
-				...{ latitude, longitude }
-			};
-
-			this.addOrEditOrganizationContact.emit({
-				tags: this.tags,
-				id: this.organizationContact
-					? this.organizationContact.id
-					: undefined,
-				organizationId,
-				tenantId,
-				name: this.contMainForm.value['name'],
-				primaryEmail: this.contMainForm.value['primaryEmail'],
-				primaryPhone: this.contMainForm.value['primaryPhone'],
-				projects: this.contMainForm.value['projects']
-					? this.contMainForm.value['projects']
-					: '',
-				contactType: contactType,
-				imageUrl: imgUrl,
-				members: (this.members || this.selectedEmployeeIds || [])
-					.map((id) => this.employees.find((e) => e.id === id))
-					.filter((e) => !!e),
-				fax: this.contMainForm.value['fax'],
-				fiscalInformation: this.contMainForm.value['fiscalInformation'],
-				website: this.contMainForm.value['website'],
-				...contact
-			});
-
-			this.selectedEmployeeIds = [];
-			this.members = [];
-			this.contMainForm.reset({
-				name: '',
-				primaryEmail: '',
-				primaryPhone: '',
-				country: '',
-				city: '',
-				address: '',
-				address2: '',
-				postcode: null,
-				contactType: '',
-				imgUrl: '',
-				projects: [],
-				fax: '',
-				fiscalInformation: '',
-				website: ''
-			});
+		if (this.contMainForm.invalid) {
+			return;
 		}
+		const { fiscalInformation, website, contactType } = this.contMainForm.getRawValue();
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const { budget, budgetType } = this.budgetForm.getRawValue();
+		const { name, primaryEmail, primaryPhone, projects = [], fax, tags = [] } = this.contMainForm.getRawValue();
+
+		let { imageUrl } = this.contMainForm.getRawValue();
+		if (imageUrl === DUMMY_PROFILE_IMAGE) {
+			imageUrl = null;
+		}
+
+		const location = this.locationFormDirective.getValue();
+		const { coordinates } = location['loc'];
+		delete location['loc'];
+
+		const [latitude, longitude] = coordinates;
+		const contact = {
+			...{ organizationId, tenantId },
+			...location,
+			...{ latitude, longitude }
+		};
+
+		const members = (this.members || this.selectedEmployeeIds || [])
+						.map((id) => this.employees.find((e) => e.id === id))
+						.filter((e) => !!e);
+
+		this.addOrEditOrganizationContact.emit({
+			id: this.organizationContact
+				? this.organizationContact.id
+				: undefined,
+			organizationId,
+			tenantId,
+			budgetType,
+			budget,
+			name,
+			primaryEmail,
+			primaryPhone,
+			projects,
+			contactType,
+			imageUrl,
+			members,
+			tags,
+			fax,
+			fiscalInformation,
+			website,
+			...contact
+		});
 	}
 
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+	selectedTagsEvent(tags: ITag[]) {
+		this.contMainForm.patchValue({ tags });
+		this.contMainForm.updateValueAndValidity();
 	}
 
 	isInvalidControl(control: string) {

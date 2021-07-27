@@ -48,7 +48,8 @@ export class TimeLimitReportComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
-				debounceTime(1350),
+				debounceTime(300),
+				tap(() => this.loading = true),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
@@ -78,7 +79,6 @@ export class TimeLimitReportComponent
 			duration,
 			relations: ['task', 'project', 'employee', 'employee.user']
 		};
-		this.loading = true;
 		this.timesheetService
 			.getTimeLimit(request)
 			.then((logs: ITimeLimitReport[]) => {

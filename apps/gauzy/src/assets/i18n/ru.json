@@ -1565,6 +1565,7 @@
 		"EDIT_PUBLIC_PAGE": "Изменить публичную страницу",
 		"SELECT_ORGANIZATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
+		"DESCRIPTION": "Описание",
 		"DEPARTMENTS": "Департаменты",
 		"VENDORS": "Вендоры",
 		"VENDOR": "Продавец",
@@ -1768,7 +1769,10 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
 			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy"
-		}
+		},
+		"BILLING": "Биллинг",
+		"BUDGET": "Бюджет",
+		"OPEN_SOURCE": "Открытый код"
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Посетители",
@@ -1784,7 +1788,8 @@
 		"CONTACT_TYPE": "Тип контакта",
 		"MAIN": "Главная",
 		"ADDRESS": "Адрес",
-		"MEMBERS": "Члены Комитета"
+		"MEMBERS": "Члены Комитета",
+		"BUDGET": "Бюджет"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Языки",
