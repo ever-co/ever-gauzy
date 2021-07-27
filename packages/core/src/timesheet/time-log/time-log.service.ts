@@ -27,7 +27,7 @@ import {
 import * as moment from 'moment';
 import { CommandBus } from '@nestjs/cqrs';
 import * as _ from 'underscore';
-import { chain, pluck } from 'underscore';
+import { chain } from 'underscore';
 import { ConfigService } from '@gauzy/config';
 import { CrudService } from '../../core';
 import {
