@@ -4,7 +4,6 @@ import * as _ from 'underscore';
 import { HttpService } from '@nestjs/common';
 import {
 	IOrganization,
-	IOrganizationProject,
 	ITag,
 	ITask,
 	ITenant,
@@ -47,6 +46,12 @@ export const createDefaultTask = async (
 	const tags: ITag[] = await createTags(connection, labels);
 
 	const defaultProjects = await connection.manager.find(OrganizationProject);
+	if (!defaultProjects) {
+		console.warn(
+			'Warning: projects not found, DefaultTasks will not be created'
+		);
+		return;
+	}
 	const teams = await connection.manager.find(OrganizationTeam);
 	const users = await connection.manager.find(User);
 	const employees = await connection.manager.find(Employee);
@@ -87,16 +92,8 @@ export const createDefaultTask = async (
 
 export const createRandomTask = async (
 	connection: Connection,
-	tenants: ITenant[],
-	projects: IOrganizationProject[] | void
+	tenants: ITenant[]
 ) => {
-	if (!projects) {
-		console.warn(
-			'Warning: projects not found, RandomTask will not be created'
-		);
-		return;
-	}
-
 	const httpService = new HttpService();
 	const tasks: ITask[] = [];
 
@@ -117,6 +114,17 @@ export const createRandomTask = async (
 	const tags: ITag[] = await createTags(connection, labels);
 
 	for await (const tenant of tenants || []) {
+		const projects = await connection.manager.find(OrganizationProject, {
+			where: {
+				tenant
+			}
+		});
+		if (!projects) {
+			console.warn(
+				'Warning: projects not found, RandomTasks will not be created'
+			);
+			continue;
+		}
 		const teams = await connection.manager.find(OrganizationTeam, {
 			where: {
 				tenant

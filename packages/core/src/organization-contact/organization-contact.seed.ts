@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { ContactOrganizationInviteStatus, ContactType, IContact, IEmployee, IOrganization, IOrganizationContact, ITag, ITenant } from '@gauzy/contracts';
+import { ContactOrganizationInviteStatus, ContactType, IContact, IEmployee, IOrganization, IOrganizationContact, ITag, ITenant, OrganizationContactBudgetTypeEnum } from '@gauzy/contracts';
 import * as _ from 'underscore';
 import { getDummyImage } from '../core';
 import { Contact, Organization, OrganizationContact, Tag } from './../core/entities/internal';
@@ -86,6 +86,13 @@ const generateOrganizationContact = async (
 	orgContact.tenant = tenant;
 	orgContact.contact = contact;
 	orgContact.contactType = faker.random.arrayElement(Object.values(ContactType));
+	orgContact.budgetType = faker.random.arrayElement(
+		Object.values(OrganizationContactBudgetTypeEnum)
+	);
+	orgContact.budget =
+		orgContact.budgetType == OrganizationContactBudgetTypeEnum.COST
+			? faker.datatype.number({ min: 200, max: 2000 })
+			: faker.datatype.number({ min: 20, max: 40 });
 
 	const email = faker.internet.email(contact.firstName, contact.lastName);
 	orgContact.emailAddresses = [email];

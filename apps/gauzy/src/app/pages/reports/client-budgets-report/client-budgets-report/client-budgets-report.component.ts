@@ -8,19 +8,17 @@ import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
 	IClientBudgetLimitReport,
-	OrganizationContactBudgetTypeEnum,
-	ReportGroupFilterEnum,
-	ReportGroupByFilter
+	OrganizationContactBudgetTypeEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
-import { ReportBaseComponent } from 'apps/gauzy/src/app/@shared/report/report-base/report-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from './../../../../@core/services/store.service';
+import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-client-budgets-report',
 	templateUrl: './client-budgets-report.component.html',
@@ -32,15 +30,14 @@ export class ClientBudgetsReportComponent
 	logRequest: IGetPaymentInput = this.request;
 	OrganizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
 	loading: boolean;
-	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	filters: IGetPaymentInput;
 	clients: IClientBudgetLimitReport[];
 
 	constructor(
-		private timesheetService: TimesheetService,
-		protected store: Store,
-		readonly translateService: TranslateService,
-		private cd: ChangeDetectorRef
+		private readonly timesheetService: TimesheetService,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly cd: ChangeDetectorRef
 	) {
 		super(store, translateService);
 	}
@@ -49,7 +46,8 @@ export class ClientBudgetsReportComponent
 		this.subject$
 			.pipe(
 				debounceTime(1350),
-				tap(() => this.getReportData()),
+				tap(() => this.loading = true),
+				tap(() => this.getReport()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -65,17 +63,15 @@ export class ClientBudgetsReportComponent
 		this.subject$.next();
 	}
 
-	async getReportData() {
+	async getReport() {
 		if (!this.organization || !this.logRequest) {
 			return;
 		}
 		const appliedFilter = pick(this.logRequest, 'clientIds');
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.logRequest),
-			groupBy: this.groupBy
+			...this.getFilterRequest(this.logRequest)
 		};
-		this.loading = true;
 		this.timesheetService
 			.getClientBudgetLimit(request)
 			.then((logs: IClientBudgetLimitReport[]) => {

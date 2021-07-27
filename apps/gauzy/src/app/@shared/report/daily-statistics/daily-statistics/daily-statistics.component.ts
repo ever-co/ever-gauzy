@@ -8,18 +8,17 @@ import {
 import {
 	ICountsStatistics,
 	IGetCountsStatistics,
-	IOrganization,
 	ITimeLogFilters,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from './../../../../@core/services/store.service';
-import * as moment from 'moment';
-import { toUTC } from '@gauzy/common-angular';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
+import { debounceTime, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { isNotEmpty } from '@gauzy/common-angular';
+import { Store } from './../../../../@core/services';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
+import { ReportBaseComponent } from '../../report-base/report-base.component';
 
 @UntilDestroy()
 @Component({
@@ -27,61 +26,32 @@ import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statist
 	templateUrl: './daily-statistics.component.html',
 	styleUrls: ['./daily-statistics.component.scss']
 })
-export class DailyStatisticsComponent implements OnInit, AfterViewInit {
+export class DailyStatisticsComponent extends ReportBaseComponent implements OnInit, AfterViewInit {
 	PermissionsEnum = PermissionsEnum;
-	logRequest: ITimeLogFilters = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate()
-	};
-	updateLogs$: Subject<any> = new Subject();
-	organization: IOrganization;
+	logRequest: ITimeLogFilters = this.request;
 	counts: ICountsStatistics;
-
-	countsLoading: boolean;
-	selectedEmployeeId: string | null = null;
-	projectId: string | null = null;
-
-	private _selectedDate: Date = new Date();
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-	}
+	loading: boolean;
 
 	@Input()
-	set filters(value) {
+	set filters(value: ITimeLogFilters) {
 		this.logRequest = value;
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	constructor(
-		private timesheetStatisticsService: TimesheetStatisticsService,
-		private store: Store,
-		private cd: ChangeDetectorRef
-	) {}
+		private readonly timesheetStatisticsService: TimesheetStatisticsService,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly cd: ChangeDetectorRef
+	) {
+		super(store, translateService);
+	}
 
 	ngOnInit() {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+		this.subject$
 			.pipe(
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
-						this.selectedEmployeeId = employee ? employee.id : null;
-						this.projectId = (project) ? project.id : null;
-						this.updateLogs$.next();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.updateLogs$
-			.pipe(
-				debounceTime(800),
+				debounceTime(300),
+				tap(() => this.loading = true),
 				tap(() => this.getCounts()),
 				untilDestroyed(this)
 			)
@@ -94,51 +64,38 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 
 	filtersChange($event) {
 		this.logRequest = $event;
-		this.updateLogs$.next();
+		this.filters = Object.assign({}, this.logRequest);
+		this.subject$.next();
 	}
 
 	getCounts() {
 		if (!this.organization || !this.logRequest) {
 			return;
 		}
-
-		const { startDate, endDate } = this.logRequest;
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-
-		let employeeId: string;
-		if (this.selectedEmployeeId) {
-			employeeId = this.selectedEmployeeId;
-		}
-
-		let projectId: string;
-		if (this.projectId) {
-			projectId = this.projectId;
-		}
-
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
 			'activityLevel',
 			'logType'
 		);
+		const {
+			employeeIds = [],
+			projectIds = [],
+			tenantId,
+			organizationId
+		}: ITimeLogFilters = this.getFilterRequest(this.logRequest);
 		const request: IGetCountsStatistics = {
 			...appliedFilter,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-			...(employeeId ? { employeeId } : {}),
-			...(projectId ? { projectId } : {}),
 			organizationId,
-			tenantId
+			tenantId,
+			...(isNotEmpty(employeeIds) ? { employeeId: employeeIds[0] } : {}),
+			...(isNotEmpty(projectIds) ? { projectId: projectIds[0] } : {})
 		};
-		this.countsLoading = true;
 		this.timesheetStatisticsService
 			.getCounts(request)
 			.then((resp) => {
 				this.counts = resp;
 			})
-			.finally(() => {
-				this.countsLoading = false;
-			});
+			.finally(() => { this.loading = false; });
 	}
 }

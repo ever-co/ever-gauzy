@@ -2,7 +2,6 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import {
 	TimesheetStatus,
-	IOrganizationProject,
 	ITimeSlot,
 	ITenant,
 	IEmployee,
@@ -23,78 +22,73 @@ export const createDefaultTimeSheet = async (
 	config: IPluginConfig,
 	tenant: ITenant,
 	organization: IOrganization,
-	employees: IEmployee[],
-	defaultProjects: IOrganizationProject[] | void
+	employees: IEmployee[]
 ) => {
-	if (!defaultProjects) {
-		console.warn(
-			'Warning: defaultProjects not found, RandomTimesheet will not be created'
-		);
-		return;
-	}
+	try {
+		const timesheets: ITimesheet[] = [];
+		for (let index = 0; index < 5; index++) {
+			const date = moment().subtract(index, 'week').toDate();
+			const startedAt = moment(date).startOf('week').toDate();
+			const stoppedAt = moment(date).endOf('week').toDate();
 
-	const timesheets: ITimesheet[] = [];
-	for (let index = 0; index < 5; index++) {
-		const date = moment().subtract(index, 'week').toDate();
-		const startedAt = moment(date).startOf('week').toDate();
-		const stoppedAt = moment(date).endOf('week').toDate();
+			for await (const employee of employees) {
+				const status = faker.random.arrayElement(
+					Object.keys(TimesheetStatus)
+				);
 
-		for (const employee of employees) {
-			const status = faker.random.arrayElement(
-				Object.keys(TimesheetStatus)
-			);
+				let isBilled = false;
+				let approvedAt: Date = null;
+				let submittedAt: Date = null;
 
-			let isBilled = false;
-			let approvedAt: Date = null;
-			let submittedAt: Date = null;
-
-			if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
-				approvedAt = null;
-				submittedAt = faker.date.past();
-			} else if (TimesheetStatus[status] === TimesheetStatus.IN_REVIEW) {
-				approvedAt = null;
-				submittedAt = faker.date.between(startedAt, new Date());
-			} else if (TimesheetStatus[status] === TimesheetStatus.APPROVED) {
-				isBilled = faker.random.arrayElement([true, false]);
-				approvedAt = faker.date.between(startedAt, new Date());
-				submittedAt = faker.date.between(startedAt, approvedAt);
+				if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
+					approvedAt = null;
+					submittedAt = faker.date.past();
+				} else if (TimesheetStatus[status] === TimesheetStatus.IN_REVIEW) {
+					approvedAt = null;
+					submittedAt = faker.date.between(startedAt, new Date());
+				} else if (TimesheetStatus[status] === TimesheetStatus.APPROVED) {
+					isBilled = faker.random.arrayElement([true, false]);
+					approvedAt = faker.date.between(startedAt, new Date());
+					submittedAt = faker.date.between(startedAt, approvedAt);
+				}
+				const timesheet = new Timesheet();
+				timesheet.employee = employee;
+				timesheet.organization = organization;
+				timesheet.tenant = tenant;
+				timesheet.approvedBy = null;
+				timesheet.startedAt = startedAt;
+				timesheet.stoppedAt = stoppedAt;
+				timesheet.duration = 0;
+				timesheet.keyboard = 0;
+				timesheet.mouse = 0;
+				timesheet.overall = 0;
+				timesheet.approvedAt = approvedAt;
+				timesheet.submittedAt = submittedAt;
+				timesheet.lockedAt = null;
+				timesheet.isBilled = isBilled;
+				timesheet.status = TimesheetStatus[status];
+				timesheet.deletedAt = null;
+				timesheets.push(timesheet);
 			}
-			const timesheet = new Timesheet();
-			timesheet.employee = employee;
-			timesheet.organization = organization;
-			timesheet.tenant = tenant;
-			timesheet.approvedBy = null;
-			timesheet.startedAt = startedAt;
-			timesheet.stoppedAt = stoppedAt;
-			timesheet.duration = 0;
-			timesheet.keyboard = 0;
-			timesheet.mouse = 0;
-			timesheet.overall = 0;
-			timesheet.approvedAt = approvedAt;
-			timesheet.submittedAt = submittedAt;
-			timesheet.lockedAt = null;
-			timesheet.isBilled = isBilled;
-			timesheet.status = TimesheetStatus[status];
-			timesheet.deletedAt = null;
-			timesheets.push(timesheet);
 		}
+		await connection.getRepository(Timesheet).save(timesheets);
+	} catch (error) {
+		console.log(chalk.red(`SEEDING Default Timesheet`, error));
 	}
 
-	await connection.getRepository(Timesheet).save(timesheets);
-	const createdTimesheets = await connection.getRepository(Timesheet).find({
-		where: {
-			tenant
-		}
-	});
-	
 	try {
 		console.log(chalk.green(`SEEDING Default TimeLogs & Activities`));
+		const createdTimesheets = await connection.getRepository(Timesheet).find({
+			where: {
+				tenant,
+				organization
+			}
+		});
 		const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
 			connection,
 			config,
 			tenant,
-			createdTimesheets,
-			defaultProjects
+			createdTimesheets
 		);
 		await createRandomActivities(
 			connection, 
@@ -109,80 +103,74 @@ export const createDefaultTimeSheet = async (
 export const createRandomTimesheet = async (
 	connection: Connection,
 	config: IPluginConfig,
-	tenants: ITenant[],
-	defaultProjects: IOrganizationProject[] | void
+	tenants: ITenant[]
 ) => {
-	if (!defaultProjects) {
-		console.warn(
-			'Warning: defaultProjects not found, RandomTimesheet will not be created'
-		);
-		return;
-	}
-
-	for (const tenant of tenants) {
-		const timesheets: Timesheet[] = [];
-		const employees = await connection.getRepository(Employee).find({
-			where: {
-				tenant
-			},
-			relations: ['organization']
-		});
-
-		for (let index = 0; index < randomSeedConfig.noOfTimesheetPerEmployee; index++) {
-			const date = moment().subtract(index, 'week').toDate();
-			const startedAt = moment(date).startOf('week').toDate();
-			const stoppedAt = moment(date).endOf('week').toDate();
-
-			_.chain(employees)
-				.shuffle()
-				.take(faker.datatype.number(employees.length))
-				.each((employee) => {
-					const status = faker.random.arrayElement(
-						Object.keys(TimesheetStatus)
-					);
-
-					let isBilled = false;
-					let approvedAt: Date = null;
-					let submittedAt: Date = null;
-
-					if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
-						approvedAt = null;
-						submittedAt = faker.date.past();
-					} else if (
-						TimesheetStatus[status] === TimesheetStatus.IN_REVIEW
-					) {
-						approvedAt = null;
-						submittedAt = faker.date.between(startedAt, new Date());
-					} else if (
-						TimesheetStatus[status] === TimesheetStatus.APPROVED
-					) {
-						isBilled = faker.random.arrayElement([true, false]);
-						approvedAt = faker.date.between(startedAt, new Date());
-						submittedAt = faker.date.between(startedAt, approvedAt);
-					}
-
-					const timesheet = new Timesheet();
-					timesheet.employee = employee;
-					timesheet.organization = employee.organization;
-					timesheet.tenant = tenant;
-					timesheet.approvedBy = null;
-					timesheet.startedAt = startedAt;
-					timesheet.stoppedAt = stoppedAt;
-					timesheet.duration = 0;
-					timesheet.keyboard = 0;
-					timesheet.mouse = 0;
-					timesheet.overall = 0;
-					timesheet.approvedAt = approvedAt;
-					timesheet.submittedAt = submittedAt;
-					timesheet.lockedAt = null;
-					timesheet.isBilled = isBilled;
-					timesheet.status = TimesheetStatus[status];
-					timesheet.deletedAt = null;
-					timesheets.push(timesheet);
-				});
+	for await (const tenant of tenants) {
+		try {
+			const timesheets: ITimesheet[] = [];
+			const employees = await connection.getRepository(Employee).find({
+				where: {
+					tenant
+				},
+				relations: ['organization']
+			});
+			for (let index = 0; index < randomSeedConfig.noOfTimesheetPerEmployee; index++) {
+				const date = moment().subtract(index, 'week').toDate();
+				const startedAt = moment(date).startOf('week').toDate();
+				const stoppedAt = moment(date).endOf('week').toDate();
+	
+				_.chain(employees)
+					.shuffle()
+					.take(faker.datatype.number(employees.length))
+					.each((employee) => {
+						const status = faker.random.arrayElement(
+							Object.keys(TimesheetStatus)
+						);
+	
+						let isBilled = false;
+						let approvedAt: Date = null;
+						let submittedAt: Date = null;
+	
+						if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
+							approvedAt = null;
+							submittedAt = faker.date.past();
+						} else if (
+							TimesheetStatus[status] === TimesheetStatus.IN_REVIEW
+						) {
+							approvedAt = null;
+							submittedAt = faker.date.between(startedAt, new Date());
+						} else if (
+							TimesheetStatus[status] === TimesheetStatus.APPROVED
+						) {
+							isBilled = faker.random.arrayElement([true, false]);
+							approvedAt = faker.date.between(startedAt, new Date());
+							submittedAt = faker.date.between(startedAt, approvedAt);
+						}
+	
+						const timesheet = new Timesheet();
+						timesheet.employee = employee;
+						timesheet.organization = employee.organization;
+						timesheet.tenant = tenant;
+						timesheet.approvedBy = null;
+						timesheet.startedAt = startedAt;
+						timesheet.stoppedAt = stoppedAt;
+						timesheet.duration = 0;
+						timesheet.keyboard = 0;
+						timesheet.mouse = 0;
+						timesheet.overall = 0;
+						timesheet.approvedAt = approvedAt;
+						timesheet.submittedAt = submittedAt;
+						timesheet.lockedAt = null;
+						timesheet.isBilled = isBilled;
+						timesheet.status = TimesheetStatus[status];
+						timesheet.deletedAt = null;
+						timesheets.push(timesheet);
+					});
+			}
+			await connection.getRepository(Timesheet).save(timesheets);
+		} catch (error) {
+			console.log(chalk.red(`SEEDING Default Timesheet`, error));
 		}
-
-		await connection.getRepository(Timesheet).save(timesheets);
 	}
 
 	try {
@@ -197,8 +185,7 @@ export const createRandomTimesheet = async (
 				connection,
 				config,
 				tenant,
-				createdTimesheets,
-				defaultProjects
+				createdTimesheets
 			);
 			await createRandomActivities(
 				connection,

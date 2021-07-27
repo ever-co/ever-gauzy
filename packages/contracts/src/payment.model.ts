@@ -6,6 +6,7 @@ import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
 import { IEmployee } from './employee.model';
+import { ReportGroupByFilter } from './report.model';
 
 export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
 	invoice?: IInvoice;
@@ -62,7 +63,7 @@ export interface IGetPaymentInput
 	relations?: string[];
 	types?: string[];
 	titles?: string[];
-	groupBy?: string;
+	groupBy?: ReportGroupByFilter;
 	date?: Date | string;
 	startDate?: Date | string;
 	endDate?: Date | string;
