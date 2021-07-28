@@ -49,6 +49,10 @@ Feature: Contacts test
     And User can enter value for street
     And User can see next button
     When User click on next button
+    Then User can see hours input field
+    And User can enter value for hours
+    And User can see last step button
+    When User click on last step button
     Then User can see finish button
     When User click on finish button
     Then Notification message will appear

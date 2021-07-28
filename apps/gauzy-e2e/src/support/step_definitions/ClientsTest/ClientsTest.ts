@@ -210,7 +210,27 @@ When('User click on next button', () => {
 	clientsPage.clickNextButton();
 });
 
-Then('User can click on next button', () => {
+Then('User can see hours input field', () => {
+	clientsPage.budgetInputVisible();
+});
+
+And('User can enter value for hours', () => {
+	clientsPage.enterBudgetData(ClientsData.hours);
+});
+
+And('User can see last step button', () => {
+	clientsPage.lastStepBtnVisible();
+});
+
+When('User click on last step button', () => {
+	clientsPage.clickLastStepBtn();
+});
+
+Then('User can see next step button', () => {
+	clientsPage.nextButtonVisible();
+});
+
+When('User click on next step button', () => {
 	clientsPage.clickNextButton();
 });
 

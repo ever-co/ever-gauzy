@@ -257,3 +257,20 @@ export const verifyFinishButtonVisible = () => {
 export const clickFinishButton = () => {
 	clickButton(ContactsLeadsPage.finishButtonCss);
 };
+
+export const lastStepBtnVisible = () =>{
+	verifyElementIsVisible(ContactsLeadsPage.lastStepBtnCss)
+}
+
+export const clickLastStepBtn = () => {
+	clickButton(ContactsLeadsPage.lastStepBtnCss)
+}
+
+export const budgetInputVisible = () => {
+	verifyElementIsVisible(ContactsLeadsPage.budgetInpuCss);
+};
+
+export const enterBudgetData = (data) => {
+	clearField(ContactsLeadsPage.budgetInpuCss);
+	enterInput(ContactsLeadsPage.budgetInpuCss, data);
+};

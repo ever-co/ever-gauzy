@@ -257,3 +257,20 @@ export const verifyFinishButtonVisible = () => {
 export const clickFinishButton = () => {
 	clickButton(CustomersPage.finishButtonCss);
 };
+
+export const lastStepBtnVisible = () =>{
+	verifyElementIsVisible(CustomersPage.lastStepBtnCss)
+}
+
+export const clickLastStepBtn = () => {
+	clickButton(CustomersPage.lastStepBtnCss)
+}
+
+export const budgetInputVisible = () => {
+	verifyElementIsVisible(CustomersPage.budgetInpuCss);
+};
+
+export const enterBudgetData = (data) => {
+	clearField(CustomersPage.budgetInpuCss);
+	enterInput(CustomersPage.budgetInpuCss, data);
+};
