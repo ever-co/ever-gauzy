@@ -237,6 +237,22 @@ When('User click on next button', () => {
 	contactsLeadsPage.clickNextButton();
 });
 
+Then('User can see hours input field', () => {
+	contactsLeadsPage.budgetInputVisible();
+});
+
+And('User can enter value for hours', () => {
+	contactsLeadsPage.enterBudgetData(ContactsLeadsPageData.hours);
+});
+
+And('User can see last step button', () => {
+	contactsLeadsPage.lastStepBtnVisible();
+});
+
+When('User click on last step button', () => {
+	contactsLeadsPage.clickLastStepBtn();
+});
+
 Then('User can see finish button', () => {
 	contactsLeadsPage.verifyFinishButtonVisible();
 });

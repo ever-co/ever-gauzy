@@ -253,3 +253,20 @@ export const verifyClientExists = (text) => {
 export const verifyElementIsDeleted = (text) => {
 	verifyTextNotExisting(ClientsPage.verifyClientCss, text);
 };
+
+export const lastStepBtnVisible = () =>{
+	verifyElementIsVisible(ClientsPage.lastStepBtnCss)
+}
+
+export const clickLastStepBtn = () => {
+	clickButton(ClientsPage.lastStepBtnCss)
+}
+
+export const budgetInputVisible = () => {
+	verifyElementIsVisible(ClientsPage.budgetInpuCss);
+};
+
+export const enterBudgetData = (data) => {
+	clearField(ClientsPage.budgetInpuCss);
+	enterInput(ClientsPage.budgetInpuCss, data);
+};

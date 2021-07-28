@@ -199,6 +199,22 @@ When('User click on next button', () => {
 	customersPage.clickNextButton();
 });
 
+Then('User can see hours input field', () => {
+	customersPage.budgetInputVisible();
+});
+
+And('User can enter value for hours', () => {
+	customersPage.enterBudgetData(CustomersPageData.hours);
+});
+
+And('User can see last step button', () => {
+	customersPage.lastStepBtnVisible();
+});
+
+When('User click on last step button', () => {
+	customersPage.clickLastStepBtn();
+});
+
 And('User can see employee dropdown', () => {
 	customersPage.selectEmployeeDropdownVisible();
 });
@@ -376,6 +392,22 @@ And('User can see next button', () => {
 
 When('User click on next button', () => {
 	customersPage.clickNextButton();
+});
+
+Then('User can see hours input field', () => {
+	customersPage.budgetInputVisible();
+});
+
+And('User can enter value for hours', () => {
+	customersPage.enterBudgetData(CustomersPageData.hours);
+});
+
+And('User can see last step button', () => {
+	customersPage.lastStepBtnVisible();
+});
+
+When('User click on last step button', () => {
+	customersPage.clickLastStepBtn();
 });
 
 Then('User can see finish button', () => {
