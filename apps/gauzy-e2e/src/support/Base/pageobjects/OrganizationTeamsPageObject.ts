@@ -5,7 +5,7 @@ export const OrganizationTeamsPage = {
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: 'div.ng-option',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
-	cardBodyCss: 'div.main-header',
+	cardBodyCss: 'nb-card-body',
 	employeeMultyselectCss:
 		'[ng-reflect-placeholder="Add or Remove Team Members"]',
 	managerMultyselectCss:
