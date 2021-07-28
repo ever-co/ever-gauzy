@@ -5,7 +5,8 @@ import { AvailabilitySlotsService } from '../../availability-slots.service';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
 import { In } from 'typeorm';
 import { pluck } from 'underscore';
-import { AvailabilityMergeType } from '@gauzy/contracts';
+import { AvailabilityMergeType, IAvailabilitySlot } from '@gauzy/contracts';
+import { RequestContext } from 'core';
 
 @CommandHandler(AvailabilitySlotsCreateCommand)
 export class AvailabilitySlotsCreateHandler
@@ -17,15 +18,19 @@ export class AvailabilitySlotsCreateHandler
 
 	public async execute(
 		command: AvailabilitySlotsCreateCommand
-	): Promise<AvailabilitySlot> {
+	): Promise<IAvailabilitySlot> {
 		const { input, insertType } = command;
-
-		const conflicts: AvailabilitySlot[] = await this.commandBus.execute(
+		const { organizationId, employeeId, startTime, endTime, type } = input;
+		const tenantId = RequestContext.currentTenantId();
+		
+		const conflicts: IAvailabilitySlot[] = await this.commandBus.execute(
 			new GetConflictAvailabilitySlotsCommand({
-				employeeId: input.employeeId,
-				startTime: input.startTime,
-				endTime: input.endTime,
-				type: input.type
+				employeeId,
+				startTime,
+				endTime,
+				type,
+				tenantId,
+				organizationId
 			})
 		);
 
@@ -54,9 +59,10 @@ export class AvailabilitySlotsCreateHandler
 		}
 
 		const availabilitySlots = new AvailabilitySlot({
-			...input
+			...input,
+			tenantId
 		});
-
+		
 		return await this.availabilitySlotsService.create(availabilitySlots);
 	}
 }

@@ -42,7 +42,8 @@ export enum AvailabilitySlotType {
 	RECURRING = 'Recurring'
 }
 
-export interface IGetAvailabilitySlotsConflictInput {
+export interface IGetAvailabilitySlotsConflictInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	relations?: string[];
 	ignoreId?: string | string[];
 	startTime: Date;

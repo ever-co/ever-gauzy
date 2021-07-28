@@ -6,7 +6,8 @@ import {
 	IInviteResendInput,
 	PermissionsEnum,
 	LanguagesEnum,
-	IOrganizationContactAcceptInviteInput
+	IOrganizationContactAcceptInviteInput,
+	IOrganizationContact
 } from '@gauzy/contracts';
 import {
 	BadRequestException,
@@ -21,7 +22,8 @@ import {
 	Delete,
 	Param,
 	Put,
-	Req
+	Req,
+	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -39,10 +41,17 @@ import { InviteService } from './invite.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { InviteAcceptEmployeeCommand, InviteAcceptOrganizationContactCommand, InviteAcceptUserCommand, InviteOrganizationContactCommand, InviteResendCommand } from './commands';
+import { TransformInterceptor } from './../core/interceptors';
+import {
+	InviteAcceptEmployeeCommand,
+	InviteAcceptOrganizationContactCommand,
+	InviteAcceptUserCommand,
+	InviteOrganizationContactCommand,
+	InviteResendCommand
+} from './commands';
 
 @ApiTags('Invite')
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class InviteController {
 	constructor(
@@ -114,10 +123,9 @@ export class InviteController {
 	)
 	@Get('all')
 	async findAllInvites(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Invite>> {
-		const { relations, findInput } = JSON.parse(data);
-
+		const { relations, findInput } = data;
 		return this.inviteService.findAll({
 			where: findInput,
 			relations
@@ -254,7 +262,7 @@ export class InviteController {
 		@Param('id') id: string,
 		@Req() request,
 		@I18nLang() languageCode: LanguagesEnum
-	): Promise<OrganizationContact> {
+	): Promise<IOrganizationContact> {
 		return this.commandBus.execute(
 			new InviteOrganizationContactCommand({
 				id,
