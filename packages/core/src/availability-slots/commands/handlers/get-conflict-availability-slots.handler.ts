@@ -2,9 +2,11 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
+import { getConfig } from '@gauzy/config';
+import { IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
-import { getConfig } from '@gauzy/config';
+import { RequestContext } from './../../../core/context';
 const config = getConfig();
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
@@ -17,27 +19,32 @@ export class GetConflictAvailabilitySlotsHandler
 
 	public async execute(
 		command: GetConflictAvailabilitySlotsCommand
-	): Promise<AvailabilitySlot[]> {
+	): Promise<IAvailabilitySlot[]> {
 		const { input } = command;
+		const { startTime, endTime, employeeId, organizationId } = input;
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-		const startedAt = moment(input.startTime).toISOString();
-		const stoppedAt = moment(input.endTime).toISOString();
+		const startedAt = moment(startTime).toISOString();
+		const stoppedAt = moment(endTime).toISOString();
+
 		let conflictQuery = this.timeLogRepository.createQueryBuilder();
-
-		conflictQuery = conflictQuery
-			.where(`"${conflictQuery.alias}"."employeeId" = :employeeId`, {
-				employeeId: input.employeeId
-			})
+		conflictQuery
+			.where(`"${conflictQuery.alias}"."employeeId" = :employeeId`, { employeeId })
 			.andWhere(
 				config.dbConnectionOptions.type === 'sqlite'
 					? `${startedAt} >= "${conflictQuery.alias}"."startTime" and ${startedAt} <= "${conflictQuery.alias}"."endTime"`
 					: `("${conflictQuery.alias}"."startTime", "${conflictQuery.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 			);
 
+		//check organization and tenant for availability slots conflicts
+		if (organizationId) {
+			conflictQuery.andWhere(`"${conflictQuery.alias}"."organizationId" = :organizationId`, { organizationId });
+		}
+
+		conflictQuery.andWhere(`"${conflictQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+
 		if (input.type) {
-			conflictQuery.andWhere(`${conflictQuery.alias}.type = :type`, {
-				type: input.type
-			});
+			conflictQuery.andWhere(`${conflictQuery.alias}.type = :type`, { type: input.type });
 		}
 
 		if (input.relations) {
@@ -60,6 +67,7 @@ export class GetConflictAvailabilitySlotsHandler
 				}
 			);
 		}
+		
 		return await conflictQuery.getMany();
 	}
 }
