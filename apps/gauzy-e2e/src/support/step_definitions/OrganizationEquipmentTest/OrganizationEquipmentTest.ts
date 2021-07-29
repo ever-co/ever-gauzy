@@ -139,6 +139,9 @@ And('User can verify equipment was created', () => {
 
 // Add equipment policy
 And('User can see equipment sharing button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	organizationEquipmentPage.equipmentSharingButtonVisible();
 });
 

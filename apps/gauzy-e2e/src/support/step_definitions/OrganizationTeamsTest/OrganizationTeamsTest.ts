@@ -22,7 +22,6 @@ let empImgUrl = faker.image.avatar();
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/organization/tags');
 });
 
 // Add new tag

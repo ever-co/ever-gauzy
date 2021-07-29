@@ -1,5 +1,5 @@
 Feature: Organization teams test
-  Scenario: Login with email test
+  Scenario: Login with email
     Given Login with default credentials
   Scenario: Add new tag
     Then User can add new tag
