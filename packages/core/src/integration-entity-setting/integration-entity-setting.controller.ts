@@ -13,6 +13,7 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 
 @ApiTags('IntegrationsEntitySetting')
@@ -37,7 +38,7 @@ export class IntegrationEntitySettingController extends CrudController<Integrati
 	})
 	@Get(':integrationId')
 	async getSettingsForIntegration(
-		@Param('integrationId') integrationId
+		@Param('integrationId', UUIDValidationPipe) integrationId
 	): Promise<IPagination<IntegrationEntitySetting>> {
 		return await this.integrationEntitySettingService.findAll({
 			relations: ['integration', 'tiedEntities'],
@@ -59,7 +60,7 @@ export class IntegrationEntitySettingController extends CrudController<Integrati
 	})
 	@Put(':integrationId')
 	async editSettings(
-		@Param('integrationId') integrationId,
+		@Param('integrationId', UUIDValidationPipe) integrationId,
 		@Body() editSettingsDto
 	): Promise<IntegrationEntitySetting> {
 		return await this.integrationEntitySettingService.create(

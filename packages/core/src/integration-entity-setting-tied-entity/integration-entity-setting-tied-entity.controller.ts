@@ -12,6 +12,7 @@ import { CrudController } from '../core';
 import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
 import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entity.service';
 import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('IntegrationsEntitySetting')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -35,7 +36,7 @@ export class IntegrationEntitySettingTiedEntityController extends CrudController
 	})
 	@Put(':integrationId')
 	async editSettings(
-		@Param('integrationId') integrationId,
+		@Param('integrationId', UUIDValidationPipe) integrationId,
 		@Body() editSettingsDto
 	): Promise<IntegrationEntitySettingTiedEntity> {
 		return await this.integrationEntitySettingTiedEntityService.create(

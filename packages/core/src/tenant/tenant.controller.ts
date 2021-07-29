@@ -1,9 +1,10 @@
-import { ITenant, ITenantCreateInput, RolesEnum } from '@gauzy/contracts';
+import { IPagination, ITenant, ITenantCreateInput, RolesEnum } from '@gauzy/contracts';
 import {
 	BadRequestException,
 	Body,
 	Controller,
 	Delete,
+	Get,
 	HttpCode,
 	HttpStatus,
 	Param,
@@ -16,16 +17,40 @@ import { UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from '../core/context';
 import { CrudController } from '../core/crud/crud.controller';
 import { Roles } from './../shared/decorators';
-import { RoleGuard } from '../shared/guards';
+import { RoleGuard, TenantPermissionGuard } from '../shared/guards';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 
 @ApiTags('Tenant')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class TenantController extends CrudController<Tenant> {
 	constructor(private readonly tenantService: TenantService) {
 		super(tenantService);
+	}
+
+	@ApiOperation({
+		summary: 'Find all tenants of the user' 
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tenants',
+		type: Tenant
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	@Get()
+	async findAll(): Promise<IPagination<ITenant>> {
+		const tenantId = RequestContext.currentTenantId();
+		return this.tenantService.findAll({
+			where: {
+				id: tenantId
+			}
+		});
 	}
 
 	@ApiOperation({
