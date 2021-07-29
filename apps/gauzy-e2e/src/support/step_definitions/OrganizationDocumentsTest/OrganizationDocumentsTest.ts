@@ -11,12 +11,14 @@ let url = faker.internet.url();
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { waitUntil } from '../../Base/utils/util';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given(
 	'Login with default credentials and go to Organization documents page',
 	() => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-		cy.visit('/#/pages/organization/documents');
+		cy.visit('/#/pages/organization/documents', { timeout: pageLoadTimeout });
 	}
 );
 

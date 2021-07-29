@@ -9,6 +9,8 @@ import { RegisterPageData } from '../../Base/pagedata/RegisterPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let fullName = faker.name.findName();
 let email = faker.internet.email();
 let pass = faker.internet.password();
@@ -18,7 +20,7 @@ let street = faker.address.streetAddress();
 
 // Create new account
 Given('Visit home page as unauthorised user', () => {
-	cy.visit('/');
+	cy.visit('/', { timeout: pageLoadTimeout });
 	loginPage.verifyTitle();
 	loginPage.verifyLoginText();
 });
