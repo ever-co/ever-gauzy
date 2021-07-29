@@ -442,5 +442,12 @@ export const CustomCommands = {
 		dashboradPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
+	},
+	getIframeBody: () => {
+		return cy
+			.get('iframe[class="cke_wysiwyg_frame cke_reset"]')
+			.its('1.contentDocument.body')
+			.should('not.be.empty')
+			.then(cy.wrap);
 	}
 };
