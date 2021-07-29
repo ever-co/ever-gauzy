@@ -16,6 +16,8 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let email = faker.internet.email();
 let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
 let city = faker.address.city();
@@ -90,7 +92,7 @@ Then('User can visit Estimates page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/accounting/invoices/estimates');
+	cy.visit('/#/pages/accounting/invoices/estimates', { timeout: pageLoadTimeout });
 });
 
 And('User can see grid button', () => {
