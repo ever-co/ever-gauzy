@@ -15,7 +15,6 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees');
 });
 
 // Add new tag
