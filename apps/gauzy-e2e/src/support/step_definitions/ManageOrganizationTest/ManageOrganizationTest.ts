@@ -11,8 +11,6 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-const pageLoadTimeout = Cypress.config('pageLoadTimeout');
-
 let organizationName = faker.company.companyName();
 let taxId = faker.random.alphaNumeric();
 let street = faker.address.streetAddress();
