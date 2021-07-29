@@ -2,11 +2,11 @@ import { ICandidateFeedback } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 
 @Injectable()
-export class CandidateFeedbacksService extends CrudService<CandidateFeedback> {
+export class CandidateFeedbacksService extends TenantAwareCrudService<CandidateFeedback> {
 	constructor(
 		@InjectRepository(CandidateFeedback)
 		private readonly candidateFeedbackRepository: Repository<CandidateFeedback>

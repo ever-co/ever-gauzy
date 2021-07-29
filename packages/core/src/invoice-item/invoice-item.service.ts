@@ -1,4 +1,4 @@
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { InvoiceItem } from './invoice-item.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 import { IInvoiceItemCreateInput } from '@gauzy/contracts';
 
 @Injectable()
-export class InvoiceItemService extends CrudService<InvoiceItem> {
+export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	constructor(
 		@InjectRepository(InvoiceItem)
 		private readonly invoiceItemRepository: Repository<InvoiceItem>

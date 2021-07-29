@@ -20,6 +20,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import { PaginationParams } from './pagination-params';
+import { UUIDValidationPipe } from './../../shared/pipes';
 
 @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
 @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden' })
@@ -49,7 +50,7 @@ export abstract class CrudController<T extends BaseEntity> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<T> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<T> {
 		return this.crudService.findOne(id);
 	}
 
@@ -99,7 +100,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: QueryDeepPartialEntity<T>,
 		...options: any[]
 	): Promise<any> {
@@ -117,7 +118,10 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string, 
+		...options: any[]
+	): Promise<any> {
 		return this.crudService.delete(id);
 	}
 }

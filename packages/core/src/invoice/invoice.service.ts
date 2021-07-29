@@ -1,4 +1,5 @@
-import { CrudService, getDateRangeFormat } from '../core';
+import { getDateRangeFormat } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
@@ -15,10 +16,10 @@ import {
 	generateInvoicePdfDefinition,
 	generateInvoicePaymentPdfDefinition
 } from './index';
-import { OrganizationService } from 'organization';
+import { OrganizationService } from './../organization';
 
 @Injectable()
-export class InvoiceService extends CrudService<Invoice> {
+export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	constructor(
 		@InjectRepository(Invoice)
 		private readonly invoiceRepository: Repository<Invoice>,

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import {
 	ICandidateCriterionsRating,
@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 
 @Injectable()
-export class CandidateCriterionsRatingService extends CrudService<CandidateCriterionsRating> {
+export class CandidateCriterionsRatingService extends TenantAwareCrudService<CandidateCriterionsRating> {
 	constructor(
 		@InjectRepository(CandidateCriterionsRating)
 		private readonly candidateCriterionsRatingRepository: Repository<CandidateCriterionsRating>
@@ -37,9 +37,11 @@ export class CandidateCriterionsRatingService extends CrudService<CandidateCrite
 			})
 			.getMany();
 	}
+	
 	async deleteBulk(ids: string[]) {
 		return await this.repository.delete(ids);
 	}
+
 	async updateBulk(
 		tech: ICandidateCriterionsRating[],
 		qual: ICandidateCriterionsRating[]

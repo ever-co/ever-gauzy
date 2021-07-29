@@ -5,7 +5,8 @@ import { EmployeeSetting } from './employee-setting.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('EmployeeSetting')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -29,10 +30,9 @@ export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 	})
 	@Get()
 	async findAllEmployees(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<EmployeeSetting>> {
-		const { relations, findInput } = JSON.parse(data);
-
+		const { relations, findInput } = data;
 		return this.employeeSettingService.findAll({
 			where: findInput,
 			relations

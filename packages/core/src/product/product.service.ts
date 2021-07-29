@@ -14,7 +14,7 @@ import {
 	IProductFindInput,
 	IProductTranslated
 } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { TranslatePropertyInput } from '../core/entities/translate-base';
 
 @Injectable()

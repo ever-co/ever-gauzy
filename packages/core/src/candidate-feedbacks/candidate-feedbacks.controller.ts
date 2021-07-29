@@ -16,17 +16,15 @@ import { IPagination } from '../core';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import {
 	PermissionsEnum,
 	ICandidateFeedbackCreateInput
 } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
-import { ParseJsonPipe } from '../shared';
+import { Permissions } from './../shared/decorators';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
-import { FeedbackUpdateCommand } from './commands/candidate-feedbacks.update.command';
-import { FeedbackDeleteCommand } from './commands/candidate-feedbacks.delete.command';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { FeedbackDeleteCommand, FeedbackUpdateCommand } from './commands';
 
 @ApiTags('CandidateFeedback')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -74,7 +72,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<CandidateFeedback> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<CandidateFeedback> {
 		return this.candidateFeedbacksService.findOne(id);
 	}
 
@@ -95,7 +93,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	// @Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT) TO DO
 	@Get('getByInterviewId/:interviewId')
 	async findByInterviewId(
-		@Param('interviewId') interviewId: string
+		@Param('interviewId', UUIDValidationPipe) interviewId: string
 	): Promise<CandidateFeedback[]> {
 		return this.candidateFeedbacksService.getFeedbacksByInterviewId(
 			interviewId
@@ -115,7 +113,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Put(':id')
 	async updateCandidateFeedback(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: any
 	): Promise<any> {
 		return this.commandBus.execute(new FeedbackUpdateCommand(id, entity));

@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { AccountingTemplate } from './accounting-template.entity';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
 
 @Injectable()
-export class AccountingTemplateService extends CrudService<AccountingTemplate> {
+export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
 	constructor(
 		@InjectRepository(AccountingTemplate)
 		private readonly accountingRepository: Repository<AccountingTemplate>

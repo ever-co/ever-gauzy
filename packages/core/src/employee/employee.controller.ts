@@ -18,24 +18,26 @@ import {
 	Req
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
+import {
+	EmployeeCreateCommand,
+	EmployeeBulkCreateCommand,
+	GetEmployeeJobStatisticsCommand,
+	UpdateEmployeeJobSearchStatusCommand
+} from './commands';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination, getUserDummyImage } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
-import { ParseJsonPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { I18nLang } from 'nestjs-i18n';
 import { ITryRequest } from '../core/crud/try-request';
 import { Request } from 'express';
 import { RequestContext } from '../core/context';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { UpdateEmployeeJobSearchStatusCommand } from './commands/update-employee-job-search-status.command';
 import { FindManyOptions } from 'typeorm';
-import { GetEmployeeJobStatisticsCommand } from './commands/get-employee-job-statistics.command';
 
 @ApiTags('Employee')
 @Controller()
@@ -85,7 +87,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put(':id')
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Employee
 	): Promise<any> {
 		//We are using create here because create calls the method save()
@@ -141,10 +143,13 @@ export class EmployeeController extends CrudController<Employee> {
 	 * those fields (columns) of an employee that can be shown to the public
 	 */
 	async findAllEmployeesPublicData(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Employee>> {
-		const { relations, findInput } = JSON.parse(data);
-		return this.employeeService.findAll({ where: findInput, relations });
+		const { relations, findInput } = data;
+		return this.employeeService.findAll({ 
+			where: findInput, 
+			relations 
+		});
 	}
 
 	@ApiOperation({
@@ -161,11 +166,10 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@Get('public/:id')
 	async findEmployeePublicData(
-		@Param('id') id: string,
-		@Query('data') data: string
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<Employee> {
-		const { relations } = JSON.parse(data);
-
+		const { relations } = data;
 		return this.employeeService.findOne(id, {
 			relations
 		});
@@ -238,11 +242,10 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get(':id')
 	@UseGuards(AuthGuard('jwt'))
 	async findById(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Employee> {
 		const { relations = [], useTenant } = data;
-
 		if (useTenant) {
 			return this.employeeService.findOne(id, {
 				relations
@@ -267,7 +270,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('/user/:userId')
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async findByUserId(
-		@Param('userId') userId: string,
+		@Param('userId', UUIDValidationPipe) userId: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<ITryRequest> {
 		const { relations = [] } = data;
@@ -360,7 +363,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put('/:id/job-search-status')
 	@UseGuards(AuthGuard('jwt'))
 	async updateJobSearchStatus(
-		@Param('id') employeeId: string,
+		@Param('id', UUIDValidationPipe) employeeId: string,
 		@Body() request: UpdateEmployeeJobsStatistics
 	): Promise<Employee[]> {
 		return this.commandBus.execute(

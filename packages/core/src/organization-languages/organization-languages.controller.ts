@@ -17,9 +17,11 @@ import { OrganizationLanguagesService } from './organization-languages.service';
 import { OrganizationLanguages } from './organization-languages.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { DeepPartial } from 'typeorm';
+import { IOrganizationLanguages } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from '../core/crud';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationLanguages')
 @Controller()
@@ -67,7 +69,7 @@ export class OrganizationLanguagesController extends CrudController<Organization
 	@Put(':id')
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: QueryDeepPartialEntity<OrganizationLanguages>
 	): Promise<any> {
 		return this.organizationLanguagesService.update(id, entity);
@@ -85,7 +87,9 @@ export class OrganizationLanguagesController extends CrudController<Organization
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-	async delete(@Param('id') id: string): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
 		return this.organizationLanguagesService.delete(id);
 	}
 
@@ -103,9 +107,9 @@ export class OrganizationLanguagesController extends CrudController<Organization
 	})
 	@Get()
 	async findLanguageByOrgId(
-		@Query('data') data: string
-	): Promise<IPagination<OrganizationLanguages>> {
-		const { relations, findInput } = JSON.parse(data);
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IOrganizationLanguages>> {
+		const { relations, findInput } = data;
 		return this.organizationLanguagesService.findAll({
 			where: findInput,
 			relations

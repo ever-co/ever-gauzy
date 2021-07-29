@@ -21,17 +21,20 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { EmployeeRecurringExpenseCreateCommand } from './commands/employee-recurring-expense.create.command';
-import { EmployeeRecurringExpenseDeleteCommand } from './commands/employee-recurring-expense.delete.command';
-import { EmployeeRecurringExpenseEditCommand } from './commands/employee-recurring-expense.edit.command';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import {
+	EmployeeRecurringExpenseCreateCommand,
+	EmployeeRecurringExpenseDeleteCommand,
+	EmployeeRecurringExpenseEditCommand
+} from './commands';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
-import { EmployeeRecurringExpenseByMonthQuery } from './queries/employee-recurring-expense.by-month.query';
-import { EmployeeRecurringExpenseStartDateUpdateTypeQuery } from './queries/employee-recurring-expense.update-type.query';
+import {
+	EmployeeRecurringExpenseByMonthQuery,
+	EmployeeRecurringExpenseStartDateUpdateTypeQuery
+} from './queries';
 
 @ApiTags('EmployeeRecurringExpense')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -79,11 +82,10 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Delete(':id')
 	async delete(
-		@Param('id') id: string,
-		@Query('data') data: string
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
-		const { deleteInput } = JSON.parse(data);
-
+		const { deleteInput } = data;
 		return this.commandBus.execute(
 			new EmployeeRecurringExpenseDeleteCommand(id, deleteInput)
 		);
@@ -106,7 +108,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IRecurringExpenseEditInput
 	): Promise<any> {
 		return this.commandBus.execute(
@@ -171,10 +173,9 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@Get('/date-update-type')
 	async findStartDateUpdateType(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IStartUpdateTypeInfo> {
-		const { findInput } = JSON.parse(data);
-
+		const { findInput } = data;
 		return this.queryBus.execute(
 			new EmployeeRecurringExpenseStartDateUpdateTypeQuery(findInput)
 		);

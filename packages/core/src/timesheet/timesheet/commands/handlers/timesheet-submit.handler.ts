@@ -1,6 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
+import { ITimesheet } from '@gauzy/contracts';
 import { EmailService } from '../../../../email/email.service';
 import { Timesheet } from '../../../timesheet.entity';
 import { TimesheetSubmitCommand } from '../timesheet-submit.command';
@@ -16,7 +17,7 @@ export class TimesheetSubmitHandler
 
 	public async execute(
 		command: TimesheetSubmitCommand
-	): Promise<Timesheet[]> {
+	): Promise<ITimesheet[]> {
 		let { ids, status } = command.input;
 
 		if (typeof ids === 'string') {

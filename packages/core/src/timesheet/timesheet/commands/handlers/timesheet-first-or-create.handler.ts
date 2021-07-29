@@ -2,6 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import * as moment from 'moment';
+import { ITimesheet } from '@gauzy/contracts';
 import { Employee, Timesheet } from '../../../../core/entities/internal';
 import { RequestContext } from '../../../../core/context';
 import { TimesheetFirstOrCreateCommand } from '../timesheet-first-or-create.command';
@@ -19,7 +20,7 @@ export class TimesheetFirstOrCreateHandler
 
 	public async execute(
 		command: TimesheetFirstOrCreateCommand
-	): Promise<Timesheet> {
+	): Promise<ITimesheet> {
 		const { date, employeeId } = command;
 		const tenantId = RequestContext.currentTenantId();
 		let { organizationId } = command;

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, ILike } from 'typeorm';
 import { Expense } from './expense.entity';
 import { getDateRangeFormat, IPagination } from '../core';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { IGetExpenseInput, PermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';

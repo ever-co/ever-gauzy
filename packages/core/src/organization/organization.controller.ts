@@ -16,13 +16,13 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+
 
 @ApiTags('Organization')
 @Controller()
@@ -71,13 +71,13 @@ export class OrganizationController extends CrudController<Organization> {
 	@Get(':id/:select')
 	async findOneById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Param('select') select: string,
-		@Query('data') data: string
+		@Param('select', ParseJsonPipe) select: any,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<Organization> {
 		const findObj = {};
-		const { relations } = JSON.parse(data);
+		const { relations } = data;
 		if (select) {
-			findObj['select'] = JSON.parse(select);
+			findObj['select'] = select;
 		}
 		if (relations) {
 			findObj['relations'] = relations;
@@ -130,7 +130,7 @@ export class OrganizationController extends CrudController<Organization> {
 
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IOrganizationCreateInput,
 		...options: any[]
 	): Promise<Organization> {

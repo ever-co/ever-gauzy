@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOneOptions } from 'typeorm';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { Organization } from './organization.entity';
 
 @Injectable()

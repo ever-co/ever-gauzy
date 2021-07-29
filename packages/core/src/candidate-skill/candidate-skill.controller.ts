@@ -17,8 +17,9 @@ import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
 import { Roles } from '../shared/decorators/roles';
-import { RolesEnum } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ICandidateSkill, ISkillCreateInput, RolesEnum } from '@gauzy/contracts';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('CandidateSkill')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -41,23 +42,23 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	})
 	@Get()
 	async findSkill(
-		@Query('data') data: string
-	): Promise<IPagination<CandidateSkill>> {
-		const { findInput } = JSON.parse(data);
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ICandidateSkill>> {
+		const { findInput } = data;
 		return this.candidateSkillService.findAll({ where: findInput });
 	}
 
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post()
-	async addSkill(@Body() entity: CandidateSkill): Promise<any> {
+	async addSkill(@Body() entity: ISkillCreateInput): Promise<any> {
 		return this.candidateSkillService.create(entity);
 	}
 
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete(':id')
-	deleteCandidateSkill(@Param() id: string): Promise<any> {
+	deleteCandidateSkill(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.candidateSkillService.delete(id);
 	}
 }

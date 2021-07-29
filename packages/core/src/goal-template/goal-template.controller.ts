@@ -12,7 +12,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { GoalTemplateService } from './goal-template.service';
 import { CrudController } from '../core';
 import { GoalTemplate } from './goal-template.entity';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('GoalTemplates')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -38,8 +39,8 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 		description: 'Record not found'
 	})
 	@Get('all')
-	async getAll(@Query('data') data: string) {
-		const { findInput } = JSON.parse(data);
+	async getAll(@Query('data', ParseJsonPipe) data: any) {
+		const { findInput } = data;
 		return this.goalTemplateService.findAll({
 			relations: ['keyResults', 'keyResults.kpi'],
 			where: { ...findInput }

@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './task.entity';
 import { ILike, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
 import { RequestContext } from '../core/context';
@@ -14,7 +14,7 @@ import { IEmployee, IGetTaskByEmployeeOptions, RolesEnum } from '@gauzy/contract
 import { isNotEmpty } from '@gauzy/common';
 
 @Injectable()
-export class TaskService extends CrudService<Task> {
+export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		@InjectRepository(Task)
 		private readonly taskRepository: Repository<Task>,

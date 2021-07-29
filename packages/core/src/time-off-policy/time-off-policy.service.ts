@@ -1,18 +1,16 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository } from 'typeorm';
 import { TimeOffPolicy } from './time-off-policy.entity';
-import { CrudService } from '../core/crud/crud.service';
-import { IPagination } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from '../employee/employee.entity';
 import {
 	ITimeOffPolicyCreateInput,
-	ITimeOffPolicyUpdateInput,
-	ITimeOffPolicy
+	ITimeOffPolicyUpdateInput
 } from '@gauzy/contracts';
 
 @Injectable()
-export class TimeOffPolicyService extends CrudService<TimeOffPolicy> {
+export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> {
 	constructor(
 		@InjectRepository(TimeOffPolicy)
 		private readonly policyRepository: Repository<TimeOffPolicy>,
@@ -20,15 +18,6 @@ export class TimeOffPolicyService extends CrudService<TimeOffPolicy> {
 		private readonly employeeRepository: Repository<Employee>
 	) {
 		super(policyRepository);
-	}
-
-	async getAllPolicies(
-		filter?: FindManyOptions<TimeOffPolicy>
-	): Promise<IPagination<ITimeOffPolicy>> {
-		const total = await this.repository.count(filter);
-		const items = await this.repository.find(filter);
-
-		return { items, total };
 	}
 
 	async create(entity: ITimeOffPolicyCreateInput): Promise<TimeOffPolicy> {

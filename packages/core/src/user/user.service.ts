@@ -6,10 +6,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, InsertResult } from 'typeorm';
 import { User } from './user.entity';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 
 @Injectable()
-export class UserService extends CrudService<User> {
+export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		@InjectRepository(User)
 		userRepository: Repository<User>

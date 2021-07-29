@@ -29,11 +29,10 @@ import { CommandBus } from '@nestjs/cqrs';
 import * as _ from 'underscore';
 import { chain } from 'underscore';
 import { ConfigService } from '@gauzy/config';
-import { CrudService } from '../../core';
+import { TenantAwareCrudService } from './../../core/crud';
 import {
 	Employee,
 	Organization,
-	OrganizationContact,
 	OrganizationProject
 } from '../../core/entities/internal';
 import {
@@ -50,7 +49,7 @@ import {
 
 
 @Injectable()
-export class TimeLogService extends CrudService<TimeLog> {
+export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	constructor(
 		private commandBus: CommandBus,
 
@@ -60,9 +59,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 
-		@InjectRepository(OrganizationContact)
-		private readonly organizationContactsRepository: Repository<OrganizationContact>,
-
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectRepository: Repository<OrganizationProject>,
 
@@ -71,8 +67,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 		super(timeLogRepository);
 	}
 
-	async getTimeLogs(request: IGetTimeLogInput) {
-		const logs = await this.timeLogRepository.find({
+	async getTimeLogs(request: IGetTimeLogInput): Promise<ITimeLog[]> {
+		return await this.timeLogRepository.find({
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
@@ -98,7 +94,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 				this.getFilterTimeLogQuery(qb, request);
 			}
 		});
-		return logs;
 	}
 
 	async getWeeklyReport(request: IGetTimeLogReportInput) {
@@ -880,7 +875,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		);
 	}
 
-	async checkConflictTime(request: IGetTimeLogConflictInput) {
+	async checkConflictTime(request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
 		return await this.commandBus.execute(
 			new IGetConflictTimeLogCommand(request)
 		);

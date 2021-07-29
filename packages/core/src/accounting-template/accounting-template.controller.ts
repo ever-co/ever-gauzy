@@ -12,10 +12,10 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
 import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateService } from './accounting-template.service';
-import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { IPagination } from '../core';
 import { IAccountingTemplate } from '@gauzy/contracts';
 

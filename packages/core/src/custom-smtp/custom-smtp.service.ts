@@ -8,7 +8,7 @@ import * as nodemailer from 'nodemailer';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { ISMTPConfig } from '@gauzy/common';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { CustomSmtp } from './custom-smtp.entity';
 import { EmailService } from '../email/email.service';
 

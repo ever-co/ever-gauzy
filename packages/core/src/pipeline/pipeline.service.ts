@@ -1,4 +1,4 @@
-import { CrudService } from '../core/crud';
+import { TenantAwareCrudService } from '../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
 	DeepPartial,
@@ -19,7 +19,7 @@ import { User } from '../user/user.entity';
 import { RequestContext } from '../core/context';
 
 @Injectable()
-export class PipelineService extends CrudService<Pipeline> {
+export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public constructor(
 		@InjectRepository(Deal)
 		protected dealRepository: Repository<Deal>,

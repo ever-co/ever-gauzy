@@ -17,8 +17,8 @@ import { IPagination, getUserDummyImage } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import {
 	PermissionsEnum,
 	ICandidateCreateInput,
@@ -33,8 +33,7 @@ import {
 	CandidateUpdateCommand
 } from './commands';
 import { I18nLang } from 'nestjs-i18n';
-import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('Candidate')
@@ -109,7 +108,7 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Get(':id')
 	async findById(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Candidate> {
 		const { relations = [] } = data;

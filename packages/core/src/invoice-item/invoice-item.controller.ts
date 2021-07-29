@@ -14,9 +14,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/contracts';
-import { ParseJsonPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { ParseJsonPipe } from './../shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { CommandBus } from '@nestjs/cqrs';
 import { InvoiceItemBulkCreateCommand } from './commands';
 

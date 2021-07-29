@@ -15,7 +15,8 @@ import { KeyResult } from './keyresult.entity';
 import { CrudController } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import { KeyResultService } from './keyresult.service';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('KeyResults')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -90,7 +91,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: KeyResult
 	): Promise<KeyResult> {
 		//We are using create here because create calls the method save()
@@ -108,7 +109,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async deleteKeyResult(@Param('id') id: string): Promise<any> {
+	async deleteKeyResult(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.keyResultService.delete(id);
 	}
 }

@@ -3,12 +3,11 @@ import { InvoiceEstimateHistory } from './invoice-estimate-history.entity';
 import { ApiTags } from '@nestjs/swagger';
 import { Controller, UseGuards, Query, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { PermissionsEnum, IInvoiceEstimateHistory } from '@gauzy/contracts';
 import { ParseJsonPipe } from '../shared';
 import { InvoiceEstimateHistoryService } from './invoice-estimate-history.service';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('InvoiceEstimateHistory')
 @Controller()

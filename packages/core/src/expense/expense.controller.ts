@@ -3,7 +3,8 @@ import {
 	PermissionsEnum,
 	ISplitExpenseOutput,
 	IGetExpenseInput,
-	IExpenseReportData
+	IExpenseReportData,
+	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -24,17 +25,14 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { EmployeeService } from '../employee/employee.service';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { ExpenseCreateCommand } from './commands/expense.create.command';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { ExpenseCreateCommand, ExpenseDeleteCommand, ExpenseUpdateCommand } from './commands';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
 import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.query';
-import { ParseJsonPipe } from '../shared';
-import { ExpenseDeleteCommand } from './commands/expense.delete.command';
-import { ExpenseUpdateCommand } from './commands/expense.update.command';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
 
 @ApiTags('Expense')
@@ -67,14 +65,12 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@Get('me')
 	async findMyExpenseWithSplitIncluded(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Expense>> {
-		const { relations, filterDate } = JSON.parse(data);
-
+		const { relations, filterDate } = data;
 		const employee = await this.employeeService.findOne({
 			user: { id: RequestContext.currentUser().id }
 		});
-
 		return await this.queryBus.execute(
 			new FindSplitExpenseQuery({
 				employeeId: employee.id,
@@ -99,11 +95,10 @@ export class ExpenseController extends CrudController<Expense> {
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('include-split/:employeeId')
 	async findAllSplitExpenses(
-		@Query('data') data: string,
-		@Param('employeeId') employeeId: string
+		@Query('data', ParseJsonPipe) data: any,
+		@Param('employeeId', UUIDValidationPipe) employeeId: string
 	): Promise<IPagination<ISplitExpenseOutput>> {
-		const { relations, filterDate } = JSON.parse(data);
-
+		const { relations, filterDate } = data;
 		return await this.queryBus.execute(
 			new FindSplitExpenseQuery({
 				employeeId,
@@ -131,13 +126,12 @@ export class ExpenseController extends CrudController<Expense> {
 		@Query() request: IGetExpenseInput
 	): Promise<IExpenseReportData[]> {
 		const expenses = await this.expenseService.getExpense(request);
-
 		let response: IExpenseReportData[] = [];
-		if (request.groupBy === 'date') {
+		if (request.groupBy === ReportGroupFilterEnum.date) {
 			response = this.expenseMapService.mapByDate(expenses);
-		} else if (request.groupBy === 'employee') {
+		} else if (request.groupBy === ReportGroupFilterEnum.employee) {
 			response = this.expenseMapService.mapByEmployee(expenses);
-		} else if (request.groupBy === 'project') {
+		} else if (request.groupBy === ReportGroupFilterEnum.project) {
 			response = this.expenseMapService.mapByProject(expenses);
 		}
 		return response;
@@ -171,10 +165,9 @@ export class ExpenseController extends CrudController<Expense> {
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get()
 	async findAllExpenses(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Expense>> {
-		const { relations, findInput, filterDate } = JSON.parse(data);
-
+		const { relations, findInput, filterDate } = data;
 		return this.expenseService.findAllExpenses(
 			{ where: findInput, relations },
 			filterDate
@@ -196,7 +189,7 @@ export class ExpenseController extends CrudController<Expense> {
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Expense
 	): Promise<any> {
 		return this.commandBus.execute(new ExpenseUpdateCommand(id, entity));

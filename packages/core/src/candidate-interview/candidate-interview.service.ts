@@ -1,12 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { CandidateInterview } from './candidate-interview.entity';
 import { ICandidateInterview } from '@gauzy/contracts';
 
 @Injectable()
-export class CandidateInterviewService extends CrudService<CandidateInterview> {
+export class CandidateInterviewService extends TenantAwareCrudService<CandidateInterview> {
 	constructor(
 		@InjectRepository(CandidateInterview)
 		private readonly candidateInterviewRepository: Repository<CandidateInterview>

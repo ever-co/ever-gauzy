@@ -17,12 +17,11 @@ import { Task } from './task.entity';
 import { CrudController, IPagination } from '../core';
 import { TaskService } from './task.service';
 import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { PermissionsEnum, IGetTaskByEmployeeOptions } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import { TaskCreateCommand } from './commands';
 
@@ -160,7 +159,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Task
 	): Promise<any> {
 		//We are using create here because create calls the method save()
@@ -178,7 +177,7 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Delete(':id')
-	async deleteTask(@Param('id') id: string): Promise<any> {
+	async deleteTask(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.taskService.delete(id);
 	}
 }

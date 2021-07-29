@@ -13,13 +13,13 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination } from '../core';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('ImageAsset')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -30,7 +30,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	}
 
 	@Get('/:id')
-	async findById(@Param('id') id: string): Promise<ImageAsset> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<ImageAsset> {
 		return this.imageAssetService.findOne(id);
 	}
 
@@ -54,7 +54,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id') id: string): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.imageAssetService.deleteAsset(id);
 	}
 }

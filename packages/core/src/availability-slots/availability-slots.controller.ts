@@ -18,7 +18,7 @@ import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
-import { TenantPermissionGuard } from '../shared/guards';
+import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { AvailabilitySlotsBulkCreateCommand, AvailabilitySlotsCreateCommand } from './commands';
 

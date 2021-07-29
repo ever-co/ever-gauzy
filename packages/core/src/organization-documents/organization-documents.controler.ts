@@ -4,7 +4,8 @@ import { CrudController, IPagination } from '../core';
 import { OrganizationDocuments } from './organization-documents.entity';
 import { OrganizationDocumentsService } from './organization-documents.service';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationDocuments')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -30,9 +31,9 @@ export class OrganizationDocumentsController extends CrudController<Organization
 	})
 	@Get()
 	async findDocument(
-		@Query('data') data
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<OrganizationDocuments>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = data;
 		return this.organizationDocumentsService.findAll({ where: findInput });
 	}
 }

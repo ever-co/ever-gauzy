@@ -21,7 +21,8 @@ import {
 	EquipmentSharingCreateCommand,
 	EquipmentSharingUpdateCommand
 } from './commands';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('EquipmentSharing')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -133,7 +134,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<any> {
 		return this.commandBus.execute(
@@ -154,7 +155,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('approval/:id')
 	async equipmentSharingsRequestApproval(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<EquipmentSharing> {
 		return this.commandBus.execute(
 			new EquipmentSharingStatusCommand(
@@ -177,7 +178,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('refuse/:id')
 	async equipmentSharingsRequestRefuse(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<EquipmentSharing> {
 		return this.commandBus.execute(
 			new EquipmentSharingStatusCommand(

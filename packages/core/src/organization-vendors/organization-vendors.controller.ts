@@ -16,7 +16,8 @@ import { OrganizationVendorsService } from './organization-vendors.service';
 import { OrganizationVendor } from './organization-vendors.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationVendors')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -42,10 +43,9 @@ export class OrganizationVendorsController extends CrudController<OrganizationVe
 	})
 	@Get()
 	async findAllOrganizations(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<OrganizationVendor>> {
-		const { relations, findInput, order } = JSON.parse(data);
-
+		const { relations, findInput, order } = data;
 		return this.organizationVendorsService.findAll({
 			where: findInput,
 			order,
@@ -69,12 +69,15 @@ export class OrganizationVendorsController extends CrudController<OrganizationVe
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string, 
+		...options: any[]
+	): Promise<any> {
 		return this.organizationVendorsService.deleteVendor(id);
 	}
 	@Put(':id')
 	async updateOrganizationTeam(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: OrganizationVendor,
 		...options: any[]
 	): Promise<OrganizationVendor> {

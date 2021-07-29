@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, FindConditions, UpdateResult, getManager } from 'typeorm';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { RolePermissions } from './role-permissions.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { RolesEnum, ITenant, IRole, IRolePermission, IImportRecord, IRolePermissionMigrateInput } from '@gauzy/contracts';

@@ -1,11 +1,11 @@
 import { Repository } from 'typeorm';
 import { Skill } from './skill.entity';
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
-export class SkillService extends CrudService<Skill> {
+export class SkillService extends TenantAwareCrudService<Skill> {
 	constructor(
 		@InjectRepository(Skill)
 		private readonly skillRepository: Repository<Skill>

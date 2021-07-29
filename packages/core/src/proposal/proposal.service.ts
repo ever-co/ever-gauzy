@@ -6,7 +6,7 @@ import { Proposal } from './proposal.entity';
 import { getDateRangeFormat, IPagination } from '../core';
 import { IProposalCreateInput, IProposal } from '@gauzy/contracts';
 import { Employee } from '../employee/employee.entity';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 
 @Injectable()
 export class ProposalService extends TenantAwareCrudService<Proposal> {

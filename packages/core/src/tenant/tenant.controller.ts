@@ -12,10 +12,11 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from '../core/context';
 import { CrudController } from '../core/crud/crud.controller';
-import { Roles } from '../shared/decorators/roles';
-import { RoleGuard } from '../shared/guards/auth/role.guard';
+import { Roles } from './../shared/decorators';
+import { RoleGuard } from '../shared/guards';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 
@@ -70,7 +71,7 @@ export class TenantController extends CrudController<Tenant> {
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Delete(':id')
-	async delete(@Param('id') id: string) {
+	async delete(@Param('id', UUIDValidationPipe) id: string) {
 		return await this.tenantService.delete(id);
 	}
 }

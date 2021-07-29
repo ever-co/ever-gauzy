@@ -11,7 +11,8 @@ import { CrudController } from '../core';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { KeyresultTemplateService } from './keyresult-template.service';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+
 
 @ApiTags('keyResultTemplate')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)

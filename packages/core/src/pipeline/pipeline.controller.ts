@@ -16,14 +16,14 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { PipelineService } from './pipeline.service';
-import { ParseJsonPipe } from '../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Deal } from '../deal/deal.entity';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+
 
 @ApiTags('Pipeline')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -56,7 +56,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	})
 	@Get(':id/deals')
 	public async findDeals(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IPagination<Deal>> {
 		return this.pipelineService.findDeals(id);
 	}
@@ -101,7 +101,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@UseGuards(PermissionGuard)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: QueryDeepPartialEntity<Pipeline>,
 		...options: any[]
 	): Promise<any> {
@@ -121,7 +121,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Delete(':id')
-	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
 		return super.delete(id);
 	}
 }

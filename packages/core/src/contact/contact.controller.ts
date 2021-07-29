@@ -4,8 +4,8 @@ import { CrudController, IPagination } from '../core';
 import { Contact } from './contact.entity';
 import { ContactService } from './contact.service';
 import { AuthGuard } from '@nestjs/passport';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('Contact')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)

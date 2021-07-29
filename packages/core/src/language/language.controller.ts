@@ -4,7 +4,8 @@ import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from '../core';
 import { Language } from './language.entity';
 import { LanguageService } from './language.service';
-import { Permissions, PermissionGuard } from '../shared';
+import { PermissionGuard } from '../shared/guards';
+import { Permissions } from './../shared/decorators';
 
 @ApiTags('Languages')
 @Controller()

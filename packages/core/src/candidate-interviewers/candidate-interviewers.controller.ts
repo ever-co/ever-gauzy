@@ -14,22 +14,21 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { CandidateInterviewersService } from './candidate-interviewers.service';
 import {
 	PermissionsEnum,
 	ICandidateInterviewersCreateInput,
 	ICandidateInterviewers
 } from '@gauzy/contracts';
-import { ParseJsonPipe } from '../shared';
+import { ParseJsonPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	CandidateInterviewersEmployeeBulkDeleteCommand,
 	CandidateInterviewersInterviewBulkDeleteCommand,
 	CandidateInterviewersBulkCreateCommand
 } from './commands';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('CandidateInterviewer')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { GoalKPITemplate } from './goal-kpi-template.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';

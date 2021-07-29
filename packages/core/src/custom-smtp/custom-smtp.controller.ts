@@ -15,14 +15,14 @@ import { CrudController } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
-import { UUIDValidationPipe } from '../shared/pipes/uuid-validation.pipe';
+import { UUIDValidationPipe } from './../shared/pipes';
 import {
 	ICustomSmtp,
 	ICustomSmtpCreateInput,
 	ICustomSmtpFindInput,
 	ICustomSmtpUpdateInput
 } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
 import { CommandBus } from '@nestjs/cqrs';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
 import { ISMTPConfig } from '@gauzy/common';

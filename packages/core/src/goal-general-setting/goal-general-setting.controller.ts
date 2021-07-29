@@ -16,7 +16,8 @@ import { CrudController } from '../core';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
 import { Goal } from '../goal/goal.entity';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('GoalGeneralSetting')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -44,8 +45,8 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 		description: 'Record not found'
 	})
 	@Get('all')
-	async getAll(@Query('data') data: string) {
-		const { findInput = null } = JSON.parse(data);
+	async getAll(@Query('data', ParseJsonPipe) data: any) {
+		const { findInput = null } = data;
 		return this.goalGeneralSettingService.findAll({
 			where: { ...findInput }
 		});
@@ -68,7 +69,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: GoalGeneralSetting
 	): Promise<GoalGeneralSetting> {
 		//We are using create here because create calls the method save()

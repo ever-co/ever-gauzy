@@ -4,11 +4,10 @@ import {
 	NotFoundException,
 	ConflictException
 } from '@nestjs/common';
-
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TimeOffRequest } from './time-off-request.entity';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import {
 	ITimeOffCreateInput,
 	RequestApprovalStatusTypesEnum,
@@ -19,8 +18,9 @@ import {
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestContext } from '../core/context';
 import * as moment from 'moment';
+
 @Injectable()
-export class TimeOffRequestService extends CrudService<TimeOffRequest> {
+export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,

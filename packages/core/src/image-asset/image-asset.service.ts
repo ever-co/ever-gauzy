@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ImageAsset } from './image-asset.entity';
 
 @Injectable()
-export class ImageAssetService extends CrudService<ImageAsset> {
+export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 	constructor(
 		@InjectRepository(ImageAsset)
 		private readonly imageAssetRepository: Repository<ImageAsset>

@@ -15,7 +15,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { Permissions } from '../shared/decorators';
+import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { RolePermissions } from './role-permissions.entity';

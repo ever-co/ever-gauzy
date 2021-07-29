@@ -12,7 +12,8 @@ import { CrudController, IPagination } from '../core';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from './expense-category.entity';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('ExpenseCategories')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -26,9 +27,9 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 
 	@Get()
 	async findAllOrganizationExpenseCategories(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ExpenseCategory>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.expenseCategoriesService.findAll({
 			where: findInput,
 			relations
@@ -36,7 +37,7 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	}
 	@Put(':id')
 	async updateOrganizationExpenseCategories(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ExpenseCategory,
 		...options: any[]
 	): Promise<ExpenseCategory> {

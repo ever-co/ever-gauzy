@@ -16,7 +16,8 @@ import { GoalTimeFrame } from './goal-time-frame.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { GoalTimeFrameService } from './goal-time-frame.service';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('GoalTimeFrame')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -47,8 +48,10 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		description: 'No Time Frame found'
 	})
 	@Get('all')
-	async getAll(@Query('data') data: string) {
-		const { findInput } = JSON.parse(data);
+	async getAll(
+		@Query('data', ParseJsonPipe) data: any
+	) {
+		const { findInput } = data;
 		return this.goalTimeFrameService.findAll({ where: { ...findInput } });
 	}
 
@@ -68,7 +71,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async deleteTask(@Param('id') id: string): Promise<any> {
+	async deleteTask(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.goalTimeFrameService.delete(id);
 	}
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -88,7 +91,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: GoalTimeFrame
 	): Promise<GoalTimeFrame> {
 		try {

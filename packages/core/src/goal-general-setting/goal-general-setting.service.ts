@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 

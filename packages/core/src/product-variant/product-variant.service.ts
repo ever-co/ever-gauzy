@@ -1,11 +1,12 @@
 import { Repository } from 'typeorm';
-import { CrudService, IPagination } from '../core';
+import { IPagination } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductVariant } from './product-variant.entity';
 
 @Injectable()
-export class ProductVariantService extends CrudService<ProductVariant> {
+export class ProductVariantService extends TenantAwareCrudService<ProductVariant> {
 	constructor(
 		@InjectRepository(ProductVariant)
 		private readonly productVariantRepository: Repository<ProductVariant>

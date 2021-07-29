@@ -24,10 +24,9 @@ import {
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { ParseJsonPipe } from '../shared';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { PaymentMapService } from './payment.map.service';
 import { I18nLang } from 'nestjs-i18n';
 
@@ -128,7 +127,7 @@ export class PaymentController extends CrudController<Payment> {
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Put(':id')
 	async updatePayment(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IPayment
 	): Promise<any> {
 		return this.paymentService.create({
@@ -141,7 +140,7 @@ export class PaymentController extends CrudController<Payment> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Delete(':id')
-	async deleteTask(@Param('id') id: string): Promise<any> {
+	async deleteTask(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.paymentService.delete(id);
 	}
 }

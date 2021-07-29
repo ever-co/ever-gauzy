@@ -18,14 +18,16 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationDepartmentEditByEmployeeCommand } from './commands/organization-department.edit-by-employee.command';
-import { OrganizationDepartmentUpdateCommand } from './commands/organization-department.update.command';
+import {
+	OrganizationDepartmentEditByEmployeeCommand,
+	OrganizationDepartmentUpdateCommand
+} from './commands';
 import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationDepartment')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -52,7 +54,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	})
 	@Get('employee/:id')
 	async findByEmployee(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IPagination<OrganizationDepartment>> {
 		return this.organizationDepartmentService.findByEmployee(id);
 	}
@@ -71,10 +73,9 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	})
 	@Get()
 	async findAllOrganizationDepartments(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<OrganizationDepartment>> {
-		const { findInput, relations, order} = JSON.parse(data);
-
+		const { findInput, relations, order} = data;
 		return this.organizationDepartmentService.findAll({
 			where: findInput,
 			order,
@@ -125,7 +126,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IOrganizationDepartmentCreateInput
 	): Promise<any> {
 		return this.commandBus.execute(

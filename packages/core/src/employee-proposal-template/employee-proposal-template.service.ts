@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 
 @Injectable()
-export class EmployeeProposalTemplateService extends CrudService<EmployeeProposalTemplate> {
+export class EmployeeProposalTemplateService extends TenantAwareCrudService<EmployeeProposalTemplate> {
 	constructor(
 		@InjectRepository(EmployeeProposalTemplate)
 		private readonly employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>

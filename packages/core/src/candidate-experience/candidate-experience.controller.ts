@@ -5,7 +5,8 @@ import { CandidateExperienceService } from './candidate-experience.service';
 import { CandidateExperience } from './candidate-experience.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateExperience')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -31,9 +32,9 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 	})
 	@Get()
 	async findExperience(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateExperience>> {
-		const { findInput, relations } = JSON.parse(data);
+		const { findInput, relations } = data;
 		return this.candidateExperienceService.findAll({
 			where: findInput,
 			relations

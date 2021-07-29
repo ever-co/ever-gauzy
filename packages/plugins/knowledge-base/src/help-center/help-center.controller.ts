@@ -19,7 +19,8 @@ import {
 	ParseJsonPipe,
 	PermissionGuard,
 	Permissions,
-	TenantPermissionGuard
+	TenantPermissionGuard,
+	UUIDValidationPipe
 } from '@gauzy/core';
 import { HelpCenterService } from './help-center.service';
 import { HelpCenter } from './help-center.entity';
@@ -110,7 +111,9 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	})
 	@UseGuards(PermissionGuard)
 	@Get(':baseId')
-	async findByBaseId(@Param('baseId') baseId: string): Promise<HelpCenter[]> {
+	async findByBaseId(
+		@Param('baseId', UUIDValidationPipe) baseId: string
+	): Promise<HelpCenter[]> {
 		return this.helpCenterService.getCategoriesByBaseId(baseId);
 	}
 

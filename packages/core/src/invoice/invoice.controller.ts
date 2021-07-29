@@ -20,8 +20,8 @@ import {
 import { DeleteResult } from 'typeorm';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import {
 	PermissionsEnum,
 	IInvoice,
@@ -31,7 +31,6 @@ import {
 } from '@gauzy/contracts';
 import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	InvoiceCreateCommand,
@@ -77,7 +76,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get(':id')
 	async findByIdWithRelations(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IInvoice> {
 		const { relations = [], findInput = null } = data;
@@ -99,7 +98,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@Get('public/:id/:token')
 	async findWithoutGuard(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Param('token') token: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IInvoice> {

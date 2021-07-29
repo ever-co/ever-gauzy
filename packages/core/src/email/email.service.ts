@@ -14,7 +14,7 @@ import * as nodemailer from 'nodemailer';
 import { Repository, IsNull } from 'typeorm';
 import { environment as env } from '@gauzy/config';
 import { ISMTPConfig } from '@gauzy/common';
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
@@ -24,7 +24,7 @@ import { Timesheet } from '../timesheet/timesheet.entity';
 import { RequestContext } from '../core/context';
 
 @Injectable()
-export class EmailService extends CrudService<IEmail> {
+export class EmailService extends TenantAwareCrudService<IEmail> {
 
 	private readonly email: Email;
 

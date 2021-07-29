@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { CrudService } from '../../core/crud/crud.service';
+import { TenantAwareCrudService } from './../../core/crud';
 import { Activity } from './activity.entity';
 import * as moment from 'moment';
 import { RequestContext } from '../../core/context';
@@ -20,14 +20,17 @@ import { getConfig } from '@gauzy/config';
 const config = getConfig();
 
 @Injectable()
-export class ActivityService extends CrudService<Activity> {
+export class ActivityService extends TenantAwareCrudService<Activity> {
 	constructor(
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectRepository: Repository<OrganizationProject>,
+
 		private readonly commandBus: CommandBus
 	) {
 		super(activityRepository);

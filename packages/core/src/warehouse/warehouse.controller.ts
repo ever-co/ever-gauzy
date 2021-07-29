@@ -12,13 +12,11 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
-
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { WarehouseService } from './warehouse.service';
 import { Warehouse } from './warehouse.entity';
-import { PermissionGuard } from 'shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
+import { Permissions } from './../shared/decorators';
 import {
 	IPagination,
 	PermissionsEnum,
@@ -26,9 +24,8 @@ import {
 	IWarehouseProductCreateInput,
 	IWarehouseProductVariant
 } from '@gauzy/contracts';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { WarehouseProductService } from './warehouse-product-service';
-import { WarehouseProduct } from 'core';
 
 @ApiTags('Warehouses')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -52,7 +49,6 @@ export class WarehouseController extends CrudController<Warehouse> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Number> {
 		const { findInput = null } = data;
-
 		return this.warehouseService.count(findInput);
 	}
 
@@ -102,7 +98,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Warehouse
 	): Promise<any> {
 		return this.warehouseService.updateWarehouse(id, entity);
@@ -123,7 +119,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	@Post('/inventory/:warehouseId')
 	async addWarehouseProducts(
 		@Body() entity: IWarehouseProductCreateInput[],
-		@Param('warehouseId') warehouseId: string
+		@Param('warehouseId', UUIDValidationPipe) warehouseId: string
 	): Promise<IPagination<IWarehouseProduct[]>> {
 		return await this.warehouseProductsService.createWarehouseProductBulk(
 			entity,
@@ -145,8 +141,8 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Get('/inventory/:warehouseId')
 	async findAllWarehouseProducts(
-		@Param('warehouseId') warehouseId: string
-	): Promise<WarehouseProduct[]> {
+		@Param('warehouseId', UUIDValidationPipe) warehouseId: string
+	): Promise<IWarehouseProduct[]> {
 		return this.warehouseProductsService.getAllWarehouseProducts(
 			warehouseId
 		);
@@ -166,9 +162,9 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Post('/inventory-quantity/:warehouseProductId')
 	async updateWarehouseProductCount(
-		@Param('warehouseProductId') warehouseProductId: string,
+		@Param('warehouseProductId', UUIDValidationPipe) warehouseProductId: string,
 		@Body() value: { count: number }
-	): Promise<WarehouseProduct> {
+	): Promise<IWarehouseProduct> {
 		return this.warehouseProductsService.updateWarehouseProductQuantity(
 			warehouseProductId,
 			value.count
@@ -189,7 +185,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Post('/inventory-quantity/variants/:warehouseProductVariantId')
 	async updateWarehouseProductVariantCount(
-		@Param('warehouseProductVariantId') warehouseProductVariantId: string,
+		@Param('warehouseProductVariantId', UUIDValidationPipe) warehouseProductVariantId: string,
 		@Body() value: { count: number }
 	): Promise<IWarehouseProductVariant> {
 		return this.warehouseProductsService.updateWarehouseProductVariantQuantity(

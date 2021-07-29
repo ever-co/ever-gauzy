@@ -15,12 +15,11 @@ import { Proposal } from './proposal.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IProposalCreateInput, IProposal } from '@gauzy/contracts';
 import { IPagination } from '../core';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
+import { Permissions } from './../shared/decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Proposal')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -44,11 +43,10 @@ export class ProposalController extends CrudController<Proposal> {
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get()
 	async findAllProposals(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IProposal>> {
-		const { relations, findInput, filterDate } = JSON.parse(data);
-
-		return this.proposalService.getAllProposals(
+		const { relations, findInput, filterDate } = data;
+		return await this.proposalService.getAllProposals(
 			{ where: findInput, relations },
 			filterDate
 		);
@@ -68,7 +66,7 @@ export class ProposalController extends CrudController<Proposal> {
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get(':id')
 	async findOne(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IProposal> {
 		const { relations, findInput } = data;
@@ -112,7 +110,7 @@ export class ProposalController extends CrudController<Proposal> {
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	@Put(':id')
 	async updateProposal(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: any
 	): Promise<any> {
 		return this.proposalService.create({

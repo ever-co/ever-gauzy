@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, ILike, In } from 'typeorm';
 import { Income } from './income.entity';
 import { getDateRangeFormat, IPagination } from '../core';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import * as moment from 'moment';
 
 @Injectable()

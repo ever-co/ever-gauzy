@@ -19,15 +19,15 @@ import { IPagination } from '../core';
 import { RequestContext } from '../core/context';
 import { CrudController } from '../core/crud/crud.controller';
 import { EmployeeService } from '../employee/employee.service';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { IncomeCreateCommand } from './commands/income.create.command';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
-import { ParseJsonPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
 import { IncomeDeleteCommand } from './commands/income.delete.command';
 import { IncomeUpdateCommand } from './commands/income.update.command';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+
 
 @ApiTags('Income')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -110,7 +110,7 @@ export class IncomeController extends CrudController<Income> {
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Income,
 		...options: any[]
 	): Promise<any> {

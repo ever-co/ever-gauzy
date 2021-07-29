@@ -15,8 +15,8 @@ import { CrudController } from '../core/crud/crud.controller';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { IPagination } from '../core';
-import { ParseJsonPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('Email')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -75,7 +75,7 @@ export class EmailController extends CrudController<Email> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(@Param('id') id: string, @Body() entity: Email): Promise<any> {
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: Email): Promise<any> {
 		return this.emailService.update(id, entity);
 	}
 }

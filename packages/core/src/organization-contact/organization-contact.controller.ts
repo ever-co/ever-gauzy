@@ -14,14 +14,13 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationContactEditByEmployeeCommand } from './commands/organization-contact.edit-by-employee.command';
+import { OrganizationContactEditByEmployeeCommand } from './commands';
 import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactService } from './organization-contact.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationContact')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -48,7 +47,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@Get('employee/:id')
 	async findByEmployee(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<OrganizationContact>> {
 		return this.organizationContactService.findByEmployee(id, data);

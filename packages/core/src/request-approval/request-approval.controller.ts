@@ -21,12 +21,11 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { AuthGuard } from '@nestjs/passport';
 import { RequestApprovalStatusCommand } from './commands';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('RequestApproval')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
@@ -74,7 +73,7 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
 	@Get('employee/:id')
 	findRequestApprovalsByEmployeeId(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IRequestApproval>> {
 		const { relations, findInput } = data;
@@ -117,7 +116,7 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('approval/:id')
 	async employeeApprovalRequestApproval(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<RequestApproval> {
 		return this.commandBus.execute(
 			new RequestApprovalStatusCommand(
@@ -141,7 +140,7 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('refuse/:id')
 	async employeeRefuseRequestApproval(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<RequestApproval> {
 		return this.commandBus.execute(
 			new RequestApprovalStatusCommand(
@@ -165,7 +164,7 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put(':id')
 	async updateRequestApprovalByAdmin(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IRequestApprovalCreateInput
 	): Promise<RequestApproval> {
 		return this.requestApprovalService.updateRequestApproval(id, entity);
