@@ -328,3 +328,7 @@ export const verifyEquipmentExists = (text) => {
 export const verifyEquipmentIsDeleted = () => {
 	verifyElementNotExist(OrganizationEquipmentPage.verifyEquipmentCss);
 };
+
+export const waitSpinnerToDisappear = () => {
+	verifyElementNotExist(OrganizationEquipmentPage.spinnerCss);
+};

@@ -152,6 +152,7 @@ When('User click on equipment sharing button', () => {
 });
 
 Then('User can see sharing policy button', () => {
+	organizationEquipmentPage.waitSpinnerToDisappear();
 	organizationEquipmentPage.sharingPolicyButtonVisible();
 });
 
@@ -215,6 +216,7 @@ When('User click on back button', () => {
 
 // Request equipment sharing
 Then('User can see request equipment sharing button', () => {
+	organizationEquipmentPage.waitSpinnerToDisappear();
 	organizationEquipmentPage.requestButtonVisible();
 });
 
