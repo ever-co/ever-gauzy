@@ -7,7 +7,8 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	verifyElementIsNotVisible
 } from '../utils/util';
 import { OrganizationEquipmentPage } from '../pageobjects/OrganizationEquipmentPageObject';
 
@@ -327,4 +328,8 @@ export const verifyEquipmentExists = (text) => {
 
 export const verifyEquipmentIsDeleted = () => {
 	verifyElementNotExist(OrganizationEquipmentPage.verifyEquipmentCss);
+};
+
+export const waitSpinnerToDisappear = () => {
+	verifyElementNotExist(OrganizationEquipmentPage.spinnerCss);
 };
