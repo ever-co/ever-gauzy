@@ -132,13 +132,13 @@ export const CustomCommands = {
 		organizationTeamsPage.tagsMultyselectVisible();
 		organizationTeamsPage.clickTagsMultyselect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickEmployeeDropdown();
 		organizationTeamsPage.selectEmployeeFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickManagerDropdown();
 		organizationTeamsPage.selectManagerFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
 	},
