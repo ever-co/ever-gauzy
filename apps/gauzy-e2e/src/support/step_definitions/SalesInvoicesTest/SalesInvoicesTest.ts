@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
-import * as invoicesPage from '../../Base/pages/Invoices.po';
-import { InvoicesPageData } from '../../Base/pagedata/InvoicesPageData';
+import * as salesInvoicesPage from '../../Base/pages/SalesInvoices.po';
+import { SalesInvoicesPageData } from '../../Base/pagedata/SalesInvoicesPageData';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
@@ -92,419 +92,326 @@ Then('User can visit Invoices page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/accounting/invoices', { timeout: pageLoadTimeout });
+	cy.visit('/#/pages/sales/invoices', { timeout: pageLoadTimeout });
 });
 
 And('User can see grid button', () => {
-	invoicesPage.gridBtnExists();
+	salesInvoicesPage.gridBtnExists();
 });
 
 And('User can click on second grid button to change view', () => {
-	invoicesPage.gridBtnClick(1);
+	salesInvoicesPage.gridBtnClick(1);
 });
 
 And('User can see add Invoice button', () => {
-	invoicesPage.addButtonVisible();
+	salesInvoicesPage.addButtonVisible();
 });
 
 When('User click on add Invoice button', () => {
-	invoicesPage.clickAddButton();
+	salesInvoicesPage.clickAddButton();
 });
 
 Then('User can see tags dropdown', () => {
-	invoicesPage.tagsDropdownVisible();
+	salesInvoicesPage.tagsDropdownVisible();
 });
 
 When('User click on tags dropdown', () => {
-	invoicesPage.clickTagsDropdwon();
+	salesInvoicesPage.clickTagsDropdwon();
 });
 
 Then('User can select tag from dropdown options', () => {
-	invoicesPage.selectTagFromDropdown(0);
-	invoicesPage.clickCardBody();
+	salesInvoicesPage.selectTagFromDropdown(0);
+	salesInvoicesPage.clickCardBody();
 });
 
 And('User can see discount input field', () => {
-	invoicesPage.discountInputVisible();
+	salesInvoicesPage.discountInputVisible();
 });
 
 And('User can enter value for discount', () => {
-	invoicesPage.enterDiscountData(InvoicesPageData.discountValue);
+	salesInvoicesPage.enterDiscountData(SalesInvoicesPageData.discountValue);
 });
 
 And('User can see discount type dropdown', () => {
-	invoicesPage.discountTypeDropdownVisible();
+	salesInvoicesPage.discountTypeDropdownVisible();
 });
 
 When('User click on discount type dropdown', () => {
-	invoicesPage.clickDiscountDropdown();
+	salesInvoicesPage.clickDiscountDropdown();
 });
 
 Then('User can select discount type from dropdown options', () => {
-	invoicesPage.selectDiscountTypeFromDropdown(
-		InvoicesPageData.discountType
+	salesInvoicesPage.selectDiscountTypeFromDropdown(
+		SalesInvoicesPageData.discountType
 	);
 });
 
 And('User can see contact dropdown', () => {
-	invoicesPage.contactDropdownVisible();
+	salesInvoicesPage.contactDropdownVisible();
 });
 
 When('User click on contact drodpown', () => {
-	invoicesPage.clickContactDropdown();
+	salesInvoicesPage.clickContactDropdown();
 });
 
 Then('User can select contact from dropdown options', () => {
-	invoicesPage.selectContactFromDropdwon(0);
+	salesInvoicesPage.selectContactFromDropdwon(0);
 });
 
 And('User can see tax input field', () => {
-	invoicesPage.taxInputVisible();
+	salesInvoicesPage.taxInputVisible();
 });
 
 And('User can enter value for tax', () => {
-	invoicesPage.enterTaxData(InvoicesPageData.taxValue);
+	salesInvoicesPage.enterTaxData(SalesInvoicesPageData.taxValue);
 });
 
 And('User can see tax type dropdown', () => {
-	invoicesPage.taxTypeDropdownVisible();
+	salesInvoicesPage.taxTypeDropdownVisible();
 });
 
 When('User click on tax type dropdown', () => {
-	invoicesPage.clickTaxTypeDropdown();
+	salesInvoicesPage.clickTaxTypeDropdown();
 });
 
 Then('User can select tax type from dropdown options', () => {
-	invoicesPage.selectTaxTypeFromDropdown(InvoicesPageData.taxType);
+	salesInvoicesPage.selectTaxTypeFromDropdown(SalesInvoicesPageData.taxType);
 });
 
 And('User can see invoice type dropdown', () => {
-	invoicesPage.invoiceTypeDropdownVisible();
+	salesInvoicesPage.invoiceTypeDropdownVisible();
 });
 
 When('User click on invoice type dropdown', () => {
-	invoicesPage.clickInvoiceTypeDropdown();
+	salesInvoicesPage.clickInvoiceTypeDropdown();
 });
 
 Then('User can select invoice type from dropdown options', () => {
-	invoicesPage.selectInvoiceTypeFromDropdown(InvoicesPageData.invoiceType);
+	salesInvoicesPage.selectInvoiceTypeFromDropdown(SalesInvoicesPageData.invoiceType);
 });
 
 And('User can see employee dropdown', () => {
-	invoicesPage.employeeDropdownVisible();
+	salesInvoicesPage.employeeDropdownVisible();
 });
 
 When('User click on employee dropdown', () => {
-	invoicesPage.clickEmployeeDropdown();
+	salesInvoicesPage.clickEmployeeDropdown();
 });
 
 Then('User can select employee from dropdown options', () => {
-	invoicesPage.selectEmployeeFromDropdown(0);
-	invoicesPage.clickKeyboardButtonByKeyCode(9);
+	salesInvoicesPage.selectEmployeeFromDropdown(0);
+	salesInvoicesPage.clickKeyboardButtonByKeyCode(9);
 });
 
 And('User can see generate items button', () => {
-	invoicesPage.generateItemsButtonVisible();
+	salesInvoicesPage.generateItemsButtonVisible();
 });
 
 When('User click on generate items button', () => {
-	invoicesPage.clickGenerateItemsButton();
+	salesInvoicesPage.clickGenerateItemsButton();
 });
 
 Then('Save as draft button will become active', () => {
-	invoicesPage.saveAsDraftButtonVisible();
+	salesInvoicesPage.saveAsDraftButtonVisible();
 });
 
 When('User click on Save as draft button', () => {
-	invoicesPage.clickSaveAsDraftButton(InvoicesPageData.saveAsDraftButton);
+	salesInvoicesPage.clickSaveAsDraftButton(SalesInvoicesPageData.saveAsDraftButton);
 });
 
 Then('Notification message will appear', () => {
-	invoicesPage.waitMessageToHide();
+	salesInvoicesPage.waitMessageToHide();
 });
 
 And('User can verify invoice was created', () => {
-	invoicesPage.verifyDraftBadgeClass();
-});
-
-// Search invoice
-And('User can see tab button', () => {
-	invoicesPage.verifyTabButtonVisible();
-});
-
-When('User click on second tab button', () => {
-	invoicesPage.clickTabButton(1);
-});
-
-Then('User can see invoice number input field', () => {
-	invoicesPage.veirifyEstimateNumberInputVisible();
-});
-
-And('User can enter invoice number', () => {
-	invoicesPage.enterEstimateNumberInputData(
-		InvoicesPageData.invoiceNumber
-	);
-});
-
-And('User can see currency dropdown', () => {
-	invoicesPage.verifyCurrencuDropdownVisible();
-});
-
-And('User can see invoice date input field', () => {
-	invoicesPage.verifyEstimateDateInput();
-});
-
-And('User can see invoice due date input field', () => {
-	invoicesPage.verifyEstimateDueDateInput();
-});
-
-And('User can see total value input field', () => {
-	invoicesPage.verifyTotalValueInputVisible();
-});
-
-And('User can see status input field', () => {
-	invoicesPage.verifyStatusInputVisible();
-});
-
-And('User can see search button', () => {
-	invoicesPage.searchButtonVisible();
-});
-
-When('User click on search button', () => {
-	invoicesPage.clickSearchButton();
-});
-
-Then('User can see reset button', () => {
-	invoicesPage.resetButtonVisible();
-});
-
-When('User click on reset button', () => {
-	invoicesPage.clickResetButton();
-});
-
-Then('User can click search button', () => {
-	invoicesPage.clickSearchButton();
-});
-
-And('User can verify badge', () => {
-	invoicesPage.verifyDraftBadgeClass();
-});
-
-And('User can edit invoice number', () => {
-	invoicesPage.enterEstimateNumberInputData(
-		InvoicesPageData.secondInvoiceNumber
-	);
-});
-
-And('User can click search button again', () => {
-	invoicesPage.clickSearchButton();
-});
-
-And('User can click on reset button', () => {
-	invoicesPage.clickResetButton();
-});
-
-And('User can verify badge', () => {
-	invoicesPage.verifyDraftBadgeClass();
-});
-
-And('User can click on next tab button', () => {
-	invoicesPage.clickTabButton(2);
-});
-
-And('User can verify badge', () => {
-	invoicesPage.verifyDraftBadgeClass();
+	salesInvoicesPage.verifyDraftBadgeClass();
 });
 
 // Edit invoice
-When('User clcik on first tab button', () => {
-	invoicesPage.clickTabButton(0);
-});
-
 Then('User can select invoices first table row', () => {
-	invoicesPage.selectTableRow(0);
+	salesInvoicesPage.selectTableRow(0);
 });
 
 And('Edit button will become active', () => {
-	invoicesPage.editButtonVisible();
+	salesInvoicesPage.editButtonVisible();
 });
 
 When('User click on edit button', () => {
-	invoicesPage.clickEditButton(0);
+	salesInvoicesPage.clickEditButton(0);
 });
 
 Then('User can see discount input field', () => {
-	invoicesPage.discountInputVisible();
+	salesInvoicesPage.discountInputVisible();
 });
 
 And('User can enter value for discount', () => {
-	invoicesPage.enterDiscountData(InvoicesPageData.editDiscountValue);
+	salesInvoicesPage.enterDiscountData(SalesInvoicesPageData.editDiscountValue);
 });
 
 And('User can see discount type dropdown', () => {
-	invoicesPage.discountTypeDropdownVisible();
+	salesInvoicesPage.discountTypeDropdownVisible();
 });
 
 When('User click on discount type dropdown', () => {
-	invoicesPage.clickDiscountDropdown();
+	salesInvoicesPage.clickDiscountDropdown();
 });
 
 Then('User can select discount type from dropdown options', () => {
-	invoicesPage.selectDiscountTypeFromDropdown(
-		InvoicesPageData.discountType
+	salesInvoicesPage.selectDiscountTypeFromDropdown(
+		SalesInvoicesPageData.discountType
 	);
 });
 
 And('User can see contact dropdown', () => {
-	invoicesPage.contactDropdownVisible();
+	salesInvoicesPage.contactDropdownVisible();
 });
 
 When('User click on contact drodpown', () => {
-	invoicesPage.clickContactDropdown();
+	salesInvoicesPage.clickContactDropdown();
 });
 
 Then('User can select contact from dropdown options', () => {
-	invoicesPage.selectContactFromDropdwon(0);
+	salesInvoicesPage.selectContactFromDropdwon(0);
 });
 
 And('User can see tax input field', () => {
-	invoicesPage.taxInputVisible();
+	salesInvoicesPage.taxInputVisible();
 });
 
 And('User can enter value for tax', () => {
-	invoicesPage.enterTaxData(InvoicesPageData.taxValue);
+	salesInvoicesPage.enterTaxData(SalesInvoicesPageData.taxValue);
 });
 
 And('User can see tax type dropdown', () => {
-	invoicesPage.taxTypeDropdownVisible();
+	salesInvoicesPage.taxTypeDropdownVisible();
 });
 
 When('User click on tax type dropdown', () => {
-	invoicesPage.clickTaxTypeDropdown();
+	salesInvoicesPage.clickTaxTypeDropdown();
 });
 
 Then('User can select tax type from dropdown options', () => {
-	invoicesPage.selectTaxTypeFromDropdown(InvoicesPageData.taxType);
+	salesInvoicesPage.selectTaxTypeFromDropdown(SalesInvoicesPageData.taxType);
 });
 
 Then('Save as draft button will become active', () => {
-	invoicesPage.saveAsDraftButtonVisible();
+	salesInvoicesPage.saveAsDraftButtonVisible();
 });
 
 When('User click on Save as draft button', () => {
-	invoicesPage.clickSaveAsDraftButton(InvoicesPageData.saveAsDraftButton);
+	salesInvoicesPage.clickSaveAsDraftButton(SalesInvoicesPageData.saveAsDraftButton);
 });
 
 Then('Notification message will appear', () => {
-	invoicesPage.waitMessageToHide();
+	salesInvoicesPage.waitMessageToHide();
 });
 
 // View invoice
 When('User select invoices first table row', () => {
-	invoicesPage.selectTableRow(0);
+	salesInvoicesPage.selectTableRow(0);
 });
 
 Then('View invoice button will become active', () => {
-	invoicesPage.viewButtonVisible();
+	salesInvoicesPage.viewButtonVisible();
 });
 
 And('User can click on vew invoice button', () => {
-	invoicesPage.clickViewButton(1);
+	salesInvoicesPage.clickViewButton(1);
 });
 
 And('User can see back button', () => {
-	invoicesPage.backButtonVisible();
+	salesInvoicesPage.backButtonVisible();
 });
 
 When('User click on back button', () => {
-	invoicesPage.clickBackButton();
+	salesInvoicesPage.clickBackButton();
 });
 
 // Send invoice by email
 Then('User can click again on invoices first table row', () => {
-	invoicesPage.selectTableRow(0);
-});
-
-And('More settings button will become active', () => {
-	invoicesPage.moreButtonVisible();
-});
-
-When('User click more settings button', () => {
-	invoicesPage.clickMoreButton();
-});
-
-Then('User can see email button', () => {
-	invoicesPage.actionButtonVisible();
-});
-
-When('User click on email button', () => {
 	cy.on('uncaught:exception', (err, runnable) => {
 		return false;
 	});
-	invoicesPage.clickActionButtonByText(InvoicesPageData.emailButton);
+	salesInvoicesPage.selectTableRow(0);
 });
 
-Then('User can scroll down to email input field', () => {
-	invoicesPage.scrollEmailInviteTemplate();
-})
-
-And('User can see email input field', () => {
-	invoicesPage.emailInputVisible();
-});
-
-And('User can enter value for email', () => {
-	invoicesPage.enterEmailData(sendEmail);
-});
-
-And('User can see confirm send email button', () => {
-	invoicesPage.confirmButtonVisible();
-});
-
-When('User click on confirm send email button', () => {
-	invoicesPage.clickConfirmButton();
-});
-
-Then('Notification message will appear', () => {
-	invoicesPage.waitMessageToHide();
+And('More settings button will become active', () => {
+	salesInvoicesPage.moreButtonVisible();
 });
 
 When('User click more settings button', () => {
-	invoicesPage.clickMoreButton();
+	salesInvoicesPage.clickMoreButton();
+});
+
+Then('User can see email button', () => {
+	salesInvoicesPage.actionButtonVisible();
+});
+
+When('User click on email button', () => {
+	salesInvoicesPage.clickActionButtonByText(SalesInvoicesPageData.emailButton);
+});
+
+Then('User can scroll down to email input field', () => {
+	salesInvoicesPage.scrollEmailInviteTemplate();
+})
+
+And('User can see email input field', () => {
+	salesInvoicesPage.emailInputVisible();
+});
+
+And('User can enter value for email', () => {
+	salesInvoicesPage.enterEmailData(sendEmail);
+});
+
+And('User can see confirm send email button', () => {
+	salesInvoicesPage.confirmButtonVisible();
+});
+
+When('User click on confirm send email button', () => {
+	salesInvoicesPage.clickConfirmButton();
+});
+
+Then('Notification message will appear', () => {
+	salesInvoicesPage.waitMessageToHide();
+});
+
+When('User click more settings button', () => {
+	salesInvoicesPage.clickMoreButton();
 });
 
 Then('User can verify invoice was sent by email', () => {
-	invoicesPage.verifySentBadgeClass();
+	salesInvoicesPage.verifySentBadgeClass();
 });
 
 // Delete invoice
 Then('User can click on invoices first row', () => {
-	invoicesPage.selectTableRow(0);
+	salesInvoicesPage.selectTableRow(0);
 });
 
 And('Settings button will become active', () => {
-	invoicesPage.moreButtonVisible();
+	salesInvoicesPage.moreButtonVisible();
 });
 
 When('User click settings button', () => {
-	invoicesPage.clickMoreButton();
+	salesInvoicesPage.clickMoreButton();
 });
 
 Then('Delete button will become active', () => {
-	invoicesPage.deleteButtonVisible();
+	salesInvoicesPage.deleteButtonVisible();
 });
 
 When('User click on delete button', () => {
-	invoicesPage.clickDeleteButton();
+	salesInvoicesPage.clickDeleteButton();
 });
 
 Then('User can see confirm delete button', () => {
-	invoicesPage.confirmDeleteButtonVisible();
+	salesInvoicesPage.confirmDeleteButtonVisible();
 });
 
 When('User click on confirm delete button', () => {
-	invoicesPage.clickConfirmDeleteButton();
+	salesInvoicesPage.clickConfirmDeleteButton();
 });
 
 Then('Notification message will appear', () => {
-	invoicesPage.waitMessageToHide();
+	salesInvoicesPage.waitMessageToHide();
 });
