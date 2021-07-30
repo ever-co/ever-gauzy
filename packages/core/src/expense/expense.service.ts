@@ -197,7 +197,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		return query;
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('notes' in filters) {
@@ -222,6 +222,6 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				filter.where.valueDate = Between(start, end); 
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

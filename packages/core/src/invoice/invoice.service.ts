@@ -310,7 +310,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		return stream;
 	}
 
-	public search(filter?: any) {
+	public pagination(filter?: any) {		
 		if ('where' in filter) {
 			const { where } = filter;
 			if (where.tags) {
@@ -343,6 +343,6 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				);
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

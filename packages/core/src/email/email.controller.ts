@@ -37,11 +37,10 @@ export class EmailController extends CrudController<Email> {
 		description: 'No records found'
 	})
 	@Get()
-	async findAllEmails(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Email>> {
 		const { relations, findInput, take } = data;
-
 		const response = await this.emailService.findAll({
 			where: findInput,
 			relations,

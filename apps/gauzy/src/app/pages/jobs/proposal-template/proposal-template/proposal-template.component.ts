@@ -113,7 +113,7 @@ export class ProposalTemplateComponent
 			request['employeeId'] = this.selectedEmployee.id;
 		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint: `${API_PREFIX}/employee-proposal-template/search/filter`,
+			endPoint: `${API_PREFIX}/employee-proposal-template/pagination`,
 			relations: [
 				'employee', 
 				'employee.user'

@@ -182,7 +182,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		);
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('note' in filters) {
@@ -210,6 +210,6 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				}
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

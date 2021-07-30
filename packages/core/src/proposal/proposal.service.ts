@@ -20,7 +20,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 	}
 
 	async getAllProposals(
-		filter?: FindManyOptions<Proposal>,
+		filter?: FindManyOptions<IProposal>,
 		filterDate?: string
 	): Promise<IPagination<IProposal>> {
 		const total = await this.repository.count(filter);
@@ -54,7 +54,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		return this.proposalRepository.save(proposal);
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('valueDate' in where) {
@@ -71,6 +71,6 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 				filter.where.jobPostContent = ILike(`%${jobPostContent}%`);
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

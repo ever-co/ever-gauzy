@@ -5,8 +5,8 @@ import { ITag } from './tag-entity.model';
 
 export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	employee?: IEmployee;
-	jobPostUrl?: string;
+	employee: IEmployee;
+	jobPostUrl: string;
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;

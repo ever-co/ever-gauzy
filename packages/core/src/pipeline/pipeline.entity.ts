@@ -1,4 +1,4 @@
-import { IPipeline } from '@gauzy/contracts';
+import { IPipeline, IPipelineStage } from '@gauzy/contracts';
 import {
 	AfterInsert,
 	AfterLoad,
@@ -19,11 +19,12 @@ import {
 export class Pipeline
 	extends TenantOrganizationBaseEntity
 	implements IPipeline {
+	
+	@ApiProperty({ type: () => PipelineStage })
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
 		cascade: ['insert']
 	})
-	@ApiProperty({ type: () => PipelineStage })
-	public stages: PipelineStage[];
+	public stages: IPipelineStage[];
 
 	@Column({ nullable: true, type: 'text' })
 	@ApiProperty({ type: () => String })
@@ -42,7 +43,7 @@ export class Pipeline
 	public isActive: boolean;
 
 	@BeforeInsert()
-	public __before_persist(): void {
+	public __before_persist?(): void {
 		const pipelineId = this.id ? { pipelineId: this.id } : {};
 		let index = 0;
 
@@ -54,7 +55,7 @@ export class Pipeline
 	@AfterLoad()
 	@AfterInsert()
 	@AfterUpdate()
-	public __after_fetch(): void {
+	public __after_fetch?(): void {
 		if (this.stages) {
 			this.stages.sort(({ index: a }, { index: b }) => a - b);
 		}

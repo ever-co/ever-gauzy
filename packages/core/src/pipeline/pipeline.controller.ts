@@ -1,4 +1,4 @@
-import { CrudController, IPagination } from '../core/crud';
+import { CrudController, IPagination, PaginationParams } from '../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
 	Body,
@@ -11,7 +11,9 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -19,7 +21,7 @@ import { PipelineService } from './pipeline.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IPipeline, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Deal } from '../deal/deal.entity';
@@ -31,6 +33,14 @@ import { Deal } from '../deal/deal.entity';
 export class PipelineController extends CrudController<Pipeline> {
 	public constructor(protected pipelineService: PipelineService) {
 		super(pipelineService);
+	}
+
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IPipeline>
+	): Promise<IPagination<IPipeline>> {
+		return this.pipelineService.pagination(filter);
 	}
 
 	@ApiOperation({ summary: 'find all' })

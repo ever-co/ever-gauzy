@@ -4,7 +4,8 @@ import {
 	ISplitExpenseOutput,
 	IGetExpenseInput,
 	IExpenseReportData,
-	ReportGroupFilterEnum
+	ReportGroupFilterEnum,
+	IExpense
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -17,12 +18,14 @@ import {
 	Post,
 	Query,
 	UseGuards,
-	Delete
+	Delete,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
+import { IPagination, PaginationParams } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
@@ -49,6 +52,16 @@ export class ExpenseController extends CrudController<Expense> {
 		super(expenseService);
 	}
 
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IExpense>
+	): Promise<IPagination<IExpense>> {
+		return this.expenseService.pagination(filter);
+	}
+
 	// If user is not an employee, then this will return 404
 	@ApiOperation({
 		summary:
@@ -66,7 +79,7 @@ export class ExpenseController extends CrudController<Expense> {
 	@Get('me')
 	async findMyExpenseWithSplitIncluded(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Expense>> {
+	): Promise<IPagination<IExpense>> {
 		const { relations, filterDate } = data;
 		const employee = await this.employeeService.findOne({
 			user: { id: RequestContext.currentUser().id }
@@ -164,9 +177,9 @@ export class ExpenseController extends CrudController<Expense> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get()
-	async findAllExpenses(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Expense>> {
+	): Promise<IPagination<IExpense>> {
 		const { relations, findInput, filterDate } = data;
 		return this.expenseService.findAllExpenses(
 			{ where: findInput, relations },
@@ -191,8 +204,10 @@ export class ExpenseController extends CrudController<Expense> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Expense
-	): Promise<any> {
-		return this.commandBus.execute(new ExpenseUpdateCommand(id, entity));
+	): Promise<IExpense> {
+		return await this.commandBus.execute(
+			new ExpenseUpdateCommand(id, entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -211,8 +226,10 @@ export class ExpenseController extends CrudController<Expense> {
 	async create(
 		@Body() entity: IExpenseCreateInput,
 		...options: any[]
-	): Promise<Expense> {
-		return this.commandBus.execute(new ExpenseCreateCommand(entity));
+	): Promise<IExpense> {
+		return await this.commandBus.execute(
+			new ExpenseCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({

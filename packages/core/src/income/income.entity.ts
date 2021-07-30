@@ -82,7 +82,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	employee: IEmployee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Income) => it.employee)
@@ -96,7 +96,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
 	@ManyToOne(() => OrganizationContact, { nullable: true })
 	@JoinColumn()
-	client: IOrganizationContact;
+	client?: IOrganizationContact;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Income) => it.client)

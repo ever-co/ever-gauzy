@@ -5,19 +5,19 @@ import { Proposal } from './proposal.entity';
 import { ProposalController } from './proposal.controller';
 import { ProposalService } from './proposal.service';
 import { Employee } from '../employee/employee.entity';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
+import { UserModule } from '../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([{ path: '/proposal', module: ProposalModule }]),
-		TypeOrmModule.forFeature([User, Proposal, Employee]),
-		TenantModule
+		TypeOrmModule.forFeature([Proposal, Employee]),
+		TenantModule,
+		UserModule
 	],
 	controllers: [ProposalController],
-	providers: [ProposalService, UserService, ...CommandHandlers],
-	exports: [ProposalService, UserService]
+	providers: [ProposalService, ...CommandHandlers],
+	exports: [ProposalService]
 })
 export class ProposalModule {}

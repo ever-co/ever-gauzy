@@ -1,4 +1,4 @@
-import { CrudController, IPagination } from '../core';
+import { CrudController, IPagination, PaginationParams } from '../core';
 import { Invoice } from './invoice.entity';
 import { InvoiceService } from './invoice.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -15,7 +15,9 @@ import {
 	Req,
 	Post,
 	Delete,
-	Res
+	Res,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { Response } from 'express';
@@ -29,7 +31,7 @@ import {
 	IInvoiceCreateInput,
 	IInvoiceUpdateInput
 } from '@gauzy/contracts';
-import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { I18nLang } from 'nestjs-i18n';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -54,8 +56,18 @@ export class InvoiceController extends CrudController<Invoice> {
 
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IInvoice>
+	): Promise<IPagination<IInvoice>> {
+		return this.invoiceService.pagination(filter);
+	}
+
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
-	async findAllInvoices(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IInvoice>> {
 		const { relations = [], findInput = null } = data;

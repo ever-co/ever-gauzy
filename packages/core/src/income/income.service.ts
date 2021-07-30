@@ -46,7 +46,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			: 0;
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {		
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('notes' in filters) {
@@ -73,6 +73,6 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 				}
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

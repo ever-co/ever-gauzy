@@ -353,7 +353,7 @@ export class ProposalsComponent
 			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
 		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint: `${API_PREFIX}/proposal/search/filter`,
+			endPoint: `${API_PREFIX}/proposal/pagination`,
 			relations: [
 				'organization',
 				'employee',

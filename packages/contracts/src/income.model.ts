@@ -2,17 +2,20 @@ import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag-entity.model';
+import { IOrganizationContact } from './organization-contact.model';
 
 export interface IIncome extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployee;
 	employeeId?: string;
 	amount: number;
 	clientId?: string;
+	client?: IOrganizationContact;
 	clientName: string;
 	currency: string;
 	valueDate?: Date;
 	notes?: string;
-	isBonus?: boolean;
+	isBonus: boolean;
+	reference?: string;
 	tags: ITag[];
 }
 

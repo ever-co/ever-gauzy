@@ -167,7 +167,7 @@ export class PaymentsComponent
 		}
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint: `${API_PREFIX}/payments/search/filter`,
+			endPoint: `${API_PREFIX}/payments/pagination`,
 			relations: [
 				'invoice',
 				'invoice.toContact',

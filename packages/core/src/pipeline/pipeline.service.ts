@@ -118,7 +118,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		return await manager.update(Pipeline, id, pipeline);
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('name' in where) {
@@ -130,6 +130,6 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 				filter.where.description = ILike(`%${description}%`)
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

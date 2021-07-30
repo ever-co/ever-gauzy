@@ -1,4 +1,4 @@
-import { CrudController, IPagination } from '../core';
+import { CrudController, IPagination, PaginationParams } from '../core';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	Controller,
@@ -12,7 +12,9 @@ import {
 	Body,
 	Post,
 	Delete,
-	Req
+	Req,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Payment } from './payment.entity';
@@ -41,11 +43,21 @@ export class PaymentController extends CrudController<Payment> {
 		super(paymentService);
 	}
 
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IPayment>
+	): Promise<IPagination<IPayment>> {
+		return this.paymentService.pagination(filter);
+	}
+
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get()
-	async findAllPayments(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IPayment>> {
 		const { relations = [], findInput = null } = data;
@@ -103,7 +115,7 @@ export class PaymentController extends CrudController<Payment> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Post()
-	async createPayment(@Body() entity: IPayment): Promise<any> {
+	async create(@Body() entity: IPayment): Promise<IPayment> {
 		return this.paymentService.create(entity);
 	}
 
@@ -126,10 +138,10 @@ export class PaymentController extends CrudController<Payment> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Put(':id')
-	async updatePayment(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IPayment
-	): Promise<any> {
+	): Promise<IPayment> {
 		return this.paymentService.create({
 			id,
 			...entity
@@ -140,7 +152,7 @@ export class PaymentController extends CrudController<Payment> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Delete(':id')
-	async deleteTask(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.paymentService.delete(id);
 	}
 }

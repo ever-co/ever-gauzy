@@ -7,6 +7,7 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
+	MethodNotAllowedException,
 	Param,
 	Post,
 	UseGuards
@@ -27,6 +28,11 @@ import { TenantService } from './tenant.service';
 export class TenantController extends CrudController<Tenant> {
 	constructor(private readonly tenantService: TenantService) {
 		super(tenantService);
+	}
+
+	@Get('pagination')
+	async pagination() {
+		throw new MethodNotAllowedException();
 	}
 
 	@ApiOperation({

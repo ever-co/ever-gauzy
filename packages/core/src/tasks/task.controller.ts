@@ -10,16 +10,18 @@ import {
 	BadRequestException,
 	UseGuards,
 	Post,
-	Delete
+	Delete,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Task } from './task.entity';
-import { CrudController, IPagination } from '../core';
+import { CrudController, IPagination, PaginationParams } from '../core';
 import { TaskService } from './task.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { PermissionsEnum, IGetTaskByEmployeeOptions } from '@gauzy/contracts';
+import { PermissionsEnum, IGetTaskByEmployeeOptions, ITask, ITaskUpdateInput, ITaskCreateInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
@@ -36,6 +38,14 @@ export class TaskController extends CrudController<Task> {
 		super(taskService);
 	}
 
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<ITask>
+	): Promise<IPagination<ITask>> {
+		return this.taskService.pagination(filter);
+	}
+
 	@ApiOperation({ summary: 'Find all tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -47,15 +57,10 @@ export class TaskController extends CrudController<Task> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllTasks(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Task>> {
-		const tenantId = RequestContext.currentTenantId();
+	): Promise<IPagination<ITask>> {
 		const { relations, findInput } = data;
-		if (!findInput.hasOwnProperty('tenantId')) {
-			findInput['tenantId'] = tenantId;
-		}
-
 		return this.taskService.findAll({
 			where: findInput,
 			relations
@@ -75,7 +80,7 @@ export class TaskController extends CrudController<Task> {
 	@Get('me')
 	async findMyTasks(
 		@Query() data: any
-	): Promise<IPagination<Task>> {
+	): Promise<IPagination<ITask>> {
 		return this.taskService.getMyTasks(data);
 	}
 
@@ -92,7 +97,7 @@ export class TaskController extends CrudController<Task> {
 	@Get('team')
 	async findTeamTasks(
 		@Query() data: any
-	): Promise<IPagination<Task>> {
+	): Promise<IPagination<ITask>> {
 		return this.taskService.findTeamTasks(data);
 	}
 
@@ -112,7 +117,7 @@ export class TaskController extends CrudController<Task> {
 	async getAllTasksByEmployee(
 		@Param('id') employeeId: string,
 		@Body() findInput: IGetTaskByEmployeeOptions
-	) {
+	): Promise<ITask[]> {
 		return this.taskService.getAllTasksByEmployee(employeeId, findInput);
 	}
 
@@ -130,12 +135,11 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
-	async createTask(@Body() entity: Task): Promise<Task> {
-		const user = RequestContext.currentUser();
+	async create(@Body() entity: ITaskCreateInput): Promise<ITask> {
 		return await this.commandBus.execute(
 			new TaskCreateCommand({
 				...entity,
-				creator: user
+				creator: RequestContext.currentUser()
 			})
 		);
 	}
@@ -160,8 +164,8 @@ export class TaskController extends CrudController<Task> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Task
-	): Promise<any> {
+		@Body() entity: ITaskUpdateInput
+	): Promise<ITask> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
