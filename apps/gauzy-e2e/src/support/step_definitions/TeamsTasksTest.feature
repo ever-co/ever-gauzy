@@ -1,4 +1,4 @@
-Feature: Tasks team test
+Feature: Teams tasks test
   Scenario: Login with email
     Given Login with default credentials
   Scenario: Add new tag
