@@ -1,4 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlotsBulkCreateCommand } from '../availability-slots.bulk.create.command';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { RequestContext } from '../../../core/context';
@@ -11,31 +12,20 @@ export class AvailabilitySlotsBulkCreateHandler
 
 	public async execute(
 		command: AvailabilitySlotsBulkCreateCommand
-	): Promise<AvailabilitySlot[]> {
+	): Promise<IAvailabilitySlot[]> {
 		const { input } = command;
-		const availabilitySlotsArray = [];
-
-		// const employee = input[0].employeeId
-		// 	? await this.employeeService.findOne(input[0].employeeId)
-		// 	: null;
-		// const organization = await this.organizationService.findOne(
-		// 	input[0].organizationId
-		// );
-
-		const { tenantId } = RequestContext.currentUser();
-
-		for (const o of input) {
+		const allAvailabilitySlots: IAvailabilitySlot[] = [];
+		const tenantId = RequestContext.currentTenantId();
+		for (const item of input) {
 			let availabilitySlots = new AvailabilitySlot({
-				...o,
+				...item,
 				tenantId
 			});
-
 			availabilitySlots = await this.commandBus.execute(
 				new AvailabilitySlotsCreateCommand(availabilitySlots)
 			);
-			availabilitySlotsArray.push(availabilitySlots);
+			allAvailabilitySlots.push(availabilitySlots);
 		}
-
-		return availabilitySlotsArray;
+		return allAvailabilitySlots;
 	}
 }

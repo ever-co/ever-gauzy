@@ -1,4 +1,4 @@
-import { IAvailabilitySlotsCreateInput } from '@gauzy/contracts';
+import { IAvailabilitySlot, IAvailabilitySlotsCreateInput } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -16,11 +16,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { AvailabilitySlotsCreateCommand } from './commands/availability-slots.create.command';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
-import { AvailabilitySlotsBulkCreateCommand } from './commands/availability-slots.bulk.create.command';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from '../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { AvailabilitySlotsBulkCreateCommand, AvailabilitySlotsCreateCommand } from './commands';
 
 @ApiTags('AvailabilitySlots')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -45,10 +45,9 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 	})
 	@Get()
 	async findAllAvailabilitySlots(
-		@Query('data') data: string
-	): Promise<IPagination<AvailabilitySlot>> {
-		const { relations, findInput } = JSON.parse(data);
-
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IAvailabilitySlot>> {
+		const { relations, findInput } = data;
 		return this.availabilitySlotsService.findAll({
 			where: findInput,
 			relations
@@ -68,10 +67,10 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
-		@Body() entity: AvailabilitySlot,
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: IAvailabilitySlot,
 		...options: any[]
-	): Promise<any> {
+	): Promise<IAvailabilitySlot> {
 		return this.availabilitySlotsService.create({
 			id,
 			...entity
@@ -92,8 +91,8 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 	async create(
 		@Body() entity: IAvailabilitySlotsCreateInput,
 		...options: any[]
-	): Promise<AvailabilitySlot> {
-		return this.commandBus.execute(
+	): Promise<IAvailabilitySlot> {
+		return await this.commandBus.execute(
 			new AvailabilitySlotsCreateCommand(entity)
 		);
 	}
@@ -112,8 +111,8 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 	@Post('/bulk')
 	async createManyWithEmailsId(
 		@Body() entity: IAvailabilitySlotsCreateInput[]
-	): Promise<IAvailabilitySlotsCreateInput[]> {
-		return this.commandBus.execute(
+	): Promise<IAvailabilitySlot[]> {
+		return await this.commandBus.execute(
 			new AvailabilitySlotsBulkCreateCommand(entity)
 		);
 	}

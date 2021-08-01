@@ -4,7 +4,6 @@ import {
 	clickButton,
 	clearField,
 	clickButtonByIndex,
-	clickElementByText,
 	waitElementToHide,
 	clickButtonByText,
 	verifyText,
@@ -65,8 +64,8 @@ export const clickProductCategoryDrodpwon = () => {
 	clickButton(OrganizationInventoryPage.productCategoryDropdownCss);
 };
 
-export const clickDropdownOption = (text) => {
-	clickElementByText(OrganizationInventoryPage.dropdownOptionCss, text);
+export const clickDropdownOption = (index) => {
+	clickButtonByIndex(OrganizationInventoryPage.dropdownOptionCss, index);
 };
 
 export const nameInputVisible = () => {

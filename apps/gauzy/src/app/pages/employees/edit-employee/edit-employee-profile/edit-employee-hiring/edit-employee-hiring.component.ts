@@ -27,7 +27,7 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 			validators: [
 				CompareDateValidators.validateDate('offerDate', 'acceptDate'),
 				CompareDateValidators.validateDate('offerDate', 'rejectDate')
-			] 
+			]
 		});
 	}
 

@@ -6,6 +6,8 @@ export const CustomersPage = {
 	deleteButtonCss: 'div.mb-3 > button[status="danger"]',
 	nameInputCss: '#name',
 	emailInputCss: '#email',
+	budgetInpuCss: 'input[formcontrolname="budget"]',
+	lastStepBtnCss: 'div.step-content > form > div > button[status="success"]',
 	phoneInputCss: '[formcontrolname="primaryPhone"]',
 	countryDropdownCss: 'ga-country div.form-group nb-select',
 	cityInpuCss: '[formcontrolname="city"]',

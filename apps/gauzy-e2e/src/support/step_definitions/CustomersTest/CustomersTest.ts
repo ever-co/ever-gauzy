@@ -14,6 +14,8 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let email = faker.internet.email();
 let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
 let deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
@@ -71,7 +73,7 @@ And('User can visit Contacts customers page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/contacts/customers');
+	cy.visit('/#/pages/contacts/customers', { timeout: pageLoadTimeout });
 });
 
 Then('User can see grid button', () => {
@@ -197,6 +199,22 @@ And('User can see next button', () => {
 
 When('User click on next button', () => {
 	customersPage.clickNextButton();
+});
+
+Then('User can see hours input field', () => {
+	customersPage.budgetInputVisible();
+});
+
+And('User can enter value for hours', () => {
+	customersPage.enterBudgetData(CustomersPageData.hours);
+});
+
+And('User can see last step button', () => {
+	customersPage.lastStepBtnVisible();
+});
+
+When('User click on last step button', () => {
+	customersPage.clickLastStepBtn();
 });
 
 And('User can see employee dropdown', () => {
@@ -376,6 +394,22 @@ And('User can see next button', () => {
 
 When('User click on next button', () => {
 	customersPage.clickNextButton();
+});
+
+Then('User can see hours input field', () => {
+	customersPage.budgetInputVisible();
+});
+
+And('User can enter value for hours', () => {
+	customersPage.enterBudgetData(CustomersPageData.hours);
+});
+
+And('User can see last step button', () => {
+	customersPage.lastStepBtnVisible();
+});
+
+When('User click on last step button', () => {
+	customersPage.clickLastStepBtn();
 });
 
 Then('User can see finish button', () => {

@@ -10,6 +10,8 @@ import * as editUserPage from '../../Base/pages/EditUser.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
 let username = faker.internet.userName();
@@ -22,7 +24,7 @@ let editLastName = faker.name.lastName();
 // Login with email
 Given('Login with default credentials and visit Users page', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/users');
+	cy.visit('/#/pages/users', { timeout: pageLoadTimeout });
 });
 
 // Add new user

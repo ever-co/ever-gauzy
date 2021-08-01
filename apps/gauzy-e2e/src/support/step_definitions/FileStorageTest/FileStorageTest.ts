@@ -7,6 +7,8 @@ import { CustomCommands } from '../../commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -14,7 +16,7 @@ Given('Login with default credentials', () => {
 
 // Add S3 file provider
 And('User can visit File storage page', () => {
-	cy.visit('/#/pages/settings/file-storage');
+	cy.visit('/#/pages/settings/file-storage', { timeout: pageLoadTimeout });
 });
 
 And('User can verify File storage page', () => {

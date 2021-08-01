@@ -108,6 +108,10 @@ export const CustomCommands = {
 		contactsLeadsPage.enterStreetInputData(street);
 		contactsLeadsPage.verifyNextButtonVisible();
 		contactsLeadsPage.clickNextButton();
+		contactsLeadsPage.budgetInputVisible();
+		contactsLeadsPage.enterBudgetData(ContactsLeadsPageData.hours);
+		contactsLeadsPage.lastStepBtnVisible();
+		contactsLeadsPage.clickLastStepBtn();
 		contactsLeadsPage.selectEmployeeDropdownVisible();
 		contactsLeadsPage.clickSelectEmployeeDropdown();
 		contactsLeadsPage.selectEmployeeDropdownOption(0);
@@ -128,13 +132,13 @@ export const CustomCommands = {
 		organizationTeamsPage.tagsMultyselectVisible();
 		organizationTeamsPage.clickTagsMultyselect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickEmployeeDropdown();
 		organizationTeamsPage.selectEmployeeFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickManagerDropdown();
 		organizationTeamsPage.selectManagerFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
 	},
@@ -294,6 +298,10 @@ export const CustomCommands = {
 		clientsPage.enterStreetInputData(street);
 		clientsPage.nextButtonVisible();
 		clientsPage.clickNextButton();
+		clientsPage.budgetInputVisible();
+		clientsPage.enterBudgetData(ClientsData.hours);
+		clientsPage.lastStepBtnVisible();
+		clientsPage.clickLastStepBtn();
 		clientsPage.selectEmployeeDropdownVisible();
 		clientsPage.clickSelectEmployeeDropdown();
 		clientsPage.selectEmployeeDropdownOption(0);
@@ -434,5 +442,12 @@ export const CustomCommands = {
 		dashboradPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
+	},
+	getIframeBody: () => {
+		return cy
+			.get('iframe[class="cke_wysiwyg_frame cke_reset"]')
+			.its('1.contentDocument.body')
+			.should('not.be.empty')
+			.then(cy.wrap);
 	}
 };

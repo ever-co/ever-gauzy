@@ -16,6 +16,8 @@ import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationPr
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
 let username = faker.internet.userName();
@@ -90,7 +92,7 @@ Then('User can visit Invoices page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/accounting/invoices');
+	cy.visit('/#/pages/accounting/invoices', { timeout: pageLoadTimeout });
 });
 
 And('User can see grid button', () => {
@@ -506,61 +508,3 @@ When('User click on confirm delete button', () => {
 Then('Notification message will appear', () => {
 	invoicesPage.waitMessageToHide();
 });
-
-// describe('Invoices test', () => {
-
-// 	it('Should be able to send invoice', () => {
-// 		invoicesPage.selectTableRow(0);
-// 		invoicesPage.moreButtonVisible();
-// 		invoicesPage.clickMoreButton();
-// 		invoicesPage.actionButtonVisible();
-// 		invoicesPage.clickActionButtonByText(InvoicesPageData.sendButton);
-// 		invoicesPage.confirmButtonVisible();
-// 		invoicesPage.clickConfirmButton();
-// 		invoicesPage.waitMessageToHide();
-// 		invoicesPage.verifySentBadgeClass();
-// 	});
-// 	it('Should be able to view invoice', () => {
-// 		invoicesPage.selectTableRow(0);
-// 		invoicesPage.viewButtonVisible();
-// 		invoicesPage.clickViewButton(1);
-// 		invoicesPage.backButtonVisible();
-// 		invoicesPage.clickBackButton();
-// 	});
-// 	it('Should be able to send invoice by email', () => {
-// 		cy.on('uncaught:exception', (err, runnable) => {
-// 			return false;
-// 		});
-// 		invoicesPage.selectTableRow(0);
-// 		invoicesPage.moreButtonVisible();
-// 		invoicesPage.clickMoreButton();
-// 		invoicesPage.actionButtonVisible();
-// 		invoicesPage.clickActionButtonByText(InvoicesPageData.emailButton);
-// 		invoicesPage.scrollEmailInviteTemplate();
-// 		invoicesPage.emailInputVisible();
-// 		invoicesPage.enterEmailData(sendEmail);
-// 		invoicesPage.confirmButtonVisible();
-// 		invoicesPage.clickConfirmButton();
-// 		invoicesPage.waitMessageToHide();
-// 		invoicesPage.verifySentBadgeClass();
-// 	});
-// 	it('Should be able to set invoice status', () => {
-// 		invoicesPage.waitMessageToHide();
-// 		invoicesPage.selectTableRow(0);
-// 		invoicesPage.setStatusButtonVisible();
-// 		invoicesPage.clickSetStatusButton(InvoicesPageData.setStatusButton);
-// 		invoicesPage.setStatusFromDropdown(InvoicesPageData.status);
-// 	});
-// 	it('Should be able to delete invoice', () => {
-// 		invoicesPage.waitMessageToHide();
-// 		invoicesPage.selectTableRow(0);
-// 		invoicesPage.moreButtonVisible();
-// 		invoicesPage.clickMoreButton();
-// 		invoicesPage.deleteButtonVisible();
-// 		invoicesPage.clickDeleteButton();
-// 		invoicesPage.confirmDeleteButtonVisible();
-// 		invoicesPage.clickConfirmDeleteButton();
-// 		invoicesPage.waitMessageToHide();
-// 		invoicesPage.verifyElementIsDeleted(InvoicesPageData.emptyTableText);
-// 	});
-// });

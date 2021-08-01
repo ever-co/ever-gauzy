@@ -29,7 +29,7 @@ describe('Register Test', () => {
 
 	it('Should able to create new account', () => {
 		loginPage.verifyLoginText();
-		registerPage.clickRegisterLink();
+		registerPage.clickRegisterLink(0);
 		registerPage.enterFullName(fullName);
 		registerPage.enterEmail(email);
 		registerPage.enterPassword(pass);

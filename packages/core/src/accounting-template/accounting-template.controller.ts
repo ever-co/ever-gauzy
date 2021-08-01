@@ -41,7 +41,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	}
 
 	@ApiOperation({
-		summary: 'Gets template bu id'
+		summary: 'Gets template by id'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,

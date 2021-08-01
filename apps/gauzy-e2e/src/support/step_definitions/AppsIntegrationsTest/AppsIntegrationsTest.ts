@@ -7,6 +7,8 @@ import { CustomCommands } from '../../commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -14,7 +16,7 @@ Given('Login with default credentials', () => {
 
 // Verify dropdown text
 Then('User can visit Integrations page', () => {
-	cy.visit('/#/pages/integrations/list');
+	cy.visit('/#/pages/integrations/list', { timeout: pageLoadTimeout });
 	appsIntegrationsPage.verifyHeaderText(AppsIntegrationsPageData.header);
 });
 

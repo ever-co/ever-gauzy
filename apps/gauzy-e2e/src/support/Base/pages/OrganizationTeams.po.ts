@@ -48,12 +48,20 @@ export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(OrganizationTeamsPage.tagsSelectOptionCss, index);
 };
 
+export const employeeDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationTeamsPage.employeeMultyselectCss);
+};
+
 export const clickEmployeeDropdown = () => {
 	clickButton(OrganizationTeamsPage.employeeMultyselectCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(OrganizationTeamsPage.selectDropdownOptionCss, index);
+};
+
+export const managerDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationTeamsPage.managerMultyselectCss);
 };
 
 export const clickManagerDropdown = () => {
@@ -68,8 +76,8 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
 };
 
-export const clickCardBody = () => {
-	clickButton(OrganizationTeamsPage.cardBodyCss);
+export const clickCardBody = (index) => {
+	clickButtonByIndex(OrganizationTeamsPage.cardBodyCss, index);
 };
 
 export const saveButtonVisible = () => {
