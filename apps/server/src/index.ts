@@ -24,7 +24,7 @@ import {
 } from '@gauzy/desktop-window';
 // import { initSentry } from './sentry';
 import os from 'os';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 
 process.env.GAUZY_USER_PATH = app.getPath('userData');
 log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
@@ -44,10 +44,12 @@ let settingsWindow: BrowserWindow;
 let tray:Tray;
 const pathWindow: {
 	gauzyUi: string,
-	ui: string
+	ui: string,
+	dir: string
 } = {
 	gauzyUi: app.isPackaged ? path.join(__dirname, '../data/ui/index.html') : path.join(__dirname, './data/ui/index.html'),
-	ui: path.join(__dirname, 'index.html')
+	ui: path.join(__dirname, 'index.html'),
+	dir: app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui')
 };
 
 const runSetup = () => {
@@ -74,6 +76,21 @@ const appState = () => {
 const runMainWindow = () => {
 	serverWindow = createServerWindow(serverWindow, null, pathWindow.ui);
 	serverWindow.show();
+	if (!tray) {
+		createTray();
+	}
+
+	new AppMenu(
+		null,
+		settingsWindow,
+		null,
+		null,
+		pathWindow
+	);
+	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById(
+		'window-setting'
+	);
+	if (menuWindowSetting) menuWindowSetting.enabled = true;
 	if (setupWindow) setupWindow.hide();
 }
 
@@ -104,9 +121,18 @@ const updateConfigUi = (config) => {
 
 	// write file new html
 
-	writeFileSync(pathWindow.gauzyUi, filestr);
+	try {
+		accessSync(pathWindow.dir, constants.W_OK);
+	} catch (e) {
+		console.error('Cannot access directory')
+	}
 
-	// console.log(filestr);
+	try {
+		writeFileSync(pathWindow.gauzyUi, filestr);
+	} catch (error) {
+		console.log('Cannot change html file', error);
+	}
+
 	
 }
 
@@ -163,10 +189,11 @@ const createServer = (typeServer) => {
 
 const runServer = () => {
 	const envVal = getEnvApi();
+	const uiPort = getUiPort();
 	apiServer({
 		ui: path.join(__dirname, 'preload', 'ui-server.js'),
 		api: path.join(__dirname, 'api/main.js')
-	}, envVal, serverWindow);
+	}, envVal, serverWindow, uiPort);
 }
 
 const getEnvApi = () => {
@@ -184,6 +211,11 @@ const getEnvApi = () => {
 	}
 }
 
+const getUiPort = () => {
+	const config = LocalStore.getStore('configs');
+	return config.portUi;
+}
+
 const createTray = () => {
 	const iconNativePath = nativeImage.createFromPath(path.join(
 		__dirname,
@@ -198,7 +230,8 @@ const createTray = () => {
 			id: '1',
 			label: 'Open Gauzy In Browser',
 			click() {
-				shell.openExternal('http://localhost:8084')
+				const config = LocalStore.getStore('configs');
+				shell.openExternal(`http://localhost:${config.portUi}`)
 			}
 		},
 		{
@@ -247,6 +280,7 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 			LocalStore.updateConfigSetting({
 				apiPid: null
 			})
+			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
 		} catch (error) {
 			
 		}
@@ -257,6 +291,7 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 			LocalStore.updateConfigSetting({
 				uiPid: null
 			})
+			serverWindow.webContents.send('log_state', { msg: 'UI stopped' });
 		} catch (error) {
 			
 		}
@@ -272,21 +307,6 @@ app.on('ready', () => {
 			pathWindow.ui
 		);
 	}
-	if (!tray) {
-		createTray();
-	}
-
-	new AppMenu(
-		null,
-		settingsWindow,
-		null,
-		null,
-		pathWindow
-	);
-	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById(
-		'window-setting'
-	);
-	if (menuWindowSetting) menuWindowSetting.enabled = true;
 })
 
 ipcMain.on('restart_app', (event, arg) => {

@@ -11,20 +11,13 @@
 							</div>
 							<div class="col-12 text-center margin-content">
 								<h4>WELCOME TO</h4>
-								<h4>GAUZY PLATFORM WIZARD</h4>
+								<h4>{{welcomeTitle}}</h4>
 							</div>
 							<div class="col-12 text-center margin-content">
 								<div class="row">
 									<div class="col-10 text-center col-center">
 										<p>
-											Gauzy Desktop App provides the full
-											functionality of the Gauzy Platform
-											available directly on your desktop
-											computer or a laptop. In addition,
-											it allows tracking work time,
-											activity recording, and the ability
-											to receive tracking
-											reminders/notifications.
+											{{welcomeLabel}}
 										</p>
 									</div>
 								</div>
@@ -161,7 +154,7 @@
 							</div>
 						</div>
 					</nb-step>
-					<nb-step label="CONNECTIVITY">
+					<nb-step label="CONNECTIVITY" *ngIf="appName !== 'gauzy-server'">
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
 								<h4>
@@ -574,7 +567,7 @@
 								class="col-10 text-center margin-setting-content col-center"
 								*ngIf="connectivity.integrated"
 							>
-								<div class="col-5 col-center margin-form">
+								<div class="col-5 col-center margin-form" *ngIf="appName !== 'gauzy-server'">
 									<div class="row">
 										<div class="col-3 col-center">
 											<span class="integraion-label"
@@ -589,6 +582,45 @@
 												status="basic"
 												[(ngModel)]="
 													serverConfig.integrated.port
+												"
+												(ngModelChange)="validation()"
+											/>
+										</div>
+									</div>
+								</div>
+
+								<div class="col-7 col-center margin-form" *ngIf="appName === 'gauzy-server'">
+									<div class="row">
+										<div class="col-4 col-center">
+											<span class="integraion-label"
+												>PORT API</span
+											>
+										</div>
+										<div class="col-3">
+											<input
+												type="number"
+												nbInput
+												fullWidth
+												status="basic"
+												[(ngModel)]="
+													serverConfig.integrated.port
+												"
+												(ngModelChange)="validation()"
+											/>
+										</div>
+										<div class="col-2 col-center">
+											<span class="integraion-label"
+												>UI</span
+											>
+										</div>
+										<div class="col-3">
+											<input
+												type="number"
+												nbInput
+												fullWidth
+												status="basic"
+												[(ngModel)]="
+													serverConfig.integrated.portUi
 												"
 												(ngModelChange)="validation()"
 											/>

@@ -71,7 +71,8 @@
 				}
 			],
 			"icon": "icon.ico",
-			"verifyUpdateCodeSignature": false
+			"verifyUpdateCodeSignature": false,
+			"requestedExecutionLevel": "requireAdministrator"
 		},
 		"linux": {
 			"icon": "icon.png",
