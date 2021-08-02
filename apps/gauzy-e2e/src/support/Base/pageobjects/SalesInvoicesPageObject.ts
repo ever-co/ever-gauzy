@@ -11,7 +11,7 @@ export const SalesInvoicesPage = {
 	discountInputCss: '#inputDiscountValue',
 	discountTypeDropdownCss: '[formcontrolname="discountType"]',
 	dropdownOptionCss: '.option-list nb-option',
-	organizationContactDropdownCss: '#inputOrganizationContact',
+	organizationContactDropdownCss: 'div.col-sm-6 > ga-contact-select > ng-select',
 	contactOptionCss: 'div.ng-option',
 	taxInputCss: '#inputTax',
 	taxTypeDropdownCss: '[formcontrolname="taxType"]',

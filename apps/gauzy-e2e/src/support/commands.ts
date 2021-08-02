@@ -132,13 +132,13 @@ export const CustomCommands = {
 		organizationTeamsPage.tagsMultyselectVisible();
 		organizationTeamsPage.clickTagsMultyselect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickEmployeeDropdown();
 		organizationTeamsPage.selectEmployeeFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickManagerDropdown();
 		organizationTeamsPage.selectManagerFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
 	},
@@ -442,5 +442,12 @@ export const CustomCommands = {
 		dashboradPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
+	},
+	getIframeBody: () => {
+		return cy
+			.get('iframe[class="cke_wysiwyg_frame cke_reset"]')
+			.its('1.contentDocument.body')
+			.should('not.be.empty')
+			.then(cy.wrap);
 	}
 };

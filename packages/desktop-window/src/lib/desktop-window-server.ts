@@ -46,8 +46,8 @@ const windowSetting = () => {
 			enableRemoteModule: true,
 			contextIsolation: false
 		},
-		width: 800,
-		height: 600,
+		width: 1280,
+		height: 860,
 		title: '',
 		show: false
 	};
