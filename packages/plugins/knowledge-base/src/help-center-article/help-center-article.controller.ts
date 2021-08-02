@@ -17,7 +17,8 @@ import {
 	CrudController,
 	TenantPermissionGuard,
 	PermissionGuard,
-	ParseJsonPipe
+	ParseJsonPipe,
+	UUIDValidationPipe
 } from '@gauzy/core';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
@@ -65,7 +66,7 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	@UseGuards(PermissionGuard)
 	@Get(':categoryId')
 	async findByCategoryId(
-		@Param('categoryId') categoryId: string
+		@Param('categoryId', UUIDValidationPipe) categoryId: string
 	): Promise<HelpCenterArticle[]> {
 		return this.helpCenterService.getArticlesByCategoryId(categoryId);
 	}

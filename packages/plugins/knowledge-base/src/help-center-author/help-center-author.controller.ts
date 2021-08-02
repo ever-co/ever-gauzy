@@ -23,7 +23,8 @@ import {
 	IPagination,
 	ParseJsonPipe,
 	PermissionGuard,
-	TenantPermissionGuard
+	TenantPermissionGuard,
+	UUIDValidationPipe
 } from '@gauzy/core';
 
 @ApiTags('KnowledgeBaseAuthor')
@@ -51,7 +52,7 @@ export class HelpCenterAuthorController extends CrudController<HelpCenterAuthor>
 	@UseGuards(PermissionGuard)
 	@Get(':articleId')
 	async findByArticleId(
-		@Param('articleId') articleId: string
+		@Param('articleId', UUIDValidationPipe) articleId: string
 	): Promise<HelpCenterAuthor[]> {
 		return this.helpCenterAuthorService.findByArticleId(articleId);
 	}
@@ -69,7 +70,7 @@ export class HelpCenterAuthorController extends CrudController<HelpCenterAuthor>
 		description: 'Record not found'
 	})
 	@Get()
-	async getAll(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<HelpCenterAuthor>> {
 		const { relations = [], findInput = null } = data;

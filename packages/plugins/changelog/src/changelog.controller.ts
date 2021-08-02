@@ -25,8 +25,7 @@ import {
 } from '@gauzy/core';
 import { Changelog } from './changelog.entity';
 import { ChangelogService } from './changelog.service';
-import { ChangelogUpdateCommand } from './commands/changelog.update.command';
-import { ChangelogCreateCommand } from './commands/changelog.create.command';
+import { ChangelogCreateCommand, ChangelogUpdateCommand } from './commands';
 
 @ApiTags('Changelog')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -68,7 +67,9 @@ export class ChangelogController extends CrudController<Changelog> {
 	async createSmtpSetting(
 		@Body() entity: IChangelogCreateInput
 	): Promise<IChangelog> {
-		return this.commandBus.execute(new ChangelogCreateCommand(entity));
+		return await this.commandBus.execute(
+			new ChangelogCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update record' })
@@ -90,7 +91,7 @@ export class ChangelogController extends CrudController<Changelog> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IChangelogUpdateInput
 	): Promise<IChangelog> {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new ChangelogUpdateCommand({ id, ...entity })
 		);
 	}

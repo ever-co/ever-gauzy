@@ -54,7 +54,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<HelpCenter>> {
+	): Promise<IPagination<IHelpCenter>> {
 		const { relations = [], findInput = null } = data;
 		return this.helpCenterService.findAll({
 			relations,
@@ -73,7 +73,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post()
-	async create(@Body() entity: IHelpCenter): Promise<any> {
+	async create(@Body() entity: IHelpCenter): Promise<IHelpCenter> {
 		return this.helpCenterService.create(entity);
 	}
 
@@ -113,7 +113,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@Get(':baseId')
 	async findByBaseId(
 		@Param('baseId', UUIDValidationPipe) baseId: string
-	): Promise<HelpCenter[]> {
+	): Promise<IHelpCenter[]> {
 		return this.helpCenterService.getCategoriesByBaseId(baseId);
 	}
 

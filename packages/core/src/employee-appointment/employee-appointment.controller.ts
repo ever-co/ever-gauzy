@@ -33,7 +33,7 @@ import { TenantPermissionGuard } from '../shared/guards';
 export class EmployeeAppointmentController extends CrudController<EmployeeAppointment> {
 	constructor(
 		private readonly employeeAppointmentService: EmployeeAppointmentService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(employeeAppointmentService);
 	}
@@ -51,7 +51,7 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployeeAppointments(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEmployeeAppointment>> {
 		const { relations, findInput } = data;

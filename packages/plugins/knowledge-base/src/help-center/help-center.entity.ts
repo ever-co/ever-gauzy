@@ -1,5 +1,6 @@
-import { Entity, Column, ManyToOne, OneToMany, JoinTable } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from '../help-center-article';
@@ -43,26 +44,38 @@ export class HelpCenter
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	index: number;
-
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
 	@ManyToOne(() => HelpCenter, (children) => children.children, {
 		cascade: ['insert'],
 		nullable: true
 	})
 	parent?: IHelpCenter;
 
+	@ApiProperty({ type: () => String })
+	@RelationId((it: HelpCenter) => it.parent)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	parentId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
 	@OneToMany(() => HelpCenter, (children) => children.parent, {
 		cascade: ['insert'],
 		nullable: true
 	})
 	children?: IHelpCenter[];
 
-	@ManyToOne(() => HelpCenterArticle, { cascade: true })
-	@JoinTable({
-		name: 'HelpCenterArticle'
+	@OneToMany(() => HelpCenterArticle, (article) => article.category, {
+		onDelete: 'CASCADE'
 	})
 	articles?: IHelpCenterArticle[];
-
-	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
-	parentId?: string;
 }

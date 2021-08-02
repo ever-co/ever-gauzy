@@ -7,7 +7,7 @@ import { HelpCenterArticle } from '../help-center-article/help-center-article.en
 export const createDefaultHelpCenterAuthor = async (
 	connection: Connection,
 	defaultEmployees: IEmployee[]
-): Promise<HelpCenterAuthor[]> => {
+): Promise<IHelpCenterAuthor[]> => {
 	if (!defaultEmployees) {
 		console.warn(
 			'Warning: defaultEmployees not found, default help center author not be created'
@@ -33,7 +33,7 @@ export const createRandomHelpCenterAuthor = async (
 	connection: Connection,
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]> | void
-): Promise<HelpCenterAuthor[]> => {
+): Promise<IHelpCenterAuthor[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
 			'Warning: tenantEmployeeMap not found, help center author not be created'

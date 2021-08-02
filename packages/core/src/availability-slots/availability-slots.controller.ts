@@ -44,7 +44,7 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllAvailabilitySlots(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IAvailabilitySlot>> {
 		const { relations, findInput } = data;
