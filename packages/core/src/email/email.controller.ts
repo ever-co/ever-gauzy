@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { IEmail, IEmailUpdateInput } from '@gauzy/contracts';
 import { CrudController } from '../core/crud/crud.controller';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
@@ -39,9 +40,9 @@ export class EmailController extends CrudController<Email> {
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Email>> {
+	): Promise<IPagination<IEmail>> {
 		const { relations, findInput, take } = data;
-		const response = await this.emailService.findAll({
+		return await this.emailService.findAll({
 			where: findInput,
 			relations,
 			order: {
@@ -49,13 +50,6 @@ export class EmailController extends CrudController<Email> {
 			},
 			take: take
 		});
-
-		response.items.forEach((email) => {
-			const name = email.emailTemplate.name;
-			email.emailTemplate.name = name.split('/')[0].split('-').join(' ');
-		});
-
-		return response;
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -74,7 +68,10 @@ export class EmailController extends CrudController<Email> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: Email): Promise<any> {
-		return this.emailService.update(id, entity);
+	async update(
+		@Param('id', UUIDValidationPipe) id: string, 
+		@Body() entity: IEmailUpdateInput
+	): Promise<any> {
+		return await this.emailService.update(id, entity);
 	}
 }

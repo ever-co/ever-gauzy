@@ -33,6 +33,18 @@ import { UUIDValidationPipe } from './../../shared/pipes';
 export abstract class CrudController<T extends BaseEntity> {
 	protected constructor(private readonly crudService: ICrudService<T>) {}
 
+	@ApiOperation({ summary: 'Find all records counts' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records count'
+	})
+	@Get('count')
+    async getCount(
+		filter?: PaginationParams<T>
+	): Promise<number> {
+        return await this.crudService.count(filter);
+    }
+
 	@ApiOperation({ summary: 'Find all records using pagination' })
 	@ApiResponse({
 		status: HttpStatus.OK,

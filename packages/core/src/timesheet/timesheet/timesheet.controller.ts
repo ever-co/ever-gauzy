@@ -56,7 +56,7 @@ export class TimeSheetController extends CrudController<Timesheet> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/count')
-	async getCount(@Query() entity: IGetTimesheetInput): Promise<any> {
+	async getTimesheetCount(@Query() entity: IGetTimesheetInput): Promise<any> {
 		return await this.timeSheetService.getTimeSheetCount(entity);
 	}
 

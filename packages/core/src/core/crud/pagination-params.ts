@@ -6,7 +6,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsOptional, Max, Min } from 'class-validator';
 
-export enum OrderType {
+export enum OrderTypeEnum {
 	DESC = 'DESC',
 	ASC = 'ASC'
 }
@@ -39,5 +39,5 @@ export abstract class PaginationParams<T> {
 	 */
 	@ApiPropertyOptional()
 	@IsOptional()
-	abstract readonly order?: { [P in keyof T]?: OrderType };
+	abstract readonly order?: { [P in keyof T]?: OrderTypeEnum };
 }

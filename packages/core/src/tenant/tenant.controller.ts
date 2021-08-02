@@ -4,12 +4,14 @@ import {
 	Body,
 	Controller,
 	Delete,
+	ForbiddenException,
 	Get,
 	HttpCode,
 	HttpStatus,
 	MethodNotAllowedException,
 	Param,
 	Post,
+	Put,
 	UseGuards
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -59,6 +61,26 @@ export class TenantController extends CrudController<Tenant> {
 		});
 	}
 
+	@ApiOperation({ summary: 'Find by id' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<ITenant> {
+		const tenantId = RequestContext.currentTenantId();
+		if (id !== tenantId) {
+			throw new ForbiddenException();
+		}
+		return this.tenantService.findOne(tenantId);
+	}
+
 	@ApiOperation({
 		summary:
 			'Create new tenant. The user who creates the tenant is given the super admin role.'
@@ -83,6 +105,33 @@ export class TenantController extends CrudController<Tenant> {
 	}
 
 	@ApiOperation({
+		summary:
+			'Update existin tenant. The user who updates the tenant is given the super admin role.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: ITenantCreateInput
+	): Promise<ITenant> {
+		const tenantId = RequestContext.currentTenantId();
+		if (id !== tenantId) {
+			throw new ForbiddenException();
+		}
+		await this.tenantService.update(id, entity);
+		return await this.findById(id);
+	}
+
+	@ApiOperation({
 		summary: 'Delete tenant',
 		security: [
 			{
@@ -102,7 +151,13 @@ export class TenantController extends CrudController<Tenant> {
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: string) {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	) {
+		const tenantId = RequestContext.currentTenantId();
+		if (id !== tenantId) {
+			throw new ForbiddenException();
+		}
 		return await this.tenantService.delete(id);
 	}
 }
