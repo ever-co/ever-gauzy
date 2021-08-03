@@ -16,7 +16,7 @@ import {
 	ITimerStatusInput
 } from '@gauzy/contracts';
 import { TimerService } from './timer.service';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from '../../shared/guards';
 
 @ApiTags('Timer')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -38,7 +38,7 @@ export class TimerController {
 	async getTimerStatus(
 		@Query() require: ITimerStatusInput
 	): Promise<ITimerStatus> {
-		return this.timerService.getTimerStatus(require);
+		return await this.timerService.getTimerStatus(require);
 	}
 
 	@ApiOperation({ summary: 'Toggle timer' })
@@ -53,7 +53,7 @@ export class TimerController {
 	})
 	@Post('/toggle')
 	async toggleTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
-		return this.timerService.toggleTimeLog(entity);
+		return await this.timerService.toggleTimeLog(entity);
 	}
 
 	@ApiOperation({ summary: 'Start timer' })
@@ -68,7 +68,7 @@ export class TimerController {
 	})
 	@Post('/start')
 	async startTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
-		return this.timerService.startTimer(entity);
+		return await this.timerService.startTimer(entity);
 	}
 
 	@ApiOperation({ summary: 'Stop timer' })
@@ -83,6 +83,6 @@ export class TimerController {
 	})
 	@Post('/stop')
 	async stopTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
-		return this.timerService.stopTimer(entity);
+		return await this.timerService.stopTimer(entity);
 	}
 }

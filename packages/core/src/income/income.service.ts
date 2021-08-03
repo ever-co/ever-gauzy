@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, ILike, In } from 'typeorm';
 import { Income } from './income.entity';
 import { getDateRangeFormat, IPagination } from '../core';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import * as moment from 'moment';
 
 @Injectable()
@@ -46,7 +46,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			: 0;
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {		
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('notes' in filters) {
@@ -73,6 +73,6 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 				}
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

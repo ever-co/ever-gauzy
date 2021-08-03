@@ -23,19 +23,18 @@ import {
 	Controller
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { CommandBus } from '@nestjs/cqrs';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	ApprovalPolicyCreateCommand,
 	ApprovalPolicyGetCommand,
 	ApprovalPolicyUpdateCommand,
 	RequestApprovalPolicyGetCommand
 } from './commands';
-import { UUIDValidationPipe } from '../shared';
+
 @ApiTags('ApprovalPolicy')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 @Controller()

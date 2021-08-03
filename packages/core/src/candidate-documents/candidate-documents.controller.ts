@@ -5,10 +5,10 @@ import { CandidateDocumentsService } from './candidate-documents.service';
 import { CandidateDocument } from './candidate-documents.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateDocument')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -35,9 +35,9 @@ export class CandidateDocumentsController extends CrudController<CandidateDocume
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW)
 	@Get()
 	async findDocument(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateDocument>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = data;
 		return this.candidateDocumentsService.findAll({ where: findInput });
 	}
 }

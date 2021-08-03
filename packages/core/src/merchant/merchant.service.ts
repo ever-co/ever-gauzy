@@ -1,16 +1,14 @@
-import { CrudService, IPagination, Merchant, Warehouse, ImageAsset, Contact } from 'core';
+import { IPagination, TenantAwareCrudService } from './../core/crud';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Contact, Merchant } from './../core/entities/internal';
 
+export class MerchantService extends TenantAwareCrudService<Merchant> {
 
-export class MerchantService extends CrudService<Merchant> {
-
-    constructor(@InjectRepository(Merchant)
-    private readonly merchantRepository: Repository<Merchant>,
-        @InjectRepository(Warehouse)
-        private readonly warehouseRepository: Repository<Warehouse>,
-        @InjectRepository(ImageAsset)
-        private readonly imageAssetRepository: Repository<ImageAsset>) {
+    constructor(
+        @InjectRepository(Merchant)
+        private readonly merchantRepository: Repository<Merchant>
+    ) {
         super(merchantRepository);
     }
 

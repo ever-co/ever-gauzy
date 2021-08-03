@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from '../core/crud';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -24,14 +24,17 @@ import { OrganizationService } from '../organization/organization.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 
 @Injectable()
-export class OrganizationTeamService extends CrudService<OrganizationTeam> {
+export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
+		
 		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService,
 		private readonly organizationService: OrganizationService,

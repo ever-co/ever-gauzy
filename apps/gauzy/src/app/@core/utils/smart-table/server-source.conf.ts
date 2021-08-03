@@ -2,8 +2,8 @@ export class ServerSourceConf {
 
     protected static readonly SORT_FIELD_KEY = 'orderBy';
     protected static readonly SORT_DIR_KEY = 'order';
-    protected static readonly PAGER_PAGE_KEY = 'page';
-    protected static readonly PAGER_LIMIT_KEY = 'limit';
+    protected static readonly PAGER_PAGE_KEY = 'skip';
+    protected static readonly PAGER_LIMIT_KEY = 'take';
     protected static readonly FILTER_FIELD_KEY = 'filters';
     protected static readonly TOTAL_KEY = 'total';
     protected static readonly DATA_KEY = 'items';

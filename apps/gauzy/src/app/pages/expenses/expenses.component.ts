@@ -460,7 +460,7 @@ export class ExpensesComponent
 			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
 		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint: `${API_PREFIX}/expense/search/filter`,
+			endPoint: `${API_PREFIX}/expense/pagination`,
 			relations: [
 				'employee',
 				'employee.user',

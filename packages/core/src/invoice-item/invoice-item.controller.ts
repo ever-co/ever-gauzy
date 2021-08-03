@@ -14,9 +14,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/contracts';
-import { ParseJsonPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { CommandBus } from '@nestjs/cqrs';
 import { InvoiceItemBulkCreateCommand } from './commands';
 
@@ -32,11 +31,10 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	}
 
 	@Get()
-	async findAllInvoiceItems(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IInvoiceItem>> {
 		const { relations = [], findInput = null } = data;
-
 		return this.invoiceItemService.findAll({
 			where: findInput,
 			relations
@@ -56,7 +54,7 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@UseGuards(PermissionGuard)
 	@Post('/createBulk/:invoiceId')
 	async createBulk(
-		@Param('invoiceId') invoiceId: string,
+		@Param('invoiceId', UUIDValidationPipe) invoiceId: string,
 		@Body() input: IInvoiceItemCreateInput[]
 	): Promise<any> {
 		return this.commandBus.execute(

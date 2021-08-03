@@ -6,7 +6,7 @@ export interface IPipelineStage
 	description: string;
 	pipeline: IPipeline;
 	index: number;
-	pipelineId?: string;
+	pipelineId: string;
 	id?: string;
 	name: string;
 }

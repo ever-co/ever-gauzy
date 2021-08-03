@@ -1,4 +1,4 @@
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import {
 	Injectable,
 	BadRequestException,
@@ -13,8 +13,9 @@ import { RequestContext } from '../core/context';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { getConfig } from '@gauzy/config';
 const config = getConfig();
+
 @Injectable()
-export class EquipmentSharingService extends CrudService<EquipmentSharing> {
+export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
 	constructor(
 		@InjectRepository(EquipmentSharing)
 		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,

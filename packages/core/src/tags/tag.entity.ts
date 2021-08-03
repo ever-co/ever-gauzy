@@ -108,6 +108,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	task?: ITask[];
 
 	@ManyToMany(() => Proposal, (proposal) => proposal.tags)
+	@JoinTable({ name: 'tag_proposal' })
 	proposal?: IProposal[];
 
 	@ManyToMany(

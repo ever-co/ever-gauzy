@@ -1,12 +1,12 @@
-import { CrudService, IPagination } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository } from 'typeorm';
 import { IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 
 @Injectable()
-export class EquipmentSharingPolicyService extends CrudService<EquipmentSharingPolicy> {
+export class EquipmentSharingPolicyService extends TenantAwareCrudService<EquipmentSharingPolicy> {
 	constructor(
 		@InjectRepository(EquipmentSharingPolicy)
 		private readonly equipmentSharingRepository: Repository<EquipmentSharingPolicy>
@@ -14,21 +14,11 @@ export class EquipmentSharingPolicyService extends CrudService<EquipmentSharingP
 		super(equipmentSharingRepository);
 	}
 
-	async findAllPolicies(
-		filter?: FindManyOptions<EquipmentSharingPolicy>
-	): Promise<IPagination<IEquipmentSharingPolicy>> {
-		const total = await this.equipmentSharingRepository.count(filter);
-		const items = await this.equipmentSharingRepository.find(filter);
-
-		return { items, total };
-	}
-
 	async create(
 		entity: IEquipmentSharingPolicy
 	): Promise<EquipmentSharingPolicy> {
 		try {
 			const policy = new EquipmentSharingPolicy();
-
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
 			policy.tenantId = entity.tenantId;

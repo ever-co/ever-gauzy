@@ -14,8 +14,8 @@ import { OrganizationPositionsService } from './organization-positions.service';
 import { OrganizationPositions } from './organization-positions.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationPositions')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -52,7 +52,7 @@ export class OrganizationPositionsController extends CrudController<Organization
 
 	@Put(':id')
 	async updateOrganizationTeam(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: OrganizationPositions,
 		...options: any[]
 	): Promise<OrganizationPositions> {

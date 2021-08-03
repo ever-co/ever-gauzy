@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CrudService, ProductOptionGroupTranslation } from '../core';
+import { ProductOptionGroupTranslation } from './../core/entities/internal';
+import { TenantAwareCrudService } from './../core/crud';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -9,7 +10,7 @@ import {
 import { ProductOptionGroup } from './product-option-group.entity';
 
 @Injectable()
-export class ProductOptionGroupService extends CrudService<ProductOptionGroup> {
+export class ProductOptionGroupService extends TenantAwareCrudService<ProductOptionGroup> {
 	constructor(
 		@InjectRepository(ProductOptionGroup)
 		private readonly productOptionGroupRepository: Repository<ProductOptionGroup>,

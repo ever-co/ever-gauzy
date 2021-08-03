@@ -4,7 +4,8 @@ import { CrudController } from '../core';
 import { IntegrationSettingService } from './integration-setting.service';
 import { IntegrationSetting } from './integration-setting.entity';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+
 
 @ApiTags('IntegrationSetting')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)

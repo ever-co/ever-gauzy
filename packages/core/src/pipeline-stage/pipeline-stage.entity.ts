@@ -1,4 +1,4 @@
-import { IPipelineStage as IStage } from '@gauzy/contracts';
+import { IPipeline, IPipelineStage as IStage } from '@gauzy/contracts';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -11,18 +11,8 @@ import {
 export class PipelineStage
 	extends TenantOrganizationBaseEntity
 	implements IStage {
-	@ManyToOne(() => Pipeline, { onDelete: 'CASCADE' })
-	@ApiProperty({ type: () => Pipeline })
-	@JoinColumn()
-	public pipeline: Pipeline;
-
-	@RelationId(({ pipeline }: PipelineStage) => pipeline)
+	
 	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsString()
-	@Column()
-	public pipelineId: string;
-
 	@Column({ nullable: true, type: 'text' })
 	@IsString()
 	public description: string;
@@ -39,4 +29,22 @@ export class PipelineStage
 	@IsString()
 	@Column()
 	public name: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Pipeline })
+	@ManyToOne(() => Pipeline, { onDelete: 'CASCADE' })
+	@ApiProperty({ type: () => Pipeline })
+	@JoinColumn()
+	public pipeline: IPipeline;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: PipelineStage) => it.pipeline)
+	@IsNotEmpty()
+	@IsString()
+	@Column()
+	public pipelineId: string;
 }

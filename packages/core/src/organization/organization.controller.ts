@@ -1,4 +1,4 @@
-import { IOrganizationCreateInput, PermissionsEnum } from '@gauzy/contracts';
+import { IOrganization, IOrganizationCreateInput, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -12,17 +12,18 @@ import {
 	Query
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { isNotEmpty } from '@gauzy/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+
 
 @ApiTags('Organization')
 @Controller()
@@ -47,9 +48,9 @@ export class OrganizationController extends CrudController<Organization> {
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
-	async findAllOrganizations(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Organization>> {
+	): Promise<IPagination<IOrganization>> {
 		const { relations, findInput } = data;
 		return await this.organizationService.findAll({
 			where: findInput,
@@ -71,18 +72,18 @@ export class OrganizationController extends CrudController<Organization> {
 	@Get(':id/:select')
 	async findOneById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Param('select') select: string,
-		@Query('data') data: string
-	): Promise<Organization> {
-		const findObj = {};
-		const { relations } = JSON.parse(data);
-		if (select) {
-			findObj['select'] = JSON.parse(select);
+		@Param('select', ParseJsonPipe) select: any,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IOrganization> {
+		const request = {};
+		const { relations } = data;
+		if (isNotEmpty(select)) {
+			request['select'] = select;
 		}
-		if (relations) {
-			findObj['relations'] = relations;
+		if (isNotEmpty(relations)) {
+			request['relations'] = relations;
 		}
-		return await this.organizationService.findOne(id, findObj);
+		return await this.organizationService.findOne(id, request);
 	}
 
 	@ApiOperation({ summary: 'Find Organization by profile link.' })
@@ -100,7 +101,7 @@ export class OrganizationController extends CrudController<Organization> {
 		@Param('profile_link') profile_link: string,
 		@Param('select') select: string,
 		@Param('relations') relations: string
-	): Promise<Organization> {
+	): Promise<IOrganization> {
 		return await this.organizationService.findByPublicLink(
 			profile_link,
 			select,
@@ -124,16 +125,33 @@ export class OrganizationController extends CrudController<Organization> {
 	@Post()
 	async create(
 		@Body() entity: IOrganizationCreateInput
-	): Promise<Organization> {
-		return await this.commandBus.execute(new OrganizationCreateCommand(entity));
+	): Promise<IOrganization> {
+		return await this.commandBus.execute(
+			new OrganizationCreateCommand(entity)
+		);
 	}
 
+	@ApiOperation({ summary: 'Update existing Organization' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The Organization has been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.OK)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IOrganizationCreateInput,
 		...options: any[]
-	): Promise<Organization> {
-		return await this.commandBus.execute(new OrganizationUpdateCommand({ id, ...entity }));
+	): Promise<IOrganization> {
+		return await this.commandBus.execute(
+			new OrganizationUpdateCommand({ id, ...entity })
+		);
 	}
 }

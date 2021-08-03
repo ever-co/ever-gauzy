@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { TimesheetStatus } from '@gauzy/contracts';
+import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { RequestContext } from '../../../../core/context';
@@ -18,7 +18,7 @@ export class TimesheetUpdateStatusHandler
 
 	public async execute(
 		command: TimesheetUpdateStatusCommand
-	): Promise<Timesheet[]> {
+	): Promise<ITimesheet[]> {
 		let { ids, status } = command.input;
 
 		if (typeof ids === 'string') {

@@ -1,4 +1,5 @@
-import { CrudService, IPagination } from '../core';
+import { IPagination } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
 import {
 	Injectable,
@@ -14,16 +15,13 @@ import {
 	IRequestApprovalCreateInput,
 	IRequestApprovalFindInput
 } from '@gauzy/contracts';
-import { Employee } from '../employee/employee.entity';
-import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { RequestContext } from '../core/context';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { Employee, OrganizationTeam, RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
 import { getConfig } from '@gauzy/config';
 const config = getConfig();
 
 @Injectable()
-export class RequestApprovalService extends CrudService<RequestApproval> {
+export class RequestApprovalService extends TenantAwareCrudService<RequestApproval> {
 	constructor(
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,

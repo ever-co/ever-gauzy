@@ -19,10 +19,10 @@ import { UserOrganization } from './user-organization.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { Not } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { UserOrganizationDeleteCommand } from './commands/user-organization.delete.command';
+import { UserOrganizationDeleteCommand } from './commands';
 import { I18nLang } from 'nestjs-i18n';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from '../shared/guards';
 import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('UserOrganization')
@@ -70,10 +70,10 @@ export class UserOrganizationController extends CrudController<IUserOrganization
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Req() request,
 		@I18nLang() language: LanguagesEnum
-	): Promise<UserOrganization> {
+	): Promise<IUserOrganization> {
 		return this.commandBus.execute(
 			new UserOrganizationDeleteCommand({
 				userOrganizationId: id,
@@ -94,7 +94,9 @@ export class UserOrganizationController extends CrudController<IUserOrganization
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findOrganizationCount(@Param('id') id: string): Promise<number> {
+	async findOrganizationCount(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<number> {
 		const { userId } = await this.findById(id);
 		const { total } = await this.userOrganizationService.findAll({
 			where: {

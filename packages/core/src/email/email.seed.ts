@@ -1,8 +1,8 @@
-import { Connection } from 'typeorm';
+import { Connection, ILike, Not } from 'typeorm';
 import { Email } from './email.entity';
 import * as faker from 'faker';
-import { IOrganization, ITenant } from '@gauzy/contracts';
-import { EmailTemplate } from './../core/entities/internal';
+import { IEmail, IEmailTemplate, IOrganization, ITenant, IUser } from '@gauzy/contracts';
+import { EmailTemplate, User } from './../core/entities/internal';
 
 export const createDefaultEmailSent = async (
 	connection: Connection,
@@ -10,16 +10,22 @@ export const createDefaultEmailSent = async (
 	organization: IOrganization,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
-	const emailTemplates = await connection.getRepository(EmailTemplate).find();
+	const emailTemplates: IEmailTemplate[] = await connection.getRepository(EmailTemplate).find({
+		where: {
+			name: Not(ILike(`%subject%`))
+		}
+	});
+	const users: IUser[] = await connection.getRepository(User).find();
 
-	let sentEmails: Email[] = [];
+	let sentEmails: IEmail[] = [];
 	sentEmails = await dataOperation(
 		connection,
 		sentEmails,
 		noOfEmailsPerOrganization,
 		organization,
 		emailTemplates,
-		tenant
+		tenant,
+		users
 	);
 	return sentEmails;
 };
@@ -30,10 +36,19 @@ export const createRandomEmailSent = async (
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
-	const emailTemplates = await connection.getRepository(EmailTemplate).find();
+	const emailTemplates: IEmailTemplate[] = await connection.getRepository(EmailTemplate).find({
+		where: {
+			name: Not(ILike(`%subject%`))
+		}
+	});
 
-	let sentEmails: Email[] = [];
+	let sentEmails: IEmail[] = [];
 	for (const tenant of tenants) {
+		const users = await connection.getRepository(User).find({
+			where: {
+				tenant
+			}
+		});
 		const orgs = tenantOrganizationsMap.get(tenant);
 		for (const org of orgs) {
 			sentEmails = await dataOperation(
@@ -42,7 +57,8 @@ export const createRandomEmailSent = async (
 				noOfEmailsPerOrganization,
 				org,
 				emailTemplates,
-				tenant
+				tenant,
+				users
 			);
 		}
 	}
@@ -51,22 +67,22 @@ export const createRandomEmailSent = async (
 
 const dataOperation = async (
 	connection: Connection,
-	sentEmails,
+	sentEmails: IEmail[],
 	noOfEmailsPerOrganization,
-	organization,
+	organization: IOrganization,
 	emailTemplates,
-	tenant
+	tenant: ITenant,
+	users: IUser[]
 ) => {
 	for (let i = 0; i < noOfEmailsPerOrganization; i++) {
 		const sentEmail = new Email();
-		sentEmail.organizationId = organization.id;
+		sentEmail.organization = organization;
 		sentEmail.email = faker.internet.email();
-		sentEmail.emailTemplate = faker.random.arrayElement(
-			emailTemplates.filter((x) => !x.name.includes('subject'))
-		);
+		sentEmail.emailTemplate = faker.random.arrayElement(emailTemplates);
 		sentEmail.name = sentEmail.emailTemplate.name.split('/')[0];
 		sentEmail.content = sentEmail.emailTemplate.hbs;
 		sentEmail.tenant = tenant;
+		sentEmail.user = faker.random.arrayElement(users);
 		sentEmails.push(sentEmail);
 	}
 	await connection.manager.save(sentEmails);

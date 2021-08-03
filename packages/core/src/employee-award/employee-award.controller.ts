@@ -18,7 +18,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { EmployeeAwardService } from './employee-award.service';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { IEmployeeAward } from '@gauzy/contracts';
 
 @ApiTags('EmployeeAward')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -63,7 +65,7 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: QueryDeepPartialEntity<EmployeeAward>
 	): Promise<any> {
 		return this.employeeAwardService.update(id, entity);
@@ -80,7 +82,7 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id') id: string): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.employeeAwardService.delete(id);
 	}
 
@@ -98,9 +100,9 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@Get()
 	async findAwardsByEmployeeId(
-		@Query('data') data: string
-	): Promise<IPagination<EmployeeAward>> {
-		const { findInput } = JSON.parse(data);
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IEmployeeAward>> {
+		const { findInput } = data;
 		return this.employeeAwardService.findAll({
 			where: findInput
 		});

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
 import {
 	ICandidateInterviewersDeleteInput,
@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 
 @Injectable()
-export class CandidateInterviewersService extends CrudService<CandidateInterviewers> {
+export class CandidateInterviewersService extends TenantAwareCrudService<CandidateInterviewers> {
 	constructor(
 		@InjectRepository(CandidateInterviewers)
 		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>

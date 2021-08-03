@@ -5,8 +5,7 @@ import {
 	JoinColumn,
 	RelationId,
 	ManyToOne,
-	ManyToMany,
-	JoinTable
+	ManyToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDate } from 'class-validator';
@@ -27,21 +26,6 @@ import {
 export class Proposal
 	extends TenantOrganizationBaseEntity
 	implements IProposal {
-	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.proposal)
-	@JoinTable({ name: 'tag_proposal' })
-	tags: ITag[];
-
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	employee: IEmployee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((proposal: Proposal) => proposal.employee)
-	@IsString()
-	@Column({ nullable: true })
-	readonly employeeId?: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
@@ -73,20 +57,44 @@ export class Proposal
 	@Column()
 	status?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	employee: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Proposal) => it.employee)
+	@IsString()
+	@Column({ nullable: true })
+	readonly employeeId?: string;
+
 	@ApiPropertyOptional({ type: () => OrganizationContact })
-	@ManyToOne(
-		(type) => OrganizationContact,
-		(organizationContact) => organizationContact.proposals,
-		{
-			nullable: true,
-			onDelete: 'CASCADE'
-		}
-	)
+	@ManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.proposals, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 
 	@ApiProperty({ type: () => String })
-	@RelationId((contact: Proposal) => contact.organizationContact)
+	@RelationId((it: Proposal) => it.organizationContact)
+	@IsString()
 	@Column({ nullable: true })
 	organizationContactId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	// Tags
+	@ApiProperty({ type: () => Tag })
+	@ManyToMany(() => Tag, (tag) => tag.proposal)
+	tags?: ITag[];
 }

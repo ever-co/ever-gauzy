@@ -10,26 +10,33 @@ import {
 	IJobPreset,
 	IMatchingCriterions
 } from '@gauzy/contracts';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
 import { CommandBus } from '@nestjs/cqrs';
-import { CreateJobPresetCommand } from './commands/create-job-preset.command';
 import { Employee } from '../employee/employee.entity';
-import { SavePresetCriterionCommand } from './commands/save-preset-criterion.command';
-import { SaveEmployeePresetCommand } from './commands/save-employee-preset.command';
-import { SaveEmployeeCriterionCommand } from './commands/save-employee-criterion.command';
+import {
+	CreateJobPresetCommand,
+	SaveEmployeeCriterionCommand,
+	SaveEmployeePresetCommand,
+	SavePresetCriterionCommand
+} from './commands';
+import { RequestContext } from 'core';
 
 @Injectable()
-export class JobPresetService extends CrudService<JobPreset> {
+export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	constructor(
 		private readonly commandBus: CommandBus,
+
 		@InjectRepository(JobPreset)
 		private readonly jobPresetRepository: Repository<JobPreset>,
+
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
+
 		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
 		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
 	) {
@@ -49,6 +56,8 @@ export class JobPresetService extends CrudService<JobPreset> {
 				name: 'ASC'
 			},
 			where: (qb: SelectQueryBuilder<IJobPreset>) => {
+				const tenantId = RequestContext.currentTenantId();
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 				if (request.search) {
 					qb.andWhere('name LIKE :search', {
 						search: request.search

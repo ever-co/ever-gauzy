@@ -15,15 +15,18 @@ import { CrudController } from '../core/crud/crud.controller';
 import { TimeOffRequest } from './time-off-request.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { TimeOffRequestService } from './time-off-request.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { ITimeOffCreateInput, StatusTypesEnum } from '@gauzy/contracts';
-import { ITimeOff, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import {
+	ITimeOff,
+	ITimeOffCreateInput,
+	PermissionsEnum,
+	StatusTypesEnum
+} from '@gauzy/contracts';
 import { IPagination } from '../core';
 import { CommandBus } from '@nestjs/cqrs';
 import { TimeOffStatusCommand } from './commands';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffRequest')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -79,7 +82,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put(':id')
 	async timeOffRequestUpdate(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ITimeOffCreateInput
 	): Promise<TimeOffRequest> {
 		return this.requestService.updateTimeOffByAdmin(id, entity);
@@ -102,7 +105,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put('approval/:id')
 	async timeOffRequestApproved(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<TimeOffRequest> {
 		return this.commandBus.execute(
 			new TimeOffStatusCommand(id, StatusTypesEnum.APPROVED)
@@ -124,7 +127,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('denied/:id')
 	async timeOffRequestDenied(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<TimeOffRequest> {
 		return this.commandBus.execute(
 			new TimeOffStatusCommand(id, StatusTypesEnum.DENIED)

@@ -15,9 +15,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination, Merchant } from 'core';
 import { MerchantService } from './merchant.service';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { IMerchant } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 
 
 @ApiTags('Merchants')
@@ -59,7 +59,7 @@ export class MerchantController extends CrudController<Merchant> {
 		})
 		@Get(':id')
 		async findMerchantById(
-			@Param('id') id: string,
+			@Param('id', UUIDValidationPipe) id: string,
 			@Query('data', ParseJsonPipe) data: any
 		): Promise<Merchant> {
 			const {relations = []} = data;

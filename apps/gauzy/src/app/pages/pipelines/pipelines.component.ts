@@ -184,7 +184,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 		const request = {};
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint: `${API_PREFIX}/pipelines/search/filter`,
+			endPoint: `${API_PREFIX}/pipelines/pagination`,
 			relations: [ 'stages' ],
 			where: {
 				...{ organizationId, tenantId },

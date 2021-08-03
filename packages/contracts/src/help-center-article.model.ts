@@ -4,8 +4,8 @@ import { IEmployee } from './employee.model';
 export interface IHelpCenterArticle
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	description?: string;
-	data?: string;
+	description: string;
+	data: string;
 	index: number;
 	draft: boolean;
 	privacy: boolean;
@@ -17,7 +17,9 @@ export interface IHelpCenterArticle
 export interface IHelpCenterAuthor
 	extends IBasePerTenantAndOrganizationEntityModel {
 	articleId: string;
+	article?: IHelpCenterArticle;
 	employeeId: string;
+	employee?: IEmployee;
 	articles?: IHelpCenterArticle[];
 }
 

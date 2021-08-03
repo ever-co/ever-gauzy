@@ -14,7 +14,9 @@ import {
 } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { IEquipment } from '@gauzy/contracts';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Equipment')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -38,9 +40,9 @@ export class EquipmentController extends CrudController<Equipment> {
 	})
 	@Get()
 	async findAllEquipmentSharings(
-		@Query('data') data: string
-	): Promise<IPagination<Equipment>> {
-		const { relations, findInput } = JSON.parse(data);
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IEquipment>> {
+		const { relations, findInput } = data;
 		return await this.equipmentService.findAll({
 			where: {
 				...findInput
@@ -50,15 +52,18 @@ export class EquipmentController extends CrudController<Equipment> {
 	}
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
-		@Body() entity: Equipment,
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: IEquipment,
 		...options: any[]
 	): Promise<any> {
 		return this.equipmentService.save(entity);
 	}
 
 	@Post()
-	async create(@Body() entity: Equipment, ...options: any[]): Promise<any> {
+	async create(
+		@Body() entity: IEquipment,
+		...options: any[]
+	): Promise<any> {
 		return this.equipmentService.save(entity);
 	}
 }

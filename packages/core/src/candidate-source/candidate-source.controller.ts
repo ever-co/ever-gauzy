@@ -15,7 +15,8 @@ import { CandidateSourceService } from './candidate-source.service';
 import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
 import { ICandidateSource } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateSource')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -40,9 +41,9 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	})
 	@Get()
 	async findSource(
-		@Query('data') data: string
-	): Promise<IPagination<CandidateSource>> {
-		const { findInput } = JSON.parse(data);
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ICandidateSource>> {
+		const { findInput } = data;
 		return this.candidateSourceService.findAll({ where: findInput });
 	}
 
@@ -59,8 +60,8 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 		description: 'Record not found'
 	})
 	@Post()
-	async create(@Body() entity: CandidateSource): Promise<any> {
-		this.candidateSourceService.create(entity);
+	async create(@Body() entity: ICandidateSource): Promise<any> {
+		return this.candidateSourceService.create(entity);
 	}
 
 	@ApiOperation({

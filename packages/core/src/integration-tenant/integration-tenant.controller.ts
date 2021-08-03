@@ -9,8 +9,9 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CrudController } from '../core';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
 
@@ -34,11 +35,10 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	})
 	@Get(':id')
 	async getById(
-		@Param('id') id,
-		@Query('data') data: string
+		@Param('id', UUIDValidationPipe) id,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IntegrationTenant> {
-		const { relations } = JSON.parse(data);
-
+		const { relations } = data;
 		return this._integrationTenantService.findOne(id, {
 			relations
 		});

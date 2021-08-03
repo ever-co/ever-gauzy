@@ -25,17 +25,18 @@ import {
 } from '@gauzy/contracts';
 import { AuthGuard } from '@nestjs/passport';
 import { TimeLogService } from './time-log.service';
-import { Permissions } from '../../shared/decorators/permissions';
-import { OrganizationPermissionGuard } from '../../shared/guards/auth/organization-permission.guard';
+import { Permissions } from '../../shared/decorators';
+import { OrganizationPermissionGuard, TenantBaseGuard } from '../../shared/guards';
+import { UUIDValidationPipe } from './../../shared/pipes';
 import { RequestContext } from '../../core/context';
 import { CrudController } from '../../core';
 import { FindOneOptions } from 'typeorm';
-import { TenantBaseGuard } from '../../shared/guards/auth/tenant-base.guard';
+import { TimeLog } from './../time-log.entity';
 
 @ApiTags('TimeLog')
 @UseGuards(AuthGuard('jwt'), TenantBaseGuard)
 @Controller('time-log')
-export class TimeLogController extends CrudController<ITimeLog> {
+export class TimeLogController extends CrudController<TimeLog> {
 	constructor(private readonly timeLogService: TimeLogService) {
 		super(timeLogService);
 	}
@@ -48,7 +49,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	})
 	@Get('/')
 	async getLogs(@Query() entity: IGetTimeLogInput): Promise<ITimeLog[]> {
-		return this.timeLogService.getTimeLogs(entity);
+		return await this.timeLogService.getTimeLogs(entity);
 	}
 
 	@ApiOperation({ summary: 'Get Timer Logs Conflict' })
@@ -61,7 +62,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	async getConflict(
 		@Query() entity: IGetTimeLogConflictInput
 	): Promise<ITimeLog[]> {
-		return this.timeLogService.checkConflictTime(entity);
+		return await this.timeLogService.checkConflictTime(entity);
 	}
 
 	@ApiOperation({ summary: 'Find Timer Log by id' })
@@ -75,7 +76,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	})
 	@Get('report/daily')
 	async getDailyReport(@Query() options: IGetTimeLogReportInput) {
-		return this.timeLogService.getDailyReport(options);
+		return await this.timeLogService.getDailyReport(options);
 	}
 
 	@ApiOperation({ summary: 'Find Timer Log by id' })
@@ -91,7 +92,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	async getDailyReportChartData(
 		@Query() options: IGetTimeLogReportInput
 	): Promise<any> {
-		return this.timeLogService.getDailyReportChartData(options);
+		return await this.timeLogService.getDailyReportChartData(options);
 	}
 
 	@ApiOperation({ summary: 'Get Owed Amount Report' })
@@ -108,7 +109,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	async getOwedAmountReport(
 		@Query() entity: IGetTimeLogReportInput
 	): Promise<any> {
-		return this.timeLogService.getOwedAmountReport(entity);
+		return await this.timeLogService.getOwedAmountReport(entity);
 	}
 
 	@ApiOperation({ summary: 'Get Owed Amount Report Chart Data' })
@@ -125,7 +126,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	async getOwedAmountReportChartData(
 		@Query() entity: IGetTimeLogReportInput
 	): Promise<any> {
-		return this.timeLogService.getOwedAmountReportChartData(entity);
+		return await this.timeLogService.getOwedAmountReportChartData(entity);
 	}
 
 	@ApiOperation({ summary: 'Find Timer Log by id' })
@@ -139,7 +140,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	})
 	@Get('report/weekly')
 	async getWeeklyReport(@Query() options: IGetTimeLogReportInput) {
-		return this.timeLogService.getWeeklyReport(options);
+		return await this.timeLogService.getWeeklyReport(options);
 	}
 
 	@ApiOperation({ summary: 'Find Timer Log by id' })
@@ -159,7 +160,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	@UseGuards(AuthGuard('jwt'))
 	@Get('time-limit')
 	async weeklyLimit(@Query() request?: IGetTimeLimitReportInput) {
-		return this.timeLogService.getTimeLimit(request);
+		return await this.timeLogService.getTimeLimit(request);
 	}
 
 	@ApiOperation({ summary: 'Budget limit' })
@@ -181,7 +182,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	async projectBudgetLimit(
 		@Query() request?: IProjectBudgetLimitReportInput
 	) {
-		return this.timeLogService.projectBudgetLimit(request);
+		return await this.timeLogService.projectBudgetLimit(request);
 	}
 
 	@ApiOperation({ summary: 'Budget limit' })
@@ -201,12 +202,12 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	@UseGuards(AuthGuard('jwt'))
 	@Get('client-budget-limit')
 	async clientBudgetLimit(@Query() request?: IClientBudgetLimitReportInput) {
-		return this.timeLogService.clientBudgetLimit(request);
+		return await this.timeLogService.clientBudgetLimit(request);
 	}
 
 	@Get(':id')
 	async findOne(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query() options: FindOneOptions
 	): Promise<ITimeLog> {
 		return this.timeLogService.findOne(id, options);
@@ -241,8 +242,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 			employeeId = user.employeeId;
 		}
 		entity.employeeId = employeeId;
-
-		return this.timeLogService.addManualTime(entity);
+		return await this.timeLogService.addManualTime(entity);
 	}
 
 	@ApiOperation({ summary: 'Update time log' })
@@ -259,10 +259,10 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
 	async updateManualTime(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IManualTimeInput
 	): Promise<ITimeLog> {
-		return this.timeLogService.updateTime(id, entity);
+		return await this.timeLogService.updateTime(id, entity);
 	}
 
 	@ApiOperation({ summary: 'Delete time log' })
@@ -279,6 +279,6 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(OrganizationPermissionsEnum.ALLOW_DELETE_TIME)
 	async deleteTimeLog(@Query() query): Promise<any> {
-		return this.timeLogService.deleteTimeLog(query.logIds);
+		return await this.timeLogService.deleteTimeLog(query.logIds);
 	}
 }

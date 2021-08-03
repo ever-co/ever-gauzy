@@ -27,18 +27,15 @@ export class HelpCenterAuthorService {
 	findByArticleId(articleId: string): Promise<IHelpCenterAuthor[]> {
 		return this.http
 			.get<IHelpCenterAuthor[]>(
-				`${API_PREFIX}/help-center-author/${articleId}`
+				`${API_PREFIX}/help-center-author/article/${articleId}`
 			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	deleteBulkByArticleId(id: string): Promise<any> {
-		const data = JSON.stringify({ id });
+	deleteBulkByArticleId(articleId: string): Promise<any> {
 		return this.http
-			.delete(`${API_PREFIX}/help-center-author/deleteBulkByArticleId`, {
-				params: { data }
-			})
+			.delete(`${API_PREFIX}/help-center-author/article/${articleId}`)
 			.pipe(first())
 			.toPromise();
 	}

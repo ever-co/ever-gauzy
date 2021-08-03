@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import {
 	WarehouseProduct,
 	WarehouseProductVariant,
@@ -8,24 +8,32 @@ import {
 } from 'core';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IWarehouseProductCreateInput } from '@gauzy/contracts';
+import {
+	IPagination,
+	IWarehouseProduct,
+	IWarehouseProductCreateInput,
+	IWarehouseProductVariant
+} from '@gauzy/contracts';
 
 @Injectable()
-export class WarehouseProductService extends CrudService<WarehouseProduct> {
+export class WarehouseProductService extends TenantAwareCrudService<WarehouseProduct> {
 	constructor(
 		@InjectRepository(Warehouse)
 		private readonly warehouseRepository: Repository<Warehouse>,
+
 		@InjectRepository(WarehouseProduct)
 		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
+
 		@InjectRepository(WarehouseProductVariant)
 		private readonly warehouseProductVariantRepository: Repository<WarehouseProductVariant>,
+
 		@InjectRepository(Product)
 		private readonly productRespository: Repository<Product>
 	) {
 		super(warehouseProductRepository);
 	}
 
-	async getAllWarehouseProducts(warehouseId: String) {
+	async getAllWarehouseProducts(warehouseId: String): Promise<IWarehouseProduct[]> {
 		return await this.warehouseProductRepository.find({
 			where: { warehouse: { id: warehouseId } },
 			relations: ['product', 'variants', 'variants.variant']
@@ -35,7 +43,7 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 	async createWarehouseProductBulk(
 		warehouseProductCreateInput: IWarehouseProductCreateInput[],
 		warehouseId: String
-	) {
+	): Promise<IPagination<IWarehouseProduct[]>> {
 		let productIds = warehouseProductCreateInput.map((pr) => pr.productId);
 		let warehouse = await this.warehouseRepository.findOne(
 			warehouseId as any
@@ -77,7 +85,7 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 	async updateWarehouseProductQuantity(
 		warehouseProductId: String,
 		quantity: number
-	) {
+	): Promise<IWarehouseProduct> {
 		let warehouseProduct = await this.warehouseProductRepository.findOne(
 			warehouseProductId as any
 		);
@@ -89,7 +97,7 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 	async updateWarehouseProductVariantQuantity(
 		warehouseProductVariantId: String,
 		quantity: number
-	) {
+	): Promise<IWarehouseProductVariant> {
 		let warehouseProductVariant = await this.warehouseProductVariantRepository.findOne(
 			warehouseProductVariantId as any,
 			{ relations: ['warehouseProduct'] }
