@@ -19,7 +19,7 @@ export class HelpCenterAuthor
 	@ManyToOne(() => Employee, {
 		onDelete: 'CASCADE'
 	})
-	employee: IEmployee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: HelpCenterAuthor) => it.employee)
@@ -32,7 +32,7 @@ export class HelpCenterAuthor
 	@ManyToOne(() => HelpCenterArticle, (article) => article.authors, {
 		onDelete: 'CASCADE'
 	})
-	article: IHelpCenterArticle;
+	article?: IHelpCenterArticle;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: HelpCenterAuthor) => it.article)

@@ -1365,16 +1365,16 @@ export class SeedDataService {
 			)
 		);
 
-		// await this.tryExecute(
-		// 	'Default TimeSheets',
-		// 	createDefaultTimeSheet(
-		// 		this.connection,
-		// 		this.config,
-		// 		this.tenant,
-		// 		this.defaultOrganization,
-		// 		this.defaultEmployees
-		// 	)
-		// );
+		await this.tryExecute(
+			'Default TimeSheets',
+			createDefaultTimeSheet(
+				this.connection,
+				this.config,
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultEmployees
+			)
+		);
 
 		// run all plugins default seed method
 		await this.bootstrapPluginSeedMethods(
@@ -2128,16 +2128,16 @@ export class SeedDataService {
 			)
 		);
 
-		// await this.tryExecute(
-		// 	'Random TimeSheets',
-		// 	createRandomTimesheet(
-		// 		this.connection,
-		// 		this.config,
-		// 		tenants
-		// 	)
-		// );
+		await this.tryExecute(
+			'Random TimeSheets',
+			createRandomTimesheet(
+				this.connection,
+				this.config,
+				tenants
+			)
+		);
 
-		//run all plugins random seed method
+		// run all plugins random seed method
 		await this.bootstrapPluginSeedMethods(
 			'onRandomPluginSeed',
 			(instance: any) => {

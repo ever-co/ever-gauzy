@@ -39,6 +39,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	) {
 		super(helpCenterService);
 	}
+
 	@ApiOperation({
 		summary: 'Find all menus.'
 	})
@@ -92,7 +93,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@Post('updateBulk')
 	async updateBulk(@Body() input: any): Promise<IHelpCenter[]> {
 		const { oldChildren = [], newChildren = [] } = input;
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new HelpCenterUpdateCommand(oldChildren, newChildren)
 		);
 	}
@@ -110,7 +111,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Get(':baseId')
+	@Get('base/:baseId')
 	async findByBaseId(
 		@Param('baseId', UUIDValidationPipe) baseId: string
 	): Promise<IHelpCenter[]> {
@@ -130,11 +131,12 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Delete('deleteBulkByBaseId')
+	@Delete('base/:baseId')
 	async deleteBulkByBaseId(
-		@Query('data', ParseJsonPipe) data: any
+		@Param('baseId', UUIDValidationPipe) baseId: string
 	): Promise<any> {
-		const { id = null } = data;
-		return this.commandBus.execute(new KnowledgeBaseBulkDeleteCommand(id));
+		return await this.commandBus.execute(
+			new KnowledgeBaseBulkDeleteCommand(baseId)
+		);
 	}
 }

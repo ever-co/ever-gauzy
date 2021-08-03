@@ -14,11 +14,11 @@ export class HelpCenterArticle
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	data: string;
 
 	@ApiProperty({ type: () => Boolean })
