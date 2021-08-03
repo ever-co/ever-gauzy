@@ -25,7 +25,7 @@ import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 
 @ApiTags('Tenant')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TenantController extends CrudController<Tenant> {
 	constructor(private readonly tenantService: TenantService) {
@@ -49,7 +49,7 @@ export class TenantController extends CrudController<Tenant> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, TenantPermissionGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get()
 	async findAll(): Promise<IPagination<ITenant>> {
@@ -70,6 +70,8 @@ export class TenantController extends CrudController<Tenant> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(RoleGuard, TenantPermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
@@ -118,6 +120,8 @@ export class TenantController extends CrudController<Tenant> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.OK)
+	@UseGuards(RoleGuard, TenantPermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -148,7 +152,7 @@ export class TenantController extends CrudController<Tenant> {
 		description: 'Tenant not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, TenantPermissionGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Delete(':id')
 	async delete(
