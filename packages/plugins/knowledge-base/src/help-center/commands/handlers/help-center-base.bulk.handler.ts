@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { isNotEmpty } from '@gauzy/common';
 import { KnowledgeBaseBulkDeleteCommand } from '../help-center-base.bulk.command';
 import { HelpCenterService } from '../../help-center.service';
 
@@ -14,10 +15,13 @@ export class KnowledgeBaseBulkDeleteHandler
 		const categories = await this.helpCenterService.getCategoriesByBaseId(
 			id
 		);
-		await this.helpCenterService.deleteBulkByBaseId(
-			categories.map((item) => item.id)
-		);
-
+		const ids = categories.map((item) => item.id);
+		if (isNotEmpty(ids)) {
+			await this.helpCenterService.deleteBulkByBaseId(
+				categories.map((item) => item.id)
+			);
+		}
+		
 		return;
 	}
 }

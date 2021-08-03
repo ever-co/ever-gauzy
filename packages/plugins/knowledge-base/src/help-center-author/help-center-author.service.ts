@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '@gauzy/core';
+import { isNotEmpty } from '@gauzy/common';
 import { HelpCenterAuthor } from './help-center-author.entity';
 
 @Injectable()
@@ -28,7 +29,9 @@ export class HelpCenterAuthorService extends CrudService<HelpCenterAuthor> {
 	}
 
 	async deleteBulkByArticleId(ids: string[]) {
-		return await this.repository.delete(ids);
+		if (isNotEmpty(ids)) {
+			return await this.repository.delete(ids);
+		}
 	}
 
 	async getAll(): Promise<IHelpCenterAuthor[]> {

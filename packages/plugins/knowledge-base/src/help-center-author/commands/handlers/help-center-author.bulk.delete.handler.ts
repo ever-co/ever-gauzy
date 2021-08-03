@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { isNotEmpty } from '@gauzy/common';
 import { KnowledgeBaseArticleBulkDeleteCommand } from '..';
 import { HelpCenterAuthorService } from '../../help-center-author.service';
 
@@ -14,9 +15,10 @@ export class KnowledgeBaseArticleBulkDeleteHandler
 	): Promise<any> {
 		const { id } = command;
 		const authors = await this.helpCenterAuthorService.findByArticleId(id);
-		await this.helpCenterAuthorService.deleteBulkByArticleId(
-			authors.map((item) => item.id)
-		);
+		const ids = authors.map((item) => item.id);
+		if (isNotEmpty(ids)) {
+			await this.helpCenterAuthorService.deleteBulkByArticleId(ids);
+		}
 		return;
 	}
 }

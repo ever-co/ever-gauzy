@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IHelpCenter } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
+import { isNotEmpty } from '@gauzy/common';
 import { HelpCenter } from './help-center.entity';
 
 @Injectable()
@@ -19,7 +20,9 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	}
 
 	async deleteBulkByBaseId(ids: string[]) {
-		return await this.repository.delete(ids);
+		if (isNotEmpty(ids)) {
+			return await this.repository.delete(ids);
+		}
 	}
 
 	async getCategoriesByBaseId(baseId: string): Promise<HelpCenter[]> {
