@@ -140,7 +140,7 @@ Then('User can see time off policy dropdown', () => {
 });
 
 And('User can select time off policy from dropdown options', () => {
-	timeOffPage.selectTimeOffPolicy(TimeOffPageData.defaultPolicy);
+	timeOffPage.selectTimeOffPolicy(TimeOffPageData.addNewPolicyData);
 });
 
 And('User can see start date input field', () => {
@@ -246,7 +246,7 @@ Then('User can see time off policy dropdown again', () => {
 });
 
 And('User can select time off policy from dropdown options', () => {
-	timeOffPage.selectTimeOffPolicy(TimeOffPageData.defaultPolicy);
+	timeOffPage.selectTimeOffPolicy(TimeOffPageData.addNewPolicyData);
 });
 
 And('User can see start date input field', () => {
@@ -361,7 +361,7 @@ Then('User can see again time off polciy dropdown', () => {
 });
 
 And('User can select again time off policy from dropdown options', () => {
-	timeOffPage.selectTimeOffPolicy(TimeOffPageData.defaultPolicy);
+	timeOffPage.selectTimeOffPolicy(TimeOffPageData.addNewPolicyData);
 });
 
 And('User can see start holiday input field', () => {
