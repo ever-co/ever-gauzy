@@ -38,7 +38,7 @@ export class InviteService {
 
 		return this.http
 			.get<{ items: IInvite[]; total: number }>(
-				`${API_PREFIX}/invite/all`,
+				`${API_PREFIX}/invite`,
 				{
 					params: { data }
 				}

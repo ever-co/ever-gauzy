@@ -121,8 +121,8 @@ export class InviteController {
 		PermissionsEnum.ORG_INVITE_VIEW,
 		PermissionsEnum.ORG_INVITE_EDIT
 	)
-	@Get('all')
-	async findAllInvites(
+	@Get()
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Invite>> {
 		const { relations, findInput } = data;
