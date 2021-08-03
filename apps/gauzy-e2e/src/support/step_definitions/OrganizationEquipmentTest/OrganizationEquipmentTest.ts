@@ -333,6 +333,9 @@ Then('User can see equipment table', () => {
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/organization/equipment', { timeout: pageLoadTimeout });
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	organizationEquipmentPage.tableRowVisible();
 });
 
