@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '@gauzy/core';
-import { HelpCenterArticle } from '../help-center-article';
+import { HelpCenterArticle } from './../entities';
 
 @Entity('knowledge_base')
 export class HelpCenter
@@ -44,14 +44,16 @@ export class HelpCenter
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	index: number;
+
+	
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 
     |--------------------------------------------------------------------------
     */
 	@ManyToOne(() => HelpCenter, (children) => children.children, {
-		cascade: ['insert'],
-		nullable: true
+		onDelete: 'CASCADE'
 	})
 	parent?: IHelpCenter;
 
@@ -69,13 +71,12 @@ export class HelpCenter
     |--------------------------------------------------------------------------
     */
 	@OneToMany(() => HelpCenter, (children) => children.parent, {
-		cascade: ['insert'],
-		nullable: true
+		cascade: true
 	})
 	children?: IHelpCenter[];
 
 	@OneToMany(() => HelpCenterArticle, (article) => article.category, {
-		onDelete: 'CASCADE'
+		cascade: true
 	})
 	articles?: IHelpCenterArticle[];
 }

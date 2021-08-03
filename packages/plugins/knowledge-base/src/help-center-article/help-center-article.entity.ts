@@ -1,10 +1,9 @@
-import { Entity, Column, ManyToOne, RelationId, Index, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
-import { IHelpCenter, IHelpCenterArticle, IHelpCenterAuthor } from '@gauzy/contracts';
+import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '@gauzy/core';
-import { HelpCenter } from './../help-center';
-import { HelpCenterAuthor } from './../help-center-author';
+import { HelpCenter } from './../entities';
 
 @Entity('knowledge_base_article')
 export class HelpCenterArticle
@@ -39,21 +38,15 @@ export class HelpCenterArticle
     | @ManyToOne 
     |--------------------------------------------------------------------------
     */
-	@ManyToOne(() => HelpCenter, (center) => center.articles)
+	@ManyToOne(() => HelpCenter, (center) => center.articles, {
+		onDelete: 'CASCADE'
+	})
 	category?: IHelpCenter;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: HelpCenterArticle) => it.category)
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	categoryId: string;
-
-	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
-	@OneToMany(() => HelpCenterAuthor, (author) => author.article)
-	authors?: IHelpCenterAuthor[];
 }

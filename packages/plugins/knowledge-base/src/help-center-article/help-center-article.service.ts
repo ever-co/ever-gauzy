@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '@gauzy/core';
+import { isNotEmpty } from '@gauzy/common';
 import { HelpCenterArticle } from './help-center-article.entity';
 
 @Injectable()
@@ -25,6 +26,8 @@ export class HelpCenterArticleService extends CrudService<HelpCenterArticle> {
 	}
 
 	async deleteBulkByCategoryId(ids: string[]) {
-		return await this.repository.delete(ids);
+		if (isNotEmpty(ids)) {
+			return await this.repository.delete(ids);
+		}
 	}
 }

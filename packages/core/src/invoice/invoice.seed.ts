@@ -91,7 +91,7 @@ const generateInvoice = async (
 		.take(faker.datatype.number({ min: 1, max: 3 }))
 		.values()
 		.value();
-	invoice.invoiceNumber = faker.datatype.number({ min: 1111111, max: 9999999 });
+	invoice.invoiceNumber = faker.datatype.number({ min: 111111111111, max: 999999999999 });
 	invoice.invoiceDate = faker.date.past(0.3);
 	invoice.dueDate = faker.date.future(0.3);
 	
