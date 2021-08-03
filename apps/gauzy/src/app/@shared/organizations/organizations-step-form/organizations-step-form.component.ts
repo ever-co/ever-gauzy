@@ -1,5 +1,6 @@
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
+import { ActivatedRoute } from '@angular/router';
 import { formatDate } from '@angular/common';
 import {
 	AfterViewInit,
@@ -30,14 +31,15 @@ import {
 	CurrenciesEnum,
 	DEFAULT_DATE_FORMATS
 } from '@gauzy/contracts';
-import { LocationFormComponent } from '../../forms/location';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
-import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
 import { filter, tap } from 'rxjs/operators';
 import { retrieveNameFromEmail } from '@gauzy/common-angular';
-import { environment as ENV } from 'apps/gauzy/src/environments/environment';
+import { LocationFormComponent } from '../../forms/location';
+import { LeafletMapComponent } from '../../forms/maps';
+import { environment as ENV } from './../../../../environments/environment';
 import { Store, ToastrService } from '../../../@core/services';
+import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -76,6 +78,7 @@ export class OrganizationsStepFormComponent
 	tags: ITag[] = [];
 	country: ICountry;
 	user: IUser;
+	retriveEmail: string;
 
 	@Input('onboarding') onboarding?: boolean;
 
@@ -86,17 +89,28 @@ export class OrganizationsStepFormComponent
 		private readonly fb: FormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly cdr: ChangeDetectorRef,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly _activatedRoute: ActivatedRoute
 	) {}
 
 	ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
-				tap((user: IUser) => (this.user = user))
+				tap((user: IUser) => (this.user = user)),
+				tap(({ email }) => this.retriveEmail = email),
+				tap(() => this._initializedForm())
 			)
 			.subscribe();
-		this._initializedForm();
+		this._activatedRoute
+			.queryParams
+			.pipe(
+				filter(({ email }) => !!email),
+				tap(({ email }) => this.retriveEmail = email),
+				tap(() => this._initializedForm()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -106,11 +120,11 @@ export class OrganizationsStepFormComponent
 	private _initializedForm() {
 		this.orgMainForm = this.fb.group({
 			imageUrl: [
-				'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
+				DUMMY_PROFILE_IMAGE,
 				Validators.required
 			],
 			currency: [ENV.DEFAULT_CURRENCY || CurrenciesEnum.USD],
-			name: [retrieveNameFromEmail(this.user.email), Validators.required],
+			name: [retrieveNameFromEmail(this.user?.email || this.retriveEmail), Validators.required],
 			officialName: [],
 			taxId: [],
 			tags: []
