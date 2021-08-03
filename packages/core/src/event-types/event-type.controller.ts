@@ -19,8 +19,8 @@ import { CrudController } from '../core/crud/crud.controller';
 import { EventTypeCreateCommand } from './commands/event-type.create.command';
 import { EventType } from './event-type.entity';
 import { EventTypeService } from './event-type.service';
-import { ParseJsonPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('EventType')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -45,9 +45,9 @@ export class EventTypeController extends CrudController<EventType> {
 	})
 	@Get()
 	async findAllEventTypes(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<EventType>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.eventTypeService.findAll({ where: findInput, relations });
 	}
 
@@ -64,7 +64,7 @@ export class EventTypeController extends CrudController<EventType> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: EventType,
 		...options: any[]
 	): Promise<any> {
@@ -86,7 +86,7 @@ export class EventTypeController extends CrudController<EventType> {
 	})
 	@Get(':id')
 	async findById(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<EventType> {
 		const { relations = [] } = data;

@@ -19,7 +19,8 @@ import {
 	ParseJsonPipe,
 	PermissionGuard,
 	Permissions,
-	TenantPermissionGuard
+	TenantPermissionGuard,
+	UUIDValidationPipe
 } from '@gauzy/core';
 import { HelpCenterService } from './help-center.service';
 import { HelpCenter } from './help-center.entity';
@@ -38,6 +39,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	) {
 		super(helpCenterService);
 	}
+
 	@ApiOperation({
 		summary: 'Find all menus.'
 	})
@@ -53,7 +55,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<HelpCenter>> {
+	): Promise<IPagination<IHelpCenter>> {
 		const { relations = [], findInput = null } = data;
 		return this.helpCenterService.findAll({
 			relations,
@@ -72,7 +74,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post()
-	async create(@Body() entity: IHelpCenter): Promise<any> {
+	async create(@Body() entity: IHelpCenter): Promise<IHelpCenter> {
 		return this.helpCenterService.create(entity);
 	}
 
@@ -91,7 +93,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@Post('updateBulk')
 	async updateBulk(@Body() input: any): Promise<IHelpCenter[]> {
 		const { oldChildren = [], newChildren = [] } = input;
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new HelpCenterUpdateCommand(oldChildren, newChildren)
 		);
 	}
@@ -109,8 +111,10 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Get(':baseId')
-	async findByBaseId(@Param('baseId') baseId: string): Promise<HelpCenter[]> {
+	@Get('base/:baseId')
+	async findByBaseId(
+		@Param('baseId', UUIDValidationPipe) baseId: string
+	): Promise<IHelpCenter[]> {
 		return this.helpCenterService.getCategoriesByBaseId(baseId);
 	}
 
@@ -127,11 +131,12 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Delete('deleteBulkByBaseId')
+	@Delete('base/:baseId')
 	async deleteBulkByBaseId(
-		@Query('data', ParseJsonPipe) data: any
+		@Param('baseId', UUIDValidationPipe) baseId: string
 	): Promise<any> {
-		const { id = null } = data;
-		return this.commandBus.execute(new KnowledgeBaseBulkDeleteCommand(id));
+		return await this.commandBus.execute(
+			new KnowledgeBaseBulkDeleteCommand(baseId)
+		);
 	}
 }

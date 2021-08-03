@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { CrudService } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
+import { TenantAwareCrudService } from './../core/crud';
 import { Repository } from 'typeorm';
 import { ProductVariantSettings } from './product-settings.entity';
 
 @Injectable()
-export class ProductVariantSettingService extends CrudService<ProductVariantSettings> {
+export class ProductVariantSettingService extends TenantAwareCrudService<ProductVariantSettings> {
 	constructor(
 		@InjectRepository(ProductVariantSettings)
 		private readonly productVariantSettingsRepository: Repository<ProductVariantSettings>

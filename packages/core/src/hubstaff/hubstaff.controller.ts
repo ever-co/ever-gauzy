@@ -8,6 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Integrations')
 @UseGuards(AuthGuard('jwt'))
@@ -17,14 +18,14 @@ export class HubstaffController {
 
 	@Get('/get-token/:integrationId')
 	getHubstaffToken(
-		@Param('integrationId') integrationId: string
+		@Param('integrationId', UUIDValidationPipe) integrationId: string
 	): Promise<string> {
 		return this._hubstaffService.getHubstaffToken(integrationId);
 	}
 
 	@Get('/refresh-token/:integrationId')
 	refreshHubstaffToken(
-		@Param('integrationId') integrationId: string
+		@Param('integrationId', UUIDValidationPipe) integrationId: string
 	): Promise<string> {
 		return this._hubstaffService.refreshToken(integrationId);
 	}
@@ -36,7 +37,7 @@ export class HubstaffController {
 
 	@Post('/organizations/:integrationId')
 	async getOrganizations(
-		@Param('integrationId') integrationId: string,
+		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Body() body
 	): Promise<IHubstaffOrganization[]> {
 		return this._hubstaffService.fetchOrganizations({
@@ -47,7 +48,7 @@ export class HubstaffController {
 
 	@Post('/projects/:organizationId')
 	async getProjects(
-		@Param('organizationId') organizationId: string,
+		@Param('organizationId', UUIDValidationPipe) organizationId: string,
 		@Body() body
 	): Promise<IHubstaffProject[]> {
 		return this._hubstaffService.fetchOrganizationProjects({
@@ -58,7 +59,7 @@ export class HubstaffController {
 
 	@Post('/sync-projects/:integrationId')
 	async syncProjects(
-		@Param('integrationId') integrationId: string,
+		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Body() body
 	): Promise<IIntegrationMap[]> {
 		return await this._hubstaffService.syncProjects({
@@ -69,7 +70,7 @@ export class HubstaffController {
 
 	@Post('/sync-organizations/:integrationId')
 	async syncOrganizations(
-		@Param('integrationId') integrationId: string,
+		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Body() body
 	): Promise<IIntegrationMap[]> {
 		return await this._hubstaffService.syncOrganizations({
@@ -80,7 +81,7 @@ export class HubstaffController {
 
 	@Post('/auto-sync/:integrationId')
 	async autoSync(
-		@Param('integrationId') integrationId: string,
+		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Body() body
 	): Promise<any> {
 		return await this._hubstaffService.autoSync({

@@ -53,6 +53,14 @@ export class RequestContext {
 		return null;
 	}
 
+	static currentUserId(): string {
+		const user: IUser = RequestContext.currentUser();
+		if (user) {
+			return user.id;
+		}
+		return null;
+	}
+
 	static currentUser(throwError?: boolean): IUser {
 		const requestContext = RequestContext.currentRequestContext();
 

@@ -19,10 +19,9 @@ import {
 	ICandidateInterviewCreateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { ParseJsonPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('CandidateInterview')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -77,7 +76,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
 	@Put(':id')
 	async updateInterview(
-		@Param() id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: any
 	): Promise<any> {
 		return this.candidateInterviewService.updateInterview(id, {
@@ -98,7 +97,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<CandidateInterview> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<CandidateInterview> {
 		return this.candidateInterviewService.findOne(id);
 	}
 
@@ -116,7 +115,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
 	@Get('findByCandidateId/:id')
 	async findByCandidateId(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<CandidateInterview[]> {
 		return this.candidateInterviewService.findByCandidateId(id);
 	}

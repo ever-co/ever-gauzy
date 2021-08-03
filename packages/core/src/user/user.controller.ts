@@ -24,20 +24,19 @@ import {
 } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { UUIDValidationPipe, ParseJsonPipe } from '../shared';
+import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { User } from './user.entity';
 import { UserService } from './user.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
+import { Permissions } from './../shared/decorators';
 import { RequestContext } from '../core/context';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserCreateCommand } from './commands';
 import { IUserCreateInput, IUserUpdateInput } from '@gauzy/contracts';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { DeleteAllDataService } from './delete-all-data/delete-all-data.service';
-import { TransformInterceptor } from './../core/interceptors/transform.interceptor';
+import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -64,10 +63,12 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@Get('/me')
-	async findCurrentUser(@Query('data') data: string): Promise<User> {
-		const { relations } = JSON.parse(data);
-		const currentUserId = RequestContext.currentUser().id;
-		return this.userService.findOne(currentUserId, {
+	async findCurrentUser(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<User> {
+		const { relations = [] } = data;
+		const id = RequestContext.currentUserId();
+		return await this.userService.findOne(id, {
 			relations
 		});
 	}
@@ -156,7 +157,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IUserUpdateInput,
 		...options: any[]
 	): Promise<any> {
@@ -169,7 +170,7 @@ export class UserController extends CrudController<User> {
 	@ApiOperation({ summary: 'Delete all user data.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found user by email address',
+		description: 'Deleted all user data.',
 		type: User
 	})
 	@ApiResponse({
@@ -178,7 +179,7 @@ export class UserController extends CrudController<User> {
 	})
 	@Delete('/all-data/:id')
 	async deleteAllData(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	){
 		return this.deleteAllDataService.deleteAllData(id);
 	}

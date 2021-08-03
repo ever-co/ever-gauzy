@@ -40,7 +40,7 @@ import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TransformInterceptor } from './../core/interceptors';
 import {
 	InviteAcceptEmployeeCommand,
@@ -121,8 +121,8 @@ export class InviteController {
 		PermissionsEnum.ORG_INVITE_VIEW,
 		PermissionsEnum.ORG_INVITE_EDIT
 	)
-	@Get('all')
-	async findAllInvites(
+	@Get()
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Invite>> {
 		const { relations, findInput } = data;
@@ -230,13 +230,19 @@ export class InviteController {
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete(':id')
-	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string,
+		...options: any[]
+	): Promise<any> {
 		return this.inviteService.delete(id);
 	}
 
 	@ApiExcludeEndpoint()
 	@Put()
-	async update(@Param('id') id: string, ...options: any[]): Promise<any> {
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
+		...options: any[]
+	): Promise<any> {
 		throw new BadRequestException('Invalid route');
 	}
 
@@ -259,7 +265,7 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Put('organization-contact/:id')
 	async inviteOrganizationContact(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Req() request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IOrganizationContact> {

@@ -10,8 +10,7 @@ import {
 	Body,
 	Param,
 	HttpStatus,
-	HttpCode,
-	Query
+	HttpCode
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseEntity } from '../entities/internal';
@@ -20,12 +19,43 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import { PaginationParams } from './pagination-params';
+import { UUIDValidationPipe } from './../../shared/pipes';
 
-@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
-@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden' })
+@ApiResponse({ 
+	status: HttpStatus.UNAUTHORIZED,
+	description: 'Unauthorized'
+})
+@ApiResponse({
+	status: HttpStatus.FORBIDDEN,
+	description: 'Forbidden'
+})
 @ApiBearerAuth()
 export abstract class CrudController<T extends BaseEntity> {
 	protected constructor(private readonly crudService: ICrudService<T>) {}
+
+	@ApiOperation({ summary: 'Find all records counts' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records count'
+	})
+	@Get('count')
+    async getCount(
+		filter?: PaginationParams<T>
+	): Promise<number> {
+        return await this.crudService.count(filter);
+    }
+
+	@ApiOperation({ summary: 'Find all records using pagination' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records' /* type: IPagination<T> */
+	})
+	@Get('pagination')
+	async pagination(
+		filter?: PaginationParams<T>
+	): Promise<IPagination<T> | void> {
+		return this.crudService.paginate(filter);
+	}
 
 	@ApiOperation({ summary: 'find all' })
 	@ApiResponse({
@@ -49,18 +79,8 @@ export abstract class CrudController<T extends BaseEntity> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<T> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<T> {
 		return this.crudService.findOne(id);
-	}
-
-	@ApiOperation({ summary: 'find all with search filter' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found records' /* type: IPagination<T> */
-	})
-	@Get('search/filter')
-	async search(@Query() filter?: any): Promise<IPagination<T>> {
-		return this.crudService.search(filter);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -99,7 +119,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: QueryDeepPartialEntity<T>,
 		...options: any[]
 	): Promise<any> {
@@ -117,7 +137,10 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string, 
+		...options: any[]
+	): Promise<any> {
 		return this.crudService.delete(id);
 	}
 }

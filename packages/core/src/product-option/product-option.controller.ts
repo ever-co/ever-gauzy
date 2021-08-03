@@ -4,7 +4,7 @@ import { Controller, UseGuards } from '@nestjs/common';
 import { ProductOption } from './product-option.entity';
 import { ProductOptionService } from './product-option.service';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('ProductOptions')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)

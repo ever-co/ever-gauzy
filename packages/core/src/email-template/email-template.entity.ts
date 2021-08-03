@@ -34,6 +34,8 @@ export class EmailTemplate
 	@Column()
 	hbs: string;
 
+	title?: string;
+
 	/*
     |--------------------------------------------------------------------------
     | @OneToMany 

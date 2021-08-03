@@ -12,7 +12,7 @@ import { Feature } from './feature.entity';
 import { FeatureService } from './feature.service';
 import { FeatureInterface } from 'unleash-client/lib/feature';
 import { getFeatureToggleDefinitions } from 'unleash-client';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
 import { AuthGuard } from '@nestjs/passport';
 import { FeatureEnum, IFeatureOrganizationUpdateInput } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';

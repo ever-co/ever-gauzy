@@ -11,6 +11,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { debounceTime } from 'rxjs/operators';
+import { DUMMY_PROFILE_IMAGE } from '../../@core/constants';
 
 @UntilDestroy()
 @Component({
@@ -133,8 +134,7 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 				organizationId: organizationId,
 				contactType: ContactType.CLIENT,
 				...(members.length > 0 ? { members } : 0),
-				imageUrl:
-					'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
+				imageUrl: DUMMY_PROFILE_IMAGE
 			});
 			this.contacts = this.contacts.concat([contact]);
 			this.contactId = contact.id;

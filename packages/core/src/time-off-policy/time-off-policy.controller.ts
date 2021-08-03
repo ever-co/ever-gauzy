@@ -11,7 +11,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Permissions } from '../shared/decorators/permissions';
+import { Permissions } from './../shared/decorators';
 import { CrudController } from '../core/crud/crud.controller';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import {
@@ -20,12 +20,11 @@ import {
 	ITimeOffPolicy,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
 import { TimeOffPolicyService } from './time-off-policy.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { AuthGuard } from '@nestjs/passport';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffPolicy')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -52,7 +51,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITimeOffPolicy>> {
 		const { relations, findInput } = data;
-		return this.policyService.getAllPolicies({
+		return this.policyService.findAll({
 			where: findInput,
 			relations
 		});
@@ -97,7 +96,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	@Permissions(PermissionsEnum.POLICY_EDIT)
 	@Put(':id')
 	async updateOrganizationTeam(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ITimeOffPolicyUpdateInput,
 		...options: any[]
 	): Promise<ITimeOffPolicy> {

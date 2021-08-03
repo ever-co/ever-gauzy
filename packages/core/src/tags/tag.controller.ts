@@ -12,10 +12,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination } from '../core';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { Permissions } from './../shared/decorators';
+
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('Tags')

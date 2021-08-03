@@ -17,10 +17,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { KeyResultUpdateService } from './keyresult-update.service';
 import { IKeyResultUpdate } from '@gauzy/contracts';
-import { ParseJsonPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import { KeyResultUpdateBulkDeleteCommand } from './commands';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+
 
 @ApiTags('KeyResultsUpdate')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -84,7 +85,7 @@ export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IKeyResultUpdate
 	): Promise<IKeyResultUpdate> {
 		//We are using create here because create calls the method save()

@@ -22,11 +22,10 @@ import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationProjectEditByEmployeeCommand } from './commands/organization-project.edit-by-employee.command';
 import { OrganizationProject } from './organization-projects.entity';
 import { OrganizationProjectsService } from './organization-projects.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationProjects')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -53,7 +52,7 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 	})
 	@Get('employee/:id')
 	async findByEmployee(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IPagination<OrganizationProject>> {
 		const { findInput = null } = data;
@@ -155,7 +154,7 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 	// @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('/task-view/:id')
 	async updateTaskViewMode(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: { taskViewMode: TaskListTypeEnum }
 	): Promise<any> {
 		return this.organizationProjectsService.updateTaskViewMode(
@@ -168,7 +167,7 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async updateProject(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: OrganizationProject
 	): Promise<OrganizationProject> {
 		//We are using create here because create calls the method save()

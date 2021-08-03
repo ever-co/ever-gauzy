@@ -1,4 +1,5 @@
-import { CrudService, getDateRangeFormat } from '../core';
+import { getDateRangeFormat,  } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, ILike, In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { getConfig } from '@gauzy/config';
 const config = getConfig();
 
 @Injectable()
-export class PaymentService extends CrudService<Payment> {
+export class PaymentService extends TenantAwareCrudService<Payment> {
 	constructor(
 		@InjectRepository(Payment)
 		private readonly paymentRepository: Repository<Payment>,
@@ -181,7 +182,7 @@ export class PaymentService extends CrudService<Payment> {
 		);
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('note' in filters) {
@@ -209,6 +210,6 @@ export class PaymentService extends CrudService<Payment> {
 				}
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

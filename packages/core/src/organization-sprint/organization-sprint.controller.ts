@@ -17,10 +17,11 @@ import { OrganizationSprint } from './organization-sprint.entity';
 import { OrganizationSprintService } from './organization-sprint.service';
 import { AuthGuard } from '@nestjs/passport';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { IOrganizationSprintUpdateInput } from '@gauzy/contracts';
+import { IOrganizationSprint, IOrganizationSprintUpdateInput } from '@gauzy/contracts';
 import { OrganizationSprintUpdateCommand } from './commands/organization-sprint.update.command';
 import { CommandBus } from '@nestjs/cqrs';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationSprint')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -47,11 +48,10 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 	})
 	@Get()
 	async findAllSprints(
-		@Query('data') data: string,
+		@Query('data', ParseJsonPipe) data: any,
 		@Request() req
-	): Promise<IPagination<OrganizationSprint>> {
-		console.log(data);
-		const { relations, findInput } = JSON.parse(data);
+	): Promise<IPagination<IOrganizationSprint>> {
+		const { relations, findInput } = data;
 		return this.organizationSprintService.findAll({
 			where: findInput,
 			relations
@@ -93,7 +93,7 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IOrganizationSprintUpdateInput
 	): Promise<any> {
 		return this.commandBus.execute(

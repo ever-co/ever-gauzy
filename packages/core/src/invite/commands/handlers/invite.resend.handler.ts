@@ -13,6 +13,7 @@ export class InviteResendHandler
 		command: InviteResendCommand
 	): Promise<UpdateResult | IInvite> {
 		const { input } = command;
+		const { invitedById } = input;
 
 		const expireDate = new Date();
 		expireDate.setDate(expireDate.getDate() + 7);
@@ -20,7 +21,7 @@ export class InviteResendHandler
 		return await this.inviteService.update(input.id, {
 			status: InviteStatusEnum.INVITED,
 			expireDate,
-			invitedById: input.invitedById
+			invitedById
 		});
 	}
 }

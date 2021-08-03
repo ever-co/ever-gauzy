@@ -210,7 +210,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		let endPoint: string; 
 
 		if (this.viewComponentName == ComponentEnum.ALL_TASKS) {
-			endPoint = `${API_PREFIX}/tasks/search/filter`;
+			endPoint = `${API_PREFIX}/tasks/pagination`;
 			relations.push(...[
 				'project', 
 				'tags', 

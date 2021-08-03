@@ -5,7 +5,8 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { CandidateEducation } from './candidate-education.entity';
 import { IPagination } from '../core';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateEducation')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -31,9 +32,9 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 	})
 	@Get()
 	async findEducations(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateEducation>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = data;
 		return this.candidateEducationService.findAll({ where: findInput });
 	}
 }

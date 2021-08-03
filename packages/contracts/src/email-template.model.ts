@@ -7,6 +7,7 @@ export interface IEmailTemplate
 	mjml?: string;
 	hbs: string;
 	languageCode: string;
+	title?: string;
 }
 
 export interface IEmailTemplateFindInput

@@ -5,28 +5,35 @@ import {
 } from './email-template.model';
 import { IUser } from './user.model';
 
-export interface IEmail extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmail 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	content: string;
-	emailTemplate: IEmailTemplate;
 	email: string;
-	user?: IUser;
 	isArchived?: boolean;
+	user?: IUser;
+	userId?: string;
+	emailTemplate: IEmailTemplate;
+	emailTemplateId: string;
 }
 
-export interface IEmailUpdateInput {
+export interface IEmailUpdateInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	content?: string;
-	emailTemplate?: IEmailTemplate;
 	email?: string;
+	emailTemplate?: IEmailTemplate;
+	emailTemplateId?: string;
 	user?: IUser;
+	userId?: string;
 	isArchived?: boolean;
 }
 
 export interface IEmailFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	emailTemplate?: IEmailTemplateFindInput;
-	// TODO! Maybe user here
+	emailTemplateId?: string;
+	user?: IUser;
 	userId?: string;
 	email?: string;
 	isArchived?: boolean;

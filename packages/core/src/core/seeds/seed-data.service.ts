@@ -2137,7 +2137,7 @@ export class SeedDataService {
 			)
 		);
 
-		//run all plugins random seed method
+		// run all plugins random seed method
 		await this.bootstrapPluginSeedMethods(
 			'onRandomPluginSeed',
 			(instance: any) => {

@@ -4,8 +4,8 @@ import { AppointmentEmployeesService } from './appointment-employees.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Controller, UseGuards, HttpStatus, Get, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { UUIDValidationPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('AppointmentEmployee')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)

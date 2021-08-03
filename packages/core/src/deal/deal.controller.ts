@@ -11,8 +11,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination } from '../core/crud';
 import { Deal } from './deal.entity';
 import { DealService } from './deal.service';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Deal')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -45,7 +45,7 @@ export class DealController extends CrudController<Deal> {
 	})
 	@Get(':id')
 	public async getOne(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<Deal> {
 		const { relations = [], findInput: where = null } = data;

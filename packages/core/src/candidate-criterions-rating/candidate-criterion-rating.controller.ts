@@ -17,12 +17,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { CandidateCriterionsRatingService } from './candidate-criterion-rating.service';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { ICandidateCriterionsRating, RolesEnum } from '@gauzy/contracts';
-import { RoleGuard } from '../shared/guards/auth/role.guard';
-import { Roles } from '../shared/decorators/roles';
-import { CandidateCriterionsRatingBulkCreateCommand } from './commands/candidate-criterions-rating.bulk.create.command';
-import { ParseJsonPipe } from '../shared';
-import { CandidateCriterionsRatingBulkDeleteCommand } from './commands/candidate-criterions-rating.bulk.delete.command';
-import { CandidateCriterionsRatingBulkUpdateCommand } from './commands';
+import { RoleGuard } from '../shared/guards';
+import { Roles } from './../shared/decorators';
+import { ParseJsonPipe } from './../shared/pipes';
+import { 
+	CandidateCriterionsRatingBulkCreateCommand,
+	CandidateCriterionsRatingBulkDeleteCommand,
+	CandidateCriterionsRatingBulkUpdateCommand
+} from './commands';
 import { TenantModule } from '../tenant/tenant.module';
 
 @ApiTags('CandidateCriterionRating')
@@ -31,7 +33,7 @@ import { TenantModule } from '../tenant/tenant.module';
 export class CandidateCriterionsRatingController extends CrudController<CandidateCriterionsRating> {
 	constructor(
 		private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(candidateCriterionsRatingService);
 	}
@@ -49,9 +51,9 @@ export class CandidateCriterionsRatingController extends CrudController<Candidat
 	})
 	@Get()
 	async findCriterionRatings(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateCriterionsRating>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = data;
 		return this.candidateCriterionsRatingService.findAll({
 			where: findInput
 		});

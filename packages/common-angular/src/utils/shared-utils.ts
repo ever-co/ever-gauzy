@@ -145,7 +145,10 @@ export function convertPrecisionFloatDigit(val: number, digit: number = 6) {
  * Retrieve name from email address
  */
 export function retrieveNameFromEmail(email: string): string {
-	return ucFirst(email.substring(0, email.lastIndexOf('@')), true);
+	if (email) {
+		return ucFirst(email.substring(0, email.lastIndexOf('@')), true);
+	}
+	return;
 }
 
 // convert local time to another timezone

@@ -12,8 +12,8 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { AuthGuard } from '@nestjs/passport';
-import { RoleGuard } from '../shared/guards/auth/role.guard';
-import { Roles } from '../shared/decorators/roles';
+import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
+import { Roles } from './../shared/decorators';
 import { RolesEnum, ICandidatePersonalQualities } from '@gauzy/contracts';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
 import { CandidatePersonalQualitiesService } from './candidate-personal-qualities.service';
@@ -22,8 +22,7 @@ import {
 	CandidatePersonalQualitiesBulkDeleteCommand
 } from './commands';
 import { CommandBus } from '@nestjs/cqrs';
-import { ParseJsonPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('CandidatePersonalQuality')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -49,8 +48,10 @@ export class CandidatePersonalQualitiesController extends CrudController<Candida
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Get()
-	findAllPersonalQualities(@Query('data') data: string): any {
-		const { findInput, relations } = JSON.parse(data);
+	findAllPersonalQualities(
+		@Query('data', ParseJsonPipe) data: any
+	): any {
+		const { findInput, relations } = data;
 		return this.candidatePersonalQualitiesService.findAll({
 			where: findInput,
 			relations
@@ -69,7 +70,7 @@ export class CandidatePersonalQualitiesController extends CrudController<Candida
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete(':id')
-	deletePersonalQuality(@Param() id: string): Promise<any> {
+	deletePersonalQuality(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.candidatePersonalQualitiesService.delete(id);
 	}
 
@@ -103,7 +104,7 @@ export class CandidatePersonalQualitiesController extends CrudController<Candida
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete('deleteBulk/:id')
 	async deleteBulk(
-		@Param() id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
 		const { personalQualities = null } = data;

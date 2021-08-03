@@ -19,7 +19,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from '../core/crud';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { IOrganizationAwards } from '@gauzy/contracts';
 
 @ApiTags('OrganizationAwards')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -66,7 +68,7 @@ export class OrganizationAwardsController extends CrudController<OrganizationAwa
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: QueryDeepPartialEntity<OrganizationAwards>
 	): Promise<any> {
 		return this.organizationAwardsService.update(id, entity);
@@ -83,7 +85,9 @@ export class OrganizationAwardsController extends CrudController<OrganizationAwa
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id') id: string): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
 		return this.organizationAwardsService.delete(id);
 	}
 
@@ -101,9 +105,9 @@ export class OrganizationAwardsController extends CrudController<OrganizationAwa
 	})
 	@Get()
 	async findAwardsByOrgId(
-		@Query('data') data: string
-	): Promise<IPagination<OrganizationAwards>> {
-		const { findInput } = JSON.parse(data);
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IOrganizationAwards>> {
+		const { findInput } = data;
 		return this.organizationAwardsService.findAll({
 			where: findInput
 		});

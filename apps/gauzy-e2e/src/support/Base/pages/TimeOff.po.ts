@@ -105,8 +105,8 @@ export const clickSelectHolidayName = () => {
 	clickButton(TimeOffPage.descriptionInputCss);
 };
 
-export const selectHolidayOption = (data) => {
-	clickElementByText(TimeOffPage.selectHolidayDropdownOptionCss, data);
+export const selectHolidayOption = (index) => {
+	clickButtonByIndex(TimeOffPage.selectHolidayDropdownOptionCss, index);
 };
 
 export const selectEmployeeDropdownVisible = () => {
@@ -243,4 +243,12 @@ export const verifyPolicyExists = (text) => {
 
 export const verifyPolicyIsDeleted = (text) => {
 	verifyTextNotExisting(TimeOffPage.verifyPolicyCss, text);
+};
+
+export const backButtonVisible = () => {
+	verifyElementIsVisible(TimeOffPage.backButtonCss);
+};
+
+export const clickBackButton = () => {
+	clickButton(TimeOffPage.backButtonCss);
 };

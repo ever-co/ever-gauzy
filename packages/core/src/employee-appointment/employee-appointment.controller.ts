@@ -15,17 +15,17 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeAppointmentService } from './employee-appointment.service';
-import { EmployeeAppointmentCreateCommand } from './commands/employee-appointment.create.command';
-import { EmployeeAppointmentUpdateCommand } from './commands/employee-appointment.update.command';
+import { EmployeeAppointmentCreateCommand, EmployeeAppointmentUpdateCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
-import { UUIDValidationPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { I18nLang } from 'nestjs-i18n';
 import {
 	LanguagesEnum,
 	IEmployeeAppointmentCreateInput,
-	IEmployeeAppointmentUpdateInput
+	IEmployeeAppointmentUpdateInput,
+	IEmployeeAppointment
 } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from '../shared/guards';
 
 @ApiTags('EmployeeAppointment')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -33,7 +33,7 @@ import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.g
 export class EmployeeAppointmentController extends CrudController<EmployeeAppointment> {
 	constructor(
 		private readonly employeeAppointmentService: EmployeeAppointmentService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(employeeAppointmentService);
 	}
@@ -51,12 +51,11 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployeeAppointments(
-		@Query('data') data: string
-	): Promise<IPagination<EmployeeAppointment>> {
-		const { relations, findInput } = JSON.parse(data);
-
-		return this.employeeAppointmentService.findAllAppointments({
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IEmployeeAppointment>> {
+		const { relations, findInput } = data;
+		return this.employeeAppointmentService.findAll({
 			where: findInput,
 			relations
 		});
@@ -100,7 +99,7 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IEmployeeAppointmentUpdateInput
 	): Promise<any> {
 		return this.commandBus.execute(
@@ -138,8 +137,8 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	})
 	@UseGuards(AuthGuard('jwt'))
 	@Get('/sign/:id')
-	async signAppointment(@Param('id') id: string): Promise<String> {
-		return await this.employeeAppointmentService.signAppointmentId(id);
+	async signAppointment(@Param('id', UUIDValidationPipe) id: string): Promise<String> {
+		return this.employeeAppointmentService.signAppointmentId(id);
 	}
 
 	@ApiOperation({ summary: 'Verify token' })

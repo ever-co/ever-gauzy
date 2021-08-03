@@ -22,6 +22,7 @@ import { patterns } from '../../../@shared/regex/regex-patterns.const';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { uniq } from 'underscore';
+import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 
 @Component({
 	selector: 'ga-projects-mutation',
@@ -242,8 +243,7 @@ export class ProjectsMutationComponent
 				name,
 				organizationId: this.organizationId,
 				contactType: ContactType.CLIENT,
-				imageUrl:
-					'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
+				imageUrl: DUMMY_PROFILE_IMAGE
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);

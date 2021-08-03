@@ -23,8 +23,10 @@ import {
 	IPagination,
 	ParseJsonPipe,
 	PermissionGuard,
-	TenantPermissionGuard
+	TenantPermissionGuard,
+	UUIDValidationPipe
 } from '@gauzy/core';
+import { IHelpCenterAuthor } from '@gauzy/contracts';
 
 @ApiTags('KnowledgeBaseAuthor')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -49,11 +51,33 @@ export class HelpCenterAuthorController extends CrudController<HelpCenterAuthor>
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Get(':articleId')
+	@Get('article/:articleId')
 	async findByArticleId(
-		@Param('articleId') articleId: string
-	): Promise<HelpCenterAuthor[]> {
+		@Param('articleId', UUIDValidationPipe) articleId: string
+	): Promise<IHelpCenterAuthor[]> {
 		return this.helpCenterAuthorService.findByArticleId(articleId);
+	}
+
+	@ApiOperation({
+		summary: 'Delete Authors By Article Id.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found article authors',
+		type: HelpCenterAuthor
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Delete('article/:articleId')
+	async deleteBulkByArticleId(
+		@Param('articleId', UUIDValidationPipe) articleId: string
+	): Promise<any> {
+		return await this.commandBus.execute(
+			new KnowledgeBaseArticleBulkDeleteCommand(articleId)
+		);
 	}
 
 	@ApiOperation({
@@ -69,9 +93,9 @@ export class HelpCenterAuthorController extends CrudController<HelpCenterAuthor>
 		description: 'Record not found'
 	})
 	@Get()
-	async getAll(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<HelpCenterAuthor>> {
+	): Promise<IPagination<IHelpCenterAuthor>> {
 		const { relations = [], findInput = null } = data;
 		return this.helpCenterAuthorService.findAll({
 			relations,
@@ -91,32 +115,9 @@ export class HelpCenterAuthorController extends CrudController<HelpCenterAuthor>
 	})
 	@UseGuards(PermissionGuard)
 	@Post('createBulk')
-	async createBulk(@Body() input: any): Promise<HelpCenterAuthor[]> {
+	async createBulk(@Body() input: any): Promise<IHelpCenterAuthor[]> {
 		return this.commandBus.execute(
 			new ArticleAuthorsBulkCreateCommand(input)
-		);
-	}
-
-	@ApiOperation({
-		summary: 'Delete Authors By Article Id.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found article authors',
-		type: HelpCenterAuthor
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@UseGuards(PermissionGuard)
-	@Delete('deleteBulkByArticleId')
-	async deleteBulkByArticleId(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
-		const { id = null } = data;
-		return this.commandBus.execute(
-			new KnowledgeBaseArticleBulkDeleteCommand(id)
 		);
 	}
 }
