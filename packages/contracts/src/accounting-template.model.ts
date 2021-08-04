@@ -3,9 +3,9 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 export interface IAccountingTemplate
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	mjml?: string;
+	mjml: string;
 	languageCode: string;
-	hbs?: string;
+	hbs: string;
 	templateType: string;
 }
 

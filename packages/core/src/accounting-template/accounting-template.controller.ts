@@ -21,7 +21,7 @@ import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateService } from './accounting-template.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { Language } from './../shared/decorators';
+import { LanguageDecorator } from './../shared/decorators';
 import { IPagination, PaginationParams } from './../core/crud';
 import { RequestContext } from 'core';
 
@@ -71,7 +71,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	@Get('template')
 	async findTemplate(
 		@Query('data', ParseJsonPipe) data: any,
-		@Language() language: LanguagesEnum
+		@LanguageDecorator() language: LanguagesEnum
 	): Promise<IAccountingTemplate> {
 		const { findInput = {} } = data;
 		return await this.accountingTemplateService.getAccountTemplate(

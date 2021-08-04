@@ -33,7 +33,7 @@ import {
 import { EmailTemplateSaveCommand } from './commands';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { Language } from './../shared/decorators';
+import { LanguageDecorator } from './../shared/decorators';
 import { RequestContext } from './../core/context';
 import { IPagination, PaginationParams } from './../core/crud';
 import { UpdateResult } from 'typeorm';
@@ -87,7 +87,7 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	@Get('template')
 	async findTemplate(
 		@Query('data', ParseJsonPipe) data: any,
-		@Language() language: LanguagesEnum
+		@LanguageDecorator() language: LanguagesEnum
 	): Promise<ICustomizableEmailTemplate> {
 		const { findInput }: { findInput: ICustomizeEmailTemplateFindInput } = data;
 		return await this.queryBus.execute(

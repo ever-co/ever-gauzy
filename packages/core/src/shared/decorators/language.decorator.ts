@@ -1,7 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { LanguagesEnum } from '@gauzy/contracts';
 
-export const Language = createParamDecorator(
+export const LanguageDecorator = createParamDecorator(
     (data: unknown, ctx: ExecutionContext) => {
         const request = ctx.switchToHttp().getRequest();
         const headers = request.headers;
