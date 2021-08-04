@@ -23,12 +23,6 @@ export interface IAccountingTemplateUpdateInput
 	templateType?: string;
 }
 
-export enum AccountingTemplateNameEnum {
-	INVOICE = 'invoice',
-	ESTIMATE = 'estimate',
-	RECEIPT = 'receipt'
-}
-
 export enum AccountingTemplateTypeEnum {
 	INVOICE = 'invoice',
 	ESTIMATE = 'estimate',

@@ -16,6 +16,7 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { mergeMap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
+import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
 import { BaseEntity } from '../entities/internal';
@@ -77,9 +78,9 @@ export abstract class CrudService<T extends BaseEntity>
 				}
 				const tenantId = RequestContext.currentTenantId();
 				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-				console.log(qb.getQueryAndParameters());
+				console.log(qb.getQueryAndParameters(), moment().format('DD.MM.YYYY HH:mm:ss'));
 			}
-			console.log(filter, options);
+			console.log(filter, moment().format('DD.MM.YYYY HH:mm:ss'));
 			const [items, total] = await this.repository.findAndCount(options);
 			return { items, total };
 		} catch (error) {
