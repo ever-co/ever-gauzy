@@ -4,12 +4,17 @@ import {
 	verifyText,
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
-	clickOutsideElement
+	clickOutsideElement,
+	clickButtonByIndex
 } from '../utils/util';
 import { HumanResourcesPage } from '../pageobjects/HumanResourcesPageObject';
 
-export const selectEmployeeByName = (name) => {
-	clickElementByText(HumanResourcesPage.employeeCss, name);
+export const verifyEmployeeCardVisible = () => {
+	verifyElementIsVisible(HumanResourcesPage.employeeCss)
+}
+
+export const selectEmployee = (index) => {
+	clickButtonByIndex(HumanResourcesPage.employeeCss, index);
 };
 
 export const verifyEmployeeName = (text) => {

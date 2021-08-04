@@ -48,6 +48,10 @@ export const clickElementByText = (loc, data) => {
 	cy.contains(loc, data).click();
 };
 
+export const forceClickElementByText = (loc, data) => {
+	cy.contains(loc, data).click({ force: true });
+};
+
 export const enterInput = (loc, data) => {
 	cy.get(loc, { timeout: taskTimeout }).type(data);
 };
