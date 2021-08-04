@@ -1,6 +1,6 @@
 export const SettingsButton = {
 	rightSidebarContainerCss: 'div.main-container-fixed',
-	settingsButtonCss: 'nb-actions.left > nb-action[icon="settings-2-outline"]',
+	settingsButtonCss: 'nb-actions.left > nb-action[ng-reflect-icon="settings-2-outline"]',
 	dropdownButtonCss: 'div.settings-row > nb-select > button.select-button',
 	dropdownOptionCss: '.option-list nb-option',
 	resetLayoutButtonCss: 'div.theme-settings > button[status="danger"]',
