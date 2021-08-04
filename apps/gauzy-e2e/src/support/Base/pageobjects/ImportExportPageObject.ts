@@ -1,5 +1,5 @@
 export const ImportExportPage = {
-	headerTextCss: 'div.header > h4',
+	headerTextCss: 'div.card-header-title > h4',
 	subheaderTextCss: 'ngx-import-export > nb-card > nb-card-header > div.h4',
 	infoTextCss: 'nb-card-header > div.info',
 	importButtonCss:
