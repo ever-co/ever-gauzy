@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { IEmployeeProposalTemplate } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 
@@ -13,8 +14,8 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 		super(employeeProposalTemplateRepository);
 	}
 
-	async makeDefault(id: string) {
-		const proposalTemplate = await this.employeeProposalTemplateRepository.findOne(
+	async makeDefault(id: string): Promise<IEmployeeProposalTemplate> {
+		const proposalTemplate: IEmployeeProposalTemplate = await this.employeeProposalTemplateRepository.findOne(
 			id
 		);
 		proposalTemplate.isDefault = true;
@@ -29,7 +30,6 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 		);
 
 		await this.employeeProposalTemplateRepository.save(proposalTemplate);
-
 		return proposalTemplate;
 	}
 }
