@@ -54,11 +54,7 @@ When('User select employee by name', () => {
 	humanResourcesPage.selectEmployee(1);
 });
 
-Then('User can verify employee was selected', () => {
-	humanResourcesPage.verifyEmployeeName(`${firstName} ${lastName}`);
-});
-
-And('User can see chart dropdown', () => {
+Then('User can see chart dropdown', () => {
 	humanResourcesPage.verifyChartDropdownVisible();
 });
 

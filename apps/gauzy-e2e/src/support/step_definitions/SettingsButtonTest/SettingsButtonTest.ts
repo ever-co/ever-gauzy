@@ -52,26 +52,26 @@ Then('User can verify Corporate theme', () => {
 });
 
 // Verify languages
-When('User click on second dropdown again', () => {
-	settingsButton.clickThemesDropdown(1);
-});
+// When('User click on second dropdown again', () => {
+// 	settingsButton.clickThemesDropdown(1);
+// });
 
-Then('User can verify English language', () => {
-	settingsButton.verifyTextExist(SettingsButtonData.languageEnglish);
-});
+// Then('User can verify English language', () => {
+// 	settingsButton.verifyTextExist(SettingsButtonData.languageEnglish);
+// });
 
-And('User can verify Bulgarian language', () => {
-	settingsButton.verifyTextExist(SettingsButtonData.languageBulgarian);
-});
+// And('User can verify Bulgarian language', () => {
+// 	settingsButton.verifyTextExist(SettingsButtonData.languageBulgarian);
+// });
 
-And('User can verify Hebrew language', () => {
-	settingsButton.verifyTextExist(SettingsButtonData.languageHebrew);
-});
+// And('User can verify Hebrew language', () => {
+// 	settingsButton.verifyTextExist(SettingsButtonData.languageHebrew);
+// });
 
-And('User can verify Russian language', () => {
-	settingsButton.verifyTextExist(SettingsButtonData.languageRussian);
-	settingsButton.clickKeyboardButtonByKeyCode(9);
-});
+// And('User can verify Russian language', () => {
+// 	settingsButton.verifyTextExist(SettingsButtonData.languageRussian);
+// 	settingsButton.clickKeyboardButtonByKeyCode(9);
+// });
 
 // Verify layout
 When('User click on third dropdown', () => {

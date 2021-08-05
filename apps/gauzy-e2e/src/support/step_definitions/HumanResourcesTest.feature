@@ -7,8 +7,7 @@ Feature: Human resources test
     And User can visit Dashboard accounting page
     And User can see employees dashboard
     When User select employee by name
-    Then User can verify employee was selected
-    And User can see chart dropdown
+    Then User can see chart dropdown
     When User click chart dropdown
     And User can verify bar chart
     And User can verify doughnut chart

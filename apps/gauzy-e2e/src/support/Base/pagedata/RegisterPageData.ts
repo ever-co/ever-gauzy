@@ -10,5 +10,6 @@ export const RegisterPageData = {
 	timeZone: '(EAT+03:00) Addis_Ababa',
 	region: 'English (United States)',
 	dateType: 'Today',
-	numberFormat: '$12,345.67'
+	numberFormat: '$12,345.67',
+	dashboard: ' Task Dashboard '
 };
