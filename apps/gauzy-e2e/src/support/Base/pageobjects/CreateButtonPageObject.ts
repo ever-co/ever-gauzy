@@ -9,6 +9,8 @@ export const CreateButton = {
 	nbCardh5Css: 'nb-card-header.d-flex > h5',
 	divh4Css: 'div.main-header > h4',
 	timeLogHeaderTextCss: 'nb-card-header.header > div.row > div.col',
-	proposalHeaderTextCss: 'nb-card-header.d-flex > h3',
-	contactHeaderTextCss: 'nb-card-header'
+	proposalHeaderTextCss: 'nb-card-header > h4',
+	contactHeaderTextCss: 'nb-card-header',
+	teamHeaderCss: 'div.card-header-title > h4',
+	projectHeaderCss: 'nb-card-header'
 };
