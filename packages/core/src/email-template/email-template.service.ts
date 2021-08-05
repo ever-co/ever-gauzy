@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TenantAwareCrudService } from './../core/crud';
-import { EmailTemplate as IEmailTemplate } from './email-template.entity';
+import { CrudService } from './../core/crud';
+import { EmailTemplate } from './email-template.entity';
 
 @Injectable()
-export class EmailTemplateService extends TenantAwareCrudService<IEmailTemplate> {
+export class EmailTemplateService extends CrudService<EmailTemplate> {
 	constructor(
-		@InjectRepository(IEmailTemplate)
-		private readonly emailRepository: Repository<IEmailTemplate>
+		@InjectRepository(EmailTemplate)
+		private readonly emailRepository: Repository<EmailTemplate>
 	) {
 		super(emailRepository);
 	}

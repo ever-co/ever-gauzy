@@ -39,7 +39,7 @@ export class EmailTemplateService {
 
 		return this.http
 			.get<ICustomizableEmailTemplate>(
-				`${API_PREFIX}/email-template/findTemplate`,
+				`${API_PREFIX}/email-template/template`,
 				{
 					params: { data }
 				}
@@ -51,7 +51,7 @@ export class EmailTemplateService {
 	generateTemplatePreview(data: string): Promise<{ html: string }> {
 		return this.http
 			.post<{ html: string }>(
-				`${API_PREFIX}/email-template/emailPreview`,
+				`${API_PREFIX}/email-template/template/preview`,
 				{
 					data
 				}
@@ -62,7 +62,7 @@ export class EmailTemplateService {
 
 	saveEmailTemplate(data: IEmailTemplateSaveInput): Promise<IEmailTemplate> {
 		return this.http
-			.post<IEmailTemplate>(`${API_PREFIX}/email-template/saveTemplate`, {
+			.post<IEmailTemplate>(`${API_PREFIX}/email-template/template/save`, {
 				data
 			})
 			.pipe(first())

@@ -4,7 +4,7 @@ import { LanguagesEnum } from './user.model';
 export interface IEmailTemplate
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	mjml?: string;
+	mjml: string;
 	hbs: string;
 	languageCode: string;
 	title?: string;

@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../core/crud';
-import { AccountingTemplate } from './accounting-template.entity';
+import { AccountingTemplateTypeEnum, LanguagesEnum } from '@gauzy/contracts';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
+import { CrudService } from './../core/crud';
+import { AccountingTemplate } from './accounting-template.entity';
+import { RequestContext } from './../core/context';
 
 @Injectable()
-export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
+export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 	constructor(
 		@InjectRepository(AccountingTemplate)
 		private readonly accountingRepository: Repository<AccountingTemplate>
@@ -135,12 +136,13 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 
 	async saveTemplate(input) {
 		const { data } = input;
+		const tenantId = RequestContext.currentTenantId();
 
 		const { success, record } = await this.findOneOrFail({
 			languageCode: data.languageCode,
 			templateType: data.templateType,
 			organizationId: data.organizationId,
-			tenantId: data.tenantId
+			tenantId
 		});
 
 		let entity: AccountingTemplate;
@@ -150,7 +152,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 				hbs: mjml2html(record.mjml).html,
 				mjml: data.mjml
 			};
-			await this.update(record.id, entity);
+			return await this.update(record.id, entity);
 		} else {
 			entity = new AccountingTemplate();
 			entity.languageCode = data.languageCode;
@@ -159,15 +161,16 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			entity.mjml = data.mjml;
 			entity.hbs = mjml2html(data.mjml).html;
 			entity.organizationId = data.organizationId;
-			entity.tenantId = data.tenantId;
-			await this.create(entity);
+			entity.tenantId = tenantId;
+			return await this.create(entity);
 		}
 	}
 
 
-	async getAccountTemplate(input) {
+	async getAccountTemplate(input, languageCode: LanguagesEnum) {
 		let template: any;
-		const { languageCode, templateType, organizationId, tenantId } = input;
+		const { templateType = AccountingTemplateTypeEnum.INVOICE, organizationId } = input;
+		const tenantId = RequestContext.currentTenantId();
 
 		try {
 			template = await this.findOne({
@@ -205,6 +208,5 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			}
 		}
 		return template;
-
 	}
 }
