@@ -1,13 +1,23 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
+import { TenantModule } from './../tenant';
 import { EmployeeProposalTemplateController } from './employee-proposal-template.controller';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { EmployeeProposalTemplateService } from './employee-proposal-template.service';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([EmployeeProposalTemplate]), CqrsModule],
+	imports: [
+		RouterModule.forRoutes([
+			{ path: '/employee-proposal-template', module: EmployeeProposalTemplateModule }
+		]),
+		TypeOrmModule.forFeature([EmployeeProposalTemplate]),
+		forwardRef(() => TenantModule),
+		CqrsModule
+	],
 	controllers: [EmployeeProposalTemplateController],
-	providers: [EmployeeProposalTemplateService]
+	providers: [EmployeeProposalTemplateService],
+	exports: [EmployeeProposalTemplateService]
 })
 export class EmployeeProposalTemplateModule {}
