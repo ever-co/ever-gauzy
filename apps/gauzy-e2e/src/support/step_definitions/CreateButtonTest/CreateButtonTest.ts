@@ -6,7 +6,6 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
-import { waitUntil } from '../../Base/utils/util';
 
 // Login with email
 Given('Login with default credentials', () => {
