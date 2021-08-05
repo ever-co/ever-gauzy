@@ -5,6 +5,6 @@ export const OnboardingPage = {
 	officialNameFieldCss: '#officialNameInput',
 	taxFieldCss: '#taxIdInput',
 	nextButtonCss: 'button[type="submit"]',
-	gotoDashboardCardCss: 'nb-card-body div div',
+	gotoDashboardCardCss: 'nb-card-body > div.shortcut > div',
 	completePageHeadingCss: 'ga-onboarding-complete > div.logo > h6'
 };

@@ -38,9 +38,9 @@ And('User can add new employee', () => {
 });
 
 // Add new proposal
-And('User can visist Jobs proposals page', () => {
+And('User can visist Jobs proposals page', () => { // User can verify complete page
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
+	CustomCommands.clearCookies(); //expected ga-onboarding-complete > div.logo > h6 to be visible
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/jobs/proposal-template', { timeout: pageLoadTimeout });
 });

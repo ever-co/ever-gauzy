@@ -11,12 +11,6 @@ Feature: Settings button test
     Then User can verify Dark theme
     Then User can verify Cosmic theme
     Then User can verify Corporate theme
-  Scenario: Verify languages
-    When User click on second dropdown again
-    Then User can verify English language
-    And User can verify Bulgarian language
-    And User can verify Hebrew language
-    And User can verify Russian language
   Scenario: Verify layout
     When User click on third dropdown
     Then User can verify Grid layout
