@@ -13,19 +13,27 @@ import {
 	ForbiddenException,
 	Delete
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiOperation,
+	ApiResponse,
+	ApiTags
+} from '@nestjs/swagger';
 import { QueryBus } from '@nestjs/cqrs';
-import { IAccountingTemplate, IAccountingTemplateUpdateInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import {
+	IAccountingTemplate,
+	IAccountingTemplateUpdateInput,
+	IPagination,
+	LanguagesEnum
+} from '@gauzy/contracts';
 import { AuthGuard } from '@nestjs/passport';
-import { CrudController } from '../core/crud';
-import { AccountingTemplate } from './accounting-template.entity';
-import { AccountingTemplateService } from './accounting-template.service';
+import { CrudController, PaginationParams } from '../core/crud';
+import { RequestContext } from './../core/context';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { LanguageDecorator } from './../shared/decorators';
-import { PaginationParams } from './../core/crud';
-import { RequestContext } from './../core/context';
 import { AccountingTemplateQuery } from './queries';
+import { AccountingTemplate } from './accounting-template.entity';
+import { AccountingTemplateService } from './accounting-template.service';
 
 @ApiTags('Accounting Template')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)

@@ -3,6 +3,7 @@ import {
 	ICustomizeEmailTemplateFindInput,
 	IEmailTemplate,
 	IEmailTemplateSaveInput,
+	IPagination,
 	LanguagesEnum
 } from '@gauzy/contracts';
 import {
@@ -21,9 +22,18 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { QueryBus, CommandBus } from '@nestjs/cqrs';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiOperation,
+	ApiResponse,
+	ApiTags
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { CrudController } from '../core/crud/crud.controller';
+import { UpdateResult } from 'typeorm';
+import { CrudController, PaginationParams } from './../core/crud';
+import { RequestContext } from './../core/context';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { LanguageDecorator } from './../shared/decorators';
 import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
 import {
@@ -32,12 +42,7 @@ import {
 	FindEmailTemplateQuery
 } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { LanguageDecorator } from './../shared/decorators';
-import { RequestContext } from './../core/context';
-import { IPagination, PaginationParams } from './../core/crud';
-import { UpdateResult } from 'typeorm';
+
 
 @ApiTags('EmailTemplate')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
