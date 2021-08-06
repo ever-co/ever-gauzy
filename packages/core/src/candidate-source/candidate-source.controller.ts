@@ -10,13 +10,12 @@ import {
 	Put
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { CandidateSourceService } from './candidate-source.service';
 import { AuthGuard } from '@nestjs/passport';
-import { IPagination } from '../core';
 import { ICandidateSource } from '@gauzy/contracts';
+import { CrudController, IPagination } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
+import { CandidateSourceService } from './candidate-source.service';
 
 @ApiTags('CandidateSource')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -27,6 +26,26 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	) {
 		super(candidateSourceService);
 	}
+
+	@ApiOperation({
+		summary: 'Update candidate source.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Updated candidate source',
+		type: CandidateSource
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Put('bulk')
+	async updateBulk(
+		@Body() entity: ICandidateSource[]
+	): Promise<ICandidateSource[]> {
+		return await this.candidateSourceService.updateBulk(entity);
+	}
+
 	@ApiOperation({
 		summary: 'Find all candidate source.'
 	})
@@ -40,7 +59,7 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findSource(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ICandidateSource>> {
 		const { findInput } = data;
@@ -60,24 +79,9 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 		description: 'Record not found'
 	})
 	@Post()
-	async create(@Body() entity: ICandidateSource): Promise<any> {
+	async create(
+		@Body() entity: CandidateSource
+	): Promise<ICandidateSource> {
 		return this.candidateSourceService.create(entity);
-	}
-
-	@ApiOperation({
-		summary: 'Update candidate source.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Updated candidate source',
-		type: CandidateSource
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Put('updateBulk')
-	async updateBulk(@Body() entity: ICandidateSource[]): Promise<any> {
-		return this.candidateSourceService.updateBulk(entity);
 	}
 }
