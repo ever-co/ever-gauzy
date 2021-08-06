@@ -28,6 +28,7 @@ import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
 import {
 	EmailTemplateGeneratePreviewQuery,
+	EmailTemplateQuery,
 	FindEmailTemplateQuery
 } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
@@ -87,11 +88,11 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	@Get('template')
 	async findTemplate(
 		@Query('data', ParseJsonPipe) data: any,
-		@LanguageDecorator() language: LanguagesEnum
+		@LanguageDecorator() themeLanguage: LanguagesEnum
 	): Promise<ICustomizableEmailTemplate> {
 		const { findInput }: { findInput: ICustomizeEmailTemplateFindInput } = data;
 		return await this.queryBus.execute(
-			new FindEmailTemplateQuery(findInput, language)
+			new FindEmailTemplateQuery(findInput, themeLanguage)
 		);
 	}
 
@@ -131,14 +132,11 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 
 	@Get()
 	async findAll(
-		@Query() filter: PaginationParams<IEmailTemplate>
+		@Query('data', ParseJsonPipe) filter: PaginationParams<IEmailTemplate>
 	): Promise<IPagination<IEmailTemplate>> {
-		return this.emailTemplateService.findAll({
-			where: {
-				tenantId: RequestContext.currentTenantId()
-			},
-			...filter
-		});
+		return await this.queryBus.execute(
+			new EmailTemplateQuery(filter)
+		);
 	}
 
 	@ApiOperation({

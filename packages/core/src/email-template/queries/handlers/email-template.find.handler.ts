@@ -17,15 +17,14 @@ export class FindEmailTemplateHandler
 	public async execute(
 		command: FindEmailTemplateQuery
 	): Promise<ICustomizableEmailTemplate> {
-		const { input, languageCode } = command;
-		const { name, organizationId } = input;
+		const { input, themeLanguage } = command;
+		const { name, organizationId, languageCode = themeLanguage } = input;
 		const tenantId = RequestContext.currentTenantId();
 
 		const emailTemplate: ICustomizableEmailTemplate = {
 			subject: '',
 			template: ''
 		};
-
 		[emailTemplate.subject, emailTemplate.template] = await Promise.all([
 			await this._fetchTemplate(
 				languageCode,

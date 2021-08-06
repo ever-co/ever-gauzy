@@ -19,7 +19,11 @@ import { TenantModule } from '../tenant/tenant.module';
 		forwardRef(() => TenantModule)
 	],
 	controllers: [EmailTemplateController],
-	providers: [EmailTemplateService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TypeOrmModule, EmailTemplateService]
+	providers: [
+		EmailTemplateService,
+		...QueryHandlers,
+		...CommandHandlers
+	],
+	exports: [EmailTemplateService]
 })
 export class EmailTemplateModule {}
