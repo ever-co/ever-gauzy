@@ -58,14 +58,14 @@ export class CandidatesService {
 
 	create(createInput: ICandidateCreateInput): Observable<ICandidate> {
 		return this.http.post<ICandidate>(
-			`${API_PREFIX}/candidate/create`,
+			`${API_PREFIX}/candidate`,
 			createInput
 		);
 	}
 
 	createBulk(createInput: ICandidateCreateInput[]): Observable<ICandidate[]> {
 		return this.http.post<ICandidate[]>(
-			`${API_PREFIX}/candidate/createBulk`,
+			`${API_PREFIX}/candidate/bulk`,
 			createInput
 		);
 	}

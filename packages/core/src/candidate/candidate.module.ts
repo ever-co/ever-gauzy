@@ -5,29 +5,28 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CandidateController } from './candidate.controller';
 import { CandidateService } from './candidate.service';
 import { EmailModule, EmailService } from '../email';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
 import { AuthService } from '../auth/auth.service';
 import { Candidate } from './candidate.entity';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{ path: '/candidate', module: CandidateModule }
 		]),
-		TypeOrmModule.forFeature([Candidate, User]),
+		TypeOrmModule.forFeature([Candidate]),
 		EmailModule,
 		CqrsModule,
 		UserOrganizationModule,
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [CandidateController],
 	providers: [
 		CandidateService,
-		UserService,
 		AuthService,
 		EmailService,
 		...CommandHandlers
