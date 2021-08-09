@@ -31,6 +31,13 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	constructor(private readonly candidateSkillService: CandidateSkillService) {
 		super(candidateSkillService);
 	}
+
+	/**
+	 * GET all candidate skills tenant base
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate skill.'
 	})
@@ -51,13 +58,25 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 		return this.candidateSkillService.findAll({ where: findInput });
 	}
 
+	/**
+	 * CREATE candidate skill
+	 * 
+	 * @param body 
+	 * @returns 
+	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post()
-	async create(@Body() entity: ISkillCreateInput): Promise<any> {
-		return this.candidateSkillService.create(entity);
+	async create(@Body() body: ISkillCreateInput): Promise<any> {
+		return this.candidateSkillService.create(body);
 	}
 
+	/**
+	 * DELETE candidate skill by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete(':id')

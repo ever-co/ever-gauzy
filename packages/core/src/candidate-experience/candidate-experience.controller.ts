@@ -18,6 +18,12 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 		super(candidateExperienceService);
 	}
 
+	/**
+	 * GET all candidate experiences 
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate experience.'
 	})

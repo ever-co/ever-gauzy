@@ -27,6 +27,12 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 		super(candidateSourceService);
 	}
 
+	/**
+	 * UPDATE bulk candidate source
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Update candidate source.'
 	})
@@ -41,11 +47,17 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	})
 	@Put('bulk')
 	async updateBulk(
-		@Body() entity: ICandidateSource[]
+		@Body() body: ICandidateSource[]
 	): Promise<ICandidateSource[]> {
-		return await this.candidateSourceService.updateBulk(entity);
+		return await this.candidateSourceService.updateBulk(body);
 	}
 
+	/**
+	 * GET all candidate sources
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate source.'
 	})
@@ -66,6 +78,12 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 		return this.candidateSourceService.findAll({ where: findInput });
 	}
 
+	/**
+	 * CREATE new candiate source
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Create candidate source.'
 	})

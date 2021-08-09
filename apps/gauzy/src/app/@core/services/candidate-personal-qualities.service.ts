@@ -30,7 +30,7 @@ export class CandidatePersonalQualitiesService {
 	): Promise<ICandidatePersonalQualities[]> {
 		return this.http
 			.post<ICandidatePersonalQualities[]>(
-				`${API_PREFIX}/candidate-personal-qualities/createBulk`,
+				`${API_PREFIX}/candidate-personal-qualities/bulk`,
 				{ interviewId, personalQualities }
 			)
 			.pipe(first())
@@ -58,7 +58,7 @@ export class CandidatePersonalQualitiesService {
 	): Promise<ICandidatePersonalQualities[]> {
 		return this.http
 			.get<ICandidatePersonalQualities[]>(
-				`${API_PREFIX}/candidate-personal-qualities/getByInterviewId/${interviewId}`
+				`${API_PREFIX}/candidate-personal-qualities/interview/${interviewId}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -88,7 +88,7 @@ export class CandidatePersonalQualitiesService {
 		const data = JSON.stringify({ personalQualities });
 		return this.http
 			.delete(
-				`${API_PREFIX}/candidate-personal-qualities/deleteBulk/${id}`,
+				`${API_PREFIX}/candidate-personal-qualities/bulk/${id}`,
 				{
 					params: { data }
 				}

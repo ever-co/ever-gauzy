@@ -40,6 +40,12 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		super(candidateFeedbacksService);
 	}
 
+	/**
+	 * GET feedback by interview id
+	 * 
+	 * @param interviewId 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find feedbacks By Interview Id.'
 	})
@@ -64,6 +70,13 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		);
 	}
 
+	/**
+	 * DELETE feedback by interview id
+	 * 
+	 * @param interviewId 
+	 * @param feedbackId 
+	 * @returns 
+	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Delete('interview/:interviewId/:feedbackId')
@@ -76,9 +89,12 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		);
 	}
 
-	/*
-	* Get Candidate Feedback Count 
-	*/
+	/**
+	 * GET candidate feedback count
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all candidate feedbacks counts in the same tenant' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -91,9 +107,12 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
         return await this.candidateFeedbacksService.count(filter);
     }
 
-	/*
-	* Get Candidate Feedbacks By Pagination  
-	*/
+	/**
+	 * GET candidate feedbacks by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all candidate feedbacks in the same tenant using pagination.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -112,9 +131,12 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		return this.candidateFeedbacksService.paginate(filter);
 	}
 
-	/*
-	* Get Candidate Feedbacks
-	*/
+	/**
+	 * GET all candidate feedbacks
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate feedback.'
 	})
@@ -138,9 +160,12 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		});
 	}
 
-	/*
-	* Get Candidate Feedback By Id
-	*/
+	/**
+	 * GET candidate feedback by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find candidate feedback by id'
 	})
@@ -160,28 +185,35 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		return this.candidateFeedbacksService.findOne(id);
 	}
 
-	/*
-	* Create New Candidate Feedback
-	*/
+	/**
+	 * CREATE candidate feedback
+	 * 
+	 * @param body 
+	 * @returns 
+	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Post()
 	async create(
-		@Body() entity: ICandidateFeedbackCreateInput
+		@Body() body: ICandidateFeedbackCreateInput
 	): Promise<ICandidateFeedback> {
-		return this.candidateFeedbacksService.create(entity);
+		return this.candidateFeedbacksService.create(body);
 	}
 
-	/*
-	* Update Candidate Feedback By Id
-	*/
+	/**
+	 * UPDATE candidate feedback by id
+	 * 
+	 * @param id 
+	 * @param body 
+	 * @returns 
+	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ICandidateFeedbackCreateInput
+		@Body() body: ICandidateFeedbackCreateInput
 	): Promise<ICandidateFeedback> {
-		return this.commandBus.execute(new FeedbackUpdateCommand(id, entity));
+		return this.commandBus.execute(new FeedbackUpdateCommand(id, body));
 	}
 }

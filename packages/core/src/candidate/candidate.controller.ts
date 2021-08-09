@@ -51,9 +51,14 @@ export class CandidateController extends CrudController<Candidate> {
 		super(candidateService);
 	}
 
-	/*
-	* Create Bulk Candidate 
-	*/
+	/**
+	 * CREATE bulk candidate
+	 * 
+	 * @param body 
+	 * @param languageCode 
+	 * @param options 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create records in Bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -68,14 +73,14 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body() input: ICandidateCreateInput[],
+		@Body() body: ICandidateCreateInput[],
 		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<ICandidate[]> {
 		/**
-		 * Use a dummy image avatar if no image is uploaded for any of the Candidate in the list
-		 */
-		input
+		* Use a dummy image avatar if no image is uploaded for any of the Candidate in the list
+		*/
+		 body
 			.filter((entity) => !entity.user.imageUrl)
 			.forEach(
 				(entity) =>
@@ -83,13 +88,16 @@ export class CandidateController extends CrudController<Candidate> {
 			);
 
 		return await this.commandBus.execute(
-			new CandidateBulkCreateCommand(input, languageCode)
+			new CandidateBulkCreateCommand(body, languageCode)
 		);
 	}
 
-	/*
-	* Get Candidate Count 
-	*/
+	/**
+	 * GET candidate counts
+	 * 
+	 * @param filter
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all candidates counts in the same tenant' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -102,9 +110,12 @@ export class CandidateController extends CrudController<Candidate> {
         return await this.candidateService.count(filter);
     }
 
-	/*
-	* Get Candidates By Pagination  
-	*/
+	/**
+	 * GET candidates by pagination  
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all candidates in the same tenant using pagination.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -123,9 +134,12 @@ export class CandidateController extends CrudController<Candidate> {
 		return this.candidateService.paginate(filter);
 	}
 
-	/*
-	* Get Candidates
-	*/
+	/**
+	 * GET all candidates
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all candidates in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -147,9 +161,12 @@ export class CandidateController extends CrudController<Candidate> {
 		});
 	}
 
-	/*
-	* Get Candidate By Id
-	*/
+	/**
+	 * GET candidate by id
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find Candidate by id ' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -171,9 +188,13 @@ export class CandidateController extends CrudController<Candidate> {
 		});
 	}
 
-	/*
-	* Create New Candidate
-	*/
+	/**
+	 * CREATE new candidate
+	 * 
+	 * @param body 
+	 * @param options 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -188,15 +209,19 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post()
 	async create(
-		@Body() entity: ICandidateCreateInput,
+		@Body() body: ICandidateCreateInput,
 		...options: any[]
 	): Promise<ICandidate> {
-		return await this.commandBus.execute(new CandidateCreateCommand(entity));
+		return await this.commandBus.execute(new CandidateCreateCommand(body));
 	}
 
-	/*
-	* Update Candidate By Id
-	*/
+	/**
+	 * UPDATE Candidate By Id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

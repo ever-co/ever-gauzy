@@ -1,9 +1,13 @@
+import { ICandidateInterview } from './candidate-interview.model';
+import { IEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface ICandidateInterviewers
 	extends IBasePerTenantAndOrganizationEntityModel {
 	interviewId: string;
+	interview: ICandidateInterview;
 	employeeId: string;
+	employee: IEmployee;
 	employeeImageUrl?: string;
 	employeeName?: string;
 }

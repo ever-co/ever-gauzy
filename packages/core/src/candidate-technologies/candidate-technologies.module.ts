@@ -5,12 +5,12 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { RoleModule } from '../role/role.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
 import { AuthModule } from '../auth/auth.module';
+import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 import { CandidateTechnologiesController } from './candidate-technologies.controller';
 import { CandidateTechnologiesService } from './candidate-technologies.service';
 import { CommandHandlers } from './commands/handlers';
-import { UserService } from '../user/user.service';
-import { TenantModule } from '../tenant/tenant.module';
-import { CandidateTechnologies, User } from './../core/entities/internal';
+import { CandidateTechnologies } from './../core/entities/internal';
 
 @Module({
 	imports: [
@@ -20,14 +20,15 @@ import { CandidateTechnologies, User } from './../core/entities/internal';
 				module: CandidateTechnologiesModule
 			}
 		]),
-		TypeOrmModule.forFeature([CandidateTechnologies, User]),
+		TypeOrmModule.forFeature([CandidateTechnologies]),
 		RoleModule,
 		RolePermissionsModule,
 		AuthModule,
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		UserModule
 	],
-	providers: [CandidateTechnologiesService, UserService, ...CommandHandlers],
+	providers: [CandidateTechnologiesService, ...CommandHandlers],
 	controllers: [CandidateTechnologiesController],
 	exports: [CandidateTechnologiesService]
 })
