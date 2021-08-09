@@ -28,6 +28,7 @@ export class CandidateSourceService {
 			.pipe(first())
 			.toPromise();
 	}
+
 	create(
 		createInput: ICandidateSourceCreateInput
 	): Promise<ICandidateSource> {
@@ -42,7 +43,7 @@ export class CandidateSourceService {
 
 	updateBulk(updateInput: ICandidateSource[]): Promise<any> {
 		return this.http
-			.put(`${API_PREFIX}/candidate-source/updateBulk`, updateInput)
+			.put(`${API_PREFIX}/candidate-source/bulk`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

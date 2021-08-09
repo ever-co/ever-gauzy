@@ -30,9 +30,8 @@ export const getUserDummyImage = (user: IUser) => {
 	if (firstNameLetter) {
 		return getDummyImage(330, 300, firstNameLetter);
 	} else {
-		const firstCityLetter = user.email.charAt(0).toUpperCase();
-
-		return getDummyImage(330, 300, firstCityLetter);
+		const firstEmailLetter = user.email.charAt(0).toUpperCase();
+		return getDummyImage(330, 300, firstEmailLetter);
 	}
 };
 

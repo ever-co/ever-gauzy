@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ICandidate } from './candidate.model';
 
 export interface ICandidateEducation
 	extends IBasePerTenantAndOrganizationEntityModel {
@@ -8,6 +9,7 @@ export interface ICandidateEducation
 	field: string;
 	notes?: string;
 	candidateId?: string;
+	candidate?: ICandidate;
 }
 
 export interface IEducationFindInput

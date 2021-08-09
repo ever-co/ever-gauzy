@@ -22,7 +22,6 @@ import {
 	Column,
 	Entity,
 	JoinColumn,
-	JoinTable,
 	ManyToMany,
 	ManyToOne,
 	OneToOne,
@@ -51,105 +50,11 @@ import {
 export class Candidate
 	extends TenantOrganizationBaseEntity
 	implements ICandidate {
-	@ManyToMany(() => Tag, (tag) => tag.candidate)
-	@JoinTable({
-		name: 'tag_candidate'
-	})
-	tags: ITag[];
-
-	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.candidates, {
-		nullable: true,
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	contact: IContact;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: Candidate) => it.contact)
-	@IsString()
-	@IsOptional()
-	@Index()
-	@Column({ nullable: true })
-	readonly contactId?: string;
-
-	@OneToMany(() => CandidateEducation, (education) => education.candidate, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	educations: ICandidateEducation[];
-
-	@OneToMany(() => CandidateInterview, (interview) => interview.candidate, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	interview?: ICandidateInterview[];
-
-	@OneToMany(() => CandidateExperience, (experience) => experience.candidate, { 
-		onDelete: 'SET NULL' 
-	})
-	@JoinColumn()
-	experience: ICandidateExperience[];
-
-	@OneToMany(() => CandidateSkill, (skill) => skill.candidate, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	skills: ICandidateSkill[];
-
-	@ApiProperty({ type: () => CandidateSource })
-	@OneToOne(() => CandidateSource, {
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	source?: ICandidateSource;
-
-	@OneToMany(() => CandidateDocument, (document) => document.candidate, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	documents?: ICandidateDocument[];
-
-	@OneToMany(() => CandidateFeedback, (feedback) => feedback.candidate, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	feedbacks?: ICandidateFeedback[];
-
-	@ApiProperty({ type: () => User })
-	@OneToOne(() => User, {
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-    user: IUser;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: Candidate) => it.user)
-	@IsString()
-	@Index()
-	@Column()
-	readonly userId: string;
-
+	
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
-
-	@ApiProperty({ type: () => OrganizationPositions })
-	@ManyToOne(() => OrganizationPositions, { nullable: true })
-	@JoinColumn()
-	organizationPosition?: IOrganizationPosition;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: Candidate) => it.organizationPosition)
-	@IsString()
-	@IsOptional()
-	@Index()
-	@Column({ nullable: true })
-	readonly organizationPositionId?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
@@ -180,12 +85,6 @@ export class Candidate
 	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
-
-	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates)
-    organizationDepartments?: IOrganizationDepartment[];
-
-	@ManyToMany(() => OrganizationEmploymentType, (employmentType) => employmentType.candidates)
-    organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
@@ -224,4 +123,131 @@ export class Candidate
 	isArchived?: boolean;
 
 	ratings?: number;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiProperty({ type: () => Contact })
+	@ManyToOne(() => Contact, (contact) => contact.candidates, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	contact: IContact;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Candidate) => it.contact)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly contactId?: string;
+
+	@ApiProperty({ type: () => OrganizationPositions })
+	@ManyToOne(() => OrganizationPositions, { nullable: true })
+	@JoinColumn()
+	organizationPosition?: IOrganizationPosition;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Candidate) => it.organizationPosition)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly organizationPositionId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiProperty({ type: () => CandidateSource })
+	@OneToOne(() => CandidateSource, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	source?: ICandidateSource;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Candidate) => it.source)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	readonly sourceId?: string;
+
+	@ApiProperty({ type: () => User })
+	@OneToOne(() => User, {
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+    user: IUser;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Candidate) => it.user)
+	@IsString()
+	@Index()
+	@Column()
+	readonly userId: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+	@OneToMany(() => CandidateEducation, (education) => education.candidate, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	educations?: ICandidateEducation[];
+
+	@OneToMany(() => CandidateInterview, (interview) => interview.candidate, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	interview?: ICandidateInterview[];
+
+	@OneToMany(() => CandidateExperience, (experience) => experience.candidate, { 
+		onDelete: 'SET NULL' 
+	})
+	@JoinColumn()
+	experience?: ICandidateExperience[];
+
+	@OneToMany(() => CandidateSkill, (skill) => skill.candidate, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	skills?: ICandidateSkill[];
+
+	@OneToMany(() => CandidateDocument, (document) => document.candidate, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	documents?: ICandidateDocument[];
+
+	@OneToMany(() => CandidateFeedback, (feedback) => feedback.candidate, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	feedbacks?: ICandidateFeedback[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ManyToMany(() => Tag, (tag) => tag.candidate)
+	tags: ITag[];
+
+	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates)
+    organizationDepartments?: IOrganizationDepartment[];
+
+	@ManyToMany(() => OrganizationEmploymentType, (employmentType) => employmentType.candidates)
+    organizationEmploymentTypes?: IOrganizationEmploymentType[];
 }

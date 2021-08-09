@@ -30,7 +30,7 @@ export class CandidateInterviewersService {
 	): Promise<ICandidateInterviewers[]> {
 		return this.http
 			.post<ICandidateInterviewers[]>(
-				`${API_PREFIX}/candidate-interviewers/createBulk`,
+				`${API_PREFIX}/candidate-interviewers/bulk`,
 				createInput
 			)
 			.pipe(first())
@@ -69,21 +69,15 @@ export class CandidateInterviewersService {
 	findByInterviewId(interviewId: string): Promise<ICandidateInterviewers[]> {
 		return this.http
 			.get<ICandidateInterviewers[]>(
-				`${API_PREFIX}/candidate-interviewers/getByInterviewId/${interviewId}`
+				`${API_PREFIX}/candidate-interviewers/interview/${interviewId}`
 			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	deleteBulkByInterviewId(id: string): Promise<any> {
-		const data = JSON.stringify({ id });
+	deleteBulkByInterviewId(interviewId: string): Promise<any> {
 		return this.http
-			.delete(
-				`${API_PREFIX}/candidate-interviewers/deleteBulkByInterviewId`,
-				{
-					params: { data }
-				}
-			)
+			.delete(`${API_PREFIX}/candidate-interviewers/interview/${interviewId}`)
 			.pipe(first())
 			.toPromise();
 	}

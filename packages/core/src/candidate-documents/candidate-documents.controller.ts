@@ -1,12 +1,11 @@
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { AuthGuard } from '@nestjs/passport';
+import { ICandidateDocument, PermissionsEnum } from '@gauzy/contracts';
+import { CrudController, IPagination } from './../core/crud';
 import { CandidateDocumentsService } from './candidate-documents.service';
 import { CandidateDocument } from './candidate-documents.entity';
-import { IPagination } from '../core';
-import { AuthGuard } from '@nestjs/passport';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe } from './../shared/pipes';
 
@@ -19,6 +18,13 @@ export class CandidateDocumentsController extends CrudController<CandidateDocume
 	) {
 		super(candidateDocumentsService);
 	}
+	
+	/**
+	 * GET all candidate documents
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate document.'
 	})
@@ -34,9 +40,9 @@ export class CandidateDocumentsController extends CrudController<CandidateDocume
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW)
 	@Get()
-	async findDocument(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<CandidateDocument>> {
+	): Promise<IPagination<ICandidateDocument>> {
 		const { findInput } = data;
 		return this.candidateDocumentsService.findAll({ where: findInput });
 	}

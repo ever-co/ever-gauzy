@@ -1,8 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { ICandidateInterviewers, ICandidateInterviewersCreateInput } from '@gauzy/contracts';
 import { CandidateInterviewersBulkCreateCommand } from '../candidate-interviewers.bulk.create.command';
 import { CandidateInterviewersService } from '../../candidate-interviewers.service';
-import { CandidateInterviewers } from '../../candidate-interviewers.entity';
-import { ICandidateInterviewersCreateInput } from '@gauzy/contracts';
 
 @CommandHandler(CandidateInterviewersBulkCreateCommand)
 export class CandidateInterviewersBulkCreateHandler
@@ -13,7 +12,7 @@ export class CandidateInterviewersBulkCreateHandler
 
 	public async execute(
 		command: CandidateInterviewersBulkCreateCommand
-	): Promise<CandidateInterviewers[]> {
+	): Promise<ICandidateInterviewers[]> {
 		const { input } = command;
 		let interviewer: ICandidateInterviewersCreateInput;
 		const createInput: ICandidateInterviewersCreateInput[] = [];

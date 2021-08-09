@@ -1,8 +1,15 @@
+// Code from https://github.com/xmlking/ngx-starter-kit.
+// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
+// Copyright (c) 2018 Sumanth Chinthagunta
+
 export interface IPaginationInput {
 	limit?: number;
 	page?: number;
 }
 
+/**
+* Generic pagination interface
+*/
 export interface IPagination<T> {
 	/**
 	 * Items included in the current listing
@@ -16,8 +23,8 @@ export interface IPagination<T> {
 }
 
 /*
- * Common query parameter
- */
+* Common query parameter
+*/
 export interface IListQueryInput<T> {
 	/**
 	 * Model entity defined relations

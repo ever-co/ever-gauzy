@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { ICandidateDocument, ICandidate } from '@gauzy/contracts';
+import { IsString } from 'class-validator';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
@@ -14,16 +15,25 @@ export class CandidateDocument
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
-	candidateId?: string;
-
 	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	documentUrl: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiPropertyOptional({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.documents, {
 		onDelete: 'CASCADE'
 	})
-	candidate: ICandidate;
+	candidate?: ICandidate;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: CandidateDocument) => it.candidate)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	candidateId?: string;
 }

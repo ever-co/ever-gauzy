@@ -20,6 +20,18 @@ export class CandidateTechnologies
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiProperty({ type: () => CandidateInterview })
+	@ManyToOne(() => CandidateInterview, (interview) => interview.technologies, { 
+		onDelete: 'CASCADE' 
+	})
+	interview?: ICandidateInterview;
+
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateTechnologies) => it.interview)
 	@IsString()
@@ -27,11 +39,13 @@ export class CandidateTechnologies
 	@Column({ nullable: true })
 	interviewId?: string;
 
-	@ManyToOne(() => CandidateInterview, (interview) => interview.technologies, { 
-		onDelete: 'CASCADE' 
-	})
-	interview: ICandidateInterview;
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
 
+	@ApiProperty({ type: () => CandidateCriterionsRating })
 	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.technology, { 
 		cascade: true 
 	})

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateTechnologies } from './candidate-technologies.entity';
-import { ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
+import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
 
 @Injectable()
 export class CandidateTechnologiesService extends TenantAwareCrudService<CandidateTechnologies> {
@@ -13,12 +13,14 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	) {
 		super(candidateTechnologiesRepository);
 	}
+	
 	async createBulk(createInput: ICandidateTechnologiesCreateInput[]) {
 		return await this.repository.save(createInput);
 	}
+	
 	async getTechnologiesByInterviewId(
 		interviewId: string
-	): Promise<CandidateTechnologies[]> {
+	): Promise<ICandidateTechnologies[]> {
 		return await this.repository
 			.createQueryBuilder('candidate_technology')
 			.where('candidate_technology.interviewId = :interviewId', {
@@ -26,6 +28,7 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 			})
 			.getMany();
 	}
+
 	async deleteBulk(ids: string[]) {
 		return await this.repository.delete(ids);
 	}
