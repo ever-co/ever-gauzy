@@ -6,6 +6,6 @@ export class FindEmailTemplateQuery implements IQuery {
 
 	constructor(
 		public readonly input: ICustomizeEmailTemplateFindInput,
-		public readonly languageCode: LanguagesEnum
+		public readonly themeLanguage: LanguagesEnum
 	) {}
 }

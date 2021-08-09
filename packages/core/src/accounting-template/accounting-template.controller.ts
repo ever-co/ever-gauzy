@@ -13,24 +13,35 @@ import {
 	ForbiddenException,
 	Delete
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IAccountingTemplate, IAccountingTemplateUpdateInput, LanguagesEnum } from '@gauzy/contracts';
+import {
+	ApiOperation,
+	ApiResponse,
+	ApiTags
+} from '@nestjs/swagger';
+import { QueryBus } from '@nestjs/cqrs';
+import {
+	IAccountingTemplate,
+	IAccountingTemplateUpdateInput,
+	IPagination,
+	LanguagesEnum
+} from '@gauzy/contracts';
 import { AuthGuard } from '@nestjs/passport';
-import { CrudController } from '../core/crud/crud.controller';
-import { AccountingTemplate } from './accounting-template.entity';
-import { AccountingTemplateService } from './accounting-template.service';
+import { CrudController, PaginationParams } from '../core/crud';
+import { RequestContext } from './../core/context';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { LanguageDecorator } from './../shared/decorators';
-import { IPagination, PaginationParams } from './../core/crud';
-import { RequestContext } from 'core';
+import { AccountingTemplateQuery } from './queries';
+import { AccountingTemplate } from './accounting-template.entity';
+import { AccountingTemplateService } from './accounting-template.service';
 
 @ApiTags('Accounting Template')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class AccountingTemplateController extends CrudController<AccountingTemplate> {
 	constructor(
-		private readonly accountingTemplateService: AccountingTemplateService
+		private readonly accountingTemplateService: AccountingTemplateService,
+		private readonly queryBus: QueryBus,
 	) {
 		super(accountingTemplateService);
 	}
@@ -71,12 +82,12 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	@Get('template')
 	async findTemplate(
 		@Query('data', ParseJsonPipe) data: any,
-		@LanguageDecorator() language: LanguagesEnum
+		@LanguageDecorator() themeLanguage: LanguagesEnum
 	): Promise<IAccountingTemplate> {
 		const { findInput = {} } = data;
 		return await this.accountingTemplateService.getAccountTemplate(
 			findInput,
-			language
+			themeLanguage
 		)
 	}
 
@@ -108,16 +119,11 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query('data', ParseJsonPipe) filter: PaginationParams<IAccountingTemplate>
 	): Promise<IPagination<IAccountingTemplate>> {
-		const { relations = [], findInput = null } = data;
-		return this.accountingTemplateService.findAll({
-			where: {
-				tenantId: RequestContext.currentTenantId(),
-				...findInput
-			},
-			relations
-		});
+		return await this.queryBus.execute(
+			new AccountingTemplateQuery(filter)
+		);
 	}
 
 	@ApiOperation({
