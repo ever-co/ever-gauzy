@@ -13,11 +13,11 @@ import {
 	HttpCode
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { BaseEntity } from '../entities/internal';
+import { IPagination } from '@gauzy/contracts';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
-import { IPagination } from './pagination';
 import { PaginationParams } from './pagination-params';
 import { UUIDValidationPipe } from './../../shared/pipes';
 

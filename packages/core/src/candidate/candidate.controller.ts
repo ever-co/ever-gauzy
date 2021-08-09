@@ -148,29 +148,6 @@ export class CandidateController extends CrudController<Candidate> {
 	}
 
 	/*
-	* Create New Candidate
-	*/
-	@ApiOperation({ summary: 'Create new record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
-	@Post()
-	async create(
-		@Body() entity: ICandidateCreateInput,
-		...options: any[]
-	): Promise<ICandidate> {
-		return await this.commandBus.execute(new CandidateCreateCommand(entity));
-	}
-
-	/*
 	* Get Candidate By Id
 	*/
 	@ApiOperation({ summary: 'Find Candidate by id ' })
@@ -192,6 +169,29 @@ export class CandidateController extends CrudController<Candidate> {
 		return this.candidateService.findOne(id, {
 			relations
 		});
+	}
+
+	/*
+	* Create New Candidate
+	*/
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@Post()
+	async create(
+		@Body() entity: ICandidateCreateInput,
+		...options: any[]
+	): Promise<ICandidate> {
+		return await this.commandBus.execute(new CandidateCreateCommand(entity));
 	}
 
 	/*

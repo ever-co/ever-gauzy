@@ -10,15 +10,18 @@ import {
 	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { AuthGuard } from '@nestjs/passport';
+import {
+	ICandidateSkill,
+	IPagination,
+	ISkillCreateInput,
+	RolesEnum
+} from '@gauzy/contracts';
+import { CrudController } from '../core/crud';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
-import { IPagination } from '../core';
-import { AuthGuard } from '@nestjs/passport';
-import { RoleGuard } from '../shared/guards/auth/role.guard';
-import { Roles } from '../shared/decorators/roles';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ICandidateSkill, ISkillCreateInput, RolesEnum } from '@gauzy/contracts';
+import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
+import { Roles } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('CandidateSkill')
@@ -41,7 +44,7 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findSkill(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ICandidateSkill>> {
 		const { findInput } = data;
@@ -51,14 +54,14 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post()
-	async addSkill(@Body() entity: ISkillCreateInput): Promise<any> {
+	async create(@Body() entity: ISkillCreateInput): Promise<any> {
 		return this.candidateSkillService.create(entity);
 	}
 
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete(':id')
-	deleteCandidateSkill(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
+	delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.candidateSkillService.delete(id);
 	}
 }

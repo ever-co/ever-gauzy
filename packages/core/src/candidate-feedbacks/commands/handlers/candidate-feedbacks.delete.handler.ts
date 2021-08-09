@@ -13,8 +13,7 @@ export class FeedbackDeleteHandler
 
 	public async execute(command: FeedbackDeleteCommand): Promise<any> {
 		const { feedbackId, interviewId } = command;
-
-		const feedback = await this.deleteFeedback(feedbackId);
+		const feedback = await this.delete(feedbackId);
 
 		if (feedback && interviewId) {
 			const id = interviewId;
@@ -40,7 +39,7 @@ export class FeedbackDeleteHandler
 		}
 	}
 
-	public async deleteFeedback(id: string): Promise<any> {
+	public async delete(id: string): Promise<any> {
 		return this.candidateFeedbackService.delete(id);
 	}
 }

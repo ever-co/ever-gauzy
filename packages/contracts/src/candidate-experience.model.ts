@@ -1,3 +1,4 @@
+import { ICandidate } from './candidate.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface ICandidateExperience
@@ -6,6 +7,7 @@ export interface ICandidateExperience
 	duration: string;
 	description?: string;
 	candidateId?: string;
+	candidate?: ICandidate;
 }
 
 export interface IExperienceFindInput

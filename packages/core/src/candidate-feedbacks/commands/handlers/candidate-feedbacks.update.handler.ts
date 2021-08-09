@@ -1,9 +1,9 @@
-import { CandidateFeedback } from './../../candidate-feedbacks.entity';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { ICandidateFeedback, ICandidateFeedbackCreateInput } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { FeedbackUpdateCommand } from '../candidate-feedbacks.update.command';
 import { CandidateFeedbacksService } from '../../candidate-feedbacks.service';
 import { CandidateInterviewService } from '../../../candidate-interview/candidate-interview.service';
-import { ICandidateFeedback } from '@gauzy/contracts';
 
 @CommandHandler(FeedbackUpdateCommand)
 export class FeedbackUpdateHandler
@@ -16,32 +16,35 @@ export class FeedbackUpdateHandler
 	public async execute(command: FeedbackUpdateCommand): Promise<any> {
 		const { id } = command;
 		const { entity } = command;
-
-		const feedback = await this.updateFeedback(id, entity);
-		const interviewId = entity.interviewer.interviewId;
-
+		const feedback = await this.update(id, entity);
 		if (feedback) {
-			const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(
-				interviewId
-			);
-			let interviewRating: number;
-
-			if (feedbacks.length > 0) {
-				interviewRating = this.candidateFeedbackService.calcRating(
-					feedbacks
+			const interviewId = entity.interviewer ? entity.interviewer.interviewId : null;
+			if (interviewId) {
+				const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(
+					interviewId
 				);
-				await this.candidateInterviewService.create({
-					id: interviewId,
-					rating: interviewRating
-				});
+				let interviewRating: number;
+				if (isNotEmpty(feedbacks)) {
+					interviewRating = this.candidateFeedbackService.calcRating(
+						feedbacks
+					);
+					await this.candidateInterviewService.create({
+						id: interviewId,
+						rating: interviewRating
+					});
+				}
 			}
 			return feedback;
 		}
 	}
-	public async updateFeedback(
+
+	public async update(
 		id: string,
-		entity: ICandidateFeedback
-	): Promise<CandidateFeedback> {
-		return this.candidateFeedbackService.create({ id: id, ...entity });
+		entity: ICandidateFeedbackCreateInput
+	): Promise<ICandidateFeedback> {
+		return this.candidateFeedbackService.create({ 
+			id, 
+			...entity
+		});
 	}
 }

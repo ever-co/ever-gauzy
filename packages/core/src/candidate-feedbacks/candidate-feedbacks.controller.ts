@@ -8,22 +8,25 @@ import {
 	Body,
 	Put,
 	Param,
-	Delete
+	Delete,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { IPagination } from '../core';
-import { CandidateFeedback } from './candidate-feedbacks.entity';
-import { CandidateFeedbacksService } from './candidate-feedbacks.service';
+import { CommandBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import {
 	PermissionsEnum,
-	ICandidateFeedbackCreateInput
+	ICandidateFeedbackCreateInput,
+	IPagination,
+	ICandidateFeedback
 } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from './../core/crud';
+import { CandidateFeedback } from './candidate-feedbacks.entity';
+import { CandidateFeedbacksService } from './candidate-feedbacks.service';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CommandBus } from '@nestjs/cqrs';
 import { FeedbackDeleteCommand, FeedbackUpdateCommand } from './commands';
 
 @ApiTags('CandidateFeedback')
@@ -35,45 +38,6 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		private readonly commandBus: CommandBus
 	) {
 		super(candidateFeedbacksService);
-	}
-	@ApiOperation({
-		summary: 'Find all candidate feedback.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found candidate feedback',
-		type: CandidateFeedback
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findFeedback(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<CandidateFeedback>> {
-		const { relations = [], findInput = null } = data;
-		return this.candidateFeedbacksService.findAll({
-			where: findInput,
-			relations
-		});
-	}
-
-	@ApiOperation({
-		summary: 'Find candidate feedback by id'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found candidate feedback',
-		type: CandidateFeedback
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get(':id')
-	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<CandidateFeedback> {
-		return this.candidateFeedbacksService.findOne(id);
 	}
 
 	@ApiOperation({
@@ -91,7 +55,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	@UseGuards(PermissionGuard)
 	// TO DO
 	// @Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT) TO DO
-	@Get('getByInterviewId/:interviewId')
+	@Get('interview/:interviewId')
 	async findByInterviewId(
 		@Param('interviewId', UUIDValidationPipe) interviewId: string
 	): Promise<CandidateFeedback[]> {
@@ -102,32 +66,122 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
-	@Post()
-	async createFeedBack(
-		@Body() entity: ICandidateFeedbackCreateInput
+	@Delete('interview/:interviewId/:feedbackId')
+	async deleteFeedback(
+		@Param('interviewId', UUIDValidationPipe) interviewId: string,
+		@Param('feedbackId', UUIDValidationPipe) feedbackId: string,
 	): Promise<any> {
+		return await this.commandBus.execute(
+			new FeedbackDeleteCommand(feedbackId, interviewId)
+		);
+	}
+
+	/*
+	* Get Candidate Feedback Count 
+	*/
+	@ApiOperation({ summary: 'Find all candidate feedbacks counts in the same tenant' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found candidates feedback count'
+	})
+	@Get('count')
+    async getCount(
+		@Query() filter: PaginationParams<ICandidateFeedback>
+	): Promise<number> {
+        return await this.candidateFeedbacksService.count(filter);
+    }
+
+	/*
+	* Get Candidate Feedbacks By Pagination  
+	*/
+	@ApiOperation({ summary: 'Find all candidate feedbacks in the same tenant using pagination.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found candidates in the tenant',
+		type: CandidateFeedback
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<ICandidateFeedback>
+	): Promise<IPagination<ICandidateFeedback>> {
+		return this.candidateFeedbacksService.paginate(filter);
+	}
+
+	/*
+	* Get Candidate Feedbacks
+	*/
+	@ApiOperation({
+		summary: 'Find all candidate feedback.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found candidate feedback',
+		type: CandidateFeedback
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ICandidateFeedback>> {
+		const { relations = [], findInput = null } = data;
+		return this.candidateFeedbacksService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
+	/*
+	* Get Candidate Feedback By Id
+	*/
+	@ApiOperation({
+		summary: 'Find candidate feedback by id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found candidate feedback',
+		type: CandidateFeedback
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<ICandidateFeedback> {
+		return this.candidateFeedbacksService.findOne(id);
+	}
+
+	/*
+	* Create New Candidate Feedback
+	*/
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
+	@Post()
+	async create(
+		@Body() entity: ICandidateFeedbackCreateInput
+	): Promise<ICandidateFeedback> {
 		return this.candidateFeedbacksService.create(entity);
 	}
 
+	/*
+	* Update Candidate Feedback By Id
+	*/
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Put(':id')
-	async updateCandidateFeedback(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: any
-	): Promise<any> {
+		@Body() entity: ICandidateFeedbackCreateInput
+	): Promise<ICandidateFeedback> {
 		return this.commandBus.execute(new FeedbackUpdateCommand(id, entity));
-	}
-
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
-	@Delete('deleteFeedback')
-	async deleteFeedback(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
-		const { feedbackId = null, interviewId = null } = data;
-		return this.commandBus.execute(
-			new FeedbackDeleteCommand(feedbackId, interviewId)
-		);
 	}
 }
