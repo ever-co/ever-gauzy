@@ -1,10 +1,12 @@
+import { IEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IEmployeeAward
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	employeeId: string;
 	year: string;
+	employee?: IEmployee;
+	employeeId: string;
 }
 
 export interface IEmployeeAwardFindInput

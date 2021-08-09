@@ -8,18 +8,16 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
-
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('Tags')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TagController extends CrudController<Tag> {
 	constructor(private readonly tagService: TagService) {
@@ -39,7 +37,7 @@ export class TagController extends CrudController<Tag> {
 	}
 
 	@Get()
-	async getAllTags(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Tag>> {
 		const { relations, findInput } = data;

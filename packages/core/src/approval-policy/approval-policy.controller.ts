@@ -23,10 +23,9 @@ import {
 	Controller
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import { Permissions } from './../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	ApprovalPolicyCreateCommand,
@@ -36,7 +35,7 @@ import {
 } from './commands';
 
 @ApiTags('ApprovalPolicy')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	constructor(

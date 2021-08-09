@@ -15,11 +15,9 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationLanguagesService } from './organization-languages.service';
 import { OrganizationLanguages } from './organization-languages.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { DeepPartial } from 'typeorm';
-import { IOrganizationLanguages } from '@gauzy/contracts';
+import { IOrganizationLanguages, IPagination } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPagination } from '../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
@@ -44,7 +42,7 @@ export class OrganizationLanguagesController extends CrudController<Organization
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	async create(
 		@Body() entity: DeepPartial<OrganizationLanguages>
 	): Promise<OrganizationLanguages> {
@@ -67,7 +65,7 @@ export class OrganizationLanguagesController extends CrudController<Organization
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: QueryDeepPartialEntity<OrganizationLanguages>
@@ -86,7 +84,7 @@ export class OrganizationLanguagesController extends CrudController<Organization
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<any> {

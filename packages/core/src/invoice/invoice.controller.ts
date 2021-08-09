@@ -1,6 +1,3 @@
-import { CrudController, IPagination, PaginationParams } from '../core';
-import { Invoice } from './invoice.entity';
-import { InvoiceService } from './invoice.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	Controller,
@@ -21,19 +18,22 @@ import {
 } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { Response } from 'express';
-import { AuthGuard } from '@nestjs/passport';
-import { Permissions } from './../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { CommandBus } from '@nestjs/cqrs';
+import { I18nLang } from 'nestjs-i18n';
 import {
 	PermissionsEnum,
 	IInvoice,
 	LanguagesEnum,
 	IInvoiceCreateInput,
-	IInvoiceUpdateInput
+	IInvoiceUpdateInput,
+	IPagination
 } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from './../core/crud';
+import { Invoice } from './invoice.entity';
+import { InvoiceService } from './invoice.service';
+import { Permissions, Public } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { I18nLang } from 'nestjs-i18n';
-import { CommandBus } from '@nestjs/cqrs';
 import {
 	InvoiceCreateCommand,
 	InvoiceDeleteCommand,
@@ -54,7 +54,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		super(invoiceService);
 	}
 
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
@@ -64,7 +64,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		return this.invoiceService.pagination(filter);
 	}
 
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
 	async findAll(
@@ -77,14 +77,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		});
 	}
 
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('highest')
 	async findHighestInvoiceNumber(): Promise<IPagination<IInvoice>> {
 		return this.invoiceService.getHighestInvoiceNumber();
 	}
 
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get(':id')
 	async findByIdWithRelations(
@@ -109,6 +109,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Record not found'
 	})
 	@Get('public/:id/:token')
+	@Public()
 	async findWithoutGuard(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Param('token') token: string,
@@ -132,7 +133,7 @@ export class InvoiceController extends CrudController<Invoice> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post()
 	async create(@Body() entity: IInvoiceCreateInput): Promise<Invoice> {
@@ -154,7 +155,7 @@ export class InvoiceController extends CrudController<Invoice> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Put(':id')
 	async update(
@@ -192,7 +193,6 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'))
 	@Put('email/:email')
 	async emailInvoice(
 		@Param('email') email: string,
@@ -210,7 +210,6 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'))
 	@Put('generate/:id')
 	async generateLink(
 		@Param('id', UUIDValidationPipe) id: string,

@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IPagination } from '../../../core';
+import { IPagination } from '@gauzy/contracts';
 import { FindRecurringExpenseByMonthHandler } from '../../../shared';
 import { EmployeeRecurringExpense } from '../../employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from '../../employee-recurring-expense.service';

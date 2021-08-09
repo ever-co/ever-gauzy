@@ -5,13 +5,13 @@ import {
 	ICountry,
 	IEmployee,
 	IEmployeeJobPost,
+	IPagination,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum
 } from '@gauzy/contracts';
 import { DEFAULT_DB_CONNECTION } from '@gauzy/common';
 import { getConnection } from 'typeorm';
-import { IPagination } from '../core';
 import { Country } from '../country';
 
 export const getRandomEmployeeJobPosts = async (

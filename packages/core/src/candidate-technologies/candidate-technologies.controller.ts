@@ -11,12 +11,11 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import { RolesEnum, ICandidateTechnologies, IPagination } from '@gauzy/contracts';
-import { CrudController } from '../core/crud';
+import { CrudController } from './../core/crud';
 import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
-import { Roles } from '../shared/decorators';
+import { Roles } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CandidateTechnologiesService } from './candidate-technologies.service';
 import { CandidateTechnologies } from './candidate-technologies.entity';
@@ -27,7 +26,7 @@ import {
 } from './commands';
 
 @ApiTags('CandidateTechnology')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateTechnologiesController extends CrudController<CandidateTechnologies> {
 	constructor(

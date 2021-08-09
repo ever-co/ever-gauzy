@@ -7,15 +7,15 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { CrudController, IPagination } from '../core/crud';
+import { IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { Deal } from './deal.entity';
 import { DealService } from './deal.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Deal')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class DealController extends CrudController<Deal> {
 	public constructor(private readonly dealService: DealService) {

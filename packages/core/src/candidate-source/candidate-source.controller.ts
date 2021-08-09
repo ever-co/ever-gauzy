@@ -10,15 +10,14 @@ import {
 	Put
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { ICandidateSource } from '@gauzy/contracts';
-import { CrudController, IPagination } from './../core/crud';
+import { ICandidateSource, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
 import { CandidateSourceService } from './candidate-source.service';
 
 @ApiTags('CandidateSource')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateSourceController extends CrudController<CandidateSource> {
 	constructor(

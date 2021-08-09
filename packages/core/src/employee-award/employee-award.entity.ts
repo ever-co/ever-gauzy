@@ -1,7 +1,7 @@
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IEmployeeAward } from '@gauzy/contracts';
+import { IEmployee, IEmployeeAward } from '@gauzy/contracts';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
@@ -24,12 +24,21 @@ export class EmployeeAward
 	@Column()
 	year: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, {
+		onDelete: 'CASCADE'
+	})
+	employee?: IEmployee;
+
 	@ApiProperty({ type: () => String })
+	@RelationId((it: EmployeeAward) => it.employee)
 	@IsString()
-	@IsNotEmpty()
+	@Index()
 	@Column()
 	employeeId: string;
-
-	@ManyToOne((type) => Employee, (employee) => employee.id)
-	employee: Employee;
 }

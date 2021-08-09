@@ -18,16 +18,15 @@ import {
 	ITimeOffPolicyCreateInput,
 	ITimeOffPolicyUpdateInput,
 	ITimeOffPolicy,
-	PermissionsEnum
+	PermissionsEnum,
+	IPagination
 } from '@gauzy/contracts';
-import { AuthGuard } from '@nestjs/passport';
-import { IPagination } from '../core';
 import { TimeOffPolicyService } from './time-off-policy.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffPolicy')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	constructor(private readonly policyService: TimeOffPolicyService) {

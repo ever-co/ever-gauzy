@@ -1,4 +1,4 @@
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -16,19 +16,19 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeAppointmentService } from './employee-appointment.service';
 import { EmployeeAppointmentCreateCommand, EmployeeAppointmentUpdateCommand } from './commands';
-import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { I18nLang } from 'nestjs-i18n';
 import {
 	LanguagesEnum,
 	IEmployeeAppointmentCreateInput,
 	IEmployeeAppointmentUpdateInput,
-	IEmployeeAppointment
+	IEmployeeAppointment,
+	IPagination
 } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('EmployeeAppointment')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmployeeAppointmentController extends CrudController<EmployeeAppointment> {
 	constructor(
@@ -117,7 +117,6 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get(':id')
 	async findOneById(
 		@Param('id', UUIDValidationPipe) id: string
@@ -135,7 +134,6 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.EXPECTATION_FAILED,
 		description: 'Token generation failure'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('/sign/:id')
 	async signAppointment(@Param('id', UUIDValidationPipe) id: string): Promise<String> {
 		return this.employeeAppointmentService.signAppointmentId(id);
@@ -151,7 +149,6 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.EXPECTATION_FAILED,
 		description: 'Token verification failure'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('/decode/:token')
 	async decodeToken(@Param('token') token: string): Promise<string> {
 		const decoded = this.employeeAppointmentService.decode(token);

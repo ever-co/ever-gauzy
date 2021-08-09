@@ -15,16 +15,14 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationAwardsService } from './organization-awards.service';
 import { OrganizationAwards } from './organization-awards.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPagination } from '../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { IOrganizationAwards } from '@gauzy/contracts';
+import { IOrganizationAwards, IPagination } from '@gauzy/contracts';
 
 @ApiTags('OrganizationAwards')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationAwardsController extends CrudController<OrganizationAwards> {
 	constructor(

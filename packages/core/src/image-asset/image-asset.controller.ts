@@ -11,18 +11,16 @@ import {
 	Delete
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
-import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('ImageAsset')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ImageAssetController extends CrudController<ImageAsset> {
 	constructor(private readonly imageAssetService: ImageAssetService) {
@@ -42,7 +40,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	}
 
 	@Get()
-	async getAllAssets(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ImageAsset>> {
 		const { relations, findInput } = data;

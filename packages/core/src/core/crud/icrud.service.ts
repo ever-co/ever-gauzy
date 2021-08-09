@@ -11,7 +11,7 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPagination } from './pagination';
+import { IPagination } from '@gauzy/contracts';
 
 export interface ICrudService<T> {
 	count(filter?: FindManyOptions<T>): Promise<number>;

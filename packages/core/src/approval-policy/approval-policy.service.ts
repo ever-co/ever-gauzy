@@ -1,4 +1,4 @@
-import { TenantAwareCrudService, IPagination } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,7 +8,8 @@ import {
 	IApprovalPolicyCreateInput,
 	ApprovalPolicyTypesStringEnum,
 	IListQueryInput,
-	IRequestApprovalFindInput
+	IRequestApprovalFindInput,
+	IPagination
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 

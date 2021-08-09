@@ -1,5 +1,6 @@
 import {
 	IEditEntityByMemberInput,
+	IPagination,
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
@@ -17,18 +18,16 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationProjectEditByEmployeeCommand } from './commands/organization-project.edit-by-employee.command';
 import { OrganizationProject } from './organization-projects.entity';
 import { OrganizationProjectsService } from './organization-projects.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationProjects')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationProjectsController extends CrudController<OrganizationProject> {
 	constructor(
@@ -122,7 +121,6 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'))
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
@@ -149,7 +147,6 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'))
 	// @UseGuards(PermissionGuard)
 	// @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('/task-view/:id')

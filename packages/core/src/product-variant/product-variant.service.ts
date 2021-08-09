@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { IPagination } from '../core';
+import { IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';

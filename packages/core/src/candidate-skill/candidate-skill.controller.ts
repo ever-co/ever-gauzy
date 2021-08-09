@@ -10,14 +10,13 @@ import {
 	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	ICandidateSkill,
 	IPagination,
 	ISkillCreateInput,
 	RolesEnum
 } from '@gauzy/contracts';
-import { CrudController } from '../core/crud';
+import { CrudController } from './../core/crud';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
 import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
@@ -25,7 +24,7 @@ import { Roles } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('CandidateSkill')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateSkillController extends CrudController<CandidateSkill> {
 	constructor(private readonly candidateSkillService: CandidateSkillService) {

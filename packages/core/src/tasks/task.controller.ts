@@ -16,19 +16,25 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Task } from './task.entity';
-import { CrudController, IPagination, PaginationParams } from '../core';
+import { CrudController, PaginationParams } from '../core';
 import { TaskService } from './task.service';
-import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { PermissionsEnum, IGetTaskByEmployeeOptions, ITask, ITaskUpdateInput, ITaskCreateInput } from '@gauzy/contracts';
+import {
+	PermissionsEnum,
+	IGetTaskByEmployeeOptions,
+	ITask,
+	ITaskUpdateInput,
+	ITaskCreateInput,
+	IPagination
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import { TaskCreateCommand } from './commands';
 
 @ApiTags('Tasks')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(

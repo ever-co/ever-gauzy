@@ -15,16 +15,15 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
 import { CrudController } from '../core/crud/crud.controller';
-import { IProposalCreateInput, IProposal } from '@gauzy/contracts';
-import { IPagination, PaginationParams } from '../core';
+import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
+import { PaginationParams } from '../core';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
-import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Proposal')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProposalController extends CrudController<Proposal> {
 	constructor(private readonly proposalService: ProposalService) {

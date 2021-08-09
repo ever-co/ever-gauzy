@@ -23,7 +23,6 @@ import {
 	IProjectBudgetLimitReportInput,
 	IClientBudgetLimitReportInput
 } from '@gauzy/contracts';
-import { AuthGuard } from '@nestjs/passport';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from '../../shared/decorators';
 import { OrganizationPermissionGuard, TenantBaseGuard } from '../../shared/guards';
@@ -34,7 +33,7 @@ import { FindOneOptions } from 'typeorm';
 import { TimeLog } from './../time-log.entity';
 
 @ApiTags('TimeLog')
-@UseGuards(AuthGuard('jwt'), TenantBaseGuard)
+@UseGuards(TenantBaseGuard)
 @Controller('time-log')
 export class TimeLogController extends CrudController<TimeLog> {
 	constructor(private readonly timeLogService: TimeLogService) {
@@ -157,7 +156,6 @@ export class TimeLogController extends CrudController<TimeLog> {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('time-limit')
 	async weeklyLimit(@Query() request?: IGetTimeLimitReportInput) {
 		return await this.timeLogService.getTimeLimit(request);
@@ -177,7 +175,6 @@ export class TimeLogController extends CrudController<TimeLog> {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('project-budget-limit')
 	async projectBudgetLimit(
 		@Query() request?: IProjectBudgetLimitReportInput
@@ -199,7 +196,6 @@ export class TimeLogController extends CrudController<TimeLog> {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('client-budget-limit')
 	async clientBudgetLimit(@Query() request?: IClientBudgetLimitReportInput) {
 		return await this.timeLogService.clientBudgetLimit(request);

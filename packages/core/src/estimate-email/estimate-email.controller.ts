@@ -1,4 +1,4 @@
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { EstimateEmail } from './estimate-email.entity';

@@ -7,17 +7,17 @@ import {
 	Body,
 	UseGuards
 } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { IntegrationEntitySettingService } from './integration-entity-setting.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 
 
 @ApiTags('IntegrationsEntitySetting')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class IntegrationEntitySettingController extends CrudController<IntegrationEntitySetting> {
 	constructor(

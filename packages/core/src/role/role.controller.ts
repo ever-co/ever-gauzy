@@ -1,6 +1,5 @@
 import { Body, Controller, Get, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RoleService } from './role.service';
 import { CrudController } from '../core/crud/crud.controller';
@@ -10,7 +9,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 
 @ApiTags('Role')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class RoleController extends CrudController<Role> {
 	constructor(private readonly roleService: RoleService) {

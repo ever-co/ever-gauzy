@@ -1,7 +1,6 @@
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICandidateExperience, IPagination } from '@gauzy/contracts';
-import { AuthGuard } from '@nestjs/passport';
 import { CrudController } from './../core/crud';
 import { CandidateExperienceService } from './candidate-experience.service';
 import { CandidateExperience } from './candidate-experience.entity';
@@ -9,7 +8,7 @@ import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateExperience')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateExperienceController extends CrudController<CandidateExperience> {
 	constructor(

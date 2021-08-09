@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import {
-	IGoalKPITemplate as IKPITemplate,
+	IGoalKPITemplate,
 	KpiMetricEnum,
 	IEmployee
 } from '@gauzy/contracts';
@@ -14,7 +14,7 @@ import {
 @Entity('goal_kpi_template')
 export class GoalKPITemplate
 	extends TenantOrganizationBaseEntity
-	implements IKPITemplate {
+	implements IGoalKPITemplate {
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -41,7 +41,7 @@ export class GoalKPITemplate
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
-	lead: IEmployee;
+	lead?: IEmployee;
 
 	@ApiProperty({ type: () => Number })
 	@Column()

@@ -1,4 +1,4 @@
-import { CurrenciesEnum, IEmployeeRecurringExpense } from '@gauzy/contracts';
+import { CurrenciesEnum, IEmployee, IEmployeeRecurringExpense } from '@gauzy/contracts';
 import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -11,7 +11,7 @@ import {
 	IsDate,
 	IsOptional
 } from 'class-validator';
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
@@ -21,13 +21,7 @@ import {
 export class EmployeeRecurringExpense
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeRecurringExpense {
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	employeeId: string;
-
+	
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsNotEmpty()
@@ -62,7 +56,7 @@ export class EmployeeRecurringExpense
 	@Min(1)
 	@Max(31)
 	@Column({ nullable: true })
-	endDay: number;
+	endDay?: number;
 
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
 	@IsNumber()
@@ -70,14 +64,14 @@ export class EmployeeRecurringExpense
 	@Min(1)
 	@Max(12)
 	@Column({ nullable: true })
-	endMonth: number;
+	endMonth?: number;
 
 	@ApiProperty({ type: () => Number, minimum: 1 })
 	@IsNumber()
 	@Optional()
 	@Min(0)
 	@Column({ nullable: true })
-	endYear: number;
+	endYear?: number;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
@@ -111,6 +105,23 @@ export class EmployeeRecurringExpense
 	@Column({ nullable: true })
 	parentRecurringExpenseId?: string;
 
-	@ManyToOne(() => Employee, (employee) => employee.id)
-	employee: Employee;
+	
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, {
+		onDelete: 'CASCADE'
+	})
+	employee?: IEmployee;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: EmployeeRecurringExpense) => it.employee)
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	employeeId: string;
 }

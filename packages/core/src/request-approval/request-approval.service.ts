@@ -1,4 +1,3 @@
-import { IPagination } from '../core';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
 import {
@@ -13,7 +12,8 @@ import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum,
 	IRequestApprovalCreateInput,
-	IRequestApprovalFindInput
+	IRequestApprovalFindInput,
+	IPagination
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { Employee, OrganizationTeam, RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';

@@ -3,13 +3,11 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	UseGuards,
 	Param
 } from '@nestjs/common';
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { Integration } from './integration.entity';
 import { IntegrationService } from './integration.service';
-import { AuthGuard } from '@nestjs/passport';
 import { IntegrationType } from './integration-type.entity';
 import { ApiResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -18,7 +16,6 @@ import { IntegrationEnum } from '@gauzy/contracts';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Integrations')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class IntegrationController extends CrudController<Integration> {
 	constructor(

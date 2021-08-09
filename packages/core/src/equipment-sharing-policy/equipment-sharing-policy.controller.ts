@@ -11,8 +11,7 @@ import {
 	Query,
 	Post
 } from '@nestjs/common';
-import { CrudController } from '../core';
-import { AuthGuard } from '@nestjs/passport';
+import { CrudController } from './../core/crud';
 import { IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -20,7 +19,7 @@ import { EquipmentSharingPolicyService } from './equipment-sharing-policy.servic
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('EquipmentSharingPolicy')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentSharingPolicyController extends CrudController<EquipmentSharingPolicy> {
 	constructor(

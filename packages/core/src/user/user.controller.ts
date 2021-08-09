@@ -22,19 +22,17 @@ import {
 	ApiTags,
 	ApiBearerAuth
 } from '@nestjs/swagger';
-import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { RequestContext } from '../core/context';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserCreateCommand } from './commands';
 import { IUserCreateInput, IUserUpdateInput } from '@gauzy/contracts';
-import { AuthGuard } from '@nestjs/passport';
 import { DeleteAllDataService } from './delete-all-data/delete-all-data.service';
 import { TransformInterceptor } from './../core/interceptors';
 
@@ -42,7 +40,6 @@ import { TransformInterceptor } from './../core/interceptors';
 @ApiBearerAuth()
 @UseInterceptors(TransformInterceptor)
 @Controller()
-@UseGuards(AuthGuard('jwt'))
 export class UserController extends CrudController<User> {
 	constructor(
 		private readonly userService: UserService,
@@ -120,7 +117,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get()
-	async findAllUsers(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<User>> {
 		const { relations, findInput } = data;

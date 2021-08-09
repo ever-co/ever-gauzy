@@ -1,6 +1,6 @@
 // import * as csurf from 'csurf';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SentryService } from '@ntegral/nestjs-sentry';
 import * as expressSession from 'express-session';
@@ -16,6 +16,7 @@ import { coreEntities } from '../core/entities';
 import { coreSubscribers } from './../core/entities/subscribers';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
+import { AuthGuard } from './../shared/guards';
 
 export async function bootstrap(
 	pluginConfig?: Partial<IPluginConfig>
@@ -26,6 +27,10 @@ export async function bootstrap(
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['error', 'warn']
 	});
+
+	// This will lockdown all routes and make them accessible by authenticated users only.
+	const reflector = app.get(Reflector);
+	app.useGlobalGuards(new AuthGuard(reflector));
 
 	app.useLogger(app.get(SentryService));
 	app.use(json({ limit: '50mb' }));

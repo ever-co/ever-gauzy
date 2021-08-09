@@ -2,7 +2,8 @@ import {
 	IEmployeeCreateInput,
 	PermissionsEnum,
 	LanguagesEnum,
-	UpdateEmployeeJobsStatistics
+	UpdateEmployeeJobsStatistics,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -24,11 +25,10 @@ import {
 	GetEmployeeJobStatisticsCommand,
 	UpdateEmployeeJobSearchStatusCommand
 } from './commands';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination, getUserDummyImage } from '../core';
+import { getUserDummyImage } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { Permissions } from './../shared/decorators';
+import { Permissions, Public } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
@@ -62,7 +62,6 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Get('/job-statistics')
-	@UseGuards(AuthGuard('jwt'))
 	async getEmployeeJobsStatistics(@Query() request: FindManyOptions) {
 		return this.commandBus.execute(
 			new GetEmployeeJobStatisticsCommand(request)
@@ -85,7 +84,7 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Employee
@@ -114,7 +113,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get()
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	async findAllEmployees(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Employee>> {
@@ -138,6 +137,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('public')
+	@Public()
 	/**
 	 * TODO: This is a public service, the response should only contain
 	 * those fields (columns) of an employee that can be shown to the public
@@ -165,6 +165,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('public/:id')
+	@Public()
 	async findEmployeePublicData(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
@@ -186,7 +187,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('/working')
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	async findAllWorkingEmployees(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Employee>> {
@@ -213,7 +214,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Count not found'
 	})
 	@Get('/working/count')
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	async findAllWorkingEmployeesCount(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<{ total: number }> {
@@ -240,7 +241,6 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	@UseGuards(AuthGuard('jwt'))
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
@@ -268,7 +268,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('/user/:userId')
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	async findByUserId(
 		@Param('userId', UUIDValidationPipe) userId: string,
 		@Query('data', ParseJsonPipe) data?: any
@@ -297,7 +297,6 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/create')
-	@UseGuards(AuthGuard('jwt'))
 	async create(
 		@Body() entity: IEmployeeCreateInput,
 		@Req() request: Request,
@@ -326,7 +325,6 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/createBulk')
-	@UseGuards(AuthGuard('jwt'))
 	async createBulk(
 		@Body() input: IEmployeeCreateInput[],
 		@I18nLang() languageCode: LanguagesEnum,
@@ -361,7 +359,6 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('/:id/job-search-status')
-	@UseGuards(AuthGuard('jwt'))
 	async updateJobSearchStatus(
 		@Param('id', UUIDValidationPipe) employeeId: string,
 		@Body() request: UpdateEmployeeJobsStatistics

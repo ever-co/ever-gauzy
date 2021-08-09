@@ -11,25 +11,23 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { IUserOrganization, RolesEnum, LanguagesEnum } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
+import { IUserOrganization, RolesEnum, LanguagesEnum, IPagination } from '@gauzy/contracts';
 import { UserOrganizationService } from './user-organization.services';
-import { IPagination } from '../core';
 import { UserOrganization } from './user-organization.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { Not } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserOrganizationDeleteCommand } from './commands';
 import { I18nLang } from 'nestjs-i18n';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from '../shared/guards';
+import { TenantPermissionGuard } from './../shared/guards';
 import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('UserOrganization')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @UseInterceptors(TransformInterceptor)
 @Controller()
-export class UserOrganizationController extends CrudController<IUserOrganization> {
+export class UserOrganizationController extends CrudController<UserOrganization> {
 	constructor(
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly commandBus: CommandBus
@@ -48,9 +46,9 @@ export class UserOrganizationController extends CrudController<IUserOrganization
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<UserOrganization>> {
+	): Promise<IPagination<IUserOrganization>> {
 		const { relations, findInput } = data;
 		return this.userOrganizationService.findAll({
 			where: findInput,

@@ -1,17 +1,19 @@
+import { NotFoundException } from '@nestjs/common';
 import {
 	DeepPartial,
+	DeleteResult,
 	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
 	ObjectLiteral,
 	Repository
 } from 'typeorm';
+import { IPagination } from '@gauzy/contracts';
 import { User } from '../../user/user.entity';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
 import { ICrudService } from './icrud.service';
-import { IPagination } from './pagination';
 import { ITryRequest } from './try-request';
 
 /**
@@ -110,14 +112,36 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	public async create(entity: DeepPartial<T>, ...options: any[]): Promise<T> {
-		const user = RequestContext.currentUser();
-		if (user && user.tenantId) {
+		const tenantId = RequestContext.currentTenantId();
+		if (tenantId) {
 			const entityWithTenant = {
 				...entity,
-				tenant: { id: user.tenantId }
+				tenant: { id: tenantId }
 			};
 			return super.create(entityWithTenant, ...options);
 		}
 		return super.create(entity, ...options);
+	}
+
+	/**
+	 * DELETE source related to tenant
+	 * 
+	 * @param criteria 
+	 * @param options 
+	 * @returns 
+	 */
+	public async delete(
+		criteria: string | number | FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<DeleteResult> {
+		try {
+			const record = await this.findOne(criteria, options);
+			if (!record) {
+				throw new NotFoundException(`The requested record was not found`);
+			}
+			return await super.delete(criteria);
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
 	}
 }

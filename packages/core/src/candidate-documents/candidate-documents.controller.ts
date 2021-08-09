@@ -1,8 +1,7 @@
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { ICandidateDocument, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, IPagination } from './../core/crud';
+import { ICandidateDocument, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { CandidateDocumentsService } from './candidate-documents.service';
 import { CandidateDocument } from './candidate-documents.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -10,7 +9,7 @@ import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateDocument')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateDocumentsController extends CrudController<CandidateDocument> {
 	constructor(
