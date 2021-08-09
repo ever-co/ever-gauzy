@@ -23,6 +23,8 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
+import 'cypress-file-upload';
+import '@4tw/cypress-drag-drop';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -190,8 +192,7 @@ export const CustomCommands = {
 		);
 		addTaskPage.selectEmployeeDropdownVisible();
 		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(1);
-		addTaskPage.selectEmployeeDropdownOption(2);
+		addTaskPage.selectEmployeeDropdownOption(0);
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.addTitleInputVisible();
 		addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);
