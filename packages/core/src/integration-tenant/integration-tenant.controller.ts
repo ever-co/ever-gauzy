@@ -6,17 +6,16 @@ import {
 	Param,
 	UseGuards
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
 
 @ApiTags('IntegrationTenant')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class IntegrationTenantController extends CrudController<IntegrationTenant> {
 	constructor(private _integrationTenantService: IntegrationTenantService) {

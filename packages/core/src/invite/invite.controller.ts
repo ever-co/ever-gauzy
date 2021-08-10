@@ -1,4 +1,3 @@
-import { AuthGuard } from '@nestjs/passport';
 import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
@@ -7,7 +6,8 @@ import {
 	PermissionsEnum,
 	LanguagesEnum,
 	IOrganizationContactAcceptInviteInput,
-	IOrganizationContact
+	IOrganizationContact,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	BadRequestException,
@@ -35,10 +35,9 @@ import {
 import { UpdateResult } from 'typeorm';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
-import { IPagination } from '../core';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
-import { Permissions } from './../shared/decorators';
+import { Permissions, Public } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TransformInterceptor } from './../core/interceptors';
@@ -70,7 +69,7 @@ export class InviteController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
 	async createManyWithEmailsId(
@@ -96,6 +95,7 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@Get('validate')
+	@Public()
 	async validateInvite(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<Invite> {
@@ -116,7 +116,7 @@ export class InviteController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(
 		PermissionsEnum.ORG_INVITE_VIEW,
 		PermissionsEnum.ORG_INVITE_EDIT
@@ -143,6 +143,7 @@ export class InviteController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('employee')
+	@Public()
 	async acceptEmployeeInvite(
 		@Body() entity: IInviteAcceptInput,
 		@Req() request: Request,
@@ -165,6 +166,7 @@ export class InviteController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('user')
+	@Public()
 	async acceptUserInvite(
 		@Body() entity: IInviteAcceptInput,
 		@Req() request: Request,
@@ -187,6 +189,7 @@ export class InviteController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('contact')
+	@Public()
 	async acceptOrganizationContactInvite(
 		@Body() input: IOrganizationContactAcceptInviteInput,
 		@Req() request: Request,
@@ -208,7 +211,7 @@ export class InviteController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
 	async resendInvite(
@@ -227,7 +230,7 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete(':id')
 	async delete(
@@ -261,7 +264,7 @@ export class InviteController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Put('organization-contact/:id')
 	async inviteOrganizationContact(

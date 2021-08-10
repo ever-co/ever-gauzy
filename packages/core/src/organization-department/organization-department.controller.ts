@@ -1,6 +1,7 @@
 import {
 	IEditEntityByMemberInput,
 	IOrganizationDepartmentCreateInput,
+	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import {
@@ -16,8 +17,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import {
 	OrganizationDepartmentEditByEmployeeCommand,
 	OrganizationDepartmentUpdateCommand
@@ -26,11 +26,10 @@ import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationDepartment')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationDepartmentController extends CrudController<OrganizationDepartment> {
 	constructor(

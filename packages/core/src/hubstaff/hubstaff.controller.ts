@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { HubstaffService } from './hubstaff.service';
 import {
 	IIntegrationTenant,
@@ -6,12 +6,10 @@ import {
 	IHubstaffProject,
 	IIntegrationMap
 } from '@gauzy/contracts';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Integrations')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class HubstaffController {
 	constructor(private _hubstaffService: HubstaffService) {}

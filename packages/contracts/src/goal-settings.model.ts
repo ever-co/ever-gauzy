@@ -37,7 +37,7 @@ export interface IGoalTemplate
 	name: string;
 	level: string;
 	keyResults?: Array<IKeyResultTemplate>;
-	category?: string;
+	category: string;
 }
 
 export interface IGoalTemplateFind
@@ -52,7 +52,7 @@ export interface IKeyResultTemplate
 	unit?: string;
 	deadline: string;
 	targetValue?: number;
-	initialValue?: number;
+	initialValue: number;
 	hardDeadline?: Date;
 	softDeadline?: Date;
 	goal: IGoalTemplate;

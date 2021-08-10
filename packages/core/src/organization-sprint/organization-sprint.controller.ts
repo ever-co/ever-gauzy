@@ -12,19 +12,18 @@ import {
 	Post
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { OrganizationSprintService } from './organization-sprint.service';
-import { AuthGuard } from '@nestjs/passport';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { IOrganizationSprint, IOrganizationSprintUpdateInput } from '@gauzy/contracts';
+import { IOrganizationSprint, IOrganizationSprintUpdateInput, IPagination } from '@gauzy/contracts';
 import { OrganizationSprintUpdateCommand } from './commands/organization-sprint.update.command';
 import { CommandBus } from '@nestjs/cqrs';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationSprint')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationSprintController extends CrudController<OrganizationSprint> {
 	constructor(

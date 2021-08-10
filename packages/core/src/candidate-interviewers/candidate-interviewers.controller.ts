@@ -12,14 +12,13 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	PermissionsEnum,
 	ICandidateInterviewersCreateInput,
 	ICandidateInterviewers,
 	IPagination
 } from '@gauzy/contracts';
-import { CrudController } from '../core/crud';
+import { CrudController } from './../core/crud';
 import { CandidateInterviewersService } from './candidate-interviewers.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -31,7 +30,7 @@ import {
 } from './commands';
 
 @ApiTags('CandidateInterviewer')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateInterviewersController extends CrudController<CandidateInterviewers> {
 	constructor(

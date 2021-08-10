@@ -1,10 +1,9 @@
-import { IPagination } from '../core';
-import { Equipment } from './equipment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { IEquipment, IPagination } from '@gauzy/contracts';
+import { Equipment } from './equipment.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { IEquipment } from '@gauzy/contracts';
 
 @Injectable()
 export class EquipmentService extends TenantAwareCrudService<Equipment> {

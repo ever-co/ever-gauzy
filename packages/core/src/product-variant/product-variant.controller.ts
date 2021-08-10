@@ -11,7 +11,7 @@ import {
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { ProductVariant } from './product-variant.entity';
 import { ProductVariantService } from './product-variant.service';
 import {
@@ -20,14 +20,13 @@ import {
 } from './commands';
 import { CommandBus } from '@nestjs/cqrs';
 import { Product } from '../product/product.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { DeleteResult } from 'typeorm';
-import { IVariantCreateInput } from '@gauzy/contracts';
+import { IPagination, IVariantCreateInput } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('ProductVariant')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProductVariantController extends CrudController<ProductVariant> {
 	constructor(

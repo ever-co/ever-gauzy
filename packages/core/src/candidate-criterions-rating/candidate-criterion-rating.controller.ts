@@ -12,9 +12,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ICandidateCriterionsRating, IPagination, RolesEnum } from '@gauzy/contracts';
-import { CrudController } from '../core/crud';
+import { CrudController } from './../core/crud';
 import { CandidateCriterionsRatingService } from './candidate-criterion-rating.service';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
@@ -27,7 +26,7 @@ import {
 } from './commands';
 
 @ApiTags('CandidateCriterionRating')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateCriterionsRatingController extends CrudController<CandidateCriterionsRating> {
 	constructor(

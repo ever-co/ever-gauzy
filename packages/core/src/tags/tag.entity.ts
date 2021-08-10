@@ -78,6 +78,9 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	isSystem?: boolean;
 
 	@ManyToMany(() => Candidate, (candidate) => candidate.tags)
+	@JoinTable({
+		name: 'tag_candidate'
+	})
 	candidate?: ICandidate[];
 
 	@ManyToMany(() => Employee, (employee) => employee.tags)

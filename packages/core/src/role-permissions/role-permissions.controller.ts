@@ -1,4 +1,9 @@
-import { PermissionsEnum } from '@gauzy/contracts';
+import {
+	IPagination,
+	IRolePermission,
+	IRolePermissionCreateInput,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -12,17 +17,15 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { Permissions } from './../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { RolePermissions } from './role-permissions.entity';
 import { RolePermissionsService } from './role-permissions.service';
 
 @ApiTags('Role')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class RolePermissionsController extends CrudController<RolePermissions> {
 	constructor(
@@ -42,9 +45,9 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findRolePermission(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<RolePermissions>> {
+	): Promise<IPagination<IRolePermission>> {
 		const { findInput } = data;
 		return this.rolePermissionsService.findAll({ where: findInput });
 	}
@@ -64,7 +67,7 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body() entity: RolePermissions,
+		@Body() entity: IRolePermissionCreateInput,
 		...options: any[]
 	): Promise<RolePermissions> {
 		return this.rolePermissionsService.create(entity);

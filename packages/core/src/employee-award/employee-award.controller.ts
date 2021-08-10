@@ -12,22 +12,43 @@ import {
 	Query,
 	Get
 } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { EmployeeAward } from './employee-award.entity';
-import { AuthGuard } from '@nestjs/passport';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { EmployeeAwardService } from './employee-award.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { IEmployeeAward } from '@gauzy/contracts';
+import { IEmployeeAward, IPagination } from '@gauzy/contracts';
 
 @ApiTags('EmployeeAward')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	constructor(private readonly employeeAwardService: EmployeeAwardService) {
 		super(employeeAwardService);
+	}
+
+	@ApiOperation({
+		summary: 'Find Employee Awards.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found Employee Awards',
+		type: EmployeeAward
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IEmployeeAward>> {
+		const { findInput } = data;
+		return this.employeeAwardService.findAll({
+			where: findInput
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -44,7 +65,7 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	@Post()
 	async create(
 		@Body() entity: DeepPartial<EmployeeAward>
-	): Promise<EmployeeAward> {
+	): Promise<IEmployeeAward> {
 		return this.employeeAwardService.create(entity);
 	}
 
@@ -67,7 +88,7 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: QueryDeepPartialEntity<EmployeeAward>
-	): Promise<any> {
+	): Promise<IEmployeeAward | UpdateResult> {
 		return this.employeeAwardService.update(id, entity);
 	}
 
@@ -84,27 +105,5 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.employeeAwardService.delete(id);
-	}
-
-	@ApiOperation({
-		summary: 'Find Employee Awards.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found Employee Awards',
-		type: EmployeeAward
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findAwardsByEmployeeId(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IEmployeeAward>> {
-		const { findInput } = data;
-		return this.employeeAwardService.findAll({
-			where: findInput
-		});
 	}
 }

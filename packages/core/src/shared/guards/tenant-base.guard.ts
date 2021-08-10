@@ -1,8 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { RequestContext } from '../../../core/context';
 import { RequestMethodEnum } from '@gauzy/contracts';
 import { isJSON } from 'class-validator';
 import { Reflector } from '@nestjs/core';
+import { RequestContext } from './../../core/context';
 
 @Injectable()
 export class TenantBaseGuard implements CanActivate {

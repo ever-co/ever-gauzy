@@ -12,18 +12,18 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { ProductService } from './product.service';
 import { Product } from './product.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { ProductCreateCommand, ProductUpdateCommand, ProductDeleteCommand } from './commands';
-import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import {
 	PermissionsEnum,
 	IProductCreateInput,
 	IProductTranslated,
-	IImageAsset
+	IImageAsset,
+	IPagination
 } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { DeleteResult } from 'typeorm';
@@ -31,12 +31,12 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 
 @ApiTags('Product')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProductController extends CrudController<Product> {
 	constructor(
 		private readonly productService: ProductService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(productService);
 	}

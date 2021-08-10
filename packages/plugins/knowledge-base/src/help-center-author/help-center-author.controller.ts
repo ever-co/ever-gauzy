@@ -20,13 +20,11 @@ import {
 } from './commands';
 import {
 	CrudController,
-	IPagination,
 	ParseJsonPipe,
-	PermissionGuard,
 	TenantPermissionGuard,
 	UUIDValidationPipe
 } from '@gauzy/core';
-import { IHelpCenterAuthor } from '@gauzy/contracts';
+import { IHelpCenterAuthor, IPagination } from '@gauzy/contracts';
 
 @ApiTags('KnowledgeBaseAuthor')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -50,7 +48,6 @@ export class HelpCenterAuthorController extends CrudController<HelpCenterAuthor>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Get('article/:articleId')
 	async findByArticleId(
 		@Param('articleId', UUIDValidationPipe) articleId: string
@@ -70,7 +67,6 @@ export class HelpCenterAuthorController extends CrudController<HelpCenterAuthor>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Delete('article/:articleId')
 	async deleteBulkByArticleId(
 		@Param('articleId', UUIDValidationPipe) articleId: string
@@ -113,7 +109,6 @@ export class HelpCenterAuthorController extends CrudController<HelpCenterAuthor>
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@Post('createBulk')
 	async createBulk(@Body() input: any): Promise<IHelpCenterAuthor[]> {
 		return this.commandBus.execute(

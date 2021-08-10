@@ -12,22 +12,21 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Permissions } from './../shared/decorators';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import {
 	ITimeOffPolicyCreateInput,
 	ITimeOffPolicyUpdateInput,
 	ITimeOffPolicy,
-	PermissionsEnum
+	PermissionsEnum,
+	IPagination
 } from '@gauzy/contracts';
-import { AuthGuard } from '@nestjs/passport';
-import { IPagination } from '../core';
 import { TimeOffPolicyService } from './time-off-policy.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffPolicy')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	constructor(private readonly policyService: TimeOffPolicyService) {

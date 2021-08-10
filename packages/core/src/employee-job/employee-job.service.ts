@@ -1,12 +1,12 @@
 import { environment as env } from '@gauzy/config';
 import { Injectable } from '@nestjs/common';
-import { IPagination } from '../core';
 import { getRandomEmployeeJobPosts } from './employee-job.seed';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostInput,
+	IPagination,
 	IUpdateEmployeeJobPostAppliedResult,
 	IVisibilityJobPostInput
 } from '@gauzy/contracts';

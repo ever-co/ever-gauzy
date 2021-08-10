@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TenantAwareCrudService } from '../core/crud';
+import { TenantAwareCrudService } from './../core/crud';
 import { Repository } from 'typeorm';
 import { Warehouse } from './warehouse.entity';
 import { Contact } from 'contact/contact.entity';

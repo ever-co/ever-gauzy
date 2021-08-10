@@ -1,4 +1,4 @@
-import { IEmployeeProposalTemplate,  } from '@gauzy/contracts';
+import { IEmployeeProposalTemplate, IPagination,  } from '@gauzy/contracts';
 import {
 	Controller,
 	Get,
@@ -10,17 +10,16 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindManyOptions } from 'typeorm';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
-import { CrudController, IPagination, PaginationParams } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { EmployeeProposalTemplateService } from './employee-proposal-template.service';
 
 @ApiTags('EmployeeProposalTemplate')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmployeeProposalTemplateController extends CrudController<EmployeeProposalTemplate> {
 	constructor(

@@ -14,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	PermissionsEnum,
 	ICandidateFeedbackCreateInput,
@@ -30,7 +29,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { FeedbackDeleteCommand, FeedbackUpdateCommand } from './commands';
 
 @ApiTags('CandidateFeedback')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateFeedbacksController extends CrudController<CandidateFeedback> {
 	constructor(

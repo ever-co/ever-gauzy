@@ -8,10 +8,9 @@ import {
 	Query
 } from '@nestjs/common';
 import { Timesheet } from '../timesheet.entity';
-import { CrudController } from '../../core/crud/crud.controller';
+import { CrudController } from '../../core/crud';
 import { TimeSheetService } from './timesheet.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	IUpdateTimesheetStatusInput,
 	IGetTimesheetInput,
@@ -19,10 +18,10 @@ import {
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { I18nLang } from 'nestjs-i18n';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('TimeSheet')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TimeSheetController extends CrudController<Timesheet> {
 	constructor(private readonly timeSheetService: TimeSheetService) {

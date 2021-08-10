@@ -5,14 +5,12 @@ import {
 	UploadedFile,
 	UseInterceptors,
 	HttpStatus,
-	UseGuards,
 	Get,
 	Query,
 	Param
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { UpworkTransactionService } from './upwork-transaction.service';
 import { UpworkService } from './upwork.service';
 import {
@@ -23,14 +21,13 @@ import {
 	IGetContractsDto,
 	IEngagement,
 	IUpworkApiConfig,
-	IUpworkClientSecretPair
+	IUpworkClientSecretPair,
+	IPagination
 } from '@gauzy/contracts';
 import { Expense, Income } from './../core/entities/internal';
-import { IPagination } from '../core';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Integrations')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class UpworkController {
 	constructor(

@@ -9,11 +9,10 @@ import {
 	Param,
 	Body
 } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
-import { AuthGuard } from '@nestjs/passport';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { IPagination, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -25,7 +24,7 @@ import { TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('EquipmentSharing')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentSharingController extends CrudController<EquipmentSharing> {
 	constructor(
@@ -48,7 +47,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEquipmentSharings(): Promise<IPagination<EquipmentSharing>> {
+	async findAll(): Promise<IPagination<EquipmentSharing>> {
 		return this.equipmentSharingService.findAllEquipmentSharings();
 	}
 

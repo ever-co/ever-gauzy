@@ -10,7 +10,6 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	RolesEnum,
@@ -18,7 +17,7 @@ import {
 	IPagination,
 	ICandidatePersonalQualitiesCreateInput
 } from '@gauzy/contracts';
-import { CrudController } from '../core/crud';
+import { CrudController } from './../core/crud';
 import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { Roles } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -30,7 +29,7 @@ import {
 } from './commands';
 
 @ApiTags('CandidatePersonalQuality')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidatePersonalQualitiesController extends CrudController<CandidatePersonalQualities> {
 	constructor(

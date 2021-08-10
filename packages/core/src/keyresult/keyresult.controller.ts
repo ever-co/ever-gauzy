@@ -12,14 +12,13 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KeyResult } from './keyresult.entity';
-import { CrudController } from '../core';
-import { AuthGuard } from '@nestjs/passport';
+import { CrudController } from './../core/crud';
 import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('KeyResults')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class KeyResultController extends CrudController<KeyResult> {
 	constructor(private readonly keyResultService: KeyResultService) {

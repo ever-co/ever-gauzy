@@ -11,17 +11,16 @@ import {
 	Put
 } from '@nestjs/common';
 import { TimeSlot } from '../time-slot.entity';
-import { CrudController } from '../../core/crud/crud.controller';
+import { CrudController } from '../../core/crud';
 import { TimeSlotService } from './time-slot.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { FindOneOptions } from 'typeorm';
 import { TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 
 @ApiTags('TimeSlot')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller('time-slot')
 export class TimeSlotController extends CrudController<TimeSlot> {
 	constructor(private readonly timeSlotService: TimeSlotService) {

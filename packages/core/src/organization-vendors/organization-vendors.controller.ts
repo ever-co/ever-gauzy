@@ -11,16 +11,15 @@ import {
 	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { OrganizationVendorsService } from './organization-vendors.service';
 import { OrganizationVendor } from './organization-vendors.entity';
-import { IPagination } from '../core';
-import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationVendors')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationVendorsController extends CrudController<OrganizationVendor> {
 	constructor(

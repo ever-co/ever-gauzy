@@ -1,7 +1,8 @@
 import {
 	IStartUpdateTypeInfo,
 	IOrganizationRecurringExpenseForEmployeeOutput,
-	IRecurringExpenseEditInput
+	IRecurringExpenseEditInput,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -17,17 +18,25 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
-import { ParseJsonPipe, TenantPermissionGuard, UUIDValidationPipe } from '../shared';
+import { CrudController } from './../core/crud';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
-import { OrganizationRecurringExpenseCreateCommand, OrganizationRecurringExpenseDeleteCommand, OrganizationRecurringExpenseEditCommand } from './commands';
-import { OrganizationRecurringExpenseByMonthQuery, OrganizationRecurringExpenseFindSplitExpenseQuery, OrganizationRecurringExpenseStartDateUpdateTypeQuery } from './queries';
+import {
+	OrganizationRecurringExpenseCreateCommand,
+	OrganizationRecurringExpenseDeleteCommand,
+	OrganizationRecurringExpenseEditCommand
+} from './commands';
+import {
+	OrganizationRecurringExpenseByMonthQuery,
+	OrganizationRecurringExpenseFindSplitExpenseQuery,
+	OrganizationRecurringExpenseStartDateUpdateTypeQuery
+} from './queries';
 
 @ApiTags('OrganizationRecurringExpense')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationRecurringExpenseController extends CrudController<OrganizationRecurringExpense> {
 	constructor(

@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { IPagination, ProductTranslation } from '../core';
+import { ProductTranslation } from '../core';
 import {
 	BadRequestException,
 	HttpException,
@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
 import {
 	IImageAsset,
+	IPagination,
 	IProductCreateInput,
 	IProductFindInput,
 	IProductTranslated

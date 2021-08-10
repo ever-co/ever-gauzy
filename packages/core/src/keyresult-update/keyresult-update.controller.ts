@@ -12,8 +12,7 @@ import {
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core';
-import { AuthGuard } from '@nestjs/passport';
+import { CrudController } from './../core/crud';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { KeyResultUpdateService } from './keyresult-update.service';
 import { IKeyResultUpdate } from '@gauzy/contracts';
@@ -24,7 +23,7 @@ import { TenantPermissionGuard } from './../shared/guards';
 
 
 @ApiTags('KeyResultsUpdate')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> {
 	constructor(

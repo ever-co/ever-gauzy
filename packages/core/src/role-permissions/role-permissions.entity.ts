@@ -1,6 +1,6 @@
 import {
 	PermissionsEnum,
-	IRolePermission as IRolePermissions,
+	IRolePermission,
 	RolesEnum
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -11,7 +11,7 @@ import { Role, TenantBaseEntity } from '../core/entities/internal';
 @Entity('role_permission')
 export class RolePermissions
 	extends TenantBaseEntity
-	implements IRolePermissions {
+	implements IRolePermission {
 	@ApiProperty({ type: () => String, enum: RolesEnum })
 	@IsEnum(PermissionsEnum)
 	@IsNotEmpty()
