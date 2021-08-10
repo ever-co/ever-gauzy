@@ -15,6 +15,7 @@ import * as clientsPage from '../../Base/pages/Clients.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -93,6 +94,19 @@ When('User click on add time log button', () => {
 	timesheetsPage.clickAddTimeButton();
 });
 
+Then('User can see client dropdown', () => {
+	timesheetsPage.clientDropdownVisible();
+});
+
+When('User click on client dropdown', () => {
+	waitUntil(5000);
+	timesheetsPage.clickClientDropdown();
+});
+
+Then('User can select client from dropdown options', () => {
+	timesheetsPage.selectClientFromDropdown(0);
+});
+
 Then('User can see project dropdown', () => {
 	timesheetsPage.selectProjectDropdownVisible();
 });
@@ -120,18 +134,6 @@ When('User click on task dropdown', () => {
 
 Then('User can select task from dropdown options', () => {
 	timesheetsPage.selectTaskFromDropdown(0);
-});
-
-And('User can see client dropdown', () => {
-	timesheetsPage.clientDropdownVisible();
-});
-
-When('User click on client dropdown', () => {
-	timesheetsPage.clickClientDropdown();
-});
-
-Then('User can select client from dropdown options', () => {
-	timesheetsPage.selectClientFromDropdown(0);
 });
 
 And('User can see start time dropdown', () => {
@@ -191,6 +193,9 @@ Then('Notification message will appear', () => {
 
 // Visit Time tracking page to verify time was added
 And('User can visit Time tracking page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/dashboard/time-tracking', { timeout: pageLoadTimeout });
 });
 

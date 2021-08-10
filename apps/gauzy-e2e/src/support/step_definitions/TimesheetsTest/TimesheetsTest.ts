@@ -17,6 +17,7 @@ import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -114,6 +115,19 @@ When('User click on add time log button', () => {
 	timesheetsPage.clickAddTimeButton();
 });
 
+Then('User can see client dropdown', () => {
+	timesheetsPage.clientDropdownVisible();
+});
+
+When('User click on client dropdown', () => {
+	waitUntil(5000);
+	timesheetsPage.clickClientDropdown();
+});
+
+Then('User can select client from dropdown options', () => {
+	timesheetsPage.selectClientFromDropdown(0);
+});
+
 Then('User can see project dropdown', () => {
 	timesheetsPage.selectProjectDropdownVisible();
 });
@@ -138,18 +152,6 @@ When('User click on task dropdown', () => {
 
 Then('User can select task from dropdown options', () => {
 	timesheetsPage.selectTaskFromDropdown(0);
-});
-
-And('User can see client dropdown', () => {
-	timesheetsPage.clientDropdownVisible();
-});
-
-When('User click on client dropdown', () => {
-	timesheetsPage.clickClientDropdown();
-});
-
-Then('User can select client from dropdown options', () => {
-	timesheetsPage.selectClientFromDropdown(0);
 });
 
 And('User can see start time dropdown', () => {
@@ -222,37 +224,6 @@ Then('User can see close time log popover button', () => {
 
 When('User click on close time log popover button', () => {
 	timesheetsPage.clickCloseAddTimeLogPopoverButton();
-});
-
-// Edit time
-Then('User can see edit time log button', () => {
-	timesheetsPage.editEmployeeTimeLogButtonVisible();
-});
-
-When('User click on edit time log button', () => {
-	timesheetsPage.clickEditEmployeeTimeLogButton(0);
-});
-
-And('User can see description input field again', () => {
-	timesheetsPage.addTimeLogDescriptionVisible();
-});
-
-And('User can enter new description', () => {
-	timesheetsPage.enterTimeLogDescriptionData(
-		TimesheetsPageData.editDescription
-	);
-});
-
-And('User can see save edited time log button', () => {
-	timesheetsPage.saveTimeLogButtonVisible();
-});
-
-When('User click on save edited time log button', () => {
-	timesheetsPage.clickSaveTimeLogButton();
-});
-
-Then('Notification message will appear', () => {
-	timesheetsPage.waitMessageToHide();
 });
 
 // Delete time
