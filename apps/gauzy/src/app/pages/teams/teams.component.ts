@@ -236,7 +236,13 @@ export class TeamsComponent
 			return;
 		}
 		const { items: teams } = await this.organizationTeamsService.getAll(
-			['members', 'tags', 'members.role'],
+			[
+				'members',
+				'members.role',
+				'members.employee',
+				'members.employee.user',
+				'tags'
+			],
 			{
 				organizationId: this.organizationId,
 				tenantId: this.tenantId

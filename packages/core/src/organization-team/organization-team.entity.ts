@@ -6,9 +6,14 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IOrganizationTeam } from '@gauzy/contracts';
+import {
+	IOrganizationTeam,
+	IOrganizationTeamEmployee,
+	IRequestApprovalTeam,
+	ITag
+} from '@gauzy/contracts';
 import {
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,
@@ -20,12 +25,6 @@ import {
 export class OrganizationTeam
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationTeam {
-	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.organizationTeam)
-	@JoinTable({
-		name: 'tag_organization_team'
-	})
-	tags?: Tag[];
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -34,18 +33,30 @@ export class OrganizationTeam
 	@Column()
 	name: string;
 
-	@OneToMany(
-		() => OrganizationTeamEmployee,
-		(organizationTeamEmployee) => organizationTeamEmployee.organizationTeam,
-		{
-			cascade: true
-		}
-	)
-	members?: OrganizationTeamEmployee[];
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiPropertyOptional({ type: () => OrganizationTeamEmployee })
+	@OneToMany(() => OrganizationTeamEmployee, (entity) => entity.organizationTeam, { 
+		cascade: true 
+	})
+	members?: IOrganizationTeamEmployee[];
 
-	@OneToMany(
-		() => RequestApprovalTeam,
-		(requestApprovals) => requestApprovals.team
-	)
-	requestApprovals?: RequestApprovalTeam[];
+	@ApiPropertyOptional({ type: () => RequestApprovalTeam })
+	@OneToMany(() => RequestApprovalTeam, (entity) => entity.team)
+	requestApprovals?: IRequestApprovalTeam[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Tag })
+	@ManyToMany(() => Tag, (tag) => tag.organizationTeam)
+	@JoinTable({
+		name: 'tag_organization_team'
+	})
+	tags?: ITag[];
 }

@@ -16,9 +16,9 @@ export interface IOrganizationTeamFindInput
 	tags?: ITag[];
 }
 
-export interface IOrganizationTeamCreateInput {
-	name: string;
-	organizationId: string;
+export interface IOrganizationTeamCreateInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	name?: string;
 	members?: string[];
 	managers?: string[];
 	tags?: ITag[];
