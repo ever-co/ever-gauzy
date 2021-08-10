@@ -11,15 +11,30 @@ export class AuthGuard extends PassportAuthGaurd('jwt') {
 	}
 
 	canActivate(context: ExecutionContext) {
-		const isPublic = this._reflector.get<boolean>(
+		
+		/*
+		* PUBLIC recorator method level 
+		*/
+		const isMethodPublic = this._reflector.get<boolean>(
 			'isPublic',
 			context.getHandler()
 		);
 
-		if (isPublic) {
+		/*
+		* PUBLIC recorator class level 
+		*/
+		const isClassPublic = this._reflector.get<boolean>(
+			'isPublic', 
+			context.getClass()
+		);
+
+		/*
+		* IF methods/class are publics allowed them 
+		*/
+		if (isMethodPublic || isClassPublic) {
 			return true;
 		}
-
+		
 		// Make sure to check the authorization, for now, just return false to have a difference between public routes.
 		return super.canActivate(context);
 	}
