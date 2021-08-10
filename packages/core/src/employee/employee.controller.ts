@@ -27,7 +27,7 @@ import {
 } from './commands';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { getUserDummyImage } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { Permissions, Public } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';

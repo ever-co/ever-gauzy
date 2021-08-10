@@ -17,7 +17,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from '../core/context';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { Roles } from './../shared/decorators';
 import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { Tenant } from './tenant.entity';

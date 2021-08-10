@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { Currency } from './currency.entity';
 import { CurrencyService } from './currency.service';
 

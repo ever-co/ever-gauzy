@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Permissions } from './../shared/decorators';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import {
 	ITimeOffPolicyCreateInput,

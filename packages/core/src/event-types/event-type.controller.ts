@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { EventTypeCreateCommand } from './commands/event-type.create.command';
 import { EventType } from './event-type.entity';
 import { EventTypeService } from './event-type.service';

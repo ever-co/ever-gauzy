@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { OrganizationVendorsService } from './organization-vendors.service';
 import { OrganizationVendor } from './organization-vendors.entity';
 import { TenantPermissionGuard } from './../shared/guards';

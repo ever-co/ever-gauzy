@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpStatus, Post, Query, UseGuards } from '@nest
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RoleService } from './role.service';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { Role } from './role.entity';
 import { ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';

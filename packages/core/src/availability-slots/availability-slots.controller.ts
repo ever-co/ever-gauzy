@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { TenantPermissionGuard } from './../shared/guards';

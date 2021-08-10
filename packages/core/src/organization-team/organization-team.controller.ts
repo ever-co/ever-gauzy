@@ -11,7 +11,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
 import {
 	IOrganizationTeamCreateInput,

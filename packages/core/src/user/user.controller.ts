@@ -22,7 +22,7 @@ import {
 	ApiTags,
 	ApiBearerAuth
 } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { User } from './user.entity';
 import { UserService } from './user.service';

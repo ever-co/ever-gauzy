@@ -14,7 +14,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { Permissions, Public } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';

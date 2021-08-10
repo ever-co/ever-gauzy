@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IEmail, IEmailUpdateInput, IPagination } from '@gauzy/contracts';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';

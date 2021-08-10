@@ -11,7 +11,7 @@ import {
 	HttpCode
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffRequestService } from './time-off-request.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';

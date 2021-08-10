@@ -12,7 +12,7 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { OrganizationAwardsService } from './organization-awards.service';
 import { OrganizationAwards } from './organization-awards.entity';
 import { DeepPartial } from 'typeorm';

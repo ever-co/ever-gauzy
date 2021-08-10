@@ -17,7 +17,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import {
 	OrganizationDepartmentEditByEmployeeCommand,
 	OrganizationDepartmentUpdateCommand

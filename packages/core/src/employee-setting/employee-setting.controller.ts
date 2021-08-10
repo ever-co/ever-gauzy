@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
 import { EmployeeSettingService } from './employee-setting.service';
 import { EmployeeSetting } from './employee-setting.entity';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
 

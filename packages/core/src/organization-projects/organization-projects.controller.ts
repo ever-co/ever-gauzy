@@ -1,5 +1,6 @@
 import {
 	IEditEntityByMemberInput,
+	IOrganizationProject,
 	IPagination,
 	PermissionsEnum,
 	TaskListTypeEnum
@@ -18,8 +19,8 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationProjectEditByEmployeeCommand } from './commands/organization-project.edit-by-employee.command';
+import { CrudController } from './../core/crud';
+import { OrganizationProjectEditByEmployeeCommand } from './commands';
 import { OrganizationProject } from './organization-projects.entity';
 import { OrganizationProjectsService } from './organization-projects.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -53,7 +54,7 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 	async findByEmployee(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
-	): Promise<IPagination<OrganizationProject>> {
+	): Promise<IPagination<IOrganizationProject>> {
 		const { findInput = null } = data;
 		return this.organizationProjectsService.findByEmployee(id, findInput);
 	}
@@ -71,10 +72,9 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any,
-		@Request() req
-	): Promise<IPagination<OrganizationProject>> {
+	): Promise<IPagination<IOrganizationProject>> {
 		const { relations, findInput } = data;
 		return this.organizationProjectsService.findAll({
 			where: findInput,
