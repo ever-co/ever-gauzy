@@ -103,7 +103,7 @@ import { IntegrationTenantService } from '../../integration-tenant/integration-t
 import { KeyResultService } from '../../keyresult/keyresult.service';
 import { KeyResultUpdateService } from '../../keyresult-update/keyresult-update.service';
 import { ProductCategoryService } from '../../product-category/product-category.service';
-import { OrganizationDocumentsService } from '../../organization-documents/organization-documents.service';
+import { OrganizationDocumentService } from '../../organization-document/organization-document.service';
 import { CustomSmtpService } from '../../custom-smtp/custom-smtp.service';
 import { CurrencyService } from '../../currency';
 import { EmployeeAwardService } from '../../employee-award/employee-award.service';
@@ -209,7 +209,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		OrganizationService,
 		OrganizationContactService,
 		OrganizationDepartmentService,
-		OrganizationDocumentsService,
+		OrganizationDocumentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
 		OrganizationProjectsService,
@@ -334,7 +334,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		OrganizationLanguagesService,
 		OrganizationContactService,
 		OrganizationDepartmentService,
-		OrganizationDocumentsService,
+		OrganizationDocumentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
 		OrganizationProjectsService,

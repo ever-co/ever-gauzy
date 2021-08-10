@@ -86,7 +86,7 @@ import {
 	OrganizationAwards,
 	OrganizationContact,
 	OrganizationDepartment,
-	OrganizationDocuments,
+	OrganizationDocument,
 	OrganizationEmploymentType,
 	OrganizationLanguages,
 	OrganizationPositions,
@@ -377,8 +377,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(OrganizationDepartment)
 		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
 
-		@InjectRepository(OrganizationDocuments)
-		private readonly organizationDocumentRepository: Repository<OrganizationDocuments>,
+		@InjectRepository(OrganizationDocument)
+		private readonly organizationDocumentRepository: Repository<OrganizationDocument>,
 
 		@InjectRepository(OrganizationEmploymentType)
 		private readonly organizationEmploymentTypeRepository: Repository<OrganizationEmploymentType>,

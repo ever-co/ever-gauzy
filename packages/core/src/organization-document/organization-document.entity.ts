@@ -4,7 +4,7 @@ import { IOrganizationDocument } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('organization_document')
-export class OrganizationDocuments
+export class OrganizationDocument
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationDocument {
 	@ApiProperty({ type: () => String })

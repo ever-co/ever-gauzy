@@ -171,7 +171,7 @@ import {
 import {
 	createOrganizationDocuments,
 	createRandomOrganizationDocuments
-} from '../../organization-documents/organization-documents.seed';
+} from '../../organization-document/organization-document.seed';
 import {
 	createDefaultEquipments,
 	createRandomEquipments

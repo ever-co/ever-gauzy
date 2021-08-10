@@ -64,7 +64,7 @@ import {
     OrganizationAwards,
     OrganizationContact,
     OrganizationDepartment,
-    OrganizationDocuments,
+    OrganizationDocument,
     OrganizationEmploymentType,
     OrganizationLanguages,
     OrganizationPositions,
@@ -137,6 +137,7 @@ export class DeleteAllDataService {
 
         @InjectRepository(CandidateInterview)
         private readonly candidateInterviewRepository: Repository<CandidateInterview>,
+
         @InjectRepository(CandidateInterviewers)
         private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
 
@@ -193,6 +194,7 @@ export class DeleteAllDataService {
 
         @InjectRepository(ExpenseCategory)
         private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
+
         @InjectRepository(FeatureOrganization)
         private readonly featureOrganizationRepository: Repository<FeatureOrganization>,
 
@@ -274,8 +276,8 @@ export class DeleteAllDataService {
         @InjectRepository(OrganizationDepartment)
         private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
 
-        @InjectRepository(OrganizationDocuments)
-        private readonly organizationDocumentRepository: Repository<OrganizationDocuments>,
+        @InjectRepository(OrganizationDocument)
+        private readonly organizationDocumentRepository: Repository<OrganizationDocument>,
 
         @InjectRepository(OrganizationEmploymentType)
         private readonly organizationEmploymentTypeRepository: Repository<OrganizationEmploymentType>,
