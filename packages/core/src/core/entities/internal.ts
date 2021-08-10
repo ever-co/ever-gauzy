@@ -79,7 +79,7 @@ export * from '../../organization-contact/organization-contact.entity';
 export * from '../../organization-department/organization-department.entity';
 export * from '../../organization-document/organization-document.entity'
 export * from '../../organization-employment-type/organization-employment-type.entity';
-export * from '../../organization-languages/organization-languages.entity';
+export * from '../../organization-language/organization-language.entity';
 export * from '../../organization-positions/organization-positions.entity';
 export * from '../../organization-projects/organization-projects.entity';
 export * from '../../organization-recurring-expense/organization-recurring-expense.entity';

@@ -250,7 +250,7 @@ import {
 import {
 	createDefaultOrganizationLanguage,
 	createRandomOrganizationLanguage
-} from '../../organization-languages/organization-languages.seed';
+} from '../../organization-language/organization-language.seed';
 import { createRandomOrganizationSprint } from '../../organization-sprint/organization-sprint.seed';
 import { createRandomOrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.seed';
 import { createRandomAppointmentEmployees } from '../../appointment-employees/appointment-employees.seed';

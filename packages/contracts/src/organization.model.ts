@@ -5,7 +5,7 @@ import { CurrenciesEnum } from './currency.model';
 import { IEmployee } from './employee.model';
 import { IFeatureOrganization } from './feature.model';
 import { IOrganizationAwards } from './organization-awards.model';
-import { IOrganizationLanguages } from './organization-languages.model';
+import { IOrganizationLanguage } from './organization-language.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { ISkill } from './skill-entity.model';
 import { ITag } from './tag-entity.model';
@@ -92,7 +92,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	fiscalEndDate?: Date;
 	discountAfterTax?: boolean;
 	awards?: IOrganizationAwards[];
-	languages?: IOrganizationLanguages[];
+	languages?: IOrganizationLanguage[];
 	featureOrganizations?: IFeatureOrganization[];
 	defaultInvoiceEstimateTerms?: string;
 	convertAcceptedEstimates?: boolean;

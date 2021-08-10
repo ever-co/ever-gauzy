@@ -48,7 +48,7 @@ import { OrganizationVendorsModule } from './organization-vendors/organization-v
 import { OrganizationTeamModule } from './organization-team/organization-team.module';
 import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
 import { OrganizationAwardsModule } from './organization-awards/organization-awards.module';
-import { OrganizationLanguagesModule } from './organization-languages/organization-languages.module';
+import { OrganizationLanguageModule } from './organization-language/organization-language.module';
 import { OrganizationDocumentModule } from './organization-document/organization-document.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country';
@@ -240,7 +240,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
 		OrganizationAwardsModule,
-		OrganizationLanguagesModule,
+		OrganizationLanguageModule,
 		OrganizationSprintModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,

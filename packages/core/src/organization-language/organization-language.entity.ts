@@ -1,16 +1,16 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { IOrganizationLanguages } from '@gauzy/contracts';
+import { IOrganizationLanguage } from '@gauzy/contracts';
 import {
 	Language,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 
 @Entity('organization_language')
-export class OrganizationLanguages
+export class OrganizationLanguage
 	extends TenantOrganizationBaseEntity
-	implements IOrganizationLanguages {
+	implements IOrganizationLanguage {
 
 	@ApiProperty({ type: () => Language })
 	@ManyToOne(() => Language, {
@@ -21,7 +21,7 @@ export class OrganizationLanguages
 	language: Language;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: OrganizationLanguages) => it.language)
+	@RelationId((it: OrganizationLanguage) => it.language)
 	@IsString()
 	@IsOptional()
 	@Index()

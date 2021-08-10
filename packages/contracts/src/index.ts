@@ -66,7 +66,7 @@ export * from './organization-department.model';
 export * from './organization-document.model';
 export * from './organization-employment-type.model';
 export * from './organization-expense-category.model';
-export * from './organization-languages.model';
+export * from './organization-language.model';
 export * from './organization-positions.model';
 export * from './organization-projects.model';
 export * from './organization-recurring-expense.model';

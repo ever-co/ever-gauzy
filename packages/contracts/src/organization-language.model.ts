@@ -1,7 +1,7 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ILanguage, ILanguageFindInput } from './language.model';
 
-export interface IOrganizationLanguages
+export interface IOrganizationLanguage
 	extends IBasePerTenantAndOrganizationEntityModel {
 	language: ILanguage;
 	languageCode: string;
@@ -9,14 +9,14 @@ export interface IOrganizationLanguages
 	name: string;
 }
 
-export interface IOrganizationLanguagesFindInput
+export interface IOrganizationLanguageFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	language?: ILanguageFindInput;
 	level?: string;
 	name?: string;
 }
 
-export interface IOrganizationLanguagesCreateInput
+export interface IOrganizationLanguageCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	language: ILanguage;
 	level: string;

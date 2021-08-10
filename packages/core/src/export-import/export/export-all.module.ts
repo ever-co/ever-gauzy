@@ -92,7 +92,7 @@ import { ProductOptionService } from '../../product-option/product-option.servic
 import { ProductVariantService } from '../../product-variant/product-variant.service';
 import { ProductVariantPriceService } from '../../product-variant-price/product-variant-price.service';
 import { OrganizationAwardsService } from '../../organization-awards/organization-awards.service';
-import { OrganizationLanguagesService } from '../../organization-languages/organization-languages.service';
+import { OrganizationLanguageService } from '../../organization-language/organization-language.service';
 import { LanguageService } from '../../language/language.service';
 import { IntegrationService } from '../../integration/integration.service';
 import { IntegrationMapService } from '../../integration-map/integration-map.service';
@@ -205,7 +205,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		LanguageService,
 
 		OrganizationAwardsService,
-		OrganizationLanguagesService,
+		OrganizationLanguageService,
 		OrganizationService,
 		OrganizationContactService,
 		OrganizationDepartmentService,
@@ -331,7 +331,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 
 		OrganizationService,
 		OrganizationAwardsService,
-		OrganizationLanguagesService,
+		OrganizationLanguageService,
 		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationDocumentService,
