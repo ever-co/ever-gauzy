@@ -11,16 +11,15 @@ import {
 	Put,
 	Query
 } from '@nestjs/common';
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { GoalTimeFrameService } from './goal-time-frame.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('GoalTimeFrame')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	constructor(private readonly goalTimeFrameService: GoalTimeFrameService) {

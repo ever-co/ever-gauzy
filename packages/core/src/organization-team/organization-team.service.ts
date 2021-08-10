@@ -6,13 +6,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
-import { TenantAwareCrudService } from '../core/crud';
+import { TenantAwareCrudService } from './../core/crud';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
-	RolesEnum
+	RolesEnum,
+	IPagination
 } from '@gauzy/contracts';
-import { IPagination } from '../core';
 import { Employee } from '../employee/employee.entity';
 import { User } from '../user/user.entity';
 import { OrganizationTeam } from './organization-team.entity';

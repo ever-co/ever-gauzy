@@ -1,4 +1,4 @@
-import { CrudController, IPagination, PaginationParams } from '../core';
+import { CrudController, PaginationParams } from '../core';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	Controller,
@@ -16,24 +16,24 @@ import {
 	ValidationPipe,
 	UsePipes
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { Payment } from './payment.entity';
 import { PaymentService } from './payment.service';
 import {
 	IGetPaymentInput,
+	IPagination,
 	IPayment,
 	IPaymentReportData,
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { PaymentMapService } from './payment.map.service';
 import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Payment')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class PaymentController extends CrudController<Payment> {
 	constructor(
@@ -43,7 +43,7 @@ export class PaymentController extends CrudController<Payment> {
 		super(paymentService);
 	}
 
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))

@@ -14,18 +14,16 @@ import {
 	Put,
 	UseGuards
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from '../core/context';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { Roles } from './../shared/decorators';
-import { RoleGuard, TenantPermissionGuard } from '../shared/guards';
+import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 
 @ApiTags('Tenant')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TenantController extends CrudController<Tenant> {
 	constructor(private readonly tenantService: TenantService) {

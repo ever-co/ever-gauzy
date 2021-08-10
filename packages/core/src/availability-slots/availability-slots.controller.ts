@@ -1,4 +1,4 @@
-import { IAvailabilitySlot, IAvailabilitySlotsCreateInput } from '@gauzy/contracts';
+import { IAvailabilitySlot, IAvailabilitySlotsCreateInput, IPagination } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -12,10 +12,8 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { TenantPermissionGuard } from './../shared/guards';
@@ -23,7 +21,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { AvailabilitySlotsBulkCreateCommand, AvailabilitySlotsCreateCommand } from './commands';
 
 @ApiTags('AvailabilitySlots')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class AvailabilitySlotsController extends CrudController<AvailabilitySlot> {
 	constructor(

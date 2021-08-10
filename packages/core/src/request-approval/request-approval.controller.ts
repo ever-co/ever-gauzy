@@ -1,11 +1,12 @@
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalService } from './request-approval.service';
 import {
 	IRequestApproval,
 	PermissionsEnum,
 	IRequestApprovalCreateInput,
-	RequestApprovalStatusTypesEnum
+	RequestApprovalStatusTypesEnum,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	Query,
@@ -23,12 +24,11 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { AuthGuard } from '@nestjs/passport';
 import { RequestApprovalStatusCommand } from './commands';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('RequestApproval')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class RequestApprovalControler extends CrudController<RequestApproval> {
 	constructor(

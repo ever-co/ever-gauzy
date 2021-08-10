@@ -10,16 +10,15 @@ import {
 	Param,
 	Body
 } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
-import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { LanguagesEnum, IProductCategoryTranslated } from '@gauzy/contracts';
+import { LanguagesEnum, IProductCategoryTranslated, IPagination } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('ProductCategories')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProductCategoryController extends CrudController<ProductCategory> {
 	constructor(

@@ -9,18 +9,16 @@ import {
 	Put,
 	HttpCode
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IEmail, IEmailUpdateInput } from '@gauzy/contracts';
-import { CrudController } from '../core/crud/crud.controller';
+import { IEmail, IEmailUpdateInput, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
-import { IPagination } from '../core';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('Email')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmailController extends CrudController<Email> {
 	constructor(private readonly emailService: EmailService) {

@@ -25,7 +25,6 @@ import {
 	IPagination,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { AuthGuard } from '@nestjs/passport';
 import { CrudController, PaginationParams } from '../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantPermissionGuard } from './../shared/guards';
@@ -36,7 +35,7 @@ import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateService } from './accounting-template.service';
 
 @ApiTags('Accounting Template')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class AccountingTemplateController extends CrudController<AccountingTemplate> {
 	constructor(

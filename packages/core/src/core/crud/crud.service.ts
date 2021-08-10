@@ -21,7 +21,7 @@ import { environment as env } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
-import { IPagination } from './pagination';
+import { IPagination } from '@gauzy/contracts';
 import { ITryRequest } from './try-request';
 import { filterQuery } from './query-builder';
 import { RequestContext } from 'core/context';

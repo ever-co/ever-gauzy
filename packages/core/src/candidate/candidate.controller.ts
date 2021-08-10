@@ -13,7 +13,6 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
@@ -40,7 +39,7 @@ import {
 import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('Candidate')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @UseInterceptors(TransformInterceptor)
 @Controller()
 export class CandidateController extends CrudController<Candidate> {

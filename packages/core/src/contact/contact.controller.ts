@@ -1,14 +1,14 @@
 import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { Contact } from './contact.entity';
 import { ContactService } from './contact.service';
-import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('Contact')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ContactController extends CrudController<Contact> {
 	constructor(private readonly contactService: ContactService) {

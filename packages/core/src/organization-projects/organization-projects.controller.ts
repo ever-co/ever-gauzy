@@ -1,5 +1,7 @@
 import {
 	IEditEntityByMemberInput,
+	IOrganizationProject,
+	IPagination,
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
@@ -17,18 +19,16 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationProjectEditByEmployeeCommand } from './commands/organization-project.edit-by-employee.command';
+import { CrudController } from './../core/crud';
+import { OrganizationProjectEditByEmployeeCommand } from './commands';
 import { OrganizationProject } from './organization-projects.entity';
 import { OrganizationProjectsService } from './organization-projects.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationProjects')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationProjectsController extends CrudController<OrganizationProject> {
 	constructor(
@@ -54,7 +54,7 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 	async findByEmployee(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
-	): Promise<IPagination<OrganizationProject>> {
+	): Promise<IPagination<IOrganizationProject>> {
 		const { findInput = null } = data;
 		return this.organizationProjectsService.findByEmployee(id, findInput);
 	}
@@ -72,10 +72,9 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any,
-		@Request() req
-	): Promise<IPagination<OrganizationProject>> {
+	): Promise<IPagination<IOrganizationProject>> {
 		const { relations, findInput } = data;
 		return this.organizationProjectsService.findAll({
 			where: findInput,
@@ -122,7 +121,6 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'))
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
@@ -149,7 +147,6 @@ export class OrganizationProjectsController extends CrudController<OrganizationP
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'))
 	// @UseGuards(PermissionGuard)
 	// @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('/task-view/:id')

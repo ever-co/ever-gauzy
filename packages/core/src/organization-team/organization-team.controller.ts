@@ -11,20 +11,19 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
-import { IPagination } from '../core';
 import {
 	IOrganizationTeamCreateInput,
-	IOrganizationTeam as IIOrganizationTeam
+	IOrganizationTeam,
+	IPagination
 } from '@gauzy/contracts';
 import { OrganizationTeam } from './organization-team.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationTeam')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
 	constructor(
@@ -66,7 +65,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Get()
 	async findAllOrganizationTeams(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IIOrganizationTeam>> {
+	): Promise<IPagination<IOrganizationTeam>> {
 		const { relations, findInput } = data;
 		return this.organizationTeamService.getAllOrgTeams({
 			where: findInput,
@@ -113,7 +112,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Get('me')
 	async findMyTeams(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IIOrganizationTeam>> {
+	): Promise<IPagination<IOrganizationTeam>> {
 		const { relations, findInput, employeeId } = data;
 		return this.organizationTeamService.findMyTeams(
 			relations,

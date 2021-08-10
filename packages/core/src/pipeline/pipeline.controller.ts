@@ -1,4 +1,4 @@
-import { CrudController, IPagination, PaginationParams } from '../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
 	Body,
@@ -16,19 +16,18 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { PipelineService } from './pipeline.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPipeline, PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Deal } from '../deal/deal.entity';
 
 
 @ApiTags('Pipeline')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class PipelineController extends CrudController<Pipeline> {
 	public constructor(protected pipelineService: PipelineService) {

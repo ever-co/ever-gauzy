@@ -1,4 +1,4 @@
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -12,15 +12,14 @@ import {
 	Body,
 	Param
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/contracts';
+import { IInvoiceItem, IInvoiceItemCreateInput, IPagination } from '@gauzy/contracts';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { CommandBus } from '@nestjs/cqrs';
 import { InvoiceItemBulkCreateCommand } from './commands';
 
 @ApiTags('InvoiceItem')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class InvoiceItemController extends CrudController<InvoiceItem> {
 	constructor(

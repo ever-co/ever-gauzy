@@ -1,4 +1,4 @@
-import { IIncome, IIncomeCreateInput, PermissionsEnum } from '@gauzy/contracts';
+import { IIncome, IIncomeCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -15,11 +15,10 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination, PaginationParams } from '../core';
+import { PaginationParams } from '../core';
 import { RequestContext } from '../core/context';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -33,7 +32,7 @@ import { IncomeService } from './income.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Income')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class IncomeController extends CrudController<Income> {
 	constructor(

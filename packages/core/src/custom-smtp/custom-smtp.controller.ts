@@ -11,8 +11,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core';
-import { AuthGuard } from '@nestjs/passport';
+import { CrudController } from './../core/crud';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
 import { UUIDValidationPipe } from './../shared/pipes';
@@ -28,7 +27,7 @@ import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
 import { ISMTPConfig } from '@gauzy/common';
 
 @ApiTags('CustomSmtp')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CustomSmtpController extends CrudController<CustomSmtp> {
 	constructor(

@@ -3,14 +3,12 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	UseGuards,
 	Post,
 	Body,
 	Param,
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	IEmployeePresetInput,
 	IGetMatchingCriterions,
@@ -20,7 +18,6 @@ import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
 
 @ApiTags('EmployeeJobPreset')
-@UseGuards(AuthGuard('jwt'))
 @Controller('employee')
 export class EmployeePresetController {
 	constructor(private readonly jobPresetService: JobPresetService) {}

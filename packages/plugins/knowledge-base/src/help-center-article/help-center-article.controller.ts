@@ -63,7 +63,6 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Get('category/:categoryId')
 	async findByCategoryId(
 		@Param('categoryId', UUIDValidationPipe) categoryId: string

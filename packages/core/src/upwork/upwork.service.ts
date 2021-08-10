@@ -26,7 +26,8 @@ import {
 	IUpworkDateRange,
 	ContactType,
 	TimeLogSourceEnum,
-	IUpworkClientSecretPair
+	IUpworkClientSecretPair,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	IntegrationTenantCreateCommand,
@@ -65,7 +66,6 @@ import { OrganizationContactService } from '../organization-contact/organization
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
-import { IPagination } from '../core';
 import {
 	UpworkJobService,
 	UpworkOffersService,

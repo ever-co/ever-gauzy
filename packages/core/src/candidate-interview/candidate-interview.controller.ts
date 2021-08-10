@@ -12,7 +12,6 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { UpdateResult } from 'typeorm';
 import {
 	ICandidateInterview,
@@ -20,7 +19,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { CandidateInterview } from './candidate-interview.entity';
 import { CandidateInterviewService } from './candidate-interview.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -29,7 +28,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from './../core/context';
 
 @ApiTags('CandidateInterview')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateInterviewController extends CrudController<CandidateInterview> {
 	constructor(

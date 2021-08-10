@@ -9,16 +9,15 @@ import {
 	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { OrganizationPositionsService } from './organization-positions.service';
 import { OrganizationPositions } from './organization-positions.entity';
-import { IPagination } from '../core';
-import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationPositions')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationPositionsController extends CrudController<OrganizationPositions> {
 	constructor(

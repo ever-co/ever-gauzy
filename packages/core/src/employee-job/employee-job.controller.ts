@@ -3,23 +3,21 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	UseGuards,
 	Post,
 	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPost } from './employee-job.entity';
-import { IPagination } from '../core';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	IApplyJobPostInput,
+	IEmployeeJobPost,
 	IGetEmployeeJobPostInput,
+	IPagination,
 	IVisibilityJobPostInput
 } from '@gauzy/contracts';
 
 @ApiTags('EmployeeJobPost')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeJobPostController {
 	constructor(
@@ -37,9 +35,9 @@ export class EmployeeJobPostController {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployeesJobs(
+	async findAll(
 		@Query() data: IGetEmployeeJobPostInput
-	): Promise<IPagination<EmployeeJobPost>> {
+	): Promise<IPagination<IEmployeeJobPost>> {
 		return this.employeeJobPostService.findAll(data);
 	}
 

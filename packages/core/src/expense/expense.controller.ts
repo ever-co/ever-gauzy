@@ -5,7 +5,8 @@ import {
 	IGetExpenseInput,
 	IExpenseReportData,
 	ReportGroupFilterEnum,
-	IExpense
+	IExpense,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -23,23 +24,26 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination, PaginationParams } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { PaginationParams } from '../core';
+import { CrudController } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ExpenseCreateCommand, ExpenseDeleteCommand, ExpenseUpdateCommand } from './commands';
+import {
+	ExpenseCreateCommand,
+	ExpenseDeleteCommand,
+	ExpenseUpdateCommand
+} from './commands';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
-import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.query';
+import { FindSplitExpenseQuery } from './queries';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
 
 @ApiTags('Expense')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ExpenseController extends CrudController<Expense> {
 	constructor(

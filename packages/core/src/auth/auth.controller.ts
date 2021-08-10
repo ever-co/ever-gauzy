@@ -10,22 +10,23 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { User as IUser } from '../user/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthRegisterCommand } from './commands';
-import { RequestContext } from '../core/context';
+import { Request } from 'express';
+import { I18nLang } from 'nestjs-i18n';
 import {
 	IAuthLoginInput,
 	IAuthResponse,
 	IUserRegistrationInput,
 	LanguagesEnum
 } from '@gauzy/contracts';
+import { AuthService } from './auth.service';
+import { User as IUser } from '../user/user.entity';
+import { AuthRegisterCommand } from './commands';
+import { RequestContext } from '../core/context';
 import { getUserDummyImage } from '../core';
-import { Request } from 'express';
-import { I18nLang } from 'nestjs-i18n';
-import { AuthLoginCommand } from './commands/auth.login.command';
+import { AuthLoginCommand } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
+import { Public } from './../shared/decorators';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
@@ -40,6 +41,7 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/authenticated')
+	@Public()
 	async authenticated(): Promise<boolean> {
 		const token = RequestContext.currentToken();
 		return await this.authService.isAuthenticated(token);
@@ -65,6 +67,7 @@ export class AuthController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/register')
+	@Public()
 	async create(
 		@Body() entity: IUserRegistrationInput,
 		@Req() request: Request,
@@ -81,6 +84,7 @@ export class AuthController {
 
 	@HttpCode(HttpStatus.OK)
 	@Post('/login')
+	@Public()
 	async login(
 		@Body() entity: IAuthLoginInput
 	): Promise<IAuthResponse | null> {
@@ -88,12 +92,14 @@ export class AuthController {
 	}
 
 	@Post('/reset-password')
+	@Public()
 	async resetPassword(@Body() findObject) {
 		return await this.authService.resetPassword(findObject);
 	}
 
 	@Post('/request-password')
-	async requestPass(
+	@Public()
+	async requestPassword(
 		@Body() findObj,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum

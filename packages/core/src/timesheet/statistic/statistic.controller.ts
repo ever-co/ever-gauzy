@@ -1,6 +1,5 @@
 import { Controller, UseGuards, HttpStatus, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { StatisticService } from './statistic.service';
 import {
 	IGetMembersStatistics,
@@ -14,10 +13,10 @@ import {
 	IMembersStatistics,
 	IProjectsStatistics
 } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('TimesheetStatistic')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller('statistics')
 export class StatisticController {
 	constructor(private readonly statisticService: StatisticService) {}

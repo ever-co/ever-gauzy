@@ -8,16 +8,15 @@ import {
 	Body
 } from '@nestjs/common';
 import { Activity } from './activity.entity';
-import { CrudController } from '../../core/crud/crud.controller';
+import { CrudController } from '../../core/crud';
 import { ActivityService } from './activity.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { IGetActivitiesInput, IBulkActivitiesInput } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../../shared/guards';
 import { ActivityMapService } from './activity.map.service';
 
 @ApiTags('Activity')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller('activity')
 export class ActivityController extends CrudController<Activity> {
 	constructor(

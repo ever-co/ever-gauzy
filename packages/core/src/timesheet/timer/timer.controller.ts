@@ -8,7 +8,6 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	ITimerToggleInput,
 	ITimeLog,
@@ -19,7 +18,7 @@ import { TimerService } from './timer.service';
 import { TenantPermissionGuard } from '../../shared/guards';
 
 @ApiTags('Timer')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller('timer')
 export class TimerController {
 	constructor(private readonly timerService: TimerService) {}

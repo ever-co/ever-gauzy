@@ -1,15 +1,14 @@
 import { CandidateEducationService } from './candidate-education.service';
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICandidateEducation, IPagination } from '@gauzy/contracts';
-import { CrudController } from '../core/crud';
+import { CrudController } from './../core/crud';
 import { CandidateEducation } from './candidate-education.entity';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateEducation')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateEducationController extends CrudController<CandidateEducation> {
 	constructor(

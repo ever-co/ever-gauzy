@@ -22,7 +22,7 @@ interface IGoalTemplateResponse {
 export class GoalTemplatesService {
 	private readonly GOAL_URL = `${API_PREFIX}/goal-templates`;
 	private readonly KEYRESULT_URL = `${API_PREFIX}/key-result-templates`;
-	private readonly GOAL_KPI_URL = `${API_PREFIX}/goal-kpi-templates`;
+	private readonly GOAL_KPI_URL = `${API_PREFIX}/goal-kpi-template`;
 
 	constructor(
 		private _http: HttpClient,
@@ -31,7 +31,7 @@ export class GoalTemplatesService {
 
 	createGoalTemplate(goalTemplate): Promise<IGoalTemplate> {
 		return this._http
-			.post<IGoalTemplate>(`${this.GOAL_URL}/create`, goalTemplate)
+			.post<IGoalTemplate>(`${this.GOAL_URL}`, goalTemplate)
 			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
@@ -39,7 +39,7 @@ export class GoalTemplatesService {
 	createKeyResultTemplate(keyResultTemplate): Promise<IKeyResultTemplate> {
 		return this._http
 			.post<IKeyResultTemplate>(
-				`${this.KEYRESULT_URL}/create`,
+				`${this.KEYRESULT_URL}`,
 				keyResultTemplate
 			)
 			.pipe(catchError((error) => this.errorHandler(error)))
@@ -49,7 +49,7 @@ export class GoalTemplatesService {
 	createGoalKpiTemplate(goalKpiTemplate): Promise<IGoalKPITemplate> {
 		return this._http
 			.post<IGoalKPITemplate>(
-				`${this.GOAL_KPI_URL}/create`,
+				`${this.GOAL_KPI_URL}`,
 				goalKpiTemplate
 			)
 			.pipe(catchError((error) => this.errorHandler(error)))
@@ -61,7 +61,7 @@ export class GoalTemplatesService {
 	): Promise<IGoalTemplateResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
-			.get<IGoalTemplateResponse>(`${this.GOAL_URL}/all`, {
+			.get<IGoalTemplateResponse>(`${this.GOAL_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))

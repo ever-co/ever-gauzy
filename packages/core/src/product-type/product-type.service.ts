@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { IPagination } from '../core';
+import { IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductType } from './product-type.entity';
 import { InjectRepository } from '@nestjs/typeorm';

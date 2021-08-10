@@ -1,14 +1,14 @@
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Controller, UseGuards, HttpStatus, Get, Query } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { OrganizationDocuments } from './organization-documents.entity';
 import { OrganizationDocumentsService } from './organization-documents.service';
-import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationDocuments')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationDocumentsController extends CrudController<OrganizationDocuments> {
 	constructor(

@@ -9,16 +9,15 @@ import {
 	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core/crud';
+import { CrudController } from './../core/crud';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
-import { AuthGuard } from '@nestjs/passport';
-import { IOrganizationEmploymentType } from '@gauzy/contracts';
+import { IOrganizationEmploymentType, IPagination } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationEmploymentType')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationEmploymentTypeController extends CrudController<OrganizationEmploymentType> {
 	constructor(

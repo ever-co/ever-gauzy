@@ -1,4 +1,4 @@
-import { TenantAwareCrudService } from '../core/crud';
+import { TenantAwareCrudService } from './../core/crud';
 import { PipelineStage } from './pipeline-stage.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';

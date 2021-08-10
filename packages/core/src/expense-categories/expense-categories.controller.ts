@@ -8,15 +8,15 @@ import {
 	Body
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from './expense-category.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('ExpenseCategories')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ExpenseCategoriesController extends CrudController<ExpenseCategory> {
 	constructor(

@@ -1,9 +1,9 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { RequestContext } from '../../../core/context';
 import { RolesEnum } from '@gauzy/contracts';
-import { TenantService } from '../../../tenant/tenant.service';
 import { environment as env } from '@gauzy/config';
+import { RequestContext } from './../../core/context';
+import { TenantService } from './../../tenant/tenant.service';
 import { TenantBaseGuard } from './tenant-base.guard';
 
 @Injectable()

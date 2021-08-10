@@ -27,7 +27,6 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { UpdateResult } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -45,7 +44,7 @@ import { EmailTemplateSaveCommand } from './commands';
 
 
 @ApiTags('EmailTemplate')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmailTemplateController extends CrudController<EmailTemplate> {
 	constructor(
