@@ -183,6 +183,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('estimate/:id')
+	@Public()
 	async updateWithoutGuard(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IInvoice

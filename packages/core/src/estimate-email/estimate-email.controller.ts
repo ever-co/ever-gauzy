@@ -4,6 +4,7 @@ import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { EstimateEmail } from './estimate-email.entity';
 import { EstimateEmailService } from './estimate-email.service';
 import { ParseJsonPipe } from './../shared/pipes';
+import { Public } from './../shared/decorators';
 
 @ApiTags('EstimateEmail')
 @Controller()
@@ -13,6 +14,7 @@ export class EstimateEmailController extends CrudController<EstimateEmail> {
 	}
 
 	@Get('validate')
+	@Public()
 	async validateEstimateEmail(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<EstimateEmail> {

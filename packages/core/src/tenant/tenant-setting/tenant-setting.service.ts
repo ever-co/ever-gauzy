@@ -16,9 +16,9 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		super(tenantSettingRepository);
 	}
 
-	async get(requrst?: FindManyOptions) {
+	async get(request?: FindManyOptions) {
 		const settings: TenantSetting[] = await this.tenantSettingRepository.find(
-			requrst
+			request
 		);
 		return _.object(_.pluck(settings, 'name'), _.pluck(settings, 'value'));
 	}
