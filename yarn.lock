@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.1.1.tgz#9274ec7460652f9c632c59addf24efb1684ef876"
   integrity sha512-sAP4LldeWNz0lNzmTird3uWfFDWWTeg6V/MsmyyLR9X1idwKBWIgt/ZvinqQldJm3LecKEs1emkbquO6PCiLVQ==
 
+"@4tw/cypress-drag-drop@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@4tw/cypress-drag-drop/-/cypress-drag-drop-1.8.0.tgz#f2990a414b18445cc117540ba6aba6994ecdd0e8"
+  integrity sha512-hPg9JvG3f+rzunVj6cZjgHaNtZ8JMbHBwD00PZjyl6/ysqyZzeR74b8yWUF0zohWcCG9bHVu666EhotOiIKhZw==
+
 "@aduh95/viz.js@^3.1.0":
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/@aduh95/viz.js/-/viz.js-3.4.0.tgz#635a020d95386c8acafbe025b2158238de889668"
@@ -13101,6 +13106,11 @@ cypress-cucumber-preprocessor@^4.1.2:
     js-string-escape "^1.0.1"
     minimist "^1.2.5"
     through "^2.3.8"
+
+cypress-file-upload@^5.0.8:
+  version "5.0.8"
+  resolved "https://registry.yarnpkg.com/cypress-file-upload/-/cypress-file-upload-5.0.8.tgz#d8824cbeaab798e44be8009769f9a6c9daa1b4a1"
+  integrity sha512-+8VzNabRk3zG6x8f8BWArF/xA/W0VK4IZNx3MV0jFWrJS/qKn8eHfa5nU73P9fOQAgwHFJx7zjg4lwOnljMO8g==
 
 cypress@^6.4.0:
   version "6.9.1"

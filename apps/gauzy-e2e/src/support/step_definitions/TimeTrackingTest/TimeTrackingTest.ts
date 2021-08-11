@@ -1,20 +1,18 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
-import * as timesheetsPage from '../../Base/pages/Timesheets.po';
+import * as timeTrackingPage from '../../Base/pages/TimeTracking.po';
+import { TimeTrackingPageData } from '../../Base/pagedata/TimeTrackingPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
+import { CustomCommands } from '../../commands';
+import * as timesheetsPage from '../../Base/pages/Timesheets.po';
 import { TimesheetsPageData } from '../../Base/pagedata/TimesheetsPageData';
+import * as logoutPage from '../../Base/pages/Logout.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
-import * as clientsPage from '../../Base/pages/Clients.po';
 import * as faker from 'faker';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
-import { CustomCommands } from '../../commands';
-import * as logoutPage from '../../Base/pages/Logout.po';
+import * as clientsPage from '../../Base/pages/Clients.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-import * as addTaskPage from '../../Base/pages/AddTasks.po';
-import { AddTasksPageData } from '../../Base/pagedata/AddTasksPageData';
-import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
-import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { waitUntil } from '../../Base/utils/util';
@@ -43,17 +41,6 @@ Given('Login with default credentials', () => {
 // Add new tag
 Then('User can add new tag', () => {
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
-});
-
-// Add project
-And('User can add new project', () => {
-	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData
-	);
 });
 
 // Add employee
@@ -87,14 +74,6 @@ And('User can add new client', () => {
 		street,
 		ClientsData
 	);
-});
-
-// Add new task
-And('User can add new task', () => {
-	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addTask(addTaskPage, AddTasksPageData);
 });
 
 // Add time
@@ -133,6 +112,9 @@ Then('User can see project dropdown', () => {
 });
 
 When('User click on project dropdown', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	timesheetsPage.clickSelectProjectDropdown();
 });
 
@@ -209,40 +191,28 @@ Then('Notification message will appear', () => {
 	timesheetsPage.waitMessageToHide();
 });
 
-// View time
-And('User can see view time log button', () => {
-	timesheetsPage.viewEmployeeTimeLogButtonVisible();
+// Visit Time tracking page to verify time was added
+And('User can visit Time tracking page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.visit('/#/pages/dashboard/time-tracking', { timeout: pageLoadTimeout });
 });
 
-When('User click on view time log button', () => {
-	timesheetsPage.clickViewEmployeeTimeLogButton(0);
+And('User can verify text content', () => {
+	timeTrackingPage.headerTextExist(TimeTrackingPageData.header);
+	timeTrackingPage.topCardTextExist(TimeTrackingPageData.membersWorked);
+	timeTrackingPage.topCardTextExist(TimeTrackingPageData.projectsWorked);
+	timeTrackingPage.topCardTextExist(TimeTrackingPageData.weeklyActivity);
+	timeTrackingPage.topCardTextExist(TimeTrackingPageData.workedThisWeek);
+	timeTrackingPage.topCardTextExist(TimeTrackingPageData.todayActivity);
+	timeTrackingPage.topCardTextExist(TimeTrackingPageData.workedToday);
+	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.recentActivities);
+	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.projects);
+	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.tasks);
+	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.appsUrls);
+	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.manualTime);
+	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.members);
 });
 
-Then('User can see close time log popover button', () => {
-	timesheetsPage.closeAddTimeLogPopoverButtonVisible();
-});
 
-When('User click on close time log popover button', () => {
-	timesheetsPage.clickCloseAddTimeLogPopoverButton();
-});
-
-// Delete time
-And('User can see delete time log button', () => {
-	timesheetsPage.deleteEmployeeTimeLogButtonVisible();
-});
-
-When('User click on delete time log button', () => {
-	timesheetsPage.clickDeleteEmployeeTimeLogButton(0);
-});
-
-Then('User can see confirm delete button', () => {
-	timesheetsPage.confirmDeleteButtonVisible();
-});
-
-When('User click on confirm delete button', () => {
-	timesheetsPage.clickConfirmDeleteButton();
-});
-
-Then('Notification message will appear', () => {
-	timesheetsPage.waitMessageToHide();
-});
