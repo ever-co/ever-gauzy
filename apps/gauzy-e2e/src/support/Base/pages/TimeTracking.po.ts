@@ -135,11 +135,11 @@ export const clickStartTimeSelect = () => {
 };
 
 export const endTimeSelectVisible = () => {
-	verifyElementIsVisible(TimeTrackingPage.startTimeSelectCss);
+	verifyElementIsVisible(TimeTrackingPage.endTimeSelectCss);
 };
 
 export const clickEndTimeSelect = () => {
-	clickButton(TimeTrackingPage.startTimeSelectCss);
+	clickButton(TimeTrackingPage.endTimeSelectCss);
 };
 
 export const addTimeBtnVisible = () => {
