@@ -50,7 +50,10 @@ import {
 	ScreenshotCreateCommand
 } from '../timesheet/commands';
 import * as moment from 'moment';
-import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
+import {
+	OrganizationProjectCreateCommand,
+	OrganizationProjectUpdateCommand
+} from '../organization-project/commands';
 import { EmployeeGetCommand } from '../employee/commands/employee.get.command';
 import { EmployeeCreateCommand } from '../employee/commands';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
@@ -75,7 +78,6 @@ import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/t
 import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
-import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 import { CreateTimeSlotMinutesCommand } from '../timesheet/time-slot/commands/create-time-slot-minutes.command';
 import { RequestContext } from '../core/context';
 import { environment as env } from '@gauzy/config';

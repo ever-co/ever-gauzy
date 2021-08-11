@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OrganizationProject } from './organization-projects.entity';
-import { TenantAwareCrudService } from './../core/crud';
 import { IOrganizationProjectsFindInput } from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { OrganizationProject } from './organization-project.entity';
 
 @Injectable()
-export class OrganizationProjectsService extends TenantAwareCrudService<OrganizationProject> {
+export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectsRepository: Repository<OrganizationProject>
+		private readonly organizationProjectRepository: Repository<OrganizationProject>
 	) {
-		super(organizationProjectsRepository);
+		super(organizationProjectRepository);
 	}
 
 	async findByEmployee(
@@ -20,7 +20,7 @@ export class OrganizationProjectsService extends TenantAwareCrudService<Organiza
 		findInput?: IOrganizationProjectsFindInput
 	): Promise<any> {
 		const tenantId = RequestContext.currentTenantId();
-		const query = this.organizationProjectsRepository.createQueryBuilder(
+		const query = this.organizationProjectRepository.createQueryBuilder(
 			'organization_project'
 		);
 		query
@@ -48,8 +48,8 @@ export class OrganizationProjectsService extends TenantAwareCrudService<Organiza
 	}
 
 	async updateTaskViewMode(id: string, taskViewMode: string): Promise<any> {
-		const project = await this.organizationProjectsRepository.findOne(id);
+		const project = await this.organizationProjectRepository.findOne(id);
 		project.taskListType = taskViewMode;
-		return await this.organizationProjectsRepository.save(project);
+		return await this.organizationProjectRepository.save(project);
 	}
 }

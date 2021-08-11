@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { CqrsModule } from '@nestjs/cqrs';
-import { OrganizationProject } from './organization-projects.entity';
-import { OrganizationProjectsController } from './organization-projects.controller';
-import { OrganizationProjectsService } from './organization-projects.service';
+import { OrganizationProject } from './organization-project.entity';
+import { OrganizationProjectController } from './organization-project.controller';
+import { OrganizationProjectService } from './organization-project.service';
 import { CommandHandlers } from './commands/handlers';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
@@ -15,15 +15,15 @@ import { TenantModule } from '../tenant/tenant.module';
 		RouterModule.forRoutes([
 			{
 				path: '/organization-projects',
-				module: OrganizationProjectsModule
+				module: OrganizationProjectModule
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationProject, User]),
 		CqrsModule,
 		TenantModule
 	],
-	controllers: [OrganizationProjectsController],
-	providers: [OrganizationProjectsService, UserService, ...CommandHandlers],
-	exports: [OrganizationProjectsService]
+	controllers: [OrganizationProjectController],
+	providers: [OrganizationProjectService, UserService, ...CommandHandlers],
+	exports: [OrganizationProjectService]
 })
-export class OrganizationProjectsModule {}
+export class OrganizationProjectModule {}

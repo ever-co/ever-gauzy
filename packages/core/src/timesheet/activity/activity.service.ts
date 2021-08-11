@@ -13,10 +13,9 @@ import {
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
-import { Employee } from '../../employee/employee.entity';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { indexBy, pluck } from 'underscore';
 import { getConfig } from '@gauzy/config';
+import { Employee, OrganizationProject } from './../../core/entities/internal';
 const config = getConfig();
 
 @Injectable()

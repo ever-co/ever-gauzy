@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { chain } from 'underscore';
-import { OrganizationProject } from './organization-projects.entity';
+import { OrganizationProject } from './organization-project.entity';
 import {
 	IOrganization,
 	IOrganizationProject,

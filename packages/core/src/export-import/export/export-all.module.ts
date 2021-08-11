@@ -26,7 +26,7 @@ import { ExpenseCategoriesService } from '../../expense-categories/expense-categ
 import { IncomeService } from '../../income/income.service';
 import { InviteService } from '../../invite/invite.service';
 import { OrganizationService } from '../../organization/organization.service';
-import { OrganizationProjectsService } from '../../organization-projects/organization-projects.service';
+import { OrganizationProjectService } from '../../organization-project/organization-project.service';
 import { OrganizationDepartmentService } from '../../organization-department/organization-department.service';
 import { RoleService } from '../../role/role.service';
 import { InvoiceService } from '../../invoice/invoice.service';
@@ -212,7 +212,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		OrganizationDocumentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
-		OrganizationProjectsService,
+		OrganizationProjectService,
 		OrganizationRecurringExpenseService,
 		OrganizationTeamService,
 		OrganizationTeamEmployeeService,
@@ -337,7 +337,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		OrganizationDocumentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
-		OrganizationProjectsService,
+		OrganizationProjectService,
 		OrganizationRecurringExpenseService,
 		OrganizationTeamService,
 		OrganizationTeamEmployeeService,

@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationProjectUpdateCommand } from '../organization-project.update.command';
-import { OrganizationProjectsService } from '../../organization-projects.service';
+import { OrganizationProjectService } from '../../organization-project.service';
 import {
 	IOrganizationProject,
 	IOrganizationProjectsUpdateInput
@@ -10,7 +10,7 @@ import {
 export class OrganizationProjectUpdateHandler
 	implements ICommandHandler<OrganizationProjectUpdateCommand> {
 	constructor(
-		private readonly _organizationProjectsService: OrganizationProjectsService
+		private readonly _organizationProjectService: OrganizationProjectService
 	) {}
 
 	public async execute(
@@ -26,11 +26,11 @@ export class OrganizationProjectUpdateHandler
 		id: string,
 		request: IOrganizationProjectsUpdateInput
 	): Promise<IOrganizationProject> {
-		const project = await this._organizationProjectsService.findOne(id);
+		const project = await this._organizationProjectService.findOne(id);
 		if (project) {
 			delete request.id;
-			await this._organizationProjectsService.update(id, request);
-			return await this._organizationProjectsService.findOne(id);
+			await this._organizationProjectService.update(id, request);
+			return await this._organizationProjectService.findOne(id);
 		}
 
 		return project;

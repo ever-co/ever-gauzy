@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateEntityByMembersHandler } from '../../../shared';
-import { OrganizationProjectsService } from '../../organization-projects.service';
+import { OrganizationProjectService } from '../../organization-project.service';
 import { OrganizationProjectEditByEmployeeCommand } from '../organization-project.edit-by-employee.command';
 
 @CommandHandler(OrganizationProjectEditByEmployeeCommand)
@@ -8,9 +8,9 @@ export class OrganizationProjectEditByEmployeeHandler
 	extends UpdateEntityByMembersHandler
 	implements ICommandHandler<OrganizationProjectEditByEmployeeCommand> {
 	constructor(
-		private readonly organizationDepartmentService: OrganizationProjectsService
+		private readonly organizationProjectService: OrganizationProjectService
 	) {
-		super(organizationDepartmentService);
+		super(organizationProjectService);
 	}
 
 	public async execute(

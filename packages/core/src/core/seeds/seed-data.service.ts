@@ -129,7 +129,7 @@ import {
 import {
 	createDefaultOrganizationProjects,
 	createRandomOrganizationProjects
-} from '../../organization-projects/organization-projects.seed';
+} from '../../organization-project/organization-project.seed';
 import { createDefaultTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
 import {
 	createDefaultGoals,
