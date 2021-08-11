@@ -42,7 +42,7 @@ import { OrganizationDepartmentModule } from './organization-department/organiza
 import { OrganizationRecurringExpenseModule } from './organization-recurring-expense/organization-recurring-expense.module';
 import { EmployeeRecurringExpenseModule } from './employee-recurring-expense/employee-recurring-expense.module';
 import { OrganizationContactModule } from './organization-contact/organization-contact.module';
-import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
+import { OrganizationPositionModule } from './organization-position/organization-position.module';
 import { OrganizationProjectModule } from './organization-project/organization-project.module';
 import { OrganizationVendorModule } from './organization-vendor/organization-vendor.module';
 import { OrganizationTeamModule } from './organization-team/organization-team.module';
@@ -236,7 +236,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		OrganizationDepartmentModule,
 		OrganizationRecurringExpenseModule,
 		OrganizationContactModule,
-		OrganizationPositionsModule,
+		OrganizationPositionModule,
 		OrganizationProjectModule,
 		OrganizationVendorModule,
 		OrganizationAwardModule,

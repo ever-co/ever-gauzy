@@ -149,7 +149,7 @@ import {
 import {
 	seedDefaultOrganizationPosition,
 	seedRandomOrganizationPosition
-} from '../../organization-positions/organization-position.seed';
+} from '../../organization-position/organization-position.seed';
 import {
 	createDefaultTags,
 	createRandomOrganizationTags,

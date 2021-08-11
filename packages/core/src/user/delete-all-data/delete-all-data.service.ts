@@ -67,7 +67,7 @@ import {
     OrganizationDocument,
     OrganizationEmploymentType,
     OrganizationLanguage,
-    OrganizationPositions,
+    OrganizationPosition,
     OrganizationProject,
     OrganizationRecurringExpense,
     OrganizationSprint,
@@ -285,8 +285,8 @@ export class DeleteAllDataService {
         @InjectRepository(OrganizationLanguage)
         private readonly organizationLanguageRepository: Repository<OrganizationLanguage>,
 
-        @InjectRepository(OrganizationPositions)
-        private readonly organizationPositionsRepository: Repository<OrganizationPositions>,
+        @InjectRepository(OrganizationPosition)
+        private readonly organizationPositionRepository: Repository<OrganizationPosition>,
 
         @InjectRepository(OrganizationProject)
         private readonly organizationProjectsRepository: Repository<OrganizationProject>,
@@ -543,7 +543,7 @@ export class DeleteAllDataService {
             this.organizationDocumentRepository,
             this.organizationEmploymentTypeRepository,
             this.organizationLanguageRepository,
-            this.organizationPositionsRepository,
+            this.organizationPositionRepository,
             this.organizationSprintRepository,
             this.organizationTeamEmployeeRepository,
             this.organizationTeamRepository,

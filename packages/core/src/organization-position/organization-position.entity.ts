@@ -5,7 +5,7 @@ import { IOrganizationPosition } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('organization_position')
-export class OrganizationPositions
+export class OrganizationPosition
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationPosition {
 	@ApiProperty()

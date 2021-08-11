@@ -90,7 +90,7 @@ import {
 	OrganizationDocument,
 	OrganizationEmploymentType,
 	OrganizationLanguage,
-	OrganizationPositions,
+	OrganizationPosition,
 	OrganizationProject,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
@@ -391,8 +391,8 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(OrganizationLanguage)
 		private readonly organizationLanguageRepository: Repository<OrganizationLanguage>,
 
-		@InjectRepository(OrganizationPositions)
-		private readonly organizationPositionRepository: Repository<OrganizationPositions>,
+		@InjectRepository(OrganizationPosition)
+		private readonly organizationPositionRepository: Repository<OrganizationPosition>,
 
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectRepository: Repository<OrganizationProject>,

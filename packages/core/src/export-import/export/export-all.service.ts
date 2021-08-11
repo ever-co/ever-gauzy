@@ -89,7 +89,7 @@ import {
 	OrganizationDocument,
 	OrganizationEmploymentType,
 	OrganizationLanguage,
-	OrganizationPositions,
+	OrganizationPosition,
 	OrganizationProject,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
@@ -386,8 +386,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(OrganizationLanguage)
 		private readonly organizationLanguageRepository: Repository<OrganizationLanguage>,
 
-		@InjectRepository(OrganizationPositions)
-		private readonly organizationPositionsRepository: Repository<OrganizationPositions>,
+		@InjectRepository(OrganizationPosition)
+		private readonly organizationPositionRepository: Repository<OrganizationPosition>,
 
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
@@ -1192,7 +1192,7 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.organizationLanguageRepository
 			},
 			{
-				repository: this.organizationPositionsRepository,
+				repository: this.organizationPositionRepository,
 				relations: [
 					{ joinTableName: 'tag_organization_position' }
 				]

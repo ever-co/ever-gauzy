@@ -35,7 +35,7 @@ import { InvoiceItemService } from '../../invoice-item/invoice-item.service';
 import { EmployeeLevelService } from '../../organization_employee-level/organization-employee-level.service';
 import { OrganizationContactService } from '../../organization-contact/organization-contact.service';
 import { OrganizationEmploymentTypeService } from '../../organization-employment-type/organization-employment-type.service';
-import { OrganizationPositionsService } from '../../organization-positions/organization-positions.service';
+import { OrganizationPositionService } from '../../organization-position/organization-position.service';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense/organization-recurring-expense.service';
 import { OrganizationTeamService } from '../../organization-team/organization-team.service';
 import { OrganizationVendorService } from '../../organization-vendor/organization-vendor.service';
@@ -211,7 +211,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		OrganizationDepartmentService,
 		OrganizationDocumentService,
 		OrganizationEmploymentTypeService,
-		OrganizationPositionsService,
+		OrganizationPositionService,
 		OrganizationProjectService,
 		OrganizationRecurringExpenseService,
 		OrganizationTeamService,
@@ -336,7 +336,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		OrganizationDepartmentService,
 		OrganizationDocumentService,
 		OrganizationEmploymentTypeService,
-		OrganizationPositionsService,
+		OrganizationPositionService,
 		OrganizationProjectService,
 		OrganizationRecurringExpenseService,
 		OrganizationTeamService,
