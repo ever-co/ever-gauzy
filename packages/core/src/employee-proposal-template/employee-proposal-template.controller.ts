@@ -28,6 +28,12 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 		super(employeeProposalTemplateService);
 	}
 
+	/**
+	 * GET employee proposal template via pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
@@ -36,6 +42,12 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 		return this.employeeProposalTemplateService.paginate(filter);
 	}
 
+	/**
+	 * CREATE make default template by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Make Default' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -50,7 +62,13 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 		);
 	}
 
-	@ApiOperation({ summary: 'find all' })
+	/**
+	 * GET all employee proposal templates
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'find all employee proposal templates' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found records'
