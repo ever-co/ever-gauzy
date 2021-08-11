@@ -95,7 +95,7 @@ import {
 import {
 	createOrganizationVendors,
 	createRandomOrganizationVendors
-} from '../../organization-vendors/organization-vendors.seed';
+} from '../../organization-vendor/organization-vendor.seed';
 import {
 	createDefaultCandidates,
 	createRandomCandidates
@@ -129,7 +129,7 @@ import {
 import {
 	createDefaultOrganizationProjects,
 	createRandomOrganizationProjects
-} from '../../organization-projects/organization-projects.seed';
+} from '../../organization-project/organization-project.seed';
 import { createDefaultTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
 import {
 	createDefaultGoals,
@@ -149,7 +149,7 @@ import {
 import {
 	seedDefaultOrganizationPosition,
 	seedRandomOrganizationPosition
-} from '../../organization-positions/organization-position.seed';
+} from '../../organization-position/organization-position.seed';
 import {
 	createDefaultTags,
 	createRandomOrganizationTags,
@@ -171,7 +171,7 @@ import {
 import {
 	createOrganizationDocuments,
 	createRandomOrganizationDocuments
-} from '../../organization-documents/organization-documents.seed';
+} from '../../organization-document/organization-document.seed';
 import {
 	createDefaultEquipments,
 	createRandomEquipments
@@ -225,7 +225,7 @@ import {
 import {
 	createDefaultAwards,
 	createRandomAwards
-} from '../../organization-awards/organization-awards.seed';
+} from '../../organization-award/organization-award.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 import {
 	createDefaultCandidateCriterionRating,
@@ -250,7 +250,7 @@ import {
 import {
 	createDefaultOrganizationLanguage,
 	createRandomOrganizationLanguage
-} from '../../organization-languages/organization-languages.seed';
+} from '../../organization-language/organization-language.seed';
 import { createRandomOrganizationSprint } from '../../organization-sprint/organization-sprint.seed';
 import { createRandomOrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.seed';
 import { createRandomAppointmentEmployees } from '../../appointment-employees/appointment-employees.seed';

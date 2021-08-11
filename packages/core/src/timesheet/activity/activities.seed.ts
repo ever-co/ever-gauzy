@@ -3,7 +3,7 @@ import * as _ from 'underscore';
 import * as moment from 'moment';
 import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';
 import { Activity } from './activity.entity';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-project/organization-project.entity';
 import { Connection } from 'typeorm';
 import { Employee } from '../../employee/employee.entity';
 

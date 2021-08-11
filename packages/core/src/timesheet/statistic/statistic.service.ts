@@ -20,12 +20,12 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { average, ArraySum, isNotEmpty } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import {
 	Activity,
 	Employee,
+	OrganizationProject,
 	Task,
 	TimeLog,
 	TimeSlot

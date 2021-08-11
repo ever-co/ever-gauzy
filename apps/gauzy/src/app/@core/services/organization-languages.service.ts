@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	IOrganizationLanguagesCreateInput,
-	IOrganizationLanguages,
-	IOrganizationLanguagesFindInput
+	IOrganizationLanguageCreateInput,
+	IOrganizationLanguage,
+	IOrganizationLanguageFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
@@ -15,10 +15,10 @@ export class OrganizationLanguagesService {
 	constructor(private http: HttpClient) {}
 
 	create(
-		createInput: IOrganizationLanguagesCreateInput
-	): Promise<IOrganizationLanguages> {
+		createInput: IOrganizationLanguageCreateInput
+	): Promise<IOrganizationLanguage> {
 		return this.http
-			.post<IOrganizationLanguages>(
+			.post<IOrganizationLanguage>(
 				`${API_PREFIX}/organization-languages`,
 				createInput
 			)
@@ -27,13 +27,13 @@ export class OrganizationLanguagesService {
 	}
 
 	getAll(
-		findInput?: IOrganizationLanguagesFindInput,
+		findInput?: IOrganizationLanguageFindInput,
 		relations?: string[]
-	): Promise<{ items: IOrganizationLanguages[]; total: number }> {
+	): Promise<{ items: IOrganizationLanguage[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: IOrganizationLanguages[]; total: number }>(
+			.get<{ items: IOrganizationLanguage[]; total: number }>(
 				`${API_PREFIX}/organization-languages`,
 				{
 					params: { data }

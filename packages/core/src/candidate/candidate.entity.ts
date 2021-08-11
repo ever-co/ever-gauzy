@@ -40,7 +40,7 @@ import {
 	Contact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
-	OrganizationPositions,
+	OrganizationPosition,
 	Tag,
 	TenantOrganizationBaseEntity,
 	User
@@ -146,8 +146,8 @@ export class Candidate
 	@Column({ nullable: true })
 	readonly contactId?: string;
 
-	@ApiProperty({ type: () => OrganizationPositions })
-	@ManyToOne(() => OrganizationPositions, { nullable: true })
+	@ApiProperty({ type: () => OrganizationPosition })
+	@ManyToOne(() => OrganizationPosition, { nullable: true })
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
