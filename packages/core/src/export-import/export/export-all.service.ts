@@ -83,7 +83,7 @@ import {
 	Language,
 	Merchant,
 	Organization,
-	OrganizationAwards,
+	OrganizationAward,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationDocument,
@@ -368,8 +368,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(EmployeeLevel)
 		private readonly employeeLevelRepository: Repository<EmployeeLevel>,
 
-		@InjectRepository(OrganizationAwards)
-		private readonly organizationAwardsRepository: Repository<OrganizationAwards>,
+		@InjectRepository(OrganizationAward)
+		private readonly organizationAwardRepository: Repository<OrganizationAward>,
 
 		@InjectRepository(OrganizationContact)
 		private readonly organizationContactRepository: Repository<OrganizationContact>,
@@ -1162,7 +1162,7 @@ export class ExportAllService implements OnModuleInit {
 				tenantBase: false
 			},
 			{
-				repository: this.organizationAwardsRepository
+				repository: this.organizationAwardRepository
 			},
 			{
 				repository: this.organizationContactRepository,

@@ -225,7 +225,7 @@ import {
 import {
 	createDefaultAwards,
 	createRandomAwards
-} from '../../organization-awards/organization-awards.seed';
+} from '../../organization-award/organization-award.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 import {
 	createDefaultCandidateCriterionRating,

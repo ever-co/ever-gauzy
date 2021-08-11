@@ -74,7 +74,7 @@ export * from '../../keyresult-update/keyresult-update.entity';
 export * from '../../keyresult/keyresult.entity';
 export * from '../../language/language.entity';
 export * from '../../organization_employee-level/organization-employee-level.entity';
-export * from '../../organization-awards/organization-awards.entity';
+export * from '../../organization-award/organization-award.entity';
 export * from '../../organization-contact/organization-contact.entity';
 export * from '../../organization-department/organization-department.entity';
 export * from '../../organization-document/organization-document.entity'

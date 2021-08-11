@@ -61,7 +61,7 @@ import {
     KeyResultTemplate,
     KeyResultUpdate,
     Organization,
-    OrganizationAwards,
+    OrganizationAward,
     OrganizationContact,
     OrganizationDepartment,
     OrganizationDocument,
@@ -264,8 +264,8 @@ export class DeleteAllDataService {
         @InjectRepository(EmployeeLevel)
         private readonly employeeLevelRepository: Repository<EmployeeLevel>,
 
-        @InjectRepository(OrganizationAwards)
-        private readonly organizationAwardsRepository: Repository<OrganizationAwards>,
+        @InjectRepository(OrganizationAward)
+        private readonly organizationAwardRepository: Repository<OrganizationAward>,
 
         @InjectRepository(Organization)
         private readonly organizationRepository: Repository<Organization>,
@@ -538,7 +538,7 @@ export class DeleteAllDataService {
             this.integrationSettingRepository,
             this.integrationTenantRepository,
             this.inviteRepository,
-            this.organizationAwardsRepository,
+            this.organizationAwardRepository,
             this.organizationDepartmentRepository,
             this.organizationDocumentRepository,
             this.organizationEmploymentTypeRepository,

@@ -1,27 +1,30 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from '../../@core/services/store.service';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { OrganizationsService } from '../../@core/services/organizations.service';
-import { EmployeesService } from '../../@core/services';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IOrganization,
-	IOrganizationAwards,
-	IOrganizationLanguages,
+	IOrganizationAward,
+	IOrganizationLanguage,
 	PermissionsEnum,
 	IOrganizationContact
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
-import { first, tap } from 'rxjs/operators';
-import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
-import * as moment from 'moment';
-import { OrganizationContactService } from '../../@core/services/organization-contact.service';
-import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
-import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
-import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { first, tap } from 'rxjs/operators';
+import * as moment from 'moment';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
+import {
+	EmployeesService,
+	EmployeeStatisticsService,
+	OrganizationContactService,
+	OrganizationProjectsService,
+	OrganizationsService,
+	Store,
+	ToastrService,
+	UsersOrganizationsService
+} from '../../@core/services';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-organization',
@@ -34,8 +37,8 @@ export class OrganizationComponent
 	organization: IOrganization;
 	hasEditPermission = false;
 	belongsToOrganization = false;
-	organizationLanguages: IOrganizationLanguages[];
-	awards: IOrganizationAwards[];
+	organizationLanguages: IOrganizationLanguage[];
+	awards: IOrganizationAward[];
 	clients: IOrganizationContact[];
 	bonusesPaid = 0;
 	totalClients = 0;

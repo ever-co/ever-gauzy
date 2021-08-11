@@ -39,7 +39,6 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 	 * GET all organization sprints
 	 * 
 	 * @param data 
-	 * @param req 
 	 * @returns 
 	 */
 	@ApiOperation({

@@ -37,7 +37,7 @@ import {
 	IPayment,
 	IOrganizationSprint,
 	IInvoiceEstimateHistory,
-	IOrganizationAwards,
+	IOrganizationAward,
 	IOrganizationLanguage,
 	IFeatureOrganization,
 	IAccountingTemplate,
@@ -51,7 +51,7 @@ import {
 	FeatureOrganization,
 	Invoice,
 	InvoiceEstimateHistory,
-	OrganizationAwards,
+	OrganizationAward,
 	OrganizationLanguage,
 	OrganizationSprint,
 	Payment,
@@ -436,10 +436,10 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@JoinColumn()
 	deals?: IDeal[];
 
-	@ApiProperty({ type: () => OrganizationAwards })
-	@OneToMany(() => OrganizationAwards, (award) => award.organization)
+	@ApiProperty({ type: () => OrganizationAward })
+	@OneToMany(() => OrganizationAward, (award) => award.organization)
 	@JoinColumn()
-	awards?: IOrganizationAwards[];
+	awards?: IOrganizationAward[];
 
 	@ApiProperty({ type: () => OrganizationLanguage })
 	@OneToMany(() => OrganizationLanguage, (language) => language.organization)

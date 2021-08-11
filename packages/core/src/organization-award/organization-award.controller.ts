@@ -12,25 +12,59 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
-import { OrganizationAwardsService } from './organization-awards.service';
-import { OrganizationAwards } from './organization-awards.entity';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { IOrganizationAward, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
+import { OrganizationAwardService } from './organization-award.service';
+import { OrganizationAward } from './organization-award.entity';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { IOrganizationAwards, IPagination } from '@gauzy/contracts';
 
-@ApiTags('OrganizationAwards')
+@ApiTags('OrganizationAward')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class OrganizationAwardsController extends CrudController<OrganizationAwards> {
+export class OrganizationAwardController extends CrudController<OrganizationAward> {
 	constructor(
-		private readonly organizationAwardsService: OrganizationAwardsService
+		private readonly organizationAwardService: OrganizationAwardService
 	) {
-		super(organizationAwardsService);
+		super(organizationAwardService);
 	}
 
+	/**
+	 * GET organization award
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	 @ApiOperation({
+		summary: 'Find Organization Awards.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found Organization Awards',
+		type: OrganizationAward
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IOrganizationAward>> {
+		const { findInput } = data;
+		return this.organizationAwardService.findAll({
+			where: findInput
+		});
+	}
+
+	/**
+	 * CREATE organization award
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -44,11 +78,18 @@ export class OrganizationAwardsController extends CrudController<OrganizationAwa
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body() entity: DeepPartial<OrganizationAwards>
-	): Promise<OrganizationAwards> {
-		return this.organizationAwardsService.create(entity);
+		@Body() entity: DeepPartial<OrganizationAward>
+	): Promise<OrganizationAward> {
+		return this.organizationAwardService.create(entity);
 	}
 
+	/**
+	 * UPDATE organization award by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -67,11 +108,17 @@ export class OrganizationAwardsController extends CrudController<OrganizationAwa
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: QueryDeepPartialEntity<OrganizationAwards>
+		@Body() entity: QueryDeepPartialEntity<OrganizationAward>
 	): Promise<any> {
-		return this.organizationAwardsService.update(id, entity);
+		return this.organizationAwardService.update(id, entity);
 	}
 
+	/**
+	 * DELETE organization award by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
@@ -86,28 +133,6 @@ export class OrganizationAwardsController extends CrudController<OrganizationAwa
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<any> {
-		return this.organizationAwardsService.delete(id);
-	}
-
-	@ApiOperation({
-		summary: 'Find Organization Awards.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found Organization Awards',
-		type: OrganizationAwards
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findAwardsByOrgId(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationAwards>> {
-		const { findInput } = data;
-		return this.organizationAwardsService.findAll({
-			where: findInput
-		});
+		return this.organizationAwardService.delete(id);
 	}
 }
