@@ -57,8 +57,10 @@ import { environment } from '@gauzy/config';
 import { getDummyImage } from '../core';
 import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
 import { RequestContext } from '../core/context';
-import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
-import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
+import {
+	OrganizationProjectCreateCommand,
+	OrganizationProjectUpdateCommand
+} from '../organization-project/commands';
 import { TaskUpdateCommand } from '../tasks/commands/task-update.command';
 import { environment as env } from '@gauzy/config';
 

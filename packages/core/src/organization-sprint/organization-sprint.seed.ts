@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { IOrganization, ITenant, SprintStartDayEnum } from '@gauzy/contracts';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-project/organization-project.entity';
 import * as moment from 'moment';
 import { Task } from '../tasks/task.entity';
 

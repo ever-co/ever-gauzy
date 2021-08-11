@@ -45,7 +45,7 @@ import {
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
-	OrganizationPositions,
+	OrganizationPosition,
 	OrganizationProject,
 	OrganizationTeamEmployee,
 	Payment,
@@ -313,8 +313,8 @@ export class Employee
 	readonly contactId?: string;
 
 	// Employee Organization Position
-	@ApiProperty({ type: () => OrganizationPositions })
-	@ManyToOne(() => OrganizationPositions, { nullable: true })
+	@ApiProperty({ type: () => OrganizationPosition })
+	@ManyToOne(() => OrganizationPosition, { nullable: true })
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 

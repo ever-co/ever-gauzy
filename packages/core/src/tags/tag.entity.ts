@@ -45,7 +45,7 @@ import {
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
-	OrganizationPositions,
+	OrganizationPosition,
 	OrganizationProject,
 	OrganizationTeam,
 	OrganizationVendor,
@@ -136,7 +136,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	organizationProject?: IOrganizationProject[];
 
 	@ManyToMany(
-		() => OrganizationPositions,
+		() => OrganizationPosition,
 		(organizationPosition) => organizationPosition.tags
 	)
 	organizationPosition?: IOrganizationPosition[];

@@ -7,7 +7,7 @@ import * as fse from 'fs-extra';
 import * as csv from 'csv-parser';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
-import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
+import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import {
@@ -44,7 +44,7 @@ export class UpworkTransactionService {
 	constructor(
 		private _userService: UserService,
 		private _employeeService: EmployeeService,
-		private _orgVendorService: OrganizationVendorsService,
+		private _orgVendorService: OrganizationVendorService,
 		private _orgClientService: OrganizationContactService,
 		private _expenseCategoryService: ExpenseCategoriesService,
 		private commandBus: CommandBus

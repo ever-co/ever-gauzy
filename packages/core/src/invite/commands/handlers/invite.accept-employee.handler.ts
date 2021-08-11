@@ -8,7 +8,7 @@ import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { OrganizationDepartmentService } from '../../../organization-department/organization-department.service';
-import { OrganizationProjectsService } from '../../../organization-projects/organization-projects.service';
+import { OrganizationProjectService } from '../../../organization-project/organization-project.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 
@@ -24,7 +24,7 @@ export class InviteAcceptEmployeeHandler
 		private readonly inviteService: InviteService,
 		private readonly employeeService: EmployeeService,
 		private readonly organizationService: OrganizationService,
-		private readonly organizationProjectService: OrganizationProjectsService,
+		private readonly organizationProjectService: OrganizationProjectService,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentService,
 		private readonly authService: AuthService

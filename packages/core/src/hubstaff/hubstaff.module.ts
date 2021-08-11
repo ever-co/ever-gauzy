@@ -8,8 +8,8 @@ import { IntegrationSetting } from '../integration-setting/integration-setting.e
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
+import { OrganizationProject } from '../organization-project/organization-project.entity';
+import { OrganizationProjectService } from '../organization-project/organization-project.service';
 import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -56,7 +56,7 @@ import { TenantModule } from './../tenant';
 		IntegrationTenantService,
 		IntegrationSettingService,
 		IntegrationMapService,
-		OrganizationProjectsService,
+		OrganizationProjectService,
 		IntegrationEntitySettingService,
 		IntegrationEntitySettingTiedEntityService,
 		OrganizationService,

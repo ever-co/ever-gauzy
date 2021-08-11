@@ -26,7 +26,7 @@ import { ExpenseCategoriesService } from '../../expense-categories/expense-categ
 import { IncomeService } from '../../income/income.service';
 import { InviteService } from '../../invite/invite.service';
 import { OrganizationService } from '../../organization/organization.service';
-import { OrganizationProjectsService } from '../../organization-projects/organization-projects.service';
+import { OrganizationProjectService } from '../../organization-project/organization-project.service';
 import { OrganizationDepartmentService } from '../../organization-department/organization-department.service';
 import { RoleService } from '../../role/role.service';
 import { InvoiceService } from '../../invoice/invoice.service';
@@ -35,10 +35,10 @@ import { InvoiceItemService } from '../../invoice-item/invoice-item.service';
 import { EmployeeLevelService } from '../../organization_employee-level/organization-employee-level.service';
 import { OrganizationContactService } from '../../organization-contact/organization-contact.service';
 import { OrganizationEmploymentTypeService } from '../../organization-employment-type/organization-employment-type.service';
-import { OrganizationPositionsService } from '../../organization-positions/organization-positions.service';
+import { OrganizationPositionService } from '../../organization-position/organization-position.service';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense/organization-recurring-expense.service';
 import { OrganizationTeamService } from '../../organization-team/organization-team.service';
-import { OrganizationVendorsService } from '../../organization-vendors/organization-vendors.service';
+import { OrganizationVendorService } from '../../organization-vendor/organization-vendor.service';
 import { ProposalService } from '../../proposal/proposal.service';
 import { RolePermissionsService } from '../../role-permissions/role-permissions.service';
 import { TagService } from '../../tags/tag.service';
@@ -91,8 +91,8 @@ import { ProductVariantSettingService } from '../../product-settings/product-set
 import { ProductOptionService } from '../../product-option/product-option.service';
 import { ProductVariantService } from '../../product-variant/product-variant.service';
 import { ProductVariantPriceService } from '../../product-variant-price/product-variant-price.service';
-import { OrganizationAwardsService } from '../../organization-awards/organization-awards.service';
-import { OrganizationLanguagesService } from '../../organization-languages/organization-languages.service';
+import { OrganizationAwardService } from '../../organization-award/organization-award.service';
+import { OrganizationLanguageService } from '../../organization-language/organization-language.service';
 import { LanguageService } from '../../language/language.service';
 import { IntegrationService } from '../../integration/integration.service';
 import { IntegrationMapService } from '../../integration-map/integration-map.service';
@@ -103,7 +103,7 @@ import { IntegrationTenantService } from '../../integration-tenant/integration-t
 import { KeyResultService } from '../../keyresult/keyresult.service';
 import { KeyResultUpdateService } from '../../keyresult-update/keyresult-update.service';
 import { ProductCategoryService } from '../../product-category/product-category.service';
-import { OrganizationDocumentsService } from '../../organization-documents/organization-documents.service';
+import { OrganizationDocumentService } from '../../organization-document/organization-document.service';
 import { CustomSmtpService } from '../../custom-smtp/custom-smtp.service';
 import { CurrencyService } from '../../currency';
 import { EmployeeAwardService } from '../../employee-award/employee-award.service';
@@ -204,20 +204,20 @@ import { ImportRecordModule } from './../../export-import/import-record';
 
 		LanguageService,
 
-		OrganizationAwardsService,
-		OrganizationLanguagesService,
+		OrganizationAwardService,
+		OrganizationLanguageService,
 		OrganizationService,
 		OrganizationContactService,
 		OrganizationDepartmentService,
-		OrganizationDocumentsService,
+		OrganizationDocumentService,
 		OrganizationEmploymentTypeService,
-		OrganizationPositionsService,
-		OrganizationProjectsService,
+		OrganizationPositionService,
+		OrganizationProjectService,
 		OrganizationRecurringExpenseService,
 		OrganizationTeamService,
 		OrganizationTeamEmployeeService,
 		OrganizationSprintService,
-		OrganizationVendorsService,
+		OrganizationVendorService,
 
 		PaymentService,
 		PipelineService,
@@ -330,19 +330,19 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		LanguageService,
 
 		OrganizationService,
-		OrganizationAwardsService,
-		OrganizationLanguagesService,
+		OrganizationAwardService,
+		OrganizationLanguageService,
 		OrganizationContactService,
 		OrganizationDepartmentService,
-		OrganizationDocumentsService,
+		OrganizationDocumentService,
 		OrganizationEmploymentTypeService,
-		OrganizationPositionsService,
-		OrganizationProjectsService,
+		OrganizationPositionService,
+		OrganizationProjectService,
 		OrganizationRecurringExpenseService,
 		OrganizationTeamService,
 		OrganizationTeamEmployeeService,
 		OrganizationSprintService,
-		OrganizationVendorsService,
+		OrganizationVendorService,
 
 		PaymentService,
 		PipelineService,
