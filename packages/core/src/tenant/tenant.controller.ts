@@ -30,6 +30,11 @@ export class TenantController extends CrudController<Tenant> {
 		super(tenantService);
 	}
 
+	@Get('count')
+	async getCount() {
+		throw new MethodNotAllowedException();
+	}
+
 	@Get('pagination')
 	async pagination() {
 		throw new MethodNotAllowedException();

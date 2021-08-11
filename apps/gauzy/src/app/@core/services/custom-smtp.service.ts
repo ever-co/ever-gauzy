@@ -24,7 +24,7 @@ export class CustomSmtpService {
 
 	getSMTPSetting(request: ICustomSmtpFindInput) {
 		return this.http
-			.get<ICustomSmtp>(`${this.API_URL}`, {
+			.get<ICustomSmtp>(`${this.API_URL}/setting`, {
 				params: toParams(request)
 			})
 			.toPromise();

@@ -41,7 +41,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	@Get('count')
     async getCount(
 		filter?: PaginationParams<T>
-	): Promise<number> {
+	): Promise<number | void> {
         return await this.crudService.count(filter);
     }
 
