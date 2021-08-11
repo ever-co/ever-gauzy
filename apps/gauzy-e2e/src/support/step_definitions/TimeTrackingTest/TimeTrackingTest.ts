@@ -4,20 +4,19 @@ import * as timeTrackingPage from '../../Base/pages/TimeTracking.po';
 import { TimeTrackingPageData } from '../../Base/pagedata/TimeTrackingPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import * as timesheetsPage from '../../Base/pages/Timesheets.po';
-import { TimesheetsPageData } from '../../Base/pagedata/TimesheetsPageData';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as faker from 'faker';
+import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
+import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import * as clientsPage from '../../Base/pages/Clients.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-
+import * as addTaskPage from '../../Base/pages/AddTasks.po';
+import { AddTasksPageData } from '../../Base/pagedata/AddTasksPageData';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { waitUntil } from '../../Base/utils/util';
-
-const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
 let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
@@ -32,6 +31,8 @@ let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
+
+let description = faker.lorem.text();
 
 // Login with email
 Given('Login with default credentials', () => {
@@ -59,6 +60,17 @@ And('User can add new employee', () => {
 	);
 });
 
+// Add new project
+And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	CustomCommands.addProject(
+		organizationProjectsPage,
+		OrganizationProjectsPageData
+	);
+});
+
 // Add new client
 And('User can add new client', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
@@ -76,143 +88,276 @@ And('User can add new client', () => {
 	);
 });
 
-// Add time
-And('User can visit Employees timesheets daily page', () => {
+// Add new task
+And('User can add new task', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees/timesheets/daily', {
-		timeout: pageLoadTimeout
-	});
+	CustomCommands.addTask(addTaskPage, AddTasksPageData);
 });
 
-And('User can see add time log button', () => {
-	timesheetsPage.addTimeButtonVisible();
+// Logout
+And('User can logout', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
 });
 
-When('User click on add time log button', () => {
-	timesheetsPage.clickAddTimeButton();
+// Login as employee
+And('Employee can see login page', () => {
+	loginPage.verifyLoginText();
 });
 
-Then('User can see client dropdown', () => {
-	timesheetsPage.clientDropdownVisible();
+And('Employee can see email input', () => {
+	loginPage.clearEmailField();
 });
 
-When('User click on client dropdown', () => {
+And('Employee can enter value for employee email', () => {
+	loginPage.enterEmail(employeeEmail);
+});
+
+And('Employee can see password input', () => {
+	loginPage.clearPasswordField();
+});
+
+And('Employee can enter value for employee password', () => {
+	loginPage.enterPassword(password);
+});
+
+When('Employee click on login button', () => {
+	loginPage.clickLoginButton();
+});
+
+Then('Employee will see Create button', () => {
+	dashboardPage.verifyCreateButton();
+});
+
+// Add time
+And('Employee can see timer', () => {
+	timeTrackingPage.timerVisible();
+});
+
+When('Employee click on timer', () => {
+	timeTrackingPage.clickTimer();
+});
+
+Then('Employee can see timer button', () => {
+	timeTrackingPage.timerBtnVisible();
+});
+
+When('Employee click on timer button', () => {
+	timeTrackingPage.clickTimerBtn(1);
+});
+
+Then('Employee can see client dropdown', () => {
+	timeTrackingPage.clientSelectVisible();
+});
+
+When('Employee click on client select', () => {
+	timeTrackingPage.clickClientSelect();
+});
+
+Then('Employee can select client from dropdown options', () => {
+	timeTrackingPage.selectOptionFromDropdown(0);
+});
+
+And('Employee can see project select', () => {
+	timeTrackingPage.projectSelectVisible();
+});
+
+When('Employee click on project select', () => {
+	timeTrackingPage.clickProjectSelect();
+});
+
+Then('Employee can select project from dropdown options', () => {
+	timeTrackingPage.selectOptionFromDropdown(0);
+});
+
+And('Employee can see task select', () => {
+	timeTrackingPage.taskSelectVisible();
+});
+
+When('Employee click on task select', () => {
+	timeTrackingPage.clickTaskSelect();
+});
+
+Then('Employee can select task from dropdown options', () => {
+	timeTrackingPage.selectOptionFromDropdown(0);
+});
+
+And('Employee can see description input field', () => {
+	timeTrackingPage.descriptionInputVisible();
+});
+
+And('Employee can enter description', () => {
+	timeTrackingPage.enterDescription(description);
+});
+
+And('Employee can see start timer button', () => {
+	timeTrackingPage.startTimerBtnVisible();
+});
+
+When('Employee click on start timer button', () => {
+	timeTrackingPage.clickStartTimerBtn();
+});
+
+Then('Employee can let timer work for 5 seconds', () => {
 	waitUntil(5000);
-	timesheetsPage.clickClientDropdown();
+})
+
+And('Employee can see stop timer button', () => {
+	timeTrackingPage.stopTimerBtnVisible();
 });
 
-Then('User can select client from dropdown options', () => {
-	timesheetsPage.selectClientFromDropdown(0);
+When('Employee click on stop timer button', () => {
+	timeTrackingPage.clickStopTimerBtn();
 });
 
-Then('User can see project dropdown', () => {
-	timesheetsPage.selectProjectDropdownVisible();
+Then('Employee can see again start timer button', () => {
+	timeTrackingPage.startTimerBtnVisible();
 });
 
-When('User click on project dropdown', () => {
-	cy.on('uncaught:exception', (err, runnable) => {
-		return false;
-	});
-	timesheetsPage.clickSelectProjectDropdown();
+And('Employee can see close button', () => {
+	timeTrackingPage.closeBtnVisible();
 });
 
-Then('User can select project from dropdown options', () => {
-	timesheetsPage.selectProjectFromDropdown(
-		TimesheetsPageData.defaultProjectName
-	);
+When('Employee click on close button', () => {
+	timeTrackingPage.clickCloseBtn();
 });
 
-And('User can see task dropdown', () => {
-	timesheetsPage.taskDropdownVisible();
+Then('User can see tab button', () => {
+	timeTrackingPage.tabBtnVisible();
 });
 
-When('User click on task dropdown', () => {
-	timesheetsPage.clickTaskDropdown();
+When('User click on second tab button', () => {
+	timeTrackingPage.clickTabBtn(1);
 });
 
-Then('User can select task from dropdown options', () => {
-	timesheetsPage.selectTaskFromDropdown(0);
+Then('Employee can verify time was recorded', () => {
+	timeTrackingPage.verifyTimeWasRecorded(3, TimeTrackingPageData.time);
 });
 
-And('User can see start time dropdown', () => {
-	timesheetsPage.startTimeDropdownVisible();
+And('Employee can verify project worked', () => {
+	timeTrackingPage.verifyWork(OrganizationProjectsPageData.name);
 });
 
-When('User click on start time dropdown', () => {
-	timesheetsPage.clickStartTimeDropdown();
+And('Employee can verify tasks worked', () => {
+	timeTrackingPage.verifyWork(AddTasksPageData.defaultTaskTitle);
 });
 
-Then('User can select time from dropdown options', () => {
-	timesheetsPage.selectTimeFromDropdown(0);
+// Add manual time
+And('Employee can go back to dashboard tab', () => {
+	timeTrackingPage.clickTabBtn(0);
 });
 
-Then('User can see date input field', () => {
-	timesheetsPage.dateInputVisible();
+When('Employee click on timer again', () => {
+	timeTrackingPage.clickTimer();
 });
 
-And('User can enter date', () => {
-	timesheetsPage.enterDateData();
-	timesheetsPage.clickKeyboardButtonByKeyCode(9);
+Then('Employee can see manual time button', () => {
+	timeTrackingPage.manualBtnVisible();
 });
 
-And('User can see employee dropdown', () => {
-	timesheetsPage.selectEmployeeDropdownVisible();
+When('Employee click on manaul time button', () => {
+	timeTrackingPage.clickManualBtn();
 });
 
-When('User click on employee dropdown', () => {
-	timesheetsPage.clickSelectEmployeeDropdown();
+Then('Employee can see date input field', () => {
+	timeTrackingPage.dateInputVisible();
 });
 
-Then('User can select employee from dropdown options', () => {
-	timesheetsPage.selectEmployeeFromDropdown(0);
+And('Employee can enter date', () => {
+	timeTrackingPage.enterDate();
+	timeTrackingPage.clickKeyboardButtonByKeyCode(9);
 });
 
-And('User can see time log description input field', () => {
-	timesheetsPage.addTimeLogDescriptionVisible();
+And('Employee can see start time select', () => {
+	timeTrackingPage.startTimeSelectVisible();
 });
 
-And('User can enter time log description', () => {
-	timesheetsPage.enterTimeLogDescriptionData(
-		TimesheetsPageData.defaultDescription
-	);
+When('Employee click on start time select', () => {
+	timeTrackingPage.clickStartTimeSelect();
 });
 
-And('User can see save time log button', () => {
-	timesheetsPage.saveTimeLogButtonVisible();
+Then('Employee can select start time from dropdown options', () => {
+	timeTrackingPage.selectOptionFromDropdown(0);
 });
 
-When('User click on save time log button', () => {
-	timesheetsPage.clickSaveTimeLogButton();
+And('Employee can see end time select', () => {
+	timeTrackingPage.endTimeSelectVisible();
+});
+
+When('Employee click on end time select', () => {
+	timeTrackingPage.clickEndTimeSelect();
+});
+
+Then('Employee can select end time from dropdown options', () => {
+	timeTrackingPage.selectOptionFromDropdown(0);
+});
+
+And('Employee can see client dropdown again', () => {
+	timeTrackingPage.clientSelectVisible();
+});
+
+When('Employee click on client select again', () => {
+	timeTrackingPage.clickClientSelect();
+});
+
+Then('Employee can select client from dropdown options again', () => {
+	timeTrackingPage.selectOptionFromDropdown(0);
+});
+
+And('Employee can see project select again', () => {
+	timeTrackingPage.projectSelectVisible();
+});
+
+When('Employee click on project select again', () => {
+	timeTrackingPage.clickProjectSelect();
+});
+
+Then('Employee can select project from dropdown options again', () => {
+	timeTrackingPage.selectOptionFromDropdown(0);
+});
+
+And('Employee can see task select again', () => {
+	timeTrackingPage.taskSelectVisible();
+});
+
+When('Employee click on task select again', () => {
+	timeTrackingPage.clickTaskSelect();
+});
+
+Then('Employee can select task from dropdown options again', () => {
+	timeTrackingPage.selectOptionFromDropdown(0);
+});
+
+And('Employee can see description input field again', () => {
+	timeTrackingPage.descriptionInputVisible();
+});
+
+And('Employee can enter description again', () => {
+	timeTrackingPage.enterDescription(description);
+});
+
+And('Employee can see add time button', () => {
+	timeTrackingPage.addTimeBtnVisible();
+});
+
+When('User click on add time button', () => {
+	timeTrackingPage.clickAddTimeBtn();
 });
 
 Then('Notification message will appear', () => {
-	timesheetsPage.waitMessageToHide();
+	timeTrackingPage.waitMessageToHide();
 });
 
-// Visit Time tracking page to verify time was added
-And('User can visit Time tracking page', () => {
-	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/dashboard/time-tracking', { timeout: pageLoadTimeout });
+And('User can see view timesheet button', () => {
+	timeTrackingPage.viewTimesheetbtnVisible();
 });
 
-And('User can verify text content', () => {
-	timeTrackingPage.headerTextExist(TimeTrackingPageData.header);
-	timeTrackingPage.topCardTextExist(TimeTrackingPageData.membersWorked);
-	timeTrackingPage.topCardTextExist(TimeTrackingPageData.projectsWorked);
-	timeTrackingPage.topCardTextExist(TimeTrackingPageData.weeklyActivity);
-	timeTrackingPage.topCardTextExist(TimeTrackingPageData.workedThisWeek);
-	timeTrackingPage.topCardTextExist(TimeTrackingPageData.todayActivity);
-	timeTrackingPage.topCardTextExist(TimeTrackingPageData.workedToday);
-	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.recentActivities);
-	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.projects);
-	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.tasks);
-	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.appsUrls);
-	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.manualTime);
-	timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.members);
+When('User click on view timesheet button', () => {
+	timeTrackingPage.clickViewTimesheetBtn();
 });
 
-
+Then('User can verify manual time was added', () => {
+	timeTrackingPage.verifyManualTime(TimeTrackingPageData.manual);
+});
