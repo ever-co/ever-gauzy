@@ -95,7 +95,7 @@ import {
 import {
 	createOrganizationVendors,
 	createRandomOrganizationVendors
-} from '../../organization-vendors/organization-vendors.seed';
+} from '../../organization-vendor/organization-vendor.seed';
 import {
 	createDefaultCandidates,
 	createRandomCandidates

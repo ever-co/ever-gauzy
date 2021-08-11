@@ -86,7 +86,7 @@ export * from '../../organization-recurring-expense/organization-recurring-expen
 export * from '../../organization-sprint/organization-sprint.entity';
 export * from '../../organization-team-employee/organization-team-employee.entity';
 export * from '../../organization-team/organization-team.entity';
-export * from '../../organization-vendors/organization-vendors.entity';
+export * from '../../organization-vendor/organization-vendor.entity';
 export * from '../../organization/organization.entity';
 export * from '../../payment/payment.entity';
 export * from '../../pipeline-stage/pipeline-stage.entity';

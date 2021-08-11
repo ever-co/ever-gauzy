@@ -38,7 +38,7 @@ import { OrganizationEmploymentTypeService } from '../../organization-employment
 import { OrganizationPositionsService } from '../../organization-positions/organization-positions.service';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense/organization-recurring-expense.service';
 import { OrganizationTeamService } from '../../organization-team/organization-team.service';
-import { OrganizationVendorsService } from '../../organization-vendors/organization-vendors.service';
+import { OrganizationVendorService } from '../../organization-vendor/organization-vendor.service';
 import { ProposalService } from '../../proposal/proposal.service';
 import { RolePermissionsService } from '../../role-permissions/role-permissions.service';
 import { TagService } from '../../tags/tag.service';
@@ -217,7 +217,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		OrganizationTeamService,
 		OrganizationTeamEmployeeService,
 		OrganizationSprintService,
-		OrganizationVendorsService,
+		OrganizationVendorService,
 
 		PaymentService,
 		PipelineService,
@@ -342,7 +342,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		OrganizationTeamService,
 		OrganizationTeamEmployeeService,
 		OrganizationSprintService,
-		OrganizationVendorsService,
+		OrganizationVendorService,
 
 		PaymentService,
 		PipelineService,

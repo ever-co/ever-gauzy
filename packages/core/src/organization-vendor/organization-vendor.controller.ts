@@ -11,29 +11,35 @@ import {
 	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IPagination } from '@gauzy/contracts';
+import { IOrganizationVendor, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
-import { OrganizationVendorsService } from './organization-vendors.service';
-import { OrganizationVendor } from './organization-vendors.entity';
+import { OrganizationVendorService } from './organization-vendor.service';
+import { OrganizationVendor } from './organization-vendor.entity';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
-@ApiTags('OrganizationVendors')
+@ApiTags('OrganizationVendor')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class OrganizationVendorsController extends CrudController<OrganizationVendor> {
+export class OrganizationVendorController extends CrudController<OrganizationVendor> {
 	constructor(
-		private readonly organizationVendorsService: OrganizationVendorsService
+		private readonly organizationVendorService: OrganizationVendorService
 	) {
-		super(organizationVendorsService);
+		super(organizationVendorService);
 	}
 
+	/**
+	 * GET all organization vendors recurring expense
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all organization vendors recurring expense.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found vendors recurring expense',
+		description: 'Found organization vendors recurring expense',
 		type: OrganizationVendor
 	})
 	@ApiResponse({
@@ -41,17 +47,41 @@ export class OrganizationVendorsController extends CrudController<OrganizationVe
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllOrganizations(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<OrganizationVendor>> {
+	): Promise<IPagination<IOrganizationVendor>> {
 		const { relations, findInput, order } = data;
-		return this.organizationVendorsService.findAll({
+		return this.organizationVendorService.findAll({
 			where: findInput,
 			order,
 			relations
 		});
 	}
 
+	/**
+	 * UPDATE organization vendor by id
+	 * 
+	 * @param id 
+	 * @param body 
+	 * @returns 
+	 */
+	 @Put(':id')
+	 async update(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body: OrganizationVendor
+	 ): Promise<IOrganizationVendor> {
+		 return this.organizationVendorService.create({
+			 id,
+			 ...body
+		 });
+	 }
+
+	/**
+	 * DELETE organization vendor by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
@@ -69,20 +99,8 @@ export class OrganizationVendorsController extends CrudController<OrganizationVe
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string, 
-		...options: any[]
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<any> {
-		return this.organizationVendorsService.deleteVendor(id);
-	}
-	@Put(':id')
-	async updateOrganizationTeam(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: OrganizationVendor,
-		...options: any[]
-	): Promise<OrganizationVendor> {
-		return this.organizationVendorsService.create({
-			id,
-			...entity
-		});
+		return this.organizationVendorService.deleteVendor(id);
 	}
 }

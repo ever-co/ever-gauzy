@@ -56,7 +56,7 @@ import { EmployeeCreateCommand } from '../employee/commands';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { UserService } from '../user/user.service';
 import { OrganizationService } from '../organization/organization.service';
-import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
+import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { ExpenseService } from '../expense/expense.service';
@@ -92,7 +92,7 @@ export class UpworkService {
 		private _userService: UserService,
 		private _roleService: RoleService,
 		private _organizationService: OrganizationService,
-		private _orgVendorService: OrganizationVendorsService,
+		private _orgVendorService: OrganizationVendorService,
 		private _orgClientService: OrganizationContactService,
 		private _timeSlotService: TimeSlotService,
 		private readonly _upworkReportService: UpworkReportService,

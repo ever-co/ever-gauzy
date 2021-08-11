@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
+import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import { UserService } from '../user/user.service';
@@ -19,7 +19,20 @@ import {
 	UpworkOffersService
 } from '@gauzy/integration-upwork';
 import { RouterModule } from 'nest-router';
-import { Activity, Employee, ExpenseCategory, IntegrationMap, Organization, OrganizationContact, OrganizationVendor, Role, TimeLog, TimeSlot, TimeSlotMinute, User } from './../core/entities/internal';
+import {
+	Activity,
+	Employee,
+	ExpenseCategory,
+	IntegrationMap,
+	Organization,
+	OrganizationContact,
+	OrganizationVendor,
+	Role,
+	TimeLog,
+	TimeSlot,
+	TimeSlotMinute,
+	User
+} from './../core/entities/internal';
 
 @Module({
 	imports: [
@@ -51,7 +64,7 @@ import { Activity, Employee, ExpenseCategory, IntegrationMap, Organization, Orga
 		UpworkService,
 		UserService,
 		EmployeeService,
-		OrganizationVendorsService,
+		OrganizationVendorService,
 		OrganizationContactService,
 		ExpenseCategoriesService,
 		IntegrationMapService,

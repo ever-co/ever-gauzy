@@ -1,21 +1,21 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OrganizationVendor } from './organization-vendors.entity';
+import { OrganizationVendor } from './organization-vendor.entity';
 import { Expense } from '../expense/expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 
 @Injectable()
-export class OrganizationVendorsService extends TenantAwareCrudService<OrganizationVendor> {
+export class OrganizationVendorService extends TenantAwareCrudService<OrganizationVendor> {
 	constructor(
 		@InjectRepository(OrganizationVendor)
-		private readonly organizationVendorsRepository: Repository<OrganizationVendor>
+		private readonly organizationVendorRepository: Repository<OrganizationVendor>
 	) {
-		super(organizationVendorsRepository);
+		super(organizationVendorRepository);
 	}
 
 	async deleteVendor(vendorId) {
-		const vendor = await this.organizationVendorsRepository
+		const vendor = await this.organizationVendorRepository
 			.createQueryBuilder('vendor')
 			.leftJoin(Expense, 'expense', 'vendor.id = expense."vendorId"')
 			.where('expense."vendorId" = :vendorId', { vendorId: vendorId })
