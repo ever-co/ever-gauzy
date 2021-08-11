@@ -22,31 +22,23 @@ When('User click on settings button', () => {
 	settingsButton.clickSettingsButton();
 });
 
-Then('User can click on second dropdown', () => {
-	settingsButton.clickThemesDropdown(1);
-});
-
-And('User can change language from dropdown options', () => {
-	settingsButton.clickDropdownOption(SettingsButtonData.languageEnglish);
-});
-
-When('User click on first dropdown', () => {
+Then('User can click on first dropdown', () => {
 	settingsButton.clickThemesDropdown(0);
 });
 
-Then('User can verify Light theme', () => {
+And('User can verify Light theme', () => {
 	settingsButton.verifyTextExist(SettingsButtonData.themeButtonLight);
 });
 
-Then('User can verify Dark theme', () => {
+And('User can verify Dark theme', () => {
 	settingsButton.verifyTextExist(SettingsButtonData.themeButtonDark);
 });
 
-Then('User can verify Cosmic theme', () => {
+And('User can verify Cosmic theme', () => {
 	settingsButton.verifyTextExist(SettingsButtonData.themeButtonCosmic);
 });
 
-Then('User can verify Corporate theme', () => {
+And('User can verify Corporate theme', () => {
 	settingsButton.verifyTextExist(SettingsButtonData.themeButtonCorporate);
 	settingsButton.clickKeyboardButtonByKeyCode(9);
 });
