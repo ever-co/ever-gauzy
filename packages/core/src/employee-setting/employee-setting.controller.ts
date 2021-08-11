@@ -1,6 +1,6 @@
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IPagination } from '@gauzy/contracts';
+import { IEmployeeSetting, IPagination } from '@gauzy/contracts';
 import { EmployeeSettingService } from './employee-setting.service';
 import { EmployeeSetting } from './employee-setting.entity';
 import { CrudController } from './../core/crud';
@@ -17,6 +17,12 @@ export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 		super(employeeSettingService);
 	}
 
+	/**
+	 * GET all employee settings
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all employee settings.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -30,7 +36,7 @@ export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<EmployeeSetting>> {
+	): Promise<IPagination<IEmployeeSetting>> {
 		const { relations, findInput } = data;
 		return this.employeeSettingService.findAll({
 			where: findInput,

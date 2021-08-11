@@ -54,7 +54,7 @@ export class EmployeeAppointmentService {
 	create(employeeAppointment: IEmployeeAppointmentCreateInput): Promise<any> {
 		return this.http
 			.post<IEmployeeAppointmentCreateInput>(
-				`${this.EMPLOYEE_APPOINTMENT_URL}/create`,
+				`${this.EMPLOYEE_APPOINTMENT_URL}`,
 				employeeAppointment
 			)
 			.pipe(first())
