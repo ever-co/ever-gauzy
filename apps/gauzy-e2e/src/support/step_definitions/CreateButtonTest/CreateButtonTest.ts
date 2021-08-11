@@ -304,6 +304,9 @@ And('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	createButton.clickCreatebutton();
 });
 
