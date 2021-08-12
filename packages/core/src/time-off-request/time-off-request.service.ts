@@ -13,7 +13,8 @@ import {
 	RequestApprovalStatusTypesEnum,
 	StatusTypesEnum,
 	StatusTypesMapRequestApprovalEnum,
-	ApprovalPolicyTypesStringEnum
+	ApprovalPolicyTypesStringEnum,
+	IPagination
 } from '@gauzy/contracts';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestContext } from '../core/context';
@@ -61,7 +62,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		}
 	}
 
-	async getAllTimeOffRequests(relations, findInput?, filterDate?) {
+	async getAllTimeOffRequests(
+		relations, 
+		findInput?, 
+		filterDate?
+	): Promise<IPagination<TimeOffRequest>> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const query = this.timeOffRequestRepository.createQueryBuilder(
@@ -72,12 +77,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				.leftJoinAndSelect(`${query.alias}.policy`, `policy`)
 				.leftJoinAndSelect(`employees.user`, `user`);
 			query.where((qb) => {
-				qb.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{
-						organizationId: findInput.organizationId
-					}
-				);
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId: findInput.organizationId
+				});
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});

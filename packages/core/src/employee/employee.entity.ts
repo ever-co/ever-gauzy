@@ -16,7 +16,9 @@ import {
 	IPayment,
 	IOrganizationProject,
 	IOrganizationContact,
-	IEmployeeSetting
+	IEmployeeSetting,
+	ITimeOffPolicy,
+	ITimeOff as ITimeOffRequest
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -56,6 +58,8 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity,
 	TimeLog,
+	TimeOffPolicy,
+	TimeOffRequest,
 	User
 } from '../core/entities/internal';
 
@@ -420,4 +424,29 @@ export class Employee
 		name: 'organization_contact_employee'
 	})
     organizationContacts?: IOrganizationContact[];
+
+
+	/**
+	 * TimeOffPolicy
+	 */
+	@ManyToMany(() => TimeOffPolicy, (timeOffPolicy) => timeOffPolicy.employees, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'time_off_policy_employee'
+	})
+	timeOffPolicies?: ITimeOffPolicy[];
+
+	/**
+	 * TimeOffRequest
+	 */
+	@ManyToMany(() => TimeOffRequest, (timeOffRequest) => timeOffRequest.employees, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'time_off_request_employee'
+	})
+	timeOffRequests?: ITimeOffRequest[];
 }
