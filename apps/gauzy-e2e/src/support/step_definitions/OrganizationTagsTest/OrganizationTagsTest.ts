@@ -131,6 +131,27 @@ Then('Notification message will appear', () => {
 	organizationTagsUserPage.waitMessageToHide();
 });
 
+// Filter tag
+And('User can see filter name input', () => {
+	organizationTagsUserPage.nameInputVisible();
+});
+
+When('User enter filter input field value', () => {
+	organizationTagsUserPage.enterFilterInputData(
+		OrganizationTagsPageData.editTagName
+	);
+});
+
+Then('User can see filtered tag', () => {
+	organizationTagsUserPage.filteredTagVisible(
+		OrganizationTagsPageData.editTagName
+	);
+});
+
+And('User clear input field value', () => {
+	organizationTagsUserPage.clearFilterInputField();
+});
+
 // Delete tag
 And('User can see tags table again', () => {
 	organizationTagsUserPage.tagsTableDataVisible();
