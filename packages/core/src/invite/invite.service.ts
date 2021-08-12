@@ -12,6 +12,7 @@ import {
 	LanguagesEnum,
 	DEFAULT_INVITE_EXPIRY_PERIOD,
 	IOrganization,
+	IEmployee,
 } from '@gauzy/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -28,10 +29,8 @@ import {
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationProject,
-	Role
+	Role,
 } from './../core/entities/internal';
-import { Employee } from '../employee/employee.entity';
-
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
@@ -218,26 +217,20 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 	async sendAcceptInvitationEmail(
 		organization: IOrganization,
-		employee: Employee,
+		employee: IEmployee,
 		languageCode: LanguagesEnum
-	): Promise<any> {		
-		const { items: superAdminUsers } = await this.userService.findAll({
-			relations: ['role'],
-			where: {
-				tenant: { id: organization.tenantId }
-			}
-		});
+	): Promise<any> 
+	{	
+		const superAdminUsers: IUser[] = await this.userService.getAdminUsers(organization.tenantId);
 
 		try {
 			for await (const superAdmin of superAdminUsers) {
-				if(superAdmin.role.name == RolesEnum.SUPER_ADMIN || superAdmin.role.name == RolesEnum.ADMIN) {
 					this.emailService.sendAcceptInvitationEmail({
 						email: superAdmin.email,
 						employee,
 						organization,
 						languageCode,
 					});
-				}
 			}
 		} catch (e) {
 			console.log('caught', e)

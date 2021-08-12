@@ -86,24 +86,11 @@ export class InviteAcceptEmployeeHandler
 
 		this.updateEmployeeMemberships(invite, employee);
 
-		this.sendEmployeeJoinEmail(organization, employee, languageCode);
+		this.inviteService.sendAcceptInvitationEmail(organization, employee, languageCode);
 
 		return await this.inviteService.update(input.inviteId, {
 			status: InviteStatusEnum.ACCEPTED
 		});
-	}
-
-	/**
-	 * This function is used to sending an  employee join email to a super admin and admin user that
-	 * exists for the same tenant.
-	 *
-	 * @param organization organization details
-	 * @param employee employee details
-	 * @param languageCode languageCode for choose particular language email template
-	 */
-	sendEmployeeJoinEmail = (organization: IOrganization, employee: Employee, languageCode: LanguagesEnum) => {
-		
-		this.inviteService.sendAcceptInvitationEmail(organization, employee, languageCode);
 	}
 
 	updateEmployeeMemberships = (invite: IInvite, employee: Employee) => {

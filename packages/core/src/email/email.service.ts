@@ -322,7 +322,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel) {
+	sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
 		const { 
 			email,
 			employee,
@@ -336,6 +336,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 				to: `${email}`
 			},
 			locals: {
+				host: originUrl || env.clientBaseUrl,
 				locale: languageCode,
 				organizationName: organization.name,
 				employeeName: employee.user.firstName,
