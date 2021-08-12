@@ -3,7 +3,6 @@ import {
 	Column,
 	JoinColumn,
 	ManyToMany,
-	JoinTable,
 	ManyToOne,
 	RelationId,
 	Index
