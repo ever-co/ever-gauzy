@@ -12,6 +12,7 @@ import { ITag } from './tag-entity.model';
 import { IUser, IUserFindInput } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
+import { IEmployeeSetting } from './employee-settings.model';
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
@@ -41,6 +42,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	anonymousBonus?: boolean;
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 	requestApprovalEmployee?: IRequestApprovalEmployee[];
+	settings?: IEmployeeSetting[];
 	contact: IContact;
 	averageIncome?: number;
 	totalWorkHours?: number;

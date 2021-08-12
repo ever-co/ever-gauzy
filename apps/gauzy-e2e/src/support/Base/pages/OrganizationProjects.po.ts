@@ -7,7 +7,8 @@ import {
 	clickKeyboardBtnByKeycode,
 	verifyText,
 	verifyTextNotExisting,
-	waitElementToHide
+	waitElementToHide,
+	clickElementByText
 } from '../utils/util';
 import { OrganizationProjectsPage } from '../pageobjects/OrganizationProjectsPageObject';
 
@@ -50,6 +51,13 @@ export const selectEmployeeDropdownOption = (index) => {
 	clickButtonByIndex(
 		OrganizationProjectsPage.selectEmployeeDropdownOptionCss,
 		index
+	);
+};
+
+export const selectEmployeeFromDropdownByName = (name) => {
+	clickElementByText(
+		OrganizationProjectsPage.selectEmployeeDropdownOptionCss,
+		name
 	);
 };
 

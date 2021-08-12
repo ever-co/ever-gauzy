@@ -47,10 +47,134 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		super(organizationRecurringExpenseService);
 	}
 
-	@ApiOperation({ summary: 'Create new expense' })
+	/**
+	 * GET organization recurring expense by month
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	 @ApiOperation({
+		summary: 'Find all organization recurring expense by month.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization recurring expense',
+		type: OrganizationRecurringExpense
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/month')
+	async findAllExpenses(
+		@Query('data', ParseJsonPipe) data: any,
+	): Promise<IPagination<OrganizationRecurringExpense>> {
+		const { findInput } = data;
+		return this.queryBus.execute(
+			new OrganizationRecurringExpenseByMonthQuery(findInput)
+		);
+	}
+
+	/**
+	 * GET date update type & conflicting expenses
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary:
+			'Find start date update type & conflicting expenses for the update'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found start date update type'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/date-update-type')
+	async findStartDateUpdateType(
+		@Query('data', ParseJsonPipe) data: any,
+	): Promise<IStartUpdateTypeInfo> {
+		const { findInput } = data;
+		return this.queryBus.execute(
+			new OrganizationRecurringExpenseStartDateUpdateTypeQuery(findInput)
+		);
+	}
+
+	/**
+	 * GET organization recurring expenses/split expense for employee 
+	 * 
+	 * @param data 
+	 * @param orgId 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary:
+			'Find all organization recurring expenses for given employee, also known as split recurring expenses.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization recurring expense'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/employee/:organizationId')
+	async getSplitExpensesForEmployee(
+		@Query('data', ParseJsonPipe) data: any,
+		@Param('organizationId', UUIDValidationPipe) organizationId: string
+	): Promise<IPagination<IOrganizationRecurringExpenseForEmployeeOutput>> {
+		const { findInput } = data;
+		return this.queryBus.execute(
+			new OrganizationRecurringExpenseFindSplitExpenseQuery(
+				organizationId,
+				findInput
+			)
+		);
+	}
+
+	/**
+	 * GET all organization recurring expenses
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Find all organization recurring expenses.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization recurring expense',
+		type: OrganizationRecurringExpense
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any,
+	): Promise<IPagination<OrganizationRecurringExpense>> {
+		const { findInput, order = {} } = data;
+		return this.organizationRecurringExpenseService.findAll({
+			where: findInput,
+			order: order
+		});
+	}
+
+	/**
+	 * CREATE organization recurring expense
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Create new organization recurring expense' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The expense has been successfully created.'
+		description: 'The organization recurring expense has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -67,76 +191,13 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		);
 	}
 
-	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'The record has been successfully deleted'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data: any,
-	): Promise<any> {
-		const { deleteInput } = data;
-		return this.commandBus.execute(
-			new OrganizationRecurringExpenseDeleteCommand(id, deleteInput)
-		);
-	}
-
-	@ApiOperation({
-		summary: 'Find all organization recurring expenses.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found organization recurring expense',
-		type: OrganizationRecurringExpense
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findAllRecurringExpenses(
-		@Query('data', ParseJsonPipe) data: any,
-	): Promise<IPagination<OrganizationRecurringExpense>> {
-		const { findInput, order = {} } = data;
-		return this.organizationRecurringExpenseService.findAll({
-			where: findInput,
-			order: order
-		});
-	}
-
-	@ApiOperation({
-		summary:
-			'Find all organization recurring expenses for given employee, also known as split recurring expenses.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found organization recurring expense'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('/employee/:orgId')
-	async getSplitExpensesForEmployee(
-		@Query('data', ParseJsonPipe) data: any,
-		@Param('orgId', UUIDValidationPipe) orgId: string
-	): Promise<IPagination<IOrganizationRecurringExpenseForEmployeeOutput>> {
-		const { findInput } = data;
-		return this.queryBus.execute(
-			new OrganizationRecurringExpenseFindSplitExpenseQuery(
-				orgId,
-				findInput
-			)
-		);
-	}
-
+	/**
+	 * UPDATE organization recurring expense by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -162,47 +223,31 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		);
 	}
 
-	@ApiOperation({
-		summary: 'Find all organization recurring expense by month.'
-	})
+	/**
+	 * DELETE organization recurring expense by id
+	 * 
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found organization recurring expense',
-		type: OrganizationRecurringExpense
+		description: 'The record has been successfully deleted'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('/month')
-	async findAllExpenses(
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any,
-	): Promise<IPagination<OrganizationRecurringExpense>> {
-		const { findInput } = data;
-		return this.queryBus.execute(
-			new OrganizationRecurringExpenseByMonthQuery(findInput)
-		);
-	}
-
-	@ApiOperation({
-		summary:
-			'Find start date update type & conflicting expenses for the update'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found start date update type'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('/date-update-type')
-	async findStartDateUpdateType(
-		@Query('data', ParseJsonPipe) data: any,
-	): Promise<IStartUpdateTypeInfo> {
-		const { findInput } = data;
-		return this.queryBus.execute(
-			new OrganizationRecurringExpenseStartDateUpdateTypeQuery(findInput)
+	): Promise<any> {
+		const { deleteInput } = data;
+		return this.commandBus.execute(
+			new OrganizationRecurringExpenseDeleteCommand(id, deleteInput)
 		);
 	}
 }

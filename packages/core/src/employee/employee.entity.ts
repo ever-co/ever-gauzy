@@ -15,7 +15,8 @@ import {
 	IRequestApprovalEmployee,
 	IPayment,
 	IOrganizationProject,
-	IOrganizationContact
+	IOrganizationContact,
+	IEmployeeSetting
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -40,6 +41,7 @@ import {
 } from 'typeorm';
 import {
 	Contact,
+	EmployeeSetting,
 	InvoiceItem,
 	JobPreset,
 	OrganizationContact,
@@ -356,6 +358,10 @@ export class Employee
 	@ApiPropertyOptional({ type: () => RequestApprovalEmployee, isArray: true })
 	@OneToMany(() => RequestApprovalEmployee, (it) => it.employee)
 	requestApprovals?: IRequestApprovalEmployee[];
+
+	@ApiPropertyOptional({ type: () => EmployeeSetting, isArray: true })
+	@OneToMany(() => EmployeeSetting, (it) => it.employee)
+	settings?: IEmployeeSetting[];
 
 	/*
     |--------------------------------------------------------------------------

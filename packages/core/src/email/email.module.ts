@@ -18,6 +18,6 @@ import { TenantModule } from '../tenant/tenant.module';
 	],
 	controllers: [EmailController],
 	providers: [EmailService],
-	exports: [TypeOrmModule]
+	exports: [EmailService, TypeOrmModule]
 })
 export class EmailModule {}

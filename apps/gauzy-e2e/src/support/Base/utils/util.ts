@@ -30,6 +30,15 @@ export const verifyTextNotExisting = (loc, text) => {
 	);
 };
 
+export const verifyTextNotExistByIndex = (loc, index, data) => {
+	cy.get(loc)
+		.eq(index)
+		.invoke('text')
+		.then((text) => {
+			expect(text).not.to.equal(data);
+		});
+};
+
 export const verifyTextByIndex = (loc, data, index) => {
 	cy.get(loc)
 		.eq(index)
@@ -137,12 +146,20 @@ export const scrollDown = (loc) => {
 	});
 };
 
+export const scrollToViewEl = (loc: any) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).scrollIntoView();
+};
+
 export const verifyElementIsNotVisible = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.be.visible');
 };
 
 export const verifyElementNotExist = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.exist');
+};
+
+export const verifyTableRowByText = (loc, text) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).contains(text);
 };
 
 export const clickTableRowByText = (loc, text) => {
