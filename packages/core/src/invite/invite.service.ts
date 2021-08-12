@@ -10,7 +10,9 @@ import {
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
 	LanguagesEnum,
-	DEFAULT_INVITE_EXPIRY_PERIOD
+	DEFAULT_INVITE_EXPIRY_PERIOD,
+	IOrganization,
+	IInvite
 } from '@gauzy/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -29,7 +31,8 @@ import {
 	OrganizationProject,
 	Role
 } from './../core/entities/internal';
-
+import { Employee } from '../employee/employee.entity';
+import { RoleService } from 'role/role.service';
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
@@ -52,7 +55,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		private readonly roleRepository: Repository<Role>,
 
 		private readonly emailService: EmailService,
-		private readonly userService: UserService
+		private readonly userService: UserService,
+		private readonly roleService: RoleService,
 	) {
 		super(inviteRepository);
 	}
@@ -212,6 +216,35 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		});
 
 		return { items, total: items.length, ignored: existingInvites.length };
+	}
+
+	async employeeJoinEmail(
+		organization: IOrganization,
+		employee: Employee,
+		languageCode
+	): Promise<any> {
+
+		const { id: roleId } = await this.roleService.findOne({
+			where: {
+				name: RolesEnum.SUPER_ADMIN,
+				tenantId: organization.tenantId
+			}
+		});
+
+		const { items: superAdminUsers } = await this.userService.findAll({
+			relations: ['role'],
+			where: {
+				tenant: { id: organization.tenantId },
+				role: { id: roleId }
+			}
+		});
+		
+		this.emailService.acceptInviteEmployee({
+			email: superAdminUsers[0].email,
+			employee,
+			organization,
+			languageCode,
+		});
 	}
 
 	async createOrganizationContactInvite(
