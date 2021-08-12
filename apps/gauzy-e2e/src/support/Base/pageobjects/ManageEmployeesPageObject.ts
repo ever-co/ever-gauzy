@@ -32,8 +32,10 @@ export const ManageEmployeesPage = {
 	emailEditInputCss: '#emailInput',
 	firstNameEditInputCss: '#firstNameInput',
 	lastNameEditInputCss: '#lastNameInput',
-	preferedLanguageDropdownCss: 'div.col-sm-6 > div.form-group > ngx-language-selector > ng-select',
-	preferedLanguageOptionCss: 'ng-dropdown-panel > div[class="ng-dropdown-panel-items scroll-host"] > div > div[class="ng-option ng-star-inserted"] > span[class="ng-option-label ng-star-inserted"]',
+	preferedLanguageDropdownCss:
+		'div.col-sm-6 > div.form-group > ngx-language-selector > ng-select',
+	preferedLanguageOptionCss:
+		'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	cardBodyCss: 'div.text-right',
 	manageInvitesButonCss:
 		'div.card-header-title > div.mr-2 > button[status="primary"]',
