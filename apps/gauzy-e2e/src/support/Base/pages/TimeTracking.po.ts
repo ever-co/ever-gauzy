@@ -1,4 +1,4 @@
-import { verifyElementIsVisible, verifyText } from '../utils/util';
+import { verifyText } from '../utils/util';
 import { TimeTrackingPage } from '../pageobjects/TimeTrackingPageObject';
 
 export const headerTextExist = (text) => {

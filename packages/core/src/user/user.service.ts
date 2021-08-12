@@ -4,7 +4,7 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult, In, SelectQueryBuilder } from 'typeorm';
+import { Repository, InsertResult, SelectQueryBuilder } from 'typeorm';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RolesEnum } from '@gauzy/contracts';
