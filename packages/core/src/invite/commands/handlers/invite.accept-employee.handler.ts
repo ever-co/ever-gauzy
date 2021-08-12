@@ -86,6 +86,8 @@ export class InviteAcceptEmployeeHandler
 
 		this.updateEmployeeMemberships(invite, employee);
 
+		this.inviteService.sendAcceptInvitationEmail(organization, employee, languageCode);
+
 		return await this.inviteService.update(input.inviteId, {
 			status: InviteStatusEnum.ACCEPTED
 		});

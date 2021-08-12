@@ -5,6 +5,7 @@ import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationDepartment } from './organization-department.model';
+import { IEmployee } from './employee.model';
 
 export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	token: string;
@@ -118,4 +119,11 @@ export interface IInviteEmployeeModel
 	organizationContacts?: IOrganizationContact[];
 	departments?: IOrganizationDepartment[];
 	originUrl?: string;
+}
+
+export interface IJoinEmployeeModel extends IBasePerTenantAndOrganizationEntityModel {
+    email: string;
+    employee: IEmployee;
+    organization: IOrganization;
+    languageCode: LanguagesEnum;
 }

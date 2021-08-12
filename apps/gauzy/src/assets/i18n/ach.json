@@ -3294,6 +3294,7 @@
 			"task-update": "crwdns7954:0crwdne7954:0",
 			"candidate-schedule-interview": "crwdns7828:0crwdne7828:0",
 			"interviewer-interview-schedule": "crwdns7830:0crwdne7830:0",
+			"employee-join": "Employee Join",
 			"TEMPLATE_NAMES": "crwdns9828:0crwdne9828:0"
 		},
 		"LANGUAGE_CODES": {
