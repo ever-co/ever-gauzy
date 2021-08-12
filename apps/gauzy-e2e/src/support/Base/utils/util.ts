@@ -37,7 +37,7 @@ export const verifyTextNotExistByIndex = (loc, index, data) => {
 		.then((text) => {
 			expect(text).not.to.equal(data);
 		});
-}
+};
 
 export const verifyTextByIndex = (loc, data, index) => {
 	cy.get(loc)
@@ -156,6 +156,10 @@ export const verifyElementIsNotVisible = (loc) => {
 
 export const verifyElementNotExist = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.exist');
+};
+
+export const verifyTableRowByText = (loc, text) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).contains(text);
 };
 
 export const clickTableRowByText = (loc, text) => {

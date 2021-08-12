@@ -1,3 +1,4 @@
+import { waitUntil } from './../utils/util';
 import {
 	verifyElementIsVisible,
 	clickButton,
@@ -6,7 +7,8 @@ import {
 	enterInput,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	verifyTableRowByText
 } from '../utils/util';
 import { OrganizationTagsPage } from '../pageobjects/OrganizationTagsPageObject';
 
@@ -135,4 +137,22 @@ export const verifyTagExists = (text) => {
 
 export const verifyTagIsDeleted = (text) => {
 	verifyTextNotExisting(OrganizationTagsPage.verifyTagCss, text);
+};
+
+export const nameInputVisible = () => {
+	verifyElementIsVisible(OrganizationTagsPage.filterNameInputCss);
+};
+
+export const enterFilterInputData = (text) => {
+	enterInput(OrganizationTagsPage.filterNameInputCss, text);
+	waitUntil(2000);
+};
+
+export const filteredTagVisible = (text) => {
+	verifyTableRowByText(OrganizationTagsPage.firstTableCellTagCss, text);
+};
+
+export const clearFilterInputField = () => {
+	clearField(OrganizationTagsPage.filterNameInputCss);
+	waitUntil(1000);
 };
