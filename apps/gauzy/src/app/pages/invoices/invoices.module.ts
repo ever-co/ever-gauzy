@@ -169,6 +169,6 @@ import { ContactSelectModule } from '../../@shared/contact-select/contact-select
 		InvoicePaymentReceiptMutationComponent,
 		InvoiceEstimateTotalValueComponent
 	],
-	exports: []
+	exports: [InvoiceViewInnerComponent]
 })
 export class InvoicesModule {}
