@@ -1,4 +1,4 @@
-import { IInvite, InviteStatusEnum, IOrganization } from '@gauzy/contracts';
+import { IInvite, InviteStatusEnum, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
@@ -86,16 +86,24 @@ export class InviteAcceptEmployeeHandler
 
 		this.updateEmployeeMemberships(invite, employee);
 
-		this.employeeJoinEmail(organization, employee, languageCode);
+		this.sendEmployeeJoinEmail(organization, employee, languageCode);
 
 		return await this.inviteService.update(input.inviteId, {
 			status: InviteStatusEnum.ACCEPTED
 		});
 	}
 
-	employeeJoinEmail = (organization: IOrganization, employee: Employee, languageCode) => {
+	/**
+	 * This function is used to sending an  employee join email to a super admin and admin user that
+	 * exists for the same tenant.
+	 *
+	 * @param organization organization details
+	 * @param employee employee details
+	 * @param languageCode languageCode for choose particular language email template
+	 */
+	sendEmployeeJoinEmail = (organization: IOrganization, employee: Employee, languageCode: LanguagesEnum) => {
 		
-		this.inviteService.employeeJoinEmail(organization, employee, languageCode);
+		this.inviteService.sendAcceptInvitationEmail(organization, employee, languageCode);
 	}
 
 	updateEmployeeMemberships = (invite: IInvite, employee: Employee) => {

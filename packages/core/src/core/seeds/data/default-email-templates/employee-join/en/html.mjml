@@ -11,14 +11,14 @@
 					border-width="1px"
 				></mj-divider>
 				<mj-text font-size="20px" font-family="helvetica"
-					>Let's warm welcome to new member</mj-text
+					>{{employeeName}} just joined your team</mj-text
 				>
 				<mj-text font-size="16px" font-family="helvetica">
-					<p>Dear {{email}},</p>
 					<p>
-						Thank you for your registration in Gauzy™ - Fair Profits
-						Sharing Open-Source Platform
+						Congratulations for adding another employee to your {{organizationName}}
 					</p>
+				</mj-text>
+				<mj-text font-size="16px" font-family="helvetica">
 					<p>We are happy to have you on board!</p>
 					<p>Best regards,</p>
 					<p>Gauzy Team</p>

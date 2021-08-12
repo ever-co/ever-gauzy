@@ -5,7 +5,7 @@ import {
 	IOrganization,
 	IOrganizationContact,
 	LanguagesEnum,
-	IAcceptInviteEmployee
+	IJoinEmployeeModel
 } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -322,13 +322,13 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	acceptInviteEmployee(inviteEmployeeModel: IAcceptInviteEmployee) {
+	sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel) {
 		const { 
 			email,
 			employee,
 			organization,
 			languageCode,
-		} = inviteEmployeeModel;
+		} = joinEmployeeModel;
 
 		const sendOptions = {
 			template: 'employee-join',
@@ -351,7 +351,6 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 					languageCode,
 					message: res.originalMessage,
 					organization,
-					user: employee
 				});
 			})
 			.catch(console.error);
