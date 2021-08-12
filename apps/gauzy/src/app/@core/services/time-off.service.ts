@@ -7,7 +7,8 @@ import {
 	ITimeOffPolicyUpdateInput,
 	ITimeOffCreateInput,
 	ITimeOff,
-	ITimeOffFindInput
+	ITimeOffFindInput,
+	IPagination
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
@@ -20,7 +21,7 @@ export class TimeOffService {
 		createInput: ITimeOffPolicyCreateInput
 	): Observable<ITimeOffPolicy> {
 		return this.http.post<ITimeOffPolicy>(
-			`${API_PREFIX}/time-off-policy/create`,
+			`${API_PREFIX}/time-off-policy`,
 			createInput
 		);
 	}
@@ -28,10 +29,9 @@ export class TimeOffService {
 	getAllPolicies(
 		relations?: string[],
 		findInput?: ITimeOffPolicyFindInput
-	): Observable<{ items: ITimeOffPolicy[]; total: number }> {
+	): Observable<IPagination<ITimeOffPolicy>> {
 		const data = JSON.stringify({ relations, findInput });
-
-		return this.http.get<{ items: ITimeOffPolicy[]; total: number }>(
+		return this.http.get<IPagination<ITimeOffPolicy>>(
 			`${API_PREFIX}/time-off-policy`,
 			{ params: { data } }
 		);
@@ -41,22 +41,22 @@ export class TimeOffService {
 		id: string,
 		updateInput: ITimeOffPolicyUpdateInput
 	): Observable<ITimeOffPolicy> {
-		return this.http.put(
+		return this.http.put<ITimeOffPolicy>(
 			`${API_PREFIX}/time-off-policy/${id}`,
 			updateInput
 		);
 	}
 
-	deletePolicy(id: string): Observable<ITimeOffPolicy> {
+	deletePolicy(id: string): Observable<any> {
 		return this.http.delete(`${API_PREFIX}/time-off-policy/${id}`);
 	}
 
 	createRequest(timeOffRequest: ITimeOffCreateInput): Observable<ITimeOff> {
-		return this.http.post(`${API_PREFIX}/time-off-request`, timeOffRequest);
+		return this.http.post<ITimeOff>(`${API_PREFIX}/time-off-request`, timeOffRequest);
 	}
 
 	updateRequest(id: string, timeOffRequest: ITimeOff): Observable<ITimeOff> {
-		return this.http.put(
+		return this.http.put<ITimeOff>(
 			`${API_PREFIX}/time-off-request/${id}`,
 			timeOffRequest
 		);
@@ -66,23 +66,25 @@ export class TimeOffService {
 		relations?: string[],
 		findInput?: ITimeOffFindInput,
 		filterDate?: Date
-	): Observable<{ items: ITimeOff[]; total: number }> {
+	): Observable<IPagination<ITimeOff>> {
 		const data = JSON.stringify({ relations, findInput, filterDate });
-
-		return this.http.get<{ items: ITimeOff[]; total: number }>(
+		return this.http.get<IPagination<ITimeOff>>(
 			`${API_PREFIX}/time-off-request`,
 			{ params: { data } }
 		);
 	}
 
-	updateRequestStatus(id: string, action: string): Observable<ITimeOff> {
-		return this.http.put(
+	updateRequestStatus(
+		id: string, 
+		action: string
+	): Observable<ITimeOff> {
+		return this.http.put<ITimeOff>(
 			`${API_PREFIX}/time-off-request/${action}/${id}`,
 			{}
 		);
 	}
 
-	deleteDaysOffRequest(id: string): Observable<ITimeOff> {
+	deleteDaysOffRequest(id: string): Observable<any> {
 		return this.http.delete(`${API_PREFIX}/time-off-request/${id}`);
 	}
 }
