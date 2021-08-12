@@ -26,7 +26,7 @@ export class RoleController extends CrudController<Role> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
+	@Get('find')
 	async findRole(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<Role> {

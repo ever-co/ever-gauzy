@@ -1,4 +1,4 @@
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -8,7 +8,7 @@ import {
 	Max,
 	IsEnum
 } from 'class-validator';
-import { IEmployeeSetting, CurrenciesEnum } from '@gauzy/contracts';
+import { IEmployeeSetting, CurrenciesEnum, IEmployee } from '@gauzy/contracts';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
@@ -18,12 +18,6 @@ import {
 export class EmployeeSetting
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeSetting {
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	employeeId: string;
 
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
 	@IsNumber()
@@ -60,6 +54,22 @@ export class EmployeeSetting
 	@Column()
 	currency: string;
 
-	@ManyToOne(() => Employee, (employee) => employee.id)
-	employee: Employee;
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, (employee) => employee.settings, {
+		onDelete: 'CASCADE'
+	})
+	employee: IEmployee;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: EmployeeSetting) => it.employee)
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	employeeId: string;
 }
