@@ -428,7 +428,7 @@ export const CustomCommands = {
 		inviteCandidatePage.allCurrentCandidatesButtonVisible();
 		inviteCandidatePage.clickAllCurrentCandidatesButton();
 		inviteCandidatePage.waitMessageToHide();
-		inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
+		// inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
 	},
 	clearCookies: () => {
 		// @ts-ignore

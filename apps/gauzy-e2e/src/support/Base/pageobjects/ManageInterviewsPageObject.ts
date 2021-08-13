@@ -18,5 +18,18 @@ export const ManageInterviewsPage = {
 	saveButtonCss: 'div.button-container > button[status="success"]',
 	verifyCandidateCss: 'div.d-block',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	scrollElementCss: 'div.step-content'
+	scrollElementCss: 'div.step-content',
+	nameFilterInputCss: 'input[placeholder="Candidate"]',
+	nameTableCellCss:
+		'tbody > tr.ng2-smart-row:first-of-type > td:nth-child(2)',
+	addFeedbackIconCss: 'tbody > tr > td:last-of-type nb-icon:first-of-type',
+	addInterviewerDropdownCss: '[ng-reflect-placeholder="Add Interviewer"]',
+	addInterviewerDropdownOptionCss:
+		'nb-option-list > ul.option-list > nb-option',
+	ratingInputCss:
+		'ga-star-rating-input > div.rating div.rating-star > span.rating-star-icon',
+	radioGroupCss: 'nb-radio-group > nb-radio',
+	radioGroupInputCss: 'nb-radio-group > nb-radio input.native-input',
+	feedbackDescriptionCss: '#description',
+	feedbackSaveButtonCss: 'nb-card button[status=success]'
 };

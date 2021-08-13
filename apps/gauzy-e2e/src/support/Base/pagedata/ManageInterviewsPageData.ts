@@ -1,5 +1,6 @@
 export const ManageInterviewsPageData = {
-	title: 'New Candidatess',
+	title: 'Interview #',
 	note: 'No previous experience',
-	location: 'Sofia, Simeonovsko shose 64'
+	location: 'Sofia, Simeonovsko shose 64',
+	feedbackDescription: 'Amazing candidate, perfect for the position!'
 };

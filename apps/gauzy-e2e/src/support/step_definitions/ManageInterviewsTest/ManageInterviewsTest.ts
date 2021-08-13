@@ -27,6 +27,9 @@ let empPassword = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let empImgUrl = faker.image.avatar();
 
+const randomInterviewTitleNumber =
+	ManageInterviewsPageData.title + Math.floor(Math.random() * 1000) + 1;
+
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -66,7 +69,9 @@ And('User can visit Candidates interviews calendar page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees/candidates/interviews/calendar', { timeout: pageLoadTimeout });
+	cy.visit('/#/pages/employees/candidates/interviews/calendar', {
+		timeout: pageLoadTimeout
+	});
 });
 
 And('User can see add interview button', () => {
@@ -87,7 +92,9 @@ When('User click on candidate dropdown', () => {
 
 Then('User can select candidate from dropdown options', () => {
 	manageInterviewsPage.candidateDropdownOptionVisible();
-	manageInterviewsPage.selectCandidateFromDropdown(`${firstName} ${lastName}`);
+	manageInterviewsPage.selectCandidateFromDropdown(
+		`${firstName} ${lastName}`
+	);
 });
 
 And('User can see title input field', () => {
@@ -95,7 +102,7 @@ And('User can see title input field', () => {
 });
 
 And('User can enter value for title', () => {
-	manageInterviewsPage.enterTitleInputData(ManageInterviewsPageData.title);
+	manageInterviewsPage.enterTitleInputData(randomInterviewTitleNumber);
 });
 
 And('User can see date input field', () => {
@@ -184,10 +191,86 @@ Then('Notification message will appear', () => {
 	manageInterviewsPage.waitMessageToHide();
 });
 
-And('User can verify interview was scheduled for candidate', () => {
+// Add interview feedback
+And('User navigates to Candidates interview panel', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/candidates/interviews/interview_panel');
-	manageInterviewsPage.verifySheduleExist(`${firstName} ${lastName}`);
+	// manageInterviewsPage.verifySheduleExist(`${firstName} ${lastName}`);
+});
+
+And('User can see filter name input field', () => {
+	manageInterviewsPage.nameFilterInputVisible();
+});
+
+When('User enter filter input value', () => {
+	manageInterviewsPage.enterFilterInputData(`${firstName} ${lastName}`);
+});
+
+Then('User can see filtered candidate', () => {
+	manageInterviewsPage.filteredCandidateVisible(`${firstName} ${lastName}`);
+});
+
+And('User can see Add Feedback button', () => {
+	manageInterviewsPage.verifyAddFeedbackButtonVisisible();
+});
+
+When('User clicks on Add Feedback button', () => {
+	manageInterviewsPage.clickAddFeedbackButton();
+});
+
+Then('User can see Add Interview dropdown', () => {
+	manageInterviewsPage.interviewDropdownVisible();
+});
+
+When('User clicks on Add Interviewer dropdown', () => {
+	manageInterviewsPage.clickInterviewerDropdown();
+});
+
+Then('User can select Interviewer from dropdown options', () => {
+	manageInterviewsPage.clickInterviewerFromDropdown(0);
+	manageInterviewsPage.clickKeyboardButtonByKeyCode(9);
+});
+
+And('User can see Rating input', () => {
+	manageInterviewsPage.verifyRating();
+});
+
+And('User clicks on Rating input', () => {
+	manageInterviewsPage.clickRating();
+});
+
+And('User can see Radio group', () => {
+	manageInterviewsPage.verifyHireRejectRadioGroup();
+});
+
+And('User clicks on a Radio option', () => {
+	manageInterviewsPage.clickRadioOption();
+});
+
+And('User can see Feedback description input field', () => {
+	manageInterviewsPage.verifyFeedbackDescription();
+});
+
+And('User enters value for Feedback description', () => {
+	manageInterviewsPage.enterFeedBackDescription(
+		ManageInterviewsPageData.feedbackDescription
+	);
+});
+
+And('User can see feedback save button', () => {
+	manageInterviewsPage.feedbackSaveButtonVisible();
+});
+
+When('User clicks on save button', () => {
+	manageInterviewsPage.clickFeedbackSaveButton();
+});
+
+Then('Notification message will appear', () => {
+	manageInterviewsPage.waitMessageToHide();
+});
+
+And('User clears filter input', () => {
+	manageInterviewsPage.clearFilterInputField();
 });

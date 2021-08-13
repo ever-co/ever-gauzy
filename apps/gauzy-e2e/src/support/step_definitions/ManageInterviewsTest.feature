@@ -34,4 +34,23 @@ Feature: Manage interviews test
     Then User can see save button
     When User click on save button
     Then Notification message will appear
-    And User can verify interview was scheduled for candidate
+  Scenario: Add interview feedback
+    And User navigates to Candidates interview panel
+    And User can see filter name input field
+    When User enter filter input value
+    Then User can see filtered candidate
+    And User can see Add Feedback button
+    When User clicks on Add Feedback button
+    Then User can see Add Interview dropdown
+    When User clicks on Add Interviewer dropdown
+    Then User can select Interviewer from dropdown options
+    And User can see Rating input
+    And User clicks on Rating input
+    And User can see Radio group
+    And User clicks on a Radio option
+    And User can see Feedback description input field
+    And User enters value for Feedback description
+    And User can see feedback save button
+    When User clicks on save button
+    Then Notification message will appear
+    And User clears filter input

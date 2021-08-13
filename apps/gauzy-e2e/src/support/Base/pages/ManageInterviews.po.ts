@@ -1,3 +1,4 @@
+import { verifyTableRowByText, waitUntil } from './../utils/util';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -148,4 +149,79 @@ export const clickSaveButton = () => {
 
 export const verifySheduleExist = (text) => {
 	verifyText(ManageInterviewsPage.verifyCandidateCss, text);
+};
+
+// Filter functions
+export const nameFilterInputVisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.nameFilterInputCss);
+};
+
+export const enterFilterInputData = (text) => {
+	enterInput(ManageInterviewsPage.nameFilterInputCss, text);
+	waitUntil(2000);
+};
+
+export const filteredCandidateVisible = (text) => {
+	verifyTableRowByText(ManageInterviewsPage.nameTableCellCss, text);
+};
+
+export const clearFilterInputField = () => {
+	clearField(ManageInterviewsPage.nameFilterInputCss);
+	waitUntil(1000);
+};
+// End of Filter functions
+
+export const verifyAddFeedbackButtonVisisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.addFeedbackIconCss);
+};
+
+export const clickAddFeedbackButton = () => {
+	clickButton(ManageInterviewsPage.addFeedbackIconCss);
+};
+
+export const interviewDropdownVisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.addInterviewerDropdownCss);
+};
+
+export const clickInterviewerDropdown = () => {
+	clickButton(ManageInterviewsPage.addInterviewerDropdownCss);
+};
+
+export const clickInterviewerFromDropdown = (index) => {
+	clickButtonByIndex(
+		ManageInterviewsPage.addInterviewerDropdownOptionCss,
+		index
+	);
+};
+
+export const verifyRating = () => {
+	verifyElementIsVisible(ManageInterviewsPage.ratingInputCss);
+};
+
+export const clickRating = () => {
+	clickButtonByIndex(ManageInterviewsPage.ratingInputCss, 4);
+};
+
+export const verifyHireRejectRadioGroup = () => {
+	verifyElementIsVisible(ManageInterviewsPage.radioGroupCss);
+};
+
+export const clickRadioOption = () => {
+	clickButtonByIndex(ManageInterviewsPage.radioGroupInputCss, 0);
+};
+
+export const verifyFeedbackDescription = () => {
+	verifyElementIsVisible(ManageInterviewsPage.feedbackDescriptionCss);
+};
+
+export const enterFeedBackDescription = (text) => {
+	enterInput(ManageInterviewsPage.feedbackDescriptionCss, text);
+};
+
+export const feedbackSaveButtonVisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.feedbackSaveButtonCss);
+};
+
+export const clickFeedbackSaveButton = () => {
+	clickButton(ManageInterviewsPage.feedbackSaveButtonCss);
 };
