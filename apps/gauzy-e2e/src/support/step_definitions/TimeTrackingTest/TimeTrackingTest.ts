@@ -31,6 +31,7 @@ let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
+let employeeFullName = `${firstName} ${lastName}`;
 
 let description = faker.lorem.text();
 
@@ -67,7 +68,8 @@ And('User can add new project', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
 		organizationProjectsPage,
-		OrganizationProjectsPageData
+		OrganizationProjectsPageData,
+		employeeFullName
 	);
 });
 
@@ -84,7 +86,8 @@ And('User can add new client', () => {
 		city,
 		postcode,
 		street,
-		ClientsData
+		ClientsData,
+		employeeFullName
 	);
 });
 
@@ -93,7 +96,7 @@ And('User can add new task', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addTask(addTaskPage, AddTasksPageData);
+	CustomCommands.addTask(addTaskPage, AddTasksPageData, employeeFullName);
 });
 
 // Logout

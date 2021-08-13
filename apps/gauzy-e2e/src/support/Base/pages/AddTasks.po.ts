@@ -52,6 +52,13 @@ export const selectEmployeeDropdownOption = (index) => {
 	clickButtonByIndex(AddTaskPage.selectEmployeeDropdownOptionCss, index);
 };
 
+export const selectEmployeeFromDropdownByName = (name) => {
+	clickElementByText(
+		AddTaskPage.selectEmployeeDropdownOptionCss,
+		name
+	);
+};
+
 export const addTitleInputVisible = () => {
 	verifyElementIsVisible(AddTaskPage.addTitleInputCss);
 };
