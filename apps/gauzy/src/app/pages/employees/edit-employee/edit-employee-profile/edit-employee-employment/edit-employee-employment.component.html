@@ -62,7 +62,7 @@
 						</p>
 						<div class="ck-editor">
 							<ckeditor
-								formControlName="description"
+								[formControl]="form.get('description')"
 								class="description"
 								[config]="{
 									width: '100%',
