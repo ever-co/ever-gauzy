@@ -146,7 +146,8 @@ export const CustomCommands = {
 	},
 	addProject: (
 		organizationProjectsPage: any,
-		OrganizationProjectsPageData: any
+		OrganizationProjectsPageData: any,
+		employeeFullName?: string
 	) => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
@@ -164,7 +165,13 @@ export const CustomCommands = {
 		);
 		organizationProjectsPage.selectEmployeeDropdownVisible();
 		organizationProjectsPage.clickSelectEmployeeDropdown();
-		organizationProjectsPage.selectEmployeeDropdownOption(0);
+		if (!employeeFullName) {
+			organizationProjectsPage.selectEmployeeDropdownOption(0);
+		} else {
+			organizationProjectsPage.selectEmployeeFromDropdownByName(
+				employeeFullName
+			);
+		}
 		organizationProjectsPage.clickKeyboardButtonByKeyCode(9);
 		organizationProjectsPage.clickTabButton(3);
 		organizationProjectsPage.budgetHoursInputVisible();
@@ -179,7 +186,11 @@ export const CustomCommands = {
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
 	},
-	addTask: (addTaskPage: any, AddTasksPageData: any) => {
+	addTask: (
+		addTaskPage: any,
+		AddTasksPageData: any,
+		employeeFullName?: string
+	) => {
 		cy.visit('/#/pages/tasks/dashboard', { timeout: pageLoadTimeout });
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
@@ -192,7 +203,11 @@ export const CustomCommands = {
 		);
 		addTaskPage.selectEmployeeDropdownVisible();
 		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(0);
+		if (!employeeFullName) {
+			addTaskPage.selectEmployeeDropdownOption(0);
+		} else {
+			addTaskPage.selectEmployeeFromDropdownByName(employeeFullName);
+		}
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.addTitleInputVisible();
 		addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);
@@ -264,7 +279,8 @@ export const CustomCommands = {
 		city: string,
 		postcode: string,
 		street: string,
-		ClientsData: any
+		ClientsData: any,
+		employeeFullName?: string
 	) => {
 		cy.visit('/#/pages/contacts/clients', { timeout: pageLoadTimeout });
 		clientsPage.gridBtnExists();
@@ -305,7 +321,11 @@ export const CustomCommands = {
 		clientsPage.clickLastStepBtn();
 		clientsPage.selectEmployeeDropdownVisible();
 		clientsPage.clickSelectEmployeeDropdown();
-		clientsPage.selectEmployeeDropdownOption(0);
+		if (!employeeFullName) {
+			clientsPage.selectEmployeeDropdownOption(0);
+		} else {
+			clientsPage.selectEmployeeFromDropdownByName(employeeFullName);
+		}
 		clientsPage.clickKeyboardButtonByKeyCode(9);
 		clientsPage.nextButtonVisible();
 		clientsPage.clickNextButton();
