@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { IPagination, ProductTranslation } from '../core';
+import { ProductTranslation } from '../core';
 import {
 	BadRequestException,
 	HttpException,
@@ -10,11 +10,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
 import {
 	IImageAsset,
+	IPagination,
 	IProductCreateInput,
 	IProductFindInput,
 	IProductTranslated
 } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { TranslatePropertyInput } from '../core/entities/translate-base';
 
 @Injectable()

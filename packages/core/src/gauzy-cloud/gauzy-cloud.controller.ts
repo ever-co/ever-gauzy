@@ -1,6 +1,5 @@
 import { Body, Controller, HttpStatus, Param, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationCreateInput, ITenantCreateInput, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts';
 import { CloudMigrateInterceptor } from './../core/interceptors';
@@ -9,7 +8,7 @@ import { Permissions } from './../shared/decorators';
 import { GauzyCloudOrganizationMigrateCommand, GauzyCloudTenantMigrateCommand, GauzyCloudUserMigrateCommand } from './commands';
 
 @UseInterceptors(CloudMigrateInterceptor)
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class GauzyCloudController {
 	

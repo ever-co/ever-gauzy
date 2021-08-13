@@ -3,11 +3,10 @@ import { IEmployee } from './employee.model';
 
 export interface ITimeOffPolicy
 	extends IBasePerTenantAndOrganizationEntityModel {
+	name: string;
+	requiresApproval: boolean;
+	paid: boolean;
 	employees?: IEmployee[];
-	// teams?: OrganizationTeams[];
-	name?: string;
-	requiresApproval?: boolean;
-	paid?: boolean;
 }
 
 export interface ITimeOffPolicyCreateInput
@@ -41,9 +40,9 @@ export interface ITimeOff extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	description?: string;
 	policy?: ITimeOffPolicy;
-	start?: Date;
-	end?: Date;
-	requestDate?: Date;
+	start: Date;
+	end: Date;
+	requestDate: Date;
 	status?: string;
 	isHoliday?: boolean;
 	documentUrl?: string;

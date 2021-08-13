@@ -1,5 +1,6 @@
-import { HelpCenterArticleService } from './../../../help-center-article/help-center-article.service';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { isNotEmpty } from '@gauzy/common';
+import { HelpCenterArticleService } from './../../../help-center-article/help-center-article.service';
 import { KnowledgeBaseCategoryBulkDeleteCommand } from '../help-center.menu.bulk.delete.command';
 
 @CommandHandler(KnowledgeBaseCategoryBulkDeleteCommand)
@@ -14,10 +15,10 @@ export class KnowledgeBaseCategoryBulkDeleteHandler
 		const articles = await this.helpCenterArticle.getArticlesByCategoryId(
 			id
 		);
-		await this.helpCenterArticle.deleteBulkByCategoryId(
-			articles.map((item) => item.id)
-		);
-
+		const ids = articles.map((item) => item.id);
+		if (isNotEmpty(ids)) {
+			await this.helpCenterArticle.deleteBulkByCategoryId(ids);
+		}
 		return;
 	}
 }

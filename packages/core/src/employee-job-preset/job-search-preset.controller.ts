@@ -3,14 +3,12 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	UseGuards,
 	Post,
 	Body,
 	Param,
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	IGetJobPresetCriterionInput,
 	IGetJobPresetInput,
@@ -25,7 +23,6 @@ import { GauzyAIService } from '@gauzy/integration-ai';
 import { EmployeeService } from '../employee/employee.service';
 
 @ApiTags('JobSearchPreset')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class JobSearchPresetController {
 	constructor(

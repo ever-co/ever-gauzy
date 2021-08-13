@@ -1,7 +1,7 @@
 <nb-layout>
 	<nb-layout-column class="top-bottom-space">
-		<nb-card>
-			<nb-card-body>
+		<nb-card class="fh">
+			<nb-card-body class="card-body">
                 <div class="row content-body">
                     <div class="col-12 text-center margin-content">
                         <img [src]="gauzyIcon" class="margin-icon" />
@@ -10,32 +10,36 @@
                         <h4>GAUZY SERVER</h4>
                     </div>
                     <div class="col-12 text-center margin-content">
-                        <div class="row">
-                            <div class="col-10 text-center col-center">
-                                <p>
-                                </p>
-                            </div>
-                        </div>
+                        <nb-accordion multi>
+                            <nb-accordion-item>
+                              <nb-accordion-item-header>
+                                Log Server
+                              </nb-accordion-item-header>
+                              <nb-accordion-item-body class="log-box">
+                                  <div class="log-content" #logbox>
+                                      <p class="content-text" *ngFor="let content of logContents">
+                                          {{content}}
+                                      </p>
+                                  </div>
+                              </nb-accordion-item-body>
+                            </nb-accordion-item>
+                          </nb-accordion>
                     </div>
                     <div class="col-12 text-center margin-content">
-                        <div class="row">
-                            <div class="col-4">
-                                <button
-                                    nbButton
-                                    status="primary"
-                                    class="button-big"
-                                    (click)="running ? stopServer() : runServer()"
-                                    [disabled]="loading"
-                                    [nbSpinner]="loading" 
-                                    nbSpinnerStatus="warning"
-                                >
-                                    {{btn.name}}<nb-icon
-                                        [icon]="btn.icon"
-                                        class="icon-medium"
-                                    ></nb-icon>
-                                </button>
-                            </div>
-                        </div>
+                        <button
+                            nbButton
+                            status="primary"
+                            class="button-big"
+                            (click)="running ? stopServer() : runServer()"
+                            [disabled]="loading"
+                            [nbSpinner]="loading" 
+                            nbSpinnerStatus="warning"
+                        >
+                            {{btn.name}}<nb-icon
+                                [icon]="btn.icon"
+                                class="icon-medium"
+                            ></nb-icon>
+                        </button>
                     </div>
                 </div>
                 

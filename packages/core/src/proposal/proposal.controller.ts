@@ -7,27 +7,37 @@ import {
 	Query,
 	UseGuards,
 	Put,
-	Param
+	Param,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
-import { CrudController } from '../core/crud/crud.controller';
-import { IProposalCreateInput, IProposal } from '@gauzy/contracts';
-import { IPagination } from '../core';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { CrudController } from './../core/crud';
+import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
+import { PaginationParams } from '../core';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared';
+import { Permissions } from './../shared/decorators';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Proposal')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProposalController extends CrudController<Proposal> {
 	constructor(private readonly proposalService: ProposalService) {
 		super(proposalService);
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IProposal>
+	): Promise<IPagination<IProposal>> {
+		return this.proposalService.pagination(filter);
 	}
 
 	@ApiOperation({ summary: 'Find all proposals.' })
@@ -43,12 +53,11 @@ export class ProposalController extends CrudController<Proposal> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get()
-	async findAllProposals(
-		@Query('data') data: string
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IProposal>> {
-		const { relations, findInput, filterDate } = JSON.parse(data);
-
-		return this.proposalService.getAllProposals(
+		const { relations, findInput, filterDate } = data;
+		return await this.proposalService.getAllProposals(
 			{ where: findInput, relations },
 			filterDate
 		);
@@ -68,7 +77,7 @@ export class ProposalController extends CrudController<Proposal> {
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get(':id')
 	async findOne(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IProposal> {
 		const { relations, findInput } = data;
@@ -94,7 +103,7 @@ export class ProposalController extends CrudController<Proposal> {
 	async createOrganizationTeam(
 		@Body() entity: IProposalCreateInput,
 		...options: any[]
-	): Promise<Proposal> {
+	): Promise<IProposal> {
 		return this.proposalService.create(entity);
 	}
 
@@ -112,9 +121,9 @@ export class ProposalController extends CrudController<Proposal> {
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	@Put(':id')
 	async updateProposal(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: any
-	): Promise<any> {
+	): Promise<IProposal> {
 		return this.proposalService.create({
 			id,
 			...entity

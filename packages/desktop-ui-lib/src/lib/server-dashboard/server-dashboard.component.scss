@@ -10,7 +10,7 @@
   }
 
   .margin-content {
-    margin-top: 40px !important;
+    margin-top: 35px !important;
   }
 
   .col-center {
@@ -23,9 +23,45 @@
   }
 
   .content-body {
-    margin-top: 40px;
+    margin-top: 25px;
   }
 
   .top-bottom-space {
     padding: 1px !important;
+  }
+
+  .log-box {
+    background-color: black;
+    color: white;
+    font-size: 11px;
+    text-align: left;
+  }
+
+  .log-content {
+    min-height: 300px;
+    overflow-y: auto;
+    max-height: 300px;
+  }
+
+  .content-text {
+    color: white;
+    font-size: 11px;
+  }
+
+  .card-body {
+    min-height: 775px;
+  }
+
+  .btn-bottom {
+    position: absolute;
+    bottom: 0;
+    left: -50px;
+  }
+
+  ::ng-deep body {
+    overflow: hidden !important;
+  }
+
+  .fh {
+    height: 100%;
   }

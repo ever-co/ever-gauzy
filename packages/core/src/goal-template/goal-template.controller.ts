@@ -8,18 +8,40 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { IGoalTemplate, IPagination } from '@gauzy/contracts';
 import { GoalTemplateService } from './goal-template.service';
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { GoalTemplate } from './goal-template.entity';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('GoalTemplates')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class GoalTemplateController extends CrudController<GoalTemplate> {
 	constructor(private readonly goalTemplateService: GoalTemplateService) {
 		super(goalTemplateService);
+	}
+
+	@ApiOperation({ summary: 'Find goal templates.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found goal templates',
+		type: GoalTemplate
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IGoalTemplate>> {
+		const { findInput } = data;
+		return this.goalTemplateService.findAll({
+			relations: ['keyResults', 'keyResults.kpi'],
+			where: { ...findInput }
+		});
 	}
 
 	@ApiOperation({ summary: 'Create Goal Template' })
@@ -28,21 +50,10 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 		description: 'Goal Template Created successfully',
 		type: GoalTemplate
 	})
-	@Post('/create')
-	async createGoalTemplate(@Body() entity: GoalTemplate): Promise<any> {
+	@Post()
+	async create(
+		@Body() entity: GoalTemplate
+	): Promise<IGoalTemplate> {
 		return this.goalTemplateService.create(entity);
-	}
-
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('all')
-	async getAll(@Query('data') data: string) {
-		const { findInput } = JSON.parse(data);
-		return this.goalTemplateService.findAll({
-			relations: ['keyResults', 'keyResults.kpi'],
-			where: { ...findInput }
-		});
 	}
 }

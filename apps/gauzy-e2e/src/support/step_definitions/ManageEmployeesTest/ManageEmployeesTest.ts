@@ -13,6 +13,8 @@ import { CustomCommands } from '../../commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let email = faker.internet.email();
 let secEmail = faker.internet.email();
 let firstName = faker.name.firstName();
@@ -48,7 +50,7 @@ And('User can visit Employees page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees');
+	cy.visit('/#/pages/employees', { timeout: pageLoadTimeout });
 });
 
 And('User can see grid button', () => {

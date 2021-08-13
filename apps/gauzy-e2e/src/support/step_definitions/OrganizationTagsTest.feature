@@ -29,6 +29,11 @@ Feature: Organization tags test
     And User can see save edited tag button
     When User click on save edited tag button
     Then Notification message will appear
+  Scenario: Filter tag 
+    And User can see filter name input
+    When User enter filter input field value
+    Then User can see filtered tag
+    And User clear input field value
   Scenario: Delete tag
     And User can see tags table again
     When User click on tags table row again

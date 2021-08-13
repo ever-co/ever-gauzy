@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { CrudService } from '../../core/crud/crud.service';
+import { TenantAwareCrudService } from './../../core/crud';
 import { TimeSlot } from '../time-slot.entity';
 import { moment } from '../../core/moment-extend';
 import { RequestContext } from '../../core/context/request-context';
@@ -10,17 +10,19 @@ import { ConfigService } from '@gauzy/config';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
 import { generateTimeSlots } from './utils';
 import { CommandBus } from '@nestjs/cqrs';
-import { CreateTimeSlotCommand } from './commands/create-time-slot.command';
-import { UpdateTimeSlotCommand } from './commands/update-time-slot.command';
-import { TimeSlotBulkCreateOrUpdateCommand } from './commands/time-slot-bulk-create-or-update.command';
-import { TimeSlotBulkCreateCommand } from './commands/time-slot-bulk-create.command';
-import { CreateTimeSlotMinutesCommand } from './commands/create-time-slot-minutes.command';
-import { UpdateTimeSlotMinutesCommand } from './commands/update-time-slot-minutes.command';
-import { DeleteTimeSlotCommand } from './commands/delete-time-slot.command';
-import { TimeSlotRangeDeleteCommand } from './commands/time-slot-range-delete.command';
+import {
+	CreateTimeSlotCommand,
+	CreateTimeSlotMinutesCommand,
+	DeleteTimeSlotCommand,
+	TimeSlotBulkCreateCommand,
+	TimeSlotBulkCreateOrUpdateCommand,
+	TimeSlotRangeDeleteCommand,
+	UpdateTimeSlotCommand,
+	UpdateTimeSlotMinutesCommand
+} from './commands';
 
 @Injectable()
-export class TimeSlotService extends CrudService<TimeSlot> {
+export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
@@ -157,17 +159,19 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async bulkCreateOrUpdate(slots) {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new TimeSlotBulkCreateOrUpdateCommand(slots)
 		);
 	}
 
 	async bulkCreate(slots) {
-		return this.commandBus.execute(new TimeSlotBulkCreateCommand(slots));
+		return await this.commandBus.execute(
+			new TimeSlotBulkCreateCommand(slots)
+		);
 	}
 
 	async rangeDelete(employeeId: string, start: Date, stop: Date) {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new TimeSlotRangeDeleteCommand(employeeId, start, stop)
 		);
 	}
@@ -177,11 +181,15 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async create(request: TimeSlot) {
-		return this.commandBus.execute(new CreateTimeSlotCommand(request));
+		return await this.commandBus.execute(
+			new CreateTimeSlotCommand(request)
+		);
 	}
 
 	async update(id: string, request: TimeSlot) {
-		return this.commandBus.execute(new UpdateTimeSlotCommand(id, request));
+		return await this.commandBus.execute(
+			new UpdateTimeSlotCommand(id, request)
+		);
 	}
 
 	/*
@@ -189,8 +197,7 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	 */
 	async createTimeSlotMinute(request: TimeSlotMinute) {
 		// const { keyboard, mouse, datetime, timeSlot } = request;
-
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new CreateTimeSlotMinutesCommand(request)
 		);
 	}
@@ -199,12 +206,14 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	 * Update timeslot minute activity for specific timeslot
 	 */
 	async updateTimeSlotMinute(id: string, request: TimeSlotMinute) {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new UpdateTimeSlotMinutesCommand(id, request)
 		);
 	}
 
 	async deleteTimeSlot(ids: string[]) {
-		return this.commandBus.execute(new DeleteTimeSlotCommand(ids));
+		return await this.commandBus.execute(
+			new DeleteTimeSlotCommand(ids)
+		);
 	}
 }

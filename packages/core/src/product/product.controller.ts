@@ -12,33 +12,31 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { ProductService } from './product.service';
 import { Product } from './product.entity';
 import { CommandBus } from '@nestjs/cqrs';
-import { ProductCreateCommand } from './commands/product.create.command';
-import { ProductUpdateCommand } from './commands/product.update.command';
-import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { ProductCreateCommand, ProductUpdateCommand, ProductDeleteCommand } from './commands';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import {
 	PermissionsEnum,
 	IProductCreateInput,
 	IProductTranslated,
-	IImageAsset
+	IImageAsset,
+	IPagination
 } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
-import { ProductDeleteCommand } from './commands';
+import { Permissions } from './../shared/decorators';
 import { DeleteResult } from 'typeorm';
-import { ParseJsonPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+
 
 @ApiTags('Product')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProductController extends CrudController<Product> {
 	constructor(
 		private readonly productService: ProductService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(productService);
 	}
@@ -58,7 +56,6 @@ export class ProductController extends CrudController<Product> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Number> {
 		const { findInput = null } = data;
-
 		return this.productService.count(findInput);
 	}
 
@@ -74,11 +71,10 @@ export class ProductController extends CrudController<Product> {
 	})
 	@Get(':id')
 	async findById(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Product> {
 		const { relations = [], findInput = null } = data;
-
 		return this.productService.findById(id, {
 			relations,
 			where: findInput
@@ -146,7 +142,7 @@ export class ProductController extends CrudController<Product> {
 	})
 	@Get('local/:langCode/:id/')
 	async findOneProductTranslated(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Param('langCode') langCode: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<Product | IProductTranslated> {
@@ -191,7 +187,7 @@ export class ProductController extends CrudController<Product> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async updateProduct(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IProductCreateInput
 	): Promise<any> {
 		return this.commandBus.execute(new ProductUpdateCommand(id, entity));
@@ -209,7 +205,7 @@ export class ProductController extends CrudController<Product> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		...options: any[]
 	): Promise<DeleteResult> {
 		return this.commandBus.execute(new ProductDeleteCommand(id));
@@ -229,7 +225,7 @@ export class ProductController extends CrudController<Product> {
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('/add-images/:productId')
 	async addGalleryImage(
-		@Param('productId') productId: string,
+		@Param('productId', UUIDValidationPipe) productId: string,
 		@Body() images: IImageAsset[]
 	) {
 		return this.productService.addGalleryImages(productId, images);
@@ -249,7 +245,7 @@ export class ProductController extends CrudController<Product> {
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('/set-as-featured/:productId')
 	async setAsFeatured(
-		@Param('productId') productId: string,
+		@Param('productId', UUIDValidationPipe) productId: string,
 		@Body() image: IImageAsset
 	) {
 		return this.productService.setAsFeatured(productId, image);
@@ -267,8 +263,8 @@ export class ProductController extends CrudController<Product> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete('/:productId/delete-gallery-image/:imageId')
 	async deleteGaleryImage(
-		@Param('productId') productId: string,
-		@Param('imageId') imageId: string
+		@Param('productId', UUIDValidationPipe) productId: string,
+		@Param('imageId', UUIDValidationPipe) imageId: string
 	): Promise<Product> {
 		return this.productService.deleteGalleryImage(productId, imageId);
 	}
@@ -285,7 +281,7 @@ export class ProductController extends CrudController<Product> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete('/delete-featured-image/:productId')
 	async deleteFeaturedImage(
-		@Param('productId') productId: string
+		@Param('productId', UUIDValidationPipe) productId: string
 	): Promise<Product> {
 		return this.productService.deleteFeaturedImage(productId);
 	}

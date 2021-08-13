@@ -8,15 +8,15 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Feature } from './feature.entity';
-import { FeatureService } from './feature.service';
 import { FeatureInterface } from 'unleash-client/lib/feature';
 import { getFeatureToggleDefinitions } from 'unleash-client';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { AuthGuard } from '@nestjs/passport';
 import { FeatureEnum, IFeatureOrganizationUpdateInput } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
-import { FeatureToggleUpdateCommand } from './commands/feature-toggle.update.command';
+import { Feature } from './feature.entity';
+import { FeatureService } from './feature.service';
+import { TenantPermissionGuard } from './../shared/guards';
+import { Public } from './../shared/decorators';
+import { FeatureToggleUpdateCommand } from './commands';
 
 @ApiTags('Feature')
 @Controller()
@@ -27,6 +27,7 @@ export class FeaturesToggleController {
 	) {}
 
 	@Get()
+	@Public()
 	async get() {
 		let featureToggles: FeatureInterface[] = getFeatureToggleDefinitions();
 
@@ -50,7 +51,6 @@ export class FeaturesToggleController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('parent')
 	async getParentFeatureList(@Query('data') data: any) {
 		return this.featureService.getParentFeatureList(data);
@@ -66,7 +66,6 @@ export class FeaturesToggleController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('all')
 	async getAllFeatureList() {
 		return this.featureService.getAllFeatureList();
@@ -82,7 +81,7 @@ export class FeaturesToggleController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	@Get('/organizations')
 	async getFeaturesOrganization(@Query('data') data: any) {
 		return this.featureService.getFeatureOrganizations(data);
@@ -98,7 +97,7 @@ export class FeaturesToggleController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	@Post()
 	async enabledDisabledFeature(
 		@Body() input: IFeatureOrganizationUpdateInput

@@ -20,12 +20,12 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { average, ArraySum, isNotEmpty } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import {
 	Activity,
 	Employee,
+	OrganizationProject,
 	Task,
 	TimeLog,
 	TimeSlot
@@ -376,7 +376,7 @@ export class StatisticService {
 		};
 	}
 
-	async getMembers(request: IGetMembersStatistics) {
+	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
 		const {
 			employeeId,
 			organizationId,
@@ -699,7 +699,7 @@ export class StatisticService {
 		return employees;
 	}
 
-	async getProjects(request: IGetProjectsStatistics) {
+	async getProjects(request: IGetProjectsStatistics): Promise<IProjectsStatistics[]> {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const {

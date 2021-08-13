@@ -7,10 +7,12 @@ import { CustomCommands } from '../../commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given('Login with default credentials and visit Organization tags page', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/organization/tags');
+	cy.visit('/#/pages/organization/tags', { timeout: pageLoadTimeout });
 });
 
 // Add tag
@@ -127,6 +129,27 @@ When('User click on save edited tag button', () => {
 
 Then('Notification message will appear', () => {
 	organizationTagsUserPage.waitMessageToHide();
+});
+
+// Filter tag
+And('User can see filter name input', () => {
+	organizationTagsUserPage.nameInputVisible();
+});
+
+When('User enter filter input field value', () => {
+	organizationTagsUserPage.enterFilterInputData(
+		OrganizationTagsPageData.editTagName
+	);
+});
+
+Then('User can see filtered tag', () => {
+	organizationTagsUserPage.filteredTagVisible(
+		OrganizationTagsPageData.editTagName
+	);
+});
+
+And('User clear input field value', () => {
+	organizationTagsUserPage.clearFilterInputField();
 });
 
 // Delete tag

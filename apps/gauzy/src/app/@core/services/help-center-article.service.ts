@@ -23,7 +23,7 @@ export class HelpCenterArticleService {
 	findByCategoryId(categoryId: string): Promise<IHelpCenterArticle[]> {
 		return this.http
 			.get<IHelpCenterArticle[]>(
-				`${API_PREFIX}/help-center-article/${categoryId}`
+				`${API_PREFIX}/help-center-article/category/${categoryId}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -43,15 +43,9 @@ export class HelpCenterArticleService {
 			.toPromise();
 	}
 
-	deleteBulkByCategoryId(id: string): Promise<any> {
-		const data = JSON.stringify({ id });
+	deleteBulkByCategoryId(categoryId: string): Promise<any> {
 		return this.http
-			.delete(
-				`${API_PREFIX}/help-center-article/deleteBulkByCategoryId`,
-				{
-					params: { data }
-				}
-			)
+			.delete(`${API_PREFIX}/help-center-article/category/${categoryId}`)
 			.pipe(first())
 			.toPromise();
 	}

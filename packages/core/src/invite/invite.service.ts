@@ -10,26 +10,29 @@ import {
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
 	LanguagesEnum,
-	DEFAULT_INVITE_EXPIRY_PERIOD
+	DEFAULT_INVITE_EXPIRY_PERIOD,
+	IOrganization,
+	IEmployee,
 } from '@gauzy/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
 import { MoreThanOrEqual, Repository } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
+import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { OrganizationDepartment } from '../organization-department/organization-department.entity';
-import { Organization } from '../organization/organization.entity';
 import { EmailService } from '../email/email.service';
-import { Role } from '../role/role.entity';
 import { addDays } from 'date-fns';
 import { UserService } from '../user/user.service';
 import { RequestContext } from './../core';
-
+import {
+	Organization,
+	OrganizationContact,
+	OrganizationDepartment,
+	OrganizationProject,
+	Role,
+} from './../core/entities/internal';
 @Injectable()
-export class InviteService extends CrudService<Invite> {
+export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
 		@InjectRepository(Invite) 
 		private readonly inviteRepository: Repository<Invite>,
@@ -210,6 +213,28 @@ export class InviteService extends CrudService<Invite> {
 		});
 
 		return { items, total: items.length, ignored: existingInvites.length };
+	}
+
+	async sendAcceptInvitationEmail(
+		organization: IOrganization,
+		employee: IEmployee,
+		languageCode: LanguagesEnum
+	): Promise<any> 
+	{	
+		const superAdminUsers: IUser[] = await this.userService.getAdminUsers(organization.tenantId);
+
+		try {
+			for await (const superAdmin of superAdminUsers) {
+					this.emailService.sendAcceptInvitationEmail({
+						email: superAdmin.email,
+						employee,
+						organization,
+						languageCode,
+					});
+			}
+		} catch (e) {
+			console.log('caught', e)
+		}
 	}
 
 	async createOrganizationContactInvite(

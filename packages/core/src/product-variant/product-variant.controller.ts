@@ -11,7 +11,7 @@ import {
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { ProductVariant } from './product-variant.entity';
 import { ProductVariantService } from './product-variant.service';
 import {
@@ -20,13 +20,13 @@ import {
 } from './commands';
 import { CommandBus } from '@nestjs/cqrs';
 import { Product } from '../product/product.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { DeleteResult } from 'typeorm';
-import { IVariantCreateInput } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { IPagination, IVariantCreateInput } from '@gauzy/contracts';
+import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('ProductVariant')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProductVariantController extends CrudController<ProductVariant> {
 	constructor(
@@ -86,7 +86,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description: 'Record not found'
 	})
 	@Get('all/:productId')
-	async findAllVariantsByProduct(@Param('productId') productId: string): Promise<IPagination<ProductVariant>> {
+	async findAllVariantsByProduct(@Param('productId', UUIDValidationPipe) productId: string): Promise<IPagination<ProductVariant>> {
 		return this.productVariantService.findAllVariantsByProductId(productId);
 	}
 
@@ -104,7 +104,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<ProductVariant> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<ProductVariant> {
 		return this.productVariantService.findOne(id);
 	}
 
@@ -125,7 +125,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() productVariant: ProductVariant
 	): Promise<ProductVariant> {
 		return this.productVariantService.updateVariant(productVariant);
@@ -143,7 +143,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		...options: any[]
 	): Promise<DeleteResult> {
 		return this.commandBus.execute(new ProductVariantDeleteCommand(id));
@@ -161,7 +161,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete('/delete-featured-image/:variantId')
 	async deleteFeaturedImage(
-		@Param('variantId') variantId: string
+		@Param('variantId', UUIDValidationPipe) variantId: string
 	): Promise<ProductVariant> {
 		return this.productVariantService.deleteFeaturedImage(variantId);
 	}

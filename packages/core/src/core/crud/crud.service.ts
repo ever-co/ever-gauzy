@@ -16,13 +16,15 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { mergeMap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
+import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
-import { IPagination } from './pagination';
+import { IPagination } from '@gauzy/contracts';
 import { ITryRequest } from './try-request';
 import { filterQuery } from './query-builder';
+import { RequestContext } from 'core/context';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -42,42 +44,48 @@ export abstract class CrudService<T extends BaseEntity>
 		return { items, total };
 	}
 
-	public async search(filter?: any): Promise<IPagination<T>> {
-		let options: FindManyOptions = {}
-		if (filter.page && filter.limit) {
-			options.skip = filter.limit * (filter.page - 1);
-			options.take = filter.limit;
-		}
-		if (filter.orderBy && filter.order) {
-			options.order = {
-				[filter.orderBy]: filter.order
-			}
-		} else if (filter.orderBy) {
-			options.order = filter.orderBy;
-		}
-		if (filter.relations) {
-			options.relations = filter.relations;
-		}
-		if (filter.join) {
-			options.join = filter.join;
-		}
-		if (filter.filters || filter.where) {
-			options.where = (qb: SelectQueryBuilder<T>) => {
-				if (filter.where) {
-					const wheres: any = {}
-					for (const field in filter.where) {
-						if (Object.prototype.hasOwnProperty.call(filter.where, field)) {
-							wheres[field] = filter.where[field];
-						}
+	public async paginate(filter?: any): Promise<IPagination<T>> {
+		try {
+			let options: FindManyOptions = {};
+			options.skip = filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0;
+			options.take = filter && filter.take ? (filter.take) : 10;
+			if (filter) {
+				if (filter.orderBy && filter.order) {
+					options.order = {
+						[filter.orderBy]: filter.order
 					}
-					filterQuery(qb, wheres);
+				} else if (filter.orderBy) {
+					options.order = filter.orderBy;
 				}
-				console.log(qb.getQueryAndParameters());
+				if (filter.relations) {
+					options.relations = filter.relations;
+				}
+				if (filter.join) {
+					options.join = filter.join;
+				}
 			}
+			options.where = (qb: SelectQueryBuilder<T>) => {
+				if (filter && (filter.filters || filter.where)) {
+					if (filter.where) {
+						const wheres: any = {}
+						for (const field in filter.where) {
+							if (Object.prototype.hasOwnProperty.call(filter.where, field)) {
+								wheres[field] = filter.where[field];
+							}
+						}
+						filterQuery(qb, wheres);
+					}
+				}
+				const tenantId = RequestContext.currentTenantId();
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+				console.log(qb.getQueryAndParameters(), moment().format('DD.MM.YYYY HH:mm:ss'));
+			}
+			console.log(filter, moment().format('DD.MM.YYYY HH:mm:ss'));
+			const [items, total] = await this.repository.findAndCount(options);
+			return { items, total };
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
-		console.log(filter, 'filters');
-		const [items, total] = await this.repository.findAndCount(options);
-		return { items, total };
 	}
 
 	public async findOneOrFail(

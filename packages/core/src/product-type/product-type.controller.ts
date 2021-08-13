@@ -1,5 +1,5 @@
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { ProductType } from './product-type.entity';
 import {
 	Controller,
@@ -13,13 +13,12 @@ import {
 	Param
 } from '@nestjs/common';
 import { ProductTypeService } from './product-type.service';
-import { AuthGuard } from '@nestjs/passport';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { LanguagesEnum, IProductTypeTranslatable } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { LanguagesEnum, IProductTypeTranslatable, IPagination } from '@gauzy/contracts';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('ProductTypes')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProductTypeController extends CrudController<ProductType> {
 	constructor(private readonly productTypesService: ProductTypeService) {
@@ -37,7 +36,6 @@ export class ProductTypeController extends CrudController<ProductType> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Number> {
 		const { findInput = null } = data;
-
 		return this.productTypesService.count(findInput);
 	}
 
@@ -89,7 +87,7 @@ export class ProductTypeController extends CrudController<ProductType> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ProductType
 	): Promise<any> {
 		return this.productTypesService.updateProductType(id, entity);

@@ -5,14 +5,12 @@ import {
 	UploadedFile,
 	UseInterceptors,
 	HttpStatus,
-	UseGuards,
 	Get,
 	Query,
 	Param
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { UpworkTransactionService } from './upwork-transaction.service';
 import { UpworkService } from './upwork.service';
 import {
@@ -23,19 +21,18 @@ import {
 	IGetContractsDto,
 	IEngagement,
 	IUpworkApiConfig,
-	IUpworkClientSecretPair
+	IUpworkClientSecretPair,
+	IPagination
 } from '@gauzy/contracts';
-import { Expense } from '../expense/expense.entity';
-import { Income } from '../income/income.entity';
-import { IPagination } from '../core';
+import { Expense, Income } from './../core/entities/internal';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Integrations')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class UpworkController {
 	constructor(
-		private _upworkTransactionService: UpworkTransactionService,
-		private _upworkService: UpworkService
+		private readonly _upworkTransactionService: UpworkTransactionService,
+		private readonly _upworkService: UpworkService
 	) {}
 
 	@ApiOperation({ summary: 'Upload Upwork transaction.' })
@@ -76,7 +73,7 @@ export class UpworkController {
 	@Post('/token-secret-pair/:organizationId')
 	async getAccessTokenSecretPair(
 		@Body() config: IUpworkClientSecretPair,
-		@Param('organizationId') organizationId: string
+		@Param('organizationId', UUIDValidationPipe) organizationId: string
 	): Promise<IAccessTokenSecretPair> {
 		return await this._upworkService.getAccessTokenSecretPair(
 			config,
@@ -100,7 +97,7 @@ export class UpworkController {
 	@Post('/access-token/:organizationId')
 	async getAccessToken(
 		@Body() accessTokenDto: IAccessTokenDto,
-		@Param('organizationId') organizationId: string
+		@Param('organizationId', UUIDValidationPipe) organizationId: string
 	): Promise<IAccessToken> {
 		return await this._upworkService.getAccessToken(
 			accessTokenDto,
@@ -122,9 +119,10 @@ export class UpworkController {
 		description: 'Invalid request'
 	})
 	@Get('work-diary')
-	async getWorkDiary(@Query('data') data: string): Promise<any> {
-		const getWorkDiaryDto: IGetWorkDiaryDto = JSON.parse(data);
-		return await this._upworkService.getWorkDiary(getWorkDiaryDto);
+	async getWorkDiary(
+		@Query('data', ParseJsonPipe) data: IGetWorkDiaryDto
+	): Promise<any> {
+		return await this._upworkService.getWorkDiary(data);
 	}
 
 	@ApiOperation({ summary: 'Get Contracts.' })
@@ -141,11 +139,10 @@ export class UpworkController {
 		description: 'Invalid request'
 	})
 	@Get('freelancer-contracts')
-	async getContracts(@Query('data') data: string): Promise<IEngagement[]> {
-		const getContractsDto: IGetContractsDto = JSON.parse(data);
-		return await this._upworkService.getContractsForFreelancer(
-			getContractsDto
-		);
+	async getContracts(
+		@Query('data', ParseJsonPipe) data: IGetContractsDto
+	): Promise<IEngagement[]> {
+		return await this._upworkService.getContractsForFreelancer(data);
 	}
 
 	@ApiOperation({ summary: 'Get Config.' })
@@ -163,10 +160,10 @@ export class UpworkController {
 	})
 	@Get('config/:integrationId')
 	async getConfig(
-		@Param('integrationId') integrationId: string,
-		@Query('data') data: string
+		@Param('integrationId', UUIDValidationPipe) integrationId: string,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IUpworkApiConfig> {
-		const { filter } = JSON.parse(data);
+		const { filter } = data;
 		return await this._upworkService.getConfig(integrationId, filter);
 	}
 
@@ -224,10 +221,10 @@ export class UpworkController {
 	})
 	@Get('report/:integrationId')
 	async getReports(
-		@Param('integrationId') integrationId: string,
-		@Query('data') data: string
+		@Param('integrationId', UUIDValidationPipe) integrationId: string,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<any>> {
-		const { relations, filter } = JSON.parse(data);
+		const { relations, filter } = data;
 		return await this._upworkService.getReportListByIntegration(
 			integrationId,
 			filter,

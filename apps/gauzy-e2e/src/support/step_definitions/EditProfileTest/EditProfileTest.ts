@@ -11,6 +11,8 @@ import * as faker from 'faker';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
 let username = faker.internet.userName();
@@ -23,7 +25,7 @@ let imgUrl = faker.image.avatar();
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/users');
+	cy.visit('/#/pages/users', { timeout: pageLoadTimeout });
 });
 
 // Add new user

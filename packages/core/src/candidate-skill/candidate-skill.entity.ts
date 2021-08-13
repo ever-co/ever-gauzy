@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ICandidateSkill, ICandidate } from '@gauzy/contracts';
@@ -15,14 +15,21 @@ export class CandidateSkill
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	candidateId?: string;
-
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.skills, {
 		onDelete: 'CASCADE'
 	})
-	candidate: ICandidate;
+	candidate?: ICandidate;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: CandidateSkill) => it.candidate)
+	@IsString()
+	@IsNotEmpty()
+	@Column({ nullable: true })
+	candidateId?: string;	
 }

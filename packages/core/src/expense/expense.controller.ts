@@ -3,7 +3,10 @@ import {
 	PermissionsEnum,
 	ISplitExpenseOutput,
 	IGetExpenseInput,
-	IExpenseReportData
+	IExpenseReportData,
+	ReportGroupFilterEnum,
+	IExpense,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -16,29 +19,31 @@ import {
 	Post,
 	Query,
 	UseGuards,
-	Delete
+	Delete,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { PaginationParams } from '../core';
+import { CrudController } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { ExpenseCreateCommand } from './commands/expense.create.command';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import {
+	ExpenseCreateCommand,
+	ExpenseDeleteCommand,
+	ExpenseUpdateCommand
+} from './commands';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
-import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.query';
-import { ParseJsonPipe } from '../shared';
-import { ExpenseDeleteCommand } from './commands/expense.delete.command';
-import { ExpenseUpdateCommand } from './commands/expense.update.command';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { FindSplitExpenseQuery } from './queries';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
 
 @ApiTags('Expense')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ExpenseController extends CrudController<Expense> {
 	constructor(
@@ -49,6 +54,16 @@ export class ExpenseController extends CrudController<Expense> {
 		private readonly queryBus: QueryBus
 	) {
 		super(expenseService);
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IExpense>
+	): Promise<IPagination<IExpense>> {
+		return this.expenseService.pagination(filter);
 	}
 
 	// If user is not an employee, then this will return 404
@@ -67,14 +82,12 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@Get('me')
 	async findMyExpenseWithSplitIncluded(
-		@Query('data') data: string
-	): Promise<IPagination<Expense>> {
-		const { relations, filterDate } = JSON.parse(data);
-
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IExpense>> {
+		const { relations, filterDate } = data;
 		const employee = await this.employeeService.findOne({
 			user: { id: RequestContext.currentUser().id }
 		});
-
 		return await this.queryBus.execute(
 			new FindSplitExpenseQuery({
 				employeeId: employee.id,
@@ -99,11 +112,10 @@ export class ExpenseController extends CrudController<Expense> {
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('include-split/:employeeId')
 	async findAllSplitExpenses(
-		@Query('data') data: string,
-		@Param('employeeId') employeeId: string
+		@Query('data', ParseJsonPipe) data: any,
+		@Param('employeeId', UUIDValidationPipe) employeeId: string
 	): Promise<IPagination<ISplitExpenseOutput>> {
-		const { relations, filterDate } = JSON.parse(data);
-
+		const { relations, filterDate } = data;
 		return await this.queryBus.execute(
 			new FindSplitExpenseQuery({
 				employeeId,
@@ -131,13 +143,12 @@ export class ExpenseController extends CrudController<Expense> {
 		@Query() request: IGetExpenseInput
 	): Promise<IExpenseReportData[]> {
 		const expenses = await this.expenseService.getExpense(request);
-
 		let response: IExpenseReportData[] = [];
-		if (request.groupBy === 'date') {
+		if (request.groupBy === ReportGroupFilterEnum.date) {
 			response = this.expenseMapService.mapByDate(expenses);
-		} else if (request.groupBy === 'employee') {
+		} else if (request.groupBy === ReportGroupFilterEnum.employee) {
 			response = this.expenseMapService.mapByEmployee(expenses);
-		} else if (request.groupBy === 'project') {
+		} else if (request.groupBy === ReportGroupFilterEnum.project) {
 			response = this.expenseMapService.mapByProject(expenses);
 		}
 		return response;
@@ -170,11 +181,10 @@ export class ExpenseController extends CrudController<Expense> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get()
-	async findAllExpenses(
-		@Query('data') data: string
-	): Promise<IPagination<Expense>> {
-		const { relations, findInput, filterDate } = JSON.parse(data);
-
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IExpense>> {
+		const { relations, findInput, filterDate } = data;
 		return this.expenseService.findAllExpenses(
 			{ where: findInput, relations },
 			filterDate
@@ -196,10 +206,12 @@ export class ExpenseController extends CrudController<Expense> {
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Expense
-	): Promise<any> {
-		return this.commandBus.execute(new ExpenseUpdateCommand(id, entity));
+	): Promise<IExpense> {
+		return await this.commandBus.execute(
+			new ExpenseUpdateCommand(id, entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -218,8 +230,10 @@ export class ExpenseController extends CrudController<Expense> {
 	async create(
 		@Body() entity: IExpenseCreateInput,
 		...options: any[]
-	): Promise<Expense> {
-		return this.commandBus.execute(new ExpenseCreateCommand(entity));
+	): Promise<IExpense> {
+		return await this.commandBus.execute(
+			new ExpenseCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({

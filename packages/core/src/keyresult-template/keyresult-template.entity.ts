@@ -1,11 +1,13 @@
-import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
 import {
 	IKeyResultTemplate,
 	KeyResultTypeEnum,
-	KeyResultDeadlineEnum
+	KeyResultDeadlineEnum,
+	IGoalTemplate,
+	IGoalKPITemplate
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsEnum } from 'class-validator';
+import { IsOptional, IsEnum, IsString } from 'class-validator';
 import {
 	GoalKPITemplate,
 	GoalTemplate,
@@ -16,6 +18,7 @@ import {
 export class KeyResultTemplate
 	extends TenantOrganizationBaseEntity
 	implements IKeyResultTemplate {
+		
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -45,26 +48,37 @@ export class KeyResultTemplate
 	@Column()
 	deadline: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
 	@ApiProperty({ type: () => GoalKPITemplate })
 	@ManyToOne(() => GoalKPITemplate, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
-	kpi?: GoalKPITemplate;
+	kpi?: IGoalKPITemplate;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((keyResult: KeyResultTemplate) => keyResult.kpi)
+	@RelationId((it: KeyResultTemplate) => it.kpi)
+	@IsString()
+	@IsOptional()
 	@Column({ nullable: true })
 	kpiId?: string;
+
 
 	@ApiProperty({ type: () => GoalTemplate })
 	@ManyToOne(() => GoalTemplate, (goalTemplate) => goalTemplate.keyResults, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })
-	goal: GoalTemplate;
+	goal: IGoalTemplate;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((keyResult: KeyResultTemplate) => keyResult.goal)
+	@RelationId((it: KeyResultTemplate) => it.goal)
+	@IsString()
+	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	readonly goalId?: string;
 }

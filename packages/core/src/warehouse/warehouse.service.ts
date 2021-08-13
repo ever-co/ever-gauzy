@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { Repository } from 'typeorm';
 import { Warehouse } from './warehouse.entity';
 import { Contact } from 'contact/contact.entity';
 import { IPagination } from '@gauzy/contracts';
 
 @Injectable()
-export class WarehouseService extends CrudService<Warehouse> {
+export class WarehouseService extends TenantAwareCrudService<Warehouse> {
 	constructor(
 		@InjectRepository(Warehouse)
 		private readonly warehouseRepository: Repository<Warehouse>

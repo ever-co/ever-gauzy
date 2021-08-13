@@ -7,6 +7,8 @@ import * as faker from 'faker';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let email = faker.internet.email();
 
 // Login with email
@@ -16,7 +18,7 @@ Given('Login with default credentials', () => {
 
 // Create new invite
 Then('User can visit Candidates invites page', () => {
-	cy.visit('/#/pages/employees/candidates/invites');
+	cy.visit('/#/pages/employees/candidates/invites', { timeout: pageLoadTimeout });
 });
 
 And('User can see invite button', () => {

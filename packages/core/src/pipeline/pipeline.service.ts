@@ -1,4 +1,4 @@
-import { CrudService } from '../core/crud';
+import { TenantAwareCrudService } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
 	DeepPartial,
@@ -19,7 +19,7 @@ import { User } from '../user/user.entity';
 import { RequestContext } from '../core/context';
 
 @Injectable()
-export class PipelineService extends CrudService<Pipeline> {
+export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public constructor(
 		@InjectRepository(Deal)
 		protected dealRepository: Repository<Deal>,
@@ -118,7 +118,7 @@ export class PipelineService extends CrudService<Pipeline> {
 		return await manager.update(Pipeline, id, pipeline);
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('name' in where) {
@@ -130,6 +130,6 @@ export class PipelineService extends CrudService<Pipeline> {
 				filter.where.description = ILike(`%${description}%`)
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

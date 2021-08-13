@@ -1,5 +1,5 @@
-import { Entity, Index, Column, ManyToMany, JoinTable } from 'typeorm';
-import { ITimeOffPolicy } from '@gauzy/contracts';
+import { Entity, Index, Column, ManyToMany } from 'typeorm';
+import { IEmployee, ITimeOffPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 import {
@@ -28,9 +28,15 @@ export class TimeOffPolicy
 	@Column()
 	paid: boolean;
 
-	@ManyToMany(() => Employee, { cascade: ['update'] })
-	@JoinTable({
-		name: 'time_off_policy_employee'
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Employee })
+	@ManyToMany(() => Employee, (employee) => employee.timeOffPolicies, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
-	employees?: Employee[];
+	employees?: IEmployee[];
 }

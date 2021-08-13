@@ -4,7 +4,8 @@ import {
 	IInviteUserModel,
 	IOrganization,
 	IOrganizationContact,
-	LanguagesEnum
+	LanguagesEnum,
+	IJoinEmployeeModel
 } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +15,7 @@ import * as nodemailer from 'nodemailer';
 import { Repository, IsNull } from 'typeorm';
 import { environment as env } from '@gauzy/config';
 import { ISMTPConfig } from '@gauzy/common';
-import { CrudService } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
@@ -24,7 +25,7 @@ import { Timesheet } from '../timesheet/timesheet.entity';
 import { RequestContext } from '../core/context';
 
 @Injectable()
-export class EmailService extends CrudService<IEmail> {
+export class EmailService extends TenantAwareCrudService<IEmail> {
 
 	private readonly email: Email;
 
@@ -316,6 +317,41 @@ export class EmailService extends CrudService<IEmail> {
 					message: res.originalMessage,
 					organization,
 					user: invitedBy
+				});
+			})
+			.catch(console.error);
+	}
+
+	sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
+		const { 
+			email,
+			employee,
+			organization,
+			languageCode,
+		} = joinEmployeeModel;
+
+		const sendOptions = {
+			template: 'employee-join',
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				host: originUrl || env.clientBaseUrl,
+				locale: languageCode,
+				organizationName: organization.name,
+				employeeName: employee.user.firstName,
+			}
+		};
+		
+		this.email
+			.send(sendOptions)
+			.then((res) => {
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email,
+					languageCode,
+					message: res.originalMessage,
+					organization,
 				});
 			})
 			.catch(console.error);

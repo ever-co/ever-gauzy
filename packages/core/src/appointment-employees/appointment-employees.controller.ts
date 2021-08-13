@@ -1,14 +1,13 @@
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { AppointmentEmployee } from './appointment-employees.entity';
 import { AppointmentEmployeesService } from './appointment-employees.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Controller, UseGuards, HttpStatus, Get, Param } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { UUIDValidationPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('AppointmentEmployee')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class AppointmentEmployeesController extends CrudController<AppointmentEmployee> {
 	constructor(
@@ -27,7 +26,6 @@ export class AppointmentEmployeesController extends CrudController<AppointmentEm
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get(':appointmentId')
 	async findOneById(
 		@Param('appointmentId', UUIDValidationPipe) appointmentId: string
@@ -51,7 +49,6 @@ export class AppointmentEmployeesController extends CrudController<AppointmentEm
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('find-employee-appointments/:employeeId')
 	async findEmployeeAppointments(
 		@Param('employeeId', UUIDValidationPipe) employeeId: string

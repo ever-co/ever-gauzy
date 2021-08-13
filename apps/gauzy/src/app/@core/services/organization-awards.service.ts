@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	IOrganizationAwardsCreateInput,
-	IOrganizationAwards,
-	IOrganizationAwardsFindInput
+	IOrganizationAwardCreateInput,
+	IOrganizationAward,
+	IOrganizationAwardFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
@@ -15,10 +15,10 @@ export class OrganizationAwardsService {
 	constructor(private http: HttpClient) {}
 
 	create(
-		createInput: IOrganizationAwardsCreateInput
-	): Promise<IOrganizationAwards> {
+		createInput: IOrganizationAwardCreateInput
+	): Promise<IOrganizationAward> {
 		return this.http
-			.post<IOrganizationAwards>(
+			.post<IOrganizationAward>(
 				`${API_PREFIX}/organization-awards`,
 				createInput
 			)
@@ -27,13 +27,13 @@ export class OrganizationAwardsService {
 	}
 
 	getAll(
-		findInput?: IOrganizationAwardsFindInput,
+		findInput?: IOrganizationAwardFindInput,
 		relations?: string[]
-	): Promise<{ items: IOrganizationAwards[]; total: number }> {
+	): Promise<{ items: IOrganizationAward[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: IOrganizationAwards[]; total: number }>(
+			.get<{ items: IOrganizationAward[]; total: number }>(
 				`${API_PREFIX}/organization-awards`,
 				{
 					params: { data }

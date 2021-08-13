@@ -58,7 +58,7 @@ export class CandidateInterviewService {
 	findByCandidateId(candidateId: string): Promise<ICandidateInterview[]> {
 		return this.http
 			.get<ICandidateInterview[]>(
-				`${API_PREFIX}/candidate-interview/findByCandidateId/${candidateId}`
+				`${API_PREFIX}/candidate-interview/candidate/${candidateId}`
 			)
 			.pipe(first())
 			.toPromise();

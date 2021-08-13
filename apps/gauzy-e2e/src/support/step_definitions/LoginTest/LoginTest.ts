@@ -5,9 +5,11 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given('Visit home page as unauthorised user', () => {
-	cy.visit('/');
+	cy.visit('/', { timeout: pageLoadTimeout });
 	loginPage.verifyTitle();
 });
 

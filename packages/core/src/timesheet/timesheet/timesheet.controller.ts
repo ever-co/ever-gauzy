@@ -8,10 +8,9 @@ import {
 	Query
 } from '@nestjs/common';
 import { Timesheet } from '../timesheet.entity';
-import { CrudController } from '../../core/crud/crud.controller';
+import { CrudController } from '../../core/crud';
 import { TimeSheetService } from './timesheet.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import {
 	IUpdateTimesheetStatusInput,
 	IGetTimesheetInput,
@@ -19,10 +18,10 @@ import {
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { I18nLang } from 'nestjs-i18n';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('TimeSheet')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TimeSheetController extends CrudController<Timesheet> {
 	constructor(private readonly timeSheetService: TimeSheetService) {
@@ -43,7 +42,7 @@ export class TimeSheetController extends CrudController<Timesheet> {
 	// @UseGuards(OrganizationPermissionGuard)
 	// @Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
 	async get(@Query() entity: IGetTimesheetInput): Promise<any> {
-		return this.timeSheetService.getTimeSheets(entity);
+		return await this.timeSheetService.getTimeSheets(entity);
 	}
 	@ApiOperation({ summary: 'Get timesheet Count' })
 	@ApiResponse({
@@ -56,8 +55,8 @@ export class TimeSheetController extends CrudController<Timesheet> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/count')
-	async getCount(@Query() entity: IGetTimesheetInput): Promise<any> {
-		return this.timeSheetService.getTimeSheetCount(entity);
+	async getTimesheetCount(@Query() entity: IGetTimesheetInput): Promise<any> {
+		return await this.timeSheetService.getTimeSheetCount(entity);
 	}
 
 	@ApiOperation({ summary: 'Update timesheet' })
@@ -77,8 +76,7 @@ export class TimeSheetController extends CrudController<Timesheet> {
 		@Body() entity: IUpdateTimesheetStatusInput,
 		@I18nLang() i18nLang: LanguagesEnum
 	): Promise<any> {
-		console.log({ i18nLang });
-		return this.timeSheetService.updateStatus(entity);
+		return await this.timeSheetService.updateStatus(entity);
 	}
 
 	@ApiOperation({ summary: 'Submit timesheet' })
@@ -93,6 +91,6 @@ export class TimeSheetController extends CrudController<Timesheet> {
 	})
 	@Put('/submit')
 	async submitTimeheet(@Body() entity: ISubmitTimesheetInput): Promise<any> {
-		return this.timeSheetService.submitTimeheet(entity);
+		return await this.timeSheetService.submitTimeheet(entity);
 	}
 }

@@ -8,9 +8,10 @@ import * as nodemailer from 'nodemailer';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { ISMTPConfig } from '@gauzy/common';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { CustomSmtp } from './custom-smtp.entity';
 import { EmailService } from '../email/email.service';
+import { RequestContext } from 'core';
 
 @Injectable()
 export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
@@ -27,11 +28,12 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	async getSmtpSetting(
 		query: ICustomSmtpFindInput
 	): Promise<ICustomSmtp | ISMTPConfig> {
-		const { tenantId, organizationId } = query;
+		const tenantId = RequestContext.currentTenantId();
+		const { organizationId } = query;
 		const globalSmtp = this.emailService.createSMTPTransporter();
 		try {
 			if (!organizationId) {
-				const organizationSmtp = await this.customSmtpRepository.findOne(
+				const tenantSmtp = await this.customSmtpRepository.findOne(
 					{
 						where: {
 							tenantId,
@@ -39,15 +41,15 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 						}
 					}
 				);
-				return organizationSmtp || globalSmtp;
+				return tenantSmtp || globalSmtp;
 			}
-			const tenantSmtp = await this.customSmtpRepository.findOne({
+			const organizationSmtp = await this.customSmtpRepository.findOne({
 				where: {
 					tenantId,
-					organizationId: organizationId
+					organizationId
 				}
 			});
-			return tenantSmtp || globalSmtp;
+			return organizationSmtp || globalSmtp;
 		} catch {
 			return globalSmtp;
 		}

@@ -7,34 +7,85 @@ import {
 	Controller,
 	Body,
 	Delete,
-	Put
+	Put,
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { IPagination } from '../core';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
+import { ICandidateCriterionsRating, IPagination, RolesEnum } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { CandidateCriterionsRatingService } from './candidate-criterion-rating.service';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
-import { ICandidateCriterionsRating, RolesEnum } from '@gauzy/contracts';
-import { RoleGuard } from '../shared/guards/auth/role.guard';
-import { Roles } from '../shared/decorators/roles';
-import { CandidateCriterionsRatingBulkCreateCommand } from './commands/candidate-criterions-rating.bulk.create.command';
-import { ParseJsonPipe } from '../shared';
-import { CandidateCriterionsRatingBulkDeleteCommand } from './commands/candidate-criterions-rating.bulk.delete.command';
-import { CandidateCriterionsRatingBulkUpdateCommand } from './commands';
-import { TenantModule } from '../tenant/tenant.module';
+import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
+import { Roles } from './../shared/decorators';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { 
+	CandidateCriterionsRatingBulkCreateCommand,
+	CandidateCriterionsRatingBulkDeleteCommand,
+	CandidateCriterionsRatingBulkUpdateCommand
+} from './commands';
 
 @ApiTags('CandidateCriterionRating')
-@UseGuards(AuthGuard('jwt'), TenantModule)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateCriterionsRatingController extends CrudController<CandidateCriterionsRating> {
 	constructor(
 		private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(candidateCriterionsRatingService);
 	}
+
+	/**
+	 * CREATE bulk candidate criterions rating 
+	 * 
+	 * @param body 
+	 * @returns 
+	 */
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Post('bulk')
+	async createBulk(
+		@Body() body: any
+	): Promise<ICandidateCriterionsRating[]> {
+		const { feedbackId = null, technologies = [], qualities = [] } = body;
+		return this.commandBus.execute(
+			new CandidateCriterionsRatingBulkCreateCommand(
+				feedbackId,
+				technologies,
+				qualities
+			)
+		);
+	}
+
+	/**
+	 * UPDATE bulk candidate criterions rating
+	 * 
+	 * @param body 
+	 * @returns 
+	 */
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Put('bulk')
+	async updateBulk(
+		@Body()
+		body: {
+			criterionsRating: ICandidateCriterionsRating[];
+			technologies: number[];
+			personalQualities: number[];
+		}
+	): Promise<ICandidateCriterionsRating[]> {
+		return this.commandBus.execute(
+			new CandidateCriterionsRatingBulkUpdateCommand(body)
+		);
+	}
+
+	/**
+	 * GET all candidate criterions rating
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate criterion rating.'
 	})
@@ -48,54 +99,29 @@ export class CandidateCriterionsRatingController extends CrudController<Candidat
 		description: 'Record not found'
 	})
 	@Get()
-	async findCriterionRatings(
-		@Query('data') data: string
-	): Promise<IPagination<CandidateCriterionsRating>> {
-		const { findInput } = JSON.parse(data);
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ICandidateCriterionsRating>> {
+		const { findInput } = data;
 		return this.candidateCriterionsRatingService.findAll({
 			where: findInput
 		});
 	}
 
+	/**
+	 * DELETE candidate criterions rating by feedback id
+	 * 
+	 * @param feedbackId 
+	 * @returns 
+	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Post('createBulk')
-	async createBulk(
-		@Body() input: any
-	): Promise<ICandidateCriterionsRating[]> {
-		const { feedbackId = null, technologies = [], qualities = [] } = input;
+	@Delete('feedback/:feedbackId')
+	async deleteBulkByFeedbackId(
+		@Param('id', UUIDValidationPipe) feedbackId: string,
+	): Promise<any> {
 		return this.commandBus.execute(
-			new CandidateCriterionsRatingBulkCreateCommand(
-				feedbackId,
-				technologies,
-				qualities
-			)
-		);
-	}
-
-	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Put('updateBulk')
-	async updateBulk(
-		@Body()
-		data: {
-			criterionsRating: ICandidateCriterionsRating[];
-			technologies: number[];
-			personalQualities: number[];
-		}
-	): Promise<ICandidateCriterionsRating[]> {
-		return this.commandBus.execute(
-			new CandidateCriterionsRatingBulkUpdateCommand(data)
-		);
-	}
-
-	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Delete('deleteBulk')
-	async deleteBulk(@Query('data', ParseJsonPipe) data: any): Promise<any> {
-		const { id = null } = data;
-		return this.commandBus.execute(
-			new CandidateCriterionsRatingBulkDeleteCommand(id)
+			new CandidateCriterionsRatingBulkDeleteCommand(feedbackId)
 		);
 	}
 }

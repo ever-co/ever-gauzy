@@ -15,6 +15,7 @@ import { ElectronService } from 'ngx-electron';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServerDashboardComponent implements OnInit {
+	@ViewChild('logbox') logbox: ElementRef;
 	active_index: any;
     gauzyIcon = './assets/images/logos/logo_Gauzy.svg';
 	running=false;
@@ -23,6 +24,7 @@ export class ServerDashboardComponent implements OnInit {
 		name: 'Start',
 		icon: 'play-circle-outline'
 	}
+	logContents:any = [];
 
     constructor(
 		private electronService: ElectronService,
@@ -40,6 +42,21 @@ export class ServerDashboardComponent implements OnInit {
 				this._cdr.detectChanges();
 			}
 		);
+
+		this.electronService.ipcRenderer.on(
+			'log_state',
+			(event, arg) => {
+				if (this.logContents.length < 20) {
+					this.logContents.push(arg.msg);
+				} else {
+					this.logContents.shift();
+					this.logContents.push(arg.msg);
+				}
+				this._cdr.detectChanges();
+				this.scrollToBottom();
+				console.log(arg);
+			}
+		)
 	}
 
 	
@@ -47,7 +64,12 @@ export class ServerDashboardComponent implements OnInit {
 		this.active_index = 0;
 	}
 
+	private scrollToBottom() {
+        this.logbox.nativeElement.scrollTop = this.logbox.nativeElement.scrollHeight;
+    }
+
     runServer() {
+		this.logContents = [];
 		this.loading = true;
 		this.btn = {
 			name: '',

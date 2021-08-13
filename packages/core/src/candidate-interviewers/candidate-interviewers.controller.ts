@@ -11,28 +11,26 @@ import {
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { AuthGuard } from '@nestjs/passport';
-import { IPagination } from '../core';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { CandidateInterviewersService } from './candidate-interviewers.service';
+import { CommandBus } from '@nestjs/cqrs';
 import {
 	PermissionsEnum,
 	ICandidateInterviewersCreateInput,
-	ICandidateInterviewers
+	ICandidateInterviewers,
+	IPagination
 } from '@gauzy/contracts';
-import { ParseJsonPipe } from '../shared';
-import { CommandBus } from '@nestjs/cqrs';
+import { CrudController } from './../core/crud';
+import { CandidateInterviewersService } from './candidate-interviewers.service';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	CandidateInterviewersEmployeeBulkDeleteCommand,
 	CandidateInterviewersInterviewBulkDeleteCommand,
 	CandidateInterviewersBulkCreateCommand
 } from './commands';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('CandidateInterviewer')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateInterviewersController extends CrudController<CandidateInterviewers> {
 	constructor(
@@ -41,43 +39,13 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 	) {
 		super(candidateInterviewersService);
 	}
-	@ApiOperation({
-		summary: 'Find all candidate interviewers.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found candidate interviewers',
-		type: CandidateInterviewers
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findInterviewers(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<CandidateInterviewers>> {
-		const { findInput = null } = data;
-		return this.candidateInterviewersService.findAll({ where: findInput });
-	}
 
-	@ApiOperation({
-		summary: 'Create new record interviewers'
-	})
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Success Add Interviewers',
-		type: CandidateInterviewers
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
-	@Post()
-	async createInterviewer(
-		@Body() entity: ICandidateInterviewersCreateInput
-	): Promise<any> {
-		return this.candidateInterviewersService.create(entity);
-	}
-
+	/**
+	 * CREATE bulk candidate interviewers
+	 * 
+	 * @param body 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create interviewers in Bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -90,13 +58,21 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
-	@Post('createBulk')
-	async createBulk(@Body() input: any): Promise<ICandidateInterviewers[]> {
-		return this.commandBus.execute(
-			new CandidateInterviewersBulkCreateCommand(input)
+	@Post('bulk')
+	async createBulk(
+		@Body() body: ICandidateInterviewersCreateInput
+	): Promise<ICandidateInterviewers[]> {
+		return await this.commandBus.execute(
+			new CandidateInterviewersBulkCreateCommand(body)
 		);
 	}
 
+	/**
+	 * GET candidate interviewers by interview id
+	 * 
+	 * @param interviewId 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find Interviewers By Interview Id.'
 	})
@@ -111,15 +87,21 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
-	@Get('getByInterviewId/:interviewId')
+	@Get('interview/:interviewId')
 	async findByInterviewId(
-		@Param('interviewId') interviewId: string
-	): Promise<CandidateInterviewers[]> {
-		return this.candidateInterviewersService.getInterviewersByInterviewId(
+		@Param('interviewId', UUIDValidationPipe) interviewId: string
+	): Promise<ICandidateInterviewers[]> {
+		return await this.candidateInterviewersService.getInterviewersByInterviewId(
 			interviewId
 		);
 	}
 
+	/**
+	 * DELETE bulk interviewer by interview id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Delete Interviewers By Interview Id.'
 	})
@@ -134,16 +116,21 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
-	@Delete('deleteBulkByInterviewId')
+	@Delete('interview/:interviewId')
 	async deleteBulkByInterviewId(
-		@Query('data', ParseJsonPipe) data: any
+		@Param('interviewId', UUIDValidationPipe) id: string
 	): Promise<any> {
-		const { id = null } = data;
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new CandidateInterviewersInterviewBulkDeleteCommand(id)
 		);
 	}
 
+	/**
+	 * DELETE candidate interviewers by bulk employee ids
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Delete Interviewers By employeeId.'
 	})
@@ -166,5 +153,54 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		return this.commandBus.execute(
 			new CandidateInterviewersEmployeeBulkDeleteCommand(deleteInput)
 		);
+	}
+
+	/**
+	 * GET all candidate interviewers
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Find all candidate interviewers.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found candidate interviewers',
+		type: CandidateInterviewers
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ICandidateInterviewers>> {
+		const { findInput = null } = data;
+		return this.candidateInterviewersService.findAll({ where: findInput });
+	}
+
+	/**
+	 * CREATE candidate interviewer
+	 * 
+	 * @param body 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Create new record interviewers'
+	})
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Success Add Interviewers',
+		type: CandidateInterviewers
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
+	@Post()
+	async create(
+		@Body() body: ICandidateInterviewersCreateInput
+	): Promise<ICandidateInterviewers> {
+		return this.candidateInterviewersService.create(body);
 	}
 }

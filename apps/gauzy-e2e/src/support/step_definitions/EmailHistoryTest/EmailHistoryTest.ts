@@ -7,10 +7,12 @@ import { CustomCommands } from '../../commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given('Login with default credentials and visit Email history page', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/settings/email-history');
+	cy.visit('/#/pages/settings/email-history', { timeout: pageLoadTimeout });
 });
 
 // Verify email templates dropdown

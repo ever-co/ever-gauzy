@@ -11,16 +11,16 @@ import {
 	Put
 } from '@nestjs/common';
 import { TimeSlot } from '../time-slot.entity';
-import { CrudController } from '../../core/crud/crud.controller';
+import { CrudController } from '../../core/crud';
 import { TimeSlotService } from './time-slot.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { IGetTimeSlotInput } from '@gauzy/contracts';
+import { IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { FindOneOptions } from 'typeorm';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from '../../shared/guards';
+import { UUIDValidationPipe } from './../../shared/pipes';
 
 @ApiTags('TimeSlot')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller('time-slot')
 export class TimeSlotController extends CrudController<TimeSlot> {
 	constructor(private readonly timeSlotService: TimeSlotService) {
@@ -34,8 +34,8 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/')
-	async getAll(@Query() entity: IGetTimeSlotInput): Promise<TimeSlot[]> {
-		return this.timeSlotService.getTimeSlots(entity);
+	async getAll(@Query() entity: IGetTimeSlotInput): Promise<ITimeSlot[]> {
+		return await this.timeSlotService.getTimeSlots(entity);
 	}
 
 	@ApiOperation({ summary: 'Get Time Slots' })
@@ -46,10 +46,10 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 	})
 	@Get('/:id')
 	async getOne(
-		@Param() { id },
+		@Param('id', UUIDValidationPipe) { id },
 		@Query() option: FindOneOptions
 	): Promise<TimeSlot> {
-		return this.timeSlotService.findOne(id, option);
+		return await this.timeSlotService.findOne(id, option);
 	}
 
 	@ApiOperation({ summary: 'Create Time Slot' })
@@ -59,7 +59,7 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/')
-	async create(@Body() entity: TimeSlot): Promise<TimeSlot> {
+	async create(@Body() entity: ITimeSlot): Promise<ITimeSlot> {
 		return this.timeSlotService.create(entity);
 	}
 
@@ -70,8 +70,11 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/:id')
-	async update(@Param() params, @Body() entity: TimeSlot): Promise<TimeSlot> {
-		return this.timeSlotService.update(params.id, entity);
+	async update(
+		@Param('id', UUIDValidationPipe) id,
+		@Body() entity: TimeSlot
+	): Promise<ITimeSlot> {
+		return this.timeSlotService.update(id, entity);
 	}
 
 	@ApiOperation({ summary: 'Delete TimeSlot' })

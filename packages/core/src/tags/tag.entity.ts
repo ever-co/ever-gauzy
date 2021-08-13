@@ -45,7 +45,7 @@ import {
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
-	OrganizationPositions,
+	OrganizationPosition,
 	OrganizationProject,
 	OrganizationTeam,
 	OrganizationVendor,
@@ -78,6 +78,9 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	isSystem?: boolean;
 
 	@ManyToMany(() => Candidate, (candidate) => candidate.tags)
+	@JoinTable({
+		name: 'tag_candidate'
+	})
 	candidate?: ICandidate[];
 
 	@ManyToMany(() => Employee, (employee) => employee.tags)
@@ -108,6 +111,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	task?: ITask[];
 
 	@ManyToMany(() => Proposal, (proposal) => proposal.tags)
+	@JoinTable({ name: 'tag_proposal' })
 	proposal?: IProposal[];
 
 	@ManyToMany(
@@ -132,7 +136,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	organizationProject?: IOrganizationProject[];
 
 	@ManyToMany(
-		() => OrganizationPositions,
+		() => OrganizationPosition,
 		(organizationPosition) => organizationPosition.tags
 	)
 	organizationPosition?: IOrganizationPosition[];

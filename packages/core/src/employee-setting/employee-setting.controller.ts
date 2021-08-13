@@ -1,14 +1,14 @@
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { IEmployeeSetting, IPagination } from '@gauzy/contracts';
 import { EmployeeSettingService } from './employee-setting.service';
 import { EmployeeSetting } from './employee-setting.entity';
-import { CrudController } from '../core/crud/crud.controller';
-import { IPagination } from '../core';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { CrudController } from './../core/crud';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('EmployeeSetting')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 	constructor(
@@ -17,6 +17,12 @@ export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 		super(employeeSettingService);
 	}
 
+	/**
+	 * GET all employee settings
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all employee settings.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -28,11 +34,10 @@ export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
-		@Query('data') data: string
-	): Promise<IPagination<EmployeeSetting>> {
-		const { relations, findInput } = JSON.parse(data);
-
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IEmployeeSetting>> {
+		const { relations, findInput } = data;
 		return this.employeeSettingService.findAll({
 			where: findInput,
 			relations

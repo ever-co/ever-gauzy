@@ -14,6 +14,8 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let empFirstName = faker.name.firstName();
 let empLastName = faker.name.lastName();
 let empUsername = faker.internet.userName();
@@ -24,7 +26,6 @@ let empImgUrl = faker.image.avatar();
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees');
 });
 
 // Add new tag
@@ -64,7 +65,7 @@ When('User go to Organization departments page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/organization/departments');
+	cy.visit('/#/pages/organization/departments', { timeout: pageLoadTimeout });
 });
 
 Then('User will see grid button', () => {

@@ -1,25 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, SelectQueryBuilder } from 'typeorm';
-import { CrudService } from '../../core/crud/crud.service';
+import { TenantAwareCrudService } from './../../core/crud';
 import { Timesheet } from '../timesheet.entity';
 import * as moment from 'moment';
 import {
 	IUpdateTimesheetStatusInput,
 	IGetTimesheetInput,
 	ISubmitTimesheetInput,
-	PermissionsEnum
+	PermissionsEnum,
+	ITimesheet
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { CommandBus } from '@nestjs/cqrs';
-import { TimesheetFirstOrCreateCommand } from './commands/timesheet-first-or-create.command';
-import { TimesheetUpdateStatusCommand } from './commands/timesheet-update-status.command';
-import { TimesheetSubmitCommand } from './commands/timesheet-submit.command';
 import { getConfig } from '@gauzy/config';
+import {
+	TimesheetFirstOrCreateCommand,
+	TimesheetSubmitCommand,
+	TimesheetUpdateStatusCommand
+} from './commands';
 const config = getConfig();
 
 @Injectable()
-export class TimeSheetService extends CrudService<Timesheet> {
+export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
@@ -28,20 +31,29 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		super(timeSheetRepository);
 	}
 
-	async createOrFindTimeSheet(employeeId, date: Date = new Date()) {
-		const timesheet = await this.commandBus.execute(
+	async createOrFindTimeSheet(
+		employeeId: string, 
+		date: Date = new Date()
+	): Promise<ITimesheet> {
+		return await this.commandBus.execute(
 			new TimesheetFirstOrCreateCommand(date, employeeId)
 		);
-
-		return timesheet;
 	}
 
-	submitTimeheet(input: ISubmitTimesheetInput) {
-		return this.commandBus.execute(new TimesheetSubmitCommand(input));
+	async submitTimeheet(
+		input: ISubmitTimesheetInput
+	): Promise<ITimesheet[]> {
+		return await this.commandBus.execute(
+			new TimesheetSubmitCommand(input)
+		);
 	}
 
-	updateStatus(input: IUpdateTimesheetStatusInput) {
-		return this.commandBus.execute(new TimesheetUpdateStatusCommand(input));
+	async updateStatus(
+		input: IUpdateTimesheetStatusInput
+	): Promise<ITimesheet[]> {
+		return await this.commandBus.execute(
+			new TimesheetUpdateStatusCommand(input)
+		);
 	}
 
 	async getTimeSheetCount(request: IGetTimesheetInput) {
@@ -49,7 +61,7 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		return timesheets.length;
 	}
 
-	async getTimeSheets(request: IGetTimesheetInput) {
+	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
 		let employeeIds: string[];
 		let startDate: any = moment.utc(request.startDate);
 		let endDate: any = moment.utc(request.endDate);
@@ -62,6 +74,7 @@ export class TimeSheetService extends CrudService<Timesheet> {
 			endDate = endDate.toDate();
 		}
 
+		const tenantId = RequestContext.currentTenantId();
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -105,16 +118,8 @@ export class TimeSheetService extends CrudService<Timesheet> {
 					);
 				}
 				//check organization and tenant for timelogs
-				let { tenantId = null } = request;
-				//if not found tenantId then get from current user session
-				if (typeof tenantId !== 'string') {
-					const user = RequestContext.currentUser();
-					tenantId = user.tenantId;
-				}
 				if (tenantId) {
-					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId
-					});
+					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 				}
 			}
 		});

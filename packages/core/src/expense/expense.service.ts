@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, ILike } from 'typeorm';
 import { Expense } from './expense.entity';
-import { getDateRangeFormat, IPagination } from '../core';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { getDateRangeFormat } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { IGetExpenseInput, PermissionsEnum } from '@gauzy/contracts';
+import { IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import { getConfig } from '@gauzy/config';
@@ -197,7 +197,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		return query;
 	}
 
-	public search(filter: any) {
+	public pagination(filter: any) {
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('notes' in filters) {
@@ -222,6 +222,6 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				filter.where.valueDate = Between(start, end); 
 			}
 		}
-		return super.search(filter);
+		return super.paginate(filter);
 	}
 }

@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
 import { Brackets, Repository } from 'typeorm';
 import { RequestContext } from '../core/context';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from './employee.entity';
 
 @Injectable()

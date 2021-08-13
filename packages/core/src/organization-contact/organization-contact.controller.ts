@@ -1,4 +1,3 @@
-import { IEditEntityByMemberInput, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -12,19 +11,22 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationContactEditByEmployeeCommand } from './commands/organization-contact.edit-by-employee.command';
+import {
+	IEditEntityByMemberInput,
+	IOrganizationContact,
+	IPagination,
+	PermissionsEnum
+} from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
+import { OrganizationContactEditByEmployeeCommand } from './commands';
 import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactService } from './organization-contact.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationContact')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationContactController extends CrudController<OrganizationContact> {
 	constructor(
@@ -34,12 +36,19 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		super(organizationContactService);
 	}
 
+	/**
+	 * GET all organization contacts by Employee
+	 * 
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
-		summary: 'Find all organization projects by Employee.'
+		summary: 'Find all organization contacts by Employee.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found projects',
+		description: 'Found organization contacts',
 		type: OrganizationContact
 	})
 	@ApiResponse({
@@ -48,33 +57,18 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@Get('employee/:id')
 	async findByEmployee(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<OrganizationContact>> {
+	): Promise<IPagination<IOrganizationContact>> {
 		return this.organizationContactService.findByEmployee(id, data);
 	}
 
-	@ApiOperation({
-		summary: 'Find all organization contacts recurring expense.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found contacts recurring expense',
-		type: OrganizationContact
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findAllOrganizationContacts(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<OrganizationContact>> {
-		return this.organizationContactService.findAllOrganizationContacts(
-			data
-		);
-	}
-
+	/**
+	 * UPDATE organization contact by Employee
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -93,11 +87,38 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
-	async updateEmployee(
+	async updateByEmployee(
 		@Body() entity: IEditEntityByMemberInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationContactEditByEmployeeCommand(entity)
+		);
+	}
+
+	/**
+	 * GET all organization contacts
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Find all organization contacts.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found contacts recurring expense',
+		type: OrganizationContact
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IOrganizationContact>> {
+		return this.organizationContactService.findAllOrganizationContacts(
+			data
 		);
 	}
 }

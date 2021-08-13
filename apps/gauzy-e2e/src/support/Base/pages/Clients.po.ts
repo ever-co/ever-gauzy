@@ -126,6 +126,13 @@ export const selectEmployeeDropdownOption = (index) => {
 	clickButtonByIndex(ClientsPage.dropdownOptionCss, index);
 };
 
+export const selectEmployeeFromDropdownByName = (name) => {
+	clickElementByText(
+		ClientsPage.dropdownOptionCss,
+		name
+	);
+};
+
 export const tagsMultyselectVisible = () => {
 	verifyElementIsVisible(ClientsPage.addTagsDropdownCss);
 };

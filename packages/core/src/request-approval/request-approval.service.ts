@@ -1,5 +1,3 @@
-import { CrudService, IPagination } from '../core';
-import { RequestApproval } from './request-approval.entity';
 import {
 	Injectable,
 	BadRequestException,
@@ -12,24 +10,34 @@ import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum,
 	IRequestApprovalCreateInput,
-	IRequestApprovalFindInput
+	IRequestApprovalFindInput,
+	IPagination,
+	IRequestApprovalEmployee,
+	IOrganizationTeam,
+	IEmployee,
+	IRequestApprovalTeam
 } from '@gauzy/contracts';
-import { Employee } from '../employee/employee.entity';
-import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { RequestContext } from '../core/context';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import {
+	Employee,
+	OrganizationTeam,
+	RequestApprovalEmployee,
+	RequestApprovalTeam
+} from './../core/entities/internal';
+import { TenantAwareCrudService } from './../core/crud';
+import { RequestApproval } from './request-approval.entity';
 import { getConfig } from '@gauzy/config';
 const config = getConfig();
 
 @Injectable()
-export class RequestApprovalService extends CrudService<RequestApproval> {
+export class RequestApprovalService extends TenantAwareCrudService<RequestApproval> {
 	constructor(
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
-		// private readonly organizationTeamService: OrganizationTeamService,
+		
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<OrganizationTeam>
 	) {
@@ -40,6 +48,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		filter: FindManyOptions<RequestApproval>,
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
+
+		const tenantId = RequestContext.currentTenantId();
 		const query = this.requestApprovalRepository.createQueryBuilder(
 			'request_approval'
 		);
@@ -78,7 +88,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			});
 		}
 
-		const { organizationId, tenantId } = findInput;
+		const { organizationId } = findInput;
 		const [items, total] = await query
 			.where(
 				new Brackets((sqb) => {
@@ -127,7 +137,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		findInput?: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
 		try {
-			const { organizationId, tenantId } = findInput;
+			const tenantId = RequestContext.currentTenantId();
+			const { organizationId } = findInput;
 			const result = await this.requestApprovalRepository.find({
 				where: {
 					createdBy: id,
@@ -201,6 +212,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		entity: IRequestApprovalCreateInput
 	): Promise<RequestApproval> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+
 			const requestApproval = new RequestApproval();
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
@@ -210,7 +223,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.min_count = entity.min_count;
 			requestApproval.tags = entity.tags;
 			requestApproval.organizationId = entity.organizationId;
-			requestApproval.tenantId = entity.tenantId;
+			requestApproval.tenantId = tenantId;
 			if (entity.employeeApprovals) {
 				const employees = await this.employeeRepository.findByIds(
 					entity.employeeApprovals,
@@ -218,19 +231,15 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 						relations: ['user']
 					}
 				);
-
-				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
-				employees.forEach((employee) => {
+				const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
+				employees.forEach((employee: IEmployee) => {
 					const raEmployees = new RequestApprovalEmployee();
 					raEmployees.employeeId = employee.id;
-					raEmployees.employee = employee;
 					raEmployees.organizationId = entity.organizationId;
-					raEmployees.tenantId = entity.tenantId;
-					raEmployees.status =
-						RequestApprovalStatusTypesEnum.REQUESTED;
+					raEmployees.tenantId = tenantId;
+					raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
 					requestApprovalEmployees.push(raEmployees);
 				});
-
 				requestApproval.employeeApprovals = requestApprovalEmployees;
 			}
 
@@ -246,7 +255,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 					raTeam.team = team;
 					raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
 					raTeam.organizationId = entity.organizationId;
-					raTeam.tenantId = entity.tenantId;
+					raTeam.tenantId = tenantId;
 					requestApprovalTeams.push(raTeam);
 				});
 
@@ -263,19 +272,20 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		entity: IRequestApprovalCreateInput
 	): Promise<RequestApproval> {
 		try {
-			let employees;
-			let teams;
+			const tenantId = RequestContext.currentTenantId();
+			let employees: IEmployee[];
+			let teams: IOrganizationTeam[];
+			
 			const requestApproval = await this.requestApprovalRepository.findOne(
 				id
 			);
-
 			requestApproval.name = entity.name;
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
 			requestApproval.min_count = entity.min_count;
 			requestApproval.tags = entity.tags;
 			requestApproval.organizationId = entity.organizationId;
-			requestApproval.tenantId = entity.tenantId;
+			requestApproval.tenantId = tenantId;
 
 			await this.repository
 				.createQueryBuilder()
@@ -299,15 +309,14 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 					}
 				);
 
-				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
+				const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
 				employees.forEach((employee) => {
 					const raEmployees = new RequestApprovalEmployee();
 					raEmployees.employeeId = employee.id;
 					raEmployees.employee = employee;
 					raEmployees.organizationId = entity.organizationId;
-					raEmployees.tenantId = entity.tenantId;
-					raEmployees.status =
-						RequestApprovalStatusTypesEnum.REQUESTED;
+					raEmployees.tenantId = tenantId;
+					raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
 					requestApprovalEmployees.push(raEmployees);
 				});
 
@@ -319,14 +328,14 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 					entity.teams
 				);
 
-				const requestApprovalTeams: RequestApprovalTeam[] = [];
+				const requestApprovalTeams: IRequestApprovalTeam[] = [];
 				teams.forEach((team) => {
 					const raTeam = new RequestApprovalTeam();
 					raTeam.teamId = team.id;
 					raTeam.team = team;
 					raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
 					raTeam.organizationId = entity.organizationId;
-					raTeam.tenantId = entity.tenantId;
+					raTeam.tenantId = tenantId;
 					requestApprovalTeams.push(raTeam);
 				});
 

@@ -3,7 +3,7 @@ import { app } from 'electron';
 import {
     LocalStore
 } from './desktop-store';
-export async function apiServer(servicePath, envValue, serverWindow) {
+export async function apiServer(servicePath, envValue, serverWindow, uiPort) {
 	try {
         console.log(envValue);
 		const uiService = fork(servicePath.api, { silent: true, env: {
@@ -17,30 +17,32 @@ export async function apiServer(servicePath, envValue, serverWindow) {
         
         uiService.stdout.on('data', (data) => {
             const msgData = data.toString()
-            console.log('SERVER API STATE LOGS -> ', msgData);
             if (msgData.indexOf('Listening at http') > -1) {
-                UiServerTask(servicePath.ui, serverWindow)
+                UiServerTask(servicePath.ui, serverWindow, uiPort.toString())
             }
+            serverWindow.webContents.send('log_state', { msg: msgData });
             // uiService.unref();
             // process.exit(0);
         });
 
         uiService.stderr.on('data', (data) => {
 			const msgData = data.toString();
+            serverWindow.webContents.send('log_state', { msg: msgData });
 			console.log('log error--', msgData);
 		});
 
 
 	} catch (error) {
-		console.log('error upload', error);
+        serverWindow.webContents.send('log_state', { msg: error.message });
 	}
   }
 
-export async function UiServerTask(uiPath, serverWindow) {
+export async function UiServerTask(uiPath, serverWindow, uiPort) {
 	try {
         const uiService = fork(uiPath, { silent: true, env: {
             ...process.env,
-            isPackaged: app.isPackaged.toString()
+            isPackaged: app.isPackaged.toString(),
+            uiPort
         } });
         LocalStore.updateConfigSetting({
             uiPid: uiService.pid
@@ -50,9 +52,16 @@ export async function UiServerTask(uiPath, serverWindow) {
             console.log('SERVER UI STATE LOGS -> ', msgLog);
             if (msgLog.indexOf('listen ui on port') > -1) {
                 serverWindow.webContents.send('running_state', true);
+                serverWindow.webContents.send('log_state', {msg: msgLog});
             }
+            
             // uiService.unref();
             // process.exit(0);
+        });
+        uiService.stderr.on('data', (data) => {
+            const msgData = data.toString();
+            serverWindow.webContents.send('log_state', { msg: msgData });
+            console.log('log error--', msgData);
         });
 	} catch (error) {
 		console.log('error upload', error);

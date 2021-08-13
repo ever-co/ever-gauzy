@@ -10,16 +10,15 @@ import {
 	Param,
 	Body
 } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
-import { AuthGuard } from '@nestjs/passport';
-import { ParseJsonPipe } from '../shared';
-import { LanguagesEnum, IProductCategoryTranslated } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { LanguagesEnum, IProductCategoryTranslated, IPagination } from '@gauzy/contracts';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('ProductCategories')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProductCategoryController extends CrudController<ProductCategory> {
 	constructor(
@@ -91,7 +90,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ProductCategory
 	): Promise<any> {
 		return this.productCategoriesService.updateProductCategory(id, entity);

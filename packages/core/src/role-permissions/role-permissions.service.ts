@@ -1,15 +1,22 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, FindConditions, UpdateResult, getManager } from 'typeorm';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
-import { RolePermissions } from './role-permissions.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { RolesEnum, ITenant, IRole, IRolePermission, IImportRecord, IRolePermissionMigrateInput } from '@gauzy/contracts';
-import { Role } from '../role/role.entity';
-import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
+import {
+	RolesEnum,
+	ITenant,
+	IRole,
+	IRolePermission,
+	IImportRecord,
+	IRolePermissionMigrateInput
+} from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
+import { RolePermissions } from './role-permissions.entity';
+import { Role } from '../role/role.entity';
+import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 
 @Injectable()
 export class RolePermissionsService extends TenantAwareCrudService<RolePermissions> {
@@ -33,12 +40,30 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 			});
 
 			if (role.name === RolesEnum.SUPER_ADMIN) {
-				throw new Error('Cannot modify Permissions for Super Admin');
+				throw new NotAcceptableException(
+					'Cannot modify Permissions for Super Admin'
+				);
 			}
-
-			return await this.repository.update(id, partialEntity);
+			return await this.update(id, partialEntity);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err.message);
+		}
+	}
+
+	public async delete(id: string | number) {
+		try {
+			const { role } = await this.repository.findOne({
+				where: { id },
+				relations: ['role']
+			});
+			if (role.name === RolesEnum.SUPER_ADMIN) {
+				throw new NotAcceptableException(
+					'Cannot delete Permissions for Super Admin'
+				);
+			}
+			return await this.delete(id);
+		} catch (error /*: WriteError*/) {
+			throw new BadRequestException(error);
 		}
 	}
 

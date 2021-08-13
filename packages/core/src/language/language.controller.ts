@@ -1,10 +1,11 @@
 import { Controller, Get, Param, Post, Body, UseGuards, HttpStatus, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { Language } from './language.entity';
 import { LanguageService } from './language.service';
-import { Permissions, PermissionGuard } from '../shared';
+import { PermissionGuard } from './../shared/guards';
+import { Permissions, Public } from './../shared/decorators';
 
 @ApiTags('Languages')
 @Controller()
@@ -24,13 +25,15 @@ export class LanguageController extends CrudController<Language> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllLanguages(
+	@Public()
+	async findAll(
 		@Query() query: any
 	): Promise<IPagination<Language>> {
 		return this.languageService.findAll(query);
 	}
 
 	@Get('getByName/:name')
+	@Public()
 	async findByName(@Param('name') name: string): Promise<Language> {
 		return this.languageService.findOneByName(name);
 	}
@@ -38,7 +41,7 @@ export class LanguageController extends CrudController<Language> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
 	@Post()
-	async createRecord(@Body() entity: Language): Promise<any> {
+	async create(@Body() entity: Language): Promise<any> {
 		return this.languageService.create(entity);
 	}
 }

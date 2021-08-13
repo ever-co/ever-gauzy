@@ -10,6 +10,8 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let empFirstName = faker.name.firstName();
 let empLastName = faker.name.lastName();
 let empUsername = faker.internet.userName();
@@ -40,7 +42,7 @@ And('User can visit Organization equipment page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/organization/equipment');
+	cy.visit('/#/pages/organization/equipment', { timeout: pageLoadTimeout });
 });
 
 And('User can see grid button', () => {
@@ -139,6 +141,9 @@ And('User can verify equipment was created', () => {
 
 // Add equipment policy
 And('User can see equipment sharing button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	organizationEquipmentPage.equipmentSharingButtonVisible();
 });
 
@@ -147,6 +152,10 @@ When('User click on equipment sharing button', () => {
 });
 
 Then('User can see sharing policy button', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.visit('/#/pages/organization/equipment-sharing', { timeout: pageLoadTimeout });
 	organizationEquipmentPage.sharingPolicyButtonVisible();
 });
 
@@ -210,10 +219,20 @@ When('User click on back button', () => {
 
 // Request equipment sharing
 Then('User can see request equipment sharing button', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.visit('/#/pages/organization/equipment-sharing', { timeout: pageLoadTimeout });
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	organizationEquipmentPage.requestButtonVisible();
 });
 
 When('User click on request equipment sharing button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	organizationEquipmentPage.clickRequestButton();
 });
 
@@ -310,6 +329,13 @@ When('User click on back button', () => {
 
 // Edit equipment
 Then('User can see equipment table', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.visit('/#/pages/organization/equipment', { timeout: pageLoadTimeout });
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	organizationEquipmentPage.tableRowVisible();
 });
 

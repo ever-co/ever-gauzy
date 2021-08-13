@@ -119,7 +119,8 @@ export class SetupComponent implements OnInit {
 
 	serverConfig: any = {
 		integrated: {
-			port: '5620'
+			port: '5620',
+			portUi: '8084'
 		},
 		localNetwork: {
 			apiHost: '',
@@ -184,6 +185,38 @@ export class SetupComponent implements OnInit {
 	};
 
 	runApp: boolean = false;
+	welcomeTitle: string = 'GAUZY PLATFORM WIZARD';
+	welcomeLabel: string = `
+		Gauzy Desktop App provides the full
+		functionality of the Gauzy Platform
+		available directly on your desktop
+		computer or a laptop. In addition,
+		it allows tracking work time,
+		activity recording, and the ability
+		to receive tracking
+		reminders/notifications.
+	`;
+
+	welcomeText() {
+		switch (this.appName) {
+			case 'gauzy-server':
+				this.welcomeTitle = 'GAUZY SERVER INSTALLATION WIZARD';
+				this.welcomeLabel = `
+					Gauzy Desktop App provides the full
+					functionality of the Gauzy Platform
+					available directly on your desktop
+					computer or a laptop. In addition,
+					it allows tracking work time,
+					activity recording, and the ability
+					to receive tracking
+					reminders/notifications.
+				`;
+				break;
+		
+			default:
+				break;
+		}
+	}
 
 	connectivityChange(event, key) {
 		Object.keys(this.connectivity).forEach((itemKey) => {
@@ -316,7 +349,7 @@ export class SetupComponent implements OnInit {
 
 	validation() {
 		const { integrated, localNetwork, live } = this.connectivity;
-		const { port } = this.serverConfig.integrated;
+		const { port, portUi } = this.serverConfig.integrated;
 		const { apiHost } = this.serverConfig.localNetwork;
 		const {
 			host,
@@ -331,6 +364,7 @@ export class SetupComponent implements OnInit {
 		switch (true) {
 			case integrated &&
 				port &&
+				portUi &&
 				dbPort &&
 				host &&
 				dbName &&
@@ -339,7 +373,7 @@ export class SetupComponent implements OnInit {
 				postgre:
 				this.buttonSave = true;
 				break;
-			case integrated && port && sqlite:
+			case integrated && port && portUi && sqlite:
 				this.buttonSave = true;
 				break;
 			case localNetwork &&
@@ -447,6 +481,7 @@ export class SetupComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		this.welcomeText();
 		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
 			// this.open(true);
 			// this._cdr.detectChanges();
@@ -471,5 +506,6 @@ export class SetupComponent implements OnInit {
 				elBtn.click();
 			}
 		});
+		this.validation();
 	}
 }

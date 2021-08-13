@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, JoinColumn, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateInterview,
@@ -16,6 +16,7 @@ import {
 	CandidateTechnologies,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { IsOptional, IsString } from 'class-validator';
 
 @Entity('candidate_interview')
 export class CandidateInterview
@@ -33,13 +34,9 @@ export class CandidateInterview
 	@Column({ nullable: true })
 	endTime: Date;
 
-	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
-	candidateId?: string;
-
 	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
-	location: string;
+	location?: string;
 
 	@ApiProperty({ type: () => String })
 	@Column()
@@ -53,44 +50,55 @@ export class CandidateInterview
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => CandidateFeedback })
 	@OneToMany(() => CandidateFeedback, (feedback) => feedback.interview, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
-	@OneToMany(
-		() => CandidateTechnologies,
-		(technologies) => technologies.interview,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
+	@ApiProperty({ type: () => CandidateTechnologies })
+	@OneToMany(() => CandidateTechnologies, (technologies) => technologies.interview, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	technologies?: ICandidateTechnologies[];
 
-	@OneToMany(
-		() => CandidatePersonalQualities,
-		(personalQualities) => personalQualities.interview,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
+	@ApiProperty({ type: () => CandidatePersonalQualities })
+	@OneToMany(() => CandidatePersonalQualities, (personalQualities) => personalQualities.interview, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	personalQualities?: ICandidatePersonalQualities[];
 
-	@OneToMany(
-		() => CandidateInterviewers,
-		(interviewers) => interviewers.interview,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
+	@ApiProperty({ type: () => CandidateInterviewers })
+	@OneToMany(() => CandidateInterviewers, (interviewers) => interviewers.interview, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	interviewers?: ICandidateInterviewers[];
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.interview, {
 		onDelete: 'CASCADE'
 	})
-	candidate: ICandidate;
+	candidate?: ICandidate;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: CandidateInterview) => it.candidate)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	candidateId?: string;
 }

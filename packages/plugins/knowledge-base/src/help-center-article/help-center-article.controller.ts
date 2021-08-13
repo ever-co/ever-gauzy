@@ -9,15 +9,14 @@ import {
 	UseGuards,
 	Get,
 	Param,
-	Delete,
-	Query
+	Delete
 } from '@nestjs/common';
 import {
 	Permissions,
 	CrudController,
 	TenantPermissionGuard,
 	PermissionGuard,
-	ParseJsonPipe
+	UUIDValidationPipe
 } from '@gauzy/core';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
@@ -29,10 +28,10 @@ import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
 @Controller()
 export class HelpCenterArticleController extends CrudController<HelpCenterArticle> {
 	constructor(
-		private readonly helpCenterService: HelpCenterArticleService,
+		private readonly helpCenterArticleService: HelpCenterArticleService,
 		private readonly commandBus: CommandBus
 	) {
-		super(helpCenterService);
+		super(helpCenterArticleService);
 	}
 
 	@ApiOperation({
@@ -46,8 +45,10 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post()
-	async createNode(@Body() entity: IHelpCenterArticle): Promise<any> {
-		return this.helpCenterService.create(entity);
+	async create(
+		@Body() entity: IHelpCenterArticle
+	): Promise<IHelpCenterArticle> {
+		return this.helpCenterArticleService.create(entity);
 	}
 
 	@ApiOperation({
@@ -62,12 +63,11 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Get(':categoryId')
+	@Get('category/:categoryId')
 	async findByCategoryId(
-		@Param('categoryId') categoryId: string
-	): Promise<HelpCenterArticle[]> {
-		return this.helpCenterService.getArticlesByCategoryId(categoryId);
+		@Param('categoryId', UUIDValidationPipe) categoryId: string
+	): Promise<IHelpCenterArticle[]> {
+		return this.helpCenterArticleService.getArticlesByCategoryId(categoryId);
 	}
 
 	@ApiOperation({
@@ -75,7 +75,7 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found category articles',
+		description: 'Deleted Articles By Category Id',
 		type: HelpCenterArticle
 	})
 	@ApiResponse({
@@ -83,13 +83,13 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Delete('deleteBulkByCategoryId')
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
+	@Delete('category/:categoryId')
 	async deleteBulkByCategoryId(
-		@Query('data', ParseJsonPipe) data: any
+		@Param('categoryId', UUIDValidationPipe) categoryId: string
 	): Promise<any> {
-		const { id = null } = data;
 		return this.commandBus.execute(
-			new KnowledgeBaseCategoryBulkDeleteCommand(id)
+			new KnowledgeBaseCategoryBulkDeleteCommand(categoryId)
 		);
 	}
 }

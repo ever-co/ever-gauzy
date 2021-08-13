@@ -10,6 +10,7 @@ export interface ICandidateInterview
 	extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	candidateId?: string;
+	candidate?: ICandidate;
 	interviewers?: ICandidateInterviewers[];
 	location?: string;
 	startTime: Date;
@@ -19,7 +20,6 @@ export interface ICandidateInterview
 	employees?: IEmployee[];
 	technologies?: ICandidateTechnologies[];
 	personalQualities?: ICandidatePersonalQualities[];
-	candidate: ICandidate;
 	rating?: number;
 	isArchived?: boolean;
 }

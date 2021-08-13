@@ -11,6 +11,8 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let email = faker.internet.email();
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
@@ -64,7 +66,7 @@ And('User can visit Candidates interviews calendar page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees/candidates/interviews/calendar');
+	cy.visit('/#/pages/employees/candidates/interviews/calendar', { timeout: pageLoadTimeout });
 });
 
 And('User can see add interview button', () => {

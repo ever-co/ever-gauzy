@@ -1,6 +1,5 @@
 import { Controller, UseGuards, HttpStatus, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { StatisticService } from './statistic.service';
 import {
 	IGetMembersStatistics,
@@ -9,12 +8,15 @@ import {
 	IGetTimeSlotStatistics,
 	IGetActivitiesStatistics,
 	IGetCountsStatistics,
-	IGetManualTimesStatistics
+	IGetManualTimesStatistics,
+	ICountsStatistics,
+	IMembersStatistics,
+	IProjectsStatistics
 } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('TimesheetStatistic')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller('statistics')
 export class StatisticController {
 	constructor(private readonly statisticService: StatisticService) {}
@@ -30,7 +32,7 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/counts')
-	async counts(@Query() request: IGetCountsStatistics) {
+	async counts(@Query() request: IGetCountsStatistics): Promise<ICountsStatistics> {
 		return await this.statisticService.getCounts(request);
 	}
 
@@ -45,7 +47,7 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/members')
-	async members(@Query() request: IGetMembersStatistics) {
+	async members(@Query() request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
 		return await this.statisticService.getMembers(request);
 	}
 
@@ -60,7 +62,7 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/projects')
-	async projects(@Query() request: IGetProjectsStatistics) {
+	async projects(@Query() request: IGetProjectsStatistics): Promise<IProjectsStatistics[]> {
 		return await this.statisticService.getProjects(request);
 	}
 

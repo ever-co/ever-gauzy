@@ -4,23 +4,24 @@ import {
 	NotFoundException,
 	ConflictException
 } from '@nestjs/common';
-
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TimeOffRequest } from './time-off-request.entity';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
 import {
 	ITimeOffCreateInput,
 	RequestApprovalStatusTypesEnum,
 	StatusTypesEnum,
 	StatusTypesMapRequestApprovalEnum,
-	ApprovalPolicyTypesStringEnum
+	ApprovalPolicyTypesStringEnum,
+	IPagination
 } from '@gauzy/contracts';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestContext } from '../core/context';
 import * as moment from 'moment';
+
 @Injectable()
-export class TimeOffRequestService extends CrudService<TimeOffRequest> {
+export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
@@ -61,7 +62,11 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 		}
 	}
 
-	async getAllTimeOffRequests(relations, findInput?, filterDate?) {
+	async getAllTimeOffRequests(
+		relations, 
+		findInput?, 
+		filterDate?
+	): Promise<IPagination<TimeOffRequest>> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const query = this.timeOffRequestRepository.createQueryBuilder(
@@ -72,12 +77,9 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 				.leftJoinAndSelect(`${query.alias}.policy`, `policy`)
 				.leftJoinAndSelect(`employees.user`, `user`);
 			query.where((qb) => {
-				qb.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{
-						organizationId: findInput.organizationId
-					}
-				);
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId: findInput.organizationId
+				});
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});

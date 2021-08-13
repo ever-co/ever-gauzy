@@ -8,7 +8,8 @@ import {
 	NbDialogModule,
 	NbDialogService,
 	NbButtonModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbAccordionModule
 } from '@nebular/theme';
 
 @NgModule({
@@ -20,7 +21,8 @@ import {
 		NbIconModule,
 		NbDialogModule,
 		NbButtonModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		NbAccordionModule
 	],
 	exports: [ServerDashboardComponent],
 	providers: [NbDialogService]

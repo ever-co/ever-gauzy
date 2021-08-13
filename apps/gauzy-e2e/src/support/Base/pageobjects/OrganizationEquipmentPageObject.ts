@@ -32,5 +32,6 @@ export const OrganizationEquipmentPage = {
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyPolicyCss: 'tr.ng2-smart-row',
 	verifySharingCss: 'div.ng-star-inserted',
-	verifyEquipmentCss: 'ga-picture-name-tags > div > div.d-block'
+	verifyEquipmentCss: 'ga-picture-name-tags > div > div.d-block',
+	spinnerCss: 'nb-spinner'
 };

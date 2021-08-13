@@ -12,14 +12,14 @@ import {
 	Put
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { GoalKPI } from './goal-kpi.entity';
 import { GoalKpiService } from './goal-kpi.service';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('GoalKpi')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class GoalKpiController extends CrudController<GoalKPI> {
 	constructor(private readonly goalKpiService: GoalKpiService) {
@@ -47,8 +47,8 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 		description: 'No KPI found'
 	})
 	@Get('all')
-	async getAll(@Query('data') data: string) {
-		const { findInput } = JSON.parse(data);
+	async getAll(@Query('data', ParseJsonPipe) data: any) {
+		const { findInput } = data;
 		return this.goalKpiService.findAll({
 			where: { ...findInput },
 			relations: ['lead']
@@ -57,7 +57,7 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async deleteKPI(@Param('id') id: string): Promise<any> {
+	async deleteKPI(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.goalKpiService.delete(id);
 	}
 
@@ -78,7 +78,7 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: GoalKPI
 	): Promise<GoalKPI> {
 		try {

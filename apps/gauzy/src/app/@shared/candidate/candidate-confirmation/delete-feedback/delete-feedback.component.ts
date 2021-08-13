@@ -34,7 +34,7 @@ export class DeleteFeedbackComponent
 				this.feedbackId
 			);
 			if (res && res.interviewId) {
-				await this.candidateCriterionsRatingService.deleteBulk(
+				await this.candidateCriterionsRatingService.deleteBulkByFeedbackId(
 					this.feedbackId
 				);
 				await this.candidateFeedbacksService.delete(

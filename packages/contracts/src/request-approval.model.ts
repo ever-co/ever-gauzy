@@ -8,17 +8,20 @@ import { ITag } from './tag-entity.model';
 
 export interface IRequestApproval
 	extends IBasePerTenantAndOrganizationEntityModel {
+	name: string;
+	status: number;
+	createdBy: string;
+	createdByName: string;
+	min_count: number;
+	requestId: string;
+	requestType: string;
+	approvalPolicy: IApprovalPolicy;
+	approvalPolicyId: string;
 	employeeApprovals?: IRequestApprovalEmployee[];
 	teamApprovals?: IRequestApprovalTeam[];
+	tags?: ITag[];
 	employees?: IEmployee[];
 	teams?: IOrganizationTeam[];
-	name?: string;
-	min_count?: number;
-	status?: number;
-	approvalPolicyId?: string;
-	approvalPolicy?: IApprovalPolicy;
-	tags?: ITag[];
-	createdByName?: string;
 }
 
 export interface IRequestApprovalCreateInput

@@ -52,6 +52,7 @@
 		"@angular-devkit/build-angular": "~0.1101.2"
 	},
 	"devDependencies": {
+		"@4tw/cypress-drag-drop": "^1.8.0",
 		"@angular-devkit/build-angular": "^0.1101.2",
 		"@angular/cli": "^11.1.1",
 		"@cypress/browserify-preprocessor": "^3.0.1",
@@ -61,6 +62,7 @@
 		"@types/jest": "^26.0.8",
 		"cypress": "^6.4.0",
 		"cypress-cucumber-preprocessor": "^4.1.2",
+		"cypress-file-upload": "^5.0.8",
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",
 		"jest": "^26.4.2",

@@ -1,6 +1,3 @@
-import { CrudController, IPagination } from '../core';
-import { EmployeeAppointment } from './employee-appointment.entity';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	Controller,
 	UseGuards,
@@ -11,33 +8,90 @@ import {
 	Post,
 	Put,
 	HttpCode,
-	Query
+	Query,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { EmployeeAppointmentService } from './employee-appointment.service';
-import { EmployeeAppointmentCreateCommand } from './commands/employee-appointment.create.command';
-import { EmployeeAppointmentUpdateCommand } from './commands/employee-appointment.update.command';
-import { AuthGuard } from '@nestjs/passport';
-import { UUIDValidationPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	LanguagesEnum,
 	IEmployeeAppointmentCreateInput,
-	IEmployeeAppointmentUpdateInput
+	IEmployeeAppointmentUpdateInput,
+	IEmployeeAppointment,
+	IPagination
 } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { EmployeeAppointmentService } from './employee-appointment.service';
+import {
+	EmployeeAppointmentCreateCommand,
+	EmployeeAppointmentUpdateCommand
+} from './commands';
+import { EmployeeAppointment } from './employee-appointment.entity';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
+import { CrudController, PaginationParams } from './../core/crud';
 
 @ApiTags('EmployeeAppointment')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmployeeAppointmentController extends CrudController<EmployeeAppointment> {
 	constructor(
 		private readonly employeeAppointmentService: EmployeeAppointmentService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(employeeAppointmentService);
 	}
 
+	@ApiOperation({ summary: 'Sign appointment id payload' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Token generated',
+		type: String
+	})
+	@ApiResponse({
+		status: HttpStatus.EXPECTATION_FAILED,
+		description: 'Token generation failure'
+	})
+	@Get('sign/:id')
+	async signAppointment(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<string> {
+		return this.employeeAppointmentService.signAppointmentId(id);
+	}
+
+	@ApiOperation({ summary: 'Verify token' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Token verified',
+		type: String
+	})
+	@ApiResponse({
+		status: HttpStatus.EXPECTATION_FAILED,
+		description: 'Token verification failure'
+	})
+	@Get('decode/:token')
+	async decodeToken(
+		@Param('token') token: string
+	): Promise<string> {
+		const decoded = this.employeeAppointmentService.decode(token);
+		return decoded['appointmentId'];
+	}
+
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<EmployeeAppointment>
+	): Promise<IPagination<IEmployeeAppointment>> {
+		return this.employeeAppointmentService.paginate(filter);
+	}
+
+	/**
+	 * GET all employee appointments
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all employee appointments'
 	})
@@ -51,15 +105,31 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployeeAppointments(
-		@Query('data') data: string
-	): Promise<IPagination<EmployeeAppointment>> {
-		const { relations, findInput } = JSON.parse(data);
-
-		return this.employeeAppointmentService.findAllAppointments({
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IEmployeeAppointment>> {
+		const { relations, findInput } = data;
+		return this.employeeAppointmentService.findAll({
 			where: findInput,
 			relations
 		});
+	}
+
+	@ApiOperation({ summary: 'Find Employee appointment by id.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record',
+		type: EmployeeAppointment
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<IEmployeeAppointment> {
+		return this.employeeAppointmentService.findOne(id);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -72,13 +142,12 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/create')
-	async createEmployeeAppointment(
+	@Post()
+	async create(
 		@Body() entity: IEmployeeAppointmentCreateInput,
-		@I18nLang() languageCode: LanguagesEnum,
-		...options: any[]
-	) {
-		return this.commandBus.execute(
+		@I18nLang() languageCode: LanguagesEnum
+	): Promise<IEmployeeAppointment> {
+		return await this.commandBus.execute(
 			new EmployeeAppointmentCreateCommand(entity, languageCode)
 		);
 	}
@@ -100,62 +169,11 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IEmployeeAppointmentUpdateInput
-	): Promise<any> {
-		return this.commandBus.execute(
+	): Promise<IEmployeeAppointment> {
+		return await this.commandBus.execute(
 			new EmployeeAppointmentUpdateCommand(id, entity)
 		);
-	}
-
-	@ApiOperation({ summary: 'Find Employee appointment by id.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found one record',
-		type: EmployeeAppointment
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@UseGuards(AuthGuard('jwt'))
-	@Get(':id')
-	async findOneById(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<EmployeeAppointment> {
-		return this.employeeAppointmentService.findOne(id);
-	}
-
-	@ApiOperation({ summary: 'Sign appointment id payload' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Token generated',
-		type: String
-	})
-	@ApiResponse({
-		status: HttpStatus.EXPECTATION_FAILED,
-		description: 'Token generation failure'
-	})
-	@UseGuards(AuthGuard('jwt'))
-	@Get('/sign/:id')
-	async signAppointment(@Param('id') id: string): Promise<String> {
-		return await this.employeeAppointmentService.signAppointmentId(id);
-	}
-
-	@ApiOperation({ summary: 'Verify token' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Token verified',
-		type: String
-	})
-	@ApiResponse({
-		status: HttpStatus.EXPECTATION_FAILED,
-		description: 'Token verification failure'
-	})
-	@UseGuards(AuthGuard('jwt'))
-	@Get('/decode/:token')
-	async decodeToken(@Param('token') token: string): Promise<string> {
-		const decoded = this.employeeAppointmentService.decode(token);
-		return decoded['appointmentId'];
 	}
 }

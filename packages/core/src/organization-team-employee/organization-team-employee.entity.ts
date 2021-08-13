@@ -1,5 +1,5 @@
-import { IOrganizationTeamEmployee } from '@gauzy/contracts';
-import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
+import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee } from '@gauzy/contracts';
+import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import {
@@ -13,41 +13,61 @@ import {
 export class OrganizationTeamEmployee
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationTeamEmployee {
+	
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+   
+   	/**
+	 * OrganizationTeam 
+	 */
+	@ApiProperty({ type: () => OrganizationTeam })
+	@ManyToOne(() => OrganizationTeam, (organizationTeam) => organizationTeam.members, { 
+		onDelete: 'CASCADE' 
+	})
+	public organizationTeam!: IOrganizationTeam;
+
 	@ApiProperty({ type: () => String })
+	@RelationId((it: OrganizationTeamEmployee) => it.organizationTeam)
 	@IsString()
 	@IsNotEmpty()
+	@Index()
 	@Column()
 	public organizationTeamId!: string;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	public employeeId!: string;
-
-	@ManyToOne(
-		() => OrganizationTeam,
-		(organizationTeam) => organizationTeam.members,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
-	public organizationTeam!: OrganizationTeam;
-
+    /**
+	 * Employee 
+	 */
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, (employee) => employee.teams, {
 		onDelete: 'CASCADE'
 	})
-	public employee!: Employee;
+	public employee!: IEmployee;
 
 	@ApiProperty({ type: () => String })
+	@RelationId((it: OrganizationTeamEmployee) => it.employee)
 	@IsString()
-	@ManyToOne(() => Role, { nullable: true })
-	@JoinColumn()
-	role?: Role;
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	public employeeId!: string;
 
-	@RelationId(
-		(organizationTeamEmployee: OrganizationTeamEmployee) =>
-			organizationTeamEmployee.role
-	)
+	/**
+	 * Role 
+	 */
+	@ApiProperty({ type: () => Role })
+	@ManyToOne(() => Role, { 
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	public role?: Role;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: OrganizationTeamEmployee) => it.role)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
 	readonly roleId?: string;
 }

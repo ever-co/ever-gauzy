@@ -9,14 +9,15 @@ import {
 	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core/crud';
+import { CrudController } from './../core/crud';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { IOrganizationEmploymentType, IPagination } from '@gauzy/contracts';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationEmploymentType')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationEmploymentTypeController extends CrudController<OrganizationEmploymentType> {
 	constructor(
@@ -39,9 +40,9 @@ export class OrganizationEmploymentTypeController extends CrudController<Organiz
 	})
 	@Get()
 	async findAllOrganizationEmploymentTypes(
-		@Query('data') data: string
-	): Promise<IPagination<OrganizationEmploymentType>> {
-		const { findInput, relations } = JSON.parse(data);
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IOrganizationEmploymentType>> {
+		const { findInput, relations } = data;
 		return this.organizationEmploymentTypeService.findAll({
 			where: findInput,
 			relations
@@ -50,7 +51,7 @@ export class OrganizationEmploymentTypeController extends CrudController<Organiz
 
 	@Put(':id')
 	async updateOrganizationExpenseCategories(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: OrganizationEmploymentType,
 		...options: any[]
 	): Promise<OrganizationEmploymentType> {

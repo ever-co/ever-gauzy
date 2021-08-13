@@ -10,6 +10,8 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
 let username = faker.internet.userName();
@@ -40,7 +42,7 @@ And('User can visit Event types page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees/event-types');
+	cy.visit('/#/pages/employees/event-types', { timeout: pageLoadTimeout });
 });
 
 Then('User can see grid button', () => {

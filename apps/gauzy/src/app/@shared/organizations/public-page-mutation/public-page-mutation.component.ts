@@ -5,9 +5,9 @@ import {
 	IIncome,
 	IOrganization,
 	ISkill,
-	IOrganizationAwards,
+	IOrganizationAward,
 	ILanguage,
-	IOrganizationLanguages,
+	IOrganizationLanguage,
 	ClientFocusEnum,
 	MinimumProjectSizeEnum
 } from '@gauzy/contracts';
@@ -39,8 +39,8 @@ export class PublicPageMutationComponent
 	tenantId: string;
 	form: FormGroup;
 	selectedLanguage: ILanguage;
-	awards: IOrganizationAwards[];
-	organization_languages: IOrganizationLanguages[];
+	awards: IOrganizationAward[];
+	organization_languages: IOrganizationLanguage[];
 	skills: ISkill[] = [];
 	languages: ILanguage[] = [];
 	moment = moment;

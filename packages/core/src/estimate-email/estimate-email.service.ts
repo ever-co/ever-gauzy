@@ -1,4 +1,5 @@
-import { CrudService, RequestContext } from '../core';
+import { RequestContext } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -8,7 +9,7 @@ import { Invoice } from '../invoice/invoice.entity';
 import { Organization } from '../organization/organization.entity';
 
 @Injectable()
-export class EstimateEmailService extends CrudService<EstimateEmail> {
+export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> {
 	constructor(
 		@InjectRepository(EstimateEmail)
 		private readonly estimateEmailRepository: Repository<EstimateEmail>,

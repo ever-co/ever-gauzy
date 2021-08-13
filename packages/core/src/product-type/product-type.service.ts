@@ -1,11 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { CrudService, IPagination } from '../core';
+import { IPagination } from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../core/crud';
 import { ProductType } from './product-type.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 @Injectable()
-export class ProductTypeService extends CrudService<ProductType> {
+export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	constructor(
 		@InjectRepository(ProductType)
 		private readonly productTypeRepository: Repository<ProductType>

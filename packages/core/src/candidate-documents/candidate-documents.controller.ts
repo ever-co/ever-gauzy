@@ -1,17 +1,15 @@
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { ICandidateDocument, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { CandidateDocumentsService } from './candidate-documents.service';
 import { CandidateDocument } from './candidate-documents.entity';
-import { IPagination } from '../core';
-import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateDocument')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateDocumentsController extends CrudController<CandidateDocument> {
 	constructor(
@@ -19,6 +17,13 @@ export class CandidateDocumentsController extends CrudController<CandidateDocume
 	) {
 		super(candidateDocumentsService);
 	}
+	
+	/**
+	 * GET all candidate documents
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate document.'
 	})
@@ -34,10 +39,10 @@ export class CandidateDocumentsController extends CrudController<CandidateDocume
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW)
 	@Get()
-	async findDocument(
-		@Query('data') data: string
-	): Promise<IPagination<CandidateDocument>> {
-		const { findInput } = JSON.parse(data);
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ICandidateDocument>> {
+		const { findInput } = data;
 		return this.candidateDocumentsService.findAll({ where: findInput });
 	}
 }

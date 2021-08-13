@@ -51,7 +51,7 @@ export class CandidateFeedbacksService {
 	findByInterviewId(interviewId: string): Promise<ICandidateFeedback[]> {
 		return this.http
 			.get<ICandidateFeedback[]>(
-				`${API_PREFIX}/candidate-feedbacks/getByInterviewId/${interviewId}`
+				`${API_PREFIX}/candidate-feedbacks/interview/${interviewId}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -64,11 +64,8 @@ export class CandidateFeedbacksService {
 	}
 
 	delete(feedbackId: string, interviewId?: string): Promise<any> {
-		const data = JSON.stringify({ feedbackId, interviewId });
 		return this.http
-			.delete(`${API_PREFIX}/candidate-feedbacks/deleteFeedback`, {
-				params: { data }
-			})
+			.delete(`${API_PREFIX}/candidate-feedbacks/interview/${interviewId}/${feedbackId}`)
 			.pipe(first())
 			.toPromise();
 	}

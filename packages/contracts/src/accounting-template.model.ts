@@ -3,9 +3,9 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 export interface IAccountingTemplate
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	mjml?: string;
+	mjml: string;
 	languageCode: string;
-	hbs?: string;
+	hbs: string;
 	templateType: string;
 }
 
@@ -21,12 +21,6 @@ export interface IAccountingTemplateUpdateInput
 	name?: string;
 	languageCode?: string;
 	templateType?: string;
-}
-
-export enum AccountingTemplateNameEnum {
-	INVOICE = 'invoice',
-	ESTIMATE = 'estimate',
-	RECEIPT = 'receipt'
 }
 
 export enum AccountingTemplateTypeEnum {

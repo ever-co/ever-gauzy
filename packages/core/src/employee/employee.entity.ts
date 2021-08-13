@@ -15,7 +15,10 @@ import {
 	IRequestApprovalEmployee,
 	IPayment,
 	IOrganizationProject,
-	IOrganizationContact
+	IOrganizationContact,
+	IEmployeeSetting,
+	ITimeOffPolicy,
+	ITimeOff as ITimeOffRequest
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -40,12 +43,13 @@ import {
 } from 'typeorm';
 import {
 	Contact,
+	EmployeeSetting,
 	InvoiceItem,
 	JobPreset,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
-	OrganizationPositions,
+	OrganizationPosition,
 	OrganizationProject,
 	OrganizationTeamEmployee,
 	Payment,
@@ -54,6 +58,8 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity,
 	TimeLog,
+	TimeOffPolicy,
+	TimeOffRequest,
 	User
 } from '../core/entities/internal';
 
@@ -313,8 +319,8 @@ export class Employee
 	readonly contactId?: string;
 
 	// Employee Organization Position
-	@ApiProperty({ type: () => OrganizationPositions })
-	@ManyToOne(() => OrganizationPositions, { nullable: true })
+	@ApiProperty({ type: () => OrganizationPosition })
+	@ManyToOne(() => OrganizationPosition, { nullable: true })
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
@@ -356,6 +362,10 @@ export class Employee
 	@ApiPropertyOptional({ type: () => RequestApprovalEmployee, isArray: true })
 	@OneToMany(() => RequestApprovalEmployee, (it) => it.employee)
 	requestApprovals?: IRequestApprovalEmployee[];
+
+	@ApiPropertyOptional({ type: () => EmployeeSetting, isArray: true })
+	@OneToMany(() => EmployeeSetting, (it) => it.employee)
+	settings?: IEmployeeSetting[];
 
 	/*
     |--------------------------------------------------------------------------
@@ -414,4 +424,29 @@ export class Employee
 		name: 'organization_contact_employee'
 	})
     organizationContacts?: IOrganizationContact[];
+
+
+	/**
+	 * TimeOffPolicy
+	 */
+	@ManyToMany(() => TimeOffPolicy, (timeOffPolicy) => timeOffPolicy.employees, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'time_off_policy_employee'
+	})
+	timeOffPolicies?: ITimeOffPolicy[];
+
+	/**
+	 * TimeOffRequest
+	 */
+	@ManyToMany(() => TimeOffRequest, (timeOffRequest) => timeOffRequest.employees, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'time_off_request_employee'
+	})
+	timeOffRequests?: ITimeOffRequest[];
 }

@@ -1,28 +1,19 @@
-import { CrudService, IPagination } from '../core';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { IEmployeeAppointmentCreateInput } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { sign, decode } from 'jsonwebtoken';
+import { TenantAwareCrudService } from './../core/crud';
 
 @Injectable()
-export class EmployeeAppointmentService extends CrudService<EmployeeAppointment> {
+export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeAppointment> {
 	constructor(
 		@InjectRepository(EmployeeAppointment)
 		private readonly employeeAppointmentRepository: Repository<EmployeeAppointment>
 	) {
 		super(employeeAppointmentRepository);
-	}
-
-	async findAllAppointments(
-		filter?: FindManyOptions<EmployeeAppointment>
-	): Promise<IPagination<EmployeeAppointment>> {
-		const total = await this.employeeAppointmentRepository.count(filter);
-		const items = await this.employeeAppointmentRepository.find(filter);
-
-		return { items, total };
 	}
 
 	async saveAppointment(

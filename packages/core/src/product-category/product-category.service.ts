@@ -1,12 +1,12 @@
-import { CrudService, IPagination } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductCategory } from './product-category.entity';
 import { Repository } from 'typeorm';
-import { IProductCategoryTranslated } from '@gauzy/contracts';
+import { IPagination, IProductCategoryTranslated } from '@gauzy/contracts';
 
 @Injectable()
-export class ProductCategoryService extends CrudService<ProductCategory> {
+export class ProductCategoryService extends TenantAwareCrudService<ProductCategory> {
 	constructor(
 		@InjectRepository(ProductCategory)
 		private readonly productCategoryRepository: Repository<ProductCategory>

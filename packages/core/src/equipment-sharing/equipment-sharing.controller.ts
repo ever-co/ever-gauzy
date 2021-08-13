@@ -9,11 +9,10 @@ import {
 	Param,
 	Body
 } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
-import { AuthGuard } from '@nestjs/passport';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { IPagination, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -21,10 +20,11 @@ import {
 	EquipmentSharingCreateCommand,
 	EquipmentSharingUpdateCommand
 } from './commands';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('EquipmentSharing')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentSharingController extends CrudController<EquipmentSharing> {
 	constructor(
@@ -47,7 +47,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEquipmentSharings(): Promise<IPagination<EquipmentSharing>> {
+	async findAll(): Promise<IPagination<EquipmentSharing>> {
 		return this.equipmentSharingService.findAllEquipmentSharings();
 	}
 
@@ -133,7 +133,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<any> {
 		return this.commandBus.execute(
@@ -154,7 +154,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('approval/:id')
 	async equipmentSharingsRequestApproval(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<EquipmentSharing> {
 		return this.commandBus.execute(
 			new EquipmentSharingStatusCommand(
@@ -177,7 +177,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('refuse/:id')
 	async equipmentSharingsRequestRefuse(
-		@Param('id') id: string
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<EquipmentSharing> {
 		return this.commandBus.execute(
 			new EquipmentSharingStatusCommand(

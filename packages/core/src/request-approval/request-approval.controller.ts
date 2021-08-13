@@ -1,11 +1,12 @@
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalService } from './request-approval.service';
 import {
 	IRequestApproval,
 	PermissionsEnum,
 	IRequestApprovalCreateInput,
-	RequestApprovalStatusTypesEnum
+	RequestApprovalStatusTypesEnum,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	Query,
@@ -21,46 +22,29 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { AuthGuard } from '@nestjs/passport';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { RequestApprovalStatusCommand } from './commands';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('RequestApproval')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class RequestApprovalControler extends CrudController<RequestApproval> {
 	constructor(
 		private readonly requestApprovalService: RequestApprovalService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(requestApprovalService);
 	}
-
-	@ApiOperation({ summary: 'Find all request approvals.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found policies',
-		type: RequestApproval
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
-	@Get()
-	findAllRequestApprovals(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IRequestApproval>> {
-		const { relations, findInput } = data;
-		return this.requestApprovalService.findAllRequestApprovals(
-			{ relations },
-			findInput
-		);
-	}
-
+	
+	/**
+	 * GET all request approval by employee
+	 * 
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all request approval.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -74,7 +58,7 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
 	@Get('employee/:id')
 	findRequestApprovalsByEmployeeId(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IRequestApproval>> {
 		const { relations, findInput } = data;
@@ -85,24 +69,12 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		);
 	}
 
-	@ApiOperation({ summary: 'create a request approval.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found policies',
-		type: RequestApproval
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
-	@Post()
-	async createRequestApproval(
-		@Body() entity: IRequestApprovalCreateInput
-	): Promise<RequestApproval> {
-		return this.requestApprovalService.createRequestApproval(entity);
-	}
-
+	/**
+	 * UPDATE employee accept request approval
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'employee accept request approval.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -117,9 +89,9 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('approval/:id')
 	async employeeApprovalRequestApproval(
-		@Param('id') id: string
-	): Promise<RequestApproval> {
-		return this.commandBus.execute(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<IRequestApproval> {
+		return await this.commandBus.execute(
 			new RequestApprovalStatusCommand(
 				id,
 				RequestApprovalStatusTypesEnum.APPROVED
@@ -127,6 +99,12 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		);
 	}
 
+	/**
+	 * UPDATE employee refuse request approval
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'employee refuse request approval.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -141,9 +119,9 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('refuse/:id')
 	async employeeRefuseRequestApproval(
-		@Param('id') id: string
-	): Promise<RequestApproval> {
-		return this.commandBus.execute(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<IRequestApproval> {
+		return await this.commandBus.execute(
 			new RequestApprovalStatusCommand(
 				id,
 				RequestApprovalStatusTypesEnum.REFUSED
@@ -151,6 +129,65 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		);
 	}
 
+	/**
+	 * GET all request approvals
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all request approvals.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: RequestApproval
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
+	@Get()
+	findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IRequestApproval>> {
+		const { relations, findInput } = data;
+		return this.requestApprovalService.findAllRequestApprovals(
+			{ relations },
+			findInput
+		);
+	}
+
+	/**
+	 * CREATE request approval
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'create a request approval.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: RequestApproval
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
+	@Post()
+	async create(
+		@Body() entity: IRequestApprovalCreateInput
+	): Promise<IRequestApproval> {
+		return this.requestApprovalService.createRequestApproval(entity);
+	}
+
+	/**
+	 * UPDATE request approval by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'update a request approval.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -164,10 +201,10 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put(':id')
-	async updateRequestApprovalByAdmin(
-		@Param('id') id: string,
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IRequestApprovalCreateInput
-	): Promise<RequestApproval> {
+	): Promise<IRequestApproval> {
 		return this.requestApprovalService.updateRequestApproval(id, entity);
 	}
 }

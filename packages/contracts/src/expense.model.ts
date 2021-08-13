@@ -12,13 +12,13 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	amount: number;
 	vendor: IOrganizationVendor;
 	vendorId: string;
-	typeOfExpense?: string;
+	typeOfExpense: string;
 	category: IExpenseCategory;
 	categoryId: string;
 	organizationContactId?: string;
 	organizationContactName?: string;
 	projectId?: string;
-	project?: IOrganizationProject;
+	project: IOrganizationProject;
 	projectName?: string;
 	notes?: string;
 	valueDate?: Date;
@@ -26,10 +26,10 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	purpose?: string;
 	taxType?: string;
 	taxLabel?: string;
-	rateValue?: number;
+	rateValue: number;
 	receipt?: string;
-	splitExpense?: boolean;
-	tags?: ITag[];
+	splitExpense: boolean;
+	tags: ITag[];
 	status?: string;
 }
 

@@ -382,7 +382,7 @@ export class IncomeComponent
 			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
 		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint: `${API_PREFIX}/income/search/filter`,
+			endPoint: `${API_PREFIX}/income/pagination`,
 			relations: [
 				'employee', 
 				'employee.user', 

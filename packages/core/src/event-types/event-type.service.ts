@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { IPagination } from '@gauzy/contracts';
 import { Repository, FindManyOptions } from 'typeorm';
 import { EventType } from './event-type.entity';
-import { CrudService } from '../core/crud/crud.service';
-import { IPagination } from '../core';
+import { TenantAwareCrudService } from './../core/crud';
 
 @Injectable()
-export class EventTypeService extends CrudService<EventType> {
+export class EventTypeService extends TenantAwareCrudService<EventType> {
 	constructor(
 		@InjectRepository(EventType)
 		private readonly eventTypeRepository: Repository<EventType>

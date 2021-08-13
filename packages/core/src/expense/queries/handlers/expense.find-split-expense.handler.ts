@@ -1,8 +1,6 @@
-import { ISplitExpenseOutput } from '@gauzy/contracts';
+import { IPagination, ISplitExpenseOutput } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IPagination } from '../../../core';
 import { EmployeeService } from '../../../employee/employee.service';
-import { OrganizationService } from '../../../organization/organization.service';
 import { ExpenseService } from '../../expense.service';
 import { FindSplitExpenseQuery } from '../expense.find-split-expense.query';
 
@@ -18,8 +16,7 @@ export class FindSplitExpenseHandler
 	implements IQueryHandler<FindSplitExpenseQuery> {
 	constructor(
 		private readonly expenseService: ExpenseService,
-		private readonly employeeService: EmployeeService,
-		private readonly organizationService: OrganizationService
+		private readonly employeeService: EmployeeService
 	) {}
 
 	public async execute(

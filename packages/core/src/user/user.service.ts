@@ -4,12 +4,13 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult } from 'typeorm';
+import { Repository, InsertResult, SelectQueryBuilder } from 'typeorm';
 import { User } from './user.entity';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from './../core/crud';
+import { RolesEnum } from '@gauzy/contracts';
 
 @Injectable()
-export class UserService extends CrudService<User> {
+export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		@InjectRepository(User)
 		userRepository: Repository<User>
@@ -104,5 +105,25 @@ export class UserService extends CrudService<User> {
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}
+	}
+
+	async getAdminUsers(tenantId: string): Promise<User[]> {
+		const roleNames =[RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];		
+		return await this.repository.find({
+			join: {
+				alias: 'user',
+				leftJoin: {
+					role: 'user.role'
+				},
+			},
+			where: (qb: SelectQueryBuilder<User>) => {
+					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
+					qb.andWhere(`role.name IN (:...roleNames)`, {
+						roleNames
+					});
+				}
+			});		
 	}
 }

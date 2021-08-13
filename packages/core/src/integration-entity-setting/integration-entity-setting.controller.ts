@@ -7,15 +7,17 @@ import {
 	Body,
 	UseGuards
 } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { IntegrationEntitySettingService } from './integration-entity-setting.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
+
 
 @ApiTags('IntegrationsEntitySetting')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class IntegrationEntitySettingController extends CrudController<IntegrationEntitySetting> {
 	constructor(
@@ -36,7 +38,7 @@ export class IntegrationEntitySettingController extends CrudController<Integrati
 	})
 	@Get(':integrationId')
 	async getSettingsForIntegration(
-		@Param('integrationId') integrationId
+		@Param('integrationId', UUIDValidationPipe) integrationId
 	): Promise<IPagination<IntegrationEntitySetting>> {
 		return await this.integrationEntitySettingService.findAll({
 			relations: ['integration', 'tiedEntities'],
@@ -58,7 +60,7 @@ export class IntegrationEntitySettingController extends CrudController<Integrati
 	})
 	@Put(':integrationId')
 	async editSettings(
-		@Param('integrationId') integrationId,
+		@Param('integrationId', UUIDValidationPipe) integrationId,
 		@Body() editSettingsDto
 	): Promise<IntegrationEntitySetting> {
 		return await this.integrationEntitySettingService.create(

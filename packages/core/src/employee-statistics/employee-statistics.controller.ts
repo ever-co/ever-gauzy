@@ -12,19 +12,20 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { parseISO } from 'date-fns';
 import { EmployeeStatisticsService } from './employee-statistics.service';
-import { AggregatedEmployeeStatisticQuery } from './queries/aggregate-employee-statistic.query';
-import { MonthAggregatedEmployeeStatisticsQuery } from './queries/month-aggregated-employee-statistics.query';
-import { EmployeeStatisticsHistoryQuery } from './queries/employee-statistics-history.query';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
+import {
+	AggregatedEmployeeStatisticQuery,
+	EmployeeStatisticsHistoryQuery,
+	MonthAggregatedEmployeeStatisticsQuery
+} from './queries';
 
 @ApiTags('EmployeeStatistics')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(
@@ -65,7 +66,7 @@ export class EmployeeStatisticsController {
 	})
 	@Get('/months/:id')
 	async findAllByEmloyeeId(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatistics> {
 		const { findInput } = data;

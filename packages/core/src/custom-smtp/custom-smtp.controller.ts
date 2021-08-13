@@ -10,25 +10,24 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core';
-import { AuthGuard } from '@nestjs/passport';
-import { CustomSmtp } from './custom-smtp.entity';
-import { CustomSmtpService } from './custom-smtp.service';
-import { UUIDValidationPipe } from '../shared/pipes/uuid-validation.pipe';
 import {
 	ICustomSmtp,
 	ICustomSmtpCreateInput,
 	ICustomSmtpFindInput,
 	ICustomSmtpUpdateInput
 } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { CommandBus } from '@nestjs/cqrs';
-import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
 import { ISMTPConfig } from '@gauzy/common';
+import { CrudController } from './../core/crud';
+import { UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
+import { CustomSmtp } from './custom-smtp.entity';
+import { CustomSmtpService } from './custom-smtp.service';
+import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
 
 @ApiTags('CustomSmtp')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CustomSmtpController extends CrudController<CustomSmtp> {
 	constructor(
@@ -38,6 +37,12 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 		super(customSmtpService);
 	}
 
+	/**
+	 * GET smtp setting for tenant
+	 * 
+	 * @param query 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find smtp setting for tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -48,13 +53,37 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
-	async tenantSmtpSetting(
+	@Get('setting')
+	async smtpSetting(
 		@Query() query: ICustomSmtpFindInput
 	): Promise<ICustomSmtp | ISMTPConfig> {
-		return this.customSmtpService.getSmtpSetting(query);
+		return await this.customSmtpService.getSmtpSetting(query);
 	}
 
+	/**
+	 * CREATE verify smtp transporter
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Validate new record' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Post('validate')
+	async validateSmtpSetting(@Body() entity: ICustomSmtpCreateInput) {
+		return await this.customSmtpService.verifyTransporter(entity);
+	}
+
+	/**
+	 * CREATE custom smtp for tenant/organization
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -67,12 +96,21 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post()
-	async createSmtpSetting(
+	async create(
 		@Body() entity: ICustomSmtpCreateInput
 	): Promise<ICustomSmtp> {
-		return this.commandBus.execute(new CustomSmtpCreateCommand(entity));
+		return await this.commandBus.execute(
+			new CustomSmtpCreateCommand(entity)
+		);
 	}
 
+	/**
+	 * UPDATE smtp by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -89,24 +127,12 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async updateSmtpSetting(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ICustomSmtpUpdateInput
 	): Promise<ICustomSmtp> {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new CustomSmtpUpdateCommand({ id, ...entity })
 		);
-	}
-
-	@ApiOperation({ summary: 'Validate new record' })
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Post('validate')
-	async validateSmtpSetting(@Body() entity: ICustomSmtpCreateInput) {
-		return await this.customSmtpService.verifyTransporter(entity);
 	}
 }

@@ -18,9 +18,13 @@ import {
 } from 'typeorm';
 import {
 	IRequestApproval,
-	ApprovalPolicyTypesStringEnum
+	ApprovalPolicyTypesStringEnum,
+	IApprovalPolicy,
+	IRequestApprovalEmployee,
+	IRequestApprovalTeam,
+	ITag
 } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber, IsEnum } from 'class-validator';
 import {
 	ApprovalPolicy,
@@ -41,38 +45,6 @@ export class RequestApproval
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: () => ApprovalPolicy })
-	@ManyToOne(() => ApprovalPolicy, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	approvalPolicy: ApprovalPolicy;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((policy: RequestApproval) => policy.approvalPolicy)
-	@IsString()
-	@Column({ nullable: true })
-	approvalPolicyId: string;
-
-	@OneToMany(
-		() => RequestApprovalEmployee,
-		(employeeApprovals) => employeeApprovals.requestApproval,
-		{
-			cascade: true
-		}
-	)
-	employeeApprovals?: RequestApprovalEmployee[];
-
-	@OneToMany(
-		() => RequestApprovalTeam,
-		(teamApprovals) => teamApprovals.requestApproval,
-		{
-			cascade: true
-		}
-	)
-	teamApprovals?: RequestApprovalTeam[];
-
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true })
@@ -83,30 +55,83 @@ export class RequestApproval
 	@Column({ nullable: true })
 	createdBy: string;
 
-	@ApiProperty({ type: () => Number })
-	@IsNumber()
-	@Column({ nullable: true })
-	min_count: number;
-
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	createdByName: string;
+
+	@ApiProperty({ type: () => Number })
+	@IsNumber()
+	@Column({ nullable: true })
+	min_count: number;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	requestId: string;
 
-	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.requestApproval)
-	@JoinTable({
-		name: 'tag_request_approval'
-	})
-	tags?: Tag[];
-
 	@ApiProperty({ type: () => String, enum: ApprovalPolicyTypesStringEnum })
 	@IsEnum(ApprovalPolicyTypesStringEnum)
 	@Column({ nullable: true })
 	requestType: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+   	
+	/**
+	*  ApprovalPolicy
+    */
+	@ApiProperty({ type: () => ApprovalPolicy })
+	@ManyToOne(() => ApprovalPolicy, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	approvalPolicy: IApprovalPolicy;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: RequestApproval) => it.approvalPolicy)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	approvalPolicyId: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * RequestApprovalEmployee
+	 */
+	@ApiPropertyOptional({ type: () => RequestApprovalEmployee, isArray: true })
+	@OneToMany(() => RequestApprovalEmployee, (employeeApprovals) => employeeApprovals.requestApproval, {
+		cascade: true
+	})
+	employeeApprovals?: IRequestApprovalEmployee[];
+
+	/**
+	 * RequestApprovalTeam
+	 */
+	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
+	@OneToMany(() => RequestApprovalTeam, (teamApprovals) => teamApprovals.requestApproval, {
+		cascade: true
+	})
+	teamApprovals?: IRequestApprovalTeam[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.requestApproval)
+	@JoinTable({
+		name: 'tag_request_approval'
+	})
+	tags?: ITag[];
 }

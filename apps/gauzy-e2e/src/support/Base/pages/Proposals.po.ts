@@ -10,6 +10,7 @@ import {
 	verifyText
 } from '../utils/util';
 import { ProposalsPage } from '../pageobjects/ProposalsPageObject';
+import { CustomCommands } from '../../../support/commands';
 
 export const gridBtnExists = () => {
 	verifyElementIsVisible(ProposalsPage.gridButtonCss);
@@ -75,9 +76,7 @@ export const jobPostContentTextareaVisible = () => {
 };
 
 export const enterJobPostContentInputData = (data) => {
-	clickButton(ProposalsPage.jobPostContentInputCss);
-	clearField(ProposalsPage.jobPostContentInputCss);
-	enterInput(ProposalsPage.jobPostContentInputCss, data);
+	CustomCommands.getIframeBody().find('p').type(data);
 };
 
 export const proposalContentTextareaVisible = () => {

@@ -1,4 +1,4 @@
-import { IIncomeCreateInput, PermissionsEnum } from '@gauzy/contracts';
+import { IIncome, IIncomeCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -10,27 +10,29 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	Delete
+	Delete,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
+import { PaginationParams } from '../core';
 import { RequestContext } from '../core/context';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
-import { Permissions } from '../shared/decorators/permissions';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { IncomeCreateCommand } from './commands/income.create.command';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import {
+	IncomeCreateCommand,
+	IncomeDeleteCommand,
+	IncomeUpdateCommand
+} from './commands';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
-import { ParseJsonPipe } from '../shared';
-import { IncomeDeleteCommand } from './commands/income.delete.command';
-import { IncomeUpdateCommand } from './commands/income.update.command';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Income')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class IncomeController extends CrudController<Income> {
 	constructor(
@@ -54,18 +56,26 @@ export class IncomeController extends CrudController<Income> {
 	@Get('me')
 	async findMyIncome(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Income>> {
+	): Promise<IPagination<IIncome>> {
 		const { relations, findInput, filterDate } = data;
-
 		//If user is not an employee, then this will return 404
 		const employee = await this.employeeService.findOne({
-			user: { id: RequestContext.currentUser().id }
+			user: { id: RequestContext.currentUserId() }
 		});
-
 		return this.incomeService.findAllIncomes(
 			{ where: { ...findInput, employeeId: employee.id }, relations },
 			filterDate
 		);
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IIncome>
+	): Promise<IPagination<IIncome>> {
+		return this.incomeService.pagination(filter);
 	}
 
 	@ApiOperation({ summary: 'Find all income.' })
@@ -81,7 +91,7 @@ export class IncomeController extends CrudController<Income> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get()
-	async findAllIncome(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Income>> {
 		const { relations, findInput, filterDate } = data;
@@ -110,11 +120,13 @@ export class IncomeController extends CrudController<Income> {
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Income,
 		...options: any[]
 	): Promise<any> {
-		return this.commandBus.execute(new IncomeUpdateCommand(id, entity));
+		return await this.commandBus.execute(
+			new IncomeUpdateCommand(id, entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -133,8 +145,10 @@ export class IncomeController extends CrudController<Income> {
 	async create(
 		@Body() entity: IIncomeCreateInput,
 		...options: any[]
-	): Promise<Income> {
-		return this.commandBus.execute(new IncomeCreateCommand(entity));
+	): Promise<IIncome> {
+		return await this.commandBus.execute(
+			new IncomeCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({
@@ -151,7 +165,9 @@ export class IncomeController extends CrudController<Income> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Delete('deleteIncome')
-	async deleteIncome(@Query('data', ParseJsonPipe) data: any): Promise<any> {
+	async deleteIncome(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
 		const { incomeId = null, employeeId = null } = data;
 		return this.commandBus.execute(
 			new IncomeDeleteCommand(employeeId, incomeId)

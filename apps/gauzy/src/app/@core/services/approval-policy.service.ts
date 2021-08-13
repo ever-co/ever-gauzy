@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IApprovalPolicy, IApprovalPolicyCreateInput } from '@gauzy/contracts';
+import {
+	IApprovalPolicy,
+	IApprovalPolicyFindInput,
+	IApprovalPolicyCreateInput,
+	IPagination
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -12,12 +17,11 @@ export class ApprovalPolicyService {
 
 	getAll(
 		relations?: string[],
-		findInput?: IApprovalPolicy
-	): Promise<{ items: any[]; total: number }> {
+		findInput?: IApprovalPolicyFindInput
+	): Promise<IPagination<IApprovalPolicy>> {
 		const data = JSON.stringify({ relations, findInput });
-
 		return this.http
-			.get<{ items: IApprovalPolicy[]; total: number }>(
+			.get<IPagination<IApprovalPolicy>>(
 				`${this.APPROVAL_POLICY_URL}`,
 				{
 					params: { data }
@@ -29,12 +33,11 @@ export class ApprovalPolicyService {
 
 	getForRequestApproval(
 		relations?: string[],
-		findInput?: IApprovalPolicy
-	): Promise<{ items: any[]; total: number }> {
+		findInput?: IApprovalPolicyFindInput
+	): Promise<IPagination<IApprovalPolicy>> {
 		const data = JSON.stringify({ relations, findInput });
-
 		return this.http
-			.get<{ items: IApprovalPolicy[]; total: number }>(
+			.get<IPagination<IApprovalPolicy>>(
 				`${this.APPROVAL_POLICY_URL}/request-approval`,
 				{
 					params: { data }

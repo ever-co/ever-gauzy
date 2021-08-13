@@ -5,6 +5,7 @@ import { EmailTemplate } from '../../email-template.entity';
 import { LanguagesEnum, EmailTemplateNameEnum, IEmailTemplate } from '@gauzy/contracts';
 import * as mjml2html from 'mjml';
 import { BadRequestException } from '@nestjs/common';
+import { RequestContext } from './../../../core/context';
 
 @CommandHandler(EmailTemplateSaveCommand)
 export class EmailTemplateSaveHandler
@@ -14,17 +15,16 @@ export class EmailTemplateSaveHandler
 	public async execute(
 		command: EmailTemplateSaveCommand
 	): Promise<IEmailTemplate> {
+		const tenantId = RequestContext.currentTenantId();
 		const {
 			input: {
 				languageCode,
 				name,
 				organizationId,
-				tenantId,
 				mjml,
 				subject
 			}
 		} = command;
-
 		try {
 			await this._saveTemplate(
 				languageCode,
@@ -62,7 +62,7 @@ export class EmailTemplateSaveHandler
 			record
 		}: {
 			success: boolean;
-			record?: EmailTemplate;
+			record?: IEmailTemplate;
 		} = await this.emailTemplateService.findOneOrFail({
 			languageCode,
 			name: `${name}/${type}`,
@@ -86,6 +86,9 @@ export class EmailTemplateSaveHandler
 						hbs: mjml2html(content).html
 					};
 					break;
+			}
+			if (`title` in entity) {
+				delete entity['title'];
 			}
 			await this.emailTemplateService.update(record.id, entity);
 		} else {

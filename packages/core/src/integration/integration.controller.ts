@@ -3,21 +3,19 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	UseGuards,
 	Param
 } from '@nestjs/common';
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { Integration } from './integration.entity';
 import { IntegrationService } from './integration.service';
-import { AuthGuard } from '@nestjs/passport';
 import { IntegrationType } from './integration-type.entity';
 import { ApiResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { IntegrationTypeGetCommand, IntegrationGetCommand } from './commands';
 import { IntegrationEnum } from '@gauzy/contracts';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Integrations')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class IntegrationController extends CrudController<Integration> {
 	constructor(
@@ -57,10 +55,11 @@ export class IntegrationController extends CrudController<Integration> {
 		description: 'Record not found'
 	})
 	@Get()
-	async getIntegrations(@Query('filters') filters): Promise<Integration[]> {
-		const integrationFilter = JSON.parse(filters);
+	async getIntegrations(
+		@Query('filters', ParseJsonPipe) filters: any
+	): Promise<Integration[]> {
 		return await this._commandBus.execute(
-			new IntegrationGetCommand(integrationFilter)
+			new IntegrationGetCommand(filters)
 		);
 	}
 
@@ -82,7 +81,7 @@ export class IntegrationController extends CrudController<Integration> {
 	@Get('check/state/:integration/:organizationId')
 	async checkRememberState(
 		@Param('integration') integration: IntegrationEnum,
-		@Param('organizationId') organizationId: string
+		@Param('organizationId', UUIDValidationPipe) organizationId: string
 	): Promise<any> {
 		return await this._integrationService.checkIntegrationRemeberState(
 			integration,

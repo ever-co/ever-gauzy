@@ -1,6 +1,3 @@
-import { CrudController } from '../core';
-import { ApprovalPolicy } from './approval-policy.entity';
-import { ApprovalPolicyService } from './approval-policy.service';
 import {
 	PermissionsEnum,
 	IApprovalPolicyCreateInput,
@@ -23,21 +20,22 @@ import {
 	Controller
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { CommandBus } from '@nestjs/cqrs';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CrudController } from '../core';
+import { ApprovalPolicy } from './approval-policy.entity';
+import { ApprovalPolicyService } from './approval-policy.service';
 import {
 	ApprovalPolicyCreateCommand,
 	ApprovalPolicyGetCommand,
 	ApprovalPolicyUpdateCommand,
 	RequestApprovalPolicyGetCommand
 } from './commands';
-import { UUIDValidationPipe } from '../shared';
+
 @ApiTags('ApprovalPolicy')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	constructor(
@@ -47,26 +45,12 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		super(approvalPolicyService);
 	}
 
-	@ApiOperation({ summary: 'Find all approval policies.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found policies',
-		type: ApprovalPolicy
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Get()
-	findAllApprovalPolicies(
-		@Query('data', ParseJsonPipe)
-		data: IListQueryInput<IRequestApprovalFindInput>
-	): Promise<IPagination<IApprovalPolicy>> {
-		return this.commandBus.execute(new ApprovalPolicyGetCommand(data));
-	}
-
+	/**
+	 * GET all approval policies except time off and equipment sharing policy
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary:
 			'Find all approval policies except time off and equipment sharing policy.'
@@ -82,16 +66,49 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	})
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Get('/request-approval')
-	findApprovalPoliciesForRequestApproval(
+	@Get('request-approval')
+	async findApprovalPoliciesForRequestApproval(
 		@Query('data', ParseJsonPipe)
 		data: IListQueryInput<IRequestApprovalFindInput>
 	): Promise<IPagination<IApprovalPolicy>> {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new RequestApprovalPolicyGetCommand(data)
 		);
 	}
 
+	/**
+	 * GET all approval policies
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all approval policies.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: ApprovalPolicy
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IApprovalPolicy>> {
+		return await this.commandBus.execute(
+			new ApprovalPolicyGetCommand(data)
+		);
+	}
+
+	/**
+	 * CREATE approval policy
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -105,12 +122,21 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post()
-	async createApprovalPolicy(
+	async create(
 		@Body() entity: IApprovalPolicyCreateInput
-	): Promise<ApprovalPolicy> {
-		return this.commandBus.execute(new ApprovalPolicyCreateCommand(entity));
+	): Promise<IApprovalPolicy> {
+		return await this.commandBus.execute(
+			new ApprovalPolicyCreateCommand(entity)
+		);
 	}
 
+	/**
+	 * UPDATE approval policy by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -128,11 +154,11 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Put(':id')
-	async updateApprovalPolicy(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IApprovalPolicyUpdateInput
-	): Promise<ApprovalPolicy> {
-		return this.commandBus.execute(
+	): Promise<IApprovalPolicy> {
+		return await this.commandBus.execute(
 			new ApprovalPolicyUpdateCommand({ id, ...entity })
 		);
 	}

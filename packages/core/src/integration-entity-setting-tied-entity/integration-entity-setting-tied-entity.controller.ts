@@ -6,15 +6,15 @@ import {
 	Body,
 	UseGuards
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core';
+import { CrudController } from './../core/crud';
 import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
 import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entity.service';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('IntegrationsEntitySetting')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller('integration-entity-setting-tied-entity')
 export class IntegrationEntitySettingTiedEntityController extends CrudController<IntegrationEntitySettingTiedEntity> {
 	constructor(
@@ -35,7 +35,7 @@ export class IntegrationEntitySettingTiedEntityController extends CrudController
 	})
 	@Put(':integrationId')
 	async editSettings(
-		@Param('integrationId') integrationId,
+		@Param('integrationId', UUIDValidationPipe) integrationId,
 		@Body() editSettingsDto
 	): Promise<IntegrationEntitySettingTiedEntity> {
 		return await this.integrationEntitySettingTiedEntityService.create(

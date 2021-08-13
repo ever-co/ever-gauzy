@@ -14,12 +14,12 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GoalService } from './goal.service';
 import { Goal } from './goal.entity';
-import { CrudController } from '../core';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { CrudController } from './../core/crud';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Goals')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class GoalController extends CrudController<Goal> {
 	constructor(private readonly goalService: GoalService) {
@@ -42,8 +42,10 @@ export class GoalController extends CrudController<Goal> {
 		description: 'Record not found'
 	})
 	@Get('all')
-	async getAll(@Query('data') data: string) {
-		const { relations, findInput } = JSON.parse(data);
+	async getAll(
+		@Query('data', ParseJsonPipe) data: any
+	) {
+		const { relations, findInput } = data;
 		return this.goalService.findAll({
 			where: { ...findInput },
 			relations,
@@ -67,7 +69,10 @@ export class GoalController extends CrudController<Goal> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(@Param('id') id: string, @Body() entity: Goal): Promise<Goal> {
+	async update(
+		@Param('id', UUIDValidationPipe) id: string, 
+		@Body() entity: Goal
+	): Promise<Goal> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
@@ -83,7 +88,9 @@ export class GoalController extends CrudController<Goal> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async deleteGoal(@Param('id') id: string): Promise<any> {
+	async deleteGoal(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
 		return this.goalService.delete(id);
 	}
 }

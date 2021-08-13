@@ -23,6 +23,8 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
+import 'cypress-file-upload';
+import '@4tw/cypress-drag-drop';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -132,19 +134,20 @@ export const CustomCommands = {
 		organizationTeamsPage.tagsMultyselectVisible();
 		organizationTeamsPage.clickTagsMultyselect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickEmployeeDropdown();
 		organizationTeamsPage.selectEmployeeFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickManagerDropdown();
 		organizationTeamsPage.selectManagerFromDropdown(0);
-		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
 	},
 	addProject: (
 		organizationProjectsPage: any,
-		OrganizationProjectsPageData: any
+		OrganizationProjectsPageData: any,
+		employeeFullName?: string
 	) => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
@@ -162,7 +165,13 @@ export const CustomCommands = {
 		);
 		organizationProjectsPage.selectEmployeeDropdownVisible();
 		organizationProjectsPage.clickSelectEmployeeDropdown();
-		organizationProjectsPage.selectEmployeeDropdownOption(0);
+		if (!employeeFullName) {
+			organizationProjectsPage.selectEmployeeDropdownOption(0);
+		} else {
+			organizationProjectsPage.selectEmployeeFromDropdownByName(
+				employeeFullName
+			);
+		}
 		organizationProjectsPage.clickKeyboardButtonByKeyCode(9);
 		organizationProjectsPage.clickTabButton(3);
 		organizationProjectsPage.budgetHoursInputVisible();
@@ -177,7 +186,11 @@ export const CustomCommands = {
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
 	},
-	addTask: (addTaskPage: any, AddTasksPageData: any) => {
+	addTask: (
+		addTaskPage: any,
+		AddTasksPageData: any,
+		employeeFullName?: string
+	) => {
 		cy.visit('/#/pages/tasks/dashboard', { timeout: pageLoadTimeout });
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
@@ -190,8 +203,11 @@ export const CustomCommands = {
 		);
 		addTaskPage.selectEmployeeDropdownVisible();
 		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(1);
-		addTaskPage.selectEmployeeDropdownOption(2);
+		if (!employeeFullName) {
+			addTaskPage.selectEmployeeDropdownOption(0);
+		} else {
+			addTaskPage.selectEmployeeFromDropdownByName(employeeFullName);
+		}
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.addTitleInputVisible();
 		addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);
@@ -263,7 +279,8 @@ export const CustomCommands = {
 		city: string,
 		postcode: string,
 		street: string,
-		ClientsData: any
+		ClientsData: any,
+		employeeFullName?: string
 	) => {
 		cy.visit('/#/pages/contacts/clients', { timeout: pageLoadTimeout });
 		clientsPage.gridBtnExists();
@@ -304,7 +321,11 @@ export const CustomCommands = {
 		clientsPage.clickLastStepBtn();
 		clientsPage.selectEmployeeDropdownVisible();
 		clientsPage.clickSelectEmployeeDropdown();
-		clientsPage.selectEmployeeDropdownOption(0);
+		if (!employeeFullName) {
+			clientsPage.selectEmployeeDropdownOption(0);
+		} else {
+			clientsPage.selectEmployeeFromDropdownByName(employeeFullName);
+		}
 		clientsPage.clickKeyboardButtonByKeyCode(9);
 		clientsPage.nextButtonVisible();
 		clientsPage.clickNextButton();
@@ -442,5 +463,12 @@ export const CustomCommands = {
 		dashboradPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
+	},
+	getIframeBody: () => {
+		return cy
+			.get('iframe[class="cke_wysiwyg_frame cke_reset"]')
+			.its('1.contentDocument.body')
+			.should('not.be.empty')
+			.then(cy.wrap);
 	}
 };

@@ -10,6 +10,8 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
 let username = faker.internet.userName();
@@ -36,11 +38,11 @@ And('User can add new employee', () => {
 });
 
 // Add new proposal
-And('User can visist Jobs proposals page', () => {
+And('User can visist Jobs proposals page', () => { // User can verify complete page
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
+	CustomCommands.clearCookies(); //expected ga-onboarding-complete > div.logo > h6 to be visible
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/jobs/proposal-template');
+	cy.visit('/#/pages/jobs/proposal-template', { timeout: pageLoadTimeout });
 });
 
 Then('User can see add button', () => {

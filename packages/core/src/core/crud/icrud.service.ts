@@ -11,12 +11,12 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPagination } from './pagination';
+import { IPagination } from '@gauzy/contracts';
 
 export interface ICrudService<T> {
 	count(filter?: FindManyOptions<T>): Promise<number>;
 	findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>>;
-	search(filter?: FindManyOptions<T>): Promise<IPagination<T>>;
+	paginate(filter?: FindManyOptions<T>): Promise<IPagination<T>>;
 	findOne(
 		id: string | number | FindOneOptions<T> | FindConditions<T>,
 		options?: FindOneOptions<T>

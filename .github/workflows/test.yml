@@ -48,8 +48,8 @@ jobs:
               with:
                   # we have already installed all dependencies above
                   install: false
-                  # TODO: switch to true after set correct RECORDING_KEY
-                  record: false
+                  # record using CYPRESS_RECORD_KEY defined in env
+                  record: true
                   # Cypress tests and config file are in "apps/gauzy-e2e" folder
                   working-directory: 'apps/gauzy-e2e'
                   # We wait till both API and UI runs completely here
@@ -57,11 +57,16 @@ jobs:
                   # wait up to 20 minutes for the servers to respond
                   wait-on-timeout: 1200
                   browser: chrome
+                  headless: true
                   config-file: cypress.json
               env:
-                CYPRESS_RECORD_KEY: ${{ secrets.RECORDING_KEY }}
+                CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+                CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}
+                # pass GitHub token to allow accurately detecting a build vs a re-run build
+                GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
             - name: Print Dashboard URL
               run: |
                 echo Cypress finished with: ${{ steps.cypress.outcome }}
-                echo See results at ${{ steps.cypress.outputs.dashboardUrl }} 
+                echo See results at ${{ steps.cypress.outputs.dashboardUrl }}
+

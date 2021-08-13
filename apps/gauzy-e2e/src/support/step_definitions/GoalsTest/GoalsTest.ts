@@ -16,6 +16,8 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let email = faker.internet.email();
 let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
 let city = faker.address.city();
@@ -89,7 +91,7 @@ And('User can visit Goals page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/goals');
+	cy.visit('/#/pages/goals', { timeout: pageLoadTimeout });
 });
 
 And('User can see add goal button', () => {

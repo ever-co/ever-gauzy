@@ -1,14 +1,14 @@
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { ICandidateExperience, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { CandidateExperienceService } from './candidate-experience.service';
 import { CandidateExperience } from './candidate-experience.entity';
-import { IPagination } from '../core';
-import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateExperience')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateExperienceController extends CrudController<CandidateExperience> {
 	constructor(
@@ -17,6 +17,12 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 		super(candidateExperienceService);
 	}
 
+	/**
+	 * GET all candidate experiences 
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate experience.'
 	})
@@ -30,10 +36,10 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 		description: 'Record not found'
 	})
 	@Get()
-	async findExperience(
-		@Query('data') data: string
-	): Promise<IPagination<CandidateExperience>> {
-		const { findInput, relations } = JSON.parse(data);
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ICandidateExperience>> {
+		const { findInput, relations } = data;
 		return this.candidateExperienceService.findAll({
 			where: findInput,
 			relations

@@ -624,7 +624,7 @@ export class InvoicesComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint: `${API_PREFIX}/invoices/search/filter`,
+			endPoint: `${API_PREFIX}/invoices/pagination`,
 			relations: [
 				'invoiceItems',
 				'invoiceItems.employee',

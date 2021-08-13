@@ -8,6 +8,8 @@ import * as faker from 'faker';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let username = faker.internet.userName();
 let password = faker.internet.password();
 
@@ -18,7 +20,7 @@ Given('Login with default credentials', () => {
 
 // Add new transfer protocol
 Then('User can visit Custom SMTP page', () => {
-	cy.visit('/#/pages/settings/custom-smtp/tenant');
+	cy.visit('/#/pages/settings/custom-smtp/tenant', { timeout: pageLoadTimeout });
 });
 
 And('User can see host input field', () => {

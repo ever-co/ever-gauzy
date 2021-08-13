@@ -9,17 +9,16 @@ import {
 	Put,
 	HttpCode
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { IEmail, IEmailUpdateInput, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
-import { IPagination } from '../core';
-import { ParseJsonPipe } from '../shared';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('Email')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmailController extends CrudController<Email> {
 	constructor(private readonly emailService: EmailService) {
@@ -37,12 +36,11 @@ export class EmailController extends CrudController<Email> {
 		description: 'No records found'
 	})
 	@Get()
-	async findAllEmails(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Email>> {
+	): Promise<IPagination<IEmail>> {
 		const { relations, findInput, take } = data;
-
-		const response = await this.emailService.findAll({
+		return await this.emailService.findAll({
 			where: findInput,
 			relations,
 			order: {
@@ -50,13 +48,6 @@ export class EmailController extends CrudController<Email> {
 			},
 			take: take
 		});
-
-		response.items.forEach((email) => {
-			const name = email.emailTemplate.name;
-			email.emailTemplate.name = name.split('/')[0].split('-').join(' ');
-		});
-
-		return response;
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -75,7 +66,10 @@ export class EmailController extends CrudController<Email> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(@Param('id') id: string, @Body() entity: Email): Promise<any> {
-		return this.emailService.update(id, entity);
+	async update(
+		@Param('id', UUIDValidationPipe) id: string, 
+		@Body() entity: IEmailUpdateInput
+	): Promise<any> {
+		return await this.emailService.update(id, entity);
 	}
 }

@@ -12,14 +12,14 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
-
-const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 // Login with email
 Given('Login with default credentials', () => {

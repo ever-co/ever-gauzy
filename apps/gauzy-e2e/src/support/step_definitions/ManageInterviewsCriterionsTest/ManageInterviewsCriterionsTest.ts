@@ -7,6 +7,8 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+const pageLoadTimeout = Cypress.config('pageLoadTimeout');
+
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -14,7 +16,7 @@ Given('Login with default credentials', () => {
 
 // Add technology stack
 And('User can visit Candidates interview criterion page', () => {
-	cy.visit('/#/pages/employees/candidates/interviews/criterion');
+	cy.visit('/#/pages/employees/candidates/interviews/criterion', { timeout: pageLoadTimeout });
 });
 
 And('User can see technology stack input field', () => {
