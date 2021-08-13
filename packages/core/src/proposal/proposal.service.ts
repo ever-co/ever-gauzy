@@ -7,6 +7,7 @@ import { getDateRangeFormat } from './../core/utils';
 import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
 import { Employee } from '../employee/employee.entity';
 import { TenantAwareCrudService } from './../core/crud';
+const puppeteer = require('puppeteer');
 
 @Injectable()
 export class ProposalService extends TenantAwareCrudService<Proposal> {
@@ -73,4 +74,17 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		}
 		return super.paginate(filter);
 	}
+
+	async getDataFromUrl(jobPostUrl: string): Promise<any> {
+		try {
+			const browser = await puppeteer.launch();
+			const [page] = await browser.pages();
+			await page.goto(jobPostUrl, { waitUntil: 'networkidle0' });
+			const data = await page.evaluate(() => document.documentElement.outerHTML);
+			await browser.close();			
+			return { data }		
+		} catch (err) {
+			return err;
+		}
+	} 
 }

@@ -61,4 +61,18 @@ export class ProposalsService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	getJobURLData(
+		jobPostUrl?: string,
+	): Promise<{ data: string }> {
+		return this.http
+			.get(`${API_PREFIX}/proposal/extract/data-from-url`, { 
+				params : { jobPostUrl } 
+			})
+			.toPromise()
+			.then((data: any) => {
+				console.log(data, 'data');				
+				return data;
+			});
+	}
 }

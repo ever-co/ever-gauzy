@@ -1,4 +1,4 @@
-<nb-card class="main card-scroll">
+<nb-card  class="main card-scroll">
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
@@ -76,7 +76,11 @@
 							[placeholder]="'PROPOSALS_PAGE.REGISTER.JOB_POST_URL' | translate"
 							formControlName="jobPostUrl"
 							autocomplete="on"
+							(focusout)="handleFocusout($event)"
 						/>
+						<div class="icon-container">
+							<i class="loader"></i>
+						</div>
 					</div>
 				</div>
 				<div class="col-sm-3">
@@ -111,7 +115,7 @@
 			</div>
 			<div class="row">
 				<div class="col-xl-6">
-					<nb-card>
+					<nb-card [nbSpinner]="loading">
 						<nb-card-header>
 							{{
 								'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT'

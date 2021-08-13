@@ -50,6 +50,7 @@ export class ProposalRegisterComponent
 	};
 	minDate = new Date(moment().subtract(1, 'days').format('YYYY-MM-DD'));
 	selectedEmployee: IEmployee;
+	loading: boolean = false;
 
 	/*
 	* Payment Mutation Form 
@@ -168,5 +169,21 @@ export class ProposalRegisterComponent
 		this.form.patchValue({
 			tags: ev
 		});
+	}
+
+	async handleFocusout(event) {
+		if(event.target.value) {
+			this.loading = true;
+			await this.proposalsService
+			.getJobURLData(event.target.value)
+			.then((res) => {
+				if(res && res.data) {
+					this.form.patchValue({
+						jobPostContent: res.data
+					});
+				}			
+			})
+			.finally(() => (this.loading = false));
+		}		
 	}
 }

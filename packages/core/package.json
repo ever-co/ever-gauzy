@@ -110,6 +110,7 @@
 		"pdfmake": "^0.1.70",
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
+		"puppeteer": "^10.2.0",
 		"redis": "^3.0.2",
 		"reflect-metadata": "^0.1.13",
 		"request": "^2.88.2",

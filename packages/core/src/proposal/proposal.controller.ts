@@ -129,4 +129,11 @@ export class ProposalController extends CrudController<Proposal> {
 			...entity
 		});
 	}
+	
+	@Get('/extract/data-from-url')
+	async jobPostData(
+		@Query('jobPostUrl') jobPostUrl: string
+	): Promise<any> {
+		return await this.proposalService.getDataFromUrl(jobPostUrl);		
+	}
 }
