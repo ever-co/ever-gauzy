@@ -5,7 +5,7 @@ import { ImportExportData } from '../../Base/pagedata/ImportExportPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 
-import { Given, And } from 'cypress-cucumber-preprocessor/steps';
+import { Given, And, When, Then } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -46,9 +46,80 @@ And('User can verify Import button', () => {
 });
 
 And('User can verify Export button', () => {
-	importExportPage.exportButtonVisible();
+	importExportPage.exportBtnVisible();
 });
 
-And('User can verify Download button', () => {
-	importExportPage.downloadButtonVisible();
+// Verify migrate button works
+And('User can see migrate button', () => {
+	importExportPage.migrateBtnVisible();
+});
+
+When('User click on migrate button', () => {
+	importExportPage.clickMigrateBtn();
+});
+
+Then('User can see password input field', () => {
+	importExportPage.passwordInputVisible();
+});
+
+And('User can enter value for password', () => {
+	importExportPage.enterPassword(ImportExportData.password);
+});
+
+And('User can see ok button', () => {
+	importExportPage.okBtnVisible();
+});
+
+And('User can see cancel button', () => {
+	importExportPage.cancelBtnVisible();
+});
+
+When('User click on cancel button', () => {
+	importExportPage.clickCancelBtn();
+});
+
+Then('User can see again import button', () => {
+	importExportPage.importButtonVisible();
+});
+
+// Upload file
+When('User click on import button', () => {
+	importExportPage.clickImportBtn();
+});
+
+Then('User can see browse files button', () => {
+	importExportPage.browseFilesBtnVisible();
+});
+
+When('User attach file by clicking on browse file button', () => {
+	importExportPage.uploadFile('archive.zip');
+});
+
+Then('User can see import file button', () => {
+	importExportPage.importFileBtnVisible();
+});
+
+When('User click on import file button', () => {
+	importExportPage.clickImportFileBtn();
+});
+
+Then('User can verify file was uplaoded by file name', () => {
+	importExportPage.verifyFileName(ImportExportData.fileName);
+});
+
+And('User can verify file was uploaded by badge status', () => {
+	importExportPage.verifyUploadStatus();
+});
+
+// Remove file
+And('User can see remove file button', () => {
+	importExportPage.removeFileBtnVisible();
+});
+
+When('User click on remove file button', () => {
+	importExportPage.clickRemoveFileBtn();
+});
+
+Then('User can see again browse files button', () => {
+	importExportPage.browseFilesBtnVisible();
 });
