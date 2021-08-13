@@ -1,4 +1,9 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large" 
+	class="card-scroll"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -10,7 +15,6 @@
 			></ga-layout-selector>
 		</div>
 	</nb-card-header>
-
 	<nb-card-body>
 		<div class="mb-3">
 			<ng-template ngxPermissionsOnly="APPROVALS_POLICY_EDIT">
@@ -19,25 +23,24 @@
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
 			</ng-template>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-
 		<ng2-smart-table
 			class="tags-table"
 			(userRowSelect)="selectApprovalPolicy($event)"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			style="cursor: pointer"
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			#approvalPolicyTable
 		>
 		</ng2-smart-table>
 		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 			[settings]="settingsSmartTable"
-			[source]="approvalData"
+			[source]="approvalPolicies"
 			[buttonTemplate]="actionButtons"
 		></ga-card-grid>
 	</nb-card-body>

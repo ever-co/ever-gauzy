@@ -1,18 +1,22 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
-import { IApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/contracts';
+import { Component, OnInit, ViewChild, OnDestroy, AfterViewInit } from '@angular/core';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { first, filter, tap, debounceTime } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
-import { first, filter, tap } from 'rxjs/operators';
-import { Store } from '../../@core/services/store.service';
-import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy/approval-policy-mutation.component';
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import {
+	IApprovalPolicy,
+	ComponentLayoutStyleEnum,
+	IApprovalPolicyFindInput,
+	IOrganization
+} from '@gauzy/contracts';
+import { TranslationBaseComponent } from '../../@shared/language-base';
+import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { ComponentEnum } from '../../@core/constants';
+import { ApprovalPolicyService, Store, ToastrService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,17 +26,23 @@ import { ToastrService } from '../../@core/services/toastr.service';
 })
 export class ApprovalPolicyComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
+	
 	public settingsSmartTable: object;
+	
 	public loading: boolean;
-	public selectedApprovalPolicy: IApprovalPolicy;
 	public disableButton = true;
+	
+	public selectedApprovalPolicy: IApprovalPolicy;
 	public smartTableSource = new LocalDataSource();
-	approvalData: IApprovalPolicy[];
-	viewComponentName: ComponentEnum;
+	approvalPolicies: IApprovalPolicy[] = [];
+
+	viewComponentName: ComponentEnum = ComponentEnum.APPROVAL_POLICY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	private selectedOrganizationId: string;
-	private selectedTenantId: string;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	
+	public organization: IOrganization;
+	policies$: Subject<any> = new Subject();
 
 	approvalPolicyTable: Ng2SmartTableComponent;
 	@ViewChild('approvalPolicyTable') set content(
@@ -45,30 +55,40 @@ export class ApprovalPolicyComponent
 	}
 
 	constructor(
-		readonly translateService: TranslateService,
-		private store: Store,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private approvalPolicyService: ApprovalPolicyService,
-		private router: Router
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly approvalPolicyService: ApprovalPolicyService,
+		private readonly router: Router
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+	}
+
+	ngAfterViewInit() {
+		this.policies$
 			.pipe(
-				filter((organization) => !!organization),
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.getApprovalPolicies()),
+				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
-			.subscribe((org) => {
-				if (org) {
-					this.selectedOrganizationId = org.id;
-					this.selectedTenantId = this.store.user.tenantId;
-					this.loadSettings();
-				}
-			});
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.policies$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -76,18 +96,16 @@ export class ApprovalPolicyComponent
 					this.setView();
 				}
 			});
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
 	}
 
 	setView() {
-		this.viewComponentName = ComponentEnum.APPROVAL_POLICY;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -102,24 +120,19 @@ export class ApprovalPolicyComponent
 			.subscribe();
 	}
 
-	async loadSettings() {
-		this.loading = true;
-		let findInput: IApprovalPolicy = {};
-		if (this.selectedOrganizationId) {
-			findInput = {
-				organizationId: this.selectedOrganizationId,
-				tenantId: this.selectedTenantId
-			};
-		}
-		const items = (
-			await this.approvalPolicyService.getAll(['organization'], findInput)
-		).items;
+	async getApprovalPolicies() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { items = [] } = await this.approvalPolicyService.getAll(['organization'], {
+			tenantId,
+			organizationId
+		} as IApprovalPolicyFindInput)
 		this.loading = false;
-		this.approvalData = items;
+		this.approvalPolicies = items;
 		this.smartTableSource.load(items);
 	}
 
-	async loadSmartTable() {
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -139,12 +152,14 @@ export class ApprovalPolicyComponent
 			}
 		};
 	}
-	_applyTranslationOnSmartTable() {
+
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async save(selectedItem?: IApprovalPolicy) {
@@ -154,18 +169,19 @@ export class ApprovalPolicyComponent
 				data: selectedItem
 			});
 		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const dialog = this.dialogService.open(
 			ApprovalPolicyMutationComponent,
 			{
 				context: {
 					approvalPolicy: this.selectedApprovalPolicy,
-					organizationId: this.selectedOrganizationId,
-					tenantId: this.selectedTenantId
+					organizationId,
+					tenantId
 				}
 			}
 		);
 		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
-
 		if (requestApproval) {
 			this.toastrService.success(
 				this.selectedApprovalPolicy?.id
@@ -174,8 +190,7 @@ export class ApprovalPolicyComponent
 				{ name: requestApproval.name }
 			);
 		}
-		this.clearItem();
-		this.loadSettings();
+		this.policies$.next();
 	}
 
 	async selectApprovalPolicy({ isSelected, data }) {
@@ -199,13 +214,12 @@ export class ApprovalPolicyComponent
 			await this.approvalPolicyService.delete(
 				this.selectedApprovalPolicy.id
 			);
-			this.loadSettings();
-			this.toastrService.success(
-				'TOASTR.MESSAGE.APPROVAL_POLICY_DELETED',
-				{ name: this.selectedApprovalPolicy.name }
-			);
+			const { name } = this.selectedApprovalPolicy;
+			this.toastrService.success( 'TOASTR.MESSAGE.APPROVAL_POLICY_DELETED', { 
+				name 
+			});
 		}
-		this.clearItem();
+		this.policies$.next();
 	}
 
 	/*

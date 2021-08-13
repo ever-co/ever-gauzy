@@ -6,12 +6,11 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { Employee } from '../employee/employee.entity';
 import { TimeOffRequestController } from './time-off-request.controller';
 import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
@@ -22,16 +21,16 @@ import { CommandHandlers } from './commands/handlers';
 		TypeOrmModule.forFeature([
 			TimeOffRequest,
 			Employee,
-			User,
 			TimeOffPolicy,
 			RequestApproval,
 			ApprovalPolicy
 		]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [TimeOffRequestController],
-	providers: [TimeOffRequestService, UserService, ...CommandHandlers],
-	exports: [TypeOrmModule]
+	providers: [TimeOffRequestService, ...CommandHandlers],
+	exports: [TimeOffRequestService, TypeOrmModule]
 })
 export class TimeOffRequestModule {}
