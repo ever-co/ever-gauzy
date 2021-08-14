@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { IEquipmentSharing } from '@gauzy/contracts';
+import { IEquipmentSharing, IEquipmentSharingRequest } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -43,7 +43,7 @@ export class EquipmentSharingService {
 	}
 
 	create(
-		equipmentSharing: IEquipmentSharing,
+		equipmentSharing: IEquipmentSharingRequest,
 		id: string
 	): Promise<IEquipmentSharing> {
 		return this.http
@@ -57,7 +57,7 @@ export class EquipmentSharingService {
 
 	update(
 		id: string,
-		equipmentSharing: IEquipmentSharing
+		equipmentSharing: IEquipmentSharingRequest
 	): Promise<IEquipmentSharing> {
 		return this.http
 			.put<IEquipmentSharing>(

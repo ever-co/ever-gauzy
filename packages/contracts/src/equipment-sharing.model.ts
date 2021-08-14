@@ -2,34 +2,37 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team-model';
 import { IEquipment } from './equipment.model';
+import { IEquipmentSharingPolicy } from './equipment-sharing-policy.model';
 
 export interface IEquipmentSharing
 	extends IBasePerTenantAndOrganizationEntityModel {
-	equipmentId?: string;
-	shareRequestDay?: Date;
-	shareStartDay?: Date;
-	shareEndDay?: Date;
-	status?: number;
-	equipmentSharingPolicyId?: string;
-	employees?: IEmployee[];
-	teams?: IOrganizationTeam[];
-	equipment?: IEquipment;
-	name?: string;
-	createdBy?: string;
-	createdByName?: string;
-}
-
-export interface IEquipmentSharingRequest {
-	equipmentId: string;
-	equipment: string;
+	name: string;
 	shareRequestDay: Date;
 	shareStartDay: Date;
 	shareEndDay: Date;
 	status: number;
+	createdBy: string;
+	createdByName: string;
+	equipment: IEquipment;
+	equipmentId: string;
+	equipmentSharingPolicy: IEquipmentSharingPolicy;
+	equipmentSharingPolicyId: string;
+	employees?: IEmployee[];
+	teams?: IOrganizationTeam[];
+}
+
+export interface IEquipmentSharingRequest 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	equipment?: IEquipment;
+	equipmentId?: string;
+	shareRequestDay: Date;
+	shareStartDay: Date;
+	shareEndDay: Date;
+	status: number;
+	equipmentSharingPolicy?: IEquipmentSharingPolicy;
 	equipmentSharingPolicyId?: string;
-	employees?: string[];
-	teams?: string[];
-	organizationId?: string;
+	employees?: IEmployee[];
+	teams?: IOrganizationTeam[];
 }
 
 export enum EquipmentSharingStatusEnum {

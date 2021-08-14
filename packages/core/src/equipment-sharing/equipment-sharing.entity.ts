@@ -5,10 +5,15 @@ import {
 	ManyToMany,
 	JoinTable,
 	JoinColumn,
-	ManyToOne
+	ManyToOne,
+	Index
 } from 'typeorm';
 import {
+	IEmployee,
+	IEquipment,
 	IEquipmentSharing,
+	IEquipmentSharingPolicy,
+	IOrganizationTeam,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
@@ -30,18 +35,6 @@ export class EquipmentSharing
 	@Column({ nullable: true })
 	name: string;
 
-	@ApiProperty({ type: () => Equipment })
-	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings)
-	@JoinColumn()
-	equipment: Equipment;
-
-	@ApiProperty({ type: () => String })
-	@RelationId(
-		(equipmentSharing: EquipmentSharing) => equipmentSharing.equipment
-	)
-	@Column({ nullable: true })
-	equipmentId: string;
-
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
@@ -62,18 +55,6 @@ export class EquipmentSharing
 	@Column()
 	status: number;
 
-	@ManyToMany(() => Employee, { cascade: true })
-	@JoinTable({
-		name: 'equipment_shares_employees'
-	})
-	employees: Employee[];
-
-	@ManyToMany(() => OrganizationTeam, { cascade: true })
-	@JoinTable({
-		name: 'equipment_shares_teams'
-	})
-	teams: OrganizationTeam[];
-
 	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
@@ -84,20 +65,68 @@ export class EquipmentSharing
 	@Column({ nullable: true })
 	createdByName: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Equipment
+	 */
+	@ApiProperty({ type: () => Equipment })
+	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings)
+	@JoinColumn()
+	equipment: IEquipment;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: EquipmentSharing) => it.equipment)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	equipmentId: string;
+
+	/**
+	* Equipment
+	*/
 	@ApiProperty({ type: () => EquipmentSharingPolicy })
-	@ManyToOne(() => EquipmentSharingPolicy, {
+	@ManyToOne(() => EquipmentSharingPolicy, (it) => it.equipmentSharings, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	equipmentSharingPolicy: EquipmentSharingPolicy;
+	equipmentSharingPolicy: IEquipmentSharingPolicy;
 
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId(
-		(equipmentSharingPolicy: EquipmentSharing) =>
-			equipmentSharingPolicy.equipmentSharingPolicy
-	)
+	@ApiProperty({ type: () => String })
+	@RelationId((it: EquipmentSharing) => it.equipmentSharingPolicy)
 	@IsString()
+	@Index()
 	@Column({ nullable: true })
 	equipmentSharingPolicyId: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToMany(() => Employee, { cascade: true })
+	@JoinTable({
+		name: 'equipment_shares_employees'
+	})
+	employees?: IEmployee[];
+
+	/**
+	 * OrganizationTeam
+	 */
+	@ApiProperty({ type: () => OrganizationTeam })
+	@ManyToMany(() => OrganizationTeam, { cascade: true })
+	@JoinTable({
+		name: 'equipment_shares_teams'
+	})
+	teams?: IOrganizationTeam[];
 }

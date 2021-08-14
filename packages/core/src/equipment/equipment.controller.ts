@@ -38,7 +38,7 @@ export class EquipmentController extends CrudController<Equipment> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEquipmentSharings(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEquipment>> {
 		const { relations, findInput } = data;
@@ -49,6 +49,7 @@ export class EquipmentController extends CrudController<Equipment> {
 			relations
 		});
 	}
+	
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
