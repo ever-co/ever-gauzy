@@ -26,12 +26,14 @@ import {
 	IExpenseCategory,
 	ITag,
 	IEmployee,
-	IOrganizationProject
+	IOrganizationProject,
+	IOrganizationContact
 } from '@gauzy/contracts';
 import {
 	Employee,
 	ExpenseCategory,
 	InvoiceItem,
+	OrganizationContact,
 	OrganizationProject,
 	OrganizationVendor,
 	Tag,
@@ -40,23 +42,7 @@ import {
 
 @Entity('expense')
 export class Expense extends TenantOrganizationBaseEntity implements IExpense {
-	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.expense)
-	@JoinTable({
-		name: 'tag_expense'
-	})
-	tags: ITag[];
-
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	employee?: IEmployee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((expense: Expense) => expense.employee)
-	@Column({ nullable: true })
-	readonly employeeId?: string;
-
+	
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
@@ -70,64 +56,6 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@Index()
 	@Column({ nullable: true })
 	typeOfExpense: string;
-
-	@ApiProperty({ type: () => OrganizationVendor })
-	@ManyToOne(() => OrganizationVendor, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	vendor: IOrganizationVendor;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: Expense) => it.vendor)
-	@IsString()
-	@Index()
-	@Column({ nullable: false })
-	readonly vendorId: string;
-
-	@ApiProperty({ type: () => ExpenseCategory })
-	@ManyToOne(() => ExpenseCategory, {
-		nullable: false
-	})
-	@JoinColumn()
-	category: IExpenseCategory;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: Expense) => it.category)
-	@IsString()
-	@Index()
-	@Column({ nullable: false })
-	readonly categoryId: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	organizationContactId?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	organizationContactName?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	@RelationId((expense: Expense) => expense.project)
-	projectId?: string;
-
-	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, {
-		nullable: false
-	})
-	@JoinColumn()
-	project: IOrganizationProject;
-
-	@ApiPropertyOptional({ type: () => String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	projectName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
@@ -195,12 +123,135 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@Column({ nullable: true })
 	status?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, (employee) => employee.expenses, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Expense) => it.employee)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly employeeId?: string;
+
+	/**
+	 * OrganizationVendor
+	 */
+	@ApiProperty({ type: () => OrganizationVendor })
+	@ManyToOne(() => OrganizationVendor, (vendor) => vendor.expenses, {
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	vendor: IOrganizationVendor;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Expense) => it.vendor)
+	@IsString()
+	@Index()
+	@Column({ nullable: false })
+	readonly vendorId: string;
+
+	/**
+	 * ExpenseCategory
+	 */
+	@ApiProperty({ type: () => ExpenseCategory })
+	@ManyToOne(() => ExpenseCategory, (category) => category.expenses, {
+		nullable: false
+	})
+	@JoinColumn()
+	category: IExpenseCategory;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Expense) => it.category)
+	@IsString()
+	@Index()
+	@Column({ nullable: false })
+	readonly categoryId: string;
+
+	/**
+	 * OrganizationProject
+	 */
+	@ApiProperty({ type: () => OrganizationProject })
+	@ManyToOne(() => OrganizationProject, (project) => project.expenses, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	project?: IOrganizationProject;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: Expense) => it.project)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	projectId?: string;
+
+	/**
+	 * OrganizationContact
+	 */
+	@ApiProperty({ type: () => OrganizationContact })
+	@ManyToOne(() => OrganizationContact, (contact) => contact.expenses, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	organizationContact?: IOrganizationContact;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: Expense) => it.organizationContact)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	organizationContactId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * InvoiceItem
+	 */
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.expense, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Tag
+	 */
+	@ApiProperty({ type: () => Tag })
+	@ManyToMany(() => Tag, (tag) => tag.expense)
+	@JoinTable({
+		name: 'tag_expense'
+	})
+	tags?: ITag[];
 
 	//IN SOME CASES THE EXPENSES ARE CRASHING BECAUSE ITS TRYING TO ADD EXPENSES AND THERE IS NO SUCH THING
 

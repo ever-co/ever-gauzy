@@ -139,7 +139,7 @@ export class ExpenseController extends CrudController<Expense> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('report')
-	async getExpanseReport(
+	async getExpenseReport(
 		@Query() request: IGetExpenseInput
 	): Promise<IExpenseReportData[]> {
 		const expenses = await this.expenseService.getExpense(request);
@@ -201,16 +201,15 @@ export class ExpenseController extends CrudController<Expense> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
-	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Expense
+	@Post()
+	async create(
+		@Body() entity: IExpenseCreateInput,
+		...options: any[]
 	): Promise<IExpense> {
 		return await this.commandBus.execute(
-			new ExpenseUpdateCommand(id, entity)
+			new ExpenseCreateCommand(entity)
 		);
 	}
 
@@ -224,15 +223,16 @@ export class ExpenseController extends CrudController<Expense> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
-	@Post('/create')
-	async create(
-		@Body() entity: IExpenseCreateInput,
-		...options: any[]
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: Expense
 	): Promise<IExpense> {
 		return await this.commandBus.execute(
-			new ExpenseCreateCommand(entity)
+			new ExpenseUpdateCommand(id, entity)
 		);
 	}
 
@@ -249,10 +249,13 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
-	@Delete('deleteExpense')
-	async deleteExpense(@Query('data', ParseJsonPipe) data: any): Promise<any> {
-		const { expenseId = null, employeeId = null } = data;
-		return this.commandBus.execute(
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) expenseId: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { employeeId = null } = data;
+		return await this.commandBus.execute(
 			new ExpenseDeleteCommand(employeeId, expenseId)
 		);
 	}

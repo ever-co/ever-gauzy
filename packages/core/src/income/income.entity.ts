@@ -38,10 +38,9 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@IsNotEmpty()
 	@Index()
-	@Column()
-	clientName: string;
+	@Column({ nullable: true })
+	clientName?: string;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)

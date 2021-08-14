@@ -6,6 +6,7 @@ import {
 	IExpenseFindInput,
 	IExpenseReportData,
 	IExpenseUpdateInput,
+	IPagination,
 	ISplitExpenseOutput
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
@@ -18,9 +19,9 @@ import { API_PREFIX } from '../constants/app.constants';
 export class ExpensesService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: IExpenseCreateInput): Promise<any> {
+	create(createInput: IExpenseCreateInput): Promise<IExpense> {
 		return this.http
-			.post<IExpense>(`${API_PREFIX}/expense/create`, createInput)
+			.post<IExpense>(`${API_PREFIX}/expense`, createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -28,11 +29,10 @@ export class ExpensesService {
 	getMyAllWithSplitExpenses(
 		relations?: string[],
 		filterDate?: Date
-	): Promise<{ items: ISplitExpenseOutput[]; total: number }> {
+	): Promise<IPagination<ISplitExpenseOutput>> {
 		const data = JSON.stringify({ relations, filterDate });
-
 		return this.http
-			.get<{ items: ISplitExpenseOutput[]; total: number }>(
+			.get<IPagination<ISplitExpenseOutput>>(
 				`${API_PREFIX}/expense/me`,
 				{
 					params: { data }
@@ -42,7 +42,7 @@ export class ExpensesService {
 			.toPromise();
 	}
 
-	getById(id: string) {
+	getById(id: string): Promise<IExpense> {
 		return this.http
 			.get<IExpense>(`${API_PREFIX}/expense/${id}`)
 			.pipe(first())
@@ -53,11 +53,10 @@ export class ExpensesService {
 		employeeId: string,
 		relations?: string[],
 		filterDate?: Date
-	): Promise<{ items: ISplitExpenseOutput[]; total: number }> {
+	): Promise<IPagination<ISplitExpenseOutput>> {
 		const data = JSON.stringify({ relations, filterDate });
-
 		return this.http
-			.get<{ items: ISplitExpenseOutput[]; total: number }>(
+			.get<IPagination<ISplitExpenseOutput>>(
 				`${API_PREFIX}/expense/include-split/${employeeId}`,
 				{
 					params: { data }
@@ -71,11 +70,10 @@ export class ExpensesService {
 		relations?: string[],
 		findInput?: IExpenseFindInput,
 		filterDate?: Date
-	): Promise<{ items: IExpense[]; total: number }> {
+	): Promise<IPagination<IExpense>> {
 		const data = JSON.stringify({ relations, findInput, filterDate });
-
 		return this.http
-			.get<{ items: IExpense[]; total: number }>(
+			.get<IPagination<IExpense>>(
 				`${API_PREFIX}/expense`,
 				{
 					params: { data }
@@ -85,17 +83,17 @@ export class ExpensesService {
 			.toPromise();
 	}
 
-	update(id: string, updateInput: IExpenseUpdateInput): Promise<any> {
+	update(id: string, updateInput: IExpenseUpdateInput): Promise<IExpense> {
 		return this.http
-			.put(`${API_PREFIX}/expense/${id}`, updateInput)
+			.put<IExpense>(`${API_PREFIX}/expense/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(expenseId: string, employeeId: string): Promise<any> {
-		const data = JSON.stringify({ expenseId, employeeId });
+		const data = JSON.stringify({ employeeId });
 		return this.http
-			.delete(`${API_PREFIX}/expense/deleteExpense`, {
+			.delete(`${API_PREFIX}/expense/${expenseId}`, {
 				params: { data }
 			})
 			.pipe(first())

@@ -22,7 +22,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
@@ -255,7 +255,6 @@ export class IncomeComponent
 						const { amount, organizationContact, valueDate, employee, notes, currency, isBonus, tags } = result;
 						await this.incomeService.create({
 							amount,
-							clientName: organizationContact.name,
 							clientId: organizationContact.id,
 							valueDate,
 							employeeId: employee ? employee.id : null,
@@ -307,7 +306,6 @@ export class IncomeComponent
 						const { employee } = this.selectedIncome;
 						await this.incomeService.update(this.selectedIncome.id, {
 							amount,
-							clientName: organizationContact.name,
 							clientId: organizationContact.id,
 							valueDate,
 							notes,
@@ -387,7 +385,8 @@ export class IncomeComponent
 				'employee', 
 				'employee.user', 
 				'tags', 
-				'organization'
+				'organization',
+				'client'
 			],
 			join: {
 				alias: 'income',
@@ -403,6 +402,7 @@ export class IncomeComponent
 			resultMap: (income: IIncome) => {
 				return Object.assign({}, income, {
 					employeeName: income.employee ? income.employee.fullName : null,
+					clientName: income.client ? income.client.name : income.clientName,
 				});
 			},
 			finalize: () => {

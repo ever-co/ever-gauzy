@@ -13,6 +13,7 @@ import { IUser, IUserFindInput } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IEmployeeSetting } from './employee-settings.model';
+import { IExpense } from './expense.model';
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
@@ -43,6 +44,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 	requestApprovalEmployee?: IRequestApprovalEmployee[];
 	settings?: IEmployeeSetting[];
+	expenses?: IExpense[];
 	contact: IContact;
 	averageIncome?: number;
 	totalWorkHours?: number;

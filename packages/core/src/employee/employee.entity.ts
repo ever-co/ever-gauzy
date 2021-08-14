@@ -18,7 +18,8 @@ import {
 	IOrganizationContact,
 	IEmployeeSetting,
 	ITimeOffPolicy,
-	ITimeOff as ITimeOffRequest
+	ITimeOff as ITimeOffRequest,
+	IExpense
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -44,6 +45,7 @@ import {
 import {
 	Contact,
 	EmployeeSetting,
+	Expense,
 	InvoiceItem,
 	JobPreset,
 	OrganizationContact,
@@ -366,6 +368,10 @@ export class Employee
 	@ApiPropertyOptional({ type: () => EmployeeSetting, isArray: true })
 	@OneToMany(() => EmployeeSetting, (it) => it.employee)
 	settings?: IEmployeeSetting[];
+
+	@ApiPropertyOptional({ type: () => Expense, isArray: true })
+	@OneToMany(() => Expense, (it) => it.employee)
+	expenses?: IExpense[];
 
 	/*
     |--------------------------------------------------------------------------
