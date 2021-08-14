@@ -8,7 +8,7 @@ import {
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { IEquipmentSharing, IPagination, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { getConfig } from '@gauzy/config';
@@ -79,10 +79,15 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		}
 	}
 
-	async findAllEquipmentSharings(): Promise<any> {
-		return await this.equipmentSharingRepository.find({
-			relations: ['equipment', 'employees', 'teams']
+	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
+		const [ items, total ] = await this.equipmentSharingRepository.findAndCount({
+			relations: [
+				'equipment',
+				'employees',
+				'teams'
+			]
 		});
+		return { items, total }
 	}
 
 	async createEquipmentSharing(

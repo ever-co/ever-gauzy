@@ -1,5 +1,4 @@
 import { OnInit, Component, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import {
 	FormGroup,
 	FormBuilder,
@@ -14,27 +13,23 @@ import {
 	IEmployee,
 	IOrganizationTeam,
 	IEquipmentSharingPolicy,
-	IOrganization
+	IOrganization,
+	IEquipmentSharingRequest
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
-import { EquipmentService } from '../../@core/services/equipment.service';
-import { EmployeesService } from '../../@core/services/employees.service';
-import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { Store } from '../../@core/services/store.service';
-import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
+import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import {
+	EmployeesService,
+	EquipmentService,
+	EquipmentSharingPolicyService,
+	EquipmentSharingService,
+	OrganizationTeamsService,
+	Store
+} from '../../@core/services';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-export interface RequestEmployee {
-	id: string;
-	firstName: string;
-	lastName: string;
-	imageUrl: string;
-	organizationId: string;
-}
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-equipment-sharing-mutation',
 	templateUrl: './equipment-sharing-mutation.component.html',
@@ -44,22 +39,22 @@ export class EquipmentSharingMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	constructor(
-		public dialogRef: NbDialogRef<EquipmentSharingMutationComponent>,
-		private equipmentSharingService: EquipmentSharingService,
-		private equipmentService: EquipmentService,
-		private store: Store,
-		private fb: FormBuilder,
-		readonly translationService: TranslateService,
-		private employeesService: EmployeesService,
-		private organizationTeamsService: OrganizationTeamsService,
-		private equipmentSharingPolicyService: EquipmentSharingPolicyService
+		public readonly dialogRef: NbDialogRef<EquipmentSharingMutationComponent>,
+		private readonly equipmentSharingService: EquipmentSharingService,
+		private readonly equipmentService: EquipmentService,
+		private readonly store: Store,
+		private readonly fb: FormBuilder,
+		public readonly translationService: TranslateService,
+		private readonly employeesService: EmployeesService,
+		private readonly organizationTeamsService: OrganizationTeamsService,
+		private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService
 	) {
 		super(translationService);
 	}
 
 	form: FormGroup;
 	equipmentSharing: IEquipmentSharing;
-	employees: IEmployee[];
+	employees: IEmployee[] = [];
 	disabled: boolean;
 	selectedOrganization: IOrganization;
 	requestStatus: number;
@@ -73,8 +68,6 @@ export class EquipmentSharingMutationComponent
 	selectedEquipmentSharingPolicy: string;
 	requestStatuses = Object.values(RequestApprovalStatus);
 
-	private _ngDestroy$ = new Subject<void>();
-
 	date1 = new Date();
 	date2 = new Date();
 	filter = this.datePickerFilterPredicate.bind(this);
@@ -87,7 +80,9 @@ export class EquipmentSharingMutationComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -107,10 +102,7 @@ export class EquipmentSharingMutationComponent
 		return parseInt(value, 10);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	async initializeForm() {
 		this.form = this.fb.group({
@@ -160,11 +152,12 @@ export class EquipmentSharingMutationComponent
 	}
 
 	async loadEquipmentSharingPolicy() {
-		const { id, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
 		this.equipmentSharingPolicies = (
 			await this.equipmentSharingPolicyService.getAll([], {
-				organizationId: id,
-				tenantId: tenantId
+				organizationId,
+				tenantId
 			})
 		).items;
 	}
@@ -199,7 +192,7 @@ export class EquipmentSharingMutationComponent
 			tenantId: this.selectedOrganization.tenantId
 		};
 
-		let equipmentSharing: IEquipmentSharing;
+		let equipmentSharing: IEquipmentSharingRequest;
 
 		if (this.equipmentSharing) {
 			shareRequest.createdBy = this.equipmentSharing.createdBy;
@@ -218,7 +211,7 @@ export class EquipmentSharingMutationComponent
 		this.closeDialog(equipmentSharing);
 	}
 
-	async closeDialog(equipmentSharing?: IEquipmentSharing) {
+	async closeDialog(equipmentSharing?: IEquipmentSharingRequest) {
 		this.dialogRef.close(equipmentSharing);
 	}
 
@@ -239,7 +232,9 @@ export class EquipmentSharingMutationComponent
 				organizationId: id,
 				tenantId
 			})
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				untilDestroyed(this)
+			)
 			.subscribe(({ items }) => {
 				this.employees = items;
 			});
@@ -308,7 +303,9 @@ export class EquipmentSharingMutationComponent
 
 		this.form
 			.get('equipment')
-			.valueChanges.pipe(takeUntil(this._ngDestroy$))
+			.valueChanges.pipe(
+				untilDestroyed(this)
+			)
 			.subscribe((valueId) => {
 				this.selectedItem = this.equipmentItems.find((item) => {
 					return item.id === valueId;
@@ -330,7 +327,9 @@ export class EquipmentSharingMutationComponent
 			});
 
 		this.form.valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				untilDestroyed(this)
+			)
 			.subscribe((form) => {
 				//check if start day is after share request day
 				if (this.shareStartDay.value <= this.shareRequestDay.value) {

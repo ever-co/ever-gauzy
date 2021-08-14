@@ -2,7 +2,8 @@ import {
 	IEquipment,
 	CurrenciesEnum,
 	IEquipmentSharing,
-	ITag
+	ITag,
+	IImageAsset
 } from '@gauzy/contracts';
 import {
 	Entity,
@@ -33,11 +34,7 @@ import {
 export class Equipment
 	extends TenantOrganizationBaseEntity
 	implements IEquipment {
-	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.equipment)
-	@JoinTable({ name: 'tag_equipment' })
-	tags: ITag[];
-
+	
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -49,11 +46,6 @@ export class Equipment
 	@IsOptional()
 	@Column()
 	type: string;
-
-	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.equipmentImage)
-	@JoinColumn()
-	image: ImageAsset;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -90,9 +82,43 @@ export class Equipment
 	@Column()
 	autoApproveShare: boolean;
 
-	@OneToMany(
-		() => EquipmentSharing,
-		(equipmentSharing) => equipmentSharing.equipment
-	)
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ImageAsset
+	 */
+	@ApiProperty({ type: () => ImageAsset })
+	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.equipmentImage, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	image: IImageAsset;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * EquipmentSharing
+	 */
+	@ApiProperty({ type: () => EquipmentSharing, isArray: true })
+	@OneToMany(() => EquipmentSharing, (equipmentSharing) => equipmentSharing.equipment)
 	equipmentSharings: IEquipmentSharing[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.equipment)
+	@JoinTable({ name: 'tag_equipment' })
+	tags: ITag[];
 }
