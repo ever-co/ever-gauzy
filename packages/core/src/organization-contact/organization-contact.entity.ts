@@ -27,11 +27,13 @@ import {
 	IInvoice,
 	IEmployee,
 	IPayment,
-	OrganizationContactBudgetTypeEnum
+	OrganizationContactBudgetTypeEnum,
+	IExpense
 } from '@gauzy/contracts';
 import {
 	Contact,
 	Employee,
+	Expense,
 	Invoice,
 	OrganizationProject,
 	Payment,
@@ -165,6 +167,15 @@ export class OrganizationContact
 	@OneToMany(() => Proposal, (it) => it.organizationContact)
 	@JoinColumn()
 	proposals?: IOrganizationProject[];
+
+	/**
+	 * Expense
+	 */
+	@ApiPropertyOptional({ type: () => Expense, isArray: true })
+	@OneToMany(() => Expense, (it) => it.organizationContact, {
+		onDelete: 'SET NULL'
+	})
+	expenses?: IExpense[];
 
 	/*
     |--------------------------------------------------------------------------

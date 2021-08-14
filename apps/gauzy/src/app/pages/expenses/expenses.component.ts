@@ -20,11 +20,15 @@ import * as moment from 'moment';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import {
+	DateViewComponent,
+	IncomeExpenseAmountComponent,
+	NotesWithTagsComponent
+} from '../../@shared/table-components';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
@@ -280,9 +284,7 @@ export class ExpensesComponent
 			vendor,
 			typeOfExpense,
 			organizationContactId: (organizationContact) ? organizationContact.organizationContactId : null,
-			organizationContactName: (organizationContact) ? organizationContact.name : null,
 			projectId: (project) ? project.projectId : null,
-			projectName: (project) ? project.name: null,
 			valueDate,
 			notes,
 			currency,
@@ -467,7 +469,8 @@ export class ExpensesComponent
 				'category',
 				'vendor',
 				'tags',
-				'project'
+				'project',
+				'organizationContact'
 			],
 			join: {
 				...(this.filters.join) ? this.filters.join : {}
@@ -482,6 +485,7 @@ export class ExpensesComponent
 					employeeName: expense.employee ? expense.employee.fullName : null,
 					vendorName: expense.vendor ? expense.vendor.name : null,
 					categoryName: expense.category ? expense.category.name : null,
+					projectName: expense.project ? expense.project.name : null,
 					status: this.statusMapper(expense.status)
 				});
 			},

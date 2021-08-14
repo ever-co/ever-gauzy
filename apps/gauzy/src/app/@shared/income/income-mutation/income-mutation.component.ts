@@ -111,11 +111,11 @@ export class IncomeMutationComponent
 
 	private _initializeForm() {
 		if (this.income) {
-			const { valueDate, amount, clientName, notes, currency, isBonus, tags } = this.income;
+			const { valueDate, amount, client, notes, currency, isBonus, tags } = this.income;
 			this.form.patchValue({
 				valueDate: new Date(valueDate),
 				amount: amount,
-				organizationContact: clientName,
+				organizationContact: client,
 				notes: notes,
 				currency: currency,
 				isBonus: isBonus,
