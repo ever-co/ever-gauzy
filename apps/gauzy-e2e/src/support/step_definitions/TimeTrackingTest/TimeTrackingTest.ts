@@ -244,7 +244,7 @@ And('Employee can verify project worked', () => {
 });
 
 And('Employee can verify tasks worked', () => {
-	timeTrackingPage.verifyWork(AddTasksPageData.defaultTaskTitle);
+	timeTrackingPage.verifyWork(AddTasksPageData.defaultTaskProject);
 });
 
 // Add manual time
