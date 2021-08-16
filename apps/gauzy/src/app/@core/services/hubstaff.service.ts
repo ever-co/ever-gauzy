@@ -27,7 +27,7 @@ const DEFAULT_DATE_RANGE = {
 	end: TODAY
 };
 
-interface IEntitiesSettings {
+interface IEntitySettingToSync {
 	previousValue: IIntegrationEntitySetting[];
 	currentValue: IIntegrationEntitySetting[];
 }
@@ -41,18 +41,17 @@ interface IDateRangeActivityFilter {
 	providedIn: 'root'
 })
 export class HubstaffService {
+	
 	private ACCESS_TOKEN: string;
-	private _entitiesToSync$: BehaviorSubject<IEntitiesSettings> = new BehaviorSubject(
-		{
-			previousValue: [],
-			currentValue: []
-		}
-	);
+	private _entitiesToSync$: BehaviorSubject<IEntitySettingToSync> = new BehaviorSubject({
+		previousValue: [],
+		currentValue: []
+	});
 	private _dateRangeActivity$: BehaviorSubject<IDateRangeActivityFilter> = new BehaviorSubject(
 		DEFAULT_DATE_RANGE
 	);
 
-	public entitiesToSync$: Observable<IEntitiesSettings> = this._entitiesToSync$.asObservable();
+	public entitiesToSync$: Observable<IEntitySettingToSync> = this._entitiesToSync$.asObservable();
 
 	public dateRangeActivity$: Observable<IDateRangeActivityFilter> = this._dateRangeActivity$.asObservable();
 
@@ -66,7 +65,7 @@ export class HubstaffService {
 		});
 		return this._http
 			.get<any>(
-				`${API_PREFIX}/integration-entity-setting/${integrationId}`,
+				`${API_PREFIX}/integration-entity-setting/integration/${integrationId}`,
 				{
 					params: { data }
 				}
@@ -75,13 +74,11 @@ export class HubstaffService {
 	}
 
 	resetSettings() {
-		const settingsData = this._entitiesToSync$.getValue();
-		const revertData = {
-			...settingsData,
-			currentValue: clone(settingsData.previousValue)
-		};
-
-		this._entitiesToSync$.next(revertData);
+		const settings = this._entitiesToSync$.getValue();
+		this._entitiesToSync$.next({
+			...settings,
+			currentValue: clone(settings.previousValue)
+		});
 	}
 
 	private _setSettingsValue(items) {
@@ -92,12 +89,11 @@ export class HubstaffService {
 	}
 
 	updateSettings(integrationId): Observable<IIntegrationEntitySetting[]> {
-		const settingsData = this._entitiesToSync$.getValue();
-
+		const { currentValue } = this._entitiesToSync$.getValue();
 		return this._http
 			.put<IIntegrationEntitySetting[]>(
-				`${API_PREFIX}/integration-entity-setting/${integrationId}`,
-				settingsData.currentValue
+				`${API_PREFIX}/integration-entity-setting/integration/${integrationId}`,
+				currentValue
 			)
 			.pipe(
 				tap((entitySettings) => this._setSettingsValue(entitySettings))
@@ -108,7 +104,7 @@ export class HubstaffService {
 		this.integrationId = integrationId;
 		return this._http
 			.get<IIntegrationSetting>(
-				`${API_PREFIX}/integrations/hubstaff/get-token/${integrationId}`
+				`${API_PREFIX}/integrations/hubstaff/token/${integrationId}`
 			)
 			.pipe(
 				tap(({ settingsValue }) => (this.ACCESS_TOKEN = settingsValue))
@@ -148,7 +144,7 @@ export class HubstaffService {
 		};
 
 		return this._http.post<IIntegrationTenant>(
-			`${API_PREFIX}/integrations/hubstaff/add-integration`,
+			`${API_PREFIX}/integrations/hubstaff/integration`,
 			{ ...getAccessTokensDto }
 		);
 	}

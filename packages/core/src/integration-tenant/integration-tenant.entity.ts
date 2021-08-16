@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
-import { IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationEntitySetting, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import {
 	IntegrationEntitySetting,
+	IntegrationSetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 
@@ -10,15 +11,34 @@ import {
 export class IntegrationTenant
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationTenant {
-	@ApiPropertyOptional({
-		type: () => IntegrationEntitySetting,
-		isArray: true
-	})
-	@OneToMany(() => IntegrationEntitySetting, (setting) => setting.integration)
-	@JoinColumn()
-	entitySettings?: IntegrationEntitySetting[];
-
+	
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
+	@Column()
 	name: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * IntegrationSetting
+	 */
+	@ApiPropertyOptional({ type: () => IntegrationSetting, isArray: true })
+	@OneToMany(() => IntegrationSetting, (setting) => setting.integration, {
+		cascade: true
+	})
+	@JoinColumn()
+	settings?: IIntegrationSetting[];
+
+	/**
+	 * IntegrationEntitySetting
+	 */
+	@ApiPropertyOptional({ type: () => IntegrationEntitySetting, isArray: true })
+	@OneToMany(() => IntegrationEntitySetting, (setting) => setting.integration, {
+		cascade: true
+	})
+	@JoinColumn()
+	entitySettings?: IIntegrationEntitySetting[];
 }

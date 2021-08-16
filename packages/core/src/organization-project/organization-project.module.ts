@@ -6,8 +6,7 @@ import { OrganizationProject } from './organization-project.entity';
 import { OrganizationProjectController } from './organization-project.controller';
 import { OrganizationProjectService } from './organization-project.service';
 import { CommandHandlers } from './commands/handlers';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
+import { UserModule } from './../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
@@ -18,12 +17,13 @@ import { TenantModule } from '../tenant/tenant.module';
 				module: OrganizationProjectModule
 			}
 		]),
-		TypeOrmModule.forFeature([OrganizationProject, User]),
+		TypeOrmModule.forFeature([OrganizationProject]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [OrganizationProjectController],
-	providers: [OrganizationProjectService, UserService, ...CommandHandlers],
+	providers: [OrganizationProjectService, ...CommandHandlers],
 	exports: [OrganizationProjectService]
 })
 export class OrganizationProjectModule {}

@@ -8,25 +8,22 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CommandBus } from '@nestjs/cqrs';
+import { IIntegrationEntitySetting, IPagination } from '@gauzy/contracts';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
-import { IntegrationEntitySettingService } from './integration-entity-setting.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
-
+import { IntegrationEntitySettingGetCommand, IntegrationEntitySettingUpdateCommand } from './commands';
 
 @ApiTags('IntegrationsEntitySetting')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class IntegrationEntitySettingController extends CrudController<IntegrationEntitySetting> {
+export class IntegrationEntitySettingController {
 	constructor(
-		private integrationEntitySettingService: IntegrationEntitySettingService
-	) {
-		super(integrationEntitySettingService);
-	}
+		private readonly _commandBus: CommandBus
+	) {}
 
-	@ApiOperation({ summary: 'Get settings.' })
+	@ApiOperation({ summary: 'Get settings by integration.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found settings',
@@ -36,16 +33,15 @@ export class IntegrationEntitySettingController extends CrudController<Integrati
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':integrationId')
-	async getSettingsForIntegration(
-		@Param('integrationId', UUIDValidationPipe) integrationId
+	@Get('integration/:id')
+	async getEntitySettingByIntegration(
+		@Param('id', UUIDValidationPipe) integrationId: string
 	): Promise<IPagination<IntegrationEntitySetting>> {
-		return await this.integrationEntitySettingService.findAll({
-			relations: ['integration', 'tiedEntities'],
-			where: {
-				integration: { id: integrationId }
-			}
-		});
+		return await this._commandBus.execute(
+			new IntegrationEntitySettingGetCommand(
+				integrationId
+			)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update settings.' })
@@ -58,13 +54,16 @@ export class IntegrationEntitySettingController extends CrudController<Integrati
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Put(':integrationId')
-	async editSettings(
-		@Param('integrationId', UUIDValidationPipe) integrationId,
-		@Body() editSettingsDto
-	): Promise<IntegrationEntitySetting> {
-		return await this.integrationEntitySettingService.create(
-			editSettingsDto
+	@Put('integration/:id')
+	async updateIntegrationEntitySettingByIntegration(
+		@Param('id', UUIDValidationPipe) integrationId: string,
+		@Body() entity
+	): Promise<IIntegrationEntitySetting[]> {
+		return await this._commandBus.execute(
+			new IntegrationEntitySettingUpdateCommand(
+				integrationId,
+				entity
+			)
 		);
 	}
 }

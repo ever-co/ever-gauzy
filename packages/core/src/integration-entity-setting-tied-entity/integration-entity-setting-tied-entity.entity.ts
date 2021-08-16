@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, RelationId, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
+import { IsOptional, IsString } from 'class-validator';
 import {
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied
@@ -13,21 +14,7 @@ import {
 export class IntegrationEntitySettingTiedEntity
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationEntitySettingTied {
-	@ApiProperty({ type: () => IntegrationEntitySetting })
-	@ManyToOne(
-		() => IntegrationEntitySetting,
-		(integrationEntitySetting) => integrationEntitySetting.tiedEntities
-	)
-	@JoinColumn()
-	integrationEntitySetting?: IIntegrationEntitySetting;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId(
-		(integrationEntityTiedSetting: IntegrationEntitySettingTiedEntity) =>
-			integrationEntityTiedSetting.integrationEntitySetting
-	)
-	readonly integrationEntitySettingId?: string;
-
+	
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	entity: string;
@@ -35,4 +22,26 @@ export class IntegrationEntitySettingTiedEntity
 	@ApiProperty({ type: () => Boolean })
 	@Column({ nullable: false })
 	sync: boolean;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * IntegrationEntitySetting
+	 */
+	@ApiProperty({ type: () => IntegrationEntitySetting })
+	@ManyToOne(() => IntegrationEntitySetting, (integrationEntitySetting) => integrationEntitySetting.tiedEntities)
+	@JoinColumn()
+	integrationEntitySetting?: IIntegrationEntitySetting;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: IntegrationEntitySettingTiedEntity) => it.integrationEntitySetting)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly integrationEntitySettingId?: string;
 }

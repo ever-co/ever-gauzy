@@ -7,6 +7,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IIntegrationEntitySettingTied } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
 import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entity.service';
@@ -18,7 +19,7 @@ import { UUIDValidationPipe } from './../shared/pipes';
 @Controller('integration-entity-setting-tied-entity')
 export class IntegrationEntitySettingTiedEntityController extends CrudController<IntegrationEntitySettingTiedEntity> {
 	constructor(
-		private integrationEntitySettingTiedEntityService: IntegrationEntitySettingTiedEntityService
+		private readonly integrationEntitySettingTiedEntityService: IntegrationEntitySettingTiedEntityService
 	) {
 		super(integrationEntitySettingTiedEntityService);
 	}
@@ -33,13 +34,14 @@ export class IntegrationEntitySettingTiedEntityController extends CrudController
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Put(':integrationId')
-	async editSettings(
-		@Param('integrationId', UUIDValidationPipe) integrationId,
-		@Body() editSettingsDto
-	): Promise<IntegrationEntitySettingTiedEntity> {
-		return await this.integrationEntitySettingTiedEntityService.create(
-			editSettingsDto
-		);
+	@Put('integration/:id')
+	async updateIntegrationEntitySettingTiedByIntegration(
+		@Param('id', UUIDValidationPipe) integrationId: string,
+		@Body() body
+	): Promise<IIntegrationEntitySettingTied> {
+		return await this.integrationEntitySettingTiedEntityService.create({
+			integrationId,
+			...body
+		});
 	}
 }

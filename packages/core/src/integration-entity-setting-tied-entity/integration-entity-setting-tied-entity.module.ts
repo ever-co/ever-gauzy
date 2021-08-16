@@ -11,6 +11,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		TenantModule
 	],
 	controllers: [IntegrationEntitySettingTiedEntityController],
-	providers: [IntegrationEntitySettingTiedEntityService]
+	providers: [IntegrationEntitySettingTiedEntityService],
+	exports: [IntegrationEntitySettingTiedEntityService]
 })
 export class IntegrationEntitySettingTiedEntityModule {}

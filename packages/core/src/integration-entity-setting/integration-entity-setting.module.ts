@@ -1,10 +1,13 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { IntegrationEntitySettingController } from './integration-entity-setting.controller';
 import { IntegrationEntitySettingService } from './integration-entity-setting.service';
+import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { IntegrationTenantModule } from './../integration-tenant/integration-tenant.module';
 
 @Module({
 	imports: [
@@ -15,9 +18,15 @@ import { TenantModule } from '../tenant/tenant.module';
 			}
 		]),
 		TypeOrmModule.forFeature([IntegrationEntitySetting]),
-		TenantModule
+		forwardRef(() => TenantModule),
+		forwardRef(() => IntegrationTenantModule),
+		CqrsModule
 	],
 	controllers: [IntegrationEntitySettingController],
-	providers: [IntegrationEntitySettingService]
+	providers: [
+		IntegrationEntitySettingService,
+		...CommandHandlers
+	],
+	exports: [IntegrationEntitySettingService]
 })
 export class IntegrationEntitySettingModule {}

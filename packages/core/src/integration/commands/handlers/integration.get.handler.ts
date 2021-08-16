@@ -1,7 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IntegrationGetCommand } from '..';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { IIntegration } from '@gauzy/contracts';
+import { IntegrationGetCommand } from './../integration.get.command';
 import { Integration } from '../../integration.entity';
 
 @CommandHandler(IntegrationGetCommand)
@@ -9,14 +10,14 @@ export class IntegrationGetHandler
 	implements ICommandHandler<IntegrationGetCommand> {
 	constructor(
 		@InjectRepository(Integration)
-		readonly repository: Repository<Integration>
+		private readonly repository: Repository<Integration>
 	) {}
 
 	public async execute(
 		command: IntegrationGetCommand
-	): Promise<Integration[]> {
+	): Promise<IIntegration[]> {
 		const { input } = command;
-
+		const { integrationTypeId, searchQuery, filter } = input;
 		const query = this.repository.createQueryBuilder('integration');
 		query
 			.leftJoinAndSelect(
@@ -24,23 +25,22 @@ export class IntegrationGetHandler
 				'integrationTypes'
 			)
 			.where('"integrationTypes"."id" = :id', {
-				id: input.integrationTypeId
+				id: integrationTypeId
 			})
-			.andWhere('LOWER(integration.name) LIKE :name', {
-				name: `${input.searchQuery.toLowerCase()}%`
+			.andWhere(`LOWER(${query.alias}.name) LIKE :name`, {
+				name: `${searchQuery.toLowerCase()}%`
 			});
 
-		if (input['filter'] === 'true') {
-			query.andWhere('integration.isPaid = :isPaid', {
+		if (filter === 'true') {
+			query.andWhere(`${query.alias}.isPaid = :isPaid`, {
 				isPaid: true
 			});
 		}
-		if (input['filter'] === 'false') {
-			query.andWhere('integration.isPaid = :isPaid', {
+		if (filter === 'false') {
+			query.andWhere(`${query.alias}.isPaid = :isPaid`, {
 				isPaid: false
 			});
 		}
-
-		return await query.orderBy('integration.order', 'ASC').getMany();
+		return await query.orderBy(`${query.alias}.order`, 'ASC').getMany();
 	}
 }

@@ -1,31 +1,19 @@
 import { Module, HttpModule } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
+import { RouterModule } from 'nest-router';
 import { HubstaffService } from './hubstaff.service';
 import { HubstaffController } from './hubstaff.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
-import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
-import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { IntegrationMap } from '../integration-map/integration-map.entity';
-import { IntegrationMapService } from '../integration-map/integration-map.service';
-import { OrganizationProject } from '../organization-project/organization-project.entity';
-import { OrganizationProjectService } from '../organization-project/organization-project.service';
-import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
-import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
-import { CqrsModule } from '@nestjs/cqrs';
-import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
-import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.service';
-import { RoleService } from '../role/role.service';
-import { Organization } from '../organization/organization.entity';
-import { OrganizationService } from '../organization/organization.service';
-import { Role } from '../role/role.entity';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
 import { UserModule } from '../user/user.module';
 import { RoleModule } from '../role/role.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
-import { RouterModule } from 'nest-router';
-import { TenantModule } from './../tenant';
+import { TenantModule } from './../tenant/tenant.module';
+import { OrganizationModule } from './../organization/organization.module';
+import { IntegrationEntitySettingModule } from './../integration-entity-setting/integration-entity-setting.module';
+import { IntegrationEntitySettingTiedEntityModule } from './../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.module';
+import { IntegrationMapModule } from './../integration-map/integration-map.module';
+import { IntegrationTenantModule } from './../integration-tenant/integration-tenant.module';
+import { IntegrationSettingModule } from './../integration-setting/integration-setting.module';
+import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 
 @Module({
 	imports: [
@@ -33,35 +21,20 @@ import { TenantModule } from './../tenant';
 			{ path: '/integrations/hubstaff', module: HubstaffModule }
 		]),
 		HttpModule,
-		TypeOrmModule.forFeature([
-			IntegrationTenant,
-			IntegrationSetting,
-			IntegrationMap,
-			OrganizationProject,
-			IntegrationEntitySetting,
-			IntegrationEntitySettingTiedEntity,
-			Role,
-			Organization,
-			User
-		]),
-		CqrsModule,
+		TenantModule,
 		RoleModule,
-		UserModule,
 		RolePermissionsModule,
-		TenantModule
+		UserModule,
+		OrganizationModule,
+		OrganizationProjectModule,
+		IntegrationTenantModule,
+		IntegrationSettingModule,
+		IntegrationEntitySettingModule,
+		IntegrationEntitySettingTiedEntityModule,
+		IntegrationMapModule,
+		CqrsModule
 	],
 	controllers: [HubstaffController],
-	providers: [
-		HubstaffService,
-		IntegrationTenantService,
-		IntegrationSettingService,
-		IntegrationMapService,
-		OrganizationProjectService,
-		IntegrationEntitySettingService,
-		IntegrationEntitySettingTiedEntityService,
-		OrganizationService,
-		RoleService,
-		UserService
-	]
+	providers: [HubstaffService]
 })
 export class HubstaffModule {}
