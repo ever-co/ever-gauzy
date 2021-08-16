@@ -85,6 +85,12 @@ export const verifyElementIsVisible = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('be.visible');
 };
 
+export const verifyElementIsVisibleByIndex = (loc, index: number) => {
+	cy.get(loc, { timeout: defaultCommandTimeout })
+		.eq(index)
+		.should('be.visible');
+};
+
 export const clickButtonByIndex = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
 };
@@ -158,11 +164,11 @@ export const verifyElementNotExist = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.exist');
 };
 
-export const verifyTableRowByText = (loc, text) => {
+export const verifyByText = (loc, text: string) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).contains(text);
 };
 
-export const clickTableRowByText = (loc, text) => {
+export const clickByText = (loc, text: string) => {
 	cy.get(loc, { timeout: taskTimeout }).contains(text).click();
 };
 

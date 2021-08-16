@@ -1,4 +1,8 @@
-import { verifyTableRowByText, waitUntil } from './../utils/util';
+import {
+	verifyByText,
+	verifyElementIsVisibleByIndex,
+	waitUntil
+} from './../utils/util';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -56,6 +60,12 @@ export const enterDateInputData = () => {
 	enterInput(ManageInterviewsPage.dateInputCss, date);
 };
 
+export const enterFutureDateInputData = (days: number) => {
+	clearField(ManageInterviewsPage.dateInputCss);
+	const futureDate = Cypress.moment().add(days, 'days').format('MMM D, YYYY');
+	enterInput(ManageInterviewsPage.dateInputCss, futureDate);
+};
+
 export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
 };
@@ -65,22 +75,22 @@ export const waitMessageToHide = () => {
 };
 
 export const employeeDropdownVisible = () => {
-	verifyElementIsVisible(ManageInterviewsPage.employeeMultyselectCss);
+	verifyElementIsVisible(ManageInterviewsPage.employeeMultiselectCss);
 };
 
 export const clickEmployeeDropdown = () => {
-	clickButton(ManageInterviewsPage.employeeMultyselectCss);
+	clickButton(ManageInterviewsPage.employeeMultiselectCss);
 };
 
 export const employeeDropdownOptionVisible = () => {
 	verifyElementIsVisible(
-		ManageInterviewsPage.employeeMultyselectDropdownOptionCss
+		ManageInterviewsPage.employeeMultiselectDropdownOptionCss
 	);
 };
 
 export const clickEmployeeDropdownOption = (index) => {
 	clickButtonByIndex(
-		ManageInterviewsPage.employeeMultyselectDropdownOptionCss,
+		ManageInterviewsPage.employeeMultiselectDropdownOptionCss,
 		index
 	);
 };
@@ -156,27 +166,40 @@ export const nameFilterInputVisible = () => {
 	verifyElementIsVisible(ManageInterviewsPage.nameFilterInputCss);
 };
 
-export const enterFilterInputData = (text) => {
+export const enterNameFilterInputData = (text: string) => {
 	enterInput(ManageInterviewsPage.nameFilterInputCss, text);
 	waitUntil(2000);
 };
 
-export const filteredCandidateVisible = (text) => {
-	verifyTableRowByText(ManageInterviewsPage.nameTableCellCss, text);
+export const titleFilterInputVisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.titleFilterInputCss);
+};
+
+export const enterTitleFilterInputData = (text: string) => {
+	enterInput(ManageInterviewsPage.titleFilterInputCss, text);
+};
+
+export const verifyNameFilterContains = (text: string) => {
+	verifyByText(ManageInterviewsPage.nameTableCellCss, text);
+};
+
+export const verifyTitleFilterContains = (text: string) => {
+	verifyByText(ManageInterviewsPage.titleTableCellCss, text);
 };
 
 export const clearFilterInputField = () => {
+	clearField(ManageInterviewsPage.titleFilterInputCss);
 	clearField(ManageInterviewsPage.nameFilterInputCss);
 	waitUntil(1000);
 };
 // End of Filter functions
 
 export const verifyAddFeedbackButtonVisisible = () => {
-	verifyElementIsVisible(ManageInterviewsPage.addFeedbackIconCss);
+	verifyElementIsVisible(ManageInterviewsPage.tableOptionsButtonsCss);
 };
 
 export const clickAddFeedbackButton = () => {
-	clickButton(ManageInterviewsPage.addFeedbackIconCss);
+	clickButtonByIndex(ManageInterviewsPage.tableOptionsButtonsCss, 0);
 };
 
 export const interviewDropdownVisible = () => {
@@ -187,9 +210,9 @@ export const clickInterviewerDropdown = () => {
 	clickButton(ManageInterviewsPage.addInterviewerDropdownCss);
 };
 
-export const clickInterviewerFromDropdown = (index) => {
+export const clickInterviewerFromDropdown = (index: number) => {
 	clickButtonByIndex(
-		ManageInterviewsPage.addInterviewerDropdownOptionCss,
+		ManageInterviewsPage.employeeMultiselectDropdownOptionCss,
 		index
 	);
 };
@@ -214,7 +237,7 @@ export const verifyFeedbackDescription = () => {
 	verifyElementIsVisible(ManageInterviewsPage.feedbackDescriptionCss);
 };
 
-export const enterFeedBackDescription = (text) => {
+export const enterFeedBackDescription = (text: string) => {
 	enterInput(ManageInterviewsPage.feedbackDescriptionCss, text);
 };
 
@@ -224,4 +247,87 @@ export const feedbackSaveButtonVisible = () => {
 
 export const clickFeedbackSaveButton = () => {
 	clickButton(ManageInterviewsPage.feedbackSaveButtonCss);
+};
+
+// Edit future interview
+export const verifyOnlyFutureCheckboxVisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.interviewCheckboxFiltersCss);
+};
+
+export const clickOnlyFutureCheckbox = () => {
+	clickButtonByIndex(
+		ManageInterviewsPage.interviewCheckboxFiltersInputsCss,
+		1
+	);
+	waitUntil(1500);
+};
+
+export const verifyEditButtonVisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.tableOptionsButtonsCss);
+};
+
+export const clickEditButton = () => {
+	clickButtonByIndex(ManageInterviewsPage.tableOptionsButtonsCss, 1);
+};
+
+export const verifyUpdatedNoteContains = (text: string) => {
+	verifyByText(ManageInterviewsPage.notesTableCellCss, text);
+};
+
+export const verifyArchiveOptionVisible = () => {
+	verifyElementIsVisibleByIndex(
+		ManageInterviewsPage.tableOptionsButtonsCss,
+		2
+	);
+};
+
+export const clickArchiveOption = () => {
+	clickButtonByIndex(ManageInterviewsPage.tableOptionsButtonsCss, 2);
+};
+
+export const verifyOkButtonVisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.archiveInterviewOkButtonCss);
+};
+
+export const clickOkButton = () => {
+	clickButton(ManageInterviewsPage.archiveInterviewOkButtonCss);
+};
+
+export const verifyInludeArchivedCheckboxVisible = () => {
+	verifyElementIsVisibleByIndex(
+		ManageInterviewsPage.interviewCheckboxFiltersCss,
+		2
+	);
+};
+
+export const clickInludeArchivedCheckbox = () => {
+	clickButtonByIndex(
+		ManageInterviewsPage.interviewCheckboxFiltersInputsCss,
+		2
+	);
+	waitUntil(1000);
+};
+
+export const verifyArchivedBadgeContains = (text: string) => {
+	verifyByText(ManageInterviewsPage.archiveBadgeCss, text);
+};
+
+// Delete future interview
+export const verifyDeleteOptionVisible = () => {
+	verifyElementIsVisibleByIndex(
+		ManageInterviewsPage.tableOptionsButtonsCss,
+		3
+	);
+};
+
+export const clickDeleteOption = () => {
+	clickButtonByIndex(ManageInterviewsPage.tableOptionsButtonsCss, 3);
+};
+
+export const verifyDeleteButtonVisible = () => {
+	verifyElementIsVisible(ManageInterviewsPage.deleteButtonCss);
+};
+
+export const clickDeleteButton = () => {
+	clickButton(ManageInterviewsPage.deleteButtonCss);
 };
