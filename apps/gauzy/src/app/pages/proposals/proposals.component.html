@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title">
 		<div>
 			<h4>
@@ -74,15 +74,17 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
 			[ngIfElse]="gridLayout"
 		>
-			<ng2-smart-table
-				class="tags-table"
-				[settings]="smartTableSettings"
-				[source]="smartTableSource"
-				(userRowSelect)="selectProposal($event)"
-				style="cursor: pointer"
-				#proposalsTable
-			>
-			</ng2-smart-table>
+			<div class="ng-smart-table-container">
+				<ng2-smart-table
+					class="tags-table"
+					[settings]="smartTableSettings"
+					[source]="smartTableSource"
+					(userRowSelect)="selectProposal($event)"
+					style="cursor: pointer"
+					#proposalsTable
+				>
+				</ng2-smart-table>
+			</div>			
 		</ng-template>
 		<ng-template #gridLayout>
 			<ga-card-grid
