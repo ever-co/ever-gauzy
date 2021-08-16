@@ -9,7 +9,7 @@ import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/goal-general-settings', module: GoalGeneralSettingModule }
+			{ path: '/goal-general-setting', module: GoalGeneralSettingModule }
 		]),
 		TypeOrmModule.forFeature([GoalGeneralSetting]),
 		TenantModule

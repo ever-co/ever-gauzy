@@ -25,6 +25,12 @@ export class KeyresultTemplateController extends CrudController<KeyResultTemplat
 		super(keyResultTemplateService);
 	}
 
+	/**
+	 * GET key result templates
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find key result templates.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -46,6 +52,12 @@ export class KeyresultTemplateController extends CrudController<KeyResultTemplat
 		});
 	}
 
+	/**
+	 * CREATE key result template
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create KeyResult Template' })
 	@ApiResponse({
 		status: HttpStatus.OK,

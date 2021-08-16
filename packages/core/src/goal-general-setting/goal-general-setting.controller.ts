@@ -8,13 +8,14 @@ import {
 	Query,
 	HttpCode,
 	Put,
-	Param
+	Param,
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { IGoalGeneralSetting, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
-import { Goal } from '../goal/goal.entity';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
@@ -28,27 +29,31 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 		super(goalGeneralSettingService);
 	}
 
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IGoalGeneralSetting>> {
+		const { findInput = null } = data;
+		return this.goalGeneralSettingService.findAll({
+			where: { ...findInput }
+		});
+	}
+
 	@ApiOperation({ summary: 'Create Goal General Setting' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Goal general setting Created successfully',
 		type: GoalGeneralSetting
 	})
-	@Post('/create')
-	async createGoal(@Body() entity: Goal): Promise<any> {
+	@Post()
+	async create(
+		@Body() entity: GoalGeneralSetting
+	): Promise<IGoalGeneralSetting> {
 		return this.goalGeneralSettingService.create(entity);
-	}
-
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('all')
-	async getAll(@Query('data', ParseJsonPipe) data: any) {
-		const { findInput = null } = data;
-		return this.goalGeneralSettingService.findAll({
-			where: { ...findInput }
-		});
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -70,17 +75,16 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: GoalGeneralSetting
-	): Promise<GoalGeneralSetting> {
-		//We are using create here because create calls the method save()
-		//We need save() to save ManyToMany relations
+	): Promise<IGoalGeneralSetting> {
 		try {
+			//We are using create here because create calls the method save()
+			//We need save() to save ManyToMany relations
 			return await this.goalGeneralSettingService.create({
 				id,
 				...entity
 			});
 		} catch (error) {
-			console.log(error);
-			return;
+			throw new BadRequestException(error);
 		}
 	}
 }

@@ -52,27 +52,6 @@ export class TaskController extends CrudController<Task> {
 		return this.taskService.pagination(filter);
 	}
 
-	@ApiOperation({ summary: 'Find all tasks.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found tasks',
-		type: Task
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ITask>> {
-		const { relations, findInput } = data;
-		return this.taskService.findAll({
-			where: findInput,
-			relations
-		});
-	}
-
 	@ApiOperation({ summary: 'Find my tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -127,6 +106,27 @@ export class TaskController extends CrudController<Task> {
 		return this.taskService.getAllTasksByEmployee(employeeId, findInput);
 	}
 
+	@ApiOperation({ summary: 'Find all tasks.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tasks',
+		type: Task
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ITask>> {
+		const { relations, findInput } = data;
+		return this.taskService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
 	@ApiOperation({ summary: 'create a task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -141,7 +141,9 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
-	async create(@Body() entity: ITaskCreateInput): Promise<ITask> {
+	async create(
+		@Body() entity: ITaskCreateInput
+	): Promise<ITask> {
 		return await this.commandBus.execute(
 			new TaskCreateCommand({
 				...entity,
@@ -187,7 +189,9 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Delete(':id')
-	async deleteTask(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
 		return this.taskService.delete(id);
 	}
 }
