@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'PIPELINES_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
@@ -40,22 +40,26 @@
 		</div>
 
 		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
-			<ng2-smart-table
-				(userRowSelect)="selectPipeline($event)"
-				[settings]="smartTableSettings"
-				[source]="smartTableSource"
-				style="cursor: pointer"
-				#pipelineTable
-			>
-			</ng2-smart-table>
+			<div class="ng-smart-table-with-scroll">
+				<ng2-smart-table
+					(userRowSelect)="selectPipeline($event)"
+					[settings]="smartTableSettings"
+					[source]="smartTableSource"
+					style="cursor: pointer"
+					#pipelineTable
+				>
+				</ng2-smart-table>
+			</div>			
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="smartTableSettings"
-				[source]="pipelines"
-				[buttonTemplate]="actionButtons"
-				[cardSize]="'big'"
-			></ga-card-grid>
+			<div class="grid-with-scroll">
+				<ga-card-grid
+					[settings]="smartTableSettings"
+					[source]="pipelines"
+					[buttonTemplate]="actionButtons"
+					[cardSize]="'big'"
+				></ga-card-grid>
+			</div>			
 			<div 
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID" 
 				class="pagination-container"

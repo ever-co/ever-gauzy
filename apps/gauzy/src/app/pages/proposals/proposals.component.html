@@ -74,7 +74,7 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
 			[ngIfElse]="gridLayout"
 		>
-			<div class="ng-smart-table-container">
+			<div class="ng-smart-table-with-scroll">
 				<ng2-smart-table
 					class="tags-table"
 					[settings]="smartTableSettings"
@@ -87,12 +87,14 @@
 			</div>			
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="smartTableSettings"
-				[source]="proposals"
-				[buttonTemplate]="actionButtons"
-				[cardSize]="'big'"
-			></ga-card-grid>
+			<div class="grid-with-scroll">
+				<ga-card-grid
+					[settings]="smartTableSettings"
+					[source]="proposals"
+					[buttonTemplate]="actionButtons"
+					[cardSize]="'big'"
+				></ga-card-grid>
+			</div>
 			<div 
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 				class="pagination-container"
