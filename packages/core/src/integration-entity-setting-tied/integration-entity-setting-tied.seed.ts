@@ -1,14 +1,14 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { IntegrationEntity, ITenant } from '@gauzy/contracts';
+import { IIntegrationEntitySettingTied, IntegrationEntity, ITenant } from '@gauzy/contracts';
 import { PROJECT_TIED_ENTITIES } from '@gauzy/integration-hubstaff';
-import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
 import { IntegrationEntitySetting, IntegrationTenant, Organization } from './../core/entities/internal';
+import { IntegrationEntitySettingTied } from './integration-entity-setting-tied';
 
-export const createRandomIntegrationEntitySettingTiedEntity = async (
+export const createRandomIntegrationEntitySettingTied = async (
 	connection: Connection,
 	tenants: ITenant[]
-): Promise<IntegrationEntitySettingTiedEntity[]> => {
+): Promise<IIntegrationEntitySettingTied[]> => {
 	if (!tenants) {
 		console.warn(
 			'Warning: tenants not found, Integration Entity Setting  will not be created'
@@ -16,7 +16,7 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 		return;
 	}
 
-	const randomIntegrationEntitySettingsTiedEntity: IntegrationEntitySettingTiedEntity[] = [];
+	const randomIntegrationEntitySettingsTiedEntity: IIntegrationEntitySettingTied[] = [];
 
 	for (const tenant of tenants) {
 		const organizations = await connection.manager.find(Organization, {
@@ -36,7 +36,7 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 				}
 			);
 			for (const integrationEntitySetting of integrationEntitySettings) {
-				const integrationEntitySettingTiedEntity = new IntegrationEntitySettingTiedEntity();
+				const integrationEntitySettingTiedEntity = new IntegrationEntitySettingTied();
 
 				integrationEntitySettingTiedEntity.integrationEntitySetting = integrationEntitySetting;
 				integrationEntitySettingTiedEntity.sync = faker.datatype.boolean();

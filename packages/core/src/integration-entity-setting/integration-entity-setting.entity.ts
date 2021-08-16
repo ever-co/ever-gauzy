@@ -15,7 +15,7 @@ import {
 	IIntegrationTenant
 } from '@gauzy/contracts';
 import {
-	IntegrationEntitySettingTiedEntity,
+	IntegrationEntitySettingTied,
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
@@ -60,8 +60,8 @@ export class IntegrationEntitySetting
     |--------------------------------------------------------------------------
     */
 
-	@ApiPropertyOptional({ type: IntegrationEntitySettingTiedEntity, isArray: true })
-	@OneToMany(() => IntegrationEntitySettingTiedEntity, (tiedEntity) => tiedEntity.integrationEntitySetting, {
+	@ApiPropertyOptional({ type: IntegrationEntitySettingTied, isArray: true })
+	@OneToMany(() => IntegrationEntitySettingTied, (tiedEntity) => tiedEntity.integrationEntitySetting, {
 		cascade: true 
 	})
 	@JoinColumn()

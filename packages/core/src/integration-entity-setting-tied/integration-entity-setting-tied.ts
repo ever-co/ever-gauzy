@@ -10,8 +10,8 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 
-@Entity('integration_entity_setting_tied_entity')
-export class IntegrationEntitySettingTiedEntity
+@Entity('integration_entity_setting_tied')
+export class IntegrationEntitySettingTied
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationEntitySettingTied {
 	
@@ -38,7 +38,7 @@ export class IntegrationEntitySettingTiedEntity
 	integrationEntitySetting?: IIntegrationEntitySetting;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: IntegrationEntitySettingTiedEntity) => it.integrationEntitySetting)
+	@RelationId((it: IntegrationEntitySettingTied) => it.integrationEntitySetting)
 	@IsString()
 	@IsOptional()
 	@Index()

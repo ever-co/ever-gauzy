@@ -9,7 +9,7 @@ import { RolePermissionsModule } from '../role-permissions/role-permissions.modu
 import { TenantModule } from './../tenant/tenant.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { IntegrationEntitySettingModule } from './../integration-entity-setting/integration-entity-setting.module';
-import { IntegrationEntitySettingTiedEntityModule } from './../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.module';
+import { IntegrationEntitySettingTiedModule } from './../integration-entity-setting-tied/integration-entity-setting-tied.module';
 import { IntegrationMapModule } from './../integration-map/integration-map.module';
 import { IntegrationTenantModule } from './../integration-tenant/integration-tenant.module';
 import { IntegrationSettingModule } from './../integration-setting/integration-setting.module';
@@ -30,7 +30,7 @@ import { OrganizationProjectModule } from './../organization-project/organizatio
 		IntegrationTenantModule,
 		IntegrationSettingModule,
 		IntegrationEntitySettingModule,
-		IntegrationEntitySettingTiedEntityModule,
+		IntegrationEntitySettingTiedModule,
 		IntegrationMapModule,
 		CqrsModule
 	],
