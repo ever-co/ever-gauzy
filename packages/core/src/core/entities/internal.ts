@@ -58,7 +58,7 @@ export * from '../../goal-time-frame/goal-time-frame.entity';
 export * from '../../goal/goal.entity';
 export * from '../../image-asset/image-asset.entity';
 export * from '../../income/income.entity';
-export * from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
+export * from '../../integration-entity-setting-tied/integration-entity-setting-tied';
 export * from '../../integration-entity-setting/integration-entity-setting.entity';
 export * from '../../integration-map/integration-map.entity';
 export * from '../../integration-setting/integration-setting.entity';

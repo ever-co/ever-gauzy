@@ -32,6 +32,9 @@ export class DateFormatPipe implements PipeTransform {
 		value: Date | string | number | null | undefined,
 		locale?: string
 	) {
+		if (!value) {
+			return;
+		}
 		let date = moment(new Date(value));
 		if (!date.isValid()) {
 			date = moment.utc(value);

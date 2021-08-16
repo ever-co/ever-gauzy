@@ -1,18 +1,22 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
-import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
 import { IEngagement } from '@gauzy/contracts';
 import { Observable, of, EMPTY } from 'rxjs';
-import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { catchError, tap, first } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, tap, first } from 'rxjs/operators';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
-import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import * as moment from 'moment';
+import {
+	ErrorHandlingService,
+	ToastrService,
+	UpworkStoreService
+} from './../../../../@core/services';
+import { DateViewComponent } from './../../../../@shared/table-components';
+import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,20 +28,26 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 export class ContractsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('contractsTable', { static: false }) contractsTable;
-	contracts$: Observable<IEngagement[]> = this._upworkStoreServices
-		.contracts$;
-	smartTableSettings;
+
+	contractsTable: Ng2SmartTableComponent;
+	@ViewChild('contractsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.contractsTable = content;
+		}
+	}
+
+	contracts$: Observable<IEngagement[]> = this._upworkStoreServices.contracts$;
+	smartTableSettings: any;
 	selectedContracts: IEngagement[] = [];
 
 	constructor(
-		private _upworkStoreServices: UpworkStoreService,
-		private toastrService: ToastrService,
-		private _ehs: ErrorHandlingService,
-		public translateService: TranslateService,
-		private _ds: NbDialogService,
-		private route: ActivatedRoute,
-		private titleCasePipe: TitleCasePipe
+		private readonly _upworkStoreServices: UpworkStoreService,
+		private readonly toastrService: ToastrService,
+		private readonly _ehs: ErrorHandlingService,
+		public readonly translateService: TranslateService,
+		private readonly _ds: NbDialogService,
+		private readonly route: ActivatedRoute,
+		private readonly titleCasePipe: TitleCasePipe
 	) {
 		super(translateService);
 		this._loadContracts();
@@ -57,7 +67,7 @@ export class ContractsComponent
 	}
 
 	ngOnInit() {
-		this.loadSettingsSmartTable();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 
 		this.route.queryParamMap
@@ -69,7 +79,7 @@ export class ContractsComponent
 			});
 	}
 
-	loadSettingsSmartTable() {
+	_loadSmartTableSettings() {
 		this.smartTableSettings = {
 			selectMode: 'multi',
 			actions: {
@@ -85,13 +95,23 @@ export class ContractsComponent
 					title: this.getTranslation('SM_TABLE.START_DATE'),
 					type: 'custom',
 					renderComponent: DateViewComponent,
-					filter: false
+					filter: false,
+					valuePrepareFunction: (date: string) => {
+						if (date) {
+							return moment.unix(parseInt(date) / 1000);
+						}
+					}
 				},
 				engagement_end_date: {
 					title: this.getTranslation('SM_TABLE.END_DATE'),
 					type: 'custom',
 					renderComponent: DateViewComponent,
-					filter: false
+					filter: false,
+					valuePrepareFunction: (date: string) => {
+						if (date) {
+							return moment.unix(parseInt(date) / 1000);
+						}
+					}
 				},
 				job__title: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
@@ -109,7 +129,9 @@ export class ContractsComponent
 	}
 
 	selectContracts({ selected }) {
-		this.contractsTable.grid.dataSet.willSelect = false;
+		if (this.contractsTable) {
+			this.contractsTable.grid.dataSet['willSelect'] = 'false';
+		}
 		this.selectedContracts = selected;
 	}
 
@@ -146,10 +168,11 @@ export class ContractsComponent
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSettingsSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy() {}

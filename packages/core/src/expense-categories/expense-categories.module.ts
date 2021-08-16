@@ -15,6 +15,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		TenantModule
 	],
 	controllers: [ExpenseCategoriesController],
-	providers: [ExpenseCategoriesService]
+	providers: [ExpenseCategoriesService],
+	exports: [ExpenseCategoriesService]
 })
 export class ExpenseCategoriesModule {}

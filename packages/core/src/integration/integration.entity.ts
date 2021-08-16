@@ -43,12 +43,19 @@ export class Integration extends BaseEntity implements IIntegration {
 	@Column({ nullable: true })
 	order?: number;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => IntegrationType, isArray: true })
 	@ManyToMany(() => IntegrationType, (integrationType) => integrationType.integrations)
 	@JoinTable({
 		name: 'integration_integration_type'
 	})
 	integrationTypes?: IIntegrationType[];
 
+	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_integration'

@@ -263,7 +263,7 @@ import { createRandomIntegrationSetting } from '../../integration-setting/integr
 import { createRandomIntegrationMap } from '../../integration-map/integration-map.seed';
 import { createRandomIntegrationTenant } from '../../integration-tenant/integration-tenant.seed';
 import { createRandomIntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.seed';
-import { createRandomIntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.seed';
+import { createRandomIntegrationEntitySettingTied } from '../../integration-entity-setting-tied/integration-entity-setting-tied.seed';
 import { createRandomRequestApprovalTeam } from '../../request-approval-team/request-approval-team.seed';
 import { createRandomRequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.seed';
 import {
@@ -2083,7 +2083,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Integration Entity Settings Tied Entity',
-			createRandomIntegrationEntitySettingTiedEntity(
+			createRandomIntegrationEntitySettingTied(
 				this.connection,
 				tenants
 			)

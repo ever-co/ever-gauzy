@@ -46,7 +46,7 @@ import {
     GoalTimeFrame,
     Income,
     IntegrationEntitySetting,
-    IntegrationEntitySettingTiedEntity,
+    IntegrationEntitySettingTied,
     IntegrationMap,
     IntegrationSetting,
     IntegrationTenant,
@@ -219,8 +219,8 @@ export class DeleteAllDataService {
         @InjectRepository(IntegrationEntitySetting)
         private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
-        @InjectRepository(IntegrationEntitySettingTiedEntity)
-        private readonly integrationEntitySettingTiedEntityRepository: Repository<IntegrationEntitySettingTiedEntity>,
+        @InjectRepository(IntegrationEntitySettingTied)
+        private readonly integrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
 
         @InjectRepository(IntegrationMap)
         private readonly integrationMapRepository: Repository<IntegrationMap>,
@@ -533,7 +533,7 @@ export class DeleteAllDataService {
             this.expenseRepository,
             this.incomeRepository,
             this.integrationEntitySettingRepository,
-            this.integrationEntitySettingTiedEntityRepository,
+            this.integrationEntitySettingTiedRepository,
             this.integrationMapRepository,
             this.integrationSettingRepository,
             this.integrationTenantRepository,

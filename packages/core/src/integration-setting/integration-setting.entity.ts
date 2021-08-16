@@ -12,26 +12,34 @@ export class IntegrationSetting
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationSetting {
 		
+	@ApiProperty({ type: () => String })
+	@Column()
+	settingsName: string;
+
+	@ApiProperty({ type: () => String })
+	@Column()
+	settingsValue: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * IntegrationTenant
+	 */
 	@ApiProperty({ type: () => IntegrationTenant })
-	@ManyToOne(() => IntegrationTenant, {
-		nullable: false,
+	@ManyToOne(() => IntegrationTenant, (integrationTenant) => integrationTenant.settings, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	integration: IntegrationTenant;
+	integration?: IntegrationTenant;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: IntegrationSetting) => it.integration)
 	@IsString()
 	@Index()
-	@Column({ nullable: false })
-	readonly integrationId: string;
-
-	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
-	settingsName: string;
-
-	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
-	settingsValue: string;
+	@Column()
+	readonly integrationId?: string;
 }

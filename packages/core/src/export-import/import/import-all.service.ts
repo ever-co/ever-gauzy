@@ -65,7 +65,7 @@ import {
 	Income,
 	Integration,
 	IntegrationEntitySetting,
-	IntegrationEntitySettingTiedEntity,
+	IntegrationEntitySettingTied,
 	IntegrationMap,
 	IntegrationSetting,
 	IntegrationTenant,
@@ -319,8 +319,8 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(IntegrationEntitySetting)
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
-		@InjectRepository(IntegrationEntitySettingTiedEntity)
-		private readonly integrationEntitySettingTiedEntityRepository: Repository<IntegrationEntitySettingTiedEntity>,
+		@InjectRepository(IntegrationEntitySettingTied)
+		private readonly integrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
 
 		@InjectRepository(IntegrationMap)
 		private readonly integrationMapRepository: Repository<IntegrationMap>,
@@ -1499,7 +1499,7 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.integrationEntitySettingTiedEntityRepository,
+				repository: this.integrationEntitySettingTiedRepository,
 				isCheckRelation: true,
 				foreignKeys: [
 					{ column: 'integrationEntitySettingId', repository: this.integrationEntitySettingRepository }
