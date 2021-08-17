@@ -85,7 +85,7 @@ When('User click on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	proposalsPage.selectEmployeeFromDrodpwon(0);
+	proposalsPage.selectEmployeeFromDrodpwon(1);
 });
 
 And('User can see job post input field', () => {
