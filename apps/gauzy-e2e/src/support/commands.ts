@@ -464,10 +464,10 @@ export const CustomCommands = {
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
 	},
-	getIframeBody: () => {
+	getIframeBody: (index: number) => {
 		return cy
 			.get('iframe[class="cke_wysiwyg_frame cke_reset"]')
-			.its('1.contentDocument.body')
+			.its(`${index}.contentDocument.body`)
 			.should('not.be.empty')
 			.then(cy.wrap);
 	}

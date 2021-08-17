@@ -75,8 +75,8 @@ export const jobPostContentTextareaVisible = () => {
 	verifyElementIsVisible(ProposalsPage.jobPostContentInputCss);
 };
 
-export const enterJobPostContentInputData = (data) => {
-	CustomCommands.getIframeBody().find('p').type(data);
+export const enterJobPostContentInputData = (data, index) => {
+	CustomCommands.getIframeBody(index).find('p').type(data);
 };
 
 export const proposalContentTextareaVisible = () => {
@@ -175,4 +175,88 @@ export const verifyProposalExists = (text) => {
 
 export const verifyProposalAccepted = () => {
 	verifyElementIsVisible(ProposalsPage.acceptedproposalCss);
+};
+
+export const manageTemplatesBtnVisible = () => {
+	verifyElementIsVisible(ProposalsPage.manageTemplatesBtnCss);
+};
+
+export const clickManageTemplatesBtn = (index) => {
+	clickButtonByIndex(ProposalsPage.manageTemplatesBtnCss, index);
+};
+
+export const addProposalTemplateBtnVisible = () => {
+	verifyElementIsVisible(ProposalsPage.addProposalTemplateBtnCss);
+};
+
+export const clickAddProposalTemplateBtn = () => {
+	clickButton(ProposalsPage.addProposalTemplateBtnCss);
+};
+
+export const templateNameInputVisible = () => {
+	verifyElementIsVisible(ProposalsPage.templateNameInputCss);
+};
+
+export const enterTemplateName = (name) => {
+	clearField(ProposalsPage.templateNameInputCss);
+	enterInput(ProposalsPage.templateNameInputCss, name);
+};
+
+export const saveTemplateBtnVisible = () => {
+	verifyElementIsVisible(ProposalsPage.saveTemplateBtnCss);
+};
+
+export const clickSaveTemplateBtn = () => {
+	clickButton(ProposalsPage.saveTemplateBtnCss);
+};
+
+export const editTemplateBtnVisible = () => {
+	verifyElementIsVisible(ProposalsPage.editProposalTemplateBtnCss);
+};
+
+export const clickEditTemplateBtn = (index) => {
+	clickButtonByIndex(ProposalsPage.editProposalTemplateBtnCss, index);
+};
+
+export const deleteTemplateBtnVisible = () => {
+	verifyElementIsVisible(ProposalsPage.deleteProposalTemplateBtnCss);
+};
+
+export const clickDeleteTemplateBtn = () => {
+	clickButton(ProposalsPage.deleteProposalTemplateBtnCss);
+};
+
+export const rejectDeleteTemplateBtnVisible = () => {
+	verifyElementIsVisible(ProposalsPage.rejectDeleteBtnCss);
+};
+
+export const confirmDeleteTemplateBtnVisible = () => {
+	verifyElementIsVisible(ProposalsPage.confirmDeleteTemplateBtnCss);
+};
+
+export const clickConfirmDeleteTemplateBtn = () => {
+	clickButton(ProposalsPage.confirmDeleteTemplateBtnCss);
+};
+
+export const enterProposalTemplateContent = (data, index) => {
+	CustomCommands.getIframeBody(index).find('p').type(data);
+};
+
+export const verifyProposalTemplate = (name) => {
+	verifyText(ProposalsPage.verifyProposalTemplateCss, name);
+};
+
+export const employeeMultySelectVisible = () => {
+	verifyElementIsVisible(ProposalsPage.employeeMultyseelectCss);
+};
+
+export const clickEmployeeMultySelect = () => {
+	clickButton(ProposalsPage.employeeMultyseelectCss);
+};
+
+export const selectEmployeeFromMultyselectDropdown = (index) => {
+	clickButtonByIndex(
+		ProposalsPage.employeeMultyselectDropdownOptionCss,
+		index
+	);
 };
