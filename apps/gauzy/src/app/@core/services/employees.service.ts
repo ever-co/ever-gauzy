@@ -178,7 +178,7 @@ export class EmployeesService {
 
 	createBulk(createInput: IEmployeeCreateInput[]): Observable<IEmployee[]> {
 		return this.http.post<IEmployee[]>(
-			`${API_PREFIX}/employee/createBulk`,
+			`${API_PREFIX}/employee/bulk`,
 			createInput
 		);
 	}

@@ -89,7 +89,8 @@ export interface IEmployeeFindInput {
 	skills?: ISkill[];
 }
 
-export interface IEmployeeUpdateInput {
+export interface IEmployeeUpdateInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
