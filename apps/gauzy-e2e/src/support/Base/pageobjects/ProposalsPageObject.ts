@@ -21,5 +21,16 @@ export const ProposalsPage = {
 	backButtonCss: 'div.main > button[status="primary"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyProposalCss: 'div.ng-star-inserted',
-	acceptedproposalCss: 'ga-status-badge > div.badge-success'
+	acceptedproposalCss: 'ga-status-badge > div.badge-success',
+	manageTemplatesBtnCss: 'div.mb-3 > button[status="info"]',
+	addProposalTemplateBtnCss: 'div.mb-3 > button[status="success"]',
+	editProposalTemplateBtnCss: 'div.mb-3 > button[status="info"]',
+	deleteProposalTemplateBtnCss: 'div.mb-3 > button[status="danger"]',
+	templateNameInputCss: 'div.form-group > input[formcontrolname="name"]',
+	saveTemplateBtnCss: 'nb-card-footer.text-right > button[status="success"]',
+	confirmDeleteTemplateBtnCss: 'nb-card-footer > button[status="primary"]',
+	rejectDeleteBtnCss: 'nb-card-footer > button[status="warn"]',
+	verifyProposalTemplateCss: 'div.ng-star-inserted',
+	employeeMultyseelectCss: 'ga-employee-multi-select > nb-select > button.select-button',
+	employeeMultyselectDropdownOptionCss: '.option-list nb-option'
 };
