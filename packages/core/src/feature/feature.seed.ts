@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { DEFAULT_FEATURES } from './default-features';
 import { Feature } from './feature.entity';
-import { FeatureOrganization } from './feature_organization.entity';
+import { FeatureOrganization } from './feature-organization.entity';
 import { IPluginConfig } from '@gauzy/common';
 
 export const createDefaultFeatureToggle = async (

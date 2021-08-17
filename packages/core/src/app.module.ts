@@ -60,7 +60,7 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
-import { EmployeeLevelModule } from './organization_employee-level/organization-employee-level.module';
+import { EmployeeLevelModule } from './employee-level/employee-level.module';
 import { ExportAllModule } from './export-import/export/export-all.module';
 import { ImportAllModule } from './export-import/import/import-all.module';
 import { TaskModule } from './tasks/task.module';

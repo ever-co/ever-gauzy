@@ -13,16 +13,15 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
 import { Report } from './report.entity';
 import { ReportService } from './report.service';
 
 @ApiTags('Report')
 @Controller()
-export class ReportController extends CrudController<Report> {
-	constructor(private reportService: ReportService) {
-		super(reportService);
-	}
+export class ReportController {
+	constructor(
+		private readonly reportService: ReportService
+	) {}
 
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({

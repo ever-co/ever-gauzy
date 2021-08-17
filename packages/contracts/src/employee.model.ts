@@ -156,10 +156,9 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
-export interface IEmployeeLevel {
-	id: string;
+export interface IEmployeeLevel 
+	extends IBasePerTenantAndOrganizationEntityModel  {
 	level: string;
-	organizationId: string;
 	tag?: ITag[];
 	skills?: ISkill[];
 }

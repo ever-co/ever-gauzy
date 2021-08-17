@@ -10,7 +10,7 @@ import {
 	IPagination,
 	ITenant
 } from '@gauzy/contracts';
-import { FeatureOrganization } from './feature_organization.entity';
+import { FeatureOrganization } from './feature-organization.entity';
 
 @Injectable()
 export class FeatureService extends CrudService<Feature> {

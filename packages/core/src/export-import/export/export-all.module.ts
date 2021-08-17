@@ -32,7 +32,7 @@ import { RoleService } from '../../role/role.service';
 import { InvoiceService } from '../../invoice/invoice.service';
 import { PdfmakerService } from './../../invoice/pdfmaker.service';
 import { InvoiceItemService } from '../../invoice-item/invoice-item.service';
-import { EmployeeLevelService } from '../../organization_employee-level/organization-employee-level.service';
+import { EmployeeLevelService } from '../../employee-level/employee-level.service';
 import { OrganizationContactService } from '../../organization-contact/organization-contact.service';
 import { OrganizationEmploymentTypeService } from '../../organization-employment-type/organization-employment-type.service';
 import { OrganizationPositionService } from '../../organization-position/organization-position.service';

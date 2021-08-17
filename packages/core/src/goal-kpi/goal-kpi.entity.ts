@@ -1,7 +1,7 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { IKPI, KpiMetricEnum } from '@gauzy/contracts';
+import { Entity, Column, ManyToOne, Index, RelationId } from 'typeorm';
+import { IEmployee, IKPI, KpiMetricEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
@@ -31,12 +31,6 @@ export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@Column()
 	operator: string;
 
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne((type) => Employee, { nullable: true })
-	@JoinColumn()
-	@IsOptional()
-	lead: Employee;
-
 	@ApiProperty({ type: () => Number })
 	@Column()
 	currentValue: number;
@@ -44,4 +38,25 @@ export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@ApiProperty({ type: () => Number })
 	@Column()
 	targetValue: number;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, { nullable: true })
+	lead?: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: GoalKPI) => it.lead)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	leadId?: string;
 }

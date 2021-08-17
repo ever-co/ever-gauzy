@@ -1,6 +1,6 @@
-import { ICandidate, IOrganizationEmploymentType } from '@gauzy/contracts';
+import { ICandidate, IEmployee, IOrganizationEmploymentType, ITag } from '@gauzy/contracts';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Candidate,
 	Employee,
@@ -12,24 +12,39 @@ import {
 export class OrganizationEmploymentType
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationEmploymentType {
-	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.organizationEmploymentType)
-	@JoinTable({
-		name: 'tag_organization_employment_type'
-	})
-	tags: Tag[];
 
 	@Column()
 	name: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiPropertyOptional({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.organizationEmploymentType)
+	@JoinTable({
+		name: 'tag_organization_employment_type'
+	})
+	tags: ITag[];
+
+	/**
+	 * Employee
+	 */
+	@ApiPropertyOptional({ type: () => Employee, isArray: true })
 	@ManyToMany(() => Employee, (employee) => employee.organizationEmploymentTypes, { 
 		cascade: ['update'] 
 	})
 	@JoinTable({
 		name: 'organization_employment_type_employee'
 	})
-	members?: Employee[];
+	members?: IEmployee[];
 
+	/**
+	 * Candidate
+	 */
+	@ApiPropertyOptional({ type: () => Candidate, isArray: true })
 	@ManyToMany(() => Candidate, (candidate) => candidate.organizationEmploymentTypes, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'

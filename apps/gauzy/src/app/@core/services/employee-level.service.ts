@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import {
 	IEmployeeLevelInput,
 	IEmployeeLevel,
-	IEmployeeLevelFindInput
+	IEmployeeLevelFindInput,
+	IPagination
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
@@ -15,19 +16,12 @@ export class EmployeeLevelService {
 	constructor(private http: HttpClient) {}
 
 	getAll(
-		orgId: string,
 		relations?: string[],
 		findInput?: IEmployeeLevelFindInput
-	): Promise<{
-		items: IEmployeeLevel[];
-		total: number;
-	}> {
+	): Promise<IPagination<IEmployeeLevel>> {
 		const data = JSON.stringify({ relations: relations || [], findInput });
 		return this.http
-			.get<{
-				items: IEmployeeLevel[];
-				total: number;
-			}>(`${API_PREFIX}/employee-level/${orgId}`, {
+			.get<IPagination<IEmployeeLevel>>(`${API_PREFIX}/employee-level`, {
 				params: { data }
 			})
 			.pipe(first())

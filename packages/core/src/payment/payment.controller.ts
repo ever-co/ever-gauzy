@@ -37,34 +37,10 @@ import { I18nLang } from 'nestjs-i18n';
 @Controller()
 export class PaymentController extends CrudController<Payment> {
 	constructor(
-		private paymentService: PaymentService,
-		private paymentMapService: PaymentMapService
+		private readonly paymentService: PaymentService,
+		private readonly paymentMapService: PaymentMapService
 	) {
 		super(paymentService);
-	}
-
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<IPayment>
-	): Promise<IPagination<IPayment>> {
-		return this.paymentService.pagination(filter);
-	}
-
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IPayment>> {
-		const { relations = [], findInput = null } = data;
-		return this.paymentService.findAll({
-			where: findInput,
-			relations
-		});
 	}
 
 	@ApiOperation({
@@ -114,14 +90,6 @@ export class PaymentController extends CrudController<Payment> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
-	@Post()
-	async create(@Body() entity: IPayment): Promise<IPayment> {
-		return this.paymentService.create(entity);
-	}
-
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Post('receipt')
 	async sendReceipt(
 		@Req() request,
@@ -132,6 +100,38 @@ export class PaymentController extends CrudController<Payment> {
 			request.body.params,
 			request.get('Origin')
 		);
+	}
+
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IPayment>
+	): Promise<IPagination<IPayment>> {
+		return this.paymentService.pagination(filter);
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IPayment>> {
+		const { relations = [], findInput = null } = data;
+		return this.paymentService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
+	@Post()
+	async create(@Body() entity: IPayment): Promise<IPayment> {
+		return this.paymentService.create(entity);
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)

@@ -19,10 +19,19 @@ import { ParseJsonPipe } from './../shared/pipes';
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class GoalTemplateController extends CrudController<GoalTemplate> {
-	constructor(private readonly goalTemplateService: GoalTemplateService) {
+
+	constructor(
+		private readonly goalTemplateService: GoalTemplateService
+	) {
 		super(goalTemplateService);
 	}
 
+	/**
+	 * GET all goal templates
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find goal templates.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -44,6 +53,12 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 		});
 	}
 
+	/**
+	 * CREATE goal template
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create Goal Template' })
 	@ApiResponse({
 		status: HttpStatus.OK,

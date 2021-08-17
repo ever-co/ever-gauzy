@@ -1,9 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import {
 	IEmployee,
 	ISkill,
@@ -11,38 +9,43 @@ import {
 	ITag,
 	PayPeriodEnum,
 	LanguagesEnum,
-	IEmployeeAward
+	IEmployeeAward,
+	IEmployeeLevel
 } from '@gauzy/contracts';
-import { OrganizationEmploymentTypesService } from '../../../@core/services/organization-employment-types.service';
 import {
 	switchMap,
 	map,
 	tap,
 	filter,
-	catchError,
-	takeUntil
+	catchError
 } from 'rxjs/operators';
-import { Observable, EMPTY, Subject } from 'rxjs';
-import { Store } from '../../../@core/services/store.service';
-import { EmployeeLevelService } from '../../../@core/services/employee-level.service';
-import { EmployeeAwardService } from '../../../@core/services/employee-award.service';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { Observable, EMPTY } from 'rxjs';
+import { TranslationBaseComponent } from '../../language-base';
+import {
+	EmployeeAwardService,
+	EmployeeLevelService,
+	ErrorHandlingService,
+	OrganizationEmploymentTypesService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-public-page-employee-mutation',
 	templateUrl: './public-page-employee-mutation.component.html',
 	styleUrls: ['./public-page-employee-mutation.component.scss'],
-	providers: [OrganizationEmploymentTypesService]
+	providers: []
 })
 export class PublicPageEmployeeMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$: Subject<void> = new Subject();
+
 	employee: IEmployee;
 	form: FormGroup;
 	employmentTypes$: Observable<IOrganizationEmploymentType[]>;
-	employeeLevels: { level: string; organizationId: string }[] = [];
+	employeeLevels: IEmployeeLevel[] = [];
 	payPeriods = Object.values(PayPeriodEnum);
 	languages: string[] = Object.values(LanguagesEnum);
 	privacySettings: any[];
@@ -50,15 +53,15 @@ export class PublicPageEmployeeMutationComponent
 	showAddAward: boolean;
 
 	constructor(
-		private fb: FormBuilder,
-		protected dialogRef: NbDialogRef<PublicPageEmployeeMutationComponent>,
+		private readonly fb: FormBuilder,
+		protected readonly dialogRef: NbDialogRef<PublicPageEmployeeMutationComponent>,
 		private readonly toastrService: ToastrService,
-		readonly translateService: TranslateService,
-		private organizationEmploymentTypeService: OrganizationEmploymentTypesService,
-		private employeeLevelService: EmployeeLevelService,
-		private employeeAwardService: EmployeeAwardService,
-		private errorHandlingService: ErrorHandlingService,
-		private store: Store
+		public readonly translateService: TranslateService,
+		private readonly organizationEmploymentTypeService: OrganizationEmploymentTypesService,
+		private readonly employeeLevelService: EmployeeLevelService,
+		private readonly employeeAwardService: EmployeeAwardService,
+		private readonly errorHandlingService: ErrorHandlingService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -70,9 +73,12 @@ export class PublicPageEmployeeMutationComponent
 		this.employmentTypes$ = this.store.selectedOrganization$.pipe(
 			filter((organization) => !!organization),
 			tap(async (organization) => {
-				const { items } = await this.employeeLevelService.getAll(
-					organization.id
-				);
+				const { tenantId } = this.store.user;
+				const { id: organizationId } = organization;
+				const { items } = await this.employeeLevelService.getAll([], {
+					tenantId,
+					organizationId
+				});
 				this.employeeLevels = items;
 			}),
 			switchMap((organization) =>
@@ -80,7 +86,8 @@ export class PublicPageEmployeeMutationComponent
 					organizationId: organization.id
 				})
 			),
-			map(({ items }) => items)
+			map(({ items }) => items),
+			untilDestroyed(this)
 		);
 	}
 
@@ -145,10 +152,12 @@ export class PublicPageEmployeeMutationComponent
 
 	selectedSkillsHandler(skill: ISkill) {
 		this.form.get('skills').setValue(skill);
+		this.form.updateValueAndValidity();
 	}
 
 	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
+		this.form.updateValueAndValidity();
 	}
 
 	close() {
@@ -186,7 +195,7 @@ export class PublicPageEmployeeMutationComponent
 						this.errorHandlingService.handleError(err);
 						return EMPTY;
 					}),
-					takeUntil(this._ngDestroy$)
+					untilDestroyed(this)
 				)
 				.subscribe();
 		} else {
@@ -219,13 +228,10 @@ export class PublicPageEmployeeMutationComponent
 					this.errorHandlingService.handleError(err);
 					return EMPTY;
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void { }
 }
