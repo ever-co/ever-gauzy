@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
-import { EmployeeLevelController } from './organization-employee-level.controller';
-import { EmployeeLevelService } from './organization-employee-level.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmployeeLevel } from './organization-employee-level.entity';
 import { CqrsModule } from '@nestjs/cqrs';
+import { RouterModule } from 'nest-router';
+import { EmployeeLevelController } from './employee-level.controller';
+import { EmployeeLevelService } from './employee-level.service';
+import { EmployeeLevel } from './employee-level.entity';
 import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
