@@ -7,7 +7,6 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationEditStore } from '../../../@core/services/organization-edit-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,8 +30,7 @@ export class EditOrganizationComponent
 		private organizationsService: OrganizationsService,
 		private employeesService: EmployeesService,
 		private store: Store,
-		readonly translateService: TranslateService,
-		private organizationEditStore: OrganizationEditStore
+		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
@@ -79,7 +77,11 @@ export class EditOrganizationComponent
 				`/share/organization/${this.selectedOrg.profile_link}`
 			])
 		);
-		window.open('#' + url, '_blank');
+		if(window.location.hash) {
+			window.open('#' + url, '_blank');
+		} else {
+			window.open(url, '_blank');
+		}
 	}
 
 	ngOnDestroy() {}

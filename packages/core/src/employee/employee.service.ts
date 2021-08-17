@@ -1,4 +1,4 @@
-import { IEmployeeCreateInput } from '@gauzy/contracts';
+import { IEmployee, IEmployeeCreateInput, IPagination } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
@@ -49,10 +49,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findWorkingEmployees(
 		organizationId: string,
-		tenantId: string,
 		forMonth: Date,
 		withUser: boolean
-	): Promise<{ total: number; items: Employee[] }> {
+	): Promise<IPagination<IEmployee>> {
+		const tenantId = RequestContext.currentTenantId();
 		const query = this.employeeRepository.createQueryBuilder('employee');
 		query
 			.where(`${query.alias}."organizationId" = :organizationId`, {
@@ -107,13 +107,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findWorkingEmployeesCount(
 		organizationId: string,
-		tenantId: string,
 		forMonth: Date,
 		withUser: boolean
 	): Promise<{ total: number }> {
 		const { total } = await this.findWorkingEmployees(
 			organizationId,
-			tenantId,
 			forMonth,
 			withUser
 		);
