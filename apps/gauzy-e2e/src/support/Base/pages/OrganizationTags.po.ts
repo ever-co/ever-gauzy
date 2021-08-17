@@ -8,7 +8,7 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
-	verifyTableRowByText
+	verifyByText
 } from '../utils/util';
 import { OrganizationTagsPage } from '../pageobjects/OrganizationTagsPageObject';
 
@@ -149,7 +149,7 @@ export const enterFilterInputData = (text) => {
 };
 
 export const filteredTagVisible = (text) => {
-	verifyTableRowByText(OrganizationTagsPage.firstTableCellTagCss, text);
+	verifyByText(OrganizationTagsPage.firstTableCellTagCss, text);
 };
 
 export const clearFilterInputField = () => {
