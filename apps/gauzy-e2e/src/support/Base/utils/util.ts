@@ -201,13 +201,13 @@ export const clickOutsideElement = () => {
 
 export const uploadMedia = (loc: any, btn: any, file: string) => {
 	const filepath = file;
-	cy.get(loc, { timeout: 40000 }).attachFile(filepath);
-	cy.get(btn, { timeout: 40000 }).click({ force: true });
+	cy.get(loc, { timeout: defaultCommandTimeout }).attachFile(filepath);
+	cy.get(btn, { timeout: defaultCommandTimeout }).click({ force: true });
 };
 
 export const uploadMediaInput = (loc: any, file: any) => {
 	const filepath = file;
-	cy.get(loc, { timeout: 40000 }).attachFile(filepath);
+	cy.get(loc, { timeout: defaultCommandTimeout }).attachFile(filepath);
 };
 
 export const waitElementToLoad = (loc: any) => {
@@ -215,7 +215,14 @@ export const waitElementToLoad = (loc: any) => {
 };
 
 export const dragNDrop = (source: any, index: number, target: any) => {
-	cy.get(source, { timeout: 40000 })
+	cy.get(source, { timeout: defaultCommandTimeout })
 		.eq(index)
 		.move({ x: 100, y: 100, force: true });
+};
+
+export const triggerSlider = (loc: any) => {
+	cy.get(loc, { timeout: defaultCommandTimeout })
+		.first()
+		.invoke('val', 35)
+		.trigger('change', { data: '35' });
 };

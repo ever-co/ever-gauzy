@@ -12,6 +12,9 @@ export const ReportsPageData = {
 	weeklyLimits: 'Weekly limits',
 	dailyLimits: 'Daily limits',
 	invoicing: 'Invoicing',
+	reports: 'Reports',
 	projectBudgets: 'Project budgets',
-	clientBudgets: 'Client budgets'
+	clientBudgets: 'Client budgets',
+	totalHours: '00:00:00',
+	progress: '0%'
 };

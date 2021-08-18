@@ -470,5 +470,44 @@ export const CustomCommands = {
 			.its(`${index}.contentDocument.body`)
 			.should('not.be.empty')
 			.then(cy.wrap);
+	},
+	loginAsEmployee: (
+		loginPage: any,
+		dashboardPage: any,
+		empEmail: string,
+		empPassword: string
+	) => {
+		loginPage.verifyLoginText();
+		loginPage.clearEmailField();
+		loginPage.enterEmail(empEmail);
+		loginPage.clearPasswordField();
+		loginPage.enterPassword(empPassword);
+		loginPage.clickLoginButton();
+		dashboardPage.verifyCreateButton();
+	},
+	addTime: (timeTrackingPage: any, description: string) => {
+		timeTrackingPage.timerVisible();
+		timeTrackingPage.clickTimer();
+		timeTrackingPage.timerBtnVisible();
+		timeTrackingPage.clickTimerBtn(1);
+		timeTrackingPage.clientSelectVisible();
+		timeTrackingPage.clickClientSelect();
+		timeTrackingPage.selectOptionFromDropdown(0);
+		timeTrackingPage.projectSelectVisible();
+		timeTrackingPage.clickProjectSelect();
+		timeTrackingPage.selectOptionFromDropdown(0);
+		timeTrackingPage.taskSelectVisible();
+		timeTrackingPage.clickTaskSelect();
+		timeTrackingPage.selectOptionFromDropdown(0);
+		timeTrackingPage.descriptionInputVisible();
+		timeTrackingPage.enterDescription(description);
+		timeTrackingPage.startTimerBtnVisible();
+		timeTrackingPage.clickStartTimerBtn();
+		cy.wait(5000);
+		timeTrackingPage.stopTimerBtnVisible();
+		timeTrackingPage.clickStopTimerBtn();
+		timeTrackingPage.startTimerBtnVisible();
+		timeTrackingPage.closeBtnVisible();
+		timeTrackingPage.clickCloseBtn();
 	}
 };
