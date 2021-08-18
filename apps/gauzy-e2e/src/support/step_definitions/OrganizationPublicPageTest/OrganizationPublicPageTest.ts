@@ -1,8 +1,8 @@
 import { CustomCommands } from '../../commands';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import { AddOrganizationPageData } from '../../Base/pagedata/AddOrganizationPageData';
-import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
+import { OrganizationPublicPagePageData as OrganizationPublicPageData } from '../../Base/pagedata/OrganizationPublicPagePageData';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as loginPage from '../../Base/pages/Login.po';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
@@ -17,6 +17,7 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 import * as faker from 'faker';
+import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
 const email = faker.internet.email();
 const fullName = faker.name.firstName() + ' ' + faker.name.lastName();
@@ -53,16 +54,16 @@ And('User can add new organization', () => {
 	);
 });
 
-const selectOrganization = (name: string) => {
-	organizationPublicPage.organizationDropdownVisible();
-	organizationPublicPage.clickOrganizationDropdown();
-	organizationPublicPage.selectOrganization(name);
-};
-
 const logoutLogin = () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+};
+
+const selectOrganization = (name: string) => {
+	organizationPublicPage.organizationDropdownVisible();
+	organizationPublicPage.clickOrganizationDropdown();
+	organizationPublicPage.selectOrganization(name);
 };
 
 // Add employee
@@ -148,7 +149,7 @@ When('User clicks on manage button', () => {
 });
 
 Then('User can see profile link input field', () => {
-	organizationPublicPage.profileLinkInputVisisble();
+	organizationPublicPage.profileLinkInputVisible();
 });
 
 And('User enters profile link value', () => {
@@ -174,138 +175,226 @@ And('User can navigate to organization public page', () => {
 	cy.visit(`/#/share/organization/${organizationName}`);
 });
 
-// And('User can see Edit Page button', () => {});
-
-// When('User clicks on Edit Page button', () => {});
-
-// Then('User can see company name input field', () => {});
-
-// And('User enters company name value', () => {});
-
-// And('User can see company size input field', () => {});
-
-// And('User enters company size value', () => {});
-
-// And('User can see year founded input field', () => {});
-
-// And('User enters year founded value', () => {});
-
-// And('User can see banner input field', () => {});
-
-// And('User enters banner value', () => {});
-
-// And('User see minimum project size dropdown', () => {});
-
-// When('User clicks on minimum project size dropdown', () => {});
-
-// Then('User can select minimum project size value ', () => {});
-
-// And('User can see short description input field', () => {});
-
-// And('User enters short description value', () => {});
-
-// And('User can see awards tab', () => {});
-
-// When('User clicks on awards tab', () => {});
-
-// Then('Use can see add award button', () => {});
-
-// When('User clicks on award button', () => {});
-
-// Then('User can see award name input field', () => {});
-
-// And('User enters award name value', () => {});
-
-// And('User can see award year input field', () => {});
-
-// And('User enters award year value', () => {});
-
-// And('User can see save button', () => {});
-
-// When('User clicks on save button', () => {});
-
-// Then('Notification message will appear', () => {});
-
-// And('User can see skills tab', () => {});
-
-// When('User clicks on skills tab', () => {});
-
-// Then('User can see skills dropdown', () => {});
-
-// When('User clicks on skills dropdown', () => {});
-
-// Then('User can select skills from dropdown options', () => {});
-
-// And('User can see languages tab', () => {});
-
-// When('User clicks on languages tab', () => {});
-
-// Then('User can see add language button', () => {});
-
-// When('User clicks on add language button', () => {});
-
-// Then('User can see language dropdown', () => {});
-
-// When('User clicks on language dropdown', () => {});
-
-// Then('User can select language from dropdown options', () => {});
-
-// And('User can see language level dropdown', () => {});
-
-// When('User clicks on language level dropdown', () => {});
-
-// Then('User can select language level from dropdown ', () => {});
-
-// And('User can see save button', () => {});
-
-// When('User clicks on save button', () => {});
-
-// Then('Notification message will appear', () => {});
-
-// And('User can see Update button', () => {});
-
-// When('User clicks on Update button', () => {});
-
-// Then('Notification message will appear', () => {});
-
-// // Verify public page header
-// And('User can verify company name', () => {});
-
-// And('User can verify banner', () => {});
-
-// And('User can verify year founded', () => {});
-
-// And('User can verify company size', () => {});
-
-// And('User can verify total clients', () => {});
-
-// And('User can verify client focus', () => {});
-
-// // Verify profile tab
-// And('User can verify projects', () => {});
-
-// And('User can verify languages', () => {});
-
-// And('User can verify awards', () => {});
-
-// And('User can verify employees', () => {});
-
-// And('User can verify description', () => {});
-
-// And('User can verify minium project size', () => {});
-
-// And('User can verify skills', () => {});
-
-// // Verify employees tab
-// And('User can see employees tab', () => {});
-
-// When('User clicks on employees tab', () => {});
-
-// Then('User can verify employees', () => {});
-
-// // Verify clients tab
-// And('User can see clients tab', () => {});
-
-// When('User clicks on clients tab', () => {});
-
-// And('User can verify clients', () => {});
+And('User can see Edit Page button', () => {
+	organizationPublicPage.editPageButtonVisible();
+});
+
+When('User clicks on Edit Page button', () => {
+	organizationPublicPage.clickEditPageButton();
+});
+
+Then('User can see company name input field', () => {
+	organizationPublicPage.companyNameInputVisible();
+});
+
+And('User enters company name value', () => {
+	organizationPublicPage.enterCompanyNameInputData(
+		OrganizationPublicPageData.copyrightSymbol
+	);
+});
+
+And('User can see company size input field', () => {
+	organizationPublicPage.companySizeInputVisible();
+});
+
+And('User enters company size value', () => {
+	organizationPublicPage.enterCompanySizeInputData(
+		OrganizationPublicPageData.companySize
+	);
+});
+
+And('User can see year founded input field', () => {
+	organizationPublicPage.yearFoundedInputVisible();
+});
+
+And('User enters year founded value', () => {
+	organizationPublicPage.enterYearFoundedInputData(
+		OrganizationPublicPageData.yearFounded
+	);
+});
+
+And('User can see banner input field', () => {
+	organizationPublicPage.bannerInputVisible();
+});
+
+And('User enters banner value', () => {
+	organizationPublicPage.enterBannerInputData(
+		OrganizationPublicPageData.banner
+	);
+});
+
+And('User see minimum project size dropdown', () => {
+	organizationPublicPage.minimumProjectSizeDropdownVisible();
+});
+
+When('User clicks on minimum project size dropdown', () => {
+	organizationPublicPage.clickMinimumProjectSizeDropdown();
+});
+
+Then('User can select minimum project size from dropdown options', () => {
+	organizationPublicPage.selectMinimumProjectSizeDropdownOption(
+		OrganizationPublicPageData.minimumProjectSizeUSD
+	);
+});
+
+And('User can see client focus dropdown', () => {
+	organizationPublicPage.clientFocusDropdownVisible();
+});
+
+When('User clicks on client focus dropdown', () => {
+	organizationPublicPage.clickClientFocusDropdown();
+});
+
+Then('User can select client focus from dropdown options', () => {
+	organizationPublicPage.selectClientFocusDropdownOptions(
+		OrganizationPublicPageData.clientFocus
+	);
+});
+
+And('User can see short description input field', () => {
+	organizationPublicPage.shortDescriptionVisible();
+});
+
+And('User enters short description value', () => {
+	organizationPublicPage.enterShortDescriptionInputData(
+		OrganizationPublicPageData.shortDescription
+	);
+});
+
+And('User can see awards tab', () => {
+	organizationPublicPage.awardsTabVisible();
+});
+
+When('User clicks on awards tab', () => {
+	organizationPublicPage.clickAwardsTab();
+});
+
+Then('Use can see add award button', () => {
+	organizationPublicPage.addAwardsButtonVisible();
+});
+
+When('User clicks on award button', () => {
+	organizationPublicPage.clickAwardButton();
+});
+
+Then('User can see award name input field', () => {
+	organizationPublicPage.awardNameInputVisible();
+});
+
+And('User enters award name value', () => {
+	organizationPublicPage.enterAwardNameInputData(
+		OrganizationPublicPageData.awardName
+	);
+});
+
+And('User can see award year input field', () => {
+	organizationPublicPage.awardYearInputVisible();
+});
+
+And('User enters award year value', () => {
+	organizationPublicPage.enterAwardYearInputData(
+		OrganizationPublicPageData.awardYear
+	);
+});
+
+And('User can see save award button', () => {
+	organizationPublicPage.awardsSaveButtonVisible();
+});
+
+When('User clicks on save award button', () => {
+	organizationPublicPage.clickAwardsSaveButton();
+});
+
+Then('Notification message will appear', () => {
+	organizationPublicPage.waitMessageToHide();
+});
+
+And('User can see skills tab', () => {
+	organizationPublicPage.skillsTabVisible();
+});
+
+When('User clicks on skills tab', () => {
+	organizationPublicPage.clickSkillsTab();
+});
+
+Then('User can see skills dropdown', () => {
+	organizationPublicPage.skillsDropdownVisible();
+});
+
+When('User clicks on skills dropdown', () => {
+	organizationPublicPage.clickSkillsDropdown();
+});
+
+Then('User can select skills from dropdown options', () => {
+	organizationPublicPage.selectSkillsFromDropdownOptions(
+		OrganizationPublicPageData.skills
+	);
+});
+
+And('User can see languages tab', () => {
+	organizationPublicPage.languagesTabVisible();
+});
+
+When('User clicks on languages tab', () => {
+	organizationPublicPage.clickLanguagesTab();
+});
+
+Then('User can see add language button', () => {
+	organizationPublicPage.addLanguageButtonVisible();
+});
+
+When('User clicks on add language button', () => {
+	organizationPublicPage.clickAddLanguageButton();
+});
+
+Then('User can see language dropdown', () => {
+	organizationPublicPage.languageDropdownVisible();
+});
+
+When('User clicks on language dropdown', () => {
+	organizationPublicPage.clickLanguageDropdown();
+});
+
+Then('User can select language from dropdown options', () => {
+	organizationPublicPage.selectLanguageFromDropdownOptions(
+		OrganizationPublicPageData.language
+	);
+});
+
+And('User can see language level dropdown', () => {
+	organizationPublicPage.languageLevelDropdownVisible();
+});
+
+When('User clicks on language level dropdown', () => {
+	organizationPublicPage.clickLanguageLevelDropdown();
+});
+
+Then('User can select language level from dropdown options', () => {
+	organizationPublicPage.selectLanguageLevelFromDropdownOptions(
+		OrganizationPublicPageData.languageLevel
+	);
+});
+
+And('User can see save language button', () => {
+	organizationPublicPage.languagesSaveButtonVisible();
+});
+
+When('User clicks on save language button', () => {
+	organizationPublicPage.clickLanguagesSaveButton();
+});
+
+Then('Notification message will appear', () => {
+	organizationPublicPage.waitMessageToHide();
+});
+
+And('User can see Update button', () => {
+	organizationPublicPage.updateButtonVisible();
+});
+
+When('User clicks on Update button', () => {
+	organizationPublicPage.clickUpdateButton();
+});
+
+Then('Notification message will appear', () => {
+	organizationPublicPage.waitMessageToHide();
+});
