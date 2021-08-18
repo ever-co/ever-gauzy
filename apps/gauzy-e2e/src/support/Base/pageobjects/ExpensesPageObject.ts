@@ -29,5 +29,13 @@ export const ExpensesPage = {
 	categorieCardCss: 'nb-card.ng-star-inserted',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	notBillableBadgeCss: 'div.badge-danger',
-	verifyCategoryCss: 'ga-notes-with-tags > div > div > div.ng-star-inserted'
+	verifyCategoryCss: 'ga-notes-with-tags > div > div > div.ng-star-inserted',
+	sidebarBtnCss: 'span.menu-title',
+	accountingExpensesSidebarBtnCss: 'a[href="#/pages/accounting/expenses"] > span.menu-title',
+	reportsExpenseSidebarBtnCss: 'a[href="#/pages/reports/expense"] > span.menu-title',
+	expenseTableCellCss:
+		'div[class="col-sm-2 project-name"] > span.ng-star-inserted',
+	amountTableCellCss: 'div[class="col text-center day-col"]',
+	groupByCss: 'div.ml-3 > nb-select > button.select-button',
+	dropdownOptionCss: '.option-list nb-option'
 };
