@@ -44,12 +44,11 @@ export const OrganizationPublicPage = {
 	languageSaveButtonCss:
 		'nb-tab[ng-reflect-tab-title="Languages"] button[status="success"]',
 	updateButtonCss: 'nb-card-footer.text-right > button[status="success"]',
-	companyNameCss: 'h4.org-name',
-	bannerCss: 'span.org-banner',
-	yearFoundedCss: '',
-	companySizeCss: 'div.org-size > h5.org-title',
-	totalClientsCss: 'div.org-size > h5.org-title',
-	clientFocusCss: 'div.org-client-focus > h5.org-title > span.client-focus',
-	skillsCss: 'div.org-skills > .org-value > li.org_list_data',
-	profileTab: 'nb-tab[ng-reflect-tab-title="Profile"]'
+	companyNameCss: 'div.org-head h4.org-name',
+	bannerCss: 'div.org-head span.org-banner',
+	companySizeCss: 'div.org-head div.org-size > h5.org-title',
+	totalClientsCss: 'div.org-head div.org-size > h5.org-title',
+	clientFocusCss:
+		'div.org-head div.org-client-focus > h5.org-title > span.client-focus',
+	skillsCss: 'div.org-skills > .org-value > li.org_list_data'
 };

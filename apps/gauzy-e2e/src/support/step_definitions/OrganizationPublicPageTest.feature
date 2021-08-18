@@ -74,3 +74,9 @@ Feature: Organization public page test
     And User can see Update button
     When User clicks on Update button
     Then Notification message will appear
+  Scenario: Verify public page data
+    And User can verify company name
+    And User can verify banner
+    And User can verify company size
+    And User can verify total clients
+    And User can verify client focus

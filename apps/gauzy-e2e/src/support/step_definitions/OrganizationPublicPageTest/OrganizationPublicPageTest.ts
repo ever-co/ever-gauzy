@@ -398,3 +398,32 @@ When('User clicks on Update button', () => {
 Then('Notification message will appear', () => {
 	organizationPublicPage.waitMessageToHide();
 });
+
+// Verify public page data
+And('User can verify company name', () => {
+	organizationPublicPage.verifyCompanyName(
+		OrganizationPublicPageData.copyrightSymbol
+	);
+});
+
+And('User can verify banner', () => {
+	organizationPublicPage.verifyBanner(OrganizationPublicPageData.banner);
+});
+
+And('User can verify company size', () => {
+	organizationPublicPage.verifyCompanySize(
+		OrganizationPublicPageData.companySize
+	);
+});
+
+And('User can verify total clients', () => {
+	organizationPublicPage.verifyTotalClients(
+		OrganizationPublicPageData.totalClients
+	);
+});
+
+And('User can verify client focus', () => {
+	organizationPublicPage.verifyClientFocus(
+		OrganizationPublicPageData.clientFocus
+	);
+});

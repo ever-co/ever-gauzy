@@ -54,7 +54,7 @@ export const manageBtnClick = () => {
 };
 
 export const profileLinkInputVisible = () => {
-	waitUntil(1000);
+	waitUntil(3000);
 	verifyElementIsVisible(OrganizationPublicPage.profileLinkInputCss);
 };
 
@@ -280,4 +280,25 @@ export const updateButtonVisible = () => {
 
 export const clickUpdateButton = () => {
 	clickButton(OrganizationPublicPage.updateButtonCss);
+};
+
+// Verify public page data
+export const verifyCompanyName = (text: string) => {
+	verifyByText(OrganizationPublicPage.companyNameCss, text);
+};
+
+export const verifyBanner = (text: string) => {
+	verifyByText(OrganizationPublicPage.bannerCss, text);
+};
+
+export const verifyCompanySize = (text: string) => {
+	verifyByText(OrganizationPublicPage.companySizeCss, text);
+};
+
+export const verifyTotalClients = (text: string) => {
+	verifyByText(OrganizationPublicPage.totalClientsCss, text);
+};
+
+export const verifyClientFocus = (text: string) => {
+	verifyByText(OrganizationPublicPage.clientFocusCss, text);
 };
