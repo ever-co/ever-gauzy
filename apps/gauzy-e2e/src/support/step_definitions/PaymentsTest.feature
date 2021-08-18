@@ -26,6 +26,21 @@ Feature: Payments test
     And User can see save button
     When User click on save button
     Then Notification message will appear
+  Scenario: Verify payment reports
+    And User can see Reports sidebar button
+    When User click on Reports sidebar button
+    Then User can click on Payments sidebar button
+    And User can see Group by select
+    When User click on Group by select
+    Then User can see option for Date
+    And User can see option for Client
+    And User can see option for Project
+    When User click on Date dropdown option
+    Then User can verify project
+    And User can verify amount
+    When User click again on Reports sidebar button
+    Then User can click on Accounting sidebar button
+    When User click on Payments sidebar button
   Scenario: Edit payment
     Then User can see payments table
     When User select table row

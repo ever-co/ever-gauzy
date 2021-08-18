@@ -134,6 +134,63 @@ Then('Notification message will appear', () => {
 	paymentsPage.waitMessageToHide();
 });
 
+// Verify payment reports
+And('User can see Reports sidebar button', () => {
+	paymentsPage.sidebarBtnVisible();
+});
+
+When('User click on Reports sidebar button', () => {
+	paymentsPage.clickSidebarBtn(PaymentsPageData.reports);
+});
+
+Then('User can click on Payments sidebar button', () => {
+	paymentsPage.clickReportsInnerSidebarBtn(PaymentsPageData.payments);
+});
+
+And('User can see Group by select', () => {
+	paymentsPage.groupBySelectVisible();
+});
+
+When('User click on Group by select', () => {
+	paymentsPage.clickGroupBySelect();
+});
+
+Then('User can see option for Date', () => {
+	paymentsPage.verifyDropdownOption(PaymentsPageData.date);
+});
+
+And('User can see option for Client', () => {
+	paymentsPage.verifyDropdownOption(PaymentsPageData.client);
+});
+
+And('User can see option for Project', () => {
+	paymentsPage.verifyDropdownOption(PaymentsPageData.project);
+});
+
+When('User click on Date dropdown option', () => {
+	paymentsPage.selectOptionFromDropdown(PaymentsPageData.date);
+});
+
+Then('User can verify project', () => {
+	paymentsPage.verifyPaymentProject(PaymentsPageData.defaultProject);
+});
+
+And('User can verify amount', () => {
+	paymentsPage.verifyPaymentAmount(PaymentsPageData.verifyAmount);
+});
+
+When('User click again on Reports sidebar button', () => {
+	paymentsPage.clickSidebarBtn(PaymentsPageData.reports);
+});
+
+Then('User can click on Accounting sidebar button', () => {
+	paymentsPage.clickSidebarBtn(PaymentsPageData.accounting);
+});
+
+When('User click on Payments sidebar button', () => {
+	paymentsPage.clickAccountingPaymentsSidebarBtn(PaymentsPageData.payments);
+});
+
 // Edit payment
 Then('User can see payments table', () => {
 	cy.on('uncaught:exception', (err, runnable) => {
