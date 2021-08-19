@@ -46,3 +46,9 @@ Feature: Appointments test
     And User can see Save button
     When User clicks on Save button
     Then Notification message will appear
+  Scenario: Verify appointment
+    And User can verify appointment title
+    And User can verify employee name
+    And User can verify agenda
+    And User can verify location
+    And User can verify description

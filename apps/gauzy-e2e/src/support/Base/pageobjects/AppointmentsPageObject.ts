@@ -27,5 +27,7 @@ export const AppointmentsPage = {
 	locationInputCss: 'input#location',
 	descriptionFieldCss: 'input#description',
 	saveButtonCss: 'button[status="success"]',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	appointmentConfirmedCss: 'nb-card h4.ng-star-inserted',
+	appointmentDetails: '.p-2 span'
 };

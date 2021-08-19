@@ -174,3 +174,25 @@ export const clickSaveButton = () => {
 export const waitMessageToHide = () => {
 	waitElementToHide(AppointmentsPage.toastrMessageCss);
 };
+
+// Verify appointments
+
+export const verifyAppointmentConfirmedTitle = (data: string) => {
+	verifyText(AppointmentsPage.appointmentConfirmedCss, data);
+};
+
+export const verifyEmployeeName = (data: string) => {
+	verifyText(AppointmentsPage.appointmentDetails, data);
+};
+
+export const verifyAgenda = (data: string) => {
+	verifyText(AppointmentsPage.appointmentDetails, data);
+};
+
+export const verifyLocation = (data: string) => {
+	verifyText(AppointmentsPage.appointmentDetails, data);
+};
+
+export const verifyDescription = (data: string) => {
+	verifyText(AppointmentsPage.appointmentDetails, data);
+};

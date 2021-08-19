@@ -195,3 +195,28 @@ When('User clicks on Save button', () => {
 Then('Notification message will appear', () => {
 	appointmentsPage.waitMessageToHide();
 });
+
+// Verify appointment
+And('User can verify appointment title', () => {
+	appointmentsPage.verifyAppointmentConfirmedTitle(
+		AppointmentsPageData.appointmentConfirmed
+	);
+});
+
+And('User can verify employee name', () => {
+	appointmentsPage.verifyEmployeeName(`${firstName} ${lastName}`);
+});
+
+And('User can verify agenda', () => {
+	appointmentsPage.verifyAgenda(AppointmentsPageData.agenda);
+});
+
+And('User can verify location', () => {
+	appointmentsPage.verifyLocation(AppointmentsPageData.location);
+});
+
+And('User can verify description', () => {
+	appointmentsPage.verifyDescription(
+		AppointmentsPageData.appointmentDescription
+	);
+});

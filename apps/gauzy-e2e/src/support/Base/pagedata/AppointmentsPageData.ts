@@ -1,6 +1,7 @@
 export const AppointmentsPageData = {
 	bookAppointmentButton: 'Book Public Appointment',
 	header: 'Pick a date and time',
+	appointmentConfirmed: 'Appointment Confirmed',
 	agenda: 'Very important meeting',
 	bufferTime: '10',
 	location: 'Sofia, Simeonovsko shose 64',
