@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-onboarding',
 	template: `
@@ -14,14 +15,10 @@ import { Subject } from 'rxjs';
 	`
 })
 export class OnboardingComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(private translate: TranslateService) {}
 
 	async ngOnInit() {}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

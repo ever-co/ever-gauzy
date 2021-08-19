@@ -1,0 +1,29 @@
+@import './../../../../styles/themes';
+
+@include nb-install-component() {
+    h6 {
+		margin-bottom: 0.5rem;
+		font-weight: 500;
+		font-size: 1rem;
+    }
+    nb-select {
+      	width: 8rem;
+    }
+    .settings-row {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		flex-wrap: wrap;
+		width: 90%;
+		margin: 0 0 1rem;
+    }
+    .title-uppercase {
+		text-transform: uppercase;
+		.settings-row select {
+			max-height: 40px;
+			padding: 0;
+			padding-left: 10px;
+			font-size: 0.9rem;
+		}
+    }
+}
