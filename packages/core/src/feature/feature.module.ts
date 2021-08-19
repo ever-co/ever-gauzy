@@ -4,8 +4,9 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { Feature } from './feature.entity';
 import { FeatureOrganization } from './feature-organization.entity';
-import { FeaturesToggleController } from './feature-toggle.controller';
+import { FeatureToggleController } from './feature-toggle.controller';
 import { FeatureService } from './feature.service';
+import { FeatureOrganizationService } from './feature-organization.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands/handlers';
 
@@ -18,8 +19,8 @@ import { CommandHandlers } from './commands/handlers';
 		forwardRef(() => TenantModule),
 		CqrsModule
 	],
-	controllers: [FeaturesToggleController],
-	providers: [FeatureService, ...CommandHandlers],
-	exports: [FeatureService]
+	controllers: [FeatureToggleController],
+	providers: [FeatureService, FeatureOrganizationService, ...CommandHandlers],
+	exports: [FeatureService, FeatureOrganizationService]
 })
 export class FeatureModule {}

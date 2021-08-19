@@ -140,16 +140,7 @@ export abstract class CrudService<T extends BaseEntity>
 		...options: any[]
 	): Promise<UpdateResult | T> {
 		try {
-			// method getPasswordHash is copied from AuthService
 			// try if can import somehow the service and use its method
-
-			if (partialEntity['hash']) {
-				const hashPassword = await this.getPasswordHash(
-					partialEntity['hash']
-				);
-				partialEntity['hash'] = hashPassword;
-			}
-
 			return await this.repository.update(id, partialEntity);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);

@@ -243,7 +243,7 @@ export function featureToggleLoaderFactory(
 ) {
 	return () =>
 		provider
-			.getFeatureToggles()
+			.getFeatureToggleDefinition()
 			.then((features: IFeatureToggle[]) => {
 				store.featureToggles = features || [];
 				return features;

@@ -4,7 +4,8 @@ import {
 	IFeature,
 	IFeatureOrganization,
 	IFeatureOrganizationUpdateInput,
-	IFeatureOrganizationFindInput
+	IFeatureOrganizationFindInput,
+	IPagination
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { Observable } from 'rxjs';
@@ -16,8 +17,8 @@ export class FeatureService {
 
 	constructor(private http: HttpClient) {}
 
-	getFeatureToggles() {
-		return this.http.get(`${this.API_URL}`).toPromise();
+	getFeatureToggleDefinition() {
+		return this.http.get(`${this.API_URL}/definition`).toPromise();
 	}
 
 	getParentFeatures(
@@ -34,16 +35,16 @@ export class FeatureService {
 
 	getAllFeatures(): Observable<{ items: IFeature[]; total: number }> {
 		return this.http.get<{ items: IFeature[]; total: number }>(
-			`${this.API_URL}/all`
+			`${this.API_URL}`
 		);
 	}
 
 	getFeatureOrganizations(
 		findInput?: IFeatureOrganizationFindInput,
 		relations?: string[]
-	): Observable<IFeatureOrganization[]> {
+	): Observable<IPagination<IFeatureOrganization>> {
 		const data = { relations, findInput };
-		return this.http.get<IFeatureOrganization[]>(
+		return this.http.get<IPagination<IFeatureOrganization>>(
 			`${this.API_URL}/organizations`,
 			{
 				params: toParams({ data })
