@@ -152,6 +152,12 @@ export const scrollDown = (loc) => {
 	});
 };
 
+export const scrollUp = (loc) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).scrollTo('top', {
+		ensureScrollable: false
+	});
+};
+
 export const scrollToViewEl = (loc: any) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).scrollIntoView();
 };
