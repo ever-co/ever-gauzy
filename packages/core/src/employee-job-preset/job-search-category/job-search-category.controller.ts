@@ -7,7 +7,7 @@ import { JobSearchCategoryService } from './job-search-category.service';
 @ApiTags('JobSearchCategory')
 @Controller('job-search-category')
 export class JobSearchCategoryController extends CrudController<JobSearchCategory> {
-	constructor(categoryService: JobSearchCategoryService) {
-		super(categoryService);
+	constructor(private readonly jobSearchCategoryService: JobSearchCategoryService) {
+		super(jobSearchCategoryService);
 	}
 }

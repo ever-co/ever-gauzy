@@ -7,7 +7,7 @@ import { JobSearchOccupation } from './job-search-occupation.entity';
 @ApiTags('JobSearchOccupation')
 @Controller('job-search-occupation')
 export class JobSearchOccupationController extends CrudController<JobSearchOccupation> {
-	constructor(occupationService: JobSearchOccupationService) {
-		super(occupationService);
+	constructor(private readonly jobSearchOccupationService: JobSearchOccupationService) {
+		super(jobSearchOccupationService);
 	}
 }

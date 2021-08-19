@@ -3,6 +3,7 @@ import { AppointmentEmployee } from './appointment-employees.entity';
 import { AppointmentEmployeesService } from './appointment-employees.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Controller, UseGuards, HttpStatus, Get, Param } from '@nestjs/common';
+import { IAppointmentEmployee } from '@gauzy/contracts';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 
@@ -11,7 +12,7 @@ import { TenantPermissionGuard } from './../shared/guards';
 @Controller()
 export class AppointmentEmployeesController extends CrudController<AppointmentEmployee> {
 	constructor(
-		private appointmentEmployeesService: AppointmentEmployeesService
+		private readonly appointmentEmployeesService: AppointmentEmployeesService
 	) {
 		super(appointmentEmployeesService);
 	}
@@ -26,10 +27,10 @@ export class AppointmentEmployeesController extends CrudController<AppointmentEm
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':appointmentId')
-	async findOneById(
+	@Get('appointment/:appointmentId')
+	async findByAppointmentId(
 		@Param('appointmentId', UUIDValidationPipe) appointmentId: string
-	): Promise<AppointmentEmployee[]> {
+	): Promise<IAppointmentEmployee[]> {
 		return (
 			await this.appointmentEmployeesService.findAll({
 				where: {
@@ -49,10 +50,10 @@ export class AppointmentEmployeesController extends CrudController<AppointmentEm
 		status: HttpStatus.NOT_FOUND,
 		description: 'Records not found'
 	})
-	@Get('find-employee-appointments/:employeeId')
+	@Get('employee-appointments/:employeeId')
 	async findEmployeeAppointments(
 		@Param('employeeId', UUIDValidationPipe) employeeId: string
-	): Promise<AppointmentEmployee[]> {
+	): Promise<IAppointmentEmployee[]> {
 		return (
 			await this.appointmentEmployeesService.findAll({
 				where: {

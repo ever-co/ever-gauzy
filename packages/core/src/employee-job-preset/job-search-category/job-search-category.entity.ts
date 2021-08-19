@@ -1,6 +1,6 @@
 import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
 	JobPostSourceEnum,
 	IJobPreset,
@@ -27,6 +27,7 @@ export class JobSearchCategory
 	// Id of category in the job source (e.g. Upwork)
 	@ApiProperty({ type: () => String })
 	@IsString()
+	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	jobSourceCategoryId?: string;
@@ -38,6 +39,16 @@ export class JobSearchCategory
 	@Column({ type: 'text', default: JobPostSourceEnum.UPWORK })
 	jobSource?: JobPostSourceEnum;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * EmployeeUpworkJobsSearchCriterion
+	 */
+	@ApiProperty({ type: () => EmployeeUpworkJobsSearchCriterion, isArray: true })
 	@OneToMany(
 		() => EmployeeUpworkJobsSearchCriterion,
 		(employeeUpworkJobsSearchCriterion) =>
@@ -48,6 +59,10 @@ export class JobSearchCategory
 	)
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
 
+	/**
+	 * JobPresetUpworkJobSearchCriterion
+	 */
+	@ApiProperty({ type: () => JobPresetUpworkJobSearchCriterion, isArray: true })
 	@OneToMany(
 		() => JobPresetUpworkJobSearchCriterion,
 		(jobPresetUpworkJobSearchCriterion) =>

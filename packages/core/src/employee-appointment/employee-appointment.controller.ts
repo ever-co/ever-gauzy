@@ -43,6 +43,12 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		super(employeeAppointmentService);
 	}
 
+	/**
+	 * GET sign appointment
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Sign appointment id payload' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -60,6 +66,12 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		return this.employeeAppointmentService.signAppointmentId(id);
 	}
 
+	/**
+	 * GET verify token
+	 * 
+	 * @param token 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Verify token' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -78,6 +90,12 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		return decoded['appointmentId'];
 	}
 
+	/**
+	 * GET employee appointment by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
@@ -115,6 +133,12 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		});
 	}
 
+	/**
+	 * GET employee appointment by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find Employee appointment by id.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -132,6 +156,13 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		return this.employeeAppointmentService.findOne(id);
 	}
 
+	/**
+	 * CREATE employee create
+	 * 
+	 * @param entity 
+	 * @param languageCode 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -152,6 +183,13 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		);
 	}
 
+	/**
+	 * UPDATE employee appointment
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

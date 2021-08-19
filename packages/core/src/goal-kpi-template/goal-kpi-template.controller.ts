@@ -25,6 +25,12 @@ export class GoalKpiTemplateController extends CrudController<GoalKPITemplate> {
 		super(goalKpiTemplateService);
 	}
 
+	/**
+	 * GET all goal kpi templates
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all goal kpi templates.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -46,10 +52,16 @@ export class GoalKpiTemplateController extends CrudController<GoalKPITemplate> {
 		});
 	}
 
-	@ApiOperation({ summary: 'Create Goal Template' })
+	/**
+	 * CREATE goal kpi template
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Create goal kpi template' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Goal Template Created successfully',
+		description: 'Goal kpi template created successfully',
 		type: GoalKPITemplate
 	})
 	@Post()
