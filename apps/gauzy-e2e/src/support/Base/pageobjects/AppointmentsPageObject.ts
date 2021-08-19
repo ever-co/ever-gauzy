@@ -1,10 +1,31 @@
 export const AppointmentsPage = {
 	bookPublicAppointmentButtonCss:
 		'div.main-header > div > button[status="success"]',
-	employeesSelectCss: 'div.center-div > ga-employee-selector.employees',
-	employeesDropdownCss: 'div.ng-option',
+	employeeDropdownCss: 'ga-employee-selector > ng-select',
+	employeeDropdownOptionsCss:
+		'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	bookAppointmentButtonCss: 'div.center-div > button[status="success"]',
 	headerCss: 'div.main-header > h4',
 	employeeNameCss: 'div.employee-details > span.employee-name',
-	selectAppointmentButtonCss: 'div.text-right > button[status="success"]'
+	appointmentButtonsCss: 'ga-appointment-calendar button[status="success"]',
+	dateSpecificAvailabilityTabCss: 'nb-route-tabset > ul.route-tabset > li',
+	eventTypeButtonsCss: 'button[status="success"]',
+	calendarTableCss: 'table.fc-scrollgrid',
+	calendarTableRowCss:
+		'.fc-timegrid-slots > table > tbody > tr:nth-child(3) > td:nth-child(2)',
+	availableTimeCalendarTableRowsCss:
+		'.fc-timegrid-event[style="background-color: green;"]',
+	agendaInputFieldCss: 'input[placeholder="Agenda"]',
+	bufferTimeCheckboxCss: 'nb-checkbox[formcontrolname="bufferTime"]',
+	bufferMinutesInputFieldCss: '#bufferTimeInMins',
+	breakTimeCheckboxCss: 'nb-checkbox[formcontrolname="breakTime"]',
+	breakTimeDateDropdownCss:
+		'ga-timer-picker[formcontrolname="breakStartTime"] ng-select',
+	breakTimeDateDropdownOptionsCss:
+		'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
+	breakTimeMinutesInputCss: '#breakTimeInMins',
+	locationInputCss: 'input#location',
+	descriptionFieldCss: 'input#description',
+	saveButtonCss: 'button[status="success"]',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };
