@@ -19,14 +19,14 @@ export class AppointmentEmployeesService {
 	}
 
 	getById(id: string = ''): Observable<IAppointmentEmployee[]> {
-		return this.http.get<IAppointmentEmployee[]>(this.URI + '/' + id);
+		return this.http.get<IAppointmentEmployee[]>(this.URI + '/appointment/' + id);
 	}
 
 	findEmployeeAppointments(
 		id: string = ''
 	): Observable<IAppointmentEmployee[]> {
 		return this.http.get<IAppointmentEmployee[]>(
-			this.URI + '/find-employee-appointments/' + id
+			this.URI + '/employee-appointments/' + id
 		);
 	}
 

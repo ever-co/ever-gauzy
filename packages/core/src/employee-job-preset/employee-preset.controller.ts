@@ -16,6 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('EmployeeJobPreset')
 @Controller('employee')
@@ -33,8 +34,10 @@ export class EmployeePresetController {
 		description: 'Record not found'
 	})
 	@Get(':employeeId')
-	async getEmployeePreset(@Param('employeeId') employeeId: string) {
-		return this.jobPresetService.getEmployeePreset(employeeId);
+	async getEmployeePreset(
+		@Param('employeeId', UUIDValidationPipe) employeeId: string
+	) {
+		return await this.jobPresetService.getEmployeePreset(employeeId);
 	}
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
@@ -49,10 +52,10 @@ export class EmployeePresetController {
 	})
 	@Get(':employeeId/criterion')
 	async getEmployeeCriterion(
-		@Param('employeeId') employeeId: string,
+		@Param('employeeId', UUIDValidationPipe) employeeId: string,
 		@Query() request: IGetMatchingCriterions
 	) {
-		return this.jobPresetService.getEmployeeCriterion({
+		return await this.jobPresetService.getEmployeeCriterion({
 			...request,
 			employeeId
 		});
@@ -70,10 +73,10 @@ export class EmployeePresetController {
 	})
 	@Post(':employeeId/criterion')
 	async saveUpdateEmployeeCriterion(
-		@Param('employeeId') employeeId: string,
+		@Param('employeeId', UUIDValidationPipe) employeeId: string,
 		@Body() request: IMatchingCriterions
 	) {
-		return this.jobPresetService.saveEmployeeCriterion({
+		return await this.jobPresetService.saveEmployeeCriterion({
 			...request,
 			employeeId
 		});
@@ -90,8 +93,10 @@ export class EmployeePresetController {
 		description: 'Record not found'
 	})
 	@Post()
-	async saveEmployeePreset(@Body() request: IEmployeePresetInput) {
-		return this.jobPresetService.saveEmployeePreset(request);
+	async saveEmployeePreset(
+		@Body() request: IEmployeePresetInput
+	) {
+		return await this.jobPresetService.saveEmployeePreset(request);
 	}
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
@@ -106,10 +111,10 @@ export class EmployeePresetController {
 	})
 	@Delete(':employeeId/criterion/:criterionId')
 	async deleteEmployeeCriterion(
-		@Param('criterionId') criterionId: string,
-		@Param('employeeId') employeeId: string
+		@Param('criterionId', UUIDValidationPipe) criterionId: string,
+		@Param('employeeId', UUIDValidationPipe) employeeId: string
 	) {
-		return this.jobPresetService.deleteEmployeeCriterion(
+		return await this.jobPresetService.deleteEmployeeCriterion(
 			criterionId,
 			employeeId
 		);
