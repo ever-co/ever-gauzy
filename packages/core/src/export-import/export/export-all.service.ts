@@ -64,7 +64,7 @@ import {
 	Income,
 	Integration,
 	IntegrationEntitySetting,
-	IntegrationEntitySettingTiedEntity,
+	IntegrationEntitySettingTied,
 	IntegrationMap,
 	IntegrationSetting,
 	IntegrationTenant,
@@ -83,13 +83,13 @@ import {
 	Language,
 	Merchant,
 	Organization,
-	OrganizationAwards,
+	OrganizationAward,
 	OrganizationContact,
 	OrganizationDepartment,
-	OrganizationDocuments,
+	OrganizationDocument,
 	OrganizationEmploymentType,
-	OrganizationLanguages,
-	OrganizationPositions,
+	OrganizationLanguage,
+	OrganizationPosition,
 	OrganizationProject,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
@@ -314,8 +314,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(IntegrationEntitySetting)
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
-		@InjectRepository(IntegrationEntitySettingTiedEntity)
-		private readonly integrationEntitySettingTiedEntityRepository: Repository<IntegrationEntitySettingTiedEntity>,
+		@InjectRepository(IntegrationEntitySettingTied)
+		private readonly IntegrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
 
 		@InjectRepository(IntegrationMap)
 		private readonly integrationMapRepository: Repository<IntegrationMap>,
@@ -368,8 +368,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(EmployeeLevel)
 		private readonly employeeLevelRepository: Repository<EmployeeLevel>,
 
-		@InjectRepository(OrganizationAwards)
-		private readonly organizationAwardsRepository: Repository<OrganizationAwards>,
+		@InjectRepository(OrganizationAward)
+		private readonly organizationAwardRepository: Repository<OrganizationAward>,
 
 		@InjectRepository(OrganizationContact)
 		private readonly organizationContactRepository: Repository<OrganizationContact>,
@@ -377,17 +377,17 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(OrganizationDepartment)
 		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
 
-		@InjectRepository(OrganizationDocuments)
-		private readonly organizationDocumentRepository: Repository<OrganizationDocuments>,
+		@InjectRepository(OrganizationDocument)
+		private readonly organizationDocumentRepository: Repository<OrganizationDocument>,
 
 		@InjectRepository(OrganizationEmploymentType)
 		private readonly organizationEmploymentTypeRepository: Repository<OrganizationEmploymentType>,
 
-		@InjectRepository(OrganizationLanguages)
-		private readonly organizationLanguagesRepository: Repository<OrganizationLanguages>,
+		@InjectRepository(OrganizationLanguage)
+		private readonly organizationLanguageRepository: Repository<OrganizationLanguage>,
 
-		@InjectRepository(OrganizationPositions)
-		private readonly organizationPositionsRepository: Repository<OrganizationPositions>,
+		@InjectRepository(OrganizationPosition)
+		private readonly organizationPositionRepository: Repository<OrganizationPosition>,
 
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
@@ -1093,7 +1093,7 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.integrationEntitySettingRepository
 			},
 			{
-				repository: this.integrationEntitySettingTiedEntityRepository
+				repository: this.IntegrationEntitySettingTiedRepository
 			},
 			{
 				repository: this.integrationMapRepository
@@ -1162,7 +1162,7 @@ export class ExportAllService implements OnModuleInit {
 				tenantBase: false
 			},
 			{
-				repository: this.organizationAwardsRepository
+				repository: this.organizationAwardRepository
 			},
 			{
 				repository: this.organizationContactRepository,
@@ -1189,10 +1189,10 @@ export class ExportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.organizationLanguagesRepository
+				repository: this.organizationLanguageRepository
 			},
 			{
-				repository: this.organizationPositionsRepository,
+				repository: this.organizationPositionRepository,
 				relations: [
 					{ joinTableName: 'tag_organization_position' }
 				]

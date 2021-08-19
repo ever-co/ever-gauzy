@@ -203,7 +203,7 @@ export class ExpenseCategoriesComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			endPoint: `${API_PREFIX}/expense-categories/search/filter`,
+			endPoint: `${API_PREFIX}/expense-categories/pagination`,
 			relations: [
 				'tags'
 			],

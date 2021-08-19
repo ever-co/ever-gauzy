@@ -1,25 +1,32 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
+import { OrganizationVendorModule } from 'organization-vendor/organization-vendor.module';
 import { CqrsModule } from '@nestjs/cqrs';
-import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
-import { UserService } from '../user/user.service';
+import { ExpenseCategoriesModule } from '../expense-categories/expense-categories.module';
+import { UserModule } from '../user/user.module';
 import { UpworkTransactionService } from './upwork-transaction.service';
-import { EmployeeService } from '../employee/employee.service';
-import { OrganizationContactService } from '../organization-contact/organization-contact.service';
+import { EmployeeModule } from '../employee/employee.module';
+import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
 import { UpworkController } from './upwork.controller';
 import { UpworkService } from './upwork.service';
-import { IntegrationMapService } from '../integration-map/integration-map.service';
-import { OrganizationService } from '../organization/organization.service';
-import { RoleService } from '../role/role.service';
+import { IntegrationMapModule } from './../integration-map/integration-map.module';
+import { OrganizationModule } from '../organization/organization.module';
+import { RoleModule } from '../role/role.module';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
-import { ExportAllModule } from '../export-import/export/export-all.module';
+import { ExpenseModule } from './../expense/expense.module';
+import { IncomeModule } from './../income/income.module';
 import {
 	UpworkJobService,
-	UpworkOffersService
+	UpworkOffersService,
+	UpworkReportService
 } from '@gauzy/integration-upwork';
 import { RouterModule } from 'nest-router';
-import { Activity, Employee, ExpenseCategory, IntegrationMap, Organization, OrganizationContact, OrganizationVendor, Role, TimeLog, TimeSlot, TimeSlotMinute, User } from './../core/entities/internal';
+import {
+	Activity,
+	TimeLog,
+	TimeSlot,
+	TimeSlotMinute
+} from './../core/entities/internal';
 
 @Module({
 	imports: [
@@ -27,36 +34,30 @@ import { Activity, Employee, ExpenseCategory, IntegrationMap, Organization, Orga
 			{ path: '/integrations/upwork', module: UpworkModule }
 		]),
 		TypeOrmModule.forFeature([
-			User,
-			Employee,
-			OrganizationVendor,
-			OrganizationContact,
-			ExpenseCategory,
-			IntegrationMap,
-			Organization,
-			Role,
 			TimeSlot,
 			Activity,
 			TimeLog,
 			TimeSlotMinute
 		]),
-		CqrsModule,
-		ExportAllModule
+		UserModule,
+		EmployeeModule,
+		RoleModule,
+		OrganizationModule,
+		OrganizationVendorModule,
+		OrganizationContactModule,
+		IntegrationMapModule,
+		ExpenseModule,
+		IncomeModule,
+		ExpenseCategoriesModule,
+		CqrsModule
 	],
 	controllers: [UpworkController],
 	providers: [
 		UpworkJobService,
 		UpworkOffersService,
 		UpworkTransactionService,
+		UpworkReportService,
 		UpworkService,
-		UserService,
-		EmployeeService,
-		OrganizationVendorsService,
-		OrganizationContactService,
-		ExpenseCategoriesService,
-		IntegrationMapService,
-		OrganizationService,
-		RoleService,
 		TimeSlotService
 	]
 })

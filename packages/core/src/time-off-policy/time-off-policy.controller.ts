@@ -11,29 +11,36 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Permissions } from './../shared/decorators';
-import { CrudController } from '../core/crud/crud.controller';
-import { TimeOffPolicy } from './time-off-policy.entity';
 import {
 	ITimeOffPolicyCreateInput,
 	ITimeOffPolicyUpdateInput,
 	ITimeOffPolicy,
-	PermissionsEnum
+	PermissionsEnum,
+	IPagination
 } from '@gauzy/contracts';
-import { AuthGuard } from '@nestjs/passport';
-import { IPagination } from '../core';
-import { TimeOffPolicyService } from './time-off-policy.service';
+import { CrudController } from './../core/crud';
+import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { TimeOffPolicy } from './time-off-policy.entity';
+import { TimeOffPolicyService } from './time-off-policy.service';
 
 @ApiTags('TimeOffPolicy')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
-	constructor(private readonly policyService: TimeOffPolicyService) {
-		super(policyService);
+	constructor(
+		private readonly timeOffPolicyService: TimeOffPolicyService
+	) {
+		super(timeOffPolicyService);
 	}
 
+	/**
+	 * GET all time off policies
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all policies.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -47,16 +54,22 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.POLICY_VIEW)
 	@Get()
-	async findAllTimeOffPolicies(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITimeOffPolicy>> {
 		const { relations, findInput } = data;
-		return this.policyService.findAll({
+		return this.timeOffPolicyService.findAll({
 			where: findInput,
 			relations
 		});
 	}
 
+	/**
+	 * CREATE time off policy
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -69,14 +82,20 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.POLICY_EDIT)
-	@Post('/create')
-	async createTimeOffPolicy(
+	@Post()
+	async create(
 		@Body() entity: ITimeOffPolicyCreateInput,
-		...options: any[]
 	): Promise<ITimeOffPolicy> {
-		return this.policyService.create(entity);
+		return this.timeOffPolicyService.create(entity);
 	}
 
+	/**
+	 * UPDATE time off policy by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -95,11 +114,10 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.POLICY_EDIT)
 	@Put(':id')
-	async updateOrganizationTeam(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ITimeOffPolicyUpdateInput,
-		...options: any[]
+		@Body() entity: ITimeOffPolicyUpdateInput
 	): Promise<ITimeOffPolicy> {
-		return this.policyService.update(id, entity);
+		return this.timeOffPolicyService.update(id, entity);
 	}
 }

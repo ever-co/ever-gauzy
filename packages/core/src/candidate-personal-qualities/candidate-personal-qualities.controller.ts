@@ -10,31 +10,102 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { AuthGuard } from '@nestjs/passport';
+import { CommandBus } from '@nestjs/cqrs';
+import {
+	RolesEnum,
+	ICandidatePersonalQualities,
+	IPagination,
+	ICandidatePersonalQualitiesCreateInput
+} from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { Roles } from './../shared/decorators';
-import { RolesEnum, ICandidatePersonalQualities } from '@gauzy/contracts';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
 import { CandidatePersonalQualitiesService } from './candidate-personal-qualities.service';
 import {
 	CandidatePersonalQualitiesBulkCreateCommand,
 	CandidatePersonalQualitiesBulkDeleteCommand
 } from './commands';
-import { CommandBus } from '@nestjs/cqrs';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('CandidatePersonalQuality')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidatePersonalQualitiesController extends CrudController<CandidatePersonalQualities> {
 	constructor(
 		private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(candidatePersonalQualitiesService);
 	}
 
+	/**
+	 * GET candidate personal qualities by interview id
+	 * 
+	 * @param interviewId 
+	 * @returns 
+	 */
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Get('interview/:interviewId')
+	async findByInterviewId(
+		@Param('interviewId', UUIDValidationPipe) interviewId: string
+	): Promise<ICandidatePersonalQualities[]> {
+		return this.candidatePersonalQualitiesService.getPersonalQualitiesByInterviewId(
+			interviewId
+		);
+	}
+
+	/**
+	 * DELETE bulk candidate personal qualities by id
+	 * 
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Delete('bulk/:id')
+	async deleteBulk(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { personalQualities = null } = data;
+		return this.commandBus.execute(
+			new CandidatePersonalQualitiesBulkDeleteCommand(
+				id,
+				personalQualities
+			)
+		);
+	}
+
+	/**
+	 * CREATE bulk candidate personal qualities
+	 * 
+	 * @param body 
+	 * @returns 
+	 */
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Post('bulk')
+	async createBulk(
+		@Body() body: any
+	): Promise<ICandidatePersonalQualities[]> {
+		const { interviewId = null, personalQualities = [] } = body;
+		return this.commandBus.execute(
+			new CandidatePersonalQualitiesBulkCreateCommand(
+				interviewId,
+				personalQualities
+			)
+		);
+	}
+
+	/**
+	 * GET all candidate personal qualities
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all candidate personal qualities.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -48,9 +119,9 @@ export class CandidatePersonalQualitiesController extends CrudController<Candida
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Get()
-	findAllPersonalQualities(
+	findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): any {
+	): Promise<IPagination<ICandidatePersonalQualities>> {
 		const { findInput, relations } = data;
 		return this.candidatePersonalQualitiesService.findAll({
 			where: findInput,
@@ -58,61 +129,33 @@ export class CandidatePersonalQualitiesController extends CrudController<Candida
 		});
 	}
 
+	/**
+	 * CREATE candidate personal quality
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post()
-	async addPersonalQuality(
-		@Body() entity: CandidatePersonalQualities
-	): Promise<any> {
-		return this.candidatePersonalQualitiesService.create(entity);
+	async create(
+		@Body() data: ICandidatePersonalQualitiesCreateInput
+	): Promise<ICandidatePersonalQualities> {
+		return this.candidatePersonalQualitiesService.create(data);
 	}
 
+	/**
+	 * DELETE candidate personal qualities by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete(':id')
-	deletePersonalQuality(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
-		return this.candidatePersonalQualitiesService.delete(id);
-	}
-
-	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Post('createBulk')
-	async createBulk(
-		@Body() input: any
-	): Promise<ICandidatePersonalQualities[]> {
-		const { interviewId = null, personalQualities = [] } = input;
-		return this.commandBus.execute(
-			new CandidatePersonalQualitiesBulkCreateCommand(
-				interviewId,
-				personalQualities
-			)
-		);
-	}
-
-	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Get('getByInterviewId/:interviewId')
-	async findByInterviewId(
-		@Param('interviewId') interviewId: string
-	): Promise<ICandidatePersonalQualities[]> {
-		return this.candidatePersonalQualitiesService.getPersonalQualitiesByInterviewId(
-			interviewId
-		);
-	}
-
-	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Delete('deleteBulk/:id')
-	async deleteBulk(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data: any
+	delete(
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<any> {
-		const { personalQualities = null } = data;
-		return this.commandBus.execute(
-			new CandidatePersonalQualitiesBulkDeleteCommand(
-				id,
-				personalQualities
-			)
-		);
+		return this.candidatePersonalQualitiesService.delete(id);
 	}
 }

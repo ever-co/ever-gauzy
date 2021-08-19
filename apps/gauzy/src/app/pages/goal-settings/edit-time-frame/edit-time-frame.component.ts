@@ -1,17 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDateService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import {
 	IGoalTimeFrame,
 	IOrganization,
 	TimeFrameStatusEnum
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { Store } from '../../../@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	getYear,
 	getQuarter,
@@ -23,8 +19,10 @@ import {
 	startOfYear,
 	endOfYear
 } from 'date-fns';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { GoalSettingsService, Store, ToastrService } from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-time-frame',
 	templateUrl: './edit-time-frame.component.html',
@@ -33,13 +31,14 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 export class EditTimeFrameComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	timeFrameForm: FormGroup;
 	timeFrame: IGoalTimeFrame;
 	type: string;
 	predefinedTimeFrames = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
-	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;
+
 	constructor(
 		private dialogRef: NbDialogRef<EditTimeFrameComponent>,
 		private fb: FormBuilder,
@@ -72,7 +71,7 @@ export class EditTimeFrameComponent
 			});
 		}
 		this.timeFrameForm.valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((form) => {
 				if (form.startDate > form.endDate) {
 					this.timeFrameForm.controls['endDate'].setErrors({
@@ -122,10 +121,7 @@ export class EditTimeFrameComponent
 		}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	updateTimeFrameValues(timeFrame, event) {
 		event.stopPropagation();

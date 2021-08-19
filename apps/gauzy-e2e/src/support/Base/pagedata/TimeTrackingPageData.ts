@@ -11,5 +11,7 @@ export const TimeTrackingPageData = {
 	tasks: 'Tasks',
 	appsUrls: 'Apps & Urls',
 	manualTime: 'Manual Time',
-	members: 'Members'
+	members: 'Members',
+	time: '00:00:00',
+	manual: 'MANUAL'
 };

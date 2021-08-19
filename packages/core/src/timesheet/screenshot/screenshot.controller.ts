@@ -6,26 +6,27 @@ import {
 	Body,
 	UseInterceptors
 } from '@nestjs/common';
-import { Screenshot } from './screenshot.entity';
-import { CrudController } from '../../core/crud/crud.controller';
-import { ScreenshotService } from './screenshot.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
-import { FileStorage } from '../../core/file-storage';
-import { UploadedFileStorage } from '../../core/file-storage/uploaded-file-storage';
 import * as fs from 'fs';
+import { IScreenshot } from '@gauzy/contracts';
+import { Screenshot } from './screenshot.entity';
+import { CrudController } from '../../core/crud';
+import { ScreenshotService } from './screenshot.service';
+import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('Screenshot')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller('screenshot')
 export class ScreenshotController extends CrudController<Screenshot> {
-	constructor(private readonly screenshotService: ScreenshotService) {
+	constructor(
+		private readonly screenshotService: ScreenshotService
+	) {
 		super(screenshotService);
 	}
 
@@ -39,7 +40,7 @@ export class ScreenshotController extends CrudController<Screenshot> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/')
+	@Post()
 	@UseInterceptors(
 		FileInterceptor('file', {
 			storage: new FileStorage().storage({
@@ -53,13 +54,12 @@ export class ScreenshotController extends CrudController<Screenshot> {
 			})
 		})
 	)
-	async upload(
+	async create(
 		@Body() entity: Screenshot,
 		@UploadedFileStorage()
 		file
-	): Promise<Screenshot> {
+	): Promise<IScreenshot> {
 		let thumb;
-
 		try {
 			const fileContent = await new FileStorage()
 				.getProvider()

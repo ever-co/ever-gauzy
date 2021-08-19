@@ -33,7 +33,7 @@ export class AccountingTemplateService {
 	getById(id: string): Promise<IAccountingTemplate> {
 		return this.http
 			.get<IAccountingTemplate>(
-				`${API_PREFIX}/accounting-template/template/${id}`
+				`${API_PREFIX}/accounting-template/${id}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -76,7 +76,7 @@ export class AccountingTemplateService {
 	updateTemplate(id: string, data: any): Promise<any> {
 		return this.http
 			.put<any>(
-				`${API_PREFIX}/accounting-template/template/update/${id}`,
+				`${API_PREFIX}/accounting-template/${id}`,
 				data
 			)
 			.pipe(first())

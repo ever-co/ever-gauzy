@@ -21,7 +21,7 @@ import { API_PREFIX } from '../constants/app.constants';
 export class GoalSettingsService {
 	private readonly TIME_FRAME_URL = `${API_PREFIX}/goal-time-frame`;
 	private readonly KPI_URL = `${API_PREFIX}/goal-kpi`;
-	private readonly GENERAL_SETTINGS_URL = `${API_PREFIX}/goal-general-settings`;
+	private readonly GENERAL_SETTINGS_URL = `${API_PREFIX}/goal-general-setting`;
 
 	constructor(
 		private _http: HttpClient,
@@ -31,7 +31,7 @@ export class GoalSettingsService {
 	// Goal Time Frame
 	createTimeFrame(timeFrame): Promise<IGoalTimeFrame> {
 		return this._http
-			.post<IGoalTimeFrame>(`${this.TIME_FRAME_URL}/create`, timeFrame)
+			.post<IGoalTimeFrame>(`${this.TIME_FRAME_URL}`, timeFrame)
 			.pipe(first())
 			.toPromise();
 	}
@@ -41,7 +41,7 @@ export class GoalSettingsService {
 	): Promise<IGoalTimeFrameResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
-			.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}/all`, {
+			.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
@@ -68,7 +68,7 @@ export class GoalSettingsService {
 	// KPI
 	createKPI(kpi): Promise<IKPI> {
 		return this._http
-			.post<IKPI>(`${this.KPI_URL}/create`, kpi)
+			.post<IKPI>(`${this.KPI_URL}`, kpi)
 			.pipe(first())
 			.toPromise();
 	}
@@ -76,7 +76,7 @@ export class GoalSettingsService {
 	getAllKPI(findInput?: ISettingFindInput): Promise<IKpiResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
-			.get<IKpiResponse>(`${this.KPI_URL}/all`, {
+			.get<IKpiResponse>(`${this.KPI_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
@@ -103,7 +103,7 @@ export class GoalSettingsService {
 	): Promise<IGeneralSettingResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
-			.get<IGeneralSettingResponse>(`${this.GENERAL_SETTINGS_URL}/all`, {
+			.get<IGeneralSettingResponse>(`${this.GENERAL_SETTINGS_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))

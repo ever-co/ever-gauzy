@@ -4,6 +4,7 @@ import { RouterModule } from 'nest-router';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
+import { TenantModule } from './../tenant/tenant.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
 import { AuthModule } from '../auth/auth.module';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
@@ -20,6 +21,7 @@ import { CommandHandlers } from './commands/handlers';
 			}
 		]),
 		TypeOrmModule.forFeature([CandidateCriterionsRating]),
+		TenantModule,
 		UserModule,
 		RoleModule,
 		RolePermissionsModule,

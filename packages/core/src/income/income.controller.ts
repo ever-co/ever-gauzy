@@ -1,4 +1,3 @@
-import { IIncome, IIncomeCreateInput, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -15,14 +14,19 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination, PaginationParams } from '../core';
+import {
+	IIncome,
+	IIncomeCreateInput,
+	IPagination,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController, PaginationParams } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	IncomeCreateCommand,
 	IncomeDeleteCommand,
@@ -30,10 +34,9 @@ import {
 } from './commands';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Income')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class IncomeController extends CrudController<Income> {
 	constructor(
@@ -94,11 +97,33 @@ export class IncomeController extends CrudController<Income> {
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Income>> {
+	): Promise<IPagination<IIncome>> {
 		const { relations, findInput, filterDate } = data;
 		return this.incomeService.findAllIncomes(
 			{ where: findInput, relations },
 			filterDate
+		);
+	}
+
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
+	@Post()
+	async create(
+		@Body() entity: IIncomeCreateInput,
+		...options: any[]
+	): Promise<IIncome> {
+		return await this.commandBus.execute(
+			new IncomeCreateCommand(entity)
 		);
 	}
 
@@ -124,31 +149,9 @@ export class IncomeController extends CrudController<Income> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Income,
 		...options: any[]
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new IncomeUpdateCommand(id, entity)
-		);
-	}
-
-	@ApiOperation({ summary: 'Create new record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
-	@Post('/create')
-	async create(
-		@Body() entity: IIncomeCreateInput,
-		...options: any[]
 	): Promise<IIncome> {
 		return await this.commandBus.execute(
-			new IncomeCreateCommand(entity)
+			new IncomeUpdateCommand(id, entity)
 		);
 	}
 
@@ -165,12 +168,13 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
-	@Delete('deleteIncome')
-	async deleteIncome(
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) incomeId: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
-		const { incomeId = null, employeeId = null } = data;
-		return this.commandBus.execute(
+		const { employeeId = null } = data;
+		return await this.commandBus.execute(
 			new IncomeDeleteCommand(employeeId, incomeId)
 		);
 	}

@@ -1,15 +1,14 @@
 import { CandidateEducationService } from './candidate-education.service';
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { ICandidateEducation, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { CandidateEducation } from './candidate-education.entity';
-import { IPagination } from '../core';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('CandidateEducation')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class CandidateEducationController extends CrudController<CandidateEducation> {
 	constructor(
@@ -17,7 +16,13 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 	) {
 		super(candidateEducationService);
 	}
-	// GET
+	
+	/**
+	 * GET all candidate educations 
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all candidate education.'
 	})
@@ -31,9 +36,9 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 		description: 'Record not found'
 	})
 	@Get()
-	async findEducations(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<CandidateEducation>> {
+	): Promise<IPagination<ICandidateEducation>> {
 		const { findInput } = data;
 		return this.candidateEducationService.findAll({ where: findInput });
 	}

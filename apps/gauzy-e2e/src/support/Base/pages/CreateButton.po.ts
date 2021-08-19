@@ -2,7 +2,8 @@ import {
 	verifyElementIsVisible,
 	clickButton,
 	clickElementByText,
-	verifyText
+	verifyText,
+	waitUntil
 } from '../utils/util';
 import { CreateButton } from '../pageobjects/CreateButtonPageObject';
 
@@ -31,8 +32,12 @@ export const verifyNbCardH5Header = (text) => {
 };
 
 export const verifyDivH4Header = (text) => {
-	verifyText(CreateButton.divh4Css, text);
+	verifyText(CreateButton.teamHeaderCss, text);
 };
+
+export const verifyProjectHeaderText = (text) => {
+	verifyText(CreateButton.projectHeaderCss, text)
+}
 
 export const verifyTimeLogHeaderText = (text) => {
 	verifyText(CreateButton.timeLogHeaderTextCss, text);
@@ -43,6 +48,7 @@ export const verifyProposalHeaderText = (text) => {
 };
 
 export const verifyContactHeaderText = (text) => {
+	waitUntil(3000);
 	verifyText(CreateButton.contactHeaderTextCss, text);
 };
 

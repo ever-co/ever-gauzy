@@ -1,4 +1,4 @@
-import { CrudController, IPagination, PaginationParams } from '../core';
+import { CrudController, PaginationParams } from '../core';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	Controller,
@@ -16,55 +16,31 @@ import {
 	ValidationPipe,
 	UsePipes
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { Payment } from './payment.entity';
 import { PaymentService } from './payment.service';
 import {
 	IGetPaymentInput,
+	IPagination,
 	IPayment,
 	IPaymentReportData,
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { PaymentMapService } from './payment.map.service';
 import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Payment')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class PaymentController extends CrudController<Payment> {
 	constructor(
-		private paymentService: PaymentService,
-		private paymentMapService: PaymentMapService
+		private readonly paymentService: PaymentService,
+		private readonly paymentMapService: PaymentMapService
 	) {
 		super(paymentService);
-	}
-
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<IPayment>
-	): Promise<IPagination<IPayment>> {
-		return this.paymentService.pagination(filter);
-	}
-
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IPayment>> {
-		const { relations = [], findInput = null } = data;
-		return this.paymentService.findAll({
-			where: findInput,
-			relations
-		});
 	}
 
 	@ApiOperation({
@@ -114,14 +90,6 @@ export class PaymentController extends CrudController<Payment> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
-	@Post()
-	async create(@Body() entity: IPayment): Promise<IPayment> {
-		return this.paymentService.create(entity);
-	}
-
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Post('receipt')
 	async sendReceipt(
 		@Req() request,
@@ -132,6 +100,38 @@ export class PaymentController extends CrudController<Payment> {
 			request.body.params,
 			request.get('Origin')
 		);
+	}
+
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IPayment>
+	): Promise<IPagination<IPayment>> {
+		return this.paymentService.pagination(filter);
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IPayment>> {
+		const { relations = [], findInput = null } = data;
+		return this.paymentService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
+	@Post()
+	async create(@Body() entity: IPayment): Promise<IPayment> {
+		return this.paymentService.create(entity);
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)

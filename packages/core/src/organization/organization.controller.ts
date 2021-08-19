@@ -1,4 +1,4 @@
-import { IOrganization, IOrganizationCreateInput, PermissionsEnum } from '@gauzy/contracts';
+import { IOrganization, IOrganizationCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -14,15 +14,13 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { Permissions } from './../shared/decorators';
+import { Permissions, Public } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
-import { AuthGuard } from '@nestjs/passport';
 
 
 @ApiTags('Organization')
@@ -45,7 +43,7 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAll(
@@ -68,7 +66,6 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get(':id/:select')
 	async findOneById(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -97,6 +94,7 @@ export class OrganizationController extends CrudController<Organization> {
 		description: 'Record not found'
 	})
 	@Get('profile/:profile_link/:select/:relations')
+	@Public()
 	async findOneByProfileLink(
 		@Param('profile_link') profile_link: string,
 		@Param('select') select: string,
@@ -120,7 +118,7 @@ export class OrganizationController extends CrudController<Organization> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	async create(
@@ -142,7 +140,7 @@ export class OrganizationController extends CrudController<Organization> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.OK)
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Put(':id')
 	async update(

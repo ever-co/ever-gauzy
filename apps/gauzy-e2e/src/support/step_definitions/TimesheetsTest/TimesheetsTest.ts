@@ -11,8 +11,13 @@ import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
+import * as addTaskPage from '../../Base/pages/AddTasks.po';
+import { AddTasksPageData } from '../../Base/pagedata/AddTasksPageData';
+import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
+import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -38,6 +43,17 @@ Given('Login with default credentials', () => {
 // Add new tag
 Then('User can add new tag', () => {
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+});
+
+// Add project
+And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	CustomCommands.addProject(
+		organizationProjectsPage,
+		OrganizationProjectsPageData
+	);
 });
 
 // Add employee
@@ -73,6 +89,14 @@ And('User can add new client', () => {
 	);
 });
 
+// Add new task
+And('User can add new task', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	CustomCommands.addTask(addTaskPage, AddTasksPageData);
+});
+
 // Add time
 And('User can visit Employees timesheets daily page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
@@ -91,13 +115,43 @@ When('User click on add time log button', () => {
 	timesheetsPage.clickAddTimeButton();
 });
 
-Then('User can see date input field', () => {
-	timesheetsPage.dateInputVisible();
+Then('User can see client dropdown', () => {
+	timesheetsPage.clientDropdownVisible();
 });
 
-And('User can enter date', () => {
-	timesheetsPage.enterDateData();
-	timesheetsPage.clickKeyboardButtonByKeyCode(9);
+When('User click on client dropdown', () => {
+	waitUntil(5000);
+	timesheetsPage.clickClientDropdown();
+});
+
+Then('User can select client from dropdown options', () => {
+	timesheetsPage.selectClientFromDropdown(0);
+});
+
+Then('User can see project dropdown', () => {
+	timesheetsPage.selectProjectDropdownVisible();
+});
+
+When('User click on project dropdown', () => {
+	timesheetsPage.clickSelectProjectDropdown();
+});
+
+Then('User can select project from dropdown options', () => {
+	timesheetsPage.selectProjectFromDropdown(
+		TimesheetsPageData.defaultProjectName
+	);
+});
+
+And('User can see task dropdown', () => {
+	timesheetsPage.taskDropdownVisible();
+});
+
+When('User click on task dropdown', () => {
+	timesheetsPage.clickTaskDropdown();
+});
+
+Then('User can select task from dropdown options', () => {
+	timesheetsPage.selectTaskFromDropdown(0);
 });
 
 And('User can see start time dropdown', () => {
@@ -112,16 +166,13 @@ Then('User can select time from dropdown options', () => {
 	timesheetsPage.selectTimeFromDropdown(0);
 });
 
-And('User can see client dropdown', () => {
-	timesheetsPage.clientDropdownVisible();
+Then('User can see date input field', () => {
+	timesheetsPage.dateInputVisible();
 });
 
-When('User click on client dropdown', () => {
-	timesheetsPage.clickClientDropdown();
-});
-
-Then('User can select client from dropdown options', () => {
-	timesheetsPage.selectClientFromDropdown(0);
+And('User can enter date', () => {
+	timesheetsPage.enterDateData();
+	timesheetsPage.clickKeyboardButtonByKeyCode(9);
 });
 
 And('User can see employee dropdown', () => {
@@ -173,37 +224,6 @@ Then('User can see close time log popover button', () => {
 
 When('User click on close time log popover button', () => {
 	timesheetsPage.clickCloseAddTimeLogPopoverButton();
-});
-
-// Edit time
-Then('User can see edit time log button', () => {
-	timesheetsPage.editEmployeeTimeLogButtonVisible();
-});
-
-When('User click on edit time log button', () => {
-	timesheetsPage.clickEditEmployeeTimeLogButton(0);
-});
-
-And('User can see description input field again', () => {
-	timesheetsPage.addTimeLogDescriptionVisible();
-});
-
-And('User can enter new description', () => {
-	timesheetsPage.enterTimeLogDescriptionData(
-		TimesheetsPageData.editDescription
-	);
-});
-
-And('User can see save edited time log button', () => {
-	timesheetsPage.saveTimeLogButtonVisible();
-});
-
-When('User click on save edited time log button', () => {
-	timesheetsPage.clickSaveTimeLogButton();
-});
-
-Then('Notification message will appear', () => {
-	timesheetsPage.waitMessageToHide();
 });
 
 // Delete time

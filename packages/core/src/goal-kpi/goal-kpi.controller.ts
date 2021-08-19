@@ -9,33 +9,25 @@ import {
 	Param,
 	Delete,
 	HttpCode,
-	Put
+	Put,
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { CrudController } from '../core';
+import { IKPI, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { GoalKPI } from './goal-kpi.entity';
 import { GoalKpiService } from './goal-kpi.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('GoalKpi')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class GoalKpiController extends CrudController<GoalKPI> {
-	constructor(private readonly goalKpiService: GoalKpiService) {
+	constructor(
+		private readonly goalKpiService: GoalKpiService
+	) {
 		super(goalKpiService);
-	}
-
-	@ApiOperation({ summary: 'Create Goal KPI' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'KPI added successfully',
-		type: GoalKPI
-	})
-	@Post('/create')
-	async createGoal(@Body() entity: GoalKPI): Promise<any> {
-		return this.goalKpiService.create(entity);
 	}
 
 	@ApiOperation({ summary: 'Get all KPI' })
@@ -47,8 +39,10 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No KPI found'
 	})
-	@Get('all')
-	async getAll(@Query('data', ParseJsonPipe) data: any) {
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IKPI>> {
 		const { findInput } = data;
 		return this.goalKpiService.findAll({
 			where: { ...findInput },
@@ -56,10 +50,17 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 		});
 	}
 
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete(':id')
-	async deleteKPI(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
-		return this.goalKpiService.delete(id);
+	@ApiOperation({ summary: 'Create Goal KPI' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'KPI added successfully',
+		type: GoalKPI
+	})
+	@Post()
+	async create(
+		@Body() entity: GoalKPI
+	): Promise<IKPI> {
+		return this.goalKpiService.create(entity);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -81,15 +82,22 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: GoalKPI
-	): Promise<GoalKPI> {
+	): Promise<IKPI> {
 		try {
 			return await this.goalKpiService.create({
 				id,
 				...entity
 			});
 		} catch (error) {
-			console.log(error);
-			return;
+			throw new BadRequestException(error);
 		}
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
+		return this.goalKpiService.delete(id);
 	}
 }

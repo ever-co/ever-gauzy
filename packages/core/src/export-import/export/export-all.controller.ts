@@ -3,16 +3,13 @@ import {
 	HttpStatus,
 	Get,
 	Res,
-	UseGuards,
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { ExportAllService } from './export-all.service';
 import { ParseJsonPipe } from './../../shared/pipes/parse-json.pipe';
 
 @ApiTags('Download')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ExportAllController {
 	constructor(private readonly exportService: ExportAllService) {}

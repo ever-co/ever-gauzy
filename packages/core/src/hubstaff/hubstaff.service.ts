@@ -5,7 +5,11 @@ import {
 	HttpStatus,
 	UnauthorizedException
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { DeepPartial } from 'typeorm';
 import { map, catchError, switchMap } from 'rxjs/operators';
+import * as moment from 'moment';
+import { environment as env } from '@gauzy/config';
 import {
 	ICreateIntegrationDto,
 	IIntegrationTenant,
@@ -20,32 +24,26 @@ import {
 	ProjectBillingEnum,
 	TimeLogSourceEnum,
 	IHubstaffOrganization,
-	IHubstaffProject
+	IHubstaffProject,
+	IIntegrationEntitySetting
 } from '@gauzy/contracts';
-import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { IntegrationMapService } from '../integration-map/integration-map.service';
-import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
 import {
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/integration-hubstaff';
+import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
+import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
+import { IntegrationMapService } from '../integration-map/integration-map.service';
 import {
 	OrganizationCreateCommand,
 	OrganizationUpdateCommand
 } from '../organization/commands';
-import { CommandBus } from '@nestjs/cqrs';
-import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
+import { OrganizationContactCreateCommand } from '../organization-contact/commands';
 import { TaskCreateCommand } from '../tasks/commands';
-import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.service';
-import { DeepPartial } from 'typeorm';
-import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
-import { EmployeeCreateCommand } from '../employee/commands';
+import { EmployeeCreateCommand, EmployeeGetCommand } from '../employee/commands';
 import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
 import { UserService } from '../user/user.service';
-import { EmployeeGetCommand } from '../employee/commands/employee.get.command';
-import * as moment from 'moment';
 import {
 	TimeSlotCreateCommand,
 	TimesheetGetCommand,
@@ -53,27 +51,25 @@ import {
 	ScreenshotCreateCommand,
 	ActivityCreateCommand
 } from '../timesheet/commands';
-import { environment } from '@gauzy/config';
-import { getDummyImage } from '../core';
-import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
+import { TimeLogCreateCommand } from '../timesheet/time-log/commands';
+import { getDummyImage } from '../core/utils';
 import { RequestContext } from '../core/context';
-import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
-import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
-import { TaskUpdateCommand } from '../tasks/commands/task-update.command';
-import { environment as env } from '@gauzy/config';
+import {
+	OrganizationProjectCreateCommand,
+	OrganizationProjectUpdateCommand
+} from '../organization-project/commands';
+import { TaskUpdateCommand } from '../tasks/commands';
 
 @Injectable()
 export class HubstaffService {
 	constructor(
-		private _httpService: HttpService,
-		private _integrationService: IntegrationTenantService,
-		private _integrationSettingService: IntegrationSettingService,
-		private _integrationMapService: IntegrationMapService,
-		private _integrationEntitySettingService: IntegrationEntitySettingService,
-		private _integrationEntitySettingTiedEntityService: IntegrationEntitySettingTiedEntityService,
-		private _roleService: RoleService,
-		private _organizationService: OrganizationService,
-		private _userService: UserService,
+		private readonly _httpService: HttpService,
+		private readonly _integrationService: IntegrationTenantService,
+		private readonly _integrationSettingService: IntegrationSettingService,
+		private readonly _integrationMapService: IntegrationMapService,
+		private readonly _roleService: RoleService,
+		private readonly _organizationService: OrganizationService,
+		private readonly _userService: UserService,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -165,7 +161,7 @@ export class HubstaffService {
 		}
 	}
 
-	async getHubstaffToken(integrationId): Promise<string> {
+	async getHubstaffToken(integrationId): Promise<IIntegrationSetting> {
 		const {
 			record: integrationSetting
 		} = await this._integrationSettingService.findOneOrFail({
@@ -180,16 +176,9 @@ export class HubstaffService {
 	async addIntegration(
 		body: ICreateIntegrationDto
 	): Promise<IIntegrationTenant> {
-		const headers = {
-			'Content-Type': 'application/x-www-form-urlencoded'
-		};
-		const {
-			client_id,
-			client_secret,
-			code,
-			redirect_uri,
-			organizationId
-		} = body;
+		const tenantId = RequestContext.currentTenantId();
+		const { client_id, client_secret, code, redirect_uri, organizationId } = body;
+
 		const urlParams = new URLSearchParams();
 		urlParams.append('client_id', client_id);
 		urlParams.append('code', code);
@@ -197,16 +186,14 @@ export class HubstaffService {
 		urlParams.append('redirect_uri', redirect_uri);
 		urlParams.append('client_secret', client_secret);
 
-		const tenantId = RequestContext.currentTenantId();
 		const tiedEntities = [];
 		for await (const entity of PROJECT_TIED_ENTITIES) {
-			const create = await this._integrationEntitySettingTiedEntityService.create(
+			tiedEntities.push(
 				Object.assign(entity, { organizationId, tenantId })
 			);
-			tiedEntities.push(create);
 		}
 
-		const settingsForEntities = DEFAULT_ENTITY_SETTINGS.map(
+		const entitySettings = DEFAULT_ENTITY_SETTINGS.map(
 			(settingEntity) => {
 				return Object.assign(settingEntity, {
 					organizationId,
@@ -220,14 +207,13 @@ export class HubstaffService {
 						tiedEntities: tiedEntities
 				  }
 				: settingEntity
-		) as DeepPartial<IntegrationEntitySetting>;
+		) as IIntegrationEntitySetting[];
 
-		const entitySettings = await this._integrationEntitySettingService.create(
-			settingsForEntities
-		);
 		return this._httpService
 			.post('https://account.hubstaff.com/access_tokens', urlParams, {
-				headers
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				}
 			})
 			.pipe(
 				switchMap(({ data }) =>
@@ -235,7 +221,7 @@ export class HubstaffService {
 						organizationId,
 						tenantId,
 						name: IntegrationEnum.HUBSTAFF,
-						entitySettings,
+						entitySettings: entitySettings,
 						settings: [
 							{
 								settingsName: 'client_id',
@@ -715,7 +701,7 @@ export class HubstaffService {
 						tenantId,
 						thirdPartyId: user.id
 					},
-					password: environment.defaultHubstaffUserPass,
+					password: env.defaultHubstaffUserPass,
 					organization,
 					startedWorkOn: new Date(
 						moment().format('YYYY-MM-DD HH:mm:ss')

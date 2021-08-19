@@ -11,16 +11,15 @@ import {
 	Query,
 	Post
 } from '@nestjs/common';
-import { CrudController } from '../core';
-import { AuthGuard } from '@nestjs/passport';
-import { IEquipmentSharingPolicy } from '@gauzy/contracts';
+import { IEquipmentSharingPolicy, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('EquipmentSharingPolicy')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentSharingPolicyController extends CrudController<EquipmentSharingPolicy> {
 	constructor(
@@ -41,9 +40,9 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	})
 	@UseGuards(PermissionGuard)
 	@Get()
-	findAllEquipmentSharingPolicies(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): any {
+	): Promise<IPagination<IEquipmentSharingPolicy>> {
 		const { findInput, relations } = data;
 		return this.equipmentSharingPolicyService.findAll({
 			where: findInput,
@@ -63,9 +62,9 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	})
 	@UseGuards(PermissionGuard)
 	@Post()
-	async createEquipmentSharingPolicy(
+	async create(
 		@Body() entity: IEquipmentSharingPolicy
-	): Promise<EquipmentSharingPolicy> {
+	): Promise<IEquipmentSharingPolicy> {
 		return this.equipmentSharingPolicyService.create(entity);
 	}
 
@@ -86,10 +85,10 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Put(':id')
-	async updateEquipmentSharingPolicy(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IEquipmentSharingPolicy
-	): Promise<EquipmentSharingPolicy> {
+	): Promise<IEquipmentSharingPolicy> {
 		return this.equipmentSharingPolicyService.update(id, entity);
 	}
 }

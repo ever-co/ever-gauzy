@@ -1,4 +1,4 @@
-import { CrudController, IPagination } from '../core';
+import { CrudController } from './../core/crud';
 import { Equipment } from './equipment.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -13,13 +13,12 @@ import {
 	Post
 } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
-import { AuthGuard } from '@nestjs/passport';
-import { IEquipment } from '@gauzy/contracts';
+import { IEquipment, IPagination } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Equipment')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentController extends CrudController<Equipment> {
 	constructor(private equipmentService: EquipmentService) {
@@ -39,7 +38,7 @@ export class EquipmentController extends CrudController<Equipment> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEquipmentSharings(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEquipment>> {
 		const { relations, findInput } = data;
@@ -50,6 +49,7 @@ export class EquipmentController extends CrudController<Equipment> {
 			relations
 		});
 	}
+	
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,

@@ -28,16 +28,15 @@ export class IntegrationService extends CrudService<Integration> {
 		organizationId: string
 	) {
 		try {
-			const user = RequestContext.currentUser();
-			const { tenantId } = user;
+			const tenantId = RequestContext.currentTenantId();
 			const { record: tenant } = await this._tenantService.findOneOrFail(
 				tenantId
 			);
 			return await this._integrationTenantService.findOneOrFail({
 				where: {
-					tenant: tenant,
-					name: integration,
-					organizationId
+					tenant,
+					organizationId,
+					name: integration
 				},
 				order: {
 					updatedAt: 'DESC'

@@ -14,7 +14,7 @@ export class RoleService {
 		tenantId: ITenant['id'];
 	}): Observable<IRole> {
 		const data = JSON.stringify({ findInput });
-		return this.http.get<IRole>(`${API_PREFIX}/role`, {
+		return this.http.get<IRole>(`${API_PREFIX}/role/find`, {
 			params: { data }
 		});
 	}

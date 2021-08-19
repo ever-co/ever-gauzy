@@ -82,10 +82,10 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	private async getEmployeeLevel() {
 		const { organizationId, tenantId } = this;
 		const { items = [] } = await this.employeeLevelService.getAll(
-			organizationId,
 			[],
 			{
-				tenantId
+				tenantId,
+				organizationId
 			}
 		);
 		this.candidateLevels = items;

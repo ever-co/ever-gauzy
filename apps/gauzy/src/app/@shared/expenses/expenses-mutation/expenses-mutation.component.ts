@@ -265,7 +265,7 @@ export class ExpensesMutationComponent
 				currency: this.expense.currency,
 				valueDate: new Date(this.expense.valueDate),
 				purpose: this.expense.purpose,
-				organizationContact: this.expense.organizationContactName,
+				organizationContact: this.expense.organizationContact,
 				project: this.expense.project,
 				taxType: this.expense.taxType,
 				taxLabel: this.expense.taxLabel,

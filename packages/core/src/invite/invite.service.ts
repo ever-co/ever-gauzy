@@ -10,7 +10,9 @@ import {
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
 	LanguagesEnum,
-	DEFAULT_INVITE_EXPIRY_PERIOD
+	DEFAULT_INVITE_EXPIRY_PERIOD,
+	IOrganization,
+	IEmployee,
 } from '@gauzy/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,9 +29,8 @@ import {
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationProject,
-	Role
+	Role,
 } from './../core/entities/internal';
-
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
@@ -212,6 +213,28 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		});
 
 		return { items, total: items.length, ignored: existingInvites.length };
+	}
+
+	async sendAcceptInvitationEmail(
+		organization: IOrganization,
+		employee: IEmployee,
+		languageCode: LanguagesEnum
+	): Promise<any> 
+	{	
+		const superAdminUsers: IUser[] = await this.userService.getAdminUsers(organization.tenantId);
+
+		try {
+			for await (const superAdmin of superAdminUsers) {
+					this.emailService.sendAcceptInvitationEmail({
+						email: superAdmin.email,
+						employee,
+						organization,
+						languageCode,
+					});
+			}
+		} catch (e) {
+			console.log('caught', e)
+		}
 	}
 
 	async createOrganizationContactInvite(

@@ -4,7 +4,7 @@ import { RouterModule } from 'nest-router';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-project/organization-project.entity';
 import { CommandHandlers } from './commands/handlers';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';

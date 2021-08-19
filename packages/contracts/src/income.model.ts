@@ -10,7 +10,7 @@ export interface IIncome extends IBasePerTenantAndOrganizationEntityModel {
 	amount: number;
 	clientId?: string;
 	client?: IOrganizationContact;
-	clientName: string;
+	clientName?: string;
 	currency: string;
 	valueDate?: Date;
 	notes?: string;
@@ -22,7 +22,7 @@ export interface IIncome extends IBasePerTenantAndOrganizationEntityModel {
 export interface IIncomeCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	amount: number;
-	clientName: string;
+	clientName?: string;
 	clientId: string;
 	valueDate: Date;
 	currency?: string;

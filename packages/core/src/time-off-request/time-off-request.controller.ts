@@ -11,40 +11,112 @@ import {
 	HttpCode
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { TimeOffRequest } from './time-off-request.entity';
-import { AuthGuard } from '@nestjs/passport';
-import { TimeOffRequestService } from './time-off-request.service';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
+import { CommandBus } from '@nestjs/cqrs';
 import {
-	ITimeOff,
+	IPagination,
+	ITimeOff as ITimeOffRequest,
 	ITimeOffCreateInput,
+	ITimeOffUpdateInput,
 	PermissionsEnum,
 	StatusTypesEnum
 } from '@gauzy/contracts';
-import { IPagination } from '../core';
-import { CommandBus } from '@nestjs/cqrs';
+import { CrudController } from './../core/crud';
+import { TimeOffRequest } from './time-off-request.entity';
+import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffStatusCommand } from './commands';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffRequest')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	constructor(
 		private readonly requestService: TimeOffRequestService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {
 		super(requestService);
 	}
 
-	@ApiOperation({ summary: 'Find all time off requests.' })
+	/**
+	 * UPDATE time off request approved
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Time off request approved' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Approved time off request',
+		type: TimeOffRequest
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
+	@Put('approval/:id')
+	async timeOffRequestApproved(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<ITimeOffRequest> {
+		return this.commandBus.execute(
+			new TimeOffStatusCommand(id, StatusTypesEnum.APPROVED)
+		);
+	}
+
+	/**
+	 * UPDATE time off request denied
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Time off request denied' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Denied time off request',
+		type: TimeOffRequest
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
+	@Put('denied/:id')
+	async timeOffRequestDenied(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<ITimeOffRequest> {
+		return this.commandBus.execute(
+			new TimeOffStatusCommand(id, StatusTypesEnum.DENIED)
+		);
+	}
+
+	/**
+	 * GET all time off requests
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all time off requests.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found time off requests',
+		type: TimeOffRequest
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TIME_OFF_VIEW)
 	@Get()
-	async findAllTimeOffRequest(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ITimeOff>> {
+	): Promise<IPagination<ITimeOffRequest>> {
 		const { relations, findInput, filterDate } = data;
 		return this.requestService.getAllTimeOffRequests(
 			relations,
@@ -53,20 +125,35 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		);
 	}
 
+	/**
+	 * CREATE new time off request/holiday
+	 * 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new time off request / holiday record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The new time off request / holiday record created'
 	})
+	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Post()
-	async createTimeOffRequest(
-		@Body() entity: ITimeOffCreateInput,
-		...options: any[]
-	): Promise<TimeOffRequest> {
+	async create(
+		@Body() entity: ITimeOffCreateInput
+	): Promise<ITimeOffRequest> {
 		return this.requestService.create(entity);
 	}
 
+	/**
+	 * UPDATE time off request by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Time off request update' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -81,56 +168,10 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put(':id')
-	async timeOffRequestUpdate(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ITimeOffCreateInput
-	): Promise<TimeOffRequest> {
+		@Body() entity: ITimeOffUpdateInput
+	): Promise<ITimeOffRequest> {
 		return this.requestService.updateTimeOffByAdmin(id, entity);
-	}
-
-	@ApiOperation({ summary: 'Time off request approved' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found request time off',
-		type: TimeOffRequest
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
-	@Put('approval/:id')
-	async timeOffRequestApproved(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<TimeOffRequest> {
-		return this.commandBus.execute(
-			new TimeOffStatusCommand(id, StatusTypesEnum.APPROVED)
-		);
-	}
-
-	@ApiOperation({ summary: 'Time off request denied' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found Time off',
-		type: TimeOffRequest
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Put('denied/:id')
-	async timeOffRequestDenied(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<TimeOffRequest> {
-		return this.commandBus.execute(
-			new TimeOffStatusCommand(id, StatusTypesEnum.DENIED)
-		);
 	}
 }

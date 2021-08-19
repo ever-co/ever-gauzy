@@ -1,6 +1,7 @@
-import { IPagination, TenantAwareCrudService } from './../core/crud';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { IPagination } from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../core/crud';
 import { Contact, Merchant } from './../core/entities/internal';
 
 export class MerchantService extends TenantAwareCrudService<Merchant> {

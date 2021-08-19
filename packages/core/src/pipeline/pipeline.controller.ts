@@ -1,4 +1,4 @@
-import { CrudController, IPagination, PaginationParams } from '../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
 	Body,
@@ -16,19 +16,16 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { PipelineService } from './pipeline.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPipeline, PermissionsEnum } from '@gauzy/contracts';
+import { IDeal, IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Deal } from '../deal/deal.entity';
-
 
 @ApiTags('Pipeline')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class PipelineController extends CrudController<Pipeline> {
 	public constructor(protected pipelineService: PipelineService) {
@@ -51,7 +48,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@Get()
 	public async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Pipeline>> {
+	): Promise<IPagination<IPipeline>> {
 		const { relations = [], findInput: where = null } = data;
 		return this.pipelineService.findAll({
 			relations,
@@ -67,7 +64,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@Get(':id/deals')
 	public async findDeals(
 		@Param('id', UUIDValidationPipe) id: string
-	): Promise<IPagination<Deal>> {
+	): Promise<IPagination<IDeal>> {
 		return this.pipelineService.findDeals(id);
 	}
 
@@ -88,7 +85,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	async create(
 		@Body() entity: DeepPartial<Pipeline>,
 		...options: any[]
-	): Promise<Pipeline> {
+	): Promise<IPipeline> {
 		return super.create(entity, ...options);
 	}
 

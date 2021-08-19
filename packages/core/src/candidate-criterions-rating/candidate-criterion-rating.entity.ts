@@ -1,7 +1,7 @@
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
-import { ICandidateCriterionsRating } from '@gauzy/contracts';
+import { ICandidateCriterionsRating, ICandidateFeedback, ICandidatePersonalQualities, ICandidateTechnologies } from '@gauzy/contracts';
 import {
 	CandidateFeedback,
 	CandidatePersonalQualities,
@@ -16,6 +16,17 @@ export class CandidateCriterionsRating
 	@ApiProperty({ type: () => String })
 	@Column()
 	rating: number;
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiProperty({ type: () => CandidateTechnologies })
+	@ManyToOne(() => CandidateTechnologies, (quality) => quality.criterionsRatings, {
+		onDelete: 'CASCADE'
+	})
+	technology?: ICandidateTechnologies;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.technology)
@@ -24,10 +35,11 @@ export class CandidateCriterionsRating
 	@Column({ nullable: true })
 	technologyId?: string;
 
-	@ManyToOne(() => CandidateTechnologies, (quality) => quality.criterionsRatings, {
+	@ApiProperty({ type: () => CandidatePersonalQualities })
+	@ManyToOne(() => CandidatePersonalQualities, (quality) => quality.criterionsRatings, {
 		onDelete: 'CASCADE'
 	})
-	technology: CandidateTechnologies;
+	personalQuality?: ICandidatePersonalQualities;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.personalQuality)
@@ -36,20 +48,16 @@ export class CandidateCriterionsRating
 	@Column({ nullable: true })
 	personalQualityId?: string;
 
-	@ManyToOne(() => CandidatePersonalQualities, (quality) => quality.criterionsRatings, {
+	@ApiProperty({ type: () => CandidateFeedback })
+	@ManyToOne(() => CandidateFeedback, (feedback) => feedback.criterionsRating, {
 		onDelete: 'CASCADE'
 	})
-	personalQuality: CandidatePersonalQualities;
+	feedback?: ICandidateFeedback;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.feedback)
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
-	feedbackId: string;
-
-	@ManyToOne(() => CandidateFeedback, (feedback) => feedback.criterionsRating, {
-		onDelete: 'CASCADE'
-	})
-	feedback: CandidateFeedback;
+	feedbackId?: string;
 }

@@ -5,6 +5,7 @@ import { IExpenseCategory } from './expense-category.model';
 import { IOrganizationVendor } from './organization-vendors.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
+import { IOrganizationContact } from 'index';
 
 export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployee;
@@ -16,10 +17,9 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	category: IExpenseCategory;
 	categoryId: string;
 	organizationContactId?: string;
-	organizationContactName?: string;
+	organizationContact?: IOrganizationContact;
 	projectId?: string;
-	project: IOrganizationProject;
-	projectName?: string;
+	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;
 	currency: string;
@@ -29,7 +29,7 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	rateValue: number;
 	receipt?: string;
 	splitExpense: boolean;
-	tags: ITag[];
+	tags?: ITag[];
 	status?: string;
 }
 
@@ -41,9 +41,9 @@ export interface IExpenseCreateInput
 	category: IExpenseCategory;
 	vendor: IOrganizationVendor;
 	organizationContactId?: string;
-	organizationContactName?: string;
+	organizationContact?: IOrganizationContact;
 	projectId?: string;
-	projectName?: string;
+	project?: IOrganizationProject;
 	notes?: string;
 	valueDate: Date;
 	currency?: string;
@@ -68,9 +68,9 @@ export interface IExpenseFindInput
 	categoryId?: string;
 	amount?: number;
 	organizationContactId?: string;
-	organizationContactName?: string;
+	organizationContact?: IOrganizationContact;
 	projectId?: string;
-	projectName?: string;
+	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;
 	currency?: string;
@@ -93,9 +93,9 @@ export interface IExpenseUpdateInput {
 	typeOfExpense?: string;
 	category: IExpenseCategory;
 	organizationContactId?: string;
-	organizationContactName?: string;
+	organizationContact?: IOrganizationContact;
 	projectId?: string;
-	projectName?: string;
+	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;
 	currency?: string;
@@ -145,12 +145,10 @@ export interface IExpenseViewModel {
 	vendor: IOrganizationVendor;
 	typeOfExpense: string;
 	categoryId: string;
-	categoryName: string;
 	category: IExpenseCategory;
 	organizationContactId: string;
-	organizationContactName: string;
+	organizationContact?: IOrganizationContact;
 	projectId: string;
-	projectName: string;
 	project: IOrganizationProject;
 	currency: string;
 	amount: number;

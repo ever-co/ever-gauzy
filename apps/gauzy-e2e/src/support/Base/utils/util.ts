@@ -30,6 +30,15 @@ export const verifyTextNotExisting = (loc, text) => {
 	);
 };
 
+export const verifyTextNotExistByIndex = (loc, index, data) => {
+	cy.get(loc)
+		.eq(index)
+		.invoke('text')
+		.then((text) => {
+			expect(text).not.to.equal(data);
+		});
+};
+
 export const verifyTextByIndex = (loc, data, index) => {
 	cy.get(loc)
 		.eq(index)
@@ -46,6 +55,10 @@ export const clickButton = (loc) => {
 
 export const clickElementByText = (loc, data) => {
 	cy.contains(loc, data).click();
+};
+
+export const forceClickElementByText = (loc, data) => {
+	cy.contains(loc, data).click({ force: true });
 };
 
 export const enterInput = (loc, data) => {
@@ -70,6 +83,12 @@ export const urlChanged = () => {
 
 export const verifyElementIsVisible = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('be.visible');
+};
+
+export const verifyElementIsVisibleByIndex = (loc, index: number) => {
+	cy.get(loc, { timeout: defaultCommandTimeout })
+		.eq(index)
+		.should('be.visible');
 };
 
 export const clickButtonByIndex = (loc, index) => {
@@ -133,6 +152,16 @@ export const scrollDown = (loc) => {
 	});
 };
 
+export const scrollUp = (loc) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).scrollTo('top', {
+		ensureScrollable: false
+	});
+};
+
+export const scrollToViewEl = (loc: any) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).scrollIntoView();
+};
+
 export const verifyElementIsNotVisible = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.be.visible');
 };
@@ -141,7 +170,11 @@ export const verifyElementNotExist = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.exist');
 };
 
-export const clickTableRowByText = (loc, text) => {
+export const verifyByText = (loc, text: string) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).contains(text);
+};
+
+export const clickByText = (loc, text: string) => {
 	cy.get(loc, { timeout: taskTimeout }).contains(text).click();
 };
 
@@ -170,4 +203,32 @@ export const verifyClassExist = (loc, someClass) => {
 
 export const clickOutsideElement = () => {
 	cy.get('body').click(0, 0);
+};
+
+export const uploadMedia = (loc: any, btn: any, file: string) => {
+	const filepath = file;
+	cy.get(loc, { timeout: defaultCommandTimeout }).attachFile(filepath);
+	cy.get(btn, { timeout: defaultCommandTimeout }).click({ force: true });
+};
+
+export const uploadMediaInput = (loc: any, file: any) => {
+	const filepath = file;
+	cy.get(loc, { timeout: defaultCommandTimeout }).attachFile(filepath);
+};
+
+export const waitElementToLoad = (loc: any) => {
+	cy.get(loc).should('have.length');
+};
+
+export const dragNDrop = (source: any, index: number, target: any) => {
+	cy.get(source, { timeout: defaultCommandTimeout })
+		.eq(index)
+		.move({ x: 100, y: 100, force: true });
+};
+
+export const triggerSlider = (loc: any) => {
+	cy.get(loc, { timeout: defaultCommandTimeout })
+		.first()
+		.invoke('val', 35)
+		.trigger('change', { data: '35' });
 };

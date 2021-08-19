@@ -1,6 +1,7 @@
 import {
 	GetReportMenuItemsInput,
 	IGetReport,
+	IPagination,
 	UpdateReportMenuInput
 } from '@gauzy/contracts';
 import {
@@ -9,21 +10,18 @@ import {
 	Get,
 	HttpStatus,
 	Post,
-	Query,
-	UseGuards
+	Query
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
 import { Report } from './report.entity';
 import { ReportService } from './report.service';
 
 @ApiTags('Report')
 @Controller()
-export class ReportController extends CrudController<Report> {
-	constructor(private reportService: ReportService) {
-		super(reportService);
-	}
+export class ReportController {
+	constructor(
+		private readonly reportService: ReportService
+	) {}
 
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({
@@ -52,7 +50,6 @@ export class ReportController extends CrudController<Report> {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Post('menu-item')
 	async updateReportMenu(@Body() input?: UpdateReportMenuInput) {
 		return this.reportService.updateReportMenu(input);

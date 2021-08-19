@@ -40,5 +40,5 @@ export class CandidateEducation
 	@ManyToOne(() => Candidate, (candidate) => candidate.educations, {
 		onDelete: 'CASCADE'
 	})
-	candidate: ICandidate;
+	candidate?: ICandidate;
 }

@@ -9,35 +9,26 @@ import {
 	Delete,
 	Param,
 	Put,
-	Query
+	Query,
+	BadRequestException
 } from '@nestjs/common';
-import { CrudController } from '../core';
+import { IGoalTimeFrame, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { GoalTimeFrameService } from './goal-time-frame.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('GoalTimeFrame')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	constructor(private readonly goalTimeFrameService: GoalTimeFrameService) {
 		super(goalTimeFrameService);
 	}
 
-	@ApiOperation({ summary: 'Create Goal Time Frame' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Time Frame added successfully',
-		type: GoalTimeFrame
-	})
-	@Post('/create')
-	async createGoal(@Body() entity: GoalTimeFrame): Promise<any> {
-		return this.goalTimeFrameService.create(entity);
-	}
-
+	
 	@ApiOperation({ summary: 'Get all Goal Time Frames' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -47,13 +38,29 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No Time Frame found'
 	})
-	@Get('all')
-	async getAll(
+	@Get()
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	) {
+	): Promise<IPagination<IGoalTimeFrame>> {
 		const { findInput } = data;
-		return this.goalTimeFrameService.findAll({ where: { ...findInput } });
+		return this.goalTimeFrameService.findAll({ 
+			where: { ...findInput } 
+		});
 	}
+
+	@ApiOperation({ summary: 'Create Goal Time Frame' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Time Frame added successfully',
+		type: GoalTimeFrame
+	})
+	@Post()
+	async create(
+		@Body() entity: GoalTimeFrame
+	): Promise<IGoalTimeFrame> {
+		return this.goalTimeFrameService.create(entity);
+	}
+
 
 	@ApiOperation({ summary: 'Find Goal Time Frames with name' })
 	@ApiResponse({
@@ -65,15 +72,12 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		description: 'No Time Frame found'
 	})
 	@Get(':name')
-	async getByName(@Param('name') name: string) {
+	async getByName(
+		@Param('name') name: string
+	): Promise<IPagination<IGoalTimeFrame>> {
 		return this.goalTimeFrameService.findAll({ where: { name: name } });
 	}
 
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete(':id')
-	async deleteTask(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
-		return this.goalTimeFrameService.delete(id);
-	}
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -93,15 +97,22 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: GoalTimeFrame
-	): Promise<GoalTimeFrame> {
+	): Promise<IGoalTimeFrame> {
 		try {
 			return await this.goalTimeFrameService.create({
 				id,
 				...entity
 			});
 		} catch (error) {
-			console.log(error);
-			return;
+			throw new BadRequestException(error)
 		}
 	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
+		return this.goalTimeFrameService.delete(id);
+	}	
 }

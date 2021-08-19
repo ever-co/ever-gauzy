@@ -12,6 +12,8 @@ import { ITag } from './tag-entity.model';
 import { IUser, IUserFindInput } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
+import { IEmployeeSetting } from './employee-settings.model';
+import { IExpense } from './expense.model';
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
@@ -41,6 +43,8 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	anonymousBonus?: boolean;
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 	requestApprovalEmployee?: IRequestApprovalEmployee[];
+	settings?: IEmployeeSetting[];
+	expenses?: IExpense[];
 	contact: IContact;
 	averageIncome?: number;
 	totalWorkHours?: number;
@@ -85,7 +89,8 @@ export interface IEmployeeFindInput {
 	skills?: ISkill[];
 }
 
-export interface IEmployeeUpdateInput {
+export interface IEmployeeUpdateInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
@@ -152,10 +157,9 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
-export interface IEmployeeLevel {
-	id: string;
+export interface IEmployeeLevel 
+	extends IBasePerTenantAndOrganizationEntityModel  {
 	level: string;
-	organizationId: string;
 	tag?: ITag[];
 	skills?: ISkill[];
 }

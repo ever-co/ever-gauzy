@@ -3,7 +3,6 @@ import {
 	Column,
 	JoinColumn,
 	ManyToMany,
-	JoinTable,
 	ManyToOne,
 	RelationId,
 	Index
@@ -103,9 +102,10 @@ export class TimeOffRequest
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
-	@ManyToMany(() => Employee, { cascade: true })
-	@JoinTable({
-		name: 'time_off_request_employee'
+	@ApiProperty({ type: () => Employee })
+	@ManyToMany(() => Employee, (employee) => employee.timeOffRequests, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	employees?: IEmployee[];
 }

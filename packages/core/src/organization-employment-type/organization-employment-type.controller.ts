@@ -6,19 +6,19 @@ import {
 	UseGuards,
 	Put,
 	Param,
-	Body
+	Body,
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core/crud';
+import { IOrganizationEmploymentType, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
-import { AuthGuard } from '@nestjs/passport';
-import { IOrganizationEmploymentType } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationEmploymentType')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationEmploymentTypeController extends CrudController<OrganizationEmploymentType> {
 	constructor(
@@ -27,6 +27,12 @@ export class OrganizationEmploymentTypeController extends CrudController<Organiz
 		super(organizationEmploymentTypeService);
 	}
 
+	/**
+	 * GET all organization employment types
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all organization employment types.'
 	})
@@ -40,7 +46,7 @@ export class OrganizationEmploymentTypeController extends CrudController<Organiz
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllOrganizationEmploymentTypes(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IOrganizationEmploymentType>> {
 		const { findInput, relations } = data;
@@ -50,15 +56,25 @@ export class OrganizationEmploymentTypeController extends CrudController<Organiz
 		});
 	}
 
+	/**
+	 * UPDATE organization employment type by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@Put(':id')
-	async updateOrganizationExpenseCategories(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: OrganizationEmploymentType,
-		...options: any[]
-	): Promise<OrganizationEmploymentType> {
-		return this.organizationEmploymentTypeService.create({
-			id,
-			...entity
-		});
+		@Body() entity: OrganizationEmploymentType
+	): Promise<IOrganizationEmploymentType> {
+		try {
+			return this.organizationEmploymentTypeService.create({
+				id,
+				...entity
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

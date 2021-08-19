@@ -6,15 +6,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
-import { TenantAwareCrudService } from '../core/crud';
+import { TenantAwareCrudService } from './../core/crud';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
-	RolesEnum
+	RolesEnum,
+	IPagination
 } from '@gauzy/contracts';
-import { IPagination } from '../core';
 import { Employee } from '../employee/employee.entity';
-import { User } from '../user/user.entity';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { RequestContext } from '../core/context';
@@ -32,9 +31,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 
-		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
-		
 		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService,
 		private readonly organizationService: OrganizationService,
@@ -45,7 +41,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 	async createOrgTeam(
 		entity: IOrganizationTeamCreateInput
-	): Promise<OrganizationTeam> {
+	): Promise<IOrganizationTeam> {
 		const {
 			tags,
 			name,
@@ -57,7 +53,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { tenantId } = await this.organizationService.findOne(
 				organizationId
 			);
-
 			const role = await this.roleService.findOne({
 				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
 			});
@@ -78,7 +73,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					: null;
 				teamEmployees.push(teamEmployee);
 			});
-			return this.create({
+			return await this.create({
 				tags,
 				organizationId,
 				tenantId,
@@ -86,8 +81,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				members: teamEmployees
 			});
 		} catch (error) {
-			console.error(error);
-			throw new BadRequestException('Failed to create a team');
+			throw new BadRequestException(`Failed to create a team: ${error}`);
 		}
 	}
 
@@ -135,26 +129,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 	}
 
-	async getAllOrgTeams(
-		filter: FindManyOptions<OrganizationTeam>
-	): Promise<IPagination<IOrganizationTeam>> {
-		const total = await this.organizationTeamRepository.count(filter);
-
-		const items = await this.organizationTeamRepository.find(filter);
-
-		for (const orgTeams of items) {
-			for (const teamEmp of orgTeams.members) {
-				const emp = await this.employeeRepository.findOne(
-					teamEmp.employeeId
-				);
-				emp.user = await this.userRepository.findOne(emp.userId);
-				teamEmp.employee = emp;
-			}
-		}
-
-		return { items, total };
-	}
-
 	async getMyOrgTeams(
 		filter: FindManyOptions<OrganizationTeam>,
 		employeeId
@@ -181,13 +155,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		try {
 			employee = await this.employeeService.findOne({
 				where: {
-					user: { id: RequestContext.currentUser().id }
+					user: { id: RequestContext.currentUserId() }
 				}
 			});
 		} catch (e) {}
 
 		try {
-			const roleId = RequestContext.currentUser().roleId;
+			const roleId = RequestContext.currentRoleId();
 			if (roleId) {
 				role = await this.roleService.findOne(roleId);
 			}
@@ -195,8 +169,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 		// selected user not passed
 		if (employeeId) {
-			if (role.name === 'ADMIN' || role.name === 'SUPER_ADMIN') {
-				return this.getAllOrgTeams({
+			if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
+				return this.findAll({
 					where: findInput,
 					relations
 				});
@@ -215,8 +189,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				);
 			}
 		} else {
-			if (role.name === 'ADMIN' || role.name === 'SUPER_ADMIN') {
-				return this.getAllOrgTeams({
+			if (role.name === RolesEnum.ADMIN || role.name === RolesEnum.SUPER_ADMIN) {
+				return this.findAll({
 					where: findInput,
 					relations
 				});

@@ -3,7 +3,8 @@ import {
 	IFeature,
 	IFeatureOrganization,
 	IFeatureOrganizationUpdateInput,
-	IFeatureOrganizationFindInput
+	IFeatureOrganizationFindInput,
+	IPagination
 } from '@gauzy/contracts';
 import { BehaviorSubject, EMPTY, from, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -31,7 +32,7 @@ export class FeatureStoreService {
 	constructor(private _featureService: FeatureService) {}
 
 	public loadUnleashFeatures() {
-		const promise = this._featureService.getFeatureToggles();
+		const promise = this._featureService.getFeatureToggleDefinition();
 		const observable = from(promise);
 		return observable.pipe(
 			tap((items) => {
@@ -59,10 +60,10 @@ export class FeatureStoreService {
 	public loadFeatureOrganizations(
 		relations?: string[],
 		findInput?: IFeatureOrganizationFindInput
-	): Observable<IFeatureOrganization[]> {
+	): Observable<IPagination<IFeatureOrganization>> {
 		return this._featureService
 			.getFeatureOrganizations(findInput, relations)
-			.pipe(tap((items) => this._featureOrganizations$.next(items)));
+			.pipe(tap(({ items }) => this._featureOrganizations$.next(items)));
 	}
 
 	changedFeature(payload: IFeatureOrganizationUpdateInput) {

@@ -16,19 +16,25 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Task } from './task.entity';
-import { CrudController, IPagination, PaginationParams } from '../core';
+import { CrudController, PaginationParams } from '../core';
 import { TaskService } from './task.service';
-import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { PermissionsEnum, IGetTaskByEmployeeOptions, ITask, ITaskUpdateInput, ITaskCreateInput } from '@gauzy/contracts';
+import {
+	PermissionsEnum,
+	IGetTaskByEmployeeOptions,
+	ITask,
+	ITaskUpdateInput,
+	ITaskCreateInput,
+	IPagination
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import { TaskCreateCommand } from './commands';
 
 @ApiTags('Tasks')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(
@@ -44,27 +50,6 @@ export class TaskController extends CrudController<Task> {
 		@Query() filter: PaginationParams<ITask>
 	): Promise<IPagination<ITask>> {
 		return this.taskService.pagination(filter);
-	}
-
-	@ApiOperation({ summary: 'Find all tasks.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found tasks',
-		type: Task
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ITask>> {
-		const { relations, findInput } = data;
-		return this.taskService.findAll({
-			where: findInput,
-			relations
-		});
 	}
 
 	@ApiOperation({ summary: 'Find my tasks.' })
@@ -121,6 +106,27 @@ export class TaskController extends CrudController<Task> {
 		return this.taskService.getAllTasksByEmployee(employeeId, findInput);
 	}
 
+	@ApiOperation({ summary: 'Find all tasks.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tasks',
+		type: Task
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ITask>> {
+		const { relations, findInput } = data;
+		return this.taskService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
 	@ApiOperation({ summary: 'create a task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -135,7 +141,9 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
-	async create(@Body() entity: ITaskCreateInput): Promise<ITask> {
+	async create(
+		@Body() entity: ITaskCreateInput
+	): Promise<ITask> {
 		return await this.commandBus.execute(
 			new TaskCreateCommand({
 				...entity,
@@ -181,7 +189,9 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Delete(':id')
-	async deleteTask(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
 		return this.taskService.delete(id);
 	}
 }

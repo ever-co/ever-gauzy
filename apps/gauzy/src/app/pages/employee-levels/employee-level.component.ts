@@ -10,13 +10,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { filter, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { EmployeeLevelService } from '../../@core/services/employee-level.service';
-import { Store } from '../../@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { EmployeeLevelService, Store, ToastrService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,8 +25,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class EmployeeLevelComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationId: string;
-	selectedOrganization: IOrganization;
+	organization: IOrganization;
 	showAddCard: boolean;
 	showEditDiv: boolean;
 
@@ -43,7 +40,7 @@ export class EmployeeLevelComponent
 
 	constructor(
 		private readonly employeeLevelService: EmployeeLevelService,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		readonly translateService: TranslateService
@@ -60,8 +57,7 @@ export class EmployeeLevelComponent
 			)
 			.subscribe((organization) => {
 				if (organization) {
-					this.selectedOrganization = organization;
-					this.organizationId = organization.id;
+					this.organization = organization;
 					this.loadEmployeeLevels();
 					this.loadSmartTable();
 					this._applyTranslationOnSmartTable();
@@ -72,10 +68,11 @@ export class EmployeeLevelComponent
 
 	private async loadEmployeeLevels() {
 		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { items } = await this.employeeLevelService.getAll(
-			this.organizationId,
 			['tags'],
-			{ tenantId }
+			{ tenantId, organizationId }
 		);
 
 		if (items) {
@@ -113,10 +110,13 @@ export class EmployeeLevelComponent
 	}
 	async addEmployeeLevel(level: string) {
 		if (level) {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
 			await this.employeeLevelService.create({
 				level,
-				organizationId: this.organizationId,
-				tenantId: this.selectedOrganization.tenantId,
+				organizationId,
+				tenantId,
 				tags: this.tags
 			});
 
@@ -139,10 +139,13 @@ export class EmployeeLevelComponent
 	}
 
 	async editEmployeeLevel(id: string, employeeLevelName: string) {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const employeeLevel = {
 			level: employeeLevelName,
-			organizationId: this.organizationId,
-			tenantId: this.selectedOrganization.tenantId,
+			organizationId,
+			tenantId,
 			tags: this.tags
 		};
 		await this.employeeLevelService.update(id, employeeLevel);

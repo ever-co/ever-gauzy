@@ -19,7 +19,7 @@ export class CandidateCriterionsRatingService {
 	): Promise<ICandidateCriterionsRating[]> {
 		return this.http
 			.post<ICandidateCriterionsRating[]>(
-				`${API_PREFIX}/candidate-criterions-rating/createBulk`,
+				`${API_PREFIX}/candidate-criterions-rating/bulk`,
 				{
 					feedbackId,
 					technologies,
@@ -44,7 +44,7 @@ export class CandidateCriterionsRatingService {
 		personalQualities: number[]
 	): Promise<any> {
 		return this.http
-			.put(`${API_PREFIX}/candidate-criterions-rating/updateBulk`, {
+			.put(`${API_PREFIX}/candidate-criterions-rating/bulk`, {
 				criterionsRating,
 				technologies,
 				personalQualities
@@ -53,12 +53,9 @@ export class CandidateCriterionsRatingService {
 			.toPromise();
 	}
 
-	deleteBulk(id: string): Promise<any> {
-		const data = JSON.stringify({ id });
+	deleteBulkByFeedbackId(id: string): Promise<any> {
 		return this.http
-			.delete(`${API_PREFIX}/candidate-criterions-rating/deleteBulk`, {
-				params: { data }
-			})
+			.delete(`${API_PREFIX}/candidate-criterions-rating/feedback/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

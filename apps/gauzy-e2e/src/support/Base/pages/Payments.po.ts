@@ -8,7 +8,8 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	forceClickElementByText
 } from '../utils/util';
 import { PaymentsPage } from '../pageobjects/PaymentsPageObject';
 
@@ -150,4 +151,44 @@ export const verifyElementIsDeleted = (text) => {
 
 export const verifyPaymentExists = (text) => {
 	verifyText(PaymentsPage.verifyPaymentCss, text);
+};
+
+export const sidebarBtnVisible = () => {
+	verifyElementIsVisible(PaymentsPage.sidebarBtnCss);
+};
+
+export const clickSidebarBtn = (text) => {
+	clickElementByText(PaymentsPage.sidebarBtnCss, text);
+};
+
+export const clickAccountingPaymentsSidebarBtn = (text) => {
+	forceClickElementByText(PaymentsPage.accountingPaymentsSidebarBtnCss, text);
+};
+
+export const clickReportsInnerSidebarBtn = (text) => {
+	forceClickElementByText(PaymentsPage.reportsPaymentsSidebarBtnCss, text);
+};
+
+export const verifyPaymentProject = (project) => {
+	verifyText(PaymentsPage.paymentTableCellCss, project);
+};
+
+export const verifyPaymentAmount = (amount) => {
+	verifyText(PaymentsPage.amountTableCellCss, amount);
+};
+
+export const groupBySelectVisible = () => {
+	verifyElementIsVisible(PaymentsPage.groupByCss);
+};
+
+export const clickGroupBySelect = () => {
+	clickButton(PaymentsPage.groupByCss);
+};
+
+export const verifyDropdownOption = (text) => {
+	verifyText(PaymentsPage.dropdownOptionCss, text);
+};
+
+export const selectOptionFromDropdown = (text) => {
+	clickElementByText(PaymentsPage.dropdownOptionCss, text);
 };

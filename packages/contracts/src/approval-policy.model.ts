@@ -2,26 +2,26 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IApprovalPolicy
 	extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
-	description?: string;
-	approvalType?: string;
+	name: string;
+	description: string;
+	approvalType: string;
 }
 
-export interface IApprovalPolicyCreateInput
+export interface IApprovalPolicyFindInput 
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	description?: string;
 	approvalType?: string;
 }
 
-export interface IApprovalPolicyUpdateInput extends IApprovalPolicyCreateInput {
-	id?: string;
+export interface IApprovalPolicyCreateInput
+	extends IApprovalPolicyFindInput {
+	name?: string;
 }
 
-export interface IApprovalPolicyFindInput {
-	name?: string;
-	description?: string;
-	nameConstapprovalType?: string;
+export interface IApprovalPolicyUpdateInput 
+	extends IApprovalPolicyCreateInput {
+	id?: string;
 }
 
 export enum ApprovalPolicyTypesEnum {

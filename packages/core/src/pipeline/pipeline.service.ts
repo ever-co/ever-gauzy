@@ -1,4 +1,4 @@
-import { TenantAwareCrudService } from '../core/crud';
+import { TenantAwareCrudService } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
 	DeepPartial,

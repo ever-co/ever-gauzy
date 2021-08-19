@@ -1,9 +1,12 @@
 import {
+	IPagination,
 	IRecurringExpenseByMonthFindInput,
 	IRecurringExpenseModel
 } from '@gauzy/contracts';
 import { Between, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { CrudService, getDateRange, getLastDayOfMonth, IPagination, RequestContext } from '../../core';
+import { CrudService } from './../../core/crud';
+import { getDateRange, getLastDayOfMonth } from './../../core/utils';
+import { RequestContext } from './../../core/context';
 
 /**
  * Finds income, expense, profit and bonus for all organizations for the given month.

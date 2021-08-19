@@ -4,7 +4,8 @@ import {
 	IIncome,
 	IIncomeCreateInput,
 	IIncomeFindInput,
-	IIncomeUpdateInput
+	IIncomeUpdateInput,
+	IPagination
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
@@ -15,7 +16,7 @@ export class IncomeService {
 
 	create(createInput: IIncomeCreateInput): Promise<IIncome> {
 		return this.http
-			.post<IIncome>(`${API_PREFIX}/income/create`, createInput)
+			.post<IIncome>(`${API_PREFIX}/income`, createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -24,11 +25,10 @@ export class IncomeService {
 		relations?: string[],
 		findInput?: IIncomeFindInput,
 		filterDate?: Date
-	): Promise<{ items: IIncome[]; total: number }> {
+	): Promise<IPagination<IIncome>> {
 		const data = JSON.stringify({ relations, findInput, filterDate });
-
 		return this.http
-			.get<{ items: IIncome[]; total: number }>(
+			.get<IPagination<IIncome>>(
 				`${API_PREFIX}/income/me`,
 				{
 					params: { data }
@@ -42,28 +42,27 @@ export class IncomeService {
 		relations?: string[],
 		findInput?: IIncomeFindInput,
 		filterDate?: Date
-	): Promise<{ items: IIncome[]; total: number }> {
+	): Promise<IPagination<IIncome>> {
 		const data = JSON.stringify({ relations, findInput, filterDate });
-
 		return this.http
-			.get<{ items: IIncome[]; total: number }>(`${API_PREFIX}/income`, {
+			.get<IPagination<IIncome>>(`${API_PREFIX}/income`, {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(id: string, updateInput: IIncomeUpdateInput): Promise<any> {
+	update(id: string, updateInput: IIncomeUpdateInput): Promise<IIncome> {
 		return this.http
-			.put(`${API_PREFIX}/income/${id}`, updateInput)
+			.put<IIncome>(`${API_PREFIX}/income/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(incomeId: string, employeeId: string): Promise<any> {
-		const data = JSON.stringify({ incomeId, employeeId });
+		const data = JSON.stringify({ employeeId });
 		return this.http
-			.delete(`${API_PREFIX}/income/deleteIncome`, {
+			.delete(`${API_PREFIX}/income/${incomeId}`, {
 				params: { data }
 			})
 			.pipe(first())

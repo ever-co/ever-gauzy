@@ -46,7 +46,7 @@ import {
     GoalTimeFrame,
     Income,
     IntegrationEntitySetting,
-    IntegrationEntitySettingTiedEntity,
+    IntegrationEntitySettingTied,
     IntegrationMap,
     IntegrationSetting,
     IntegrationTenant,
@@ -61,13 +61,13 @@ import {
     KeyResultTemplate,
     KeyResultUpdate,
     Organization,
-    OrganizationAwards,
+    OrganizationAward,
     OrganizationContact,
     OrganizationDepartment,
-    OrganizationDocuments,
+    OrganizationDocument,
     OrganizationEmploymentType,
-    OrganizationLanguages,
-    OrganizationPositions,
+    OrganizationLanguage,
+    OrganizationPosition,
     OrganizationProject,
     OrganizationRecurringExpense,
     OrganizationSprint,
@@ -137,6 +137,7 @@ export class DeleteAllDataService {
 
         @InjectRepository(CandidateInterview)
         private readonly candidateInterviewRepository: Repository<CandidateInterview>,
+
         @InjectRepository(CandidateInterviewers)
         private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
 
@@ -193,6 +194,7 @@ export class DeleteAllDataService {
 
         @InjectRepository(ExpenseCategory)
         private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
+
         @InjectRepository(FeatureOrganization)
         private readonly featureOrganizationRepository: Repository<FeatureOrganization>,
 
@@ -217,8 +219,8 @@ export class DeleteAllDataService {
         @InjectRepository(IntegrationEntitySetting)
         private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
-        @InjectRepository(IntegrationEntitySettingTiedEntity)
-        private readonly integrationEntitySettingTiedEntityRepository: Repository<IntegrationEntitySettingTiedEntity>,
+        @InjectRepository(IntegrationEntitySettingTied)
+        private readonly integrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
 
         @InjectRepository(IntegrationMap)
         private readonly integrationMapRepository: Repository<IntegrationMap>,
@@ -262,8 +264,8 @@ export class DeleteAllDataService {
         @InjectRepository(EmployeeLevel)
         private readonly employeeLevelRepository: Repository<EmployeeLevel>,
 
-        @InjectRepository(OrganizationAwards)
-        private readonly organizationAwardsRepository: Repository<OrganizationAwards>,
+        @InjectRepository(OrganizationAward)
+        private readonly organizationAwardRepository: Repository<OrganizationAward>,
 
         @InjectRepository(Organization)
         private readonly organizationRepository: Repository<Organization>,
@@ -274,17 +276,17 @@ export class DeleteAllDataService {
         @InjectRepository(OrganizationDepartment)
         private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
 
-        @InjectRepository(OrganizationDocuments)
-        private readonly organizationDocumentRepository: Repository<OrganizationDocuments>,
+        @InjectRepository(OrganizationDocument)
+        private readonly organizationDocumentRepository: Repository<OrganizationDocument>,
 
         @InjectRepository(OrganizationEmploymentType)
         private readonly organizationEmploymentTypeRepository: Repository<OrganizationEmploymentType>,
 
-        @InjectRepository(OrganizationLanguages)
-        private readonly organizationLanguagesRepository: Repository<OrganizationLanguages>,
+        @InjectRepository(OrganizationLanguage)
+        private readonly organizationLanguageRepository: Repository<OrganizationLanguage>,
 
-        @InjectRepository(OrganizationPositions)
-        private readonly organizationPositionsRepository: Repository<OrganizationPositions>,
+        @InjectRepository(OrganizationPosition)
+        private readonly organizationPositionRepository: Repository<OrganizationPosition>,
 
         @InjectRepository(OrganizationProject)
         private readonly organizationProjectsRepository: Repository<OrganizationProject>,
@@ -531,17 +533,17 @@ export class DeleteAllDataService {
             this.expenseRepository,
             this.incomeRepository,
             this.integrationEntitySettingRepository,
-            this.integrationEntitySettingTiedEntityRepository,
+            this.integrationEntitySettingTiedRepository,
             this.integrationMapRepository,
             this.integrationSettingRepository,
             this.integrationTenantRepository,
             this.inviteRepository,
-            this.organizationAwardsRepository,
+            this.organizationAwardRepository,
             this.organizationDepartmentRepository,
             this.organizationDocumentRepository,
             this.organizationEmploymentTypeRepository,
-            this.organizationLanguagesRepository,
-            this.organizationPositionsRepository,
+            this.organizationLanguageRepository,
+            this.organizationPositionRepository,
             this.organizationSprintRepository,
             this.organizationTeamEmployeeRepository,
             this.organizationTeamRepository,

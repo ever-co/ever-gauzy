@@ -32,6 +32,7 @@ export const verifyOrganisationNameField = () => {
 };
 
 export const enterOrganizationName = (data) => {
+	clearField(AddOrganizationPage.organisationNameFieldCss);
 	enterInput(AddOrganizationPage.organisationNameFieldCss, data);
 };
 

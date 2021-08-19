@@ -13,11 +13,11 @@ import {
 	HttpCode
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { BaseEntity } from '../entities/internal';
+import { IPagination } from '@gauzy/contracts';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
-import { IPagination } from './pagination';
 import { PaginationParams } from './pagination-params';
 import { UUIDValidationPipe } from './../../shared/pipes';
 
@@ -41,7 +41,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	@Get('count')
     async getCount(
 		filter?: PaginationParams<T>
-	): Promise<number> {
+	): Promise<number | void> {
         return await this.crudService.count(filter);
     }
 
@@ -79,7 +79,10 @@ export abstract class CrudController<T extends BaseEntity> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<T> {
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+		...options: any[]
+	): Promise<T> {
 		return this.crudService.findOne(id);
 	}
 

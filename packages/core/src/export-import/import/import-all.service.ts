@@ -65,7 +65,7 @@ import {
 	Income,
 	Integration,
 	IntegrationEntitySetting,
-	IntegrationEntitySettingTiedEntity,
+	IntegrationEntitySettingTied,
 	IntegrationMap,
 	IntegrationSetting,
 	IntegrationTenant,
@@ -84,13 +84,13 @@ import {
 	Language,
 	Merchant,
 	Organization,
-	OrganizationAwards,
+	OrganizationAward,
 	OrganizationContact,
 	OrganizationDepartment,
-	OrganizationDocuments,
+	OrganizationDocument,
 	OrganizationEmploymentType,
-	OrganizationLanguages,
-	OrganizationPositions,
+	OrganizationLanguage,
+	OrganizationPosition,
 	OrganizationProject,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
@@ -319,8 +319,8 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(IntegrationEntitySetting)
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
-		@InjectRepository(IntegrationEntitySettingTiedEntity)
-		private readonly integrationEntitySettingTiedEntityRepository: Repository<IntegrationEntitySettingTiedEntity>,
+		@InjectRepository(IntegrationEntitySettingTied)
+		private readonly integrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
 
 		@InjectRepository(IntegrationMap)
 		private readonly integrationMapRepository: Repository<IntegrationMap>,
@@ -373,8 +373,8 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(EmployeeLevel)
 		private readonly employeeLevelRepository: Repository<EmployeeLevel>,
 
-		@InjectRepository(OrganizationAwards)
-		private readonly organizationAwardsRepository: Repository<OrganizationAwards>,
+		@InjectRepository(OrganizationAward)
+		private readonly organizationAwardRepository: Repository<OrganizationAward>,
 
 		@InjectRepository(OrganizationContact)
 		private readonly organizationContactRepository: Repository<OrganizationContact>,
@@ -382,17 +382,17 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(OrganizationDepartment)
 		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
 
-		@InjectRepository(OrganizationDocuments)
-		private readonly organizationDocumentRepository: Repository<OrganizationDocuments>,
+		@InjectRepository(OrganizationDocument)
+		private readonly organizationDocumentRepository: Repository<OrganizationDocument>,
 
 		@InjectRepository(OrganizationEmploymentType)
 		private readonly organizationEmploymentTypeRepository: Repository<OrganizationEmploymentType>,
 
-		@InjectRepository(OrganizationLanguages)
-		private readonly organizationLanguagesRepository: Repository<OrganizationLanguages>,
+		@InjectRepository(OrganizationLanguage)
+		private readonly organizationLanguageRepository: Repository<OrganizationLanguage>,
 
-		@InjectRepository(OrganizationPositions)
-		private readonly organizationPositionRepository: Repository<OrganizationPositions>,
+		@InjectRepository(OrganizationPosition)
+		private readonly organizationPositionRepository: Repository<OrganizationPosition>,
 
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectRepository: Repository<OrganizationProject>,
@@ -972,7 +972,7 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.organizationTeamRepository
 			},
 			{ 
-				repository: this.organizationAwardsRepository
+				repository: this.organizationAwardRepository
 			},
 			{
 				repository: this.organizationVendorRepository
@@ -984,7 +984,7 @@ export class ImportAllService implements OnModuleInit {
 				repository: this.organizationDocumentRepository
 			},
 			{
-				repository: this.organizationLanguagesRepository
+				repository: this.organizationLanguageRepository
 			},
 			{
 				repository: this.organizationEmploymentTypeRepository
@@ -1499,7 +1499,7 @@ export class ImportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.integrationEntitySettingTiedEntityRepository,
+				repository: this.integrationEntitySettingTiedRepository,
 				isCheckRelation: true,
 				foreignKeys: [
 					{ column: 'integrationEntitySettingId', repository: this.integrationEntitySettingRepository }

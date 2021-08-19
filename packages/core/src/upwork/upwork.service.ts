@@ -26,7 +26,8 @@ import {
 	IUpworkDateRange,
 	ContactType,
 	TimeLogSourceEnum,
-	IUpworkClientSecretPair
+	IUpworkClientSecretPair,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	IntegrationTenantCreateCommand,
@@ -49,13 +50,16 @@ import {
 	ScreenshotCreateCommand
 } from '../timesheet/commands';
 import * as moment from 'moment';
-import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
+import {
+	OrganizationProjectCreateCommand,
+	OrganizationProjectUpdateCommand
+} from '../organization-project/commands';
 import { EmployeeGetCommand } from '../employee/commands/employee.get.command';
 import { EmployeeCreateCommand } from '../employee/commands';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { UserService } from '../user/user.service';
 import { OrganizationService } from '../organization/organization.service';
-import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
+import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { ExpenseService } from '../expense/expense.service';
@@ -65,7 +69,6 @@ import { OrganizationContactService } from '../organization-contact/organization
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
-import { IPagination } from '../core';
 import {
 	UpworkJobService,
 	UpworkOffersService,
@@ -75,7 +78,6 @@ import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/t
 import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
-import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 import { CreateTimeSlotMinutesCommand } from '../timesheet/time-slot/commands/create-time-slot-minutes.command';
 import { RequestContext } from '../core/context';
 import { environment as env } from '@gauzy/config';
@@ -92,7 +94,7 @@ export class UpworkService {
 		private _userService: UserService,
 		private _roleService: RoleService,
 		private _organizationService: OrganizationService,
-		private _orgVendorService: OrganizationVendorsService,
+		private _orgVendorService: OrganizationVendorService,
 		private _orgClientService: OrganizationContactService,
 		private _timeSlotService: TimeSlotService,
 		private readonly _upworkReportService: UpworkReportService,

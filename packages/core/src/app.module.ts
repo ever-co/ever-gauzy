@@ -42,14 +42,14 @@ import { OrganizationDepartmentModule } from './organization-department/organiza
 import { OrganizationRecurringExpenseModule } from './organization-recurring-expense/organization-recurring-expense.module';
 import { EmployeeRecurringExpenseModule } from './employee-recurring-expense/employee-recurring-expense.module';
 import { OrganizationContactModule } from './organization-contact/organization-contact.module';
-import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
-import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
-import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
+import { OrganizationPositionModule } from './organization-position/organization-position.module';
+import { OrganizationProjectModule } from './organization-project/organization-project.module';
+import { OrganizationVendorModule } from './organization-vendor/organization-vendor.module';
 import { OrganizationTeamModule } from './organization-team/organization-team.module';
 import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
-import { OrganizationAwardsModule } from './organization-awards/organization-awards.module';
-import { OrganizationLanguagesModule } from './organization-languages/organization-languages.module';
-import { OrganizationDocumentsModule } from './organization-documents/organization-documents.module';
+import { OrganizationAwardModule } from './organization-award/organization-award.module';
+import { OrganizationLanguageModule } from './organization-language/organization-language.module';
+import { OrganizationDocumentModule } from './organization-document/organization-document.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country';
 import { CurrencyModule } from './currency';
@@ -60,7 +60,7 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
-import { EmployeeLevelModule } from './organization_employee-level/organization-employee-level.module';
+import { EmployeeLevelModule } from './employee-level/employee-level.module';
 import { ExportAllModule } from './export-import/export/export-all.module';
 import { ImportAllModule } from './export-import/import/import-all.module';
 import { TaskModule } from './tasks/task.module';
@@ -79,7 +79,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
 import { ProductVariantModule } from './product-variant/product-variant.module';
 import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
-import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.module';
+import { IntegrationEntitySettingTiedModule } from './integration-entity-setting-tied/integration-entity-setting-tied.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
 import { CandidateSourceModule } from './candidate-source/candidate-source.module';
 import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
@@ -236,15 +236,15 @@ if (process.env.DB_TYPE === 'postgres') {
 		OrganizationDepartmentModule,
 		OrganizationRecurringExpenseModule,
 		OrganizationContactModule,
-		OrganizationPositionsModule,
-		OrganizationProjectsModule,
-		OrganizationVendorsModule,
-		OrganizationAwardsModule,
-		OrganizationLanguagesModule,
+		OrganizationPositionModule,
+		OrganizationProjectModule,
+		OrganizationVendorModule,
+		OrganizationAwardModule,
+		OrganizationLanguageModule,
 		OrganizationSprintModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
-		OrganizationDocumentsModule,
+		OrganizationDocumentModule,
 		RequestApprovalEmployeeModule,
 		RequestApprovalTeamModule,
 		ProposalModule,
@@ -302,7 +302,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		ProductVariantModule,
 		ProductVariantSettingsModule,
 		IntegrationEntitySettingModule,
-		IntegrationEntitySettingTiedEntityModule,
+		IntegrationEntitySettingTiedModule,
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,

@@ -4,13 +4,11 @@ import {
 	Get,
 	Post,
 	UseInterceptors,
-	Body,
-	UseGuards
+	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
-import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import { IImportHistory, ImportHistoryStatusEnum, IPagination, UploadedFile } from '@gauzy/contracts';
 import { ImportAllService } from './import-all.service';
@@ -19,7 +17,6 @@ import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { ImportHistoryCreateCommand, ImportHistoryService } from './../import-history';
 
 @ApiTags('Import')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ImportAllController {
 	constructor(

@@ -1,53 +1,39 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
 import { IncomeController } from './income.controller';
 import { CommandHandlers } from './commands/handlers';
-import { CqrsModule } from '@nestjs/cqrs';
-import { EmployeeService } from '../employee/employee.service';
-import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
-import { OrganizationService } from '../organization/organization.service';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
-import { Expense } from '../expense/expense.entity';
-import {
-	EmployeeRecurringExpense,
-	EmployeeRecurringExpenseService
-} from '../employee-recurring-expense';
-import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
-import { ExpenseService } from '../expense/expense.service';
-import { EmployeeStatisticsService } from '../employee-statistics';
-import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
-import { TenantModule } from '../tenant/tenant.module';
+import { EmployeeRecurringExpenseModule } from './../employee-recurring-expense/employee-recurring-expense.module';
+import { EmployeeStatisticsModule } from './../employee-statistics/employee-statistics.module';
+import { TenantModule } from './../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
+import { OrganizationModule } from './../organization/organization.module';
+import { ExpenseModule } from './../expense/expense.module';
+import { EmployeeModule } from './../employee/employee.module';
+import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/income', module: IncomeModule }]),
-		TypeOrmModule.forFeature([
-			Income,
-			Employee,
-			Organization,
-			User,
-			Expense,
-			EmployeeRecurringExpense,
-			OrganizationRecurringExpense
+		RouterModule.forRoutes([
+			{ path: '/income', module: IncomeModule }
 		]),
-		CqrsModule,
-		TenantModule
+		TypeOrmModule.forFeature([ Income ]), 
+		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
+		forwardRef(() => EmployeeModule),
+		forwardRef(() => OrganizationModule),
+		forwardRef(() => ExpenseModule),
+		forwardRef(() => EmployeeRecurringExpenseModule),
+		forwardRef(() => OrganizationRecurringExpenseModule),
+		forwardRef(() => EmployeeStatisticsModule),
+		CqrsModule
 	],
 	controllers: [IncomeController],
 	providers: [
 		IncomeService,
-		EmployeeService,
-		OrganizationService,
-		UserService,
-		ExpenseService,
-		EmployeeStatisticsService,
-		EmployeeRecurringExpenseService,
-		OrganizationRecurringExpenseService,
 		...CommandHandlers
 	],
 	exports: [IncomeService]

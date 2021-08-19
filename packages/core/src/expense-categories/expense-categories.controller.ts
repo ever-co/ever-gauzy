@@ -5,18 +5,20 @@ import {
 	Query,
 	Put,
 	Param,
-	Body
+	Body,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CrudController, IPagination } from '../core';
+import { IExpenseCategory, IPagination } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from './../core/crud';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from './expense-category.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('ExpenseCategories')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ExpenseCategoriesController extends CrudController<ExpenseCategory> {
 	constructor(
@@ -25,22 +27,52 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 		super(expenseCategoriesService);
 	}
 
+	/**
+	 * GET all expense categories by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IExpenseCategory>
+	): Promise<IPagination<IExpenseCategory>> {
+		return this.expenseCategoriesService.paginate(filter);
+	}
+
+	/**
+	 * GET all expense categories
+	 * 
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@Get()
-	async findAllOrganizationExpenseCategories(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ExpenseCategory>> {
+	): Promise<IPagination<IExpenseCategory>> {
 		const { relations, findInput } = data;
 		return this.expenseCategoriesService.findAll({
 			where: findInput,
 			relations
 		});
 	}
+
+	/**
+	 * UPDATE expense category by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
 	@Put(':id')
-	async updateOrganizationExpenseCategories(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ExpenseCategory,
 		...options: any[]
-	): Promise<ExpenseCategory> {
+	): Promise<IExpenseCategory> {
 		return this.expenseCategoriesService.create({
 			id,
 			...entity

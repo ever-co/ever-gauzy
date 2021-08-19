@@ -13,10 +13,16 @@ export class CandidateSourceService extends TenantAwareCrudService<CandidateSour
 	) {
 		super(candidateSourceRepository);
 	}
-	updateBulk(updateInput: ICandidateSource[]): Promise<any> {
-		updateInput.forEach(async (item) => {
-			await this.candidateSourceRepository.save(item);
-		});
-		return;
+
+	async updateBulk(sources: ICandidateSource[]): Promise<any> {
+		const candidateSources: ICandidateSource[] = [];
+		if (sources) {
+			for await (const source of sources) {
+				candidateSources.push(
+					await this.create(source)
+				);
+			}
+		}
+		return candidateSources;
 	}
 }

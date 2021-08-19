@@ -1,6 +1,5 @@
-import { IOrganizationRecurringExpenseForEmployeeOutput } from '@gauzy/contracts';
+import { IOrganizationRecurringExpenseForEmployeeOutput, IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IPagination } from '../../../core';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';

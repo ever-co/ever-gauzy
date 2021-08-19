@@ -6,7 +6,7 @@ import {
 } from '@gauzy/contracts';
 import { Entity, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsEnum } from 'class-validator';
+import { IsEnum } from 'class-validator';
 import {
 	KeyResultTemplate,
 	TenantOrganizationBaseEntity
@@ -32,6 +32,5 @@ export class GoalTemplate
 
 	@ApiProperty({ type: () => KeyResultTemplate })
 	@OneToMany(() => KeyResultTemplate, (keyResult) => keyResult.goal)
-	@IsOptional()
 	keyResults?: IKeyResultTemplate[];
 }

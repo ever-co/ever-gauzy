@@ -232,6 +232,9 @@ When('User click on next button', () => {
 });
 
 Then('User can verify complete page', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	onboardingPage.verifyHeadingOnCompletePage();
 });
 

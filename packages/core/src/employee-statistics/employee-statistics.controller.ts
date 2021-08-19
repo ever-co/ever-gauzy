@@ -12,7 +12,6 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { parseISO } from 'date-fns';
@@ -26,7 +25,7 @@ import {
 } from './queries';
 
 @ApiTags('EmployeeStatistics')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(

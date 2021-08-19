@@ -30,7 +30,7 @@ export class CandidateTechnologiesService {
 	): Promise<ICandidateTechnologies[]> {
 		return this.http
 			.post<ICandidateTechnologies[]>(
-				`${API_PREFIX}/candidate-technologies/createBulk`,
+				`${API_PREFIX}/candidate-technologies/bulk`,
 				{ interviewId, technologies }
 			)
 			.pipe(first())
@@ -62,7 +62,7 @@ export class CandidateTechnologiesService {
 	updateBulk(technologies: ICandidateTechnologies[]): Promise<any> {
 		return this.http
 			.put(
-				`${API_PREFIX}/candidate-technologies/updateBulk`,
+				`${API_PREFIX}/candidate-technologies/bulk`,
 				technologies
 			)
 			.pipe(first())
@@ -72,7 +72,7 @@ export class CandidateTechnologiesService {
 	findByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
 		return this.http
 			.get<ICandidateTechnologies[]>(
-				`${API_PREFIX}/candidate-technologies/getByInterviewId/${interviewId}`
+				`${API_PREFIX}/candidate-technologies/interview/${interviewId}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -91,7 +91,7 @@ export class CandidateTechnologiesService {
 	): Promise<any> {
 		const data = JSON.stringify({ technologies });
 		return this.http
-			.delete(`${API_PREFIX}/candidate-technologies/deleteBulk/${id}`, {
+			.delete(`${API_PREFIX}/candidate-technologies/bulk/${id}`, {
 				params: { data }
 			})
 			.pipe(first())

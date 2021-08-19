@@ -7,52 +7,63 @@ import {
 	Post,
 	Body,
 	Put,
-	Param
+	Param,
+	UsePipes,
+	ValidationPipe,
+	ForbiddenException,
+	Delete
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { AuthGuard } from '@nestjs/passport';
+import {
+	ApiOperation,
+	ApiResponse,
+	ApiTags
+} from '@nestjs/swagger';
+import { QueryBus } from '@nestjs/cqrs';
+import {
+	IAccountingTemplate,
+	IAccountingTemplateUpdateInput,
+	IPagination,
+	LanguagesEnum
+} from '@gauzy/contracts';
+import { CrudController, PaginationParams } from '../core/crud';
+import { RequestContext } from './../core/context';
 import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { LanguageDecorator } from './../shared/decorators';
+import { AccountingTemplateQuery } from './queries';
 import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateService } from './accounting-template.service';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { IPagination } from '../core';
-import { IAccountingTemplate } from '@gauzy/contracts';
 
 @ApiTags('Accounting Template')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class AccountingTemplateController extends CrudController<AccountingTemplate> {
 	constructor(
-		private readonly accountingTemplateService: AccountingTemplateService
+		private readonly accountingTemplateService: AccountingTemplateService,
+		private readonly queryBus: QueryBus,
 	) {
 		super(accountingTemplateService);
 	}
 
-	@Get()
-	async findAllTemplates(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IAccountingTemplate>> {
-		const { relations = [], findInput = null } = data;
-		return this.accountingTemplateService.findAll({
-			where: findInput,
-			relations
+	@Get('count')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async getCount(
+		@Query() filter: PaginationParams<IAccountingTemplate>
+	): Promise<number> {
+		return this.accountingTemplateService.count({
+			where: {
+				tenantId: RequestContext.currentTenantId()
+			},
+			...filter
 		});
 	}
 
-	@ApiOperation({
-		summary: 'Gets template by id'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'template found',
-		type: AccountingTemplate
-	})
-	@Get('template/:id')
-	async getTemplateById(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
-		return this.accountingTemplateService.findOne(id);
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IAccountingTemplate>
+	): Promise<IPagination<IAccountingTemplate>> {
+		return this.accountingTemplateService.paginate(filter);
 	}
 
 	@ApiOperation({
@@ -68,11 +79,15 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		description: 'Record not found'
 	})
 	@Get('template')
-	async findAccountingTemplate(
-		@Query('data', ParseJsonPipe) data: any
+	async findTemplate(
+		@Query('data', ParseJsonPipe) data: any,
+		@LanguageDecorator() themeLanguage: LanguagesEnum
 	): Promise<IAccountingTemplate> {
-		const { findInput } = data;
-		return await this.accountingTemplateService.getAccountTemplate(findInput)
+		const { findInput = {} } = data;
+		return await this.accountingTemplateService.getAccountTemplate(
+			findInput,
+			themeLanguage
+		)
 	}
 
 	@ApiOperation({
@@ -84,7 +99,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		type: AccountingTemplate
 	})
 	@Post('template/preview')
-	async generateTemplatePreview(@Body() input: any): Promise<any> {
+	async generatePreview(@Body() input: any): Promise<any> {
 		return this.accountingTemplateService.generatePreview(input);
 	}
 
@@ -101,6 +116,34 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		return this.accountingTemplateService.saveTemplate(input);
 	}
 
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) filter: PaginationParams<IAccountingTemplate>
+	): Promise<IPagination<IAccountingTemplate>> {
+		return await this.queryBus.execute(
+			new AccountingTemplateQuery(filter)
+		);
+	}
+
+	@ApiOperation({
+		summary: 'Gets template by id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'template found',
+		type: AccountingTemplate
+	})
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<IAccountingTemplate> {
+		return this.accountingTemplateService.findOne(id, {
+			where: {
+				tenantId: RequestContext.currentTenantId(),
+			}
+		});
+	}
+
 	@ApiOperation({
 		summary: 'Updates template'
 	})
@@ -109,11 +152,41 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		description: 'template updated',
 		type: AccountingTemplate
 	})
-	@Put('template/update/:id')
-	async updateTemplate(
-		@Body() input: any,
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
-		return this.accountingTemplateService.create({ id, ...input });
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() input: IAccountingTemplateUpdateInput,
+	): Promise<IAccountingTemplate> {
+		const record = await this.findById(id);
+		const tenantId = RequestContext.currentTenantId();
+		if (tenantId !== record.tenantId) {
+			throw new ForbiddenException();
+		}
+		return this.accountingTemplateService.create({
+			id, 
+			...{ tenantId, ...input }
+		});
+	}
+
+	@ApiOperation({
+		summary: 'Delete accounting template'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Accounting template deleted',
+		type: AccountingTemplate
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Accounting template not found'
+	})
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: string) {
+		const record = await this.findById(id);
+		const tenantId = RequestContext.currentTenantId();
+		if (tenantId !== record.tenantId) {
+			throw new ForbiddenException();
+		}
+		return await this.accountingTemplateService.delete(id);
 	}
 }

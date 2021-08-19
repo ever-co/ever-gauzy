@@ -1,42 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { TenantAwareCrudService } from './../core/crud';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { IIntegrationTenant } from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationTenant } from './integration-tenant.entity';
-import { TenantService } from '../tenant/tenant.service';
-import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class IntegrationTenantService extends TenantAwareCrudService<IntegrationTenant> {
 	constructor(
 		@InjectRepository(IntegrationTenant)
-		readonly repository: Repository<IntegrationTenant>,
-		private _tenantService: TenantService,
-		private _integrationSettingService: IntegrationSettingService
+		protected readonly repository: Repository<IntegrationTenant>
 	) {
 		super(repository);
 	}
 
-	async addIntegration(createIntegrationDto): Promise<IntegrationTenant> {
-		const { tenantId, organizationId } = createIntegrationDto;
-		const { record: tenant } = await this._tenantService.findOneOrFail(
-			tenantId
-		);
-		const integration = await this.create({
-			tenant,
-			organizationId,
-			name: createIntegrationDto.name,
-			entitySettings: createIntegrationDto.entitySettings
-		});
-		const settingsDto = createIntegrationDto.settings.map((setting) => ({
+	async addIntegration(
+		input: IIntegrationTenant
+	): Promise<IIntegrationTenant> {
+		const tenantId = RequestContext.currentTenantId();
+		const { organizationId, name, entitySettings } = input;
+
+		const settings = input.settings.map((setting) => ({
 			...setting,
-			integration,
 			tenantId
 		}));
 
-		await this._integrationSettingService.create(settingsDto);
+		const integration = await this.create({
+			tenantId,
+			organizationId,
+			name,
+			settings,
+			entitySettings
+		});
 		return integration;
 	}
 
-	async updateIntegration(updateIntegrationDto) {}
+	async updateIntegration(input) {}
 }

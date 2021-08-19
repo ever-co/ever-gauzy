@@ -4,7 +4,7 @@ import { LanguagesEnum } from './user.model';
 export interface IEmailTemplate
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	mjml?: string;
+	mjml: string;
 	hbs: string;
 	languageCode: string;
 	title?: string;
@@ -35,7 +35,8 @@ export enum EmailTemplateNameEnum {
 	INVITE_EMPLOYEE = 'invite-employee',
 	INVITE_USER = 'invite-user',
 	EMAIL_INVOICE = 'email-invoice',
-	EMAIL_ESTIMATE = 'email-estimate'
+	EMAIL_ESTIMATE = 'email-estimate',
+	EMPLOYEE_JOIN = "employee-join",
 }
 
 export interface ICustomizeEmailTemplateFindInput

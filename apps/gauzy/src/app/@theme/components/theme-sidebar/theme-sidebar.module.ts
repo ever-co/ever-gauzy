@@ -8,7 +8,7 @@ import {
 } from '@nebular/theme';
 import { ThemeSidebarComponent } from './theme-sidebar.component';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
-import { ThemeSettingsComponent } from './theme-settings/theme-settings.component';
+import { ThemeSettingsModule } from './theme-settings/theme-settings.module';
 import { ChangelogComponent } from './changelog/changelog.component';
 
 @NgModule({
@@ -18,16 +18,15 @@ import { ChangelogComponent } from './changelog/changelog.component';
 		NbSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule
+		TranslateModule,
+		ThemeSettingsModule
 	],
 	exports: [
 		ThemeSidebarComponent,
-		ThemeSettingsComponent,
 		ChangelogComponent
 	],
 	declarations: [
 		ThemeSidebarComponent,
-		ThemeSettingsComponent,
 		ChangelogComponent
 	],
 	providers: []

@@ -79,7 +79,7 @@ import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
 } from '../../organization-employment-type/organization-employment-type.seed';
-import { createEmployeeLevels } from '../../organization_employee-level/organization-employee-level.seed';
+import { createEmployeeLevels } from '../../employee-level/employee-level.seed';
 import {
 	createDefaultTimeOffPolicy,
 	createRandomTimeOffPolicies
@@ -95,7 +95,7 @@ import {
 import {
 	createOrganizationVendors,
 	createRandomOrganizationVendors
-} from '../../organization-vendors/organization-vendors.seed';
+} from '../../organization-vendor/organization-vendor.seed';
 import {
 	createDefaultCandidates,
 	createRandomCandidates
@@ -129,7 +129,7 @@ import {
 import {
 	createDefaultOrganizationProjects,
 	createRandomOrganizationProjects
-} from '../../organization-projects/organization-projects.seed';
+} from '../../organization-project/organization-project.seed';
 import { createDefaultTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
 import {
 	createDefaultGoals,
@@ -149,7 +149,7 @@ import {
 import {
 	seedDefaultOrganizationPosition,
 	seedRandomOrganizationPosition
-} from '../../organization-positions/organization-position.seed';
+} from '../../organization-position/organization-position.seed';
 import {
 	createDefaultTags,
 	createRandomOrganizationTags,
@@ -171,7 +171,7 @@ import {
 import {
 	createOrganizationDocuments,
 	createRandomOrganizationDocuments
-} from '../../organization-documents/organization-documents.seed';
+} from '../../organization-document/organization-document.seed';
 import {
 	createDefaultEquipments,
 	createRandomEquipments
@@ -225,7 +225,7 @@ import {
 import {
 	createDefaultAwards,
 	createRandomAwards
-} from '../../organization-awards/organization-awards.seed';
+} from '../../organization-award/organization-award.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 import {
 	createDefaultCandidateCriterionRating,
@@ -250,7 +250,7 @@ import {
 import {
 	createDefaultOrganizationLanguage,
 	createRandomOrganizationLanguage
-} from '../../organization-languages/organization-languages.seed';
+} from '../../organization-language/organization-language.seed';
 import { createRandomOrganizationSprint } from '../../organization-sprint/organization-sprint.seed';
 import { createRandomOrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.seed';
 import { createRandomAppointmentEmployees } from '../../appointment-employees/appointment-employees.seed';
@@ -263,7 +263,7 @@ import { createRandomIntegrationSetting } from '../../integration-setting/integr
 import { createRandomIntegrationMap } from '../../integration-map/integration-map.seed';
 import { createRandomIntegrationTenant } from '../../integration-tenant/integration-tenant.seed';
 import { createRandomIntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.seed';
-import { createRandomIntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.seed';
+import { createRandomIntegrationEntitySettingTied } from '../../integration-entity-setting-tied/integration-entity-setting-tied.seed';
 import { createRandomRequestApprovalTeam } from '../../request-approval-team/request-approval-team.seed';
 import { createRandomRequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.seed';
 import {
@@ -2083,7 +2083,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Integration Entity Settings Tied Entity',
-			createRandomIntegrationEntitySettingTiedEntity(
+			createRandomIntegrationEntitySettingTied(
 				this.connection,
 				tenants
 			)

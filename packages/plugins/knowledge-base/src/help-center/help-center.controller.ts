@@ -1,4 +1,4 @@
-import { IHelpCenter, PermissionsEnum } from '@gauzy/contracts';
+import { IHelpCenter, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	Controller,
@@ -15,7 +15,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	CrudController,
-	IPagination,
 	ParseJsonPipe,
 	PermissionGuard,
 	Permissions,
@@ -110,7 +109,6 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Get('base/:baseId')
 	async findByBaseId(
 		@Param('baseId', UUIDValidationPipe) baseId: string
@@ -130,7 +128,6 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Delete('base/:baseId')
 	async deleteBulkByBaseId(
 		@Param('baseId', UUIDValidationPipe) baseId: string

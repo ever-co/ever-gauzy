@@ -11,20 +11,19 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
-import { IPagination } from '../core';
 import {
 	IOrganizationTeamCreateInput,
-	IOrganizationTeam as IIOrganizationTeam
+	IOrganizationTeam,
+	IPagination
 } from '@gauzy/contracts';
 import { OrganizationTeam } from './organization-team.entity';
-import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationTeam')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
 	constructor(
@@ -33,6 +32,43 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		super(organizationTeamService);
 	}
 
+	/**
+	 * GET find my organization teams
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Find all organization Teams.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found Teams',
+		type: OrganizationTeam
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('me')
+	async findMyTeams(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IOrganizationTeam>> {
+		const { relations, findInput, employeeId } = data;
+		return this.organizationTeamService.findMyTeams(
+			relations,
+			findInput,
+			employeeId
+		);
+	}
+
+	/**
+	 * CREATE organization team
+	 * 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -45,12 +81,18 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@Post('/create')
 	async createOrganizationTeam(
-		@Body() entity: IOrganizationTeamCreateInput,
+		@Body() body: IOrganizationTeamCreateInput,
 		...options: any[]
 	): Promise<OrganizationTeam> {
-		return this.organizationTeamService.createOrgTeam(entity);
+		return this.organizationTeamService.createOrgTeam(body);
 	}
 
+	/**
+	 * GET all organization teams
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all organization Teams.'
 	})
@@ -64,16 +106,24 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllOrganizationTeams(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IIOrganizationTeam>> {
+	): Promise<IPagination<IOrganizationTeam>> {
 		const { relations, findInput } = data;
-		return this.organizationTeamService.getAllOrgTeams({
+		return this.organizationTeamService.findAll({
 			where: findInput,
 			relations
 		});
 	}
 
+	/**
+	 * UPDATE organization team by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an organization Team' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -92,33 +142,9 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Put(':id')
 	async updateOrganizationTeam(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IOrganizationTeamCreateInput,
+		@Body() body: IOrganizationTeamCreateInput,
 		...options: any[]
 	): Promise<OrganizationTeam> {
-		return this.organizationTeamService.updateOrgTeam(id, entity);
-	}
-
-	@ApiOperation({
-		summary: 'Find all organization Teams.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found Teams',
-		type: OrganizationTeam
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('me')
-	async findMyTeams(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IIOrganizationTeam>> {
-		const { relations, findInput, employeeId } = data;
-		return this.organizationTeamService.findMyTeams(
-			relations,
-			findInput,
-			employeeId
-		);
+		return this.organizationTeamService.updateOrgTeam(id, body);
 	}
 }

@@ -18,5 +18,13 @@ export const PaymentsPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-footer.text-right',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyPaymentCss: 'div.ng-star-inserted'
+	verifyPaymentCss: 'div.ng-star-inserted',
+	sidebarBtnCss: 'span.menu-title',
+	accountingPaymentsSidebarBtnCss: 'a[href="#/pages/accounting/payments"] > span.menu-title',
+	reportsPaymentsSidebarBtnCss: 'a[href="#/pages/reports/payments"] > span.menu-title',
+	paymentTableCellCss:
+		'div[class="col-sm-2 project-name"] > span.ng-star-inserted',
+	amountTableCellCss: 'div[class="col text-center day-col"]',
+	groupByCss: 'div.ml-3 > nb-select > button.select-button',
+	dropdownOptionCss: '.option-list nb-option'
 };

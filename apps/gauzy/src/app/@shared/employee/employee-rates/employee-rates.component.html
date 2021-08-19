@@ -65,7 +65,7 @@
 							</div>
 							<div class="col-6 float-left">
 								<ga-currency
-									formControlName="billRateCurrency"
+									[formControl]="form.get('billRateCurrency')"
 									(optionChange)="currencyChanged($event)"
 								></ga-currency>
 							</div>

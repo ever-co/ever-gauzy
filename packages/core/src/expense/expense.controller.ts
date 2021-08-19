@@ -5,7 +5,8 @@ import {
 	IGetExpenseInput,
 	IExpenseReportData,
 	ReportGroupFilterEnum,
-	IExpense
+	IExpense,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -23,23 +24,26 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination, PaginationParams } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { PaginationParams } from '../core';
+import { CrudController } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ExpenseCreateCommand, ExpenseDeleteCommand, ExpenseUpdateCommand } from './commands';
+import {
+	ExpenseCreateCommand,
+	ExpenseDeleteCommand,
+	ExpenseUpdateCommand
+} from './commands';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
-import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.query';
+import { FindSplitExpenseQuery } from './queries';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
 
 @ApiTags('Expense')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class ExpenseController extends CrudController<Expense> {
 	constructor(
@@ -135,7 +139,7 @@ export class ExpenseController extends CrudController<Expense> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('report')
-	async getExpanseReport(
+	async getExpenseReport(
 		@Query() request: IGetExpenseInput
 	): Promise<IExpenseReportData[]> {
 		const expenses = await this.expenseService.getExpense(request);
@@ -197,16 +201,15 @@ export class ExpenseController extends CrudController<Expense> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
-	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Expense
+	@Post()
+	async create(
+		@Body() entity: IExpenseCreateInput,
+		...options: any[]
 	): Promise<IExpense> {
 		return await this.commandBus.execute(
-			new ExpenseUpdateCommand(id, entity)
+			new ExpenseCreateCommand(entity)
 		);
 	}
 
@@ -220,15 +223,16 @@ export class ExpenseController extends CrudController<Expense> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
-	@Post('/create')
-	async create(
-		@Body() entity: IExpenseCreateInput,
-		...options: any[]
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: Expense
 	): Promise<IExpense> {
 		return await this.commandBus.execute(
-			new ExpenseCreateCommand(entity)
+			new ExpenseUpdateCommand(id, entity)
 		);
 	}
 
@@ -245,10 +249,13 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
-	@Delete('deleteExpense')
-	async deleteExpense(@Query('data', ParseJsonPipe) data: any): Promise<any> {
-		const { expenseId = null, employeeId = null } = data;
-		return this.commandBus.execute(
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) expenseId: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { employeeId = null } = data;
+		return await this.commandBus.execute(
 			new ExpenseDeleteCommand(employeeId, expenseId)
 		);
 	}

@@ -1,24 +1,24 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import {
 	IEquipmentSharing,
 	ComponentLayoutStyleEnum,
 	IEquipmentSharingPolicy,
-	IOrganization
+	IOrganization,
+	IEquipmentSharingPolicyFindInput
 } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { filter, first, tap } from 'rxjs/operators';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Store } from '../../@core/services/store.service';
-import { Router, NavigationEnd, RouterEvent } from '@angular/router';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
-import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../@shared/language-base';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { EquipmentSharingPolicyService, Store, ToastrService } from '../../@core/services';
+import { ComponentEnum } from '../../@core/constants';
+import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment-sharing-policy.component.html',
@@ -50,11 +50,11 @@ export class EquipmentSharingPolicyComponent
 
 	constructor(
 		readonly translateService: TranslateService,
-		private equipmentSharingPolicyService: EquipmentSharingPolicyService,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private store: Store,
-		private router: Router
+		private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store,
+		private readonly router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -199,7 +199,7 @@ export class EquipmentSharingPolicyComponent
 	async loadSettings() {
 		this.loading = true;
 
-		let findInput: IEquipmentSharingPolicy = {};
+		let findInput: IEquipmentSharingPolicyFindInput;
 		let policies = [];
 		if (this.selectedOrganization) {
 			const { tenantId } = this.store.user;

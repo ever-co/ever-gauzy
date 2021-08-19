@@ -1,5 +1,5 @@
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import {
 	Body,
 	Controller,
@@ -12,8 +12,7 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { WarehouseService } from './warehouse.service';
 import { Warehouse } from './warehouse.entity';
 import { Permissions } from './../shared/decorators';
@@ -28,7 +27,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { WarehouseProductService } from './warehouse-product-service';
 
 @ApiTags('Warehouses')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class WarehouseController extends CrudController<Warehouse> {
 	constructor(

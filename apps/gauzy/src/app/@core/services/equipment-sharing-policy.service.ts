@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IEquipmentSharingPolicy } from '@gauzy/contracts';
+import { IEquipmentSharingPolicy, IEquipmentSharingPolicyFindInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -12,7 +12,7 @@ export class EquipmentSharingPolicyService {
 
 	getAll(
 		relations?: string[],
-		findInput?: IEquipmentSharingPolicy
+		findInput?: IEquipmentSharingPolicyFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http

@@ -1,1 +1,4 @@
-export const ProposalsPageData = {};
+export const ProposalsPageData = {
+    juniorDeveloper: 'Junior Developer Template',
+    seniorDeveloper: 'Senior Developer Template'
+};

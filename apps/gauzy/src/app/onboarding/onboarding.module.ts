@@ -3,6 +3,7 @@ import { NbLayoutModule, NbSpinnerModule } from '@nebular/theme';
 import { RoleGuard } from '../@core/guards';
 import { AuthService } from '../@core/services/auth.service';
 import { TranslateModule } from '../@shared/translate/translate.module';
+import { ThemeSettingsModule } from '../@theme/components/theme-sidebar/theme-settings/theme-settings.module';
 import { ThemeModule } from '../@theme/theme.module';
 import { OnboardingRoutingModule } from './onboarding-routing.module';
 import { OnboardingComponent } from './onboarding.component';
@@ -13,7 +14,8 @@ import { OnboardingComponent } from './onboarding.component';
 		ThemeModule,
 		NbLayoutModule,
 		TranslateModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		ThemeSettingsModule
 	],
 	declarations: [OnboardingComponent],
 	providers: [AuthService, RoleGuard]

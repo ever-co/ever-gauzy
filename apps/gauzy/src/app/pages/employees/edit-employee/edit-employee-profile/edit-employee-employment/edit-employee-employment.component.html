@@ -62,7 +62,7 @@
 						</p>
 						<div class="ck-editor">
 							<ckeditor
-								formControlName="description"
+								[formControl]="form.get('description')"
 								class="description"
 								[config]="{
 									width: '100%',
@@ -162,7 +162,7 @@
 				<div class="col-md-6">
 					<div class="form-group">
 						<ga-tags-color-input
-							[selectedTags]="tags"
+							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
 						>
@@ -172,7 +172,7 @@
 				<div class="col-md-6">
 					<div class="form-group">
 						<ngx-skills-input
-							[selectedSkills]="skills"
+							[selectedSkills]="form.get('skills').value"
 							(selectedSkillsEvent)="
 								selectedSkillsHandler($event)
 							"

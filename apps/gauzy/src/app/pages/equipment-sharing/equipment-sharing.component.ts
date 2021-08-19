@@ -1,31 +1,30 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { DatePipe } from '@angular/common';
+import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IEquipmentSharing,
-	IApprovalPolicy,
 	ComponentLayoutStyleEnum,
 	ISelectedEquipmentSharing,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
-import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { NbDialogService } from '@nebular/theme';
-import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
 import { first, switchMap, tap } from 'rxjs/operators';
-import { DatePipe } from '@angular/common';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
-import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';
-import { Store } from '../../@core/services/store.service';
-import { combineLatest, Subject } from 'rxjs';
-import { Router, NavigationEnd, RouterEvent } from '@angular/router';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { EquipmentSharingPolicyComponent } from './table-components/equipment-sharing-policy/equipment-sharing-policy.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
-import { EmployeesService } from '../../@core/services';
+import { TranslationBaseComponent } from '../../@shared/language-base';
+import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import {
+	EquipmentSharingActionComponent,
+	EquipmentSharingStatusComponent,
+	EquipmentSharingPolicyComponent
+} from './table-components';
+import { EmployeesService, EquipmentSharingService, Store, ToastrService } from '../../@core/services';
+import { combineLatest, Subject } from 'rxjs';
+import { ComponentEnum } from '../../@core/constants';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment-sharing.component.html',
@@ -34,6 +33,7 @@ import { EmployeesService } from '../../@core/services';
 export class EquipmentSharingComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedEquipmentSharing: IEquipmentSharing;
@@ -42,7 +42,6 @@ export class EquipmentSharingComponent
 	disableButton = true;
 	selectedEmployeeUserId: string;
 	ngDestroy$ = new Subject<void>();
-	approvalPolicies: IApprovalPolicy[] = [];
 	selectedOrgId: string;
 	equipmentsData: IEquipmentSharing[];
 	viewComponentName: ComponentEnum;
@@ -59,13 +58,13 @@ export class EquipmentSharingComponent
 	}
 
 	constructor(
-		readonly translateService: TranslateService,
-		private equipmentSharingService: EquipmentSharingService,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private employeesService: EmployeesService,
-		private store: Store,
-		private router: Router
+		public readonly translateService: TranslateService,
+		private readonly equipmentSharingService: EquipmentSharingService,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly employeesService: EmployeesService,
+		private readonly store: Store,
+		private readonly router: Router
 	) {
 		super(translateService);
 		this.setView();

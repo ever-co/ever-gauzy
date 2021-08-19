@@ -1,0 +1,20 @@
+export const AccountingTemplatesPageData = {
+    receiptOpt: 'Receipt',
+    invoiceOpt: 'Invoice',
+    estimateOpt: 'Estimate',
+    english: 'English',
+	receipt: 'RECEIPT',
+	invoice: 'INVOICE',
+	estimate: 'ESTIMATE',
+	from: 'FROM:',
+	to: 'TO:',
+	invoiceNumber: 'Invoice Number:',
+	invoiceDate: 'Invoice Date:',
+	estimateNumber: 'Estimate Number:',
+	estimateDate: 'Estimate Date:',
+	receiptNumber: 'Receipt Number:',
+	paymentDate: 'Payment Date:',
+	paymentMethod: 'Payment Method:',
+	billTo: 'Bill to',
+	dueDate: 'Due Date:'
+};

@@ -17,6 +17,7 @@ let email = faker.internet.email();
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
 let username = faker.internet.userName();
+
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
 
@@ -26,6 +27,16 @@ let empUsername = faker.internet.userName();
 let empPassword = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let empImgUrl = faker.image.avatar();
+
+const createRandomInteviewTitleNumber = () => {
+	return (
+		ManageInterviewsPageData.title + Math.floor(Math.random() * 1000) + 1
+	);
+};
+
+const interviewTitle = createRandomInteviewTitleNumber();
+
+const futureInterviewTitle = createRandomInteviewTitleNumber();
 
 // Login with email
 Given('Login with default credentials', () => {
@@ -66,7 +77,9 @@ And('User can visit Candidates interviews calendar page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/employees/candidates/interviews/calendar', { timeout: pageLoadTimeout });
+	cy.visit('/#/pages/employees/candidates/interviews/calendar', {
+		timeout: pageLoadTimeout
+	});
 });
 
 And('User can see add interview button', () => {
@@ -87,7 +100,9 @@ When('User click on candidate dropdown', () => {
 
 Then('User can select candidate from dropdown options', () => {
 	manageInterviewsPage.candidateDropdownOptionVisible();
-	manageInterviewsPage.selectCandidateFromDropdown(`${firstName} ${lastName}`);
+	manageInterviewsPage.selectCandidateFromDropdown(
+		`${firstName} ${lastName}`
+	);
 });
 
 And('User can see title input field', () => {
@@ -95,7 +110,7 @@ And('User can see title input field', () => {
 });
 
 And('User can enter value for title', () => {
-	manageInterviewsPage.enterTitleInputData(ManageInterviewsPageData.title);
+	manageInterviewsPage.enterTitleInputData(interviewTitle);
 });
 
 And('User can see date input field', () => {
@@ -184,10 +199,191 @@ Then('Notification message will appear', () => {
 	manageInterviewsPage.waitMessageToHide();
 });
 
-And('User can verify interview was scheduled for candidate', () => {
+// Add interview feedback
+And('User navigates to Candidates interview panel', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/candidates/interviews/interview_panel');
-	manageInterviewsPage.verifySheduleExist(`${firstName} ${lastName}`);
+	// manageInterviewsPage.verifySheduleExist(`${firstName} ${lastName}`);
+});
+
+And('User can see name filter input field', () => {
+	manageInterviewsPage.nameFilterInputVisible();
+});
+
+And('User enters name filter input value', () => {
+	manageInterviewsPage.enterNameFilterInputData(`${firstName} ${lastName}`);
+});
+
+And('User can see title filter input field', () => {
+	manageInterviewsPage.titleFilterInputVisible();
+});
+
+When('User enters title filter input value', () => {
+	manageInterviewsPage.enterTitleFilterInputData(`${interviewTitle}`);
+});
+
+Then('User can see filtered candidate', () => {
+	manageInterviewsPage.verifyNameFilterContains(`${firstName} ${lastName}`);
+	manageInterviewsPage.verifyTitleFilterContains(`${interviewTitle}`);
+});
+
+And('User can see Add Feedback button', () => {
+	manageInterviewsPage.verifyAddFeedbackButtonVisisible();
+});
+
+When('User clicks on Add Feedback button', () => {
+	manageInterviewsPage.clickAddFeedbackButton();
+});
+
+Then('User can see Add Interview dropdown', () => {
+	manageInterviewsPage.interviewDropdownVisible();
+});
+
+When('User clicks on Add Interviewer dropdown', () => {
+	manageInterviewsPage.clickInterviewerDropdown();
+});
+
+Then('User can select Interviewer from dropdown options', () => {
+	manageInterviewsPage.clickInterviewerFromDropdown(0);
+	manageInterviewsPage.clickKeyboardButtonByKeyCode(9);
+});
+
+And('User can see Rating input', () => {
+	manageInterviewsPage.verifyRating();
+});
+
+And('User clicks on Rating input', () => {
+	manageInterviewsPage.clickRating();
+});
+
+And('User can see Radio group', () => {
+	manageInterviewsPage.verifyHireRejectRadioGroup();
+});
+
+And('User clicks on a Radio option', () => {
+	manageInterviewsPage.clickRadioOption();
+});
+
+And('User can see Feedback description input field', () => {
+	manageInterviewsPage.verifyFeedbackDescription();
+});
+
+And('User enters value for Feedback description', () => {
+	manageInterviewsPage.enterFeedBackDescription(
+		ManageInterviewsPageData.feedbackDescription
+	);
+});
+
+And('User can see feedback save button', () => {
+	manageInterviewsPage.feedbackSaveButtonVisible();
+});
+
+When('User clicks on save button', () => {
+	manageInterviewsPage.clickFeedbackSaveButton();
+});
+
+Then('Notification message will appear', () => {
+	manageInterviewsPage.waitMessageToHide();
+});
+
+And('User clears filter input', () => {
+	manageInterviewsPage.clearFilterInputField();
+});
+
+// Add Future Interview
+And('User can enter value for title for a future interview', () => {
+	manageInterviewsPage.enterTitleInputData(futureInterviewTitle);
+});
+
+And('User can enter value for a future date', () => {
+	manageInterviewsPage.enterFutureDateInputData(10);
+	manageInterviewsPage.clickKeyboardButtonByKeyCode(9);
+});
+
+// Edit future Interview
+And('User can see Only Future checkbox', () => {
+	manageInterviewsPage.verifyOnlyFutureCheckboxVisible();
+});
+
+And('User clicks on Only Future checkbox', () => {
+	manageInterviewsPage.clickOnlyFutureCheckbox();
+});
+
+When('User enters title filter input value for future interview', () => {
+	manageInterviewsPage.enterTitleFilterInputData(`${futureInterviewTitle}`);
+});
+
+And('User can see Edit interview button', () => {
+	manageInterviewsPage.verifyEditButtonVisible();
+});
+
+And('User clicks Edit interview button', () => {
+	manageInterviewsPage.clickEditButton();
+});
+
+And('User can enter value for updated note', () => {
+	manageInterviewsPage.enterNoteInputData(
+		ManageInterviewsPageData.updatedNote
+	);
+});
+
+And('User can see updated note', () => {
+	manageInterviewsPage.verifyUpdatedNoteContains(
+		ManageInterviewsPageData.updatedNote
+	);
+});
+
+// Archive future interview
+And('User can see Archive option', () => {
+	manageInterviewsPage.verifyArchiveOptionVisible();
+});
+
+When('User clicks on Archive option', () => {
+	manageInterviewsPage.clickArchiveOption();
+});
+
+Then('User can see Ok button', () => {
+	manageInterviewsPage.verifyOkButtonVisible();
+});
+
+When('User clicks on Ok button', () => {
+	manageInterviewsPage.clickOkButton();
+});
+
+Then('Notification message will appear', () => {
+	manageInterviewsPage.waitMessageToHide();
+});
+
+And('User can see Include Archived checkbox', () => {
+	manageInterviewsPage.verifyInludeArchivedCheckboxVisible();
+});
+
+When('User clicks on Include Archived button', () => {
+	manageInterviewsPage.clickInludeArchivedCheckbox();
+});
+
+Then('User can see Archived badge', () => {
+	manageInterviewsPage.verifyArchivedBadgeContains('Archived');
+});
+
+// Delete future interview
+And('User can see Delete option', () => {
+	manageInterviewsPage.verifyDeleteOptionVisible();
+});
+When('User clicks on Delete option', () => {
+	manageInterviewsPage.clickDeleteOption();
+});
+Then('User can see Delete button', () => {
+	manageInterviewsPage.verifyDeleteButtonVisible();
+});
+When('User clicks on Delete button', () => {
+	manageInterviewsPage.clickDeleteButton();
+});
+Then('Notification message will appear', () => {
+	manageInterviewsPage.waitMessageToHide();
+});
+And('User clears filters', () => {
+	manageInterviewsPage.clearFilterInputField();
 });

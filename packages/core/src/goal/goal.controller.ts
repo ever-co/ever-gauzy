@@ -14,13 +14,12 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GoalService } from './goal.service';
 import { Goal } from './goal.entity';
-import { CrudController } from '../core';
-import { AuthGuard } from '@nestjs/passport';
+import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Goals')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class GoalController extends CrudController<Goal> {
 	constructor(private readonly goalService: GoalService) {

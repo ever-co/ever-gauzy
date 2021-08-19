@@ -7,6 +7,7 @@ import {
 	EmailTemplateNameEnum
 } from '@gauzy/contracts';
 import { IsNull } from 'typeorm';
+import { RequestContext } from './../../../core/context';
 
 @QueryHandler(FindEmailTemplateQuery)
 export class FindEmailTemplateHandler
@@ -16,15 +17,14 @@ export class FindEmailTemplateHandler
 	public async execute(
 		command: FindEmailTemplateQuery
 	): Promise<ICustomizableEmailTemplate> {
-		const {
-			input: { languageCode, name, organizationId, tenantId }
-		} = command;
+		const { input, themeLanguage } = command;
+		const { name, organizationId, languageCode = themeLanguage } = input;
+		const tenantId = RequestContext.currentTenantId();
 
 		const emailTemplate: ICustomizableEmailTemplate = {
 			subject: '',
 			template: ''
 		};
-
 		[emailTemplate.subject, emailTemplate.template] = await Promise.all([
 			await this._fetchTemplate(
 				languageCode,

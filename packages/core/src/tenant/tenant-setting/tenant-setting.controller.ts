@@ -8,20 +8,20 @@ import {
 	Post,
 	UseGuards
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../../core';
+import { CrudController } from '../../core/crud';
 import { RequestContext } from '../../core/context';
-import { Roles } from '../../shared/decorators/roles';
-import { RoleGuard } from '../../shared/guards/auth/role.guard';
+import { Roles } from './../../shared/decorators/roles';
+import { RoleGuard } from './../../shared/guards';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 
 @ApiTags('TenantSetting')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TenantSettingController extends CrudController<TenantSetting> {
-	constructor(private tenantSettingService: TenantSettingService) {
+	constructor(
+		private readonly tenantSettingService: TenantSettingService
+	) {
 		super(tenantSettingService);
 	}
 
@@ -42,10 +42,10 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get()
 	async get() {
-		const user = RequestContext.currentUser();
-		return this.tenantSettingService.get({
+		const tenantId = RequestContext.currentTenantId();
+		return await this.tenantSettingService.get({
 			where: {
-				tenantId: user.tenantId
+				tenantId
 			}
 		});
 	}

@@ -1,3 +1,4 @@
+import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
 export interface IHubstaffAccessTokens {
 	access_token: string;
 	refresh_token: string;
@@ -5,9 +6,8 @@ export interface IHubstaffAccessTokens {
 	expires_in: number;
 }
 
-export interface ICreateIntegrationDto {
-	tenantId: string;
-	organizationId: string;
+export interface ICreateIntegrationDto 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	client_id: string;
 	code: string;
 	grant_type: string;

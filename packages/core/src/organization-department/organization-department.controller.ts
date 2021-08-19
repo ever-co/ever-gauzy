@@ -1,6 +1,8 @@
 import {
 	IEditEntityByMemberInput,
+	IOrganizationDepartment,
 	IOrganizationDepartmentCreateInput,
+	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import {
@@ -16,8 +18,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
+import { CrudController } from './../core/crud';
 import {
 	OrganizationDepartmentEditByEmployeeCommand,
 	OrganizationDepartmentUpdateCommand
@@ -26,11 +27,10 @@ import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationDepartment')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationDepartmentController extends CrudController<OrganizationDepartment> {
 	constructor(
@@ -40,6 +40,12 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 		super(organizationDepartmentService);
 	}
 
+	/**
+	 * GET organization department by employee
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all organization departments.'
 	})
@@ -59,30 +65,12 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 		return this.organizationDepartmentService.findByEmployee(id);
 	}
 
-	@ApiOperation({
-		summary: 'Find all organization departments.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found departments',
-		type: OrganizationDepartment
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findAllOrganizationDepartments(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<OrganizationDepartment>> {
-		const { findInput, relations, order} = data;
-		return this.organizationDepartmentService.findAll({
-			where: findInput,
-			order,
-			relations
-		});
-	}
-
+	/**
+	 * UPDATE organization department by employee
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -101,7 +89,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
-	async updateEmployee(
+	async updateByEmployee(
 		@Body() entity: IEditEntityByMemberInput
 	): Promise<any> {
 		return this.commandBus.execute(
@@ -109,6 +97,43 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 		);
 	}
 
+	/**
+	 * GET all organization department
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Find all organization departments.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found departments',
+		type: OrganizationDepartment
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<IOrganizationDepartment>> {
+		const { findInput, relations, order} = data;
+		return this.organizationDepartmentService.findAll({
+			where: findInput,
+			order,
+			relations
+		});
+	}
+
+	/**
+	 * UPDATE organization department by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

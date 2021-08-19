@@ -1,18 +1,16 @@
-import { Controller, Get, Param, Post, Body, UseGuards, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Param, HttpStatus, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController } from '../core';
+import { ILanguage, IPagination } from '@gauzy/contracts';
 import { Language } from './language.entity';
 import { LanguageService } from './language.service';
-import { PermissionGuard } from '../shared/guards';
-import { Permissions } from './../shared/decorators';
+import { Public } from './../shared/decorators';
 
 @ApiTags('Languages')
 @Controller()
-export class LanguageController extends CrudController<Language> {
-	constructor(private readonly languageService: LanguageService) {
-		super(languageService);
-	}
+export class LanguageController {
+	constructor(
+		private readonly languageService: LanguageService
+	) { }
 
 	@ApiOperation({ summary: 'Find all language.' })
 	@ApiResponse({
@@ -25,21 +23,16 @@ export class LanguageController extends CrudController<Language> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllLanguages(
+	@Public()
+	async findAll(
 		@Query() query: any
-	): Promise<IPagination<Language>> {
+	): Promise<IPagination<ILanguage>> {
 		return this.languageService.findAll(query);
 	}
 
 	@Get('getByName/:name')
-	async findByName(@Param('name') name: string): Promise<Language> {
+	@Public()
+	async findByName(@Param('name') name: string): Promise<ILanguage> {
 		return this.languageService.findOneByName(name);
-	}
-
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
-	@Post()
-	async createRecord(@Body() entity: Language): Promise<any> {
-		return this.languageService.create(entity);
 	}
 }

@@ -52,9 +52,7 @@ export class ExpenseCreateHandler
 		expense.category = input.category;
 		expense.vendor = input.vendor;
 		expense.typeOfExpense = input.typeOfExpense;
-		expense.organizationContactName = input.organizationContactName;
 		expense.organizationContactId = input.organizationContactId;
-		expense.projectName = input.projectName;
 		expense.projectId = input.projectId;
 		expense.notes = input.notes;
 		expense.valueDate = input.valueDate;
