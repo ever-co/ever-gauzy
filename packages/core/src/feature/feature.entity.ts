@@ -4,47 +4,20 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	OneToMany
+	OneToMany,
+	RelationId
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IFeature,
 	IFeatureOrganization
 } from '@gauzy/contracts';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
 
 @Entity('feature')
 export class Feature extends BaseEntity implements IFeature {
-	@ApiProperty({ type: () => FeatureOrganization })
-	@OneToMany(
-		() => FeatureOrganization,
-		(featureOrganization) => featureOrganization.feature,
-		{
-			cascade: true,
-			onDelete: 'CASCADE'
-		}
-	)
-	@JoinColumn()
-	featureOrganizations?: IFeatureOrganization[];
-
-	@ApiProperty({ type: () => Feature })
-	@ManyToOne(() => Feature, (feature) => feature.children)
-	parent: Feature;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@Column({ nullable: true })
-	parentId?: string;
-
-	@ApiProperty({ type: () => Feature })
-	@OneToMany(() => Feature, (feature) => feature.parent, {
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn({ name: 'parentId' })
-	children: Feature[];
-
+	
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -90,4 +63,53 @@ export class Feature extends BaseEntity implements IFeature {
 
 	isEnabled?: boolean;
 	imageUrl?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Feature
+	 */
+	@ApiProperty({ type: () => Feature })
+	@ManyToOne(() => Feature, (feature) => feature.children, {
+		onDelete: 'CASCADE'
+	})
+	parent: IFeature;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Feature) => it.parent)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	parentId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * FeatureOrganization
+	 */
+	@ApiProperty({ type: () => FeatureOrganization })
+	@OneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.feature, {
+		cascade: true
+	})
+	@JoinColumn()
+	featureOrganizations?: IFeatureOrganization[];
+	
+	/**
+	 * Feature
+	 */
+	@ApiProperty({ type: () => Feature })
+	@OneToMany(() => Feature, (feature) => feature.parent, {
+		cascade: true
+	})
+	@JoinColumn({ name: 'parentId' })
+	children: IFeature[];
 }
