@@ -14,6 +14,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		TenantModule
 	],
 	controllers: [IntegrationSettingController],
-	providers: [IntegrationSettingService, ...CommandHandlers]
+	providers: [IntegrationSettingService, ...CommandHandlers],
+	exports: [IntegrationSettingService]
 })
 export class IntegrationSettingModule {}

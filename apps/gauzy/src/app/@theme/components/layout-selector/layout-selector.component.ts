@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
-import { Subject } from 'rxjs';
-import './layout-selector.component.scss';
-import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ComponentEnum } from '../../../@core/constants';
+import { Store } from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-layout-selector',
 	templateUrl: './layout-selector.component.html',
@@ -13,7 +12,6 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class LayoutSelectorComponent implements OnInit, OnDestroy {
 	public layoutStyles = ComponentLayoutStyleEnum;
-	private _ngDestroy$ = new Subject<void>();
 
 	@Input() componentName: ComponentEnum;
 	componentLayoutStyle: ComponentLayoutStyleEnum;
@@ -22,7 +20,7 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.store.componentLayoutMap$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(
 				(componentLayoutMap: Map<string, ComponentLayoutStyleEnum>) => {
 					const dataLayout = componentLayoutMap.get(
@@ -37,8 +35,5 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 		this.store.setLayoutForComponent(this.componentName, layout);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() { }
 }

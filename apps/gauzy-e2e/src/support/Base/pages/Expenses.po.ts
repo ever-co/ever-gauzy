@@ -10,7 +10,8 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyElementNotExist,
-	waitUntil
+	waitUntil,
+	forceClickElementByText
 } from '../utils/util';
 import { ExpensesPage } from '../pageobjects/ExpensesPageObject';
 
@@ -244,4 +245,44 @@ export const verifyElementIsDeleted = () => {
 
 export const verifyCategoryExists = (text) => {
 	verifyText(ExpensesPage.verifyCategoryCss, text);
+};
+
+export const sidebarBtnVisible = () => {
+	verifyElementIsVisible(ExpensesPage.sidebarBtnCss);
+};
+
+export const clickSidebarBtn = (text) => {
+	clickElementByText(ExpensesPage.sidebarBtnCss, text);
+};
+
+export const clickAccountingExpensesSidebarBtn = (text) => {
+	forceClickElementByText(ExpensesPage.accountingExpensesSidebarBtnCss, text);
+};
+
+export const clickReportsInnerSidebarBtn = (text) => {
+	forceClickElementByText(ExpensesPage.reportsExpenseSidebarBtnCss, text);
+};
+
+export const verifyExpenseProject = (project) => {
+	verifyText(ExpensesPage.expenseTableCellCss, project);
+};
+
+export const verifyExpenseAmount = (amount) => {
+	verifyText(ExpensesPage.amountTableCellCss, amount);
+};
+
+export const groupBySelectVisible = () => {
+	verifyElementIsVisible(ExpensesPage.groupByCss);
+};
+
+export const clickGroupBySelect = () => {
+	clickButton(ExpensesPage.groupByCss);
+};
+
+export const verifyDropdownOption = (text) => {
+	verifyText(ExpensesPage.dropdownOptionCss, text);
+};
+
+export const selectOptionFromDropdown = (text) => {
+	clickElementByText(ExpensesPage.dropdownOptionCss, text);
 };

@@ -186,6 +186,63 @@ And('User can verify expense', () => {
 	expensesPage.verifyExpenseExists();
 });
 
+// Verify expense reports
+And('User can see Reports sidebar button', () => {
+	expensesPage.sidebarBtnVisible();
+});
+
+When('User click on Reports sidebar button', () => {
+	expensesPage.clickSidebarBtn(ExpensePageData.reports);
+});
+
+Then('User can click on Expense sidebar button', () => {
+	expensesPage.clickReportsInnerSidebarBtn(ExpensePageData.expense);
+});
+
+And('User can see Group by select', () => {
+	expensesPage.groupBySelectVisible();
+});
+
+When('User click on Group by select', () => {
+	expensesPage.clickGroupBySelect();
+});
+
+Then('User can see option for Date', () => {
+	expensesPage.verifyDropdownOption(ExpensePageData.date);
+});
+
+And('User can see option for Client', () => {
+	expensesPage.verifyDropdownOption(ExpensePageData.employee);
+});
+
+And('User can see option for Project', () => {
+	expensesPage.verifyDropdownOption(ExpensePageData.project);
+});
+
+When('User click on Date dropdown option', () => {
+	expensesPage.selectOptionFromDropdown(ExpensePageData.date);
+});
+
+Then('User can verify project', () => {
+	expensesPage.verifyExpenseProject(ExpensePageData.defaultProject);
+});
+
+And('User can verify amount', () => {
+	expensesPage.verifyExpenseAmount(ExpensePageData.verifyAmount);
+});
+
+When('User click again on Reports sidebar button', () => {
+	expensesPage.clickSidebarBtn(ExpensePageData.reports);
+});
+
+Then('User can click on Accounting sidebar button', () => {
+	expensesPage.clickSidebarBtn(ExpensePageData.accounting);
+});
+
+When('User click on Expenses sidebar button', () => {
+	expensesPage.clickAccountingExpensesSidebarBtn(ExpensePageData.expenses);
+});
+
 // Edit expense
 When('User select first table row', () => {
 	expensesPage.selectTableRow(0);
@@ -316,10 +373,6 @@ When('User can click on confirm delete button', () => {
 
 Then('Notification message will appear', () => {
 	expensesPage.waitMessageToHide();
-});
-
-And('User can verify expense was deleted', () => {
-	expensesPage.verifyElementIsDeleted();
 });
 
 // Add new category

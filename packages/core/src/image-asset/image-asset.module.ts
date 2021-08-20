@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { TenantModule } from '../tenant/tenant.module';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
+import { UserModule } from '../user/user.module';
 import { ImageAssetController } from './image-asset.controller';
 import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
@@ -13,11 +12,12 @@ import { ImageAssetService } from './image-asset.service';
 		RouterModule.forRoutes([
 			{ path: '/image-assets', module: ImageAssetModule }
 		]),
-		TypeOrmModule.forFeature([ImageAsset, User]),
-		TenantModule
+		TypeOrmModule.forFeature([ ImageAsset ]),
+		TenantModule,
+		UserModule
 	],
 	controllers: [ImageAssetController],
-	providers: [ImageAssetService, UserService],
-	exports: []
+	providers: [ImageAssetService],
+	exports: [ImageAssetService]
 })
 export class ImageAssetModule {}

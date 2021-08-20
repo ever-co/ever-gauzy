@@ -38,6 +38,21 @@ Feature: Expenses test
     When User click on save button
     Then Notification message will appear
     And User can verify expense
+  Scenario: Verify expense reports
+    And User can see Reports sidebar button
+    When User click on Reports sidebar button
+    Then User can click on Expense sidebar button
+    And User can see Group by select
+    When User click on Group by select
+    Then User can see option for Date
+    And User can see option for Client
+    And User can see option for Project
+    When User click on Date dropdown option
+    Then User can verify project
+    And User can verify amount
+    When User click again on Reports sidebar button
+    Then User can click on Accounting sidebar button
+    When User click on Expenses sidebar button
   Scenario: Edit expense
     When User select first table row
     Then Edit button will become active
@@ -73,7 +88,6 @@ Feature: Expenses test
     Then User can see confirm delete button
     When User can click on confirm delete button
     Then Notification message will appear
-    And User can verify expense was deleted
   Scenario: Add new category
     And User can see manage categories button
     When User click on manage categories button

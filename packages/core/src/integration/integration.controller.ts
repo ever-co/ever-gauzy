@@ -5,7 +5,6 @@ import {
 	Query,
 	Param
 } from '@nestjs/common';
-import { CrudController } from './../core/crud';
 import { Integration } from './integration.entity';
 import { IntegrationService } from './integration.service';
 import { IntegrationType } from './integration-type.entity';
@@ -17,14 +16,17 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Integrations')
 @Controller()
-export class IntegrationController extends CrudController<Integration> {
+export class IntegrationController {
 	constructor(
-		private _integrationService: IntegrationService,
-		private _commandBus: CommandBus
-	) {
-		super(_integrationService);
-	}
+		private readonly _integrationService: IntegrationService,
+		private readonly _commandBus: CommandBus
+	) {}
 
+	/**
+	 * GET all integration types
+	 * 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all integration types.'
 	})
@@ -42,27 +44,13 @@ export class IntegrationController extends CrudController<Integration> {
 		return await this._commandBus.execute(new IntegrationTypeGetCommand());
 	}
 
-	@ApiOperation({
-		summary: 'Find all integrations.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found integrations',
-		type: IntegrationType
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async getIntegrations(
-		@Query('filters', ParseJsonPipe) filters: any
-	): Promise<Integration[]> {
-		return await this._commandBus.execute(
-			new IntegrationGetCommand(filters)
-		);
-	}
-
+	/**
+	 * GET Check integration remember state for tenant user 
+	 * 
+	 * @param integration 
+	 * @param organizationId 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Check integration remember state for tenant user.'
 	})
@@ -86,6 +74,33 @@ export class IntegrationController extends CrudController<Integration> {
 		return await this._integrationService.checkIntegrationRemeberState(
 			integration,
 			organizationId
+		);
+	}
+
+	/**
+	 * GET all system integrations
+	 * 
+	 * @param filters 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Find all integrations.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found integrations',
+		type: IntegrationType
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async getIntegrations(
+		@Query('filters', ParseJsonPipe) filters: any
+	): Promise<Integration[]> {
+		return await this._commandBus.execute(
+			new IntegrationGetCommand(filters)
 		);
 	}
 }

@@ -60,7 +60,7 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
-import { EmployeeLevelModule } from './organization_employee-level/organization-employee-level.module';
+import { EmployeeLevelModule } from './employee-level/employee-level.module';
 import { ExportAllModule } from './export-import/export/export-all.module';
 import { ImportAllModule } from './export-import/import/import-all.module';
 import { TaskModule } from './tasks/task.module';
@@ -79,7 +79,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
 import { ProductVariantModule } from './product-variant/product-variant.module';
 import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
-import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.module';
+import { IntegrationEntitySettingTiedModule } from './integration-entity-setting-tied/integration-entity-setting-tied.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
 import { CandidateSourceModule } from './candidate-source/candidate-source.module';
 import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
@@ -302,7 +302,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		ProductVariantModule,
 		ProductVariantSettingsModule,
 		IntegrationEntitySettingModule,
-		IntegrationEntitySettingTiedEntityModule,
+		IntegrationEntitySettingTiedModule,
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,

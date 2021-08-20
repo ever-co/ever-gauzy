@@ -5,8 +5,12 @@ import {
 	OnInit,
 	SimpleChanges
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable } from 'rxjs/Observable';
+import { TranslateService } from '@ngx-translate/core';
+import * as _ from 'underscore';
 import {
 	IFeature,
 	IFeatureOrganization,
@@ -14,13 +18,8 @@ import {
 	IOrganization,
 	IUser
 } from '@gauzy/contracts';
-import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
-import { Store } from '../../@core/services/store.service';
-import { Observable } from 'rxjs/Observable';
-import { TranslateService } from '@ngx-translate/core';
+import { FeatureStoreService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { ActivatedRoute } from '@angular/router';
-import * as _ from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,6 +30,7 @@ import * as _ from 'underscore';
 export class FeatureToggleComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnChanges {
+
 	@Input() organization: IOrganization;
 
 	blocks$: Observable<IFeature[][]> = this._featureStoreService.blocks$;

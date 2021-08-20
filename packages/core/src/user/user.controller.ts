@@ -14,7 +14,9 @@ import {
 	Body,
 	Put,
 	Delete,
-	UseInterceptors
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import {
 	ApiOperation,
@@ -22,19 +24,24 @@ import {
 	ApiTags,
 	ApiBearerAuth
 } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
+import { CommandBus } from '@nestjs/cqrs';
+import {
+	IPagination,
+	IUser,
+	PermissionsEnum,
+	IUserCreateInput,
+	IUserUpdateInput
+} from '@gauzy/contracts';
+import { CrudController, PaginationParams } from './../core/crud';
+import { TransformInterceptor } from './../core/interceptors';
+import { RequestContext } from '../core/context';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { User } from './user.entity';
 import { UserService } from './user.service';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from './../shared/decorators';
-import { RequestContext } from '../core/context';
-import { CommandBus } from '@nestjs/cqrs';
 import { UserCreateCommand } from './commands';
-import { IUserCreateInput, IUserUpdateInput } from '@gauzy/contracts';
 import { DeleteAllDataService } from './delete-all-data/delete-all-data.service';
-import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -49,6 +56,12 @@ export class UserController extends CrudController<User> {
 		super(userService);
 	}
 
+	/**
+	 * GET current login user
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find current user.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -60,7 +73,7 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@Get('/me')
-	async findCurrentUser(
+	async findMe(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<User> {
 		const { relations = [] } = data;
@@ -70,6 +83,12 @@ export class UserController extends CrudController<User> {
 		});
 	}
 
+	/**
+	 * GET user by email
+	 * 
+	 * @param email 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find user by email address.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -85,25 +104,46 @@ export class UserController extends CrudController<User> {
 		return this.userService.getUserByEmail(email);
 	}
 
-	@ApiOperation({ summary: 'Find User by id.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found one record',
-		type: User
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data?: any
-	): Promise<User> {
-		const { relations } = data;
-		return this.userService.findOne(id, { relations });
+
+	/**
+	 * GET user count
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@Get('count')
+	async getCount(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { relations, findInput } = data;
+		return this.userService.count({
+			where: findInput,
+			relations
+		});
 	}
 
+	/**
+	 * GET user list by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IUser>
+	): Promise<IPagination<IUser>> {
+		return this.userService.paginate(filter);
+	}
+
+	/**
+	 * GET all users
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all users.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -127,6 +167,39 @@ export class UserController extends CrudController<User> {
 		});
 	}
 
+	/**
+	 * GET user by id
+	 * 
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find User by id.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record',
+		type: User
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<User> {
+		const { relations } = data;
+		return this.userService.findOne(id, { relations });
+	}
+
+	/**
+	 * CREATE new user
+	 * 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -143,27 +216,41 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body() entity: IUserCreateInput,
-		...options: any[]
-	): Promise<User> {
-		return this.commandBus.execute(new UserCreateCommand(entity));
+		@Body() entity: IUserCreateInput
+	): Promise<IUser> {
+		return await this.commandBus.execute(
+			new UserCreateCommand(entity)
+		);
 	}
 
+	/**
+	 * UPDATE user by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IUserUpdateInput,
-		...options: any[]
+		@Body() entity: IUserUpdateInput
 	): Promise<any> {
-		return this.userService.updateProfile(id, {
+		return await this.userService.updateProfile(id, {
 			id,
 			...entity
 		});
 	}
 
+	/**
+	 * DELETE all user data from all tables
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Delete all user data.' })
 	@ApiResponse({
 		status: HttpStatus.OK,

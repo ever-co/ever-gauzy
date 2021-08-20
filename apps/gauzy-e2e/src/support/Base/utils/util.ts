@@ -85,6 +85,12 @@ export const verifyElementIsVisible = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('be.visible');
 };
 
+export const verifyElementIsVisibleByIndex = (loc, index: number) => {
+	cy.get(loc, { timeout: defaultCommandTimeout })
+		.eq(index)
+		.should('be.visible');
+};
+
 export const clickButtonByIndex = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
 };
@@ -146,6 +152,12 @@ export const scrollDown = (loc) => {
 	});
 };
 
+export const scrollUp = (loc) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).scrollTo('top', {
+		ensureScrollable: false
+	});
+};
+
 export const scrollToViewEl = (loc: any) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).scrollIntoView();
 };
@@ -158,11 +170,11 @@ export const verifyElementNotExist = (loc) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.exist');
 };
 
-export const verifyTableRowByText = (loc, text) => {
+export const verifyByText = (loc, text: string) => {
 	cy.get(loc, { timeout: defaultCommandTimeout }).contains(text);
 };
 
-export const clickTableRowByText = (loc, text) => {
+export const clickByText = (loc, text: string) => {
 	cy.get(loc, { timeout: taskTimeout }).contains(text).click();
 };
 
@@ -195,13 +207,13 @@ export const clickOutsideElement = () => {
 
 export const uploadMedia = (loc: any, btn: any, file: string) => {
 	const filepath = file;
-	cy.get(loc, { timeout: 40000 }).attachFile(filepath);
-	cy.get(btn, { timeout: 40000 }).click({ force: true });
+	cy.get(loc, { timeout: defaultCommandTimeout }).attachFile(filepath);
+	cy.get(btn, { timeout: defaultCommandTimeout }).click({ force: true });
 };
 
 export const uploadMediaInput = (loc: any, file: any) => {
 	const filepath = file;
-	cy.get(loc, { timeout: 40000 }).attachFile(filepath);
+	cy.get(loc, { timeout: defaultCommandTimeout }).attachFile(filepath);
 };
 
 export const waitElementToLoad = (loc: any) => {
@@ -209,7 +221,14 @@ export const waitElementToLoad = (loc: any) => {
 };
 
 export const dragNDrop = (source: any, index: number, target: any) => {
-	cy.get(source, { timeout: 40000 })
+	cy.get(source, { timeout: defaultCommandTimeout })
 		.eq(index)
 		.move({ x: 100, y: 100, force: true });
+};
+
+export const triggerSlider = (loc: any) => {
+	cy.get(loc, { timeout: defaultCommandTimeout })
+		.first()
+		.invoke('val', 35)
+		.trigger('change', { data: '35' });
 };

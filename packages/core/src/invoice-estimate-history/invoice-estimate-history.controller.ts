@@ -1,18 +1,18 @@
-import { CrudController } from './../core/crud';
-import { InvoiceEstimateHistory } from './invoice-estimate-history.entity';
-import { ApiTags } from '@nestjs/swagger';
 import { Controller, UseGuards, Query, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { PermissionsEnum, IInvoiceEstimateHistory, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { PermissionsEnum, IInvoiceEstimateHistory, IPagination } from '@gauzy/contracts';
 import { ParseJsonPipe } from './../shared/pipes';
+import { InvoiceEstimateHistory } from './invoice-estimate-history.entity';
 import { InvoiceEstimateHistoryService } from './invoice-estimate-history.service';
 
 @ApiTags('InvoiceEstimateHistory')
 @Controller()
 export class InvoiceEstimateHistoryController extends CrudController<InvoiceEstimateHistory> {
 	constructor(
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
+		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(invoiceEstimateHistoryService);
 	}
@@ -20,7 +20,7 @@ export class InvoiceEstimateHistoryController extends CrudController<InvoiceEsti
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
-	async findAllHistories(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IInvoiceEstimateHistory>> {
 		const { relations = [], findInput = null } = data;

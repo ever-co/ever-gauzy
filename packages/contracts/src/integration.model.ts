@@ -1,25 +1,25 @@
 import {
 	IBaseEntityModel,
-	IBasePerTenantAndOrganizationEntityModel,
-	IBasePerTenantEntityModel
+	IBasePerTenantAndOrganizationEntityModel
 } from './base-entity.model';
 import { IOrganizationProjectsCreateInput } from './organization-projects.model';
 import { ITag } from './tag-entity.model';
 
 export interface IIntegrationSetting
 	extends IBasePerTenantAndOrganizationEntityModel {
-	integration?: IIntegrationTenant;
 	settingsName: string;
 	settingsValue: string;
+	integration?: IIntegrationTenant;
+	integrationId?: string;
 }
 
 export interface IIntegrationEntitySetting
 	extends IBasePerTenantAndOrganizationEntityModel {
-	integration?: IIntegrationTenant;
-	readonly integrationId?: string;
 	entity: string;
 	sync: boolean;
-	tiedEntities?: any[];
+	integration?: IIntegrationTenant;
+	readonly integrationId?: string;
+	tiedEntities?: IIntegrationEntitySettingTied[];
 }
 
 export interface IIntegrationEntitySettingTied
@@ -44,9 +44,10 @@ export interface IIntegrationViewModel {
 	isComingSoon?: boolean;
 }
 
-export interface IIntegrationTenant extends IBasePerTenantEntityModel {
+export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];
+	settings?: IIntegrationSetting[];
 }
 
 export interface IIntegration {

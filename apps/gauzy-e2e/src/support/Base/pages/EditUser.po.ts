@@ -9,7 +9,7 @@ import {
 	clickKeyboardBtnByKeycode,
 	verifyText,
 	waitElementToHide,
-	clickTableRowByText
+	clickByText
 } from '../utils/util';
 import { EditUserPage } from '../pageobjects/EditUserPageObject';
 
@@ -26,7 +26,7 @@ export const tableRowVisible = () => {
 };
 
 export const selectTableRow = (text) => {
-	clickTableRowByText(EditUserPage.selectTableRowCss, text);
+	clickByText(EditUserPage.selectTableRowCss, text);
 };
 
 export const editButtonVisible = () => {

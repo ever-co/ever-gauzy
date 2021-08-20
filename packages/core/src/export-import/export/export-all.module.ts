@@ -32,7 +32,7 @@ import { RoleService } from '../../role/role.service';
 import { InvoiceService } from '../../invoice/invoice.service';
 import { PdfmakerService } from './../../invoice/pdfmaker.service';
 import { InvoiceItemService } from '../../invoice-item/invoice-item.service';
-import { EmployeeLevelService } from '../../organization_employee-level/organization-employee-level.service';
+import { EmployeeLevelService } from '../../employee-level/employee-level.service';
 import { OrganizationContactService } from '../../organization-contact/organization-contact.service';
 import { OrganizationEmploymentTypeService } from '../../organization-employment-type/organization-employment-type.service';
 import { OrganizationPositionService } from '../../organization-position/organization-position.service';
@@ -98,7 +98,7 @@ import { IntegrationService } from '../../integration/integration.service';
 import { IntegrationMapService } from '../../integration-map/integration-map.service';
 import { IntegrationSettingService } from '../../integration-setting/integration-setting.service';
 import { IntegrationEntitySettingService } from '../../integration-entity-setting/integration-entity-setting.service';
-import { IntegrationEntitySettingTiedEntityService } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.service';
+import { IntegrationEntitySettingTiedService } from '../../integration-entity-setting-tied/integration-entity-setting-tied.service';
 import { IntegrationTenantService } from '../../integration-tenant/integration-tenant.service';
 import { KeyResultService } from '../../keyresult/keyresult.service';
 import { KeyResultUpdateService } from '../../keyresult-update/keyresult-update.service';
@@ -184,7 +184,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		IncomeService,
 		IntegrationService,
 		IntegrationEntitySettingService,
-		IntegrationEntitySettingTiedEntityService,
+		IntegrationEntitySettingTiedService,
 		IntegrationMapService,
 		IntegrationSettingService,
 		IntegrationTenantService,
@@ -309,7 +309,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		IncomeService,
 		IntegrationService,
 		IntegrationEntitySettingService,
-		IntegrationEntitySettingTiedEntityService,
+		IntegrationEntitySettingTiedService,
 		IntegrationMapService,
 		IntegrationSettingService,
 		IntegrationTenantService,

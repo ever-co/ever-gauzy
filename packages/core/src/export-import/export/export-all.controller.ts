@@ -3,11 +3,13 @@ import {
 	HttpStatus,
 	Get,
 	Res,
-	Query
+	Query,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ExportAllService } from './export-all.service';
 import { ParseJsonPipe } from './../../shared/pipes/parse-json.pipe';
+import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('Download')
 @Controller()
@@ -23,6 +25,7 @@ export class ExportAllController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(TenantPermissionGuard)
 	@Get()
 	async exportAll(
 		@Query('data', ParseJsonPipe) data: any,
@@ -45,6 +48,7 @@ export class ExportAllController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(TenantPermissionGuard)
 	@Get('template')
 	async downloadTemplate(
 		@Res() res
@@ -66,6 +70,7 @@ export class ExportAllController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(TenantPermissionGuard)
 	@Get('filter')
 	async exportByName(
 		@Query('data', ParseJsonPipe) data: any,

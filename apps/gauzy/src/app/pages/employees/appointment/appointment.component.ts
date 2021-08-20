@@ -144,6 +144,15 @@ export class AppointmentComponent
 				debounceTime(500)
 			)
 			.subscribe((employee) => {
+				// Will only call in case of public appointment booking
+				if (
+					this.employee &&
+					this.employee.id &&
+					this.selectedEventType
+				) {
+					return this.renderAppointmentsAndSlots(this.employee.id);
+				}
+
 				if (employee && employee.id) {
 					this._selectedEmployeeId = employee.id;
 					this.renderAppointmentsAndSlots(this._selectedEmployeeId);
@@ -155,11 +164,6 @@ export class AppointmentComponent
 					}
 				}
 			});
-
-		// only call in case of public appointment booking
-		if (this.employee && this.employee.id && this.selectedEventType) {
-			this.renderAppointmentsAndSlots(this.employee.id);
-		}
 	}
 
 	getCalendarOption() {
@@ -333,7 +337,7 @@ export class AppointmentComponent
 			tenantId,
 			employeeId: employeeId || null
 		};
-		
+
 		try {
 			const slots = await this.availabilitySlotsService.getAll(
 				[],

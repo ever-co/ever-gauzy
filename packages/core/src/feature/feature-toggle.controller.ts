@@ -10,25 +10,27 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FeatureInterface } from 'unleash-client/lib/feature';
 import { getFeatureToggleDefinitions } from 'unleash-client';
-import { FeatureEnum, IFeatureOrganizationUpdateInput } from '@gauzy/contracts';
+import { FeatureEnum, IFeatureOrganization, IFeatureOrganizationUpdateInput, IPagination } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { Feature } from './feature.entity';
 import { FeatureService } from './feature.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { Public } from './../shared/decorators';
 import { FeatureToggleUpdateCommand } from './commands';
+import { FeatureOrganizationService } from './feature-organization.service';
 
 @ApiTags('Feature')
 @Controller()
-export class FeaturesToggleController {
+export class FeatureToggleController {
 	constructor(
 		private readonly featureService: FeatureService,
+		private readonly _featureOrganizationService: FeatureOrganizationService,
 		private readonly commandBus: CommandBus
 	) {}
 
-	@Get()
+	@Get('definition')
 	@Public()
-	async get() {
+	async getFeatureToggleDefinitions() {
 		let featureToggles: FeatureInterface[] = getFeatureToggleDefinitions();
 
 		//only support gauzy feature and removed other
@@ -52,23 +54,10 @@ export class FeaturesToggleController {
 		description: 'Record not found'
 	})
 	@Get('parent')
-	async getParentFeatureList(@Query('data') data: any) {
-		return this.featureService.getParentFeatureList(data);
-	}
-
-	@ApiOperation({ summary: 'Find all features.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found feature',
-		type: Feature
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('all')
-	async getAllFeatureList() {
-		return this.featureService.getAllFeatureList();
+	async getParentFeatureList(
+		@Query('data') data: any
+	) {
+		return this.featureService.getParentFeatures(data);
 	}
 
 	@ApiOperation({ summary: 'Find all feature organizations.' })
@@ -83,8 +72,29 @@ export class FeaturesToggleController {
 	})
 	@UseGuards(TenantPermissionGuard)
 	@Get('/organizations')
-	async getFeaturesOrganization(@Query('data') data: any) {
-		return this.featureService.getFeatureOrganizations(data);
+	async getFeaturesOrganization(
+		@Query('data') data: any
+	): Promise<IPagination<IFeatureOrganization>> {
+		const { relations = [], findInput = {} } = data;
+		return await this._featureOrganizationService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
+	@ApiOperation({ summary: 'Find all features.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found feature',
+		type: Feature
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll() {
+		return await this.featureService.findAll();
 	}
 
 	@ApiOperation({ summary: 'Enabled or disabled features' })
@@ -102,6 +112,8 @@ export class FeaturesToggleController {
 	async enabledDisabledFeature(
 		@Body() input: IFeatureOrganizationUpdateInput
 	) {
-		return this.commandBus.execute(new FeatureToggleUpdateCommand(input));
+		return await this.commandBus.execute(
+			new FeatureToggleUpdateCommand(input)
+		);
 	}
 }

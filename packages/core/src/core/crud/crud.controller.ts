@@ -79,7 +79,10 @@ export abstract class CrudController<T extends BaseEntity> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<T> {
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+		...options: any[]
+	): Promise<T> {
 		return this.crudService.findOne(id);
 	}
 

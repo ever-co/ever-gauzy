@@ -89,7 +89,8 @@ export interface IEmployeeFindInput {
 	skills?: ISkill[];
 }
 
-export interface IEmployeeUpdateInput {
+export interface IEmployeeUpdateInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
@@ -156,10 +157,9 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
-export interface IEmployeeLevel {
-	id: string;
+export interface IEmployeeLevel 
+	extends IBasePerTenantAndOrganizationEntityModel  {
 	level: string;
-	organizationId: string;
 	tag?: ITag[];
 	skills?: ISkill[];
 }

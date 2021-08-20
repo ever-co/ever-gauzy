@@ -8,7 +8,7 @@ import { IntegrationTenant, Organization } from './../core/entities/internal';
 export const createRandomIntegrationEntitySetting = async (
 	connection: Connection,
 	tenants: ITenant[]
-): Promise<IntegrationEntitySetting[]> => {
+): Promise<IIntegrationEntitySetting[]> => {
 	if (!tenants) {
 		console.warn(
 			'Warning: tenants not found, Integration Entity Setting will not be created.'

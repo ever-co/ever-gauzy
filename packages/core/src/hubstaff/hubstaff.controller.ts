@@ -4,7 +4,8 @@ import {
 	IIntegrationTenant,
 	IHubstaffOrganization,
 	IHubstaffProject,
-	IIntegrationMap
+	IIntegrationMap,
+	IIntegrationSetting
 } from '@gauzy/contracts';
 import { ApiTags } from '@nestjs/swagger';
 import { UUIDValidationPipe } from './../shared/pipes';
@@ -12,25 +13,29 @@ import { UUIDValidationPipe } from './../shared/pipes';
 @ApiTags('Integrations')
 @Controller()
 export class HubstaffController {
-	constructor(private _hubstaffService: HubstaffService) {}
+	constructor(
+		private readonly _hubstaffService: HubstaffService
+	) {}
 
-	@Get('/get-token/:integrationId')
-	getHubstaffToken(
+	@Get('/token/:integrationId')
+	async getHubstaffTokenByIntegration(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string
-	): Promise<string> {
-		return this._hubstaffService.getHubstaffToken(integrationId);
+	): Promise<IIntegrationSetting> {
+		return await this._hubstaffService.getHubstaffToken(integrationId);
 	}
 
 	@Get('/refresh-token/:integrationId')
-	refreshHubstaffToken(
+	async refreshHubstaffTokenByIntegration(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string
 	): Promise<string> {
-		return this._hubstaffService.refreshToken(integrationId);
+		return await this._hubstaffService.refreshToken(integrationId);
 	}
 
-	@Post('/add-integration')
-	addIntegration(@Body() body): Promise<IIntegrationTenant> {
-		return this._hubstaffService.addIntegration(body);
+	@Post('/integration')
+	async addIntegration(
+		@Body() body
+	): Promise<IIntegrationTenant> {
+		return await this._hubstaffService.addIntegration(body);
 	}
 
 	@Post('/organizations/:integrationId')
@@ -38,7 +43,7 @@ export class HubstaffController {
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Body() body
 	): Promise<IHubstaffOrganization[]> {
-		return this._hubstaffService.fetchOrganizations({
+		return await this._hubstaffService.fetchOrganizations({
 			integrationId,
 			...body
 		});
@@ -46,10 +51,10 @@ export class HubstaffController {
 
 	@Post('/projects/:organizationId')
 	async getProjects(
-		@Param('organizationId', UUIDValidationPipe) organizationId: string,
+		@Param('organizationId') organizationId: string,
 		@Body() body
 	): Promise<IHubstaffProject[]> {
-		return this._hubstaffService.fetchOrganizationProjects({
+		return await this._hubstaffService.fetchOrganizationProjects({
 			organizationId,
 			...body
 		});

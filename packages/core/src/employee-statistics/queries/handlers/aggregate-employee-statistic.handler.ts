@@ -6,7 +6,6 @@ import {
 } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { startOfMonth, subMonths } from 'date-fns';
-import { RequestContext } from '../../../core/context';
 import { EmployeeService } from '../../../employee/employee.service';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
 import { EmployeeStatisticsService } from './../../employee-statistics.service';
@@ -28,8 +27,6 @@ export class AggregateOrganizationQueryHandler
 		const {
 			input: { filterDate, organizationId }
 		} = command;
-		const tenantId = RequestContext.currentTenantId();
-
 		// Calculate transactions for 1 month if filterDate is available,
 		// TODO: last 20 years otherwise. More than one month can be very complex, since in any given month, any number of employees can be working
 		const searchInput = {
@@ -57,7 +54,6 @@ export class AggregateOrganizationQueryHandler
 			items: employees
 		} = await this.employeeService.findWorkingEmployees(
 			organizationId,
-			tenantId,
 			filterDate,
 			true
 		);

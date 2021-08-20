@@ -2,6 +2,7 @@ import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as faker from 'faker';
 import * as proposalsPage from '../../Base/pages/Proposals.po';
+import { ProposalsPageData } from '../../Base/pagedata/ProposalsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
@@ -16,6 +17,7 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 let jobPostUrl = faker.internet.url();
 let editJobPostUrl = faker.internet.url();
 let proposalContent = faker.lorem.paragraph();
+let proposalTemplateContent = faker.lorem.paragraph();
 
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
@@ -116,7 +118,7 @@ Then('User can select tag from dropdown options', () => {
 });
 
 And('User can enter job proposal content', () => {
-	proposalsPage.enterJobPostContentInputData(proposalContent);
+	proposalsPage.enterJobPostContentInputData(proposalContent, 1);
 });
 
 And('User can see save button', () => {
@@ -148,10 +150,16 @@ Then('User can see details button', () => {
 });
 
 When('User click on details button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	proposalsPage.clickDetailsButton(0);
 });
 
 Then('User can see edit proposal button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	proposalsPage.editProposalButtonVisible();
 });
 
@@ -231,6 +239,137 @@ Then('User can see confirm delete button', () => {
 
 When('User click on confirm delete button', () => {
 	proposalsPage.clickConfirmDeleteButton();
+});
+
+Then('Notification message will appear', () => {
+	proposalsPage.waitMessageToHide();
+});
+
+// Add proposal template
+And('User can see manage templates button', () => {
+	proposalsPage.manageTemplatesBtnVisible();
+});
+
+When('User click on manage templates button', () => {
+	proposalsPage.clickManageTemplatesBtn(1);
+});
+
+Then('User can see add new proposal template button', () => {
+	proposalsPage.addProposalTemplateBtnVisible();
+});
+
+When('User click on add new proposal template button', () => {
+	proposalsPage.clickAddProposalTemplateBtn();
+});
+
+Then('User can see employee multyselect', () => {
+	proposalsPage.employeeMultySelectVisible();
+});
+
+When('User click on employee multyselect', () => {
+	proposalsPage.clickEmployeeMultySelect();
+});
+
+Then('User can select employee from multyselect dropdown options', () => {
+	proposalsPage.selectEmployeeFromMultyselectDropdown(0);
+});
+
+And('User can see template name input field', () => {
+	proposalsPage.templateNameInputVisible();
+});
+
+And('User can enter template name', () => {
+	proposalsPage.enterTemplateName(ProposalsPageData.juniorDeveloper);
+});
+
+And('User can enter propsoal template content', () => {
+	proposalsPage.enterProposalTemplateContent(proposalTemplateContent, 0);
+});
+
+And('User can see save proposal template button', () => {
+	proposalsPage.saveTemplateBtnVisible();
+});
+
+When('User click on save proposal template button', () => {
+	proposalsPage.clickSaveTemplateBtn();
+});
+
+Then('Notification message will appear', () => {
+	proposalsPage.waitMessageToHide();
+});
+
+And('User can verify proposal template was created', () => {
+	proposalsPage.verifyProposalTemplate(ProposalsPageData.juniorDeveloper);
+});
+
+// Edit proposal template
+And('User can see proposals templates table', () => {
+	proposalsPage.tableRowVisible();
+});
+
+When('User click on rpoposals templates table row', () => {
+	proposalsPage.selectTableRow(0);
+});
+
+Then('Edit proposal template button will become active', () => {
+	proposalsPage.editTemplateBtnVisible();
+});
+
+When('User click on edit proposal template button', () => {
+	proposalsPage.clickEditTemplateBtn(0);
+});
+
+Then('User can see tempalte name input field again', () => {
+	proposalsPage.templateNameInputVisible();
+});
+
+And('User can enter new value for template name', () => {
+	proposalsPage.enterTemplateName(ProposalsPageData.seniorDeveloper);
+});
+
+And('User can see save proposal template button again', () => {
+	proposalsPage.saveTemplateBtnVisible();
+});
+
+When('User click on save edited proposal template button', () => {
+	proposalsPage.clickSaveTemplateBtn();
+});
+
+Then('Notification message will appear', () => {
+	proposalsPage.waitMessageToHide();
+});
+
+And('User can verify proposal template was edited', () => {
+	proposalsPage.verifyProposalTemplate(ProposalsPageData.seniorDeveloper);
+});
+
+// Delete proposal template
+And('User can see proposals templates table again', () => {
+	proposalsPage.tableRowVisible();
+});
+
+When('User click on rpoposals templates table row again', () => {
+	proposalsPage.selectTableRow(0);
+});
+
+Then('Delete proposal template button will become actuve', () => {
+	proposalsPage.deleteTemplateBtnVisible();
+});
+
+When('User click on delete proposal tempalte button', () => {
+	proposalsPage.clickDeleteTemplateBtn();
+});
+
+Then('User can see reject delete operation button', () => {
+	proposalsPage.rejectDeleteTemplateBtnVisible();
+});
+
+And('User can see confirm delete proposal template button', () => {
+	proposalsPage.confirmDeleteTemplateBtnVisible();
+});
+
+When('User click on confirm delete proposal template button', () => {
+	proposalsPage.clickConfirmDeleteTemplateBtn();
 });
 
 Then('Notification message will appear', () => {

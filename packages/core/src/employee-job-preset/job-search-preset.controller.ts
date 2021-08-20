@@ -15,12 +15,13 @@ import {
 	IJobPreset,
 	IMatchingCriterions
 } from '@gauzy/contracts';
+import { GauzyAIService } from '@gauzy/integration-ai';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
-import { GauzyAIService } from '@gauzy/integration-ai';
 import { EmployeeService } from '../employee/employee.service';
+import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('JobSearchPreset')
 @Controller()
@@ -66,7 +67,7 @@ export class JobSearchPresetController {
 	})
 	@Get(':id')
 	async get(
-		@Param('id') presetId: string,
+		@Param('id', UUIDValidationPipe) presetId: string,
 		@Query() request: IGetJobPresetCriterionInput
 	) {
 		return this.jobPresetService.get(presetId, request);
@@ -83,7 +84,9 @@ export class JobSearchPresetController {
 		description: 'Record not found'
 	})
 	@Get(':id/criterion')
-	async getJobPresetCriterion(@Param('id') presetId: string) {
+	async getJobPresetCriterion(
+		@Param('id', UUIDValidationPipe) presetId: string
+	) {
 		return this.jobPresetService.getJobPresetCriterion(presetId);
 	}
 
@@ -98,7 +101,9 @@ export class JobSearchPresetController {
 		description: 'Record not found'
 	})
 	@Post()
-	async createJobPreset(@Body() request: IJobPreset) {
+	async createJobPreset(
+		@Body() request: IJobPreset
+	) {
 		return this.jobPresetService.createJobPreset(request);
 	}
 
@@ -114,7 +119,7 @@ export class JobSearchPresetController {
 	})
 	@Post(':jobPresetId/criterion')
 	async saveUpdate(
-		@Param('jobPresetId') jobPresetId: string,
+		@Param('jobPresetId', UUIDValidationPipe) jobPresetId: string,
 		@Body() request: IMatchingCriterions
 	) {
 		return this.jobPresetService.saveJobPresetCriterion({
@@ -134,7 +139,9 @@ export class JobSearchPresetController {
 		description: 'Record not found'
 	})
 	@Delete('criterion/:criterionId')
-	async deleteJobPresetCriterion(@Param('criterionId') creationId: string) {
+	async deleteJobPresetCriterion(
+		@Param('criterionId', UUIDValidationPipe) creationId: string
+	) {
 		return this.jobPresetService.deleteJobPresetCriterion(creationId);
 	}
 }
