@@ -14,8 +14,8 @@ export class WarehouseService extends TenantAwareCrudService<Warehouse> {
 		super(warehouseRepository);
 	}
 
-	update(id: string, warehouse: Warehouse): Promise<IWarehouse> {
-		return this.warehouseRepository.save({ id, ...warehouse });
+	async update(id: string, warehouse: Warehouse): Promise<IWarehouse> {
+		return await this.warehouseRepository.save({ id, ...warehouse });
 	}
 
 	async findAllWarehouses(

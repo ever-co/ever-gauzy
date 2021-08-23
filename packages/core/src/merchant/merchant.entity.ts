@@ -72,14 +72,14 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	contact: IContact;
+	contact?: IContact;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
-	contactId: string;
+	contactId?: string;
 
 	/*
     |--------------------------------------------------------------------------
@@ -93,14 +93,14 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => ImageAsset })
 	@ManyToOne(() => ImageAsset, { cascade: true })
 	@JoinColumn()
-	logo: IImageAsset;
+	logo?: IImageAsset;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
-	logoId: string;
+	logoId?: string;
 
 	/*
     |--------------------------------------------------------------------------
@@ -118,7 +118,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@JoinTable({
 		name: 'tag_merchant'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 
 	/**
 	 * Warehouse
@@ -127,5 +127,5 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@JoinTable({
 		name: 'warehouse_merchant'
 	})
-	warehouses: IWarehouse[];
+	warehouses?: IWarehouse[];
 }

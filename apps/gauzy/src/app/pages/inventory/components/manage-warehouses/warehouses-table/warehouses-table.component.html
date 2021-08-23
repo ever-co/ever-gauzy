@@ -27,8 +27,8 @@
 				status="success"
 				class="mr-2"
 			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
 			</button>
 			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
@@ -54,9 +54,7 @@
 				[source]="warehouses"
 				[buttonTemplate]="actionButtons"
 			></ga-card-grid>
-			<div 
-				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
-				class="pagination-container">
+			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination 
 						(selectedPage)="onPageChange($event)"

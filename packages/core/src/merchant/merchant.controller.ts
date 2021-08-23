@@ -9,11 +9,14 @@ import {
 	HttpCode,
 	Post,
 	Put,
-	Param
+	Param,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { IMerchant, IPagination } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
+import { RequestContext } from './../core/context';
 import { Merchant } from './merchant.entity';
 import { MerchantService } from './merchant.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -30,45 +33,49 @@ export class MerchantController extends CrudController<Merchant> {
 		super(merchantService);
 	}
 
-	@ApiOperation({ summary: 'Find Merchants Count ' })
+	/**
+	 * GET merchant store count
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all merchant stores count in the same tenant' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Count Products',
-		type: Number
+		description: 'Found merchant stores count'
 	})
 	@Get('count')
-	async count(
-		@Query('data', ParseJsonPipe) data?: any
-	): Promise<Number> {
-		const { findInput = null } = data;
-
-		return this.merchantService.count(findInput);
+	async getCount(
+		@Query() filter: PaginationParams<Merchant>
+	): Promise<number> {
+		return await this.merchantService.count({
+			where: {
+				tenantId: RequestContext.currentTenantId()
+			},
+			...filter
+		});
 	}
 
-	@ApiOperation({
-		summary: 'Get merchant by id.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found merchant.',
-		type: Merchant
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get(':id')
-	async findMerchantById(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<Merchant> {
-		const {relations = []} = data;
-		return this.merchantService.findMerchantById(
-			id,
-			relations
-		);
+	/**
+	 * GET merchants by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<Merchant>
+	): Promise<IPagination<IMerchant>> {
+		return this.merchantService.paginate(filter);
 	}
-	
+
+	/**
+	 * GET all products merchants stores
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all product stores.'
 	})
@@ -82,30 +89,57 @@ export class MerchantController extends CrudController<Merchant> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllMerchants(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any,
-		@Query('page') page: any,
-		@Query('_limit') limit: any
-	): Promise<IPagination<Merchant>> {
-		const {
-			relations = [],
-			findInput = null} = data;
-		return this.merchantService.findAllMechants(
+	): Promise<IPagination<IMerchant>> {
+		const { relations = [], findInput = null } = data;
+		return this.merchantService.findAllMerchants(
 			relations,
-			findInput,
-			{page, limit}
+			findInput
 		);
 	}
 
-
-	@ApiOperation({ summary: 'Create record' })
+	/**
+	 * GET merchant by id
+	 * 
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Get merchant by id.'
+	})
 	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
+		status: HttpStatus.OK,
+		description: 'Found merchant.',
+		type: Merchant
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
+	})
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IMerchant> {
+		const {relations = []} = data;
+		return this.merchantService.findMerchantById(
+			id,
+			relations
+		);
+	}
+
+	/**
+	 * CREATE new merchant store
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The merchant store has been successfully created.' /*, type: T*/
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -115,16 +149,22 @@ export class MerchantController extends CrudController<Merchant> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post()
 	async create(
-		@Body() merchantInput: IMerchant
-	): Promise<Merchant> {
-		return this.merchantService.createMerchant(merchantInput);
+		@Body() entity: Merchant
+	): Promise<IMerchant> {
+		return this.merchantService.create(entity);
 	}
 
-
-	@ApiOperation({ summary: 'Update record' })
+	/**
+	 * UPDATE merchant store by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Update merchant store record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully updated.'
+		description: 'The merchant store record has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -137,9 +177,10 @@ export class MerchantController extends CrudController<Merchant> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async updateMerchant(
-		@Body() productStoreInput: IMerchant
-	): Promise<Merchant> {
-		return this.merchantService.updateMerchant(productStoreInput);
+	async update(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: Merchant
+	): Promise<IMerchant> {
+		return await this.merchantService.update(id, entity);
 	}    
 }

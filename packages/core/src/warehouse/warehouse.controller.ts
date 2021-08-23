@@ -259,6 +259,6 @@ export class WarehouseController extends CrudController<Warehouse> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Warehouse
 	): Promise<IWarehouse> {
-		return this.warehouseService.update(id, entity);
+		return await this.warehouseService.update(id, entity);
 	}
 }

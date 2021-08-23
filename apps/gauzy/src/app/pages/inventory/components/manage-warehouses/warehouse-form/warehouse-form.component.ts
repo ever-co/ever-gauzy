@@ -197,7 +197,7 @@ export class WarehouseFormComponent
 	async onSaveRequest() {
 
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+		const { id: organizationId } = this.organization;
 
 		const locationFormValue = this.locationFormDirective.getValue();
 		const { coordinates } = locationFormValue['loc'];
@@ -208,8 +208,8 @@ export class WarehouseFormComponent
 		let request = {
 			...this.form.value,
 			logo: this.logo,
-			tenant: { id: tenantId},
-			organization: { id: organizationId},
+			tenantId,
+			organizationId,
 			contact: {
 				...locationFormValue,
 				latitude,

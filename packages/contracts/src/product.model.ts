@@ -258,18 +258,18 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 
 export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	code: string;
-	contact: IContact;
-	contactId?: string;
-	description: string;
-	logo: IImageAsset;
-	logoId: string;
 	email: string;
 	phone: string;
-	tags: ITag[];
-	currency: string;
-	warehouses: IWarehouse[];
+	code: string;
 	active: boolean;
+	currency: string;
+	description: string;
+	contact?: IContact;
+	contactId?: string;
+	logo?: IImageAsset;
+	logoId?: string;
+	tags?: ITag[];
+	warehouses?: IWarehouse[];
 }
 
 export interface IMerchantCreateInput {

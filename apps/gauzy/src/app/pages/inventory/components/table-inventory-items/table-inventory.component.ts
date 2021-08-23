@@ -228,7 +228,7 @@ export class TableInventoryComponent
 
 
 	manageStores() {
-		this.router.navigate(['/pages/organization/inventory/merchants/all']);
+		this.router.navigate(['/pages/organization/inventory/merchants']);
 	}
 
 	onAddInventoryItem() {
