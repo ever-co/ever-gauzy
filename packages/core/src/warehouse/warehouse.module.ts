@@ -5,8 +5,8 @@ import { WarehouseService } from './warehouse.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { WarehouseController } from './warehouse.controller';
 import { Warehouse } from './warehouse.entity';
-import { UserService } from 'user/user.service';
-import { User, Product } from 'core';
+import { UserModule } from './../user/user.module';
+import { Product } from './../core/entities/internal';
 import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { WarehouseProductService } from './warehouse-product-service';
@@ -18,14 +18,15 @@ import { WarehouseProductService } from './warehouse-product-service';
 		]),
 		TypeOrmModule.forFeature([
 			Warehouse,
-			User,
 			Product,
 			WarehouseProduct,
 			WarehouseProductVariant
 		]),
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [WarehouseController],
-	providers: [WarehouseService, WarehouseProductService, UserService]
+	providers: [WarehouseService, WarehouseProductService],
+	exports: [WarehouseService, WarehouseProductService]
 })
 export class WarehouseModule {}

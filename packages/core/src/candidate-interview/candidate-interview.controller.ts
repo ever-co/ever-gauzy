@@ -68,7 +68,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	 * @param filter 
 	 * @returns 
 	 */
-	@ApiOperation({ summary: 'Find all candidate interviews in the same tenant' })
+	@ApiOperation({ summary: 'Find all candidate interviews count in the same tenant' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate interviews count'

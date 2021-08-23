@@ -1,8 +1,8 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IPagination } from '@gauzy/contracts';
+import { IMerchant, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
-import { Contact, Merchant } from './../core/entities/internal';
+import { Merchant } from './../core/entities/internal';
 
 export class MerchantService extends TenantAwareCrudService<Merchant> {
 
@@ -17,35 +17,19 @@ export class MerchantService extends TenantAwareCrudService<Merchant> {
         return await this.merchantRepository.findOne(id, { relations });
     }
 
-    async findAllMechants(relations?: string[],
-        findInput?: any,
-        options = { page: 1, limit: 10 }): Promise<IPagination<Merchant>> {
+    async findAllMerchants(
+		relations?: string[],
+		findInput?: any
+	): Promise<IPagination<Merchant>> {
+		return await this.findAll({
+			where: {
+				...findInput
+			},
+			relations
+		});
+	}
 
-        const total = await this.merchantRepository.count(findInput);
-
-        const allMerchants = await this.merchantRepository.find({
-            where: findInput,
-            relations,
-            skip: (options.page - 1) * options.limit,
-            take: options.limit
-        });
-
-        return {
-            items: allMerchants,
-            total
-        }
-
-    }
-
-    async createMerchant(merchantInput: any): Promise<Merchant> {
-
-        const contact = Object.assign(new Contact(), merchantInput.contact);
-        const merchant = Object.assign(new Merchant(), { ...merchantInput, contact });
-
-        return await this.merchantRepository.save(merchant);
-    }
-
-    async updateMerchant(merchantInput: any): Promise<Merchant> {
-        return await this.merchantRepository.save(merchantInput);
-    }
+    async update(id: string, merchant: Merchant): Promise<IMerchant> {
+		return await this.merchantRepository.save({ id, ...merchant });
+	}
 }

@@ -243,31 +243,33 @@ export interface IImageAsset extends IBasePerTenantEntityModel {
 }
 
 export interface IWarehouse extends IBasePerTenantEntityModel {
-	description: string;
-	active: boolean;
-	contact: IContact;
-	code: string;
-	products?: IWarehouseProduct[];
 	name: string;
-	logo?: IImageAsset;
 	email: string;
+	description: string;
+	code: string;
+	active: boolean;
+	logo?: IImageAsset;
+	logoId?: string;
+	contact?: IContact;
+	contactId?: string;
+	products?: IWarehouseProduct[];
 	tags?: ITag[];
 }
 
 export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	code: string;
-	contact: IContact;
-	contactId?: string;
-	description: string;
-	logo: IImageAsset;
-	logoId: string;
 	email: string;
 	phone: string;
-	tags: ITag[];
-	currency: string;
-	warehouses: IWarehouse[];
+	code: string;
 	active: boolean;
+	currency: string;
+	description: string;
+	contact?: IContact;
+	contactId?: string;
+	logo?: IImageAsset;
+	logoId?: string;
+	tags?: ITag[];
+	warehouses?: IWarehouse[];
 }
 
 export interface IMerchantCreateInput {
@@ -285,9 +287,11 @@ export interface IMerchantCreateInput {
 }
 
 export interface IWarehouseProduct extends IBasePerTenantEntityModel {
-	warehouse: IWarehouse;
 	quantity: number;
+	warehouse: IWarehouse;
+	warehouseId?: string;
 	product: IProductTranslatable;
+	productId?: string;
 	variants: IWarehouseProductVariant[];
 }
 

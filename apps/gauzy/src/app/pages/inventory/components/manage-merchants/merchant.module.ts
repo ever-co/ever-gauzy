@@ -45,7 +45,8 @@ const NB_MODULES = [
     declarations: [
         MerchantComponent,
         MerchantTableComponent,
-        MerchantFormComponent],
+        MerchantFormComponent
+    ],
     imports: [
         MerchantRoutingModule,
         FormsModule,

@@ -54,6 +54,6 @@ export class AppointmentEmployee
 	@RelationId((it: AppointmentEmployee) => it.employeeAppointment)
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	public employeeAppointmentId?: string;
 }
