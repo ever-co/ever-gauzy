@@ -1,11 +1,11 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
 import {
 	Product,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IProductOptionGroupTranslatable } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import {
 	ProductOption,
 	ProductOptionGroupTranslation
@@ -20,19 +20,49 @@ export class ProductOptionGroup
 	@Column()
 	name: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	
+	/**
+	 * Product
+	 */
+	@ApiProperty({ type: () => Product })
 	@ManyToOne(() => Product, (product) => product.optionGroups)
 	@JoinColumn()
 	product: Product;
 
+	@ApiProperty({ type: () => String })
+	@RelationId((it: ProductOptionGroup) => it.product)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column()
+	productId: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductOption
+	 */
+	@ApiProperty({ type: () => ProductOption, isArray: true })
 	@OneToMany(() => ProductOption, (productOption) => productOption.group, {
 		eager: true
 	})
 	options: ProductOption[];
 
-	@OneToMany(
-		() => ProductOptionGroupTranslation,
-		(translation) => translation.reference,
-		{ eager: true }
-	)
+	/**
+	 * ProductOptionGroupTranslation
+	 */
+ 	@ApiProperty({ type: () => ProductOptionGroupTranslation, isArray: true })
+	@OneToMany(() => ProductOptionGroupTranslation, (translation) => translation.reference, { 
+		eager: true 
+	})
 	translations: ProductOptionGroupTranslation[];
 }

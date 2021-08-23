@@ -282,7 +282,7 @@ import {
 	createRandomProductOption, 
 	createRandomProductOptionGroups 
 } from '../../product-option/product-option.seed';
-import { createRandomProductVariantSettings } from '../../product-settings/product-settings.seed';
+import { createRandomProductVariantSettings } from '../../product-setting/product-setting.seed';
 import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
 import { createRandomProductVariantPrice } from '../../product-variant-price/product-variant-price.seed';
 import {

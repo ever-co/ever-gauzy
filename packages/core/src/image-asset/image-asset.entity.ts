@@ -1,4 +1,4 @@
-import { IImageAsset } from '@gauzy/contracts';
+import { IEquipment, IImageAsset, IProduct } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString } from 'class-validator';
 import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
@@ -35,15 +35,33 @@ export class ImageAsset
 	@ApiProperty({ type: () => Boolean })
 	@Column({ default: false })
 	isFeatured: boolean;
+	
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
 
-	@ApiProperty({ type: () => Product })
+	/**
+	 * Product
+	 */
+	@ApiProperty({ type: () => Product, isArray: true })
 	@OneToMany(() => Product, (product) => product.featuredImage)
-	productFeaturedImage?: Product[];
+	productFeaturedImage?: IProduct[];
 
-	@ApiProperty({ type: () => Equipment })
+	/**
+	 * Equipment
+	 */
+	@ApiProperty({ type: () => Equipment, isArray: true })
 	@OneToMany(() => Equipment, (equipment) => equipment.image)
-	equipmentImage?: Equipment[];
+	equipmentImage?: IEquipment[];
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	@ApiProperty({ type: () => Equipment, isArray: true })
 	@ManyToMany(() => Product, (product) => product.gallery)
-	productGallery?: Product[];
+	productGallery?: IProduct[];
 }

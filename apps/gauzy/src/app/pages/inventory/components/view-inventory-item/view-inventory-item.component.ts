@@ -73,7 +73,7 @@ export class InventoryItemViewComponent
 					variants = this.inventoryItem.variants.map((variant) => {
 						return {
 							...variant,
-							...variant.settings,
+							...variant.setting,
 							...variant.price
 						};
 					});

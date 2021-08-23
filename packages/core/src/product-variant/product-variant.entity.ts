@@ -6,17 +6,25 @@ import {
 	RelationId,
 	JoinColumn,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	Index
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IProductVariant, BillingInvoicingPolicyEnum } from '@gauzy/contracts';
+import {
+	IProductVariant,
+	BillingInvoicingPolicyEnum,
+	IProductTranslatable,
+	IProductVariantPrice,
+	IProductVariantSetting,
+	IProductOptionTranslatable
+} from '@gauzy/contracts';
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import {
 	ImageAsset,
 	Product,
 	ProductOption,
 	ProductVariantPrice,
-	ProductVariantSettings,
+	ProductVariantSetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 
@@ -34,12 +42,6 @@ export class ProductVariant
 	@IsOptional()
 	@Column({ nullable: true })
 	notes: string;
-
-	@ApiProperty({ type: () => String })
-	@RelationId((productVariant: ProductVariant) => productVariant.product)
-	@IsString()
-	@Column({ nullable: true })
-	productId: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
@@ -60,39 +62,83 @@ export class ProductVariant
 	@Column({ default: true })
 	enabled: boolean;
 
-	@ManyToMany(() => ProductOption, { eager: true })
-	@JoinTable()
-	options: ProductOption[];
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
 
-	@OneToOne(
-		() => ProductVariantSettings,
-		(settings) => settings.productVariant,
-		{
-			eager: true,
-			onDelete: 'CASCADE'
-		}
-	)
+	/**
+	 * ProductVariantPrice
+	 */
+	@OneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, { 
+		eager: true,
+		onDelete: 'CASCADE' 
+	})
 	@JoinColumn()
-	settings: ProductVariantSettings;
+	price: IProductVariantPrice;
 
-	@OneToOne(
-		() => ProductVariantPrice,
-		(variantPrice) => variantPrice.productVariant,
-		{ eager: true, onDelete: 'CASCADE' }
-	)
+	/**
+	 * ProductVariantSetting
+	 */
+	@OneToOne(() => ProductVariantSetting, (settings) => settings.productVariant, {
+		eager: true,
+		onDelete: 'CASCADE' 
+	})
 	@JoinColumn()
-	price: ProductVariantPrice;
+	setting: IProductVariantSetting;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Product
+	 */
+	@ApiProperty({ type: () => Product })
 	@ManyToOne(() => Product, (product) => product.variants, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	product: Product;
+	product?: IProductTranslatable;
 
-	@ApiPropertyOptional({ type: ImageAsset })
+	@ApiProperty({ type: () => String })
+	@RelationId((it: ProductVariant) => it.product)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	productId?: string;
+
+	/**
+	 * ImageAsset
+	 */
+	@ApiProperty({ type: () => ImageAsset })
 	@ManyToOne(() => ImageAsset, {
 		eager: true
 	})
 	@JoinColumn()
-	image: ImageAsset;
+	image?: ImageAsset;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: ProductVariant) => it.image)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	imageId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductOption
+	 */
+	@ApiProperty({ type: () => ProductOption })
+	@ManyToMany(() => ProductOption, { eager: true })
+	@JoinTable()
+	options: IProductOptionTranslatable[];
 }

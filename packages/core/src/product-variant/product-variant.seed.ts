@@ -1,13 +1,16 @@
 import { Connection, In } from 'typeorm';
 import { BillingInvoicingPolicyEnum, IOrganization, ITenant } from '@gauzy/contracts';
-import { ProductVariant } from './product-variant.entity';
 import * as faker from 'faker';
 import * as _ from 'underscore';
-import { ProductCategory } from '../product-category/product-category.entity';
-import { Product } from '../product/product.entity';
-import { ProductVariantSettings } from '../product-settings/product-settings.entity';
-import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
-import { ProductOption, ProductOptionGroup } from './../core/entities/internal';
+import { ProductVariant } from './product-variant.entity';
+import {
+	Product,
+	ProductCategory,
+	ProductOption,
+	ProductOptionGroup,
+	ProductVariantPrice,
+	ProductVariantSetting
+} from './../core/entities/internal';
 
 export const createRandomProductVariant = async (
 	connection: Connection,
@@ -58,7 +61,7 @@ export const createRandomProductVariant = async (
 						);
 						productVariant.enabled = faker.datatype.boolean();
 						productVariant.options = productOptions;
-						productVariant.settings = new ProductVariantSettings();
+						productVariant.setting = new ProductVariantSetting();
 						productVariant.price = new ProductVariantPrice();
 						productVariant.product = product;
 						productVariant.tenant = tenant;

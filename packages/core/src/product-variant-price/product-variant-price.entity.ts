@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne } from 'typeorm';
+import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
 import { IProductVariantPrice, CurrenciesEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsEnum } from 'class-validator';
@@ -31,6 +31,16 @@ export class ProductVariantPrice
 	@Column({ default: CurrenciesEnum.USD })
 	retailPriceCurrency: string;
 
-	@OneToOne((type) => ProductVariant)
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductVariant
+	 */
+	@OneToOne(() => ProductVariant)
+	@JoinColumn()
 	productVariant: ProductVariant;
 }

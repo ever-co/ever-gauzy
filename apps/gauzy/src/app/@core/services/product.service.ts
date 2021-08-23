@@ -95,7 +95,7 @@ export class ProductService {
 		product: IProductTranslatableCreateInput
 	): Promise<IProductTranslatable> {
 		return this.http
-			.post<IProductTranslatable>(`${this.PRODUCTS_URL}/create`, product)
+			.post<IProductTranslatable>(`${this.PRODUCTS_URL}`, product)
 			.pipe(first())
 			.toPromise();
 	}

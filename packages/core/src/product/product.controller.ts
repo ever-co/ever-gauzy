@@ -12,12 +12,8 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
-import { ProductService } from './product.service';
-import { Product } from './product.entity';
 import { CommandBus } from '@nestjs/cqrs';
-import { ProductCreateCommand, ProductUpdateCommand, ProductDeleteCommand } from './commands';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { DeleteResult } from 'typeorm';
 import {
 	PermissionsEnum,
 	IProductCreateInput,
@@ -25,8 +21,16 @@ import {
 	IImageAsset,
 	IPagination
 } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
+import { ProductService } from './product.service';
+import { Product } from './product.entity';
+import {
+	ProductCreateCommand,
+	ProductUpdateCommand,
+	ProductDeleteCommand
+} from './commands';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { DeleteResult } from 'typeorm';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 
@@ -162,12 +166,13 @@ export class ProductController extends CrudController<Product> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-	@Post('/create')
-	async createProduct(
-		@Body() entity: IProductCreateInput,
-		...options: any[]
-	) {
-		return this.commandBus.execute(new ProductCreateCommand(entity));
+	@Post()
+	async create(
+		@Body() entity: IProductCreateInput
+	): Promise<Product> {
+		return await this.commandBus.execute(
+			new ProductCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -186,11 +191,13 @@ export class ProductController extends CrudController<Product> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async updateProduct(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IProductCreateInput
-	): Promise<any> {
-		return this.commandBus.execute(new ProductUpdateCommand(id, entity));
+	): Promise<Product> {
+		return await this.commandBus.execute(
+			new ProductUpdateCommand(id, entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -205,10 +212,11 @@ export class ProductController extends CrudController<Product> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
-		...options: any[]
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<DeleteResult> {
-		return this.commandBus.execute(new ProductDeleteCommand(id));
+		return await this.commandBus.execute(
+			new ProductDeleteCommand(id)
+		);
 	}
 
 	@ApiOperation({ summary: 'Create gallery image' })

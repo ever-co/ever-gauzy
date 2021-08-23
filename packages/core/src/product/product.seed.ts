@@ -23,9 +23,9 @@ export const createDefaultProducts = async (
 		translation.description = faker.lorem.words();
 
 		product.code = faker.lorem.word();
-		product.type =
+		product.productType =
 			productTypes[Math.floor(Math.random() * productTypes.length)];
-		product.category =
+		product.productCategory =
 			productCategories[
 				Math.floor(Math.random() * productCategories.length)
 			];
@@ -84,9 +84,9 @@ export const createRandomProduct = async (
 
 			product.translations = [translation];
 			product.code = faker.lorem.word();
-			product.type =
+			product.productType =
 				productTypes[Math.floor(Math.random() * productTypes.length)];
-			product.category =
+			product.productCategory =
 				productCategories[
 					Math.floor(Math.random() * productCategories.length)
 				];

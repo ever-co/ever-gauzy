@@ -17,17 +17,26 @@ export class ProductCategory
 	@Column({ nullable: true })
 	imageUrl: string;
 
-	@OneToMany(() => Product, (product) => product.category)
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Product
+	 */
+	@ApiProperty({ type: () => Product, isArray: true })
+	@OneToMany(() => Product, (product) => product.productCategory)
 	products: Product[];
 
+	/**
+	 * ProductCategoryTranslation
+	 */
 	@ApiProperty({ type: () => ProductCategoryTranslation, isArray: true })
-	@OneToMany(
-		() => ProductCategoryTranslation,
-		(instance) => instance.reference,
-		{
-			eager: true,
-			cascade: true
-		}
-	)
+	@OneToMany(() => ProductCategoryTranslation, (instance) => instance.reference, {
+		eager: true,
+		cascade: true
+	})
 	translations: ProductCategoryTranslation[];
 }

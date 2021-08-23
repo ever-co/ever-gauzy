@@ -52,7 +52,7 @@
 				[cardSize]="'big'">
 			</ga-card-grid>
 			<div 
-				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 				class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination 

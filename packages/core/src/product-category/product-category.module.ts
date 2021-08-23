@@ -10,12 +10,15 @@ import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/product-categories', module: ProductCategoriesModule }
+			{ path: '/product-categories', module: ProductCategoryModule }
 		]),
-		TypeOrmModule.forFeature([ProductCategory, ProductCategoryTranslation]),
+		TypeOrmModule.forFeature([
+			ProductCategory,
+			ProductCategoryTranslation
+		]),
 		TenantModule
 	],
 	controllers: [ProductCategoryController],
 	providers: [ProductCategoryService]
 })
-export class ProductCategoriesModule {}
+export class ProductCategoryModule {}

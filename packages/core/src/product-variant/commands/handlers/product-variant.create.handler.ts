@@ -3,7 +3,7 @@ import { ProductVariant } from '../../product-variant.entity';
 import { ProductVariantCreateCommand } from '../product-variant.create.command';
 import { ProductVariantService } from '../../product-variant.service';
 import { ProductVariantPriceService } from '../../../product-variant-price/product-variant-price.service';
-import { ProductVariantSettingService } from '../../../product-settings/product-settings.service';
+import { ProductVariantSettingService } from '../../../product-setting/product-setting.service';
 import { IVariantCreateInput } from '@gauzy/contracts';
 import { ProductService } from '../../../product/product.service';
 
@@ -65,7 +65,7 @@ export class ProductVariantCreateHandler
 			newProductVariant.organizationId = organizationId;
 			newProductVariant.tenantId = tenantId;
 
-			newProductVariant.settings = await this.productVariantSettingsService.createDefaultVariantSettings();
+			newProductVariant.setting = await this.productVariantSettingsService.createDefaultVariantSettings();
 			newProductVariant.price = await this.productVariantPriceService.createDefaultProductVariantPrice();
 			newProductVariant.product = await this.productService.findOne(
 				variantCreateInput.product.id

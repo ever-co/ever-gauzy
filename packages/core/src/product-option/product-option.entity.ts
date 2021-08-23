@@ -1,6 +1,6 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { IProductOptionTranslatable } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
+import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import {
 	TenantOrganizationBaseEntity,
@@ -12,6 +12,7 @@ import { ProductOptionGroup } from './product-option-group.entity';
 export class ProductOption
 	extends TenantOrganizationBaseEntity
 	implements IProductOptionTranslatable {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
@@ -22,14 +23,36 @@ export class ProductOption
 	@Column({ nullable: true })
 	code: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductOptionGroup
+	 */
+	@ApiPropertyOptional({ type: () => ProductOptionGroup })
 	@ManyToOne(() => ProductOptionGroup, (group) => group.options)
 	@JoinColumn()
-	group: ProductOptionGroup;
+	group?: ProductOptionGroup;
 
-	@OneToMany(
-		() => ProductOptionTranslation,
-		(translation) => translation.reference,
-		{ eager: true }
-	)
-	translations: ProductOptionTranslation[];
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: ProductOption) => it.group)
+	@IsString()
+	@Index()
+	@Column()
+	groupId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiProperty({ type: () => ProductOptionTranslation, isArray: true })
+	@OneToMany(() => ProductOptionTranslation, (translation) => translation.reference, { 
+		eager: true 
+	})
+	translations: IProductOptionTranslation[];
 }

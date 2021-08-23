@@ -10,6 +10,8 @@ import {
 	UseGuards,
 	Delete
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { DeleteResult } from 'typeorm';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
 import { ProductVariant } from './product-variant.entity';
@@ -18,10 +20,8 @@ import {
 	ProductVariantCreateCommand,
 	ProductVariantDeleteCommand
 } from './commands';
-import { CommandBus } from '@nestjs/cqrs';
 import { Product } from '../product/product.entity';
-import { DeleteResult } from 'typeorm';
-import { IPagination, IVariantCreateInput } from '@gauzy/contracts';
+import { IPagination, IProductVariant, IVariantCreateInput } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 
@@ -36,6 +36,25 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		super(productVariantService);
 	}
 
+	@ApiOperation({
+		summary: 'Find all variants by product id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found product variants',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('product/:productId')
+	async findAllVariantsByProduct(
+		@Param('productId', UUIDValidationPipe) productId: string
+	): Promise<IPagination<IProductVariant>> {
+		return this.productVariantService.findAllVariantsByProductId(productId);
+	}
+
 	@ApiOperation({ summary: 'Create product variants' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -48,12 +67,13 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	// @UseGuards(PermissionGuard)
-	@Post('/create-variants')
+	@Post('variants')
 	async createProductVariants(
-		@Body() entity: IVariantCreateInput,
-		...options: any[]
-	): Promise<ProductVariant[]> {
-		return this.commandBus.execute(new ProductVariantCreateCommand(entity));
+		@Body() entity: IVariantCreateInput
+	): Promise<IProductVariant[]> {
+		return await this.commandBus.execute(
+			new ProductVariantCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({
@@ -68,28 +88,10 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('all')
-	async findAllProductVariants(): Promise<IPagination<ProductVariant>> {
+	@Get()
+	async findAll(): Promise<IPagination<IProductVariant>> {
 		return this.productVariantService.findAllProductVariants();
 	}
-
-	@ApiOperation({
-		summary: 'Find all variants by product id'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found product variants',
-		type: Product
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('all/:productId')
-	async findAllVariantsByProduct(@Param('productId', UUIDValidationPipe) productId: string): Promise<IPagination<ProductVariant>> {
-		return this.productVariantService.findAllVariantsByProductId(productId);
-	}
-
 
 	@ApiOperation({
 		summary: 'Find all product variants'
@@ -104,7 +106,9 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<ProductVariant> {
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<IProductVariant> {
 		return this.productVariantService.findOne(id);
 	}
 
@@ -127,7 +131,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() productVariant: ProductVariant
-	): Promise<ProductVariant> {
+	): Promise<IProductVariant> {
 		return this.productVariantService.updateVariant(productVariant);
 	}
 
@@ -143,10 +147,11 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
-		...options: any[]
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<DeleteResult> {
-		return this.commandBus.execute(new ProductVariantDeleteCommand(id));
+		return await this.commandBus.execute(
+			new ProductVariantDeleteCommand(id)
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete featured image' })
@@ -159,10 +164,10 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete('/delete-featured-image/:variantId')
+	@Delete('/featured-image/:variantId')
 	async deleteFeaturedImage(
 		@Param('variantId', UUIDValidationPipe) variantId: string
-	): Promise<ProductVariant> {
+	): Promise<IProductVariant> {
 		return this.productVariantService.deleteFeaturedImage(variantId);
 	}
 }

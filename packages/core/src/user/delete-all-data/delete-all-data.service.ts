@@ -82,7 +82,7 @@ import {
     ProductOption,
     ProductVariant,
     ProductVariantPrice,
-    ProductVariantSettings,
+    ProductVariantSetting,
     Proposal,
     RequestApproval,
     Screenshot,
@@ -324,8 +324,8 @@ export class DeleteAllDataService {
         @InjectRepository(ProductOption)
         private readonly productOptionRepository: Repository<ProductOption>,
 
-        @InjectRepository(ProductVariantSettings)
-        private readonly productVariantSettingsRepository: Repository<ProductVariantSettings>,
+        @InjectRepository(ProductVariantSetting)
+        private readonly productVariantSettingRepository: Repository<ProductVariantSetting>,
 
         @InjectRepository(ProductVariant)
         private readonly productVariantRepository: Repository<ProductVariant>,
@@ -556,7 +556,7 @@ export class DeleteAllDataService {
             this.productRepository,
             this.productVariantPriceRepository,
             this.productVariantRepository,
-            this.productVariantSettingsRepository,
+            this.productVariantSettingRepository,
             this.paymentRepository,
             this.pipelineRepository,
             this.proposalRepository,

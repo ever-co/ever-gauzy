@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import {
 	IProductTypeTranslation as IProductCategoryTranslation,
 	LanguagesEnum
@@ -21,20 +21,32 @@ export class ProductCategoryTranslation
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty({ type: () => ProductCategory })
-	@ManyToOne(
-		() => ProductCategory,
-		(productCategory) => productCategory.translations,
-		{
-			onDelete: 'CASCADE',
-			onUpdate: 'CASCADE'
-		}
-	)
-	@JoinColumn()
-	reference: ProductCategory;
-
 	@ApiProperty({ type: () => String, enum: LanguagesEnum })
 	@IsEnum(LanguagesEnum)
 	@Column({ nullable: false })
 	languageCode: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductCategory
+	 */
+	@ApiProperty({ type: () => ProductCategory })
+	@ManyToOne(() => ProductCategory, (productCategory) => productCategory.translations, {
+		onDelete: 'CASCADE',
+		onUpdate: 'CASCADE'
+	})
+	@JoinColumn()
+	reference: ProductCategory;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: ProductCategoryTranslation) => it.reference)
+	@IsString()
+	@Index()
+	@Column()
+	referenceId: string;
 }
