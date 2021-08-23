@@ -4,21 +4,43 @@ import * as organizationInventoryPage from '../../Base/pages/OrganizationInvento
 import { OrganizationInventoryPageData } from '../../Base/pagedata/OrganizationInventoryPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
+import * as faker from 'faker';
+import * as logoutPage from '../../Base/pages/Logout.po';
+import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
+import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
+let email = faker.internet.email();
+let website = faker.internet.url();
+let phone = faker.phone.phoneNumber();
+let description = faker.lorem.text();
+let city = faker.address.city();
+let postcode = faker.address.zipCode();
+let address = faker.address.streetAddress();
+
 // Login with email
-Given(
-	'Login with default credentials and visit Organization inventory page',
-	() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-		cy.visit('/#/pages/organization/inventory/all', { timeout: pageLoadTimeout });
-	}
-);
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+});
+
+// Add new tag
+Then('User can add new tag', () => {
+	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+});
 
 // Add new product category
+And('User can visit Organization inventory page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.visit('/#/pages/organization/inventory/all', {
+		timeout: pageLoadTimeout
+	});
+});
+
 And('User can see grid button', () => {
 	organizationInventoryPage.gridBtnExists();
 });
@@ -231,7 +253,7 @@ When('User click back from inventory page button', () => {
 
 Then('User can click on back button again', () => {
 	organizationInventoryPage.clickBackFromInventoryButton();
-})
+});
 
 // Edit inventory
 And('User can see inventory table', () => {
@@ -507,6 +529,320 @@ Then('User can see confirm delete product type button', () => {
 
 When('User click on confirm delete product type button', () => {
 	organizationInventoryPage.clickConfirmDeleteButton();
+});
+
+Then('Notification message will appear', () => {
+	organizationInventoryPage.waitMessageToHide();
+});
+
+// Add warehouse
+And('User can see Warehouses button', () => {
+	organizationInventoryPage.merchantOrWarehouseBtnVisible();
+});
+
+When('User click on Warehouses button', () => {
+	organizationInventoryPage.clickMerchantOrWarehouseBtn(1);
+});
+
+Then('User can see Add warehouse button', () => {
+	organizationInventoryPage.addWarehouseBtnVisible();
+});
+
+When('User click on Add warehouse button', () => {
+	organizationInventoryPage.clickAddWarehouseBtn();
+});
+
+Then('User can see warehouse name input field', () => {
+	organizationInventoryPage.warehouseNameInputVisible();
+});
+
+And('User can enter value for warehouse name', () => {
+	organizationInventoryPage.enterWarehouseName(
+		OrganizationInventoryPageData.warehouseName
+	);
+});
+
+And('User can see warehouse tags select', () => {
+	organizationInventoryPage.tagsSelectVisible();
+});
+
+When('User click on warehouse tags select', () => {
+	organizationInventoryPage.clickTagsSelect();
+});
+
+Then('User can select warehouse tag from dropdown options', () => {
+	organizationInventoryPage.selectTagFromDropdownOptions(0);
+});
+
+And('User can see warehouse code input field', () => {
+	organizationInventoryPage.warehouseCodeInputVisible();
+});
+
+And('User can enter warehouse code', () => {
+	organizationInventoryPage.enterWarehouseCode(
+		OrganizationInventoryPageData.warehouseCode
+	);
+});
+
+And('User can see warehouse email input field', () => {
+	organizationInventoryPage.warehouseEmailInputVisible();
+});
+
+And('User can enter value for warehouse email', () => {
+	organizationInventoryPage.enterWarehouseEmail(email);
+});
+
+And('User can see warehouse active state checkbox', () => {
+	organizationInventoryPage.activeStateCheckBoxVisible();
+});
+
+And('User can click on warehouse active state checkbox', () => {
+	organizationInventoryPage.clickActiveStateCheckbox();
+});
+
+And('User can see warehouse description input field', () => {
+	organizationInventoryPage.warehouseDescriptionInputVisible();
+});
+
+And('User can enter value for merchant description', () => {
+	organizationInventoryPage.enterWarehouseDescription(description);
+});
+
+And('User can see tab button', () => {
+	organizationInventoryPage.tabBtnVisible();
+});
+
+When('User click on Location tab button', () => {
+	organizationInventoryPage.clickTabBtn(1);
+});
+
+Then('User can see warehouse country select', () => {
+	organizationInventoryPage.countrySelectVisible();
+});
+
+When('User click on warehouse country select', () => {
+	organizationInventoryPage.clickCountrySelect();
+});
+
+Then('User can select warehouse country from dropdown options', () => {
+	organizationInventoryPage.selectCountryFromDropdownOptions(
+		OrganizationInventoryPageData.country
+	);
+});
+
+And('User can see warehouse city input field', () => {
+	organizationInventoryPage.cityInputVisible();
+});
+
+And('User can enter value for warehouse city', () => {
+	organizationInventoryPage.enterCity(city);
+});
+
+And('User can see warehouse postcode input field', () => {
+	organizationInventoryPage.postcodeInputVisible();
+});
+
+And('User can enter value for warehouse postcode', () => {
+	organizationInventoryPage.enterPostcode(postcode);
+});
+
+And('User can see warehouse address input field', () => {
+	organizationInventoryPage.addressInputVisible();
+});
+
+And('User can enter value for warehouse address', () => {
+	organizationInventoryPage.enterAddress(address);
+});
+
+And('User can see save warehouse button', () => {
+	organizationInventoryPage.saveWarehouseBtnVisible();
+});
+
+When('User click on save warehouse button', () => {
+	organizationInventoryPage.clickSaveWarehouseBtn();
+});
+
+Then('Notification message will appear', () => {
+	organizationInventoryPage.waitMessageToHide();
+});
+
+// Add merchant
+And('User can see Merchants button', () => {
+	organizationInventoryPage.merchantOrWarehouseBtnVisible();
+});
+
+When('User click on Merchants button', () => {
+	organizationInventoryPage.clickMerchantOrWarehouseBtn(0);
+});
+
+Then('User can see Add merchant button', () => {
+	organizationInventoryPage.addMerchantBtnVisible();
+});
+
+When('User click on Add merchant button', () => {
+	organizationInventoryPage.clickAddMerchantBtn();
+});
+
+Then('User can see merchant name input field', () => {
+	organizationInventoryPage.merchantNameInputVisible();
+});
+
+And('User can enter merchant name', () => {
+	organizationInventoryPage.enterMerchantNameInput(
+		OrganizationInventoryPageData.merchantName
+	);
+});
+
+And('User can see merchant code input field', () => {
+	organizationInventoryPage.merchantCodeInputVisible();
+});
+
+And('User can enter merchant code', () => {
+	organizationInventoryPage.enterMerchantCode(
+		OrganizationInventoryPageData.merchantCode
+	);
+});
+
+And('User can see merchant email input field', () => {
+	organizationInventoryPage.merchantEmailInputVisible();
+});
+
+And('User can enter value for merchant email', () => {
+	organizationInventoryPage.enterMerchantEmail(email);
+});
+
+And('User can see merchant phone input field', () => {
+	organizationInventoryPage.merchantPhoneInputVisible();
+});
+
+And('User can enter value for merchant phone', () => {
+	organizationInventoryPage.enterMerchantPhone(phone);
+});
+
+And('User can see currency select', () => {
+	organizationInventoryPage.merchantCurrencySelectVisible();
+});
+
+When('User click on currency select', () => {
+	organizationInventoryPage.clickMerchantCurrencySelect();
+});
+
+Then('User can select currency from dropdown options', () => {
+	organizationInventoryPage.selectCurrencyFromDropdownOptions(
+		OrganizationInventoryPageData.currency
+	);
+});
+
+And('User can see merchant website input field', () => {
+	organizationInventoryPage.merchantWebsiteInputVisible();
+});
+
+And('User can enter value for merchant website', () => {
+	organizationInventoryPage.enterMerchantWebsite(website);
+});
+
+And('User can see merchant tags select', () => {
+	organizationInventoryPage.tagsSelectVisible();
+});
+
+When('User click on merchant tags select', () => {
+	organizationInventoryPage.clickTagsSelect();
+});
+
+Then('User can select merchant tag from dropdown options', () => {
+	organizationInventoryPage.selectTagFromDropdownOptions(0);
+});
+
+And('User can see merchant description input field', () => {
+	organizationInventoryPage.merchantDescriptionInputVisible();
+});
+
+And('User can enter value for merchant description', () => {
+	organizationInventoryPage.enterMerchantDescription(description);
+});
+
+And('User can see merchant active state checkbox', () => {
+	organizationInventoryPage.activeStateCheckBoxVisible();
+});
+
+And('User can click on merchant active state checkbox', () => {
+	organizationInventoryPage.clickActiveStateCheckbox();
+});
+
+And('User can see next step button', () => {
+	organizationInventoryPage.merchantNextBtnVisible();
+});
+
+When('User click on next step button', () => {
+	organizationInventoryPage.clickMerchantNextBtn(
+		OrganizationInventoryPageData.nextBtn
+	);
+});
+
+Then('User can see merchant country select', () => {
+	organizationInventoryPage.countrySelectVisible();
+});
+
+When('User click on merchant country select', () => {
+	organizationInventoryPage.clickCountrySelect();
+});
+
+Then('User can select merchant country from dropdown options', () => {
+	organizationInventoryPage.selectCountryFromDropdownOptions(
+		OrganizationInventoryPageData.country
+	);
+});
+
+And('User can see merchant city input field', () => {
+	organizationInventoryPage.cityInputVisible();
+});
+
+And('User can enter value for merchant city', () => {
+	organizationInventoryPage.enterCity(city);
+});
+
+And('User can see merchant postcode input field', () => {
+	organizationInventoryPage.postcodeInputVisible();
+});
+
+And('User can enter value for merchant postcode', () => {
+	organizationInventoryPage.enterPostcode(postcode);
+});
+
+And('User can see merchant address input field', () => {
+	organizationInventoryPage.addressInputVisible();
+});
+
+And('User can enter value for merchant address', () => {
+	organizationInventoryPage.enterAddress(address);
+});
+
+And('User can see last step button', () => {
+	organizationInventoryPage.merchantNextBtnVisible();
+});
+
+When('User click on last step button', () => {
+	organizationInventoryPage.clickMerchantNextBtn(
+		OrganizationInventoryPageData.nextBtn
+	);
+});
+
+And('User can see warehousee select', () => {
+	organizationInventoryPage.warehousesSelectVisible();
+});
+
+When('User click on warehouses select', () => {
+	organizationInventoryPage.clickWarehousesSelect();
+});
+
+Then('User can select warehouse from dropdown options', () => {});
+
+And('User can see save merchant button', () => {
+	organizationInventoryPage.saveMerchantBtnVisible();
+});
+
+When('User click on save merchant button', () => {
+	organizationInventoryPage.clickSaveMerchantBtn();
 });
 
 Then('Notification message will appear', () => {

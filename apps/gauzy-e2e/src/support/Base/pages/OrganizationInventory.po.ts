@@ -8,7 +8,8 @@ import {
 	clickButtonByText,
 	verifyText,
 	verifyTextNotExisting,
-	verifyElementNotExist
+	verifyElementNotExist,
+	clickElementByText
 } from '../utils/util';
 import { OrganizationInventoryPage } from '../pageobjects/OrganizationInventoryPageObject';
 
@@ -187,4 +188,280 @@ export const verifyInventoryExists = (text) => {
 
 export const verifyInventoryIsDeleted = () => {
 	verifyElementNotExist(OrganizationInventoryPage.verifyInventoryCss);
+};
+
+export const merchantOrWarehouseBtnVisible = () => {
+	verifyElementIsVisible(
+		OrganizationInventoryPage.merchantsOrWarehousesBtnCss
+	);
+};
+
+export const clickMerchantOrWarehouseBtn = (index) => {
+	clickButtonByIndex(
+		OrganizationInventoryPage.merchantsOrWarehousesBtnCss,
+		index
+	);
+};
+
+export const addMerchantBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.addMerchantBtnCss);
+};
+
+export const clickAddMerchantBtn = () => {
+	clickButton(OrganizationInventoryPage.addMerchantBtnCss);
+};
+
+export const merchantNameInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.merchantNameInputCss);
+};
+
+export const enterMerchantNameInput = (name) => {
+	clearField(OrganizationInventoryPage.merchantNameInputCss);
+	enterInput(OrganizationInventoryPage.merchantNameInputCss, name);
+};
+
+export const merchantCodeInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.merchantCodeInputCss);
+};
+
+export const enterMerchantCode = (code) => {
+	clearField(OrganizationInventoryPage.merchantCodeInputCss);
+	enterInput(OrganizationInventoryPage.merchantCodeInputCss, code);
+};
+
+export const merchantEmailInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.merchantEmailInputCss);
+};
+
+export const enterMerchantEmail = (email) => {
+	clearField(OrganizationInventoryPage.merchantEmailInputCss);
+	enterInput(OrganizationInventoryPage.merchantEmailInputCss, email);
+};
+
+export const merchantPhoneInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.merchantPhoneInputCss);
+};
+
+export const enterMerchantPhone = (phone) => {
+	clearField(OrganizationInventoryPage.merchantPhoneInputCss);
+	enterInput(OrganizationInventoryPage.merchantPhoneInputCss, phone);
+};
+
+export const merchantCurrencySelectVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.merchantCurrencySelectCss);
+};
+
+export const clickMerchantCurrencySelect = () => {
+	clickButton(OrganizationInventoryPage.merchantCurrencySelectCss);
+};
+
+export const currencyDropdownOptionVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.dropdownOptionCss);
+};
+
+export const selectCurrencyFromDropdownOptions = (currency) => {
+	clickElementByText(OrganizationInventoryPage.dropdownOptionCss, currency);
+};
+
+export const merchantWebsiteInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.merchantWebsiteInputCss);
+};
+
+export const enterMerchantWebsite = (website) => {
+	clearField(OrganizationInventoryPage.merchantWebsiteInputCss);
+	enterInput(OrganizationInventoryPage.merchantWebsiteInputCss, website);
+};
+
+export const tagsSelectVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.tagsSelectCss);
+};
+
+export const clickTagsSelect = () => {
+	clickButton(OrganizationInventoryPage.tagsSelectCss);
+};
+
+export const selectTagFromDropdownOptions = (index) => {
+	clickButtonByIndex(OrganizationInventoryPage.tagsDropdownOptionCss, index);
+};
+
+export const merchantDescriptionInputVisible = () => {
+	verifyElementIsVisible(
+		OrganizationInventoryPage.merchantDescriptionInputCss
+	);
+};
+
+export const enterMerchantDescription = (description) => {
+	clearField(OrganizationInventoryPage.merchantDescriptionInputCss);
+	enterInput(
+		OrganizationInventoryPage.merchantDescriptionInputCss,
+		description
+	);
+};
+
+export const activeStateCheckBoxVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.merchantActiveCheckboxCss);
+};
+
+export const clickActiveStateCheckbox = () => {
+	clickButton(OrganizationInventoryPage.merchantActiveCheckboxCss);
+};
+
+export const merchantNextBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.merchantNextBtnCss);
+};
+
+export const clickMerchantNextBtn = (text) => {
+	clickElementByText(OrganizationInventoryPage.merchantNextBtnCss, text);
+};
+
+export const countrySelectVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.countrySelectCss);
+};
+
+export const clickCountrySelect = () => {
+	clickButton(OrganizationInventoryPage.countrySelectCss);
+};
+
+export const selectCountryFromDropdownOptions = (country) => {
+	clickElementByText(OrganizationInventoryPage.dropdownOptionCss, country);
+};
+
+export const cityInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.cityInputCss);
+};
+
+export const enterCity = (city) => {
+	clearField(OrganizationInventoryPage.cityInputCss);
+	enterInput(OrganizationInventoryPage.cityInputCss, city);
+};
+
+export const postcodeInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.postcodeInputCss);
+};
+
+export const enterPostcode = (postcode) => {
+	clearField(OrganizationInventoryPage.postcodeInputCss);
+	enterInput(OrganizationInventoryPage.postcodeInputCss, postcode);
+};
+
+export const addressInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.addressInputCss);
+};
+
+export const enterAddress = (address) => {
+	clearField(OrganizationInventoryPage.addressInputCss);
+	enterInput(OrganizationInventoryPage.addressInputCss, address);
+};
+
+export const warehousesSelectVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.warehousesSelectCss);
+};
+
+export const clickWarehousesSelect = () => {
+	clickButton(OrganizationInventoryPage.warehousesSelectCss);
+};
+
+export const saveMerchantBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.saveMerchantBtnCss);
+};
+
+export const clickSaveMerchantBtn = () => {
+	clickButton(OrganizationInventoryPage.saveMerchantBtnCss);
+};
+
+export const editMerchantBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.editMerchantBtnCss);
+};
+
+export const clickEditMerchantBtn = () => {
+	clickButton(OrganizationInventoryPage.editMerchantBtnCss);
+};
+
+export const deleteMerchantBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.deleteMerchantBtnCss);
+};
+
+export const clickDeleteMerchantBtn = () => {
+	clickButton(OrganizationInventoryPage.deleteMerchantBtnCss);
+};
+
+export const addWarehouseBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.addWarehouseBtnCss);
+};
+
+export const clickAddWarehouseBtn = () => {
+	clickButton(OrganizationInventoryPage.addWarehouseBtnCss);
+};
+
+export const warehouseNameInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.warehouseNameInputCss);
+};
+
+export const enterWarehouseName = (name) => {
+	clearField(OrganizationInventoryPage.warehouseNameInputCss);
+	enterInput(OrganizationInventoryPage.warehouseNameInputCss, name);
+};
+
+export const warehouseCodeInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.warehouseCodeInputCss);
+};
+
+export const enterWarehouseCode = (code) => {
+	clearField(OrganizationInventoryPage.warehouseCodeInputCss);
+	enterInput(OrganizationInventoryPage.warehouseCodeInputCss, code);
+};
+
+export const warehouseEmailInputVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.warehouseEmailInputCss);
+};
+
+export const enterWarehouseEmail = (email) => {
+	clearField(OrganizationInventoryPage.warehouseEmailInputCss);
+	enterInput(OrganizationInventoryPage.warehouseEmailInputCss, email);
+};
+
+export const warehouseDescriptionInputVisible = () => {
+	verifyElementIsVisible(
+		OrganizationInventoryPage.warehouseDescriptionInputCss
+	);
+};
+
+export const enterWarehouseDescription = (description) => {
+	clearField(OrganizationInventoryPage.warehouseDescriptionInputCss);
+	enterInput(
+		OrganizationInventoryPage.warehouseDescriptionInputCss,
+		description
+	);
+};
+
+export const tabBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.tabBtnCss);
+};
+
+export const clickTabBtn = (text) => {
+	clickElementByText(OrganizationInventoryPage.tabBtnCss, text);
+};
+
+export const saveWarehouseBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.saveWarehouseBtnCss);
+};
+
+export const clickSaveWarehouseBtn = () => {
+	clickButton(OrganizationInventoryPage.saveWarehouseBtnCss);
+};
+
+export const editWarehouseBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.editWarehouseBtnCss);
+};
+
+export const clickEditWarehouseBtn = () => {
+	clickButton(OrganizationInventoryPage.editWarehouseBtnCss);
+};
+
+export const deleteWarehouseBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.deleteWarehouseBtnCss);
+};
+
+export const clickDeleteWarehouseBtn = () => {
+	clickButton(OrganizationInventoryPage.deleteWarehouseBtnCss);
 };

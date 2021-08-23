@@ -9,5 +9,14 @@ export const OrganizationInventoryPageData = {
 	productTypeName: 'CRM System',
 	productTypeDescription: 'Main product',
 	categoryButtonText: 'Product categories',
-	typeButtonText: 'Product types'
+	typeButtonText: 'Product types',
+	currency: 'Afghan Afghani (AFN)',
+	country: 'Afghanistan',
+	nextBtn: 'Next',
+	main: 'Main',
+	location: 'Location',
+	merchantName: 'Dominos Pizza',
+	merchantCode: '01A9990Z',
+	warehouseName: 'Sardo & Sons',
+	warehouseCode: '01A9990Z'
 };
