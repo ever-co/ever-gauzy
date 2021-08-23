@@ -223,7 +223,7 @@ export class TableInventoryComponent
 	}
 
 	manageWarehouses() {
-		this.router.navigate(['/pages/organization/inventory/warehouses/all']);
+		this.router.navigate(['/pages/organization/inventory/warehouses']);
 	}
 
 

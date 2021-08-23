@@ -14,6 +14,7 @@ import {
     NbSelectModule,
     NbTabsetModule,
     NbInputModule,
+    NbStepperModule,
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
 import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
@@ -43,6 +44,7 @@ const NB_MODULES = [
     NbSelectModule,
     NbTabsetModule,
     NbInputModule,
+    NbStepperModule
 ];
 
 

@@ -1,24 +1,20 @@
-import { ITag, IWarehouse, IImageAsset } from '@gauzy/contracts';
+import { ITag, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { LeafletMapComponent } from 'apps/gauzy/src/app/@shared/forms/maps/leaflet/leaflet.component';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { WarehouseService } from 'apps/gauzy/src/app/@core/services/warehouse.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LatLng } from 'leaflet';
-import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { LocationFormComponent } from 'apps/gauzy/src/app/@shared/forms/location';
-import { NbDialogService } from '@nebular/theme';
-import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
+import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { first } from 'rxjs/operators';
-import { ImageAssetService } from 'apps/gauzy/src/app/@core';
+import { filter, first, tap } from 'rxjs/operators';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { LocationFormComponent } from './../../../../../@shared/forms/location';
+import { LeafletMapComponent } from './../../../../../@shared/forms/maps';
+import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
+import { ImageAssetService, Store, ToastrService, WarehouseService } from './../../../../../@core/services';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-warehouse-form',
 	templateUrl: './warehouse-form.component.html',
@@ -27,59 +23,103 @@ import { ImageAssetService } from 'apps/gauzy/src/app/@core';
 export class WarehouseFormComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	form: FormGroup;
-	tags: ITag[] = [];
-
+	
+	warehouseId: string;
+	hoverState: boolean;
+	organization: IOrganization;
 	warehouse: IWarehouse;
+	logo: IImageAsset;
+	images: IImageAsset[] = [];
+	
+	private newImageUploadedEvent$ = new Subject<any>();
+	
+	/*
+	* Location Mutation Form 
+	*/
+	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
+	/*
+	* Warehouse Mutation Form 
+	*/
+	public form: FormGroup = WarehouseFormComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			name: ['', Validators.required],
+			tags: [],
+			code: ['', Validators.required],
+			email: ['', Validators.email],
+			active: [false],
+			logo: [''],
+			description: ['']
+		});
+	}
+
+	/**
+	 * Location Form Directive
+	 */
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
+	/**
+	 * Leaflet Map Directive
+	 */
 	@ViewChild('leafletTemplate')
 	leafletTemplate: LeafletMapComponent;
 
-	hoverState: boolean;
-	private newImageUploadedEvent$ = new Subject<any>();
-
-	logo: IImageAsset = null;
-	images: IImageAsset[] = [];
-
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	/**
+	 * Form Stepper Directive
+	 */
+	@ViewChild('stepper')
+	stepper: NbStepperComponent;
 
 	constructor(
-		private toastrService: ToastrService,
-		private warehouseService: WarehouseService,
-		readonly translateService: TranslateService,
-		private route: ActivatedRoute,
-		private fb: FormBuilder,
-		private store: Store,
-		private location: Location,
-		private dialogService: NbDialogService,
-		private imageAssetService: ImageAssetService
+		private readonly toastrService: ToastrService,
+		private readonly warehouseService: WarehouseService,
+		public readonly translateService: TranslateService,
+		private readonly route: ActivatedRoute,
+		private readonly router: Router,
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
+		private readonly dialogService: NbDialogService,
+		private readonly imageAssetService: ImageAssetService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
 		this.route.params
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((params) => !!params.id),
+				tap(({ id }) => this.warehouseId = id),
+				untilDestroyed(this)
+			)
 			.subscribe(async (params) => {
 				if (params.id) {
 					this.warehouse = await this.warehouseService.getById(
-						params.id
+						params.id,
+						['logo', 'contact', 'tags']
 					);
-
-					this.tags = this.warehouse.tags || [];
-					this.logo = this.warehouse.logo || null;
-
-					this._initializeLocationForm();
-					this._initializeForm();
+					this._patchForm();
+					this._patchLocationForm();
 				}
 			});
-
-		this._loadImages(); 
-		this._initializeForm();
-		this._initializeLocationForm();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._getAssetsImages()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.newImageUploadedEvent$
+			.pipe(
+				filter((image) => !!image),
+				tap((image) => {
+					console.log(image)
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async onImageSelect() {
@@ -102,38 +142,31 @@ export class WarehouseFormComponent
 	}
 
 	
-	private async _loadImages() {
-		const { items } = await this.imageAssetService.getAll({
-			organizationId: this.store.selectedOrganization ? this.store.selectedOrganization.id : null
-		});
-		this.images = items;
+	private async _getAssetsImages() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		this.images = (await this.imageAssetService.getAll({ tenantId, organizationId })).items;
 	}
 
+	private _patchForm() {
+		if (!this.warehouse) return;
 
+		const { warehouse } = this;
 
-	private _initializeForm() {
-		this.form = this.fb.group({
-			name: [
-				this.warehouse ? this.warehouse.name : '',
-				Validators.required
-			],
-			tags: this.tags,
-			code: [
-				this.warehouse ? this.warehouse.code : '',
-				Validators.required
-			],
-			email: [
-				this.warehouse ? this.warehouse.email : '',
-				Validators.email
-			],
-			active: [this.warehouse ? this.warehouse.active : false],
-			logo: [this.warehouse ? this.warehouse.logo : ''],
-			description: [this.warehouse ? this.warehouse.description : '']
+		this.form.patchValue({
+			name: warehouse.name,
+			tags: warehouse.tags,
+			code: warehouse.code,
+			email: warehouse.email,
+			active: warehouse.active,
+			description: warehouse.description,
+			logo: warehouse.logo
 		});
+
+		this.logo = warehouse.logo || null;
 	}
 
-
-	private _initializeLocationForm() {
+	private _patchLocationForm() {
 		if (!this.warehouse || !this.warehouse.contact) return;
 
 		const { contact } = this.warehouse;
@@ -146,7 +179,10 @@ export class WarehouseFormComponent
 			address2: contact.address2,
 			loc: {
 				type: 'Point',
-				coordinates: [contact.latitude, contact.longitude]
+				coordinates: [
+					contact.latitude,
+					contact.longitude
+				]
 			}
 		});
 	}
@@ -167,6 +203,8 @@ export class WarehouseFormComponent
 		const { coordinates } = locationFormValue['loc'];
 		delete locationFormValue['loc'];
 
+		const [ latitude, longitude ] = coordinates;
+
 		let request = {
 			...this.form.value,
 			logo: this.logo,
@@ -174,57 +212,55 @@ export class WarehouseFormComponent
 			organization: { id: organizationId},
 			contact: {
 				...locationFormValue,
-				latitude: coordinates[0],
-				longitude: coordinates[1]
+				latitude,
+				longitude
 			}
 		};
 
 		if (!this.warehouse) {
 			await this.warehouseService
 				.create(request)
-				.then((res) => {
-					this.toastrService.success(
-						'INVENTORY_PAGE.WAREHOUSE_WAS_CREATED',
-						{ name: request.name }
-					);
-
-					this.warehouse = res;
-
+				.then(() => {
+					this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_CREATED', { 
+						name: request.name 
+					});
 				})
-				.catch((err) => {
-					this.toastrService.danger(
-						'INVENTORY_PAGE.COULD_NOT_CREATE_WAREHOUSE',
-						null,
-						{ name: request.name }
-					);
+				.catch(() => {
+					this.toastrService.danger('INVENTORY_PAGE.COULD_NOT_CREATE_WAREHOUSE', null, { 
+						name: request.name
+					});
+				})
+				.finally(() => {
+					this.cancel();
 				});
 		} else {
 			await this.warehouseService
 				.update(this.warehouse.id, request)
 				.then((res) => {
-					this.toastrService.success(
-						'INVENTORY_PAGE.WAREHOUSE_WAS_UPDATED',
-						{ name: request.name }
-					);
-
+					this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_UPDATED', { 
+						name: request.name 
+					});
 					this.warehouse = res;
-
+				})
+				.finally(() => {
+					this.cancel();
 				});
 		}
 	}
 
 	cancel() {
-		this.location.back();
+		this.router.navigate([
+			'/pages/organization/inventory/warehouses'
+		]);
 	}
 
 	selectedTagsEvent(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
+		this.form.updateValueAndValidity();
 	}
 
 	onCoordinatesChanges($event) {
-		const {
-			loc: { coordinates }
-		} = this.locationFormDirective.getValue();
+		const { loc: { coordinates } } = this.locationFormDirective.getValue();
 		const [lat, lng] = coordinates;
 		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
@@ -243,13 +279,18 @@ export class WarehouseFormComponent
 		});
 	}
 
-	onChangeTab(tab) {
-		if (tab['tabTitle'] == 'Location') {
-			setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-		}
+	stepClick() {
+		setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 	}
 
 	isActiveInventoryTab() {
 		return this.warehouse && this.warehouse.id;
+	}
+
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 }

@@ -11,13 +11,13 @@ import {
 	Put,
 	Param
 } from '@nestjs/common';
-import { CrudController } from './../core/crud';
-import { MerchantService } from './merchant.service';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { IMerchant, IPagination } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
+import { Merchant } from './merchant.entity';
+import { MerchantService } from './merchant.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
-import { Merchant } from './merchant.entity';
 
 
 @ApiTags('Merchants')

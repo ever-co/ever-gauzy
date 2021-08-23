@@ -2,7 +2,8 @@ import { Entity, ManyToOne, JoinColumn, Column, RelationId, Index } from 'typeor
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
-import { TenantBaseEntity, ProductVariant, WarehouseProduct } from '../core/entities/internal';
+import { TenantBaseEntity, ProductVariant } from '../core/entities/internal';
+import { WarehouseProduct } from './warehouse-product.entity';
 
 @Entity('warehouse_product_variant')
 export class WarehouseProductVariant
@@ -13,23 +14,36 @@ export class WarehouseProductVariant
 	@Column({ nullable: true, type: 'numeric', default: 0 })
 	quantity: number;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductVariant
+	 */
+	@ApiProperty({ type: () => ProductVariant })
 	@ManyToOne(() => ProductVariant)
 	@JoinColumn()
 	variant: IProductVariant;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProductVariant) => it.variant)
 	@IsString()
 	@Index()
 	@Column()
 	variantId: string;
 
+	/**
+	 * WarehouseProduct
+	 */
 	@ManyToOne(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.variants, {
 		onDelete: 'CASCADE'
 	})
 	warehouseProduct: IWarehouseProduct;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProductVariant) => it.warehouseProduct)
 	@IsString()
 	@Index()

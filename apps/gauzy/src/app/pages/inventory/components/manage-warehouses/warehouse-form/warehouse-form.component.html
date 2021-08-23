@@ -2,164 +2,196 @@
 	<nb-card-header>
 		<div class="main-header">
 			<div class="top-nav">
-				<h4 *ngIf="!warehouse">
+				<h4>
 					<ngx-back-navigation></ngx-back-navigation>
-
-					{{ 'INVENTORY_PAGE.CREATE_WAREHOUSE' | translate }}
-				</h4>
-				<h4 *ngIf="warehouse">
-					<ngx-back-navigation></ngx-back-navigation>
-
-					{{ 'INVENTORY_PAGE.EDIT_WAREHOUSE' | translate }}
+					{{ (((!warehouseId) ? 
+						'INVENTORY_PAGE.CREATE_WAREHOUSE' 
+						: 'INVENTORY_PAGE.EDIT_WAREHOUSE') | translate
+					) }}
 				</h4>
 			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
-			<div class="row">
-				<div class="col-md-2 col-sm-12">
-					<ng-container *ngTemplateOutlet="warehouseImage"></ng-container>
-				</div>
-				<div class="col-md-10 col-sm-12">
-					<nb-tabset (changeTab)="onChangeTab($event)">
-						<nb-tab [tabTitle]="'INVENTORY_PAGE.MAIN' | translate">
+		<nb-stepper #stepper linear="false" (click)="stepClick()">
+			<nb-step 
+				[label]="'INVENTORY_PAGE.MAIN' | translate"
+			>
+				<form [formGroup]="form">
+					<div class="row">
+						<div class="col-md-3 col-sm-12 image-container">
+							<ng-container *ngTemplateOutlet="warehouseImage"></ng-container>
+						</div>
+						<div class="col-md-9 col-sm-12 pl-5">
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
-										<label class="label" for="name">{{
-											'INVENTORY_PAGE.NAME' | translate
-										}}</label>
-										<input fullWidth id="name" type="text" formControlName="name" nbInput
-											[placeholder]="
-												'INVENTORY_PAGE.NAME'
-													| translate
-											" [ngClass]="{
-												'status-danger':
-													form.controls['name'].invalid &&
-													form.controls['name'].touched
-											}" />
-										<div class="text-danger" *ngIf="
-										form.controls['name'].dirty &&
-										form.controls['name'].errors &&
-										form.controls['name'].errors.required
-							">
+										<label 
+											class="label" 
+											for="name" 
+											[innerHtml]="'INVENTORY_PAGE.NAME' | translate">
+										</label>
+										<input 
+											fullWidth 
+											id="name" 
+											type="text" 
+											formControlName="name" 
+											nbInput
+											[placeholder]=" 'INVENTORY_PAGE.NAME' | translate"
+											[status]="isInvalidControl('name') ? 'danger' : 'basic'"
+										/>
+										<div class="text-danger" *ngIf="isInvalidControl('name')">
 											{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
 										</div>
 									</div>
 								</div>
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
-										<ga-tags-color-input [selectedTags]="tags" (selectedTagsEvent)="
-												selectedTagsEvent($event)
-											" [isOrgLevel]="true">
-										</ga-tags-color-input>
+										<ga-tags-color-input 
+											[selectedTags]="form.get('tags').value" 
+											(selectedTagsEvent)="selectedTagsEvent($event)"
+											[isOrgLevel]="true"
+										></ga-tags-color-input>
 									</div>
 								</div>
 							</div>
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
-										<label class="label" for="code">{{
-											'INVENTORY_PAGE.CODE' | translate
-										}}</label>
-										<input fullWidth id="code" type="text" formControlName="code" nbInput
-											[placeholder]="
-												'INVENTORY_PAGE.CODE'
-													| translate
-											" [ngClass]="{
-												'status-danger':
-													form.controls['code'].invalid &&
-													form.controls['code'].touched
-											}" />
-										<div class="text-danger" *ngIf="
-										form.controls['code'].dirty &&
-										form.controls['code'].errors &&
-										form.controls['code'].errors.required
-							">
+										<label 
+											class="label" 
+											for="code" 
+											[innerHtml]="'INVENTORY_PAGE.CODE' | translate">
+										</label>
+										<input 
+											fullWidth 
+											id="code" 
+											type="text" 
+											formControlName="code" 
+											nbInput
+											[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+											[status]="isInvalidControl('code') ? 'danger' : 'basic'"
+										>
+										<div class="text-danger" *ngIf="isInvalidControl('code')">
 											{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
 										</div>
 									</div>
 								</div>
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
-										<label class="label" for="email">{{
-											'INVENTORY_PAGE.EMAIL' | translate
-										}}</label>
-										<input fullWidth id="email" type="text" formControlName="email" nbInput
-											[placeholder]="
-												'INVENTORY_PAGE.EMAIL'
-													| translate
-											" [ngClass]="{
-												'status-danger':
-													form.controls['email'].invalid &&
-													form.controls['email'].touched
-											}" />
-										<div class="text-danger" *ngIf="
-										form.controls['email'].dirty &&
-										form.controls['email'].errors &&
-										form.controls['email'].errors.email
-							">
+										<label 
+											class="label" 
+											for="email" 
+											[innerHtml]="'INVENTORY_PAGE.EMAIL' | translate">
+										</label>
+										<input 
+											fullWidth 
+											id="email" 
+											type="text"
+											formControlName="email"
+											nbInput
+											[placeholder]="'INVENTORY_PAGE.EMAIL' | translate"
+											[status]="isInvalidControl('email') ? 'danger' : 'basic'"
+										>
+										<div class="text-danger" *ngIf="isInvalidControl('email')">
 											{{ 'INVENTORY_PAGE.EMAIL_WRONG_FORMAT' | translate }}
 										</div>
 									</div>
 								</div>
 							</div>
-
-							<div class="row mb-3">
+							<div class="row mb-2">
 								<div class="col-md-6 col-sm-12">
 									<nb-checkbox formControlName="active">{{
 										'INVENTORY_PAGE.ACTIVE' | translate
 									}}</nb-checkbox>
 								</div>
 							</div>
-
-							<div class="form-group">
-								<label class="label" for="email">{{
-									'INVENTORY_PAGE.DESCRIPTION' | translate
-								}}</label>
-								<textarea fullWidth id="description" type="text" formControlName="description" nbInput
-									[placeholder]="
-										'INVENTORY_PAGE.DESCRIPTION' | translate
-									"></textarea>
+							<div class="row">
+								<div class="col-md-12 col-sm-12">
+									<div class="form-group">
+										<label 
+											class="label" 
+											for="description" 
+											[innerHtml]="'INVENTORY_PAGE.DESCRIPTION' | translate">
+										</label>
+										<textarea
+											fullWidth
+											id="description"
+											type="text"
+											formControlName="description"
+											nbInput
+											[placeholder]="'INVENTORY_PAGE.DESCRIPTION' | translate"
+										></textarea>
+									</div>
+								</div>
 							</div>
-						</nb-tab>
-						<nb-tab [tabTitle]="'INVENTORY_PAGE.LOCATION' | translate">
-							<ga-location-form #locationFormDirective [form]="locationForm"
-								[showAutocompleteSearch]="true" (mapCoordinatesEmitter)="
-									onCoordinatesChanges($event)
-								">
-							</ga-location-form>
-							<ga-leaflet-map [zoom]="4" #leafletTemplate (mapClicked)="onMapClicked($event)">
-							</ga-leaflet-map>
-						</nb-tab>
-						<nb-tab [tabTitle]="'INVENTORY_PAGE.INVENTORY' | translate "
-							[disabled]="!isActiveInventoryTab()">
-							<ga-warehouse-products-table></ga-warehouse-products-table>
-						</nb-tab>
-					</nb-tabset>
+						</div>
+					</div>
+				</form>
+			</nb-step>
+			<nb-step 
+				[label]="'INVENTORY_PAGE.LOCATION' | translate"
+			>
+				<div class="row">
+					<div class="col-md-12 col-sm-12">
+						<ga-location-form 
+							#locationFormDirective 
+							[form]="locationForm"
+							[showAutocompleteSearch]="true" 
+							(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+						></ga-location-form>
+						<ga-leaflet-map 
+							#leafletTemplate 
+							(mapClicked)="onMapClicked($event)"
+						></ga-leaflet-map>
+					</div>
 				</div>
-			</div>
-		</form>
+			</nb-step>
+			<nb-step 
+				[label]="'INVENTORY_PAGE.INVENTORY' | translate"
+				[hidden]="!isActiveInventoryTab()"
+			>
+				<ng-container *ngIf="isActiveInventoryTab()">
+					<div class="row">
+						<div class="col-md-12 col-sm-12">
+							<ga-warehouse-products-table></ga-warehouse-products-table>
+						</div>
+					</div>
+				</ng-container>
+			</nb-step>
+		</nb-stepper>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button (click)="cancel()" status="danger" class="mr-2" nbButton>
-			{{ 'BUTTONS.CANCEL' | translate }}
+		<button 
+			(click)="cancel()" 
+			status="danger"
+			class="mr-2" 
+			nbButton>
+				{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button status="success" nbButton (click)="onSaveRequest()">
-			{{ 'BUTTONS.SAVE' | translate }}
+		<button
+			status="success" 
+			nbButton 
+			(click)="onSaveRequest()">
+				{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
 
 <ng-template #warehouseImage>
-	<div class="warehouse-photo" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false"
-		(click)="onImageSelect()">
+	<div 
+		class="warehouse-photo" 
+		(mouseenter)="hoverState = true" 
+		(mouseleave)="hoverState = false"
+		(click)="onImageSelect()"
+	>
 		<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="68" height="68"
 			viewBox="0 0 68 68" [ngStyle]="{ opacity: hoverState ? '1' : '0.3' }">
 			<defs>
-				<path id="a"
-					d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4" />
+				<path 
+					id="a"
+					d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4" 
+				/>
 			</defs>
 			<g fill="none" fill-rule="evenodd">
 				<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
@@ -167,12 +199,21 @@
 				<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 			</g>
 		</svg>
-		<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
-
-		<img class="store-image" *ngIf="!logo || !logo.url" [src]="
-											'https://afostats.imagead.net/uploads/afo/no_img.png'
-										" alt="Warehouse Photo" />
-
-		<img class="store-image" *ngIf="logo && logo.url" [src]="logo.url" alt="Warehouse Photo" />
+		<div 
+			class="image-overlay" 
+			[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
+		></div>
+		<img 
+			class="store-image" 
+			*ngIf="!logo || !logo.url" 
+			[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'" 
+			alt="Warehouse Photo" 
+		/>
+		<img 
+			class="store-image" 
+			*ngIf="logo && logo.url" 
+			[src]="logo.url" 
+			alt="Warehouse Photo" 
+		/>
 	</div>
 </ng-template>

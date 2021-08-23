@@ -8,11 +8,13 @@ import {
 	Query,
 	HttpCode,
 	HttpStatus,
-	Delete
+	Delete,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IImageAsset, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -29,6 +31,60 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		super(imageAssetService);
 	}
 
+	/**
+	 * GET image assets counts
+	 * 
+	 * @param filter
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all image assets counts in the same tenant' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found image assets count'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
+	@Get('count')
+	async getCount(
+		@Query() filter: PaginationParams<IImageAsset>
+	): Promise<number> {
+		return await this.imageAssetService.count(filter);
+	}
+
+	/**
+	 * GET image assets by pagination  
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all image assets in the same tenant using pagination.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found image assets in the tenant',
+		type: ImageAsset
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<IImageAsset>
+	): Promise<IPagination<IImageAsset>> {
+		return this.imageAssetService.paginate(filter);
+	}
+
+	/**
+	 * GET image assets
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	// @UseGuards(PermissionGuard)
+	// @Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
@@ -40,6 +96,14 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		});
 	}
 
+	/**
+	 * GET image assets by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
 	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
@@ -47,6 +111,12 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		return this.imageAssetService.findOne(id);
 	}
 
+	/**
+	 * CREATE new image asset
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.INVENTORY_GALLERY_EDIT)
 	@Post()
@@ -56,7 +126,15 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		return this.imageAssetService.create(entity);
 	}
 
+	/**
+	 * DELETE image assets
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVENTORY_GALLERY_EDIT)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string
