@@ -37,7 +37,7 @@ export const OrganizationInventoryPage = {
 	merchantFiscalInfoInputCss:
 		'div.form-group > input[formcontrolname="fiscalInformation"]',
 	merchantWebsiteInputCss: 'div.form-group > input[id="website"]',
-	tagsSelectCss: 'ga-tags-color-input > div > nb-select[id="addTags"]',
+	tagsSelectCss: 'ga-tags-color-input > div > ng-select[id="addTags"]',
 	tagsDropdownOptionCss: 'div.ng-option',
 	merchantDescriptionInputCss:
 		'div.form-group > textarea[formcontrolname="description"]',
@@ -45,7 +45,7 @@ export const OrganizationInventoryPage = {
 	merchantNextBtnCss:
 		'div.row > div[class="form-group col-4"] > button[status="primary"]',
 	countrySelectCss:
-		'div.col-4 > ga-country > nb-select > button.select-button',
+		'div.col-4 > ga-country > div.form-group > nb-select > button.select-button',
 	cityInputCss: 'div.form-group > input[id="cityInput"]',
 	postcodeInputCss: 'div.form-group > input[id="postcodeInput"]',
 	addressInputCss: 'div.form-group > input[id="addressInput"]',
@@ -61,8 +61,13 @@ export const OrganizationInventoryPage = {
 	warehouseEmailInputCss: 'div.form-group > input[id="email"]',
 	warehouseActiveCheckboxCss: 'nb-checkbox > label > span.custom-checkbox',
 	warehouseDescriptionInputCss: 'div.form-group > textarea[id="description"]',
-	tabBtnCss: 'nb-tabset > ul.tabset > li.tab > a > span',
+	tabBtnCss:
+		'div[class="step ng-star-inserted"] > div.label > span.ng-star-inserted',
 	saveWarehouseBtnCss: 'nb-card-footer.text-right > button[status="success"]',
 	editWarehouseBtnCss: 'div.mb-3 > button[status="info"]',
-	deleteWarehouseBtnCss: 'div.mb-3 > button[status="danger"]'
+	deleteWarehouseBtnCss: 'div.mb-3 > button[status="danger"]',
+	sidebarBtnCss: 'span.menu-title',
+	inventorySidebarBtnCss:
+		'a[href="#/pages/organization/inventory"] > span.menu-title',
+	verifyMerchantWarehouseCss: 'div.d-block'
 };

@@ -196,10 +196,10 @@ export const merchantOrWarehouseBtnVisible = () => {
 	);
 };
 
-export const clickMerchantOrWarehouseBtn = (index) => {
-	clickButtonByIndex(
+export const clickMerchantOrWarehouseBtn = (text) => {
+	clickElementByText(
 		OrganizationInventoryPage.merchantsOrWarehousesBtnCss,
-		index
+		text
 	);
 };
 
@@ -464,4 +464,20 @@ export const deleteWarehouseBtnVisible = () => {
 
 export const clickDeleteWarehouseBtn = () => {
 	clickButton(OrganizationInventoryPage.deleteWarehouseBtnCss);
+};
+
+export const sidebarBtnVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.sidebarBtnCss);
+};
+
+export const clickSidebarBtn = (text) => {
+	clickElementByText(OrganizationInventoryPage.sidebarBtnCss, text);
+};
+
+export const verifyMerchantWarehouse = (text) => {
+	verifyText(OrganizationInventoryPage.verifyMerchantWarehouseCss, text);
+};
+
+export const clickInventorySidebarBtn = () => {
+	clickButton(OrganizationInventoryPage.inventorySidebarBtnCss);
 };

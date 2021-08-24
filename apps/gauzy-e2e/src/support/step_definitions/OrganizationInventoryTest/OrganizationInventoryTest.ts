@@ -15,7 +15,6 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
 let website = faker.internet.url();
-let phone = faker.phone.phoneNumber();
 let description = faker.lorem.text();
 let city = faker.address.city();
 let postcode = faker.address.zipCode();
@@ -46,6 +45,9 @@ And('User can see grid button', () => {
 });
 
 And('User can click on second grid button to change view', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	organizationInventoryPage.gridBtnClick(1);
 });
 
@@ -536,12 +538,28 @@ Then('Notification message will appear', () => {
 });
 
 // Add warehouse
+And('User can see sidebar menu buttons', () => {
+	organizationInventoryPage.sidebarBtnVisible();
+});
+
+When('User click on Organization sidebar button', () => {
+	organizationInventoryPage.clickSidebarBtn(
+		OrganizationInventoryPageData.organization
+	);
+});
+
+Then('User can click on Inventory sidebar button', () => {
+	organizationInventoryPage.clickInventorySidebarBtn();
+});
+
 And('User can see Warehouses button', () => {
 	organizationInventoryPage.merchantOrWarehouseBtnVisible();
 });
 
 When('User click on Warehouses button', () => {
-	organizationInventoryPage.clickMerchantOrWarehouseBtn(1);
+	organizationInventoryPage.clickMerchantOrWarehouseBtn(
+		OrganizationInventoryPageData.warehouses
+	);
 });
 
 Then('User can see Add warehouse button', () => {
@@ -613,7 +631,9 @@ And('User can see tab button', () => {
 });
 
 When('User click on Location tab button', () => {
-	organizationInventoryPage.clickTabBtn(1);
+	organizationInventoryPage.clickTabBtn(
+		OrganizationInventoryPageData.location
+	);
 });
 
 Then('User can see warehouse country select', () => {
@@ -666,13 +686,25 @@ Then('Notification message will appear', () => {
 	organizationInventoryPage.waitMessageToHide();
 });
 
+And('User can verify Warehouse was created', () => {
+	organizationInventoryPage.verifyMerchantWarehouse(
+		OrganizationInventoryPageData.warehouseName
+	);
+});
+
 // Add merchant
-And('User can see Merchants button', () => {
+When('User click again on Inventory sidebar menu button', () => {
+	organizationInventoryPage.clickInventorySidebarBtn();
+});
+
+Then('User can see Merchants button', () => {
 	organizationInventoryPage.merchantOrWarehouseBtnVisible();
 });
 
 When('User click on Merchants button', () => {
-	organizationInventoryPage.clickMerchantOrWarehouseBtn(0);
+	organizationInventoryPage.clickMerchantOrWarehouseBtn(
+		OrganizationInventoryPageData.merchants
+	);
 });
 
 Then('User can see Add merchant button', () => {
@@ -709,14 +741,6 @@ And('User can see merchant email input field', () => {
 
 And('User can enter value for merchant email', () => {
 	organizationInventoryPage.enterMerchantEmail(email);
-});
-
-And('User can see merchant phone input field', () => {
-	organizationInventoryPage.merchantPhoneInputVisible();
-});
-
-And('User can enter value for merchant phone', () => {
-	organizationInventoryPage.enterMerchantPhone(phone);
 });
 
 And('User can see currency select', () => {
@@ -843,6 +867,182 @@ And('User can see save merchant button', () => {
 
 When('User click on save merchant button', () => {
 	organizationInventoryPage.clickSaveMerchantBtn();
+});
+
+Then('Notification message will appear', () => {
+	organizationInventoryPage.waitMessageToHide();
+});
+
+And('User can verify Merchant was created', () => {
+	organizationInventoryPage.verifyMerchantWarehouse(
+		OrganizationInventoryPageData.merchantName
+	);
+});
+
+// Edit Merchant
+And('User can see merchants table', () => {
+	organizationInventoryPage.tableRowVisible();
+});
+
+When('User click on merchants table row', () => {
+	organizationInventoryPage.selectTableRow(0);
+});
+
+Then('Edit merchant button will become active', () => {
+	organizationInventoryPage.editMerchantBtnVisible();
+});
+
+When('User click on edit merchant name', () => {
+	organizationInventoryPage.clickEditMerchantBtn();
+});
+
+Then('User can see again merchant name input field', () => {
+	organizationInventoryPage.merchantNameInputVisible();
+});
+
+And('User can enter new value for merchant name', () => {
+	organizationInventoryPage.enterMerchantNameInput(
+		OrganizationInventoryPageData.editMerchantName
+	);
+});
+
+And('User can see again next step button', () => {
+	organizationInventoryPage.merchantNextBtnVisible();
+});
+
+When('User click on next step button again', () => {
+	organizationInventoryPage.clickMerchantNextBtn(
+		OrganizationInventoryPageData.nextBtn
+	);
+});
+
+Then('User can click again on last step button', () => {
+	organizationInventoryPage.clickMerchantNextBtn(
+		OrganizationInventoryPageData.nextBtn
+	);
+});
+
+And('User can see again save merchant button', () => {
+	organizationInventoryPage.saveMerchantBtnVisible();
+});
+
+When('User click on save edited merchant button', () => {
+	organizationInventoryPage.clickSaveMerchantBtn();
+});
+
+Then('Notification message will appear', () => {
+	organizationInventoryPage.waitMessageToHide();
+});
+
+And('User can verify Merchant was edited', () => {
+	organizationInventoryPage.verifyMerchantWarehouse(
+		OrganizationInventoryPageData.editMerchantName
+	);
+});
+
+// Delete merchant
+And('User can see merchants table again', () => {
+	organizationInventoryPage.tableRowVisible();
+});
+
+When('User click again on merchants table row', () => {
+	organizationInventoryPage.selectTableRow(0);
+});
+
+Then('Delete merchant button will become active', () => {
+	organizationInventoryPage.deleteMerchantBtnVisible();
+});
+
+When('User click on delete merchant button', () => {
+	organizationInventoryPage.clickDeleteMerchantBtn();
+});
+
+Then('Notification message will appear', () => {
+	organizationInventoryPage.waitMessageToHide();
+});
+
+// Edit warehouse
+When('User click on Inventory sidebar button again', () => {
+	organizationInventoryPage.clickInventorySidebarBtn();
+});
+
+Then('User can see Warehouses button again', () => {
+	organizationInventoryPage.merchantOrWarehouseBtnVisible();
+});
+
+When('User click on Warehouses button again', () => {
+	organizationInventoryPage.clickMerchantOrWarehouseBtn(
+		OrganizationInventoryPageData.warehouses
+	);
+});
+
+Then('User can see warehouses table', () => {
+	organizationInventoryPage.tableRowVisible();
+});
+
+When('User click on warehouses table row', () => {
+	organizationInventoryPage.selectTableRow(0);
+});
+
+Then('Edit warehouse button will become active', () => {
+	organizationInventoryPage.editWarehouseBtnVisible();
+});
+
+When('User click on edit warehouse button', () => {
+	organizationInventoryPage.clickEditWarehouseBtn();
+});
+
+Then('User can see warehouse name input field again', () => {
+	organizationInventoryPage.warehouseNameInputVisible();
+});
+
+And('User can enter new value for warehouse name', () => {
+	organizationInventoryPage.enterWarehouseName(
+		OrganizationInventoryPageData.editWarehouseName
+	);
+});
+
+And('User can see save edited warehouse button', () => {
+	organizationInventoryPage.saveWarehouseBtnVisible();
+});
+
+When('User click on save edited warehouse button', () => {
+	organizationInventoryPage.clickSaveWarehouseBtn();
+});
+
+Then('Notification message will appear', () => {
+	organizationInventoryPage.waitMessageToHide();
+});
+
+And('User can verify warehouse was edited', () => {
+	organizationInventoryPage.verifyMerchantWarehouse(
+		OrganizationInventoryPageData.editWarehouseName
+	);
+});
+
+// Delete warehouse
+And('User can see warehouses table again', () => {
+	organizationInventoryPage.tableRowVisible();
+});
+
+When('User click on warehouses table row again', () => {
+	organizationInventoryPage.selectTableRow(0);
+});
+
+Then('Delete warehouse button will become active', () => {
+	organizationInventoryPage.deleteWarehouseBtnVisible();
+});
+
+When('User click on delete warehouse button', () => {
+	organizationInventoryPage.clickDeleteWarehouseBtn();
+});
+
+Then('User can see confirm delete warehouse button', () => {
+	organizationInventoryPage.confirmDeleteButtonVisible();
+});
+
+When('User click on confirm delete warehouse button', () => {
+	organizationInventoryPage.clickConfirmDeleteButton();
 });
 
 Then('Notification message will appear', () => {

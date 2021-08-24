@@ -16,7 +16,12 @@ export const OrganizationInventoryPageData = {
 	main: 'Main',
 	location: 'Location',
 	merchantName: 'Dominos Pizza',
+	editMerchantName: 'Mambo Pizza',
+	editWarehouseName: 'Jumbo',
 	merchantCode: '01A9990Z',
 	warehouseName: 'Sardo & Sons',
-	warehouseCode: '01A9990Z'
+	warehouseCode: '01A9990Z',
+	organization: 'Organization',
+	merchants: 'Merchants',
+	warehouses: 'Warehouses'
 };
