@@ -15,7 +15,6 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
 let website = faker.internet.url();
-let phone = faker.phone.phoneNumber();
 let description = faker.lorem.text();
 let city = faker.address.city();
 let postcode = faker.address.zipCode();
