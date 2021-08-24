@@ -22,9 +22,9 @@ export const createRandomWarehouses = async (
 
     let warehouses: Warehouse[] = [];
 
-    for (const tenant of tenants) {
+    for await (const tenant of tenants) {
         const organizations = tenantOrganizationsMap.get(tenant);
-        for (const organization of organizations) {
+        for await (const organization of organizations) {
             for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
                 const warehouse = applyRandomProperties(tenant, organization, countries);
                 warehouse.products = [];
@@ -92,7 +92,6 @@ const applyRandomProperties = (
     contact.organization = organization;
     contact.tenant = tenant;
 
-    
     const logo = new ImageAsset();
     logo.name = faker.name.title();
     logo.url = faker.image.imageUrl();

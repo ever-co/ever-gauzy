@@ -1,6 +1,10 @@
 import { Component } from '@angular/core';
 
 @Component({
-	template: `<div class="content"><router-outlet></router-outlet></div>`
+	template: `
+		<div class="content">
+			<router-outlet></router-outlet>
+		</div>
+	`
 })
 export class WarehousesComponent {}

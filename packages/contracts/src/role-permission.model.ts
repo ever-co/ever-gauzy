@@ -181,7 +181,6 @@ export const PermissionGroups = {
 		PermissionsEnum.EQUIPMENT_MAKE_REQUEST,
 		PermissionsEnum.EQUIPMENT_APPROVE_REQUEST,
 		PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
-		PermissionsEnum.INVENTORY_GALLERY_EDIT,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
 		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES

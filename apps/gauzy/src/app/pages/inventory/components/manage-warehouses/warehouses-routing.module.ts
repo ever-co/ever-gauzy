@@ -6,8 +6,6 @@ import { WarehousesComponent } from './warehouses.component';
 import { WarehouseFormComponent } from './warehouse-form/warehouse-form.component';
 import { WarehousesTableComponent } from './warehouses-table/warehouses-table.component';
 
-
-
 const ORG_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW,
 	PermissionsEnum.ALL_ORG_EDIT
@@ -20,13 +18,16 @@ const routes: Routes = [
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
-				only: [...ORG_PERMISSIONS, PermissionsEnum.ORG_INVENTORY_VIEW],
+				only: [
+					...ORG_PERMISSIONS,
+					PermissionsEnum.ORG_INVENTORY_VIEW
+				],
 				redirectTo: '/pages/dashboard'
 			}
 		},
 		children: [
 			{
-				path: 'all',
+				path: '',
 				component: WarehousesTableComponent
 			},
 			{

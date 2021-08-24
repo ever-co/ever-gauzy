@@ -19,13 +19,16 @@ const routes: Routes = [
 		canActivate: [NgxPermissionsGuard], 
 		data: {
 			permissions: {
-				only: [...ORG_PERMISSIONS, PermissionsEnum.ORG_INVENTORY_VIEW],
+				only: [
+					...ORG_PERMISSIONS,
+					PermissionsEnum.ORG_INVENTORY_VIEW
+				],
 				redirectTo: '/pages/dashboard'
 			}
 		},
 		children: [
 			{
-				path: 'all',
+				path: '',
 				component: MerchantTableComponent
 			},
 			{

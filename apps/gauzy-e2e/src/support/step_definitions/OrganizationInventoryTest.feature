@@ -121,3 +121,79 @@ Feature: Organization inventory test
     Then User can see confirm delete product type button
     When User click on confirm delete product type button
     Then Notification message will appear
+  Scenario: Add warehouse
+    And User can see Warehouses button
+    When User click on Warehouses button
+    Then User can see Add warehouse button
+    When User click on Add warehouse button
+    Then User can see warehouse name input field
+    And User can enter value for warehouse name
+    And User can see warehouse tags select
+    When User click on warehouse tags select
+    Then User can select warehouse tag from dropdown options
+    And User can see warehouse code input field
+    And User can enter warehouse code
+    And User can see warehouse email input field
+    And User can enter value for warehouse email
+    And User can see warehouse active state checkbox
+    And User can click on warehouse active state checkbox
+    And User can see warehouse description input field
+    And User can enter value for merchant description
+    And User can see tab button
+    When User click on Location tab button
+    Then User can see warehouse country select
+    When User click on warehouse country select
+    Then User can select warehouse country from dropdown options
+    And User can see warehouse city input field
+    And User can enter value for warehouse city
+    And User can see warehouse postcode input field
+    And User can enter value for warehouse postcode
+    And User can see warehouse address input field
+    And User can enter value for warehouse address
+    And User can see save warehouse button
+    When User click on save warehouse button
+    Then Notification message will appear
+  Scenario: Add merchant
+    And User can see Merchants button
+    When User click on Merchants button
+    Then User can see Add merchant button
+    When User click on Add merchant button
+    Then User can see merchant name input field
+    And User can enter merchant name
+    And User can see merchant code input field
+    And User can enter merchant code
+    And User can see merchant email input field
+    And User can enter value for merchant email
+    And User can see merchant phone input field
+    And User can enter value for merchant phone
+    And User can see currency select
+    When User click on currency select
+    Then User can select currency from dropdown options
+    And User can see merchant website input field
+    And User can enter value for merchant website
+    And User can see merchant tags select
+    When User click on merchant tags select
+    Then User can select merchant tag from dropdown options
+    And User can see merchant description input field
+    And User can enter value for merchant description
+    And User can see merchant active state checkbox
+    And User can click on merchant active state checkbox
+    And User can see next step button
+    When User click on next step button
+    Then User can see merchant country select
+    When User click on merchant country select
+    Then User can select merchant country from dropdown options
+    And User can see merchant city input field
+    And User can enter value for merchant city
+    And User can see merchant postcode input field
+    And User can enter value for merchant postcode
+    And User can see merchant address input field
+    And User can enter value for merchant address
+    And User can see last step button
+    When User click on last step button
+    And User can see warehousee select
+    When User click on warehouses select
+    Then User can select warehouse from dropdown options
+    And User can see save merchant button
+    When User click on save merchant button
+    Then Notification message will appear

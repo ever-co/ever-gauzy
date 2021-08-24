@@ -1,8 +1,22 @@
 import { IMerchant, CurrenciesEnum, IImageAsset, ITag, IWarehouse, IContact } from '@gauzy/contracts';
 import {
-	TenantOrganizationBaseEntity, ImageAsset, Tag, Contact, Warehouse,
+	TenantOrganizationBaseEntity,
+	ImageAsset,
+	Tag,
+	Contact,
+	Warehouse,
 } from '../core/entities/internal';
-import { Entity, Column, ManyToOne, JoinColumn, JoinTable, ManyToMany, OneToOne, Index, RelationId } from 'typeorm';
+import {
+	Entity,
+	Column,
+	ManyToOne,
+	JoinColumn,
+	JoinTable,
+	ManyToMany,
+	OneToOne,
+	Index,
+	RelationId
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString } from 'class-validator';
 
@@ -43,36 +57,60 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@Column({ default: CurrenciesEnum.USD })
 	currency: string;
 
-	@ApiProperty()
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Contact
+	 */
+	@ApiProperty({ type: () => Contact })
 	@OneToOne(() => Contact, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	contact: IContact;
+	contact?: IContact;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
 	@IsString()
 	@Index()
-	@Column()
-	contactId: string;
+	@Column({ nullable: true })
+	contactId?: string;
 
-	@ApiProperty()
-	@ManyToOne(
-		() => ImageAsset,
-		{ cascade: true }
-	)
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ImageAsset
+	 */
+	@ApiProperty({ type: () => ImageAsset })
+	@ManyToOne(() => ImageAsset, { cascade: true })
 	@JoinColumn()
-	logo: IImageAsset;
+	logo?: IImageAsset;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
 	@IsString()
 	@Index()
-	@Column()
-	logoId: string;
+	@Column({ nullable: true })
+	logoId?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Tag
+	 */
 	@ManyToMany(() => Tag, (tag) => tag.merchants, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
@@ -80,11 +118,14 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@JoinTable({
 		name: 'tag_merchant'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 
+	/**
+	 * Warehouse
+	 */
 	@ManyToMany(() => Warehouse)
 	@JoinTable({
 		name: 'warehouse_merchant'
 	})
-	warehouses: IWarehouse[];
+	warehouses?: IWarehouse[];
 }
