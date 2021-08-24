@@ -83,8 +83,8 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 * @param data 
 	 * @returns 
 	 */
-	// @UseGuards(PermissionGuard)
-	// @Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any

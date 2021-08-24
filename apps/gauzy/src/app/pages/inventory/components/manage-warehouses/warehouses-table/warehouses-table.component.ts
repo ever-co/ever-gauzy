@@ -38,7 +38,7 @@ export class WarehousesTableComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
 	public organization: IOrganization;
-	warhouses$: Subject<any> = new Subject();
+	warhouses$: Subject<any> = this.subject$;
 
 	warehousesTable: Ng2SmartTableComponent;
 	@ViewChild('warehousesTable') set content(content: Ng2SmartTableComponent) {

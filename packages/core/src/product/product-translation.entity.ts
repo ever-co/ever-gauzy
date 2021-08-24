@@ -2,7 +2,8 @@ import { IProduct, IProductTranslation, LanguagesEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Product, TranslationBase } from '../core/entities/internal';
+import { TranslationBase } from '../core/entities/internal';
+import { Product } from './product.entity';
 
 @Entity('product_translation')
 export class ProductTranslation

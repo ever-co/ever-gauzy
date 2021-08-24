@@ -2,23 +2,19 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
-import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { LocalDataSource } from 'ng2-smart-table';
+import { TranslateService } from '@ngx-translate/core';
+import { combineLatest } from 'rxjs';
 import {
 	IImageAsset,
 	IProductOptionTranslatable,
 	IProductTranslatable,
 	LanguagesEnum
-} from 'packages/contracts/dist';
-import { combineLatest } from 'rxjs';
-import { EnabledStatusComponent } from '../table-components/enabled-row.component';
-import { ImageRowComponent } from '../table-components/image-row.component';
-import { TranslatableService } from 'apps/gauzy/src/app/@core';
+} from '@gauzy/contracts';
+import { ProductService, Store, TranslatableService } from './../../../../@core/services';
+import { GalleryComponent, GalleryService } from './../../../../@shared/gallery';
+import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { EnabledStatusComponent, ImageRowComponent } from './../table-components';
 
 @UntilDestroy()
 @Component({
@@ -39,13 +35,13 @@ export class InventoryItemViewComponent
 	smartTableSource = new LocalDataSource();
 
 	constructor(
-		readonly translateService: TranslateService,
-		private translatableService: TranslatableService,
-		private productService: ProductService,
-		private route: ActivatedRoute,
+		public readonly translateService: TranslateService,
+		private readonly translatableService: TranslatableService,
+		private readonly productService: ProductService,
+		private readonly route: ActivatedRoute,
 		private readonly store: Store,
-		private galleryService: GalleryService,
-		private nbDialogService: NbDialogService
+		private readonly galleryService: GalleryService,
+		private readonly nbDialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -57,8 +53,8 @@ export class InventoryItemViewComponent
 				this.inventoryItem = await this.productService.getById(
 					params.id,
 					[
-						'category',
-						'type',
+						'productCategory',
+						'productType',
 						'optionGroups',
 						'variants',
 						'tags',
@@ -66,7 +62,6 @@ export class InventoryItemViewComponent
 						'featuredImage'
 					]
 				);
-
 				let variants = [];
 
 				if (this.inventoryItem && this.inventoryItem.variants) {

@@ -4,11 +4,7 @@ import { Router, NavigationStart } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as _ from 'underscore';
-
-export interface GalleryItem {
-	thumbUrl: string;
-	fullUrl: string;
-}
+import { GalleryItem } from './gallery.directive';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({

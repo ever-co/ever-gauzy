@@ -1,133 +1,231 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
-	<nb-card-header>
-		<div class="main-header">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
 			<h4>
 				<ngx-header-title>
 					{{ 'INVENTORY_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
-			<div class="card-header-title">
-				<div style="margin-right: 9px"></div>
-				<ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
-			</div>
+		</div>
+		<div>
+			<ga-layout-selector
+				[componentName]="viewComponentName"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
-
 	<nb-card-body>
 		<div class="mb-3">
-			<button *ngIf="editProductAllowed" (click)="onAddInventoryItem()" nbButton status="success" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+				<button
+					(click)="onAddInventoryItem()"
+					nbButton
+					status="success"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</ng-template>
+			<ng-container 
+				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+			>
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
-			<button *ngIf="viewTypesAllowed" class="float-right" nbButton status="primary" [size]="'medium'"
-				(click)="manageProductTypes()">
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
-			</button>
-			<button *ngIf="viewCategoriesAllowed" class="float-right" style="margin-right: 9px" nbButton [size]="'medium'"
-				status="primary" (click)="manageProductCategories()">
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
-			</button>
-			<button *ngIf="editProductAllowed" class="float-right" style="margin-right: 9px" nbButton status="warning" [size]="'medium'"
-				(click)="manageWarehouses()">
-				<nb-icon icon="home-outline"></nb-icon>
-				{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
-			</button>
-			<button *ngIf="editProductAllowed" class="float-right" style="margin-right: 9px" nbButton status="warning" [size]="'medium'"
-				(click)="manageStores()">
-				<nb-icon icon="home-outline"></nb-icon>
-				{{ 'INVENTORY_PAGE.MERCHANTS' | translate }}
-			</button>
+			<ng-container *ngTemplateOutlet="subActionButtons"></ng-container>
 		</div>
-
-		<ng2-smart-table class="tags-table" [settings]="settingsSmartTable" (userRowSelect)="selectProduct($event)"
-			[source]="source" style="cursor: pointer" *ngIf="dataLayoutStyle === 'TABLE'" #inventoryTable>
-		</ng2-smart-table>
-		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-			<li class="flex-item" *ngFor="let x of inventoryData">
-				<div class="info-line">
-					<span class="info-meta">{{
-						'INVENTORY_PAGE.IMAGE' | translate
-					}}</span>
-					<div class="card-image">
-						<div class="card-image" *ngIf="!x.featuredImage || !x.featuredImage.url" [ngStyle]="{
-								backgroundImage:
-									'url(https://afostats.imagead.net/uploads/afo/no_img.png)'
-							}" alt="Product Item Photo"></div>
-						<div class="card-image" *ngIf="x.featuredImage && x.featuredImage.url" [ngStyle]="{
-								backgroundImage:
-									'url(' + x.featuredImage.url + ')'
-							}" alt="Product Item Photo"></div>
-					</div>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'INVENTORY_PAGE.NAME' | translate
-					}}</span>
-					<span class="info-value">{{ x.name }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'INVENTORY_PAGE.CODE' | translate
-					}}</span>
-					<span class="info-value">{{ x.code }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'INVENTORY_PAGE.PRODUCT_TYPE' | translate
-					}}</span>
-					<span class="info-value">{{ x.type?.name }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate
-					}}</span>
-					<span class="info-value">{{ x.category?.name }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'INVENTORY_PAGE.DESCRIPTION' | translate
-					}}</span>
-					<span class="info-value">{{ x.description }}</span>
-				</div>
-				<nb-card-footer class="card-footer">
-					<ng-container *ngTemplateOutlet="
-							actionButtons;
-							context: {
-								buttonSize: 'tiny',
-								selectedItem: x
-							}
-						">
-					</ng-container>
-				</nb-card-footer>
-			</li>
-		</ul>
-
-		<div class="pagination-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-				<ga-pagination (selectedPage)="onPageChange($event)" [totalItems]="totalItems" [itemsPerPage]="10"
-				[activePage]="1"></ga-pagination>
-		</div>
-
-		
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+			[ngIfElse]="gridLayout"
+		>
+			<ng2-smart-table
+				[settings]="settingsSmartTable" 
+				(userRowSelect)="selectProduct($event)"
+				[source]="smartTableSource"
+				style="cursor: pointer"
+				#inventoryTable
+			></ng2-smart-table>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ng-container *ngTemplateOutlet="gridViewTemplate"></ng-container>
+			<div class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination 
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems" 
+						[itemsPerPage]="pagination?.itemsPerPage" 
+						[activePage]="pagination?.activePage">
+					</ga-pagination>
+				</ng-container>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-	<button *ngIf="editProductAllowed" (click)="onEditInventoryItem(selectedItem)" nbButton status="info" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button (click)="onViewInventoryItem(selectedItem)" nbButton status="warning" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
-		<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
-		{{ 'BUTTONS.VIEW' | translate }}
-	</button>
-	<button *ngIf="editProductAllowed" (click)="delete(selectedItem)" nbButton status="danger" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+
+<ng-template #gridViewTemplate>
+	<ul class="flex-container">
+		<li class="flex-item" *ngFor="let x of products">
+			<div class="info-line">
+				<span class="info-meta" [innerHtml]="'INVENTORY_PAGE.IMAGE' | translate"></span>
+				<div class="card-image">
+					<div 
+						class="card-image"
+						*ngIf="!x.featuredImage || !x.featuredImage.url" 
+						[ngStyle]="{ 
+							backgroundImage: 'url(https://afostats.imagead.net/uploads/afo/no_img.png)' 
+						}"
+						alt="Product Item Photo">
+					</div>
+					<div
+						class="card-image"
+						*ngIf="x.featuredImage && x.featuredImage.url"
+						[ngStyle]="{
+							backgroundImage: 'url(' + x.featuredImage.url + ')'
+						}" 
+						alt="Product Item Photo">
+					</div>
+				</div>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.NAME' | translate
+				}}</span>
+				<span class="info-value">{{ x.name }}</span>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.CODE' | translate
+				}}</span>
+				<span class="info-value">{{ x.code }}</span>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.PRODUCT_TYPE' | translate
+				}}</span>
+				<span class="info-value">{{ x.type?.name }}</span>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate
+				}}</span>
+				<span class="info-value">{{ x.category?.name }}</span>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.DESCRIPTION' | translate
+				}}</span>
+				<span class="info-value">{{ x.description }}</span>
+			</div>
+			<nb-card-footer class="card-footer">
+				<ng-container *ngTemplateOutlet="
+						actionButtons;
+						context: {
+							buttonSize: 'tiny',
+							selectedItem: x
+						}
+					">
+				</ng-container>
+			</nb-card-footer>
+		</li>
+	</ul>
+</ng-template>
+
+<ng-template 
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+		<button
+			(click)="onEditInventoryItem(selectedItem)"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton" 
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+	</ng-template>
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_VIEW">
+		<button
+			(click)="onViewInventoryItem(selectedItem)"
+			nbButton
+			status="warning"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+	</ng-template>
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+		<button
+			(click)="delete(selectedItem)"
+			nbButton
+			status="danger"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
+</ng-template>
+
+<ng-template #subActionButtons>
+	<ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
+		<button
+			(click)="manageProductTypes()"
+			nbButton
+			status="primary"
+			class="float-right mr-2"
+			[size]="'medium'"
+			>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
+		</button>
+	</ng-template>
+	<ng-template ngxPermissionsOnly="ORG_PRODUCT_CATEGORIES_VIEW">
+		<button
+			(click)="manageProductCategories()"
+			nbButton
+			status="primary"
+			class="float-right mr-2"
+			[size]="'medium'"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
+		</button>
+	</ng-template>
+	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
+		<button 
+			(click)="manageWarehouses()"
+			nbButton
+			status="warning" 
+			class="float-right mr-2"
+			[size]="'medium'"
+		>
+			<nb-icon icon="home-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
+		</button>
+		<button
+			(click)="manageStores()"
+			nbButton
+			status="warning" 
+			class="float-right mr-2"
+			[size]="'medium'"
+		>
+			<nb-icon icon="home-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.MERCHANTS' | translate }}
+		</button>
+	</ng-template>
 </ng-template>

@@ -1,4 +1,4 @@
-import { ITranslation, ITranslatable } from '@gauzy/contracts';
+import { ITranslation, ITranslatable, TranslatePropertyInput, TranslateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../entities/internal';
 
 export abstract class TranslationBase
@@ -6,17 +6,6 @@ export abstract class TranslationBase
 	implements ITranslation<TranslatableBase> {
 	reference: ITranslatable<TranslatableBase>;
 	languageCode: string;
-}
-
-export interface TranslateInput {
-	key: string;
-	alias: string;
-}
-
-export interface TranslatePropertyInput {
-	prop: string;
-	propsTranslate: Array<TranslateInput>;
-	propAsArr?: Array<string>;
 }
 
 export abstract class TranslatableBase

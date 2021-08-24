@@ -32,7 +32,7 @@ export const createRandomProductVariantPrice = async (
 			);
 			for (const productCategory of productCategories) {
 				const products = await connection.manager.find(Product, {
-					where: [{ category: productCategory }]
+					where: [{ productCategory: productCategory }]
 				});
 				for (const product of products) {
 					const productVariants = await connection.manager.find(

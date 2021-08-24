@@ -138,7 +138,7 @@ export class ProductService {
 	): Promise<IProductTranslatable> {
 		return this.http
 			.delete<IProductTranslatable>(
-				`${this.PRODUCTS_URL}/${id}/delete-gallery-image/${image.id}`
+				`${this.PRODUCTS_URL}/${id}/gallery-image/${image.id}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -160,7 +160,7 @@ export class ProductService {
 	deleteFeaturedImage(id: string): Promise<IProductTranslatable> {
 		return this.http
 			.delete<IProductTranslatable>(
-				`${this.PRODUCTS_URL}/delete-featured-image/${id}`
+				`${this.PRODUCTS_URL}/featured-image/${id}`
 			)
 			.pipe(first())
 			.toPromise();
