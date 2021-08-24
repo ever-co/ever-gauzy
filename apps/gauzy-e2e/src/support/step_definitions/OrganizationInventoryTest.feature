@@ -1,7 +1,10 @@
 Feature: Organization inventory test
   Scenario: Login with email
-    Given Login with default credentials and visit Organization inventory page
+    Given Login with default credentials
+  Scenario: Add new tag
+    Then User can add new tag
   Scenario: Add new product category
+    And User can visit Organization inventory page
     And User can see grid button
     And User can click on second grid button to change view
     And User can see add category button
@@ -122,6 +125,9 @@ Feature: Organization inventory test
     When User click on confirm delete product type button
     Then Notification message will appear
   Scenario: Add warehouse
+    And User can see sidebar menu buttons
+    When User click on Organization sidebar button
+    Then User can click on Inventory sidebar button
     And User can see Warehouses button
     When User click on Warehouses button
     Then User can see Add warehouse button
@@ -153,8 +159,10 @@ Feature: Organization inventory test
     And User can see save warehouse button
     When User click on save warehouse button
     Then Notification message will appear
+    And User can verify Warehouse was created
   Scenario: Add merchant
-    And User can see Merchants button
+    When User click again on Inventory sidebar menu button
+    Then User can see Merchants button
     When User click on Merchants button
     Then User can see Add merchant button
     When User click on Add merchant button
@@ -164,8 +172,6 @@ Feature: Organization inventory test
     And User can enter merchant code
     And User can see merchant email input field
     And User can enter value for merchant email
-    And User can see merchant phone input field
-    And User can enter value for merchant phone
     And User can see currency select
     When User click on currency select
     Then User can select currency from dropdown options
@@ -196,4 +202,47 @@ Feature: Organization inventory test
     Then User can select warehouse from dropdown options
     And User can see save merchant button
     When User click on save merchant button
+    Then Notification message will appear
+    And User can verify Merchant was created
+  Scenario: Edit Merchant
+    And User can see merchants table
+    When User click on merchants table row
+    Then Edit merchant button will become active
+    When User click on edit merchant name
+    Then User can see again merchant name input field
+    And User can enter new value for merchant name
+    And User can see again next step button
+    When User click on next step button again
+    Then User can click again on last step button
+    And User can see again save merchant button
+    When User click on save edited merchant button
+    Then Notification message will appear
+    And User can verify Merchant was edited
+  Scenario: Delete merchant
+    And User can see merchants table again
+    When User click again on merchants table row
+    Then Delete merchant button will become active
+    When User click on delete merchant button
+    Then Notification message will appear
+  Scenario: Edit warehouse
+    When User click on Inventory sidebar button again
+    Then User can see Warehouses button again
+    When User click on Warehouses button again
+    Then User can see warehouses table
+    When User click on warehouses table row
+    Then Edit warehouse button will become active
+    When User click on edit warehouse button
+    Then User can see warehouse name input field again
+    And User can enter new value for warehouse name
+    And User can see save edited warehouse button
+    When User click on save edited warehouse button
+    Then Notification message will appear
+    And User can verify warehouse was edited
+  Scenario: Delete warehouse
+    And User can see warehouses table again
+    When User click on warehouses table row again
+    Then Delete warehouse button will become active
+    When User click on delete warehouse button
+    Then User can see confirm delete warehouse button
+    When User click on confirm delete warehouse button
     Then Notification message will appear
