@@ -7,7 +7,8 @@ import {
 	JoinColumn,
 	ManyToMany,
 	JoinTable,
-	Index
+	Index,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -16,7 +17,8 @@ import {
 	IProductTranslatable,
 	IProductVariantPrice,
 	IProductVariantSetting,
-	IProductOptionTranslatable
+	IProductOptionTranslatable,
+	IWarehouseProductVariant
 } from '@gauzy/contracts';
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import {
@@ -25,7 +27,8 @@ import {
 	ProductOption,
 	ProductVariantPrice,
 	ProductVariantSetting,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	WarehouseProductVariant
 } from '../core/entities/internal';
 
 @Entity('product_variant')
@@ -127,6 +130,21 @@ export class ProductVariant
 	@Index()
 	@Column({ nullable: true })
 	imageId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductOption
+	 */
+	@ApiProperty({ type: () => WarehouseProductVariant, isArray: true })
+	@OneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.variant, {
+		cascade: true
+	})
+	warehouseProductVariants?: IWarehouseProductVariant[];
 
 	/*
     |--------------------------------------------------------------------------

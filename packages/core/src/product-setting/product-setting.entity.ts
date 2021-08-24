@@ -51,7 +51,9 @@ export class ProductVariantSetting
 	/**
 	 * ProductVariant
 	 */
-	@OneToOne(() => ProductVariant)
+	@OneToOne(() => ProductVariant, (productVariant) => productVariant.setting, {
+		onDelete: 'CASCADE' 
+	})
 	@JoinColumn()
 	productVariant: ProductVariant;
 }

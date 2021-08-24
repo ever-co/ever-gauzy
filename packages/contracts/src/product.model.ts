@@ -157,6 +157,7 @@ export interface IProductVariant
 	image?: IImageAsset;
 	imageId?: string;
 	options: IProductOptionTranslatable[];
+	warehouseProductVariants?: IWarehouseProductVariant[];
 }
 
 export interface IVariantCreateInput {

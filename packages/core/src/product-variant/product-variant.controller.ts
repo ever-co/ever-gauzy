@@ -66,7 +66,6 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	// @UseGuards(PermissionGuard)
 	@Post('variants')
 	async createProductVariants(
 		@Body() entity: IVariantCreateInput

@@ -75,7 +75,9 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * ProductType
 	 */
 	@ApiProperty({ type: () => ProductType })
-	@ManyToOne(() => ProductType, { onDelete: 'SET NULL' })
+	@ManyToOne(() => ProductType, (productType) => productType.products, {
+		onDelete: 'SET NULL' 
+	})
 	@JoinColumn()
 	productType?: ProductType;
 
@@ -91,7 +93,9 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 */
 	
 	@ApiProperty({ type: () => ProductCategory })
-	@ManyToOne(() => ProductCategory, { onDelete: 'SET NULL' })
+	@ManyToOne(() => ProductCategory, (productCategory) => productCategory.products, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	productCategory?: ProductCategory;
 
@@ -122,7 +126,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 */
 	@ApiPropertyOptional({ type: () => ProductVariant, isArray: true })
 	@OneToMany(() => ProductVariant, (productVariant) => productVariant.product, {
-		onDelete: 'CASCADE'
+		cascade: true
 	})
 	variants?: ProductVariant[];
 
@@ -131,7 +135,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 */
 	@ApiPropertyOptional({ type: () => ProductOptionGroup, isArray: true })
 	@OneToMany(() => ProductOptionGroup, (productOptionGroup) => productOptionGroup.product, {
-		onDelete: 'CASCADE'
+		cascade: true
 	})
 	optionGroups?: ProductOptionGroup[];
 
@@ -139,9 +143,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * InvoiceItem
 	 */
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product, {
-		onDelete: 'SET NULL'
-	})
+	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product)
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 

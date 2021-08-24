@@ -40,7 +40,9 @@ export class ProductVariantPrice
 	/**
 	 * ProductVariant
 	 */
-	@OneToOne(() => ProductVariant)
+	@OneToOne(() => ProductVariant, (productVariant) => productVariant.price, {
+		onDelete: 'CASCADE' 
+	})
 	@JoinColumn()
 	productVariant: ProductVariant;
 }
