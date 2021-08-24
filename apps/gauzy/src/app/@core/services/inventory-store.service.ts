@@ -265,6 +265,7 @@ export class InventoryStore {
 			tags: [],
 			name: '',
 			code: '',
+			imageUrl: '',
 			productTypeId: null,
 			productCategoryId: null,
 			enabled: true,

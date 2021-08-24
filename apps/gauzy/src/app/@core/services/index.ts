@@ -96,7 +96,7 @@ export * from './product-category.service';
 export * from './merchant.service';
 export * from './product-type.service';
 export * from './product-variant-price.service';
-export * from './product-variant-settings.service';
+export * from './product-variant-setting.service';
 export * from './product-variant.service';
 export * from './product.service';
 export * from './proposals.service';

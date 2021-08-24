@@ -14,6 +14,7 @@ export class ProductOptionGroupService extends TenantAwareCrudService<ProductOpt
 	constructor(
 		@InjectRepository(ProductOptionGroup)
 		private readonly productOptionGroupRepository: Repository<ProductOptionGroup>,
+		
 		@InjectRepository(ProductOptionGroupTranslation)
 		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>
 	) {

@@ -3,9 +3,11 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IMerchant,
 	IOrganization,
@@ -18,8 +20,6 @@ import { MerchantService, Store, ToastrService } from '../../../../../@core/serv
 import { EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
 import { PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
-import { distinctUntilChange } from 'packages/common-angular/dist';
-import { combineLatest } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -42,7 +42,7 @@ export class MerchantTableComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
 	public organization: IOrganization;
-	merchants$: Subject<any> = new Subject();
+	merchants$: Subject<any> = this.subject$;
 
 	merchantsTable: Ng2SmartTableComponent;
 	@ViewChild('merchantsTable') set content(content: Ng2SmartTableComponent) {

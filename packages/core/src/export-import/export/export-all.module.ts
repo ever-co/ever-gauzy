@@ -87,7 +87,7 @@ import { PipelineService } from '../../pipeline/pipeline.service';
 import { PaymentService } from '../../payment/payment.service';
 import { ProductService } from '../../product/product.service';
 import { ProductTypeService } from '../../product-type/product-type.service';
-import { ProductVariantSettingService } from '../../product-settings/product-settings.service';
+import { ProductVariantSettingService } from '../../product-setting/product-setting.service';
 import { ProductOptionService } from '../../product-option/product-option.service';
 import { ProductVariantService } from '../../product-variant/product-variant.service';
 import { ProductVariantPriceService } from '../../product-variant-price/product-variant-price.service';

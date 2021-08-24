@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { IPagination } from '@gauzy/contracts';
+import { IPagination, IProductVariant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +14,7 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		super(productVariantRepository);
 	}
 
-	async findAllProductVariants(): Promise<IPagination<ProductVariant>> {
+	async findAllProductVariants(): Promise<IPagination<IProductVariant>> {
 		const total = await this.productVariantRepository.count();
 		const items = await this.productVariantRepository.find({
 			relations: ['settings', 'price', 'image']
@@ -23,7 +23,7 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		return { items, total };
 	}
 
-	async findAllVariantsByProductId(productId: string): Promise<IPagination<ProductVariant>> {
+	async findAllVariantsByProductId(productId: string): Promise<IPagination<IProductVariant>> {
 		const total = await this.productVariantRepository.count();
 		const items = await this.productVariantRepository.find({
 			relations: ['image'],
@@ -61,7 +61,7 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		return this.productVariantRepository.remove(productVariants);
 	}
 
-	async deleteFeaturedImage(id: string): Promise<ProductVariant> {
+	async deleteFeaturedImage(id: string): Promise<IProductVariant> {
 		try {
 			let variant = await this.productVariantRepository.findOne(id);
 			variant.image = null;

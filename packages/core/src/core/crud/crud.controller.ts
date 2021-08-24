@@ -52,7 +52,8 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@Get('pagination')
 	async pagination(
-		filter?: PaginationParams<T>
+		filter?: PaginationParams<T>,
+		...options: any[]
 	): Promise<IPagination<T> | void> {
 		return this.crudService.paginate(filter);
 	}
@@ -64,7 +65,8 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@Get()
 	async findAll(
-		filter?: PaginationParams<T>
+		filter?: PaginationParams<T>,
+		...options: any[]
 	): Promise<IPagination<T>> {
 		return this.crudService.findAll(filter);
 	}

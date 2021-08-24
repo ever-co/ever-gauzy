@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
-import { IOrganization, ITenant } from '@gauzy/contracts';
-import { ProductVariantSettings } from './product-settings.entity';
+import { IOrganization, IProductVariantSetting, ITenant } from '@gauzy/contracts';
+import { ProductVariantSetting } from './product-setting.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { Product } from '../product/product.entity';
@@ -10,14 +10,14 @@ export const createRandomProductVariantSettings = async (
 	connection: Connection,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
-): Promise<ProductVariantSettings[]> => {
+): Promise<IProductVariantSetting[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
 			'Warning: tenantOrganizationsMap not found, Product Options  will not be created'
 		);
 		return;
 	}
-	const productVariantSettings: ProductVariantSettings[] = [];
+	const productVariantSettings: IProductVariantSetting[] = [];
 
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
@@ -30,7 +30,7 @@ export const createRandomProductVariantSettings = async (
 			);
 			for (const productCategory of productCategories) {
 				const products = await connection.manager.find(Product, {
-					where: [{ category: productCategory }]
+					where: [{ productCategory: productCategory }]
 				});
 				for (const product of products) {
 					const productVariants = await connection.manager.find(
@@ -40,7 +40,7 @@ export const createRandomProductVariantSettings = async (
 						}
 					);
 					for (const productVariant of productVariants) {
-						const productVariantSetting = new ProductVariantSettings();
+						const productVariantSetting = new ProductVariantSetting();
 						productVariantSetting.productVariant = productVariant;
 						productVariantSetting.isSubscription = faker.datatype.boolean();
 						productVariantSetting.isPurchaseAutomatically = faker.datatype.boolean();

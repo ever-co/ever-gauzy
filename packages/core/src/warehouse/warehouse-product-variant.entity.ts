@@ -24,7 +24,9 @@ export class WarehouseProductVariant
 	 * ProductVariant
 	 */
 	@ApiProperty({ type: () => ProductVariant })
-	@ManyToOne(() => ProductVariant)
+	@ManyToOne(() => ProductVariant, (productVariant) => productVariant.warehouseProductVariants, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	variant: IProductVariant;
 

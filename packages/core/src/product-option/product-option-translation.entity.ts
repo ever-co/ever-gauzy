@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductOptionTranslation, LanguagesEnum } from '@gauzy/contracts';
 import {
 	TenantOrganizationBaseEntity,
@@ -21,13 +21,29 @@ export class ProductOptionTranslation
 	@Column({ nullable: true })
 	description: string;
 
+	@ApiProperty({ type: () => String, enum: LanguagesEnum })
+	@IsEnum(LanguagesEnum)
+	@Column({ nullable: false })
+	languageCode: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductOption
+	 */
 	@ApiProperty({ type: () => ProductOption })
 	@ManyToOne(() => ProductOption, (option) => option.translations)
 	@JoinColumn()
 	reference: ProductOption;
 
-	@ApiProperty({ type: () => String, enum: LanguagesEnum })
-	@IsEnum(LanguagesEnum)
-	@Column({ nullable: false })
-	languageCode: string;
+	@ApiProperty({ type: () => String })
+	@RelationId((it: ProductOptionTranslation) => it.reference)
+	@IsString()
+	@Index()
+	@Column()
+	referenceId: string;
 }

@@ -232,7 +232,7 @@ export class ProductUpdateHandler
 		);
 
 		product.optionGroups = product.optionGroups.concat(newProductOptions);
-		product.category = <any>productUpdateRequest.category;
+		product.productCategory = <any>productUpdateRequest.category;
 		product.productTypeId = <any>productUpdateRequest.type;
 		product.tags = productUpdateRequest.tags;
 

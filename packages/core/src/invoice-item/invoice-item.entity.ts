@@ -98,7 +98,7 @@ export class InvoiceItem
 	// Invoice Item Belongs to Task
 	@ApiPropertyOptional({ type: () => Task })
 	@ManyToOne(() => Task, (task) => task.invoiceItems, {
-		onDelete: 'CASCADE'
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	task?: ITask;
@@ -112,7 +112,9 @@ export class InvoiceItem
 
 	// Invoice Item Belongs to Employee
 	@ApiPropertyOptional({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.invoiceItems)
+	@ManyToOne(() => Employee, (employee) => employee.invoiceItems, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -140,7 +142,9 @@ export class InvoiceItem
 
 	// Invoice Item Belongs to Product
 	@ApiPropertyOptional({ type: () => Product })
-	@ManyToOne(() => Product, (product) => product.invoiceItems)
+	@ManyToOne(() => Product, (product) => product.invoiceItems, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	product?: IProductTranslatable;
 

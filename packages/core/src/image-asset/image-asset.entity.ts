@@ -36,7 +36,7 @@ export class ImageAsset
 	@ApiProperty({ type: () => Boolean })
 	@Column({ default: false })
 	isFeatured: boolean;
-
+	
 	/*
     |--------------------------------------------------------------------------
     | @OneToMany 
@@ -45,7 +45,7 @@ export class ImageAsset
 
 	/**
 	 * Product
-	 */
+	 */	
 	@ApiProperty({ type: () => Product, isArray: true })
 	@OneToMany(() => Product, (product) => product.featuredImage, {
 		onDelete: 'SET NULL'

@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne } from 'typeorm';
+import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
 import { IProductVariantSetting } from '@gauzy/contracts';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -7,7 +7,7 @@ import {
 } from '../core/entities/internal';
 
 @Entity('product_variant_setting')
-export class ProductVariantSettings
+export class ProductVariantSetting
 	extends TenantOrganizationBaseEntity
 	implements IProductVariantSetting {
 	@ApiPropertyOptional({ type: () => Boolean })
@@ -42,6 +42,18 @@ export class ProductVariantSettings
 	@Column({ default: false })
 	trackInventory: boolean;
 
-	@OneToOne(() => ProductVariant)
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductVariant
+	 */
+	@OneToOne(() => ProductVariant, (productVariant) => productVariant.setting, {
+		onDelete: 'CASCADE' 
+	})
+	@JoinColumn()
 	productVariant: ProductVariant;
 }

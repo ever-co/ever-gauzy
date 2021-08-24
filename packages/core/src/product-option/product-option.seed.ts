@@ -31,7 +31,7 @@ export const createRandomProductOption = async (
 			);
 			for (const productCategory of productCategories) {
 				const products = await connection.manager.find(Product, {
-					where: { category: productCategory }
+					where: { productCategory: productCategory }
 				});
 				for (const product of products) {
 					const productOptionGroups = await connection.manager.find(
@@ -83,7 +83,7 @@ export const createRandomProductOptionGroups = async (
 			});
 			for (const productCategory of productCategories) {
 				const products = await connection.manager.find(Product, {
-					where: { category: productCategory }
+					where: { productCategory: productCategory }
 				});
 				for (const product of products) {
 					for (let i = 0; i <= numberOfOptionGroupPerProduct; i++) {

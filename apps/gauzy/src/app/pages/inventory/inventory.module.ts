@@ -27,20 +27,22 @@ import { SharedModule } from '../../@shared/shared.module';
 import { VariantTableComponent } from './components/edit-inventory-item/variant-table/variant-table.component';
 import { OptionsFormComponent } from './components/edit-inventory-item/options-form/options-form.component';
 import { VariantFormComponent } from './components/edit-inventory-item/variant-form/variant-form.component';
-import { ProductService } from '../../@core/services/product.service';
-import { ProductVariantService } from '../../@core/services/product-variant.service';
-import { ProductVariantSettingsService } from '../../@core/services/product-variant-settings.service';
-import { ProductVariantPriceService } from '../../@core/services/product-variant-price.service';
-import { OrganizationsService } from '../../@core/services/organizations.service';
+import {
+	ImageAssetService,
+	InventoryStore,
+	OrganizationsService,
+	ProductService,
+	ProductVariantPriceService,
+	ProductVariantService,
+	ProductVariantSettingService,
+	TranslatableService
+} from '../../@core/services';
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
-import { ImageAssetService } from '../../@core/services/image-asset.service';
-import { InventoryStore } from '../../@core/services/inventory-store.service';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
-import { TranslatableService } from '../../@core/services/translatable.service';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector';
 import { MerchantModule } from './components/manage-merchants/merchant.module';
@@ -108,7 +110,7 @@ const NB_MODULES = [
 	providers: [
 		ProductService,
 		ProductVariantService,
-		ProductVariantSettingsService,
+		ProductVariantSettingService,
 		ProductVariantPriceService,
 		OrganizationsService,
 		ImageAssetService,
