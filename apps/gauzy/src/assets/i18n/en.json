@@ -3112,6 +3112,7 @@
 		"IMMUTABLE_TIME": "Immutable Time",
 		"BULK_ACTION": "Bulk action",
 		"LOG_TYPE": "Log type",
+		"SOURCE": "Source",
 		"TOTAL_TIME": "Total Time",
 		"ACTIVITIES": "Activities",
 		"APPROVED_AT": "Approved At",

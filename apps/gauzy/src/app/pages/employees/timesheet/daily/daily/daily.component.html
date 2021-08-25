@@ -71,10 +71,12 @@
 			{{ 'TIMESHEET.EMPLOYEE' | translate }}
 		</div>
 		<div class="col">{{ 'TIMESHEET.LOG_TYPE' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.SOURCE' | translate }}</div>
 		<div class="col">{{ 'TIMESHEET.DURATION' | translate }}</div>
 		<div class="col">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
 		<div class="col action">{{ 'TIMESHEET.ACTION' | translate }}</div>
 	</div>
+	
 	<ng-template [ngIf]="timeLogs?.length > 0" [ngIfElse]="notFound">
 		<div
 			class="row border-bottom py-3 align-items-center"
@@ -121,6 +123,7 @@
 				</div>
 			</div>
 			<div class="col">{{ log.logType }}</div>
+			<div class="col">{{ log.source }}</div>
 			<div class="col">{{ log.duration | durationFormat }}</div>
 			<div class="col">
 				<span class="start-timer">
@@ -141,55 +144,70 @@
 			</div>
 			<div class="col action">
 				<div class="action-button">
-					<button
-						class="m-1"
-						nbButton
-						status="primary"
-						size="small"
-						(click)="openView(log)"
-					>
-						<nb-icon icon="eye-outline"></nb-icon>
-						{{ 'TIMESHEET.VIEW' | translate }}
-					</button>
-					<button
-						*ngxPermissionsOnly="[
-							OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
-						]"
-						[disabled]="!log.stoppedAt"
-						class="m-1"
-						nbButton
-						status="success"
-						size="small"
-						(click)="openEdit(log)"
-					>
-						<nb-icon icon="edit"></nb-icon>
-						{{ 'TIMESHEET.EDIT' | translate }}
-					</button>
-					<button
-						*ngxPermissionsOnly="[
-							OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-						]"
-						[disabled]="!log.stoppedAt"
-						class="m-1"
-						nbButton
-						status="danger"
-						size="small"
-						ngxConfirmDialog
-						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-						(confirm)="onDeleteConfirm(log)"
-					>
-						<nb-icon icon="trash-2-outline"></nb-icon>
-						{{ 'TIMESHEET.DELETE' | translate }}
-					</button>
+					<ng-container *ngTemplateOutlet="
+						actionButtons;
+						context: {
+							buttonSize: 'small',
+							timeLog: log
+						}
+					"></ng-container>
 				</div>
 			</div>
 		</div>
 	</ng-template>
-	<ng-template #notFound>
-		<div class="row font-weight-bold py-3 align-items-center">
-			<div class="col text-center">
-				{{ 'TIMESHEET.NO_TIMELOG' | translate }}
-			</div>
-		</div>
-	</ng-template>
 </div>
+
+<ng-template #notFound>
+	<div class="row font-weight-bold py-3 align-items-center">
+		<div class="col text-center">
+			{{ 'TIMESHEET.NO_TIMELOG' | translate }}
+		</div>
+	</div>
+</ng-template>
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize" 
+	let-timeLog="timeLog"
+>
+	<button
+		class="m-1"
+		nbButton
+		status="primary"
+		[size]="buttonSize"
+		(click)="openView(timeLog)"
+	>
+		<nb-icon icon="eye-outline"></nb-icon>
+		{{ 'TIMESHEET.VIEW' | translate }}
+	</button>
+	<button
+		*ngxPermissionsOnly="[
+			OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+		]"
+		[disabled]="!timeLog.stoppedAt"
+		class="m-1"
+		nbButton
+		status="success"
+		[size]="buttonSize"
+		(click)="openEdit(timeLog)"
+	>
+		<nb-icon icon="edit"></nb-icon>
+		{{ 'TIMESHEET.EDIT' | translate }}
+	</button>
+	<button
+		*ngxPermissionsOnly="[
+			OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+		]"
+		[disabled]="!timeLog.stoppedAt"
+		class="m-1"
+		nbButton
+		status="danger"
+		[size]="buttonSize"
+		ngxConfirmDialog
+		[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+		(confirm)="onDeleteConfirm(timeLog)"
+	>
+		<nb-icon icon="trash-2-outline"></nb-icon>
+		{{ 'TIMESHEET.DELETE' | translate }}
+	</button>
+</ng-template>

@@ -92,7 +92,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		try {
 			await this.userService.update(this.user.id, data);
 		} catch (error) { 
-			throw new Error(`Failed to update user preferred component layout: ${error}`);
+			console.error(`Failed to update user preferred component layout`);
 		}
 	}
 

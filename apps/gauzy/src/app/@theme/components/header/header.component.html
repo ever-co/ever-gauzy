@@ -97,9 +97,9 @@
 		></nb-action>
 
 		<nb-action
-			*ngIf="user?.employee?.id"
+			*ngIf="user?.employee?.id && !isElectron"
 			class="timer-action"
-			(click)="isElectron ? '' : toggleTimerWindow()"
+			(click)="toggleTimerWindow()"
 		>
 			<nb-icon class="mr-3" icon="clock-outline"></nb-icon>
 			{{ timerDuration }}
