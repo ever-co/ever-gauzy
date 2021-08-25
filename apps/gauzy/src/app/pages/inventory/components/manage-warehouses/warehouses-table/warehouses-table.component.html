@@ -2,9 +2,8 @@
 	[nbSpinner]="loading" 
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
-	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="card-header-title" fixed>
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4> 
@@ -38,21 +37,25 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
 			[ngIfElse]="gridLayout"
 		>
-			<ng2-smart-table
-				[settings]="settingsSmartTable"
-				(userRowSelect)="selectWarehouse($event)"
-				[source]="smartTableSource"
-				style="cursor: pointer"
-				#warehousesTable
-			>
-			</ng2-smart-table>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					[settings]="settingsSmartTable"
+					(userRowSelect)="selectWarehouse($event)"
+					[source]="smartTableSource"
+					style="cursor: pointer"
+					#warehousesTable
+				>
+				</ng2-smart-table>
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="warehouses"
-				[buttonTemplate]="actionButtons"
-			></ga-card-grid>
+			<div class="grid-scroll-container">
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="warehouses"
+					[buttonTemplate]="actionButtons"
+				></ga-card-grid>
+			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination 
@@ -73,7 +76,7 @@
 	let-selectedItem="selectedItem"
 >
 	<button
-		(click)="onUpdateWarehouse()"
+		(click)="onUpdateWarehouse(selectedItem)"
 		nbButton
 		status="info"
 		class="mr-2"
@@ -84,7 +87,7 @@
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
-		(click)="delete(selectedItem)"
+		(click)="onDelete(selectedItem)"
 		nbButton
 		status="danger"
 		class="mr-2"

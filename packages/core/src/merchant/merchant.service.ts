@@ -13,14 +13,17 @@ export class MerchantService extends TenantAwareCrudService<Merchant> {
         super(merchantRepository);
     }
 
-    async findMerchantById(id: string, relations: string[]): Promise<Merchant> {
-        return await this.merchantRepository.findOne(id, { relations });
+    async findById(
+		id: string,
+		relations: string[]
+	): Promise<IMerchant> {
+        return await this.findOne(id, { relations });
     }
 
     async findAllMerchants(
 		relations?: string[],
 		findInput?: any
-	): Promise<IPagination<Merchant>> {
+	): Promise<IPagination<IMerchant>> {
 		return await this.findAll({
 			where: {
 				...findInput
@@ -29,7 +32,10 @@ export class MerchantService extends TenantAwareCrudService<Merchant> {
 		});
 	}
 
-    async update(id: string, merchant: Merchant): Promise<IMerchant> {
+    async update(
+		id: string,
+		merchant: Merchant
+	): Promise<IMerchant> {
 		return await this.merchantRepository.save({ id, ...merchant });
 	}
 }

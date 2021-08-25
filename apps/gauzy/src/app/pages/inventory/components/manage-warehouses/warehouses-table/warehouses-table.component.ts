@@ -171,37 +171,47 @@ export class WarehousesTableComponent
 		]);
 	}
 
-	onUpdateWarehouse() {
+	onUpdateWarehouse(selectedItem?: IWarehouse) {
+		if (selectedItem) {
+			this.selectWarehouse({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
 			'/pages/organization/inventory/warehouses/edit' , this.selectedWarehouse.id
 		]);
 	}
 
-	async delete() {
-		let res = await this.dialogService
+	async onDelete(selectedItem?: IWarehouse) {
+		if (selectedItem) {
+			this.selectWarehouse({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		if (!this.selectedWarehouse) {
+			return;
+		}
+
+		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
 			.toPromise();
 
-		if (res) {
+		if (result) {
 			await this.warehouseService
 				.deleteFeaturedImage(this.selectedWarehouse.id)
 				.then((res) => {
 					if (res && res.affected == 1) {
-						this.toastrService.success(
-							'INVENTORY_PAGE.WAREHOUSE_WAS_CREATED',
-							{
-								name: this.selectedWarehouse.name
-							}
-						);
-						this.warhouses$.next();
+						const { name } = this.selectedWarehouse;
+						this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_DELETED', {
+							name
+						});
 					}
 				})
-				.catch(() => {
-					this.toastrService.danger(
-						'INVENTORY_PAGE.WAREHOUSE_WAS_DELETED',
-						this.selectedWarehouse.name
-					);
+				.finally(() => {
+					this.warhouses$.next();
 				});
 		}
 	}

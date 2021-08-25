@@ -124,7 +124,7 @@ export class MerchantController extends CrudController<Merchant> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IMerchant> {
 		const {relations = []} = data;
-		return this.merchantService.findMerchantById(
+		return this.merchantService.findById(
 			id,
 			relations
 		);
@@ -148,6 +148,7 @@ export class MerchantController extends CrudController<Merchant> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
 		@Body() entity: Merchant
 	): Promise<IMerchant> {

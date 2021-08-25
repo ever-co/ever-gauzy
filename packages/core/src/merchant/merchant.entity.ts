@@ -1,11 +1,11 @@
-import { IMerchant, CurrenciesEnum, IImageAsset, ITag, IWarehouse, IContact } from '@gauzy/contracts';
 import {
-	TenantOrganizationBaseEntity,
-	ImageAsset,
-	Tag,
-	Contact,
-	Warehouse,
-} from '../core/entities/internal';
+	IMerchant,
+	CurrenciesEnum,
+	IImageAsset,
+	ITag,
+	IWarehouse,
+	IContact
+} from '@gauzy/contracts';
 import {
 	Entity,
 	Column,
@@ -17,42 +17,57 @@ import {
 	Index,
 	RelationId
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	IsBoolean,
+	IsEmail,
+	IsEnum,
+	IsNotEmpty,
+	IsOptional,
+	IsString
+} from 'class-validator';
+import {
+	TenantOrganizationBaseEntity,
+	ImageAsset,
+	Tag,
+	Contact,
+	Warehouse,
+} from '../core/entities/internal';
 
 @Entity('merchant')
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
 	@IsString()
+	@IsNotEmpty()
 	@Column()
 	name: string;
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	code: string;
 
-	@ApiProperty()
-	@IsString()
+	@ApiProperty({ type: () => String })
+	@IsEmail()
 	@Column()
 	email: string;
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({nullable: true})
+	@Column({ nullable: true })
 	phone: string;
 
-	@ApiProperty()
-	@IsString()
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty()
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsBoolean()
 	@Column({ default: true })
 	active: boolean;
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
 	@IsEnum(CurrenciesEnum)
 	@Column({ default: CurrenciesEnum.USD })
 	currency: string;
@@ -77,6 +92,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
 	@IsString()
+	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	contactId?: string;
@@ -98,6 +114,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
 	@IsString()
+	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	logoId?: string;
@@ -111,6 +128,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	/**
 	 * Tag
 	 */
+	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.merchants, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
@@ -123,6 +141,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	/**
 	 * Warehouse
 	 */
+	@ApiProperty({ type: () => Warehouse, isArray: true })
 	@ManyToMany(() => Warehouse)
 	@JoinTable({
 		name: 'warehouse_merchant'
