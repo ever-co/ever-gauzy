@@ -1,7 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbDialogService } from '@nebular/theme';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
 import * as moment from 'moment';
 import * as _ from 'underscore';
+import { NgxPermissionsService } from 'ngx-permissions';
 import {
 	IGetTimeLogInput,
 	IOrganization,
@@ -11,15 +15,9 @@ import {
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
 import { toUTC } from '@gauzy/common-angular';
-import { Store } from './../../../../../@core/services/store.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
-import { NbDialogService } from '@nebular/theme';
-import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
-import { ViewTimeLogComponent } from './../../../../../@shared/timesheet/view-time-log/view-time-log.component';
-import { NgxPermissionsService } from 'ngx-permissions';
-import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
+import { Store } from './../../../../../@core/services';
+import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;
@@ -45,14 +43,6 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	viewTimeLogComponent = ViewTimeLogComponent;
 
 	futureDateAllowed: boolean;
-	private _selectedDate: Date = new Date();
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-	}
-
 	selectedEmployeeId: string | null = null;
 	projectId: string | null = null;
 

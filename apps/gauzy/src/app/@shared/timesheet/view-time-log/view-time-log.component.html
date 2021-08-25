@@ -3,19 +3,19 @@
 
 	<nb-list class="time-span custom-scroll">
 		<nb-list-item
-			*ngFor="let timelog of timelogs"
+			*ngFor="let timeLog of timeLogs"
 			class="row align-items-center"
-			(click)="viewLog(timelog)"
+			(click)="viewLog(timeLog)"
 		>
 			<div class="time-log-content col">
 				<nb-user
-					[name]="timelog.employee?.user?.name"
+					[name]="timeLog.employee?.user?.name"
 					title="{{
-						timelog.startedAt | utcToLocal | timeFormat: true
+						timeLog.startedAt | utcToLocal | timeFormat: true
 					}} -  {{
-						timelog.stoppedAt | utcToLocal | timeFormat: true
-					}} ({{ timelog.duration | durationFormat }})"
-					[picture]="timelog.employee?.user?.imageUrl"
+						timeLog.stoppedAt | utcToLocal | timeFormat: true
+					}} ({{ timeLog.duration | durationFormat }})"
+					[picture]="timeLog.employee?.user?.imageUrl"
 				>
 				</nb-user>
 			</div>
@@ -27,7 +27,7 @@
 					nbButton
 					ghost
 					status="primary"
-					(click)="openEdit($event, timelog)"
+					(click)="openEdit($event, timeLog)"
 				>
 					<nb-icon icon="edit"></nb-icon>
 				</button>
@@ -41,7 +41,7 @@
 					ngxConfirmDialog
 					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 					(click)="$event.stopPropagation()"
-					(confirm)="onDeleteConfirm(timelog)"
+					(confirm)="onDeleteConfirm(timeLog)"
 				>
 					<nb-icon icon="trash-2-outline"></nb-icon>
 				</button>
@@ -49,17 +49,20 @@
 		</nb-list-item>
 	</nb-list>
 	<div class="text-center">
-		<button
+		<ng-template 
 			*ngxPermissionsOnly="[
 				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
 			]"
-			nbButton
-			class="mx-auto mt-3"
-			status="primary"
-			(click)="openAddByDateProject($event)"
 		>
-			<nb-icon icon="plus-outline"></nb-icon>
-			{{ 'TIMESHEET.ADD_TIME' | translate }}
-		</button>
+			<button
+				nbButton
+				class="mx-auto mt-3"
+				status="primary"
+				(click)="openAddByDateProject($event)"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'TIMESHEET.ADD_TIME' | translate }}
+			</button>
+		</ng-template>
 	</div>
 </div>

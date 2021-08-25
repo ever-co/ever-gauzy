@@ -125,7 +125,7 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		try {
 			await this._userService.update(this.user.id, data);
 		} catch (error) { 			
-			throw new Error(`Failed to update user preferred language: ${error}`);
+			console.error(`Failed to update user preferred language`);
 		}
 	}
 

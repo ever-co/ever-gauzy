@@ -1,5 +1,18 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { toUTC } from '@gauzy/common-angular';
+import {
+	NbCheckboxComponent,
+	NbDialogService,
+	NbMenuService
+} from '@nebular/theme';
+import { combineLatest } from 'rxjs';
+import { filter, map, debounceTime, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import * as _ from 'underscore';
 import {
 	IGetTimeLogInput,
 	ITimeLog,
@@ -9,25 +22,12 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { toUTC } from '@gauzy/common-angular';
-import {
-	NbCheckboxComponent,
-	NbDialogService,
-	NbMenuService
-} from '@nebular/theme';
-import { Store } from './../../../../../@core/services/store.service';
-import { filter, map, debounceTime, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
-import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
-import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ViewTimeLogModalComponent } from './../../../../../@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import { Store } from './../../../../../@core/services';
+import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
-import { TranslateService } from '@ngx-translate/core';
-import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
-import * as _ from 'underscore';
-import { ActivatedRoute } from '@angular/router';
-import { combineLatest } from 'rxjs';
+import { TimeTrackerService } from './../../../../../@shared/time-tracker/time-tracker.service';
+import { TimeLogsLabel } from './../../../../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -67,8 +67,11 @@ export class DailyComponent implements OnInit, OnDestroy {
 	selectedEmployeeId: string | null = null;
 	projectId: string | null = null;
 
+	TimeLogsLabel = TimeLogsLabel;
+
 	constructor(
 		private readonly timesheetService: TimesheetService,
+		private readonly timeTrackerService: TimeTrackerService,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly nbMenuService: NbMenuService,
@@ -272,10 +275,11 @@ export class DailyComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	onDeleteConfirm(log) {
-		this.timesheetService.deleteLogs(log.id).then(() => {
-			const index = this.timeLogs.indexOf(log);
+	onDeleteConfirm(timeLog: ITimeLog) {
+		this.timesheetService.deleteLogs(timeLog.id).then(() => {
+			const index = this.timeLogs.indexOf(timeLog);
 			this.timeLogs.splice(index, 1);
+			this.checkTimerStatus();
 		});
 	}
 
@@ -305,9 +309,17 @@ export class DailyComponent implements OnInit, OnDestroy {
 						}
 						this.timesheetService.deleteLogs(logIds).then(() => {
 							this.updateLogs$.next();
+							this.checkTimerStatus();
 						});
 					}
 				});
+		}
+	}
+
+	private checkTimerStatus() {
+		const { employee, tenantId } = this.store.user;
+		if (employee && employee.id) {
+			this.timeTrackerService.checkTimerStatus(tenantId);
 		}
 	}
 
