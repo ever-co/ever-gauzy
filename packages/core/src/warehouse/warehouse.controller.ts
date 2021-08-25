@@ -28,6 +28,7 @@ import { WarehouseProductService } from './warehouse-product-service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { RequestContext } from './../core/context';
 
 @ApiTags('Warehouses')
 @UseGuards(TenantPermissionGuard)
@@ -157,6 +158,29 @@ export class WarehouseController extends CrudController<Warehouse> {
 	}
 
 	/**
+	 * GET warehouse count
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all warehouse count in the same tenant' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found warehouse count'
+	})
+	@Get('count')
+	async getCount(
+		@Query() filter: PaginationParams<Warehouse>
+	): Promise<number> {
+		return await this.warehouseService.count({
+			where: {
+				tenantId: RequestContext.currentTenantId()
+			},
+			...filter
+		});
+	}
+
+	/**
 	 * GET warehouses by pagination
 	 * 
 	 * @param filter 
@@ -226,6 +250,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
 		@Body() entity: Warehouse
 	): Promise<IWarehouse> {

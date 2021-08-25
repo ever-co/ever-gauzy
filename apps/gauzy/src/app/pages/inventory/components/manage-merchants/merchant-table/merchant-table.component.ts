@@ -4,9 +4,10 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IMerchant,
@@ -20,6 +21,7 @@ import { MerchantService, Store, ToastrService } from '../../../../../@core/serv
 import { EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
 import { PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
+import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -63,7 +65,8 @@ export class MerchantTableComponent
 		private readonly http: HttpClient,
 		private readonly toastrService: ToastrService,
 		private readonly merchantService: MerchantService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
 		this.setView();
@@ -181,7 +184,14 @@ export class MerchantTableComponent
 		]);
 	}
 
-	onEditStore() {
+	onEditStore(selectedItem?: IMerchant) {
+		if (selectedItem) {
+			this.selectStore({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
 		this.router.navigate([
 			`/pages/organization/inventory/merchants/edit`, 
 			this.selectedMerchant.id
@@ -200,18 +210,37 @@ export class MerchantTableComponent
 			.subscribe();
 	}
 
-	async delete() {
-		this.merchantService.delete(this.selectedMerchant.id)
-			.then(res => {
-				if (res && res['affected'] == 1) {
-					this.toastrService.success('INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY', {
-						name: this.selectedMerchant.name 
-					});
-				}
-			})
-			.finally(() => {
-				this.merchants$.next();
+	async onDelete(selectedItem?: IMerchant) {
+		if (selectedItem) {
+			this.selectStore({
+				isSelected: true,
+				data: selectedItem
 			});
+		}
+		if (!this.selectedMerchant) {
+			return;
+		}
+
+		const dialog = await this.dialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (dialog) {
+			await this.merchantService
+				.delete(this.selectedMerchant.id)
+				.then(res => {
+					if (res && res['affected'] == 1) {
+						const { name } = this.selectedMerchant;
+						this.toastrService.success('INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY', {
+							name
+						});
+					}
+				})
+				.finally(() => {
+					this.merchants$.next();
+				});
+		}
 	}
 
 	/*
