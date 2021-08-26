@@ -23,6 +23,9 @@ jobs:
             # - name: Increase file limit
             #  run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
+            - name: Install Yarn
+              run: npm install -g yarn
+
             - name: Bootstrap Yarn
               run: yarn bootstrap
 
