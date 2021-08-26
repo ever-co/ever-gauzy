@@ -118,6 +118,7 @@ export class TimeTrackerService implements OnDestroy {
 		await this.getTimerStatus(tenantId)
 			.then((status: ITimerStatus) => {
 				this.duration = status.duration;
+				
 				if (status.lastLog && !status.lastLog.stoppedAt) {
 					this.currentSessionDuration = moment().diff(
 						toLocal(status.lastLog.startedAt),
@@ -126,10 +127,11 @@ export class TimeTrackerService implements OnDestroy {
 				} else {
 					this.currentSessionDuration = 0;
 				}
+
+				// On refresh/delete timelog, we need to clear interval to prevent duplicate interval
+				this.turnOffTimer();
 				if (status.running) {
 					this.turnOnTimer();
-				} else {
-					this.turnOffTimer();
 				}
 			})
 			.catch(() => {});
