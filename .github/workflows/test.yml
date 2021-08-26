@@ -32,11 +32,14 @@ jobs:
             - name: Build all packages
               run: yarn build:package:all
 
+            - name: Install forever package
+              run: npm install forever -g
+
             - name: Run API in background
-              run: yarn start:api &
+              run: yarn start:api:forever
 
             - name: Run UI in background
-              run: yarn start:gauzy &
+              run: yarn start:gauzy:forever
 
             - name: Cypress info
               run: npx cypress info
