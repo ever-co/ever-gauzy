@@ -4,8 +4,8 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	AfterLoad,
-	ManyToMany
+	ManyToMany,
+	Index
 } from 'typeorm';
 import {
 	ITimeLog,
@@ -19,8 +19,7 @@ import {
 	ITimeSlot
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
-import * as moment from 'moment';
+import { IsString, IsBoolean, IsDateString, IsEnum, IsOptional } from 'class-validator';
 import {
 	Employee,
 	OrganizationContact,
@@ -33,61 +32,6 @@ import {
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true })
-	@JoinColumn()
-	employee: IEmployee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((timeLog: TimeLog) => timeLog.employee)
-	@Column()
-	readonly employeeId: string;
-
-	@ApiProperty({ type: () => Timesheet })
-	@ManyToOne(() => Timesheet, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	timesheet?: ITimesheet;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((timeLog: TimeLog) => timeLog.timesheet)
-	@Column({ nullable: true })
-	readonly timesheetId?: string;
-
-	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
-	})
-	timeSlots?: ITimeSlot[];
-
-	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, { nullable: true })
-	@JoinColumn()
-	project?: IOrganizationProject;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((timeLog: TimeLog) => timeLog.project)
-	@Column({ nullable: true })
-	readonly projectId?: string;
-
-	@ApiProperty({ type: () => Task })
-	@ManyToOne(() => Task, { nullable: true })
-	@JoinColumn()
-	task?: ITask;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((timeLog: TimeLog) => timeLog.task)
-	@Column({ nullable: true })
-	readonly taskId?: string;
-
-	@ApiProperty({ type: () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, { nullable: true })
-	@JoinColumn()
-	organizationContact?: IOrganizationContact;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
-	@Column({ nullable: true })
-	readonly organizationContactId?: string;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
@@ -133,9 +77,105 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	duration: number;
 
-	@AfterLoad()
-	getDuration?() {
-		const end = this.stoppedAt ? this.stoppedAt : new Date();
-		this.duration = moment(end).diff(moment(this.startedAt), 'seconds');
-	}
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, { nullable: true })
+	@JoinColumn()
+	employee: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: TimeLog) => it.employee)
+	@IsString()
+	@Index()
+	@Column()
+	readonly employeeId: string;
+
+	/**
+	 * Timesheet
+	 */
+	@ApiProperty({ type: () => Timesheet })
+	@ManyToOne(() => Timesheet, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	timesheet?: ITimesheet;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: TimeLog) => it.timesheet)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly timesheetId?: string;
+
+	/**
+	 * OrganizationProject
+	 */
+	@ApiProperty({ type: () => OrganizationProject })
+	@ManyToOne(() => OrganizationProject, { nullable: true })
+	@JoinColumn()
+	project?: IOrganizationProject;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((timeLog: TimeLog) => timeLog.project)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly projectId?: string;
+
+	/**
+	 * Task
+	 */
+	@ApiProperty({ type: () => Task })
+	@ManyToOne(() => Task, { nullable: true })
+	@JoinColumn()
+	task?: ITask;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((timeLog: TimeLog) => timeLog.task)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly taskId?: string;
+
+	/**
+	 * OrganizationContact
+	 */
+	@ApiProperty({ type: () => OrganizationContact })
+	@ManyToOne(() => OrganizationContact, { nullable: true })
+	@JoinColumn()
+	organizationContact?: IOrganizationContact;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly organizationContactId?: string;
+
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * TimeSlot
+	 */
+	@ApiProperty({ type: () => TimeSlot, isArray: true })
+	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	timeSlots?: ITimeSlot[];
 }

@@ -25,7 +25,21 @@ import { ActivityCommandHandlers } from './activity/commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { ActivityMapService } from './activity/activity.map.service';
 import { RouterModule } from 'nest-router';
-import { Activity, Email, EmailTemplate, Employee, Organization, OrganizationContact, OrganizationProject, Screenshot, Task, TimeLog, Timesheet, TimeSlot, TimeSlotMinute } from './../core/entities/internal';
+import {
+	Activity,
+	Email,
+	EmailTemplate,
+	Employee,
+	Organization,
+	OrganizationContact,
+	OrganizationProject,
+	Screenshot,
+	Task,
+	TimeLog,
+	Timesheet,
+	TimeSlot,
+	TimeSlotMinute
+} from './../core/entities/internal';
 
 @Module({
 	controllers: [
