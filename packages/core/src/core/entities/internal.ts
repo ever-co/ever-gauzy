@@ -145,6 +145,7 @@ export * from './../../reports/report.subscriber';
 export * from './../../timesheet/activity/activity.subscriber';
 export * from './../../timesheet/screenshot/screenshot.subscriber';
 export * from './../../timesheet/time-slot/time-slot.subscriber';
+export * from './../../timesheet/time-log/time-log.subscriber';
 export * from './../../user/user.subscriber';
 export * from './../../organization-contact/organization-contact.subscriber';
 export * from './../../email-template/email-template.subscriber';

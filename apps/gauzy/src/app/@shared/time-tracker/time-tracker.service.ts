@@ -43,7 +43,7 @@ export function createInitialTimerState(): TimerState {
 	return {
 		showTimerWindow: false,
 		duration: 0,
-		current_session_duration: 0,
+		currentSessionDuration: 0,
 		running: false,
 		timerConfig
 	} as TimerState;
@@ -73,8 +73,8 @@ export class TimeTrackerService implements OnDestroy {
 
 	showTimerWindow$ = this.timerQuery.select((state) => state.showTimerWindow);
 	duration$ = this.timerQuery.select((state) => state.duration);
-	current_session_duration$ = this.timerQuery.select(
-		(state) => state.current_session_duration
+	currentSessionDuration$ = this.timerQuery.select(
+		(state) => state.currentSessionDuration
 	);
 	$running = this.timerQuery.select((state) => state.running);
 	$timerConfig = this.timerQuery.select((state) => state.timerConfig);
@@ -114,22 +114,24 @@ export class TimeTrackerService implements OnDestroy {
 	/*
 	 * Check current timer status for employee only
 	 */
-	public checkTimerStatus(tenantId: string) {
-		this.getTimerStatus(tenantId)
+	public async checkTimerStatus(tenantId: string) {
+		await this.getTimerStatus(tenantId)
 			.then((status: ITimerStatus) => {
 				this.duration = status.duration;
+				
 				if (status.lastLog && !status.lastLog.stoppedAt) {
-					this.current_session_duration = moment().diff(
+					this.currentSessionDuration = moment().diff(
 						toLocal(status.lastLog.startedAt),
 						'seconds'
 					);
 				} else {
-					this.current_session_duration = 0;
+					this.currentSessionDuration = 0;
 				}
+
+				// On refresh/delete timelog, we need to clear interval to prevent duplicate interval
+				this.turnOffTimer();
 				if (status.running) {
 					this.turnOnTimer();
-				} else {
-					this.turnOffTimer();
 				}
 			})
 			.catch(() => {});
@@ -155,13 +157,13 @@ export class TimeTrackerService implements OnDestroy {
 		});
 	}
 
-	public get current_session_duration(): number {
-		const { current_session_duration } = this.timerQuery.getValue();
-		return current_session_duration;
+	public get currentSessionDuration(): number {
+		const { currentSessionDuration } = this.timerQuery.getValue();
+		return currentSessionDuration;
 	}
-	public set current_session_duration(value: number) {
+	public set currentSessionDuration(value: number) {
 		this.timerStore.update({
-			current_session_duration: value
+			currentSessionDuration: value
 		});
 	}
 
@@ -207,7 +209,7 @@ export class TimeTrackerService implements OnDestroy {
 		this.showTimerWindow = true;
 		if (!this.running) {
 			if (this.canStartTimer()) {
-				this.current_session_duration = 0;
+				this.currentSessionDuration = 0;
 				this.toggle();
 			}
 		}
@@ -223,7 +225,7 @@ export class TimeTrackerService implements OnDestroy {
 				)
 				.toPromise();
 		} else {
-			this.current_session_duration = 0;
+			this.currentSessionDuration = 0;
 			this.turnOnTimer();
 			return this.http
 				.post<ITimeLog>(
@@ -238,7 +240,7 @@ export class TimeTrackerService implements OnDestroy {
 		this.running = true;
 		this.interval = setInterval(() => {
 			this.duration++;
-			this.current_session_duration++;
+			this.currentSessionDuration++;
 		}, 1000);
 	}
 
@@ -275,7 +277,7 @@ export class TimeTrackerService implements OnDestroy {
 	setTimeLogType(timeType: string) {
 		this._trackType$.next(timeType);
 		this.timeType =
-			timeType === 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
+			timeType === TimeLogType.TRACKED ? TimeLogType.TRACKED : TimeLogType.MANUAL;
 	}
 
 	public get timeType(): TimeLogType {

@@ -306,7 +306,7 @@ export interface ITimerStatus {
 export interface TimerState {
 	showTimerWindow: boolean;
 	duration: number;
-	current_session_duration: number;
+	currentSessionDuration: number;
 	running: boolean;
 	timerConfig: ITimerToggleInput;
 }
