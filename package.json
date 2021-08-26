@@ -141,11 +141,11 @@
 		"prepare:gauzy-server": "yarn run postinstall.electron && tsc -p apps/server/tsconfig.json",
 		"build:gauzy-server": "yarn run postinstall.electron && yarn build:package:all &&  yarn run config:prod && yarn ng:prod build gauzy-server --prod --base-href ./ && yarn run prepare:gauzy-server && yarn ng:prod build gauzy-server-ui --prod --base-href ./ && yarn ng:prod build gauzy-server-api --prod && yarn run copy-files-gauzy-server",
 		"copy-files-gauzy-server": "copyfiles -f  packages/core/src/**/*.gql dist/apps/gauzy-server/data/",
-		"build:gauzy-server:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/gauzy-server",	
-		"build:gauzy-server:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 build --linux --project dist/apps/gauzy-server",		
+		"build:gauzy-server:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/gauzy-server",
+		"build:gauzy-server:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 build --linux --project dist/apps/gauzy-server",
 		"build:gauzy-server:mac": "yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 build --mac --project dist/apps/gauzy-server",
-		"build:gauzy-server:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/gauzy-server",	
-		"build:gauzy-server:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 build --linux --publish=always --project dist/apps/gauzy-server",		
+		"build:gauzy-server:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/gauzy-server",
+		"build:gauzy-server:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 build --linux --publish=always --project dist/apps/gauzy-server",
 		"build:gauzy-server:mac:release": "yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 build --mac --publish=always --project dist/apps/gauzy-server",
 		"quick:build:gauzy-server": "yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-server"
 	},
@@ -207,6 +207,7 @@
 		"@angular-devkit/core": "^11.1.1"
 	},
 	"dependencies": {
+		"@angular/animations": "^11.1.1",
 		"@angular/common": "^11.1.1",
 		"@angular/compiler": "^11.1.1",
 		"@angular/core": "^11.1.1",
@@ -214,8 +215,7 @@
 		"@angular/platform-browser": "^11.1.1",
 		"@angular/platform-browser-dynamic": "^11.1.1",
 		"@angular/router": "^11.1.1",
-		"@angular/service-worker": "^11.1.1",
-		"@angular/animations": "^11.1.1"
+		"@angular/service-worker": "^11.1.1"
 	},
 	"devDependencies": {
 		"@angular-devkit/architect": "^0.1101.2",

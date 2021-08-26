@@ -232,3 +232,20 @@ export const triggerSlider = (loc: any) => {
 		.invoke('val', 35)
 		.trigger('change', { data: '35' });
 };
+
+export const verifyTextContentByIndex = (loc, data, index) => {
+	cy.get(loc)
+		.eq(index)
+		.should('contain.text', data)
+
+}
+
+export const verifyElementIsNotVisibleByIndex = (loc, index: number) => {
+	cy.get(loc, { timeout: defaultCommandTimeout })
+		.eq(index)
+		.should('not.be.visible');
+};
+
+export const clickButtonWithForce = (loc) => {
+	cy.get(loc, { timeout: taskTimeout }).click({ force: true });
+};
