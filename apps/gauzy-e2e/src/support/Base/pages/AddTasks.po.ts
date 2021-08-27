@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	verifyElementIsVisible,
 	clickButtonByIndex,
@@ -98,7 +99,7 @@ export const dueDateInputVisible = () => {
 
 export const enterDueDateData = () => {
 	clearField(AddTaskPage.dueDateInputCss);
-	const date = Cypress.moment().add(1, 'days').format('MMM D, YYYY');
+	const date = dayjs().add(1, 'd').format('MMM D, YYYY');
 	enterInput(AddTaskPage.dueDateInputCss, date);
 };
 

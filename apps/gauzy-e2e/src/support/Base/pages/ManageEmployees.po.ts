@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -44,7 +45,7 @@ export const dateInputVisible = () => {
 
 export const enterDateData = () => {
 	clearField(ManageEmployeesPage.dateInputCss);
-	const date = Cypress.moment().format('MMM D, YYYY');
+	const date = dayjs().format('MMM D, YYYY');
 	enterInput(ManageEmployeesPage.dateInputCss, date);
 };
 

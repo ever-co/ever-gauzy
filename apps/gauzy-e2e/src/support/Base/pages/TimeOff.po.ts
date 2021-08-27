@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	verifyElementIsVisible,
 	clickButton,
@@ -58,7 +59,7 @@ export const startDateInputVisible = () => {
 
 export const enterStartDateData = () => {
 	clearField(TimeOffPage.startDateInputCss);
-	const date = Cypress.moment().add(1, 'days').format('MMM D, YYYY');
+	const date = dayjs().add(1, 'days').format('MMM D, YYYY');
 	enterInput(TimeOffPage.startDateInputCss, date);
 };
 
@@ -68,7 +69,7 @@ export const endDateInputVisible = () => {
 
 export const enterEndDateData = () => {
 	clearField(TimeOffPage.endDateInputCss);
-	const date = Cypress.moment().add(5, 'days').format('MMM D, YYYY');
+	const date = dayjs().add(5, 'days').format('MMM D, YYYY');
 	enterInput(TimeOffPage.endDateInputCss, date);
 };
 
@@ -127,7 +128,7 @@ export const startHolidayDateInputVisible = () => {
 
 export const enterStartHolidayDate = () => {
 	clearField(TimeOffPage.startHolidayDateCss);
-	const date = Cypress.moment()
+	const date = dayjs()
 		.add(1, 'years')
 		.startOf('year')
 		.format('MMM D, YYYY');
@@ -140,7 +141,7 @@ export const endHolidayDateInputVisible = () => {
 
 export const enterEndHolidayDate = () => {
 	clearField(TimeOffPage.endHolidayDateCss);
-	const date = Cypress.moment()
+	const date = dayjs()
 		.add(1, 'years')
 		.startOf('year')
 		.add(1, 'days')

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	verifyByText,
 	verifyElementIsVisibleByIndex,
@@ -56,13 +57,13 @@ export const dateInputVisible = () => {
 
 export const enterDateInputData = () => {
 	clearField(ManageInterviewsPage.dateInputCss);
-	const date = Cypress.moment().format('MMM D, YYYY');
+	const date = dayjs().format('MMM D, YYYY');
 	enterInput(ManageInterviewsPage.dateInputCss, date);
 };
 
 export const enterFutureDateInputData = (days: number) => {
 	clearField(ManageInterviewsPage.dateInputCss);
-	const futureDate = Cypress.moment().add(days, 'days').format('MMM D, YYYY');
+	const futureDate = dayjs().add(days, 'days').format('MMM D, YYYY');
 	enterInput(ManageInterviewsPage.dateInputCss, futureDate);
 };
 
