@@ -7,6 +7,9 @@ jobs:
 
         runs-on: [self-hosted]
 
+        env:
+          CYPRESS_CACHE_FOLDER: C:\Users\Evereq\AppData\Local\Cypress\Cache
+
         timeout-minutes: 360
 
         steps:
@@ -25,7 +28,7 @@ jobs:
             #  run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
             - name: Add Yarn to path
-              run: echo "C:\Users\Precision T3610\AppData\Roaming\npm" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+              run: echo "C:\Users\Evereq\AppData\Roaming\npm" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
             - name: Bootstrap Yarn
               run: yarn bootstrap
@@ -41,7 +44,7 @@ jobs:
 
             - name: Run UI in background
               run: yarn start:gauzy:forever
-
+                        
             - name: Install Cypress Package
               run: npm install -g cypress
 
@@ -49,7 +52,7 @@ jobs:
               run: | 
                 cd apps/gauzy-e2e
                 cypress install
-
+            
             - name: Cypress info
               env:
                 # make sure every Cypress install prints minimal information
