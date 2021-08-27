@@ -3,8 +3,9 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { GauzyAIService } from '@gauzy/integration-ai';
-import { Employee, TimeLog, User } from './../core/entities/internal';
-import { UserService } from '../user/user.service';
+import { TimeLog } from './../core/entities/internal';
+import { Employee } from './employee.entity';
+import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
@@ -16,16 +17,16 @@ import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([{ path: '/employee', module: EmployeeModule }]),
-		TypeOrmModule.forFeature([Employee, User, TimeLog]),
+		TypeOrmModule.forFeature([Employee, TimeLog]),
 		EmailModule,
 		UserOrganizationModule,
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [EmployeeController],
 	providers: [
 		EmployeeService,
-		UserService,
 		AuthService,
 		EmailService,
 		GauzyAIService,

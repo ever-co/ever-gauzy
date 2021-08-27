@@ -17,7 +17,7 @@ import { ActivityMapService } from './activity.map.service';
 
 @ApiTags('Activity')
 @UseGuards(TenantPermissionGuard)
-@Controller('activity')
+@Controller()
 export class ActivityController extends CrudController<Activity> {
 	constructor(
 		private readonly activityService: ActivityService,
