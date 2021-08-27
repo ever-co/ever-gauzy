@@ -17,7 +17,7 @@ jobs:
               with:
                 path: |                  
                   ~/.cache
-                key: ${{ runner.os }}-cache-${{ hashFiles('yarn.json') }}
+                key: ${{ runner.os }}-cache-${{ hashFiles('yarn.lock') }}
                 restore-keys: |
                   ${{ runner.os }}-cache-
 
