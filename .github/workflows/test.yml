@@ -15,10 +15,11 @@ jobs:
 
             - uses: actions/cache@v2
               with:
-                path: |
-                  ~/.cache/Cypress
-                  node_modules
-                key: my-cache-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                path: |                  
+                  ~/.cache
+                key: ${{ runner.os }}-cache-${{ hashFiles('**/package.json') }}
+                restore-keys: |
+                  ${{ runner.os }}-cache-
 
             # - name: Increase file limit
             #  run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
@@ -42,7 +43,18 @@ jobs:
               run: yarn start:gauzy:forever
 
             - name: Cypress info
-              run: npx cypress info
+              env:
+                # make sure every Cypress install prints minimal information
+                CI: 1
+              # print Cypress and OS info
+              run: |
+                npx cypress verify
+                npx cypress info
+                npx cypress version
+                npx cypress version --component package
+                npx cypress version --component binary
+                npx cypress version --component electron
+                npx cypress version --component node
 
             - name: Cypress run
               uses: cypress-io/github-action@v2
