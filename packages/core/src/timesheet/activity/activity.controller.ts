@@ -7,10 +7,10 @@ import {
 	Post,
 	Body
 } from '@nestjs/common';
-import { ActivityService } from './activity.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IGetActivitiesInput, IBulkActivitiesInput } from '@gauzy/contracts';
+import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
+import { ActivityService } from './activity.service';
 import { ActivityMapService } from './activity.map.service';
 
 @ApiTags('Activity')
@@ -61,11 +61,11 @@ export class ActivityController {
 			request
 		);
 
-		if (request.groupBy === 'date') {
+		if (request.groupBy === ReportGroupFilterEnum.date) {
 			activities = this.activityMapService.mapByDate(activities);
-		} else if (request.groupBy === 'employee') {
+		} else if (request.groupBy === ReportGroupFilterEnum.employee) {
 			activities = this.activityMapService.mapByEmployee(activities);
-		} else if (request.groupBy === 'project') {
+		} else if (request.groupBy === ReportGroupFilterEnum.project) {
 			activities = this.activityMapService.mapByProject(activities);
 		}
 
