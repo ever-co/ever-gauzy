@@ -5,7 +5,8 @@ import {
 	ManyToOne,
 	JoinColumn,
 	ManyToMany,
-	Index
+	Index,
+	AfterLoad
 } from 'typeorm';
 import {
 	ITimeLog,
@@ -19,13 +20,8 @@ import {
 	ITimeSlot
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-	IsString,
-	IsBoolean,
-	IsDateString,
-	IsEnum,
-	IsOptional
-} from 'class-validator';
+import { IsString, IsBoolean, IsDateString, IsEnum, IsOptional } from 'class-validator';
+import * as moment from 'moment';
 import {
 	Employee,
 	OrganizationContact,
@@ -184,4 +180,20 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		onDelete: 'CASCADE'
 	})
 	timeSlots?: ITimeSlot[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @EventSubscriber 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+    * Called after entity is loaded.
+    */
+	@AfterLoad()
+	afterLoadEntity?() {
+        const startedAt = moment(this.startedAt, 'YYYY-MM-DD HH:mm:ss');
+        const stoppedAt = moment(this.stoppedAt || new Date(), 'YYYY-MM-DD HH:mm:ss');
+        this.duration = stoppedAt.diff(startedAt, 'seconds');
+    }
 }
