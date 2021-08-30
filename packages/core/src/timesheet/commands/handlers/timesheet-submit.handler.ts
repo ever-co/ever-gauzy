@@ -2,8 +2,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { ITimesheet } from '@gauzy/contracts';
-import { EmailService } from '../../../../email/email.service';
-import { Timesheet } from '../../../timesheet.entity';
+import { EmailService } from './../../../email/email.service';
+import { Timesheet } from './../../timesheet.entity';
 import { TimesheetSubmitCommand } from '../timesheet-submit.command';
 
 @CommandHandler(TimesheetSubmitCommand)

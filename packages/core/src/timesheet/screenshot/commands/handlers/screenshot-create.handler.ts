@@ -2,8 +2,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import * as moment from 'moment';
 import { ScreenshotCreateCommand } from '..';
-import { ScreenshotService } from '../../screenshot/screenshot.service';
-import { TimeSlotService } from '../../time-slot/time-slot.service';
+import { ScreenshotService } from './../../../screenshot/screenshot.service';
+import { TimeSlotService } from './../../../time-slot/time-slot.service';
 
 @CommandHandler(ScreenshotCreateCommand)
 export class ScreenshotCreateHandler

@@ -2,49 +2,25 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
-import { TimerController } from './timer/timer.controller';
-import { TimerService } from './timer/timer.service';
-import { TimeSheetService } from './timesheet/timesheet.service';
-import { ScreenshotService } from './screenshot/screenshot.service';
-import { TimeSlotService } from './time-slot/time-slot.service';
-import { TimeLogController } from './time-log/time-log.controller';
-import { TimeLogService } from './time-log/time-log.service';
-import { CommandHandlers } from './commands/handlers';
-import { TimeSheetController } from './timesheet/timesheet.controller';
-import { TimeSlotController } from './time-slot/time-slot.controller';
-import { ScreenshotController } from './screenshot/screenshot.controller';
-import { TimesheetCommandHandlers } from './timesheet/commands/handlers';
-import { TimeLogCommandHandlers } from './time-log/commands/handlers';
-import { StatisticService } from './statistic/statistic.service';
-import { StatisticController } from './statistic/statistic.controller';
 import { EmailService } from '../email/email.service';
 import { EmailModule } from '../email';
-import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
+import { Email, EmailTemplate } from './../core/entities/internal';
 import { TenantModule } from '../tenant/tenant.module';
-import {
-	Activity,
-	Email,
-	EmailTemplate,
-	Employee,
-	Organization,
-	OrganizationContact,
-	OrganizationProject,
-	Screenshot,
-	Task,
-	TimeLog,
-	Timesheet,
-	TimeSlot,
-	TimeSlotMinute
-} from './../core/entities/internal';
+import { EmployeeModule } from './../employee/employee.module';
 import { ActivityModule } from './activity/activity.module';
+import { TimeSlotModule } from './time-slot/time-slot.module';
+import { TimeLogModule } from './time-log/time-log.module';
+import { ScreenshotModule } from './screenshot/screenshot.module';
+import { StatisticModule } from './statistic/statistic.module';
+import { TimerModule } from './timer/timer.module';
+
+import { TimeSheetController } from './timesheet.controller';
+import { TimeSheetService } from './timesheet.service';
+import { Timesheet } from './timesheet.entity';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	controllers: [
-		TimerController,
-		TimeLogController,
-		TimeSlotController,
-		ScreenshotController,
-		StatisticController,
 		TimeSheetController
 	],
 	imports: [
@@ -52,49 +28,36 @@ import { ActivityModule } from './activity/activity.module';
 			{
 				path: '/timesheet', module: TimesheetModule,
 				children: [
-					{ path: '/activity', module: ActivityModule }
+					{ path: '/activity', module: ActivityModule },
+					{ path: '/time-slot', module: TimeSlotModule },
+					{ path: '/time-log', module: TimeLogModule },
+					{ path: '/screenshot', module: ScreenshotModule },
+					{ path: '/statistics', module: StatisticModule },
+					{ path: '/timer', module: TimerModule }
 				]
 			}
 		]),
 		TypeOrmModule.forFeature([
-			TimeSlot,
-			Screenshot,
-			TimeLog,
 			Timesheet,
-			Employee,
-			TimeSlotMinute,
-			OrganizationProject,
-			Task,
 			Email,
-			EmailTemplate,
-			Organization,
-			OrganizationContact
+			EmailTemplate
 		]),
 		CqrsModule,
 		EmailModule,
 		TenantModule,
-		ActivityModule
+		ActivityModule,
+		TimeSlotModule,
+		TimeLogModule,
+		ScreenshotModule,
+		EmployeeModule
 	],
 	providers: [
-		TimerService,
 		TimeSheetService,
-		ScreenshotService,
-		TimeLogService,
-		TimeSlotService,
-		StatisticService,
 		EmailService,
-		...TimeLogCommandHandlers,
-		...TimesheetCommandHandlers,
-		...TimeSlotCommandHandlers,
 		...CommandHandlers
 	],
 	exports: [
-		TimeSheetService,
-		ScreenshotService,
-		TimeLogService,
-		TimeSlotService,
-		StatisticService,
-		ActivityModule
+		TimeSheetService
 	]
 })
 export class TimesheetModule {}

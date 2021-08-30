@@ -1,6 +1,6 @@
 import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
 import * as moment from 'moment';
-import { TimeLog } from "./../time-log.entity";
+import { TimeLog } from "./time-log.entity";
 
 @EventSubscriber()
 export class TimeLogSubscriber implements EntitySubscriberInterface<TimeLog> {

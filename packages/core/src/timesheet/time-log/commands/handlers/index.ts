@@ -8,7 +8,7 @@ import { GetTimeLogGroupByEmployeeHandler } from './get-time-log-group-by-employ
 import { GetTimeLogGroupByProjectHandler } from './get-time-log-group-by-project.handler';
 import { GetTimeLogGroupByClientHandler } from './get-time-log-group-by-client.handler';
 
-export const TimeLogCommandHandlers = [
+export const CommandHandlers = [
 	TimeLogCreateHandler,
 	TimeLogUpdateHandler,
 	TimeLogDeleteHandler,

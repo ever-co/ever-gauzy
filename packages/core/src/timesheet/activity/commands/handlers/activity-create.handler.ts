@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { ActivityCreateCommand } from '../activity-create.command';
-import { ActivityService } from '../../activity/activity.service';
+import { ActivityService } from './../../../activity/activity.service';
 
 @CommandHandler(ActivityCreateCommand)
 export class ActivityCreateHandler

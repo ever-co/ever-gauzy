@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import * as moment from 'moment';
 import { ITimesheet } from '@gauzy/contracts';
-import { Employee, Timesheet } from '../../../../core/entities/internal';
-import { RequestContext } from '../../../../core/context';
+import { Employee, Timesheet } from './../../../core/entities/internal';
+import { RequestContext } from './../../../core/context';
 import { TimesheetFirstOrCreateCommand } from '../timesheet-first-or-create.command';
 
 @CommandHandler(TimesheetFirstOrCreateCommand)

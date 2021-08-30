@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TimeSlot } from '../../../time-slot.entity';
+import { TimeSlot } from './../../time-slot.entity';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
 import { DeleteTimeSlotCommand } from '../delete-time-slot.command';
 import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';

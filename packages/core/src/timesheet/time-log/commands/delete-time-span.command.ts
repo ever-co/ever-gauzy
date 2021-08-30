@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { TimeLog } from '../../time-log.entity';
+import { TimeLog } from './../time-log.entity';
 import { IDateRange } from '@gauzy/contracts';
 
 export class DeleteTimeSpanCommand implements ICommand {

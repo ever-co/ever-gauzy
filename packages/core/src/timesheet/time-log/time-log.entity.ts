@@ -19,7 +19,13 @@ import {
 	ITimeSlot
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsDateString, IsEnum, IsOptional } from 'class-validator';
+import {
+	IsString,
+	IsBoolean,
+	IsDateString,
+	IsEnum,
+	IsOptional
+} from 'class-validator';
 import {
 	Employee,
 	OrganizationContact,
@@ -28,7 +34,7 @@ import {
 	TenantOrganizationBaseEntity,
 	Timesheet,
 	TimeSlot
-} from '../core/entities/internal';
+} from './../../core/entities/internal';
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {

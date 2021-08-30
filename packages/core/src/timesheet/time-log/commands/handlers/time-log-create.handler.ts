@@ -3,11 +3,11 @@ import { TimeLogType, TimeLogSourceEnum } from '@gauzy/contracts';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
 import { Repository } from 'typeorm';
-import { TimeLog } from '../../../time-log.entity';
+import { TimeLog } from './../../time-log.entity';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
-import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands/timesheet-first-or-create.command';
-import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
+import { TimesheetFirstOrCreateCommand } from './../../../../timesheet/commands/timesheet-first-or-create.command';
+import { TimesheetRecalculateCommand } from './../../../../timesheet/commands/timesheet-recalculate.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { RequestContext } from '../../../../core/context';
 
@@ -17,6 +17,7 @@ export class TimeLogCreateHandler
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
+		
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
 	) {}

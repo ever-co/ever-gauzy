@@ -7,8 +7,6 @@ import {
 	Post,
 	Body
 } from '@nestjs/common';
-import { Activity } from './activity.entity';
-import { CrudController } from '../../core/crud';
 import { ActivityService } from './activity.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGetActivitiesInput, IBulkActivitiesInput } from '@gauzy/contracts';
@@ -18,13 +16,11 @@ import { ActivityMapService } from './activity.map.service';
 @ApiTags('Activity')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class ActivityController extends CrudController<Activity> {
+export class ActivityController {
 	constructor(
 		private readonly activityService: ActivityService,
 		private readonly activityMapService: ActivityMapService
-	) {
-		super(activityService);
-	}
+	) {}
 
 	@ApiOperation({ summary: 'Get Activities' })
 	@ApiResponse({

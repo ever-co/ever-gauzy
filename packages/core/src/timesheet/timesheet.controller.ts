@@ -7,26 +7,24 @@ import {
 	Get,
 	Query
 } from '@nestjs/common';
-import { Timesheet } from '../timesheet.entity';
-import { CrudController } from '../../core/crud';
-import { TimeSheetService } from './timesheet.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { I18nLang } from 'nestjs-i18n';
 import {
 	IUpdateTimesheetStatusInput,
 	IGetTimesheetInput,
 	ISubmitTimesheetInput,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { I18nLang } from 'nestjs-i18n';
-import { TenantPermissionGuard } from './../../shared/guards';
+import { TimeSheetService } from './timesheet.service';
+import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('TimeSheet')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class TimeSheetController extends CrudController<Timesheet> {
-	constructor(private readonly timeSheetService: TimeSheetService) {
-		super(timeSheetService);
-	}
+export class TimeSheetController {
+	constructor(
+		private readonly timeSheetService: TimeSheetService
+	) {}
 
 	@ApiOperation({ summary: 'Get timesheet' })
 	@ApiResponse({
