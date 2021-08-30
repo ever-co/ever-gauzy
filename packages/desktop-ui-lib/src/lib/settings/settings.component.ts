@@ -13,7 +13,12 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
 	styleUrls: ['./settings.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	styles: [`
+    :host nb-tab {
+      padding: 1.25rem;
+    }
+  `],
 })
 export class SettingsComponent implements OnInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
@@ -41,6 +46,255 @@ export class SettingsComponent implements OnInit {
 			status: 'basic'
 		}
 	];
+
+	thirdPartyConfig = [
+		{
+			title: 'UNLEASH_APP',
+			fields: [
+				{
+					name: 'UNLEASH_APP_NAME',
+					field: 'UNLEASH_APP_NAME',
+					value: ''
+				},
+				{
+					name: 'UNLEASH_API_URL',
+					field: 'UNLEASH_API_URL',
+					value: ''
+				},
+				{
+					name: 'UNLEASH_INSTANCE_ID',
+					field: 'UNLEASH_INSTANCE_ID',
+					value: ''
+				},
+				{
+					name: 'UNLEASH_REFRESH_INTERVAL',
+					field: 'UNLEASH_REFRESH_INTERVAL',
+					value: 1000
+				},
+				{
+					name: 'UNLEASH_METRICS_INTERVAL',
+					field: 'UNLEASH_METRICS_INTERVAL',
+					value: 1000
+				}
+			]
+		},
+		{
+			title: 'Twitter',
+			fields: [
+				{
+					name: 'TWITTER_CLIENT_ID',
+					field: 'TWITTER_CLIENT_ID',
+					value: ''
+				},
+				{
+					name: 'TWITTER_CLIENT_SECRET',
+					field: 'TWITTER_CLIENT_SECRET',
+					value: ''
+				},
+				{
+					name: 'TWITTER_CALLBACK_URL',
+					field: 'TWITTER_CALLBACK_URL',
+					value: 'http://localhost:3000/api/auth/twitter/callback'
+				}
+			]
+		},
+		{
+			title: 'Google',
+			fields: [
+				{
+					name: 'GOOGLE_CLIENT_ID',
+					field: 'GOOGLE_CLIENT_ID',
+					value: ''
+				},
+				{
+					name: 'GOOGLE_CLIENT_SECRET',
+					field: 'GOOGLE_CLIENT_SECRET',
+					value: ''
+				},
+				{
+					name: 'GOOGLE_CALLBACK_URL',
+					field: 'GOOGLE_CALLBACK_URL',
+					value: 'http://localhost:3000/api/auth/google/callback'
+				}
+			]
+		},
+		{
+			title: 'Facebook',
+			fields: [
+				{
+					name: 'FACEBOOK_CLIENT_ID',
+					field: 'FACEBOOK_CLIENT_ID',
+					value: ''
+				},
+				{
+					name: 'FACEBOOK_CLIENT_SECRET',
+					field: 'FACEBOOK_CLIENT_SECRET',
+					value: ''
+				},
+				{
+					name: 'FACEBOOK_CALLBACK_URL',
+					field: 'FACEBOOK_CALLBACK_URL',
+					value: ''
+				},
+				{
+					name: 'FACEBOOK_GRAPH_VERSION',
+					field: 'FACEBOOK_GRAPH_VERSION',
+					value: ''
+				}
+			]
+		},
+		{
+			title: 'Github',
+			fields: [
+				{
+					name: 'GITHUB_CLIENT_ID',
+					field: 'GITHUB_CLIENT_ID',
+					value: ''
+				},
+				{
+					name: 'GITHUB_CLIENT_SECRET',
+					field: 'GITHUB_CLIENT_SECRET',
+					value: ''
+				},
+				{
+					name: 'GITHUB_CALLBACK_URL',
+					field: 'GITHUB_CALLBACK_URL',
+					value: ''
+				}
+			]
+		},
+		{
+			title: 'Linkedin',
+			fields: [
+				{
+					name: 'LINKEDIN_CLIENT_ID',
+					field: 'LINKEDIN_CLIENT_ID',
+					value: ''
+				},
+				{
+					name: 'LINKEDIN_CLIENT_SECRET',
+					field: 'LINKEDIN_CLIENT_SECRET',
+					value: ''
+				},
+				{
+					name: 'LINKEDIN_CALLBACK_URL',
+					field: 'LINKEDIN_CALLBACK_URL',
+					value: ''
+				}
+			]
+		},
+		{
+			title: 'Microsoft',
+			fields: [
+				{
+					name: 'MICROSOFT_CLIENT_ID',
+					field: 'MICROSOFT_CLIENT_ID',
+					value: ''
+				},
+				{
+					name: 'MICROSOFT_CLIENT_SECRET',
+					field: 'MICROSOFT_CLIENT_SECRET',
+					value: ''
+				},
+				{
+					name: 'MICROSOFT_RESOURCE',
+					field: 'MICROSOFT_RESOURCE',
+					value: ''
+				},
+				{
+					name: 'MICROSOFT_TENANT',
+					field: 'MICROSOFT_TENANT',
+					value: ''
+
+				},
+				{
+					name: 'MICROSOFT_CALLBACK_URL',
+					field: 'MICROSOFT_CALLBACK_URL',
+					value: ''
+				}
+			]
+		},
+		{
+			title: 'Fiverr',
+			fields: [
+				{ 
+					name: 'FIVERR_CLIENT_ID',
+					field: 'FIVERR_CLIENT_ID',
+					value: ''
+				},
+				{ 
+					name: 'FIVERR_CLIENT_SECRET',
+					field: 'FIVERR_CLIENT_SECRET',
+					value: ''
+				},
+			]
+		},
+		{
+			title: 'Auth0',
+			fields: [
+				{ 
+					name: 'AUTH0_CLIENT_ID',
+					field: 'AUTH0_CLIENT_ID',
+					value: ''
+				},
+				{ 
+					name: 'AUTH0_CLIENT_SECRET',
+					field: 'AUTH0_CLIENT_SECRET',
+					value: ''
+				},
+				{ 
+					name: 'AUTH0_DOMAIN',
+					field: 'AUTH0_DOMAIN',
+					value: ''
+				}
+			]
+		},
+		{
+			title: 'KEYCLOAK',
+			fields: [
+				{ 
+					name: 'KEYCLOAK_REALM',
+					field: 'KEYCLOAK_REALM',
+					value: ''
+				},
+				{ 
+					name: 'KEYCLOAK_CLIENT_ID',
+					field: 'KEYCLOAK_CLIENT_ID',
+					value: ''
+				},
+				{ 
+					name: 'KEYCLOAK_SECRET',
+					field: 'KEYCLOAK_SECRET',
+					value: ''
+				},
+				{ 
+					name: 'KEYCLOAK_AUTH_SERVER_URL',
+					field: 'KEYCLOAK_AUTH_SERVER_URL',
+					value: ''
+				},
+				{ 
+					name: 'KEYCLOAK_COOKIE_KEY',
+					field: 'KEYCLOAK_COOKIE_KEY',
+					value: ''
+				}
+			]
+		},
+		{
+			title: 'Other',
+			fields: [
+				{
+					name: 'SENTRY_DSN',
+					field: 'SENTRY_DSN',
+					value: ''
+				},
+				{
+					name: 'GOOGLE_MAPS_API_KEY',
+					field: 'GOOGLE_MAPS_API_KEY',
+					value: ''
+				}
+			]
+		},
+	]
 
 	selectedMenu = 'Screen Capture';
 
@@ -86,10 +340,11 @@ export class SettingsComponent implements OnInit {
 		private readonly timeTrackerService: TimeTrackerService
 	) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
-			const { setting, config, auth } = arg;
+			const { setting, config, auth, additionalSetting } = arg;
 			this.appSetting = setting;
 			this.config = config;
 			this.authSetting = auth;
+			this.mappingAdditionalSetting(additionalSetting || null);
 
 			this.config.awPort = this.config.timeTrackerWindow
 				? this.config.awHost.split('t:')[1]
@@ -175,6 +430,16 @@ export class SettingsComponent implements OnInit {
 		this.version = this.electronService.remote.app.getVersion();
 	}
 
+	mappingAdditionalSetting(values) {
+		if (values) {
+			this.thirdPartyConfig.forEach((item) => {
+				item.fields.forEach((itemField) => {
+					itemField.value = values[itemField.field];
+				})
+			})
+		}
+	}
+
 	selectMonitorOption(item) {
 		this.monitorOptionSelected = item.value;
 		this.updateSetting({ captured: item.value }, 'monitor');
@@ -228,12 +493,19 @@ export class SettingsComponent implements OnInit {
 	}
 
 	restartApp() {
+		const thConfig = {};
+		this.thirdPartyConfig.forEach((item) => {
+			item.fields.forEach((itemField) => {
+				thConfig[itemField.field] = itemField.value;
+			})
+		});
 		const newConfig: any = {
 			...this.config
 		};
 		if (this.config.timeTrackerWindow)
 			newConfig.awHost = `http://localhost:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('restart_app', newConfig);
+		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
 	}
 
 	portChange(val, type) {

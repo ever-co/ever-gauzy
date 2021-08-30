@@ -240,6 +240,7 @@ const createTray = () => {
 			click() {
 				const appSetting = LocalStore.getStore('appSetting');
 				const config = LocalStore.getStore('configs');
+				const addSetting = LocalStore.getStore('additionalSetting');
 				settingsWindow.show();
 				setTimeout(() => {
 					settingsWindow.webContents.send('goto_update');
@@ -247,7 +248,8 @@ const createTray = () => {
 				setTimeout(() => {
 					settingsWindow.webContents.send('app_setting', {
 						setting: appSetting,
-						config: config
+						config: config,
+						additionalSetting: addSetting
 					});
 				}, 500);
 			}
@@ -314,6 +316,11 @@ ipcMain.on('restart_app', (event, arg) => {
 	LocalStore.updateConfigSetting(arg);
 	updateConfigUi(arg);
 });
+
+ipcMain.on('save_additional_setting', (event, arg) => {
+	console.log('arg', arg);
+	LocalStore.updateAdditionalSetting(arg);
+})
 
 ipcMain.on('quit', quit);
 
