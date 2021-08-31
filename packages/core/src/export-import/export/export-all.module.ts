@@ -45,7 +45,7 @@ import { TagService } from '../../tags/tag.service';
 import { TaskService } from '../../tasks/task.service';
 import { TenantService } from '../../tenant/tenant.service';
 import { TimeOffPolicyService } from '../../time-off-policy/time-off-policy.service';
-import { TimeSheetService } from '../../timesheet/timesheet/timesheet.service';
+import { TimeSheetService } from '../../timesheet/timesheet.service';
 import { ActivityService } from '../../timesheet/activity/activity.service';
 import { ScreenshotService } from '../../timesheet/screenshot/screenshot.service';
 import { TimeSlotService } from '../../timesheet/time-slot/time-slot.service';

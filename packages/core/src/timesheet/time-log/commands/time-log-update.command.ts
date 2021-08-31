@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { TimeLog } from '../../time-log.entity';
+import { TimeLog } from './../time-log.entity';
 
 export class TimeLogUpdateCommand implements ICommand {
 	static readonly type = '[TimeLog] update';

@@ -1,7 +1,7 @@
 import { EntitySubscriberInterface, EventSubscriber, RemoveEvent } from "typeorm";
 import * as moment from 'moment';
 import { IScreenshot } from "@gauzy/contracts";
-import { TimeSlot } from "./../time-slot.entity";
+import { TimeSlot } from "./time-slot.entity";
 import { FileStorage } from "./../../core/file-storage";
 
 @EventSubscriber()

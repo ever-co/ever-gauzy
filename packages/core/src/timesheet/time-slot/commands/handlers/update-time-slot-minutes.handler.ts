@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TimeSlotMinute } from '../../../time-slot-minute.entity';
+import { TimeSlotMinute } from './../../time-slot-minute.entity';
 import { UpdateTimeSlotMinutesCommand } from '../update-time-slot-minutes.command';
 
 @CommandHandler(UpdateTimeSlotMinutesCommand)

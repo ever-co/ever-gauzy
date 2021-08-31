@@ -1,22 +1,27 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { EmployeeService } from '../../employee.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
-import { TimeLog } from '../../../timesheet/time-log.entity';
 import { getConfig } from '@gauzy/config';
+import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
+import { EmployeeService } from '../../employee.service';
+import { TimeLog } from './../../../core/entities/internal';
+import { RequestContext } from 'core';
 const config = getConfig();
+
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
 export class UpdateEmployeeTotalWorkedHoursHandler
 	implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
 	constructor(
 		private readonly employeeService: EmployeeService,
+
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>
 	) {}
 
 	public async execute(command: UpdateEmployeeTotalWorkedHoursCommand) {
 		const { employeeId, hours } = command;
+		const tenantId = RequestContext.currentTenantId();
+
 		let totalWorkHours: number;
 		if (hours) {
 			totalWorkHours = hours;
@@ -32,7 +37,8 @@ export class UpdateEmployeeTotalWorkedHoursHandler
 					`duration`
 				)
 				.where({
-					employeeId
+					employeeId,
+					tenantId
 				})
 				.getRawOne();
 			totalWorkHours = (logs.duration || 0) / 3600;

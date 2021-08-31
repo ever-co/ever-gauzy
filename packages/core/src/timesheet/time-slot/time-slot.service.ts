@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CommandBus } from '@nestjs/cqrs';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { TenantAwareCrudService } from './../../core/crud';
-import { TimeSlot } from '../time-slot.entity';
-import { moment } from '../../core/moment-extend';
-import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
-import { TimeSlotMinute } from '../time-slot-minute.entity';
+import { TenantAwareCrudService } from './../../core/crud';
+import { TimeSlot } from './time-slot.entity';
+import { moment } from '../../core/moment-extend';
+import { RequestContext } from '../../core/context/request-context';
+import { TimeSlotMinute } from './time-slot-minute.entity';
 import { generateTimeSlots } from './utils';
-import { CommandBus } from '@nestjs/cqrs';
 import {
 	CreateTimeSlotCommand,
 	CreateTimeSlotMinutesCommand,
@@ -26,6 +26,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+		
 		private readonly commandBus: CommandBus,
 		private readonly configService: ConfigService
 	) {

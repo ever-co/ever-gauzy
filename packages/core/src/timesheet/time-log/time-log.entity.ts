@@ -30,7 +30,7 @@ import {
 	TenantOrganizationBaseEntity,
 	Timesheet,
 	TimeSlot
-} from '../core/entities/internal';
+} from './../../core/entities/internal';
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {

@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { TimeLog } from '../time-log.entity';
+import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, SelectQueryBuilder, Brackets, WhereExpression } from 'typeorm';
 import { RequestContext } from '../../core/context';

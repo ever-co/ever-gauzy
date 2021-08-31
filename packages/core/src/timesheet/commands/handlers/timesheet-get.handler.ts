@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { TimeSheetService } from '../../timesheet/timesheet.service';
 import { ITimesheet } from '@gauzy/contracts';
-import { TimesheetGetCommand } from '..';
+import { TimeSheetService } from './../../../timesheet/timesheet.service';
+import { TimesheetGetCommand } from './../timesheet-get.command';
 
 @CommandHandler(TimesheetGetCommand)
 export class TimesheetGetHandler

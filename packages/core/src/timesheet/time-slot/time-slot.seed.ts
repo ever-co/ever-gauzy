@@ -1,5 +1,5 @@
 import * as faker from 'faker';
-import { TimeSlot } from '../time-slot.entity';
+import { TimeSlot } from './time-slot.entity';
 import { generateTimeSlots } from './utils';
 
 export function createTimeSlots(start, end) {

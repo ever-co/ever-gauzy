@@ -8,10 +8,8 @@ import {
 import { ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
-import {
-	TenantOrganizationBaseEntity,
-	TimeSlot
-} from './../core/entities/internal';
+import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
+import { TimeSlot } from './time-slot.entity';
 
 @Entity('time_slot_minute')
 @Unique(['timeSlotId', 'datetime'])
@@ -27,7 +25,7 @@ export class TimeSlotMinute
 	timeSlot?: ITimeSlot;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((activity: TimeSlotMinute) => activity.timeSlot)
+	@RelationId((it: TimeSlotMinute) => it.timeSlot)
 	@Column({ nullable: true })
 	readonly timeSlotId?: string;
 

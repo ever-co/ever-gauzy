@@ -30,7 +30,7 @@ export class TimerService {
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
-		
+
 		private readonly commandBus: CommandBus
 	) {}
 

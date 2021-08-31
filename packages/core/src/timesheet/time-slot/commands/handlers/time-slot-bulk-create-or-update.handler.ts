@@ -2,13 +2,12 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import * as moment from 'moment';
-import { TimeSlot } from '../../../time-slot.entity';
 import * as _ from 'underscore';
-import { TimeSlotBulkCreateOrUpdateCommand } from '../time-slot-bulk-create-or-update.command';
+import { TimeSlot } from './../../time-slot.entity';
+import { TimeSlotBulkCreateOrUpdateCommand } from './../time-slot-bulk-create-or-update.command';
 import { RequestContext } from '../../../../core/context';
-import { Employee } from '../../../../employee/employee.entity';
-import { TimeLog } from '../../../time-log.entity';
-import { TimeSlotMergeCommand } from '../time-slot-merge.command';
+import { TimeSlotMergeCommand } from './../time-slot-merge.command';
+import { Employee, TimeLog } from './../../../../core/entities/internal';
 
 @CommandHandler(TimeSlotBulkCreateOrUpdateCommand)
 export class TimeSlotBulkCreateOrUpdateHandler

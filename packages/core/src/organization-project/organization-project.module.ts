@@ -24,6 +24,9 @@ import { TenantModule } from '../tenant/tenant.module';
 	],
 	controllers: [OrganizationProjectController],
 	providers: [OrganizationProjectService, ...CommandHandlers],
-	exports: [OrganizationProjectService]
+	exports: [
+		TypeOrmModule,
+		OrganizationProjectService
+	]
 })
 export class OrganizationProjectModule {}

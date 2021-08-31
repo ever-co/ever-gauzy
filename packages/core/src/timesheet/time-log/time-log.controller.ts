@@ -11,6 +11,7 @@ import {
 	Delete
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FindOneOptions } from 'typeorm';
 import {
 	IManualTimeInput,
 	ITimeLog,
@@ -24,32 +25,18 @@ import {
 	IClientBudgetLimitReportInput
 } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
-import { Permissions } from '../../shared/decorators';
-import { OrganizationPermissionGuard, TenantBaseGuard } from '../../shared/guards';
+import { Permissions } from './../../shared/decorators';
+import { OrganizationPermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
-import { RequestContext } from '../../core/context';
-import { CrudController } from '../../core';
-import { FindOneOptions } from 'typeorm';
-import { TimeLog } from './../time-log.entity';
+import { RequestContext } from './../../core/context';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard)
-@Controller('time-log')
-export class TimeLogController extends CrudController<TimeLog> {
-	constructor(private readonly timeLogService: TimeLogService) {
-		super(timeLogService);
-	}
-
-	@ApiOperation({ summary: 'Get Timer Logs' })
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@Get('/')
-	async getLogs(@Query() entity: IGetTimeLogInput): Promise<ITimeLog[]> {
-		return await this.timeLogService.getTimeLogs(entity);
-	}
+@Controller()
+export class TimeLogController {
+	constructor(
+		private readonly timeLogService: TimeLogService
+	) { }
 
 	@ApiOperation({ summary: 'Get Timer Logs Conflict' })
 	@ApiResponse({
@@ -199,6 +186,17 @@ export class TimeLogController extends CrudController<TimeLog> {
 	@Get('client-budget-limit')
 	async clientBudgetLimit(@Query() request?: IClientBudgetLimitReportInput) {
 		return await this.timeLogService.clientBudgetLimit(request);
+	}
+
+	@ApiOperation({ summary: 'Get Timer Logs' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/')
+	async getLogs(@Query() entity: IGetTimeLogInput): Promise<ITimeLog[]> {
+		return await this.timeLogService.getTimeLogs(entity);
 	}
 
 	@Get(':id')
