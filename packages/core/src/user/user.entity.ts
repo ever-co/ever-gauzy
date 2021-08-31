@@ -147,3 +147,19 @@ export class User extends TenantBaseEntity implements IUser {
 	@JoinTable({ name: 'tag_user' })
 	tags?: ITag[];
 }
+
+export class UserPreferredLanguageDTO {
+
+	@ApiProperty({ type: () => String, enum: LanguagesEnum })
+	@IsNotEmpty()
+    @IsEnum(LanguagesEnum)
+    readonly preferredLanguage: LanguagesEnum;
+}
+
+export class UserPreferredComponentLayoutDTO {
+
+	@ApiProperty({ type: () => String, enum: ComponentLayoutStyleEnum })
+	@IsNotEmpty()
+    @IsEnum(ComponentLayoutStyleEnum)
+    readonly preferredComponentLayout: ComponentLayoutStyleEnum;
+}

@@ -118,12 +118,15 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		this._translate.use(this.currentLang || LanguagesEnum.ENGLISH);
 	}
 
-	private async changePreferredLanguage(data: any) {
+	private async changePreferredLanguage(request: any) {
 		if (!this.user) {
 			return;
 		}
 		try {
-			await this._userService.update(this.user.id, data);
+			await this._userService.updatePreferredLanguage(
+				this.user.id,
+				request
+			);
 		} catch (error) { 			
 			console.error(`Failed to update user preferred language`);
 		}
