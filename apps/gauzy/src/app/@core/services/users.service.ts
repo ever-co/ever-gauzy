@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IUser, IUserFindInput } from '@gauzy/contracts';
+import { IUser, IUserFindInput, IUserUpdateInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -51,7 +51,7 @@ export class UsersService {
 			.toPromise();
 	}
 
-	update(userId: string, updateInput: IUserFindInput) {
+	update(userId: string, updateInput: IUserUpdateInput) {
 		return this.http
 			.put(`${this.API_URL}/${userId}`, updateInput)
 			.pipe(first())
@@ -68,6 +68,26 @@ export class UsersService {
 	deleteAllData(userId) {
 		return this.http
 			.delete(`${this.API_URL}/all-data/${userId}`)
+			.pipe(first())
+			.toPromise();
+	}
+
+	updatePreferredLanguage(
+		userId: string,
+		updateInput: IUserUpdateInput
+	) {
+		return this.http
+			.put(`${this.API_URL}/preferred-language/${userId}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	updatePreferredComponentLayout(
+		userId: string,
+		updateInput: IUserUpdateInput
+	) {
+		return this.http
+			.put(`${this.API_URL}/preferred-layout/${userId}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

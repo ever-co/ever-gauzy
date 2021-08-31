@@ -85,12 +85,15 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		this.store.componentLayout = [];
 	}
 
-	private async changePreferredComponentLayout(data: any) {
+	private async changePreferredComponentLayout(request: any) {
 		if (!this.user) {
 			return;
 		}
 		try {
-			await this.userService.update(this.user.id, data);
+			await this.userService.updatePreferredComponentLayout(
+				this.user.id,
+				request
+			);
 		} catch (error) { 
 			console.error(`Failed to update user preferred component layout`);
 		}
