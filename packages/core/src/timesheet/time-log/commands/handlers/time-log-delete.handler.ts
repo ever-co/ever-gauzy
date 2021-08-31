@@ -2,9 +2,9 @@ import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DeleteResult, UpdateResult } from 'typeorm';
 import * as _ from 'underscore';
-import { TimeLog } from './../../../time-log.entity';
+import { TimeLog } from './../../time-log.entity';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
-import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
+import { TimesheetRecalculateCommand } from './../../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 

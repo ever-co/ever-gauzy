@@ -17,7 +17,7 @@ import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('TimesheetStatistic')
 @UseGuards(TenantPermissionGuard)
-@Controller('statistics')
+@Controller()
 export class StatisticController {
 	constructor(private readonly statisticService: StatisticService) {}
 

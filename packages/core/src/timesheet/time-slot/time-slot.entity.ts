@@ -23,9 +23,9 @@ import {
 	Employee,
 	Screenshot,
 	TenantOrganizationBaseEntity,
-	TimeLog,
-	TimeSlotMinute
-} from './../core/entities/internal';
+	TimeLog
+} from './../../core/entities/internal';
+import { TimeSlotMinute } from './time-slot-minute.entity';
 
 @Entity('time_slot')
 export class TimeSlot

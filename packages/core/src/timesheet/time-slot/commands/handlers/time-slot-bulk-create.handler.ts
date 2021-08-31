@@ -2,13 +2,15 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import * as moment from 'moment';
-import { TimeSlot } from '../../../time-slot.entity';
 import * as _ from 'underscore';
-import { TimeSlotBulkCreateCommand } from '../time-slot-bulk-create.command';
+import { TimeSlot } from './../../time-slot.entity';
+import {
+	Employee,
+	TimeLog
+} from './../../../../core/entities/internal';
+import { TimeSlotBulkCreateCommand } from './../time-slot-bulk-create.command';
+import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { RequestContext } from '../../../../core/context';
-import { Employee } from '../../../../employee/employee.entity';
-import { TimeLog } from '../../../time-log.entity';
-import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 
 @CommandHandler(TimeSlotBulkCreateCommand)
 export class TimeSlotBulkCreateHandler
@@ -16,10 +18,13 @@ export class TimeSlotBulkCreateHandler
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
+
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		private readonly commandBus: CommandBus
 	) {}
 

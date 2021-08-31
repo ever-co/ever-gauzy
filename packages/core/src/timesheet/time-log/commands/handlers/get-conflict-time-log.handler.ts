@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
-import { TimeLog } from '../../../time-log.entity';
+import { TimeLog } from './../../time-log.entity';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { RequestContext } from './../../../../core/context/request-context';
 

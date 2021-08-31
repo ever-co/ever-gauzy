@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CommandBus } from '@nestjs/cqrs';
 import { Repository, Between, In, SelectQueryBuilder } from 'typeorm';
-import { TenantAwareCrudService } from './../../core/crud';
-import { Timesheet } from '../timesheet.entity';
 import * as moment from 'moment';
 import {
 	IUpdateTimesheetStatusInput,
@@ -11,9 +10,10 @@ import {
 	PermissionsEnum,
 	ITimesheet
 } from '@gauzy/contracts';
-import { RequestContext } from '../../core/context';
-import { CommandBus } from '@nestjs/cqrs';
 import { getConfig } from '@gauzy/config';
+import { RequestContext } from './../core/context';
+import { Timesheet } from './timesheet.entity';
+import { TenantAwareCrudService } from './../core/crud';
 import {
 	TimesheetFirstOrCreateCommand,
 	TimesheetSubmitCommand,
@@ -26,6 +26,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
+
 		private readonly commandBus: CommandBus
 	) {
 		super(timeSheetRepository);
@@ -117,10 +118,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 						{ organizationId: request.organizationId }
 					);
 				}
-				//check organization and tenant for timelogs
-				if (tenantId) {
-					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-				}
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 			}
 		});
 		return timesheet;

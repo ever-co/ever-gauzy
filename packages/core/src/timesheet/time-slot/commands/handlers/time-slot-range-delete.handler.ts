@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { TimeSlot } from '../../../time-slot.entity';
+import { TimeSlot } from './../../time-slot.entity';
 import { TimeSlotRangeDeleteCommand } from '../time-slot-range-delete.command';
 import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';

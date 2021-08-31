@@ -14,7 +14,6 @@ import * as sharp from 'sharp';
 import * as fs from 'fs';
 import { IScreenshot } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
-import { CrudController } from '../../core/crud';
 import { ScreenshotService } from './screenshot.service';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
@@ -22,13 +21,11 @@ import { TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard)
-@Controller('screenshot')
-export class ScreenshotController extends CrudController<Screenshot> {
+@Controller()
+export class ScreenshotController {
 	constructor(
 		private readonly screenshotService: ScreenshotService
-	) {
-		super(screenshotService);
-	}
+	) {}
 
 	@ApiOperation({ summary: 'Add manual time' })
 	@ApiResponse({
