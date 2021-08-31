@@ -16,7 +16,8 @@ import {
 	Delete,
 	UseInterceptors,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	ForbiddenException
 } from '@nestjs/common';
 import {
 	ApiOperation,
@@ -38,7 +39,7 @@ import { RequestContext } from '../core/context';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { User } from './user.entity';
+import { User, UserPreferredComponentLayoutDTO, UserPreferredLanguageDTO } from './user.entity';
 import { UserService } from './user.service';
 import { UserCreateCommand } from './commands';
 import { DeleteAllDataService } from './delete-all-data/delete-all-data.service';
@@ -102,6 +103,68 @@ export class UserController extends CrudController<User> {
 	@Get('/email/:email')
 	async findByEmail(@Param('email') email: string): Promise<User> {
 		return this.userService.getUserByEmail(email);
+	}
+
+	/**
+	 * UPDATE user preferred language
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(TenantPermissionGuard)
+	@Put('/preferred-language/:id')
+	@UsePipes(new ValidationPipe({
+		transform: true,
+		whitelist: true
+	}))
+	async updatePreferredLanguage(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: UserPreferredLanguageDTO
+	) {
+		const userId = RequestContext.currentUserId();
+		if (userId !== id) {
+			throw new ForbiddenException();
+		}
+
+		const { preferredLanguage } = entity;
+		return this.userService.updatePreferredLanguage(
+			id,
+			preferredLanguage
+		);
+	}
+
+	/**
+	 * UPDATE user preferred component layout
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(TenantPermissionGuard)
+	@Put('/preferred-layout/:id')
+	@UsePipes(new ValidationPipe({
+		transform: true,
+		whitelist: true
+	}))
+	async updatePreferredComponentLayout(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: UserPreferredComponentLayoutDTO
+	) {
+		const userId = RequestContext.currentUserId();
+		if (userId !== id) {
+			throw new ForbiddenException();
+		}
+		
+		const { preferredComponentLayout } = entity;
+		return this.userService.updatePreferredComponentLayout(
+			id, 
+			preferredComponentLayout
+		);
 	}
 
 

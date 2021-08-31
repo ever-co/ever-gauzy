@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, InsertResult, SelectQueryBuilder } from 'typeorm';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { RolesEnum } from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -125,5 +125,43 @@ export class UserService extends TenantAwareCrudService<User> {
 					});
 				}
 			});		
+	}
+
+	/*
+	 * Update user preferred language
+	 */
+	async updatePreferredLanguage(
+		id: string | number,
+		preferredLanguage: LanguagesEnum
+	): Promise<IUser> {
+		try {
+			const user = await this.findOne(id);
+			if (!user) {
+				throw new NotFoundException(`The user was not found`);
+			}
+			user.preferredLanguage = preferredLanguage;
+			return await this.repository.save(user);
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
+	}
+
+	/*
+	 * Update user preferred component layout
+	 */
+	async updatePreferredComponentLayout(
+		id: string | number,
+		preferredComponentLayout: ComponentLayoutStyleEnum
+	): Promise<IUser> {
+		try {
+			const user = await this.findOne(id);
+			if (!user) {
+				throw new NotFoundException(`The user was not found`);
+			}
+			user.preferredComponentLayout = preferredComponentLayout;
+			return await this.repository.save(user);
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
 	}
 }
