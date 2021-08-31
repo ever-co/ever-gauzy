@@ -1,0 +1,26 @@
+export const MyTasksTrackedInTimesheets = {
+    addButtonCss: 'div.mb-3 > button[status="success"]',
+    projectDropdownCss: '[formControlName="project"]',
+	statusDropdownCss: '[formcontrolname="status"]',
+    drodownOptionCss: 'div.ng-option',
+    addTitleInputCss: '[formControlName="title"]',
+    tagsSelectCss: '#addTags',
+    tagsSelectOptionCss: '[type="checkbox"]',
+    cardBodyCss: 'nb-card-footer.text-right',
+    dueDateInputCss: '[formControlName="dueDate"]',
+	estimateDaysInputCss: '[formControlName="estimateDays"]',
+	estimateHoursInputCss: '[formControlName="estimateHours"]',
+	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
+	descriptionTextareaCss: '[formControlName="description"]',
+	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
+    toastrMessageCss: 'nb-toast.ng-trigger',
+    timerCss: 'div.header-container > nb-actions > nb-action.timer-action',
+    timerBtnCss: 'nb-icon[icon="clock-outline"] > svg > g[data-name="Layer 2"] > g[data-name="clock"]',
+    taskSelectCss: 'div.form-group > ga-task-selector > div > ng-select[ng-reflect-placeholder="Select Task"]',
+    dropdownOptionCss: 'div.ng-option',
+    startTimerBtnCss: 'div.actions > div.toggle > button[class="btn btn-rounded btn-success"]',
+	stopTimerBtnCss: 'div.actions > div.toggle > button[class="btn btn-rounded btn-danger"]',
+    viewTimesheetBtnCss: 'div.view-log-button > a[href="#/pages/employees/timesheets"]',
+    projectNameCss: 'div[class="col project-name"] > div[class="mt-2 small"] > span.ng-star-inserted'
+
+}
