@@ -2,9 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
-import { EmailService } from '../email/email.service';
-import { EmailModule } from '../email';
-import { Email, EmailTemplate } from './../core/entities/internal';
+import { EmailModule } from './../email/email.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { ActivityModule } from './activity/activity.module';
@@ -13,11 +11,10 @@ import { TimeLogModule } from './time-log/time-log.module';
 import { ScreenshotModule } from './screenshot/screenshot.module';
 import { StatisticModule } from './statistic/statistic.module';
 import { TimerModule } from './timer/timer.module';
-
+import { CommandHandlers } from './commands/handlers';
 import { TimeSheetController } from './timesheet.controller';
 import { TimeSheetService } from './timesheet.service';
 import { Timesheet } from './timesheet.entity';
-import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	controllers: [
@@ -37,11 +34,7 @@ import { CommandHandlers } from './commands/handlers';
 				]
 			}
 		]),
-		TypeOrmModule.forFeature([
-			Timesheet,
-			Email,
-			EmailTemplate
-		]),
+		TypeOrmModule.forFeature([ Timesheet ]),
 		CqrsModule,
 		EmailModule,
 		TenantModule,
@@ -49,15 +42,17 @@ import { CommandHandlers } from './commands/handlers';
 		TimeSlotModule,
 		TimeLogModule,
 		ScreenshotModule,
+		StatisticModule,
+		TimerModule,
 		EmployeeModule
 	],
 	providers: [
 		TimeSheetService,
-		EmailService,
 		...CommandHandlers
 	],
 	exports: [
-		TimeSheetService
+		TimeSheetService,
+		TypeOrmModule
 	]
 })
 export class TimesheetModule {}

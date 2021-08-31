@@ -21,7 +21,7 @@ import { Roles } from './../../shared/decorators';
 
 @ApiTags('Timer')
 @UseGuards(TenantPermissionGuard)
-@Controller('timer')
+@Controller()
 export class TimerController {
 	constructor(private readonly timerService: TimerService) {}
 
