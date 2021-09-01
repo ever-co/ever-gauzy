@@ -150,7 +150,7 @@ And('User can see contact dropdown', () => {
 	salesInvoicesPage.contactDropdownVisible();
 });
 
-When('User click on contact drodpown', () => {
+When('User click on contact dropdown', () => {
 	salesInvoicesPage.clickContactDropdown();
 });
 
@@ -266,7 +266,7 @@ And('User can see contact dropdown', () => {
 	salesInvoicesPage.contactDropdownVisible();
 });
 
-When('User click on contact drodpown', () => {
+When('User click on contact dropdown', () => {
 	salesInvoicesPage.clickContactDropdown();
 });
 

@@ -89,8 +89,8 @@ export const CustomCommands = {
 		contactsLeadsPage.selectProjectFromDropdown(
 			ContactsLeadsPageData.defaultProject
 		);
-		contactsLeadsPage.tagsMultyselectVisible();
-		contactsLeadsPage.clickTagsMultyselect();
+		contactsLeadsPage.tagsMultiSelectVisible();
+		contactsLeadsPage.clickTagsMultiSelect();
 		contactsLeadsPage.selectTagsFromDropdown(0);
 		contactsLeadsPage.clickCardBody();
 		contactsLeadsPage.websiteInputVisible();
@@ -131,8 +131,8 @@ export const CustomCommands = {
 		organizationTeamsPage.enterNameInputData(
 			OrganizationTeamsPageData.name
 		);
-		organizationTeamsPage.tagsMultyselectVisible();
-		organizationTeamsPage.clickTagsMultyselect();
+		organizationTeamsPage.tagsMultiSelectVisible();
+		organizationTeamsPage.clickTagsMultiSelect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
 		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickEmployeeDropdown();
@@ -296,8 +296,8 @@ export const CustomCommands = {
 		clientsPage.projectDropdownVisible();
 		clientsPage.clickProjectDropdown();
 		clientsPage.selectProjectFromDropdown(ClientsData.defaultProject);
-		clientsPage.tagsMultyselectVisible();
-		clientsPage.clickTagsMultyselect();
+		clientsPage.tagsMultiSelectVisible();
+		clientsPage.clickTagsMultiSelect();
 		clientsPage.selectTagsFromDropdown(0);
 		clientsPage.clickCardBody();
 		clientsPage.websiteInputVisible();

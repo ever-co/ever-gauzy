@@ -107,22 +107,22 @@ export const selectProjectFromDropdown = (text) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(ContactsLeadsPage.usersMultyselectCss);
+	verifyElementIsVisible(ContactsLeadsPage.usersMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(ContactsLeadsPage.usersMultyselectCss);
+	clickButton(ContactsLeadsPage.usersMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (index) => {
 	clickButtonByIndex(ContactsLeadsPage.dropdownOptionCss, index);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(ContactsLeadsPage.addTagsDropdownCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(ContactsLeadsPage.addTagsDropdownCss);
 };
 

@@ -142,11 +142,11 @@ And('Employee can enter title', () => {
 });
 
 And('Employee can see tags dropdown', () => {
-	myTasksTrackedInTimesheets.tagsMultyselectVisible();
+	myTasksTrackedInTimesheets.tagsMultiSelectVisible();
 });
 
 When('Employee click on tags dropdown', () => {
-	myTasksTrackedInTimesheets.clickTagsMultyselect();
+	myTasksTrackedInTimesheets.clickTagsMultiSelect();
 });
 
 Then('Employee can select tag from dropdown options', () => {

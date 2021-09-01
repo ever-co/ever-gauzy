@@ -117,11 +117,11 @@ And('User can enter title', () => {
 });
 
 And('User can see tags dropdown', () => {
-	teamsTasksPage.tagsMultyselectVisible();
+	teamsTasksPage.tagsMultiSelectVisible();
 });
 
 When('User click on tags dropdown', () => {
-	teamsTasksPage.clickTagsMultyselect();
+	teamsTasksPage.clickTagsMultiSelect();
 });
 
 Then('User can select tag from dropdown options', () => {

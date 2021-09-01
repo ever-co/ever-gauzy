@@ -1,6 +1,6 @@
 Feature: Login
   Scenario: Login with email test
-    Given Visit home page as unauthorised user
+    Given Visit home page as unauthorized user
     Then User can see login text
     And User cane see email input
     And Use can enter value for email

@@ -58,9 +58,9 @@ Feature: Proposals test
     When User click on manage templates button
     Then User can see add new proposal template button
     When User click on add new proposal template button
-    Then User can see employee multyselect
-    When User click on employee multyselect
-    Then User can select employee from multyselect dropdown options
+    Then User can see employee multiselect
+    When User click on employee multiselect
+    Then User can select employee from multiselect dropdown options
     And User can see template name input field
     And User can enter template name
     And User can enter propsoal template content

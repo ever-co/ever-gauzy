@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -44,7 +45,7 @@ export const dateInputVisible = () => {
 
 export const enterDateData = () => {
 	clearField(ManageEmployeesPage.dateInputCss);
-	const date = Cypress.moment().format('MMM D, YYYY');
+	const date = dayjs().format('MMM D, YYYY');
 	enterInput(ManageEmployeesPage.dateInputCss, date);
 };
 
@@ -226,16 +227,16 @@ export const enterLastNameEditInputData = (data) => {
 	enterInput(ManageEmployeesPage.lastNameEditInputCss, data);
 };
 
-export const preferedLanguageDropdownVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.preferedLanguageDropdownCss);
+export const preferredLanguageDropdownVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.preferredLanguageDropdownCss);
 };
 
-export const clickPreferedLanguageDropdown = () => {
-	clickButton(ManageEmployeesPage.preferedLanguageDropdownCss);
+export const clickpreferredLanguageDropdown = () => {
+	clickButton(ManageEmployeesPage.preferredLanguageDropdownCss);
 };
 
 export const selectLanguageFromDropdown = (text) => {
-	clickElementByText(ManageEmployeesPage.preferedLanguageOptionCss, text);
+	clickElementByText(ManageEmployeesPage.preferredLanguageOptionCss, text);
 };
 
 export const saveEditButtonVisible = () => {

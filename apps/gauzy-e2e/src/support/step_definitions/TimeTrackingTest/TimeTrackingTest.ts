@@ -260,7 +260,7 @@ Then('Employee can see manual time button', () => {
 	timeTrackingPage.manualBtnVisible();
 });
 
-When('Employee click on manaul time button', () => {
+When('Employee click on manual time button', () => {
 	timeTrackingPage.clickManualBtn();
 });
 

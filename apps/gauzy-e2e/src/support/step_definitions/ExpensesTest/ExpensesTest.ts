@@ -88,7 +88,7 @@ Then('User can see employee dropdown', () => {
 	expensesPage.selectEmployeeDropdownVisible();
 });
 
-When('User click on employee drodpwon', () => {
+When('User click on employee dropdown', () => {
 	expensesPage.clickEmployeeDropdown();
 });
 
@@ -384,7 +384,7 @@ When('User click on manage categories button', () => {
 	expensesPage.clickManageCategoriesButton();
 });
 
-Then('User can add categorty button', () => {
+Then('User can add category button', () => {
 	expensesPage.addExpenseButtonVisible();
 });
 
@@ -418,7 +418,7 @@ And('User can see save category button', () => {
 	expensesPage.saveCategorieButtonVisible();
 });
 
-When('User click on save categiry button', () => {
+When('User click on save category button', () => {
 	expensesPage.clickSaveCategorieButton();
 });
 

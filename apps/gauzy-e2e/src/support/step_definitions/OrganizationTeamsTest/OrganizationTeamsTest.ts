@@ -80,11 +80,11 @@ And('User can enter value for name', () => {
 });
 
 And('User can see tags dropdown', () => {
-	organizationTeamsPage.tagsMultyselectVisible();
+	organizationTeamsPage.tagsMultiSelectVisible();
 });
 
 When('User click on tags dropdown', () => {
-	organizationTeamsPage.clickTagsMultyselect();
+	organizationTeamsPage.clickTagsMultiSelect();
 });
 
 Then('User can select tag from dropdown options', () => {

@@ -1,6 +1,6 @@
 Feature: Add employee level
   Scenario: Login with email test
-    Given Visit home page as unauthorised user
+    Given Visit home page as unauthorized user
     Then User can see login text
     And User cane see email input
     And Use can enter value for email
@@ -30,8 +30,8 @@ Feature: Add employee level
     When User click on Add new level button
     Then User will see new level input
     And User can enter new level name
-    And User can see tags multiselect
-    When User click on tags multiselect
+    And User can see tags multi-select
+    When User click on tags multi-select
     Then User can select tag from dropdown menu
     And User can see Save button
     When User click on Save button
@@ -46,8 +46,8 @@ Feature: Add employee level
     When User click edit level button
     Then User can see level name input
     And User can enter new level name data
-    And User can see tags multiselect
-    When User click on tags multiselect
+    And User can see tags multi-select
+    When User click on tags multi-select
     Then User can select tag from dropdown menu
     And User can see Save button
     When User click on Save button
@@ -62,8 +62,8 @@ Feature: Add employee level
     When User click on Add new level button again
     Then User will see new level input
     And User can enter another level name
-    And User can see tags multiselect
-    When User click on tags multiselect
+    And User can see tags multi-select
+    When User click on tags multi-select
     Then User can select tag from dropdown menu
     And User can see Save button
     When User click on Save button

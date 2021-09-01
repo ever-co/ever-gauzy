@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	clearField,
 	clickButton,
@@ -6,9 +7,7 @@ import {
 	enterInput,
 	verifyElementIsVisible,
 	verifyText,
-	verifyTextNotExistByIndex,
 	waitElementToHide,
-	verifyTextByIndex,
 	verifyTextContentByIndex,
 	verifyElementIsVisibleByIndex,
 	verifyElementIsNotVisibleByIndex,
@@ -128,7 +127,7 @@ export const dateInputVisible = () => {
 
 export const enterDate = () => {
 	clearField(TimeTrackingWithPausePage.dateInputCss);
-	const date = Cypress.moment().format('MMM D, YYYY');
+	const date = dayjs().format('MMM D, YYYY');
 	enterInput(TimeTrackingWithPausePage.dateInputCss, date);
 };
 

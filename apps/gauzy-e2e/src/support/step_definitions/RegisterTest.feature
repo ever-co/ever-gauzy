@@ -1,17 +1,17 @@
 Feature: Register test
   Scenario: Create new account
-    Given Visit home page as unauthorised user
+    Given Visit home page as unauthorized user
     When User can click on register link
     Then User can enter full name
     And User can enter email address
     And User can enter password
     And User can repeat password
-    And User can click on terms and coditions checkbox
+    And User can click on terms and conditions checkbox
     When User click on click on register button
   Scenario: Create first organization
     Then User will be redirected to create first organization and add organization name
     And User can select currency
-    And User can enter organization offical name
+    And User can enter organization official name
     And User can enter tax id
     When User click on next button
     Then User can see country dropdown
@@ -28,7 +28,7 @@ Feature: Register test
     When User click on bonus type dropdown
     Then User can select bonus type from dropdown options
     And User can see bonus percentage input field
-    And User can enter bonus precentage data
+    And User can enter bonus percentage data
     When User click on next button
     Then User can see timezone dropdown
     When User click on timezone dropdown
@@ -53,7 +53,7 @@ Feature: Register test
     When User click on next button
     Then User can verify complete page
     When User click on dashboard
-    Then User can see homw page as authorised user
+    Then User can see home page as authorized user
   Scenario: Logout
     When User click on username
     Then User can click on logout button
@@ -65,4 +65,4 @@ Feature: Register test
     And User can see password input field
     And User can enter value for password
     When User click on login button
-    Then User will be redirected to home page as authorised user
+    Then User will be redirected to home page as authorized user

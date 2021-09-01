@@ -8,7 +8,7 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 // Login with email
-Given('Visit home page as unauthorised user', () => {
+Given('Visit home page as unauthorized user', () => {
 	cy.visit('/', { timeout: pageLoadTimeout });
 	loginPage.verifyTitle();
 });

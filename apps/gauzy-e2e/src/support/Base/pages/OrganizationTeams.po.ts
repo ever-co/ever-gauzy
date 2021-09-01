@@ -36,11 +36,11 @@ export const enterNameInputData = (data) => {
 	enterInput(OrganizationTeamsPage.teamNameInputCss, data);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(OrganizationTeamsPage.tagsSelectCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(OrganizationTeamsPage.tagsSelectCss);
 };
 
@@ -49,11 +49,11 @@ export const selectTagsFromDropdown = (index) => {
 };
 
 export const employeeDropdownVisible = () => {
-	verifyElementIsVisible(OrganizationTeamsPage.employeeMultyselectCss);
+	verifyElementIsVisible(OrganizationTeamsPage.employeeMultiSelectCss);
 };
 
 export const clickEmployeeDropdown = () => {
-	clickButton(OrganizationTeamsPage.employeeMultyselectCss);
+	clickButton(OrganizationTeamsPage.employeeMultiSelectCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {
@@ -61,11 +61,11 @@ export const selectEmployeeFromDropdown = (index) => {
 };
 
 export const managerDropdownVisible = () => {
-	verifyElementIsVisible(OrganizationTeamsPage.managerMultyselectCss);
+	verifyElementIsVisible(OrganizationTeamsPage.managerMultiSelectCss);
 };
 
 export const clickManagerDropdown = () => {
-	clickButton(OrganizationTeamsPage.managerMultyselectCss);
+	clickButton(OrganizationTeamsPage.managerMultiSelectCss);
 };
 
 export const selectManagerFromDropdown = (index) => {

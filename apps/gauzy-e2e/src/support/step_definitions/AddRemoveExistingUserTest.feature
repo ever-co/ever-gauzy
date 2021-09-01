@@ -49,4 +49,4 @@ Feature: Add remove existing user
     Then Remove user button will became active
     When User click on remove user button
     Then User can see confirm remove user button
-    And User can click on cofnrim remove user button
+    And User can click on confirm remove user button

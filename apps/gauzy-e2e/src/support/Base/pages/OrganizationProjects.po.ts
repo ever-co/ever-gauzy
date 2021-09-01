@@ -39,12 +39,12 @@ export const enterNameInputData = (data) => {
 
 export const selectEmployeeDropdownVisible = () => {
 	verifyElementIsVisible(
-		OrganizationProjectsPage.selectEmloyeeMultyselectCss
+		OrganizationProjectsPage.selectEmloyeeMultiSelectCss
 	);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(OrganizationProjectsPage.selectEmloyeeMultyselectCss);
+	clickButton(OrganizationProjectsPage.selectEmloyeeMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (index) => {
@@ -61,11 +61,11 @@ export const selectEmployeeFromDropdownByName = (name) => {
 	);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(OrganizationProjectsPage.tagsSelectCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(OrganizationProjectsPage.tagsSelectCss);
 };
 

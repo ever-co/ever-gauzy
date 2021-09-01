@@ -24,7 +24,7 @@ Feature: Invoices test
     When User click on discount type dropdown
     Then User can select discount type from dropdown options
     And User can see contact dropdown
-    When User click on contact drodpown
+    When User click on contact dropdown
     Then User can select contact from dropdown options
     And User can see tax input field
     And User can enter value for tax
@@ -66,7 +66,7 @@ Feature: Invoices test
     And User can click on next tab button
     And User can verify badge
   Scenario: Edit invoice
-    When User clcik on first tab button
+    When User click on first tab button
     Then User can select invoices first table row
     And Edit button will become active
     When User click on edit button
@@ -76,7 +76,7 @@ Feature: Invoices test
     When User click on discount type dropdown
     Then User can select discount type from dropdown options
     And User can see contact dropdown
-    When User click on contact drodpown
+    When User click on contact dropdown
     Then User can select contact from dropdown options
     And User can see tax input field
     And User can enter value for tax

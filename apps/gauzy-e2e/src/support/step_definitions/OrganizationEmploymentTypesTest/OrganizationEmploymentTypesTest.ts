@@ -77,7 +77,7 @@ When('User click on save button', () => {
 	organizationEmploymentTypePage.clickSaveButton();
 });
 
-Then('Notification messgae will appear', () => {
+Then('Notification message will appear', () => {
 	organizationEmploymentTypePage.waitMessageToHide();
 });
 
@@ -114,7 +114,7 @@ When('User click on save edited type button', () => {
 	organizationEmploymentTypePage.clickSaveButton();
 });
 
-Then('Notification messgae will appear', () => {
+Then('Notification message will appear', () => {
 	organizationEmploymentTypePage.waitMessageToHide();
 });
 
@@ -141,6 +141,6 @@ When('User click on confirm delete button', () => {
 	organizationEmploymentTypePage.clickConfirmDeleteButton();
 });
 
-Then('Notification messgae will appear', () => {
+Then('Notification message will appear', () => {
 	organizationEmploymentTypePage.waitMessageToHide();
 });

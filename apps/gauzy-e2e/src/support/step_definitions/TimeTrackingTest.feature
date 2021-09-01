@@ -54,7 +54,7 @@ Feature: Time tracking test
     And Employee can go back to dashboard tab
     When Employee click on timer again
     Then Employee can see manual time button
-    When Employee click on manaul time button
+    When Employee click on manual time button
     Then Employee can see date input field
     And Employee can enter date
     And Employee can see start time select

@@ -106,10 +106,10 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.enterFirstNameEditInputData(firstName);
 		manageEmployeesPage.lastNameEditInputVisible();
 		manageEmployeesPage.enterLastNameEditInputData(lastName);
-		manageEmployeesPage.preferedLanguageDropdownVisible();
-		manageEmployeesPage.clickPreferedLanguageDropdown();
+		manageEmployeesPage.preferredLanguageDropdownVisible();
+		manageEmployeesPage.clickpreferredLanguageDropdown();
 		manageEmployeesPage.selectLanguageFromDropdown(
-			ManageEmployeesPageData.preferedLanguage
+			ManageEmployeesPageData.preferredLanguage
 		);
 		manageEmployeesPage.saveEditButtonVisible();
 		manageEmployeesPage.clickSaveEditButton();

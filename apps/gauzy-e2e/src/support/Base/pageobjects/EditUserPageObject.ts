@@ -6,7 +6,7 @@ export const EditUserPage = {
 	addOrgButtonCss: 'nb-card-header > button[status="success"]',
 	removeOrgButtonCss: 'g[data-name="close"]',
 	confirmRemoveOrgButtonCss: 'nb-card-footer > button[status="danger"]',
-	selectOrgMultyselectCss: 'button[class="select-button placeholder"]',
+	selectOrgMultiSelectCss: 'button[class="select-button placeholder"]',
 	selectOrgDropdownOptionCss: '.option-list nb-option',
 	saveSelectedOrgButton: 'div.form-group > button[status="success"]',
 	firstNameInputCss: '#firstNameInput',

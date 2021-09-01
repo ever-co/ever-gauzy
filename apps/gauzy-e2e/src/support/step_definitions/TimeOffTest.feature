@@ -10,7 +10,7 @@ Feature: Time off request test
     Then User can see add new policy button
     When User click on add new policy button
     Then User can see policy input field
-    And User can enter polciy name
+    And User can enter policy name
     And User can see employee select dropdown
     When User click on employee select dropdown
     Then User can select employee from dropdown select options
@@ -22,7 +22,7 @@ Feature: Time off request test
   Scenario: Create new time off request
     Then User can see request button
     When User click on request button
-    Then User can see eployee select
+    Then User can see employee select
     When User click employee select
     Then User can see employee dropdown
     And User can select employee from dropdown options
@@ -50,7 +50,7 @@ Feature: Time off request test
     When User click on approve time off request button
     Then User can see request button
     When User click on request button
-    Then User can see eployee select
+    Then User can see employee select
     When User click employee select
     Then User can see employee dropdown
     And User can select employee from dropdown options
@@ -82,14 +82,14 @@ Feature: Time off request test
     When User click on holiday select
     Then User can select holiday from dropdown options
     And User can see select employee dropdown
-    When User click on selectn employee dropdown
-    Then User can select employee from seelct dropdown options
+    When User click on select employee dropdown
+    Then User can select employee from select dropdown options
     And User can see again time off policy dropdown
     When User click on time off policy dropdown
-    Then User can see again time off polciy dropdown
+    Then User can see again time off policy dropdown
     And User can select again time off policy from dropdown options
     And User can see start holiday input field
-    And User can snter start holiday date
+    And User can enter start holiday date
     And User can see end holiday date input field
     And User can enter end holiday date
     And User can see save holiday button

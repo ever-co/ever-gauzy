@@ -274,7 +274,7 @@ When('User click on edit inventory button', () => {
 	organizationInventoryPage.clickEditButton();
 });
 
-Then('User can see editn inventory name input field', () => {
+Then('User can see edit inventory name input field', () => {
 	organizationInventoryPage.nameInputVisible();
 });
 
@@ -851,7 +851,7 @@ When('User click on last step button', () => {
 	);
 });
 
-And('User can see warehousee select', () => {
+And('User can see warehouse select', () => {
 	organizationInventoryPage.warehousesSelectVisible();
 });
 

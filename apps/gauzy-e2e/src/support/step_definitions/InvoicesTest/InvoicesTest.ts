@@ -150,7 +150,7 @@ And('User can see contact dropdown', () => {
 	invoicesPage.contactDropdownVisible();
 });
 
-When('User click on contact drodpown', () => {
+When('User click on contact dropdown', () => {
 	invoicesPage.clickContactDropdown();
 });
 
@@ -317,7 +317,7 @@ And('User can verify badge', () => {
 });
 
 // Edit invoice
-When('User clcik on first tab button', () => {
+When('User click on first tab button', () => {
 	invoicesPage.clickTabButton(0);
 });
 
@@ -359,7 +359,7 @@ And('User can see contact dropdown', () => {
 	invoicesPage.contactDropdownVisible();
 });
 
-When('User click on contact drodpown', () => {
+When('User click on contact dropdown', () => {
 	invoicesPage.clickContactDropdown();
 });
 

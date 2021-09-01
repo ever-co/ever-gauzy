@@ -95,7 +95,7 @@ describe('Proposals test', () => {
 		proposalsPage.selectTableRow(0);
 		proposalsPage.markAsStatusButtonVisible();
 		proposalsPage.clickMarkAsStatusButton();
-		proposalsPage.confrimStatusButtonVisible();
+		proposalsPage.confirmStatusButtonVisible();
 		proposalsPage.clickConfirmStatusButton();
 		proposalsPage.waitMessageToHide();
 		proposalsPage.verifyProposalAccepted();

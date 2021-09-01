@@ -32,5 +32,5 @@ export const ProposalsPage = {
 	rejectDeleteBtnCss: 'nb-card-footer > button[status="warn"]',
 	verifyProposalTemplateCss: 'div.ng-star-inserted',
 	employeeMultyseelectCss: 'ga-employee-multi-select > nb-select > button.select-button',
-	employeeMultyselectDropdownOptionCss: '.option-list nb-option'
+	employeeMultiSelectDropdownOptionCss: '.option-list nb-option'
 };

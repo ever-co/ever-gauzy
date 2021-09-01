@@ -77,6 +77,6 @@ When('User click on save button', () => {
 	fileStoragePage.clickSaveButton();
 });
 
-Then('Notifiaction message will appear', () => {
+Then('Notification message will appear', () => {
 	fileStoragePage.waitMessageToHide();
 });

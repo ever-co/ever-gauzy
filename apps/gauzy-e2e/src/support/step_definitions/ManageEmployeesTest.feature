@@ -50,7 +50,7 @@ Feature: Manage employees test
     Then Notification message will appear
   Scenario: Edit employee
     And User can see employees table
-    When User click on emloyees table row
+    When User click on employees table row
     Then Edit button will become active
     When User click on edit button
     Then User will see edit username input field
@@ -61,8 +61,8 @@ Feature: Manage employees test
     And User can enter value for first name edit
     And User can see edit last name input field
     And User can enter value for last name edit
-    And User can see prefered language dropdown
-    When User click on prefered language dropdown
+    And User can see preferred language dropdown
+    When User click on preferred language dropdown
     Then User can select language from dropdown options
     And User can see save edit button
     When User click on save edit button
@@ -70,7 +70,7 @@ Feature: Manage employees test
     And User can go back to Employees page
   Scenario: End employee work
     And User can see employees table again
-    When User click on emloyees table row again
+    When User click on employees table row again
     Then End work button will become active
     When User click on end work button
     Then User will see confirm button

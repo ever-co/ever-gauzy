@@ -115,11 +115,11 @@ export const selectProjectFromDropdown = (text) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(ClientsPage.usersMultyselectCss);
+	verifyElementIsVisible(ClientsPage.usersMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(ClientsPage.usersMultyselectCss);
+	clickButton(ClientsPage.usersMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (index) => {
@@ -133,11 +133,11 @@ export const selectEmployeeFromDropdownByName = (name) => {
 	);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(ClientsPage.addTagsDropdownCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(ClientsPage.addTagsDropdownCss);
 };
 

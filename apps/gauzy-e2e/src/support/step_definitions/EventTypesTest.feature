@@ -11,7 +11,7 @@ Feature: Event types test
     When User click on add event type button
     Then User can see employee dropdown
     When User click on employee dropdown
-    Then User can select epmloyee from dropdown options
+    Then User can select employee from dropdown options
     And User can see title input field
     And User can enter value for title
     And User can see description input field

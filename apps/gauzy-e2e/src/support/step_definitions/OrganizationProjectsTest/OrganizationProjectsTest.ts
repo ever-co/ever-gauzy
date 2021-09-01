@@ -89,21 +89,21 @@ When('User click on employee dropdown', () => {
 	organizationProjectsPage.clickSelectEmployeeDropdown();
 });
 
-Then('User can select employee from dropodown options', () => {
+Then('User can select employee from dropdown options', () => {
 	organizationProjectsPage.selectEmployeeDropdownOption(0);
 	organizationProjectsPage.clickKeyboardButtonByKeyCode(9);
 });
 
-And('User can nvigate to second section', () => {
+And('User can navigate to second section', () => {
 	organizationProjectsPage.clickTabButton(1);
 });
 
 And('User can see tags dropdown', () => {
-	organizationProjectsPage.tagsMultyselectVisible();
+	organizationProjectsPage.tagsMultiSelectVisible();
 });
 
 When('User click on tags dropdown', () => {
-	organizationProjectsPage.clickTagsMultyselect();
+	organizationProjectsPage.clickTagsMultiSelect();
 });
 
 Then('User can select tag from dropdown options', () => {

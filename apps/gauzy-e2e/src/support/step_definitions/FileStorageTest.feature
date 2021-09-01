@@ -17,4 +17,4 @@ Feature: File storage test
     And User can enter value for bucket
     And User can see save button
     When User click on save button
-    Then Notifiaction message will appear
+    Then Notification message will appear

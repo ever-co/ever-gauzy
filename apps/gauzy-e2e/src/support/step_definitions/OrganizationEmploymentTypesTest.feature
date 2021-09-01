@@ -16,7 +16,7 @@ Feature: Organization employment types test
     Then User can select tag from dropdown options
     And User can see save button
     When User click on save button
-    Then Notification messgae will appear
+    Then Notification message will appear
     And User can verify employment type was created
   Scenario: Edit employment type
     And User can see edit button
@@ -25,11 +25,11 @@ Feature: Organization employment types test
     And User can enter new value for name
     And User can see save edited type button
     When User click on save edited type button
-    Then Notification messgae will appear
+    Then Notification message will appear
     And User can verify employment type was edited
   Scenario: Delete employment type
     And User can see delete button
     When User click on delete button
     Then User can see confirm delete button
     When User click on confirm delete button
-    Then Notification messgae will appear
+    Then Notification message will appear

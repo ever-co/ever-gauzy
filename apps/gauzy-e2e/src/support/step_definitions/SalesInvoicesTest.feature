@@ -24,7 +24,7 @@ Feature: Sales invoices test
     When User click on discount type dropdown
     Then User can select discount type from dropdown options
     And User can see contact dropdown
-    When User click on contact drodpown
+    When User click on contact dropdown
     Then User can select contact from dropdown options
     And User can see tax input field
     And User can enter value for tax
@@ -53,7 +53,7 @@ Feature: Sales invoices test
     When User click on discount type dropdown
     Then User can select discount type from dropdown options
     And User can see contact dropdown
-    When User click on contact drodpown
+    When User click on contact dropdown
     Then User can select contact from dropdown options
     And User can see tax input field
     And User can enter value for tax

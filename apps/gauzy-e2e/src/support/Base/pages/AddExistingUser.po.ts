@@ -38,16 +38,16 @@ export const clickConfirmRemoveUserBtn = () => {
 	clickButton(AddExistingUserPage.confirmRemoveUserButtonCss);
 };
 
-export const usersMultyselectVisible = () => {
-	verifyElementIsVisible(AddExistingUserPage.usersMultyselectCss);
+export const usersMultiSelectVisible = () => {
+	verifyElementIsVisible(AddExistingUserPage.usersMultiSelectCss);
 };
 
-export const clickUsersMultyselect = () => {
-	clickButton(AddExistingUserPage.usersMultyselectCss);
+export const clickUsersMultiSelect = () => {
+	clickButton(AddExistingUserPage.usersMultiSelectCss);
 };
 
 export const selectUsersFromDropdown = (text) => {
-	clickElementByText(AddExistingUserPage.checkUsersMultyselectCss, text);
+	clickElementByText(AddExistingUserPage.checkUsersMultiSelectCss, text);
 };
 
 export const cancelButtonVisible = () => {

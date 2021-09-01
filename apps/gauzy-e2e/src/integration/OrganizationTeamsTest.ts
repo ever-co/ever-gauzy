@@ -26,8 +26,8 @@ describe('Organization teams test', () => {
 		organizationTeamsPage.enterNameInputData(
 			OrganizationTeamsPageData.name
 		);
-		organizationTeamsPage.tagsMultyselectVisible();
-		organizationTeamsPage.clickTagsMultyselect();
+		organizationTeamsPage.tagsMultiSelectVisible();
+		organizationTeamsPage.clickTagsMultiSelect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
 		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickEmployeeDropdown();
@@ -50,8 +50,8 @@ describe('Organization teams test', () => {
 		organizationTeamsPage.enterNameInputData(
 			OrganizationTeamsPageData.editName
 		);
-		organizationTeamsPage.tagsMultyselectVisible();
-		organizationTeamsPage.clickTagsMultyselect();
+		organizationTeamsPage.tagsMultiSelectVisible();
+		organizationTeamsPage.clickTagsMultiSelect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
 		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.clickEmployeeDropdown();

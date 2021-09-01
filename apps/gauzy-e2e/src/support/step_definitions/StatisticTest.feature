@@ -4,10 +4,10 @@ Feature: Statistics test
   Scenario: Verify statistic page
     And User can verify text content
     When User click on first subheader
-    Then user canv erify text content
+    Then user can verify text content
     When User click on second subheader
-    Then user canv erify text content
+    Then user can verify text content
     When User click on third subheader
-    Then user canv erify text content
+    Then user can verify text content
     When User click on fourth subheader
-    Then user canv erify text content
+    Then user can verify text content
