@@ -48,6 +48,9 @@ Then('User will see Create button', () => {
 
 // Add new tag
 When('User go to Tags page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/organization/tags');
 });
 
