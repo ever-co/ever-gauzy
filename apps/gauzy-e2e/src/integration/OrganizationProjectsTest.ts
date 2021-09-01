@@ -24,8 +24,8 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.selectEmployeeDropdownOption(0);
 		organizationProjectsPage.clickKeyboardButtonByKeyCode(9);
 		organizationProjectsPage.clickTabButton(1);
-		organizationProjectsPage.tagsMultyselectVisible();
-		organizationProjectsPage.clickTagsMultyselect();
+		organizationProjectsPage.tagsMultiSelectVisible();
+		organizationProjectsPage.clickTagsMultiSelect();
 		organizationProjectsPage.selectTagsFromDropdown(0);
 		organizationProjectsPage.clickCardBody();
 		organizationProjectsPage.clickTabButton(3);

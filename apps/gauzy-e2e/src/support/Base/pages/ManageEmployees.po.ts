@@ -227,16 +227,16 @@ export const enterLastNameEditInputData = (data) => {
 	enterInput(ManageEmployeesPage.lastNameEditInputCss, data);
 };
 
-export const preferedLanguageDropdownVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.preferedLanguageDropdownCss);
+export const preferredLanguageDropdownVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.preferredLanguageDropdownCss);
 };
 
-export const clickPreferedLanguageDropdown = () => {
-	clickButton(ManageEmployeesPage.preferedLanguageDropdownCss);
+export const clickpreferredLanguageDropdown = () => {
+	clickButton(ManageEmployeesPage.preferredLanguageDropdownCss);
 };
 
 export const selectLanguageFromDropdown = (text) => {
-	clickElementByText(ManageEmployeesPage.preferedLanguageOptionCss, text);
+	clickElementByText(ManageEmployeesPage.preferredLanguageOptionCss, text);
 };
 
 export const saveEditButtonVisible = () => {

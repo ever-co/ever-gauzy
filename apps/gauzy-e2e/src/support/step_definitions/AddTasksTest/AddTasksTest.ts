@@ -395,7 +395,7 @@ When('User click on delete task button', () => {
 	addTaskPage.clickDeleteTaskButton();
 });
 
-Then('User will see confirm delte button again', () => {
+Then('User will see confirm delete button again', () => {
 	addTaskPage.confirmDeleteTaskButtonVisible();
 });
 

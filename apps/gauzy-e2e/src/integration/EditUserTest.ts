@@ -82,7 +82,7 @@ describe('Edit user test', () => {
 		editUserPage.passwordInputVisible();
 		editUserPage.repeatPasswordInputVisible();
 		editUserPage.emailInputVisible();
-		editUserPage.tagsMultyselectVisible();
+		editUserPage.tagsMultiSelectVisible();
 		editUserPage.selectRoleVisible();
 		editUserPage.languageSelectVisible();
 		editUserPage.saveBtnExists();

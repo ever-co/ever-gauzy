@@ -34,7 +34,7 @@ When('User click on first subheader', () => {
 	statisticPage.clickSubheaderByIndex(0);
 });
 
-Then('user canv erify text content', () => {
+Then('user can verify text content', () => {
 	statisticPage.verifyNoDataText(StatisticPageData.noDataText);
 });
 
@@ -42,7 +42,7 @@ When('User click on second subheader', () => {
 	statisticPage.clickSubheaderByIndex(1);
 });
 
-Then('user canv erify text content', () => {
+Then('user can verify text content', () => {
 	statisticPage.verifyNoDataText(StatisticPageData.noDataText);
 });
 
@@ -50,7 +50,7 @@ When('User click on third subheader', () => {
 	statisticPage.clickSubheaderByIndex(2);
 });
 
-Then('user canv erify text content', () => {
+Then('user can verify text content', () => {
 	statisticPage.verifyNoDataText(StatisticPageData.noDataText);
 });
 
@@ -58,6 +58,6 @@ When('User click on fourth subheader', () => {
 	statisticPage.clickSubheaderByIndex(3);
 });
 
-Then('user canv erify text content', () => {
+Then('user can verify text content', () => {
 	statisticPage.verifyNoDataText(StatisticPageData.noDataText);
 });

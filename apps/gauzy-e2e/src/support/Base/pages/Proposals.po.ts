@@ -134,7 +134,7 @@ export const clickMarkAsStatusButton = () => {
 	clickButton(ProposalsPage.markAsStatusButtonCss);
 };
 
-export const confrimStatusButtonVisible = () => {
+export const confirmStatusButtonVisible = () => {
 	verifyElementIsVisible(ProposalsPage.confirmStatusButtonCss);
 };
 
@@ -247,17 +247,17 @@ export const verifyProposalTemplate = (name) => {
 	verifyText(ProposalsPage.verifyProposalTemplateCss, name);
 };
 
-export const employeeMultySelectVisible = () => {
+export const employeeMultiSelectVisible = () => {
 	verifyElementIsVisible(ProposalsPage.employeeMultyseelectCss);
 };
 
-export const clickEmployeeMultySelect = () => {
+export const clickEmployeeMultiSelect = () => {
 	clickButton(ProposalsPage.employeeMultyseelectCss);
 };
 
-export const selectEmployeeFromMultyselectDropdown = (index) => {
+export const selectEmployeeFromMultiSelectDropdown = (index) => {
 	clickButtonByIndex(
-		ProposalsPage.employeeMultyselectDropdownOptionCss,
+		ProposalsPage.employeeMultiSelectDropdownOptionCss,
 		index
 	);
 };

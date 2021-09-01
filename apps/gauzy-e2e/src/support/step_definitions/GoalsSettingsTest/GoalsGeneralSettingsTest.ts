@@ -202,11 +202,11 @@ And('User can enter KPI description', () => {
 });
 
 And('User can see employee dropdown', () => {
-	goalsKPIPage.employeeMultyselectVisible();
+	goalsKPIPage.employeeMultiSelectVisible();
 });
 
 When('User click on employee dropdown', () => {
-	goalsKPIPage.clickEmployeeMultyselect();
+	goalsKPIPage.clickEmployeeMultiSelect();
 });
 
 Then('User can select employee from dropdown options', () => {

@@ -54,11 +54,11 @@ export const enterTitleInputData = (data) => {
 	enterInput(MyTasksTrackedInTimesheets.addTitleInputCss, data);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.tagsSelectCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(MyTasksTrackedInTimesheets.tagsSelectCss);
 };
 

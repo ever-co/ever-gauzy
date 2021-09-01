@@ -44,7 +44,7 @@ And('User can see description input field', () => {
 	pipelinesPage.descriptionInputVisible();
 });
 
-And('User can enter pipelien description', () => {
+And('User can enter pipeline description', () => {
 	pipelinesPage.enterDescriptionInputData(
 		PipelinesPageData.pipelineDescription
 	);
@@ -118,7 +118,7 @@ When('User click on pipelines table row again', () => {
 	pipelinesPage.selectTableRow(0);
 });
 
-Then('User can see delte button', () => {
+Then('User can see delete button', () => {
 	pipelinesPage.deleteButtonVisible();
 });
 

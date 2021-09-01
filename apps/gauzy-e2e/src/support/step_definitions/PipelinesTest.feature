@@ -9,7 +9,7 @@ Feature: Pipelines test
     Then User can see name input field
     And User can enter pipeline name
     And User can see description input field
-    And User can enter pipelien description
+    And User can enter pipeline description
     And User can see create pipeline button
     When User click on create pipeline button
     Then Notification message will appear
@@ -28,7 +28,7 @@ Feature: Pipelines test
   Scenario: Delete pipeline
     And User can see pipelines table again
     When User click on pipelines table row again
-    Then User can see delte button
+    Then User can see delete button
     When User click on delete button
     Then User can see confirm delete button
     When User click on confirm delete button

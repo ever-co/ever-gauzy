@@ -38,7 +38,7 @@ And('User can add new employee', () => {
 });
 
 // Add new proposal
-And('User can visist Jobs proposals page', () => { // User can verify complete page
+And('User can visits Jobs proposals page', () => { // User can verify complete page
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies(); //expected ga-onboarding-complete > div.logo > h6 to be visible
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -139,7 +139,7 @@ When('User select first table row', () => {
 	jobProposalsPage.selectTableRow(0);
 });
 
-Then('Make dafault button will become active', () => {
+Then('Make default button will become active', () => {
 	jobProposalsPage.makeDefaultButtonVisible();
 });
 
@@ -178,6 +178,6 @@ Then('Notification message will appear', () => {
 	jobProposalsPage.waitMessageToHide();
 });
 
-And('User can verify porposal was deleted', () => {
+And('User can verify proposal was deleted', () => {
 	jobProposalsPage.verifyElementIsDeleted(JobsProposalsPageData.editName);
 });

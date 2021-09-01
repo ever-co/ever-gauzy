@@ -19,7 +19,7 @@ let taxId = faker.random.alphaNumeric();
 let street = faker.address.streetAddress();
 
 // Create new account
-Given('Visit home page as unauthorised user', () => {
+Given('Visit home page as unauthorized user', () => {
 	cy.visit('/', { timeout: pageLoadTimeout });
 	loginPage.verifyTitle();
 	loginPage.verifyLoginText();
@@ -49,7 +49,7 @@ And('User can repeat password', () => {
 	registerPage.enterConfirmPass(pass);
 });
 
-And('User can click on terms and coditions checkbox', () => {
+And('User can click on terms and conditions checkbox', () => {
 	registerPage.clickTermAndConditionCheckBox();
 });
 
@@ -69,7 +69,7 @@ And('User can select currency', () => {
 	onboardingPage.selectCurrency(OnboardingPageData.currency);
 });
 
-And('User can enter organization offical name', () => {
+And('User can enter organization official name', () => {
 	onboardingPage.enterOfficialName(organizationName);
 });
 
@@ -137,7 +137,7 @@ And('User can see bonus percentage input field', () => {
 	registerPage.bonusPercentageInputVisible();
 });
 
-And('User can enter bonus precentage data', () => {
+And('User can enter bonus percentage data', () => {
 	registerPage.enterBonusPercentageInputData(
 		RegisterPageData.bonusPercentage
 	);
@@ -242,7 +242,7 @@ When('User click on dashboard', () => {
 	onboardingPage.clickDashboardCard(0);
 });
 
-Then('User can see homw page as authorised user', () => {
+Then('User can see home page as authorized user', () => {
 	dashboradPage.verifyCreateButton();
 });
 
@@ -284,6 +284,6 @@ When('User click on login button', () => {
 	loginPage.clickLoginButton();
 });
 
-Then('User will be redirected to home page as authorised user', () => {
+Then('User will be redirected to home page as authorized user', () => {
 	registerPage.verifyLogoExists();
 });

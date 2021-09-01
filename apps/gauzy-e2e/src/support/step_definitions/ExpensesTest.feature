@@ -14,7 +14,7 @@ Feature: Expenses test
     And User can see add expense button
     When User click on add expense button
     Then User can see employee dropdown
-    When User click on employee drodpwon
+    When User click on employee dropdown
     Then User can select employee from dropdown options
     And User can see category input field
     When User click on category input field
@@ -91,7 +91,7 @@ Feature: Expenses test
   Scenario: Add new category
     And User can see manage categories button
     When User click on manage categories button
-    Then User can add categorty button
+    Then User can add category button
     When User click on add category button
     Then User can see new category input field
     And User can enter data for new category
@@ -99,5 +99,5 @@ Feature: Expenses test
     When User click on category tags dropdown
     Then User can select category tag from dropdown options
     And User can see save category button
-    When User click on save categiry button
+    When User click on save category button
     Then User can verify category was created

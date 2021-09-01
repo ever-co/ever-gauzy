@@ -56,8 +56,8 @@ describe('Customers test', () => {
 		customersPage.selectProjectFromDropdown(
 			CustomersPageData.defaultProject
 		);
-		customersPage.tagsMultyselectVisible();
-		customersPage.clickTagsMultyselect();
+		customersPage.tagsMultiSelectVisible();
+		customersPage.clickTagsMultiSelect();
 		customersPage.selectTagsFromDropdown(0);
 		customersPage.clickCardBody();
 		customersPage.websiteInputVisible();

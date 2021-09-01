@@ -69,7 +69,7 @@ When('User click on employee dropdown', () => {
 	eventTypesPage.clickSelectEmployeeDropdown();
 });
 
-Then('User can select epmloyee from dropdown options', () => {
+Then('User can select employee from dropdown options', () => {
 	eventTypesPage.selectEmployeeFromDropdown(1);
 });
 

@@ -59,7 +59,7 @@ Feature: Organization inventory test
     When User select inventory table row
     Then Edit inventory button will become active
     When User click on edit inventory button
-    Then User can see editn inventory name input field
+    Then User can see edit inventory name input field
     And User can enter new inventory name
     And User can see edit code input field
     And User can enter new code
@@ -197,7 +197,7 @@ Feature: Organization inventory test
     And User can enter value for merchant address
     And User can see last step button
     When User click on last step button
-    And User can see warehousee select
+    And User can see warehouse select
     When User click on warehouses select
     Then User can select warehouse from dropdown options
     And User can see save merchant button

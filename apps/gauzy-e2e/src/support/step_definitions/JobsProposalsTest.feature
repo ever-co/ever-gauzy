@@ -4,7 +4,7 @@ Feature: Job Proposals test
   Scenario: Add employee
     And User can add new employee
   Scenario: Add new proposal
-    And User can visist Jobs proposals page
+    And User can visits Jobs proposals page
     Then User can see add button
     When User click on add button
     Then User can see employee dropdown
@@ -30,7 +30,7 @@ Feature: Job Proposals test
     And User can verify job proposal was edited
   Scenario: Make proposal default
     When User select first table row
-    Then Make dafault button will become active
+    Then Make default button will become active
     When User click on make default button
     Then Notification message will appear
   Scenario: Delete proposal
@@ -40,4 +40,4 @@ Feature: Job Proposals test
     Then User will see confirm delete button
     When User click on confirm delete button
     Then Notification message will appear
-    And User can verify porposal was deleted
+    And User can verify proposal was deleted

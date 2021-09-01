@@ -42,11 +42,11 @@ export const selectProjectOptionDropdown = (text) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(AddTaskPage.selectEmloyeeMultyselectCss);
+	verifyElementIsVisible(AddTaskPage.selectEmloyeeMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(AddTaskPage.selectEmloyeeMultyselectCss);
+	clickButton(AddTaskPage.selectEmloyeeMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (index) => {
@@ -69,11 +69,11 @@ export const enterTitleInputData = (data) => {
 	enterInput(AddTaskPage.addTitleInputCss, data);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(AddTaskPage.tagsSelectCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(AddTaskPage.tagsSelectCss);
 };
 
@@ -81,12 +81,12 @@ export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(AddTaskPage.tagsSelectOptionCss, index);
 };
 
-export const closeTagsMultyselectDropdownButtonVisible = () => {
-	verifyElementIsVisible(AddTaskPage.closeTagsMultyselectDropdownCss);
+export const closeTagsMultiSelectDropdownButtonVisible = () => {
+	verifyElementIsVisible(AddTaskPage.closeTagsMultiSelectDropdownCss);
 };
 
-export const clickCloseTagsMultyselectDropdownButton = () => {
-	clickButton(AddTaskPage.closeTagsMultyselectDropdownCss);
+export const clickCloseTagsMultiSelectDropdownButton = () => {
+	clickButton(AddTaskPage.closeTagsMultiSelectDropdownCss);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {

@@ -49,8 +49,8 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.addTitleInputVisible();
 		teamsTasksPage.enterTitleInputData(TeamsTasksPageData.defaultTaskTitle);
-		teamsTasksPage.tagsMultyselectVisible();
-		teamsTasksPage.clickTagsMultyselect();
+		teamsTasksPage.tagsMultiSelectVisible();
+		teamsTasksPage.clickTagsMultiSelect();
 		teamsTasksPage.selectTagsFromDropdown(0);
 		teamsTasksPage.clickCardBody();
 		teamsTasksPage.dueDateInputVisible();

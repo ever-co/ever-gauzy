@@ -66,7 +66,7 @@ Feature: Payments test
     When User select table row again
     Then Delete payment button will become active
     When User can click on Delete payment button
-    Then User can see confrim delete button
+    Then User can see confirm delete button
     When User click on confirm delete button
     Then Notification message will appear
     And User can verify payment was deleted

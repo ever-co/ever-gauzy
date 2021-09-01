@@ -21,11 +21,10 @@ import 'brace/ext/language_tools';
 import 'brace/mode/handlebars';
 import 'brace/theme/sqlserver';
 import 'brace/theme/tomorrow_night';
-import { Subject } from 'rxjs';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { EmailTemplateService } from '../../@core/services/email-template.service';
-import { Store } from '../../@core/services/store.service';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { EmailTemplateService, Store, ToastrService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -40,7 +39,6 @@ export class EmailTemplatesComponent
 	previewEmail: SafeHtml;
 	previewSubject: SafeHtml;
 	organization: IOrganization;
-	form: FormGroup;
 
 	@ViewChild('subjectEditor') subjectEditor;
 	@ViewChild('emailEditor') emailEditor;
@@ -48,20 +46,29 @@ export class EmailTemplatesComponent
 	templateNames: string[] = Object.values(EmailTemplateNameEnum);
 	subject$: Subject<any> = new Subject();
 
+	readonly form: FormGroup = EmailTemplatesComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			name: [EmailTemplateNameEnum.WELCOME_USER],
+			languageCode: [LanguagesEnum.ENGLISH],
+			subject: ['', [Validators.required, Validators.maxLength(60)]],
+			mjml: ['', Validators.required]
+		});
+	}
+
 	constructor(
 		readonly translateService: TranslateService,
-		private sanitizer: DomSanitizer,
-		private store: Store,
-		private fb: FormBuilder,
-		private toastrService: ToastrService,
-		private emailTemplateService: EmailTemplateService,
-		private themeService: NbThemeService
+		private readonly sanitizer: DomSanitizer,
+		private readonly store: Store,
+		private readonly fb: FormBuilder,
+		private readonly toastrService: ToastrService,
+		private readonly emailTemplateService: EmailTemplateService,
+		private readonly themeService: NbThemeService
 	) {
 		super(translateService);
 	}
 
 	async ngOnInit() {
-		this._initializeForm();
 		this.subject$
 			.pipe(
 				debounceTime(500),
@@ -69,18 +76,17 @@ export class EmailTemplatesComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.preferredLanguage$
+
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const preferredLanguage$ = this.store.preferredLanguage$;
+		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
-				untilDestroyed(this)
-			)
-			.subscribe((language) => {
-				this.form.patchValue({ languageCode: language });
-				this.subject$.next();
-			});
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => this.organization = organization),
+				distinctUntilChange(),
+				filter(([organization, language]) => !!organization && !!language),
+				tap(([organization, language]) => {
+					this.organization = organization;
+					this.form.patchValue({ languageCode: language });
+				}),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -129,13 +135,10 @@ export class EmailTemplatesComponent
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			const { languageCode = LanguagesEnum.ENGLISH, name = EmailTemplateNameEnum.WELCOME_USER } = this.form.value;
-			console.log({
-				languageCode,
-				name,
-				organizationId,
-				tenantId
-			});
+			const {
+				languageCode = LanguagesEnum.ENGLISH,
+				name = EmailTemplateNameEnum.WELCOME_USER
+			} = this.form.value;		
 			const result = await this.emailTemplateService.getTemplate({
 				languageCode,
 				name,
@@ -164,15 +167,6 @@ export class EmailTemplatesComponent
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
-	}
-
-	private _initializeForm() {
-		this.form = this.fb.group({
-			name: [EmailTemplateNameEnum.WELCOME_USER],
-			languageCode: [LanguagesEnum.ENGLISH],
-			subject: ['', [Validators.required, Validators.maxLength(60)]],
-			mjml: ['', Validators.required]
-		});
 	}
 
 	async onSubjectChange(code: string) {

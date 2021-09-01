@@ -1,4 +1,4 @@
 export const ManageEmployeesPageData = {
-	preferedLanguage: 'English',
+	preferredLanguage: 'English',
 	defaultProject: 'Gauzy Web Site'
 };

@@ -22,8 +22,8 @@ describe('Add existing user/s test', () => {
 		addExistingUserPage.confirmRemoveUserBtnVisible();
 		addExistingUserPage.clickConfirmRemoveUserBtn();
 		addExistingUserPage.clickAddExistingUsersButton();
-		addExistingUserPage.usersMultyselectVisible();
-		addExistingUserPage.clickUsersMultyselect();
+		addExistingUserPage.usersMultiSelectVisible();
+		addExistingUserPage.clickUsersMultiSelect();
 		addExistingUserPage.selectUsersFromDropdown(
 			AddExistingUserPageData.defaultUser
 		);

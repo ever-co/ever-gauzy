@@ -44,8 +44,8 @@ describe('Goals KPI test', () => {
 		goalsKPIPage.enterNameInputData(GoalsKPIPageData.name);
 		goalsKPIPage.descriptionInputVisible();
 		goalsKPIPage.enterDescriptionInputData(GoalsKPIPageData.description);
-		goalsKPIPage.employeeMultyselectVisible();
-		goalsKPIPage.clickEmployeeMultyselect();
+		goalsKPIPage.employeeMultiSelectVisible();
+		goalsKPIPage.clickEmployeeMultiSelect();
 		goalsKPIPage.employeeDropdownVisible();
 		goalsKPIPage.selectEmployeeFromDropdown(0);
 		goalsKPIPage.valueInputVisible();
@@ -64,8 +64,8 @@ describe('Goals KPI test', () => {
 		goalsKPIPage.enterNameInputData(GoalsKPIPageData.name);
 		goalsKPIPage.descriptionInputVisible();
 		goalsKPIPage.enterDescriptionInputData(GoalsKPIPageData.description);
-		goalsKPIPage.employeeMultyselectVisible();
-		goalsKPIPage.clickEmployeeMultyselect();
+		goalsKPIPage.employeeMultiSelectVisible();
+		goalsKPIPage.clickEmployeeMultiSelect();
 		goalsKPIPage.employeeDropdownVisible();
 		goalsKPIPage.selectEmployeeFromDropdown(0);
 		goalsKPIPage.valueInputVisible();

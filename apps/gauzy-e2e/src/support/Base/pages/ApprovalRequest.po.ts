@@ -66,15 +66,15 @@ export const selectApprovalPolicyOptionDropdown = (text) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(ApprovalRequestPage.usersMultyselectCss);
+	verifyElementIsVisible(ApprovalRequestPage.usersMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(ApprovalRequestPage.usersMultyselectCss);
+	clickButton(ApprovalRequestPage.usersMultiSelectCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {
-	clickButtonByIndex(ApprovalRequestPage.checkUsersMultyselectCss, index);
+	clickButtonByIndex(ApprovalRequestPage.checkUsersMultiSelectCss, index);
 };
 
 export const saveButtonVisible = () => {

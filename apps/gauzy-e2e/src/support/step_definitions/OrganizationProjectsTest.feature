@@ -15,8 +15,8 @@ Feature: Organization projects test
     And User can enter value for name
     And User can see employee dropdown
     When User click on employee dropdown
-    Then User can select employee from dropodown options
-    And User can nvigate to second section
+    Then User can select employee from dropdown options
+    And User can navigate to second section
     And User can see tags dropdown
     When User click on tags dropdown
     Then User can select tag from dropdown options

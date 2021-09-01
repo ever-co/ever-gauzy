@@ -86,5 +86,5 @@ Feature: Add task
     When User click on first table row
     Then Delete button will become active again
     When User click on delete task button
-    Then User will see confirm delte button again
+    Then User will see confirm delete button again
     And User can click again on confirm delete task button
