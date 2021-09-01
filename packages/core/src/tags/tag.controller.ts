@@ -12,7 +12,7 @@ import { CrudController } from './../core/crud';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, ITag, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe } from './../shared/pipes';
 
@@ -27,24 +27,6 @@ export class TagController extends CrudController<Tag> {
 	@Get('getByName/:name')
 	async findByName(@Param('name') name: string): Promise<Tag> {
 		return this.tagService.findOneByName(name);
-	}
-
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
-	@Post()
-	async createRecord(@Body() entity: Tag): Promise<any> {
-		return this.tagService.create(entity);
-	}
-
-	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Tag>> {
-		const { relations, findInput } = data;
-		return this.tagService.findAll({
-			where: findInput,
-			relations
-		});
 	}
 
 	@Get('getByOrgId')
@@ -68,5 +50,25 @@ export class TagController extends CrudController<Tag> {
 	): Promise<any> {
 		const { organizationId } = data;
 		return this.tagService.getTagUsageCount(organizationId);
+	}
+
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ITag>> {
+		const { relations, findInput } = data;
+		return this.tagService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
+	@Post()
+	async create(
+		@Body() entity: Tag
+	): Promise<ITag> {
+		return this.tagService.create(entity);
 	}
 }
