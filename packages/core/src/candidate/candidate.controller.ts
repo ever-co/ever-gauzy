@@ -24,7 +24,6 @@ import {
 	ICandidateUpdateInput,
 	IPagination
 } from '@gauzy/contracts';
-import { getUserDummyImage } from '../core/utils';
 import { CrudController, PaginationParams} from './../core/crud';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
@@ -73,19 +72,8 @@ export class CandidateController extends CrudController<Candidate> {
 	@Post('/bulk')
 	async createBulk(
 		@Body() body: ICandidateCreateInput[],
-		@I18nLang() languageCode: LanguagesEnum,
-		...options: any[]
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ICandidate[]> {
-		/**
-		* Use a dummy image avatar if no image is uploaded for any of the Candidate in the list
-		*/
-		 body
-			.filter((entity) => !entity.user.imageUrl)
-			.forEach(
-				(entity) =>
-					(entity.user.imageUrl = getUserDummyImage(entity.user))
-			);
-
 		return await this.commandBus.execute(
 			new CandidateBulkCreateCommand(body, languageCode)
 		);

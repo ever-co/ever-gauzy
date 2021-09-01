@@ -1,7 +1,6 @@
 import { ICandidateInterview } from './candidate-interview.model';
 import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
-import { IOrganization } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IUserFindInput, IUser } from './user.model';
 import { IOrganizationTeam } from './organization-team-model';
@@ -59,7 +58,8 @@ export interface ICandidateFindInput
 	valueDate?: Date;
 }
 
-export interface ICandidateUpdateInput {
+export interface ICandidateUpdateInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	payPeriod?: string;
 	billRateValue?: number;
@@ -77,9 +77,9 @@ export interface ICandidateUpdateInput {
 	candidateLevel?: string;
 }
 
-export interface ICandidateCreateInput {
+export interface ICandidateCreateInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	user: IUser;
-	organization: IOrganization;
 	password?: string;
 	appliedDate?: Date;
 	hiredDate?: Date;
@@ -90,17 +90,18 @@ export interface ICandidateCreateInput {
 	tags?: ITag[];
 	documents: ICandidateDocument[];
 }
-export interface ICandidateLevel {
+export interface ICandidateLevel 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id: string;
 	level: string;
-	organizationId: string;
 }
-export interface ICandidateLevelInput {
+export interface ICandidateLevelInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	level: string;
-	organizationId: string;
 }
 
-export interface ICandidateViewModel {
+export interface ICandidateViewModel
+	extends IBasePerTenantAndOrganizationEntityModel {
 	fullName: string;
 	email: string;
 	id: string;
