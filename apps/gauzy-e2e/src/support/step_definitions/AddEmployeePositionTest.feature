@@ -4,7 +4,7 @@ Feature: Add employee position
   Scenario: Add new tag
     Then User can add new tag
   Scenario: Add new employee position
-    Then User can go to Employee postions page
+    Then User can go to Employee positions page
     And User will see grid button
     And User can click on second grid button to change view
     And User can see Add new position button
