@@ -7,17 +7,17 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbThemeService } from '@nebular/theme';
 import {
 	AccountingTemplateTypeEnum,
 	IOrganization,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { AccountingTemplateService } from '../../@core/services/accounting-template.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NbThemeService } from '@nebular/theme';
-import { Store } from '../../@core/services/store.service';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { AccountingTemplateService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,7 +27,6 @@ import { Subject } from 'rxjs';
 export class AccountingTemplatesComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 
-	form: FormGroup;
 	previewTemplate: SafeHtml;
 	languageCodes: string[] = Object.values(LanguagesEnum);
 	templateTypes: string[] = Object.values(AccountingTemplateTypeEnum);
@@ -37,37 +36,42 @@ export class AccountingTemplatesComponent
 
 	@ViewChild('templateEditor') templateEditor;
 
+	readonly form: FormGroup = AccountingTemplatesComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			templateType: [AccountingTemplateTypeEnum.INVOICE],
+			languageCode: [LanguagesEnum.ENGLISH],
+			mjml: ['']
+		});
+	}
+
 	constructor(
-		private accountingTemplateService: AccountingTemplateService,
-		private fb: FormBuilder,
-		private store: Store,
-		private sanitizer: DomSanitizer,
-		private themeService: NbThemeService
+		private readonly fb: FormBuilder,
+		private readonly accountingTemplateService: AccountingTemplateService,
+		private readonly store: Store,
+		private readonly sanitizer: DomSanitizer,
+		private readonly themeService: NbThemeService
 	) {}
 
 	ngOnInit() {
-		this._initializeForm();
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				debounceTime(300),
 				tap(() => this.getTemplate()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.preferredLanguage$
+
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const preferredLanguage$ = this.store.preferredLanguage$;
+		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
-				untilDestroyed(this)
-			)
-			.subscribe((language) => {
-				this.form.patchValue({ languageCode: language });
-				this.subject$.next();
-			});
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => {
+				distinctUntilChange(),
+				filter(([organization, language]) => !!organization && !!language),
+				tap(([organization, language]) => {
 					this.organization = organization;
 					this.organizationName = organization.name;
+					this.form.patchValue({ languageCode: language });
 				}),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
@@ -109,6 +113,10 @@ export class AccountingTemplatesComponent
 	}
 
 	async getTemplate() {
+		if (!this.organization) {
+			return;
+		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { 
@@ -151,14 +159,6 @@ export class AccountingTemplatesComponent
 			...this.form.value,
 			organizationId,
 			tenantId
-		});
-	}
-
-	private _initializeForm() {
-		this.form = this.fb.group({
-			templateType: [AccountingTemplateTypeEnum.INVOICE],
-			languageCode: [LanguagesEnum.ENGLISH],
-			mjml: ['']
 		});
 	}
 
