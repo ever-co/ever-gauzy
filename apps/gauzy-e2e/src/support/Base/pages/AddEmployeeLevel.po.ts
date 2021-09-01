@@ -45,11 +45,11 @@ export const enterNewLevelData = (data) => {
 	enterInput(AddEmployeeLevelPage.newLevelInputCss, data);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(AddEmployeeLevelPage.tagsSelectCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(AddEmployeeLevelPage.tagsSelectCss);
 };
 

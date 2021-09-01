@@ -45,11 +45,11 @@ export const enterNewPositionData = (data) => {
 	enterInput(AddEmployeePositionPage.newPositionInputCss, data);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(AddEmployeePositionPage.tagsSelectCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(AddEmployeePositionPage.tagsSelectCss);
 };
 

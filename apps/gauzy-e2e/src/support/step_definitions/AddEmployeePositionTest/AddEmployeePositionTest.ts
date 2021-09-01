@@ -58,12 +58,12 @@ And('User can add data for new position', () => {
 	);
 });
 
-And('User can see tag multiselect', () => {
-	addEmployeePositionPage.tagsMultyselectVisible();
+And('User can see tag multi-select', () => {
+	addEmployeePositionPage.tagsMultiSelectVisible();
 });
 
-When('User click on tag multiselect', () => {
-	addEmployeePositionPage.clickTagsMultyselect();
+When('User click on tag multi-select', () => {
+	addEmployeePositionPage.clickTagsMultiSelect();
 });
 
 Then('User can pick tag from dropdown menu', () => {
@@ -120,12 +120,12 @@ Then('User can edit previously created position', () => {
 	);
 });
 
-And('User can see tag multiselect', () => {
-	addEmployeePositionPage.tagsMultyselectVisible();
+And('User can see tag multi-select', () => {
+	addEmployeePositionPage.tagsMultiSelectVisible();
 });
 
-When('User click on tag multiselect', () => {
-	addEmployeePositionPage.clickTagsMultyselect();
+When('User click on tag multi-select', () => {
+	addEmployeePositionPage.clickTagsMultiSelect();
 });
 
 Then('User can pick tag from dropdown menu', () => {
@@ -186,12 +186,12 @@ And('User can add data for new position', () => {
 	);
 });
 
-And('User can see tag multiselect', () => {
-	addEmployeePositionPage.tagsMultyselectVisible();
+And('User can see tag multi-select', () => {
+	addEmployeePositionPage.tagsMultiSelectVisible();
 });
 
-When('User click on tag multiselect', () => {
-	addEmployeePositionPage.clickTagsMultyselect();
+When('User click on tag multi-select', () => {
+	addEmployeePositionPage.clickTagsMultiSelect();
 });
 
 Then('User can pick tag from dropdown menu', () => {

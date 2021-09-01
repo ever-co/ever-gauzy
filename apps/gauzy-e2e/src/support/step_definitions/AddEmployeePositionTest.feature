@@ -11,8 +11,8 @@ Feature: Add employee position
     When User click on Add new position button
     Then User can see new position input
     And User can add data for new position
-    And User can see tag multiselect
-    When User click on tag multiselect
+    And User can see tag multi-select
+    When User click on tag multi-select
     Then User can pick tag from dropdown menu
     And User can see save position button
     When User click on save position button
@@ -26,8 +26,8 @@ Feature: Add employee position
     Then User can see edit newly position button
     When User click on edit new position button
     Then User can edit previously created position
-    And User can see tag multiselect
-    When User click on tag multiselect
+    And User can see tag multi-select
+    When User click on tag multi-select
     Then User can pick tag from dropdown menu
     And User can see save position button
     When User click on save position button
@@ -42,8 +42,8 @@ Feature: Add employee position
     When User click on Add new position button
     Then User can see new position input
     And User can add data for new position
-    And User can see tag multiselect
-    When User click on tag multiselect
+    And User can see tag multi-select
+    When User click on tag multi-select
     Then User can pick tag from dropdown menu
     And User can see save position button
     When User click on save position button

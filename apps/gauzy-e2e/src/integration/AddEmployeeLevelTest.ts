@@ -23,8 +23,8 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickAddNewLevelButton();
 		addEmployeeLevelPage.newLevelInputVisible();
 		addEmployeeLevelPage.enterNewLevelData(AddEmployeeLevelPageData.levelE);
-		addEmployeeLevelPage.tagsMultyselectVisible();
-		addEmployeeLevelPage.clickTagsMultyselect();
+		addEmployeeLevelPage.tagsMultiSelectVisible();
+		addEmployeeLevelPage.clickTagsMultiSelect();
 		addEmployeeLevelPage.selectTagsFromDropdown(0);
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
@@ -43,8 +43,8 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.enterEditLevelData(
 			AddEmployeeLevelPageData.levelF
 		);
-		addEmployeeLevelPage.tagsMultyselectVisible();
-		addEmployeeLevelPage.clickTagsMultyselect();
+		addEmployeeLevelPage.tagsMultiSelectVisible();
+		addEmployeeLevelPage.clickTagsMultiSelect();
 		addEmployeeLevelPage.selectTagsFromDropdown(0);
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
@@ -61,8 +61,8 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickAddNewLevelButton();
 		addEmployeeLevelPage.newLevelInputVisible();
 		addEmployeeLevelPage.enterNewLevelData(AddEmployeeLevelPageData.levelE);
-		addEmployeeLevelPage.tagsMultyselectVisible();
-		addEmployeeLevelPage.clickTagsMultyselect();
+		addEmployeeLevelPage.tagsMultiSelectVisible();
+		addEmployeeLevelPage.clickTagsMultiSelect();
 		addEmployeeLevelPage.selectTagsFromDropdown(0);
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();

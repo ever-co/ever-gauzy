@@ -9,11 +9,12 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../../support/commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const responseTimeout = Cypress.config('responseTimeout');
 
 // Login with email
-Given('Visit home page as unauthorised user', () => {
+Given('Visit home page as unauthorized user', () => {
 	cy.visit('/', { timeout: responseTimeout, retryOnNetworkFailure: true });
 	loginPage.verifyTitle();
 });
@@ -48,9 +49,7 @@ Then('User will see Create button', () => {
 
 // Add new tag
 When('User go to Tags page', () => {
-	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	waitUntil(3000);
 	cy.visit('/#/pages/organization/tags');
 });
 
@@ -138,12 +137,12 @@ And('User can enter new level name', () => {
 	addEmployeeLevelPage.enterNewLevelData(AddEmployeeLevelPageData.levelE);
 });
 
-And('User can see tags multiselect', () => {
-	addEmployeeLevelPage.tagsMultyselectVisible();
+And('User can see tags multi-select', () => {
+	addEmployeeLevelPage.tagsMultiSelectVisible();
 });
 
-When('User click on tags multiselect', () => {
-	addEmployeeLevelPage.clickTagsMultyselect();
+When('User click on tags multi-select', () => {
+	addEmployeeLevelPage.clickTagsMultiSelect();
 });
 
 Then('User can select tag from dropdown menu', () => {
@@ -200,12 +199,12 @@ And('User can enter new level name data', () => {
 	addEmployeeLevelPage.enterEditLevelData(AddEmployeeLevelPageData.levelF);
 });
 
-And('User can see tags multiselect', () => {
-	addEmployeeLevelPage.tagsMultyselectVisible();
+And('User can see tags multi-select', () => {
+	addEmployeeLevelPage.tagsMultiSelectVisible();
 });
 
-When('User click on tags multiselect', () => {
-	addEmployeeLevelPage.clickTagsMultyselect();
+When('User click on tags multi-select', () => {
+	addEmployeeLevelPage.clickTagsMultiSelect();
 });
 
 Then('User can select tag from dropdown menu', () => {
@@ -262,12 +261,12 @@ And('User can enter another level name', () => {
 	addEmployeeLevelPage.enterNewLevelData(AddEmployeeLevelPageData.levelE);
 });
 
-And('User can see tags multiselect', () => {
-	addEmployeeLevelPage.tagsMultyselectVisible();
+And('User can see tags multi-select', () => {
+	addEmployeeLevelPage.tagsMultiSelectVisible();
 });
 
-When('User click on tags multiselect', () => {
-	addEmployeeLevelPage.clickTagsMultyselect();
+When('User click on tags multi-select', () => {
+	addEmployeeLevelPage.clickTagsMultiSelect();
 });
 
 Then('User can select tag from dropdown menu', () => {
