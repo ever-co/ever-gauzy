@@ -27,7 +27,7 @@ Given('Login with default credentials', () => {
 
 // Add employee
 And('User can add new employee', () => {
-	waitUntil(2000);
+	waitUntil(3000);
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,

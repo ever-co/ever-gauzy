@@ -17,7 +17,7 @@ Given('Login with default credentials', () => {
 
 // Visit Accounting templates page
 And('User can visit Accounting templates page', () => {
-	waitUntil(2000);
+	waitUntil(3000);
 	cy.visit('/#/pages/settings/accounting-templates', { timeout: pageLoadTimeout });
 });
 
