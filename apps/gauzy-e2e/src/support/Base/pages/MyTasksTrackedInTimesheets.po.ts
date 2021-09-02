@@ -12,6 +12,7 @@ import {
 
 } from '../utils/util';
 import { MyTasksTrackedInTimesheets } from '../pageobjects/MyTasksTrackedInTimesheetsPageObject';
+import dayjs from 'dayjs'
 
 export const verifyAddButton = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.addButtonCss);
@@ -76,7 +77,7 @@ export const dueDateInputVisible = () => {
 
 export const enterDueDateData = () => {
 	clearField(MyTasksTrackedInTimesheets.dueDateInputCss);
-	const date = Cypress.moment().add(1, 'days').format('MMM D, YYYY');
+	const date = dayjs().add(1, 'days').format('MMM D, YYYY');
 	enterInput(MyTasksTrackedInTimesheets.dueDateInputCss, date);
 };
 
