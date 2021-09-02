@@ -13,7 +13,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
@@ -24,8 +24,6 @@
 							#employeeSelector
 							fullWidth
 							[skipGlobalChange]="true"
-							class="employees"
-							placeholder="Organization"
 							[defaultSelected]="false"
 							(selectionChanged)="onEmployeeChange($event)"
 						></ga-employee-selector>
@@ -82,12 +80,14 @@
 			</div>
 			<div class="row">
 				<div class="col">
-					<ga-tags-color-input
-						[selectedTags]="tags"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
-					>
-					</ga-tags-color-input>
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
 				</div>
 			</div>
 			<div>
@@ -109,15 +109,14 @@
 							/>
 						</div>
 					</div>
-					<div class="col-sm-6">
+					<div class="col-6">
 						<nb-select
 							class="d-block"
-							[selected]="unit"
 							formControlName="durationUnit"
 						>
 							<nb-option
 								*ngFor="let unit of durationUnits"
-								value="{{ unit }}"
+								[value]="unit"
 							>
 								{{
 									'EVENT_TYPE_PAGE.DURATION_UNIT'

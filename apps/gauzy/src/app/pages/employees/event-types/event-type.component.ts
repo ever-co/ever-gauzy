@@ -1,31 +1,33 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import {
 	IEventType,
-	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IEventTypeViewModel
 } from '@gauzy/contracts';
-import {
-	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
-} from '@angular/router';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
-import { filter } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
-import { EventTypeMutationComponent } from './event-type-mutation/event-type-mutation.component';
-import { EventTypeService } from '../../../@core/services/event-type.service';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { ComponentEnum } from '../../../@core/constants/layout.constants';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { combineLatest } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import {
+	ErrorHandlingService,
+	EventTypeService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
+import { PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
+import { EventTypeMutationComponent } from './event-type-mutation/event-type-mutation.component';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
+import { NotesWithTagsComponent } from '../../../@shared/table-components';
+import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { DEFAULT_EVENT_TYPE } from './default-event-type';
+import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,295 +35,142 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	styleUrls: ['event-type.component.scss']
 })
 export class EventTypeComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	settingsSmartTable: object;
-	sourceSmartTable = new LocalDataSource();
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+		
+	smartTableSource: ServerDataSource;
+	smartTableSettings: object;
+	localDataSource = new LocalDataSource();
 	selectedEventType: IEventTypeViewModel;
-	eventTypeData: IEventTypeViewModel[];
-	showTable: boolean;
+	eventTypes: IEventTypeViewModel[] = [];
 	selectedEmployeeId: string;
-	employeeName: string;
-	_selectedOrganizationId: string;
-	tags?: ITag[];
 	viewComponentName: ComponentEnum;
-	disableButton = true;
+	disableButton: boolean = true;
+	loading: boolean;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public organization: IOrganization;
+	eventTypes$: Subject<any> = new Subject();
 
-	@ViewChild('eventTypesTable') eventTypesTable;
-
-	loading = true;
-	defaultEventTypes: IEventTypeViewModel[] = [
-		{
-			id: null,
-			title: '15 Minutes Event',
-			description: 'This is a default event type.',
-			duration: 15,
-			durationUnit: 'Minute(s)',
-			isActive: false,
-			Active: 'No',
-			durationFormat: '15 Minute(s)',
-			tags: []
-		},
-		{
-			id: null,
-			title: '30 Minutes Event',
-			description: 'This is a default event type.',
-			duration: 30,
-			durationUnit: 'Minute(s)',
-			isActive: false,
-			Active: 'No',
-			durationFormat: '30 Minute(s)',
-			tags: []
-		},
-		{
-			id: null,
-			title: '60 Minutes Event',
-			description: 'This is a default event type.',
-			duration: 60,
-			durationUnit: 'Minute(s)',
-			isActive: false,
-			Active: 'No',
-			durationFormat: '60 Minute(s)',
-			tags: []
+	defaultEventTypes: IEventTypeViewModel[] = DEFAULT_EVENT_TYPE;
+	
+	eventTypesTable: Ng2SmartTableComponent;
+	@ViewChild('eventTypesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.eventTypesTable = content;
+			this._onChangedSource();
 		}
-	];
-	organization: IOrganization;
+	}
 
 	constructor(
-		private route: ActivatedRoute,
-		private store: Store,
-		private errorHandler: ErrorHandlingService,
-		private eventTypeService: EventTypeService,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		readonly translateService: TranslateService,
-		private cd: ChangeDetectorRef,
-		private router: Router
+		private readonly route: ActivatedRoute,
+		private readonly store: Store,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly eventTypeService: EventTypeService,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		public readonly translateService: TranslateService,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit(): void {
-		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this.canShowTable();
+		this._loadSmartTableSettings();
 
-		this.store.selectedEmployee$
+		this.eventTypes$
 			.pipe(
-				filter((employee) => !!employee),
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.getEventTypes()),
+				tap(() => this._clearItem()),
+				tap(() => this.loading = false),
 				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this.selectedEmployeeId = employee.id;
-					this._loadTableData();
-				} else {
-					if (this._selectedOrganizationId) {
-						this.selectedEmployeeId = null;
-						this._loadTableData(null, this._selectedOrganizationId);
-					}
-				}
-			});
-		this.store.selectedOrganization$
+			.subscribe();
+
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this._selectedOrganizationId = organization.id;
+				debounceTime(300),
+				filter(([organization]) => !!organization),
+				distinctUntilChange(),
+				tap(([organization, employee]) => {
 					this.organization = organization;
-					if (this.loading) {
-						this._loadTableData(
-							this.store.selectedEmployee
-								? this.store.selectedEmployee.id
-								: null,
-							this.store.selectedEmployee &&
-								this.store.selectedEmployee.id
-								? null
-								: this._selectedOrganizationId
-						);
-					}
-				}
-			});
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this.eventTypes$.next();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
-			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
-					this.openAddEventTypeDialog();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.openAddEventTypeDialog()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		const { employeeId } = this.store.user;
+		if (employeeId) {
+			delete this.smartTableSettings['columns']['employeeName'];
+			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+		}
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EVENT_TYPES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
-	}
-
-	private async _loadTableData(
-		employeeId = this.selectedEmployeeId,
-		organizationId?: string
-	) {
-		let findObj;
-		this.showTable = false;
-		this.cd.detectChanges();
-		this.selectedEventType = null;
-
-		if (organizationId) {
-			findObj = {
-				organizationId
-			};
-
-			this.settingsSmartTable['columns']['employeeName'] = {
-				title: this.getTranslation('EVENT_TYPE_PAGE.EMPLOYEE'),
-				type: 'string',
-				valuePrepareFunction: (_, eventType: IEventType) => {
-					const user = eventType.employee
-						? eventType.employee.user
-						: null;
-
-					if (user) {
-						return `${user.firstName} ${user.lastName}`;
-					}
-				}
-			};
-		} else {
-			findObj = {
-				employee: {
-					id: employeeId
-				}
-			};
-
-			delete this.settingsSmartTable['columns']['employee'];
-		}
-
-		const { tenantId } = this.store.user;
-		findObj['tenantId'] = tenantId;
-
-		try {
-			const { items } = await this.eventTypeService.getAll(
-				['employee', 'employee.user', 'tags'],
-				findObj
-			);
-			let eventTypeVM: IEventTypeViewModel[] = items.map((i) => ({
-				isActive: i.isActive,
-				Active: i.isActive
-					? this.getTranslation('EVENT_TYPE_PAGE.YES')
-					: this.getTranslation('EVENT_TYPE_PAGE.NO'),
-				description: i.description,
-				durationFormat: `${i.duration} ${i.durationUnit}`,
-				title: i.title,
-				id: i.id,
-				duration: i.duration,
-				durationUnit: i.durationUnit,
-				employee: i.employee,
-				employeeName: i.employee?.user?.name,
-				tags: i.tags
-			}));
-
-			eventTypeVM = eventTypeVM.concat(
-				this.defaultEventTypes.filter(
-					(e) =>
-						!eventTypeVM.find(
-							(i) => i.durationFormat === e.durationFormat
-						)
-				)
-			);
-			this.eventTypeData = eventTypeVM;
-			this.sourceSmartTable.load(eventTypeVM);
-			this.showTable = true;
-			this.cd.detectChanges();
-		} catch (error) {
-			this.toastrService.danger(
-				this.getTranslation('NOTES.EVENT_TYPES.ERROR', {
-					error: error.error.message || error.message
-				}),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
-		}
-		this.employeeName = this.store.selectedEmployee
-			? (
-					this.store.selectedEmployee.firstName +
-					' ' +
-					this.store.selectedEmployee.lastName
-			  ).trim()
-			: 'All Employees';
-		this.loading = false;
-	}
-
-	getFormData(formData) {
-		return {
-			title: formData.title,
-			description: formData.description,
-			duration: formData.duration,
-			durationUnit: formData.durationUnit,
-			employee: formData.employee,
-			isActive: formData.isActive,
-			tags: this.tags
-		};
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(() => this.eventTypes$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	openAddEventTypeDialog() {
 		this.dialogService
 			.open(EventTypeMutationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async (formData) => {
-				if (formData) {
-					await this.addEventType(
-						this.getFormData(formData),
-						formData
-					);
+			.onClose
+			.pipe(untilDestroyed(this))
+			.subscribe(async (data) => {
+				if (data) {
+					await this.addEventType(data);
 				}
 			});
 	}
 
-	async addEventType(completedForm: any, formData: any) {
-		completedForm.tags = formData.tags;
+	async addEventType(data: any) {
 		try {
+			const { title } = data;
+			const employeeId = data.employee ? data.employee.id : null;
+			
 			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
 			await this.eventTypeService.create({
-				...completedForm,
-				employeeId: formData.employee ? formData.employee.id : null,
-				organizationId: this.store.selectedOrganization.id,
+				...data,
+				employeeId,
+				organizationId,
 				tenantId
 			});
 
 			this.toastrService.success('NOTES.EVENT_TYPES.ADD_EVENT_TYPE', {
-				name: formData.title
+				name: title
 			});
-
-			this.store.selectedEmployee = formData.employee
-				? formData.employee
-				: null;
-			this._loadTableData(
-				this.selectedEmployeeId,
-				this.selectedEmployeeId ? null : this._selectedOrganizationId
-			);
-			this._clearItem();
+			this.eventTypes$.next();
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
-	}
-
-	canShowTable() {
-		if (this.eventTypesTable) {
-			this.eventTypesTable.grid.dataSet.willSelect = 'false';
-		}
-		this.cd.detectChanges();
 	}
 
 	openEditEventTypeDialog(selectedItem?: IEventTypeViewModel) {
@@ -337,59 +186,45 @@ export class EventTypeComponent
 					eventType: this.selectedEventType
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async (formData) => {
+			.onClose
+			.pipe(untilDestroyed(this))
+			.subscribe(async (data) => {
 				try {
-					if (formData) {
-						const completedForm = this.getFormData(formData);
+					if (data) {
+						const { id, title } = data;
+						const employeeId = data.employee ? data.employee.id : null;
+
 						const { tenantId } = this.store.user;
+						const { id: organizationId } = this.organization;
+
+						const request = {
+							...data,
+							employeeId,
+							organizationId,
+							tenantId
+						}
 
 						// For default event types
-						if (formData.id === null) {
-							await this.eventTypeService.create({
-								...completedForm,
-								employeeId: formData.employee
-									? formData.employee.id
-									: null,
-								organizationId: this.store.selectedOrganization
-									.id,
-								tenantId
-							});
+						if (isEmpty(id)) {
+							await this.eventTypeService.create(request);
 						} else {
-							await this.eventTypeService.update(formData.id, {
-								...completedForm,
-								employeeId: formData.employee
-									? formData.employee.id
-									: null,
-								tags: formData.tags
-							});
+							await this.eventTypeService.update(id, request);
 						}
-						this.toastrService.success(
-							'NOTES.EVENT_TYPES.EDIT_EVENT_TYPE',
-							{ name: formData.title }
-						);
-
-						this._loadTableData(
-							this.selectedEmployeeId,
-							this.selectedEmployeeId
-								? null
-								: this._selectedOrganizationId
-						);
-						this._clearItem();
+						this.toastrService.success('NOTES.EVENT_TYPES.EDIT_EVENT_TYPE', {
+							name: title
+						});
 					}
 				} catch (error) {
 					this.errorHandler.handleError(error);
+				} finally {
+					this.eventTypes$.next();
 				}
 			});
 	}
 
 	selectEventType({ isSelected, data }) {
-		const selectedEventType = isSelected ? data : null;
-		if (this.eventTypesTable) {
-			this.eventTypesTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedEventType = selectedEventType;
+		this.selectedEventType = isSelected ? data : null;
 	}
 
 	async deleteEventType(selectedItem?: IEventTypeViewModel) {
@@ -399,6 +234,9 @@ export class EventTypeComponent
 				data: selectedItem
 			});
 		}
+		if (!this.selectedEventType) {
+			return;
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -407,27 +245,27 @@ export class EventTypeComponent
 					)
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { title } = this.selectedEventType;
 						await this.eventTypeService.delete(
 							this.selectedEventType.id
-						);
-
-						this.toastrService.success(
-							'NOTES.EVENT_TYPES.DELETE_EVENT_TYPE',
-							{ name: this.selectedEventType.title }
-						);
-						this._loadTableData(
-							this.selectedEmployeeId,
-							this.selectedEmployeeId
-								? null
-								: this._selectedOrganizationId
-						);
-						this._clearItem();
+						)
+						.then(() => {
+							this.toastrService.success('NOTES.EVENT_TYPES.DELETE_EVENT_TYPE', {
+								name: title
+							});
+						})
+						.finally(() => {
+							this.eventTypes$.next();
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this.eventTypes$.next();
 					}
 				}
 			});
@@ -435,14 +273,27 @@ export class EventTypeComponent
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this._loadSmartTableSettings();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	private _onChangedSource() {
+		this.eventTypesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this._clearItem())
+			)
+			.subscribe();
 	}
 
 	private _loadSmartTableSettings() {
-		this.settingsSmartTable = {
+		this.smartTableSettings = {
 			actions: false,
 			columns: {
 				title: {
@@ -465,27 +316,122 @@ export class EventTypeComponent
 					type: 'text',
 					class: 'align-row'
 				},
-				Active: {
+				active: {
 					title: this.getTranslation('EVENT_TYPE_PAGE.ACTIVE'),
 					type: 'text',
 					class: 'align-row'
+				},
+				employeeName: {
+					title: this.getTranslation('EVENT_TYPE_PAGE.EMPLOYEE'),
+					type: 'string',
+					filter: false,
+					sort: false
 				}
 			},
 			pager: {
 				display: true,
-				perPage: 8
+				perPage: 10
 			}
 		};
 	}
 
+	/**
+	 * Register Smart Table Source Config
+	 */
+	setSmartTableSource() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const request = {};
+		if (this.selectedEmployeeId) {
+			request['employeeId'] = this.selectedEmployeeId;
+		}
+
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/event-type/pagination`,
+			relations: [
+				'employee',
+				'employee.user',
+				'tags'
+			],
+			where: {
+				...{ organizationId, tenantId },
+				...request,
+				...this.filters.where
+			},
+			resultMap: (i: IEventType) => {
+				const durationFormat = `${i.duration} ${i.durationUnit}`;
+				const employeeName = i.employee.fullName;
+
+				return Object.assign({}, i, {
+					active: i.isActive
+						? this.getTranslation('EVENT_TYPE_PAGE.YES')
+						: this.getTranslation('EVENT_TYPE_PAGE.NO'),
+					durationFormat,
+					employeeName
+				});
+			},
+			finalize: () => {
+				this.loading = false;
+				this.localDataSource.load(this.mapEventTypes());
+			}
+		});
+	}
+
+	/**
+	 * GET all event types
+	 */
+	private async getEventTypes() {
+		try { 
+			this.setSmartTableSource();
+
+			// Initiate GRID view pagination
+			const { activePage, itemsPerPage } = this.pagination;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			await this.smartTableSource.getElements();
+			this.eventTypes = this.mapEventTypes();
+
+			this.pagination['totalItems'] =  this.smartTableSource.count();
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	/**
+	 * Map default types & organization event types
+	 * 
+	 * @returns 
+	 */
+	private mapEventTypes() {
+		const data = this.smartTableSource.getData() || [];
+		return data.concat(
+			this.defaultEventTypes.filter(
+				(e) => !data.find((i) => i.durationFormat === e.durationFormat)
+			)
+		);
+	}
+
+	/*
+	 * Clear selected item
+	 */
 	private _clearItem() {
 		this.selectEventType({
 			isSelected: false,
 			data: null
 		});
+		this.deselectAll();
 	}
 
-	ngOnDestroy() {
-		delete this.settingsSmartTable['columns']['employee'];
+	/**
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.eventTypesTable && this.eventTypesTable.grid) {
+			this.eventTypesTable.grid.dataSet['willSelect'] = 'false';
+			this.eventTypesTable.grid.dataSet.deselectAll();
+		}
 	}
+
+	ngOnDestroy(): void {}
 }

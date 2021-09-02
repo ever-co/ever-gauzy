@@ -2,93 +2,105 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter, tap } from 'rxjs/operators';
+import { IEventTypeViewModel, IOrganization } from '@gauzy/contracts';
 import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { IEventTypeViewModel, ITag } from '@gauzy/contracts';
+import { Store } from './../../../../@core/services';
 
-export enum COMPONENT_TYPE {
-	EMPLOYEE = 'EMPLOYEE',
-	ORGANIZATION = 'ORGANIZATION'
-}
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './event-type-mutation.component.html'
 })
 export class EventTypeMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	public form: FormGroup;
-	tags: ITag[] = [];
-
+		
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
+
+	public organization: IOrganization;
 	eventType: IEventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
-	durationUnit: string = this.durationUnits[0];
+
+	readonly form: FormGroup = EventTypeMutationComponent.buildForm(this.fb, this);
+	static buildForm(
+		fb: FormBuilder,
+		self: EventTypeMutationComponent
+	): FormGroup {
+		return fb.group({
+			title: [],
+			description: [],
+			duration: [],
+			durationUnit: [self.durationUnits[0]],
+			isActive: [false],
+			tags: []
+		});
+	}
 
 	constructor(
-		private fb: FormBuilder,
-		public dialogRef: NbDialogRef<EventTypeMutationComponent>,
-		public readonly translate: TranslateService
+		private readonly fb: FormBuilder,
+		public readonly dialogRef: NbDialogRef<EventTypeMutationComponent>,
+		public readonly translate: TranslateService,
+		private readonly store: Store
 	) {
 		super(translate);
 	}
 
 	ngOnInit() {
-		this.durationUnits = ['Minute(s)', 'Hour(s)', 'Day(s)'];
-		this._initializeForm();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._patchRawForm()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	submitForm() {
-		if (this.form.valid) {
-			this.closeAndSubmit();
-		}
-	}
-
-	closeAndSubmit() {
-		let formValues = this.form.getRawValue();
-		formValues = {
-			...formValues,
-			startDay: formValues.startDate.getDate(),
-			startMonth: formValues.startDate.getMonth(),
-			startYear: formValues.startDate.getFullYear()
-		};
-		this.dialogRef.close(formValues);
-	}
-
-	onEmployeeChange(ev) {
-		console.log(ev);
-	}
+	onEmployeeChange(ev) { }
 
 	addOrEditEventType() {
-		this.form.get('tags').setValue(this.tags);
+		if (this.form.invalid) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { selectedEmployee } = this.employeeSelector;
+
 		this.dialogRef.close(
-			Object.assign(
-				{
-					employee: this.employeeSelector.selectedEmployee,
-					id: this.eventType ? this.eventType.id : null
-				},
-				this.form.value
-			)
+			Object.assign({
+				id: this.eventType ? this.eventType.id : null,
+				employee: selectedEmployee,
+				tenantId,
+				organizationId
+			}, this.form.getRawValue())
 		);
 	}
 
-	private _initializeForm() {
-		if (this.eventType) {
-			this.tags = this.eventType.tags;
+	private _patchRawForm() {
+		if (!this.eventType) {
+			return;
 		}
-		this.form = this.fb.group({
-			title: this.eventType ? this.eventType.title : '',
-			description: this.eventType ? this.eventType.description : '',
-			duration: this.eventType ? this.eventType.duration : undefined,
-			durationUnit: this.eventType
-				? this.eventType.durationUnit
-				: this.durationUnits[0],
-			isActive: this.eventType ? this.eventType.isActive : false,
-			tags: []
+
+		const { title, description, duration, isActive = false, tags } = this.eventType;
+		this.form.patchValue({
+			title: title,
+			description: description,
+			duration: duration,
+			isActive: isActive,
+			tags
+		});
+
+		const { durationUnit } = this.eventType;
+		this.form.patchValue({
+			durationUnit: (durationUnit) ? durationUnit : this.durationUnits[0],
 		});
 	}
+
 	selectedTagsEvent(ev) {
-		this.tags = ev;
+		this.form.patchValue({ tags: ev });
 	}
 }

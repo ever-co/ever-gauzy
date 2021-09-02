@@ -1,8 +1,17 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
-			<h4> <ngx-header-title> {{ 'EVENT_TYPE_PAGE.EVENT_TYPE' | translate }} </ngx-header-title> </h4>
+			<h4>
+				<ngx-header-title>
+					{{ 'EVENT_TYPE_PAGE.EVENT_TYPE' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
 		<div>
 			<ga-layout-selector
@@ -21,26 +30,41 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-		<ng2-smart-table
-			class="employees-table"
-			*ngIf="showTable && dataLayoutStyle === 'TABLE'"
-			style="cursor: pointer;"
-			[settings]="settingsSmartTable"
-			[source]="sourceSmartTable"
-			(userRowSelect)="selectEventType($event)"
-			#eventTypesTable
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+			[ngIfElse]="gridLayout"
 		>
-		</ng2-smart-table>
-		<ga-card-grid
-			[settings]="settingsSmartTable"
-			[source]="eventTypeData"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+			<ng2-smart-table
+				style="cursor: pointer;"
+				[settings]="smartTableSettings"
+				[source]="localDataSource"
+				(userRowSelect)="selectEventType($event)"
+				#eventTypesTable
+			>
+			</ng2-smart-table>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ga-card-grid
+				[settings]="smartTableSettings"
+				[source]="eventTypes"
+				[buttonTemplate]="actionButtons"
+			></ga-card-grid>
+			<div class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination 
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems" 
+						[itemsPerPage]="pagination?.itemsPerPage" 
+						[activePage]="pagination?.activePage">
+					</ga-pagination>
+				</ng-container>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template
