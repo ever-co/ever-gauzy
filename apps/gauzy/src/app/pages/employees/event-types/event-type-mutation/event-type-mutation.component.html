@@ -20,41 +20,34 @@
 						<label for="employee" class="label">{{
 							'FORM.LABELS.EMPLOYEE' | translate
 						}}</label>
-						<ga-employee-selector
-							#employeeSelector
-							fullWidth
-							[skipGlobalChange]="true"
-							[defaultSelected]="false"
-							(selectionChanged)="onEmployeeChange($event)"
-						></ga-employee-selector>
+						<ga-employee-multi-select
+							id="employee"
+							[multiple]="false"
+							[label]="false"
+							[placeholder]="'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate"
+							[selectedEmployeeIds]="form.get('employeeId').value"
+							(selectedChange)="onEmployeeChange($event)"
+							formControlName="employeeId"
+						>
+						</ga-employee-multi-select>
 					</div>
 				</div>
 			</div>
-			<div
-				class="row"
-				*ngIf="
-					!(
-						employeeSelector &&
-						employeeSelector.selectedEmployee &&
-						employeeSelector.selectedEmployee.id
-					)
-				"
-			></div>
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label for="title" class="label">{{
-							'FORM.LABELS.TITLE' | translate
-						}}</label>
+						<label
+							for="title"
+							class="label"
+							[innerHtml]="'FORM.LABELS.TITLE' | translate"
+						></label>
 						<input
 							fullWidth
 							id="title"
 							type="text"
 							nbInput
 							formControlName="title"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.TITLE' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.TITLE' | translate"
 						/>
 					</div>
 				</div>
@@ -62,18 +55,18 @@
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label for="description" class="label">{{
-							'FORM.LABELS.DESCRIPTION' | translate
-						}}</label>
+						<label
+							for="description"
+							class="label"
+							[innerHtml]="'FORM.LABELS.DESCRIPTION' | translate"
+						></label>
 						<input
 							fullWidth
 							id="description"
 							type="text"
 							nbInput
 							formControlName="description"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
 						/>
 					</div>
 				</div>
@@ -98,9 +91,7 @@
 					<div class="col-6">
 						<div class="form-group">
 							<input
-								placeholder="{{
-									'FORM.PLACEHOLDERS.DURATION' | translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.DURATION' | translate"
 								fullWidth
 								id="durationInput"
 								type="number"
@@ -130,14 +121,10 @@
 					<div class="col">
 						<div class="form-group">
 							<nb-checkbox formControlName="isActive">
-								<span
-									nbTooltip="{{
-										'EVENT_TYPE_PAGE.ACTIVE' | translate
-									}}"
-									>{{
-										'EVENT_TYPE_PAGE.ACTIVE' | translate
-									}}</span
-								>
+								<span 
+									[nbTooltip]="'EVENT_TYPE_PAGE.ACTIVE' | translate"
+									[innerHtml]="'EVENT_TYPE_PAGE.ACTIVE' | translate"
+								></span>
 							</nb-checkbox>
 						</div>
 					</div>
@@ -149,7 +136,7 @@
 		<button
 			(click)="dialogRef.close()"
 			status="danger"
-			class="mr-3"
+			class="mr-2"
 			nbButton
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}

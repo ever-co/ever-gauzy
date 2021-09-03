@@ -1,11 +1,10 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { IEventTypeViewModel, IOrganization } from '@gauzy/contracts';
-import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Store } from './../../../../@core/services';
 
@@ -17,9 +16,6 @@ export class EventTypeMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 		
-	@ViewChild('employeeSelector')
-	employeeSelector: EmployeeSelectorComponent;
-
 	public organization: IOrganization;
 	eventType: IEventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
@@ -35,7 +31,8 @@ export class EventTypeMutationComponent
 			duration: [],
 			durationUnit: [self.durationUnits[0]],
 			isActive: [false],
-			tags: []
+			tags: [],
+			employeeId: []
 		});
 	}
 
@@ -59,7 +56,10 @@ export class EventTypeMutationComponent
 			.subscribe();
 	}
 
-	onEmployeeChange(ev) { }
+	onEmployeeChange(event) { 
+		this.form.patchValue({ employeeId: event });
+		this.form.updateValueAndValidity();
+	}
 
 	addOrEditEventType() {
 		if (this.form.invalid) {
@@ -68,15 +68,13 @@ export class EventTypeMutationComponent
 
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-		const { selectedEmployee } = this.employeeSelector;
 
 		this.dialogRef.close(
 			Object.assign({
 				id: this.eventType ? this.eventType.id : null,
-				employee: selectedEmployee,
 				tenantId,
 				organizationId
-			}, this.form.getRawValue())
+			}, this.form.value)
 		);
 	}
 
@@ -85,13 +83,14 @@ export class EventTypeMutationComponent
 			return;
 		}
 
-		const { title, description, duration, isActive = false, tags } = this.eventType;
+		const { title, description, duration, isActive = false, tags, employeeId } = this.eventType;
 		this.form.patchValue({
 			title: title,
 			description: description,
 			duration: duration,
 			isActive: isActive,
-			tags
+			tags,
+			employeeId
 		});
 
 		const { durationUnit } = this.eventType;

@@ -128,7 +128,6 @@ And('User can see events table', () => {
 
 When('User click on table first row', () => {
 	eventTypesPage.selectTableRow(0);
-	eventTypesPage.selectTableRow(0);
 });
 
 Then('Edit button will become active', () => {
@@ -191,7 +190,6 @@ And('User can see events table', () => {
 });
 
 When('User click on first table row', () => {
-	eventTypesPage.selectTableRow(0);
 	eventTypesPage.selectTableRow(0);
 });
 

@@ -151,9 +151,7 @@ export class EventTypeComponent
 
 	async addEventType(data: any) {
 		try {
-			const { title } = data;
-			const employeeId = data.employee ? data.employee.id : null;
-			
+			const { title, employeeId } = data;			
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
@@ -191,9 +189,7 @@ export class EventTypeComponent
 			.subscribe(async (data) => {
 				try {
 					if (data) {
-						const { id, title } = data;
-						const employeeId = data.employee ? data.employee.id : null;
-
+						const { id, title, employeeId } = data;
 						const { tenantId } = this.store.user;
 						const { id: organizationId } = this.organization;
 

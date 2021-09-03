@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { EventTypeMutationComponent } from './event-type-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { EmployeeSelectorsModule } from '../../../../@theme/components/header/selectors/employee/employee.module';
+import { EmployeeMultiSelectModule } from './../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TranslateModule } from '../../../../@shared/translate/translate.module';
 
@@ -32,7 +32,7 @@ import { TranslateModule } from '../../../../@shared/translate/translate.module'
 		NbDatepickerModule,
 		NbSelectModule,
 		NbRadioModule,
-		EmployeeSelectorsModule,
+		EmployeeMultiSelectModule,
 		NbCheckboxModule,
 		NbTooltipModule,
 		TranslateModule
