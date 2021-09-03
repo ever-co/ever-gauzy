@@ -28,7 +28,8 @@ import {
 	IEmployee,
 	IPayment,
 	OrganizationContactBudgetTypeEnum,
-	IExpense
+	IExpense,
+	ITimeLog
 } from '@gauzy/contracts';
 import {
 	Contact,
@@ -39,7 +40,8 @@ import {
 	Payment,
 	Proposal,
 	Tag,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	TimeLog
 } from '../core/entities/internal';
 
 @Entity('organization_contact')
@@ -177,6 +179,14 @@ export class OrganizationContact
 	})
 	expenses?: IExpense[];
 
+
+	/**
+	 * TimeLog
+	 */
+	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
+	@OneToMany(() => TimeLog, (it) => it.organizationContact)
+	timeLogs?: ITimeLog[];
+	
 	/*
     |--------------------------------------------------------------------------
     | @ManyToMany 

@@ -3,11 +3,12 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	Unique
+	Unique,
+	Index
 } from 'typeorm';
 import { ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsDateString } from 'class-validator';
+import { IsNumber, IsDateString, IsString } from 'class-validator';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { TimeSlot } from './time-slot.entity';
 
@@ -16,18 +17,6 @@ import { TimeSlot } from './time-slot.entity';
 export class TimeSlotMinute
 	extends TenantOrganizationBaseEntity
 	implements ITimeSlotMinute {
-
-	@ApiProperty({ type: () => TimeSlot })
-	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.timeSlotMinutes, {
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	timeSlot?: ITimeSlot;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: TimeSlotMinute) => it.timeSlot)
-	@Column({ nullable: true })
-	readonly timeSlotId?: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
@@ -43,4 +32,23 @@ export class TimeSlotMinute
 	@IsDateString()
 	@Column()
 	datetime?: Date;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	@ApiProperty({ type: () => TimeSlot })
+	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.timeSlotMinutes, {
+		onDelete: 'CASCADE'
+	})
+	timeSlot?: ITimeSlot;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: TimeSlotMinute) => it.timeSlot)
+	@IsString()
+	@Index()
+	@Column()
+	readonly timeSlotId?: string;
 }

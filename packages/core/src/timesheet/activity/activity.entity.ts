@@ -25,7 +25,13 @@ import {
 	IsNumber,
 	IsDateString
 } from 'class-validator';
-import { Employee, OrganizationProject, Task, TenantOrganizationBaseEntity, TimeSlot } from './../../core/entities/internal';
+import {
+	Employee,
+	OrganizationProject,
+	Task,
+	TenantOrganizationBaseEntity,
+	TimeSlot
+} from './../../core/entities/internal';
 import { getConfig } from '@gauzy/config';
 const config = getConfig();
 
@@ -105,12 +111,16 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 
 	// Organization Project
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, { nullable: true })
+	@ManyToOne(() => OrganizationProject, (project) => project.activities, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
 	project?: IOrganizationProject;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Activity) => it.project)
 	@IsString()
+	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	projectId?: string;
@@ -119,7 +129,6 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiProperty({ type: () => TimeSlot })
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
 		nullable: true,
-		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	timeSlot?: ITimeSlot;
@@ -127,14 +136,16 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Activity) => it.timeSlot)
 	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly timeSlotId?: string;
 
 	// Task
 	@ApiProperty({ type: () => Task })
-	@ManyToOne(() => Task, { nullable: true })
+	@ManyToOne(() => Task, (task) => task.activities, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	task?: ITask;
 
