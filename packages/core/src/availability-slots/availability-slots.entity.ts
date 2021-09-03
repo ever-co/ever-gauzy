@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, RelationId, JoinColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -21,19 +21,7 @@ import {
 export class AvailabilitySlot
 	extends TenantOrganizationBaseEntity
 	implements IAvailabilitySlot {
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	employee?: IEmployee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@IsOptional()
-	@RelationId(
-		(availabilitySlot: AvailabilitySlot) => availabilitySlot.employee
-	)
-	@Column({ nullable: true })
-	readonly employeeId?: string;
-
+	
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
@@ -54,4 +42,29 @@ export class AvailabilitySlot
 	@IsNotEmpty()
 	@Column({ type: 'text', nullable: true })
 	type: AvailabilitySlotType;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: AvailabilitySlot) => it.employee)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	readonly employeeId?: string;
 }

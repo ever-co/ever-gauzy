@@ -6,12 +6,10 @@ import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { AvailabilitySlotsController } from './availability-slots.controller';
 import { CommandHandlers } from './commands/handlers';
-import { Employee } from '../employee/employee.entity';
-import { EmployeeService } from '../employee/employee.service';
-import { Organization } from '../organization/organization.entity';
-import { OrganizationService } from '../organization/organization.service';
-import { UserModule } from '../user/user.module';
-import { TenantModule } from '../tenant/tenant.module';
+import { EmployeeModule } from './../employee/employee.module';
+import { OrganizationModule } from './../organization/organization.module';
+import { UserModule } from './../user/user.module';
+import { TenantModule } from './../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -19,15 +17,17 @@ import { TenantModule } from '../tenant/tenant.module';
 			{ path: '/availability-slots', module: AvailabilitySlotsModule }
 		]),
 		UserModule,
-		TypeOrmModule.forFeature([AvailabilitySlot, Employee, Organization]),
+		TypeOrmModule.forFeature([
+			AvailabilitySlot
+		]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		EmployeeModule,
+		OrganizationModule
 	],
 	controllers: [AvailabilitySlotsController],
 	providers: [
 		AvailabilitySlotsService,
-		EmployeeService,
-		OrganizationService,
 		...CommandHandlers
 	],
 	exports: [AvailabilitySlotsService]
