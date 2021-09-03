@@ -6,6 +6,7 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -16,6 +17,7 @@ Given('Login with default credentials', () => {
 
 // Add S3 file provider
 And('User can visit File storage page', () => {
+	waitUntil(3000);
 	cy.visit('/#/pages/settings/file-storage', { timeout: pageLoadTimeout });
 });
 
