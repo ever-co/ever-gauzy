@@ -21,11 +21,11 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
     }
 
     /**
-    * Called before entity removal.
-    */
-    beforeRemove(event: RemoveEvent<TimeSlot>) {
-        console.log(`BEFORE ENTITY WITH ID ${event.entityId} REMOVED: `, event.entity);
+     * Called after entity removal.
+     */
+    afterRemove(event: RemoveEvent<TimeSlot>) {
         if (event.entityId && event.entity.screenshots) {
+            console.log(`AFTER TIMESLOT WITH ID ${event.entityId} REMOVED: `, event.entity);
             const { screenshots } = event.entity;
             if (screenshots instanceof Array && screenshots.length > 0) {
                 screenshots.forEach((screenshot: IScreenshot) => {

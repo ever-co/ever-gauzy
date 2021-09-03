@@ -120,7 +120,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * OrganizationProject
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, { nullable: true })
+	@ManyToOne(() => OrganizationProject, (project) => project.timeLogs, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	project?: IOrganizationProject;
 
@@ -136,7 +139,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * Task
 	 */
 	@ApiProperty({ type: () => Task })
-	@ManyToOne(() => Task, { nullable: true })
+	@ManyToOne(() => Task, (task) => task.activities, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	task?: ITask;
 
@@ -152,7 +158,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * OrganizationContact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, { nullable: true })
+	@ManyToOne(() => OrganizationContact, (contact) => contact.timeLogs, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 

@@ -18,7 +18,13 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { IIncome, CurrenciesEnum, IEmployee, ITag, IOrganizationContact } from '@gauzy/contracts';
+import {
+	IIncome,
+	CurrenciesEnum,
+	IEmployee,
+	ITag,
+	IOrganizationContact
+} from '@gauzy/contracts';
 import {
 	Employee,
 	OrganizationContact,
@@ -93,7 +99,10 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 
 	// Client
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, { nullable: true })
+	@ManyToOne(() => OrganizationContact, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	client?: IOrganizationContact;
 
