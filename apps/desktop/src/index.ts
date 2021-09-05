@@ -141,6 +141,7 @@ function startServer(value, restart = false) {
 		process.env.API_BASE_URL = `http://localhost:${
 			value.port || environment.API_DEFAULT_PORT
 		}`;
+		setEnvAdditional();
 		// require(path.join(__dirname, 'api/main.js'));
 		serverGauzy = fork(path.join(__dirname, './api/main.js'), {
 			silent: true
@@ -242,6 +243,15 @@ function startServer(value, restart = false) {
 	});
 
 	return true;
+}
+
+function setEnvAdditional() {
+	const additionalConfig = LocalStore.getAdditionalConfig();
+	Object.keys(additionalConfig).forEach((key) => {
+		if (additionalConfig[key]) {
+			process.env[key] = additionalConfig[key];
+		}
+	});
 }
 
 const dialogMessage = (msg) => {

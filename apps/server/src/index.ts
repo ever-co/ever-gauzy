@@ -198,6 +198,8 @@ const runServer = () => {
 
 const getEnvApi = () => {
 	const config = LocalStore.getStore('configs');
+	updateConfigUi(config);
+	const addsConfig = LocalStore.getAdditionalConfig();
 	return {
 		IS_ELECTRON: 'true',
         DB_PATH: sqlite3filename,
@@ -208,6 +210,7 @@ const getEnvApi = () => {
         DB_USER: config.dbUsername,
         DB_PASS: config.dbPassword,
         PORT: config.port ? config.port.toString() : '',
+		...addsConfig
 	}
 }
 

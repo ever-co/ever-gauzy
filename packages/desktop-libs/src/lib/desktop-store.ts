@@ -109,5 +109,18 @@ export const LocalStore = {
 		store.set({
 			additionalSetting: { ...addSetting, ...values }
 		});
+	},
+
+	getAdditionalConfig: () => {
+		const addSetting = store.get('additionalSetting');
+		const values = {};
+		if (addSetting) {
+			Object.keys(addSetting).forEach((value) => {
+				if (addSetting[value]) {
+					values[value] = addSetting[value]
+				};
+			})
+		}
+		return values;
 	}
 };
