@@ -5,7 +5,10 @@ on:
 jobs:    
     e2e-tests:
 
-        runs-on: ubuntu-latest
+        runs-on: [self-hosted]
+
+        env:
+          CYPRESS_CACHE_FOLDER: C:\Users\Evereq\AppData\Local\Cypress\Cache
 
         timeout-minutes: 360
 
@@ -15,13 +18,17 @@ jobs:
 
             - uses: actions/cache@v2
               with:
-                path: |
-                  ~/.cache/Cypress
-                  node_modules
-                key: my-cache-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                path: |                  
+                  ~/.cache
+                key: ${{ runner.os }}-cache-${{ hashFiles('yarn.lock') }}
+                restore-keys: |
+                  ${{ runner.os }}-cache-
 
-            - name: Increase file limit
-              run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+            # - name: Increase file limit
+            #  run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+
+            - name: Add Yarn to path
+              run: echo "C:\Users\Precision T3610\AppData\Roaming\npm" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
             - name: Bootstrap Yarn
               run: yarn bootstrap
@@ -29,14 +36,36 @@ jobs:
             - name: Build all packages
               run: yarn build:package:all
 
+            - name: Install forever package
+              run: npm install forever -g
+
             - name: Run API in background
-              run: yarn start:api &
+              run: yarn start:api:forever
 
             - name: Run UI in background
-              run: yarn start:gauzy &
+              run: yarn start:gauzy:forever
+                        
+            - name: Install Cypress Package
+              run: npm install -g cypress
 
+            - name: Install Cypress for our e2e tests
+              run: | 
+                cd apps/gauzy-e2e
+                cypress install
+            
             - name: Cypress info
-              run: npx cypress info
+              env:
+                # make sure every Cypress install prints minimal information
+                CI: 1
+              # print Cypress and OS info
+              run: |
+                npx cypress verify
+                npx cypress info
+                npx cypress version
+                npx cypress version --component package
+                npx cypress version --component binary
+                npx cypress version --component electron
+                npx cypress version --component node
 
             - name: Cypress run
               uses: cypress-io/github-action@v2

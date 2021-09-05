@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	verifyElementIsVisible,
 	clickButtonByIndex,
@@ -53,11 +54,11 @@ export const selectStatusFromDropdown = (text) => {
 };
 
 export const selectTeamDropdownVisible = () => {
-	verifyElementIsVisible(TeamsTasksPage.selectTeamMultyselectCss);
+	verifyElementIsVisible(TeamsTasksPage.selectTeamMultiSelectCss);
 };
 
 export const clickSelectTeamDropdown = () => {
-	clickButton(TeamsTasksPage.selectTeamMultyselectCss);
+	clickButton(TeamsTasksPage.selectTeamMultiSelectCss);
 };
 
 export const selectTeamDropdownOption = (index) => {
@@ -73,11 +74,11 @@ export const enterTitleInputData = (data) => {
 	enterInput(TeamsTasksPage.addTitleInputCss, data);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(TeamsTasksPage.tagsSelectCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(TeamsTasksPage.tagsSelectCss);
 };
 
@@ -85,12 +86,12 @@ export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(TeamsTasksPage.tagsSelectOptionCss, index);
 };
 
-export const closeTagsMultyselectDropdownButtonVisible = () => {
-	verifyElementIsVisible(TeamsTasksPage.closeTagsMultyselectDropdownCss);
+export const closeTagsMultiSelectDropdownButtonVisible = () => {
+	verifyElementIsVisible(TeamsTasksPage.closeTagsMultiSelectDropdownCss);
 };
 
-export const clickCloseTagsMultyselectDropdownButton = () => {
-	clickButton(TeamsTasksPage.closeTagsMultyselectDropdownCss);
+export const clickCloseTagsMultiSelectDropdownButton = () => {
+	clickButton(TeamsTasksPage.closeTagsMultiSelectDropdownCss);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
@@ -103,7 +104,7 @@ export const dueDateInputVisible = () => {
 
 export const enterDueDateData = () => {
 	clearField(TeamsTasksPage.dueDateInputCss);
-	const date = Cypress.moment().add(1, 'days').format('MMM D, YYYY');
+	const date = dayjs().add(1, 'days').format('MMM D, YYYY');
 	enterInput(TeamsTasksPage.dueDateInputCss, date);
 };
 

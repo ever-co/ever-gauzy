@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	clearField,
 	clickButton,
@@ -214,7 +215,7 @@ export const clickDateFormatDropdown = () => {
 };
 
 export const selectDateFormatFromDropdown = () => {
-	const today = Cypress.moment().format('MM/DD/YYYY');
+	const today = dayjs().format('MM/DD/YYYY');
 	clickElementByText(RegisterPage.dropdownOptionCss, today);
 };
 

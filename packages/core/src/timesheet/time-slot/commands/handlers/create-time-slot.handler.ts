@@ -5,12 +5,14 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
+import {
+	Employee,
+	TimeLog
+} from './../../../../core/entities/internal';
+import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
-import { TimeSlot } from '../../../time-slot.entity';
-import { TimeLog } from '../../../time-log.entity';
-import { Employee } from '../../../../employee/employee.entity';
-import { BulkActivitiesSaveCommand } from '../../../activity/commands/bulk-activities-save.command';
-import { TimeSlotMergeCommand } from '../time-slot-merge.command';
+import { BulkActivitiesSaveCommand } from '../../../activity/commands';
+import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler

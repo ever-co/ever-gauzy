@@ -10,12 +10,16 @@ import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/product-types', module: ProductTypesModule }
+			{ path: '/product-types', module: ProductTypeModule }
 		]),
-		TypeOrmModule.forFeature([ProductType, ProductTypeTranslation]),
+		TypeOrmModule.forFeature([
+			ProductType,
+			ProductTypeTranslation
+		]),
 		TenantModule
 	],
 	controllers: [ProductTypeController],
-	providers: [ProductTypeService]
+	providers: [ProductTypeService],
+	exports: [ProductTypeService]
 })
-export class ProductTypesModule {}
+export class ProductTypeModule {}

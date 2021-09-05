@@ -11,6 +11,7 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -33,6 +34,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
+	waitUntil(3000);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -205,7 +207,7 @@ When('User click on status button', () => {
 });
 
 Then('User can see confirm button', () => {
-	proposalsPage.confrimStatusButtonVisible();
+	proposalsPage.confirmStatusButtonVisible();
 });
 
 When('User click on confirm button', () => {
@@ -262,16 +264,16 @@ When('User click on add new proposal template button', () => {
 	proposalsPage.clickAddProposalTemplateBtn();
 });
 
-Then('User can see employee multyselect', () => {
-	proposalsPage.employeeMultySelectVisible();
+Then('User can see employee multiselect', () => {
+	proposalsPage.employeeMultiSelectVisible();
 });
 
-When('User click on employee multyselect', () => {
-	proposalsPage.clickEmployeeMultySelect();
+When('User click on employee multiselect', () => {
+	proposalsPage.clickEmployeeMultiSelect();
 });
 
-Then('User can select employee from multyselect dropdown options', () => {
-	proposalsPage.selectEmployeeFromMultyselectDropdown(0);
+Then('User can select employee from multiselect dropdown options', () => {
+	proposalsPage.selectEmployeeFromMultiSelectDropdown(0);
 });
 
 And('User can see template name input field', () => {

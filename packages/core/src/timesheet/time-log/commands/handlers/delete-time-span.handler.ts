@@ -1,5 +1,5 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { TimeLog } from './../../../time-log.entity';
+import { TimeLog } from './../../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
@@ -20,6 +20,7 @@ export class DeleteTimeSpanHandler
 
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+		
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
 	) {}

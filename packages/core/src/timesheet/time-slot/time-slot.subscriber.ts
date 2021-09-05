@@ -1,7 +1,7 @@
 import { EntitySubscriberInterface, EventSubscriber, RemoveEvent } from "typeorm";
 import * as moment from 'moment';
 import { IScreenshot } from "@gauzy/contracts";
-import { TimeSlot } from "./../time-slot.entity";
+import { TimeSlot } from "./time-slot.entity";
 import { FileStorage } from "./../../core/file-storage";
 
 @EventSubscriber()
@@ -21,11 +21,11 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
     }
 
     /**
-    * Called before entity removal.
-    */
-    beforeRemove(event: RemoveEvent<TimeSlot>) {
-        console.log(`BEFORE ENTITY WITH ID ${event.entityId} REMOVED: `, event.entity);
+     * Called after entity removal.
+     */
+    afterRemove(event: RemoveEvent<TimeSlot>) {
         if (event.entityId && event.entity.screenshots) {
+            console.log(`AFTER TIMESLOT WITH ID ${event.entityId} REMOVED: `, event.entity);
             const { screenshots } = event.entity;
             if (screenshots instanceof Array && screenshots.length > 0) {
                 screenshots.forEach((screenshot: IScreenshot) => {

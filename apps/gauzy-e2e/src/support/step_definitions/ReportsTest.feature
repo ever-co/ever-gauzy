@@ -3,16 +3,16 @@ Feature: Reports test
     Given Login with default credentials and visit Reports page
   Scenario: Verify Time tracking
     And User can verify Time tracking content
-    And User can verify Time tracking settigns state
+    And User can verify Time tracking settings state
   Scenario: Payments tracking
     And User can verify Payments content
-    And User can verify Payments settigns state
+    And User can verify Payments settings state
   Scenario: Time Off tracking
     And User can verify Time Off content
-    And User can verify Time Off settigns state
+    And User can verify Time Off settings state
   Scenario: Invoices tracking
     And User can verify Invoices content
-    And User can verify Invoices settigns state
+    And User can verify Invoices settings state
   Scenario: Add new tag
     And User can add new tag
   Scenario: Add employee

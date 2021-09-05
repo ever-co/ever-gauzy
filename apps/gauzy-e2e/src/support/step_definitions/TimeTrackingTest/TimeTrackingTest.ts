@@ -42,6 +42,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
+	waitUntil(3000);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -260,7 +261,7 @@ Then('Employee can see manual time button', () => {
 	timeTrackingPage.manualBtnVisible();
 });
 
-When('Employee click on manaul time button', () => {
+When('Employee click on manual time button', () => {
 	timeTrackingPage.clickManualBtn();
 });
 

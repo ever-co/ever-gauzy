@@ -1,13 +1,15 @@
-import { TimeSlotCreateHandler } from './time-slot-create.handler';
 import { TimesheetCreateHandler } from './timesheet-create.handler';
+import { TimesheetFirstOrCreateHandler } from './timesheet-first-or-create.handler';
 import { TimesheetGetHandler } from './timesheet-get.handler';
-import { ScreenshotCreateHandler } from './screenshot-create.handler';
-import { ActivityCreateHandler } from './activity-create.handler';
+import { TimesheetRecalculateHandler } from './timesheet-recalculate.handler';
+import { TimesheetSubmitHandler } from './timesheet-submit.handler';
+import { TimesheetUpdateStatusHandler } from './timesheet-update-status.handler';
 
 export const CommandHandlers = [
-	TimeSlotCreateHandler,
 	TimesheetCreateHandler,
+	TimesheetFirstOrCreateHandler,
 	TimesheetGetHandler,
-	ScreenshotCreateHandler,
-	ActivityCreateHandler
+	TimesheetRecalculateHandler,
+	TimesheetSubmitHandler,
+	TimesheetUpdateStatusHandler
 ];

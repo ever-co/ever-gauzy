@@ -121,7 +121,7 @@ import {
 import {
 	createDefaultTimeSheet,
 	createRandomTimesheet
-} from '../../timesheet/timesheet/timesheet.seed';
+} from './../../timesheet/timesheet.seed';
 import {
 	createDefaultTask,
 	createRandomTask
@@ -282,7 +282,7 @@ import {
 	createRandomProductOption, 
 	createRandomProductOptionGroups 
 } from '../../product-option/product-option.seed';
-import { createRandomProductVariantSettings } from '../../product-settings/product-settings.seed';
+import { createRandomProductVariantSettings } from '../../product-setting/product-setting.seed';
 import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
 import { createRandomProductVariantPrice } from '../../product-variant-price/product-variant-price.seed';
 import {
@@ -312,7 +312,7 @@ import {
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
 import { createRandomMerchants, createDefaultMerchants } from './../../merchant/merchant.seed';
-import { createRandomWarehouses } from 'warehouse/warehouse.seed';
+import { createRandomWarehouses } from './../../warehouse/warehouse.seed';
 
 
 export enum SeederTypeEnum {

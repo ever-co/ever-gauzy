@@ -3,7 +3,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { PaymentService } from 'apps/gauzy/src/app/@core/services/payment.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { IInvoice, IPayment } from 'packages/contracts/dist';
+import { IInvoice, IPayment } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-payment-receipt-mutation',

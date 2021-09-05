@@ -24,7 +24,8 @@ import {
 	IPayment,
 	IPaymentReportData,
 	LanguagesEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -63,11 +64,11 @@ export class PaymentController extends CrudController<Payment> {
 		const reports = await this.paymentService.getPayments(request);
 
 		let response: IPaymentReportData[] = [];
-		if (request.groupBy === 'date') {
+		if (request.groupBy === ReportGroupFilterEnum.date) {
 			response = this.paymentMapService.mapByDate(reports);
-		} else if (request.groupBy === 'client') {
+		} else if (request.groupBy === ReportGroupFilterEnum.client) {
 			response = this.paymentMapService.mapByClient(reports);
-		} else if (request.groupBy === 'project') {
+		} else if (request.groupBy === ReportGroupFilterEnum.project) {
 			response = this.paymentMapService.mapByProject(reports);
 		}
 		return response;

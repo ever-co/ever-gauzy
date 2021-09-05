@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IAvailabilitySlotsCreateInput } from '@gauzy/contracts';
+import { IAvailabilitySlot, IAvailabilitySlotsCreateInput } from '@gauzy/contracts';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { TenantAwareCrudService } from './../core/crud';
 
@@ -16,7 +16,7 @@ export class AvailabilitySlotsService extends TenantAwareCrudService<Availabilit
 
 	public async createBulk(
 		availabilitySlots: IAvailabilitySlotsCreateInput[]
-	): Promise<AvailabilitySlot[]> {
-		return this.availabilitySlotsRepository.save(availabilitySlots);
+	): Promise<IAvailabilitySlot[]> {
+		return await this.availabilitySlotsRepository.save(availabilitySlots);
 	}
 }

@@ -9,6 +9,7 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -26,6 +27,7 @@ Given('Login with default credentials', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	waitUntil(3000);
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
@@ -69,7 +71,7 @@ When('User click on employee dropdown', () => {
 	eventTypesPage.clickSelectEmployeeDropdown();
 });
 
-Then('User can select epmloyee from dropdown options', () => {
+Then('User can select employee from dropdown options', () => {
 	eventTypesPage.selectEmployeeFromDropdown(1);
 });
 
@@ -125,7 +127,6 @@ And('User can see events table', () => {
 });
 
 When('User click on table first row', () => {
-	eventTypesPage.selectTableRow(0);
 	eventTypesPage.selectTableRow(0);
 });
 
@@ -189,7 +190,6 @@ And('User can see events table', () => {
 });
 
 When('User click on first table row', () => {
-	eventTypesPage.selectTableRow(0);
 	eventTypesPage.selectTableRow(0);
 });
 

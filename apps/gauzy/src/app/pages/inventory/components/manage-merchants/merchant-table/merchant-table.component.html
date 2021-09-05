@@ -1,129 +1,162 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-
-	<nb-card-header>
-		<div class="main-header">
-			<div class="top-header">
-				<ngx-back-navigation></ngx-back-navigation>
-				<h4>
-					<ngx-header-title>
-						{{ 'INVENTORY_PAGE.HEADER' | translate }}
-					</ngx-header-title>
-				</h4>
-			</div>
-
-			<div class="card-header-title">
-				<div style="margin-right: 9px"></div>
-				<ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
-			</div>
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary" 
+	nbSpinnerSize="large"
+>
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
+			<ngx-back-navigation></ngx-back-navigation>
+			<h4> 
+				<ngx-header-title>
+					{{ 'INVENTORY_PAGE.MERCHANTS' | translate }}
+				</ngx-header-title> 
+			</h4>
+		</div>
+		<div>
+			<ga-layout-selector
+				[componentName]="viewComponentName"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
-
 	<nb-card-body>
 		<div class="mb-3">
-			<button nbButton status="success" class="mr-2" (click)="onAddStoreClick()">
-				{{ 'INVENTORY_PAGE.CREATE_MERCHANT' | translate }}
+			<button
+				(click)="onAddStoreClick()"
+				nbButton
+				status="success"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
 			</button>
-
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-
-		<ng2-smart-table [settings]="settingsSmartTable" (userRowSelect)="selectStore($event)" [source]="source"
-			style="cursor: pointer" *ngIf="dataLayoutStyle === 'TABLE'">
-		</ng2-smart-table>
-
-
-		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-			<li class="flex-item" *ngFor="let x of merchantData">
-				<div class="info-line">
-					<span class="info-meta">{{
-								'INVENTORY_PAGE.IMAGE' | translate
-							}}
-					</span>
-					<div class="card-image">
-						<div class="card-image" *ngIf="!x.logo || !x.logo.url" [ngStyle]="{
-										backgroundImage:
-											'url(https://afostats.imagead.net/uploads/afo/no_img.png)'
-									}" alt="Product Item Photo"></div>
-						<div class="card-image" *ngIf="x.logo && x.logo.url" [ngStyle]="{
-										backgroundImage:
-											'url(' + x.logo.url + ')'
-									}" alt="Product Item Photo"></div>
-					</div>
-				</div>
-
-				<div class="info-line">
-					<span class="info-meta">{{
-								'INVENTORY_PAGE.NAME' | translate
-							}}</span>
-					<span class="info-value">{{ x.name }}</span>
-				</div>
-
-				<div class="info-line">
-					<span class="info-meta">{{
-								'INVENTORY_PAGE.CODE' | translate
-							}}</span>
-					<span class="info-value">{{ x.code }}</span>
-				</div>
-
-				<div class="info-line">
-					<span class="info-meta">{{
-								'INVENTORY_PAGE.PHONE' | translate
-							}}</span>
-					<span class="info-value">{{ x.phone }}</span>
-				</div>
-
-
-				<div class="info-line">
-					<span class="info-meta">{{
-								'INVENTORY_PAGE.EMAIL' | translate
-							}}</span>
-					<span class="info-value">{{ x.email }}</span>
-				</div>
-
-
-				<div class="info-line">
-					<span class="info-meta">{{
-								'INVENTORY_PAGE.DESCRIPTION' | translate
-							}}</span>
-					<span class="info-value">{{ x.description }}</span>
-				</div>
-
-
-				<nb-card-footer class="card-footer">
-					<ng-container *ngTemplateOutlet="
-									actionButtons;
-									context: {
-										buttonSize: 'tiny',
-										selectedItem: x
-									}
-								">
-					</ng-container>
-				</nb-card-footer>
-			</li>
-		</ul>
-
-		<div class="pagination-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-			<ga-pagination *ngIf="totalItems > itemsPerPage" (selectedPage)="onPageChange($event)"
-				[totalItems]="totalItems" [itemsPerPage]="itemsPerPage" [activePage]="activePage"></ga-pagination>
-		</div>
-
-
+		<ng-template 
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIfElse]="gridLayout"
+		>
+			<ng2-smart-table 
+				[settings]="settingsSmartTable"
+				(userRowSelect)="selectStore($event)"
+				[source]="smartTableSource"
+				style="cursor: pointer" 
+				#merchantsTable
+			></ng2-smart-table>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ng-container *ngTemplateOutlet="gridViewTemplate"></ng-container>
+			<div class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination 
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems" 
+						[itemsPerPage]="pagination?.itemsPerPage" 
+						[activePage]="pagination?.activePage">
+					</ga-pagination>
+				</ng-container>
+			</div>
+		</ng-template>
 	</nb-card-body>
-
 </nb-card>
 
-
-<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-	<button (click)="onEditStore(selectedItem)" nbButton status="info" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+<ng-template 
+	#actionButtons 
+	let-buttonSize="buttonSize" 
+	let-selectedItem="selectedItem"
+>
+	<button 
+		(click)="onEditStore(selectedItem)"
+		nbButton 
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton" 
+		[size]="buttonSize || 'medium'"
+	>
 		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
-	<button (click)="delete()" nbButton status="danger" class="mr-2" [disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'">
+	<button 
+		(click)="onDelete(selectedItem)"
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
 		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 		{{ 'BUTTONS.DELETE' | translate }}
 	</button>
+</ng-template>
+
+<ng-template #gridViewTemplate>
+	<ul class="flex-container">
+		<li class="flex-item" *ngFor="let x of merchants">
+			<div class="info-line">
+				<span class="info-meta">{{ 'INVENTORY_PAGE.IMAGE' | translate }} </span>
+				<div class="card-image">
+					<div 
+						class="card-image" 
+						*ngIf="!x.logo || !x.logo.url" 
+						[ngStyle]="{
+							backgroundImage:
+								'url(https://afostats.imagead.net/uploads/afo/no_img.png)'
+						}" 
+						alt="Product Item Photo">
+					</div>
+					<div 
+						class="card-image" 
+						*ngIf="x.logo && x.logo.url" 
+						[ngStyle]="{
+							backgroundImage:
+								'url(' + x.logo.url + ')'
+						}" 
+						alt="Product Item Photo">
+					</div>
+				</div>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.NAME' | translate
+				}}</span>
+				<span class="info-value">{{ x.name }}</span>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.CODE' | translate
+				}}</span>
+				<span class="info-value">{{ x.code }}</span>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.PHONE' | translate
+				}}</span>
+				<span class="info-value">{{ x.phone }}</span>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.EMAIL' | translate
+				}}</span>
+				<span class="info-value">{{ x.email }}</span>
+			</div>
+			<div class="info-line">
+				<span class="info-meta">{{
+					'INVENTORY_PAGE.DESCRIPTION' | translate
+				}}</span>
+				<span class="info-value">{{ x.description }}</span>
+			</div>
+			<nb-card-footer class="card-footer">
+				<ng-container *ngTemplateOutlet="
+						actionButtons;
+						context: {
+							buttonSize: 'tiny',
+							selectedItem: x
+						}
+					">
+				</ng-container>
+			</nb-card-footer>
+		</li>
+	</ul>
 </ng-template>

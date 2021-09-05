@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-    node: circleci/node@4.1.0
+    node: circleci/node@4.7.0
     pulumi: pulumi/pulumi@2.0.0
 
 aliases:
@@ -271,31 +271,38 @@ jobs:
 
     pulumi_deploy:
         <<: *defaults
+        machine:
+            image: ubuntu-2004:202010-01
+
         working_directory: /tmp/workspace/pulumi
-        docker:
-            - image: circleci/node:latest
         steps:
             - checkout
             - run: *install-node
             - run: *install-deps
             - run: *install-yarn
+
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
                       - yarn-packages-pulumi-{{ checksum "yarn.lock" }}
+
             - pulumi/login
+
             - run:
                   name: 'Installing NPM Packages'
                   command: |
                       yarn bootstrap
                   no_output_timeout: 60m
+
             - pulumi/update:
                   stack: dev
+
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-pulumi-{{ checksum "yarn.lock" }}
                   paths:
                       - ~/.cache/yarn
+
             - persist_to_workspace:
                   root: /tmp/workspace/pulumi
                   paths:

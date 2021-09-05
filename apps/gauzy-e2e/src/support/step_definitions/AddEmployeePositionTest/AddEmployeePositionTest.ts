@@ -9,6 +9,7 @@ import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po'
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -19,11 +20,12 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
+	waitUntil(3000);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
 // Add new employee position
-Then('User can go to Employee postions page', () => {
+Then('User can go to Employee positions page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -56,12 +58,12 @@ And('User can add data for new position', () => {
 	);
 });
 
-And('User can see tag multiselect', () => {
-	addEmployeePositionPage.tagsMultyselectVisible();
+And('User can see tag multi-select', () => {
+	addEmployeePositionPage.tagsMultiSelectVisible();
 });
 
-When('User click on tag multiselect', () => {
-	addEmployeePositionPage.clickTagsMultyselect();
+When('User click on tag multi-select', () => {
+	addEmployeePositionPage.clickTagsMultiSelect();
 });
 
 Then('User can pick tag from dropdown menu', () => {
@@ -118,12 +120,12 @@ Then('User can edit previously created position', () => {
 	);
 });
 
-And('User can see tag multiselect', () => {
-	addEmployeePositionPage.tagsMultyselectVisible();
+And('User can see tag multi-select', () => {
+	addEmployeePositionPage.tagsMultiSelectVisible();
 });
 
-When('User click on tag multiselect', () => {
-	addEmployeePositionPage.clickTagsMultyselect();
+When('User click on tag multi-select', () => {
+	addEmployeePositionPage.clickTagsMultiSelect();
 });
 
 Then('User can pick tag from dropdown menu', () => {
@@ -184,12 +186,12 @@ And('User can add data for new position', () => {
 	);
 });
 
-And('User can see tag multiselect', () => {
-	addEmployeePositionPage.tagsMultyselectVisible();
+And('User can see tag multi-select', () => {
+	addEmployeePositionPage.tagsMultiSelectVisible();
 });
 
-When('User click on tag multiselect', () => {
-	addEmployeePositionPage.clickTagsMultyselect();
+When('User click on tag multi-select', () => {
+	addEmployeePositionPage.clickTagsMultiSelect();
 });
 
 Then('User can pick tag from dropdown menu', () => {

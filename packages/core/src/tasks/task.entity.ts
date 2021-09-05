@@ -12,6 +12,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import {
+	IActivity,
 	IEmployee,
 	IInvoiceItem,
 	IOrganizationProject,
@@ -24,6 +25,7 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import {
+	Activity,
 	Employee,
 	InvoiceItem,
 	OrganizationProject,
@@ -117,32 +119,55 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
     | @OneToMany 
     |--------------------------------------------------------------------------
     */
-	// Invoice Items
+	/**
+	 * InvoiceItem
+	 */
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.task)
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
-	// Timelogs
+	/**
+	 * TimeLog
+	 */
+	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
 	@OneToMany(() => TimeLog, (timeLog) => timeLog.task)
+	@JoinColumn()
 	timeLogs?: ITimeLog[];
+
+	/**
+	 * Activity
+	 */
+	@ApiPropertyOptional({ type: () => Activity, isArray: true })
+	@OneToMany(() => Activity, (activity) => activity.task)
+	@JoinColumn()
+	activities?: IActivity[];
 
 	/*
     |--------------------------------------------------------------------------
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
-	// Tags
+
+	/**
+	 * Tags
+	 */
 	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.task)
 	tags?: ITag[];
 
-	// Members
+	/**
+	 * Members
+	 */
+	@ApiProperty({ type: () => Employee })
 	@ManyToMany(() => Employee, { cascade: ['update'] })
 	@JoinTable({ name: 'task_employee' })
 	members?: IEmployee[];
 
-	// Teams
+	/**
+	 * OrganizationTeam
+	 */
+	@ApiProperty({ type: () => OrganizationTeam })
 	@ManyToMany(() => OrganizationTeam, { cascade: ['update'] })
 	@JoinTable({ name: 'task_team' })
 	teams?: IOrganizationTeam[];

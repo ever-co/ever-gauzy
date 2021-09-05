@@ -1,22 +1,21 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
-import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { first, tap } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { combineLatest } from 'rxjs';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { WarehouseService } from 'apps/gauzy/src/app/@core/services/warehouse.service';
-import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { ItemImgTagsComponent } from '../../table-components/item-img-tags-row.component';
-import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
-import { HttpClient } from '@angular/common/http';
-import { API_PREFIX } from '../../../../../@core';
-import { ContactRowComponent } from '../../table-components/contact-row.component';
+import { ComponentLayoutStyleEnum, IOrganization, IWarehouse } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
+import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
+import { Store, ToastrService, WarehouseService } from './../../../../../@core/services';
+import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
+import { PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,21 +24,21 @@ import { ContactRowComponent } from '../../table-components/contact-row.componen
 	styleUrls: ['./warehouses-table.component.scss']
 })
 export class WarehousesTableComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedWarehouse: IWarehouse;
 	smartTableSource: ServerDataSource;
-	warehousesList: IWarehouse[] = [];
+	warehouses: IWarehouse[] = [];
 	disableButton: boolean = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	STORES_URL = `${API_PREFIX}/warehouses?`;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
-	totalItems = 0;
-	currentPage = 1;
-	itemsPerPage = 10;
+	public organization: IOrganization;
+	warhouses$: Subject<any> = this.subject$;
 
 	warehousesTable: Ng2SmartTableComponent;
 	@ViewChild('warehousesTable') set content(content: Ng2SmartTableComponent) {
@@ -49,46 +48,66 @@ export class WarehousesTableComponent
 		}
 	}
 
+	/*
+	* Actions Buttons directive 
+	*/
+	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+
 	constructor(
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private warehouseService: WarehouseService,
-		private toastrService: ToastrService,
-		private router: Router,
-		private store: Store,
-		private http: HttpClient
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly warehouseService: WarehouseService,
+		private readonly toastrService: ToastrService,
+		private readonly router: Router,
+		private readonly store: Store,
+		private readonly http: HttpClient
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit(): void {
-		this.loadSmartTable();
-		this.loadSettings();
+		this._applyTranslationOnSmartTable();
+		this._loadSmartTableSettings();
+	}
 
+	ngAfterViewInit(): void {
+		this.warhouses$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.getWarehouses()),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization || { id: null };
-
-		this.warehouseService.count({ findInput: { organizationId, tenantId } }).then(res => {
-			this.totalItems = res as any;
-		});
+		const storeOrganization$ = this.store.selectedOrganization$;
+		combineLatest([storeOrganization$])
+			.pipe(
+				debounceTime(300),
+				filter(([organization]) => !!organization),
+				tap(([organization]) => (this.organization = organization)),
+				distinctUntilChange(),
+				tap(() => this.warhouses$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.WAREHOUSE;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-
-				
-				if (componentLayout == ComponentLayoutStyleEnum.CARDS_GRID) {
-					this.onPageChange(this.currentPage);
-				}
-
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.warhouses$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -103,11 +122,11 @@ export class WarehousesTableComponent
 			.subscribe();
 	}
 
-	async loadSettings() {
+	async _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
-				perPage: this.itemsPerPage
+				perPage: this.pagination.itemsPerPage
 			},
 			columns: {
 				name: {
@@ -137,54 +156,13 @@ export class WarehousesTableComponent
 		};
 	}
 
-
-	async loadSmartTable() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization || { id: null };
-
-		const data = "data=" + JSON.stringify({
-			relations: ['logo'],
-			findInput: {
-				organization: { id: organizationId },
-				tenantId
-			},
-		});
-
-		this.smartTableSource = new ServerDataSource(this.http, {
-			endPoint: this.STORES_URL + data,
-			dataKey: 'items',
-			totalKey: 'total',
-			perPage: 'per_page',
-			pagerPageKey: 'page'
-		});
-		this.loading = false;
-	}
-
-	onPageChange(pageNum: number) {
-		this.currentPage = pageNum;
-
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization || { id: null };
-
-		const options = {
-			relations: ['logo'],
-			findInput: { organizationId, tenantId }
-		};
-
-		this.warehouseService.getAll(options,
-			{ page: pageNum, _limit: this.itemsPerPage }).then(res => {
-				if (res && res.items) {
-					this.warehousesList = res.items;
-				}
-			});
-	}
-
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	onCreateWarehouse() {
@@ -193,41 +171,93 @@ export class WarehousesTableComponent
 		]);
 	}
 
-	onUpdateWarehouse() {
+	onUpdateWarehouse(selectedItem?: IWarehouse) {
+		if (selectedItem) {
+			this.selectWarehouse({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
-			'/pages/organization/inventory/warehouses/edit/' +
-				this.selectedWarehouse?.id
+			'/pages/organization/inventory/warehouses/edit' , this.selectedWarehouse.id
 		]);
 	}
 
-	async delete() {
-		let res = await this.dialogService
+	async onDelete(selectedItem?: IWarehouse) {
+		if (selectedItem) {
+			this.selectWarehouse({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		if (!this.selectedWarehouse) {
+			return;
+		}
+
+		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
 			.toPromise();
 
-		if (res) {
+		if (result) {
 			await this.warehouseService
 				.deleteFeaturedImage(this.selectedWarehouse.id)
 				.then((res) => {
 					if (res && res.affected == 1) {
-						this.toastrService.success(
-							'INVENTORY_PAGE.WAREHOUSE_WAS_CREATED',
-							{
-								name: this.selectedWarehouse.name
-							}
-						);
-
-						this.loadSettings();
-						this.clearItem();
+						const { name } = this.selectedWarehouse;
+						this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_DELETED', {
+							name
+						});
 					}
 				})
-				.catch((err) => {
-					this.toastrService.danger(
-						'INVENTORY_PAGE.WAREHOUSE_WAS_DELETED',
-						this.selectedWarehouse.name
-					);
+				.finally(() => {
+					this.warhouses$.next();
 				});
+		}
+	}
+
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.smartTableSource = new ServerDataSource(this.http, {
+			endPoint: `${API_PREFIX}/warehouses/pagination`,
+			relations: ['logo', 'contact'],
+			where: {
+				...{ organizationId, tenantId },
+				...this.filters.where
+			},
+			resultMap: (warehouse: IWarehouse) => {
+				return Object.assign({}, warehouse);
+			},
+			finalize: () => {
+				this.loading = false;
+			}
+		});
+	}
+
+	/**
+	 * GET warehouse smart table source
+	 */
+	private async getWarehouses() {
+		try { 
+			this.setSmartTableSource();
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+				await this.smartTableSource.getElements();
+				this.warehouses = this.smartTableSource.getData();
+
+				this.pagination['totalItems'] =  this.smartTableSource.count();
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
 		}
 	}
 
@@ -236,6 +266,9 @@ export class WarehousesTableComponent
 		this.selectedWarehouse = isSelected ? data : null;
 	}
 
+	/*
+	 * Clear selected item
+	 */
 	clearItem() {
 		this.selectWarehouse({
 			isSelected: false,
@@ -244,6 +277,9 @@ export class WarehousesTableComponent
 		this.deselectAll();
 	}
 
+	/*
+	 * Deselect all table rows
+	 */
 	deselectAll() {
 		if (this.warehousesTable && this.warehousesTable.grid) {
 			this.warehousesTable.grid.dataSet['willSelect'] = 'false';
@@ -251,4 +287,5 @@ export class WarehousesTableComponent
 		}
 	}
 
+	ngOnDestroy() { }
 }

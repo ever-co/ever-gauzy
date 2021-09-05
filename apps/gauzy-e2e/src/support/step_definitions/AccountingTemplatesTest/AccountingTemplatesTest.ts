@@ -3,6 +3,7 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as accountingTemplatesPage from '../../Base/pages/AccountingTemplates.po';
 import { AccountingTemplatesPageData } from '../../Base/pagedata/AccountingTemplatesPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
+import { waitUntil } from '../../Base/utils/util';
 import { CustomCommands } from '../../../support/commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
@@ -16,6 +17,7 @@ Given('Login with default credentials', () => {
 
 // Visit Accounting templates page
 And('User can visit Accounting templates page', () => {
+	waitUntil(3000);
 	cy.visit('/#/pages/settings/accounting-templates', { timeout: pageLoadTimeout });
 });
 

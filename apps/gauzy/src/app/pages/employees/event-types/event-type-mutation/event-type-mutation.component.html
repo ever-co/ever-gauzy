@@ -13,50 +13,41 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
 						<label for="employee" class="label">{{
 							'FORM.LABELS.EMPLOYEE' | translate
 						}}</label>
-						<ga-employee-selector
-							#employeeSelector
-							fullWidth
-							[skipGlobalChange]="true"
-							class="employees"
-							placeholder="Organization"
-							[defaultSelected]="false"
-							(selectionChanged)="onEmployeeChange($event)"
-						></ga-employee-selector>
+						<ga-employee-multi-select
+							id="employee"
+							[multiple]="false"
+							[label]="false"
+							[placeholder]="'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate"
+							[selectedEmployeeIds]="form.get('employeeId').value"
+							(selectedChange)="onEmployeeChange($event)"
+							formControlName="employeeId"
+						>
+						</ga-employee-multi-select>
 					</div>
 				</div>
 			</div>
-			<div
-				class="row"
-				*ngIf="
-					!(
-						employeeSelector &&
-						employeeSelector.selectedEmployee &&
-						employeeSelector.selectedEmployee.id
-					)
-				"
-			></div>
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label for="title" class="label">{{
-							'FORM.LABELS.TITLE' | translate
-						}}</label>
+						<label
+							for="title"
+							class="label"
+							[innerHtml]="'FORM.LABELS.TITLE' | translate"
+						></label>
 						<input
 							fullWidth
 							id="title"
 							type="text"
 							nbInput
 							formControlName="title"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.TITLE' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.TITLE' | translate"
 						/>
 					</div>
 				</div>
@@ -64,30 +55,32 @@
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label for="description" class="label">{{
-							'FORM.LABELS.DESCRIPTION' | translate
-						}}</label>
+						<label
+							for="description"
+							class="label"
+							[innerHtml]="'FORM.LABELS.DESCRIPTION' | translate"
+						></label>
 						<input
 							fullWidth
 							id="description"
 							type="text"
 							nbInput
 							formControlName="description"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
 						/>
 					</div>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col">
-					<ga-tags-color-input
-						[selectedTags]="tags"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
-					>
-					</ga-tags-color-input>
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
 				</div>
 			</div>
 			<div>
@@ -98,9 +91,7 @@
 					<div class="col-6">
 						<div class="form-group">
 							<input
-								placeholder="{{
-									'FORM.PLACEHOLDERS.DURATION' | translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.DURATION' | translate"
 								fullWidth
 								id="durationInput"
 								type="number"
@@ -109,15 +100,14 @@
 							/>
 						</div>
 					</div>
-					<div class="col-sm-6">
+					<div class="col-6">
 						<nb-select
 							class="d-block"
-							[selected]="unit"
 							formControlName="durationUnit"
 						>
 							<nb-option
 								*ngFor="let unit of durationUnits"
-								value="{{ unit }}"
+								[value]="unit"
 							>
 								{{
 									'EVENT_TYPE_PAGE.DURATION_UNIT'
@@ -131,14 +121,10 @@
 					<div class="col">
 						<div class="form-group">
 							<nb-checkbox formControlName="isActive">
-								<span
-									nbTooltip="{{
-										'EVENT_TYPE_PAGE.ACTIVE' | translate
-									}}"
-									>{{
-										'EVENT_TYPE_PAGE.ACTIVE' | translate
-									}}</span
-								>
+								<span 
+									[nbTooltip]="'EVENT_TYPE_PAGE.ACTIVE' | translate"
+									[innerHtml]="'EVENT_TYPE_PAGE.ACTIVE' | translate"
+								></span>
 							</nb-checkbox>
 						</div>
 					</div>
@@ -150,7 +136,7 @@
 		<button
 			(click)="dialogRef.close()"
 			status="danger"
-			class="mr-3"
+			class="mr-2"
 			nbButton
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}

@@ -13,6 +13,7 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -30,6 +31,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
+	waitUntil(3000);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -88,7 +90,7 @@ Then('User can see employee dropdown', () => {
 	expensesPage.selectEmployeeDropdownVisible();
 });
 
-When('User click on employee drodpwon', () => {
+When('User click on employee dropdown', () => {
 	expensesPage.clickEmployeeDropdown();
 });
 
@@ -384,7 +386,7 @@ When('User click on manage categories button', () => {
 	expensesPage.clickManageCategoriesButton();
 });
 
-Then('User can add categorty button', () => {
+Then('User can add category button', () => {
 	expensesPage.addExpenseButtonVisible();
 });
 
@@ -418,7 +420,7 @@ And('User can see save category button', () => {
 	expensesPage.saveCategorieButtonVisible();
 });
 
-When('User click on save categiry button', () => {
+When('User click on save category button', () => {
 	expensesPage.clickSaveCategorieButton();
 });
 

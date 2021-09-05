@@ -12,7 +12,7 @@ import { NgForm } from '@angular/forms';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
 
@@ -24,10 +24,11 @@ import { ErrorHandlingService, Store, ToastrService } from '../../../@core/servi
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
 
+	isDisable: boolean = false;
 	isOpen: boolean = false;
 	employeeId: string;
-	time = '00:00:00';
-	current_time = '00:00:00';
+	todaySessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
+	currentSessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
 	running: boolean;
 	today: Date = new Date();
 	selectedRange: IDateRange = { start: null, end: null };
@@ -37,6 +38,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	allowFutureDate: boolean;
 
 	@ViewChild(NgForm) form: NgForm;
+
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
 
 	constructor(
@@ -117,41 +119,43 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-			});
+			.subscribe();
 		this.store.user$
 			.pipe(
-				filter((user) => !!user),
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => this.user = user),
+				tap((user: IUser) => this.employeeId = user.employeeId),
 				untilDestroyed(this)
 			)
-			.subscribe((user: IUser) => {
-				this.user = user;
-				this.employeeId = user.employeeId;
-			});
+			.subscribe();
 		this.timeTrackerService.duration$
-			.pipe(untilDestroyed(this))
-			.subscribe((time) => {
-				this.time = moment.utc(time * 1000).format('HH:mm:ss');
-			});
+			.pipe(
+				tap((time) => this.todaySessionTime = moment.utc(time * 1000).format('HH:mm:ss')),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.timeTrackerService.showTimerWindow$
-			.pipe(untilDestroyed(this))
-			.subscribe((isOpen) => {
-				this.isOpen = isOpen;
-			});
-		this.timeTrackerService.current_session_duration$
-			.pipe(untilDestroyed(this))
-			.subscribe((time) => {
-				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
-			});
+			.pipe(
+				tap((isOpen) => this.isOpen = isOpen),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.timeTrackerService.currentSessionDuration$
+			.pipe(
+				tap((time) => this.currentSessionTime = moment.utc(time * 1000).format('HH:mm:ss')),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.timeTrackerService.$running
-			.pipe(untilDestroyed(this))
-			.subscribe((isRunning) => {
-				this.running = isRunning;
-			});
+			.pipe(
+				tap((isRunning) => this.running = isRunning),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
@@ -181,19 +185,25 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		this.timeTrackerService.showTimerWindow = false;
 	}
 
-	toggleTimer() {
+	async toggleTimer() {
 		if (!this.running && this.form.invalid) {
 			this.form.resetForm();
 			return;
 		}
-		this.timeTrackerService.toggle().catch((error) => {
-			if (this.timeTrackerService.interval) {
-				this.timeTrackerService.turnOffTimer();
-			} else {
-				this.timeTrackerService.turnOnTimer();
-			}
-			this._errorHandlingService.handleError(error);
-		});
+
+		this.isDisable = true;
+		await this.timeTrackerService.toggle()
+			.catch((error) => {
+				if (this.timeTrackerService.interval) {
+					this.timeTrackerService.turnOffTimer();
+				} else {
+					this.timeTrackerService.turnOnTimer();
+				}
+				this._errorHandlingService.handleError(error);
+			})
+			.finally(() => {
+				this.isDisable = false;
+			});
 	}
 
 	addTime() {

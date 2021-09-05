@@ -6,11 +6,18 @@ import {
 	JoinColumn,
 	ManyToOne,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	Index
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
-import { IProductTranslatable, IWarehouse } from '@gauzy/contracts';
+import {
+	IInvoiceItem,
+	IImageAsset,
+	IProductTranslatable,
+	ITag,
+	IWarehouse
+} from '@gauzy/contracts';
 import {
 	ImageAsset,
 	InvoiceItem,
@@ -26,12 +33,7 @@ import {
 
 @Entity('product')
 export class Product extends TranslatableBase implements IProductTranslatable {
-	@ManyToMany(() => Tag, (tag) => tag.product)
-	@JoinTable({
-		name: 'tag_product'
-	})
-	tags?: Tag[];
-
+	
 	@ApiPropertyOptional({ type: () => Boolean })
 	@Column({ default: true })
 	enabled: boolean;
@@ -46,76 +48,140 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@Column({ nullable: true })
 	imageUrl: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ImageAsset
+	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(
-		() => ImageAsset,
-		(imageAsset) => imageAsset.productFeaturedImage,
-		{ onDelete: 'SET NULL' }
-	)
+	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.productFeaturedImage, {
+		onDelete: 'SET NULL' 
+	})
 	@JoinColumn()
-	featuredImage: ImageAsset;
+	featuredImage?: IImageAsset;
 
-	@OneToMany(
-		() => ProductVariant,
-		(productVariant) => productVariant.product,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
-	variants: ProductVariant[];
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Product) => it.featuredImage)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	featuredImageId?: string;
 
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((product: Product) => product.type)
-	productTypeId: string;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((product: Product) => product.category)
-	productCategoryId: string;
-
-	@ManyToOne(() => ProductType, { onDelete: 'SET NULL' })
+	/**
+	 * ProductType
+	 */
+	@ApiProperty({ type: () => ProductType })
+	@ManyToOne(() => ProductType, (productType) => productType.products, {
+		onDelete: 'SET NULL' 
+	})
 	@JoinColumn()
-	type: ProductType;
+	productType?: ProductType;
 
-	@ManyToOne(() => ProductCategory, { onDelete: 'SET NULL' })
-	@JoinColumn()
-	category: ProductCategory;
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Product) => it.productType)
+	@IsString()
+	@Index()
+	@Column()
+	productTypeId?: string;
 
-	@OneToMany(
-		() => ProductOptionGroup,
-		(productOptionGroup) => productOptionGroup.product,
-		{ onDelete: 'CASCADE' }
-	)
-	optionGroups: ProductOptionGroup[];
-
-	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product, {
+	/**
+	 * ProductCategory
+	 */
+	
+	@ApiProperty({ type: () => ProductCategory })
+	@ManyToOne(() => ProductCategory, (productCategory) => productCategory.products, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	invoiceItems?: InvoiceItem[];
+	productCategory?: ProductCategory;
 
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Product) => it.productCategory)
+	@IsString()
+	@Index()
+	@Column()
+	productCategoryId?: string;
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductTranslation
+	 */
 	@ApiProperty({ type: () => ProductTranslation, isArray: true })
-	@OneToMany(
-		() => ProductTranslation,
-		(productTranslation) => productTranslation.reference,
-		{
-			eager: true,
-			cascade: true
-		}
-	)
+	@OneToMany(() => ProductTranslation, (productTranslation) => productTranslation.reference, {
+		eager: true,
+		cascade: true
+	})
 	translations: ProductTranslation[];
 
+	/**
+	 * ProductVariant
+	 */
+	@ApiPropertyOptional({ type: () => ProductVariant, isArray: true })
+	@OneToMany(() => ProductVariant, (productVariant) => productVariant.product, {
+		cascade: true
+	})
+	variants?: ProductVariant[];
+
+	/**
+	 * ProductOptionGroup
+	 */
+	@ApiPropertyOptional({ type: () => ProductOptionGroup, isArray: true })
+	@OneToMany(() => ProductOptionGroup, (productOptionGroup) => productOptionGroup.product, {
+		cascade: true
+	})
+	optionGroups?: ProductOptionGroup[];
+
+	/**
+	 * InvoiceItem
+	 */
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
+	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product)
+	@JoinColumn()
+	invoiceItems?: IInvoiceItem[];
+
+	/**
+	 * WarehouseProduct
+	 */
+	@ApiPropertyOptional({ type: () => WarehouseProduct, isArray: true })
+	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.product, {
+		cascade: true 
+	})
+	@JoinColumn()
+	warehouses?: IWarehouse[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Tag
+	 */
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.product)
+	@JoinTable({
+		name: 'tag_product'
+	})
+	tags?: ITag[];
+
+	/**
+	 * ImageAsset
+	 */
+	@ApiProperty({ type: () => ImageAsset, isArray: true })
 	@ManyToMany(() => ImageAsset, (imageAsset) => imageAsset.productGallery, {
 		cascade: false
 	})
 	@JoinTable({
 		name: 'product_gallery_item'
 	})
-	gallery: ImageAsset[];
-
-	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.product, {
-		cascade: true 
-	})
-	@JoinColumn()
-	warehouses?: IWarehouse[];
+	gallery?: IImageAsset[];
 }

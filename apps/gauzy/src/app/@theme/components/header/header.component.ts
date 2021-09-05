@@ -125,7 +125,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				debounceTime(1300),
 				tap(() => this.checkEmployeeSelectorVisibility()),
 				tap(() => this.checkProjectSelectorVisibility()),
-				tap(() => this.loadItems()),
+				tap(() => this._loadRolePermissions()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -215,7 +215,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			)
 			.subscribe();
 		this._applyTranslationOnSmartTable();
-		this.loadItems();
+		this._loadRolePermissions();
 	}
 
 	checkProjectSelectorVisibility() {
@@ -406,7 +406,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			bool !== undefined ? bool : !this.showExtraActions;
 	}
 
-	loadItems() {
+	_loadRolePermissions() {
 		this.store.userRolePermissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
@@ -593,7 +593,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			.subscribe(() => {
 				this.createContextMenu = [];
 				this.supportContextMenu = [];
-				this.loadItems();
+				this._loadRolePermissions();
 			});
 	}
 

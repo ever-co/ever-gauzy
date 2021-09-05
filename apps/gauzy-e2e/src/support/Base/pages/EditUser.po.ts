@@ -70,11 +70,11 @@ export const clickAddOrgButton = () => {
 };
 
 export const selectOrgDropdownVisible = () => {
-	verifyElementIsVisible(EditUserPage.selectOrgMultyselectCss);
+	verifyElementIsVisible(EditUserPage.selectOrgMultiSelectCss);
 };
 
 export const clickSelectOrgDropdown = () => {
-	clickButton(EditUserPage.selectOrgMultyselectCss);
+	clickButton(EditUserPage.selectOrgMultiSelectCss);
 };
 
 export const clickSelectOrgDropdownOption = () => {
@@ -132,11 +132,11 @@ export const enterEmailData = (data) => {
 	enterInput(EditUserPage.emailInputCss, data);
 };
 
-export const tagsMultyselectVisible = () => {
+export const tagsMultiSelectVisible = () => {
 	verifyElementIsVisible(EditUserPage.tagsSelectCss);
 };
 
-export const clickTagsMultyselect = () => {
+export const clickTagsMultiSelect = () => {
 	clickButton(EditUserPage.tagsSelectCss);
 };
 

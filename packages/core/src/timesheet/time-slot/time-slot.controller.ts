@@ -10,22 +10,21 @@ import {
 	Body,
 	Put
 } from '@nestjs/common';
-import { TimeSlot } from '../time-slot.entity';
-import { CrudController } from '../../core/crud';
-import { TimeSlotService } from './time-slot.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { FindOneOptions } from 'typeorm';
+import { IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
+import { TimeSlotService } from './time-slot.service';
 import { TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
+import { TimeSlot } from './time-slot.entity';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard)
-@Controller('time-slot')
-export class TimeSlotController extends CrudController<TimeSlot> {
-	constructor(private readonly timeSlotService: TimeSlotService) {
-		super(timeSlotService);
-	}
+@Controller()
+export class TimeSlotController {
+	constructor(
+		private readonly timeSlotService: TimeSlotService
+	) {}
 
 	@ApiOperation({ summary: 'Get Time Slots' })
 	@ApiResponse({

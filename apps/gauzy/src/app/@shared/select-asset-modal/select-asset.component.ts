@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ImageAssetService } from '../../@core/services/image-asset.service';
+import { filter, tap } from 'rxjs/operators';
 
 export interface SelectAssetSettings {
 	uploadImageEnabled?: boolean;
@@ -41,24 +42,22 @@ export class SelectAssetComponent
 	organization: IOrganization;
 
 	constructor(
-		public dialogRef: NbDialogRef<any>,
+		public readonly dialogRef: NbDialogRef<any>,
 		readonly translationService: TranslateService,
-		private imageAssetService: ImageAssetService,
-		private store: Store
+		private readonly imageAssetService: ImageAssetService,
+		private readonly store: Store
 	) {
 		super(translationService);
 	}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.getAvailableImages();
-				}
-			});
-
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap(() => this.getAvailableImages()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.setImageStoredEvent();
 	}
 
@@ -69,14 +68,10 @@ export class SelectAssetComponent
 			return;
 		}
 
+		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		let searchInput: any = {
-			tenantId,
-			organizationId: this.organization.id
-		};
-
-		this.gallery = (await this.imageAssetService.getAll(searchInput)).items;
+		this.gallery = (await this.imageAssetService.getAll({ tenantId, organizationId })).items;
 		this.loading = false;
 	}
 

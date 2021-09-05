@@ -30,9 +30,11 @@ import {
 	IOrganizationSprint,
 	IPayment,
 	OrganizationProjectBudgetTypeEnum,
-	IExpense
+	IExpense,
+	IActivity
 } from '@gauzy/contracts';
 import {
+	Activity,
 	Employee,
 	Expense,
 	InvoiceItem,
@@ -196,10 +198,8 @@ export class OrganizationProject
 	tasks?: ITask[];
 
 	// Organization TimeLogs
-	@ApiPropertyOptional({ type: () => TimeLog })
-	@OneToMany(() => TimeLog, (it) => it.project, {
-		onDelete: 'SET NULL'
-	})
+	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
+	@OneToMany(() => TimeLog, (it) => it.project)
 	timeLogs?: ITimeLog[];
 
 	// Organization Invoice Items
@@ -231,6 +231,14 @@ export class OrganizationProject
 		onDelete: 'SET NULL'
 	})
 	expenses?: IExpense[];
+
+	/**
+	 * Activity
+	 */
+	@ApiPropertyOptional({ type: () => Activity, isArray: true })
+	@OneToMany(() => Activity, (activity) => activity.project)
+	@JoinColumn()
+	activities?: IActivity[];
 
 	/*
     |--------------------------------------------------------------------------

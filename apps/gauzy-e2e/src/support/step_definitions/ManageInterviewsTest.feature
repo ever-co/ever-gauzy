@@ -106,7 +106,7 @@ Feature: Manage interviews test
     When User click on save button
     Then Notification message will appear
     And User can see updated note
-  Scenario: Achive future interview
+  Scenario: Archive future interview
     And User can see Archive option
     When User clicks on Archive option
     Then User can see Ok button

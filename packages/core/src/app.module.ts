@@ -71,8 +71,8 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 import { UpworkModule } from './upwork/upwork.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
-import { ProductCategoriesModule } from './product-category/product-category.module';
-import { ProductTypesModule } from './product-type/product-type.module';
+import { ProductCategoryModule } from './product-category/product-category.module';
+import { ProductTypeModule } from './product-type/product-type.module';
 import { ProductModule } from './product/product.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
@@ -85,7 +85,7 @@ import { CandidateSourceModule } from './candidate-source/candidate-source.modul
 import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
 import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
 import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedbacks.module';
-import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
+import { ProductVariantSettingModule } from './product-setting/product-setting.module';
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationTenantModule } from './integration-tenant/integration-tenant.module';
 import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
@@ -290,8 +290,8 @@ if (process.env.DB_TYPE === 'postgres') {
 		UpworkModule,
 		HubstaffModule,
 		ExpenseCategoriesModule,
-		ProductCategoriesModule,
-		ProductTypesModule,
+		ProductCategoryModule,
+		ProductTypeModule,
 		ProductModule,
 		ImageAssetModule,
 		IntegrationModule,
@@ -300,7 +300,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		IntegrationMapModule,
 		ProductVariantPriceModule,
 		ProductVariantModule,
-		ProductVariantSettingsModule,
+		ProductVariantSettingModule,
 		IntegrationEntitySettingModule,
 		IntegrationEntitySettingTiedModule,
 		GoalKpiModule,

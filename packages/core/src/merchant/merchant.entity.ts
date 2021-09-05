@@ -1,78 +1,134 @@
-import { IMerchant, CurrenciesEnum, IImageAsset, ITag, IWarehouse, IContact } from '@gauzy/contracts';
 import {
-	TenantOrganizationBaseEntity, ImageAsset, Tag, Contact, Warehouse,
+	IMerchant,
+	CurrenciesEnum,
+	IImageAsset,
+	ITag,
+	IWarehouse,
+	IContact
+} from '@gauzy/contracts';
+import {
+	Entity,
+	Column,
+	ManyToOne,
+	JoinColumn,
+	JoinTable,
+	ManyToMany,
+	OneToOne,
+	Index,
+	RelationId
+} from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	IsBoolean,
+	IsEmail,
+	IsEnum,
+	IsNotEmpty,
+	IsOptional,
+	IsString
+} from 'class-validator';
+import {
+	TenantOrganizationBaseEntity,
+	ImageAsset,
+	Tag,
+	Contact,
+	Warehouse,
 } from '../core/entities/internal';
-import { Entity, Column, ManyToOne, JoinColumn, JoinTable, ManyToMany, OneToOne, Index, RelationId } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString } from 'class-validator';
 
 @Entity('merchant')
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
 	@IsString()
+	@IsNotEmpty()
 	@Column()
 	name: string;
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	code: string;
 
-	@ApiProperty()
-	@IsString()
+	@ApiProperty({ type: () => String })
+	@IsEmail()
 	@Column()
 	email: string;
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({nullable: true})
+	@Column({ nullable: true })
 	phone: string;
 
-	@ApiProperty()
-	@IsString()
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty()
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsBoolean()
 	@Column({ default: true })
 	active: boolean;
 
-	@ApiProperty()
+	@ApiProperty({ type: () => String })
 	@IsEnum(CurrenciesEnum)
 	@Column({ default: CurrenciesEnum.USD })
 	currency: string;
 
-	@ApiProperty()
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Contact
+	 */
+	@ApiProperty({ type: () => Contact })
 	@OneToOne(() => Contact, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	contact: IContact;
+	contact?: IContact;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
 	@IsString()
+	@IsOptional()
 	@Index()
-	@Column()
-	contactId: string;
+	@Column({ nullable: true })
+	contactId?: string;
 
-	@ApiProperty()
-	@ManyToOne(
-		() => ImageAsset,
-		{ cascade: true }
-	)
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ImageAsset
+	 */
+	@ApiProperty({ type: () => ImageAsset })
+	@ManyToOne(() => ImageAsset, { cascade: true })
 	@JoinColumn()
-	logo: IImageAsset;
+	logo?: IImageAsset;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
 	@IsString()
+	@IsOptional()
 	@Index()
-	@Column()
-	logoId: string;
+	@Column({ nullable: true })
+	logoId?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Tag
+	 */
+	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.merchants, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
@@ -80,11 +136,15 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@JoinTable({
 		name: 'tag_merchant'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 
+	/**
+	 * Warehouse
+	 */
+	@ApiProperty({ type: () => Warehouse, isArray: true })
 	@ManyToMany(() => Warehouse)
 	@JoinTable({
 		name: 'warehouse_merchant'
 	})
-	warehouses: IWarehouse[];
+	warehouses?: IWarehouse[];
 }

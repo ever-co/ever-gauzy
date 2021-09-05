@@ -12,7 +12,7 @@ export class ProductVariantService {
 
 	getVariantsByProductId(productId: string): Promise<IPagination<IProductVariant>> {
 		return this.http
-			.get<IPagination<IProductVariant>>(`${this.PRODUCT_VARIANTS_URL}/all/${productId}`)
+			.get<IPagination<IProductVariant>>(`${this.PRODUCT_VARIANTS_URL}/product/${productId}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -29,7 +29,7 @@ export class ProductVariantService {
 	): Promise<IProductVariant[]> {
 		return this.http
 			.post<IProductVariant[]>(
-				`${this.PRODUCT_VARIANTS_URL}/create-variants`,
+				`${this.PRODUCT_VARIANTS_URL}/variants`,
 				variantCreateInput
 			)
 			.pipe(first())
@@ -57,7 +57,7 @@ export class ProductVariantService {
 
 	deleteFeaturedImage(id: string): Promise<any> {
 		return this.http
-			.delete(`${this.PRODUCT_VARIANTS_URL}/delete-featured-image/${id}`)
+			.delete(`${this.PRODUCT_VARIANTS_URL}/featured-image/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

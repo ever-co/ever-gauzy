@@ -1,62 +1,38 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
+import { CqrsModule } from '@nestjs/cqrs';
 import { Product } from './product.entity';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
-import { ProductOption } from '../product-option/product-option.entity';
-import { CqrsModule } from '@nestjs/cqrs';
-import { ProductOptionService } from '../product-option/product-option.service';
-import { ProductCreateHandler } from './commands/handlers/product.create.handler';
-import { ProductUpdateHandler } from './commands/handlers/product.update.handler';
-import { UserService } from '../user/user.service';
-import { User } from '../user/user.entity';
-import { ProductDeleteHandler } from './commands/handlers/product.delete.handler';
-import { ProductVariantService } from '../product-variant/product-variant.service';
-import { ProductVariant } from '../product-variant/product-variant.entity';
-import { ProductVariantSettings } from '../product-settings/product-settings.entity';
-import { ProductVariantSettingService } from '../product-settings/product-settings.service';
-import { ProductVariantPriceService } from '../product-variant-price/product-variant-price.service';
-import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
+import { ProductVariantModule } from './../product-variant/product-variant.module';
+import { ProductVariantPriceModule } from './../product-variant-price/product-variant-price-module';
+import { ProductVariantSettingModule } from './../product-setting/product-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 import { ProductTranslation } from './product-translation.entity';
-import { ProductOptionGroupService } from 'product-option/product-option-group.service';
-import {
-	ProductOptionGroup,
-	ProductOptionGroupTranslation,
-	ProductOptionTranslation
-} from 'core';
+import { ProductOptionModule } from './../product-option/product-option-module';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([{ path: '/products', module: ProductModule }]),
 		TypeOrmModule.forFeature([
 			Product,
-			ProductTranslation,
-			ProductOption,
-			User,
-			ProductVariant,
-			ProductVariantSettings,
-			ProductVariantPrice,
-			ProductOptionGroup,
-			ProductOptionGroupTranslation,
-			ProductOptionTranslation
+			ProductTranslation
 		]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		UserModule,
+		ProductVariantSettingModule,
+		ProductVariantPriceModule,
+		ProductOptionModule,
+		forwardRef(() => ProductVariantModule)
 	],
 	controllers: [ProductController],
 	providers: [
 		ProductService,
-		ProductOptionService,
-		ProductOptionGroupService,
-		ProductVariantService,
-		ProductVariantSettingService,
-		ProductVariantPriceService,
-		ProductCreateHandler,
-		ProductUpdateHandler,
-		UserService,
-		ProductDeleteHandler
+		...CommandHandlers
 	],
 	exports: [ProductService]
 })

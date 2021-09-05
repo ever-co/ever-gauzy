@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import { IOrganization, ITenant } from '@gauzy/contracts';
+import { IOrganization, IProductVariantPrice, ITenant } from '@gauzy/contracts';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
@@ -11,7 +11,7 @@ export const createRandomProductVariantPrice = async (
 	connection: Connection,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
-): Promise<ProductVariantPrice[]> => {
+): Promise<IProductVariantPrice[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
 			'Warning: tenantOrganizationsMap not found, Product Variant will not be created'
@@ -19,7 +19,7 @@ export const createRandomProductVariantPrice = async (
 		return;
 	}
 
-	const productVariantPrices: ProductVariantPrice[] = [];
+	const productVariantPrices: IProductVariantPrice[] = [];
 
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
@@ -32,7 +32,7 @@ export const createRandomProductVariantPrice = async (
 			);
 			for (const productCategory of productCategories) {
 				const products = await connection.manager.find(Product, {
-					where: [{ category: productCategory }]
+					where: [{ productCategory: productCategory }]
 				});
 				for (const product of products) {
 					const productVariants = await connection.manager.find(
@@ -42,7 +42,7 @@ export const createRandomProductVariantPrice = async (
 						}
 					);
 					for (const productVariant of productVariants) {
-						const productVariantPrice = new ProductVariantPrice();
+						const productVariantPrice: IProductVariantPrice = new ProductVariantPrice();
 
 						productVariantPrice.productVariant = productVariant;
 						productVariantPrice.unitCost = faker.datatype.number(

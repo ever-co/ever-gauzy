@@ -3,7 +3,7 @@ export const GoalsKPIPage = {
 	tabButtonCss: 'nb-tabset > ul.tabset > li.tab',
 	kpiTitleInputCss: '#kpi-title',
 	kpiDescriptionInputCss: '#kpi-description',
-	employeeMultyselectCss: '#kpi-lead',
+	employeeMultiSelectCss: '#kpi-lead',
 	employeeDropdownCss: '.option-list nb-option',
 	currentValueInputCss: '#current-value',
 	addKPIButtonCss: 'nb-tab[tabid="kpi"] > div.mb-3 > button[status="success"]',

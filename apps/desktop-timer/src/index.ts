@@ -219,6 +219,7 @@ const dialogMessage = (msg) => {
 			else {
 				const appSetting = LocalStore.getStore('appSetting');
 				const config = LocalStore.getStore('configs');
+				const addSetting = LocalStore.getStore('additionalSetting');
 				if (!settingsWindow) {
 					settingsWindow = createSettingsWindow(
 						settingsWindow,
@@ -229,7 +230,8 @@ const dialogMessage = (msg) => {
 				setTimeout(() => {
 					settingsWindow.webContents.send('app_setting', {
 						setting: appSetting,
-						config: config
+						config: config,
+						additionalSetting: addSetting
 					});
 				}, 500);
 			}
@@ -379,6 +381,10 @@ ipcMain.on('restart_app', (event, arg) => {
 		}
 	}, 100);
 });
+
+ipcMain.on('save_additional_setting', (event, arg) => {
+	LocalStore.updateAdditionalSetting(arg);
+})
 
 ipcMain.on('server_already_start', () => {
 	if (!gauzyWindow && !isAlreadyRun) {

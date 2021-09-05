@@ -22,8 +22,8 @@ Feature: Customers test
     And User can see project dropdown
     When User click on project dropdown
     Then User can select project from dropdown options
-    And User can see tags multyselect
-    When User click on tags nultyselect
+    And User can see tags multi-select
+    When User click on tags multi-select
     Then User can select tags from dropdown options
     And User can see website input field
     And User can enter value for website

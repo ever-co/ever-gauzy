@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	verifyElementIsVisible,
 	clickButton,
@@ -59,7 +60,7 @@ export const dateInputVisible = () => {
 
 export const enterDateInputData = () => {
 	clearField(PaymentsPage.dateInputCss);
-	const date = Cypress.moment().format('MMM D, YYYY');
+	const date = dayjs().format('MMM D, YYYY');
 	enterInput(PaymentsPage.dateInputCss, date);
 };
 

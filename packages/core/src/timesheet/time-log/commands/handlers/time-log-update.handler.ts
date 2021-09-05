@@ -1,14 +1,16 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { TimeLog } from '../../../time-log.entity';
+import { TimeLogSourceEnum } from '@gauzy/contracts';
+import { TimeLog } from './../../time-log.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { Timesheet } from '../../../timesheet.entity';
-import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands/timesheet-first-or-create.command';
-import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
+import {
+	TimesheetFirstOrCreateCommand,
+	TimesheetRecalculateCommand
+} from './../../../../timesheet/commands';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
-import { TimeLogSourceEnum } from '@gauzy/contracts';
 
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler

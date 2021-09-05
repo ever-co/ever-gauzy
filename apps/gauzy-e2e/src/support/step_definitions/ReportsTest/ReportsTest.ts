@@ -58,7 +58,7 @@ And('User can verify Time tracking content', () => {
 	reportsPage.verifyTitle(ReportsPageData.expense);
 });
 
-And('User can verify Time tracking settigns state', () => {
+And('User can verify Time tracking settings state', () => {
 	reportsPage.verifyCheckboxState(0, checked);
 	reportsPage.verifyCheckboxState(1, checked);
 	reportsPage.verifyCheckboxState(2, checked);
@@ -73,7 +73,7 @@ And('User can verify Payments content', () => {
 	reportsPage.verifyTitle(ReportsPageData.payments);
 });
 
-And('User can verify Payments settigns state', () => {
+And('User can verify Payments settings state', () => {
 	reportsPage.verifyCheckboxState(5, checked);
 	reportsPage.verifyCheckboxState(6, checked);
 });
@@ -85,7 +85,7 @@ And('User can verify Time Off content', () => {
 	reportsPage.verifyTitle(ReportsPageData.dailyLimits);
 });
 
-And('User can verify Time Off settigns state', () => {
+And('User can verify Time Off settings state', () => {
 	reportsPage.verifyCheckboxState(7, checked);
 	reportsPage.verifyCheckboxState(8, checked);
 });
@@ -97,7 +97,7 @@ And('User can verify Invoices content', () => {
 	reportsPage.verifyTitle(ReportsPageData.clientBudgets);
 });
 
-And('User can verify Invoices settigns state', () => {
+And('User can verify Invoices settings state', () => {
 	reportsPage.verifyCheckboxState(9, checked);
 	reportsPage.verifyCheckboxState(10, checked);
 });

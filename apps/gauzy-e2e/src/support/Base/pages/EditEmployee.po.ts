@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -118,7 +119,7 @@ export const offerDateInputVisible = () => {
 
 export const enterOfferDateData = () => {
 	clearField(EditEmployeePage.offerDateInputCss);
-	const date = Cypress.moment().add(1, 'days').format('MMM D, YYYY');
+	const date = dayjs().add(1, 'd').format('MMM D, YYYY');
 	enterInput(EditEmployeePage.offerDateInputCss, date);
 };
 
@@ -128,7 +129,7 @@ export const acceptDateInputVisible = () => {
 
 export const enterAcceptDateData = () => {
 	clearField(EditEmployeePage.acceptDateInputCss);
-	const date = Cypress.moment().add(2, 'days').format('MMM D, YYYY');
+	const date = dayjs().add(2, 'd').format('MMM D, YYYY');
 	enterInput(EditEmployeePage.acceptDateInputCss, date);
 };
 

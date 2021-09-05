@@ -2,10 +2,12 @@ import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { ITimeLog, OrganizationPermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
-import { EditTimeLogModalComponent } from '../edit-time-log-modal/edit-time-log-modal.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ViewTimeLogModalComponent } from '../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
-import { TimesheetService } from '../timesheet.service';
+import { EditTimeLogModalComponent } from './../edit-time-log-modal';
+import { ViewTimeLogModalComponent } from './../view-time-log-modal';
+import { TimesheetService } from './../timesheet.service';
+import { Store } from './../../../@core/services';
+import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,19 +16,22 @@ import { TimesheetService } from '../timesheet.service';
 	styleUrls: ['./view-time-log.component.scss']
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
+	
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	@Input() timelogs: ITimeLog[];
+	@Input() timeLogs: ITimeLog[] = [];
 	@Input() callback: CallableFunction;
 
 	constructor(
-		private nbDialogService: NbDialogService,
-		private timesheetService: TimesheetService
+		private readonly nbDialogService: NbDialogService,
+		private readonly timesheetService: TimesheetService,
+		private readonly store: Store,
+		private readonly timeTrackerService: TimeTrackerService,
 	) {}
 
 	ngOnInit(): void {}
 
 	openAddByDateProject($event: MouseEvent) {
-		const timelog = this.timelogs[0];
+		const [ timelog ] = this.timeLogs;
 		const minutes = moment().minutes();
 		const stoppedAt = new Date(
 			moment(timelog.startedAt).format('YYYY-MM-DD') +
@@ -70,7 +75,15 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	onDeleteConfirm(timeLog) {
 		this.timesheetService.deleteLogs(timeLog.id).then((res) => {
 			this.callback(res);
+			this.checkTimerStatus();
 		});
+	}
+
+	checkTimerStatus() {
+		const { employee, tenantId } = this.store.user;
+		if (employee && employee.id) {
+			this.timeTrackerService.checkTimerStatus(tenantId);
+		}
 	}
 
 	ngOnDestroy(): void {}

@@ -1,31 +1,27 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
-import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { first, tap } from 'rxjs/operators';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { combineLatest } from 'rxjs';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { Router } from '@angular/router';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IProduct,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProductTranslated,
-	PermissionsEnum,
-	LanguagesEnum
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ProductService } from '../../../../@core/services/product.service';
-import { ComponentEnum } from '../../../../@core/constants/layout.constants';
-import { Store } from '../../../../@core/services/store.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { ItemImgTagsComponent } from '../table-components/item-img-tags-row.component';
-import { NgxPermissionsService } from 'ngx-permissions';
-import { ServerDataSource } from 'ng2-smart-table';
-import { HttpClient } from '@angular/common/http';
-import { API_PREFIX } from 'apps/gauzy/src/app/@core';
-
+import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
+import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
+import { ProductService, Store, ToastrService } from '../../../../@core/services';
+import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { ItemImgTagsComponent } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,28 +30,22 @@ import { API_PREFIX } from 'apps/gauzy/src/app/@core';
 	styleUrls: ['./table-inventory.component.scss']
 })
 export class TableInventoryComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+	
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedProduct: IProduct;
-	form: FormGroup;
-	selectedLanguage: string = LanguagesEnum.ENGLISH;
-	inventoryData: IProductTranslated[] = [];
+	smartTableSource: ServerDataSource;
+	products: IProductTranslated[] = [];
 	disableButton: boolean = true;
-	viewComponentName: ComponentEnum = ComponentEnum.INVENTORY;
-	dataLayoutStyle: ComponentLayoutStyleEnum = ComponentLayoutStyleEnum.CARDS_GRID;
-	organization: IOrganization;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	permissionsEnum = PermissionsEnum;
 
-	editProductAllowed: boolean = false;
-	viewCategoriesAllowed: boolean = false;
-	viewTypesAllowed: boolean = false;
-
-	source: ServerDataSource;
-	PRODUCTS_URL = `${API_PREFIX}/products/local/${this.selectedLanguage}?`;
-
-	currentPage: number = 0;
-	totalItems: number = 0;
+	public organization: IOrganization;
+	products$: Subject<any> = this.subject$;
 
 	inventoryTable: Ng2SmartTableComponent;
 	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
@@ -65,68 +55,68 @@ export class TableInventoryComponent
 		}
 	}
 
+	/*
+	* Actions Buttons directive 
+	*/
+	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+
 	constructor(
-		private http: HttpClient,
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private productService: ProductService,
-		private router: Router,
-		private store: Store,
-		private ngxPermissionsService: NgxPermissionsService
+		private readonly http: HttpClient,
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly productService: ProductService,
+		private readonly router: Router,
+		private readonly store: Store
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	async ngOnInit() {
-		this.setPermissions();
-		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.selectedLanguage = this.store.preferredLanguage;
+		this._loadSmartTableSettings();
+	}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization || { id: '' };
+	ngAfterViewInit() {
+		this.products$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.getTranslatedProducts()),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const preferredLanguage$ = this.store.preferredLanguage$
 
-		this.productService.count({ findInput: { organizationId, tenantId } }).then(res => {
-			this.totalItems = res as any;
-		});
-
-
-		this.store.preferredLanguage$
-			.pipe(untilDestroyed(this))
-			.subscribe((lang) => {
-				this.selectedLanguage = lang;
-				this.loadSettings();
-			});
-
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.loadSettings();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
-
+		combineLatest([storeOrganization$, preferredLanguage$])
+			.pipe(
+				debounceTime(300),
+				filter(([organization, language]) => !!organization && !!language),
+				tap(([ organization ]) => this.organization = organization),
+				distinctUntilChange(),
+				tap(() => this.products$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.INVENTORY;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.products$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -141,11 +131,11 @@ export class TableInventoryComponent
 			.subscribe();
 	}
 
-	async loadSmartTable() {
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
-				perPage: 10
+				perPage: this.pagination.itemsPerPage
 			},
 			columns: {
 				name: {
@@ -160,14 +150,14 @@ export class TableInventoryComponent
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
 					type: 'string'
 				},
-				type: {
+				productType: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
 					valuePrepareFunction: (type: string) => {
 						return type ? type : '-';
 					}
 				},
-				category: {
+				productCategory: {
 					title: this.getTranslation(
 						'INVENTORY_PAGE.PRODUCT_CATEGORY'
 					),
@@ -185,35 +175,15 @@ export class TableInventoryComponent
 							? description.slice(0, 15) + '...'
 							: '';
 					}
-				},
-
+				}
 			}
 		};
-	}
-
-	onPageChange(pageNum) {
-		this.currentPage = pageNum;
-
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization || { id: '' };
-
-		const options = {
-			relations: ['type', 'category', 'tags', 'featuredImage'],
-			findInput: { organizationId, tenantId }
-		};
-
-		this.productService.getAllTranslated(options,
-			{ page: pageNum, _limit: 10 },
-			this.store.preferredLanguage
-		).then(res => {
-			if (res && res.items) {
-				this.inventoryData = res.items;
-			}
-		});
 	}
 
 	manageProductTypes() {
-		this.router.navigate(['/pages/organization/inventory/product-types']);
+		this.router.navigate([
+			'/pages/organization/inventory/product-types'
+		]);
 	}
 
 	manageProductCategories() {
@@ -223,16 +193,21 @@ export class TableInventoryComponent
 	}
 
 	manageWarehouses() {
-		this.router.navigate(['/pages/organization/inventory/warehouses/all']);
+		this.router.navigate([
+			'/pages/organization/inventory/warehouses'
+		]);
 	}
 
-
 	manageStores() {
-		this.router.navigate(['/pages/organization/inventory/merchants/all']);
+		this.router.navigate([
+			'/pages/organization/inventory/merchants'
+		]);
 	}
 
 	onAddInventoryItem() {
-		this.router.navigate([`/pages/organization/inventory/create`]);
+		this.router.navigate([
+			`/pages/organization/inventory/create`
+		]);
 	}
 
 	onEditInventoryItem(selectedItem?: IProduct) {
@@ -243,7 +218,7 @@ export class TableInventoryComponent
 			});
 		}
 		this.router.navigate([
-			`/pages/organization/inventory/edit/${this.selectedProduct.id}`
+			`/pages/organization/inventory/edit`, this.selectedProduct.id
 		]);
 	}
 
@@ -255,7 +230,7 @@ export class TableInventoryComponent
 			});
 		}
 		this.router.navigate([
-			`/pages/organization/inventory/view/${this.selectedProduct.id}`
+			`/pages/organization/inventory/view`, this.selectedProduct.id
 		]);
 	}
 
@@ -277,60 +252,80 @@ export class TableInventoryComponent
 			const res = await this.productService.delete(
 				this.selectedProduct.id
 			);
-
 			if (res.affected > 0) {
-				this.loadSettings();
-				this.toastrService.success(
-					'INVENTORY_PAGE.INVENTORY_ITEM_DELETED',
-					{
-						name: this.selectedProduct.name
-					}
-				);
+				this.toastrService.success('INVENTORY_PAGE.INVENTORY_ITEM_DELETED', {
+					name: this.selectedProduct.name
+				});
 			}
 		} catch {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		} finally {
-			this.clearItem();
+			this.products$.next();
 		}
 	}
 
-	async loadSettings() {
-		this.loading = true;
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization || { id: '' };
+		const { id: organizationId } = this.organization;
 
-		const data = "data=" + JSON.stringify({
-			relations: ['type', 'category', 'tags', 'featuredImage'],
-			findInput: { organizationId, tenantId },
+		this.smartTableSource = new ServerDataSource(this.http, {
+			endPoint: `${API_PREFIX}/products/pagination`,
+			relations: [
+				'productType',
+				'productCategory',
+				'tags',
+				'featuredImage'
+			],
+			where: {
+				...{ organizationId, tenantId }
+			},
+			resultMap: (product: IProductTranslated) => {
+				console.log(product);
+				return Object.assign({}, product);
+			},
+			finalize: () => {
+				this.loading = false;
+			}
 		});
-
-		this.productService.count({ findInput: { organizationId, tenantId } }).then(res => {
-			this.totalItems = res as any;
-		});
-
-
-		this.source = new ServerDataSource(this.http, {
-			endPoint: this.PRODUCTS_URL + data,
-			dataKey: 'items',
-			totalKey: 'total',
-			perPage: 'per_page',
-			pagerPageKey: 'page'
-		});
-
-		this.loading = false;
 	}
 
-	async selectProduct({ isSelected, data }) {
+	/**
+	 * GET product inventory smart table source
+	 */
+	 private async getTranslatedProducts() {
+		try { 
+			this.setSmartTableSource();
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+				await this.smartTableSource.getElements();
+				this.products = this.smartTableSource.getData();
+
+				this.pagination['totalItems'] =  this.smartTableSource.count();
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	selectProduct({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedProduct = isSelected ? data : null;
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -343,6 +338,7 @@ export class TableInventoryComponent
 		});
 		this.deselectAll();
 	}
+
 	/*
 	 * Deselect all table rows
 	 */
@@ -353,15 +349,5 @@ export class TableInventoryComponent
 		}
 	}
 
-	async setPermissions() {
-		this.editProductAllowed = await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
-		);
-		this.viewCategoriesAllowed = await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW
-		);
-		this.viewTypesAllowed = await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW
-		);
-	}
+	ngOnDestroy() { }
 }

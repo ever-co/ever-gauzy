@@ -3111,6 +3111,7 @@
 		"IMMUTABLE_TIME": "Неизменяемое время",
 		"BULK_ACTION": "Массовое действие",
 		"LOG_TYPE": "Тип журнала",
+		"SOURCE": "Источник",
 		"TOTAL_TIME": "Общее время",
 		"ACTIVITIES": "Действия",
 		"APPROVED_AT": "Одобрено",

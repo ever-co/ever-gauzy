@@ -204,7 +204,9 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	// To Contact
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact)
+	@ManyToOne(() => OrganizationContact, (contact) => contact.invoices, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	toContact?: IOrganizationContact;
 
@@ -212,7 +214,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@RelationId((it: Invoice) => it.toContact)
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	toContactId?: string;
 
 	/*
@@ -230,9 +232,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
    	// Invoice Estimate Payments
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (payment) => payment.invoice, {
-		onDelete: 'SET NULL'
-	})
+	@OneToMany(() => Payment, (payment) => payment.invoice)
 	@JoinColumn()
 	payments?: IPayment[];
 

@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductTypeTranslation, LanguagesEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum } from 'class-validator';
@@ -18,6 +18,20 @@ export class ProductTypeTranslation
 	@Column({ nullable: true })
 	description: string;
 
+	@ApiProperty({ type: () => String, enum: LanguagesEnum })
+	@IsEnum(LanguagesEnum)
+	@Column({ nullable: false })
+	languageCode: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * ProductType
+	 */
 	@ApiProperty({ type: () => ProductType })
 	@ManyToOne(() => ProductType, (productType) => productType.translations, {
 		onDelete: 'CASCADE',
@@ -26,8 +40,10 @@ export class ProductTypeTranslation
 	@JoinColumn()
 	reference: ProductType;
 
-	@ApiProperty({ type: () => String, enum: LanguagesEnum })
-	@IsEnum(LanguagesEnum)
-	@Column({ nullable: false })
-	languageCode: string;
+	@ApiProperty({ type: () => String })
+	@RelationId((it: ProductTypeTranslation) => it.reference)
+	@IsString()
+	@Index()
+	@Column()
+	referenceId: string;
 }

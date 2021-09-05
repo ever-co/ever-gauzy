@@ -6,9 +6,9 @@ export const OrganizationTeamsPage = {
 	tagsSelectOptionCss: 'div.ng-option',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	cardBodyCss: 'nb-card-body',
-	employeeMultyselectCss:
+	employeeMultiSelectCss:
 		'[ng-reflect-placeholder="Add or Remove Team Members"]',
-	managerMultyselectCss:
+	managerMultiSelectCss:
 		'[ng-reflect-placeholder="Add or Remove Team Managers"]',
 	selectDropdownOptionCss: '.option-list nb-option',
 	saveButtonCss: 'div.form-group > button[status="success"]',

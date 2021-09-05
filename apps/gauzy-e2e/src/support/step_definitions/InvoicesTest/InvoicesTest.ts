@@ -15,6 +15,7 @@ import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -40,6 +41,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
+	waitUntil(3000);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -150,7 +152,7 @@ And('User can see contact dropdown', () => {
 	invoicesPage.contactDropdownVisible();
 });
 
-When('User click on contact drodpown', () => {
+When('User click on contact dropdown', () => {
 	invoicesPage.clickContactDropdown();
 });
 
@@ -317,7 +319,7 @@ And('User can verify badge', () => {
 });
 
 // Edit invoice
-When('User clcik on first tab button', () => {
+When('User click on first tab button', () => {
 	invoicesPage.clickTabButton(0);
 });
 
@@ -359,7 +361,7 @@ And('User can see contact dropdown', () => {
 	invoicesPage.contactDropdownVisible();
 });
 
-When('User click on contact drodpown', () => {
+When('User click on contact dropdown', () => {
 	invoicesPage.clickContactDropdown();
 });
 

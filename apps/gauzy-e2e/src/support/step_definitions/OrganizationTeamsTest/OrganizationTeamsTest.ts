@@ -11,6 +11,7 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -28,6 +29,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
+	waitUntil(3000);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -80,11 +82,11 @@ And('User can enter value for name', () => {
 });
 
 And('User can see tags dropdown', () => {
-	organizationTeamsPage.tagsMultyselectVisible();
+	organizationTeamsPage.tagsMultiSelectVisible();
 });
 
 When('User click on tags dropdown', () => {
-	organizationTeamsPage.clickTagsMultyselect();
+	organizationTeamsPage.clickTagsMultiSelect();
 });
 
 Then('User can select tag from dropdown options', () => {

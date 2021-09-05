@@ -65,7 +65,7 @@ Then('User can see policy input field', () => {
 	timeOffPage.policyInputFieldVisible();
 });
 
-And('User can enter polciy name', () => {
+And('User can enter policy name', () => {
 	timeOffPage.enterNewPolicyName(TimeOffPageData.addNewPolicyData);
 });
 
@@ -111,7 +111,7 @@ When('User click on request button', () => {
 	timeOffPage.clickRequestButton();
 });
 
-Then('User can see eployee select', () => {
+Then('User can see employee select', () => {
 	timeOffPage.employeeSelectorVisible();
 });
 
@@ -217,7 +217,7 @@ When('User click on request button', () => {
 	timeOffPage.clickRequestButton();
 });
 
-Then('User can see eployee select', () => {
+Then('User can see employee select', () => {
 	timeOffPage.employeeSelectorVisible();
 });
 
@@ -339,11 +339,11 @@ And('User can see select employee dropdown', () => {
 	timeOffPage.selectEmployeeDropdownVisible();
 });
 
-When('User click on selectn employee dropdown', () => {
+When('User click on select employee dropdown', () => {
 	timeOffPage.clickSelectEmployeeDropdown();
 });
 
-Then('User can select employee from seelct dropdown options', () => {
+Then('User can select employee from select dropdown options', () => {
 	timeOffPage.selectEmployeeFromHolidayDropdown(0);
 	timeOffPage.clickKeyboardButtonByKeyCode(9);
 });
@@ -356,7 +356,7 @@ When('User click on time off policy dropdown', () => {
 	timeOffPage.clickTimeOffPolicyDropdown();
 });
 
-Then('User can see again time off polciy dropdown', () => {
+Then('User can see again time off policy dropdown', () => {
 	timeOffPage.timeOffPolicyDropdownOptionVisible();
 });
 
@@ -368,7 +368,7 @@ And('User can see start holiday input field', () => {
 	timeOffPage.startHolidayDateInputVisible();
 });
 
-And('User can snter start holiday date', () => {
+And('User can enter start holiday date', () => {
 	timeOffPage.enterStartHolidayDate();
 });
 

@@ -87,7 +87,7 @@ export class SelectProductComponent
 		const { id: organizationId } = this.organization || { id: '' };
 
 		const data = "data=" + JSON.stringify({
-			relations: ['type', 'category', 'featuredImage', 'variants'],
+			relations: ['productType', 'productCategory', 'featuredImage', 'variants'],
 			findInput: { organizationId, tenantId },
 		});
 

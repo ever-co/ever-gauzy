@@ -5,7 +5,7 @@ import { ProductOption } from './product-option.entity';
 import { ProductOptionService } from './product-option.service';
 import { TenantPermissionGuard } from './../shared/guards';
 
-@ApiTags('ProductOptions')
+@ApiTags('ProductOption')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class ProductOptionController extends CrudController<ProductOption> {

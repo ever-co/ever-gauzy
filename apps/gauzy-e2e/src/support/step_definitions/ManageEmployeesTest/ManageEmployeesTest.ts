@@ -12,6 +12,7 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import { CustomCommands } from '../../commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -31,6 +32,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
+	waitUntil(3000);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -225,7 +227,7 @@ And('User can see employees table', () => {
 	manageEmployeesPage.tableRowVisible();
 });
 
-When('User click on emloyees table row', () => {
+When('User click on employees table row', () => {
 	manageEmployeesPage.selectTableRow(0);
 });
 
@@ -269,17 +271,17 @@ And('User can enter value for last name edit', () => {
 	manageEmployeesPage.enterLastNameEditInputData(lastName);
 });
 
-And('User can see prefered language dropdown', () => {
-	manageEmployeesPage.preferedLanguageDropdownVisible();
+And('User can see preferred language dropdown', () => {
+	manageEmployeesPage.preferredLanguageDropdownVisible();
 });
 
-When('User click on prefered language dropdown', () => {
-	manageEmployeesPage.clickPreferedLanguageDropdown();
+When('User click on preferred language dropdown', () => {
+	manageEmployeesPage.clickpreferredLanguageDropdown();
 });
 
 Then('User can select language from dropdown options', () => {
 	manageEmployeesPage.selectLanguageFromDropdown(
-		ManageEmployeesPageData.preferedLanguage
+		ManageEmployeesPageData.preferredLanguage
 	);
 });
 
@@ -307,7 +309,7 @@ And('User can see employees table again', () => {
 	manageEmployeesPage.tableRowVisible();
 });
 
-When('User click on emloyees table row again', () => {
+When('User click on employees table row again', () => {
 	manageEmployeesPage.selectTableRow(0);
 });
 

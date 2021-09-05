@@ -45,10 +45,7 @@ import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
 import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
-import {
-	TimeSlotCreateCommand,
-	ScreenshotCreateCommand
-} from '../timesheet/commands';
+import { TimesheetFirstOrCreateCommand } from './../timesheet/commands';
 import * as moment from 'moment';
 import {
 	OrganizationProjectCreateCommand,
@@ -66,21 +63,24 @@ import { ExpenseService } from '../expense/expense.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import { IncomeService } from '../income/income.service';
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
-import { IncomeCreateCommand } from '../income/commands/income.create.command';
-import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
-import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
+import { IncomeCreateCommand } from '../income/commands';
+import { ExpenseCreateCommand } from '../expense/commands';
+import { OrganizationContactCreateCommand } from '../organization-contact/commands';
 import {
 	UpworkJobService,
 	UpworkOffersService,
 	UpworkReportService
 } from '@gauzy/integration-upwork';
-import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';
-import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
+import { TimeLogCreateCommand } from '../timesheet/time-log/commands';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
-import { CreateTimeSlotMinutesCommand } from '../timesheet/time-slot/commands/create-time-slot-minutes.command';
+import {
+	CreateTimeSlotMinutesCommand,
+	TimeSlotCreateCommand
+} from './../timesheet/time-slot/commands';
 import { RequestContext } from '../core/context';
 import { environment as env } from '@gauzy/config';
+import { ScreenshotCreateCommand } from './../timesheet/screenshot/commands';
 
 @Injectable()
 export class UpworkService {
@@ -88,19 +88,19 @@ export class UpworkService {
 
 	constructor(
 		private readonly _expenseService: ExpenseService,
-		private _expenseCategoryService: ExpenseCategoriesService,
+		private readonly _expenseCategoryService: ExpenseCategoriesService,
 		private readonly _incomeService: IncomeService,
-		private _integrationMapService: IntegrationMapService,
-		private _userService: UserService,
-		private _roleService: RoleService,
-		private _organizationService: OrganizationService,
-		private _orgVendorService: OrganizationVendorService,
-		private _orgClientService: OrganizationContactService,
-		private _timeSlotService: TimeSlotService,
+		private readonly _integrationMapService: IntegrationMapService,
+		private readonly _userService: UserService,
+		private readonly _roleService: RoleService,
+		private readonly _organizationService: OrganizationService,
+		private readonly _orgVendorService: OrganizationVendorService,
+		private readonly _orgClientService: OrganizationContactService,
+		private readonly _timeSlotService: TimeSlotService,
 		private readonly _upworkReportService: UpworkReportService,
 		private readonly _upworkJobService: UpworkJobService,
 		private readonly _upworkOfferService: UpworkOffersService,
-		private commandBus: CommandBus
+		private readonly commandBus: CommandBus
 	) {}
 
 	private async _consumerHasAccessToken(

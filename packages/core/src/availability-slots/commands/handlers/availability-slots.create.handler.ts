@@ -1,12 +1,12 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { In } from 'typeorm';
+import { pluck } from 'underscore';
+import { AvailabilityMergeType, IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlotsCreateCommand } from '../availability-slots.create.command';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { AvailabilitySlotsService } from '../../availability-slots.service';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
-import { In } from 'typeorm';
-import { pluck } from 'underscore';
-import { AvailabilityMergeType, IAvailabilitySlot } from '@gauzy/contracts';
-import { RequestContext } from 'core';
+import { RequestContext } from './../../../core/context';
 
 @CommandHandler(AvailabilitySlotsCreateCommand)
 export class AvailabilitySlotsCreateHandler
@@ -22,7 +22,7 @@ export class AvailabilitySlotsCreateHandler
 		const { input, insertType } = command;
 		const { organizationId, employeeId, startTime, endTime, type } = input;
 		const tenantId = RequestContext.currentTenantId();
-		
+				
 		const conflicts: IAvailabilitySlot[] = await this.commandBus.execute(
 			new GetConflictAvailabilitySlotsCommand({
 				employeeId,

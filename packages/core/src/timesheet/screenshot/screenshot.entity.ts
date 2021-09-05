@@ -3,7 +3,8 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	AfterLoad
+	AfterLoad,
+	Index
 } from 'typeorm';
 import { IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
@@ -18,18 +19,7 @@ import {
 export class Screenshot
 	extends TenantOrganizationBaseEntity
 	implements IScreenshot {
-	@ApiProperty({ type: () => TimeSlot })
-	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	timeSlot?: ITimeSlot;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((screenshot: Screenshot) => screenshot.timeSlot)
-	@Column({ nullable: true })
-	readonly timeSlotId?: string;
-
+	
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
@@ -60,4 +50,26 @@ export class Screenshot
 		this.fullUrl = new FileStorage().getProvider().url(this.file);
 		this.thumbUrl = new FileStorage().getProvider().url(this.thumb);
 	}
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * TimeSlot
+	 */
+	@ApiProperty({ type: () => TimeSlot })
+	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
+		onDelete: 'CASCADE'
+	})
+	timeSlot?: ITimeSlot;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Screenshot) => it.timeSlot)
+	@IsString()
+	@Index()
+	@Column()
+	readonly timeSlotId?: string;
 }

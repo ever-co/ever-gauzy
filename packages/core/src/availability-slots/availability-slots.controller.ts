@@ -18,7 +18,10 @@ import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { AvailabilitySlotsBulkCreateCommand, AvailabilitySlotsCreateCommand } from './commands';
+import {
+	AvailabilitySlotsBulkCreateCommand,
+	AvailabilitySlotsCreateCommand
+} from './commands';
 
 @ApiTags('AvailabilitySlots')
 @UseGuards(TenantPermissionGuard)
@@ -31,6 +34,38 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 		super(availabilitySlotsService);
 	}
 
+	/**
+	 * CREATE slots in bulk
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Create slots in bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The records have been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post('/bulk')
+	async createManyWithEmailsId(
+		@Body() entity: IAvailabilitySlotsCreateInput[]
+	): Promise<IAvailabilitySlot[]> {
+		return await this.commandBus.execute(
+			new AvailabilitySlotsBulkCreateCommand(entity)
+		);
+	}
+
+	/**
+	 * GET all availability slots
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Find all availability slots' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -52,6 +87,40 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 		});
 	}
 
+	/**
+	 * CREATE new availability slot
+	 * 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post()
+	async create(
+		@Body() entity: IAvailabilitySlotsCreateInput
+	): Promise<IAvailabilitySlot> {
+		return await this.commandBus.execute(
+			new AvailabilitySlotsCreateCommand(entity)
+		);
+	}
+
+	/**
+	 * UPDATE availability slot by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @param options 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -66,52 +135,11 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IAvailabilitySlot,
-		...options: any[]
+		@Body() entity: IAvailabilitySlot
 	): Promise<IAvailabilitySlot> {
 		return this.availabilitySlotsService.create({
 			id,
 			...entity
 		});
-	}
-
-	@ApiOperation({ summary: 'Create new record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@Post()
-	async create(
-		@Body() entity: IAvailabilitySlotsCreateInput,
-		...options: any[]
-	): Promise<IAvailabilitySlot> {
-		return await this.commandBus.execute(
-			new AvailabilitySlotsCreateCommand(entity)
-		);
-	}
-
-	@ApiOperation({ summary: 'Create slots in bulk' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The records have been successfully created.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.CREATED)
-	@Post('/bulk')
-	async createManyWithEmailsId(
-		@Body() entity: IAvailabilitySlotsCreateInput[]
-	): Promise<IAvailabilitySlot[]> {
-		return await this.commandBus.execute(
-			new AvailabilitySlotsBulkCreateCommand(entity)
-		);
 	}
 }

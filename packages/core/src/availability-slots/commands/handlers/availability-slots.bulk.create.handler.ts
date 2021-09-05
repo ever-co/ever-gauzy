@@ -13,9 +13,11 @@ export class AvailabilitySlotsBulkCreateHandler
 	public async execute(
 		command: AvailabilitySlotsBulkCreateCommand
 	): Promise<IAvailabilitySlot[]> {
+		
 		const { input } = command;
 		const allAvailabilitySlots: IAvailabilitySlot[] = [];
 		const tenantId = RequestContext.currentTenantId();
+
 		for (const item of input) {
 			let availabilitySlots = new AvailabilitySlot({
 				...item,

@@ -1,9 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CommandBus } from '@nestjs/cqrs';
 import { Repository, IsNull, Between, Not } from 'typeorm';
-import { RequestContext } from '../../core/context';
-import { Employee } from '../../employee/employee.entity';
+import * as moment from 'moment';
 import {
 	TimeLogType,
 	ITimerStatus,
@@ -13,13 +12,15 @@ import {
 	TimeLogSourceEnum,
 	ITimerStatusInput
 } from '@gauzy/contracts';
-import * as moment from 'moment';
-import { CommandBus } from '@nestjs/cqrs';
-import { IGetConflictTimeLogCommand } from '../time-log/commands/get-conflict-time-log.command';
-import { TimeLogCreateCommand } from '../time-log/commands/time-log-create.command';
-import { DeleteTimeSpanCommand } from '../time-log/commands/delete-time-span.command';
-import { TimeLogUpdateCommand } from '../time-log/commands/time-log-update.command';
+import { Employee, TimeLog } from './../../core/entities/internal';
+import { RequestContext } from '../../core/context';
 import { getDateRange } from './../../core/utils';
+import {
+	DeleteTimeSpanCommand,
+	IGetConflictTimeLogCommand,
+	TimeLogCreateCommand,
+	TimeLogUpdateCommand
+} from './../time-log/commands';
 
 @Injectable()
 export class TimerService {
@@ -29,14 +30,16 @@ export class TimerService {
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		private readonly commandBus: CommandBus
 	) {}
 
 	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
-		const user = RequestContext.currentUser();
-		const { tenantId } = user;
+		const userId = RequestContext.currentUserId();
+		const tenantId = RequestContext.currentTenantId();
+
 		const employee = await this.employeeRepository.findOne({
-			userId: user.id,
+			userId,
 			tenantId
 		});
 
@@ -107,11 +110,11 @@ export class TimerService {
 	}
 
 	async startTimer(request: ITimerToggleInput): Promise<TimeLog> {
-		const user = RequestContext.currentUser();
+		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
 		const employee = await this.employeeRepository.findOne({
-			userId: user.id,
+			userId,
 			tenantId
 		});
 		if (!employee) {
@@ -205,11 +208,11 @@ export class TimerService {
 	* Get employee last running timer 
 	*/
 	private async getLastRunningLog() {
-		const user = RequestContext.currentUser();
+		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
 		const employee = await this.employeeRepository.findOne({
-			userId: user.id,
+			userId,
 			tenantId
 		});
 		if (!employee) {

@@ -10,83 +10,141 @@ import {
 	RelationId,
 	OneToMany
 } from 'typeorm';
-import { IContact, ITag, IWarehouse } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import {
+	ApiProperty,
+	ApiPropertyOptional
+} from '@nestjs/swagger';
+import {
+	IsBoolean,
+	IsEmail,
+	IsNotEmpty,
+	IsOptional,
+	IsString
+} from 'class-validator';
+import {
+	IContact,
+	IImageAsset,
+	ITag,
+	IWarehouse,
+	IWarehouseProduct
+} from '@gauzy/contracts';
 import {
 	Contact,
 	Tag,
-	WarehouseProduct,
 	TenantOrganizationBaseEntity,
 	ImageAsset
 } from '../core/entities/internal';
+import { WarehouseProduct } from './warehouse-product.entity';
 
 @Entity('warehouse')
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
 	
 	@ApiProperty({ type: () => String })
 	@IsString()
+	@IsNotEmpty()
 	@Column()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
+	code: string;
+
+	@ApiProperty({ type: () => String })
+	@IsEmail()
+	@Column()
 	email: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@Column({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
+	@IsBoolean()
 	@Column({ default: true })
 	active: boolean;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@Column()
-	code: string;
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
 
-	@ApiProperty()
-	@ManyToOne(() => ImageAsset, { cascade: true })
+	/**
+	 * ImageAsset
+	 */
+	@ApiProperty({ type: () => ImageAsset })
+	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.warehouses, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
-	logo: ImageAsset;
+	logo?: IImageAsset;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.logo)
 	@IsString()
+	@IsOptional()
 	@Index()
-	@Column({ nullable: false })
-	logoId: string;
+	@Column({ nullable: true })
+	logoId?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Contact
+	 */
 	@ApiProperty({ type: () => Contact })
 	@OneToOne(() => Contact, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	contact: IContact;
+	contact?: IContact;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.contact)
 	@IsString()
+	@IsOptional()
 	@Index()
 	@Column({ nullable: false })
-	contactId: string;
+	contactId?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * WarehouseProduct
+	 */
+	@ApiProperty({ type: () => WarehouseProduct, isArray: true })
 	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.warehouse, {
 		cascade: true 
 	})
 	@JoinColumn()
-	products: WarehouseProduct[];
+	products?: IWarehouseProduct[];
 
-	@ManyToMany(() => Tag, (tag) => tag.merchants, {
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Tag
+	 */
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.warehouses, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
     })
 	@JoinTable({
 		name: 'tag_warehouse'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 }

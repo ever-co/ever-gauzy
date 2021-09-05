@@ -10,7 +10,7 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
 import { ProductVariantPriceService } from 'apps/gauzy/src/app/@core/services/product-variant-price.service';
-import { ProductVariantSettingsService } from 'apps/gauzy/src/app/@core/services/product-variant-settings.service';
+import { ProductVariantSettingService } from 'apps/gauzy/src/app/@core/services/product-variant-setting.service';
 import { Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { first, takeUntil } from 'rxjs/operators';
@@ -55,7 +55,7 @@ export class InventoryVariantFormComponent
 		private toastrService: ToastrService,
 		private productVariantService: ProductVariantService,
 		private productVariantPriceService: ProductVariantPriceService,
-		private productVariantSettingsService: ProductVariantSettingsService,
+		private productVariantSettingService: ProductVariantSettingService,
 		private location: Location,
 		private route: ActivatedRoute,
 		private readonly store: Store,
@@ -148,35 +148,35 @@ export class InventoryVariantFormComponent
 			],
 			isSubscription: [
 				this.itemVariant
-					? this.itemVariant.settings.isSubscription
+					? this.itemVariant.setting.isSubscription
 					: false
 			],
 			isPurchaseAutomatically: [
 				this.itemVariant
-					? this.itemVariant.settings.isPurchaseAutomatically
+					? this.itemVariant.setting.isPurchaseAutomatically
 					: false
 			],
 			canBeSold: [
-				this.itemVariant ? this.itemVariant.settings.canBeSold : true
+				this.itemVariant ? this.itemVariant.setting.canBeSold : true
 			],
 			canBePurchased: [
 				this.itemVariant
-					? this.itemVariant.settings.canBePurchased
+					? this.itemVariant.setting.canBePurchased
 					: true
 			],
 			canBeCharged: [
-				this.itemVariant ? this.itemVariant.settings.canBeCharged : true
+				this.itemVariant ? this.itemVariant.setting.canBeCharged : true
 			],
 			canBeRented: [
-				this.itemVariant ? this.itemVariant.settings.canBeRented : false
+				this.itemVariant ? this.itemVariant.setting.canBeRented : false
 			],
 			trackInventory: [
 				this.itemVariant
-					? this.itemVariant.settings.trackInventory
+					? this.itemVariant.setting.trackInventory
 					: false
 			],
 			isEquipment: [
-				this.itemVariant ? this.itemVariant.settings.isEquipment : false
+				this.itemVariant ? this.itemVariant.setting.isEquipment : false
 			],
 			notes: [this.itemVariant ? this.itemVariant.notes : '']
 		});
@@ -212,8 +212,8 @@ export class InventoryVariantFormComponent
 				organizationId,
 				tenantId
 			},
-			productVariantSettings: {
-				id: this.itemVariant.settings.id,
+			productVariantSetting: {
+				id: this.itemVariant.setting.id,
 				isSubscription: formValue['isSubscription'],
 				isPurchaseAutomatically: formValue['isPurchaseAutomatically'],
 				canBeSold: formValue['canBeSold'],
@@ -232,8 +232,8 @@ export class InventoryVariantFormComponent
 
 	async saveVariant(productVariantRequest: any) {
 		try {
-			await this.productVariantSettingsService.updateProductVariantSettings(
-				productVariantRequest.productVariantSettings
+			await this.productVariantSettingService.updateProductVariantSetting(
+				productVariantRequest.productVariantSetting
 			);
 
 			await this.productVariantPriceService.updateProductVariantPrice(

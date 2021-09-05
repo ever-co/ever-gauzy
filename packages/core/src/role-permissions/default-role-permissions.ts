@@ -91,7 +91,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
 			PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
-			PermissionsEnum.MIGRATE_GAUZY_CLOUD
+			PermissionsEnum.MIGRATE_GAUZY_CLOUD,
+			PermissionsEnum.INVENTORY_GALLERY_VIEW,
+			PermissionsEnum.INVENTORY_GALLERY_EDIT,
 		]
 	},
 	{
@@ -180,7 +182,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PRODUCT_TYPES_EDIT,
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
-			PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
+			PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
+			PermissionsEnum.INVENTORY_GALLERY_VIEW,
+			PermissionsEnum.INVENTORY_GALLERY_EDIT,
 		]
 	},
 	{
@@ -228,6 +232,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
 			PermissionsEnum.EMPLOYEE_EXPENSES_EDIT,
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
+			PermissionsEnum.INVENTORY_GALLERY_EDIT,
 			PermissionsEnum.ORG_INVENTORY_VIEW,
 			PermissionsEnum.ORG_EQUIPMENT_VIEW,
 			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,

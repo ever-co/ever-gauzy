@@ -51,12 +51,12 @@ export const enterDescriptionInputData = (data) => {
 	enterInput(GoalsKPIPage.kpiDescriptionInputCss, data);
 };
 
-export const employeeMultyselectVisible = () => {
-	verifyElementIsVisible(GoalsKPIPage.employeeMultyselectCss);
+export const employeeMultiSelectVisible = () => {
+	verifyElementIsVisible(GoalsKPIPage.employeeMultiSelectCss);
 };
 
-export const clickEmployeeMultyselect = () => {
-	clickButton(GoalsKPIPage.employeeMultyselectCss);
+export const clickEmployeeMultiSelect = () => {
+	clickButton(GoalsKPIPage.employeeMultiSelectCss);
 };
 
 export const employeeDropdownVisible = () => {

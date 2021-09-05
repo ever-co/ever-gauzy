@@ -176,8 +176,8 @@ export class ProductFormComponent
 			this.inventoryItem = await this.productService.getById(
 				id,
 				[
-					'category',
-					'type',
+					'productCategory',
+					'productType',
 					'optionGroups',
 					'variants',
 					'tags',

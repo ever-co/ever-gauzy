@@ -15,7 +15,7 @@ export const ContactsLeadsPage = {
 	streetInputCss: '[formcontrolname="address"]',
 	projectsDropdownCss: '[formcontrolname="projects"]',
 	projectsDropdownOptionCss: 'div.ng-option',
-	usersMultyselectCss: 'div.form-group ga-employee-multi-select nb-select',
+	usersMultiSelectCss: 'div.form-group ga-employee-multi-select nb-select',
 	dropdownOptionCss: '.option-list nb-option',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',

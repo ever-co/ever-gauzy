@@ -6,7 +6,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { Activity } from '../../../activity/activity.entity';
 import { UpdateTimeSlotCommand } from '../update-time-slot.command';
-import { TimeSlot } from '../../../time-slot.entity';
+import { TimeSlot } from './../../time-slot.entity';
 
 @CommandHandler(UpdateTimeSlotCommand)
 export class UpdateTimeSlotHandler
@@ -14,6 +14,7 @@ export class UpdateTimeSlotHandler
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>
 	) {}

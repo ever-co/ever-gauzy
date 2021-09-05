@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ProductVariantDeleteCommand } from '../product-variant.delete.command';
 import { ProductVariantService } from '../../product-variant.service';
-import { ProductVariantSettingService } from '../../../product-settings/product-settings.service';
+import { ProductVariantSettingService } from '../../../product-setting/product-setting.service';
 import { ProductVariantPriceService } from '../../../product-variant-price/product-variant-price.service';
 import { DeleteResult } from 'typeorm/query-builder/result/DeleteResult';
 
@@ -29,7 +29,7 @@ export class ProductVariantDeleteHandler
 				productVariant.price.id
 			),
 			await this.productVariantSettingsService.delete(
-				productVariant.settings.id
+				productVariant.setting.id
 			)
 		];
 

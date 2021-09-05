@@ -45,20 +45,21 @@ import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
 import { UserService } from '../user/user.service';
 import {
-	TimeSlotCreateCommand,
 	TimesheetGetCommand,
 	TimesheetCreateCommand,
-	ScreenshotCreateCommand,
-	ActivityCreateCommand
-} from '../timesheet/commands';
+} from './../timesheet/commands';
+import { ScreenshotCreateCommand } from './../timesheet/screenshot/commands';
+import { TimeSlotCreateCommand } from './../timesheet/time-slot/commands/time-slot-create.command';
+import { ActivityCreateCommand } from './../timesheet/activity/commands';
 import { TimeLogCreateCommand } from '../timesheet/time-log/commands';
-import { getDummyImage } from '../core/utils';
-import { RequestContext } from '../core/context';
 import {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectUpdateCommand
 } from '../organization-project/commands';
 import { TaskUpdateCommand } from '../tasks/commands';
+import { getDummyImage } from '../core/utils';
+import { RequestContext } from '../core/context';
+
 
 @Injectable()
 export class HubstaffService {

@@ -1,22 +1,27 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
-import { EmailService } from '../../../@core/services/email.service';
 import {
 	IEmail,
 	IEmployee,
 	IOrganization,
-	IOrganizationContact
+	IOrganizationContact,
+	LanguagesEnum
 } from '@gauzy/contracts';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Store } from '../../../@core/services/store.service';
-import { first, filter } from 'rxjs/operators';
-import { EmailFiltersComponent } from './email-filters/email-filters.component';
-import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { EmployeesService } from '../../../@core/services';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { first, filter, tap, debounceTime } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { EmailFiltersComponent } from './email-filters/email-filters.component';
+import { TranslationBaseComponent } from '../../../@shared/language-base';
+import {
+	EmailService,
+	EmployeesService,
+	OrganizationContactService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,30 +32,22 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class EmailHistoryComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _selectedOrganization: IOrganization;
 
-	loading = true;
-
-	emails: IEmail[];
-
-	employees: IEmployee[];
-
-	organizationContacts: IOrganizationContact[];
-
+	loading: boolean;
+	emails: IEmail[] = [];
+	employees: IEmployee[] = [];
+	organizationContacts: IOrganizationContact[] = [];
 	selectedEmail: IEmail;
-
 	filteredCount: Number;
-
 	threshholdHitCount = 1;
-
 	pageSize = 10;
-
 	imageUrl: string;
-
 	filters = [];
 	disableLoadMore: boolean = false;
 	totalNoPage: number;
 	nextDataLoading: boolean = false;
+	private organization: IOrganization;
+	emails$: Subject<any> = new Subject();
 
 	get selectedEmailHTML() {
 		return this.sanitizer.bypassSecurityTrustHtml(
@@ -59,43 +56,39 @@ export class EmailHistoryComponent
 	}
 
 	constructor(
-		private dialogService: NbDialogService,
-		private emailService: EmailService,
-		private sanitizer: DomSanitizer,
-		private store: Store,
-		private toastrService: ToastrService,
-		private organizationContactService: OrganizationContactService,
-		private employeesService: EmployeesService,
+		private readonly dialogService: NbDialogService,
+		private readonly emailService: EmailService,
+		private readonly sanitizer: DomSanitizer,
+		private readonly store: Store,
+		private readonly toastrService: ToastrService,
+		private readonly organizationContactService: OrganizationContactService,
+		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
+		this.emails$
 			.pipe(
-				filter((organization) => !!organization),
+				debounceTime(300),
+				tap(() => this._getEmails()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this._selectedOrganization = organization;
-
-					const { tenantId } = this.store.user;
-					const { id: organizationId } = this._selectedOrganization;
-
-					this.resetFilters();
-
-					this._getSelectedOrganizationEmails(
-						organizationId,
-						tenantId
-					);
-					this._getEmployees(organizationId, tenantId);
-
-					this._getOrganizationContacts();
-					this.loading = false;
-				}
-			});
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loading = true),
+				tap(() => this.resetFilters()),
+				tap(() => this._getEmployees()),
+				tap(() => this._getOrganizationContacts()),
+				tap(() => this.loading = false),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	selectEmail(email: IEmail) {
@@ -107,21 +100,14 @@ export class EmailHistoryComponent
 			.open(EmailFiltersComponent, {
 				context: {
 					filters: this.filters,
-					organization: this._selectedOrganization
+					organization: this.organization
 				}
 			})
 			.onClose.pipe(first())
 			.toPromise();
 
 		if (filters) {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this._selectedOrganization;
-
-			this._getSelectedOrganizationEmails(
-				organizationId,
-				tenantId,
-				filters
-			);
+			this.emails$.next();
 			const getCount = function (obj) {
 				return Object.values(obj).filter(
 					(value) => typeof value !== 'undefined'
@@ -132,28 +118,30 @@ export class EmailHistoryComponent
 		}
 	}
 
-	getEmailLanguageFullName(languageCode: 'en' | 'bg' | 'he' | 'ru') {
+	getEmailLanguageFullName(languageCode: LanguagesEnum) {
 		switch (languageCode) {
-			case 'en':
+			case LanguagesEnum.ENGLISH:
 				return 'English';
-			case 'bg':
+			case LanguagesEnum.BULGARIAN:
 				return 'Bulgarian';
-			case 'he':
+			case LanguagesEnum.HEBREW:
 				return 'Hebrew';
-			case 'ru':
+			case LanguagesEnum.RUSSIAN:
 				return 'Russian';
 		}
 	}
 
-	private async _getSelectedOrganizationEmails(
-		organizationId: string,
-		tenantId: string,
-		filters?: any
-	) {
+	private async _getEmails() {
+		if (!this.organization) {
+			return;
+		}
+
 		try {
-			await this.emailService
-				.getAll(
-					['emailTemplate', 'user'],
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+			const filters = this.filters;
+
+			await this.emailService.getAll(['emailTemplate', 'user'],
 					{
 						organizationId,
 						tenantId,
@@ -169,8 +157,7 @@ export class EmailHistoryComponent
 
 					if (this.threshholdHitCount >= totalNoPage) {
 						this.disableLoadMore = true
-					}
-					else {
+					} else {
 						this.disableLoadMore = false
 					}
 				}).finally(() => {
@@ -184,17 +171,35 @@ export class EmailHistoryComponent
 		}
 	}
 
-	private async _getEmployees(organizationId: string, tenantId: string) {
-		const { items } = await this.employeesService
-			.getAll(['user'], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
-		this.employees = items;
+	private async _getEmployees() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.employees = (
+			await (
+				this.employeesService.getAll(['user'], {
+					organizationId,
+					tenantId
+				})
+				.pipe(first())
+				.toPromise())
+		).items;
 	}
 
 	private async _getOrganizationContacts() {
-		const { items } = await this.organizationContactService.getAll();
-		this.organizationContacts = items;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.organizationContacts = (
+			await this.organizationContactService.getAll([], {
+				organizationId,
+				tenantId
+			})
+		).items;
 	}
 
 	async archive() {
@@ -203,15 +208,15 @@ export class EmailHistoryComponent
 		}
 		await this.emailService.update(this.selectedEmail.id, {
 			isArchived: true
+		})
+		.then(() => {
+			this.toastrService.success(
+				this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
+			);
+		})
+		.finally(() => {
+			this.emails$.next();
 		});
-		this._getSelectedOrganizationEmails(
-			this._selectedOrganization.id,
-			this._selectedOrganization.tenantId,
-			this.filters
-		);
-		this.toastrService.success(
-			this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
-		);
 	}
 
 	getEmailDate(createdAt: string): string {
@@ -226,11 +231,7 @@ export class EmailHistoryComponent
 		}
 		this.nextDataLoading = true;
 		this.threshholdHitCount++;
-		this._getSelectedOrganizationEmails(
-			this._selectedOrganization.id,
-			this._selectedOrganization.tenantId,
-			this.filters
-		);
+		this.emails$.next();
 	}
 
 	getUrl(email: string): string {

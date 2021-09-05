@@ -102,5 +102,12 @@ export const LocalStore = {
 				...values
 			}
 		});
+	},
+
+	updateAdditionalSetting: (values) => {
+		let addSetting = store.get('additionalSetting');
+		store.set({
+			additionalSetting: { ...addSetting, ...values }
+		});
 	}
 };

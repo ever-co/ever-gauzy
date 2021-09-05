@@ -51,9 +51,12 @@ export interface IEventTypeViewModel {
 	description: string;
 	durationFormat: string;
 	id: string;
-	Active: string;
+	active: string;
 	isActive: boolean;
 	duration: Number;
 	durationUnit: string;
 	tags: ITag[];
+	isDefault?: boolean;
+	employeeId?: string;
+    employee?: IEmployee;
 }

@@ -51,9 +51,7 @@
 				[buttonTemplate]="actionButtons"
 				[cardSize]="'big'">
 			</ga-card-grid>
-			<div 
-				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-				class="pagination-container">
+			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination 
 						(selectedPage)="onPageChange($event)"

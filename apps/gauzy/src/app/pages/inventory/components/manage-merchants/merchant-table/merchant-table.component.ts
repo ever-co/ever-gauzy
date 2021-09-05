@@ -1,24 +1,27 @@
-import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { API_PREFIX } from 'apps/gauzy/src/app/@core';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { combineLatest } from 'rxjs';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { NbDialogService } from '@nebular/theme';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IMerchant,
 	IOrganization,
 	ComponentLayoutStyleEnum,
-	IContact
+	IContact,
+	IWarehouse
 } from '@gauzy/contracts';
-import { tap } from 'rxjs/operators';
-import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
-import { Router } from '@angular/router';
-import { MerchantService } from '../../../../../@core/services/merchant.service';
-import { Store } from '../../../../../@core/services/store.service';
-import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
-import { ItemImgTagsComponent } from '../../table-components/item-img-tags-row.component';
+import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
+import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
+import { EnabledStatusComponent, ItemImgTagsComponent } from '../../table-components';
+import { PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
+import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,86 +30,97 @@ import { ItemImgTagsComponent } from '../../table-components/item-img-tags-row.c
 	styleUrls: ['./merchant-table.component.scss']
 })
 export class MerchantTableComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit {
 
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedMerchant: IMerchant;
-	source: ServerDataSource;
-	STORES_URL = `${API_PREFIX}/merchants?`;
-
-	disableButton = true;
-	viewComponentName: ComponentEnum.MERCHANTS;
+	smartTableSource: ServerDataSource;
+	merchants: IMerchant[] = [];
+	disableButton: boolean = true;
+	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	selectedOrganization: IOrganization;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+
+	public organization: IOrganization;
+	merchants$: Subject<any> = this.subject$;
 
 	merchantsTable: Ng2SmartTableComponent;
-	merchantData: IMerchant[] = [];
-	totalItems = 0;
-	currentPage = 1;
-	itemsPerPage = 10;
-
-	@ViewChild('productStore') set content(content: Ng2SmartTableComponent) {
+	@ViewChild('merchantsTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
 			this.merchantsTable = content;
 			this.onChangedSource();
 		}
 	}
 
+	/*
+	* Actions Buttons directive 
+	*/
+	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+
 	constructor(
-		readonly translateService: TranslateService,
-		private router: Router,
-		private http: HttpClient,
-		private toastrService: ToastrService,
-		private merchantService: MerchantService,
-		private store: Store
+		public readonly translateService: TranslateService,
+		private readonly router: Router,
+		private readonly http: HttpClient,
+		private readonly toastrService: ToastrService,
+		private readonly merchantService: MerchantService,
+		private readonly store: Store,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
-		this.setView();
-		this.loadSettings();
-		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
+		this._loadSmartTableSettings();
+	}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+	ngAfterViewInit(): void {
+		this.merchants$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.getMerchants()),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
-		this.merchantService.count({ findInput: { organizationId, tenantId } }).then(res => {
-			this.totalItems = res as any;
-		});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((org) => {
-				this.selectedOrganization = org;
-				if (this.selectedOrganization) {
-					this.loadSettings();
-				}
-			});
-
+		const storeOrganization$ = this.store.selectedOrganization$;
+		combineLatest([storeOrganization$])
+			.pipe(
+				debounceTime(300),
+				filter(([organization]) => !!organization),
+				tap(([organization]) => (this.organization = organization)),
+				distinctUntilChange(),
+				tap(() => this.merchants$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.MERCHANTS;
 		this.store
-			.componentLayout$(ComponentEnum.MERCHANTS)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-
-				if (componentLayout == ComponentLayoutStyleEnum.CARDS_GRID) {
-					this.onPageChange(this.currentPage);
-				}
-			});
+			.componentLayout$(this.viewComponentName)
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.merchants$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	async loadSmartTable() {
+	async _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
-				perPage: this.itemsPerPage
+				perPage: this.pagination.itemsPerPage
 			},
 			columns: {
 				name: {
@@ -151,58 +165,37 @@ export class MerchantTableComponent
 					type: 'custom',
 					renderComponent: EnabledStatusComponent
 				}
-			},
-
+			}
 		}
 	}
 
-	onPageChange(pageNum) {
-		this.currentPage = pageNum;
-
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization || { id: null };
-
-		const options = {
-			relations: ['logo', 'contact', 'tags', 'warehouses'],
-			findInput: { organizationId, tenantId }
-		};
-
-		this.merchantService.getAll(options,
-			{ page: pageNum, _limit: this.itemsPerPage }).then(res => {
-				if (res && res.items) {
-					this.merchantData = res.items;
-				}
-			});
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	onAddStoreClick() {
-		this.router.navigate(['/pages/organization/inventory/merchants/create']);
+		this.router.navigate([
+			'/pages/organization/inventory/merchants/create'
+		]);
 	}
 
-	onEditStore(selectedItem) {
-		this.router.navigate([`/pages/organization/inventory/merchants/edit/${this.selectedMerchant.id}`]);
-	}
+	onEditStore(selectedItem?: IMerchant) {
+		if (selectedItem) {
+			this.selectStore({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 
-	async loadSettings() {
-		const { id: organizationId, tenantId } = this.selectedOrganization || { id: null, tenantId: null };
-
-
-		const data = "data=" + JSON.stringify({
-			relations: ['logo', 'contact', 'tags', 'warehouses'],
-			findInput: {
-				organization: { id: organizationId },
-				tenantId
-			},
-		});
-
-		this.source = new ServerDataSource(this.http, {
-			endPoint: this.STORES_URL + data,
-			dataKey: 'items',
-			totalKey: 'total',
-			perPage: 'per_page',
-			pagerPageKey: 'page'
-		});
-		this.loading = false;
+		this.router.navigate([
+			`/pages/organization/inventory/merchants/edit`, 
+			this.selectedMerchant.id
+		]);
 	}
 
 	/*
@@ -215,6 +208,89 @@ export class MerchantTableComponent
 				tap(() => this.clearItem())
 			)
 			.subscribe();
+	}
+
+	async onDelete(selectedItem?: IMerchant) {
+		if (selectedItem) {
+			this.selectStore({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		if (!this.selectedMerchant) {
+			return;
+		}
+
+		const dialog = await this.dialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (dialog) {
+			await this.merchantService
+				.delete(this.selectedMerchant.id)
+				.then(res => {
+					if (res && res['affected'] == 1) {
+						const { name } = this.selectedMerchant;
+						this.toastrService.success('INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY', {
+							name
+						});
+					}
+				})
+				.finally(() => {
+					this.merchants$.next();
+				});
+		}
+	}
+
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.smartTableSource = new ServerDataSource(this.http, {
+			endPoint: `${API_PREFIX}/merchants/pagination`,
+			relations: [ 'logo', 'contact', 'tags', 'warehouses' ],
+			where: {
+				...{ organizationId, tenantId },
+				...this.filters.where
+			},
+			resultMap: (warehouse: IWarehouse) => {
+				return Object.assign({}, warehouse);
+			},
+			finalize: () => {
+				this.loading = false;
+			}
+		});
+	}
+
+	/**
+	 * GET merchants smart table source
+	 */
+	 private async getMerchants() {
+		try { 
+			this.setSmartTableSource();
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+				await this.smartTableSource.getElements();
+				this.merchants = this.smartTableSource.getData();
+
+				this.pagination['totalItems'] =  this.smartTableSource.count();
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	selectStore({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.selectedMerchant = isSelected ? data : null;
 	}
 
 	/*
@@ -237,25 +313,4 @@ export class MerchantTableComponent
 			this.merchantsTable.grid.dataSet.deselectAll();
 		}
 	}
-
-	async selectStore({ isSelected, data }) {
-		this.disableButton = !isSelected;
-		this.selectedMerchant = isSelected ? data : null;
-	}
-
-	async delete() {
-		this.merchantService.delete(this.selectedMerchant.id)
-			.then(res => {
-				if (res && res['affected'] == 1) {
-					this.toastrService.success(
-						'INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY',
-						{ name: this.selectedMerchant.name }
-					);
-
-				}
-				this.loadSettings();
-			});
-	}
-
-
 }

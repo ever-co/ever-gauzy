@@ -3111,6 +3111,7 @@
 		"IMMUTABLE_TIME": "crwdns4862:0crwdne4862:0",
 		"BULK_ACTION": "crwdns7570:0crwdne7570:0",
 		"LOG_TYPE": "crwdns4868:0crwdne4868:0",
+		"SOURCE": "crwdns10531:0crwdne10531:0",
 		"TOTAL_TIME": "crwdns4870:0crwdne4870:0",
 		"ACTIVITIES": "crwdns8434:0crwdne8434:0",
 		"APPROVED_AT": "crwdns4874:0crwdne4874:0",
@@ -3295,7 +3296,6 @@
 			"candidate-schedule-interview": "crwdns7828:0crwdne7828:0",
 			"interviewer-interview-schedule": "crwdns7830:0crwdne7830:0",
 			"employee-join": "crwdns10529:0crwdne10529:0",
-			"employee-join": "Employee Join",
 			"TEMPLATE_NAMES": "crwdns9828:0crwdne9828:0"
 		},
 		"LANGUAGE_CODES": {

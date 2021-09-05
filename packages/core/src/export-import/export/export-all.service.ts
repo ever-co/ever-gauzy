@@ -111,7 +111,7 @@ import {
 	ProductTypeTranslation,
 	ProductVariant,
 	ProductVariantPrice,
-	ProductVariantSettings,
+	ProductVariantSetting,
 	Proposal,
 	Report,
 	ReportCategory,
@@ -440,8 +440,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(ProductOptionGroupTranslation)
 		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>,
 
-		@InjectRepository(ProductVariantSettings)
-		private readonly productVariantSettingsRepository: Repository<ProductVariantSettings>,
+		@InjectRepository(ProductVariantSetting)
+		private readonly productVariantSettingRepository: Repository<ProductVariantSetting>,
 
 		@InjectRepository(ProductType)
 		private readonly productTypeRepository: Repository<ProductType>,
@@ -1284,7 +1284,7 @@ export class ExportAllService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.productVariantSettingsRepository
+				repository: this.productVariantSettingRepository
 			},
 			{
 				repository: this.imageAssetRepository

@@ -4,20 +4,22 @@ import {
 } from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag-entity.model';
-import { IContact } from 'index';
+import { IContact } from './contact.model';
+import { IInvoiceItem } from './invoice-item.model';
 
 export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description: string;
 	enabled: boolean;
 	code: string;
+	imageUrl: string;
 	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
 	optionGroups?: IProductOptionGroupTranslatable[];
 	productTypeId: string;
 	productCategoryId: string;
-	type?: IProductTypeTranslatable;
-	category?: IProductCategoryTranslatable;
+	productType?: IProductTypeTranslatable;
+	productCategory?: IProductCategoryTranslatable;
 	tags?: ITag[];
 	language?: string;
 }
@@ -26,35 +28,37 @@ export interface IProductTranslatable
 	extends ITranslatable<IProductTranslation> {
 	enabled: boolean;
 	code: string;
+	imageUrl: string;
 	featuredImage?: IImageAsset;
+	featuredImageId?: string;
+	productType?: IProductTypeTranslatable;
+	productTypeId?: string;
+	productCategory?: IProductCategoryTranslatable;
+	productCategoryId?: string;
 	variants?: IProductVariant[];
 	optionGroups?: IProductOptionGroupTranslatable[];
-	productTypeId: string;
-	productCategoryId: string;
-	type?: IProductTypeTranslatable;
-	category?: IProductCategoryTranslatable;
+	invoiceItems?: IInvoiceItem[];
+	warehouses?: IWarehouse[];
 	tags?: ITag[];
 	gallery?: IImageAsset[];
 }
 
 export interface IProductTranslated
 	extends IBasePerTenantAndOrganizationEntityModel {
-	imageUrl: string;
-	productType: string;
-	productCategory: string;
 	name: string;
-	description: string;
-	category?: string;
-	type?: string;
-	featuredImage?: IImageAsset;
 	code: string;
 	enabled: boolean;
+	imageUrl: string;
+	productType?: IProductTypeTranslatable;
+	productCategory?: IProductCategoryTranslatable;
+	description: string;
+	featuredImage?: IImageAsset;
 	gallery?: IImageAsset[];
 	options?: IProductOption[];
 	tags?: ITag[];
 	variants?: IProductVariant[];
-	productTypeId: string;
-	productCategoryId: string;
+	productTypeId?: string;
+	productCategoryId?: string;
 }
 
 export interface IProductTranslation
@@ -140,18 +144,20 @@ export interface IProductCategoryTranslated
 
 export interface IProductVariant
 	extends IBasePerTenantAndOrganizationEntityModel {
-	price: IProductVariantPrice;
 	taxes: number;
 	notes: string;
-	enabled: boolean;
-	productId: string;
 	quantity: number;
 	billingInvoicingPolicy: string;
 	internalReference: string;
-	image: IImageAsset;
-	options: IProductOptionTranslatable[];
-	settings: IProductVariantSetting;
+	enabled: boolean;
+	price: IProductVariantPrice;
+	setting: IProductVariantSetting;
 	product?: IProductTranslatable;
+	productId?: string;
+	image?: IImageAsset;
+	imageId?: string;
+	options: IProductOptionTranslatable[];
+	warehouseProductVariants?: IWarehouseProductVariant[];
 }
 
 export interface IVariantCreateInput {
@@ -202,9 +208,9 @@ export interface IProductOptionTranslated
 
 export interface IProductOptionTranslatable
 	extends IBasePerTenantAndOrganizationEntityModel {
+	name: string;
 	code: string;
 	product?: IProductTranslatable;
-	name?: string;
 	description?: string;
 	group?: IProductOptionGroupTranslatable;
 	translations: IProductOptionTranslation[];
@@ -220,8 +226,9 @@ export interface IProductOptionTranslation
 
 export interface IProductOptionGroupTranslatable
 	extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
+	name: string;
 	product?: IProductTranslatable;
+	productId?: string;
 	options: IProductOptionTranslatable[];
 	translatedOptions?: IProductOptionTranslated[];
 	translations: IProductOptionGroupTranslation[];
@@ -243,31 +250,33 @@ export interface IImageAsset extends IBasePerTenantEntityModel {
 }
 
 export interface IWarehouse extends IBasePerTenantEntityModel {
-	description: string;
-	active: boolean;
-	contact: IContact;
-	code: string;
-	products?: IWarehouseProduct[];
 	name: string;
-	logo?: IImageAsset;
 	email: string;
+	description: string;
+	code: string;
+	active: boolean;
+	logo?: IImageAsset;
+	logoId?: string;
+	contact?: IContact;
+	contactId?: string;
+	products?: IWarehouseProduct[];
 	tags?: ITag[];
 }
 
 export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	code: string;
-	contact: IContact;
-	contactId?: string;
-	description: string;
-	logo: IImageAsset;
-	logoId: string;
 	email: string;
 	phone: string;
-	tags: ITag[];
-	currency: string;
-	warehouses: IWarehouse[];
+	code: string;
 	active: boolean;
+	currency: string;
+	description: string;
+	contact?: IContact;
+	contactId?: string;
+	logo?: IImageAsset;
+	logoId?: string;
+	tags?: ITag[];
+	warehouses?: IWarehouse[];
 }
 
 export interface IMerchantCreateInput {
@@ -285,9 +294,11 @@ export interface IMerchantCreateInput {
 }
 
 export interface IWarehouseProduct extends IBasePerTenantEntityModel {
-	warehouse: IWarehouse;
 	quantity: number;
+	warehouse: IWarehouse;
+	warehouseId?: string;
 	product: IProductTranslatable;
+	productId?: string;
 	variants: IWarehouseProductVariant[];
 }
 
@@ -296,7 +307,7 @@ export interface IWarehouseProductVariant extends IBasePerTenantEntityModel {
 	variant: IProductVariant;
 }
 
-export interface IWarehouseProductCreateInput {
+export interface IWarehouseProductCreateInput extends IBasePerTenantEntityModel {
 	productId: String;
 	variantIds: String[];
 }

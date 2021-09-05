@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { Merchant, Contact, ImageAsset, Country } from './../core/entities/internal';
 import * as faker from 'faker';
-import { ICountry, IOrganization, ITenant } from '@gauzy/contracts';
+import { ICountry, IMerchant, IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createRandomMerchants = async (
     connection: Connection,
@@ -16,10 +16,11 @@ export const createRandomMerchants = async (
     }
 
     const countries: ICountry[] = await connection.manager.find(Country);
-    let merchants: Merchant[] = [];
-    for (const tenant of tenants) {
+    const merchants: IMerchant[] = [];
+
+    for await (const tenant of tenants) {
         const organizations = tenantOrganizationsMap.get(tenant);
-        for (const organization of organizations) {
+        for await (const organization of organizations) {
             for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
                 const merchant = applyRandomProperties(tenant, organization, countries);
                 merchant.organization = organization;
@@ -37,7 +38,7 @@ export const createDefaultMerchants = async (connection: Connection,
     organizations: IOrganization[]
 ) => {
     const countries: ICountry[] = await connection.manager.find(Country);
-    let merchants: Merchant[] = [];
+    let merchants: IMerchant[] = [];
     for (const organization of organizations) {
         const merchant = applyRandomProperties(tenant, organization, countries);
         merchant.organization = organization;

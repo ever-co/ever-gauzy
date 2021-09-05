@@ -7,6 +7,7 @@ import { CustomCommands } from '../../commands';
 import * as faker from 'faker';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -20,6 +21,7 @@ Given('Login with default credentials', () => {
 
 // Add new transfer protocol
 Then('User can visit Custom SMTP page', () => {
+	waitUntil(3000);
 	cy.visit('/#/pages/settings/custom-smtp/tenant', { timeout: pageLoadTimeout });
 });
 

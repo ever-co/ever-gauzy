@@ -1,8 +1,16 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
-	<nb-card-header class="card-header-title">
+<nb-card 
+	[nbSpinner]="loading" 
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
+	<nb-card-header class="card-header-title" fixed>
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
-			<h4> <ngx-header-title> {{ 'INVENTORY_PAGE.WAREHOUSES' | translate }} </ngx-header-title> </h4>
+			<h4> 
+				<ngx-header-title>
+					{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
+				</ngx-header-title> 
+			</h4>
 		</div>
 		<div>
 			<ga-layout-selector
@@ -10,7 +18,6 @@
 			></ga-layout-selector>
 		</div>
 	</nb-card-header>
-
 	<nb-card-body>
 		<div class="mb-3">
 			<button
@@ -19,36 +26,48 @@
 				status="success"
 				class="mr-2"
 			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-		<ng2-smart-table
-			class="tags-table"
-			[settings]="settingsSmartTable"
-			(userRowSelect)="selectWarehouse($event)"
-			[source]="smartTableSource"
-			style="cursor: pointer"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			#warehousesTable
+		<ng-template 
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIfElse]="gridLayout"
 		>
-		</ng2-smart-table>
-		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[settings]="settingsSmartTable"
-			[source]="warehousesList"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
-
-		<div class="pagination-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-				<ga-pagination *ngIf="totalItems > itemsPerPage" (selectedPage)="onPageChange($event)"
-					[totalItems]="totalItems" [itemsPerPage]="itemsPerPage" [activePage]="activePage">
-				</ga-pagination>
-		</div>
-
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					[settings]="settingsSmartTable"
+					(userRowSelect)="selectWarehouse($event)"
+					[source]="smartTableSource"
+					style="cursor: pointer"
+					#warehousesTable
+				>
+				</ng2-smart-table>
+			</div>
+		</ng-template>
+		<ng-template #gridLayout>
+			<div class="grid-scroll-container">
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="warehouses"
+					[buttonTemplate]="actionButtons"
+				></ga-card-grid>
+			</div>
+			<div class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination 
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems" 
+						[itemsPerPage]="pagination?.itemsPerPage" 
+						[activePage]="pagination?.activePage">
+					</ga-pagination>
+				</ng-container>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template
@@ -57,7 +76,7 @@
 	let-selectedItem="selectedItem"
 >
 	<button
-		(click)="onUpdateWarehouse()"
+		(click)="onUpdateWarehouse(selectedItem)"
 		nbButton
 		status="info"
 		class="mr-2"
@@ -68,7 +87,7 @@
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
-		(click)="delete(selectedItem)"
+		(click)="onDelete(selectedItem)"
 		nbButton
 		status="danger"
 		class="mr-2"

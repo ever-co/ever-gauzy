@@ -3,7 +3,7 @@ import { ProductDeleteCommand } from '../product.delete.command';
 import { ProductService } from '../../product.service';
 import { ProductVariantService } from '../../../product-variant/product-variant.service';
 import { DeleteResult } from 'typeorm';
-import { ProductVariantSettingService } from '../../../product-settings/product-settings.service';
+import { ProductVariantSettingService } from '../../../product-setting/product-setting.service';
 import { ProductVariantPriceService } from '../../../product-variant-price/product-variant-price.service';
 import { ProductOptionService } from 'product-option/product-option.service';
 import { ProductOptionGroupService } from 'product-option/product-option-group.service';
@@ -34,7 +34,7 @@ export class ProductDeleteHandler
 		const pricesToDelete = [];
 
 		product.variants.forEach((variant) => {
-			settingsToDelete.push(variant.settings);
+			settingsToDelete.push(variant.setting);
 		});
 		product.variants.forEach((variant) => {
 			pricesToDelete.push(variant.price);

@@ -28,8 +28,8 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.enterNewPositionData(
 			AddEmployeePositionPageData.fullStackDeveloper
 		);
-		addEmployeePositionPage.tagsMultyselectVisible();
-		addEmployeePositionPage.clickTagsMultyselect();
+		addEmployeePositionPage.tagsMultiSelectVisible();
+		addEmployeePositionPage.clickTagsMultiSelect();
 		addEmployeePositionPage.selectTagsFromDropdown(0);
 		addEmployeePositionPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeePositionPage.savePositionButtonVisible();
@@ -49,8 +49,8 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.enterEditPositionData(
 			AddEmployeePositionPageData.midLevelWebDeveloper
 		);
-		addEmployeePositionPage.tagsMultyselectVisible();
-		addEmployeePositionPage.clickTagsMultyselect();
+		addEmployeePositionPage.tagsMultiSelectVisible();
+		addEmployeePositionPage.clickTagsMultiSelect();
 		addEmployeePositionPage.selectTagsFromDropdown(0);
 		addEmployeePositionPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeePositionPage.savePositionButtonVisible();
@@ -74,8 +74,8 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.enterNewPositionData(
 			AddEmployeePositionPageData.fullStackDeveloper
 		);
-		addEmployeePositionPage.tagsMultyselectVisible();
-		addEmployeePositionPage.clickTagsMultyselect();
+		addEmployeePositionPage.tagsMultiSelectVisible();
+		addEmployeePositionPage.clickTagsMultiSelect();
 		addEmployeePositionPage.selectTagsFromDropdown(0);
 		addEmployeePositionPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeePositionPage.savePositionButtonVisible();

@@ -12,14 +12,16 @@ import {
 	ITimerToggleInput,
 	ITimeLog,
 	ITimerStatus,
-	ITimerStatusInput
+	ITimerStatusInput,
+	RolesEnum
 } from '@gauzy/contracts';
 import { TimerService } from './timer.service';
-import { TenantPermissionGuard } from '../../shared/guards';
+import { RoleGuard, TenantPermissionGuard } from './../../shared/guards';
+import { Roles } from './../../shared/decorators';
 
 @ApiTags('Timer')
 @UseGuards(TenantPermissionGuard)
-@Controller('timer')
+@Controller()
 export class TimerController {
 	constructor(private readonly timerService: TimerService) {}
 
@@ -33,11 +35,13 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.EMPLOYEE)
 	@Get('/status')
 	async getTimerStatus(
-		@Query() require: ITimerStatusInput
+		@Query() query: ITimerStatusInput
 	): Promise<ITimerStatus> {
-		return await this.timerService.getTimerStatus(require);
+		return await this.timerService.getTimerStatus(query);
 	}
 
 	@ApiOperation({ summary: 'Toggle timer' })
@@ -50,8 +54,12 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.EMPLOYEE)
 	@Post('/toggle')
-	async toggleTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
+	async toggleTimer(
+		@Body() entity: ITimerToggleInput
+	): Promise<ITimeLog> {
 		return await this.timerService.toggleTimeLog(entity);
 	}
 
@@ -65,8 +73,12 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.EMPLOYEE)
 	@Post('/start')
-	async startTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
+	async startTimer(
+		@Body() entity: ITimerToggleInput
+	): Promise<ITimeLog> {
 		return await this.timerService.startTimer(entity);
 	}
 
@@ -80,8 +92,12 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.EMPLOYEE)
 	@Post('/stop')
-	async stopTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
+	async stopTimer(
+		@Body() entity: ITimerToggleInput
+	): Promise<ITimeLog> {
 		return await this.timerService.stopTimer(entity);
 	}
 }

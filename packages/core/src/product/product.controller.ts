@@ -9,24 +9,32 @@ import {
 	HttpCode,
 	UseGuards,
 	Delete,
-	Query
+	Query,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
-import { ProductService } from './product.service';
-import { Product } from './product.entity';
 import { CommandBus } from '@nestjs/cqrs';
-import { ProductCreateCommand, ProductUpdateCommand, ProductDeleteCommand } from './commands';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { DeleteResult } from 'typeorm';
 import {
 	PermissionsEnum,
 	IProductCreateInput,
 	IProductTranslated,
 	IImageAsset,
-	IPagination
+	IPagination,
+	LanguagesEnum
 } from '@gauzy/contracts';
-import { Permissions } from './../shared/decorators';
-import { DeleteResult } from 'typeorm';
+import { CrudController, PaginationParams } from './../core/crud';
+import { RequestContext } from './../core/context';
+import { ProductService } from './product.service';
+import { Product } from './product.entity';
+import {
+	ProductCreateCommand,
+	ProductUpdateCommand,
+	ProductDeleteCommand
+} from './commands';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 
@@ -41,65 +49,15 @@ export class ProductController extends CrudController<Product> {
 		super(productService);
 	}
 
-	@ApiOperation({ summary: 'Find Products Count ' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Count Products',
-		type: Product
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('count')
-	async count(
-		@Query('data', ParseJsonPipe) data?: any
-	): Promise<Number> {
-		const { findInput = null } = data;
-		return this.productService.count(findInput);
-	}
-
-	@ApiOperation({ summary: 'Find Product by id ' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found one record',
-		type: Product
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data?: any
-	): Promise<Product> {
-		const { relations = [], findInput = null } = data;
-		return this.productService.findById(id, {
-			relations,
-			where: findInput
-		});
-	}
-
-	@ApiOperation({
-		summary: 'Find all products'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found products',
-		type: Product
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findAllProducts(): Promise<
-		IPagination<Product | IProductTranslated>
-	> {
-		return this.productService.findAllProducts();
-	}
-
+	/**
+	 * GET all products translated
+	 * 
+	 * @param langCode 
+	 * @param data 
+	 * @param page 
+	 * @param limit 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find all products translated'
 	})
@@ -112,9 +70,11 @@ export class ProductController extends CrudController<Product> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('local/:langCode')
 	async findAllProductsTranslated(
-		@Param('langCode') langCode: string,
+		@Param('langCode') langCode: LanguagesEnum,
 		@Query('data', ParseJsonPipe) data: any,
 		@Query('page') page: any,
 		@Query('_limit') limit: any
@@ -128,6 +88,14 @@ export class ProductController extends CrudController<Product> {
 		);
 	}
 
+	/**
+	 * GET product by language & id
+	 * 
+	 * @param id 
+	 * @param langCode 
+	 * @param data 
+	 * @returns 
+	 */
 	@ApiOperation({
 		summary: 'Find one product translated'
 	})
@@ -140,7 +108,9 @@ export class ProductController extends CrudController<Product> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('local/:langCode/:id/')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
+	@Get('local/:langCode/:id')
 	async findOneProductTranslated(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Param('langCode') langCode: string,
@@ -150,6 +120,230 @@ export class ProductController extends CrudController<Product> {
 		return this.productService.findByIdTranslated(langCode, id, relations);
 	}
 
+	/**
+	 * CRAETE product image gallery
+	 * 
+	 * @param productId 
+	 * @param images 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Create gallery image' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The gallery image has been stored.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+	@Post('add-images/:productId')
+	async addGalleryImage(
+		@Param('productId', UUIDValidationPipe) productId: string,
+		@Body() images: IImageAsset[]
+	) {
+		return this.productService.addGalleryImages(productId, images);
+	}
+
+	/**
+	 * UPDATE product set image as a feature
+	 * 
+	 * @param productId 
+	 * @param image 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Set featured image' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The featured image has been saved.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+	@Post('set-as-featured/:productId')
+	async setAsFeatured(
+		@Param('productId', UUIDValidationPipe) productId: string,
+		@Body() image: IImageAsset
+	) {
+		return this.productService.setAsFeatured(productId, image);
+	}
+
+	/**
+	 * DELETE product gallery image by id
+	 * 
+	 * @param productId 
+	 * @param imageId 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Delete image from gallery' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+	@Delete(':productId/gallery-image/:imageId')
+	async deleteGaleryImage(
+		@Param('productId', UUIDValidationPipe) productId: string,
+		@Param('imageId', UUIDValidationPipe) imageId: string
+	): Promise<Product> {
+		return this.productService.deleteGalleryImage(productId, imageId);
+	}
+
+	/**
+	 * DELETE product feature image by product id
+	 * 
+	 * @param productId 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Delete featured image' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+	@Delete('featured-image/:productId')
+	async deleteFeaturedImage(
+		@Param('productId', UUIDValidationPipe) productId: string
+	): Promise<Product> {
+		return this.productService.deleteFeaturedImage(productId);
+	}
+
+	/**
+	 * GET inventory products count
+	 * 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find Products Count ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Count Products',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
+	@Get('count')
+	async getCount(
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<number> {
+		const { findInput = null } = data;
+		return await this.productService.count({
+			where: {
+				tenantId: RequestContext.currentTenantId(),
+				...findInput
+			}
+		});
+	}
+
+	/**
+	 * GET inventory products by pagination
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
+	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async pagination(
+		@Query() filter: PaginationParams<Product>,
+		@LanguageDecorator() themeLanguage: LanguagesEnum
+	): Promise<IPagination<Product>> {
+		return this.productService.pagination(
+			filter,
+			themeLanguage
+		);
+	}
+
+	/**
+	 * GET all inventory products in the same tenant
+	 * 
+	 * @param data 
+	 * @param themeLanguage 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find all products' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found products',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
+	@Get()
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any,
+		@LanguageDecorator() themeLanguage: LanguagesEnum
+	): Promise<IPagination<any>> {
+		return await this.productService.findProducts(
+			data,
+			themeLanguage
+		);
+	}
+
+	/**
+	 * GET product by id
+	 * 
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Find Product by id ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Product> {
+		const { relations = [], findInput = null } = data;
+		return this.productService.findOne(id, {
+			relations,
+			where: findInput
+		});
+	}
+
+	/**
+	 * CREATE new product
+	 * 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -162,14 +356,22 @@ export class ProductController extends CrudController<Product> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-	@Post('/create')
-	async createProduct(
-		@Body() entity: IProductCreateInput,
-		...options: any[]
-	) {
-		return this.commandBus.execute(new ProductCreateCommand(entity));
+	@Post()
+	async create(
+		@Body() entity: IProductCreateInput
+	): Promise<Product> {
+		return await this.commandBus.execute(
+			new ProductCreateCommand(entity)
+		);
 	}
 
+	/**
+	 * UPDATE existing product by id
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -185,14 +387,24 @@ export class ProductController extends CrudController<Product> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Put(':id')
-	async updateProduct(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IProductCreateInput
-	): Promise<any> {
-		return this.commandBus.execute(new ProductUpdateCommand(id, entity));
+	): Promise<Product> {
+		return await this.commandBus.execute(
+			new ProductUpdateCommand(id, entity)
+		);
 	}
 
+	/**
+	 * DELETE product by id
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
@@ -203,86 +415,14 @@ export class ProductController extends CrudController<Product> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
-		...options: any[]
+		@Param('id', UUIDValidationPipe) id: string
 	): Promise<DeleteResult> {
-		return this.commandBus.execute(new ProductDeleteCommand(id));
-	}
-
-	@ApiOperation({ summary: 'Create gallery image' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The gallery image has been stored.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-	@Post('/add-images/:productId')
-	async addGalleryImage(
-		@Param('productId', UUIDValidationPipe) productId: string,
-		@Body() images: IImageAsset[]
-	) {
-		return this.productService.addGalleryImages(productId, images);
-	}
-
-	@ApiOperation({ summary: 'Set featured image' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The featured image has been saved.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-	@Post('/set-as-featured/:productId')
-	async setAsFeatured(
-		@Param('productId', UUIDValidationPipe) productId: string,
-		@Body() image: IImageAsset
-	) {
-		return this.productService.setAsFeatured(productId, image);
-	}
-
-	@ApiOperation({ summary: 'Delete image from gallery' })
-	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
-		description: 'The record has been successfully deleted'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete('/:productId/delete-gallery-image/:imageId')
-	async deleteGaleryImage(
-		@Param('productId', UUIDValidationPipe) productId: string,
-		@Param('imageId', UUIDValidationPipe) imageId: string
-	): Promise<Product> {
-		return this.productService.deleteGalleryImage(productId, imageId);
-	}
-
-	@ApiOperation({ summary: 'Delete featured image' })
-	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
-		description: 'The record has been successfully deleted'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete('/delete-featured-image/:productId')
-	async deleteFeaturedImage(
-		@Param('productId', UUIDValidationPipe) productId: string
-	): Promise<Product> {
-		return this.productService.deleteFeaturedImage(productId);
+		return await this.commandBus.execute(
+			new ProductDeleteCommand(id)
+		);
 	}
 }

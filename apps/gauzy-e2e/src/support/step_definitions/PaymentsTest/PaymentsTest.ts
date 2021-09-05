@@ -288,7 +288,7 @@ When('User can click on Delete payment button', () => {
 	paymentsPage.clickDeletePaymentButton();
 });
 
-Then('User can see confrim delete button', () => {
+Then('User can see confirm delete button', () => {
 	paymentsPage.confirmDeleteButtonVisible();
 });
 
