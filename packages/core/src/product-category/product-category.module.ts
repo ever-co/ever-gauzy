@@ -6,6 +6,7 @@ import { ProductCategoryService } from './product-category.service';
 import { ProductCategoryController } from './product-category.controller';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
@@ -16,9 +17,13 @@ import { TenantModule } from '../tenant/tenant.module';
 			ProductCategory,
 			ProductCategoryTranslation
 		]),
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [ProductCategoryController],
-	providers: [ProductCategoryService]
+	providers: [
+		TypeOrmModule,
+		ProductCategoryService
+	]
 })
 export class ProductCategoryModule {}

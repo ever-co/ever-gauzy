@@ -4,7 +4,7 @@ export const OrganizationInventoryPage = {
 	languageDropdownCss:
 		'div[class="form-group mb-3"] > ngx-language-selector > ng-select',
 	dropdownOptionCss: '.option-list nb-option',
-	nameInputCss: 'input[id="nameInput"]',
+	nameInputCss: 'input[id="name"]',
 	codeInputCss: 'input[id="codeInput"]',
 	productTypeDropdownCss:
 		'div[class="col-sm-6 mb-4"] > nb-select[id="productTypeId"]',

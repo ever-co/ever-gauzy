@@ -70,6 +70,6 @@ export class Screenshot
 	@RelationId((it: Screenshot) => it.timeSlot)
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	readonly timeSlotId?: string;
 }

@@ -283,7 +283,6 @@ export class TableInventoryComponent
 				...{ organizationId, tenantId }
 			},
 			resultMap: (product: IProductTranslated) => {
-				console.log(product);
 				return Object.assign({}, product);
 			},
 			finalize: () => {

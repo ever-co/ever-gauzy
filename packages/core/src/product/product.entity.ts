@@ -85,7 +85,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.productType)
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	productTypeId?: string;
 
 	/**
@@ -103,7 +103,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.productCategory)
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	productCategoryId?: string;
 	/*
     |--------------------------------------------------------------------------
