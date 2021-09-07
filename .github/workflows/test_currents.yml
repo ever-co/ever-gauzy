@@ -110,14 +110,24 @@ jobs:
                 npx cypress version --component electron
                 npx cypress version --component node
 
-            - name: Currents Cypress run
-              run: |
-                echo 'Waiting API...'
-                until $(curl --output /dev/null --silent --head --fail http://localhost:3000/api); do printf '.'; sleep 5; done
+            - name: Wait API
+              uses: nev7n/wait_for_response@v1
+              with:
+                url: 'http://localhost:3000/api'
+                responseCode: 200
+                timeout: 120000
+                interval: 500
 
-                echo 'Waiting UI...'
-                until $(curl --output /dev/null --silent --head --fail http://localhost:4200); do printf '.'; sleep 5; done
-                
+            - name: Wait UI
+              uses: nev7n/wait_for_response@v1
+              with:
+                url: 'http://localhost:4200'
+                responseCode: 200
+                timeout: 120000
+                interval: 500
+
+            - name: Currents Cypress run
+              run: |                               
                 echo 'Starting Cypress Tests ...'
                 currents run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY \
                     --ci-build-id ${{ needs.prepare.outputs.uuid }} \
