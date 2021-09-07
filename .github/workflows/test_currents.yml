@@ -112,15 +112,13 @@ jobs:
 
             - name: Currents Cypress run
               run: |
-                until $(curl --output /dev/null --silent --head --fail http://localhost:3000/api); do
-                  printf '.'
-                  sleep 5
-                done
-                until $(curl --output /dev/null --silent --head --fail http://localhost:4200); do
-                  printf '.'
-                  sleep 5
-                done
+                echo 'Waiting API...'
+                until $(curl --output /dev/null --silent --head --fail http://localhost:3000/api); do printf '.'; sleep 5; done
+
+                echo 'Waiting UI...'
+                until $(curl --output /dev/null --silent --head --fail http://localhost:4200); do printf '.'; sleep 5; done
                 
+                echo 'Starting Cypress Tests ...'
                 currents run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY \
                     --ci-build-id ${{ needs.prepare.outputs.uuid }} \
                     -C cypress.json \
