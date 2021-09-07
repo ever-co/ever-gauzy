@@ -21,7 +21,7 @@ Given('Login with default credentials', () => {
 
 // Add new transfer protocol
 Then('User can visit Custom SMTP page', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboard();
 	cy.visit('/#/pages/settings/custom-smtp/tenant', { timeout: pageLoadTimeout });
 });
 

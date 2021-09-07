@@ -29,7 +29,7 @@ Given('Login with default credentials', () => {
 
 // Add new employee
 And('User can add new employee', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboard()
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
@@ -258,6 +258,18 @@ Then('User can see edit KPI name input field', () => {
 
 And('User can enter new KPI name', () => {
 	goalsKPIPage.enterNameInputData(GoalsKPIPageData.editName);
+});
+
+And('User can see employee dropdown', () => {
+	goalsKPIPage.employeeMultiSelectVisible();
+});
+
+When('User click on employee dropdown', () => {
+	goalsKPIPage.clickEmployeeMultiSelect();
+});
+
+Then('User can select employee from dropdown options', () => {
+	goalsKPIPage.selectEmployeeFromDropdown(0);
 });
 
 And('User can see save edited KPI button', () => {
