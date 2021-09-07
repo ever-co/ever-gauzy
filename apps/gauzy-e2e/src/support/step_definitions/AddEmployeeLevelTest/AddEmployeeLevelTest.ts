@@ -9,7 +9,6 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../../support/commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
-import { waitUntil } from '../../Base/utils/util';
 
 const responseTimeout = Cypress.config('responseTimeout');
 
@@ -49,7 +48,7 @@ Then('User will see Create button', () => {
 
 // Add new tag
 When('User go to Tags page', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboard();
 	cy.visit('/#/pages/organization/tags');
 });
 
