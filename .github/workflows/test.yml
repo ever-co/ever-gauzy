@@ -21,8 +21,9 @@ jobs:
               id: cypress
 
               with:
-                # we don't want to install dependencies (e.g. node_modules) at this job
-                install: false
+                # we want to install Cypress only                
+                install: true
+                install-command: node -p 'os.cpus()'
                 
                 # we don't want to run tests in this job, we only setup Cypress here
                 runTests: false
@@ -33,8 +34,7 @@ jobs:
                 # pass GitHub token to allow accurately detecting a build vs a re-run build
                 GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
             
-            - run: yarn cypress info
-            - run: node -p 'os.cpus()'
+            - run: yarn cypress info            
 
             - name: Print Dashboard URL
               run: |
