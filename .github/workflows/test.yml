@@ -16,11 +16,29 @@ jobs:
 
             - name: Cypress install
               uses: cypress-io/github-action@v2
+
+              # let's give this action an ID so we can refer to its output values later
+              id: cypress
+
               with:
+                # we don't want to install dependencies (e.g. node_modules) at this job
+                install: false
+                
+                # we don't want to run tests in this job, we only setup Cypress here
                 runTests: false
 
+              env:
+                CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+                CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}
+                # pass GitHub token to allow accurately detecting a build vs a re-run build
+                GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+            
             - run: yarn cypress info
             - run: node -p 'os.cpus()'
+
+            - name: Print Dashboard URL
+              run: |
+                echo See results at ${{ steps.cypress.outputs.dashboardUrl }}
 
     e2e-tests:
 
