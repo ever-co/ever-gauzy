@@ -49,7 +49,7 @@ jobs:
             #  run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
             - name: Output build number
-              run: echo "Running in Build $GITHUB_RUN_ID-$GITHUB_RUN_NUMBER"
+              run: echo "Running in Build ${{ github.run_id }}-${{ github.run_number }}"
 
             - name: Add Yarn to path
               run: echo "C:\Users\Evereq\AppData\Roaming\npm" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
@@ -102,7 +102,7 @@ jobs:
                   sleep 5
                 done
                 
-                currents run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY --ci-build-id "$GITHUB_RUN_ID-$GITHUB_RUN_NUMBER" -C cypress.json -c "projectId=k1BPpu"
+                currents run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY --ci-build-id "${{ github.run_id }}-${{ github.run_number }}" -C cypress.json -c "projectId=k1BPpu"
 
 
 
