@@ -24,6 +24,7 @@ let city = faker.address.city();
 let postcode = faker.address.zipCode();
 let street = faker.address.streetAddress();
 let website = faker.internet.url();
+let projectName = faker.name.jobTitle()
 
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
@@ -42,7 +43,6 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	waitUntil(3000);
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -69,7 +69,13 @@ And('User can add new project', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
 		organizationProjectsPage,
-		OrganizationProjectsPageData,
+		{
+			name: projectName,
+			hours: OrganizationProjectsPageData.hours,
+			editName: OrganizationProjectsPageData.editName,
+			description: OrganizationProjectsPageData.description,
+			color: OrganizationProjectsPageData.color
+		},
 		employeeFullName
 	);
 });
@@ -87,7 +93,12 @@ And('User can add new client', () => {
 		city,
 		postcode,
 		street,
-		ClientsData,
+		{
+			defaultProject: projectName,
+			country: ClientsData.country,
+			defaultPhone: ClientsData.defaultPhone,
+			hours: ClientsData.hours
+		},
 		employeeFullName
 	);
 });
@@ -97,7 +108,18 @@ And('User can add new task', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addTask(addTaskPage, AddTasksPageData, employeeFullName);
+	CustomCommands.addTask(
+		addTaskPage,
+		{
+			defaultTaskProject: projectName,
+			defaultTaskTitle: AddTasksPageData.defaultTaskTitle,
+			editTaskTitle: AddTasksPageData.editTaskTitle,
+			defaultTaskEstimateDays: AddTasksPageData.defaultTaskEstimateDays,
+			defaultTaskEstimateHours: AddTasksPageData.defaultTaskEstimateHours,
+			defaultTaskEstimateMinutes: AddTasksPageData.defaultTaskEstimateMinutes,
+			defaultTaskDescription: AddTasksPageData.defaultTaskDescription
+		},
+		employeeFullName);
 });
 
 // Logout
@@ -241,11 +263,11 @@ Then('Employee can verify time was recorded', () => {
 });
 
 And('Employee can verify project worked', () => {
-	timeTrackingPage.verifyWork(OrganizationProjectsPageData.name);
+	timeTrackingPage.verifyWork(projectName);
 });
 
 And('Employee can verify tasks worked', () => {
-	timeTrackingPage.verifyWork(AddTasksPageData.defaultTaskProject);
+	timeTrackingPage.verifyWork(projectName);
 });
 
 // Add manual time
