@@ -9,7 +9,6 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
-import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -27,7 +26,7 @@ Given('Login with default credentials', () => {
 
 // Add employee
 And('User can add new employee', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboard();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,

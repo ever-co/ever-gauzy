@@ -29,7 +29,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboard();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 

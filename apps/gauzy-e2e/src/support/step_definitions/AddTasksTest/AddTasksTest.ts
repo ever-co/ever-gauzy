@@ -11,7 +11,6 @@ import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po'
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as faker from 'faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-import { waitUntil } from '../../Base/utils/util';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -31,7 +30,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboard();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
