@@ -112,11 +112,11 @@ jobs:
 
             - name: Wait API
               run: |
-                wait-on http://localhost:3000/api -l -t 120000
+                wait-on http://localhost:3000/api -l -t 600000
               
             - name: Wait UI
               run: |
-                wait-on http://localhost:4200 -l -t 120000
+                wait-on http://localhost:4200 -l -t 600000
             
             - name: Currents Cypress run
               run: |                               
