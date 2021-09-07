@@ -77,6 +77,12 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 		language: LanguagesEnum
 	): Promise<IPagination<ProductType | IProductTypeTranslated>> {
 		const { relations = [], findInput } = input;
+		if ('langCode' in input) {
+			const { langCode } = input;
+			language = langCode;
+			delete input['langCode'];
+		}
+
 		const { items, total } = await this.findAll({
 			where: {
 				...findInput
@@ -101,11 +107,11 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	) {
 		if (languageCode) {
 			return Promise.all(
-				items.map((product: IProductTypeTranslatable) =>
+				items.map((type: IProductTypeTranslatable) =>
 					Object.assign(
 						{},
-						product,
-						product.translate(languageCode)
+						type,
+						type.translate(languageCode)
 					)
 				)
 			);
