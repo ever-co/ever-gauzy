@@ -102,7 +102,7 @@ jobs:
             - name: Install Cypress for our e2e tests
               run: | 
                 cd apps/gauzy-e2e
-                cypress install
+                yarn cypress install
             
             - name: Cypress info
               env:
