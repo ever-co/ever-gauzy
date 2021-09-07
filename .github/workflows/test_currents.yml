@@ -88,8 +88,8 @@ jobs:
             - name: Run UI in background
               run: yarn start:gauzy:forever
                         
-            - name: Install Cypress Package
-              run: npm install -g cypress cy2 @currents/cli
+            - name: Install Required Packages
+              run: npm install -g wait-on cypress cy2 @currents/cli
             
             - name: Install Cypress for our e2e tests
               run: | 
@@ -111,21 +111,13 @@ jobs:
                 npx cypress version --component node
 
             - name: Wait API
-              uses: nev7n/wait_for_response@v1
-              with:
-                url: 'http://localhost:3000/api'
-                responseCode: 200
-                timeout: 120000
-                interval: 500
-
+              run: |
+                wait-on http://localhost:3000/api -l -t 120000
+              
             - name: Wait UI
-              uses: nev7n/wait_for_response@v1
-              with:
-                url: 'http://localhost:4200'
-                responseCode: 200
-                timeout: 120000
-                interval: 500
-
+              run: |
+                wait-on http://localhost:4200 -l -t 120000
+            
             - name: Currents Cypress run
               run: |                               
                 echo 'Starting Cypress Tests ...'
