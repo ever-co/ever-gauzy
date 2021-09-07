@@ -33,8 +33,6 @@ jobs:
                 CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}
                 # pass GitHub token to allow accurately detecting a build vs a re-run build
                 GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-            
-            - run: yarn cypress info            
 
             - name: Print Dashboard URL
               run: |
