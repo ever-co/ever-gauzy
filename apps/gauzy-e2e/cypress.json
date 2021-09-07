@@ -11,7 +11,7 @@
 	"chromeWebSecurity": false,
 	"viewportWidth": 1920,
 	"viewportHeight": 1080,
-	"baseUrl": "http://localhost:4200/",
+	"baseUrl": "http://localhost:4200",
 	"ignoreTestFiles": "*.ts",
 	"testFiles": "**/*.feature",
 	"defaultCommandTimeout": 60000,
@@ -19,5 +19,16 @@
 	"taskTimeout": 60000,
 	"requestTimeout": 5000,
 	"execTimeout": 3000,
-	"responseTimeout": 300000
+	"responseTimeout": 300000,
+	"retries": {
+		"runMode": 1,
+		"openMode": 1
+	},
+	"env": {				
+		"coverage": false,
+		"codeCoverage": {
+		  "url": "http://localhost:3001/__coverage__"
+		}
+	},
+	"experimentalStudio": true
 }
