@@ -4,9 +4,25 @@ on:
         branches: [develop]
 jobs:    
           
+    prepare:
+      runs-on: ubuntu-latest
+      outputs:
+        uuid: ${{ steps.uuid.outputs.value }}
+      steps:
+        - name: Generate unique ID 💎
+          id: uuid
+          # take the current commit + timestamp together
+          # the typical value would be something like
+          # "sha-5d3fe...35d3-time-1620841214"
+          run: echo "::set-output name=value::sha-$GITHUB_SHA-time-$(date +"%s")"
+
+        - name: Print unique ID 🖨`
+          run: echo "Generated Unique Build ID ${{ steps.uuid.outputs.value }}"
+
     e2e-tests:
 
         runs-on: [self-hosted]
+        needs: ['prepare']
 
         # we can try to run tests in the Docker containers later
         # container: cypress/browsers:node14.17.0-chrome88-ff89
@@ -36,6 +52,9 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v2
+
+            - name: Print custom build id 🖨
+              run: echo "Custom build id is ${{ needs.prepare.outputs.uuid }}"
 
             - uses: actions/cache@v2
               with:
@@ -102,8 +121,9 @@ jobs:
                   sleep 5
                 done
                 
-                currents run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY --ci-build-id "${{ github.run_id }}-${{ github.run_number }}" -C cypress.json -c "projectId=k1BPpu"
+                currents run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY \
+                    --ci-build-id ${{ needs.prepare.outputs.uuid }} \
+                    -C cypress.json \
+                    -c "projectId=k1BPpu"
+                    --group "1 - all e2e tests"
 
-
-
-              

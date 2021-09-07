@@ -134,7 +134,7 @@ jobs:
                   # run tests in parallel
                   parallel: true
 
-                  group: 'Gauzy e2e'
+                  group: '1 - all e2e tests'
 
                   # Cypress tests and config file are in "apps/gauzy-e2e" folder
                   working-directory: 'apps/gauzy-e2e'
