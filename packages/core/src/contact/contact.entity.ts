@@ -100,23 +100,30 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@Column({ nullable: true })
 	website?: string;
 
-	@ApiProperty({ type: () => OrganizationContact })
-	@OneToMany(
-		() => OrganizationContact,
-		(organizationContact) => organizationContact.contact,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * OrganizationContact
+	 */
+	@ApiProperty({ type: () => OrganizationContact, isArray: true })
+	@OneToMany(() => OrganizationContact, (organizationContact) => organizationContact.contact)
 	public organization_contacts?: IOrganizationContact[];
 
-	@ApiProperty({ type: () => Employee })
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee, isArray: true })
 	@OneToMany(() => Employee, (employee) => employee.contact)
 	public employees?: IEmployee[];
 
-	@ApiProperty({ type: () => Candidate })
-	@OneToMany(() => Candidate, (candidate) => candidate.contact, {
-		onDelete: 'SET NULL'
-	})
+	/**
+	 * Candidate
+	 */
+	@ApiProperty({ type: () => Candidate, isArray: true })
+	@OneToMany(() => Candidate, (candidate) => candidate.contact)
 	public candidates?: ICandidate[];
 }

@@ -1,36 +1,44 @@
 import { NgModule } from '@angular/core';
-import { TimeTrackingComponent } from './time-tracking.component';
 import { CommonModule } from '@angular/common';
-import { SharedModule } from '../../../@shared/shared.module';
 import {
 	NbCardModule,
 	NbSpinnerModule,
 	NbListModule,
 	NbProgressBarModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbToggleModule,
+	NbIconModule,
+	NbButtonModule
 } from '@nebular/theme';
-import { ScreenshotsItemModule } from '../../../@shared/timesheet/screenshots/screenshots-item/screenshots-item.module';
-import { ActivityItemModule } from '../../../@shared/timesheet/activities/activity-item/activity-item.module';
+import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'angular2-chartjs';
 import { TranslateModule } from '@ngx-translate/core';
+import { TimeTrackingComponent } from './time-tracking.component';
+import { SharedModule } from '../../../@shared/shared.module';
+import { ScreenshotsItemModule } from '../../../@shared/timesheet/screenshots/screenshots-item/screenshots-item.module';
+import { ActivityItemModule } from '../../../@shared/timesheet/activities/activity-item/activity-item.module';
 import { GalleryModule } from '../../../@shared/gallery/gallery.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
 		CommonModule,
+		FormsModule,
 		SharedModule,
 		NbCardModule,
-		ScreenshotsItemModule,
-		ActivityItemModule,
+		NbButtonModule,
 		NbSpinnerModule,
 		NbListModule,
 		NbProgressBarModule,
-		ChartModule,
+		NbToggleModule,
+		NbIconModule,
 		NbBadgeModule,
+		ScreenshotsItemModule,
+		ActivityItemModule,
+		ChartModule,
 		TranslateModule,
 		GalleryModule,
-		HeaderTitleModule
+		HeaderTitleModule,
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

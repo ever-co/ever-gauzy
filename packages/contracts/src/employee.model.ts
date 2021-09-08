@@ -14,6 +14,7 @@ import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IEmployeeSetting } from './employee-settings.model';
 import { IExpense } from './expense.model';
+import { ITimesheet } from './timesheet.model';
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
@@ -45,6 +46,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	requestApprovalEmployee?: IRequestApprovalEmployee[];
 	settings?: IEmployeeSetting[];
 	expenses?: IExpense[];
+	timesheets?: ITimesheet[];
 	contact: IContact;
 	averageIncome?: number;
 	totalWorkHours?: number;

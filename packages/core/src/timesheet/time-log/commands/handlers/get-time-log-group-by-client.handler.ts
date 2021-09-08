@@ -1,7 +1,7 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { chain } from 'underscore';
 import * as moment from 'moment';
-import { IReportDayGroupByClient, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { IOrganizationContact, IReportDayGroupByClient, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { GetTimeLogGroupByClientCommand } from '../get-time-log-group-by-client.command';
 
 @CommandHandler(GetTimeLogGroupByClientCommand)
@@ -15,13 +15,15 @@ export class GetTimeLogGroupByClientHandler
 		const { timeLogs } = command;
 
 		const dailyLogs: any = chain(timeLogs)
-			.groupBy((log) =>
-				log.project ? log.project.organizationContactId : null
+			.groupBy((log: ITimeLog) =>
+				log.organizationContact ? log.organizationContactId : null
 			)
 			.map((byClientLogs: ITimeLog[]) => {
 				const log = byClientLogs.length > 0 ? byClientLogs[0] : null;
-				let client = null;
-				if (log && log.project && log.project.organizationContact) {
+				let client: IOrganizationContact = null;
+				if (log && log.organizationContact) {
+					client = log.organizationContact;
+				} else if (log && log.project && log.project.organizationContact) {
 					client = log.project.organizationContact;
 				}
 

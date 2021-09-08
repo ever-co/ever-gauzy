@@ -264,6 +264,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			},
 			relations: [
 				'project',
+				'project.organizationContact',
 				'task',
 				'timeSlots',
 				'organizationContact',

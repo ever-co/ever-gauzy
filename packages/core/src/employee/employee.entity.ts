@@ -19,7 +19,8 @@ import {
 	IEmployeeSetting,
 	ITimeOffPolicy,
 	ITimeOff as ITimeOffRequest,
-	IExpense
+	IExpense,
+	ITimesheet
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -62,6 +63,7 @@ import {
 	TimeLog,
 	TimeOffPolicy,
 	TimeOffRequest,
+	Timesheet,
 	User
 } from '../core/entities/internal';
 
@@ -307,7 +309,6 @@ export class Employee
 	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.employees, {
 		nullable: true,
-		cascade: true,
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -372,6 +373,15 @@ export class Employee
 	@ApiPropertyOptional({ type: () => Expense, isArray: true })
 	@OneToMany(() => Expense, (it) => it.employee)
 	expenses?: IExpense[];
+
+	/**
+	 * Timesheet
+	 */
+	@ApiPropertyOptional({ type: () => Timesheet, isArray: true })
+	@OneToMany(() => Timesheet, (it) => it.employee, {
+		cascade: true
+	})
+	timesheets?: ITimesheet[];
 
 	/*
     |--------------------------------------------------------------------------

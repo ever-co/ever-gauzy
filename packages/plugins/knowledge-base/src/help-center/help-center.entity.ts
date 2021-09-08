@@ -45,8 +45,6 @@ export class HelpCenter
 	@Column({ nullable: true })
 	index: number;
 
-	
-
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 
