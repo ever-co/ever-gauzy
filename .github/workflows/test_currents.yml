@@ -121,9 +121,4 @@ jobs:
             - name: Currents Cypress run
               run: |                               
                 echo 'Starting Cypress Tests ...'
-                currents run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY \
-                    --ci-build-id ${{ needs.prepare.outputs.uuid }} \
-                    -C cypress.json \
-                    -c "projectId=k1BPpu"
-                    --group "1 - all e2e tests"
-
+                currents run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY --ci-build-id ${{ needs.prepare.outputs.uuid }} -C cypress.json -c "projectId=k1BPpu" --group "1 - all e2e tests"
