@@ -17,7 +17,7 @@ import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
-import { waitUntil } from '../../Base/utils/util';
+
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -42,7 +42,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboard();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -116,19 +116,6 @@ When('User click on add time log button', () => {
 	timesheetsPage.clickAddTimeButton();
 });
 
-Then('User can see client dropdown', () => {
-	timesheetsPage.clientDropdownVisible();
-});
-
-When('User click on client dropdown', () => {
-	waitUntil(5000);
-	timesheetsPage.clickClientDropdown();
-});
-
-Then('User can select client from dropdown options', () => {
-	timesheetsPage.selectClientFromDropdown(0);
-});
-
 Then('User can see project dropdown', () => {
 	timesheetsPage.selectProjectDropdownVisible();
 });
@@ -142,6 +129,19 @@ Then('User can select project from dropdown options', () => {
 		TimesheetsPageData.defaultProjectName
 	);
 });
+
+Then('User can see client dropdown', () => {
+	timesheetsPage.clientDropdownVisible();
+});
+
+When('User click on client dropdown', () => {
+	timesheetsPage.clickClientDropdown();
+});
+
+Then('User can select client from dropdown options', () => {
+	timesheetsPage.selectClientFromDropdown(0);
+});
+
 
 And('User can see task dropdown', () => {
 	timesheetsPage.taskDropdownVisible();

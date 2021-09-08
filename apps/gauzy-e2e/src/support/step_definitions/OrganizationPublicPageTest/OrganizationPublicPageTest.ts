@@ -412,7 +412,7 @@ And('User can verify banner', () => {
 
 And('User can verify company size', () => {
 	organizationPublicPage.verifyCompanySize(
-		OrganizationPublicPageData.companySize
+		OrganizationPublicPageData.companySizeStr
 	);
 });
 

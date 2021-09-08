@@ -8,7 +8,6 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as projectTrackedInTimesheets from '../../Base/pages/ProjectTrackedInTimesheet.po';
 import { waitUntil } from '../../Base/utils/util';
-import { ProjectTrackedInTimesheetPageData } from '../../Base/pagedata/ProjectTrackedInTimesheetPageData';
 
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
