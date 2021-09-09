@@ -30,4 +30,4 @@ Feature: Time tracking for client test
     When Employee click on view timesheet button
     Then Employee can see view button
     When Employee click on view button
-    Then Employee can verify the customer name is recorded
+    Then Employee can verify the client name is recorded

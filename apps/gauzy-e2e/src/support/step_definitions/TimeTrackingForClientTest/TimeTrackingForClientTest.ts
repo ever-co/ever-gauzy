@@ -166,6 +166,6 @@ When('Employee click on view button', () => {
     timeTrackingForClient.clickOnViewBtn();
 });
 
-Then('Employee can verify the customer name is recorded', () =>{
+Then('Employee can verify the client name is recorded', () =>{
     timeTrackingForClient.verifyCustomerName(fullName);
 });
