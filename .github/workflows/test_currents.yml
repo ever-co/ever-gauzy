@@ -97,7 +97,7 @@ jobs:
               run: yarn start:gauzy:forever
                         
             - name: Install Required Packages
-              run: npm install -g wait-on cypress @currents/cli https://github.com/sorry-cypress/cy2#feat/use-CYPRESS_PACKAGE_CONFIG_PATH
+              run: npm install -g wait-on cypress@8.3.0 @currents/cli https://github.com/sorry-cypress/cy2#feat/use-CYPRESS_PACKAGE_CONFIG_PATH
             
             # - name: Install Cypress for our e2e tests
             #   run: | 
