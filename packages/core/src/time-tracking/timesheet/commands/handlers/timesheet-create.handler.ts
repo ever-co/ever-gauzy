@@ -3,7 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ITimesheet } from '@gauzy/contracts';
 import { TimesheetCreateCommand } from '..';
 import { TimeSheetService } from './../../timesheet.service';
-import { RequestContext } from '../../../core/context';
+import { RequestContext } from '../../../../core/context';
 
 @CommandHandler(TimesheetCreateCommand)
 export class TimesheetCreateHandler

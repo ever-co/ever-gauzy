@@ -37,7 +37,7 @@ export class ScreenshotController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post()
+	@Post('/')
 	@UseInterceptors(
 		FileInterceptor('file', {
 			storage: new FileStorage().storage({

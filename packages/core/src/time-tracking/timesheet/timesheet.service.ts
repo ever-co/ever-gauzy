@@ -11,9 +11,9 @@ import {
 	ITimesheet
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { RequestContext } from './../core/context';
-import { TenantAwareCrudService } from './../core/crud';
-import { getDateRangeFormat } from './../core/utils';
+import { RequestContext } from './../../core/context';
+import { TenantAwareCrudService } from './../../core/crud';
+import { getDateRangeFormat } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
 import {
 	TimesheetFirstOrCreateCommand,

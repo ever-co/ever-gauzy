@@ -12,7 +12,7 @@ import { UpworkService } from './upwork.service';
 import { IntegrationMapModule } from './../integration-map/integration-map.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RoleModule } from '../role/role.module';
-import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
+import { TimeSlotService } from '../time-tracking/time-slot/time-slot.service';
 import { ExpenseModule } from './../expense/expense.module';
 import { IncomeModule } from './../income/income.module';
 import {

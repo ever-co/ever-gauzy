@@ -20,7 +20,7 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity,
 	TimeLog
-} from '../core/entities/internal';
+} from './../../core/entities/internal';
 
 @Entity('timesheet')
 export class Timesheet

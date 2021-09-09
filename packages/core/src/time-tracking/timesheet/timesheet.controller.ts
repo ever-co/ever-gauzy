@@ -17,9 +17,9 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TimeSheetService } from './timesheet.service';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
-import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { UUIDValidationPipe } from './../../shared/pipes';
+import { Permissions } from './../../shared/decorators';
 
 @ApiTags('TimeSheet')
 @UseGuards(TenantPermissionGuard)
@@ -45,7 +45,7 @@ export class TimeSheetController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Get('count')
+	@Get('/count')
 	async getTimesheetCount(
 		@Query() entity: IGetTimesheetInput
 	): Promise<number> {
@@ -70,7 +70,7 @@ export class TimeSheetController {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
-	@Put('status')
+	@Put('/status')
 	async updateTimesheetStatus(
 		@Body() entity: IUpdateTimesheetStatusInput
 	): Promise<ITimesheet[]> {
@@ -95,7 +95,7 @@ export class TimeSheetController {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
-	@Put('submit')
+	@Put('/submit')
 	async submitTimeheet(
 		@Body() entity: ISubmitTimesheetInput
 	): Promise<ITimesheet[]> {
@@ -118,7 +118,7 @@ export class TimeSheetController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Get()
+	@Get('/')
 	async get(
 		@Query() entity: IGetTimesheetInput
 	): Promise<ITimesheet[]> {
@@ -137,11 +137,10 @@ export class TimeSheetController {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
-	@Get(':id')
+	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<ITimesheet> {
-		console.log(id);
 		return this.timeSheetService.findOne(id);
 	}
 }

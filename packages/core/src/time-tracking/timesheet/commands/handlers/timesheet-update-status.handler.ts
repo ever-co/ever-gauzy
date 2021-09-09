@@ -2,8 +2,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { RequestContext } from './../../../core/context';
-import { EmailService } from './../../../email/email.service';
+import { RequestContext } from './../../../../core/context';
+import { EmailService } from './../../../../email/email.service';
 import { TimesheetUpdateStatusCommand } from '../timesheet-update-status.command';
 import { Timesheet } from './../../timesheet.entity';
 

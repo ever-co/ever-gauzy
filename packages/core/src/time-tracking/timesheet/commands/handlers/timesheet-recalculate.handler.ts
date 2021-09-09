@@ -4,8 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { TimeSheetService } from '../../timesheet.service';
 import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';
-import { TimeSlot } from './../../../core/entities/internal';
-import { RequestContext } from './../../../core/context';
+import { TimeSlot } from './../../../../core/entities/internal';
+import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(TimesheetRecalculateCommand)
 export class TimesheetRecalculateHandler

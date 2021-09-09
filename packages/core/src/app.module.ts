@@ -66,7 +66,7 @@ import { ImportAllModule } from './export-import/import/import-all.module';
 import { TaskModule } from './tasks/task.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
-import { TimesheetModule } from './timesheet/timesheet.module';
+import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 import { UpworkModule } from './upwork/upwork.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
@@ -131,6 +131,7 @@ import { SeederModule } from './core/seeds/seeder.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
 import { MerchantModule } from './merchant/merchant.module';
 import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
+
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -284,7 +285,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		EquipmentSharingModule,
 		TaskModule,
 		OrganizationEmploymentTypeModule,
-		TimesheetModule,
+		TimeTrackingModule,
 		FeatureModule,
 		ReportModule,
 		UpworkModule,
