@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository, SelectQueryBuilder } from 'typeorm';
+import { Between, Brackets, Repository, SelectQueryBuilder, WhereExpression } from 'typeorm';
 import * as moment from 'moment';
 import { ITimesheet } from '@gauzy/contracts';
 import { Employee, Timesheet } from './../../../core/entities/internal';
@@ -31,6 +31,9 @@ export class TimesheetFirstOrCreateHandler
 		const startedAt = moment.utc(date).startOf('week');
 		const stoppedAt = moment.utc(date).endOf('week');
 
+		/**
+		 * If organization not found,use employee organization
+		 */
 		if (!organizationId) {
 			const employee = await this.employeeRepository.findOne(employeeId, {
 				where: (query: SelectQueryBuilder<Employee>) => {
@@ -40,39 +43,49 @@ export class TimesheetFirstOrCreateHandler
 			organizationId = employee.organizationId;
 		}
 
+		/**
+		 * Find employee current week working timesheet
+		 */
 		let timesheet = await this.timeSheetRepository.findOne({
 			where: (query: SelectQueryBuilder<Timesheet>) => {
-				query.where(
-					[
-						{
-							startedAt: Between(
-								startedAt.format('YYYY-MM-DD HH:mm:ss.SSS'),
-								stoppedAt.format('YYYY-MM-DD HH:mm:ss.SSS')
-							)
-						}, 
-						{
-							stoppedAt: Between(
-								startedAt.format('YYYY-MM-DD HH:mm:ss.SSS'),
-								stoppedAt.format('YYYY-MM-DD HH:mm:ss.SSS')
-							)
-						}
-					]
+				query.andWhere(
+					new Brackets((qb: WhereExpression) => { 
+						qb.where(
+							[
+								{
+									startedAt: Between(
+										startedAt.format('YYYY-MM-DD HH:mm:ss.SSS'),
+										stoppedAt.format('YYYY-MM-DD HH:mm:ss.SSS')
+									)
+								}, 
+								{
+									stoppedAt: Between(
+										startedAt.format('YYYY-MM-DD HH:mm:ss.SSS'),
+										stoppedAt.format('YYYY-MM-DD HH:mm:ss.SSS')
+									)
+								}
+							]
+						);
+					})
 				);
-				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
-				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-				query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-
+				query.andWhere(
+					new Brackets((qb: WhereExpression) => { 
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
+						qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+					})
+				);
 				console.log(query.getQueryAndParameters(), 'Timesheet Query Paramerts');
 			}
 		});
 		if (!timesheet) {
 			timesheet = await this.commandBus.execute(
 				new TimesheetCreateCommand({
-					startedAt: startedAt.toISOString(),
-					stoppedAt: stoppedAt.toISOString(),
+					startedAt: new Date(startedAt.toDate()),
+					stoppedAt: new Date(stoppedAt.toDate()),
 					employeeId,
 					organizationId,
-					tenantId,
 					mouse: 0,
 					keyboard: 0,
 					duration: 0
