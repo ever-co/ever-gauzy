@@ -194,13 +194,15 @@ export class TimeLogController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Get('/')
-	async getLogs(@Query() entity: IGetTimeLogInput): Promise<ITimeLog[]> {
+	@Get()
+	async getLogs(
+		@Query() entity: IGetTimeLogInput
+	): Promise<ITimeLog[]> {
 		return await this.timeLogService.getTimeLogs(entity);
 	}
 
 	@Get(':id')
-	async findOne(
+	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query() options: FindOneOptions
 	): Promise<ITimeLog> {

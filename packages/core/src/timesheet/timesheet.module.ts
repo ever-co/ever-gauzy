@@ -4,6 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { EmailModule } from './../email/email.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { ActivityModule } from './activity/activity.module';
 import { TimeSlotModule } from './time-slot/time-slot.module';
@@ -44,7 +45,8 @@ import { Timesheet } from './timesheet.entity';
 		ScreenshotModule,
 		StatisticModule,
 		TimerModule,
-		EmployeeModule
+		EmployeeModule,
+		UserModule
 	],
 	providers: [
 		TimeSheetService,

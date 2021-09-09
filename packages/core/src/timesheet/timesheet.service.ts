@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, Between, In, SelectQueryBuilder } from 'typeorm';
+import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpression } from 'typeorm';
 import * as moment from 'moment';
 import {
 	IUpdateTimesheetStatusInput,
@@ -10,16 +10,16 @@ import {
 	PermissionsEnum,
 	ITimesheet
 } from '@gauzy/contracts';
-import { getConfig } from '@gauzy/config';
+import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from './../core/context';
-import { Timesheet } from './timesheet.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { getDateRangeFormat } from './../core/utils';
+import { Timesheet } from './timesheet.entity';
 import {
 	TimesheetFirstOrCreateCommand,
 	TimesheetSubmitCommand,
 	TimesheetUpdateStatusCommand
 } from './commands';
-const config = getConfig();
 
 @Injectable()
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
@@ -57,39 +57,35 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		);
 	}
 
-	async getTimeSheetCount(request: IGetTimesheetInput) {
-		const timesheets = await this.getTimeSheets(request);
-		return timesheets.length;
+	/**
+	 * GET timesheets count in date range for same tenant
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
+	async getTimeSheetCount(request: IGetTimesheetInput): Promise<number> {
+		return await this.timeSheetRepository.count({
+			join: {
+				alias: 'timesheet',
+				innerJoin: {
+					employee: 'timesheet.employee',
+					timeLogs: 'timesheet.timeLogs'
+				}
+			},
+			where: (query: SelectQueryBuilder<Timesheet>) => {
+				this.getFilterTimesheetQuery(query, request);
+			}
+		});
 	}
 
+	/**
+	 * GET timesheets in date range for same tenant
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
-		let employeeIds: string[];
-		let startDate: any = moment.utc(request.startDate);
-		let endDate: any = moment.utc(request.endDate);
-
-		if (config.dbConnectionOptions.type === 'sqlite') {
-			startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
-			endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
-		} else {
-			startDate = startDate.toDate();
-			endDate = endDate.toDate();
-		}
-
-		const tenantId = RequestContext.currentTenantId();
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (request.employeeIds) {
-				employeeIds = request.employeeIds;
-			}
-		} else {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
-
-		const timesheet = await this.timeSheetRepository.find({
+		return await this.timeSheetRepository.find({
 			join: {
 				alias: 'timesheet',
 				innerJoin: {
@@ -104,23 +100,67 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 					? ['employee', 'employee.organization', 'employee.user']
 					: [])
 			],
-			where: (qb: SelectQueryBuilder<Timesheet>) => {
-				qb.where({
-					startedAt: Between(startDate, endDate),
-					...(employeeIds ? { employeeId: In(employeeIds) } : {})
-				});
-				qb.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
-				//check organization and tenant for timelogs
-				const { organizationId = null } = request;
-				if (typeof organizationId === 'string') {
-					qb.andWhere(
-						`"${qb.alias}"."organizationId" = :organizationId`,
-						{ organizationId: request.organizationId }
-					);
-				}
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+			where: (query: SelectQueryBuilder<Timesheet>) => {
+				this.getFilterTimesheetQuery(query, request);
 			}
 		});
-		return timesheet;
+	}
+
+	/**
+	 * GET timesheet QueryBuilder
+	 * 
+	 * @param qb 
+	 * @param request 
+	 * @returns 
+	 */
+	async getFilterTimesheetQuery(
+		qb: SelectQueryBuilder<Timesheet>,
+		request: IGetTimesheetInput
+	) {
+		// use current start of the month if startDate not found
+		const startDate: any = (request.startDate) ?
+							moment.utc(request.startDate) :
+							moment.utc().startOf('month');
+
+		// use current end of the month if endDate not found
+		const endDate: any = (request.endDate) ?
+							moment.utc(request.endDate) :
+							moment.utc().endOf('month');
+
+		const { start, end } = getDateRangeFormat(startDate, endDate);
+		const tenantId = RequestContext.currentTenantId();
+		
+		const employeeIds: string[] = [];
+		if (
+			RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			if (request.employeeIds) {
+				employeeIds.push(...request.employeeIds);
+			}
+		} else {
+			const { employeeId } = RequestContext.currentUser();
+			employeeIds.push(employeeId);
+		}
+
+		qb.andWhere(
+			new Brackets((qb: WhereExpression) => { 
+				qb.where(						{
+					startedAt: Between( start, end ),
+					...(employeeIds.length > 0 ? { employeeId: In(employeeIds) } : {})
+				});
+			})
+		);
+
+		qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+		qb.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
+
+		if (isNotEmpty(request.organizationId)) {
+			qb.andWhere( `"${qb.alias}"."organizationId" = :organizationId`, {
+				organizationId: request.organizationId
+			});
+		}
+		return qb;
 	}
 }
