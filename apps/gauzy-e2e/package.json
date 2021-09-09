@@ -60,7 +60,7 @@
 		"@nrwl/cypress": "11.2.7",
 		"@nrwl/jest": "^11.2.7",
 		"@types/jest": "^26.0.8",
-		"cypress": "8.3.0",
+		"cypress": "8.3.1",
 		"cypress-cucumber-preprocessor": "^4.2.0",
 		"cypress-file-upload": "^5.0.8",
 		"dayjs": "^1.10.6",

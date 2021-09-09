@@ -93,7 +93,7 @@ jobs:
               run: yarn start:gauzy:forever
                         
             - name: Install Cypress Package
-              run: npm install -g cypress
+              run: npm install -g cypress@8.3.1
 
             - name: Install Cypress for our e2e tests
               run: | 
