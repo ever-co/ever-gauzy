@@ -133,7 +133,6 @@ export class Candidate
 	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.candidates, {
 		nullable: true,
-		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	contact: IContact;

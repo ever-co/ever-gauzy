@@ -60,7 +60,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('report/daily')
+	@Get('/report/daily')
 	async getDailyReport(@Query() options: IGetTimeLogReportInput) {
 		return await this.timeLogService.getDailyReport(options);
 	}
@@ -74,7 +74,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('report/daily-chart')
+	@Get('/report/daily-chart')
 	async getDailyReportChartData(
 		@Query() options: IGetTimeLogReportInput
 	): Promise<any> {
@@ -124,7 +124,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('report/weekly')
+	@Get('/report/weekly')
 	async getWeeklyReport(@Query() options: IGetTimeLogReportInput) {
 		return await this.timeLogService.getWeeklyReport(options);
 	}
@@ -143,7 +143,7 @@ export class TimeLogController {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
-	@Get('time-limit')
+	@Get('/time-limit')
 	async weeklyLimit(@Query() request?: IGetTimeLimitReportInput) {
 		return await this.timeLogService.getTimeLimit(request);
 	}
@@ -162,7 +162,7 @@ export class TimeLogController {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
-	@Get('project-budget-limit')
+	@Get('/project-budget-limit')
 	async projectBudgetLimit(
 		@Query() request?: IProjectBudgetLimitReportInput
 	) {
@@ -183,7 +183,7 @@ export class TimeLogController {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
-	@Get('client-budget-limit')
+	@Get('/client-budget-limit')
 	async clientBudgetLimit(@Query() request?: IClientBudgetLimitReportInput) {
 		return await this.timeLogService.clientBudgetLimit(request);
 	}
@@ -195,12 +195,14 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/')
-	async getLogs(@Query() entity: IGetTimeLogInput): Promise<ITimeLog[]> {
+	async getLogs(
+		@Query() entity: IGetTimeLogInput
+	): Promise<ITimeLog[]> {
 		return await this.timeLogService.getTimeLogs(entity);
 	}
 
-	@Get(':id')
-	async findOne(
+	@Get('/:id')
+	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query() options: FindOneOptions
 	): Promise<ITimeLog> {

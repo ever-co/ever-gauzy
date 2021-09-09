@@ -47,11 +47,11 @@ import { UserService } from '../user/user.service';
 import {
 	TimesheetGetCommand,
 	TimesheetCreateCommand,
-} from './../timesheet/commands';
-import { ScreenshotCreateCommand } from './../timesheet/screenshot/commands';
-import { TimeSlotCreateCommand } from './../timesheet/time-slot/commands/time-slot-create.command';
-import { ActivityCreateCommand } from './../timesheet/activity/commands';
-import { TimeLogCreateCommand } from '../timesheet/time-log/commands';
+} from './../time-tracking/timesheet/commands';
+import { ScreenshotCreateCommand } from './../time-tracking/screenshot/commands';
+import { TimeSlotCreateCommand } from './../time-tracking/time-slot/commands/time-slot-create.command';
+import { ActivityCreateCommand } from './../time-tracking/activity/commands';
+import { TimeLogCreateCommand } from '../time-tracking/time-log/commands';
 import {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectUpdateCommand

@@ -87,7 +87,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get(':id')
-	async findByIdWithRelations(
+	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IInvoice> {

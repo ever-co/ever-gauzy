@@ -6,7 +6,6 @@ import { TimerController } from './timer.controller';
 import { TimerService } from './timer.service';
 import { TenantModule } from './../../tenant/tenant.module';
 
-
 @Module({
 	controllers: [
 		TimerController

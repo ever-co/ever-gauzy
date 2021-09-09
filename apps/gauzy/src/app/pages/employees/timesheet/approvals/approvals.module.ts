@@ -1,12 +1,9 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-import { ApprovalsRoutingModule } from './approvals-routing.module';
-import { ApprovalsComponent } from './approvals/approvals.component';
+import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
-	NbCheckboxModule,
 	NbButtonModule,
 	NbSelectModule,
 	NbDatepickerModule,
@@ -16,43 +13,32 @@ import {
 	NbPopoverModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
-import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
-import { FormsModule } from '@angular/forms';
-import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
-import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/project-select.module';
-import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { MomentModule } from 'ngx-moment';
-import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
-import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/tasks/task-select/task-select.module';
-import { DialogsModule } from 'apps/gauzy/src/app/@shared/dialogs';
+import { SharedModule } from './../../../../@shared/shared.module';
+import { FiltersModule } from './../../../../@shared/timesheet/filters/filters.module';
+import { TranslateModule } from './../../../../@shared/translate/translate.module';
+import { ApprovalsRoutingModule } from './approvals-routing.module';
+import { ApprovalsComponent } from './approvals/approvals.component';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
 	imports: [
 		CommonModule,
-		ApprovalsRoutingModule,
-		NbCardModule,
-		TranslateModule,
-		NbCheckboxModule,
-		NbButtonModule,
-		NbSelectModule,
-		SharedModule,
-		NbDatepickerModule,
 		FormsModule,
+		NbButtonModule,
+		NbCardModule,
 		NbContextMenuModule,
-		NbIconModule,
+		NbDatepickerModule,
 		NbDialogModule,
-		TimerPickerModule,
-		TaskSelectModule,
-		ProjectSelectModule,
 		NbIconModule,
-		EmployeeSelectorsModule,
 		NbPopoverModule,
-		MomentModule,
-		FiltersModule,
+		NbSelectModule,
 		NbSpinnerModule,
-		DialogsModule
+		TranslateModule,
+		MomentModule,
+		SharedModule,
+		FiltersModule,
+		ApprovalsRoutingModule
 	]
 })
 export class ApprovalsModule {}

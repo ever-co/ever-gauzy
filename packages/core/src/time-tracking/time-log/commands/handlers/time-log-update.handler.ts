@@ -4,11 +4,11 @@ import { Repository, In } from 'typeorm';
 import { TimeLogSourceEnum } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
-import { Timesheet } from '../../../timesheet.entity';
+import { Timesheet } from './../../../timesheet/timesheet.entity';
 import {
 	TimesheetFirstOrCreateCommand,
 	TimesheetRecalculateCommand
-} from './../../../../timesheet/commands';
+} from './../../../timesheet/commands';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 

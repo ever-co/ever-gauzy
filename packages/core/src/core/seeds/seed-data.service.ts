@@ -121,7 +121,7 @@ import {
 import {
 	createDefaultTimeSheet,
 	createRandomTimesheet
-} from './../../timesheet/timesheet.seed';
+} from './../../time-tracking/timesheet/timesheet.seed';
 import {
 	createDefaultTask,
 	createRandomTask

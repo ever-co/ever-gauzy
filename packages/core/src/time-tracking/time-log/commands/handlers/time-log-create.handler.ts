@@ -6,8 +6,7 @@ import { Repository } from 'typeorm';
 import { TimeLog } from './../../time-log.entity';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
-import { TimesheetFirstOrCreateCommand } from './../../../../timesheet/commands/timesheet-first-or-create.command';
-import { TimesheetRecalculateCommand } from './../../../../timesheet/commands/timesheet-recalculate.command';
+import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { RequestContext } from '../../../../core/context';
 

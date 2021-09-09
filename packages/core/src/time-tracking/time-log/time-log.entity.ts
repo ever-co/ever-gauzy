@@ -104,7 +104,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * Timesheet
 	 */
 	@ApiProperty({ type: () => Timesheet })
-	@ManyToOne(() => Timesheet, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Timesheet, (timesheet) => timesheet.timeLogs, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	timesheet?: ITimesheet;
 

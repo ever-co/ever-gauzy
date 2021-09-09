@@ -4,9 +4,10 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	OneToMany
+	OneToMany,
+	Index
 } from 'typeorm';
-import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
+import { IEmployee, ITimeLog, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,
@@ -19,37 +20,13 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity,
 	TimeLog
-} from '../core/entities/internal';
+} from './../../core/entities/internal';
 
 @Entity('timesheet')
 export class Timesheet
 	extends TenantOrganizationBaseEntity
 	implements ITimesheet {
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true })
-	@JoinColumn()
-	employee: Employee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((timesheet: Timesheet) => timesheet.employee)
-	@Column()
-	readonly employeeId?: string;
-
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true })
-	@JoinColumn()
-	approvedBy?: Employee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((timesheet: Timesheet) => timesheet.approvedBy)
-	@Column({ nullable: true })
-	readonly approvedById?: string;
-
-	@ApiProperty({ type: () => TimeLog })
-	@OneToMany(() => TimeLog, (timeLog) => timeLog.timesheet)
-	@JoinColumn()
-	timeLogs?: TimeLog[];
-
+	
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
@@ -110,4 +87,58 @@ export class Timesheet
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, (employee) => employee.timesheets, {
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	employee: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Timesheet) => it.employee)
+	@IsString()
+	@Index()
+	@Column()
+	readonly employeeId?: string;
+
+	/**
+	 * Approve By Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, { nullable: true })
+	@JoinColumn()
+	approvedBy?: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Timesheet) => it.approvedBy)
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	readonly approvedById?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * TimeLog
+	 */
+	@ApiProperty({ type: () => TimeLog, isArray: true })
+	@OneToMany(() => TimeLog, (timeLog) => timeLog.timesheet, {
+		cascade: true
+	})
+	@JoinColumn()
+	timeLogs?: ITimeLog[];
 }
