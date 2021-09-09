@@ -46,7 +46,7 @@ jobs:
           CYPRESS_API_URL: https://cy.currents.dev/
 
           # Note: CYPRESS_PACKAGE_CONFIG_PATH value should be adjusted for Linux runners
-          CYPRESS_PACKAGE_CONFIG_PATH: C:\Users\Evereq\AppData\Local\Cypress\Cache\8.3.1\Cypress\resources\app\packages\server\config\app.yml
+          CYPRESS_PACKAGE_CONFIG_PATH: C:\Users\Evereq\AppData\Local\Cypress\Cache\8.3.0\Cypress\resources\app\packages\server\config\app.yml
 
           # Currents use different record key compared to Cypress
           CURRENTS_CYPRESS_RECORD_KEY: ${{ secrets.CURRENTS_CYPRESS_RECORD_KEY }}
