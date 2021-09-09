@@ -39,12 +39,19 @@ jobs:
             containers: [1, 2]
 
         env:
+          # Note: Cache folder will be different on Linux runners
           CYPRESS_CACHE_FOLDER: C:\Users\Evereq\AppData\Local\Cypress\Cache
 
           # We are using Currents Dashboard for now, but we can replace with our self-hosted if needed
           CYPRESS_API_URL: https://cy.currents.dev/
+
+          # Note: CYPRESS_PACKAGE_CONFIG_PATH value should be adjusted for Linux runners
           CYPRESS_PACKAGE_CONFIG_PATH: C:\Users\Evereq\AppData\Local\Cypress\Cache\8.3.1\Cypress\resources\app\packages\server\config\app.yml
 
+          # Currents use different record key compared to Cypress
+          CURRENTS_CYPRESS_RECORD_KEY: ${{ secrets.CURRENTS_CYPRESS_RECORD_KEY }}
+
+          # we don't use original Cypress Dashboard here, but still let's keep it for now
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}          
 
@@ -121,8 +128,8 @@ jobs:
             
             - name: Currents Cypress run
               env:
-                DEBUG: cy2*
+                DEBUG: cy2*                
               run: |                               
                 echo 'Starting Cypress Tests ...'
                 cd apps/gauzy-e2e
-                cy2 run --parallel --record --key CURRENTS_CYPRESS_RECORD_KEY --ci-build-id ${{ needs.prepare.outputs.uuid }} -C cypress.json -c "projectId=k1BPpu" --group "1 - all e2e tests"
+                cy2 run --parallel --record --key ${{ secrets.CURRENTS_CYPRESS_RECORD_KEY }} --ci-build-id ${{ needs.prepare.outputs.uuid }} -C cypress.json -c "projectId=k1BPpu" --group "1 - all e2e tests"
