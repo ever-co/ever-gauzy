@@ -121,7 +121,7 @@ jobs:
             
             - name: Currents Cypress run
               env:
-                DEBUG: *
+                DEBUG: cy2*
               run: |                               
                 echo 'Starting Cypress Tests ...'
                 cd apps/gauzy-e2e
