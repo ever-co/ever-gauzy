@@ -40,8 +40,8 @@ export interface ITimesheetCreateInput
 	keyboard: number;
 	mouse: number;
 	overall?: number;
-	startedAt: Date;
-	stoppedAt?: Date;
+	startedAt: Date | string;
+	stoppedAt?: Date | string;
 	approvedAt?: Date;
 	submittedAt?: Date;
 	lockedAt?: Date;
