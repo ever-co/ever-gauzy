@@ -16,7 +16,7 @@ export const OrganizationInventoryPage = {
 	editButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	addCategoryOrTypeButtonCss: 'div.mb-3 > button[status="primary"]',
+	addCategoryOrTypeButtonCss: 'div.mb-3 > button[status="success"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
 	backFromInventoryButtonCss: 'div.navigate > button[status="primary"]',
 	backFromCategoryButtonCss:

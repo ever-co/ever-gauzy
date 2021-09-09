@@ -223,6 +223,7 @@ Feature: Organization inventory test
     When User click again on merchants table row
     Then Delete merchant button will become active
     When User click on delete merchant button
+    Then User click on delete button to confirm
     Then Notification message will appear
   Scenario: Edit warehouse
     When User click on Inventory sidebar button again

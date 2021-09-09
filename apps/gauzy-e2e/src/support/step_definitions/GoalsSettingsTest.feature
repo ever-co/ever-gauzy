@@ -60,6 +60,9 @@ Feature: Goals Time frame and KPI test
     When User click on edit KPI button
     Then User can see edit KPI name input field
     And User can enter new KPI name
+    And User can see employee dropdown
+    When User click on employee dropdown
+    Then User can select employee from dropdown options
     And User can see save edited KPI button
     When User click on save edited KPI button
     Then Notification message will appear

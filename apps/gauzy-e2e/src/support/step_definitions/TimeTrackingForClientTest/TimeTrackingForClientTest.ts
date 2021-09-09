@@ -3,15 +3,26 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
+import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
+import * as clientsPage from '../../Base/pages/Clients.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-import * as projectTrackedInTimesheets from '../../Base/pages/ProjectTrackedInTimesheet.po';
+import * as timeTrackingForClient from '../../Base/pages/TimeTrackingForClient.po';
 import { waitUntil } from '../../Base/utils/util';
+import { TimeTrackingForClientPageData } from '../../Base/pagedata/TimeTrackingForClientPageData';
 
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
+let projectName = faker.name.jobTitle()
+
+let email = faker.internet.email();
+let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
+let city = faker.address.city();
+let postcode = faker.address.zipCode();
+let street = faker.address.streetAddress();
+let website = faker.internet.url();
 
 
 let firstName = faker.name.firstName();
@@ -21,10 +32,7 @@ let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
 let employeeEmail = faker.internet.email();
 
-let projectName = faker.company.companyName()
-
 let employeeFullName = `${firstName} ${lastName}`;
-
 
 // Login with email
 
@@ -47,68 +55,27 @@ Then('User can add new employee', () => {
 		imgUrl
 	);
 });
-
-//Add new project
-
-And('User can visit Organization projects page', () => {
+// Add new client
+And('User can add new client', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/organization/projects', { timeout: pageLoadTimeout });
-});
-
-And('User can see grid button', () => {
-	projectTrackedInTimesheets.gridBtnExists();
-});
-
-And('User can click on second grid button to change view', () => {
-	projectTrackedInTimesheets.gridBtnClick(1);
-});
-
-And('User can see request project button', () => {
-	projectTrackedInTimesheets.requestProjectButtonVisible();
-});
-
-When('User click on request project button', () => {
-	projectTrackedInTimesheets.clickRequestProjectButton();
-});
-
-Then('User can see name input field', () => {
-	projectTrackedInTimesheets.nameInputVisible();
-});
-
-And('User can enter value for name', () => {
-	projectTrackedInTimesheets.enterNameInputData(projectName);
-});
-
-And('User can see employee dropdown', () => {
-	projectTrackedInTimesheets.selectEmployeeDropdownVisible();
-});
-
-When('User click on employee dropdown', () => {
-	projectTrackedInTimesheets.clickSelectEmployeeDropdown();
-});
-
-Then('User can select employee from dropodown options', () => {
-	projectTrackedInTimesheets.selectEmployeeDropdownOption(employeeFullName);
-	projectTrackedInTimesheets.clickKeyboardButtonByKeyCode(9);
-});
-
-And('User can see save project button', () => {
-	projectTrackedInTimesheets.saveProjectButtonVisible();
-});
-
-When('User click on save project button', () => {
-	projectTrackedInTimesheets.clickSaveProjectButton();
-});
-
-Then('Notification message will appear', () => {
-	projectTrackedInTimesheets.waitMessageToHide();
+	CustomCommands.addClient(
+		clientsPage,
+		fullName,
+		email,
+		website,
+		city,
+		postcode,
+		street,
+		ClientsData,
+		employeeFullName
+	);
 });
 
 //Logout
-And ('User can logout', () => {
-    CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+And('User can logout', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 });
 
@@ -142,34 +109,34 @@ Then('Employee will see Create button', () => {
 	dashboardPage.verifyCreateButton();
 });
 
-//Record time with the new project
+//Record time for the new client and verify
 
 And('Employee can see timer', () => {
-	projectTrackedInTimesheets.timerVisible();
+	timeTrackingForClient.timerVisible();
 });
 
 When('Employee click on timer', () => {
-	projectTrackedInTimesheets.clickTimer();
+	timeTrackingForClient.clickTimer();
 });
 
 Then('Employee can see timer button', () => {
-	projectTrackedInTimesheets.timerBtnVisible();
+	timeTrackingForClient.timerBtnVisible();
 });
 
-And('Employee can see project select', () => {
-	projectTrackedInTimesheets.projectSelectVisible();
+And('Employee can see client select', () => {
+	timeTrackingForClient.clientSelectVisible();
 });
 
-When('Employee click on project select', () => {
-	projectTrackedInTimesheets.clickProjectSelect();
+When('Employee click on client select', () => {
+	timeTrackingForClient.clickClientSelect();
 });
 
-Then('Employee can select project from dropdown options', () => {
-	projectTrackedInTimesheets.selectOptionFromDropdown(0);
+Then('Employee can select client from dropdown options', () => {
+	timeTrackingForClient.selectOptionFromDropdown(0);
 });
 
 When('Employee click on start timer button', () => {
-	projectTrackedInTimesheets.clickStartTimerBtn();
+	timeTrackingForClient.clickStartTimerBtn();
 });
 
 Then('Employee can let timer work for 5 seconds', () => {
@@ -177,22 +144,28 @@ Then('Employee can let timer work for 5 seconds', () => {
 })
 
 And('Employee can see stop timer button', () => {
-	projectTrackedInTimesheets.stopTimerBtnVisible();
+	timeTrackingForClient.stopTimerBtnVisible();
 });
 
 When('Employee click on stop timer button', () => {
-	projectTrackedInTimesheets.clickStopTimerBtn();
+	timeTrackingForClient.clickStopTimerBtn();
 });
 
 Then('Employee can see view timesheet button', () => {
-	projectTrackedInTimesheets.viewTimesheetbtnVisible();
+	timeTrackingForClient.viewTimesheetbtnVisible();
 });
 
 When('Employee click on view timesheet button', () => {
-	projectTrackedInTimesheets.clickViewTimesheetBtn();
-});
-Then ('Employee verify project name is the same', () => {
-	projectTrackedInTimesheets.verifyProjectText(projectName)
+	timeTrackingForClient.clickViewTimesheetBtn();
 });
 
+Then('Employee can see view button', () => {
+    timeTrackingForClient.viewViewBtnVisible();
+});
+When('Employee click on view button', () => {
+    timeTrackingForClient.clickOnViewBtn();
+});
 
+Then('Employee can verify the client name is recorded', () =>{
+    timeTrackingForClient.verifyCustomerName(fullName);
+});

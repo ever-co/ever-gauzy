@@ -15,7 +15,7 @@ import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationPr
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
-import { waitUntil } from '../../Base/utils/util';
+
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -41,7 +41,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboard();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
