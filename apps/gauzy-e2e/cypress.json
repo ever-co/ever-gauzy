@@ -16,12 +16,12 @@
 	"baseUrl": "http://localhost:4200",
 	"ignoreTestFiles": "*.ts",
 	"testFiles": "**/*.feature",
-	"defaultCommandTimeout": 120000,
-	"pageLoadTimeout": 300000,
-	"taskTimeout": 120000,
-	"requestTimeout": 120000,
-	"execTimeout": 120000,
-	"responseTimeout": 300000,
+	"defaultCommandTimeout": 12000,
+	"pageLoadTimeout": 60000,
+	"taskTimeout": 60000,
+	"requestTimeout": 12000,
+	"execTimeout": 60000,
+	"responseTimeout": 30000,
 	"retries": {
 		"runMode": 1,
 		"openMode": 1

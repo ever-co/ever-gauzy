@@ -34,7 +34,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboard();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -84,6 +84,10 @@ And('User can see employee dropdown', () => {
 
 When('User click on employee dropdown', () => {
 	proposalsPage.clickEmployeeDropdown();
+});
+
+And('User can see on employee dropdown', () => {
+	proposalsPage.verifyEmployeeDropdownVisible();
 });
 
 Then('User can select employee from dropdown options', () => {

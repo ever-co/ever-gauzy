@@ -1,4 +1,4 @@
-import { verifyElementIsVisible, clickButton } from '../utils/util';
+import { verifyElementIsVisible, clickButton, verifyElementIfVisible } from '../utils/util';
 import { DashboardPage } from '../pageobjects/DashboardPageObject';
 
 export const verifyCreateButton = () => {
@@ -11,4 +11,8 @@ export const clickUserName = () => {
 
 export const verifyAccountingDashboard = () => {
 	verifyElementIsVisible(DashboardPage.settingBlockCss);
+}
+
+export const verifyAccountingDashboardIfVisible = () => {
+	verifyElementIfVisible(DashboardPage.childerElementCss, DashboardPage.settingBlockCssTwo)
 }
