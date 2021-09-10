@@ -13,6 +13,7 @@ Feature: Proposals test
     When User click on register proposal button
     And User can see employee dropdown
     When User click on employee dropdown
+    And User can see on employee dropdown
     Then User can select employee from dropdown options
     And User can see job post input field
     And User can enter job post url
