@@ -11,7 +11,8 @@ import {
 	NbIconModule,
 	NbDialogModule,
 	NbPopoverModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { SharedModule } from './../../../../@shared/shared.module';
@@ -27,6 +28,7 @@ import { ApprovalsComponent } from './approvals/approvals.component';
 		FormsModule,
 		NbButtonModule,
 		NbCardModule,
+		NbCheckboxModule,
 		NbContextMenuModule,
 		NbDatepickerModule,
 		NbDialogModule,

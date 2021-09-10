@@ -321,11 +321,11 @@ if (process.env.DB_TYPE === 'postgres') {
 export class AppModule {
 	constructor() {
 		// Set Monday as start of the week
-		moment.locale('en', {
+		moment.locale(LanguagesEnum.ENGLISH, {
 			week: {
 				dow: 1
 			}
 		});
-		moment.locale('en');
+		moment.locale(LanguagesEnum.ENGLISH);
 	}
 }
