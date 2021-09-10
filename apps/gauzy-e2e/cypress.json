@@ -6,7 +6,7 @@
 	"integrationFolder": "./src/support",
 	"pluginsFile": "./src/plugins/index.ts",
 	"supportFile": "./src/support/index.ts",
-	"video": true,
+	"video": false,
 	"videoUploadOnPasses": false,
 	"videosFolder": "../../dist/cypress/apps/gauzy-e2e/videos",
 	"screenshotsFolder": "../../dist/cypress/apps/gauzy-e2e/screenshots",
