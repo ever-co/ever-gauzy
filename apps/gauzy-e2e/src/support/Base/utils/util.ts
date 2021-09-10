@@ -251,7 +251,6 @@ export const clickButtonWithForce = (loc) => {
 
 export const verifyElementIfVisible = (locOne, locTwo) => {
 	cy.get(locTwo, { timeout: taskTimeout }).then((loc) => {
-		console.log(loc.is(locOne))
 		if(loc.is(locOne)){
 			cy.get(locOne, { timeout: defaultCommandTimeout}).should('be.visible');
 		}
