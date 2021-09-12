@@ -90,4 +90,6 @@ export interface IEnvironment {
 	unleashConfig?: IUnleashConfig;
 	
 	demo: boolean;
+
+	isElectronServer: boolean;
 }

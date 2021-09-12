@@ -34,7 +34,7 @@ import { DatabaseProviderModule } from './database-provider.module';
 					'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 			},
 			typePaths: [
-				environment.isElectron
+				environment.isElectron && environment.isElectronServer
 					? path.join(
 							path.resolve(__dirname, '../../../../../../data/'),
 							'*.gql'

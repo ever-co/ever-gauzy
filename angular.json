@@ -1019,7 +1019,7 @@
         "build": {
           "builder": "@nrwl/node:build",
           "options": {
-            "outputPath": "dist/apps/gauzy-server/api",
+            "outputPath": "dist/apps/gauzy-server/server/api",
             "main": "apps/api/src/main.ts",
             "showCircularDependencies": false,
             "sourceMap": true,

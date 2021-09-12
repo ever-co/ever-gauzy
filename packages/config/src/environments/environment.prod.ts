@@ -156,7 +156,9 @@ export const environment: IEnvironment = {
 		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 1000
 	},
 
-	demo: process.env.DEMO === 'true' ? true : false
+	demo: process.env.DEMO === 'true' ? true : false,
+
+	isElectronServer: process.env.IS_ELECTRON_SERVER == 'true' ? true: false
 };
 
 export const gauzyToggleFeatures: IGauzyFeatures = {

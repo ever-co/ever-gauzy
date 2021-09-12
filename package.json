@@ -149,7 +149,11 @@
 		"build:gauzy-server:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/gauzy-server",
 		"build:gauzy-server:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 build --linux --publish=always --project dist/apps/gauzy-server",
 		"build:gauzy-server:mac:release": "yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=12.0.5 build --mac --publish=always --project dist/apps/gauzy-server",
-		"quick:build:gauzy-server": "yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-server"
+		"quick:build:gauzy-server": "yarn electron-builder -c.electronVersion=12.0.5 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-server",
+		"build:gauzy-server:pkg:window": "yarn build:gauzy-server && yarn run config:pkg -- --platform=win",
+		"build:gauzy-server:pkg:mac": "yarn build:gauzy-server && yarn run config:pkg -- --platform=mac",
+		"config:pkg": "yarn ts-node ./.scripts/pkg.ts"
+
 	},
 	"config": {
 		"commitizen": {
