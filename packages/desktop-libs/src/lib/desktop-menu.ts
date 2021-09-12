@@ -99,21 +99,22 @@ export class AppMenu {
 									additionalSetting: addSetting
 								});
 								settingsWindow.webContents.send(
-									'goto_top_menu'
+									timeTrackerWindow ? 'goto_top_menu' : 'goto_update'
 								);
 							}, 500);
 						}
 					}
-					// {
-					// 	id: 'devtools',
-					// 	label: 'DevTool',
-					// 	enabled: true,
-					// 	click() {
-					// 		settingsWindow.webContents.toggleDevTools();
-					// 	}
-					// }
 				]
 			},
+			{
+				label: 'Edit',
+				submenu: [
+				  { role: 'cut' },
+				  { role: 'copy' },
+				  { role: 'paste' },
+				  { role: 'selectAll'}
+				]
+			  },
 			{
 				label: 'Help',
 				submenu: [
@@ -122,7 +123,30 @@ export class AppMenu {
 						click() {
 							shell.openExternal('https://gauzy.co/');
 						}
-					}
+					},
+					{
+						id: 'devtools-setting',
+						label: 'Setting Inpect',
+						enabled: true,
+						click() {
+							if (!settingsWindow) {
+								settingsWindow = createSettingsWindow(
+									settingsWindow,
+									windowPath.timeTrackerUi
+								);
+							}
+							settingsWindow.webContents.toggleDevTools();
+						}
+					},
+					{
+						id: 'devtools-time-tracker',
+						label: 'Time Tracker Inpect',
+						enabled: true,
+						visible: timeTrackerWindow ? true : false,
+						click() {
+							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
+						}
+					} 
 				]
 			}
 		]);
