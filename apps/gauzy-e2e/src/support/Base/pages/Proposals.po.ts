@@ -261,3 +261,7 @@ export const selectEmployeeFromMultiSelectDropdown = (index) => {
 		index
 	);
 };
+
+export const verifyEmployeeDropdownVisible = () => {
+	verifyElementIsVisible(ProposalsPage.selectEmployeeDropdownOptionCss)
+}

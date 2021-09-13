@@ -419,6 +419,10 @@ export class SettingsComponent implements OnInit {
 			} else this.selectMenu('Screen Capture');
 		});
 
+		electronService.ipcRenderer.on('goto_advanced_setting', () => {
+			this.selectMenu('Advanced Setting');
+		});
+
 		electronService.ipcRenderer.on('logout_success', () => {
 			this.currentUser = null;
 			this._cdr.detectChanges();
