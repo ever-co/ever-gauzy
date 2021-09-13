@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -33,22 +33,26 @@
 				</ng-container>
 			</div>
 		</ng-template>
-		<ng2-smart-table
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			class="employees-table"
-			style="cursor: pointer"
-			[settings]="settingsSmartTable"
-			[source]="sourceSmartTable"
-			(userRowSelect)="selectEmployeeTmp($event)"
-			#invitesTable
-		>
-		</ng2-smart-table>
-		<ga-card-grid
-			[settings]="settingsSmartTable"
-			[source]="manageInvites"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				*ngIf="dataLayoutStyle === 'TABLE'"
+				class="employees-table"
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				[source]="sourceSmartTable"
+				(userRowSelect)="selectEmployeeTmp($event)"
+				#invitesTable
+			>
+			</ng2-smart-table>
+		</div>
+		<div class="grid-scroll-container">
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="manageInvites"
+				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+				[buttonTemplate]="actionButtons"
+			></ga-card-grid>
+		</div>		
 	</nb-card-body>
 </nb-card>
 <ng-template

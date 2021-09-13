@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'EMPLOYEES_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
@@ -59,16 +59,18 @@
 				>
 			</div>
 		</ng-template>
-		<ng2-smart-table
-			class="employees-table"
-			style="cursor: pointer"
-			[settings]="settingsSmartTable"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			[source]="sourceSmartTable"
-			(userRowSelect)="selectEmployee($event)"
-			#employeesTable
-		>
-		</ng2-smart-table>
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				class="employees-table"
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				*ngIf="dataLayoutStyle === 'TABLE'"
+				[source]="sourceSmartTable"
+				(userRowSelect)="selectEmployee($event)"
+				#employeesTable
+			>
+			</ng2-smart-table>
+		</div>		
 
 		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
 			<li class="flex-item" *ngFor="let x of employeeData">

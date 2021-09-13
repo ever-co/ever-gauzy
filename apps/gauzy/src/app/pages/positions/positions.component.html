@@ -1,4 +1,4 @@
-<nb-card class="card-scroll">
+<nb-card>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4>
@@ -89,107 +89,110 @@
 			</ng-template>
 		</div>
 		<div *ngIf="dataLayoutStyle === 'TABLE' && positions?.length">
-			<nb-card *ngFor="let p of positions">
-				<nb-card-body
-					style="
-						display: inline;
-						align-items: center;
-						justify-content: space-between;
-						overflow: inherit;
-					"
-				>
-					<ga-notes-with-tags
-						[rowData]="p"
-						*ngIf="p !== selectedPosition"
+			<div class="table-scroll-container">
+				<nb-card *ngFor="let p of positions">
+					<nb-card-body
+						style="
+							display: inline;
+							align-items: center;
+							justify-content: space-between;
+							overflow: inherit;
+						"
 					>
-					</ga-notes-with-tags>
-					<div
-						*ngIf="showEditDiv && p === selectedPosition"
-						class="row"
-					>
-						<div
-							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+						<ga-notes-with-tags
+							[rowData]="p"
+							*ngIf="p !== selectedPosition"
 						>
-							<label class="label">{{
-								'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME'
-									| translate
-							}}</label>
-							<input
-								#editInput="ngModel"
-								nbInput
-								type="text"
-								fullWidth
-								[(ngModel)]="selectedPosition.name"
-								required
-							/>
-						</div>
+						</ga-notes-with-tags>
 						<div
-							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+							*ngIf="showEditDiv && p === selectedPosition"
+							class="row"
 						>
-							<ga-tags-color-input
-								[selectedTags]="tags"
-								(selectedTagsEvent)="selectedTagsEvent($event)"
-								[isOrgLevel]="true"
+							<div
+								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 							>
-							</ga-tags-color-input>
-						</div>
-						<div
-							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
-						>
-							<button
-								class="w-100 mt-3"
-								(click)="
-									editPosition(
-										selectedPosition.id,
-										editInput.value
-									)
-								"
-								nbButton
-								status="success"
-								[disabled]="editInput.invalid"
+								<label class="label">{{
+									'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME'
+										| translate
+								}}</label>
+								<input
+									#editInput="ngModel"
+									nbInput
+									type="text"
+									fullWidth
+									[(ngModel)]="selectedPosition.name"
+									required
+								/>
+							</div>
+							<div
+								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 							>
-								{{ 'BUTTONS.UPDATE' | translate }}
-							</button>
-						</div>
-						<div
-							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
-						>
-							<button
-								class="w-100 mt-3"
-								(click)="cancel()"
-								nbButton
-								status="danger"
+								<ga-tags-color-input
+									[selectedTags]="tags"
+									(selectedTagsEvent)="selectedTagsEvent($event)"
+									[isOrgLevel]="true"
+								>
+								</ga-tags-color-input>
+							</div>
+							<div
+								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 							>
-								{{ 'BUTTONS.CANCEL' | translate }}
-							</button>
+								<button
+									class="w-100 mt-3"
+									(click)="
+										editPosition(
+											selectedPosition.id,
+											editInput.value
+										)
+									"
+									nbButton
+									status="success"
+									[disabled]="editInput.invalid"
+								>
+									{{ 'BUTTONS.UPDATE' | translate }}
+								</button>
+							</div>
+							<div
+								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+							>
+								<button
+									class="w-100 mt-3"
+									(click)="cancel()"
+									nbButton
+									status="danger"
+								>
+									{{ 'BUTTONS.CANCEL' | translate }}
+								</button>
+							</div>
 						</div>
-					</div>
-					<nb-actions
-						*ngIf="p !== selectedPosition"
-						class="float-right"
-						e="medium"
-					>
-						<nb-action
-							(click)="showEditCard(p)"
-							class="d-inline pr-2"
-							icon="edit"
-						></nb-action>
-						<nb-action
-							(click)="removePosition(p.id, p.name)"
-							class="d-inline pr-0 pl-2"
-							icon="close"
-						></nb-action>
-					</nb-actions>
-				</nb-card-body>
-			</nb-card>
+						<nb-actions
+							*ngIf="p !== selectedPosition"
+							class="float-right"
+							e="medium"
+						>
+							<nb-action
+								(click)="showEditCard(p)"
+								class="d-inline pr-2"
+								icon="edit"
+							></nb-action>
+							<nb-action
+								(click)="removePosition(p.id, p.name)"
+								class="d-inline pr-0 pl-2"
+								icon="close"
+							></nb-action>
+						</nb-actions>
+					</nb-card-body>
+				</nb-card>
+			</div>			
 		</div>
-
-		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID' && positions?.length"
-			[settings]="settingsSmartTable"
-			[source]="positions"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+		<div class="grid-scroll-container">
+			<ga-card-grid
+				*ngIf="dataLayoutStyle === 'CARDS_GRID' && positions?.length"
+				[settings]="settingsSmartTable"
+				[source]="positions"
+				[buttonTemplate]="actionButtons"
+			></ga-card-grid>
+		</div>		
 		<ng-template
 			#actionButtons
 			let-buttonSize="buttonSize"

@@ -1,0 +1,9 @@
+:host>nb-card {
+    min-height: 75vh;
+}
+
+.table-scroll-container,
+.grid-scroll-container {
+    overflow-y: auto;
+    max-height: calc(70vh - 110px);
+}

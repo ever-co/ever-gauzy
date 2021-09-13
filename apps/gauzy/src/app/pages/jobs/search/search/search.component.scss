@@ -31,4 +31,7 @@
       }
     }
   }
+  .table-scroll-container {
+    max-height: calc(70vh - 110px);
+  }
 }

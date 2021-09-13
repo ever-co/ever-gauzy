@@ -1,5 +1,5 @@
 <nb-card
-	class="tasks-component card-scroll"
+	class="tasks-component"
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -57,22 +57,26 @@
 					</ng-container>
 				</div>
 				<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
-					<ng2-smart-table
-						[settings]="settingsSmartTable"
-						[source]="smartTableSource"
-						(userRowSelect)="selectTask($event)"
-						style="cursor: pointer"
-						#tasksTable
-					>
-					</ng2-smart-table>
+					<div class="table-scroll-container">
+						<ng2-smart-table
+							[settings]="settingsSmartTable"
+							[source]="smartTableSource"
+							(userRowSelect)="selectTask($event)"
+							style="cursor: pointer"
+							#tasksTable
+						>
+						</ng2-smart-table>
+					</div>					
 				</ng-template>
 				<ng-template #gridLayout>
-					<ga-card-grid
-						[settings]="settingsSmartTable"
-						[source]="availableTasks$ | async"
-						[cardSize]="'big'"
-						[buttonTemplate]="actionButtons"
-					></ga-card-grid>
+					<div class="grid-scroll-container">
+						<ga-card-grid
+							[settings]="settingsSmartTable"
+							[source]="availableTasks$ | async"
+							[cardSize]="'big'"
+							[buttonTemplate]="actionButtons"
+						></ga-card-grid>
+					</div>					
 					<ng-container 
 						*ngTemplateOutlet="paginationTemplate; context: { 
 							pagination: pagination 
