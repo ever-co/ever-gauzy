@@ -1,10 +1,10 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import {
-	NbCheckboxComponent,
 	NbDialogService,
+	NbMenuItem,
 	NbMenuService
 } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
@@ -17,7 +17,6 @@ import {
 	IGetTimeLogInput,
 	ITimeLog,
 	IOrganization,
-	IDateRange,
 	PermissionsEnum,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
@@ -27,7 +26,7 @@ import { TimesheetService, TimesheetFilterService } from './../../../../../@shar
 import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
 import { TimeTrackerService } from './../../../../../@shared/time-tracker/time-tracker.service';
-import { TimeLogsLabel } from './../../../../../@core/constants';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,39 +34,26 @@ import { TimeLogsLabel } from './../../../../../@core/constants';
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent implements OnInit, OnDestroy {
+export class DailyComponent 
+	extends TranslationBaseComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
+	
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
-	timeLogs: ITimeLog[];
-	today: Date = new Date();
-	checkboxAll = false;
-	selectedIds: any = {};
 
-	@ViewChild('checkAllCheckbox')
-	checkAllCheckbox: NbCheckboxComponent;
-	organization: IOrganization;
-	addEditTimeRequest: any = {
-		isBillable: true,
-		projectId: null,
-		taskId: null,
-		description: ''
-	};
-	selectedRange: IDateRange = { start: null, end: null };
-	showBulkAction = false;
-	bulkActionOptions = [
-		{
-			title: 'Delete'
-		}
-	];
-	logRequest: ITimeLogFilters = {};
-
-	updateLogs$: Subject<any> = new Subject();
 	loading: boolean;
+	showBulkAction: boolean;
+	
+	logRequest: ITimeLogFilters;
+	timeLogs: ITimeLog[] = [];
 
+	logs$: Subject<any> = new Subject();
+	public organization: IOrganization;
 	selectedEmployeeId: string | null = null;
 	projectId: string | null = null;
 
-	TimeLogsLabel = TimeLogsLabel;
+	allChecked: boolean;
+	contextMenus: NbMenuItem[];
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -76,41 +62,21 @@ export class DailyComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly nbMenuService: NbMenuService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		private readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute
-	) {}
+	) {
+		super(translateService);
+	}
 
-	async ngOnInit() {
-		this.nbMenuService
-			.onItemClick()
+	ngOnInit() {
+		this._applyTranslationOnChange();
+		this.logs$
 			.pipe(
-				untilDestroyed(this),
-				filter(({ tag }) => tag === 'time-logs-bulk-acton'),
-				map(({ item: { title } }) => title)
-			)
-			.subscribe((title) => this.bulkAction(title));
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
-						this.selectedEmployeeId = employee ? employee.id : null;
-						this.projectId = project ? project.id : null;
-						this.updateLogs$.next();
-					}
-				}),
+				debounceTime(500),
+				tap(() => this.loading = true),
+				tap(() => this.getLogs()),
+				tap(() => this.allChecked = false),
 				untilDestroyed(this)
-			)
-			.subscribe();
-		this.updateLogs$
-			.pipe(
-				untilDestroyed(this),
-				debounceTime(800),
-				tap(() => this.getLogs())
 			)
 			.subscribe();
 		this.timesheetService.updateLog$
@@ -120,23 +86,53 @@ export class DailyComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.nbMenuService
+			.onItemClick()
+			.pipe(
+				untilDestroyed(this),
+				filter(({ tag }) => tag === 'time-logs-bulk-action'),
+				map(({ item: { data } }) => data.action),
+				filter((action) => action === 'DELETE'),
+				tap(() => this._bulkDeleteAction())
+			)
+			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params),
 				debounceTime(1000),
+				filter((params) => !!params),
+				filter((params) => params.get('openAddDialog') === 'true'),
+				tap(() => this.openAdd()),
 				untilDestroyed(this)
 			)
-			.subscribe((params) => {
-				if (params.get('openAddDialog') === 'true') {
-					this.openAdd();
-				}
-			});
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		this._createContextMenus();
+
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					this.organization = organization;
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this.projectId = project ? project.id : null;
+				}),
+				tap(() => this.logs$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.timesheetFilterService.filter = $event;
-		this.updateLogs$.next();
+		this.logs$.next();
 	}
 
 	async getLogs() {
@@ -175,55 +171,12 @@ export class DailyComponent implements OnInit, OnDestroy {
 			...(projectIds.length > 0 ? { projectIds } : {})
 		};
 
-		this.loading = true;
 		this.timeLogs = await this.timesheetService
 			.getTimeLogs(request)
-			.then((logs) => {
-				this.selectedIds = {};
-				if (this.checkAllCheckbox) {
-					this.checkAllCheckbox.checked = false;
-					this.checkAllCheckbox.indeterminate = false;
-				}
-				logs.forEach((log) => (this.selectedIds[log.id] = false));
+			.then((logs: ITimeLog[]) => {
 				return logs;
 			})
 			.finally(() => (this.loading = false));
-	}
-
-	toggleCheckbox(event: any, type?: any) {
-		if (type === 'all') {
-			for (const key in this.selectedIds) {
-				if (this.selectedIds.hasOwnProperty(key)) {
-					this.selectedIds[key] = event.target.checked;
-				}
-			}
-		} else {
-			let all_checked = true;
-			let any_checked = false;
-			for (const key in this.selectedIds) {
-				if (this.selectedIds.hasOwnProperty(key)) {
-					const is_checked = this.selectedIds[key];
-					if (is_checked === false || is_checked === undefined) {
-						all_checked = false;
-					} else {
-						any_checked = true;
-					}
-				}
-			}
-
-			if (all_checked) {
-				this.showBulkAction = true;
-				this.checkAllCheckbox.indeterminate = false;
-				this.checkAllCheckbox.checked = true;
-			} else if (any_checked) {
-				this.showBulkAction = true;
-				this.checkAllCheckbox.indeterminate = any_checked;
-			} else {
-				this.showBulkAction = false;
-				this.checkAllCheckbox.checked = false;
-				this.checkAllCheckbox.indeterminate = false;
-			}
-		}
 	}
 
 	openAdd() {
@@ -244,7 +197,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.updateLogs$.next();
+					this.logs$.next();
 				}
 			});
 	}
@@ -254,7 +207,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.updateLogs$.next();
+					this.logs$.next();
 				}
 			});
 	}
@@ -270,50 +223,48 @@ export class DailyComponent implements OnInit, OnDestroy {
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.updateLogs$.next();
+					this.logs$.next();
 				}
 			});
 	}
 
 	onDeleteConfirm(timeLog: ITimeLog) {
-		this.timesheetService.deleteLogs(timeLog.id).then(() => {
-			const index = this.timeLogs.indexOf(timeLog);
-			this.timeLogs.splice(index, 1);
-			this.checkTimerStatus();
-		});
+		this.timesheetService.deleteLogs(timeLog.id)
+			.then(() => {
+				this.checkTimerStatus();
+			})
+			.finally(() => {
+				this.logs$.next();
+			});
 	}
 
-	bulkAction(action) {
-		if (action === 'Delete') {
-			this.dialogService
-				.open(ConfirmComponent, {
-					context: {
-						data: {
-							message: this.translateService.instant(
-								'TIMESHEET.DELETE_TIMELOG'
-							)
-						}
+	private _bulkDeleteAction() {
+		this.dialogService
+			.open(ConfirmComponent, {
+				context: {
+					data: {
+						message: this.translateService.instant('TIMESHEET.DELETE_TIMELOG')
 					}
-				})
-				.onClose.pipe(untilDestroyed(this))
-				.subscribe((type) => {
-					if (type === true) {
-						const logIds = [];
-						for (const key in this.selectedIds) {
-							if (this.selectedIds.hasOwnProperty(key)) {
-								const is_checked = this.selectedIds[key];
-								if (is_checked) {
-									logIds.push(key);
-								}
-							}
-						}
-						this.timesheetService.deleteLogs(logIds).then(() => {
-							this.updateLogs$.next();
+				}
+			})
+			.onClose
+			.pipe(untilDestroyed(this))
+			.subscribe((type) => {
+				if (type === true) {
+					const logIds = this.timeLogs.filter(
+						(timelog: ITimeLog) => timelog['checked']
+					).map(
+						(timelog: ITimeLog) => timelog.id
+					);
+					this.timesheetService.deleteLogs(logIds)
+						.then(() => {
 							this.checkTimerStatus();
+						})
+						.finally(() => {
+							this.logs$.next();
 						});
-					}
-				});
-		}
+				}
+			});
 	}
 
 	private checkTimerStatus() {
@@ -321,6 +272,63 @@ export class DailyComponent implements OnInit, OnDestroy {
 		if (employee && employee.id) {
 			this.timeTrackerService.checkTimerStatus(tenantId);
 		}
+	}
+
+	/**
+	 * Checked/Un-Checked Checkbox
+	 * 
+	 * @param checked 
+	 */
+	 public checkedAll(checked: boolean) {
+		this.allChecked = checked;
+		this.timeLogs.forEach((timesheet: any) => timesheet.checked = checked);
+	}
+
+	/**
+	 * Is Indeterminate
+	 * 
+	 * @returns 
+	 */
+	public isIndeterminate() {
+		const c1 = (this.timeLogs.filter((t: any) => t.checked).length > 0);
+		return c1 && !this.allChecked;
+	}
+
+	/**
+	 * Checkbox Toggle For Every TimeLog
+	 * 
+	 * @param checked 
+	 * @param timesheet 
+	 */
+	public toggleCheckbox(checked: boolean, timelog: ITimeLog) {
+		timelog['checked'] = checked;
+		this.allChecked = this.timeLogs.every((t: any) => t.checked);
+	}
+
+	/**
+	 * Translate context menus
+	 */
+	private _applyTranslationOnChange() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._createContextMenus()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Create bulk action context menus
+	 */
+	private _createContextMenus() {
+		this.contextMenus = [
+			{
+				title: this.getTranslation('TIMESHEET.DELETE'),
+				data: {
+					action: 'DELETE'
+				}
+			}
+		];
 	}
 
 	ngOnDestroy(): void {}
