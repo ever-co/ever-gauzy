@@ -1,4 +1,3 @@
-import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import {
 	Component,
 	OnInit,
@@ -8,6 +7,8 @@ import {
 	Input,
 	ChangeDetectorRef
 } from '@angular/core';
+import { Router } from '@angular/router';
+import { FormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import {
 	ICandidate,
@@ -18,20 +19,21 @@ import {
 	ICandidateTechnologies,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
-import { FormGroup } from '@angular/forms';
-import { CandidatesService } from '../../../@core/services/candidates.service';
 import { first } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { Subject } from 'rxjs';
-import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
-import { EmployeesService } from '../../../@core/services';
-import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
+import {
+	CandidateInterviewersService,
+	CandidateInterviewService,
+	CandidatePersonalQualitiesService,
+	CandidatesService,
+	CandidateStore,
+	CandidateTechnologiesService,
+	EmployeesService,
+	ErrorHandlingService,
+	Store
+} from '../../../@core/services';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
-import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
-import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
-import { Router } from '@angular/router';
-import { CandidateStore } from '../../../@core/services/candidate-store.service';
+import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
+import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -40,26 +42,31 @@ import { CandidateStore } from '../../../@core/services/candidate-store.service'
 })
 export class CandidateInterviewMutationComponent
 	implements OnInit, AfterViewInit, OnDestroy {
+
 	@Input() editData: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate = null;
 	@Input() interviewId = null;
 	@Input() isCalendar: boolean;
 	@Input() selectedRangeCalendar: IDateRange;
 	@Input() header: string;
-	@Input() interviewList: ICandidateInterview[];
+	@Input() interviewList: ICandidateInterview[] = [];
+
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
+
 	@ViewChild('candidateCriterionsForm')
 	candidateCriterionsForm: CandidateCriterionsFormComponent;
+
 	@ViewChild('candidateInterviewForm')
 	candidateInterviewForm: CandidateInterviewFormComponent;
+
 	@ViewChild('candidateNotificationForm')
-	candidateNotificationForm: CandidateInterviewFormComponent;
+	candidateNotificationForm: CandidateNotificationFormComponent;
+
 	form: FormGroup;
 	candidateForm: FormGroup;
 	interviewerForm: FormGroup;
 	interview: any;
-	private _ngDestroy$ = new Subject<void>();
 	employees: IEmployee[] = [];
 	candidates: ICandidate[] = [];
 	selectedInterviewers: string[];
@@ -78,19 +85,20 @@ export class CandidateInterviewMutationComponent
 	technologies: ICandidateTechnologies[];
 	selectedCandidateId: string;
 	selectedOrganization: IOrganization;
+
 	constructor(
-		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
-		protected employeesService: EmployeesService,
-		protected store: Store,
-		private cdRef: ChangeDetectorRef,
-		private candidateInterviewService: CandidateInterviewService,
-		protected candidatesService: CandidatesService,
-		private errorHandler: ErrorHandlingService,
-		private candidateInterviewersService: CandidateInterviewersService,
-		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
-		private router: Router,
-		private candidateStore: CandidateStore
+		protected readonly dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
+		protected readonly employeesService: EmployeesService,
+		protected readonly store: Store,
+		private readonly cdRef: ChangeDetectorRef,
+		private readonly candidateInterviewService: CandidateInterviewService,
+		protected readonly candidatesService: CandidatesService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly candidateInterviewersService: CandidateInterviewersService,
+		private readonly candidateTechnologiesService: CandidateTechnologiesService,
+		private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
+		private readonly router: Router,
+		private readonly candidateStore: CandidateStore
 	) {}
 
 	async ngOnInit() {
@@ -223,6 +231,7 @@ export class CandidateInterviewMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	}
+
 	async addCriterions(interviewId: string, tech?: string[], qual?: string[]) {
 		try {
 			this.technologies = await this.candidateTechnologiesService.createBulk(
@@ -237,6 +246,7 @@ export class CandidateInterviewMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	}
+
 	async editInterview() {
 		let deletedIds = [];
 		let newIds = [];
@@ -277,6 +287,7 @@ export class CandidateInterviewMutationComponent
 		this.interviewId = null;
 		return updatedInterview;
 	}
+
 	async updateCriterions(
 		qual: ICandidatePersonalQualities[],
 		tech: ICandidateTechnologies[]
@@ -334,6 +345,7 @@ export class CandidateInterviewMutationComponent
 			}
 		}
 	}
+
 	setCriterions(
 		data: ICandidateTechnologies[] | ICandidatePersonalQualities[],
 		selectedItems: string[]
@@ -354,6 +366,7 @@ export class CandidateInterviewMutationComponent
 			return { createInput: createInput, deleteInput: deleteInput };
 		}
 	}
+
 	async onCandidateSelected(id: string) {
 		const candidate = await this.candidatesService.getCandidateById(id, [
 			'user'
@@ -370,6 +383,7 @@ export class CandidateInterviewMutationComponent
 		this.candidateInterviewForm.form.patchValue({ valid: true });
 		this.employees = [];
 	}
+
 	route() {
 		this.dialogRef.close();
 		this.router.navigate([
@@ -377,8 +391,5 @@ export class CandidateInterviewMutationComponent
 		]);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }
