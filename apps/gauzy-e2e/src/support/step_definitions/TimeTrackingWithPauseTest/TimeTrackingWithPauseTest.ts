@@ -120,11 +120,16 @@ Then('Employee can let timer work for 5 seconds', () => {
 })
 
 And('Employee can see stop timer button', () => {
+	timeTrackingWithPausePage.clickTimer();
 	timeTrackingWithPausePage.stopTimerBtnVisible();
 });
 
 When('Employee click on stop timer button', () => {
 	timeTrackingWithPausePage.clickStopTimerBtn();
+});
+
+And('Employee wait button to change', () => {
+	waitUntil(3000);
 });
 
 Then('Employee can see again start timer button', () => {
@@ -139,7 +144,7 @@ Then('Employee can let timer work for 5 seconds', () => {
 	waitUntil(5000);
 })
 
-And('Employee can see stop timer button', () => {
+And('Employee can see stop timer button again', () => {
 	timeTrackingWithPausePage.stopTimerBtnVisible();
 });
 

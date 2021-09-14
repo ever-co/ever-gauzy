@@ -23,10 +23,11 @@ Feature: Time tracking with pause test
     Then Employee can let timer work for 5 seconds
     And Employee can see stop timer button
     When Employee click on stop timer button
+    And Employee wait button to change
     Then Employee can see again start timer button
     When Employee click on start timer button
     Then Employee can let timer work for 5 seconds
-    And Employee can see stop timer button
+    And Employee can see stop timer button again
     When Employee click on stop timer button
     Then Employee can see again start timer button
     Then Employee can see view timesheet button
