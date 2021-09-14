@@ -1,12 +1,5 @@
-.header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-}
-
 ::ng-deep {
-  .nb-theme-default .tab-link:focus {
-    outline: none !important;
-  }
+    .nb-theme-default .tab-link:focus {
+        outline: none !important;
+    }
 }
