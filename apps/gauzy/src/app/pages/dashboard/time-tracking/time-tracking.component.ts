@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
@@ -48,8 +48,10 @@ export class TimeTrackingComponent
 	members: IMembersStatistics[] = [];
 	manualTimes: IManualTimesStatistics[] = [];
 	counts: ICountsStatistics;
+
 	organization: IOrganization;
 	logs$: Subject<any> = new Subject();
+
 	timeSlotLoading = true;
 	activitiesLoading = true;
 	projectsLoading = true;
@@ -57,10 +59,13 @@ export class TimeTrackingComponent
 	memberLoading = true;
 	countsLoading = true;
 	manualTimeLoading = true;
+
 	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
-	startDate: Date;
-	endDate: Date;
+
+	startDate: Date = moment().startOf('week').toDate();
+	endDate: Date = moment().endOf('week').toDate();
+
 	employeeId: string = null;
 	projectId: string = null;
 	tenantId: string = null;
@@ -75,11 +80,10 @@ export class TimeTrackingComponent
 		private readonly store: Store,
 		private readonly galleryService: GalleryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		private readonly changeRef: ChangeDetectorRef
 	) {
 		super(translateService);
-		this.startDate = moment().startOf('week').toDate();
-		this.endDate = moment().endOf('week').toDate();
 	}
 
 	ngOnInit() {
@@ -126,6 +130,10 @@ export class TimeTrackingComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewChecked(): void {
+		this.changeRef.detectChanges();
 	}
 
 	getStatistics() {
