@@ -26,11 +26,14 @@ export const employeeSelectorVisible = () => {
 };
 
 export const clickEmployeeSelector = () => {
+	cy.intercept('GET', 'api/employee/working*').as('getUsersXhr')
 	clickButton(TimeOffPage.employeeDropdownCss);
 };
 
 export const employeeDropdownVisible = () => {
-	verifyElementIsVisible(TimeOffPage.employeeDropdownOptionCss);
+	cy.wait('@getUsersXhr').then(() => {
+		verifyElementIsVisible(TimeOffPage.employeeDropdownOptionCss);
+	})
 };
 
 export const selectEmployeeFromDropdown = (index) => {
