@@ -92,6 +92,7 @@ Then('Employee will see Create button', () => {
 //Generate work time
 
 And('Employee can see timer', () => {
+	timeTrackingWithPausePage.waitMainDashboard(TimeTrackingWithPausePageData.urlConfirmDashboardLoad);
 	timeTrackingWithPausePage.timerVisible();
 });
 
@@ -120,7 +121,6 @@ Then('Employee can let timer work for 5 seconds', () => {
 })
 
 And('Employee can see stop timer button', () => {
-	timeTrackingWithPausePage.clickTimer();
 	timeTrackingWithPausePage.stopTimerBtnVisible();
 });
 
@@ -209,10 +209,3 @@ Then ('Employee can verify time',()=>{
 	timeTrackingWithPausePage.verifyTimerTime(TimeTrackingWithPausePageData.timerTime)
 	
 });
-
-
-
-/*  Then Employee can let timer work for 5 seconds
-    And Employee can see stop timer button
-    When Employee click on stop timer button
-    Then Employee can see again start timer button */
