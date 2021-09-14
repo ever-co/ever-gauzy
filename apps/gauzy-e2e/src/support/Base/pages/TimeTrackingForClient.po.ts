@@ -2,7 +2,8 @@ import {
 	clickButton,
 	clickButtonByIndex,
 	verifyElementIsVisible,
-    verifyByText
+    verifyByText,
+	waitForDropdownToLoad
 } from '../utils/util';
 
 import { TimeTrackingForClient } from '../pageobjects/TimeTrackingForClientPageObject';
@@ -53,13 +54,21 @@ export const clickViewTimesheetBtn = () => {
 };
 
 export const viewViewBtnVisible = () => {
-    verifyElementIsVisible(TimeTrackingForClient.viewViewBtnCss)
+    verifyElementIsVisible(TimeTrackingForClient.viewViewBtnCss);
 };
 
 export const clickOnViewBtn = () => {
-    clickButton(TimeTrackingForClient.viewViewBtnCss)
+    clickButton(TimeTrackingForClient.viewViewBtnCss);
 };
 
 export const verifyCustomerName = (name) => {
-    verifyByText(TimeTrackingForClient.clientNameCss, name)
+    verifyByText(TimeTrackingForClient.clientNameCss, name);
 }
+
+export const waitMainDashboard = (url: string) => {
+	//waits for responce then continue 
+	cy.intercept('GET', url).as('getUser')
+	cy.wait('@getUser').then(() => {
+		verifyElementIsVisible(TimeTrackingForClient.headerImgCss);
+	})
+};

@@ -1,3 +1,4 @@
 export const TimeTrackingForClientPageData = {
-    defaultProject: 'Gauzy Web Site'
+    mainTextDashboard: 'Total Income',
+    urlConfirmDashboardLoad: '/api/employee-statistics/months*'
 }
