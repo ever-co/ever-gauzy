@@ -199,7 +199,7 @@ When('User click on deny time off request button', () => {
 Then('Notification message will appear', () => {
 	timeOffPage.waitMessageToHide();
 });
-//here to fix
+
 // Approve time off request
 And('User can see approve time off request button', () => {
 	timeOffPage.approveTimeOffButtonVisible();
@@ -224,7 +224,7 @@ Then('User can see employee select', () => {
 When('User click employee select', () => {
 	timeOffPage.clickEmployeeSelector();
 });
-//here 
+
 Then('User can see employee dropdown', () => {
 	timeOffPage.employeeDropdownVisible();
 });
