@@ -18,73 +18,79 @@
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
 			</ng-template>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-		<div class="table-scroll-container">
-			<ng2-smart-table
-				[settings]="settingsSmartTable"
-				[source]="smartTableSource"
-				(userRowSelect)="selectOrganization($event)"
-				style="cursor: pointer"
-				*ngIf="dataLayoutStyle === 'TABLE'"
-				#organizationsTable
-			>
-			</ng2-smart-table>
-		</div>
-		<div class="grid-scroll-container">
-			<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-				<li class="flex-item" *ngFor="let x of organizations">
-					<div class="fullName">
-						<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
-						<span>{{ x.name }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'SM_TABLE.EMPLOYEES' | translate
-						}}</span>
-						<span class="info-value">{{ x.totalEmployees }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'SM_TABLE.CURRENCY' | translate
-						}}</span>
-						<span class="info-value">{{ x.currency }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'SM_TABLE.STATUS' | translate
-						}}</span>
-						<div class="text-center" *ngIf="x.isActive; else archived">
-							<div class="text-center badge-success">
-								{{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
-							</div>
+		<ng-template 
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIfElse]="gridLayout"
+		>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					[settings]="settingsSmartTable"
+					[source]="smartTableSource"
+					(userRowSelect)="selectOrganization($event)"
+					style="cursor: pointer"
+					#organizationsTable
+				>
+				</ng2-smart-table>
+			</div>
+		</ng-template>
+		<ng-template #gridLayout>
+			<div class="grid-scroll-container">
+				<ul class="flex-container">
+					<li class="flex-item" *ngFor="let x of organizations">
+						<div class="fullName">
+							<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
+							<span>{{ x.name }}</span>
 						</div>
-						<ng-template #archived>
-							<div class="text-center">
-								<div class="badge-danger d-block">
-									{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
+						<div class="info-line">
+							<span class="info-meta">{{
+								'SM_TABLE.EMPLOYEES' | translate
+							}}</span>
+							<span class="info-value">{{ x.totalEmployees }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'SM_TABLE.CURRENCY' | translate
+							}}</span>
+							<span class="info-value">{{ x.currency }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'SM_TABLE.STATUS' | translate
+							}}</span>
+							<div class="text-center" *ngIf="x.isActive; else archived">
+								<div class="text-center badge-success">
+									{{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
 								</div>
 							</div>
-						</ng-template>
-					</div>
-
-					<nb-card-footer class="card-footer">
-						<ng-container
-							*ngTemplateOutlet="
-								actionButtons;
-								context: {
-									buttonSize: 'tiny',
-									selectedItem: x
-								}
-							"
-						>
-						</ng-container>
-					</nb-card-footer>
-				</li>
-			</ul>
-		</div>
+							<ng-template #archived>
+								<div class="text-center">
+									<div class="badge-danger d-block">
+										{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
+									</div>
+								</div>
+							</ng-template>
+						</div>
+	
+						<nb-card-footer class="card-footer">
+							<ng-container
+								*ngTemplateOutlet="
+									actionButtons;
+									context: {
+										buttonSize: 'tiny',
+										selectedItem: x
+									}
+								"
+							>
+							</ng-container>
+						</nb-card-footer>
+					</li>
+				</ul>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template

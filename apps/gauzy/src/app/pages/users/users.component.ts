@@ -65,6 +65,7 @@ export class UsersComponent
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	userData: IUser[];
 
 	usersTable: Ng2SmartTableComponent;

@@ -83,99 +83,105 @@
 		</div>
 		<ng-template ngxPermissionsOnly="TIME_OFF_EDIT">
 			<div class="row actions-container" *ngIf="isRecordSelected">
-				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
 					></ng-container>
 				</ng-container>
 			</div>
 		</ng-template>
-		<div class="table-scroll-container">
-			<ng2-smart-table
-				class="time-off-table"
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				[source]="sourceSmartTable"
-				(userRowSelect)="selectRecord($event)"
-				*ngIf="dataLayoutStyle === 'TABLE'"
-				#timeOffTable
-			>
-			</ng2-smart-table>
-		</div>
-		<div class="grid-scroll-container">
-			<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-				<li class="flex-item" *ngFor="let x of timeOffData">
-					<div class="fullName">
-						<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
-						<span>{{ x.fullName }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'TIME_OFF_PAGE.DESCRIPTION' | translate
-						}}</span>
-						<span class="info-value">{{ x.description }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'TIME_OFF_PAGE.POLICY.POLICY' | translate
-						}}</span>
-						<span class="info-value">{{ x.policy.name }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'TIME_OFF_PAGE.START_DATE' | translate
-						}}</span>
-						<span class="info-value">{{ x.start | date }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'TIME_OFF_PAGE.END_DATE' | translate
-						}}</span>
-						<span class="info-value">{{ x.end | date }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'TIME_OFF_PAGE.REQUEST_DATE' | translate
-						}}</span>
-						<span class="info-value">{{ x.requestDate | date }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'TIME_OFF_PAGE.STATUS' | translate
-						}}</span>
-						<div class="text-center d-block" *ngIf="x.status">
-							<div class="badge-danger" *ngIf="x.status == 'Denied'">
-								{{ 'TIME_OFF_PAGE.STATUSES.DENIED' | translate }}
-							</div>
-							<div
-								class="badge-success"
-								*ngIf="x.status == 'Approved'"
-							>
-								{{ 'TIME_OFF_PAGE.STATUSES.APPROVED' | translate }}
-							</div>
-							<div
-								class="badge-warning"
-								*ngIf="x.status == 'Requested'"
-							>
-								{{ 'TIME_OFF_PAGE.STATUSES.REQUESTED' | translate }}
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIfElse]="gridLayout"
+		>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					class="time-off-table"
+					style="cursor: pointer"
+					[settings]="settingsSmartTable"
+					[source]="sourceSmartTable"
+					(userRowSelect)="selectRecord($event)"
+					#timeOffTable
+				>
+				</ng2-smart-table>
+			</div>
+		</ng-template>
+		<ng-template #gridLayout>		
+			<div class="grid-scroll-container">
+				<ul class="flex-container">
+					<li class="flex-item" *ngFor="let x of timeOffData">
+						<div class="fullName">
+							<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
+							<span>{{ x.fullName }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'TIME_OFF_PAGE.DESCRIPTION' | translate
+							}}</span>
+							<span class="info-value">{{ x.description }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'TIME_OFF_PAGE.POLICY.POLICY' | translate
+							}}</span>
+							<span class="info-value">{{ x.policy.name }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'TIME_OFF_PAGE.START_DATE' | translate
+							}}</span>
+							<span class="info-value">{{ x.start | date }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'TIME_OFF_PAGE.END_DATE' | translate
+							}}</span>
+							<span class="info-value">{{ x.end | date }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'TIME_OFF_PAGE.REQUEST_DATE' | translate
+							}}</span>
+							<span class="info-value">{{ x.requestDate | date }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'TIME_OFF_PAGE.STATUS' | translate
+							}}</span>
+							<div class="text-center d-block" *ngIf="x.status">
+								<div class="badge-danger" *ngIf="x.status == 'Denied'">
+									{{ 'TIME_OFF_PAGE.STATUSES.DENIED' | translate }}
+								</div>
+								<div
+									class="badge-success"
+									*ngIf="x.status == 'Approved'"
+								>
+									{{ 'TIME_OFF_PAGE.STATUSES.APPROVED' | translate }}
+								</div>
+								<div
+									class="badge-warning"
+									*ngIf="x.status == 'Requested'"
+								>
+									{{ 'TIME_OFF_PAGE.STATUSES.REQUESTED' | translate }}
+								</div>
 							</div>
 						</div>
-					</div>
-					<nb-card-footer class="card-footer">
-						<ng-container
-							*ngTemplateOutlet="
-								actionButtons;
-								context: {
-									buttonSize: 'tiny',
-									selectedItem: x
-								}
-							"
-						>
-						</ng-container>
-					</nb-card-footer>
-				</li>
-			</ul>
-		</div>
+						<nb-card-footer class="card-footer">
+							<ng-container
+								*ngTemplateOutlet="
+									actionButtons;
+									context: {
+										buttonSize: 'tiny',
+										selectedItem: x
+									}
+								"
+							>
+							</ng-container>
+						</nb-card-footer>
+					</li>
+				</ul>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 

@@ -41,6 +41,6 @@
   justify-content: space-between;
 }
 
-.grid-scroll-container {
-  max-height: calc(70vh - 140px);
+.table-scroll-container, .grid-scroll-container {
+  max-height: calc(70vh - 120px);
 }

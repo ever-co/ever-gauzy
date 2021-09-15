@@ -35,6 +35,7 @@ export class EmployeeLevelComponent
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 

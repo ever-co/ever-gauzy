@@ -36,106 +36,112 @@
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
 			</ng-template>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-		<div class="table-scroll-container">
-			<ng2-smart-table
-				*ngIf="dataLayoutStyle === 'TABLE'"
-				class="tags-table"
-				(userRowSelect)="selectRequestApproval($event)"
-				[settings]="settingsSmartTable"
-				[source]="smartTableSource"
-				style="cursor: pointer"
-				#requestApprovalTable
-			>
-			</ng2-smart-table>
-		</div>
-		<div class="grid-scroll-container">
-			<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-				<li class="flex-item" *ngFor="let x of requestApprovalData">
-					<div class="info-line">
-						<span class="info-meta">{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
-								| translate
-						}}</span>
-						<span class="info-value">{{ x?.name }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
-								| translate
-						}}</span>
-						<span class="info-value">{{ x.min_count }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'
-								| translate
-						}}</span>
-						<span class="info-value">{{ x?.approvalPolicy?.name }}</span>
-					</div>
-					<div class="info-line">
-						<span class="info-meta">{{
-							'APPROVAL_REQUEST_PAGE.CREATED_BY' | translate
-						}}</span>
-						<span class="info-value">{{ x.createdByName }}</span>
-					</div>
-					<div class="info-line" [ngSwitch]="x.status">
-						<span class="info-meta">{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
-								| translate
-						}}</span>
-						<span class="badge-warning-card" *ngSwitchCase="1">
-							{{ 'APPROVAL_REQUEST_PAGE.REQUESTED' | translate }}
-						</span>
-						<span class="badge-success-card" *ngSwitchCase="2">
-							{{ 'APPROVAL_REQUEST_PAGE.APPROVED' | translate }}
-						</span>
-						<span class="badge-danger-card" *ngSwitchCase="3">
-							{{ 'APPROVAL_REQUEST_PAGE.REFUSED' | translate }}
-						</span>
-					</div>
-					<div class="info-line" style="height: 56px">
-						<span class="info-meta">{{
-							'APPROVAL_REQUEST_PAGE.ACTION' | translate
-						}}</span>
-						<div *ngIf="x.status === 1">
-							<button
-								nbButton
-								status="success"
-								(click)="approval(x)"
-								class="mr-3"
-								[size]="'tiny'"
-							>
-								{{ 'APPROVAL_REQUEST_PAGE.APPROVE' | translate }}
-							</button>
-							<button
-								nbButton
-								status="danger"
-								(click)="refuse(x)"
-								[size]="'tiny'"
-							>
-								{{ 'APPROVAL_REQUEST_PAGE.REFUSE' | translate }}
-							</button>
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIfElse]="gridLayout"
+		>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					class="tags-table"
+					(userRowSelect)="selectRequestApproval($event)"
+					[settings]="settingsSmartTable"
+					[source]="smartTableSource"
+					style="cursor: pointer"
+					#requestApprovalTable
+				>
+				</ng2-smart-table>
+			</div>
+		</ng-template>
+		<ng-template #gridLayout>
+			<div class="grid-scroll-container">
+				<ul class="flex-container">
+					<li class="flex-item" *ngFor="let x of requestApprovalData">
+						<div class="info-line">
+							<span class="info-meta">{{
+								'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
+									| translate
+							}}</span>
+							<span class="info-value">{{ x?.name }}</span>
 						</div>
-					</div>
-					<nb-card-footer class="card-footer">
-						<ng-container
-							*ngTemplateOutlet="
-								actionButtons;
-								context: {
-									buttonSize: 'tiny',
-									selectedItem: x
-								}
-							"
-						>
-						</ng-container>
-					</nb-card-footer>
-				</li>
-			</ul>
-		</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
+									| translate
+							}}</span>
+							<span class="info-value">{{ x.min_count }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'
+									| translate
+							}}</span>
+							<span class="info-value">{{ x?.approvalPolicy?.name }}</span>
+						</div>
+						<div class="info-line">
+							<span class="info-meta">{{
+								'APPROVAL_REQUEST_PAGE.CREATED_BY' | translate
+							}}</span>
+							<span class="info-value">{{ x.createdByName }}</span>
+						</div>
+						<div class="info-line" [ngSwitch]="x.status">
+							<span class="info-meta">{{
+								'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
+									| translate
+							}}</span>
+							<span class="badge-warning-card" *ngSwitchCase="1">
+								{{ 'APPROVAL_REQUEST_PAGE.REQUESTED' | translate }}
+							</span>
+							<span class="badge-success-card" *ngSwitchCase="2">
+								{{ 'APPROVAL_REQUEST_PAGE.APPROVED' | translate }}
+							</span>
+							<span class="badge-danger-card" *ngSwitchCase="3">
+								{{ 'APPROVAL_REQUEST_PAGE.REFUSED' | translate }}
+							</span>
+						</div>
+						<div class="info-line" style="height: 56px">
+							<span class="info-meta">{{
+								'APPROVAL_REQUEST_PAGE.ACTION' | translate
+							}}</span>
+							<div *ngIf="x.status === 1">
+								<button
+									nbButton
+									status="success"
+									(click)="approval(x)"
+									class="mr-3"
+									[size]="'tiny'"
+								>
+									{{ 'APPROVAL_REQUEST_PAGE.APPROVE' | translate }}
+								</button>
+								<button
+									nbButton
+									status="danger"
+									(click)="refuse(x)"
+									[size]="'tiny'"
+								>
+									{{ 'APPROVAL_REQUEST_PAGE.REFUSE' | translate }}
+								</button>
+							</div>
+						</div>
+						<nb-card-footer class="card-footer">
+							<ng-container
+								*ngTemplateOutlet="
+									actionButtons;
+									context: {
+										buttonSize: 'tiny',
+										selectedItem: x
+									}
+								"
+							>
+							</ng-container>
+						</nb-card-footer>
+					</li>
+				</ul>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template

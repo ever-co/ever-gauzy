@@ -38,6 +38,7 @@ export class TimeOffComponent
 	timeOffRequest: ITimeOff;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	selectedDate: Date;
 	tableData = [];
 	selectedEmployeeId: string;

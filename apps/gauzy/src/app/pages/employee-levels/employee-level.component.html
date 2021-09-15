@@ -85,7 +85,7 @@
 				</button>
 			</ng-template>
 		</div>
-		<div *ngIf="employeeLevels?.length && dataLayoutStyle === 'TABLE'">
+		<ng-template [ngIf]="employeeLevels?.length && dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 			<div class="table-scroll-container">
 				<nb-card *ngFor="let e of employeeLevels">
 					<nb-card-body
@@ -178,15 +178,16 @@
 					</nb-card-body>
 				</nb-card>
 			</div>
-		</div>
-		<div class="grid-scroll-container">
-			<ga-card-grid
-				*ngIf="dataLayoutStyle === 'CARDS_GRID' && employeeLevels?.length"
-				[settings]="settingsSmartTable"
-				[source]="employeeLevels"
-				[buttonTemplate]="actionButtons"
-			></ga-card-grid>
-		</div>		
+		</ng-template>		
+		<ng-template [ngIf]="employeeLevels?.length && dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
+			<div class="grid-scroll-container">
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="employeeLevels"
+					[buttonTemplate]="actionButtons"
+				></ga-card-grid>
+			</div>
+		</ng-template>
 		<ng-template
 			#actionButtons
 			let-buttonSize="buttonSize"
