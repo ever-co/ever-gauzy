@@ -19,7 +19,8 @@ import {
 	ICandidateTechnologies,
 	IOrganization
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	CandidateInterviewersService,
 	CandidateInterviewService,
@@ -35,21 +36,52 @@ import { CandidateCriterionsFormComponent } from './candidate-criterions-form/ca
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-candidate-interview-mutation',
 	templateUrl: 'candidate-interview-mutation.component.html',
 	styleUrls: ['candidate-interview-mutation.component.scss']
 })
 export class CandidateInterviewMutationComponent
-	implements OnInit, AfterViewInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
 
 	@Input() editData: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate = null;
 	@Input() interviewId = null;
 	@Input() isCalendar: boolean;
-	@Input() selectedRangeCalendar: IDateRange;
-	@Input() header: string;
-	@Input() interviewList: ICandidateInterview[] = [];
+
+	/*
+	* Getter & Setter for date range
+	*/
+	_selectedRangeCalendar: IDateRange;
+	get selectedRangeCalendar(): IDateRange {
+		return this._selectedRangeCalendar;
+	}
+	@Input() set selectedRangeCalendar(value: IDateRange) {
+		this._selectedRangeCalendar = value;
+	}
+
+	/*
+	* Getter & Setter for header title
+	*/
+	_headerTitle: string;
+	get headerTitle(): string {
+		return this._headerTitle;
+	}
+	@Input() set headerTitle(value: string) {
+		this._headerTitle = value;
+	}
+
+	/*
+	* Getter & Setter for interviews
+	*/
+	_interviews: ICandidateInterview[] = [];
+	get interviews(): ICandidateInterview[] {
+		return this._interviews;
+	}
+	@Input() set interviews(value: ICandidateInterview[]) {
+		this._interviews = value;
+	}
 
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
@@ -69,22 +101,14 @@ export class CandidateInterviewMutationComponent
 	interview: any;
 	employees: IEmployee[] = [];
 	candidates: ICandidate[] = [];
-	selectedInterviewers: string[];
+	selectedInterviewers: string[] = [];
 	criterionsId = null;
 	isTitleExist = false;
-	interviewNames: string[];
-	emptyInterview = {
-		title: '',
-		interviewers: null,
-		startTime: null,
-		endTime: null,
-		criterions: null,
-		note: ''
-	};
+	
 	personalQualities: ICandidatePersonalQualities[] = null;
 	technologies: ICandidateTechnologies[];
 	selectedCandidateId: string;
-	selectedOrganization: IOrganization;
+	organization: IOrganization;
 
 	constructor(
 		protected readonly dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
@@ -102,19 +126,28 @@ export class CandidateInterviewMutationComponent
 	) {}
 
 	async ngOnInit() {
-		if (this.interviewList.length > 0) {
-			this.interviewNames = [];
-			this.interviewList.forEach((interview) => {
-				this.interviewNames.push(interview.title.toLocaleLowerCase());
-			});
-		}
-		this.selectedOrganization = this.store.selectedOrganization;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const { items = [] } = await this.candidatesService
-			.getAll(['user'], { organizationId, tenantId })
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loadCandidates()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	async loadCandidates() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.candidates = (
+			await this.candidatesService.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
 			.pipe(first())
-			.toPromise();
-		this.candidates = items;
+			.toPromise()
+		).items;
 	}
 
 	titleExist(value: boolean) {
@@ -157,7 +190,9 @@ export class CandidateInterviewMutationComponent
 	}
 
 	async getEmployees(employeeIds: string[]) {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { items } = await this.employeesService
 			.getAll(['user'], { organizationId, tenantId })
 			.pipe(first())
@@ -186,9 +221,20 @@ export class CandidateInterviewMutationComponent
 	}
 
 	async createInterview(interview: ICandidateInterview) {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		
+		const emptyInterview = {
+			title: '',
+			interviewers: null,
+			startTime: null,
+			endTime: null,
+			criterions: null,
+			note: ''
+		};
+
 		interview = await this.candidateInterviewService.create({
-			...this.emptyInterview,
+			...emptyInterview,
 			candidateId: this.selectedCandidate.id,
 			organizationId,
 			tenantId
@@ -220,7 +266,9 @@ export class CandidateInterviewMutationComponent
 
 	async addInterviewers(interviewId: string, employeeIds: string[]) {
 		try {
-			const { id: organizationId, tenantId } = this.selectedOrganization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
 			await this.candidateInterviewersService.createBulk({
 				interviewId,
 				employeeIds,

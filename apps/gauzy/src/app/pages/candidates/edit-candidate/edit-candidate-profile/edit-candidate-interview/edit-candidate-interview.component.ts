@@ -32,6 +32,7 @@ import { CandidatesService } from '../../../../../@core/services/candidates.serv
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { isNotEmpty } from '@gauzy/common-angular';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -207,11 +208,11 @@ export class EditCandidateInterviewComponent
 			CandidateInterviewMutationComponent,
 			{
 				context: {
-					header: this.getTranslation(
+					headerTitle: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
 					),
 					selectedCandidate: this.selectedCandidate,
-					interviewList: this.interviewList
+					interviews: this.interviewList
 				}
 			}
 		);
@@ -357,13 +358,13 @@ export class EditCandidateInterviewComponent
 			CandidateInterviewMutationComponent,
 			{
 				context: {
-					header: this.getTranslation(
+					headerTitle: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
 					),
 					editData: currentInterview,
 					selectedCandidate: this.selectedCandidate,
 					interviewId: id,
-					interviewList: this.interviewList
+					interviews: this.interviewList
 				}
 			}
 		);

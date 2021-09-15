@@ -92,9 +92,9 @@ export class ManageCandidateInterviewsComponent
 			CandidateInterviewMutationComponent,
 			{
 				context: {
-					header: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'),
+					headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'),
 					isCalendar: true,
-					interviewList: this.interviews
+					interviews: this.interviews
 				}
 			}
 		);
