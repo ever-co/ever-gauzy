@@ -65,7 +65,7 @@ export interface ITimeSheetFindInput
 export enum TimesheetStatus {
 	DRAFT = 'DRAFT',
 	PENDING = 'PENDING',
-	IN_REVIEW = 'IN_REVIEW',
+	IN_REVIEW = 'IN REVIEW',
 	DENIED = 'DENIED',
 	APPROVED = 'APPROVED'
 }

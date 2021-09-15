@@ -112,6 +112,7 @@ Then('Employee will see Create button', () => {
 //Record time for the new client and verify
 
 And('Employee can see timer', () => {
+	timeTrackingForClient.waitMainDashboard(TimeTrackingForClientPageData.urlConfirmDashboardLoad);
 	timeTrackingForClient.timerVisible();
 });
 

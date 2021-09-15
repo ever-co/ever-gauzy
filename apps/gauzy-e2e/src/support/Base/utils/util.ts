@@ -256,3 +256,11 @@ export const verifyElementIfVisible = (locOne, locTwo) => {
 		}
 	});
 };
+
+export const clickButtonDouble = (loc) => {
+	cy.get(loc, { timeout: requestTimeout }).dblclick()
+}
+
+export const waitForDropdownToLoad = (loc: any) => {
+	cy.get(loc, { timeout: defaultCommandTimeout}).should('have.length.greaterThan', 1);
+};

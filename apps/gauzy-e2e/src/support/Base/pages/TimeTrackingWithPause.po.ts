@@ -207,4 +207,10 @@ export const verifyTimerTime = (type) => {
 	verifyText(TimeTrackingWithPausePage.timerCss, type);
 };
 
-
+export const waitMainDashboard = (url: string) => {
+	//waits for responce then continue 
+	cy.intercept('GET', url).as('getUser')
+	cy.wait('@getUser').then(() => {
+		verifyElementIsVisible(TimeTrackingWithPausePage.headerImgCss);
+	})
+};

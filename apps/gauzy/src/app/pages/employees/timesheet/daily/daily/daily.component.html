@@ -12,7 +12,6 @@
 		</ng-template>
 	</div>
 </div>
-
 <div class="filters row mb-3">
 	<div class="col">
 		<ngx-filters
@@ -22,50 +21,48 @@
 		></ngx-filters>
 	</div>
 </div>
+<div class="row">
+	<div class="mb-4 col d-flex align-items-center">
+		<ng-container *ngIf="(isIndeterminate() || allChecked) && contextMenus">
+			<button
+				outline
+				nbButton
+				status="primary"
+				[title]="'TIMESHEET.BULK_ACTION' | translate"
+				[nbContextMenu]="contextMenus"
+				nbContextMenuTag="time-logs-bulk-action"
+			>
+				{{ 'TIMESHEET.BULK_ACTION' | translate }}
+				<nb-icon icon="chevron-down-outline"></nb-icon>
+			</button>
+		</ng-container>
+	</div>
+</div>
 <div
 	class="log-container"
 	[nbSpinner]="loading"
 	nbSpinnerSize="giant"
 	nbSpinnerStatus="primary"
 >
-	<div class="bulk-actions row">
-		<div class="bulk-actions mb-3 col-sm-3">
-			<button
-				nbButton
-				status="default"
-				*ngIf="showBulkAction"
-				[nbContextMenu]="bulkActionOptions"
-				nbContextMenuTag="time-logs-bulk-acton"
-			>
-				{{ 'TIMESHEET.BULK_ACTION' | translate }}
-				<nb-icon icon="chevron-down-outline"></nb-icon>
-			</button>
-		</div>
-	</div>
-
-	<div
-		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
-	>
-		<div
-			class="col-auto check-box"
-			*ngxPermissionsOnly="[
-				OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-			]"
+	<div class="row border-bottom border-top py-3 font-weight-bold align-items-center">
+		<div 
+			class="col-auto"
+			*ngxPermissionsOnly="[OrganizationPermissionsEnum.ALLOW_DELETE_TIME]"
 		>
 			<nb-checkbox
-				[indeterminate]="false"
-				#checkAllCheckbox
-				(change)="toggleCheckbox($event, 'all')"
 				status="primary"
+				[checked]="allChecked"
+                [indeterminate]="isIndeterminate()"
+				(checkedChange)="checkedAll($event)"
 			>
 			</nb-checkbox>
 		</div>
-		<div class="col project-name">
+		<div class="col">
 			{{ 'TIMESHEET.PROJECT' | translate }} /
 			{{ 'TIMESHEET.TODO' | translate }}
 		</div>
 		<div
-			class="col employee-name"
+			class="col"
 			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
 		>
 			{{ 'TIMESHEET.EMPLOYEE' | translate }}
@@ -74,7 +71,7 @@
 		<div class="col">{{ 'TIMESHEET.SOURCE' | translate }}</div>
 		<div class="col">{{ 'TIMESHEET.DURATION' | translate }}</div>
 		<div class="col">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
-		<div class="col action">{{ 'TIMESHEET.ACTION' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.ACTION' | translate }}</div>
 	</div>
 	
 	<ng-template [ngIf]="timeLogs?.length > 0" [ngIfElse]="notFound">
@@ -82,15 +79,13 @@
 			class="row border-bottom py-3 align-items-center"
 			*ngFor="let log of timeLogs"
 		>
-			<div
-				class="col-auto check-box"
-				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-				]"
+			<div 
+				class="col-auto"
+				*ngxPermissionsOnly="[OrganizationPermissionsEnum.ALLOW_DELETE_TIME]"
 			>
 				<nb-checkbox
-					[(ngModel)]="selectedIds[log.id]"
-					(change)="toggleCheckbox($event)"
+					[checked]="log.checked"
+					(checkedChange)="toggleCheckbox($event, log)"
 					status="primary"
 				></nb-checkbox>
 			</div>

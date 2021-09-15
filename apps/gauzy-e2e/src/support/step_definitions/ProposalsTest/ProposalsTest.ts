@@ -163,9 +163,6 @@ When('User click on details button', () => {
 });
 
 Then('User can see edit proposal button', () => {
-	cy.on('uncaught:exception', (err, runnable) => {
-		return false;
-	});
 	proposalsPage.editProposalButtonVisible();
 });
 

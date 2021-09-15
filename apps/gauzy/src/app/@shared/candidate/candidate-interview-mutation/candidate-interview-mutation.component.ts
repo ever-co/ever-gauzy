@@ -1,4 +1,3 @@
-import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import {
 	Component,
 	OnInit,
@@ -8,6 +7,8 @@ import {
 	Input,
 	ChangeDetectorRef
 } from '@angular/core';
+import { Router } from '@angular/router';
+import { FormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import {
 	ICandidate,
@@ -18,95 +19,135 @@ import {
 	ICandidateTechnologies,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
-import { FormGroup } from '@angular/forms';
-import { CandidatesService } from '../../../@core/services/candidates.service';
-import { first } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { Subject } from 'rxjs';
-import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
-import { EmployeesService } from '../../../@core/services';
-import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
+import { filter, first, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	CandidateInterviewersService,
+	CandidateInterviewService,
+	CandidatePersonalQualitiesService,
+	CandidatesService,
+	CandidateStore,
+	CandidateTechnologiesService,
+	EmployeesService,
+	ErrorHandlingService,
+	Store
+} from '../../../@core/services';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
-import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
-import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
-import { Router } from '@angular/router';
-import { CandidateStore } from '../../../@core/services/candidate-store.service';
+import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
+import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-candidate-interview-mutation',
 	templateUrl: 'candidate-interview-mutation.component.html',
 	styleUrls: ['candidate-interview-mutation.component.scss']
 })
 export class CandidateInterviewMutationComponent
-	implements OnInit, AfterViewInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	@Input() editData: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate = null;
 	@Input() interviewId = null;
 	@Input() isCalendar: boolean;
-	@Input() selectedRangeCalendar: IDateRange;
-	@Input() header: string;
-	@Input() interviewList: ICandidateInterview[];
+
+	/*
+	* Getter & Setter for date range
+	*/
+	_selectedRangeCalendar: IDateRange;
+	get selectedRangeCalendar(): IDateRange {
+		return this._selectedRangeCalendar;
+	}
+	@Input() set selectedRangeCalendar(value: IDateRange) {
+		this._selectedRangeCalendar = value;
+	}
+
+	/*
+	* Getter & Setter for header title
+	*/
+	_headerTitle: string;
+	get headerTitle(): string {
+		return this._headerTitle;
+	}
+	@Input() set headerTitle(value: string) {
+		this._headerTitle = value;
+	}
+
+	/*
+	* Getter & Setter for interviews
+	*/
+	_interviews: ICandidateInterview[] = [];
+	get interviews(): ICandidateInterview[] {
+		return this._interviews;
+	}
+	@Input() set interviews(value: ICandidateInterview[]) {
+		this._interviews = value;
+	}
+
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
+
 	@ViewChild('candidateCriterionsForm')
 	candidateCriterionsForm: CandidateCriterionsFormComponent;
+
 	@ViewChild('candidateInterviewForm')
 	candidateInterviewForm: CandidateInterviewFormComponent;
+
 	@ViewChild('candidateNotificationForm')
-	candidateNotificationForm: CandidateInterviewFormComponent;
+	candidateNotificationForm: CandidateNotificationFormComponent;
+
 	form: FormGroup;
 	candidateForm: FormGroup;
 	interviewerForm: FormGroup;
 	interview: any;
-	private _ngDestroy$ = new Subject<void>();
 	employees: IEmployee[] = [];
 	candidates: ICandidate[] = [];
-	selectedInterviewers: string[];
+	selectedInterviewers: string[] = [];
 	criterionsId = null;
 	isTitleExist = false;
-	interviewNames: string[];
-	emptyInterview = {
-		title: '',
-		interviewers: null,
-		startTime: null,
-		endTime: null,
-		criterions: null,
-		note: ''
-	};
+	
 	personalQualities: ICandidatePersonalQualities[] = null;
 	technologies: ICandidateTechnologies[];
 	selectedCandidateId: string;
-	selectedOrganization: IOrganization;
+	organization: IOrganization;
+
 	constructor(
-		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
-		protected employeesService: EmployeesService,
-		protected store: Store,
-		private cdRef: ChangeDetectorRef,
-		private candidateInterviewService: CandidateInterviewService,
-		protected candidatesService: CandidatesService,
-		private errorHandler: ErrorHandlingService,
-		private candidateInterviewersService: CandidateInterviewersService,
-		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
-		private router: Router,
-		private candidateStore: CandidateStore
+		protected readonly dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
+		protected readonly employeesService: EmployeesService,
+		protected readonly store: Store,
+		private readonly cdRef: ChangeDetectorRef,
+		private readonly candidateInterviewService: CandidateInterviewService,
+		protected readonly candidatesService: CandidatesService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly candidateInterviewersService: CandidateInterviewersService,
+		private readonly candidateTechnologiesService: CandidateTechnologiesService,
+		private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
+		private readonly router: Router,
+		private readonly candidateStore: CandidateStore
 	) {}
 
 	async ngOnInit() {
-		if (this.interviewList.length > 0) {
-			this.interviewNames = [];
-			this.interviewList.forEach((interview) => {
-				this.interviewNames.push(interview.title.toLocaleLowerCase());
-			});
-		}
-		this.selectedOrganization = this.store.selectedOrganization;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const { items = [] } = await this.candidatesService
-			.getAll(['user'], { organizationId, tenantId })
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loadCandidates()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	async loadCandidates() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.candidates = (
+			await this.candidatesService.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
 			.pipe(first())
-			.toPromise();
-		this.candidates = items;
+			.toPromise()
+		).items;
 	}
 
 	titleExist(value: boolean) {
@@ -149,7 +190,9 @@ export class CandidateInterviewMutationComponent
 	}
 
 	async getEmployees(employeeIds: string[]) {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { items } = await this.employeesService
 			.getAll(['user'], { organizationId, tenantId })
 			.pipe(first())
@@ -178,9 +221,20 @@ export class CandidateInterviewMutationComponent
 	}
 
 	async createInterview(interview: ICandidateInterview) {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		
+		const emptyInterview = {
+			title: '',
+			interviewers: null,
+			startTime: null,
+			endTime: null,
+			criterions: null,
+			note: ''
+		};
+
 		interview = await this.candidateInterviewService.create({
-			...this.emptyInterview,
+			...emptyInterview,
 			candidateId: this.selectedCandidate.id,
 			organizationId,
 			tenantId
@@ -212,7 +266,9 @@ export class CandidateInterviewMutationComponent
 
 	async addInterviewers(interviewId: string, employeeIds: string[]) {
 		try {
-			const { id: organizationId, tenantId } = this.selectedOrganization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
 			await this.candidateInterviewersService.createBulk({
 				interviewId,
 				employeeIds,
@@ -223,6 +279,7 @@ export class CandidateInterviewMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	}
+
 	async addCriterions(interviewId: string, tech?: string[], qual?: string[]) {
 		try {
 			this.technologies = await this.candidateTechnologiesService.createBulk(
@@ -237,6 +294,7 @@ export class CandidateInterviewMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	}
+
 	async editInterview() {
 		let deletedIds = [];
 		let newIds = [];
@@ -277,6 +335,7 @@ export class CandidateInterviewMutationComponent
 		this.interviewId = null;
 		return updatedInterview;
 	}
+
 	async updateCriterions(
 		qual: ICandidatePersonalQualities[],
 		tech: ICandidateTechnologies[]
@@ -334,6 +393,7 @@ export class CandidateInterviewMutationComponent
 			}
 		}
 	}
+
 	setCriterions(
 		data: ICandidateTechnologies[] | ICandidatePersonalQualities[],
 		selectedItems: string[]
@@ -354,6 +414,7 @@ export class CandidateInterviewMutationComponent
 			return { createInput: createInput, deleteInput: deleteInput };
 		}
 	}
+
 	async onCandidateSelected(id: string) {
 		const candidate = await this.candidatesService.getCandidateById(id, [
 			'user'
@@ -370,6 +431,7 @@ export class CandidateInterviewMutationComponent
 		this.candidateInterviewForm.form.patchValue({ valid: true });
 		this.employees = [];
 	}
+
 	route() {
 		this.dialogRef.close();
 		this.router.navigate([
@@ -377,8 +439,5 @@ export class CandidateInterviewMutationComponent
 		]);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

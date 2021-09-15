@@ -107,7 +107,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 						this.selectedEmployeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
 						this.updateLogs$.next();
-						console.log('combine latest');
 					}
 				}),
 				untilDestroyed(this)

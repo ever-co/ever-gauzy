@@ -151,11 +151,15 @@ export const taskSelectVisible = () => {
 
 
 export const clickTaskSelect = () => {
+	cy.intercept('GET', '/api/tasks/employee/*').as('waitTasksXhr');
 	clickButton(MyTasksTrackedInTimesheets.taskSelectCss);
 };
 
 export const selectOptionFromDropdown = (index) => {
-	clickButtonByIndex(MyTasksTrackedInTimesheets.dropdownOptionCss, index);
+	cy.wait('@waitTasksXhr')
+		.then(() => {
+			clickButtonByIndex(MyTasksTrackedInTimesheets.dropdownOptionCss, index);
+		})
 };
 
 export const clickStartTimerBtn = () => {

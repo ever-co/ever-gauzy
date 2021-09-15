@@ -7,6 +7,7 @@ export const TimeTrackingForClient = {
 	stopTimerBtnCss: 'div.actions > div.toggle > button[class="btn btn-rounded btn-danger"]',
     viewTimesheetBtnCss: 'div.view-log-button > a[href="#/pages/employees/timesheets"]',
     viewViewBtnCss: 'div.action-button > button[status="primary"]',
-    clientNameCss: 'nb-card-body.custom-scroll > div > span'
+    clientNameCss: 'nb-card-body.custom-scroll > div > span',
+    headerImgCss: 'div.header-container'
 
 };
