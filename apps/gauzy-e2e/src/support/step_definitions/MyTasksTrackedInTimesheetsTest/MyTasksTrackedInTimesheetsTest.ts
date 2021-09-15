@@ -9,6 +9,10 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as myTasksTrackedInTimesheets from '../../Base/pages/MyTasksTrackedInTimesheets.po';
 import { waitUntil } from '../../Base/utils/util';
 import { MyTasksTrackedInTimesheetsPageData } from '../../Base/pagedata/MyTasksTrackedInTimesheetsPageData';
+import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
+import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
+import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
+import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
@@ -37,6 +41,11 @@ Given('Login with default credentials',()=>{
     CustomCommands.login(loginPage, LoginPageData, dashboardPage)
 })
 
+// Add new tag
+And('User can add new tag', () => {
+	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+});
+
 //Add employee
 Then('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
@@ -50,6 +59,17 @@ Then('User can add new employee', () => {
 		employeeEmail,
 		password,
 		imgUrl
+	);
+});
+//Add new project
+And('User can add new project', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	CustomCommands.addProject(
+		organizationProjectsPage,
+		OrganizationProjectsPageData,
+		employeeFullName
 	);
 });
 
