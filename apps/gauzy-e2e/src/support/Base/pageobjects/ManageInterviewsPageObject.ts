@@ -42,5 +42,6 @@ export const ManageInterviewsPage = {
 	notesTableCellCss: 'table > tbody > tr > td:nth-child(9)',
 	archiveInterviewOkButtonCss: 'nb-card-footer > button[status="danger"]',
 	archiveBadgeCss: 'ga-interview-actions div.badges > div.badge',
-	deleteButtonCss: 'ga-delete-interview button[status="danger"]'
+	deleteButtonCss: 'ga-delete-interview button[status="danger"]',
+	fututeCheckBoxCss: 'nb-checkbox[status="warning"] > span.custom-checkbox'
 };

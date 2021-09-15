@@ -13,5 +13,6 @@ export const TimeTrackingPageData = {
 	manualTime: 'Manual Time',
 	members: 'Members',
 	time: '00:00:00',
-	manual: 'MANUAL'
+	manual: 'MANUAL',
+	urlConfirmDashboardLoad: '/api/employee-statistics/months*'
 };

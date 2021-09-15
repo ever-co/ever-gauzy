@@ -21,7 +21,10 @@ export const gridBtnClick = (index) => {
 };
 
 export const addBtnExists = () => {
-	verifyElementIsVisible(AddOrganizationPage.addButtonCss);
+	cy.intercept('GET', '/api/user-organization*').as('waitOrganizationLoad')
+	cy.wait('@waitOrganizationLoad').then(() => {
+		verifyElementIsVisible(AddOrganizationPage.addButtonCss);
+	})
 };
 
 export const addBtnClick = () => {

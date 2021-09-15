@@ -292,6 +292,8 @@ And('User clears filter input', () => {
 	manageInterviewsPage.clearFilterInputField();
 });
 
+
+//fix here
 // Add Future Interview
 And('User can enter value for title for a future interview', () => {
 	manageInterviewsPage.enterTitleInputData(futureInterviewTitle);
@@ -300,6 +302,13 @@ And('User can enter value for title for a future interview', () => {
 And('User can enter value for a future date', () => {
 	manageInterviewsPage.enterFutureDateInputData(10);
 	manageInterviewsPage.clickKeyboardButtonByKeyCode(9);
+});
+
+Then('Notification message will appear second', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
+	manageInterviewsPage.waitMessageToHide();
 });
 
 // Edit future Interview
@@ -318,6 +327,14 @@ When('User enters title filter input value for future interview', () => {
 And('User can see Edit interview button', () => {
 	manageInterviewsPage.verifyEditButtonVisible();
 });
+
+And('User can see future checkbox', () => { 
+	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
+})
+
+Then('User click future checkbox', () => { 
+	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
+})
 
 And('User clicks Edit interview button', () => {
 	manageInterviewsPage.clickEditButton();

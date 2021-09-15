@@ -43,6 +43,7 @@ Given('Login with default credentials',()=>{
 
 // Add new tag
 And('User can add new tag', () => {
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 

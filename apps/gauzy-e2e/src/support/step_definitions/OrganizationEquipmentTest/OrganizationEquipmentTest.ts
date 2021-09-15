@@ -378,7 +378,7 @@ When('User click on equipment sharing button again', () => {
 	organizationEquipmentPage.clickEquipmentSharingButton();
 });
 
-Then('user can see equipment sharing table', () => {
+Then('User can see equipment sharing table', () => {
 	organizationEquipmentPage.tableRowVisible();
 });
 

@@ -79,7 +79,7 @@ Feature: Organization equipment test
   Scenario: Edit equipment request
     Then User can see equipment sharing button again
     When User click on equipment sharing button again
-    Then user can see equipment sharing table
+    Then User can see equipment sharing table
     When User click on equipment sharing table row
     Then Edit equipment button will become active
     When User click on edit equipment button
