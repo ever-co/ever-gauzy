@@ -2,8 +2,7 @@ import {
 	clickButton,
 	clickButtonByIndex,
 	verifyElementIsVisible,
-    verifyByText,
-	waitForDropdownToLoad
+    verifyByText
 } from '../utils/util';
 
 import { TimeTrackingForClient } from '../pageobjects/TimeTrackingForClientPageObject';

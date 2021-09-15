@@ -24,8 +24,6 @@ let city = faker.address.city();
 let postcode = faker.address.zipCode();
 let street = faker.address.streetAddress();
 let website = faker.internet.url();
-let projectName = faker.name.jobTitle()
-
 
 
 let firstName = faker.name.firstName();
