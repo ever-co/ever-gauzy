@@ -178,3 +178,11 @@ export const verifyManualTime = (text) => {
 export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
 };
+
+export const waitMainDashboard = (url: string) => {
+	//waits for responce then continue 
+	cy.intercept('GET', url).as('getUser')
+	cy.wait('@getUser').then(() => {
+		verifyElementIsVisible(TimeTrackingPage.headerImgCss);
+	})
+};

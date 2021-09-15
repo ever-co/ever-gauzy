@@ -160,6 +160,7 @@ Then('Employee will see Create button', () => {
 
 // Add time
 And('Employee can see timer', () => {
+	timeTrackingPage.waitMainDashboard(TimeTrackingPageData.urlConfirmDashboardLoad);
 	timeTrackingPage.timerVisible();
 });
 
