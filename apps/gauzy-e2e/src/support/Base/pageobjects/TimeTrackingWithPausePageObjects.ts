@@ -30,5 +30,7 @@ export const TimeTrackingWithPausePage = {
 	verifyManualTimeCss: 'div[class="row border-bottom py-3 align-items-center ng-star-inserted"] > div.col',
     verifyTrackedTimeCss: 'div[class="row border-bottom py-3 align-items-center ng-star-inserted"] > div.col',
 	deleteTimeBtnCss: 'div[class="action-button"] > button > nb-icon > svg[class="eva eva-trash-2-outline"]',
-	confirmDialogBtnCss: 'nb-dialog-container > ngx-confirm > nb-card > nb-card-footer > button[class="mr-2 appearance-filled size-medium shape-rectangle status-primary nb-transition"]'
+	confirmDialogBtnCss: 'nb-dialog-container > ngx-confirm > nb-card > nb-card-footer > button[class="mr-2 appearance-filled size-medium shape-rectangle status-primary nb-transition"]',
+	headerImgCss: 'div.header-container'
+
 };
