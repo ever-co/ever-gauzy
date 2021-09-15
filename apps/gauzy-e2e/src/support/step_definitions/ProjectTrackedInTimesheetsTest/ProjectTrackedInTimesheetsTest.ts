@@ -8,6 +8,7 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as projectTrackedInTimesheets from '../../Base/pages/ProjectTrackedInTimesheet.po';
 import { waitUntil } from '../../Base/utils/util';
+import { ProjectTrackedInTimesheetPageData } from '../../Base/pagedata/ProjectTrackedInTimesheetPageData';
 
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
@@ -145,6 +146,7 @@ Then('Employee will see Create button', () => {
 //Record time with the new project
 
 And('Employee can see timer', () => {
+	projectTrackedInTimesheets.waitMainDashboard(ProjectTrackedInTimesheetPageData.urlConfirmDashboardLoad);
 	projectTrackedInTimesheets.timerVisible();
 });
 
@@ -165,7 +167,7 @@ When('Employee click on project select', () => {
 });
 
 Then('Employee can select project from dropdown options', () => {
-	projectTrackedInTimesheets.selectOptionFromDropdown(0);
+	projectTrackedInTimesheets.selectOptionFromDropdown(0, projectName);
 });
 
 When('Employee click on start timer button', () => {
