@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
 		<div class="main-header">
 			<h4> <ngx-header-title> {{ contactType + 's'| titlecase }} </ngx-header-title> </h4>
@@ -57,170 +57,173 @@
 			>
 			</ga-contact-mutation>
 		</div>
-		<div
-			class="contact-list"
-			*ngIf="
-				organizationContact.length &&
-				dataLayoutStyle === 'CARDS_GRID' &&
-				!showAddCard
-			"
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE && !showAddCard" 
+			[ngIfElse]="gridLayout"
 		>
-			<ga-entity-with-members-card
-				*ngFor="let c of organizationContact"
-				[entityWithMembers]="c"
-				[layout]="dataLayoutStyle"
-				(remove)="removeOrganizationContact(c.id, c.name)"
-				(edit)="editOrganizationContact(c)"
-				class="member-card"
-			>
-				<div class="contact-info">
-					<div>
-						<button
-							size="tiny"
-							class="ml-2"
-							(click)="invite(c)"
-							*ngIf="
-								!c.inviteStatus ||
-								c.inviteStatus === 'NOT_INVITED'
-							"
-							nbButton
-							status="success"
-						>
-							<nb-icon class="mr-1" icon="email-outline"></nb-icon
-							>{{ 'BUTTONS.INVITE' | translate }}
-						</button>
-						<button
-							size="tiny"
-							class="ml-2"
-							(click)="invite(c)"
-							*ngIf="c.inviteStatus === 'INVITED'"
-							nbButton
-						>
-							<nb-icon class="mr-1" icon="email-outline"></nb-icon
-							>{{ 'BUTTONS.INVITE_AGAIN' | translate }}
-						</button>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{
-								'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
-									| translate
-							}}
-						</div>
-						<div class="info-value">{{ c.primaryEmail }}</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
-						</div>
-						<div class="info-value">{{ c.primaryPhone }}</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate }}
-						</div>
-						<div class="info-value">
-							{{ c.contact ? getCountry(c.contact) : '' }}
-						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'ORGANIZATIONS_PAGE.EDIT.CITY' | translate }}
-						</div>
-						<div class="info-value">
-							{{ c.contact ? c.contact.city : '' }}
-						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'ORGANIZATIONS_PAGE.EDIT.STREET' | translate }}
-						</div>
-						<div class="info-value">
-							{{ c.contact ? c.contact.address : '' }}
-						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{
-								'ORGANIZATIONS_PAGE.EDIT.SECOND_ADDRESS'
-									| translate
-							}}
-						</div>
-						<div class="info-value">
-							{{ c.contact ? c.contact.address2 : '' }}
-						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'ORGANIZATIONS_PAGE.EDIT.POSTCODE' | translate }}
-						</div>
-						<div class="info-value">
-							{{ c.contact ? c.contact.postcode : '' }}
-						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
-						</div>
-						<div class="info-value">
-							<div
-								class="info-list-item"
-								*ngFor="let p of c.projects"
-							>
-								{{ p.name }}
+			<div class="mt-4">
+				<div class="table-scroll-container">
+					<ng2-smart-table
+						class="w-100"
+						(userRowSelect)="selectContact($event)"
+						[settings]="settingsSmartTable"
+						[source]="smartTableSource"
+						style="cursor: pointer"
+						#contactsTable
+					>
+					</ng2-smart-table>
+				</div>
+			</div>
+		</ng-template>
+		<ng-template #gridLayout>
+			<div class="grid-scroll-container">
+				<div class="contact-list">
+					<ga-entity-with-members-card
+						*ngFor="let c of organizationContact"
+						[entityWithMembers]="c"
+						[layout]="dataLayoutStyle"
+						(remove)="removeOrganizationContact(c.id, c.name)"
+						(edit)="editOrganizationContact(c)"
+						class="member-card"
+					>
+						<div class="contact-info">
+							<div>
+								<button
+									size="tiny"
+									class="ml-2"
+									(click)="invite(c)"
+									*ngIf="
+										!c.inviteStatus ||
+										c.inviteStatus === 'NOT_INVITED'
+									"
+									nbButton
+									status="success"
+								>
+									<nb-icon class="mr-1" icon="email-outline"></nb-icon
+									>{{ 'BUTTONS.INVITE' | translate }}
+								</button>
+								<button
+									size="tiny"
+									class="ml-2"
+									(click)="invite(c)"
+									*ngIf="c.inviteStatus === 'INVITED'"
+									nbButton
+								>
+									<nb-icon class="mr-1" icon="email-outline"></nb-icon
+									>{{ 'BUTTONS.INVITE_AGAIN' | translate }}
+								</button>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{
+										'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
+											| translate
+									}}
+								</div>
+								<div class="info-value">{{ c.primaryEmail }}</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
+								</div>
+								<div class="info-value">{{ c.primaryPhone }}</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate }}
+								</div>
+								<div class="info-value">
+									{{ c.contact ? getCountry(c.contact) : '' }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.CITY' | translate }}
+								</div>
+								<div class="info-value">
+									{{ c.contact ? c.contact.city : '' }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.STREET' | translate }}
+								</div>
+								<div class="info-value">
+									{{ c.contact ? c.contact.address : '' }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{
+										'ORGANIZATIONS_PAGE.EDIT.SECOND_ADDRESS'
+											| translate
+									}}
+								</div>
+								<div class="info-value">
+									{{ c.contact ? c.contact.address2 : '' }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.POSTCODE' | translate }}
+								</div>
+								<div class="info-value">
+									{{ c.contact ? c.contact.postcode : '' }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
+								</div>
+								<div class="info-value">
+									<div
+										class="info-list-item"
+										*ngFor="let p of c.projects"
+									>
+										{{ p.name }}
+									</div>
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'CONTACTS_PAGE.CONTACT_TYPE' | translate }}
+								</div>
+								<div class="info-value">
+									{{ c.contactType }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}
+								</div>
+								<div class="info-value">
+									{{ c.contact ? c.contact.fax : '' }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{
+										'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
+											| translate
+									}}
+								</div>
+								<div class="info-value">
+									{{ c.contact ? c.contact.fiscalInformation : '' }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}
+								</div>
+								<div class="info-value">
+									{{ c.contact ? c.contact.website : '' }}
+								</div>
 							</div>
 						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'CONTACTS_PAGE.CONTACT_TYPE' | translate }}
-						</div>
-						<div class="info-value">
-							{{ c.contactType }}
-						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}
-						</div>
-						<div class="info-value">
-							{{ c.contact ? c.contact.fax : '' }}
-						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{
-								'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
-									| translate
-							}}
-						</div>
-						<div class="info-value">
-							{{ c.contact ? c.contact.fiscalInformation : '' }}
-						</div>
-					</div>
-					<div class="info-line">
-						<div class="info-meta">
-							{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}
-						</div>
-						<div class="info-value">
-							{{ c.contact ? c.contact.website : '' }}
-						</div>
-					</div>
+					</ga-entity-with-members-card>
 				</div>
-			</ga-entity-with-members-card>
-		</div>
-		<div class="mt-4">
-			<ng2-smart-table
-				*ngIf="dataLayoutStyle === 'TABLE' && !showAddCard"
-				class="w-100"
-				(userRowSelect)="selectContact($event)"
-				[settings]="settingsSmartTable"
-				[source]="smartTableSource"
-				style="cursor: pointer"
-				#contactsTable
-			>
-			</ng2-smart-table>
-		</div>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template

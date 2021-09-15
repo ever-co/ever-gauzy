@@ -64,6 +64,7 @@ export class ContactComponent
 	organizationContactToEdit: IOrganizationContact;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	selectedContact: any;
 	isGridEdit: boolean;

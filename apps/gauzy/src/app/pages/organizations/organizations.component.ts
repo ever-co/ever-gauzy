@@ -35,6 +35,7 @@ export class OrganizationsComponent
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	loading = true;
 	user: IUser;
 

@@ -42,6 +42,7 @@ export class ApprovalsComponent
 	public selectedEmployeeId: string;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	requestApprovalData: IRequestApproval[];
 	organization: IOrganization;
 

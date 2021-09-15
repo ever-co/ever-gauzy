@@ -40,3 +40,7 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.table-scroll-container, .grid-scroll-container {
+  max-height: calc(70vh - 120px);
+}

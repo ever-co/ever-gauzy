@@ -1,10 +1,8 @@
-:host > nb-card { 
-    min-height: 47.50rem; 
+:host>nb-card {
+    min-height: 75vh;
 }
-
-.header-selector-wrapper {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-} 
+.table-scroll-container,
+.grid-scroll-container {
+    overflow-y: auto;
+    max-height: calc(70vh - 110px);
+}
