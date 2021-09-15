@@ -7,15 +7,9 @@
 			alt="Candidate Avatar"
 		/>
 		<div>
-			<h5>
-				{{ header }}
-			</h5>
-			<span *ngIf="!isCalendar">
-				{{ selectedCandidate?.user.firstName }}
-				{{ selectedCandidate?.user.lastName }}
-			</span>
+			<h5 [innerText]="headerTitle"></h5>
+			<span *ngIf="!isCalendar"> {{ selectedCandidate?.user?.name }} </span>
 		</div>
-
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -23,7 +17,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="stepper">
-		<nb-stepper #stepper>
+		<nb-stepper #stepper disableStepNavigation>
 			<nb-step [label]="step1">
 				<ng-template #step1>{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_1'
@@ -35,9 +29,7 @@
 					}}</label>
 					<ga-candidate-select
 						[allCandidates]="candidates"
-						[placeholder]="
-							'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate
-						"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate"
 						(selectedChange)="onCandidateSelected($event)"
 						[selectedCandidateId]="selectedCandidateId"
 					>
@@ -45,7 +37,7 @@
 				</div>
 
 				<ga-candidate-interview-form
-					[interviewList]="interviewList"
+					[interviews]="interviews"
 					#candidateInterviewForm
 					(titleExist)="titleExist($event)"
 					[isCalendar]="isCalendar"

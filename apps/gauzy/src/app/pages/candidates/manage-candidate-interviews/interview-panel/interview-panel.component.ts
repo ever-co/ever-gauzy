@@ -461,13 +461,13 @@ export class InterviewPanelComponent
 				CandidateInterviewMutationComponent,
 				{
 					context: {
-						header: this.getTranslation(
+						headerTitle: this.getTranslation(
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
 						),
 						editData: currentInterview,
 						selectedCandidate: candidate.items[0],
 						interviewId: id,
-						interviewList: this.interviewList
+						interviews: this.interviewList
 					}
 				}
 			);

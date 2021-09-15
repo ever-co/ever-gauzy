@@ -1,6 +1,6 @@
 export const ManageInterviewsPage = {
 	addInterviewButtonCss:
-		'nb-card-header.header > div > button[status="primary"]',
+		'nb-card-header > div > button[status="primary"]',
 	candidateDropdownCss:
 		'div.step-content > div.form-group > ga-candidate-select > nb-select > button[class="select-button placeholder"]',
 	candidateDropdownOptionCss: '.option-list nb-option',
