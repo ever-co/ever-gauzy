@@ -1,4 +1,5 @@
 @import "./themes";
+@import 'var';
 
 ::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
@@ -256,6 +257,9 @@ nb-card-body {
 .table-scroll-container, .grid-scroll-container {
 	overflow-y: auto;
   max-height: calc(70vh - 100px);
+  @include respond(dsk) {
+    max-height: calc(70vh - 132px);
+  }
 	table thead {
 		position: sticky;
 		z-index: 100;

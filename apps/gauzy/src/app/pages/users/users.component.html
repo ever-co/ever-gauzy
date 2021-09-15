@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'USERS_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
@@ -76,44 +76,48 @@
 				</ng-template>
 			</div>
 		</ng-template>
-		<ng2-smart-table
-			style="cursor: pointer"
-			[settings]="settingsSmartTable"
-			[source]="sourceSmartTable"
-			(userRowSelect)="selectUserTmp($event)"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			#usersTable
-		>
-		</ng2-smart-table>
-		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-			<li class="flex-item" *ngFor="let x of userData">
-				<div class="fullName">
-					<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
-					<span>{{ x.fullName }}</span>
-				</div>
-				<div class="email">
-					<span class="info-value">{{ x.email }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'USERS_PAGE.ROLE.ROLE' | translate
-					}}</span>
-					<span class="info-value">{{ x.role }}</span>
-				</div>
-				<nb-card-footer class="card-footer">
-					<ng-container
-						*ngTemplateOutlet="
-							actionButtons;
-							context: {
-								buttonSize: 'tiny',
-								selectedItem: x
-							}
-						"
-					>
-					</ng-container>
-				</nb-card-footer>
-			</li>
-		</ul>
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				[source]="sourceSmartTable"
+				(userRowSelect)="selectUserTmp($event)"
+				*ngIf="dataLayoutStyle === 'TABLE'"
+				#usersTable
+			>
+			</ng2-smart-table>
+		</div>
+		<div class="table-scroll-container">
+			<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+				<li class="flex-item" *ngFor="let x of userData">
+					<div class="fullName">
+						<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
+						<span>{{ x.fullName }}</span>
+					</div>
+					<div class="email">
+						<span class="info-value">{{ x.email }}</span>
+					</div>
+					<div class="info-line">
+						<span class="info-meta">{{
+							'USERS_PAGE.ROLE.ROLE' | translate
+						}}</span>
+						<span class="info-value">{{ x.role }}</span>
+					</div>
+					<nb-card-footer class="card-footer">
+						<ng-container
+							*ngTemplateOutlet="
+								actionButtons;
+								context: {
+									buttonSize: 'tiny',
+									selectedItem: x
+								}
+							"
+						>
+						</ng-container>
+					</nb-card-footer>
+				</li>
+			</ul>
+		</div>
 	</nb-card-body>
 </nb-card>
 <ng-template

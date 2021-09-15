@@ -71,94 +71,95 @@
 			>
 			</ng2-smart-table>
 		</div>		
+		<div class="grid-scroll-container">
+			<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+				<li class="flex-item" *ngFor="let x of employeeData">
+					<div class="fullName">
+						<ga-notes-with-tags [rowData]="x"></ga-notes-with-tags>
+						<span>{{ x.fullName }}</span>
+					</div>
+					<div class="email">
+						<span class="info-value">{{ x.email }}</span>
+					</div>
+					<div class="info-line">
+						<span class="info-meta">{{
+							'SM_TABLE.INCOME' | translate
+						}}</span>
+						<span class="info-value">{{ x.averageIncome }}</span>
+					</div>
+					<div class="info-line">
+						<span class="info-meta">{{
+							'SM_TABLE.EXPENSES' | translate
+						}}</span>
+						<span class="info-value">{{ x.averageExpenses }}</span>
+					</div>
+					<div class="info-line">
+						<span class="info-meta">{{
+							'SM_TABLE.BONUS_AVG' | translate
+						}}</span>
+						<span class="info-value">{{ x.averageBonus }}</span>
+					</div>
+					<div class="info-line">
+						<span class="info-meta"
+							>{{ 'SM_TABLE.BONUS' | translate }} ({{ month }}
+							{{ year }})</span
+						>
+						<span class="info-value">{{ x.bonus }}</span>
+					</div>
+					<div class="info-line" style="height: 62px">
+						<span class="info-meta"
+							>{{ 'SM_TABLE.WORK_STATUS' | translate }}s</span
+						>
+						<div class="text-center d-block" *ngIf="x.workStatus">
+							<div class="badge-danger">
+								{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
+							</div>
+							{{ x.workStatus }}
+						</div>
+						<div
+							class="text-center d-block"
+							*ngIf="!x.startedWorkOn"
+							nbTooltip="{{
+								'EMPLOYEES_PAGE.NOT_STARTED_HELP' | translate
+							}}"
+						>
+							<div class="badge-disabled">
+								{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
+							</div>
+						</div>
+						<div
+							class="text-center d-block"
+							*ngIf="x.startedWorkOn && x.isActive && !x.workStatus"
+						>
+							<div class="badge-success">
+								{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
+							</div>
+						</div>
+						<div
+							class="text-center d-block"
+							*ngIf="x.startedWorkOn && !x.isActive"
+						>
+							<div class="badge-danger">
+								{{ 'EMPLOYEES_PAGE.DELETED' | translate }}
+							</div>
+						</div>
+					</div>
 
-		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
-			<li class="flex-item" *ngFor="let x of employeeData">
-				<div class="fullName">
-					<ga-notes-with-tags [rowData]="x"></ga-notes-with-tags>
-					<span>{{ x.fullName }}</span>
-				</div>
-				<div class="email">
-					<span class="info-value">{{ x.email }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'SM_TABLE.INCOME' | translate
-					}}</span>
-					<span class="info-value">{{ x.averageIncome }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'SM_TABLE.EXPENSES' | translate
-					}}</span>
-					<span class="info-value">{{ x.averageExpenses }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta">{{
-						'SM_TABLE.BONUS_AVG' | translate
-					}}</span>
-					<span class="info-value">{{ x.averageBonus }}</span>
-				</div>
-				<div class="info-line">
-					<span class="info-meta"
-						>{{ 'SM_TABLE.BONUS' | translate }} ({{ month }}
-						{{ year }})</span
-					>
-					<span class="info-value">{{ x.bonus }}</span>
-				</div>
-				<div class="info-line" style="height: 62px">
-					<span class="info-meta"
-						>{{ 'SM_TABLE.WORK_STATUS' | translate }}s</span
-					>
-					<div class="text-center d-block" *ngIf="x.workStatus">
-						<div class="badge-danger">
-							{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
-						</div>
-						{{ x.workStatus }}
-					</div>
-					<div
-						class="text-center d-block"
-						*ngIf="!x.startedWorkOn"
-						nbTooltip="{{
-							'EMPLOYEES_PAGE.NOT_STARTED_HELP' | translate
-						}}"
-					>
-						<div class="badge-disabled">
-							{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
-						</div>
-					</div>
-					<div
-						class="text-center d-block"
-						*ngIf="x.startedWorkOn && x.isActive && !x.workStatus"
-					>
-						<div class="badge-success">
-							{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
-						</div>
-					</div>
-					<div
-						class="text-center d-block"
-						*ngIf="x.startedWorkOn && !x.isActive"
-					>
-						<div class="badge-danger">
-							{{ 'EMPLOYEES_PAGE.DELETED' | translate }}
-						</div>
-					</div>
-				</div>
-
-				<nb-card-footer class="card-footer">
-					<ng-container
-						*ngTemplateOutlet="
-							actionButtons;
-							context: {
-								buttonSize: 'tiny',
-								selectedItem: x
-							}
-						"
-					>
-					</ng-container>
-				</nb-card-footer>
-			</li>
-		</ul>
+					<nb-card-footer class="card-footer">
+						<ng-container
+							*ngTemplateOutlet="
+								actionButtons;
+								context: {
+									buttonSize: 'tiny',
+									selectedItem: x
+								}
+							"
+						>
+						</ng-container>
+					</nb-card-footer>
+				</li>
+			</ul>
+		</div>
 	</nb-card-body>
 </nb-card>
 <ng-template
