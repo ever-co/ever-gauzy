@@ -9,7 +9,8 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	clickButtonDouble
 } from '../utils/util';
 import { TimeOffPage } from '../pageobjects/TimeOffPageObject';
 
@@ -26,14 +27,14 @@ export const employeeSelectorVisible = () => {
 };
 
 export const clickEmployeeSelector = () => {
-	cy.intercept('GET', 'api/employee/working*').as('getUsersXhr')
+	cy.intercept('GET', '/api/employee/working*').as('getUsersXhr')
 	clickButton(TimeOffPage.employeeDropdownCss);
+	cy.wait('@getUsersXhr')
+	clickButtonDouble(TimeOffPage.employeeDropdownCss);
 };
 
 export const employeeDropdownVisible = () => {
-	cy.wait('@getUsersXhr').then(() => {
-		verifyElementIsVisible(TimeOffPage.employeeDropdownOptionCss);
-	})
+	verifyElementIsVisible(TimeOffPage.employeeDropdownOptionCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {

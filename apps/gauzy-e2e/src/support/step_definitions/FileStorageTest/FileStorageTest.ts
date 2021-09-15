@@ -16,7 +16,7 @@ Given('Login with default credentials', () => {
 
 // Add S3 file provider
 And('User can visit File storage page', () => {
-	dashboardPage.verifyAccountingDashboard()
+	dashboardPage.verifyAccountingDashboardIfVisible()
 	cy.visit('/#/pages/settings/file-storage', { timeout: pageLoadTimeout });
 });
 
