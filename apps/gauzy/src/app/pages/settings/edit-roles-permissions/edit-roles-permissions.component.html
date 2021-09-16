@@ -13,35 +13,28 @@
 						<nb-select
 							class="d-block"
 							size="medium"
-							[(selected)]="selectedRole"
-							(selectedChange)="loadPermissionsForSelectedRole()"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.ROLE' | translate
-							}}"
 							fullWidth
+							[(ngModel)]="selectedRole"
+							[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+							(selectedChange)="onSelectedRole()"
 						>
-							<nb-option
-								*ngFor="let role of allRoles"
-								[value]="role.toUpperCase()"
-							>
-								{{ 'USERS_PAGE.ROLE.' + role | translate }}
+							<nb-option *ngFor="let role of roles" [value]="role.name">
+								{{ 'USERS_PAGE.ROLE.' + role.name | translate }}
 							</nb-option>
 						</nb-select>
 					</div>
 				</div>
 			</div>
-
 			<div class="row" [nbSpinner]="loading" nbSpinnerSize="large">
 				<div class="col-6">
 					<nb-card>
-						<nb-card-header>{{
-							'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL'
-								| translate
-						}}</nb-card-header>
+						<nb-card-header>
+							{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL' | translate }}
+						</nb-card-header>
 						<nb-card-body class="permission-items-col">
 							<nb-toggle
 								*ngFor="
-									let permission of permissionGroups.GENERAL
+									let permission of PermissionGroups.GENERAL
 								"
 								[(checked)]="enabledPermissions[permission]"
 								(checkedChange)="
@@ -49,11 +42,9 @@
 								"
 								labelPosition="start"
 								status="basic"
-								>{{
-									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
-										permission | translate
-								}}</nb-toggle
 							>
+								{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
+							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
 				</div>
@@ -65,10 +56,7 @@
 									| translate
 							}}
 							<nb-icon
-								nbTooltip="{{
-									'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN'
-										| translate
-								}}"
+								[nbTooltip]="'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN' | translate"
 								class="mr-1"
 								icon="question-mark-circle-outline"
 							>
@@ -76,20 +64,16 @@
 						</nb-card-header>
 						<nb-card-body class="permission-items-col">
 							<nb-toggle
-								*ngFor="
-									let permission of permissionGroups.ADMINISTRATION
-								"
+								*ngFor="let permission of PermissionGroups.ADMINISTRATION"
 								[(checked)]="enabledPermissions[permission]"
 								(checkedChange)="
 									permissionChanged(permission, $event)
 								"
 								labelPosition="start"
 								status="basic"
-								[disabled]="selectedRole !== adminRole"
-								>{{
-									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
-										permission | translate
-								}}
+								[disabled]="selectedRole !== RolesEnum.ADMIN"
+							>
+								{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>

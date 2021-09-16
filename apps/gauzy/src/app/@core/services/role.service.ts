@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IRole, RolesEnum, ITenant } from '@gauzy/contracts';
+import { IRole, RolesEnum, ITenant, IPagination } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
@@ -17,6 +17,13 @@ export class RoleService {
 		return this.http.get<IRole>(`${API_PREFIX}/role/find`, {
 			params: { data }
 		});
+	}
+
+	getAll(): Promise<IPagination<IRole>> {
+		return this.http
+			.get<IPagination<IRole>>(`${API_PREFIX}/role`)
+			.pipe(first())
+			.toPromise();
 	}
 
 	getRoleById(roleId: string): Promise<IRole> {

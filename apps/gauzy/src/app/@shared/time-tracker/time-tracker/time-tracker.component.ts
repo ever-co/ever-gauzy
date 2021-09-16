@@ -4,7 +4,8 @@ import {
 	IOrganization,
 	IUser,
 	IDateRange,
-	OrganizationPermissionsEnum
+	OrganizationPermissionsEnum,
+	TimeLogType
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { toUTC } from '@gauzy/common-angular';
@@ -35,6 +36,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	user: IUser;
 	organization: IOrganization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	timeLogType = TimeLogType;
 	allowFutureDate: boolean;
 
 	@ViewChild(NgForm) form: NgForm;

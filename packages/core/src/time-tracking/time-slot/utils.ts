@@ -18,7 +18,7 @@ export function generateTimeSlots(start: Date, end: Date) {
 				duration = mEnd.diff(mStart, 'seconds');
 			}
 		} else {
-			/* Calculate duearion for without round time IE. 10:14-10:20 */
+			/* Calculate duration for without round time IE. 10:14-10:20 */
 			const tempStart = mStart
 				.clone()
 				.set('minute', mStart.get('minute') - (mStart.minutes() % 10));
@@ -35,8 +35,6 @@ export function generateTimeSlots(start: Date, end: Date) {
 		}
 
 		mStart.set('second', 0);
-		mStart.set('second', 0);
-		mEnd.set('millisecond', 0);
 		mEnd.set('millisecond', 0);
 
 		slots.push({

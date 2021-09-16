@@ -29,7 +29,7 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 		super(rolePermissionsRepository);
 	}
 
-	public async update(
+	public async updatePermission(
 		id: string | number | FindConditions<RolePermissions>,
 		partialEntity: QueryDeepPartialEntity<RolePermissions>
 	): Promise<UpdateResult | RolePermissions> {
@@ -50,7 +50,7 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 		}
 	}
 
-	public async delete(id: string | number) {
+	public async deletePermission(id: string | number) {
 		try {
 			const { role } = await this.repository.findOne({
 				where: { id },

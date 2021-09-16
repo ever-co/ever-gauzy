@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, IsNull, Between, Not } from 'typeorm';
@@ -10,7 +10,8 @@ import {
 	ITimerToggleInput,
 	IDateRange,
 	TimeLogSourceEnum,
-	ITimerStatusInput
+	ITimerStatusInput,
+	ITimeLog
 } from '@gauzy/contracts';
 import { Employee, TimeLog } from './../../core/entities/internal';
 import { RequestContext } from '../../core/context';
@@ -109,7 +110,7 @@ export class TimerService {
 		return status;
 	}
 
-	async startTimer(request: ITimerToggleInput): Promise<TimeLog> {
+	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -129,7 +130,7 @@ export class TimerService {
 		}
 
 		const { source, projectId, taskId, organizationContactId, logType, description, isBillable } = request;
-		const newTimeLogInput = {
+		const timeLog = {
 			organizationId,
 			tenantId,
 			employeeId,
@@ -140,20 +141,23 @@ export class TimerService {
 			taskId: taskId || null,
 			organizationContactId: organizationContactId || null,
 			logType: logType || TimeLogType.TRACKED,
-			description: description || '',
+			description: description || null,
 			isBillable: isBillable || false
 		};
 
 		return await this.commandBus.execute(
-			new TimeLogCreateCommand(newTimeLogInput)
+			new TimeLogCreateCommand(timeLog)
 		);
 	}
 
-	async stopTimer(request: ITimerToggleInput): Promise<TimeLog> {
+	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		const { organizationId } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		let lastLog = await this.getLastRunningLog();
+		if (!lastLog) {
+			throw new NotAcceptableException();
+		}
 
 		const stoppedAt = new Date();
 		if (lastLog.startedAt === stoppedAt) {

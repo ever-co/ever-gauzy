@@ -1,12 +1,15 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { TimeLogType, TimeLogSourceEnum } from '@gauzy/contracts';
+import { TimeLogType, TimeLogSourceEnum, ITimeSlot } from '@gauzy/contracts';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { TimeLog } from './../../time-log.entity';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
-import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
+import {
+	TimesheetFirstOrCreateCommand,
+	TimesheetRecalculateCommand
+} from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { RequestContext } from '../../../../core/context';
 
@@ -25,6 +28,8 @@ export class TimeLogCreateHandler
 		const { input } = command;
 		const { startedAt, employeeId, organizationId } = input;
 
+		const tenantId = RequestContext.currentTenantId();
+
 		const timesheet = await this.commandBus.execute(
 			new TimesheetFirstOrCreateCommand(
 				startedAt,
@@ -33,33 +38,35 @@ export class TimeLogCreateHandler
 			)
 		);
 
-		const newTimeLog = new TimeLog({
-			startedAt: moment.utc(input.startedAt).toDate(),
+		const timeLog = new TimeLog({
+			startedAt: moment.utc(startedAt).toDate(),
 			...(input.stoppedAt
 				? { stoppedAt: moment.utc(input.stoppedAt).toDate() }
 				: {}),
-			timesheetId: timesheet.id,
-			organizationId: input.organizationId,
-			employeeId: input.employeeId,
+			timesheet,
+			organizationId,
+			tenantId,
+			employeeId,
 			projectId: input.projectId || null,
 			taskId: input.taskId || null,
 			organizationContactId: input.organizationContactId || null,
 			logType: input.logType || TimeLogType.MANUAL,
-			description: input.description || '',
-			reason: input.reason || '',
+			description: input.description || null,
+			reason: input.reason || null,
 			isBillable: input.isBillable || false,
 			source: input.source || TimeLogSourceEnum.BROWSER
 		});
 
-		let timeSlots = [];
+		let timeSlots: ITimeSlot[] = [];
 		if (input.stoppedAt) {
 			timeSlots = this.timeSlotService.generateTimeSlots(
 				input.startedAt,
 				input.stoppedAt
-			);
-			timeSlots = timeSlots.map((slot) => ({
+			).map((slot) => ({
 				...slot,
-				employeeId: input.employeeId,
+				employeeId,
+				organizationId,
+				tenantId,
 				keyboard: 0,
 				mouse: 0,
 				overall: 0
@@ -73,9 +80,11 @@ export class TimeLogCreateHandler
 			 * Time Logs is : 04:00:00 to  05:00:00 and pass time slots for 04:00:00, 04:20:00, 04:30:00, 04:40:00
 			 * then it will add  04:10:00,  04:50:00 as blank time slots in array to instert
 			 */
-			input.timeSlots = input.timeSlots.map((timeSlot) => {
-				timeSlot.startedAt = moment.utc(input.startedAt).toDate();
-				timeSlot.employeeId = input.employeeId;
+			input.timeSlots = input.timeSlots.map((timeSlot: ITimeSlot) => {
+				timeSlot.startedAt = moment.utc(startedAt).toDate();
+				timeSlot.employeeId = employeeId;
+				timeSlot.organizationId = organizationId;
+				timeSlot.tenantId = tenantId;
 				return timeSlot;
 			});
 
@@ -98,22 +107,27 @@ export class TimeLogCreateHandler
 			});
 		}
 
-		newTimeLog.timeSlots = await this.timeSlotService.bulkCreate(timeSlots);
+		timeLog.timeSlots = await this.timeSlotService.bulkCreate(timeSlots);
 
-		newTimeLog.tenantId = RequestContext.currentTenantId();
+		await this.timeLogRepository.save(timeLog);
 
-		await this.timeLogRepository.save(newTimeLog);
+		/**
+		 * RECALCULATE timesheet activity  
+		 */
+		if (timesheet) {
+			const { id: timesheetId } = timesheet;
+			await this.commandBus.execute(
+				new TimesheetRecalculateCommand(timesheetId)
+			);
+		}
+
+		/**
+		 * UPDATE employee total worked hours
+		 */
+		await this.commandBus.execute(
+			new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
+		);
 		
-		console.log('New Time Log:', newTimeLog);
-
-		await this.commandBus.execute(
-			new TimesheetRecalculateCommand(timesheet.id)
-		);
-
-		await this.commandBus.execute(
-			new UpdateEmployeeTotalWorkedHoursCommand(newTimeLog.employeeId)
-		);
-
-		return newTimeLog;
+		return await this.timeLogRepository.findOne(timeLog.id);
 	}
 }

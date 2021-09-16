@@ -13,10 +13,12 @@ import {
 	ITimeLog,
 	ITimerStatus,
 	ITimerStatusInput,
-	RolesEnum
+	RolesEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { TimerService } from './timer.service';
-import { RoleGuard, TenantPermissionGuard } from './../../shared/guards';
+import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
 import { Roles } from './../../shared/decorators';
 
 @ApiTags('Timer')
@@ -35,8 +37,9 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, PermissionGuard)
 	@Roles(RolesEnum.EMPLOYEE)
+	@Permissions(PermissionsEnum.TIME_TRACKER)
 	@Get('/status')
 	async getTimerStatus(
 		@Query() query: ITimerStatusInput
@@ -54,8 +57,9 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, PermissionGuard)
 	@Roles(RolesEnum.EMPLOYEE)
+	@Permissions(PermissionsEnum.TIME_TRACKER)
 	@Post('/toggle')
 	async toggleTimer(
 		@Body() entity: ITimerToggleInput
@@ -73,8 +77,9 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, PermissionGuard)
 	@Roles(RolesEnum.EMPLOYEE)
+	@Permissions(PermissionsEnum.TIME_TRACKER)
 	@Post('/start')
 	async startTimer(
 		@Body() entity: ITimerToggleInput
@@ -92,8 +97,9 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, PermissionGuard)
 	@Roles(RolesEnum.EMPLOYEE)
+	@Permissions(PermissionsEnum.TIME_TRACKER)
 	@Post('/stop')
 	async stopTimer(
 		@Body() entity: ITimerToggleInput

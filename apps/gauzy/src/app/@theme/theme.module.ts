@@ -19,6 +19,7 @@ import {
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	FooterComponent,
 	HeaderComponent,
@@ -73,7 +74,8 @@ const MODULES = [
 	EmployeeSelectorsModule,
 	ProjectSelectModule,
 	TimeTrackerModule,
-	TranslateModule
+	TranslateModule,
+	NgxPermissionsModule.forChild(),
 ];
 
 const COMPONENTS = [

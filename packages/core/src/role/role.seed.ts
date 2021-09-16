@@ -4,14 +4,14 @@
 
 import { Connection } from 'typeorm';
 import { Role } from './role.entity';
-import { ITenant, RolesEnum } from '@gauzy/contracts';
+import { IRole, ITenant, RolesEnum } from '@gauzy/contracts';
 
 export const createRoles = async (
 	connection: Connection,
 	tenants: ITenant[]
-): Promise<Role[]> => {
+): Promise<IRole[]> => {
 	try {
-		const roles: Role[] = [];
+		const roles: IRole[] = [];
 		for (const tenant of tenants) {
 			for (const name of Object.values(RolesEnum)) {
 				const role = new Role();

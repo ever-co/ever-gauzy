@@ -172,6 +172,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
+		PermissionsEnum.TIME_TRACKER,
 		PermissionsEnum.INVENTORY_GALLERY_VIEW,
 		PermissionsEnum.INVENTORY_GALLERY_EDIT,
 		PermissionsEnum.ORG_EQUIPMENT_VIEW,
