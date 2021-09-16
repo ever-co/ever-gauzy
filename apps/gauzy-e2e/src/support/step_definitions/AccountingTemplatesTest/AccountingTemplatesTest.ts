@@ -16,7 +16,7 @@ Given('Login with default credentials', () => {
 
 // Visit Accounting templates page
 And('User can visit Accounting templates page', () => {
-	dashboardPage.verifyAccountingDashboard();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/settings/accounting-templates', { timeout: pageLoadTimeout });
 });
 

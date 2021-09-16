@@ -15,6 +15,45 @@ Feature: Appointments test
     Then User can see Calendar table
     When User clicks on Calendar table row
     Then Notification message will appear
+  Scenario: Add new event type
+    And User can visit Event types page
+    Then User can see grid button
+    And User can click on second grid button to change view
+    And User can see add event type button
+    When User click on add event type button
+    Then User can see employee dropdown
+    When User click on employee dropdown
+    Then User can select employee from dropdown options second
+    And User can see title input field
+    And User can enter value for title
+    And User can see description input field
+    And User can enter value for description
+    And User can see duration input field
+    And User can select value for duration
+    And User can checkbox
+    And User can click on checkbox
+    And User can see save button
+    When User click on save button
+    Then Notification message will appear
+    And User can visit Event types page
+    Then User can see grid button
+    And User can click on second grid button to change view
+    And User can see add event type button
+    When User click on add event type button
+    Then User can see employee dropdown
+    When User click on employee dropdown
+    Then User can select employee from dropdown options second
+    And User can see title input field
+    And User can enter value for title
+    And User can see description input field
+    And User can enter value for description
+    And User can see duration input field
+    And User can select value for duration
+    And User can checkbox
+    And User can click on checkbox
+    And User can see save button
+    When User click on save button
+    Then Notification message will appear
   Scenario: Book public appointment
     And User can visit Employees appointments page
     And User can see employee select dropdown
