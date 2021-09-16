@@ -1,19 +1,22 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
-	IOrganization,
 	PermissionGroups,
 	IRolePermission,
 	RolesEnum,
-	IUser
+	IUser,
+	IRole
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { RolePermissionsService } from '../../../@core/services/role-permissions.service';
-import { RoleService } from '../../../@core/services/role.service';
-import { first } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../../@shared/language-base';
+import {
+	RolePermissionsService,
+	RoleService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
+import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,26 +27,23 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class EditRolesPermissionsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private currentUser: IUser;
 
-	organization: IOrganization;
-
-	adminRole: RolesEnum = RolesEnum.ADMIN;
+	RolesEnum = RolesEnum;
+	PermissionGroups = PermissionGroups;
+	
+	user: IUser;
+	role: IRole;
+	roles: IRole[] = [];
+	permissions: IRolePermission[] = [];
 	selectedRole: RolesEnum = RolesEnum.EMPLOYEE;
-	superAdminRole: RolesEnum = RolesEnum.SUPER_ADMIN;
-	selectedRoleId: string;
+	
+	loading: boolean;
+	enabledPermissions: any = {};
 
-	allRoles: string[] = Object.values(RolesEnum);
-
-	loading = true;
-
-	permissionGroups = PermissionGroups;
-
-	enabledPermissions = {};
-	allPermissions: IRolePermission[] = [];
+	permissions$: Subject<any> = new Subject();
 
 	constructor(
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly rolePermissionsService: RolePermissionsService,
 		private readonly rolesService: RoleService,
@@ -53,69 +53,54 @@ export class EditRolesPermissionsComponent
 	}
 
 	ngOnInit(): void {
-		this.store.user$.pipe(untilDestroyed(this)).subscribe((user) => {
-			this.currentUser = user;
-			if (this.currentUser && this.currentUser.tenant) {
-				this.loadPermissionsForSelectedRole();
-			}
-		});
-	}
-
-	async updateOrganizationSettings() {
-		this.toastrService.success(
-			this.getTranslation(
-				'TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED',
-				{ name: this.organization.name }
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				untilDestroyed(this)
 			)
-		);
-		this.goBack();
+			.subscribe();
 	}
 
-	goBack() {
-		const currentURL = window.location.href;
-		window.location.href = currentURL.substring(
-			0,
-			currentURL.indexOf('/settings')
-		);
+	ngAfterViewInit() {
+		this.permissions$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.loadPermissions()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.rolesService.getAll()
+			.then(({ items }) => {
+				this.roles = items;
+				this.onSelectedRole();
+			});
 	}
 
-	async loadPermissionsForSelectedRole() {
-		this.enabledPermissions = {};
-		this.loading = true;
+	async loadPermissions() {
+		const { tenantId } = this.user;
+		const { id: roleId } = this.role;
 
-		const { tenantId } = this.currentUser;
-		const role = await this.rolesService
-			.getRoleByName({
-				name: this.selectedRole,
+		this.permissions = (
+			await this.rolePermissionsService.getRolePermissions({
+				roleId,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+			.finally(() => this.loading = false)
+		).items;
 
-		this.selectedRoleId = role.id;
-
-		await this.refreshPermissions();
-
-		this.loading = false;
-	}
-
-	async refreshPermissions() {
-		const tenantId = this.currentUser.tenantId;
-		const { items } = await this.rolePermissionsService.getRolePermissions({
-			roleId: this.selectedRoleId,
-			tenantId
-		});
-
-		items.forEach((p) => {
+		this.permissions.forEach((p) => {
 			this.enabledPermissions[p.permission] = p.enabled;
 		});
-
-		this.allPermissions = items;
 	}
 
-	async permissionChanged(permission, enabled) {
+	async permissionChanged(permission: string, enabled: boolean) {
 		try {
-			const permissionToEdit = this.allPermissions.find(
+			const { id: roleId } = this.role;
+			const { tenantId } = this.user;
+
+			const permissionToEdit = this.permissions.find(
 				(p) => p.permission === permission
 			);
 
@@ -127,22 +112,15 @@ export class EditRolesPermissionsComponent
 						}
 				  )
 				: await this.rolePermissionsService.create({
-						roleId: this.selectedRoleId,
+						roleId,
 						permission,
 						enabled,
-						tenant: this.store.user.tenant
+						tenantId
 				  });
-
-			await this.refreshPermissions();
-
 			this.toastrService.success(
 				this.getTranslation('TOASTR.MESSAGE.PERMISSION_UPDATED', {
-					permissionName: this.getTranslation(
-						'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission
-					),
-					roleName: this.getTranslation(
-						'USERS_PAGE.ROLE.' + this.selectedRole
-					)
+					permissionName: this.getTranslation('ORGANIZATIONS_PAGE.PERMISSIONS.' + permission),
+					roleName: this.getTranslation('USERS_PAGE.ROLE.' + this.selectedRole)
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
@@ -151,7 +129,29 @@ export class EditRolesPermissionsComponent
 				this.getTranslation('TOASTR.MESSAGE.PERMISSION_UPDATE_ERROR'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
+		} finally {
+			this.permissions$.next();
 		}
+	}
+
+	/**
+	 * CHANGE current selected role
+	 */
+	onSelectedRole() {
+		this.role = this.getRoleByName(this.selectedRole);
+		this.permissions$.next();
+	}
+
+	/**
+	 * GET role by name
+	 * 
+	 * @param name 
+	 * @returns 
+	 */
+	getRoleByName(name: IRole['name']) {
+		return this.roles.find(
+			(role: IRole) => name === role.name
+		);
 	}
 
 	ngOnDestroy() {}

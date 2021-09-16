@@ -72,6 +72,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	hasPermissionPaymentAddEdit = false;
 	hasPermissionTimesheetEdit = false;
 	hasPermissionCandidateEdit = false;
+	hasPermissionTimeTracker = false;
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 
@@ -599,7 +600,10 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 
 	private _checkTimerStatus() {
 		const { employee, tenantId } = this.user;
-		if (!!this.store.hasPermission(PermissionsEnum.TIME_TRACKER)) {
+		this.hasPermissionTimeTracker = this.store.hasPermission(
+			PermissionsEnum.TIME_TRACKER
+		);
+		if (!!this.hasPermissionTimeTracker) {
 			if (employee && employee.id) {
 				this.timeTrackerService.checkTimerStatus(tenantId);
 			}

@@ -5,8 +5,7 @@ import { RouterModule } from 'nest-router';
 import { RolePermissionsController } from './role-permissions.controller';
 import { RolePermissions } from './role-permissions.entity';
 import { RolePermissionsService } from './role-permissions.service';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
+import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
@@ -14,12 +13,13 @@ import { TenantModule } from '../tenant/tenant.module';
 		RouterModule.forRoutes([
 			{ path: 'role-permissions', module: RolePermissionsModule }
 		]),
-		forwardRef(() => TypeOrmModule.forFeature([RolePermissions, User])),
+		forwardRef(() => TypeOrmModule.forFeature([ RolePermissions ])),
 		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [RolePermissionsController],
-	providers: [RolePermissionsService, UserService],
-	exports: [RolePermissionsService]
+	providers: [RolePermissionsService],
+	exports: [TypeOrmModule, RolePermissionsService]
 })
 export class RolePermissionsModule {}

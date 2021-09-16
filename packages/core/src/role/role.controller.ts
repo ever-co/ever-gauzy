@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, IRole, PermissionsEnum } from '@gauzy/contracts';
 import { RoleService } from './role.service';
 import { CrudController } from './../core/crud';
 import { Role } from './role.entity';
@@ -32,6 +32,21 @@ export class RoleController extends CrudController<Role> {
 	): Promise<Role> {
 		const { findInput } = data;
 		return this.roleService.findOne({ where: findInput });
+	}
+
+	@ApiOperation({ summary: 'Find roles.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found roles.',
+		type: Role
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAll(): Promise<IPagination<IRole>> {
+		return this.roleService.findAll();
 	}
 
 	@ApiOperation({ summary: 'Import role from self hosted to gauzy cloud hosted in bulk' })

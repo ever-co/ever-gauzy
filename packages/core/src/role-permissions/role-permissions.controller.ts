@@ -7,6 +7,7 @@ import {
 import {
 	Body,
 	Controller,
+	Delete,
 	Get,
 	HttpCode,
 	HttpStatus,
@@ -17,6 +18,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UpdateResult } from 'typeorm';
 import { CrudController } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -32,6 +34,24 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 		private readonly rolePermissionsService: RolePermissionsService
 	) {
 		super(rolePermissionsService);
+	}
+
+	@ApiOperation({ summary: 'Import role-permissions from self hosted to gauzy cloud hosted in bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Role Permissions have been successfully imported.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The request body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
+	@Post('import/migrate')
+	async importRole(
+		@Body() input: any
+	) {
+		return await this.rolePermissionsService.migrateImportRecord(input);
 	}
 
 	@ApiOperation({ summary: 'Find role permissions.' })
@@ -67,9 +87,8 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body() entity: IRolePermissionCreateInput,
-		...options: any[]
-	): Promise<RolePermissions> {
+		@Body() entity: IRolePermissionCreateInput
+	): Promise<IRolePermission> {
 		return this.rolePermissionsService.create(entity);
 	}
 
@@ -93,27 +112,18 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: RolePermissions,
-		...options: any[]
-	): Promise<any> {
-		return this.rolePermissionsService.update(id, entity);
+		@Body() entity: RolePermissions
+	): Promise<UpdateResult | IRolePermission> {
+		return await this.rolePermissionsService.updatePermission(id, entity);
 	}
 
-	@ApiOperation({ summary: 'Import role-permissions from self hosted to gauzy cloud hosted in bulk' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Role Permissions have been successfully imported.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The request body may contain clues as to what went wrong'
-	})
+	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
-	@Post('import/migrate')
-	async importRole(
-		@Body() input: any
-	) {
-		return await this.rolePermissionsService.migrateImportRecord(input);
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
+		return await this.rolePermissionsService.deletePermission(id);
 	}
 }
