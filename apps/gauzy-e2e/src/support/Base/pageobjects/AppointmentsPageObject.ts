@@ -29,5 +29,7 @@ export const AppointmentsPage = {
 	saveButtonCss: 'button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	appointmentConfirmedCss: 'nb-card h4.ng-star-inserted',
-	appointmentDetails: '.p-2 span'
+	appointmentDetails: '.p-2 span',
+	selectEmployeeDropdownOptionCss: 'nb-option-list > ul.option-list > nb-option'
+
 };

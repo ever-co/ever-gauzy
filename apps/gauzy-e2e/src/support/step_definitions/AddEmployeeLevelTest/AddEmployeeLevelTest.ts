@@ -48,7 +48,7 @@ Then('User will see Create button', () => {
 
 // Add new tag
 When('User go to Tags page', () => {
-	dashboardPage.verifyAccountingDashboard();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/organization/tags');
 });
 

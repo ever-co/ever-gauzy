@@ -292,8 +292,6 @@ And('User clears filter input', () => {
 	manageInterviewsPage.clearFilterInputField();
 });
 
-
-//fix here
 // Add Future Interview
 And('User can enter value for title for a future interview', () => {
 	manageInterviewsPage.enterTitleInputData(futureInterviewTitle);

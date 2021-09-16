@@ -18,6 +18,10 @@ Given('Login with default credentials', () => {
 And('User can visit File storage page', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible()
 	cy.visit('/#/pages/settings/file-storage', { timeout: pageLoadTimeout });
+	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
+	cy.intercept('GET', '/api/employee/user/*').as('waitUsers');
+	cy.intercept('GET', '/api/user/me*').as('waitMe');
+	cy.wait(['@waitMe','@waitUserOrganization', '@waitUsers']);
 });
 
 And('User can verify File storage page', () => {

@@ -54,10 +54,6 @@ Feature: Organization public page test
     When User clicks on save award button
     Then Notification message will appear
     And User can see skills tab
-    When User clicks on skills tab
-    Then User can see skills dropdown
-    When User clicks on skills dropdown
-    Then User can select skills from dropdown options
     And User can see languages tab
     When User clicks on languages tab
     Then User can see add language button
