@@ -5,28 +5,29 @@ import {
 	OnInit,
 	AfterViewInit
 } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import {
 	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
 	NbMenuItem
 } from '@nebular/theme';
-import { LayoutService } from '../../../@core/utils';
-import { Router, NavigationEnd } from '@angular/router';
+import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	CrudActionEnum,
 	IOrganization,
+	IUser,
 	PermissionsEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { IUser } from '@gauzy/contracts';
-import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
-import * as moment from 'moment';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '../../../../environments/environment';
 import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
+import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -44,9 +45,8 @@ import {
 	ISelectorVisibility,
 	SelectorBuilderService
 } from '../../../@core/services';
-import { combineLatest, Subject } from 'rxjs';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { LayoutService } from '../../../@core/utils';
+import { TranslationBaseComponent } from '../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -599,8 +599,10 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 
 	private _checkTimerStatus() {
 		const { employee, tenantId } = this.user;
-		if (employee && employee.id) {
-			this.timeTrackerService.checkTimerStatus(tenantId);
+		if (!!this.store.hasPermission(PermissionsEnum.TIME_TRACKER)) {
+			if (employee && employee.id) {
+				this.timeTrackerService.checkTimerStatus(tenantId);
+			}
 		}
 	}
 
