@@ -313,24 +313,6 @@ And('User can see skills tab', () => {
 	organizationPublicPage.skillsTabVisible();
 });
 
-When('User clicks on skills tab', () => {
-	organizationPublicPage.clickSkillsTab();
-});
-
-Then('User can see skills dropdown', () => {
-	organizationPublicPage.skillsDropdownVisible();
-});
-
-When('User clicks on skills dropdown', () => {
-	organizationPublicPage.clickSkillsDropdown();
-});
-
-Then('User can select skills from dropdown options', () => {
-	organizationPublicPage.selectSkillsFromDropdownOptions(
-		OrganizationPublicPageData.skills
-	);
-});
-
 And('User can see languages tab', () => {
 	organizationPublicPage.languagesTabVisible();
 });
