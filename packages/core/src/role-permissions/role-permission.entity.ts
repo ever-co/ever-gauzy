@@ -9,7 +9,7 @@ import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { Role, TenantBaseEntity } from '../core/entities/internal';
 
 @Entity('role_permission')
-export class RolePermissions
+export class RolePermission
 	extends TenantBaseEntity
 	implements IRolePermission {
 	@ApiProperty({ type: () => String, enum: RolesEnum })
@@ -34,7 +34,7 @@ export class RolePermissions
 	role!: Role;
 
 	@ApiProperty({ type: () => String, enum: RolesEnum })
-	@RelationId((it: RolePermissions) => it.role)
+	@RelationId((it: RolePermission) => it.role)
 	@IsEnum(RolesEnum)
 	@IsNotEmpty()
 	@IsString()

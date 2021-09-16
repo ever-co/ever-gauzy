@@ -23,13 +23,13 @@ import { CrudController } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { RolePermissions } from './role-permissions.entity';
+import { RolePermission } from './role-permission.entity';
 import { RolePermissionsService } from './role-permissions.service';
 
 @ApiTags('Role')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class RolePermissionsController extends CrudController<RolePermissions> {
+export class RolePermissionsController extends CrudController<RolePermission> {
 	constructor(
 		private readonly rolePermissionsService: RolePermissionsService
 	) {
@@ -58,7 +58,7 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found role permissions.',
-		type: RolePermissions
+		type: RolePermission
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -112,7 +112,7 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: RolePermissions
+		@Body() entity: RolePermission
 	): Promise<UpdateResult | IRolePermission> {
 		return await this.rolePermissionsService.updatePermission(id, entity);
 	}

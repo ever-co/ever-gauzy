@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { RolePermissionsController } from './role-permissions.controller';
-import { RolePermissions } from './role-permissions.entity';
+import { RolePermission } from './role-permission.entity';
 import { RolePermissionsService } from './role-permissions.service';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -13,7 +13,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		RouterModule.forRoutes([
 			{ path: 'role-permissions', module: RolePermissionsModule }
 		]),
-		forwardRef(() => TypeOrmModule.forFeature([ RolePermissions ])),
+		forwardRef(() => TypeOrmModule.forFeature([ RolePermission ])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule

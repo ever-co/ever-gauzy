@@ -120,7 +120,7 @@ import {
 	RequestApprovalEmployee,
 	RequestApprovalTeam,
 	Role,
-	RolePermissions,
+	RolePermission,
 	Screenshot,
 	Skill,
 	Tag,
@@ -491,8 +491,8 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
 
-		@InjectRepository(RolePermissions)
-		private readonly rolePermissionsRepository: Repository<RolePermissions>,
+		@InjectRepository(RolePermission)
+		private readonly rolePermissionRepository: Repository<RolePermission>,
 
 		@InjectRepository(Report)
 		private readonly reportRepository: Repository<Report>,
@@ -1338,7 +1338,7 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.requestApprovalTeamRepository
 			},
 			{
-				repository: this.rolePermissionsRepository
+				repository: this.rolePermissionRepository
 			},
 			{
 				repository: this.roleRepository

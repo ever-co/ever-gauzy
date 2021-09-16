@@ -4,7 +4,7 @@ import {
 	FeatureOrganization,
 	ImportRecord,
 	Organization,
-	RolePermissions
+	RolePermission
 } from '../core/entities/internal';
 import { Entity, Column, Index, OneToMany, JoinColumn } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
@@ -37,8 +37,8 @@ export class Tenant extends BaseEntity implements ITenant {
 	@JoinColumn()
 	organizations?: IOrganization[];
 
-	@ApiProperty({ type: () => RolePermissions })
-	@OneToMany(() => RolePermissions, (rolePermission) => rolePermission.tenant, {
+	@ApiProperty({ type: () => RolePermission })
+	@OneToMany(() => RolePermission, (rolePermission) => rolePermission.tenant, {
 		cascade: true
 	})
 	rolePermissions?: IRolePermission[];

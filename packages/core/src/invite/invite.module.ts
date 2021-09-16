@@ -5,67 +5,50 @@ import { RouterModule } from 'nest-router';
 import { AuthService } from '../auth/auth.service';
 import { EmailModule } from '../email/email.module';
 import { EmailService } from '../email/email.service';
-import { Employee } from '../employee/employee.entity';
-import { EmployeeService } from '../employee/employee.service';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { OrganizationContactService } from '../organization-contact/organization-contact.service';
-import { OrganizationDepartment } from '../organization-department/organization-department.entity';
-import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
-import { OrganizationProject } from '../organization-project/organization-project.entity';
-import { OrganizationProjectService } from '../organization-project/organization-project.service';
 import { SharedModule } from '../shared';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
-import { UserOrganization } from '../user-organization/user-organization.entity';
-import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
+import { RoleModule } from './../role/role.module';
+import { UserModule } from './../user/user.module';
+import { EmployeeModule } from './../employee/employee.module';
+import { OrganizationProjectModule } from './../organization-project/organization-project.module';
+import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
+import { OrganizationDepartmentModule } from './../organization-department/organization-department.module';
+import { OrganizationModule } from './../organization/organization.module';
+import { UserOrganizationModule } from './../user-organization/user-organization.module';
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
-import { Organization } from '../organization/organization.entity';
-import { OrganizationService } from '../organization/organization.service';
-import { Role } from '../role/role.entity';
-import { RoleService } from '../role/role.service';
-import { RolePermissionsService } from '../role-permissions/role-permissions.service';
-import { RolePermissions } from '../role-permissions/role-permissions.entity';
-import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/invite', module: InviteModule }]),
-		TypeOrmModule.forFeature([
-			Role,
-			Invite,
-			Employee,
-			User,
-			UserOrganization,
-			OrganizationProject,
-			OrganizationContact,
-			OrganizationDepartment,
-			Organization,
-			RolePermissions
+		RouterModule.forRoutes([
+			{ path: '/invite', module: InviteModule }
 		]),
+		TypeOrmModule.forFeature([ Invite ]),
 		SharedModule,
 		CqrsModule,
 		EmailModule,
-		TenantModule
+		TenantModule,
+		UserModule,
+		RoleModule,
+		EmployeeModule,
+		OrganizationModule,
+		OrganizationProjectModule,
+		OrganizationContactModule,
+		OrganizationDepartmentModule,
+		UserOrganizationModule
 	],
 	controllers: [InviteController],
 	providers: [
 		InviteService,
 		...CommandHandlers,
-		EmployeeService,
-		RoleService,
-		UserService,
 		AuthService,
-		UserOrganizationService,
 		EmailService,
-		OrganizationProjectService,
-		OrganizationContactService,
-		OrganizationDepartmentService,
-		OrganizationService,
-		RolePermissionsService
 	],
-	exports: [InviteService]
+	exports: [
+		TypeOrmModule,
+		InviteService
+	]
 })
 export class InviteModule {}

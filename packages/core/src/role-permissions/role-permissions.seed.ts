@@ -5,7 +5,7 @@
 import { IRole, ITenant, IRolePermission } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
-import { RolePermissions } from './role-permissions.entity';
+import { RolePermission } from './role-permission.entity';
 
 export const createRolePermissions = async (
 	connection: Connection,
@@ -20,7 +20,7 @@ export const createRolePermissions = async (
 			);
 			if (role) {
 				r.defaultEnabledPermissions.forEach((p) => {
-					const rolePermission = new RolePermissions();
+					const rolePermission = new RolePermission();
 					rolePermission.roleId = role.id;
 					rolePermission.permission = p;
 					rolePermission.enabled = true;
