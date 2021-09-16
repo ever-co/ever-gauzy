@@ -8,7 +8,6 @@ import {
 	verifyText,
 	enterInputConditionally,
 	clickKeyboardBtnByKeycode,
-	verifyTextNotExisting,
 	clickElementByText,
 	verifyElementNotExist
 } from '../utils/util';
