@@ -1,6 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
-import { Store } from '../../../@core/services/store.service';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
@@ -18,15 +16,20 @@ import {
 	IProjectsStatistics,
 	ITasksStatistics,
 	IGetManualTimesStatistics,
-	IManualTimesStatistics
+	IManualTimesStatistics,
+	IUser
 } from '@gauzy/contracts';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import _ from 'underscore';
-import { progressStatus, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, progressStatus, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
-import { GalleryService } from '../../../@shared/gallery/gallery.service';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { TranslateService } from '@ngx-translate/core';
+import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
+import { Store } from '../../../@core/services';
+import { GalleryService } from '../../../@shared/gallery';
+import { TranslationBaseComponent } from '../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +37,10 @@ import { NgxPermissionsService } from 'ngx-permissions';
 	templateUrl: './time-tracking.component.html',
 	styleUrls: ['./time-tracking.component.scss']
 })
-export class TimeTrackingComponent implements OnInit, OnDestroy {
+export class TimeTrackingComponent 
+	extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+	
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
 	activities: IActivitiesStatistics[] = [];
 	projects: IProjectsStatistics[] = [];
@@ -42,8 +48,10 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	members: IMembersStatistics[] = [];
 	manualTimes: IManualTimesStatistics[] = [];
 	counts: ICountsStatistics;
+
 	organization: IOrganization;
-	updateLogs$: Subject<any> = new Subject();
+	logs$: Subject<any> = new Subject();
+
 	timeSlotLoading = true;
 	activitiesLoading = true;
 	projectsLoading = true;
@@ -51,60 +59,81 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	memberLoading = true;
 	countsLoading = true;
 	manualTimeLoading = true;
+
 	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
-	startDate: Date;
-	endDate: Date;
+
+	startDate: Date = moment().startOf('week').toDate();
+	endDate: Date = moment().endOf('week').toDate();
+
 	employeeId: string = null;
 	projectId: string = null;
 	tenantId: string = null;
 	organizationId: string = null;
 	isAllowedMembers: boolean;
 
+	private autoRefresh$: Subscription;
+	autoRefresh: boolean = false;
+
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
 		private readonly store: Store,
 		private readonly galleryService: GalleryService,
-		private readonly ngxPermissionsService: NgxPermissionsService
+		private readonly ngxPermissionsService: NgxPermissionsService,
+		public readonly translateService: TranslateService,
+		private readonly changeRef: ChangeDetectorRef
 	) {
-		this.startDate = moment().startOf('week').toDate();
-		this.endDate = moment().endOf('week').toDate();
+		super(translateService);
 	}
 
 	ngOnInit() {
 		this.ngxPermissionsService
-			.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
 			.then((value: boolean) => {
 				this.isAllowedMembers = value;
 			});
-		this.updateLogs$
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.tenantId = user.tenantId)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.logs$
 			.pipe(
 				debounceTime(800),
 				tap(() => this.getStatistics()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
 		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
 				filter(([organization]) => !!organization),
+				distinctUntilChange(),
 				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
+					this.organization = organization;
 
-						this.organizationId = organization.id;
-						this.tenantId = this.store.user.tenantId;
-						this.employeeId = employee ? employee.id : null;
-						this.projectId = project ? project.id : null;
+					this.organizationId = organization.id;
+					this.employeeId = employee ? employee.id : null;
+					this.projectId = project ? project.id : null;
 
-						this.updateLogs$.next();
-					}
+					this.logs$.next();
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewChecked(): void {
+		this.changeRef.detectChanges();
 	}
 
 	getStatistics() {
@@ -117,6 +146,22 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 
 		if (this.isAllowedMembers) {
 			this.getMembers();
+		}
+	}
+
+	setAutoRefresh(value) {
+		if (value) {
+			this.autoRefresh$ = timer(0, 60000)
+				.pipe(
+					filter((timer) => !!timer),
+					tap(() => this.logs$.next()),
+					untilDestroyed(this)
+				)
+				.subscribe();
+		} else {
+			if (this.autoRefresh$) {
+				this.autoRefresh$.unsubscribe();
+			}
 		}
 	}
 
@@ -141,7 +186,7 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	onDelete() {
-		this.updateLogs$.next();
+		this.logs$.next();
 	}
 
 	getCounts() {

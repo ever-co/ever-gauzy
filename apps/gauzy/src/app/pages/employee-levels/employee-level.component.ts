@@ -20,7 +20,7 @@ import { EmployeeLevelService, Store, ToastrService } from '../../@core/services
 @Component({
 	selector: 'ga-employee-level',
 	templateUrl: './employee-level.component.html',
-	styles: [':host > nb-card { min-height: 47.50rem; }']
+	styleUrls: ['employee-level.component.scss']
 })
 export class EmployeeLevelComponent
 	extends TranslationBaseComponent
@@ -35,6 +35,7 @@ export class EmployeeLevelComponent
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 

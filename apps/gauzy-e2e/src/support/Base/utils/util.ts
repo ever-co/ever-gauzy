@@ -49,7 +49,6 @@ export const verifyTextByIndex = (loc, data, index) => {
 };
 
 export const clickButton = (loc) => {
-	cy.wait(execTimeout);
 	cy.get(loc, { timeout: taskTimeout }).click();
 };
 
@@ -248,4 +247,20 @@ export const verifyElementIsNotVisibleByIndex = (loc, index: number) => {
 
 export const clickButtonWithForce = (loc) => {
 	cy.get(loc, { timeout: taskTimeout }).click({ force: true });
+};
+
+export const verifyElementIfVisible = (locOne, locTwo) => {
+	cy.get(locTwo, { timeout: taskTimeout }).then((loc) => {
+		if(loc.is(locOne)){
+			cy.get(locOne, { timeout: defaultCommandTimeout}).should('be.visible');
+		}
+	});
+};
+
+export const clickButtonDouble = (loc) => {
+	cy.get(loc, { timeout: requestTimeout }).dblclick()
+}
+
+export const waitForDropdownToLoad = (loc: any) => {
+	cy.get(loc, { timeout: defaultCommandTimeout}).should('have.length.greaterThan', 1);
 };

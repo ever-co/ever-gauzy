@@ -27,5 +27,6 @@ export const TimeTrackingPage = {
 	verifyWorkCss: 'nb-list[role="list"] > nb-list-item[role="listitem"] > div.w-100 > div[class="row align-items-center"] > div[class="col text-left"]',
 	verifyTimeCss: 'div[class="col-sm-4 col-md-3 col-lg"] > nb-card > nb-card-body > div.h1',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyManualTimeCss: 'div[class="row border-bottom py-3 align-items-center ng-star-inserted"] > div.col'
+	verifyManualTimeCss: 'div[class="row border-bottom py-3 align-items-center ng-star-inserted"] > div.col',
+	headerImgCss: 'div.header-container'
 };

@@ -6,7 +6,7 @@ import {
 	RelationId,
 	ManyToOne
 } from 'typeorm';
-import { IUserOrganization } from '@gauzy/contracts';
+import { IUser, IUserOrganization } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
@@ -15,19 +15,7 @@ import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 export class UserOrganization
 	extends TenantOrganizationBaseEntity
 	implements IUserOrganization {
-	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	user?: User;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	@RelationId((userOrganization: UserOrganization) => userOrganization.user)
-	userId: string;
-
+	
 	@ApiProperty({ type: () => Boolean, default: true })
 	@Index()
 	@Column({ default: true })
@@ -37,4 +25,29 @@ export class UserOrganization
 	@Index()
 	@Column({ default: true })
 	isActive: boolean;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * User
+	 */
+	@ApiProperty({ type: () => User })
+	@ManyToOne(() => User, (user) => user.organizations, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	user?: IUser;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: UserOrganization) => it.user)
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	userId: string;
 }

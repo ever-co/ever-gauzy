@@ -7,6 +7,7 @@ import { IBasePerTenantEntityModel } from './base-entity.model';
 import { ITag } from './tag-entity.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
+import { IOrganization } from './organization.model';
 
 export interface IUser extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
@@ -27,7 +28,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	paymentsId?: string;
 	preferredComponentLayout?: string;
 	fullName?: string;
-
+	organizations?: IOrganization[];
 	isImporting?: boolean;
 	sourceId?: string;
 }

@@ -20,7 +20,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 @Component({
 	selector: 'ga-positions',
 	templateUrl: './positions.component.html',
-	styles: [':host > nb-card { min-height: 47.50rem; }']
+	styleUrls: ['positions.component.scss']
 })
 export class PositionsComponent
 	extends TranslationBaseComponent
@@ -35,6 +35,7 @@ export class PositionsComponent
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	selectedOrganization: IOrganization;

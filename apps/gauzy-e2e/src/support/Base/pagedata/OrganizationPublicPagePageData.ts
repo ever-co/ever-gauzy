@@ -1,6 +1,7 @@
 export const OrganizationPublicPagePageData = {
 	copyrightSymbol: ' ©',
-	companySize: '15',
+	companySize: 15,
+	companySizeStr: '15',
 	yearFounded: 2019,
 	banner: 'We are an engineering company',
 	minimumProjectSizeUSD: 'USD 5000+',

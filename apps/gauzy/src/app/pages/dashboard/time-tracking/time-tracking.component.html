@@ -1,9 +1,34 @@
 <nb-card class="dashboard-card-scroll">
 	<nb-card-header>
-		<h4> <ngx-header-title> {{ 'TIMESHEET.TIME_TRACKING' | translate }} </ngx-header-title> </h4>
-		<div>{{ startDate | date }} - {{ endDate | date }}</div>
+		<h4>
+			<ngx-header-title>
+				{{ 'TIMESHEET.TIME_TRACKING' | translate }}
+			</ngx-header-title>
+		</h4>
+		<div>{{ startDate | dateFormat }} - {{ endDate | dateFormat }}</div>
 	</nb-card-header>
 	<nb-card-body>
+		<div class="row">
+			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
+				<nb-toggle
+					class="mr-3"
+					[(ngModel)]="autoRefresh"
+					(checkedChange)="setAutoRefresh($event)"
+				>
+					{{ 'BUTTONS.AUTO_REFRESH' | translate }}
+				</nb-toggle>
+				<button
+					[disabled]="autoRefresh"
+					type="button"
+					nbButton
+					status="primary"
+					(click)="logs$.next()"
+				>
+					<nb-icon icon="refresh-outline"></nb-icon>
+					{{ 'BUTTONS.REFRESH' | translate }}
+				</button>
+			</div>
+		</div>
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="row">

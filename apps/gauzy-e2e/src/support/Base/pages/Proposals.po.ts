@@ -8,7 +8,10 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyTextNotExisting,
-	verifyText
+	verifyText,
+	clickButtonWithForce,
+	waitForDropdownToLoad,
+	clickButtonDouble
 } from '../utils/util';
 import { ProposalsPage } from '../pageobjects/ProposalsPageObject';
 import { CustomCommands } from '../../../support/commands';
@@ -26,7 +29,7 @@ export const registerProposalButtonVisible = () => {
 };
 
 export const clickRegisterProposalButton = () => {
-	clickButton(ProposalsPage.registerProposalButtonCss);
+	clickButtonWithForce(ProposalsPage.registerProposalButtonCss);
 };
 
 export const selectEmployeeDropdownVisible = () => {
@@ -34,7 +37,9 @@ export const selectEmployeeDropdownVisible = () => {
 };
 
 export const clickEmployeeDropdown = () => {
+	clickButtonDouble(ProposalsPage.selectEmployeeDropdownCss);
 	clickButton(ProposalsPage.selectEmployeeDropdownCss);
+	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss)
 };
 
 export const selectEmployeeFromDrodpwon = (index) => {
@@ -261,3 +266,8 @@ export const selectEmployeeFromMultiSelectDropdown = (index) => {
 		index
 	);
 };
+
+export const verifyEmployeeDropdownVisible = () => {
+	verifyElementIsVisible(ProposalsPage.selectEmployeeDropdownOptionCss)
+	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss)
+}

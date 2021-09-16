@@ -45,11 +45,13 @@ let tray:Tray;
 const pathWindow: {
 	gauzyUi: string,
 	ui: string,
-	dir: string
+	dir: string,
+	timeTrackerUi: string
 } = {
 	gauzyUi: app.isPackaged ? path.join(__dirname, '../data/ui/index.html') : path.join(__dirname, './data/ui/index.html'),
 	ui: path.join(__dirname, 'index.html'),
-	dir: app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui')
+	dir: app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui'),
+	timeTrackerUi: path.join(__dirname, 'index.html')
 };
 
 const runSetup = () => {
@@ -136,57 +138,6 @@ const updateConfigUi = (config) => {
 	
 }
 
-const createServer = (typeServer) => {
-	let fileServe = 'desktop-server-ui.js';
-	let serviceName = `GauzyServe${typeServer}`;
-	if (typeServer === 'Api') {
-		fileServe = 'desktop-server-api.js';
-	}
-	const platform = os.platform();
-	const serverPath = path.join(docPath, 'preload', fileServe);
-	console.log('server location', serverPath);
-	let Service:any | null = null;
-	let svc:any | null = null;
-	switch (platform) {
-		case 'win32':
-			Service = require('node-windows').Service;
-			break;
-		case 'darwin':
-			Service = require('node-mac').Service;
-			break;
-		default:
-			break;
-	}
-
-	svc = new Service({
-		name: serviceName,
-		description: 'gauzy ui service',
-		script: serverPath
-	});
-	if (svc.exists) {
-		svc.on('uninstall',function(){
-			console.log('Uninstall complete.');
-			console.log('The service exists: ',svc.exists);
-		  });
-		svc.uninstall();
-	} else {
-		svc.on('install',function(){
-			console.log('on install');
-			svc.on('start', () => {
-				console.log('service start');
-			})
-			svc.start();
-		});
-		svc.on('error', () => {
-			console.log('service install error');
-		});
-		svc.on('invalidinstallation ', () => {
-			console.log('service invalid installation');
-		})
-		svc.install();
-	}
-}
-
 const runServer = () => {
 	const envVal = getEnvApi();
 	const uiPort = getUiPort();
@@ -198,6 +149,8 @@ const runServer = () => {
 
 const getEnvApi = () => {
 	const config = LocalStore.getStore('configs');
+	updateConfigUi(config);
+	const addsConfig = LocalStore.getAdditionalConfig();
 	return {
 		IS_ELECTRON: 'true',
         DB_PATH: sqlite3filename,
@@ -208,6 +161,7 @@ const getEnvApi = () => {
         DB_USER: config.dbUsername,
         DB_PASS: config.dbPassword,
         PORT: config.port ? config.port.toString() : '',
+		...addsConfig
 	}
 }
 

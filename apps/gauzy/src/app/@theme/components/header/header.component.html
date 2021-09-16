@@ -97,7 +97,7 @@
 		></nb-action>
 
 		<nb-action
-			*ngIf="user?.employee?.id && !isElectron"
+			*ngIf="user?.employee?.id && !isElectron && hasPermissionTimeTracker"
 			class="timer-action"
 			(click)="toggleTimerWindow()"
 		>
@@ -162,5 +162,7 @@
 </div>
 
 <ng-template [ngIf]="user?.employee?.id">
-	<ngx-time-tracker></ngx-time-tracker>
+	<ng-template ngxPermissionsOnly="TIME_TRACKER">
+		<ngx-time-tracker></ngx-time-tracker>
+	</ng-template>
 </ng-template>

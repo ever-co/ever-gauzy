@@ -1,4 +1,5 @@
 @import "./themes";
+@import 'var';
 
 ::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
@@ -255,7 +256,17 @@ nb-card-body {
 // ng smart table scroll container
 .table-scroll-container, .grid-scroll-container {
 	overflow-y: auto;
-
+  max-height: calc(70vh - 100px);
+  @include respond(dsk) {
+    max-height: calc(70vh - 132px);
+  }
+  table thead tr:nth-of-type(1) {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2 !important;
+    box-shadow: inset 0 1px 0 #edf1f7 !important;
+  }
 	table thead {
 		position: sticky;
 		z-index: 100;
@@ -272,4 +283,10 @@ nb-card-body {
 	table tbody:nth-of-type(1) tr:nth-of-type(1) td {
 		border-top: none !important;
 	}
+  .nb-theme-default ng2-smart-table thead tr:first-child {
+    border-top: 1px solid#edf1f7 !important;
+	}
+  table tbody:first-of-type tr:first-child {
+    border-top: 1px solid #edf1f7 !important;
+  }
 }

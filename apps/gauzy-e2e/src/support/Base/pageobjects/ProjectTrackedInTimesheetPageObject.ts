@@ -13,7 +13,6 @@ export const ProjectTrackedInTimesheetPage = {
     startTimerBtnCss: 'div.actions > div.toggle > button[class="btn btn-rounded btn-success"]',
     stopTimerBtnCss: 'div.actions > div.toggle > button[class="btn btn-rounded btn-danger"]',
     viewTimesheetBtnCss: 'div.view-log-button > a[href="#/pages/employees/timesheets"]',
-    projectNameCss: 'div[class="col project-name"] > span.ng-star-inserted'
-    
-
+    projectNameCss: 'div[class="col project-name"] > span.ng-star-inserted',
+    headerImgCss: 'div.header-container'
 }

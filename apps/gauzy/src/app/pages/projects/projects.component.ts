@@ -1,4 +1,16 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { filter, first, tap } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IEmployee,
 	IOrganization,
@@ -9,28 +21,19 @@ import {
 	ComponentLayoutStyleEnum,
 	CrudActionEnum
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { filter, first, tap } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../@shared/language-base';
 import {
-	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
-} from '@angular/router';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { Store } from '../../@core/services/store.service';
-import { OrganizationContactService } from '../../@core/services/organization-contact.service';
-import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
-import { EmployeesService } from '../../@core/services';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { DatePipe } from '@angular/common';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { OrganizationProjectStore } from '../../@core/services/organization-projects-store.service';
-import { ToastrService } from '../../@core/services/toastr.service';
+	EmployeesService,
+	OrganizationContactService,
+	OrganizationProjectsService,
+	OrganizationProjectStore,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import { ComponentEnum } from '../../@core/constants';
+import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-projects',
@@ -40,14 +43,15 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class ProjectsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	loading: boolean;
 	settingsSmartTable: object;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	organization: IOrganization;
 	showAddCard: boolean;
-	projects: IOrganizationProject[];
-	organizationContacts: IOrganizationContact[];
+	projects: IOrganizationProject[] = [];
+	organizationContacts: IOrganizationContact[] = [];
 	employees: IEmployee[] = [];
 	projectToEdit: IOrganizationProject;
 	viewPrivateProjects: boolean;
@@ -67,13 +71,13 @@ export class ProjectsComponent
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
-		private store: Store,
+		private readonly store: Store,
 		private readonly employeesService: EmployeesService,
-		readonly translateService: TranslateService,
-		private route: ActivatedRoute,
-		private router: Router,
-		private dialogService: NbDialogService,
-		private organizationProjectStore: OrganizationProjectStore
+		public readonly translateService: TranslateService,
+		private readonly route: ActivatedRoute,
+		private readonly router: Router,
+		private readonly dialogService: NbDialogService,
+		private readonly organizationProjectStore: OrganizationProjectStore
 	) {
 		super(translateService);
 		this.setView();

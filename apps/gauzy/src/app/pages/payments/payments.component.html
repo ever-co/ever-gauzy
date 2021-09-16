@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'PAYMENTS_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
@@ -27,23 +27,27 @@
 			</ng-container>
 		</div>
 		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
-			<ng2-smart-table
-				class="payments-table"
-				[settings]="settingsSmartTable"
-				[source]="smartTableSource"
-				style="cursor: pointer"
-				(userRowSelect)="selectPayment($event)"
-				#paymentsTable
-			>
-			</ng2-smart-table>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					class="payments-table"
+					[settings]="settingsSmartTable"
+					[source]="smartTableSource"
+					style="cursor: pointer"
+					(userRowSelect)="selectPayment($event)"
+					#paymentsTable
+				>
+				</ng2-smart-table>
+			</div>			
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="payments"
-				[buttonTemplate]="actionButtons"
-				[cardSize]="'big'">
-			</ga-card-grid>
+			<div class="grid-scroll-container">
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="payments"
+					[buttonTemplate]="actionButtons"
+					[cardSize]="'big'">
+				</ga-card-grid>
+			</div>			
 			<div 
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID" 
 				class="pagination-container"

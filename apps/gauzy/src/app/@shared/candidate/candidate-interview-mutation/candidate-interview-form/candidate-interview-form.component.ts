@@ -5,11 +5,13 @@ import {
 	ChangeDetectorRef,
 	Input,
 	Output,
-	EventEmitter
+	EventEmitter,
+	AfterViewInit
 } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { takeUntil, first } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { filter, first, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import * as moment from 'moment';
 import {
 	IEmployee,
 	IDateRange,
@@ -21,45 +23,73 @@ import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-candidate-interview-form',
 	templateUrl: 'candidate-interview-form.component.html',
 	styleUrls: ['candidate-interview-form.component.scss']
 })
-export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
+export class CandidateInterviewFormComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	@Input() editData: ICandidateInterview;
 	@Input() isCalendar: boolean;
-	@Input() interviewList: ICandidateInterview[];
 	@Output() titleExist = new EventEmitter<any>();
 
-	yesterday = new Date();
+	/*
+	* Getter & Setter for interviews
+	*/
+	_interviews: ICandidateInterview[] = [];
+	get interviews(): ICandidateInterview[] {
+		return this._interviews;
+	}
+	@Input() set interviews(value: ICandidateInterview[]) {
+		this._interviews = value;
+	}
+
+	yesterday = moment().subtract(1, 'days').toDate();
 	form: any;
-	employees: IEmployee[];
-	employeeIds: string[];
+	employees: IEmployee[] = [];
+	employeeIds: string[] = [];
 	isMeeting: boolean;
-	interviewNames: string[];
+	interviewNames: string[] = [];
 	selectedEmployeeIds = null;
 	isTitleExisted: boolean;
 	selectedRange: IDateRange = { start: null, end: null };
-	private _ngDestroy$ = new Subject<void>();
-	selectedOrganization: IOrganization;
+	organization: IOrganization;
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private dialogService: NbDialogService,
-		private employeeService: EmployeesService,
-		private cdRef: ChangeDetectorRef,
-		private store: Store
+		private readonly dialogService: NbDialogService,
+		private readonly employeeService: EmployeesService,
+		private readonly cdRef: ChangeDetectorRef,
+		private readonly store: Store
 	) {}
 
 	ngOnInit() {
-		this.selectedOrganization = this.store.selectedOrganization;
-
-		this.yesterday.setDate(this.yesterday.getDate() - 1);
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loadEmployees()),
+				tap(() => this.loadInterviewNames()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.loadFormData();
-		this.form.valueChanges.subscribe((item) => {
+	
+		//if editing
+		if (this.editData) {
+			this.employeeIds = this.editData.interviewers
+				? this.editData.interviewers.map((item) => item.employeeId)
+				: [];
+		}
+	}
+
+	ngAfterViewInit() {
+		this.form.get('title').valueChanges.subscribe((title: string) => {
 			for (let i = 0; i < this.interviewNames.length; i++) {
-				if (this.interviewNames[i] === item.title.toLocaleLowerCase()) {
+				if (this.interviewNames[i] === title.toLocaleLowerCase()) {
 					if (
 						this.editData &&
 						this.editData.title === this.form.get('title').value
@@ -77,25 +107,28 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 				}
 			}
 		});
+	}
 
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+	async loadEmployees() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		this.employeeService
 			.getAll(['user'], { organizationId, tenantId })
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
+			.pipe(
+				tap(({ items }) => this.employees = items),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	loadInterviewNames() {
 		this.interviewNames = [];
-		this.interviewList.forEach((interview) => {
+		this.interviews.forEach((interview) => {
 			this.interviewNames.push(interview.title.toLocaleLowerCase());
 		});
-		//if editing
-		if (this.editData) {
-			this.employeeIds = this.editData.interviewers
-				? this.editData.interviewers.map((item) => item.employeeId)
-				: [];
-		}
 	}
+
 	async findTime() {
 		const dialog = this.dialogService.open(CandidateCalendarInfoComponent);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -133,8 +166,6 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			this.form.patchValue({ location: '' });
 		}
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+
+	ngOnDestroy() { }
 }

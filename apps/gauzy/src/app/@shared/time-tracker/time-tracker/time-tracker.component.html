@@ -13,78 +13,82 @@
 		</div>
 		<form #form="ngForm">
 			<div class="timer-container form-group pr-4">
-				<div class="time-tracker" *ngIf="(trackType$ | async) == 'TRACKED'">
-					<div class="is_billable">
-						<button
-							nbButton
-							type="button"
-							(click)="
-								$event.stopPropagation(); isBillable = !isBillable
-							"
-							size="small"
-							[status]="isBillable ? 'primary' : 'basic'"
-							[nbTooltip]="'TIMER_TRACKER.IS_BILLABLE' | translate"
-							[disabled]="running"
-						>
-							$
-						</button>
-					</div>
-					<div class="time-count">
-						<span class="current-session">{{ currentSessionTime }}</span>
-						<span class="today-time mt-2" >
-							{{ 'TIMER_TRACKER.TODAY' | translate }}: {{ todaySessionTime }}
-						</span>
-					</div>
-					<div class="actions">
-						<div class="toggle">
+				<ng-template 
+					[ngIf]="(trackType$ | async) == timeLogType.TRACKED"
+				>
+					<div class="time-tracker">
+						<div class="is_billable">
 							<button
-								type="submit"
-								class="btn btn-rounded"
-								[ngClass]="{
-									'btn-danger': running,
-									'btn-success': !running
-								}"
-								[nbTooltip]="
-									(running
-										? 'TIMER_TRACKER.STOP_TIMER'
-										: 'TIMER_TRACKER.START_TIMER'
-									) | translate
+								nbButton
+								type="button"
+								(click)="
+									$event.stopPropagation(); isBillable = !isBillable
 								"
-								(click)="toggleTimer()"
-								[disabled]="isDisable"
-							>
-								<nb-icon 
-									[icon]="(!running 
-										? 'play-circle-outline' 
-										: 'pause-circle-outline')"
-								></nb-icon>
-							</button>
+								size="small"
+								[status]="isBillable ? 'primary' : 'basic'"
+								[nbTooltip]="'TIMER_TRACKER.IS_BILLABLE' | translate"
+								[disabled]="running"
+							> $ </button>
+						</div>
+						<div class="time-count">
+							<span class="current-session">{{ currentSessionTime }}</span>
+							<span class="today-time mt-2" >
+								{{ 'TIMER_TRACKER.TODAY' | translate }}: {{ todaySessionTime }}
+							</span>
+						</div>
+						<div class="actions">
+							<div class="toggle">
+								<button
+									type="submit"
+									class="btn btn-rounded"
+									[ngClass]="{
+										'btn-danger': running,
+										'btn-success': !running
+									}"
+									[nbTooltip]="
+										(running
+											? 'TIMER_TRACKER.STOP_TIMER'
+											: 'TIMER_TRACKER.START_TIMER'
+										) | translate
+									"
+									(click)="toggleTimer()"
+									[disabled]="isDisable"
+								>
+									<nb-icon 
+										[icon]="(!running 
+											? 'play-circle-outline' 
+											: 'pause-circle-outline')"
+									></nb-icon>
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
-				<div class="time-manual" *ngIf="(trackType$ | async) == 'MANUAL'">
-					<h6>{{ 'TIMER_TRACKER.ADD_TIME' | translate }}</h6>
-					<div class="row">
-						<div class="col-12">
-							<ngx-timer-range-picker
-								name="selectedRange"
-								[maxDate]="allowFutureDate ? null : today"
-								[(ngModel)]="selectedRange"
-							></ngx-timer-range-picker>
-						</div>
-	
-						<div class="col-12">
-							<nb-checkbox
-								[(ngModel)]="isBillable"
-								name="isBillable"
-								status="primary"
-								>{{
-									'TIMER_TRACKER.IS_BILLABLE' | translate
-								}}</nb-checkbox
-							>
+				</ng-template>
+				<ng-template
+					[ngIf]="(trackType$ | async) == timeLogType.MANUAL"
+				>
+					<div class="time-manual">
+						<h6>{{ 'TIMER_TRACKER.ADD_TIME' | translate }}</h6>
+						<div class="row">
+							<div class="col-12">
+								<ngx-timer-range-picker
+									name="selectedRange"
+									[maxDate]="allowFutureDate ? null : today"
+									[(ngModel)]="selectedRange"
+								></ngx-timer-range-picker>
+							</div>
+							<div class="col-12">
+								<nb-checkbox
+									[(ngModel)]="isBillable"
+									name="isBillable"
+									status="primary"
+								>
+									{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
+								</nb-checkbox>
+							</div>
 						</div>
 					</div>
-				</div>
+				</ng-template>
 				<div
 					class="mode"
 					*ngxPermissionsOnly="[
@@ -94,10 +98,12 @@
 					<button
 						nbButton
 						type="button"
-						(click)="$event.stopPropagation(); setTimeType('TRACKED')"
+						(click)="$event.stopPropagation(); setTimeType(timeLogType.TRACKED)"
 						size="tiny"
 						[status]="
-							(trackType$ | async) == 'TRACKED' ? 'primary' : 'basic'
+							(trackType$ | async) == timeLogType.TRACKED 
+								? 'primary' 
+								: 'basic'
 						"
 						[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
 						[disabled]="running"
@@ -116,11 +122,11 @@
 							nbButton
 							type="button"
 							(click)="
-								$event.stopPropagation(); setTimeType('MANUAL')
+								$event.stopPropagation(); setTimeType(timeLogType.MANUAL)
 							"
 							size="tiny"
 							[status]="
-								(trackType$ | async) == 'MANUAL'
+								(trackType$ | async) == timeLogType.MANUAL
 									? 'primary'
 									: 'basic'
 							"
@@ -224,12 +230,11 @@
 					</div>
 				</div>
 			</div>
-			<div class="time-manual" *ngIf="(trackType$ | async) == 'MANUAL'">
+			<div class="time-manual" *ngIf="(trackType$ | async) == timeLogType.MANUAL">
 				<button class="btn btn-success" (click)="addTime()">
 					{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
 				</button>
 			</div>
-	
 			<div
 				class="view-log-button mt-2 text-center"
 				*ngIf="user?.employee?.id"

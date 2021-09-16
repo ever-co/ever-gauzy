@@ -11,7 +11,7 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
-import { waitUntil } from '../../Base/utils/util';
+
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -34,7 +34,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -84,6 +84,10 @@ And('User can see employee dropdown', () => {
 
 When('User click on employee dropdown', () => {
 	proposalsPage.clickEmployeeDropdown();
+});
+
+And('User can see on employee dropdown', () => {
+	proposalsPage.verifyEmployeeDropdownVisible();
 });
 
 Then('User can select employee from dropdown options', () => {
@@ -159,9 +163,6 @@ When('User click on details button', () => {
 });
 
 Then('User can see edit proposal button', () => {
-	cy.on('uncaught:exception', (err, runnable) => {
-		return false;
-	});
 	proposalsPage.editProposalButtonVisible();
 });
 

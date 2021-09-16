@@ -75,7 +75,12 @@ export const cloudinary = {
 	Cloudinary: CloudinaryCore
 };
 
-if (environment.SENTRY_DSN) {
+if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
+	console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
+} else if (environment.SENTRY_DSN && environment.SENTRY_DSN !== 'DOCKER_SENTRY_DSN') {
+
+	console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+
 	sentryInit({
 		dsn: environment.SENTRY_DSN,
 		environment: environment.production ? 'production' : 'development',

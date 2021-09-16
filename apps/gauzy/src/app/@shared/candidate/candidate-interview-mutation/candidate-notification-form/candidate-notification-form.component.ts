@@ -1,7 +1,5 @@
 import { Component, OnDestroy, Input, ViewChild } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { Subject } from 'rxjs';
-
 import { ICandidateInterview, ICandidate } from '@gauzy/contracts';
 import { CandidateEmailComponent } from './candidate-email/candidate-email.component';
 @Component({
@@ -24,7 +22,6 @@ export class CandidateNotificationFormComponent implements OnDestroy {
 	@ViewChild('emailInterviewerForm')
 	emailInterviewerForm: CandidateEmailComponent;
 
-	private _ngDestroy$ = new Subject<void>();
 	constructor() {}
 
 	notification() {
@@ -35,6 +32,7 @@ export class CandidateNotificationFormComponent implements OnDestroy {
 			this.emailInterviewerForm.loadFormData();
 		}
 	}
+
 	checkedCandidate(checked: boolean) {
 		this.isCandidateNotification = checked;
 	}
@@ -42,8 +40,6 @@ export class CandidateNotificationFormComponent implements OnDestroy {
 	checkedInterviewer(checked: boolean) {
 		this.isInterviewerNotification = checked;
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+
+	ngOnDestroy() {}
 }

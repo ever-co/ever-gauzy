@@ -132,7 +132,9 @@ export class ProjectsMutationComponent
 				this.project ? this.project.currency : this.defaultCurrency
 			],
 			startDate: [
-				this.project ? new Date(this.project.startDate) : new Date()
+				this.project && this.project.startDate ? 
+					new Date(this.project.startDate) : 
+					null
 			],
 			endDate: [this.project ? this.project.endDate : null],
 			owner: [this.project ? this.project.owner : ProjectOwnerEnum.CLIENT],

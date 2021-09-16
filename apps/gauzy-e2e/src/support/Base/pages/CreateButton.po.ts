@@ -12,6 +12,9 @@ export const createButtonVisible = () => {
 };
 
 export const clickCreatebutton = () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	clickButton(CreateButton.createButtonCss);
 };
 

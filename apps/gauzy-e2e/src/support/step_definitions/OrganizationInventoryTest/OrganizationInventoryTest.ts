@@ -11,6 +11,7 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
+
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
@@ -27,6 +28,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
+	dashboardPage.verifyAccountingDashboard();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -35,7 +37,7 @@ And('User can visit Organization inventory page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	cy.visit('/#/pages/organization/inventory/all', {
+	cy.visit('/#/pages/organization/inventory', {
 		timeout: pageLoadTimeout
 	});
 });
@@ -955,6 +957,10 @@ Then('Delete merchant button will become active', () => {
 
 When('User click on delete merchant button', () => {
 	organizationInventoryPage.clickDeleteMerchantBtn();
+});
+
+Then('User click on delete button to confirm', () => {
+	organizationInventoryPage.clickConfirmDeleteButton();
 });
 
 Then('Notification message will appear', () => {

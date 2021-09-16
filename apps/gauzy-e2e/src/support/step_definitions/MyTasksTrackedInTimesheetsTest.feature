@@ -1,8 +1,12 @@
 Feature: Time tracking with pause test
   Scenario: Login with email
     Given Login with default credentials
+  Scenario: Add new tag
+    And User can add new tag
   Scenario: Add employee
     Then User can add new employee
+  Scenario: Add project
+    And User can add new project
   Scenario: Logout
     And User can logout
   Scenario: Login as employee

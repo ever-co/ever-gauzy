@@ -1,6 +1,6 @@
 export const ManageInterviewsPage = {
 	addInterviewButtonCss:
-		'nb-card-header.header > div > button[status="primary"]',
+		'nb-card-header > div > button[status="primary"]',
 	candidateDropdownCss:
 		'div.step-content > div.form-group > ga-candidate-select > nb-select > button[class="select-button placeholder"]',
 	candidateDropdownOptionCss: '.option-list nb-option',
@@ -42,5 +42,6 @@ export const ManageInterviewsPage = {
 	notesTableCellCss: 'table > tbody > tr > td:nth-child(9)',
 	archiveInterviewOkButtonCss: 'nb-card-footer > button[status="danger"]',
 	archiveBadgeCss: 'ga-interview-actions div.badges > div.badge',
-	deleteButtonCss: 'ga-delete-interview button[status="danger"]'
+	deleteButtonCss: 'ga-delete-interview button[status="danger"]',
+	fututeCheckBoxCss: 'nb-checkbox[status="warning"] > span.custom-checkbox'
 };

@@ -33,6 +33,7 @@ export class DailyGridComponent extends ReportBaseComponent implements OnInit, A
 	dailyData: IReportDayData[] = [];
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
 	@Input()
 	set filters(value: ITimeLogFilters) {

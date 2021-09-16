@@ -1,7 +1,7 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime } from 'rxjs/operators';
 import {
 	IGetTimeLogInput,
 	ITimeLog,
@@ -12,59 +12,64 @@ import {
 } from '@gauzy/contracts';
 import * as _ from 'underscore';
 import * as moment from 'moment';
-import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
+import { tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
+import { TranslateService } from '@ngx-translate/core';
+import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
+import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-view',
+	selector: 'ngx-timesheet-view',
 	templateUrl: './view.component.html'
 })
-export class ViewComponent implements OnInit, OnDestroy {
-	logRequest: {
-		timesheetId?: string;
-	} = {};
+export class ViewComponent 
+	extends TranslationBaseComponent 
+	implements OnInit, OnDestroy {
 
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
 	timeLogs: any;
-	updateLogs$: Subject<any> = new Subject();
+	logs$: Subject<any> = new Subject();
 	timesheet: ITimesheet;
+	timesheetId: string;
 
 	constructor(
-		private timesheetService: TimesheetService,
-		private activatedRoute: ActivatedRoute,
-		private nbDialogService: NbDialogService
-	) {}
+		private readonly timesheetService: TimesheetService,
+		private readonly activatedRoute: ActivatedRoute,
+		private readonly nbDialogService: NbDialogService,
+		public readonly translateService: TranslateService
+	) {
+		super(translateService)
+	}
 
 	ngOnInit() {
-		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getLogs();
-			});
-
+		this.logs$
+			.pipe(
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.activatedRoute.params
-			.pipe(untilDestroyed(this))
-			.subscribe((params) => {
-				if (params) {
-					this.logRequest.timesheetId = params.id;
-					this.updateLogs$.next();
-				}
-			});
+			.pipe(
+				tap((params) => !!params),
+				tap(({ id }) => this.timesheetId = id),
+				tap(() => this.logs$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async getLogs() {
 		const request: IGetTimeLogInput = {
-			timesheetId: this.logRequest.timesheetId
+			timesheetId: this.timesheetId
 		};
 
 		this.timesheetService
-			.getTimeSheet(this.logRequest.timesheetId)
+			.getTimeSheet(this.timesheetId)
 			.then((timesheet: ITimesheet) => {
 				this.timesheet = timesheet;
 			});
@@ -81,18 +86,22 @@ export class ViewComponent implements OnInit, OnDestroy {
 			.open(EditTimeLogModalComponent, {
 				context: { timeLog: timeLog }
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe((resp) => {
 				if (resp) {
-					this.updateLogs$.next();
+					this.logs$.next();
 				}
 			});
 	}
 
 	deleteTimeLog(log) {
-		this.timesheetService.deleteLogs([log.id]).then(() => {
-			this.updateLogs$.next();
-		});
+		this.timesheetService.deleteLogs([log.id])
+			.then(() => {})
+			.finally(() => {
+				this.logs$.next();
+			});
 	}
+
 	ngOnDestroy() {}
 }

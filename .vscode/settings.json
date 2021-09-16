@@ -74,5 +74,6 @@
 		"**/public/**/*.png": true,
 		"**/public/**/*.jpg": true,
 		"**/public/**/*.pdf": true
-	}
+	},
+	"angular.enable-strict-mode-prompt": false
 }

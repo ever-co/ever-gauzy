@@ -1,27 +1,22 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import {
-	IDateRange,
 	IOrganization,
 	ITimeLogFilters,
 	ITimesheet,
 	TimesheetStatus,
 	IGetTimesheetInput,
-	ISelectedEmployee
 } from '@gauzy/contracts';
-import { toUTC } from '@gauzy/common-angular';
-import {
-	NbCheckboxComponent,
-	NbDialogRef,
-	NbMenuService
-} from '@nebular/theme';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { debounceTime, filter, map, tap, withLatestFrom } from 'rxjs/operators';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { NbMenuItem, NbMenuService } from '@nebular/theme';
+import { combineLatest } from 'rxjs';
+import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Router } from '@angular/router';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
-import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
+import { TranslateService } from '@ngx-translate/core';
+import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { Store, ToastrService } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,92 +24,74 @@ import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/tim
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })
-export class ApprovalsComponent implements OnInit, OnDestroy {
-	timeSheets: ITimesheet[];
-	today: Date = new Date();
-	checkboxAll = false;
-	selectedIds: any = {};
-	@ViewChild('checkAllCheckbox')
-	checkAllCheckbox: NbCheckboxComponent;
-	organization: IOrganization;
-	addEditTimeRequest: any = {
-		isBillable: true,
-		projectId: null,
-		taskId: null,
-		description: ''
-	};
-	selectedRange: IDateRange = { start: null, end: null };
-	showBulkAction = false;
-	TimesheetStatus = TimesheetStatus;
-	bulkActionOptions = [
-		{
-			title: 'Approve'
-		},
-		{
-			title: 'Deny'
-		}
-	];
-	dialogRef: NbDialogRef<any>;
-	canChangeSelectedEmployee: boolean;
-	logRequest: ITimeLogFilters = {};
+export class ApprovalsComponent 
+	extends TranslationBaseComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
 
-	updateLogs$: Subject<any> = new Subject();
+	logRequest: ITimeLogFilters;
+	timesheets: ITimesheet[] = [];
+
+	showBulkAction: boolean;
 	loading: boolean;
 
-	selectedEmployeeId = null;
+	TimesheetStatus = TimesheetStatus;
+	contextMenus: NbMenuItem[];
+
+	public organization: IOrganization;
+	timesheets$: Subject<any> = new Subject();
+	selectedEmployeeId: string;
+
+	allChecked: boolean;
 
 	constructor(
-		private timesheetService: TimesheetService,
-		private store: Store,
-		private router: Router,
-		private toastrService: ToastrService,
-		private timesheetFilterService: TimesheetFilterService,
-		private nbMenuService: NbMenuService
-	) {}
+		private readonly timesheetService: TimesheetService,
+		private readonly store: Store,
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly nbMenuService: NbMenuService,
+		public readonly translate: TranslateService,
+	) {
+		super(translate);
+	}
 
-	async ngOnInit() {
+	ngOnInit() {
+		this._applyTranslationOnChange();
+		this.timesheets$
+			.pipe(
+				debounceTime(500),
+				tap(() => this.loading = true),
+				tap(() => this.getTimeSheets()),
+				tap(() => this.allChecked = false),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.nbMenuService
 			.onItemClick()
 			.pipe(
 				untilDestroyed(this),
-				filter(({ tag }) => tag === 'timesheet-bulk-acton'),
-				map(({ item: { title } }) => title)
+				filter(({ tag }) => tag === 'timesheet-bulk-action'),
+				map(({ item: { data } }) => data.status),
+				tap((status) => this.bulkAction(status))
 			)
-			.subscribe((title) => this.bulkAction(title));
+			.subscribe();
+	}
 
-		const storeEmployee$ = this.store.selectedEmployee$;
+	ngAfterViewInit() {
+		this._createContextMenus();
+
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
 				debounceTime(200),
-				withLatestFrom(storeOrganization$),
-				untilDestroyed(this)
-			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee]) => {
 					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
-		this.updateLogs$
-			.pipe(
-				debounceTime(500),
-				tap(() => this.getTimeSheets()),
+					this.selectedEmployeeId = employee ? employee.id : null;
+				}),
+				tap(() => this.timesheets$.next()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -123,7 +100,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.timesheetFilterService.filter = $event;
-		this.updateLogs$.next();
+		this.timesheets$.next();
 	}
 
 	async getTimeSheets() {
@@ -148,103 +125,135 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 
-		this.loading = true;
-		this.timeSheets = await this.timesheetService
+		await this.timesheetService
 			.getTimeSheets(request)
-			.then((logs) => {
-				this.selectedIds = {};
-				if (this.checkAllCheckbox) {
-					this.checkAllCheckbox.checked = false;
-					this.checkAllCheckbox.indeterminate = false;
-				}
-				logs.forEach((log) => (this.selectedIds[log.id] = false));
-				return logs;
+			.then((timesheets: ITimesheet[]) => {
+				this.timesheets = timesheets;
 			})
 			.finally(() => (this.loading = false));
 	}
 
-	toggleCheckbox(event: any, type?: any) {
-		if (type === 'all') {
-			for (const key in this.selectedIds) {
-				if (this.selectedIds.hasOwnProperty(key)) {
-					this.selectedIds[key] = event.target.checked;
+	updateStatus(timesheetIds: string | string[], status: TimesheetStatus) {
+		this.timesheetService.updateStatus(timesheetIds, status)
+			.then(() => {
+				if (status === TimesheetStatus.APPROVED) {
+					this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
+				} else if (status === TimesheetStatus.DENIED) {
+					this.toastrService.success('TIMESHEET.DENIED_SUCCESS');
 				}
-			}
-		} else {
-			let all_checked = true;
-			let any_checked = false;
-			for (const key in this.selectedIds) {
-				if (this.selectedIds.hasOwnProperty(key)) {
-					const is_checked = this.selectedIds[key];
-					if (is_checked === false || is_checked === undefined) {
-						all_checked = false;
-					} else {
-						any_checked = true;
-					}
-				}
-			}
-
-			if (all_checked) {
-				this.showBulkAction = true;
-				this.checkAllCheckbox.indeterminate = false;
-				this.checkAllCheckbox.checked = true;
-			} else if (any_checked) {
-				this.showBulkAction = true;
-				this.checkAllCheckbox.indeterminate = any_checked;
-			} else {
-				this.showBulkAction = false;
-				this.checkAllCheckbox.checked = false;
-				this.checkAllCheckbox.indeterminate = false;
-			}
-		}
-	}
-
-	updateStatus(timesheetId: string | string[], status: TimesheetStatus) {
-		this.timesheetService.updateStatus(timesheetId, status).then(() => {
-			if (status === TimesheetStatus.APPROVED) {
-				this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
-			} else if (status === TimesheetStatus.DENIED) {
-				this.toastrService.success('TIMESHEET.DENIED_SUCCESS');
-			}
-			this.updateLogs$.next();
-		});
+			})
+			.finally(() => {
+				this.timesheets$.next();
+			});
 	}
 
 	submitTimesheet(
-		timesheetId: string | string[],
+		timesheetIds: string | string[],
 		status: 'submit' | 'unsubmit'
 	) {
-		this.timesheetService.submitTimesheet(timesheetId, status).then(() => {
-			if (status === 'submit') {
-				this.toastrService.success('TIMESHEET.SUBMIT_SUCCESS');
-			} else if (status === 'unsubmit') {
-				this.toastrService.success('TIMESHEET.UNSUBMIT_SUCCESS');
-			}
-			this.updateLogs$.next();
-		});
+		this.timesheetService.submitTimesheet(timesheetIds, status)
+			.then(() => {
+				if (status === 'submit') {
+					this.toastrService.success('TIMESHEET.SUBMIT_SUCCESS');
+				} else if (status === 'unsubmit') {
+					this.toastrService.success('TIMESHEET.UNSUBMIT_SUCCESS');
+				}
+			})
+			.finally(() => {
+				this.timesheets$.next();
+			});
 	}
 
-	bulkAction(action) {
-		const timeSheetIds = [];
-		for (const key in this.selectedIds) {
-			if (this.selectedIds.hasOwnProperty(key)) {
-				const is_checked = this.selectedIds[key];
-				if (is_checked) {
-					timeSheetIds.push(key);
-				}
-			}
-		}
-
-		if (action === 'Approve') {
+	/**
+	 * Bulk action for APPROVED/DENIED timesheet
+	 * 
+	 * @param status 
+	 */
+	bulkAction(status: TimesheetStatus) {
+		const timeSheetIds = this.timesheets.filter(
+			(timesheet: ITimesheet) => timesheet['checked']
+		).map(
+			(timesheet: ITimesheet) => timesheet.id
+		);
+		if (status === TimesheetStatus.APPROVED) {
 			this.updateStatus(timeSheetIds, TimesheetStatus.APPROVED);
 		}
-		if (action === 'Deny') {
+		if (status === TimesheetStatus.DENIED) {
 			this.updateStatus(timeSheetIds, TimesheetStatus.DENIED);
 		}
 	}
 
+	/**
+	 * Redirect to timesheet inner page
+	 * 
+	 * @param timesheet 
+	 * @returns 
+	 */
 	redirectToView(timesheet: ITimesheet) {
-		this.router.navigate(['/pages/employees/timesheets/', timesheet.id]);
+		if (!timesheet) { return; }
+
+		this.router.navigate([
+			'/pages/employees/timesheets', timesheet.id
+		]);
+	}
+
+	/**
+	 * Checked/Un-Checked Checkbox
+	 * 
+	 * @param checked 
+	 */
+	checkedAll(checked: boolean) {
+		this.allChecked = checked;
+		this.timesheets.forEach((timesheet: any) => timesheet.checked = checked);
+	}
+
+	/**
+	 * Is Indeterminate
+	 * 
+	 * @returns 
+	 */
+	isIndeterminate() {
+		const c1 = (this.timesheets.filter((t: any) => t.checked).length > 0);
+		return c1 && !this.allChecked;
+	}
+
+	/**
+	 * Checkbox Toggle For Every Timesheet
+	 * 
+	 * @param checked 
+	 * @param timesheet 
+	 */
+	toggleCheckbox(checked: boolean, timesheet: ITimesheet) {
+		timesheet['checked'] = checked;
+		this.allChecked = this.timesheets.every((t: any) => t.checked);
+	}
+
+	/**
+	 * Translate context menus
+	 */
+	private _applyTranslationOnChange() {
+		this.translate.onLangChange
+			.pipe(
+				tap(() => this._createContextMenus()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Create bulk action context menus
+	 */
+	 private _createContextMenus() {
+		this.contextMenus = [
+			{
+				title: this.getTranslation('TIMESHEET.APPROVE'),
+				data: { status: TimesheetStatus.APPROVED }
+			},
+			{
+				title: this.getTranslation('TIMESHEET.DENY'),
+				data: { status: TimesheetStatus.DENIED }
+			}
+		];
 	}
 
 	ngOnDestroy(): void {}

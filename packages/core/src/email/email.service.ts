@@ -16,13 +16,9 @@ import { Repository, IsNull } from 'typeorm';
 import { environment as env } from '@gauzy/config';
 import { ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
-import { EmailTemplate } from '../email-template/email-template.entity';
-import { Organization } from '../organization/organization.entity';
-import { User } from '../user/user.entity';
 import { Email as IEmail } from './email.entity';
-import { Invite } from '../invite/invite.entity';
-import { Timesheet } from '../timesheet/timesheet.entity';
 import { RequestContext } from '../core/context';
+import { EmailTemplate, Invite, Organization, Timesheet, User } from './../core/entities/internal';
 
 @Injectable()
 export class EmailService extends TenantAwareCrudService<IEmail> {

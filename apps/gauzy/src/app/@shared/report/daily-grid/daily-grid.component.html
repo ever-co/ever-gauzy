@@ -1,19 +1,26 @@
 <div class="d-flex align-items-center" *ngIf="dailyData?.length > 0">
 	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
 	<div class="ml-3">
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()">
-			<nb-option value="date">{{
-				'REPORT_PAGE.DATE' | translate
-			}}</nb-option>
-			<nb-option value="employee">{{
-				'REPORT_PAGE.EMPLOYEE' | translate
-			}}</nb-option>
-			<nb-option value="project">{{
-				'REPORT_PAGE.PROJECT' | translate
-			}}</nb-option>
-			<nb-option value="client">{{
-				'REPORT_PAGE.CLIENT' | translate
-			}}</nb-option>
+		<nb-select 
+			[(ngModel)]="groupBy" 
+			(selectedChange)="groupByChange()"
+		>
+			<nb-option 
+				[value]="ReportGroupFilterEnum.date"
+			>{{ 'REPORT_PAGE.DATE' | translate }}
+			</nb-option>
+			<nb-option
+				[value]="ReportGroupFilterEnum.employee"
+			>{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+			</nb-option>
+			<nb-option
+				[value]="ReportGroupFilterEnum.project"
+			>{{ 'REPORT_PAGE.PROJECT' | translate }}
+			</nb-option>
+			<nb-option
+				[value]="ReportGroupFilterEnum.client"
+			>{{ 'REPORT_PAGE.CLIENT' | translate }}
+			</nb-option>
 		</nb-select>
 	</div>
 </div>
@@ -25,13 +32,13 @@
 >
 	<div class="px-4" *ngIf="dailyData?.length > 0">
 		<div class="row py-3 font-weight-bold align-items-center">
-			<div *ngIf="groupBy != 'date'" class="col-sm-2">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="col-sm-2">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>
-			<div *ngIf="groupBy != 'project'" class="col-sm-2">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="col-sm-2">
 				{{ 'REPORT_PAGE.PROJECT' | translate }}
 			</div>
-			<div *ngIf="groupBy != 'employee'" class="col-sm-2">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.employee" class="col-sm-2">
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</div>
 			<div class="col-sm-3 text-center day-col">
@@ -51,7 +58,7 @@
 			class="card"
 			*ngFor="let day of dailyData"
 		>
-			<ng-container *ngSwitchCase="'employee'">
+			<ng-container *ngSwitchCase="ReportGroupFilterEnum.employee">
 				<ng-container
 					*ngTemplateOutlet="
 						groupByEmployeeCardEl;
@@ -59,7 +66,7 @@
 					"
 				></ng-container>
 			</ng-container>
-			<ng-container *ngSwitchCase="'project'">
+			<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
 				<ng-container
 					*ngTemplateOutlet="
 						groupByProjectCardEl;
@@ -67,7 +74,7 @@
 					"
 				></ng-container>
 			</ng-container>
-			<ng-container *ngSwitchCase="'client'">
+			<ng-container *ngSwitchCase="ReportGroupFilterEnum.client">
 				<ng-container
 					*ngTemplateOutlet="
 						groupByClientCardEl;

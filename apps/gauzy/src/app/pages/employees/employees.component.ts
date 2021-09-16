@@ -46,6 +46,7 @@ export class EmployeesComponent
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	incomeStatistics: number[];
 	expenseStatistics: number[];
 	profitStatistics: number[];

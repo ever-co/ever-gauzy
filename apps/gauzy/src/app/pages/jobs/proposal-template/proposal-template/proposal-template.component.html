@@ -1,5 +1,5 @@
 <nb-card
-	class="jobs-page card-scroll"
+	class="jobs-page"
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -25,13 +25,15 @@
 			</ng-template>
 			<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 		</div>
-		<ng2-smart-table
-			style="cursor: pointer"
-			[settings]="smartTableSettings"
-			[source]="smartTableSource"
-			(userRowSelect)="selectItem($event)"
-			#proposalTemplateTable
-		></ng2-smart-table>
+		<div class="table-scroll-container">
+			<ng2-smart-table
+				style="cursor: pointer"
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				(userRowSelect)="selectItem($event)"
+				#proposalTemplateTable
+			></ng2-smart-table>
+		</div>		
 	</nb-card-body>
 </nb-card>
 

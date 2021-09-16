@@ -11,7 +11,7 @@ describe('Organization inventory test', () => {
 	});
 
 	it('Should be able to add new product category', () => {
-		cy.visit('/#/pages/organization/inventory/all');
+		cy.visit('/#/pages/organization/inventory');
 		organizationInventoryPage.gridBtnExists();
 		organizationInventoryPage.gridBtnClick(1);
 		organizationInventoryPage.addCategoryOrTypeButtonVisible();

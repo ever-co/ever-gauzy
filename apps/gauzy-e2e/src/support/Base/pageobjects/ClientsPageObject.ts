@@ -9,7 +9,7 @@ export const ClientsPage = {
 	lastStepBtnCss: 'div.step-content > form > div > button[status="success"]',
 	phoneInputCss: '[formcontrolname="primaryPhone"]',
 	budgetInpuCss: 'input[formcontrolname="budget"]',
-	countryDropdownCss: 'ga-country div.form-group nb-select',
+	countryDropdownCss: 'ga-country > div.form-group > nb-select',
 	cityInpuCss: '[formcontrolname="city"]',
 	postcodeinputCss: '[formcontrolname="postcode"]',
 	streetInputCss: '[formcontrolname="address"]',

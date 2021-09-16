@@ -44,6 +44,7 @@ export class InvitesComponent
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	invitedName = 'Employee / User';
 	manageInvites: IInviteViewModel[];
 	loading = true;

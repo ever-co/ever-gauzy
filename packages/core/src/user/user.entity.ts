@@ -7,7 +7,8 @@ import {
 	LanguagesEnum,
 	ComponentLayoutStyleEnum,
 	ITag,
-	IEmployee
+	IEmployee,
+	IOrganization
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -30,13 +31,15 @@ import {
 	RelationId,
 	ManyToMany,
 	JoinTable,
-	OneToOne
+	OneToOne,
+	OneToMany
 } from 'typeorm';
 import {
 	Employee,
 	Role,
 	Tag,
-	TenantBaseEntity
+	TenantBaseEntity,
+	UserOrganization
 } from '../core/entities/internal';
 
 @Entity('user')
@@ -146,6 +149,22 @@ export class User extends TenantBaseEntity implements IUser {
 	@ManyToMany(() => Tag)
 	@JoinTable({ name: 'tag_user' })
 	tags?: ITag[];
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * UserOrganization
+	 */
+	@ApiProperty({ type: () => UserOrganization, isArray: true })
+	@OneToMany(() => UserOrganization, (userOrganization) => userOrganization.user, {
+		cascade: true
+	})
+	@JoinColumn()
+	organizations?: IOrganization[];
 }
 
 export class UserPreferredLanguageDTO {

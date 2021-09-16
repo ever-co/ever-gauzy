@@ -45,7 +45,7 @@ import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
 import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
-import { TimesheetFirstOrCreateCommand } from './../timesheet/commands';
+import { TimesheetFirstOrCreateCommand } from './../time-tracking/timesheet/commands';
 import * as moment from 'moment';
 import {
 	OrganizationProjectCreateCommand,
@@ -58,7 +58,7 @@ import { UserService } from '../user/user.service';
 import { OrganizationService } from '../organization/organization.service';
 import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
 import { RoleService } from '../role/role.service';
-import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
+import { TimeSlotService } from '../time-tracking/time-slot/time-slot.service';
 import { ExpenseService } from '../expense/expense.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import { IncomeService } from '../income/income.service';
@@ -71,16 +71,16 @@ import {
 	UpworkOffersService,
 	UpworkReportService
 } from '@gauzy/integration-upwork';
-import { TimeLogCreateCommand } from '../timesheet/time-log/commands';
+import { TimeLogCreateCommand } from '../time-tracking/time-log/commands';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
 import {
 	CreateTimeSlotMinutesCommand,
 	TimeSlotCreateCommand
-} from './../timesheet/time-slot/commands';
+} from './../time-tracking/time-slot/commands';
 import { RequestContext } from '../core/context';
 import { environment as env } from '@gauzy/config';
-import { ScreenshotCreateCommand } from './../timesheet/screenshot/commands';
+import { ScreenshotCreateCommand } from './../time-tracking/screenshot/commands';
 
 @Injectable()
 export class UpworkService {

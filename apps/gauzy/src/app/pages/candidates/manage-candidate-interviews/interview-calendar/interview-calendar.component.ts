@@ -218,12 +218,12 @@ export class InterviewCalendarComponent
 			CandidateInterviewMutationComponent,
 			{
 				context: {
-					header: this.getTranslation(
+					headerTitle: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
 					),
 					isCalendar: true,
 					selectedRangeCalendar: selectedRange,
-					interviewList: this.interviewList
+					interviews: this.interviewList
 				}
 			}
 		);

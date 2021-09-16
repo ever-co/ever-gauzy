@@ -15,57 +15,68 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
-			<div class="form-group mb-3">
-				<label class="label" for="lang">
-					{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
-				</label>
-				<ngx-language-selector
-					[placeholder]="'INVENTORY_PAGE.LANGUAGE'| translate"
-					class="d-block"
-					size="medium"
-					[template]="'ng-select'"
-					formControlName="languageCode"
-					(selectedLanguageEvent)="onLangChange($event)"
-				>
-				</ngx-language-selector>
-				
+		<form
+			[formGroup]="form"
+			#productTypeForm="ngForm"
+			(ngSubmit)="onSubmit()"
+		>
+			<div class="row">
+				<div class="col-12">
+					<div class="form-group">
+						<label class="label" for="language">
+							{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
+						</label>
+						<ngx-language-selector
+							id="language"
+							[placeholder]="'INVENTORY_PAGE.LANGUAGE'| translate"
+							class="d-block"
+							size="medium"
+							[template]="'ng-select'"
+							[selectedLanguageCode]="selectedLanguage"
+							(selectedLanguageEvent)="onLangChange($event)"
+						>
+						</ngx-language-selector>
+					</div>
+				</div>
 			</div>
-			<div class="form-group">
-				<div class="row">
-					<div class="col-sm-4 mb-4">
-						<label class="label" for="nameInput">
+			<div class="row">
+				<div class="col-4">
+					<label class="label" for="icon">
+						{{ 'INVENTORY_PAGE.ICON' | translate }}
+					</label>
+					<ng-select
+						class="icon-select"
+						[clearable]="false"
+						[items]="icons"
+						bindLabel="name"
+						[placeholder]="'INVENTORY_PAGE.ICON' | translate"
+						id="icon"
+						formControlName="icon"
+						appendTo="body"
+
+					>
+						<ng-template
+							ng-option-tmp
+							let-item="item"
+							let-index="index"
+						>
+							<nb-icon [icon]="item"></nb-icon>
+						</ng-template>
+						<ng-template ng-label-tmp let-item="item">
+							<div class="selector-template">
+								<nb-icon [icon]="item"></nb-icon>
+							</div>
+						</ng-template>
+					</ng-select>
+				</div>
+				<div class="col-8">
+					<div class="form-group">
+						<label class="label" for="name">
 							{{ 'INVENTORY_PAGE.NAME' | translate }}
 						</label>
-						<ng-select
-							class="icon-select"
-							[clearable]="false"
-							[items]="icons"
-							bindLabel="name"
-							[placeholder]="'INVENTORY_PAGE.ICON' | translate"
-							id="organizationId"
-							[(ngModel)]="selectedIcon"
-							[ngModelOptions]="{ standalone: true }"
-							appendTo="body"
-						>
-							<ng-template
-								ng-option-tmp
-								let-item="item"
-								let-index="index"
-							>
-								<nb-icon [icon]="item"></nb-icon>
-							</ng-template>
-							<ng-template ng-label-tmp let-item="item">
-								<div class="selector-template">
-									<nb-icon [icon]="item"></nb-icon>
-								</div>
-							</ng-template>
-						</ng-select>
-					</div>
-					<div class="col-sm-8 mb-4 flex-end">
 						<input
 							fullWidth
-							id="nameInput"
+							id="name"
 							type="text"
 							nbInput
 							formControlName="name"
@@ -73,22 +84,19 @@
 						/>
 					</div>
 				</div>
-				<div class="row">
-					<div class="col-sm-12">
-						<label class="label" for="description">{{
-							'INVENTORY_PAGE.DESCRIPTION' | translate
-						}}</label>
-						<textarea
-							fullWidth
-							id="description"
-							type="text"
-							nbInput
-							formControlName="description"
-							[placeholder]="
-								'INVENTORY_PAGE.DESCRIPTION' | translate
-							"
-						></textarea>
-					</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<label class="label" for="description">{{
+						'INVENTORY_PAGE.DESCRIPTION' | translate
+					}}</label>
+					<textarea
+						fullWidth
+						id="description"
+						nbInput
+						formControlName="description"
+						[placeholder]="'INVENTORY_PAGE.DESCRIPTION' | translate"
+					></textarea>
 				</div>
 			</div>
 		</form>
@@ -102,7 +110,12 @@
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button status="success" nbButton (click)="onSaveRequest()">
+		<button
+			[disabled]="form.invalid"
+			(click)="productTypeForm.ngSubmit.emit()"
+			status="success"
+			nbButton
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

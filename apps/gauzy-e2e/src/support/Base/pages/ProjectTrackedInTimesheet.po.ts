@@ -90,11 +90,15 @@ export const projectSelectVisible = () => {
 };
 
 export const clickProjectSelect = () => {
+	cy.intercept('GET', '/api/organization-projects/employee/*').as('waitProjectLoad');
 	clickButton(ProjectTrackedInTimesheetPage.projectSelectCss);
 };
 
-export const selectOptionFromDropdown = (index) => {
-	clickButtonByIndex(ProjectTrackedInTimesheetPage.dropdownOptionCss, index);
+export const selectOptionFromDropdown = (index, projectName: string) => {
+	cy.wait('@waitProjectLoad').then(() => {
+		verifyText(ProjectTrackedInTimesheetPage.dropdownOptionCss,projectName);
+		clickButtonByIndex(ProjectTrackedInTimesheetPage.dropdownOptionCss, index);
+	});
 };
 
 export const clickStartTimerBtn = () => {
@@ -120,3 +124,11 @@ export const clickViewTimesheetBtn = () => {
 export const verifyProjectText = (text) => {
     compareTwoTexts(ProjectTrackedInTimesheetPage.projectNameCss, text)
 }
+
+export const waitMainDashboard = (url: string) => {
+	//waits for responce then continue 
+	cy.intercept('GET', url).as('getUser')
+	cy.wait('@getUser').then(() => {
+		verifyElementIsVisible(ProjectTrackedInTimesheetPage.headerImgCss);
+	})
+};

@@ -302,6 +302,13 @@ And('User can enter value for a future date', () => {
 	manageInterviewsPage.clickKeyboardButtonByKeyCode(9);
 });
 
+Then('Notification message will appear second', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
+	manageInterviewsPage.waitMessageToHide();
+});
+
 // Edit future Interview
 And('User can see Only Future checkbox', () => {
 	manageInterviewsPage.verifyOnlyFutureCheckboxVisible();
@@ -318,6 +325,14 @@ When('User enters title filter input value for future interview', () => {
 And('User can see Edit interview button', () => {
 	manageInterviewsPage.verifyEditButtonVisible();
 });
+
+And('User can see future checkbox', () => { 
+	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
+})
+
+Then('User click future checkbox', () => { 
+	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
+})
 
 And('User clicks Edit interview button', () => {
 	manageInterviewsPage.clickEditButton();

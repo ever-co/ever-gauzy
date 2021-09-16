@@ -1,4 +1,3 @@
-import { TenantAwareCrudService } from './../core/crud';
 import {
 	Injectable,
 	BadRequestException,
@@ -7,20 +6,23 @@ import {
 } from '@nestjs/common';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository, WhereExpression } from 'typeorm';
 import { IEquipmentSharing, IPagination, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { ConfigService } from '@gauzy/config';
 import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from '../request-approval/request-approval.entity';
-import { getConfig } from '@gauzy/config';
-const config = getConfig();
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
 	constructor(
 		@InjectRepository(EquipmentSharing)
 		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>
+		private readonly requestApprovalRepository: Repository<RequestApproval>,
+
+		private readonly configService: ConfigService
 	) {
 		super(equipmentSharingRepository);
 	}
@@ -34,16 +36,13 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 				.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
 				.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
-				.leftJoinAndSelect(
-					`${query.alias}.equipmentSharingPolicy`,
-					'equipmentSharingPolicy'
-				);
+				.leftJoinAndSelect( `${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
-			if (config.dbConnectionOptions.type === 'sqlite') {
+			if (this.configService.dbConnectionOptions.type === 'sqlite') {
 				query.leftJoinAndSelect(
 					'request_approval',
 					'requestApproval',
-					'"equipment_sharing"."id" = "request_approval"."requestId"'
+					'"equipment_sharing"."id" = "requestApproval"."requestId"'
 				);
 			} else {
 				query.leftJoinAndSelect(
@@ -57,9 +56,13 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					'requestApproval.approvalPolicy',
 					'approvalPolicy'
 				)
-				.where('equipment_sharing.organizationId =:organizationId', {
-					organizationId
-				})
+				.where(
+					new Brackets((qb: WhereExpression) => { 
+						const tenantId = RequestContext.currentTenantId();
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					})
+				)
 				.getMany();
 		} catch (err) {
 			throw new BadRequestException(err);

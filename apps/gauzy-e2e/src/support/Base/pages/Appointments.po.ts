@@ -1,4 +1,4 @@
-import { waitElementToHide, waitUntil } from './../utils/util';
+import { clickButtonDouble, waitElementToHide, waitUntil } from './../utils/util';
 import {
 	verifyElementIsVisible,
 	clickButton,
@@ -23,12 +23,15 @@ export const employeeDropdownVisible = () => {
 };
 
 export const clickEmployeeDropdown = () => {
+	cy.intercept('GET', '/api/employee-appointment*').as('getUserXhr');
 	clickButton(AppointmentsPage.employeeDropdownCss);
+	cy.wait('@getUserXhr').then(() =>{
+		clickButtonDouble(AppointmentsPage.employeeDropdownCss);
+	});
 };
 
 export const selectEmployeeFromDropdown = (text: string) => {
 	clickElementByText(AppointmentsPage.employeeDropdownOptionsCss, text);
-	waitUntil(2000);
 };
 // End of Employee select functions
 
@@ -195,4 +198,8 @@ export const verifyLocation = (data: string) => {
 
 export const verifyDescription = (data: string) => {
 	verifyText(AppointmentsPage.appointmentDetails, data);
+};
+
+export const selectEmployeeFromDropdownSecond = (text: string) => {
+	clickElementByText(AppointmentsPage.selectEmployeeDropdownOptionCss, text);
 };

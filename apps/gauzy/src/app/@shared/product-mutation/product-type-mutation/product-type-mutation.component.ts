@@ -1,4 +1,3 @@
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
@@ -6,16 +5,21 @@ import {
 	LanguagesEnum,
 	IProductTypeTranslation,
 	IProductTypeTranslatable,
-	IOrganization,
-	ILanguage
+	IOrganization
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { ProductTypeService } from '../../../@core/services/product-type.service';
 import { NbDialogRef } from '@nebular/theme';
-import { Store } from '../../../@core/services/store.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import {
+	ProductTypeService,
+	Store
+} from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-type-mutation',
 	templateUrl: './product-type-mutation.component.html',
@@ -24,82 +28,83 @@ import { takeUntil } from 'rxjs/operators';
 export class ProductTypeMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	form: FormGroup;
+
 	@Input() productType: IProductTypeTranslatable;
+
 	icons = Object.values(ProductTypesIconsEnum);
-
-	selectedIcon: string = ProductTypesIconsEnum.STAR;
-	selectedLanguage: string;
-
-	languages: ILanguage[];
-	private _ngDestroy$ = new Subject<void>();
-
-	translations = [];
+	selectedLanguage: LanguagesEnum;
 	activeTranslation: IProductTypeTranslation;
+	translations: any = [];
 	organization: IOrganization;
 
+	readonly form: FormGroup = ProductTypeMutationComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			name: ['', Validators.required],
+			icon: [ProductTypesIconsEnum.STAR],
+			description: []
+		});
+	}
+
 	constructor(
-		public dialogRef: NbDialogRef<IProductTypeTranslatable>,
-		readonly translationService: TranslateService,
-		private fb: FormBuilder,
-		private productTypeService: ProductTypeService,
-		private store: Store
+		public readonly dialogRef: NbDialogRef<IProductTypeTranslatable>,
+		public readonly translationService: TranslateService,
+		private readonly fb: FormBuilder,
+		private readonly productTypeService: ProductTypeService,
+		private readonly store: Store
 	) {
 		super(translationService);
 	}
 
 	ngOnInit() {
-		this.organization = this.store.selectedOrganization;
-		this.selectedLanguage =
-			this.store.preferredLanguage || LanguagesEnum.ENGLISH;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const preferredLanguage$ = this.store.preferredLanguage$;
+		combineLatest([storeOrganization$, preferredLanguage$])
+			.pipe(
+				distinctUntilChange(),
+				filter(([organization, language]) => !!organization && !!language),
+				tap(([organization, language]) => {
+					this.selectedLanguage = language || LanguagesEnum.ENGLISH;
+					this.organization = organization;
+				}),
+				tap(() => this._patchRawValue()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
-		this.translations = this.productType
-			? this.productType.translations
-			: [];
-		this.setActiveTranslation();
+	ngOnDestroy(): void { }
 
-		this._initializeForm();
-
-		if (this.store.systemLanguages) {
-			this.languages = this.store.systemLanguages.map((item) => {
-				return {
-					value: item.code,
-					name: item.name
-				};
-			});
+	async onSubmit() {
+		if (!this.organization) {
+			return;
 		}
 
-		this.form.valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((formValue) => {
-				this.updateTranslations();
-			});
-	}
+		await this._setTranslationsRawValue();
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-	async onSaveRequest() {
-		const productTypeRequest = {
-			organization: this.store.selectedOrganization,
-			icon: this.selectedIcon,
-			translations: this.translations,
-			tenantId: this.organization.tenantId
+		const { translations = [] } = this;
+		const { icon } = this.form.getRawValue();
+
+		const payload: IProductTypeTranslatable = {
+			organizationId,
+			tenantId,
+			translations,
+			icon
 		};
-
+		
 		let productType: IProductTypeTranslatable;
-
 		try {
 			if (!this.productType) {
 				productType = await this.productTypeService.create(
-					productTypeRequest
+					payload
 				);
 			} else {
-				productTypeRequest['id'] = this.productType.id;
+				payload['id'] = this.productType.id;
 				productType = await this.productTypeService.update(
-					productTypeRequest
+					payload
 				);
 			}
 		} catch (err) {
@@ -113,58 +118,73 @@ export class ProductTypeMutationComponent
 		this.dialogRef.close(productType);
 	}
 
-	private _initializeForm() {
-		this.form = this.fb.group({
-			languageCode: [this.translateService.currentLang],
-			organizationId: [
-				this.productType
-					? this.productType.organizationId
-					: this.store.selectedOrganization,
-				Validators.required
-			],
-			name: [
-				this.activeTranslation ? this.activeTranslation['name'] : '',
-				Validators.required
-			],
-			description: [
-				this.activeTranslation
-					? this.activeTranslation['description']
-					: null
-			]
-		});
-	}
-
-	setActiveTranslation() {
-		this.activeTranslation = this.translations.find((tr) => {
-			return tr.languageCode === this.selectedLanguage;
-		});
-
-		if (!this.activeTranslation) {
-			const { id: organizationId, tenantId } = this.organization;
-			this.activeTranslation = {
-				languageCode: this.selectedLanguage,
-				name: '',
-				description: '',
-				organizationId,
-				tenantId
-			};
-
-			this.translations.push(this.activeTranslation);
+	/**
+	 * PATCH product category old raw value
+	 * 
+	 * @returns 
+	 */
+	 private _patchRawValue() {
+		if (!this.productType) {
+			return;
 		}
+
+		const { icon, translations = [] } = this.productType;
+
+		this.translations = translations;
+		this.form.patchValue({ icon });
+
+		this._setActiveTranslation();
 	}
 
-	onLangChange(langCode: string) {
-		this.selectedLanguage = langCode;
-		this.setActiveTranslation();
+	/**
+	 * SET selected language active translation
+	 * 
+	 * @returns 
+	 */
+	private _setActiveTranslation() {		
+		this.activeTranslation = this.translations.find(({ languageCode }) => {
+			return languageCode === this.selectedLanguage;
+		});
 
 		this.form.patchValue({
-			name: this.activeTranslation.name,
-			description: this.activeTranslation.description
+			name: this.activeTranslation ? this.activeTranslation.name : '',
+			description: this.activeTranslation ? this.activeTranslation.description: ''
 		});
 	}
 
-	updateTranslations() {
-		this.activeTranslation.name = this.form.get('name').value;
-		this.activeTranslation.description = this.form.get('description').value;
+	/**
+	 * SET product category all translations
+	 */
+	private async _setTranslationsRawValue() {
+		const { name, description } = this.form.getRawValue();
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		// Remove old transaltions for language code
+		const translations = this.translations.filter(({ languageCode }) => {
+			return languageCode !== this.selectedLanguage;
+		});
+
+		// Added latest product category translations
+		this.translations = [
+			...translations,
+			{
+				name,
+				description,
+				tenantId,
+				organizationId,
+				languageCode: this.selectedLanguage
+			}
+		];
+	}
+
+	/**
+	 * On language change set active translation
+	 * 
+	 * @param langCode 
+	 */
+	onLangChange(langCode: LanguagesEnum) {
+		this.selectedLanguage = langCode;
+		this._setActiveTranslation();
 	}
 }

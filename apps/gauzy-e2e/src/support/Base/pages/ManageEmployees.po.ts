@@ -10,7 +10,8 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	clickButtonWithForce
 } from '../utils/util';
 import { ManageEmployeesPage } from '../pageobjects/ManageEmployeesPageObject';
 import dayjs from 'dayjs'
@@ -84,7 +85,7 @@ export const addEmployeeButtonVisible = () => {
 };
 
 export const clickAddEmployeeButton = () => {
-	clickButton(ManageEmployeesPage.addEmployeeButtonCss);
+	clickButtonWithForce(ManageEmployeesPage.addEmployeeButtonCss);
 };
 
 export const firstNameInputVisible = () => {

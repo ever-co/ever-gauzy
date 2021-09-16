@@ -57,8 +57,6 @@ Feature: Manage interviews test
     Then Notification message will appear
     And User clears filter input
   Scenario: Add future interview
-    And User navigates to Candidates interview panel
-    And User can see add interview button
     When User click on add interview button
     Then User can see candidate dropdown
     When User click on candidate dropdown
@@ -84,7 +82,7 @@ Feature: Manage interviews test
     When User can click on notify candidate button
     Then User can see save button
     When User click on save button
-    Then Notification message will appear
+    Then Notification message will appear second
   Scenario: Edit future interview
     And User can see Only Future checkbox
     And User clicks on Only Future checkbox
@@ -93,6 +91,8 @@ Feature: Manage interviews test
     And User can see title filter input field
     When User enters title filter input value for future interview
     And User can see Edit interview button
+    And User can see future checkbox
+    Then User click future checkbox
     And User clicks Edit interview button
     And User can see note input field
     And User can enter value for updated note

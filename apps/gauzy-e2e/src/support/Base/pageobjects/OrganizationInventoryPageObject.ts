@@ -4,7 +4,7 @@ export const OrganizationInventoryPage = {
 	languageDropdownCss:
 		'div[class="form-group mb-3"] > ngx-language-selector > ng-select',
 	dropdownOptionCss: '.option-list nb-option',
-	nameInputCss: 'input[id="nameInput"]',
+	nameInputCss: 'input[id="name"]',
 	codeInputCss: 'input[id="codeInput"]',
 	productTypeDropdownCss:
 		'div[class="col-sm-6 mb-4"] > nb-select[id="productTypeId"]',
@@ -16,7 +16,7 @@ export const OrganizationInventoryPage = {
 	editButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	addCategoryOrTypeButtonCss: 'div.mb-3 > button[status="primary"]',
+	addCategoryOrTypeButtonCss: 'div.mb-3 > button[status="success"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
 	backFromInventoryButtonCss: 'div.navigate > button[status="primary"]',
 	backFromCategoryButtonCss:

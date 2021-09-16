@@ -7,9 +7,12 @@ import { CustomCommands } from '../../commands';
 import * as faker from 'faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
+import * as eventTypesPage from '../../Base/pages/EventTypes.po';
+import { EventTypePageData } from '../../Base/pagedata/EventTypesPageData';
+
+
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
-import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -27,7 +30,7 @@ Given('Login with default credentials', () => {
 
 // Add employee
 And('User can add new employee', () => {
-	waitUntil(3000);
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
@@ -83,6 +86,88 @@ Then('User can see Calendar table', () => {
 
 When('User clicks on Calendar table row', () => {
 	appointmentsPage.clickCalendarTableRow();
+});
+
+// Add new event type
+And('User can visit Event types page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.visit('/#/pages/employees/event-types', { timeout: pageLoadTimeout });
+});
+
+Then('User can see grid button', () => {
+	eventTypesPage.gridBtnExists();
+});
+
+And('User can click on second grid button to change view', () => {
+	eventTypesPage.gridBtnClick(1);
+});
+
+And('User can see add event type button', () => {
+	eventTypesPage.addEventTypeButtonVisible();
+});
+
+When('User click on add event type button', () => {
+	eventTypesPage.clickAddEventTypeButton();
+});
+
+Then('User can see employee dropdown', () => {
+	eventTypesPage.selectEmployeeDropdownVisible();
+});
+
+When('User click on employee dropdown', () => {
+	eventTypesPage.clickSelectEmployeeDropdown();
+});
+
+Then('User can select employee from dropdown options second', () => {
+	appointmentsPage.selectEmployeeFromDropdownSecond(`${firstName} ${lastName}`);
+});
+
+And('User can see title input field', () => {
+	eventTypesPage.titleInputVisible();
+});
+
+And('User can enter value for title', () => {
+	eventTypesPage.enterTitleInputData(EventTypePageData.dafaultEventTitle);
+});
+
+And('User can see description input field', () => {
+	eventTypesPage.descriptionInputVisible();
+});
+
+And('User can enter value for description', () => {
+	eventTypesPage.enterDescriptionInputData(
+		EventTypePageData.defaultDescription
+	);
+});
+
+And('User can see duration input field', () => {
+	eventTypesPage.durationInputVisible();
+});
+
+And('User can select value for duration', () => {
+	eventTypesPage.enterDurationInputData(EventTypePageData.defaultDuration);
+});
+
+And('User can checkbox', () => {
+	eventTypesPage.checkboxVisible();
+});
+
+And('User can click on checkbox', () => {
+	eventTypesPage.clickCheckbox();
+});
+
+And('User can see save button', () => {
+	eventTypesPage.saveButtonVisible();
+});
+
+When('User click on save button', () => {
+	eventTypesPage.clickSaveButton();
+});
+
+Then('Notification message will appear', () => {
+	eventTypesPage.waitMessageToHide();
 });
 
 // Book public appointment
