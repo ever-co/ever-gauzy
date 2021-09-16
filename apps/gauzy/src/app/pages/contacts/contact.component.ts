@@ -4,8 +4,10 @@ import {
 	ViewChild,
 	Input,
 	OnDestroy,
-	ChangeDetectorRef
+	ChangeDetectorRef,
+	TemplateRef
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
@@ -15,36 +17,31 @@ import {
 	IContact,
 	ICountry
 } from '@gauzy/contracts';
-import {
-	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
-} from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { combineLatest, Subject } from 'rxjs';
 import {
 	debounceTime,
 	filter,
 	first,
-	tap,
-	withLatestFrom
+	tap
 } from 'rxjs/operators';
-import { InviteContactComponent } from './invite-contact/invite-contact.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
-import { OrganizationContactService } from '../../@core/services/organization-contact.service';
-import { Store } from '../../@core/services/store.service';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
-import { TaskTeamsComponent } from '../../@shared/table-components/task-teams/task-teams.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CountryService } from '../../@core/services/country.service';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { InviteContactComponent } from './invite-contact/invite-contact.component';
+import { TranslationBaseComponent } from '../../@shared/language-base';
+import {
+	CountryService,
+	OrganizationContactService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import { ComponentEnum } from '../../@core/constants';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { EmployeeWithLinksComponent, PictureNameTagsComponent, TaskTeamsComponent } from '../../@shared/table-components';
+import { ContactActionComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,8 +52,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class ContactComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationId: string;
-	selectedOrganization: IOrganization;
+
 	showAddCard: boolean;
 	organizationContact: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContact: IOrganizationProject[];
@@ -72,9 +68,21 @@ export class ContactComponent
 	countries: ICountry[] = [];
 	loading: boolean;
 	smartTableSource = new LocalDataSource();
+
+	subject$: Subject<any> = new Subject();
+	public organization: IOrganization;
 	selectedEmployeeId: string;
 
-	@Input() contactType: any;
+	/*
+	* Getter & Setter for contact type
+	*/
+	_contactType: string;
+	get contactType(): string {
+		return this._contactType;
+	}
+	@Input() set contactType(value: string) {
+		this._contactType = value;
+	}
 
 	contactsTable: Ng2SmartTableComponent;
 	@ViewChild('contactsTable') set content(content: Ng2SmartTableComponent) {
@@ -84,6 +92,11 @@ export class ContactComponent
 		}
 	}
 
+	/*
+	* Actions Buttons directive 
+	*/
+	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
@@ -92,7 +105,6 @@ export class ContactComponent
 		public readonly translateService: TranslateService,
 		private readonly dialogService: NbDialogService,
 		private readonly route: ActivatedRoute,
-		private readonly router: Router,
 		private readonly countryService: CountryService,
 		private readonly cd: ChangeDetectorRef
 	) {
@@ -102,55 +114,40 @@ export class ContactComponent
 	}
 
 	ngOnInit(): void {
-		const storeEmployee$ = this.store.selectedEmployee$;
+		this._applyTranslationOnSmartTable();
+		this.subject$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.loadOrganizationContacts()),
+				tap(() => this.loadProjectsWithoutOrganizationContacts()),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				filter((employee) => !!employee),
-				withLatestFrom(storeOrganization$),
+				debounceTime(300),
+				filter(([organization]) => !!organization),
+				distinctUntilChange(),
+				tap(([organization, employee]) => {
+					this.organization = organization;
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this.subject$.next();
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(([employee]) => {
-				if (employee && this.selectedOrganization) {
-					this.selectedEmployeeId = employee.id;
-					this.loadOrganizationContacts();
-					this.loadProjectsWithoutOrganizationContacts();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.selectedOrganization = organization;
-					this.organizationId = organization.id;
-					this.loadOrganizationContacts();
-					this.loadProjectsWithoutOrganizationContacts();
-				}
-			});
+			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
+				tap(() => this.add()),
 				untilDestroyed(this)
 			)
-			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
-					this.add();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+			.subscribe();
 		this.countryService.countries$
 			.pipe(
 				tap((countries: ICountry[]) => (this.countries = countries)),
@@ -158,10 +155,8 @@ export class ContactComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy(): void {}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -325,14 +320,12 @@ export class ContactComponent
 	}
 
 	private async loadOrganizationContacts() {
-		if (!this.selectedOrganization) {
+		if (!this.organization) {
 			return;
 		}
 
-		this.loading = true;
-		this.cd.detectChanges();
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		const { id: organizationId } = this.organization;
 
 		const findObj = {
 			organizationId,
@@ -385,10 +378,13 @@ export class ContactComponent
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
-		this.loading = true;
-		this.cd.detectChanges();
+		if (!this.organization) {
+			return;
+		}
+
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		const { id: organizationId } = this.organization;
+
 		this.organizationProjectsService
 			.getAll(['organizationContact'], {
 				organizationId,
@@ -430,12 +426,13 @@ export class ContactComponent
 
 	async invite(selectedOrganizationContact?: IOrganizationContact) {
 		try {
+			const { id: organizationId } = this.organization;
 			const dialog = this.dialogService.open(InviteContactComponent, {
 				context: {
-					organizationId: this.selectedOrganization.id,
+					organizationId,
 					organizationContact: selectedOrganizationContact,
 					contactType: this.contactType,
-					selectedOrganization: this.selectedOrganization
+					selectedOrganization: this.organization
 				}
 			});
 
@@ -456,12 +453,14 @@ export class ContactComponent
 			);
 		}
 	}
-	_applyTranslationOnSmartTable() {
+
+	public _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this.loadSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -502,4 +501,6 @@ export class ContactComponent
 		);
 		return find ? find.country : row.country;
 	}
+
+	ngOnDestroy(): void {}
 }
