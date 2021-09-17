@@ -35,7 +35,6 @@ const employeeFullName = `${firstName} ${lastName}`;
 
 const organizationName = faker.company.companyName();
 const taxId = faker.random.alphaNumeric();
-const organizationStreet = faker.address.streetAddress();
 
 // Login with email
 Given('Login with default credentials', () => {
