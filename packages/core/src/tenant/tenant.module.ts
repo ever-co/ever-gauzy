@@ -3,7 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { AuthModule } from '../auth/auth.module';
-import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
 import { CommandHandlers } from './commands/handlers';
@@ -19,12 +19,12 @@ import { FeatureModule } from './../feature/feature.module';
 		AuthModule,
 		UserModule,
 		RoleModule,
-		RolePermissionsModule,
+		RolePermissionModule,
 		forwardRef(() => FeatureModule),
 		CqrsModule
 	],
 	controllers: [TenantController],
 	providers: [TenantService, ...CommandHandlers],
-	exports: [TenantService, RolePermissionsModule]
+	exports: [TenantService, RolePermissionModule]
 })
 export class TenantModule {}

@@ -97,10 +97,10 @@ import {
     TimeSlot,
     User,
     UserOrganization
-} from './../../core/entities/internal';
+} from '../../core/entities/internal';
 
 @Injectable()
-export class DeleteAllDataService {
+export class FactoryResetService {
 
     repositories: Repository<any>[];
 
@@ -379,7 +379,7 @@ export class DeleteAllDataService {
         this.registerCoreRepositories();
     }
 
-    async deleteAllData(id: any) {
+    async reset(id: any) {
 
         const user = await this.userRepository.findOne(id);
         user.thirdPartyId = null;

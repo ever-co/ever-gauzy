@@ -14,25 +14,25 @@ import {
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
-import { RolePermissions } from './role-permissions.entity';
+import { RolePermission } from './role-permission.entity';
 import { Role } from '../role/role.entity';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 
 @Injectable()
-export class RolePermissionsService extends TenantAwareCrudService<RolePermissions> {
+export class RolePermissionService extends TenantAwareCrudService<RolePermission> {
 	constructor(
-		@InjectRepository(RolePermissions)
-		private readonly rolePermissionsRepository: Repository<RolePermissions>,
+		@InjectRepository(RolePermission)
+		private readonly rolePermissionRepository: Repository<RolePermission>,
 
 		private readonly _commandBus: CommandBus
 	) {
-		super(rolePermissionsRepository);
+		super(rolePermissionRepository);
 	}
 
 	public async updatePermission(
-		id: string | number | FindConditions<RolePermissions>,
-		partialEntity: QueryDeepPartialEntity<RolePermissions>
-	): Promise<UpdateResult | RolePermissions> {
+		id: string | number | FindConditions<IRolePermission>,
+		partialEntity: QueryDeepPartialEntity<IRolePermission>
+	): Promise<UpdateResult | IRolePermission> {
 		try {
 			const { role } = await this.repository.findOne({
 				where: { id },
@@ -72,7 +72,7 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 			(defaultRole) => role.name === defaultRole.role
 		);
 		for await (const permission of defaultEnabledPermissions) {
-			const rolePermission = new RolePermissions();
+			const rolePermission = new RolePermission();
 			rolePermission.roleId = role.id;
 			rolePermission.permission = permission;
 			rolePermission.enabled = true;
@@ -101,7 +101,7 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 				) {
 					const { defaultEnabledPermissions } = defaultPermissions;
 					for await (const permission of defaultEnabledPermissions) {
-						const rolePermission = new RolePermissions();
+						const rolePermission = new RolePermission();
 						rolePermission.roleId = role.id;
 						rolePermission.permission = permission;
 						rolePermission.enabled = true;
@@ -112,12 +112,12 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 			}
 		}
 		
-		await this.rolePermissionsRepository.save(rolesPermissions);
+		await this.rolePermissionRepository.save(rolesPermissions);
 		return rolesPermissions;
 	}
 
 	public async migratePermissions(): Promise<IRolePermissionMigrateInput[]> {
-		const permissions: IRolePermission[] = await this.rolePermissionsRepository.find({
+		const permissions: IRolePermission[] = await this.rolePermissionRepository.find({
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			},
@@ -148,7 +148,7 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 			if (isImporting && sourceId) {
 				const { permission, role: name } = item;
 				const role = roles.find((role: IRole) => role.name === name);
-				const destinantion = await this.rolePermissionsRepository.findOne({
+				const destinantion = await this.rolePermissionRepository.findOne({
 					tenantId: RequestContext.currentTenantId(), 
 					permission,
 					role
@@ -157,7 +157,7 @@ export class RolePermissionsService extends TenantAwareCrudService<RolePermissio
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: getManager().getRepository(RolePermissions).metadata.tableName,
+								entityType: getManager().getRepository(RolePermission).metadata.tableName,
 								sourceId,
 								destinationId: destinantion.id,
 								tenantId: RequestContext.currentTenantId()

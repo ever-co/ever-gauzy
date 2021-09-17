@@ -112,7 +112,7 @@ export * from '../../reports/report.entity';
 export * from '../../request-approval-employee/request-approval-employee.entity';
 export * from '../../request-approval-team/request-approval-team.entity';
 export * from '../../request-approval/request-approval.entity';
-export * from '../../role-permissions/role-permissions.entity';
+export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../skills/skill.entity';
 export * from '../../tags/tag.entity';

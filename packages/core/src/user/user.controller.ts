@@ -42,7 +42,7 @@ import { Permissions } from './../shared/decorators';
 import { User, UserPreferredComponentLayoutDTO, UserPreferredLanguageDTO } from './user.entity';
 import { UserService } from './user.service';
 import { UserCreateCommand } from './commands';
-import { DeleteAllDataService } from './delete-all-data/delete-all-data.service';
+import { FactoryResetService } from './factory-reset/factory-reset.service';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -51,7 +51,7 @@ import { DeleteAllDataService } from './delete-all-data/delete-all-data.service'
 export class UserController extends CrudController<User> {
 	constructor(
 		private readonly userService: UserService,
-		private readonly deleteAllDataService: DeleteAllDataService,
+		private readonly factoryResetService: FactoryResetService,
 		private readonly commandBus: CommandBus
 	) {
 		super(userService);
@@ -324,10 +324,10 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Delete('/all-data/:id')
+	@Delete('/reset/:id')
 	async deleteAllData(
 		@Param('id', UUIDValidationPipe) id: string
 	){
-		return this.deleteAllDataService.deleteAllData(id);
+		return this.factoryResetService.reset(id);
 	}
 }

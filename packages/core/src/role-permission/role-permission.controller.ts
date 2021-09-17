@@ -23,17 +23,17 @@ import { CrudController } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { RolePermissions } from './role-permissions.entity';
-import { RolePermissionsService } from './role-permissions.service';
+import { RolePermission } from './role-permission.entity';
+import { RolePermissionService } from './role-permission.service';
 
 @ApiTags('Role')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class RolePermissionsController extends CrudController<RolePermissions> {
+export class RolePermissionController extends CrudController<RolePermission> {
 	constructor(
-		private readonly rolePermissionsService: RolePermissionsService
+		private readonly rolePermissionService: RolePermissionService
 	) {
-		super(rolePermissionsService);
+		super(rolePermissionService);
 	}
 
 	@ApiOperation({ summary: 'Import role-permissions from self hosted to gauzy cloud hosted in bulk' })
@@ -51,14 +51,14 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	async importRole(
 		@Body() input: any
 	) {
-		return await this.rolePermissionsService.migrateImportRecord(input);
+		return await this.rolePermissionService.migrateImportRecord(input);
 	}
 
 	@ApiOperation({ summary: 'Find role permissions.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found role permissions.',
-		type: RolePermissions
+		type: RolePermission
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -69,7 +69,7 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IRolePermission>> {
 		const { findInput } = data;
-		return this.rolePermissionsService.findAll({ where: findInput });
+		return this.rolePermissionService.findAll({ where: findInput });
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -89,7 +89,7 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	async create(
 		@Body() entity: IRolePermissionCreateInput
 	): Promise<IRolePermission> {
-		return this.rolePermissionsService.create(entity);
+		return this.rolePermissionService.create(entity);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -112,9 +112,9 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: RolePermissions
+		@Body() entity: RolePermission
 	): Promise<UpdateResult | IRolePermission> {
-		return await this.rolePermissionsService.updatePermission(id, entity);
+		return await this.rolePermissionService.updatePermission(id, entity);
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
@@ -124,6 +124,6 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 	async delete(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<any> {
-		return await this.rolePermissionsService.deletePermission(id);
+		return await this.rolePermissionService.deletePermission(id);
 	}
 }

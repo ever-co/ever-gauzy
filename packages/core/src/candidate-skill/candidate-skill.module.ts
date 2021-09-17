@@ -1,25 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
+import { TenantModule } from '../tenant/tenant.module';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
 import { CandidateSkillController } from './candidate-skill.controller';
-import { RoleModule } from '../role/role.module';
-import { UserModule } from '../user/user.module';
-import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
-import { AuthModule } from '../auth/auth.module';
-import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{ path: '/candidate-skills', module: CandidateSkillModule }
 		]),
-		TypeOrmModule.forFeature([CandidateSkill]),
-		UserModule,
-		RoleModule,
-		RolePermissionsModule,
-		AuthModule,
+		TypeOrmModule.forFeature([ CandidateSkill ]),
 		TenantModule
 	],
 	providers: [CandidateSkillService],

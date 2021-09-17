@@ -5,7 +5,7 @@ import { HubstaffService } from './hubstaff.service';
 import { HubstaffController } from './hubstaff.controller';
 import { UserModule } from '../user/user.module';
 import { RoleModule } from '../role/role.module';
-import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TenantModule } from './../tenant/tenant.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { IntegrationEntitySettingModule } from './../integration-entity-setting/integration-entity-setting.module';
@@ -23,7 +23,7 @@ import { OrganizationProjectModule } from './../organization-project/organizatio
 		HttpModule,
 		TenantModule,
 		RoleModule,
-		RolePermissionsModule,
+		RolePermissionModule,
 		UserModule,
 		OrganizationModule,
 		OrganizationProjectModule,

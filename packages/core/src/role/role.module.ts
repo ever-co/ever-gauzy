@@ -11,14 +11,16 @@ import { UserModule } from './../user';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/role', module: RoleModule }]),
-		forwardRef(() => TypeOrmModule.forFeature([Role])),
+		RouterModule.forRoutes([
+			{ path: '/role', module: RoleModule }
+		]),
+		forwardRef(() => TypeOrmModule.forFeature([ Role ])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [RoleController],
 	providers: [RoleService, ...CommandHandlers],
-	exports: [RoleService]
+	exports: [TypeOrmModule, RoleService]
 })
 export class RoleModule {}
