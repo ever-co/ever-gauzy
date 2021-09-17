@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	clearField,
 	clickButton,
@@ -8,7 +9,10 @@ import {
 	verifyByText,
 	verifyElementIsVisible,
 	waitElementToHide,
-	waitUntil
+	waitUntil,
+	clickButtonByIndex,
+	verifyText,
+	getLastElement
 } from './../utils/util';
 import { OrganizationPublicPage } from '../pageobjects/OrganizationPublicPagePageObject';
 
@@ -301,4 +305,196 @@ export const verifyTotalClients = (text: string) => {
 
 export const verifyClientFocus = (text: string) => {
 	verifyByText(OrganizationPublicPage.clientFocusCss, text);
+};
+
+export const gridBtnExists = () => {
+	verifyElementIsVisible(OrganizationPublicPage.gridButtonCss);
+};
+
+export const gridBtnClick = (index) => {
+	clickButtonByIndex(OrganizationPublicPage.gridButtonCss, index);
+};
+
+export const addBtnExists = () => {
+	verifyElementIsVisible(OrganizationPublicPage.addButtonCss);
+};
+
+export const addBtnClick = () => {
+	clickButton(OrganizationPublicPage.addButtonCss);
+};
+
+export const verifyOrganisationNameField = () => {
+	verifyElementIsVisible(OrganizationPublicPage.organisationNameFieldCss);
+};
+
+export const enterOrganizationName = (data) => {
+	clearField(OrganizationPublicPage.organisationNameFieldCss);
+	enterInput(OrganizationPublicPage.organisationNameFieldCss, data);
+};
+
+export const selectCurrency = (data) => {
+	clickButton(OrganizationPublicPage.currencyFieldCss);
+	clickElementByText(OrganizationPublicPage.dropdownOptionCss, data);
+};
+
+export const enterOfficialName = (data) => {
+	enterInput(OrganizationPublicPage.officialNameFieldCss, data);
+};
+
+export const enterTaxId = (data) => {
+	enterInput(OrganizationPublicPage.taxFieldCss, data);
+};
+
+export const clickOnNextButton = () => {
+	clickButton(OrganizationPublicPage.nextButtonCss);
+};
+
+export const verifyOrganizationExists = (text) => {
+	verifyText(OrganizationPublicPage.verifyOrganizationCss, text);
+};
+
+export const countryDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.countryDropdownCss);
+};
+
+export const clickCountryDropdown = () => {
+	clickButton(OrganizationPublicPage.countryDropdownCss);
+};
+
+export const selectCountryFromDropdown = (text) => {
+	clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
+};
+
+export const cityInputVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.cityInputCss);
+};
+
+export const enterCityInputData = (data) => {
+	clearField(OrganizationPublicPage.cityInputCss);
+	enterInput(OrganizationPublicPage.cityInputCss, data);
+};
+
+export const postcodeInputVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.postcodeInputCss);
+};
+
+export const enterPostcodeInputData = (data) => {
+	clearField(OrganizationPublicPage.postcodeInputCss);
+	enterInput(OrganizationPublicPage.postcodeInputCss, data);
+};
+
+export const streetInputVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.streetInputCss);
+};
+
+export const enterStreetInputData = (data) => {
+	clearField(OrganizationPublicPage.streetInputCss);
+	enterInput(OrganizationPublicPage.streetInputCss, data);
+};
+
+export const bonusTypeDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.bonusTypeDropdownCss);
+};
+
+export const clickBonusTypeDropdown = () => {
+	clickButton(OrganizationPublicPage.bonusTypeDropdownCss);
+};
+
+export const selectBonusTypeFromDropdown = (text) => {
+	clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
+};
+
+export const bonusPercentageInputVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.bonusPercentageCss);
+};
+
+export const enterBonusPercentageInputData = (data) => {
+	clearField(OrganizationPublicPage.bonusPercentageCss);
+	enterInput(OrganizationPublicPage.bonusPercentageCss, data);
+};
+
+export const expiryPeriodInputVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.expiryPeriodInputCss);
+};
+
+export const enterExpiryPeriodInputData = (data) => {
+	clearField(OrganizationPublicPage.expiryPeriodInputCss);
+	enterInput(OrganizationPublicPage.expiryPeriodInputCss, data);
+};
+
+export const timeZoneDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.timeZoneDropdownCss);
+};
+
+export const clickTimeZoneDropdown = () => {
+	clickButton(OrganizationPublicPage.timeZoneDropdownCss);
+};
+
+export const selectTimeZoneFromDropdown = (text) => {
+	clickElementByText(OrganizationPublicPage.timeZoneDropdownOptionCss, text);
+};
+
+export const startOfWeekDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.startOfWeekDropdownCss);
+};
+
+export const clickStartOfWeekDropdown = () => {
+	clickButton(OrganizationPublicPage.startOfWeekDropdownCss);
+};
+
+export const selectStartOfWeekFromDropdown = (text) => {
+	clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
+};
+
+export const dateTypeDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.dateTypeDropdownCss);
+};
+
+export const clickDateTypeDropdown = () => {
+	clickButton(OrganizationPublicPage.dateTypeDropdownCss);
+};
+
+export const selectDateTypeFromDropdown = (text) => {
+	clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
+};
+
+export const regionDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.regionCodeDropdownCss);
+};
+
+export const clickRegionDropdown = () => {
+	clickButton(OrganizationPublicPage.regionCodeDropdownCss);
+};
+
+export const selectRegionFromDropdown = (text) => {
+	clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
+};
+
+export const numberFormatDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.numberFormatDropdownCss);
+};
+
+export const clickNumberFormatDropdown = () => {
+	clickButton(OrganizationPublicPage.numberFormatDropdownCss);
+};
+
+export const selectNumberFormatFromDropdown = (text) => {
+	clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
+};
+
+export const dateFormatDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.dateFormatDropdownCss);
+};
+
+export const clickDateFormatDropdown = () => {
+	clickButton(OrganizationPublicPage.dateFormatDropdownCss);
+};
+
+export const selectDateFormatFromDropdown = () => {
+	const today = dayjs().format('MM/DD/YYYY');
+	clickElementByText(OrganizationPublicPage.dropdownOptionCss, today);
+};
+
+export const selectTableRow = () => {
+	getLastElement(OrganizationPublicPage.tableRowCss);
 };

@@ -340,9 +340,6 @@ export const CustomCommands = {
 		street: string
 	) => {
 		cy.visit('/#/pages/organizations', { timeout: pageLoadTimeout });
-		cy.intercept('GET', '/api/employee/user/*').as('waitUsers');
-		cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
-		cy.wait(['@waitUsers','@waitUserOrganization']);
 		addOrganizationPage.addBtnExists();
 		addOrganizationPage.addBtnClick();
 		addOrganizationPage.enterOrganizationName(organizationName);
