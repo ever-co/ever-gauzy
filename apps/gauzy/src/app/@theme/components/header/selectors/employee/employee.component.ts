@@ -14,6 +14,7 @@ import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
 import { Store } from './../../../../../@core/services/store.service';
 import {
 	CrudActionEnum,
+	DEFAULT_TYPE,
 	IEmployee,
 	IOrganization,
 	ISelectedEmployee
@@ -320,5 +321,17 @@ export class EmployeeSelectorComponent
 		) { 
 			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
+	}
+
+	/**
+	 * Display clearable option in employee selector
+	 * 
+	 * @returns 
+	 */
+	isClearable(): boolean {
+		if (this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE) {
+			return false;
+		}
+		return true;
 	}
 }
