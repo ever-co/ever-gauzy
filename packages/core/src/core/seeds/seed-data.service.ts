@@ -67,7 +67,7 @@ import {
 	createDefaultTeams,
 	createRandomTeam
 } from '../../organization-team/organization-team.seed';
-import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
+import { createRolePermissions } from '../../role-permission/role-permission.seed';
 import {
 	createDefaultTenant,
 	createRandomTenants,

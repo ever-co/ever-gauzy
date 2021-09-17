@@ -2,24 +2,24 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
-import { RolePermissionsController } from './role-permissions.controller';
+import { RolePermissionController } from './role-permission.controller';
 import { RolePermission } from './role-permission.entity';
-import { RolePermissionsService } from './role-permissions.service';
+import { RolePermissionService } from './role-permission.service';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: 'role-permissions', module: RolePermissionsModule }
+			{ path: 'role-permissions', module: RolePermissionModule }
 		]),
 		forwardRef(() => TypeOrmModule.forFeature([ RolePermission ])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
 	],
-	controllers: [RolePermissionsController],
-	providers: [RolePermissionsService],
-	exports: [TypeOrmModule, RolePermissionsService]
+	controllers: [RolePermissionController],
+	providers: [RolePermissionService],
+	exports: [TypeOrmModule, RolePermissionService]
 })
-export class RolePermissionsModule {}
+export class RolePermissionModule {}

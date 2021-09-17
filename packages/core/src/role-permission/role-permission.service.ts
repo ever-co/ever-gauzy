@@ -19,7 +19,7 @@ import { Role } from '../role/role.entity';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 
 @Injectable()
-export class RolePermissionsService extends TenantAwareCrudService<RolePermission> {
+export class RolePermissionService extends TenantAwareCrudService<RolePermission> {
 	constructor(
 		@InjectRepository(RolePermission)
 		private readonly rolePermissionRepository: Repository<RolePermission>,

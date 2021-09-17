@@ -9,7 +9,7 @@ import { IntegrationSettingModule } from './../integration-setting/integration-s
 import { IntegrationEntitySettingModule } from './../integration-entity-setting/integration-entity-setting.module';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
-import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 
@@ -23,7 +23,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		]),
 		TenantModule,
 		RoleModule,
-		RolePermissionsModule,
+		RolePermissionModule,
 		UserModule,
 		forwardRef(() => IntegrationSettingModule),
 		forwardRef(() => IntegrationEntitySettingModule),

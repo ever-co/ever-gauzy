@@ -56,7 +56,7 @@ import { CurrencyModule } from './currency';
 import { InviteModule } from './invite/invite.module';
 import { EmailModule } from './email/email.module';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
-import { RolePermissionsModule } from './role-permissions/role-permissions.module';
+import { RolePermissionModule } from './role-permission/role-permission.module';
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
@@ -259,7 +259,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		ApprovalPolicyModule,
 		EquipmentSharingPolicyModule,
 		RequestApprovalModule,
-		RolePermissionsModule,
+		RolePermissionModule,
 		TenantModule,
 		TenantSettingModule,
 		TagModule,
