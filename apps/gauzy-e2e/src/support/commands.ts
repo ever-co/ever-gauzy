@@ -488,7 +488,8 @@ export const CustomCommands = {
 		loginPage.clickLoginButton();
 		dashboardPage.verifyCreateButton();
 	},
-	addTime: (timeTrackingPage: any, description: string) => {
+	addTime: (timeTrackingPage: any, description: string, url: string) => {
+		timeTrackingPage.waitMainDashboard(url);
 		timeTrackingPage.timerVisible();
 		timeTrackingPage.clickTimer();
 		timeTrackingPage.timerBtnVisible();

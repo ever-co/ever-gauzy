@@ -16,6 +16,8 @@ import * as addTaskPage from '../../Base/pages/AddTasks.po';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import { AddTasksPageData } from '../../Base/pagedata/AddTasksPageData';
 import * as timeTrackingPage from '../../Base/pages/TimeTracking.po';
+import { TimeTrackingPageData } from '../../Base/pagedata/TimeTrackingPageData';
+
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -35,6 +37,8 @@ let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 let employeeFullName = `${firstName} ${lastName}`;
+let projectName = faker.company.companyName()
+
 
 let description = faker.lorem.text();
 
@@ -133,7 +137,13 @@ And('User can add new project', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
 		organizationProjectsPage,
-		OrganizationProjectsPageData,
+		{
+			name: projectName,
+			hours: OrganizationProjectsPageData.hours,
+			editName: OrganizationProjectsPageData.editName,
+			description: OrganizationProjectsPageData.description,
+			color: OrganizationProjectsPageData.color
+		},
 		employeeFullName
 	);
 });
@@ -151,7 +161,12 @@ And('User can add new client', () => {
 		city,
 		postcode,
 		street,
-		ClientsData,
+		{
+			defaultProject: projectName,
+			country: ClientsData.country,
+			defaultPhone: ClientsData.defaultPhone,
+			hours: ClientsData.hours
+		},
 		employeeFullName
 	);
 });
@@ -161,7 +176,15 @@ And('User can add new task', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addTask(addTaskPage, AddTasksPageData, employeeFullName);
+	CustomCommands.addTask(addTaskPage,{ 
+		defaultTaskProject: projectName,
+		defaultTaskTitle: AddTasksPageData.defaultTaskTitle,
+		editTaskTitle: AddTasksPageData.defaultTaskTitle,
+		defaultTaskEstimateDays: AddTasksPageData.defaultTaskEstimateDays,
+		defaultTaskEstimateHours: AddTasksPageData.defaultTaskEstimateHours,
+		defaultTaskEstimateMinutes: AddTasksPageData.defaultTaskEstimateMinutes,
+		defaultTaskDescription: AddTasksPageData.defaultTaskDescription
+	}, employeeFullName);
 });
 
 // Logout
@@ -182,7 +205,7 @@ And('Newly created employee can log in', () => {
 
 // Add time
 And('Employee can log time', () => {
-	CustomCommands.addTime(timeTrackingPage, description);
+	CustomCommands.addTime(timeTrackingPage, description, TimeTrackingPageData.urlConfirmDashboardLoad);
 });
 
 // Verify reports time log data
@@ -223,7 +246,7 @@ And('Employee can verify time logged by total hours', () => {
 });
 
 And('Employee can verify Time and Activity project worked', () => {
-	reportsPage.verifyTimeAndActivityProject(OrganizationProjectsPageData.name);
+	reportsPage.verifyTimeAndActivityProject(projectName);
 });
 
 When('Employee can click on Amounts owed sidebar button', () => {
@@ -239,7 +262,7 @@ When('Employee click on Projects budgets sidebar button', () => {
 });
 
 Then('Employee can verify project that he worked on', () => {
-	reportsPage.verifyProjectBudgetsProject(OrganizationProjectsPageData.name);
+	reportsPage.verifyProjectBudgetsProject(projectName);
 });
 
 When('Employee click on Clients budgets sidebar button', () => {

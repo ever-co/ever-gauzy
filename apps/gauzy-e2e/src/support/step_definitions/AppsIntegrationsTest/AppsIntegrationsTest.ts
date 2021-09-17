@@ -16,7 +16,7 @@ Given('Login with default credentials', () => {
 
 // Verify dropdown text
 Then('User can visit Integrations page', () => {
-	dashboardPage.verifyAccountingDashboard();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/integrations/list', { timeout: pageLoadTimeout });
 	appsIntegrationsPage.verifyHeaderText(AppsIntegrationsPageData.header);
 });
