@@ -24,7 +24,7 @@ export const createDefaultEmployeeInviteSent = async (
 	organizations.forEach((org) => {
 		for (let i = 0; i < 10; i++) {
 			const invitee = new Invite();
-			invitee.email = faker.internet.email();
+			invitee.email = faker.internet.exampleEmail();
 			invitee.expireDate = faker.date.between(
 				new Date(),
 				moment(new Date()).add(30, 'days').toDate()
@@ -67,7 +67,7 @@ export const createRandomEmployeeInviteSent = async (
 		orgs.forEach((org) => {
 			for (let i = 0; i < noOfInvitesPerOrganization; i++) {
 				const invitee = new Invite();
-				invitee.email = faker.internet.email();
+				invitee.email = faker.internet.exampleEmail();
 				invitee.expireDate = faker.date.between(
 					new Date(),
 					moment(new Date()).add(30, 'days').toDate()

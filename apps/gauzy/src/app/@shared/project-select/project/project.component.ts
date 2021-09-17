@@ -143,7 +143,7 @@ export class ProjectSelectorComponent
 			});
 		this.subject$
 			.pipe(
-				debounceTime(500),
+				debounceTime(200),
 				tap(() => this.getProjects()),
 				untilDestroyed(this)
 			)
@@ -305,6 +305,18 @@ export class ProjectSelectorComponent
 		this.selectedProject = project || ALL_PROJECT_SELECTED;
 		this.projectId = this.selectedProject.id;
 		this.onChanged.emit(project);
+	}
+
+	/**
+	 * Display clearable option in project selector
+	 * 
+	 * @returns 
+	 */
+	 isClearable(): boolean {
+		if (this.selectedProject === ALL_PROJECT_SELECTED) {
+			return false;
+		}
+		return true;
 	}
 
 	ngOnDestroy() {}
