@@ -8,7 +8,6 @@ import * as loginPage from '../../Base/pages/Login.po';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import * as clientsPage from '../../Base/pages/Clients.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
-import * as addOrganizationPage from '../../Base/pages/AddOrganization.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as organizationPublicPage from '../../Base/pages/OrganizationPublicPage.po';
 
@@ -36,22 +35,221 @@ const employeeFullName = `${firstName} ${lastName}`;
 
 const organizationName = faker.company.companyName();
 const taxId = faker.random.alphaNumeric();
-const organizationStreet = faker.address.streetAddress();
 
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
+	cy.visit('/#/pages/organizations', { timeout: pageLoadTimeout });
 });
 
 // Add new organization
-And('User can add new organization', () => {
-	CustomCommands.addOrganization(
-		addOrganizationPage,
-		organizationName,
-		AddOrganizationPageData,
-		taxId,
-		organizationStreet
+Then('User can see grid button', () => {
+	organizationPublicPage.gridBtnExists();
+});
+
+And('User can click on second grid button to change view', () => {
+	organizationPublicPage.gridBtnClick(1);
+});
+
+Then('User can see Add new organization button', () => {
+	organizationPublicPage.addBtnExists();
+});
+
+When('User click on Add new organization button', () => {
+	organizationPublicPage.addBtnClick();
+});
+
+Then('User can add value for organization name', () => {
+	organizationPublicPage.enterOrganizationName(organizationName);
+});
+
+And('User can select currency', () => {
+	organizationPublicPage.selectCurrency(AddOrganizationPageData.currency);
+});
+
+And('User can enter value for official name', () => {
+	organizationPublicPage.enterOfficialName(organizationName);
+});
+
+And('User can add tax id value', () => {
+	organizationPublicPage.enterTaxId(taxId);
+});
+
+When('User click on Next button', () => {
+	organizationPublicPage.clickOnNextButton();
+});
+
+Then('User can see country dropdown', () => {
+	organizationPublicPage.countryDropdownVisible();
+});
+
+When('User click on country dropdown', () => {
+	organizationPublicPage.clickCountryDropdown();
+});
+
+Then('User can select country from dropdown option', () => {
+	organizationPublicPage.selectCountryFromDropdown(
+		AddOrganizationPageData.country
 	);
+});
+
+And('User can see city input field', () => {
+	organizationPublicPage.cityInputVisible();
+});
+
+And('User can add value for city', () => {
+	organizationPublicPage.enterCityInputData(AddOrganizationPageData.city);
+});
+
+And('User can see post code input field', () => {
+	organizationPublicPage.postcodeInputVisible();
+});
+
+And('User can add value for post code', () => {
+	organizationPublicPage.enterPostcodeInputData(
+		AddOrganizationPageData.postcode
+	);
+});
+
+And('User can see street input field', () => {
+	organizationPublicPage.streetInputVisible();
+});
+
+And('User can add value for street', () => {
+	organizationPublicPage.enterStreetInputData(street);
+});
+
+Then('User can click on Next button', () => {
+	organizationPublicPage.clickOnNextButton();
+});
+
+And('User can see bonus dropdown', () => {
+	organizationPublicPage.bonusTypeDropdownVisible();
+});
+
+When('User click on bonus dropdown', () => {
+	organizationPublicPage.clickBonusTypeDropdown();
+});
+
+Then('User can select bonus from dropdown options', () => {
+	organizationPublicPage.selectBonusTypeFromDropdown(
+		AddOrganizationPageData.bonusType
+	);
+});
+
+And('User can see bonus input field', () => {
+	organizationPublicPage.bonusPercentageInputVisible();
+});
+
+And('User can enter value for bonus', () => {
+	organizationPublicPage.enterBonusPercentageInputData(
+		AddOrganizationPageData.bonusPercentage
+	);
+});
+
+Then('User can click next button', () => {
+	organizationPublicPage.clickOnNextButton();
+});
+
+And('User can see time zone dropdown', () => {
+	organizationPublicPage.timeZoneDropdownVisible();
+});
+
+When('User click on time zone dropdown', () => {
+	organizationPublicPage.clickTimeZoneDropdown();
+});
+
+Then('User can select time zone from dropdown options', () => {
+	organizationPublicPage.selectTimeZoneFromDropdown(
+		AddOrganizationPageData.timeZone
+	);
+});
+
+And('User can see start of week dropdown', () => {
+	organizationPublicPage.startOfWeekDropdownVisible();
+});
+
+When('User click on start of week dropdown', () => {
+	organizationPublicPage.clickStartOfWeekDropdown();
+});
+
+Then('User can select day of week from dropdown options', () => {
+	organizationPublicPage.selectStartOfWeekFromDropdown(
+		AddOrganizationPageData.startOfWeek
+	);
+});
+
+And('User can see date type dropdown', () => {
+	organizationPublicPage.dateTypeDropdownVisible();
+});
+
+When('User click on date type dropdown', () => {
+	organizationPublicPage.clickDateTypeDropdown();
+});
+
+Then('User can select date type from dropdown options', () => {
+	organizationPublicPage.selectDateTypeFromDropdown(
+		AddOrganizationPageData.dateType
+	);
+});
+
+And('User can see region dropdown', () => {
+	organizationPublicPage.regionDropdownVisible();
+});
+
+When('User click on region dropdown', () => {
+	organizationPublicPage.clickRegionDropdown();
+});
+
+Then('User can select region from dropdown options', () => {
+	organizationPublicPage.selectRegionFromDropdown(
+		AddOrganizationPageData.region
+	);
+});
+
+And('User can see number format dropdown', () => {
+	organizationPublicPage.numberFormatDropdownVisible();
+});
+
+When('User click on number format dropdown', () => {
+	organizationPublicPage.clickNumberFormatDropdown();
+});
+
+Then('User can select number format from dropdown options', () => {
+	organizationPublicPage.selectNumberFormatFromDropdown(
+		AddOrganizationPageData.numberFormat
+	);
+});
+
+And('User can see date format dropdown', () => {
+	organizationPublicPage.dateFormatDropdownVisible();
+});
+
+When('User click on date format dropdown', () => {
+	organizationPublicPage.clickDateFormatDropdown();
+});
+
+Then('User can select date format from dropdown options', () => {
+	organizationPublicPage.selectDateFormatFromDropdown();
+});
+
+And('User can see expiry date input field', () => {
+	organizationPublicPage.expiryPeriodInputVisible();
+});
+
+And('User can enter value for expiry date', () => {
+	organizationPublicPage.enterExpiryPeriodInputData(
+		AddOrganizationPageData.expiryPeriod
+	);
+});
+
+When('User click on last Next button', () => {
+	organizationPublicPage.clickOnNextButton();
+});
+
+Then('Notification message will appear', () => {
+	organizationPublicPage.waitMessageToHide();
 });
 
 const logoutLogin = () => {

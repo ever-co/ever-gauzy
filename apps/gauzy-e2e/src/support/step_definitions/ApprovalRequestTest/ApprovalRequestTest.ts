@@ -242,7 +242,7 @@ And('User can see save button', () => {
 });
 
 When('User click on save button', () => {
-	approvalRequestPage.clickSaveButton();
+	approvalRequestPage.clickSaveButtonWithForce();
 });
 
 Then('Notification message will appear', () => {

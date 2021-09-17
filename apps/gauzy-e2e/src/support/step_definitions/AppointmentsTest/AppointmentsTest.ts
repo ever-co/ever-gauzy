@@ -186,7 +186,7 @@ Then('User can see Event Type Select button', () => {
 });
 
 When('User clicks on Event Type select button', () => {
-	appointmentsPage.clickEventTypeSelectButton(1);
+	appointmentsPage.clickEventTypeSelectButton(0);
 });
 
 Then('User can see available time in Calendar table', () => {
