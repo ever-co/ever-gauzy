@@ -8,8 +8,7 @@ import {
 	verifyText,
 	enterInputConditionally,
 	clickKeyboardBtnByKeycode,
-	clickElementByText,
-	verifyElementNotExist
+	clickElementByText
 } from '../utils/util';
 import { ManageCandidatesInvitesPage } from '../pageobjects/ManageCandidatesInvitesPageObject';
 
@@ -99,8 +98,4 @@ export const clickConfirmDeleteButton = () => {
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
-};
-
-export const verifyInviteIsDeleted = (text) => {
-	verifyElementNotExist(ManageCandidatesInvitesPage.verifyEmailCss);
 };

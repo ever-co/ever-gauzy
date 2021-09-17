@@ -29,4 +29,3 @@ Feature: Candidates invites test
     Then User will see confirm delete button
     When User click on confirm delete button
     Then Notification message will appear
-    And User can verify invite was deleted
