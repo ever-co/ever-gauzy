@@ -750,16 +750,6 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Default Employee Invite',
-			createDefaultEmployeeInviteSent(
-				this.connection,
-				this.tenant,
-				this.organizations,
-				this.superAdminUsers
-			)
-		);
-
-		await this.tryExecute(
 			'Default General Goal Setting',
 			createDefaultGeneralGoalSetting(
 				this.connection,
@@ -849,6 +839,16 @@ export class SeedDataService {
 			chalk.magenta(
 				`🌱 SEEDING DEFAULT ${env.production ? 'PRODUCTION' : ''
 				} DATABASE...`
+			)
+		);
+
+		await this.tryExecute(
+			'Default Employee Invite',
+			createDefaultEmployeeInviteSent(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				this.superAdminUsers
 			)
 		);
 
