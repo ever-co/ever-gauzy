@@ -94,7 +94,7 @@ const generateOrganizationContact = async (
 			? faker.datatype.number({ min: 200, max: 2000 })
 			: faker.datatype.number({ min: 20, max: 40 });
 
-	const email = faker.internet.email(contact.firstName, contact.lastName);
+	const email = faker.internet.exampleEmail(contact.firstName, contact.lastName);
 	orgContact.emailAddresses = [email];
 	orgContact.inviteStatus = faker.random.arrayElement(Object.values(ContactOrganizationInviteStatus));
 

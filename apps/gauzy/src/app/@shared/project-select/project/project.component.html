@@ -2,7 +2,7 @@
 	<ng-select
 		[addTag]="hasPermissionProjEdit ? createNew : null"
 		[multiple]="multiple"
-		[clearable]="true"
+		[clearable]="isClearable()"
 		[disabled]="disabled"
 		[items]="projects"
 		(change)="selectProject($event)"
