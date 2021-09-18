@@ -43,6 +43,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
+import { TaskStatusSelectModule } from '../../@shared/tasks/task-status-select/task-status-select.module';
 
 @NgModule({
 	declarations: [
@@ -90,7 +92,9 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		TasksSprintSettingsViewModule,
 		HeaderTitleModule,
 		TableFiltersModule,
-		PaginationModule
+		PaginationModule,
+		ProjectSelectModule,
+		TaskStatusSelectModule,
 	]
 })
 export class TasksModule {}

@@ -111,7 +111,8 @@ export class MyTaskDialogComponent
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
-			status: [status],
+			projectId: (project) ? project.id : null,
+			status: [status? status :this.getTranslation('TASKS_PAGE.TODO')],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [
@@ -164,6 +165,10 @@ export class MyTaskDialogComponent
 	selectedTagsHandler(ev) {
 		// we dont need this, at least we dont need for create or update TASK
 		// this.tags = ev;
+	}
+
+	selectedProject(project: IOrganizationProject) {
+		this.form.patchValue({ project });
 	}
 
 	private async loadEmployees() {
