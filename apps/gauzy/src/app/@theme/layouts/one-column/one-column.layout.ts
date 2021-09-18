@@ -50,7 +50,7 @@ export class OneColumnLayoutComponent
 		this.loading = true;
 		this.store.user$
 			.pipe(
-				filter((user) => !!user),
+				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
 				untilDestroyed(this)
 			)
