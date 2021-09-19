@@ -50,5 +50,30 @@ export const OrganizationPublicPage = {
 	totalClientsCss: 'div.org-head div.org-size > h5.org-title',
 	clientFocusCss:
 		'div.org-head div.org-client-focus > h5.org-title > span.client-focus',
-	skillsCss: 'div.org-skills > .org-value > li.org_list_data'
+	skillsCss: 'div.org-skills > .org-value > li.org_list_data',
+
+	organisationNameFieldCss: '[placeholder="Organization Name"]',
+	currencyFieldCss: '#currencySelect',
+	dropdownOptionCss: '.option-list nb-option',
+	officialNameFieldCss: '#officialNameInput',
+	gridButtonCss: 'div.layout-switch > button',
+	taxFieldCss: '#taxIdInput',
+	nextButtonCss: 'button[type="submit"]',
+	addButtonCss: 'nb-card-body > div > button[status="success"]',
+	verifyOrganizationCss: 'div.d-block',
+	countryDropdownCss: 'ga-country div.form-group nb-select',
+	cityInputCss: '#cityInput',
+	postcodeInputCss: '#postcodeInput',
+	streetInputCss: '#addressInput',
+	bonusTypeDropdownCss: '[formcontrolname="bonusType"]',
+	bonusPercentageCss: '[formcontrolname="bonusPercentage"]',
+	expiryPeriodInputCss: '[formcontrolname="inviteExpiryPeriod"]',
+	dateTypeDropdownCss: '[formcontrolname="defaultValueDateType"]',
+	startOfWeekDropdownCss: '#startWeekOnSelect',
+	regionCodeDropdownCss: '[formcontrolname="regionCode"]',
+	numberFormatDropdownCss: '[formcontrolname="numberFormat"]',
+	dateFormatDropdownCss: '[formcontrolname="dateFormat"]',
+	timeZoneDropdownCss: '[formcontrolname="timeZone"]',
+	timeZoneDropdownOptionCss: 'div.ng-option',
+	tableRowCss: 'table > tbody > tr.ng2-smart-row'
 };

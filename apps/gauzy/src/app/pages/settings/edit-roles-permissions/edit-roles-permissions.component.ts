@@ -8,6 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import {
@@ -16,7 +17,6 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -79,6 +79,8 @@ export class EditRolesPermissionsComponent
 	}
 
 	async loadPermissions() {
+		this.enabledPermissions = {};
+
 		const { tenantId } = this.user;
 		const { id: roleId } = this.role;
 

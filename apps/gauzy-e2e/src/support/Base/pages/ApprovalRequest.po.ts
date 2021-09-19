@@ -8,7 +8,8 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	clickButtonWithForce
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
 
@@ -148,4 +149,8 @@ export const verifyRequestExists = (text) => {
 
 export const verifyElementIsDeleted = () => {
 	verifyElementNotExist(ApprovalRequestPage.verifyRequestCss);
+};
+
+export const clickSaveButtonWithForce = () =>{
+	clickButtonWithForce(ApprovalRequestPage.saveButtonCss);
 };

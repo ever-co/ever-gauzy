@@ -124,7 +124,3 @@ When('User click on confirm delete button', () => {
 Then('Notification message will appear', () => {
 	manageCandidatesInvitesPage.waitMessageToHide();
 });
-
-And('User can verify invite was deleted', () => {
-	manageCandidatesInvitesPage.verifyInviteIsDeleted(email);
-});

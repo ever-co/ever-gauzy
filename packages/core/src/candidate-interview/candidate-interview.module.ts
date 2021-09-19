@@ -4,20 +4,20 @@ import { RouterModule } from 'nest-router';
 import { CandidateInterviewService } from './candidate-interview.service';
 import { CandidateInterviewController } from './candidate-interview.controller';
 import { CandidateInterview } from './candidate-interview.entity';
-import { UserService } from '../user/user.service';
-import { User } from '../user/user.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{ path: '/candidate-interview', module: CandidateInterviewModule }
 		]),
-		TypeOrmModule.forFeature([CandidateInterview, User]),
-		TenantModule
+		TypeOrmModule.forFeature([ CandidateInterview ]),
+		TenantModule,
+		UserModule
 	],
-	providers: [CandidateInterviewService, UserService],
+	providers: [CandidateInterviewService],
 	controllers: [CandidateInterviewController],
-	exports: [CandidateInterviewService]
+	exports: [TypeOrmModule, CandidateInterviewService]
 })
 export class CandidateInterviewModule {}

@@ -5,7 +5,7 @@ import { ITenant } from '@gauzy/contracts';
 import { GauzyCloudService } from '../../gauzy-cloud.service';
 import { RoleService } from './../../../role/role.service';
 import { GauzyCloudTenantMigrateCommand } from './../gauzy-cloud-tenant.migrate.command';
-import { RolePermissionsService } from './../../../role-permissions/role-permissions.service';
+import { RolePermissionService } from './../../../role-permission/role-permission.service';
 
 @CommandHandler(GauzyCloudTenantMigrateCommand)
 export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyCloudTenantMigrateCommand> {
@@ -13,7 +13,7 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 	constructor(
 		private readonly _gauzyCloudService: GauzyCloudService,
 		private readonly _roleService: RoleService,
-		private readonly _rolePermissionsService: RolePermissionsService
+		private readonly _rolePermissionService: RolePermissionService
 	) {}
 
 	public async execute(command: GauzyCloudTenantMigrateCommand): Promise<any> {
@@ -51,7 +51,7 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 		token: string
 	) {
 		return this._gauzyCloudService.migrateRolePermissions(
-			await this._rolePermissionsService.migratePermissions(), 
+			await this._rolePermissionService.migratePermissions(), 
 			token, 
 			tenant
 		)

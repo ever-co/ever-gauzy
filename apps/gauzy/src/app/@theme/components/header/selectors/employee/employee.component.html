@@ -1,11 +1,12 @@
 <ng-select
+	[clearable]="isClearable()"
 	[disabled]="disabled"
 	[(items)]="people"
-	bindName="firstName"
 	(change)="selectEmployee($event)"
 	[(ngModel)]="selectedEmployee"
-	[placeholder]="placeholder || 'All Employees'"
+	[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate"
 	[searchFn]="searchEmployee"
+	bindName="firstName"
 	appendTo="body"
 >
 	<ng-template ng-option-tmp let-item="item" let-index="index">

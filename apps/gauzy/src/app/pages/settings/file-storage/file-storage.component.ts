@@ -35,7 +35,11 @@ export class FileStorageComponent
 		).map((label) => ({ label, value: FileStorageProviderEnum[label] }));
 
 		this.tenantService.getSettings().then((settings) => {
-			this.settings = settings;
+			if (!settings) {
+				this.settings.fileStorageProvider = FileStorageProviderEnum.LOCAL
+			} else {
+				this.settings = settings;
+			}
 		});
 	}
 

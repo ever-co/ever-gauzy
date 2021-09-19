@@ -12,16 +12,18 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { SharedModule } from '../shared';
 import { TenantModule } from '../tenant/tenant.module';
-import { DeleteAllDataModule } from './delete-all-data/delete-all-data.module';
+import { FactoryResetModule } from './factory-reset/factory-reset.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/user', module: UserModule }]),
-		forwardRef(() => TypeOrmModule.forFeature([User])),
+		RouterModule.forRoutes([
+			{ path: '/user', module: UserModule }
+		]),
+		forwardRef(() => TypeOrmModule.forFeature([ User ])),
 		forwardRef(() => TenantModule),
 		SharedModule,
 		CqrsModule,
-		DeleteAllDataModule,
+		FactoryResetModule,
 	],
 	controllers: [UserController],
 	providers: [UserService, ...CommandHandlers],

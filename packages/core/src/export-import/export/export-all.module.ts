@@ -40,7 +40,7 @@ import { OrganizationRecurringExpenseService } from '../../organization-recurrin
 import { OrganizationTeamService } from '../../organization-team/organization-team.service';
 import { OrganizationVendorService } from '../../organization-vendor/organization-vendor.service';
 import { ProposalService } from '../../proposal/proposal.service';
-import { RolePermissionsService } from '../../role-permissions/role-permissions.service';
+import { RolePermissionService } from '../../role-permission/role-permission.service';
 import { TagService } from '../../tags/tag.service';
 import { TaskService } from '../../tasks/task.service';
 import { TenantService } from '../../tenant/tenant.service';
@@ -234,7 +234,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		ReportCategoryService,
 		RequestApprovalService,
 		RoleService,
-		RolePermissionsService,
+		RolePermissionService,
 
 		ScreenshotService,
 		StageService,
@@ -358,7 +358,7 @@ import { ImportRecordModule } from './../../export-import/import-record';
 		ReportService,
 		ReportCategoryService,
 		RoleService,
-		RolePermissionsService,
+		RolePermissionService,
 		RequestApprovalService,
 
 		StageService,

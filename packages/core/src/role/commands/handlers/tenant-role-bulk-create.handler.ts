@@ -1,6 +1,6 @@
 import { IRole } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { RolePermissionsService } from '../../../role-permissions/role-permissions.service';
+import { RolePermissionService } from '../../../role-permission/role-permission.service';
 import { RoleService } from '../../role.service';
 import { TenantRoleBulkCreateCommand } from '../tenant-role-bulk-create.command';
 
@@ -9,7 +9,7 @@ export class TenantRoleBulkCreateHandler
 	implements ICommandHandler<TenantRoleBulkCreateCommand> {
 	constructor(
 		private readonly roleService: RoleService,
-		private readonly rolePermissionsService: RolePermissionsService
+		private readonly rolePermissionService: RolePermissionService
 	) {}
 
 	public async execute(
@@ -19,7 +19,7 @@ export class TenantRoleBulkCreateHandler
 
 		//create roles/permissions after create tenant
 		const roles = await this.roleService.createBulk(tenants);
-		await this.rolePermissionsService.updateRolesAndPermissions(
+		await this.rolePermissionService.updateRolesAndPermissions(
 			tenants,
 			roles
 		);

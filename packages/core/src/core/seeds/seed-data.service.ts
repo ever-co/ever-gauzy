@@ -67,7 +67,7 @@ import {
 	createDefaultTeams,
 	createRandomTeam
 } from '../../organization-team/organization-team.seed';
-import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
+import { createRolePermissions } from '../../role-permission/role-permission.seed';
 import {
 	createDefaultTenant,
 	createRandomTenants,
@@ -750,16 +750,6 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Default Employee Invite',
-			createDefaultEmployeeInviteSent(
-				this.connection,
-				this.tenant,
-				this.organizations,
-				this.superAdminUsers
-			)
-		);
-
-		await this.tryExecute(
 			'Default General Goal Setting',
 			createDefaultGeneralGoalSetting(
 				this.connection,
@@ -849,6 +839,16 @@ export class SeedDataService {
 			chalk.magenta(
 				`🌱 SEEDING DEFAULT ${env.production ? 'PRODUCTION' : ''
 				} DATABASE...`
+			)
+		);
+
+		await this.tryExecute(
+			'Default Employee Invite',
+			createDefaultEmployeeInviteSent(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				this.superAdminUsers
 			)
 		);
 

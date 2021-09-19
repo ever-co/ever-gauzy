@@ -381,7 +381,7 @@ const generateRandomUser = async (
 	const firstName = faker.name.firstName(gender);
 	const lastName = faker.name.lastName(gender);
 	const username = faker.internet.userName(firstName, lastName);
-	const email = faker.internet.email(firstName, lastName);
+	const email = faker.internet.exampleEmail(firstName, lastName);
 	const avatar = faker.image.avatar();
 
 	const user = new User();
