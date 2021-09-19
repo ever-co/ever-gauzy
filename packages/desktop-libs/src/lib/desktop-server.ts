@@ -3,13 +3,15 @@ import { app } from 'electron';
 import {
     LocalStore
 } from './desktop-store';
-export async function apiServer(servicePath, envValue, serverWindow, uiPort) {
+export async function apiServer(servicePath, envValue, serverWindow, uiPort, isRestart) {
 	try {
-        console.log(envValue);
+        // console.log(envValue);
 		const uiService = fork(servicePath.api, { silent: true, env: {
             ...process.env,
             ...envValue
         } });
+
+        console.log('new api pid', uiService.pid);
 
         LocalStore.updateConfigSetting({
             apiPid: uiService.pid
@@ -18,7 +20,7 @@ export async function apiServer(servicePath, envValue, serverWindow, uiPort) {
         uiService.stdout.on('data', (data) => {
             const msgData = data.toString()
             if (msgData.indexOf('Listening at http') > -1) {
-                UiServerTask(servicePath.ui, serverWindow, uiPort.toString())
+                UiServerTask(servicePath.ui, serverWindow, uiPort.toString(), isRestart)
             }
             serverWindow.webContents.send('log_state', { msg: msgData });
             // uiService.unref();
@@ -37,13 +39,14 @@ export async function apiServer(servicePath, envValue, serverWindow, uiPort) {
 	}
   }
 
-export async function UiServerTask(uiPath, serverWindow, uiPort) {
+export async function UiServerTask(uiPath, serverWindow, uiPort, isRestart) {
 	try {
         const uiService = fork(uiPath, { silent: true, env: {
             ...process.env,
             isPackaged: app.isPackaged.toString(),
             uiPort
         } });
+        console.log('new ui pid', uiService.pid);
         LocalStore.updateConfigSetting({
             uiPid: uiService.pid
         })
@@ -53,6 +56,9 @@ export async function UiServerTask(uiPath, serverWindow, uiPort) {
             if (msgLog.indexOf('listen ui on port') > -1) {
                 serverWindow.webContents.send('running_state', true);
                 serverWindow.webContents.send('log_state', {msg: msgLog});
+                if (isRestart) {
+                    serverWindow.webContents.send('resp_msg', {type: 'start_server', status: 'success'});
+                }
             }
             
             // uiService.unref();

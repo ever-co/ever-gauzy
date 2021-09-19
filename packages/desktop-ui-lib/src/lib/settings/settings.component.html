@@ -499,7 +499,7 @@
 														class="col-5 centered-text"
 														*ngIf="config.isLocalServer"
 													>
-														<p>{{field.name}}</p>
+														<p>{{field.name.replaceAll('_', ' ')}}</p>
 													</div>
 													<div
 														class="col-7 form-group"

@@ -42,6 +42,7 @@ let setupWindow:BrowserWindow;
 let serverWindow:BrowserWindow;
 let settingsWindow: BrowserWindow;
 let tray:Tray;
+let isServerRun: boolean;
 const pathWindow: {
 	gauzyUi: string,
 	ui: string,
@@ -138,13 +139,13 @@ const updateConfigUi = (config) => {
 	
 }
 
-const runServer = () => {
+const runServer = (isRestart) => {
 	const envVal = getEnvApi();
 	const uiPort = getUiPort();
 	apiServer({
 		ui: path.join(__dirname, 'preload', 'ui-server.js'),
 		api: path.join(__dirname, 'api/main.js')
-	}, envVal, serverWindow, uiPort);
+	}, envVal, serverWindow, uiPort, isRestart);
 }
 
 const getEnvApi = () => {
@@ -225,11 +226,13 @@ ipcMain.on('start_server', (event, arg) => {
 
 ipcMain.on('run_gauzy_server', (event, arg) => {
 	console.log('run gauzy server');
-	runServer()
+	runServer(false)
 })
 
-ipcMain.on('stop_gauzy_server', (event, arg) => {
+const stopServer = (isRestart) => {
 	const config = LocalStore.getStore('configs');
+	console.log('api pid', config.apiPid)
+	console.log('api pid', config.uiPid)
 	if (config.apiPid) {
 		try {
 			process.kill(config.apiPid);
@@ -238,7 +241,7 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 			})
 			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
 		} catch (error) {
-			
+			console.log('error api', error);
 		}
 	}
 	if (config.uiPid) {
@@ -248,11 +251,19 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 				uiPid: null
 			})
 			serverWindow.webContents.send('log_state', { msg: 'UI stopped' });
+			if (isRestart) {
+				runServer(true);
+			}
 		} catch (error) {
-			
+			console.log('error ui', error);
 		}
 	} 
 	serverWindow.webContents.send('running_state', false);
+	
+}
+
+ipcMain.on('stop_gauzy_server', (event, arg) => {
+	stopServer(false);
 })
 app.on('ready', () => {
 	LocalStore.setDefaultApplicationSetting();
@@ -267,8 +278,14 @@ app.on('ready', () => {
 
 ipcMain.on('restart_app', (event, arg) => {
 	console.log('restart app', arg);
+	if (arg.apiPid) delete arg.apiPid;
+	if (arg.uiPid) delete arg.uiPid;
 	LocalStore.updateConfigSetting(arg);
 	updateConfigUi(arg);
+	event.sender.send('resp_msg', {type: 'update_config', status: 'success'})
+	if (isServerRun) {
+		stopServer(true);
+	}
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
@@ -316,6 +333,15 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		});
 	}
 });
+
+ipcMain.on('resp_msg_server', (event, arg) => {
+	settingsWindow.webContents.send('resp_msg', arg);
+})
+
+ipcMain.on('running_state', (event, arg) => {
+	settingsWindow.webContents.send('server_status', arg);
+	isServerRun = arg;
+})
 
 function quit() {
 	if (process.platform !== 'darwin') {
