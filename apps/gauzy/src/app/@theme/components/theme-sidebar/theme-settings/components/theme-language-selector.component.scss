@@ -7,8 +7,14 @@
 		font-size: 1rem;
     }
     nb-select {
-      	width: 8rem;
+      	width: 8.5rem;
     }
+	nb-select ::ng-deep {
+		.select-button {
+			text-overflow: inherit;
+			padding-left: 0.5rem !important;
+		}
+	}	
     .settings-row {
 		display: flex;
 		flex-direction: row;
