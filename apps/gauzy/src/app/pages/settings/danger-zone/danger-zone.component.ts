@@ -10,6 +10,8 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
+import { Environment } from '../../../../environments/model';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,6 +22,7 @@ export class DangerZoneComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	
+	environment: Environment = environment;
 	user: IUser;
 	loading: boolean;
 	process: number = 0;

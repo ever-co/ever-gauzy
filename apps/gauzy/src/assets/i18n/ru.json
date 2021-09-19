@@ -1768,7 +1768,9 @@
 			"IMPORT_EXPORT_VIEW": "Просмотр импорта/экспорта",
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
-			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy"
+			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy",
+			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
+			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",

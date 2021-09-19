@@ -1768,7 +1768,9 @@
 			"IMPORT_EXPORT_VIEW": "View Import/Export",
 			"ORG_JOB_EMPLOYEE_VIEW": "View Job Employees",
 			"ORG_JOB_MATCHING_VIEW": "View Job Matching",
-			"MIGRATE_GAUZY_CLOUD": "Migrate Into Gauzy Cloud"
+			"MIGRATE_GAUZY_CLOUD": "Migrate Into Gauzy Cloud",
+			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
+			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

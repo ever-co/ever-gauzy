@@ -324,6 +324,7 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ACCESS_DELETE_ALL_DATA)
 	@Delete('/reset/:id')
 	async deleteAllData(
 		@Param('id', UUIDValidationPipe) id: string
