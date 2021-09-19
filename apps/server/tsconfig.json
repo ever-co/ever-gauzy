@@ -13,5 +13,5 @@
 		"typeRoots": ["../../node_modules/@types"]
 	},
 	"files": ["global.d.ts"],
-	"include": ["src/index.ts", "src/preload"]
+	"include": ["src/index.ts", "src/preload", "src/server"]
 }

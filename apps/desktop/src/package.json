@@ -130,6 +130,7 @@
 		"@gauzy/desktop-libs": "^0.1.0",
 		"@sentry/node": "^5.30.0",
 		"@sentry/tracing": "^5.30.0",
-		"htmlparser2": "^3.10.1"
+		"htmlparser2": "^3.10.1",
+		"electron-sudo": "4.0.12"
 	}
 }

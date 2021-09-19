@@ -55,7 +55,7 @@ const pkgConfig = `
             "node-static": "^0.7.11",
             ${platformDeps}
         },
-        "bin": "main.js",
+        "bin": "gauzy-service.js",
         "pkg": {
             "scripts": "./*.js",
             "assets": [
@@ -63,6 +63,8 @@ const pkgConfig = `
                 "../../../../../node_modules/linebreak/src/classes.trie",
                 "../../../../../ormlogs.log",
                 "./data/**/*",
+                "./api/**/*",
+                "./service.js",
                 ${platformAssets}
             ],
             "targets": ${platformConfig}

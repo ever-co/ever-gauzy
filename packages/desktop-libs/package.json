@@ -35,7 +35,8 @@
 		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.2",
         "sound-play": "1.1.0",
-        "underscore": "^1.13.0"
+        "underscore": "^1.13.0",
+		"electron-sudo": "4.0.12"
 	},
     "devDependencies": {
         "@gauzy/desktop-window": "^0.1.0",

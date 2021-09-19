@@ -1,5 +1,6 @@
 import { fork } from 'child_process';
 import { app } from 'electron';
+import Sudoer from 'electron-sudo';
 import {
     LocalStore
 } from './desktop-store';
@@ -21,8 +22,6 @@ export async function apiServer(servicePath, envValue, serverWindow, uiPort) {
                 UiServerTask(servicePath.ui, serverWindow, uiPort.toString())
             }
             serverWindow.webContents.send('log_state', { msg: msgData });
-            // uiService.unref();
-            // process.exit(0);
         });
 
         uiService.stderr.on('data', (data) => {
@@ -54,9 +53,6 @@ export async function UiServerTask(uiPath, serverWindow, uiPort) {
                 serverWindow.webContents.send('running_state', true);
                 serverWindow.webContents.send('log_state', {msg: msgLog});
             }
-            
-            // uiService.unref();
-            // process.exit(0);
         });
         uiService.stderr.on('data', (data) => {
             const msgData = data.toString();
@@ -66,4 +62,26 @@ export async function UiServerTask(uiPath, serverWindow, uiPort) {
 	} catch (error) {
 		console.log('error upload', error);
 	}
+}
+
+export async function runAsService(env, servicePath) {
+    try {
+        const options = {name: 'Gauzy Server'};
+        const sudoer = new Sudoer(options);
+        let cp = await sudoer.spawn(
+            servicePath, {env: {...process.env, ...env}}
+          );
+        cp.on('close', () => {
+            cp.output.stdout((buff) => {
+                const data = buff.toString();
+                console.log('message', data)
+            })
+            cp.output.stderr((buff) => {
+                const data = buff.toString();
+                console.log('message error', data)
+            })
+        });
+    } catch (error) {
+        console.log('error before', error);
+    }
 }

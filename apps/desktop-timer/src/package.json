@@ -112,6 +112,7 @@
 		"@sentry/electron": "2.4.0",
 		"underscore": "^1.13.0",
 		"@gauzy/desktop-window": "^0.1.0",
-		"@gauzy/desktop-libs": "^0.1.0"
+		"@gauzy/desktop-libs": "^0.1.0",
+		"electron-sudo": "4.0.12"
 	}
 }
