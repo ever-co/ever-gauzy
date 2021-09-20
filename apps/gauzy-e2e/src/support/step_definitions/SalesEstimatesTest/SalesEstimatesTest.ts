@@ -467,14 +467,23 @@ When('User click on confirm send email button', () => {
 });
 
 Then('Notification message will appear', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	estimatesPage.waitMessageToHide();
 });
 
-When('User click more settings button', () => {
-	estimatesPage.clickMoreButton();
-});
+//Verify invoice was sent
+Then('User can see more settings button again', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
+	cy.visit('/#/pages/sales/invoices/estimates', { timeout: pageLoadTimeout });
+	estimatesPage.verifyMoreButton();
+})
 
-Then('User can verify estimate was sent by email', () => {
+And('User can verify invoice was sent by email', () => {
 	estimatesPage.verifySentBadgeClass();
 });
 

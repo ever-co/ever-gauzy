@@ -318,3 +318,7 @@ export const resetButtonVisible = () => {
 export const clickResetButton = () => {
 	clickButton(EstimatesPage.resetButtonCss);
 };
+
+export const verifyMoreButton = () => {
+	verifyElementIsVisible(EstimatesPage.moreButtonCss);
+};
