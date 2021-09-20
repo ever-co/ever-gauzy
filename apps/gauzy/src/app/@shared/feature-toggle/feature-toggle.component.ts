@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs/Observable';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as _ from 'underscore';
 import {
@@ -21,7 +22,7 @@ import {
 import { FeatureStoreService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { CountdownConfirmationComponent } from '../user/forms';
-import { NbDialogService } from '@nebular/theme';
+import { environment } from './../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -48,7 +49,7 @@ export class FeatureToggleComponent
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _featureStoreService: FeatureStoreService,
 		private readonly _storeService: Store,
-		readonly translationService: TranslateService,
+		public readonly translationService: TranslateService,
 		private readonly dialogService: NbDialogService,
 	) {
 		super(translationService);
@@ -66,16 +67,16 @@ export class FeatureToggleComponent
 			.subscribe();
 		this._storeService.user$
 			.pipe(
-				filter((user) => !!user),
-				tap((user) => (this.user = user)),
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
 				tap(() => this.getFeatures()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this._storeService.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => (this.loading = true)),
 				debounceTime(50),
 				tap(() => (this.loading = false)),
@@ -111,11 +112,7 @@ export class FeatureToggleComponent
 			.subscribe();
 	}
 
-	ngOnChanges(change: SimpleChanges): void {
-		if (change.organization.previousValue) {
-			console.log(change.organization);
-		}
-	}
+	ngOnChanges(change: SimpleChanges): void { }
 
 	getFeatures() {
 		this._featureStoreService
@@ -126,33 +123,37 @@ export class FeatureToggleComponent
 
 	getFeatureOrganizations() {
 		const { tenantId } = this.user;
-		const find = { tenantId };
+		const request = { tenantId };
 
 		if (this.organization && this.isOrganization) {
-			find['organizationId'] = this.organization.id;
+			const { id: organizationId } = this.organization;
+			request['organizationId'] = organizationId;
 		}
 
 		this._featureStoreService
-			.loadFeatureOrganizations(['feature'], find)
+			.loadFeatureOrganizations(['feature'], request)
 			.pipe(untilDestroyed(this))
 			.subscribe();
 	}
 
 	async featureChanged(isEnabled: boolean, feature: IFeature) {
-		console.log(feature, 'feature');
-		
 		const result = await this.dialogService
 			.open(CountdownConfirmationComponent, {
 				context: {
-					recordType: feature.name,
+					recordType: feature.description,
 					isEnabled: isEnabled
-				}
+				},
+				closeOnBackdropClick: false
 			})
 			.onClose.pipe()
 			.toPromise();
 
 		if (result && result === "continue") {
 			this.emitFeatureToggle(feature, isEnabled);
+		} else {
+			if (!environment.IS_ELECTRON) {
+				window.location.reload();
+			}
 		}
 	}
 
@@ -171,7 +172,11 @@ export class FeatureToggleComponent
 
 		this._featureStoreService
 			.changedFeature(request)
-			.pipe(tap(() => window.location.reload()))
+			.pipe(tap(() => {
+				if (!environment.IS_ELECTRON) {
+					window.location.reload();
+				}
+			}))
 			.subscribe();
 	}
 

@@ -548,7 +548,7 @@
 		},
 		"COUNTDOWN_CONFIRMATION": {
 			"WAS": "was",
-			"ENABLED": "Enabled",
+			"ENABLED": "enabled",
 			"DISABLED": "disabled",
 			"WAIT_UNTIL_RELOAD" : "Please wait till application reloads"
 		}

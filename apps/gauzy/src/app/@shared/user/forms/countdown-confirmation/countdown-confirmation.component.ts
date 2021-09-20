@@ -11,9 +11,14 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 			</nb-card-header>
 			<nb-card-body>
 				<span>
-					{{ recordType | translate }} 
+					<b>{{ recordType }}</b>
 					{{'FORM.COUNTDOWN_CONFIRMATION.WAS' | translate}}
-					{{ isEnabled ?  ('FORM.COUNTDOWN_CONFIRMATION.ENABLED' | translate) : ('FORM.COUNTDOWN_CONFIRMATION.DISABLED' | translate) }} ?
+					{{
+						((isEnabled
+							? 'FORM.COUNTDOWN_CONFIRMATION.ENABLED'
+							: 'FORM.COUNTDOWN_CONFIRMATION.DISABLED'
+						) | translate) + '?'
+					}}
 				</span>
 				<div class="mt-2">
 					{{ 'FORM.COUNTDOWN_CONFIRMATION.WAIT_UNTIL_RELOAD' | translate }}
@@ -29,7 +34,11 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 				>
 					{{ 'BUTTONS.CONTINUE' | translate }}
 				</button>
-				<button (click)="close()" status="info" nbButton>
+				<button 
+					(click)="close()"
+					status="info"
+					nbButton
+				>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
 			</nb-card-footer>
@@ -51,7 +60,7 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 export class CountdownConfirmationComponent {
 	recordType: string;
 	isEnabled: boolean;
-	countDownConfig: CountdownConfig = { leftTime: 5 };
+	countDownConfig: CountdownConfig = { leftTime: 10 };
 
 	constructor(
 		protected dialogRef: NbDialogRef<CountdownConfirmationComponent>
