@@ -1,4 +1,4 @@
-import { clickButtonDouble, waitElementToHide, waitUntil } from './../utils/util';
+import { clickButtonDouble, waitElementToHide} from './../utils/util';
 import {
 	verifyElementIsVisible,
 	clickButton,
