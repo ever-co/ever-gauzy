@@ -82,7 +82,5 @@ export const RolesPermissionsPageData = {
 	viewCustomSMTP: 'View Custom SMTP',
 	viewImportExport: 'View Import/Export',
 	viewJobEmployees: 'View Job Employees',
-	viewJobMatching: 'View Job Matching',
-	accessDeleteAccount: "Access Delete Account",
-	accessDeleteAllData: "Access Delete All Data"
+	viewJobMatching: 'View Job Matching'
 };

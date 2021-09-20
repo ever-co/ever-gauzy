@@ -186,9 +186,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
-		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
-		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
-		PermissionsEnum.ACCESS_DELETE_ALL_DATA
+		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
 	],
 
 	//Readonly permissions, are only enabled for admin role
@@ -229,6 +227,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
 		PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
-		PermissionsEnum.MIGRATE_GAUZY_CLOUD
+		PermissionsEnum.MIGRATE_GAUZY_CLOUD,
+		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+		PermissionsEnum.ACCESS_DELETE_ALL_DATA
 	]
 };
