@@ -20,6 +20,8 @@ import {
 } from '@gauzy/contracts';
 import { FeatureStoreService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { CountdownConfirmationComponent } from '../user/forms';
+import { NbDialogService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,7 +48,8 @@ export class FeatureToggleComponent
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _featureStoreService: FeatureStoreService,
 		private readonly _storeService: Store,
-		readonly translationService: TranslateService
+		readonly translationService: TranslateService,
+		private readonly dialogService: NbDialogService,
 	) {
 		super(translationService);
 	}
@@ -135,8 +138,22 @@ export class FeatureToggleComponent
 			.subscribe();
 	}
 
-	featureChanged(isEnabled: boolean, feature: IFeature) {
-		this.emitFeatureToggle(feature, isEnabled);
+	async featureChanged(isEnabled: boolean, feature: IFeature) {
+		console.log(feature, 'feature');
+		
+		const result = await this.dialogService
+			.open(CountdownConfirmationComponent, {
+				context: {
+					recordType: feature.name,
+					isEnabled: isEnabled
+				}
+			})
+			.onClose.pipe()
+			.toPromise();
+
+		if (result && result === "continue") {
+			this.emitFeatureToggle(feature, isEnabled);
+		}
 	}
 
 	emitFeatureToggle(feature: IFeature, isEnabled: boolean) {

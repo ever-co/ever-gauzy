@@ -102,7 +102,8 @@
 		"PUBLIC_LINK": "crwdns10058:0crwdne10058:0",
 		"GENERATE": "crwdns10060:0crwdne10060:0",
 		"SEND_RECEIPT": "crwdns10122:0crwdne10122:0",
-		"ADD_COMMENT": "crwdns10132:0crwdne10132:0"
+		"ADD_COMMENT": "crwdns10132:0crwdne10132:0",
+		"CONTINUE" : "Continue"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
@@ -544,6 +545,12 @@
 			"INVITATION": "crwdns2455:0crwdne2455:0",
 			"DELETE_USER": "crwdns3788:0crwdne3788:0",
 			"EVENT_TYPE": "crwdns4168:0crwdne4168:0"
+		},
+		"COUNTDOWN_CONFIRMATION": {
+			"SURE": "Are you sure you want to ",
+			"ENABLED": "Enabled",
+			"DISABLED": "disabled",
+			"WAIT_UNTIL_RELOAD" : "please wait till application reloads"
 		}
 	},
 	"POP_UPS": {

@@ -23,6 +23,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CandidateActionConfirmationComponent } from './candidate-action-confirmation/candidate-action-confirmation.component';
 import { TranslateModule } from '../../translate/translate.module';
+import { CountdownConfirmationComponent } from './countdown-confirmation/countdown-confirmation.component';
+import { CountdownModule } from 'ngx-countdown';
 
 @NgModule({
 	imports: [
@@ -39,21 +41,24 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbBadgeModule,
 		NbCheckboxModule,
 		TagsColorInputModule,
-		TranslateModule
+		TranslateModule,
+		CountdownModule
 	],
 	exports: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent,
 		ArchiveConfirmationComponent,
-		CandidateActionConfirmationComponent
+		CandidateActionConfirmationComponent,
+		CountdownConfirmationComponent
 	],
 	declarations: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent,
 		ArchiveConfirmationComponent,
-		CandidateActionConfirmationComponent
+		CandidateActionConfirmationComponent,
+		CountdownConfirmationComponent
 	],
 	providers: [AuthService, RoleService, IncomeService, TagsService]
 })

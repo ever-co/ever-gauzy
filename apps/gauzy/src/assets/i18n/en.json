@@ -102,7 +102,8 @@
 		"PUBLIC_LINK": "Public Link",
 		"GENERATE": "Generate",
 		"SEND_RECEIPT": "Send Receipt",
-		"ADD_COMMENT": "Add Comment"
+		"ADD_COMMENT": "Add Comment",
+		"CONTINUE" : "Continue"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -544,6 +545,12 @@
 			"INVITATION": "invitation",
 			"DELETE_USER": " from database as it is associated only to current organization",
 			"EVENT_TYPE": "Event type"
+		},
+		"COUNTDOWN_CONFIRMATION": {
+			"SURE": "Are you sure you want to ",
+			"ENABLED": "Enabled",
+			"DISABLED": "disabled",
+			"WAIT_UNTIL_RELOAD" : "please wait till application reloads"
 		}
 	},
 	"POP_UPS": {

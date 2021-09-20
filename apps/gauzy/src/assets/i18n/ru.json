@@ -102,7 +102,8 @@
 		"PUBLIC_LINK": "Публичная ссылка",
 		"GENERATE": "Сгенерировать",
 		"SEND_RECEIPT": "Отправить квитанцию",
-		"ADD_COMMENT": "Добавить комментарий"
+		"ADD_COMMENT": "Добавить комментарий",
+		"CONTINUE" : "Continue"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -544,6 +545,12 @@
 			"INVITATION": "приглашение",
 			"DELETE_USER": " из базы данных, которая связана только с текущей организацией",
 			"EVENT_TYPE": "Тип события"
+		},
+		"COUNTDOWN_CONFIRMATION": {
+			"SURE": "Are you sure you want to ",
+			"ENABLED": "Enabled",
+			"DISABLED": "disabled",
+			"WAIT_UNTIL_RELOAD" : "please wait till application reloads"
 		}
 	},
 	"POP_UPS": {
