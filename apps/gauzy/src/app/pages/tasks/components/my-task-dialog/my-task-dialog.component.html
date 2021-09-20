@@ -30,20 +30,6 @@
 								[showAllOption]="false"
 								(onChanged)="selectedProject($event)"
 							></ga-project-selector>
-							<!-- <ng-select
-								[addTag]="addNewProject"
-								[items]="projects"
-								nbInput
-								bindLabel="name"
-								[searchable]="true"
-								autocomplete="on"
-								formControlName="project"
-								placeholder="{{
-									'CONTEXT_MENU.PROJECT' | translate
-								}}"
-								appendTo="body"
-							>
-							</ng-select> -->
 						</div>
 					</div>
 					<div class="col-sm-6">
@@ -55,18 +41,6 @@
 								formControlName="status"
 								[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 							></ga-task-status-select>
-							<!-- <ng-select
-								[items]="statuses"
-								nbInput
-								bindLabel="name"
-								autocomplete="on"
-								formControlName="status"
-								placeholder="{{
-									'TASKS_PAGE.TASKS_STATUS' | translate
-								}}"
-								appendTo="body"
-							>
-							</ng-select> -->
 						</div>
 					</div>
 				</div>
@@ -99,18 +73,16 @@
 							/>
 						</div>					
 					</div>
-				</div>
-				<div class="row">
 					<div class="col-sm-12">
-						<div class="formGroup">
+						<div class="form-group">
 							<ga-tags-color-input
 								[selectedTags]="tags"
 								(selectedTagsEvent)="selectedTagsHandler($event)"
 								[isOrgLevel]="true"
 							>
 							</ga-tags-color-input>
-						</div>
-					</div>	
+						</div>					
+					</div>					
 				</div>
 				<div class="row">
 					<div class="col-sm-6">

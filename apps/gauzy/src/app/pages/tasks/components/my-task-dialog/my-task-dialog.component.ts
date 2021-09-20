@@ -162,9 +162,8 @@ export class MyTaskDialogComponent
 		}
 	}
 
-	selectedTagsHandler(ev) {
-		// we dont need this, at least we dont need for create or update TASK
-		// this.tags = ev;
+	selectedTagsHandler(currentSelection: ITag[]) {
+		this.form.patchValue({ tags: currentSelection });
 	}
 
 	selectedProject(project: IOrganizationProject) {
