@@ -103,7 +103,7 @@
 		"GENERATE": "crwdns10060:0crwdne10060:0",
 		"SEND_RECEIPT": "crwdns10122:0crwdne10122:0",
 		"ADD_COMMENT": "crwdns10132:0crwdne10132:0",
-		"CONTINUE" : "Continue"
+		"CONTINUE": "crwdns10533:0crwdne10533:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
@@ -547,10 +547,10 @@
 			"EVENT_TYPE": "crwdns4168:0crwdne4168:0"
 		},
 		"COUNTDOWN_CONFIRMATION": {
-			"WAS": "was",
-			"ENABLED": "Enabled",
-			"DISABLED": "disabled",
-			"WAIT_UNTIL_RELOAD" : "Please wait till application reloads"
+			"WAS": "crwdns10535:0crwdne10535:0",
+			"ENABLED": "crwdns10537:0crwdne10537:0",
+			"DISABLED": "crwdns10539:0crwdne10539:0",
+			"WAIT_UNTIL_RELOAD": "crwdns10541:0crwdne10541:0"
 		}
 	},
 	"POP_UPS": {
