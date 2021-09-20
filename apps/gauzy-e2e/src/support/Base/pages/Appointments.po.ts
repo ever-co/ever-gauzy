@@ -5,7 +5,8 @@ import {
 	clickElementByText,
 	clickButtonByIndex,
 	verifyText,
-	enterInput
+	enterInput,
+	clickButtonByIndexNoForce
 } from '../utils/util';
 import { AppointmentsPage } from '../pageobjects/AppointmentsPageObject';
 
@@ -81,8 +82,7 @@ export const eventTypeSelectButtonVisible = () => {
 };
 
 export const clickEventTypeSelectButton = (index: number) => {
-	clickButtonByIndex(AppointmentsPage.eventTypeButtonsCss, index);
-	waitUntil(3000);
+	clickButtonByIndexNoForce(AppointmentsPage.eventTypeButtonsCss, index);
 };
 
 export const calendarTableVisible = () => {

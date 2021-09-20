@@ -264,3 +264,7 @@ export const clickButtonDouble = (loc) => {
 export const waitForDropdownToLoad = (loc: any) => {
 	cy.get(loc, { timeout: defaultCommandTimeout}).should('have.length.greaterThan', 1);
 };
+
+export const clickButtonByIndexNoForce = (loc, index) => {
+	cy.get(loc, { timeout: taskTimeout }).eq(index).click();
+}
