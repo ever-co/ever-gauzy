@@ -60,7 +60,7 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 export class CountdownConfirmationComponent {
 	recordType: string;
 	isEnabled: boolean;
-	countDownConfig: CountdownConfig = { leftTime: 10 };
+	countDownConfig: CountdownConfig = { leftTime: 5 };
 
 	constructor(
 		protected dialogRef: NbDialogRef<CountdownConfirmationComponent>
