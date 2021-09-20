@@ -11,11 +11,11 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 			</nb-card-header>
 			<nb-card-body>
 				<span>
-					{{ 'FORM.COUNTDOWN_CONFIRMATION.SURE' | translate }}
-					{{ isEnabled ?  ('FORM.COUNTDOWN_CONFIRMATION.ENABLED' | translate) : ('FORM.COUNTDOWN_CONFIRMATION.DISABLED' | translate) }}
-					{{ recordType | translate }}? 
+					{{ recordType | translate }} 
+					{{'FORM.COUNTDOWN_CONFIRMATION.WAS' | translate}}
+					{{ isEnabled ?  ('FORM.COUNTDOWN_CONFIRMATION.ENABLED' | translate) : ('FORM.COUNTDOWN_CONFIRMATION.DISABLED' | translate) }} ?
 				</span>
-				<div>
+				<div class="mt-2">
 					{{ 'FORM.COUNTDOWN_CONFIRMATION.WAIT_UNTIL_RELOAD' | translate }}
 					<countdown #cd [config]="countDownConfig" (event)="handleActionEvent($event)"></countdown>
 				</div>
@@ -43,7 +43,7 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 
 			.center {
 				align-items: center;
-				width: 300px;
+				width: 350px;
 			}
 		`
 	]

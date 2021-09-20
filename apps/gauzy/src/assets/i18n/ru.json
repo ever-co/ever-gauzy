@@ -547,10 +547,10 @@
 			"EVENT_TYPE": "Тип события"
 		},
 		"COUNTDOWN_CONFIRMATION": {
-			"SURE": "Are you sure you want to ",
+			"WAS": "was",
 			"ENABLED": "Enabled",
 			"DISABLED": "disabled",
-			"WAIT_UNTIL_RELOAD" : "please wait till application reloads"
+			"WAIT_UNTIL_RELOAD" : "Please wait till application reloads"
 		}
 	},
 	"POP_UPS": {
