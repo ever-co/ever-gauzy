@@ -329,8 +329,13 @@ export class EmployeeSelectorComponent
 	 * @returns 
 	 */
 	isClearable(): boolean {
-		if (this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE) {
-			return false;
+		if (
+			this.selectedEmployee &&
+			this.selectedEmployee.hasOwnProperty('defaultType')
+		) {
+			if (this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE) {
+				return false;
+			}
 		}
 		return true;
 	}
