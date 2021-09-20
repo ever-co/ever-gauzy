@@ -8,7 +8,14 @@
   }
 
   nb-select, ngx-language-selector {
-    width: 8rem;
+    width: 9.5rem;
+  }
+
+  nb-select ::ng-deep {
+    .select-button {
+      text-overflow: inherit;
+      padding-left: 0.5rem !important;
+    }
   }
 
   .settings-row {
