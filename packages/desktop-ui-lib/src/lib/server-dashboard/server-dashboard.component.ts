@@ -39,6 +39,7 @@ export class ServerDashboardComponent implements OnInit {
 					icon: arg ? 'stop-circle-outline' : 'play-circle-outline'
 				};
 				this.running = arg
+				event.sender.send('running_state', arg);
 				this._cdr.detectChanges();
 			}
 		);
@@ -57,6 +58,10 @@ export class ServerDashboardComponent implements OnInit {
 				console.log(arg);
 			}
 		)
+
+		this.electronService.ipcRenderer.on('resp_msg', (event, arg) => {
+			event.sender.send('resp_msg_server', arg);
+		})
 	}
 
 	

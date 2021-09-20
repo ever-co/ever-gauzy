@@ -9,6 +9,7 @@ import {
 import { Router } from '@angular/router';
 import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { NbToastrService } from '@nebular/theme';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -321,6 +322,8 @@ export class SettingsComponent implements OnInit {
 		localNetwork: 'Local Network',
 		live: 'Live'
 	};
+	waitRestart = false;
+	serverIsRunning = false;
 
 	serverOptions =
 		this.appName === 'gauzy-desktop-timer'
@@ -337,7 +340,8 @@ export class SettingsComponent implements OnInit {
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
 		private readonly router: Router,
-		private readonly timeTrackerService: TimeTrackerService
+		private readonly timeTrackerService: TimeTrackerService,
+		private toastrService: NbToastrService
 	) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
 			const { setting, config, auth, additionalSetting } = arg;
@@ -427,6 +431,13 @@ export class SettingsComponent implements OnInit {
 			this.currentUser = null;
 			this._cdr.detectChanges();
 		})
+
+		electronService.ipcRenderer.on('resp_msg', (event, arg) => {
+			this.showAlert(arg);
+		})
+		electronService.ipcRenderer.on('server_status', (event, arg) => {
+			this.serverIsRunning = arg;
+		})
 	}
 
 	ngOnInit(): void {
@@ -497,6 +508,9 @@ export class SettingsComponent implements OnInit {
 	}
 
 	restartApp() {
+		if (this.appName === 'gauzy-server' && this.serverIsRunning) {
+			this.restartDisable = true;
+		}
 		const thConfig = {};
 		this.thirdPartyConfig.forEach((item) => {
 			item.fields.forEach((itemField) => {
@@ -627,5 +641,26 @@ export class SettingsComponent implements OnInit {
 			default:
 				break;
 		}
+	}
+
+	showAlert(arg) {
+		let message = '';
+		switch (arg.type) {
+			case 'update_config':
+				message = 'Server configuration updated, please wait for server restart';
+				break;
+			case 'start_server':
+				this.restartDisable = false;
+				this._cdr.detectChanges();
+				message = 'Server Successfully restated'
+				break;
+			default:
+				break;
+		}
+		this.toastrService.show(
+			message,
+			`Success`,
+			{ status: arg.status }
+		);
 	}
 }

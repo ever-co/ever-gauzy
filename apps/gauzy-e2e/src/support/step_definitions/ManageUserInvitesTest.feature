@@ -1,11 +1,27 @@
 Feature: Manage user invites test
   Scenario: Login with email
     Given Login with default credentials and visit Users page
-  Scenario: Copy invite
+  Scenario: Create new invite
+    Then User can visit Candidates invites page
     Then User can see manage invites button
     When User click on manage invites button
     Then User will see grid button
     And User can click on second grid button to change view
+    And User can see invite button
+    When User click on invite button
+    And User can see email input field
+    And User can enter value for email
+    And User can see date input field
+    And User can enter value for date
+    When User can see roles select
+    Then User click on roles select
+    When User can see roles dropdown
+    Then User click see roles dropdown
+    And User can see save button
+    When User click on save button
+    Then Notification message will appear
+    And User can verify invite was created
+  Scenario: Copy invite
     And User can see invites table
     When User click on invites first table row
     Then Copy invite button will become active

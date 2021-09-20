@@ -47,7 +47,6 @@ export const minCountInputVisible = () => {
 };
 
 export const enterMinCountInputData = (data) => {
-	clearField(ApprovalRequestPage.minCountInputCss);
 	enterInput(ApprovalRequestPage.minCountInputCss, data);
 };
 

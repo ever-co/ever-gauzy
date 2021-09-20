@@ -102,7 +102,8 @@
 		"PUBLIC_LINK": "Public Link",
 		"GENERATE": "Generate",
 		"SEND_RECEIPT": "Send Receipt",
-		"ADD_COMMENT": "Add Comment"
+		"ADD_COMMENT": "Add Comment",
+		"CONTINUE" : "Continue"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -544,6 +545,12 @@
 			"INVITATION": "покана",
 			"DELETE_USER": " from database as it is associated only to current organization",
 			"EVENT_TYPE": "Event type"
+		},
+		"COUNTDOWN_CONFIRMATION": {
+			"WAS": "was",
+			"ENABLED": "enabled",
+			"DISABLED": "disabled",
+			"WAIT_UNTIL_RELOAD" : "Please wait till application reloads"
 		}
 	},
 	"POP_UPS": {
