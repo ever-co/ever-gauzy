@@ -2372,7 +2372,11 @@
 		"PASSWORD": "crwdns2241:0crwdne2241:0",
 		"REPEAT_PASSWORD": "crwdns2243:0crwdne2243:0",
 		"ERROR": "crwdns2245:0crwdne2245:0",
-		"SAVE": "crwdns2247:0crwdne2247:0"
+		"SAVE": "crwdns2247:0crwdne2247:0",
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "crwdns10547:0crwdne10547:0",
+			"PASSWORDS_DO_NOT_MATCH": "crwdns10549:0crwdne10549:0"
+		}
 	},
 	"INVITE_PAGE": {
 		"USER": {
