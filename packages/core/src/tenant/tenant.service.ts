@@ -8,7 +8,8 @@ import {
 	ITenantCreateInput,
 	RolesEnum,
 	ITenant,
-	IUser
+	IUser,
+	FileStorageProviderEnum
 } from '@gauzy/contracts';
 import { UserService } from '../user/user.service';
 import { RoleService } from 'role/role.service';
@@ -16,6 +17,7 @@ import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-c
 import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { User } from './../core/entities/internal';
+import { TenantSettingSaveCommand } from './tenant-setting/commands';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -47,6 +49,16 @@ export class TenantService extends CrudService<Tenant> {
 		//3. Create Enabled/Disabled features for relative tenants.
 		await this.commandBus.execute(
 			new TenantFeatureOrganizationCreateCommand([tenant])
+		);
+
+		//4. Create tenant default file stoage setting (LOCAL)
+		const tenantId = tenant.id;
+		await this.commandBus.execute(
+			new TenantSettingSaveCommand({
+					fileStorageProvider: FileStorageProviderEnum.LOCAL,
+				},
+				tenantId
+			)
 		);
 
 		//4. Find SUPER_ADMIN role to relative tenant.
