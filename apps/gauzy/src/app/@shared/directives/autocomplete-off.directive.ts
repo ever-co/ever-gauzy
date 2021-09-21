@@ -33,8 +33,11 @@ export class AutocompleteOffDirective implements OnInit {
 				 * disabled autocomplete for all inputs inside form
 				 */
 				const inputs = Array.prototype.slice.call(this._el.nativeElement.querySelectorAll('input'))
-				inputs.map((element: ElementRef) => {
-					this._renderer.setAttribute(element, 'autocomplete', 'off')
+				inputs.forEach((element: ElementRef) => {
+					this._renderer.setAttribute(element, 'autocomplete', 'off');
+					this._renderer.setAttribute(element, 'autocorrect', 'off');
+					this._renderer.setAttribute(element, 'autocapitalize', 'none');
+					this._renderer.setAttribute(element, 'spellcheck', 'false');
 				});
 			}
 		}

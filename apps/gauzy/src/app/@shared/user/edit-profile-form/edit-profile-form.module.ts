@@ -7,34 +7,40 @@ import {
 	NbIconModule,
 	NbSelectModule,
 	NbInputModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbFormFieldModule
 } from '@nebular/theme';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { UsersService } from '../../../@core/services';
+import {
+	OrganizationsService,
+	RoleService,
+	UsersService
+} from '../../../@core/services';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
-import { RoleService } from '../../../@core/services/role.service';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { LanguageSelectorModule } from '../../language/language-selector';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
+		FormsModule,
+		ReactiveFormsModule,
+		NbButtonModule,
+		NbCardModule,
+		NbIconModule,
+		NbInputModule,
+		NbSelectModule,
+		NbBadgeModule,
+		NbFormFieldModule,
 		TagsColorInputModule,
 		ThemeModule,
-		FormsModule,
-		NbCardModule,
 		UserFormsModule,
-		NbButtonModule,
-		NbIconModule,
 		ImageUploaderModule,
-		NbSelectModule,
-		ReactiveFormsModule,
-		NbInputModule,
-		NbBadgeModule,
 		TranslateModule,
 		LanguageSelectorModule,
+		SharedModule
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],
