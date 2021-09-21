@@ -9,7 +9,9 @@ import {
 } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class OrganizationEmploymentTypesService {
 	private readonly API_URL = `${API_PREFIX}/organization-employment-type`;
 

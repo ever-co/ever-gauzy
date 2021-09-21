@@ -440,9 +440,7 @@
 													<div class="col-auto">
 														<a
 															class="name margin-right-10"
-															[routerLink]="[
-																employee.id
-															]"
+															routerLink="{{createSlug(employee.user.firstName +' ' +employee.user.lastName)}}/{{employee.id}}"															
 														>
 															{{
 																employee.user
