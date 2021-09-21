@@ -43,6 +43,7 @@ import { User, UserPreferredComponentLayoutDTO, UserPreferredLanguageDTO } from 
 import { UserService } from './user.service';
 import { UserCreateCommand } from './commands';
 import { FactoryResetService } from './factory-reset/factory-reset.service';
+import { UserDeleteCommand } from './commands/user.delete.command';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -309,6 +310,34 @@ export class UserController extends CrudController<User> {
 	}
 
 	/**
+	 * DELTE user account
+	 * 
+	 * @param userId 
+	 * @returns 
+	 */
+	@ApiOperation({
+		summary: 'Delete record'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) userId: string,
+	): Promise<any> {
+		return await this.commandBus.execute(
+			new UserDeleteCommand(userId)
+		);
+	}
+
+	/**
 	 * DELETE all user data from all tables
 	 * 
 	 * @param id 
@@ -324,6 +353,8 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ACCESS_DELETE_ALL_DATA)
 	@Delete('/reset/:id')
 	async deleteAllData(
 		@Param('id', UUIDValidationPipe) id: string

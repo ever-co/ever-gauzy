@@ -929,7 +929,11 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 						link: '/pages/settings/danger-zone',
 						icon: 'alert-triangle-outline',
 						data: {
-							translationKey: 'MENU.DANGER_ZONE'
+							translationKey: 'MENU.DANGER_ZONE',
+							permissionKeys: [
+								PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+								PermissionsEnum.ACCESS_DELETE_ALL_DATA
+							],
 						}
 					}
 				]

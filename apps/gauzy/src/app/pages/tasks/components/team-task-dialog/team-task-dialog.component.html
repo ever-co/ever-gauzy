@@ -22,20 +22,14 @@
 						<label class="label">{{
 							'CONTEXT_MENU.PROJECT' | translate
 						}}</label>
-						<ng-select
-							[addTag]="addNewProject"
-							[items]="projects"
-							nbInput
-							bindLabel="name"
-							[searchable]="true"
-							autocomplete="on"
-							formControlName="project"
-							placeholder="{{
-								'CONTEXT_MENU.PROJECT' | translate
-							}}"
-							appendTo="body"
-						>
-						</ng-select>
+						<ga-project-selector
+							formControlName="projectId"
+							[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
+							[skipGlobalChange]="true"
+							[defaultSelected]="false"
+							[showAllOption]="false"
+							(onChanged)="selectedProject($event)"
+						></ga-project-selector>
 					</div>
 				</div>
 				<div class="col-sm-6">
@@ -43,20 +37,14 @@
 						<label class="label">{{
 							'TASKS_PAGE.TASKS_STATUS' | translate
 						}}</label>
-						<ng-select
-							[items]="statuses"
-							nbInput
-							bindLabel="name"
-							autocomplete="on"
+						<ga-task-status-select
 							formControlName="status"
-							placeholder="{{
-								'TASKS_PAGE.TASKS_STATUS' | translate
-							}}"
-							appendTo="body"
-						>
-						</ng-select>
+							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
+						></ga-task-status-select>
 					</div>
 				</div>
+			</div>
+			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
 						<label class="label">{{
@@ -81,22 +69,26 @@
 						</nb-select>
 					</div>
 				</div>
+			</div>				
+			<div class="row">
 				<div class="col-sm-12">
-					<label class="label">{{
-						'TASKS_PAGE.TASKS_TITLE' | translate
-					}}</label>
-					<input
-						class="name-input"
-						formControlName="title"
-						type="text"
-						nbInput
-						placeholder="{{
-							'FORM.PLACEHOLDERS.ADD_TITLE' | translate
-						}}"
-					/>
+					<div class="form-group">
+						<label class="label">{{
+							'TASKS_PAGE.TASKS_TITLE' | translate
+						}}</label>
+						<input
+							class="name-input"
+							formControlName="title"
+							type="text"
+							nbInput
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ADD_TITLE' | translate
+							}}"
+						/>
+					</div>					
 				</div>
 				<div class="col-sm-12">
-					<div class="formGroup">
+					<div class="form-group">
 						<ga-tags-color-input
 							[selectedTags]="tags"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
@@ -105,6 +97,8 @@
 						</ga-tags-color-input>
 					</div>
 				</div>
+			</div>
+			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label for="dueDate" class="label">{{
@@ -173,7 +167,8 @@
 						</div>
 					</div>
 				</div>
-
+			</div>
+			<div class="row">
 				<div class="col-sm-12">
 					<label class="label">{{
 						'TASKS_PAGE.TASKS_DESCRIPTION' | translate
@@ -188,7 +183,7 @@
 						}}"
 					></textarea>
 				</div>
-			</div>
+			</div>			
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">

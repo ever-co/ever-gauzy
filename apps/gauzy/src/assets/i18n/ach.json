@@ -102,7 +102,8 @@
 		"PUBLIC_LINK": "crwdns10058:0crwdne10058:0",
 		"GENERATE": "crwdns10060:0crwdne10060:0",
 		"SEND_RECEIPT": "crwdns10122:0crwdne10122:0",
-		"ADD_COMMENT": "crwdns10132:0crwdne10132:0"
+		"ADD_COMMENT": "crwdns10132:0crwdne10132:0",
+		"CONTINUE": "crwdns10533:0crwdne10533:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
@@ -544,6 +545,12 @@
 			"INVITATION": "crwdns2455:0crwdne2455:0",
 			"DELETE_USER": "crwdns3788:0crwdne3788:0",
 			"EVENT_TYPE": "crwdns4168:0crwdne4168:0"
+		},
+		"COUNTDOWN_CONFIRMATION": {
+			"WAS": "crwdns10535:0crwdne10535:0",
+			"ENABLED": "crwdns10537:0crwdne10537:0",
+			"DISABLED": "crwdns10539:0crwdne10539:0",
+			"WAIT_UNTIL_RELOAD": "crwdns10541:0crwdne10541:0"
 		}
 	},
 	"POP_UPS": {
@@ -1768,7 +1775,9 @@
 			"IMPORT_EXPORT_VIEW": "crwdns8746:0crwdne8746:0",
 			"ORG_JOB_EMPLOYEE_VIEW": "crwdns8748:0crwdne8748:0",
 			"ORG_JOB_MATCHING_VIEW": "crwdns8750:0crwdne8750:0",
-			"MIGRATE_GAUZY_CLOUD": "crwdns10480:0crwdne10480:0"
+			"MIGRATE_GAUZY_CLOUD": "crwdns10480:0crwdne10480:0",
+			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
+			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
 		},
 		"BILLING": "crwdns10521:0crwdne10521:0",
 		"BUDGET": "crwdns10523:0crwdne10523:0",

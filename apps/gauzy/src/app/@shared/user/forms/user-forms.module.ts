@@ -1,7 +1,4 @@
-import { ArchiveConfirmationComponent } from './archive-confirmation/archive-confirmation.component';
-import { ThemeModule } from '../../../@theme/theme.module';
 import { NgModule } from '@angular/core';
-import { BasicInfoFormComponent } from './basic-info/basic-info-form.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import {
 	NbInputModule,
@@ -12,17 +9,14 @@ import {
 	NbBadgeModule,
 	NbCheckboxModule
 } from '@nebular/theme';
-import { AuthService } from '../../../@core/services/auth.service';
-import { RoleService } from '../../../@core/services/role.service';
-import { DeleteConfirmationComponent } from './delete-confirmation/delete-confirmation.component';
-import { IncomeService } from '../../../@core/services/income.service';
-import { ActionConfirmationComponent } from './action-confirmation/action-confirmation.component';
-import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
-import { TagsService } from '../../../@core/services/tags.service';
+import { CountdownModule } from 'ngx-countdown';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { CandidateActionConfirmationComponent } from './candidate-action-confirmation/candidate-action-confirmation.component';
+import { ThemeModule } from '../../../@theme/theme.module';
+import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { AuthService, IncomeService, RoleService, TagsService } from '../../../@core/services';
+import { COMPONENTS } from './index';
 
 @NgModule({
 	imports: [
@@ -39,21 +33,14 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbBadgeModule,
 		NbCheckboxModule,
 		TagsColorInputModule,
-		TranslateModule
+		TranslateModule,
+		CountdownModule
 	],
 	exports: [
-		BasicInfoFormComponent,
-		DeleteConfirmationComponent,
-		ActionConfirmationComponent,
-		ArchiveConfirmationComponent,
-		CandidateActionConfirmationComponent
+		...COMPONENTS
 	],
 	declarations: [
-		BasicInfoFormComponent,
-		DeleteConfirmationComponent,
-		ActionConfirmationComponent,
-		ArchiveConfirmationComponent,
-		CandidateActionConfirmationComponent
+		...COMPONENTS
 	],
 	providers: [AuthService, RoleService, IncomeService, TagsService]
 })

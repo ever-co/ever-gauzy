@@ -102,7 +102,8 @@
 		"PUBLIC_LINK": "Публичная ссылка",
 		"GENERATE": "Сгенерировать",
 		"SEND_RECEIPT": "Отправить квитанцию",
-		"ADD_COMMENT": "Добавить комментарий"
+		"ADD_COMMENT": "Добавить комментарий",
+		"CONTINUE": "Продолжить"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -544,6 +545,12 @@
 			"INVITATION": "приглашение",
 			"DELETE_USER": " из базы данных, которая связана только с текущей организацией",
 			"EVENT_TYPE": "Тип события"
+		},
+		"COUNTDOWN_CONFIRMATION": {
+			"WAS": "был",
+			"ENABLED": "включен",
+			"DISABLED": "отключено",
+			"WAIT_UNTIL_RELOAD": "Пожалуйста, дождитесь перезагрузки приложения"
 		}
 	},
 	"POP_UPS": {
@@ -901,7 +908,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "English",
+		"ENGLISH": "Английский",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -1768,7 +1775,9 @@
 			"IMPORT_EXPORT_VIEW": "Просмотр импорта/экспорта",
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
-			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy"
+			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy",
+			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
+			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
@@ -2327,7 +2336,7 @@
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации",
 			"PREFERRED_LANGUAGE": {
-				"en": "Russian",
+				"en": "Английский",
 				"he": "Иврит",
 				"bg": "Болгарский",
 				"ru": "Русский"
@@ -3299,7 +3308,7 @@
 			"TEMPLATE_NAMES": "Названия шаблонов"
 		},
 		"LANGUAGE_CODES": {
-			"en": "Russian",
+			"en": "Английский",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
@@ -3394,7 +3403,7 @@
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
 		"LANGUAGE_CODES": {
-			"en": "Russian",
+			"en": "Английский",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"

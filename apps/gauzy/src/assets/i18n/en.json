@@ -102,7 +102,8 @@
 		"PUBLIC_LINK": "Public Link",
 		"GENERATE": "Generate",
 		"SEND_RECEIPT": "Send Receipt",
-		"ADD_COMMENT": "Add Comment"
+		"ADD_COMMENT": "Add Comment",
+		"CONTINUE" : "Continue"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -544,6 +545,12 @@
 			"INVITATION": "invitation",
 			"DELETE_USER": " from database as it is associated only to current organization",
 			"EVENT_TYPE": "Event type"
+		},
+		"COUNTDOWN_CONFIRMATION": {
+			"WAS": "was",
+			"ENABLED": "enabled",
+			"DISABLED": "disabled",
+			"WAIT_UNTIL_RELOAD" : "Please wait till application reloads"
 		}
 	},
 	"POP_UPS": {
@@ -1768,7 +1775,9 @@
 			"IMPORT_EXPORT_VIEW": "View Import/Export",
 			"ORG_JOB_EMPLOYEE_VIEW": "View Job Employees",
 			"ORG_JOB_MATCHING_VIEW": "View Job Matching",
-			"MIGRATE_GAUZY_CLOUD": "Migrate Into Gauzy Cloud"
+			"MIGRATE_GAUZY_CLOUD": "Migrate Into Gauzy Cloud",
+			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
+			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

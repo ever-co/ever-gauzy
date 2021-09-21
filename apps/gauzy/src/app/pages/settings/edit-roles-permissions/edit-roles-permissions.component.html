@@ -34,7 +34,7 @@
 						<nb-card-body class="permission-items-col">
 							<nb-toggle
 								*ngFor="
-									let permission of PermissionGroups.GENERAL
+									let permission of permissionGroups.GENERAL
 								"
 								[(checked)]="enabledPermissions[permission]"
 								(checkedChange)="
@@ -64,14 +64,14 @@
 						</nb-card-header>
 						<nb-card-body class="permission-items-col">
 							<nb-toggle
-								*ngFor="let permission of PermissionGroups.ADMINISTRATION"
+								*ngFor="let permission of getAdministrationPermissions()"
 								[(checked)]="enabledPermissions[permission]"
 								(checkedChange)="
 									permissionChanged(permission, $event)
 								"
 								labelPosition="start"
 								status="basic"
-								[disabled]="selectedRole !== RolesEnum.ADMIN"
+								[disabled]="selectedRole !== rolesEnum.ADMIN"
 							>
 								{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
 							</nb-toggle>

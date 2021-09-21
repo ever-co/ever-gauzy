@@ -24243,6 +24243,13 @@ ngx-color-picker@^11.0.0:
   dependencies:
     tslib "^2.0.0"
 
+ngx-countdown@^12.0.1:
+  version "12.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-12.0.1.tgz#0bd6aef4ca83bafcbc3dd9366c84494d2b93ce27"
+  integrity sha512-JAHLTzDUTKAoGvcXwDA23bUmH8g2qGRsuEt7jQ81smXutyEtHdOvZcbMpok4gSoA5TAv9FkrXLH58loUgWJ5VA==
+  dependencies:
+    tslib "^2.1.0"
+
 ngx-echarts@^6.0.0:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-6.0.1.tgz#676fd1b0d348ac76545545f37edd7c737e6c411f"
