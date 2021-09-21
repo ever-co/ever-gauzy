@@ -2372,7 +2372,11 @@
 		"PASSWORD": "Парола",
 		"REPEAT_PASSWORD": "Repeat Password",
 		"ERROR": "Error",
-		"SAVE": "Запази"
+		"SAVE": "Запази",
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "Email is required!",
+			"PASSWORDS_DO_NOT_MATCH": "Password Do Not Match!"
+		}
 	},
 	"INVITE_PAGE": {
 		"USER": {

@@ -2372,7 +2372,11 @@
 		"PASSWORD": "Пароль",
 		"REPEAT_PASSWORD": "Повторите пароль",
 		"ERROR": "Ошибка",
-		"SAVE": "Сохранить"
+		"SAVE": "Сохранить",
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"PASSWORDS_DO_NOT_MATCH": "Пароль не совпадает!"
+		}
 	},
 	"INVITE_PAGE": {
 		"USER": {
