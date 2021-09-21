@@ -98,7 +98,9 @@ export const editApprovalRequestButtonVisible = () => {
 };
 
 export const clickEditApprovalRequestButton = () => {
+	cy.intercept('GET', '/api/approval-policy/request-approval*').as('waitApproval');
 	clickButton(ApprovalRequestPage.editApprovalRequestButtonCss);
+	cy.wait('@waitApproval');
 };
 
 export const deleteApprovalRequestButtonVisible = () => {
