@@ -908,7 +908,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Английский",
+		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -2336,7 +2336,7 @@
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации",
 			"PREFERRED_LANGUAGE": {
-				"en": "Английский",
+				"en": "Russian",
 				"he": "Иврит",
 				"bg": "Болгарский",
 				"ru": "Русский"
@@ -2372,7 +2372,11 @@
 		"PASSWORD": "Пароль",
 		"REPEAT_PASSWORD": "Повторите пароль",
 		"ERROR": "Ошибка",
-		"SAVE": "Сохранить"
+		"SAVE": "Сохранить",
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"PASSWORDS_DO_NOT_MATCH": "Пароль не совпадает!"
+		}
 	},
 	"INVITE_PAGE": {
 		"USER": {
@@ -3308,7 +3312,7 @@
 			"TEMPLATE_NAMES": "Названия шаблонов"
 		},
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
@@ -3403,7 +3407,7 @@
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
