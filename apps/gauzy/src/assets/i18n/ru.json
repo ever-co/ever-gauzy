@@ -908,7 +908,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Английский",
+		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -1776,8 +1776,8 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
 			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy",
-			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
-			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
+			"ACCESS_DELETE_ACCOUNT": "Доступ к удалению аккаунта",
+			"ACCESS_DELETE_ALL_DATA": "Доступ к удалению всех данных"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
@@ -2336,7 +2336,7 @@
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации",
 			"PREFERRED_LANGUAGE": {
-				"en": "Английский",
+				"en": "Russian",
 				"he": "Иврит",
 				"bg": "Болгарский",
 				"ru": "Русский"
@@ -3308,7 +3308,7 @@
 			"TEMPLATE_NAMES": "Названия шаблонов"
 		},
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
@@ -3403,7 +3403,7 @@
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
