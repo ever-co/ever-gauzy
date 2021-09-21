@@ -9,18 +9,20 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
 import { CrudController } from '../../core/crud';
-import { RequestContext } from '../../core/context';
 import { Roles } from './../../shared/decorators/roles';
-import { RoleGuard } from './../../shared/guards';
+import { RoleGuard, TenantPermissionGuard } from './../../shared/guards';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
+import { TenantSettingGetCommand, TenantSettingSaveCommand } from './commands';
 
 @ApiTags('TenantSetting')
 @Controller()
 export class TenantSettingController extends CrudController<TenantSetting> {
 	constructor(
-		private readonly tenantSettingService: TenantSettingService
+		private readonly tenantSettingService: TenantSettingService,
+		private readonly commandBus: CommandBus
 	) {
 		super(tenantSettingService);
 	}
@@ -38,16 +40,13 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		description: 'Tenant not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard)
+	@UseGuards(TenantPermissionGuard, RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get()
 	async get() {
-		const tenantId = RequestContext.currentTenantId();
-		return await this.tenantSettingService.get({
-			where: {
-				tenantId
-			}
-		});
+		return await this.commandBus.execute(
+			new TenantSettingGetCommand()
+		);
 	}
 
 	@ApiOperation({
@@ -63,12 +62,14 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(RoleGuard)
+	@UseGuards(TenantPermissionGuard, RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Post()
 	async saveSettings(
 		@Body() entity: ITenantSetting
 	): Promise<ITenantSetting> {
-		return this.tenantSettingService.saveSettngs(entity);
+		return await this.commandBus.execute(
+			new TenantSettingSaveCommand(entity)
+		);
 	}
 }

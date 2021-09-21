@@ -74,6 +74,9 @@ import {
 	DEFAULT_EVER_TENANT,
 	DEFAULT_TENANT
 } from '../../tenant';
+import {
+	createDefaultTenantSetting
+} from './../../tenant/tenant-setting/tenant-setting.seed';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
@@ -642,6 +645,11 @@ export class SeedDataService {
 		) as ITenant;
 
 		this.roles = await createRoles(
+			this.connection, 
+			[this.tenant]
+		);
+
+		await createDefaultTenantSetting(
 			this.connection, 
 			[this.tenant]
 		);
@@ -1429,6 +1437,11 @@ export class SeedDataService {
 
 		// Independent roles and role permissions for each tenant
 		const roles: IRole[] = await createRoles(
+			this.connection, 
+			tenants
+		);
+
+		await createDefaultTenantSetting(
 			this.connection, 
 			tenants
 		);
