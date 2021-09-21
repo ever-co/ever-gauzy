@@ -1776,8 +1776,8 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
 			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy",
-			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
-			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
+			"ACCESS_DELETE_ACCOUNT": "Доступ к удалению аккаунта",
+			"ACCESS_DELETE_ALL_DATA": "Доступ к удалению всех данных"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
