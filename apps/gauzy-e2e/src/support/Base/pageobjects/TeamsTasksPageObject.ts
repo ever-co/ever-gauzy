@@ -1,7 +1,7 @@
 export const TeamsTasksPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addTaskButtonCss: 'div.mb-3 > button[status="success"]',
-	projectDropdownCss: '[formControlName="project"]',
+	projectDropdownCss: '[formControlName="projectId"]',
 	statusDropdownCss: '[formcontrolname="status"]',
 	teamDropdownCss: '[formcontrolname="teams"]',
 	drodownOptionCss: 'div.ng-option',

@@ -66,4 +66,4 @@ Feature: Employee candidates test
     Then User will see confirm archive button
     When User click on confirm archive button
     Then Notification message will appear
-    And User can verify candidate was archived
+    

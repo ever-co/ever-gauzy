@@ -280,7 +280,3 @@ When('User click on confirm archive button', () => {
 Then('Notification message will appear', () => {
 	inviteCandidatePage.waitMessageToHide();
 });
-
-And('User can verify candidate was archived', () => {
-	inviteCandidatePage.verifyElementIsDeleted();
-});

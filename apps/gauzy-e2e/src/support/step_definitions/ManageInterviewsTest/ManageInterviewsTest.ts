@@ -344,6 +344,13 @@ And('User can enter value for updated note', () => {
 	);
 });
 
+Then('Notification message will appear', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
+	manageInterviewsPage.waitMessageToHide();
+});
+
 And('User can see updated note', () => {
 	manageInterviewsPage.verifyUpdatedNoteContains(
 		ManageInterviewsPageData.updatedNote
