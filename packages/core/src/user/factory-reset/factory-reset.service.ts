@@ -2,7 +2,8 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@gauzy/config';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { filter, map, some } from 'underscore';
@@ -365,6 +366,7 @@ export class FactoryResetService {
 
         @InjectRepository(TimeOffPolicy)
         private readonly timeOffPolicyRepository: Repository<TimeOffPolicy>,
+
         @InjectRepository(TenantSetting)
         private readonly tenantSettingRepository: Repository<TenantSetting>,
 
@@ -372,7 +374,9 @@ export class FactoryResetService {
         private readonly userRepository: Repository<User>,
 
         @InjectRepository(UserOrganization)
-        private readonly userOrganizationRepository: Repository<UserOrganization>
+        private readonly userOrganizationRepository: Repository<UserOrganization>,
+
+        private readonly configService: ConfigService
     ) { }
 
     async onModuleInit() {
@@ -380,6 +384,9 @@ export class FactoryResetService {
     }
 
     async reset(id: any) {
+        if (this.configService.get('demo') === true) {
+            throw new ForbiddenException();
+        }
 
         const user = await this.userRepository.findOne(id);
         user.thirdPartyId = null;

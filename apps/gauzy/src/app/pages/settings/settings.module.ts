@@ -32,6 +32,7 @@ import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 @NgModule({
 	imports: [
@@ -57,7 +58,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		TranslateModule,
 		NgSelectModule,
 		BackNavigationModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		NgxPermissionsModule.forChild(),
 	],
 	declarations: [
 		FileStorageComponent,
