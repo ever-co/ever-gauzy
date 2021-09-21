@@ -82,7 +82,10 @@ export const eventTypeSelectButtonVisible = () => {
 };
 
 export const clickEventTypeSelectButton = (index: number) => {
+	cy.intercept('GET', '/api/event-type/*').as('waitTableLoad');
+	cy.intercept('GET', '/api/employee/*').as('waitEmployee');
 	clickButtonByIndexNoForce(AppointmentsPage.eventTypeButtonsCss, index);
+	cy.wait(['@waitTableLoad','@waitEmployee']);
 };
 
 export const calendarTableVisible = () => {
