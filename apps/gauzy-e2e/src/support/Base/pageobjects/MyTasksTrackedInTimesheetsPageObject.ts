@@ -1,6 +1,6 @@
 export const MyTasksTrackedInTimesheets = {
     addButtonCss: 'div.mb-3 > button[status="success"]',
-    projectDropdownCss: '[formControlName="project"]',
+    projectDropdownCss: '[formControlName="projectId"]',
 	statusDropdownCss: '[formcontrolname="status"]',
     drodownOptionCss: 'div.ng-option',
     addTitleInputCss: '[formControlName="title"]',

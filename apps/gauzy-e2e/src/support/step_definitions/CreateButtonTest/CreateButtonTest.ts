@@ -216,6 +216,9 @@ When('User click on create button', () => {
 
 // Verify contract card
 Then('User can select contract from dropdown options', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	createButton.clickOptionByText(CreateButtonData.contract);
 });
 
