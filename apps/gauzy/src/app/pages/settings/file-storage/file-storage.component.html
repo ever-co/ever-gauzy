@@ -1,24 +1,27 @@
 <nb-card>
 	<nb-card-body>
 		<div class="form-group">
-			<label class="label cols-sm-3">{{
-				'SETTINGS_FILE_STORAGE.FILE_PROVIDER' | translate
-			}}</label>
-			<nb-select
-				class="d-block"
-				size="medium"
-				[(selected)]="settings.fileStorageProvider"
-			>
-				<nb-option
-					*ngFor="let providerName of fileStorageProviders"
-					[value]="providerName.value"
+			<ng-template [ngIf]="fileStorageProviders.length > 0">
+				<label 
+					class="label cols-sm-3"
+					[innerText]="'SETTINGS_FILE_STORAGE.FILE_PROVIDER' | translate"
+				></label>
+				<nb-select
+					class="d-block"
+					size="medium"
+					[(selected)]="settings.fileStorageProvider"
 				>
-					{{ providerName.label | titlecase }}
-				</nb-option>
-			</nb-select>
+					<nb-option
+						*ngFor="let providerName of fileStorageProviders"
+						[value]="providerName.value"
+					>
+						{{ providerName?.label | titlecase }}
+					</nb-option>
+				</nb-select>
+			</ng-template>
 		</div>
 		<ng-template
-			[ngIf]="settings.fileStorageProvider == FileStorageProviderEnum.S3"
+			[ngIf]="settings.fileStorageProvider == fileStorageProviderEnum.S3"
 		>
 			<nb-card>
 				<nb-card-header>

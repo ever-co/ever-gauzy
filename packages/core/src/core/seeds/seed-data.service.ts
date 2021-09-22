@@ -74,6 +74,9 @@ import {
 	DEFAULT_EVER_TENANT,
 	DEFAULT_TENANT
 } from '../../tenant';
+import {
+	createDefaultTenantSetting
+} from './../../tenant/tenant-setting/tenant-setting.seed';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
@@ -646,10 +649,17 @@ export class SeedDataService {
 			[this.tenant]
 		);
 
+		await createDefaultTenantSetting(
+			this.connection, 
+			[this.tenant]
+		);
+
+		const isDemo = this.configService.get('demo') as boolean;
 		await createRolePermissions(
 			this.connection, 
 			this.roles,
-			[this.tenant]
+			[this.tenant],
+			isDemo
 		);
 
 		// Tenant level inserts which only need connection, tenant, roles
@@ -1431,7 +1441,18 @@ export class SeedDataService {
 			tenants
 		);
 
-		await createRolePermissions(this.connection, roles, tenants);
+		await createDefaultTenantSetting(
+			this.connection, 
+			tenants
+		);
+
+		const isDemo = this.configService.get('demo') as boolean;
+		await createRolePermissions(
+			this.connection,
+			roles,
+			tenants,
+			isDemo
+		);
 
 		// Tenant level inserts which only need connection, tenant, role
 		const tenantOrganizationsMap = await createRandomOrganizations(

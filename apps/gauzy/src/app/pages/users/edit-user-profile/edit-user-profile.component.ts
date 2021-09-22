@@ -3,12 +3,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IUser, ITag } from '@gauzy/contracts';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { UsersOrganizationsService } from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-user-profile',
 	templateUrl: './edit-user-profile.component.html',
@@ -19,32 +20,36 @@ import { UsersOrganizationsService } from '../../../@core/services/users-organiz
 export class EditUserProfileComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+
 	form: FormGroup;
-	routeParams: Params;
-	selectedUser: IUser;
+	params: Params;
+	user: IUser;
 
 	tabs: any[];
 	tags: ITag[];
 
 	constructor(
-		private route: ActivatedRoute,
-		private location: Location,
-		readonly translateService: TranslateService,
-		private usersOrganizationsService: UsersOrganizationsService
+		private readonly route: ActivatedRoute,
+		private readonly location: Location,
+		public readonly translateService: TranslateService,
+		private readonly usersOrganizationsService: UsersOrganizationsService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((params) => {
-				this.routeParams = params;
-				this._loadUserData();
-			});
+			.pipe(
+				filter((params) => !!params),
+				tap((params) => this.params = params),
+				tap(() => this.loadTabs()),
+				tap(() => this.getUserProfile()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
-		this.loadTabs();
+	ngAfterViewInit() {
 		this._applyTranslationOnTabs();
 	}
 
@@ -53,7 +58,7 @@ export class EditUserProfileComponent
 	}
 
 	getRoute(tab: string): string {
-		return `/pages/users/edit/${this.routeParams.id}/${tab}`;
+		return `/pages/users/edit/${this.params.id}/${tab}`;
 	}
 
 	loadTabs() {
@@ -75,26 +80,23 @@ export class EditUserProfileComponent
 		];
 	}
 
-	private async _loadUserData() {
-		const { id } = this.routeParams;
+	private async getUserProfile() {
+		const { id } = this.params;
 		const { items } = await this.usersOrganizationsService.getAll(
 			['user', 'user.role', 'user.tags'],
 			{ id }
 		);
-
-		this.selectedUser = items[0].user;
+		this.user = items[0].user;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.loadTabs();
-			});
+			.pipe(
+				tap(() => this.loadTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

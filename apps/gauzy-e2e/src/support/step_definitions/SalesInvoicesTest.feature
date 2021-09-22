@@ -81,8 +81,9 @@ Feature: Sales invoices test
     And User can see confirm send email button
     When User click on confirm send email button
     Then Notification message will appear
-    When User click more settings button
-    Then User can verify invoice was sent by email
+  Scenario: Verify invoice was sent
+    Then User can see more settings button again
+    And User can verify invoice was sent by email
   Scenario: Delete invoice
     Then User can click on invoices first row
     And Settings button will become active

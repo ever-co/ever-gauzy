@@ -10,7 +10,8 @@ import {
 	clickButtonByText,
 	verifyValue,
 	scrollDown,
-	verifyText
+	verifyText,
+	clickButtonWithDelay
 } from '../utils/util';
 import { SalesInvoicesPage } from '../pageobjects/SalesInvoicesPageObject';
 
@@ -176,7 +177,7 @@ export const confirmButtonVisible = () => {
 };
 
 export const clickConfirmButton = () => {
-	clickButton(SalesInvoicesPage.confirmButtonCss);
+	clickButtonWithDelay(SalesInvoicesPage.confirmButtonCss);
 };
 
 export const emailInputVisible = () => {
@@ -257,4 +258,8 @@ export const moreButtonVisible = () => {
 
 export const clickMoreButton = () => {
 	clickButton(SalesInvoicesPage.moreButtonCss);
+};
+
+export const verifyMoreButton = () => {
+	verifyElementIsVisible(SalesInvoicesPage.moreButtonCss);
 };

@@ -349,6 +349,9 @@ Then('User can see email button', () => {
 });
 
 When('User click on email button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	salesInvoicesPage.clickActionButtonByText(SalesInvoicesPageData.emailButton);
 });
 
@@ -373,14 +376,23 @@ When('User click on confirm send email button', () => {
 });
 
 Then('Notification message will appear', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	salesInvoicesPage.waitMessageToHide();
 });
 
-When('User click more settings button', () => {
-	salesInvoicesPage.clickMoreButton();
-});
+//Verify invoice was sent
+Then('User can see more settings button again', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
+	cy.visit('/#/pages/sales/invoices', { timeout: pageLoadTimeout });
+	salesInvoicesPage.verifyMoreButton();
+})
 
-Then('User can verify invoice was sent by email', () => {
+And('User can verify invoice was sent by email', () => {
 	salesInvoicesPage.verifySentBadgeClass();
 });
 

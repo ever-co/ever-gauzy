@@ -9,52 +9,71 @@ import {
 import {
 	FormBuilder,
 	FormGroup,
-	Validators,
-	AbstractControl
+	Validators
 } from '@angular/forms';
-import { UsersService } from '../../../@core/services/users.service';
-import { Store } from '../../../@core/services/store.service';
 import {
 	IUser,
-	IUserFindInput,
 	RolesEnum,
-	ITag
+	ITag,
+	IRole,
+	IUserUpdateInput
 } from '@gauzy/contracts';
-import { RoleService } from '../../../@core/services/role.service';
-import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Subject } from 'rxjs/internal/Subject';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import {
+	ErrorHandlingService,
+	RoleService,
+	Store,
+	ToastrService,
+	UsersService
+} from '../../../@core/services';
+import { MatchValidator } from '../../../@core/validators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-profile',
 	templateUrl: './edit-profile-form.component.html',
 	styleUrls: ['./edit-profile-form.component.scss']
 })
-export class EditProfileFormComponent implements OnInit, OnDestroy {
-	private ngDestroy$ = new Subject<void>();
+export class EditProfileFormComponent 
+	implements OnInit, OnDestroy {
 
-	form: FormGroup;
+	showPassword: boolean = false;
+	showConfirmPassword: boolean = false;
+
 	hoverState: boolean;
-	roleName: string;
+	loading: boolean;
 
-	accountInfo: IUserFindInput;
-	password: AbstractControl;
-	repeatPassword: AbstractControl;
+	role: IRole;
+	user: IUser;
 
-	passwordErrorMsg: string;
-	repeatPasswordErrorMsg: string;
+	accountInfo: IUserUpdateInput;
+	user$: Subject<any> = new Subject();
 
-	matchPassword = true;
-	tags: ITag[] = [];
-	selectedTags: any;
+	/*
+	* Getter & Setter for selected user
+	*/
+	_selectedUser: IUser;
+	get selectedUser(): IUser {
+		return this._selectedUser;
+	}
+	@Input() set selectedUser(value: IUser) {
+		this._selectedUser = value;
+	}
 
-	@Input()
-	selectedUser: IUser;
+	/*
+	* Getter & Setter for allow role change
+	*/
+	_allowRoleChange: boolean = false;
+	get allowRoleChange(): boolean {
+		return this._allowRoleChange;
+	}
+	@Input() set allowRoleChange(value: boolean) {
+		this._allowRoleChange = value;
+	}
 
-	@Input()
-	allowRoleChange = false;
-
+	
 	@Output()
 	userSubmitted = new EventEmitter<void>();
 
@@ -62,74 +81,67 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		(r) => r !== RolesEnum.EMPLOYEE
 	);
 
+	public form: FormGroup = EditProfileFormComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			firstName: [],
+			lastName: [],
+			email: ['', Validators.required],
+			imageUrl: ['', Validators.required],
+			password: [],
+			repeatPassword: [],
+			roleName: [],
+			tags: [],
+			preferredLanguage: []
+		}, {
+			validators: [
+				MatchValidator.mustMatch(
+					'password',
+					'repeatPassword'
+				)
+			]
+		});
+	}
+
 	constructor(
-		private fb: FormBuilder,
-		private userService: UsersService,
-		private store: Store,
-		private toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService,
-		private roleService: RoleService
+		private readonly fb: FormBuilder,
+		private readonly userService: UsersService,
+		private readonly store: Store,
+		private readonly toastrService: ToastrService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly roleService: RoleService
 	) {}
 
-	private validations = {
-		passwordControl: () => {
-			this.password.valueChanges
-				.pipe(takeUntil(this.ngDestroy$))
-				.subscribe(() => {
-					if (this.password.value === this.repeatPassword.value) {
-						this.matchPassword = true;
-					} else {
-						this.matchPassword = false;
-					}
-				});
-		},
-		repeatPasswordControl: () => {
-			this.repeatPassword.valueChanges
-				.pipe(takeUntil(this.ngDestroy$))
-				.subscribe(() => {
-					if (this.password.value === this.repeatPassword.value) {
-						this.matchPassword = true;
-					} else {
-						this.matchPassword = false;
-					}
-
-					this.repeatPasswordErrorMsg =
-						(this.repeatPassword.touched ||
-							this.repeatPassword.dirty) &&
-						this.repeatPassword.errors
-							? this.repeatPassword.errors.validUrl
-								? this.passwordDoNotMuch()
-								: Object.keys(this.repeatPassword.errors)[0]
-							: '';
-				});
-		}
-	};
-
 	async ngOnInit() {
+		this.user$
+			.pipe(
+				debounceTime(100),
+				tap(() => this.getUserProfile()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				tap(() => this.user$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	async getUserProfile() {
 		try {
-			const user = this.selectedUser
-				? this.selectedUser
-				: await this.userService.getUserById(this.store.userId, [
-						'tags'
-				  ]);
+			const { id: userId } = this.selectedUser || this.user;
+			const user = await this.userService.getUserById(userId, [
+				'tags',
+				'role'
+			]);
 
-			const role =
-				this.selectedUser && this.selectedUser.role
-					? this.selectedUser.role
-					: await this.roleService.getRoleById(user.roleId);
-
-			this.roleName = role.name;
-
-			this._initializeForm({ ...user, role });
-			this.bindFormControls();
-			this.loadControls();
+			this._patchForm({ ...user });
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
-	}
-
-	passwordDoNotMuch() {
-		return 'Password Do Not Much!';
 	}
 
 	handleImageUploadError(error: any) {
@@ -137,24 +149,19 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
-		const {
-			email,
-			firstName,
-			lastName,
-			tags,
-			preferredLanguage
-		} = this.form.value;
-		this.accountInfo = {
+		const { email, firstName, lastName, tags, preferredLanguage, password } = this.form.getRawValue();
+		let request: IUserUpdateInput = {
 			email,
 			firstName,
 			lastName,
 			tags,
 			preferredLanguage
 		};
-		if (this.form.value['password']) {
-			this.accountInfo = {
-				...this.accountInfo,
-				hash: this.form.value['password']
+
+		if (password) {
+			request = {
+				...request,
+				hash: password
 			};
 		}
 
@@ -168,8 +175,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				.pipe(first())
 				.toPromise();
 
-			this.accountInfo = {
-				...this.accountInfo,
+			request = {
+				...request,
 				role
 			};
 		}
@@ -177,67 +184,49 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		try {
 			await this.userService.update(
 				this.selectedUser ? this.selectedUser.id : this.store.userId,
-				this.accountInfo
-			);
-			this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
-			this.userSubmitted.emit();
-
-			/**
-			 * selectedUser is null for edit profile and populated in User edit
-			 * Update app language when current user's profile is modified.
-			 */
-			if (this.selectedUser && this.selectedUser.id !== this.store.userId)
-				return;
-			this.store.preferredLanguage = this.form.value['preferredLanguage'];
+				request
+			)
+			.then(() => {
+				this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
+				this.userSubmitted.emit();
+				/**
+				* selectedUser is null for edit profile and populated in User edit
+				* Update app language when current user's profile is modified.
+				*/
+				if (this.selectedUser && this.selectedUser.id !== this.store.userId) { return; }
+				this.store.preferredLanguage = preferredLanguage;
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
 	}
 
-	private _initializeForm(user: IUser) {
-		this.form = this.fb.group({
-			firstName: [user.firstName],
-			lastName: [user.lastName],
-			email: [user.email, Validators.required],
-			imageUrl: [user.imageUrl, Validators.required],
-			password: [''],
-			repeatPassword: [
-				'',
-				[
-					(control: AbstractControl) => {
-						if (this.password) {
-							return control.value === this.password.value
-								? null
-								: { validUrl: true };
-						} else {
-							return null;
-						}
-					}
-				]
-			],
-			roleName: [user.role.name],
-			tags: [user.tags],
-			preferredLanguage: [user.preferredLanguage]
+	private _patchForm(user: IUser) {
+		if (!user) { return; }
+
+		this.form.patchValue({
+			firstName: user.firstName,
+			lastName: user.lastName,
+			email: user.email,
+			imageUrl: user.imageUrl,
+			roleName: user.role.name,
+			tags: user.tags,
+			preferredLanguage: user.preferredLanguage
 		});
-		this.tags = this.form.get('tags').value || [];
+		this.role = user.role;
 	}
 
-	bindFormControls() {
-		this.password = this.form.get('password');
-		this.repeatPassword = this.form.get('repeatPassword');
+	selectedTagsHandler(tags: ITag[]) {
+		this.form.get('tags').setValue(tags);
+		this.form.updateValueAndValidity();
 	}
 
-	loadControls() {
-		this.validations.passwordControl();
-		this.validations.repeatPasswordControl();
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 
-	selectedTagsHandler(currentSelection: ITag[]) {
-		this.form.get('tags').setValue(currentSelection);
-	}
-
-	ngOnDestroy(): void {
-		this.ngDestroy$.next();
-		this.ngDestroy$.complete();
-	}
+	ngOnDestroy(): void { }
 }

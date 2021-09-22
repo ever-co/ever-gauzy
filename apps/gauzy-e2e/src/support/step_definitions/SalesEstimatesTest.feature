@@ -104,8 +104,9 @@ Feature: Sales estimates test
     And User can see confirm send email button
     When User click on confirm send email button
     Then Notification message will appear
-    When User click more settings button
-    Then User can verify estimate was sent by email
+  Scenario: Verify invoice was sent
+    Then User can see more settings button again
+    And User can verify invoice was sent by email
   Scenario: Convert estimate to invoice
     Then User can click again on estimates first table row
     And User can see convert to invoice button

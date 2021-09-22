@@ -220,7 +220,7 @@ And('User can verify Admin general roles and permissions', () => {
 And('User can verify Admin administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(53, checked);
 	rolesPermissionsPage.verifyState(54, notChecked);
-	rolesPermissionsPage.verifyState(55, checked);
+	rolesPermissionsPage.verifyState(55, notChecked);
 	rolesPermissionsPage.verifyState(56, checked);
 	rolesPermissionsPage.verifyState(57, checked);
 	rolesPermissionsPage.verifyState(58, checked);
@@ -259,7 +259,7 @@ And('User can verify Admin administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(91, checked);
 	rolesPermissionsPage.verifyState(92, checked);
 	rolesPermissionsPage.verifyState(93, checked);
-	rolesPermissionsPage.verifyState(94, notChecked);
+	rolesPermissionsPage.verifyState(94, checked);
 	rolesPermissionsPage.verifyState(95, checked);
 	rolesPermissionsPage.verifyState(96, checked);
 	rolesPermissionsPage.verifyState(97, checked);
@@ -471,8 +471,8 @@ And('User can verify Employee general roles and permissions', () => {
 
 And('User can verify Employee administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(53, checked);
-	rolesPermissionsPage.verifyState(54, notChecked);
-	rolesPermissionsPage.verifyState(55, checked);
+	rolesPermissionsPage.verifyState(54, checked);
+	rolesPermissionsPage.verifyState(55, notChecked);
 	rolesPermissionsPage.verifyState(56, notChecked);
 	rolesPermissionsPage.verifyState(57, checked);
 	rolesPermissionsPage.verifyState(58, notChecked);

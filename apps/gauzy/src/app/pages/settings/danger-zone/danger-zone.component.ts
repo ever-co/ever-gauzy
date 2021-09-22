@@ -1,15 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { DangerZoneMutationComponent } from '../../../@shared/settings/danger-zone-mutation/danger-zone-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-import { UsersService } from '../../../@core/services';
-import { Store } from '../../../@core/services/store.service';
 import { Router } from '@angular/router';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { ToastrService } from '../../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
+import { IUser } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { DangerZoneMutationComponent } from '../../../@shared/settings/danger-zone-mutation/danger-zone-mutation.component';
+import { environment } from '../../../../environments/environment';
+import { Environment } from '../../../../environments/model';
+import { Store, ToastrService, UsersService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,17 +20,18 @@ export class DangerZoneComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	
+	environment: Environment = environment;
 	user: IUser;
 	loading: boolean;
 	process: number = 0;
 
 	constructor(
-		readonly translate: TranslateService,
-		private dialogService: NbDialogService,
-		private userService: UsersService,
-		private store: Store,
-		private toastrService: ToastrService,
-		private router: Router
+		public readonly translate: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly userService: UsersService,
+		private readonly store: Store,
+		private readonly toastrService: ToastrService,
+		private readonly router: Router
 	) {
 		super(translate);
 	}

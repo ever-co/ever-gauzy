@@ -1,11 +1,12 @@
-import { clickButtonDouble, waitElementToHide, waitUntil } from './../utils/util';
+import { clickButtonDouble, waitElementToHide} from './../utils/util';
 import {
 	verifyElementIsVisible,
 	clickButton,
 	clickElementByText,
 	clickButtonByIndex,
 	verifyText,
-	enterInput
+	enterInput,
+	clickButtonByIndexNoForce
 } from '../utils/util';
 import { AppointmentsPage } from '../pageobjects/AppointmentsPageObject';
 
@@ -81,8 +82,10 @@ export const eventTypeSelectButtonVisible = () => {
 };
 
 export const clickEventTypeSelectButton = (index: number) => {
-	clickButtonByIndex(AppointmentsPage.eventTypeButtonsCss, index);
-	waitUntil(3000);
+	cy.intercept('GET', '/api/event-type/*').as('waitTableLoad');
+	cy.intercept('GET', '/api/employee/*').as('waitEmployee');
+	clickButtonByIndexNoForce(AppointmentsPage.eventTypeButtonsCss, index);
+	cy.wait(['@waitTableLoad','@waitEmployee']);
 };
 
 export const calendarTableVisible = () => {

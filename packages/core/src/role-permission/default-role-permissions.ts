@@ -94,6 +94,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.MIGRATE_GAUZY_CLOUD,
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+			PermissionsEnum.ACCESS_DELETE_ALL_DATA
 		]
 	},
 	{
@@ -185,6 +187,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+			PermissionsEnum.ACCESS_DELETE_ALL_DATA
 		]
 	},
 	{

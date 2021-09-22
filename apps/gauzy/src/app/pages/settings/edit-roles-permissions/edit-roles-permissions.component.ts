@@ -4,7 +4,8 @@ import {
 	IRolePermission,
 	RolesEnum,
 	IUser,
-	IRole
+	IRole,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -17,6 +18,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
+import { environment } from './../../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,8 +30,8 @@ export class EditRolesPermissionsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
-	RolesEnum = RolesEnum;
-	PermissionGroups = PermissionGroups;
+	rolesEnum = RolesEnum;
+	permissionGroups = PermissionGroups;
 	
 	user: IUser;
 	role: IRole;
@@ -41,7 +43,7 @@ export class EditRolesPermissionsComponent
 	enabledPermissions: any = {};
 
 	permissions$: Subject<any> = new Subject();
-
+	
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
@@ -154,6 +156,20 @@ export class EditRolesPermissionsComponent
 		return this.roles.find(
 			(role: IRole) => name === role.name
 		);
+	}
+
+	/***
+	 * GET Administration permissions & removed some permission in DEMO
+	 */
+	getAdministrationPermissions(): PermissionsEnum[] {
+		// removed permissions for all users in DEMO mode
+		const deniedPermisisons = [
+			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+			PermissionsEnum.ACCESS_DELETE_ALL_DATA
+		];
+
+		return this.permissionGroups.ADMINISTRATION
+					.filter((permission) => environment.DEMO ? !deniedPermisisons.includes(permission) : true)
 	}
 
 	ngOnDestroy() {}

@@ -6,15 +6,17 @@ import { AuthModule } from '../auth/auth.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
-import { CommandHandlers } from './commands/handlers';
+import { FeatureModule } from './../feature/feature.module';
 import { TenantController } from './tenant.controller';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
-import { FeatureModule } from './../feature/feature.module';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/tenant', module: TenantModule }]),
+		RouterModule.forRoutes([
+			{ path: '/tenant', module: TenantModule }
+		]),
 		TypeOrmModule.forFeature([ Tenant ]),
 		AuthModule,
 		UserModule,

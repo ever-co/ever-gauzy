@@ -2,10 +2,9 @@ import { ITenantSetting } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, In, Repository } from 'typeorm';
+import * as _ from 'underscore';
 import { TenantAwareCrudService } from './../../core/crud';
 import { TenantSetting } from './tenant-setting.entity';
-import * as _ from 'underscore';
-import { RequestContext } from '../../core/context';
 
 @Injectable()
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {
@@ -23,15 +22,17 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		return _.object(_.pluck(settings, 'name'), _.pluck(settings, 'value'));
 	}
 
-	async saveSettngs(input: ITenantSetting): Promise<ITenantSetting> {
-		const settingsName = _.keys(input);
+	async saveSettngs(
+		input: ITenantSetting,
+		tenantId: string
+	): Promise<ITenantSetting> {
 
-		const user = RequestContext.currentUser();
+		const settingsName = _.keys(input);
 		const settings: TenantSetting[] = await this.tenantSettingRepository.find(
 			{
 				where: {
 					name: In(settingsName),
-					tenantId: user.tenantId
+					tenantId
 				}
 			}
 		);
@@ -49,14 +50,14 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 						new TenantSetting({
 							value: input[key],
 							name: key,
-							tenantId: user.tenantId
+							tenantId
 						})
 					);
 				}
 			}
 		}
 
-		this.tenantSettingRepository.save(saveInput);
+		await this.tenantSettingRepository.save(saveInput);
 		return _.object(
 			_.pluck(saveInput, 'name'),
 			_.pluck(saveInput, 'value')

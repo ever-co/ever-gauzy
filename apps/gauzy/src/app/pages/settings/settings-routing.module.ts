@@ -146,7 +146,15 @@ const routes: Routes = [
 			{
 				path: 'danger-zone',
 				component: DangerZoneComponent,
+				canActivate: [NgxPermissionsGuard],
 				data: {
+					permissions: {
+						only: [
+							PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+							PermissionsEnum.ACCESS_DELETE_ALL_DATA,
+						],
+						redirectTo: '/pages/settings'
+					},
 					selectors: {
 						project: false,
 						employee: false,

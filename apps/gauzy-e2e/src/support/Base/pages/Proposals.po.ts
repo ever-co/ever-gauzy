@@ -121,6 +121,8 @@ export const detailsButtonVisible = () => {
 
 export const clickDetailsButton = (index) => {
 	clickButtonByIndex(ProposalsPage.detailsButtonCss, index);
+	cy.intercept('GET', '/api/proposal/*').as('waitToLoad');
+	cy.wait('@waitToLoad');
 };
 
 export const editProposalButtonVisible = () => {

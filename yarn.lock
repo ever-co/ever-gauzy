@@ -24243,6 +24243,13 @@ ngx-color-picker@^11.0.0:
   dependencies:
     tslib "^2.0.0"
 
+ngx-countdown@^12.0.1:
+  version "12.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-12.0.1.tgz#0bd6aef4ca83bafcbc3dd9366c84494d2b93ce27"
+  integrity sha512-JAHLTzDUTKAoGvcXwDA23bUmH8g2qGRsuEt7jQ81smXutyEtHdOvZcbMpok4gSoA5TAv9FkrXLH58loUgWJ5VA==
+  dependencies:
+    tslib "^2.1.0"
+
 ngx-echarts@^6.0.0:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-6.0.1.tgz#676fd1b0d348ac76545545f37edd7c737e6c411f"
@@ -29706,9 +29713,9 @@ semver-intersect@1.4.0:
     semver "^5.0.0"
 
 semver-regex@^3.1.2:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/semver-regex/-/semver-regex-3.1.2.tgz#34b4c0d361eef262e07199dbef316d0f2ab11807"
-  integrity sha512-bXWyL6EAKOJa81XG1OZ/Yyuq+oT0b2YLlxx7c+mrdYPaPbnj6WgVULXhinMIeZGufuUBu/eVRqXEhiv4imfwxA==
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/semver-regex/-/semver-regex-3.1.3.tgz#b2bcc6f97f63269f286994e297e229b6245d0dc3"
+  integrity sha512-Aqi54Mk9uYTjVexLnR67rTyBusmwd04cLkHy9hNvk3+G3nT2Oyg7E0l4XVbOaNwIvQ3hHeYxGcyEy+mKreyBFQ==
 
 "semver@2 || 3 || 4":
   version "4.3.6"
@@ -32354,9 +32361,9 @@ tmp@^0.1.0:
     rimraf "^2.6.3"
 
 tmpl@1.0.x:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/tmpl/-/tmpl-1.0.4.tgz#23640dd7b42d00433911140820e5cf440e521dd1"
-  integrity sha1-I2QN17QtAEM5ERQIIOXPRA5SHdE=
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/tmpl/-/tmpl-1.0.5.tgz#8683e0b902bb9c20c4f726e3c0b69f36518c07cc"
+  integrity sha512-3f0uOEAQwIqGuWW2MVzYg8fV/QNnc/IpuJNG837rLuczAaLVHslWHZQj4IGiEl5Hs3kkbhwL9Ab7Hrsmuj+Smw==
 
 tn1150@^0.1.0:
   version "0.1.0"
