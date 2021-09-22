@@ -632,7 +632,9 @@
 		"SHOW_START_WORK_ON": "crwdns7884:0crwdne7884:0",
 		"SHOW_CLIENTS": "crwdns7948:0crwdne7948:0",
 		"DISPLAY_BONUS_ANONYMOUSLY": "crwdns7990:0crwdne7990:0",
-		"SOURCE": "crwdns8112:0crwdne8112:0"
+		"SOURCE": "crwdns8112:0crwdne8112:0",
+		"DESCRIPTION": "Description",
+		"MAIN": "Main"
 	},
 	"MENU": {
 		"PIPELINES": "crwdns4734:0crwdne4734:0",

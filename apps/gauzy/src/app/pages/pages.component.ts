@@ -3,26 +3,27 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import {
 	FeatureEnum,
 	IOrganization,
+	IRolePermission,
 	IUser,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, map, mergeMap } from 'rxjs/operators';
-import { Store } from '../@core/services/store.service';
+import { filter, map, mergeMap, tap } from 'rxjs/operators';
+import { NgxPermissionsService } from 'ngx-permissions';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { chain } from 'underscore';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { SelectorService } from '../@core/utils/selector.service';
-import { EmployeesService, UsersService } from '../@core/services';
+import { EmployeesService, Store, UsersService } from '../@core/services';
 import {
 	DEFAULT_SELECTOR_VISIBILITY,
 	ISelectorVisibility,
 	SelectorBuilderService
 } from '../@core/services/selector-builder';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { ReportService } from './reports/all-report/report.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { chain } from 'underscore';
 import { AuthStrategy } from '../@core/auth/auth-strategy.service';
-import { TranslationBaseComponent } from '../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../@shared/language-base';
 
 interface GaMenuItem extends NbMenuItem {
 	data: {
@@ -33,7 +34,8 @@ interface GaMenuItem extends NbMenuItem {
 		hide?: () => boolean; //Hide the menu item if this returns true
 	};
 }
-@UntilDestroy()
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-pages',
 	styleUrls: ['pages.component.scss'],
@@ -45,25 +47,23 @@ interface GaMenuItem extends NbMenuItem {
 	`
 })
 export class PagesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	basicMenu: GaMenuItem[];
-	adminMenu: GaMenuItem[];
-	isAdmin: boolean;
+	
 	isEmployee: boolean;
-	_selectedOrganization: IOrganization;
+	organization: IOrganization;
 	user: IUser;
 	menu: NbMenuItem[] = [];
-	reportMenuItems: NbMenuItem[];
+	reportMenuItems: NbMenuItem[] = [];
 	headerSelectors: ISelectorVisibility;
 
 	constructor(
-		private employeeService: EmployeesService,
-		public translate: TranslateService,
-		private store: Store,
-		private reportService: ReportService,
-		private selectorService: SelectorService,
-		private router: Router,
+		private readonly employeeService: EmployeesService,
+		public readonly translate: TranslateService,
+		private readonly store: Store,
+		private readonly reportService: ReportService,
+		private readonly selectorService: SelectorService,
+		private readonly router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
-		private ngxPermissionsService: NgxPermissionsService,
+		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly usersService: UsersService,
 		private readonly authStrategy: AuthStrategy,
 		public readonly selectorBuilderService: SelectorBuilderService
@@ -945,33 +945,30 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		await this._createEntryPoint();
 		this._applyTranslationOnSmartTable();
 
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap(() => this.checkForEmployee()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.getReportsMenus()),
 				untilDestroyed(this)
 			)
-			.subscribe(async (org) => {
-				this.checkForEmployee();
-				this._selectedOrganization = org;
-
-				if (org) {
-					await this.reportService.getReportMenuItems({
-						organizationId: org.id
-					});
-				}
-				this.loadItems(
-					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationShortcuts
-				);
-			});
+			.subscribe();
 		this.store.userRolePermissions$
 			.pipe(
-				filter((permissions) => permissions.length > 0),
+				filter((permissions: IRolePermission[]) => isNotEmpty(permissions)),
+				map((permissions) => permissions.map(({ permission }) => permission)),
+				tap((permissions) => this.ngxPermissionsService.loadPermissions(permissions)),
 				untilDestroyed(this)
 			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
+			.subscribe(() => {
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
@@ -987,7 +984,10 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 				);
 			});
 		this.reportService.menuItems$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				distinctUntilChange(),
+				untilDestroyed(this)
+			)
 			.subscribe((menuItems) => {
 				if (menuItems) {
 					this.reportMenuItems = chain(menuItems)
@@ -1030,6 +1030,20 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		this.menu = this.getMenuItems();
 	}
 
+	async getReportsMenus() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		await this.reportService.getReportMenuItems({
+			tenantId,
+			organizationId
+		});
+		this.loadItems(
+			this.selectorService.showSelectors(this.router.url)
+				.showOrganizationShortcuts
+		);
+	}
+
 	/*
 	 * This is app entry point after login
 	 */
@@ -1061,13 +1075,13 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		this.store.user = this.user;
 
 		//tenant enabled/disabled features for relatives organizations
-		const { tenant } = this.user;
+		const { tenant, role } = this.user;
 		this.store.featureTenant = tenant.featureOrganizations.filter(
 			(item) => !item.organizationId
 		);
 
 		//only enabled permissions assign to logged in user
-		this.store.userRolePermissions = this.user.role.rolePermissions.filter(
+		this.store.userRolePermissions = role.rolePermissions.filter(
 			(permission) => permission.enabled
 		);
 	}
@@ -1090,11 +1104,11 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 			item.hidden = !anyPermission || (item.data.hide && item.data.hide());
 
 			if (anyPermission && item.data.organizationShortcut) {
-				item.hidden = !withOrganizationShortcuts || !this._selectedOrganization;
+				item.hidden = !withOrganizationShortcuts || !this.organization;
 				if (!item.hidden) {
 					item.link =
 						item.data.urlPrefix +
-						this._selectedOrganization.id +
+						this.organization.id +
 						item.data.urlPostfix;
 				}
 			}
