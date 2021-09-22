@@ -14,8 +14,8 @@
 		<form [formGroup]="form" *ngIf="form">
 			<nb-tabset class="tab_sections">
 				<nb-tab
-					tabTitle="{{ 'POP_UPS.DETAILS' | translate }}"
-					tabIcon="alert-circle-outline"
+					tabTitle="{{ 'POP_UPS.MAIN' | translate }}"
+					tabIcon="person-outline"
 					responsive
 				>
 					<div class="row">
@@ -216,6 +216,12 @@
 							</div>
 						</div>
 					</div>
+				</nb-tab>
+				<nb-tab
+					tabTitle="{{ 'POP_UPS.DESCRIPTION' | translate }}"
+					tabIcon="alert-circle-outline"
+					responsive
+				>
 					<div class="row">
 						<div class="col">
 							<div class="form-group">

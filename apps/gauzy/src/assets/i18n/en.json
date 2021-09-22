@@ -632,7 +632,9 @@
 		"SHOW_START_WORK_ON": "Show Started Work On",
 		"SHOW_CLIENTS": "Show Clients",
 		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously",
-		"SOURCE": "Source"
+		"SOURCE": "Source",
+		"DESCRIPTION": "Description",
+		"MAIN": "Main"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",

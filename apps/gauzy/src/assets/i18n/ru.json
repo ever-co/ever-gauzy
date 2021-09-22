@@ -632,7 +632,9 @@
 		"SHOW_START_WORK_ON": "Показать начатую работу на",
 		"SHOW_CLIENTS": "Показать клиентов",
 		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса",
-		"SOURCE": "Источник"
+		"SOURCE": "Источник",
+		"DESCRIPTION": "Description",
+		"MAIN": "Main"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
