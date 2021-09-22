@@ -1,6 +1,6 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
 import { Employee } from "./employee.entity";
-import { getUserDummyImage } from "./../core/utils";
+import { generateSlug, getUserDummyImage } from "./../core/utils";
 
 @EventSubscriber()
 export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
@@ -33,6 +33,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
             if (!entity.user.imageUrl) {
                 entity.user.imageUrl = getUserDummyImage(entity.user)
             }
+            entity.profile_link = generateSlug(entity.user.firstName+" "+entity.user.lastName);            
         }
     }
 }

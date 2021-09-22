@@ -71,6 +71,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	isVetted?: boolean;
 	totalJobs?: number;
 	fullName?: string;
+	profile_link: string;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &
@@ -89,6 +90,7 @@ export interface IEmployeeFindInput {
 	tenantId?: string;
 	tags?: ITag[];
 	skills?: ISkill[];
+	profile_link?: string;
 }
 
 export interface IEmployeeUpdateInput 
@@ -117,6 +119,7 @@ export interface IEmployeeUpdateInput
 	githubUrl?: string;
 	gitlabUrl?: string;
 	upworkUrl?: string;
+	profile_link?: string;
 }
 
 export interface IEmployeeCreateInput

@@ -13,6 +13,7 @@ import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
 import { Employee, Organization } from './../core/entities/internal';
 import { getDefaultOrganization } from './../organization/organization.seed';
+import { generateSlug } from 'core/utils';
 
 export const createDefaultEmployees = async (
 	connection: Connection,
@@ -45,6 +46,7 @@ export const createDefaultEmployees = async (
 		employee.billRateCurrency = organization.currency || env.defaultCurrency;
 		employee.reWeeklyLimit = faker.datatype.number({ min: 25, max: 40 });
 		employee.tenant = tenant;
+		employee.profile_link = generateSlug(user.firstName+' '+user.lastName);
 		employees.push(employee);
 	}
 
@@ -87,6 +89,7 @@ export const createRandomEmployees = async (
 						organization.currency || env.defaultCurrency;
 					employee.reWeeklyLimit = faker.datatype.number({ min: 25, max: 40 });
 					employee.tenant = tenant;
+					employee.profile_link = generateSlug(employee.user.firstName+' '+employee.user.lastName);
 
 					if (employee.user) {
 						employees.push(employee);

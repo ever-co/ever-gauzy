@@ -223,11 +223,6 @@ export class OrganizationComponent
 		this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 	}
 
-	createSlug(name : string) {		
-		name = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-		return name;
-	}
-
 	async editPage() {
 		this.dialogService
 			.open(PublicPageMutationComponent, {

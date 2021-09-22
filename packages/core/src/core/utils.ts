@@ -187,3 +187,7 @@ export function getDateRangeFormat(
 		end
 	};
 }
+
+export function generateSlug(name: string) {
+	return name.trim().replace(/[^A-Z0-9]+/gi, '-').toLowerCase();
+}
