@@ -15,7 +15,9 @@ export const bookPublicAppointmentButtonVisible = () => {
 };
 
 export const clickBookPublicAppointmentButton = (text) => {
+	cy.intercept('GET', '/api/event-type*').as('waitEventType');
 	clickElementByText(AppointmentsPage.bookPublicAppointmentButtonCss, text);
+	cy.wait('@waitEventType');
 };
 
 // Employee select functions
@@ -85,7 +87,7 @@ export const clickEventTypeSelectButton = (index: number) => {
 	cy.intercept('GET', '/api/event-type/*').as('waitTableLoad');
 	cy.intercept('GET', '/api/employee/*').as('waitEmployee');
 	clickButtonByIndexNoForce(AppointmentsPage.eventTypeButtonsCss, index);
-	cy.wait(['@waitTableLoad','@waitEmployee']);
+	cy.wait(['@waitTableLoad','@waitEmployee']);	
 };
 
 export const calendarTableVisible = () => {

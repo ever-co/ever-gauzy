@@ -449,7 +449,15 @@ Then('User can select client focus from dropdown options', () => {
 	);
 });
 
-And('User can see short description input field', () => {
+And('User can see description tab', () => {
+	organizationPublicPage.descriptionTabVisible();
+});
+
+When('User clicks on description tab', () => {
+	organizationPublicPage.clickDescriptionTab();
+});
+
+Then('User can see short description input field', () => {
 	organizationPublicPage.shortDescriptionVisible();
 });
 
