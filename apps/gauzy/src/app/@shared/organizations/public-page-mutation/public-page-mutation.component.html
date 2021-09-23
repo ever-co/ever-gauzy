@@ -369,29 +369,13 @@
 							</div>
 							<div class="row" *ngIf="awardExist">
 								<div class="col">
-									<nb-list class="nb_list block_style">
-										<nb-list-item
-											*ngFor="let a of awards"
-											class="nb_list_item item"
-										>
-											<span
-												class="award_title"
-												[textContent]="
-													a.name + ' (' + a.year + ')'
-												"
-											></span>
-											<nb-actions
-												class="nb_action float-left"
-												e="medium"
-											>
-												<nb-action
-													(click)="removeAward(a)"
-													class="d-inline pr-0 block_style"
-													icon="close"
-												></nb-action>
-											</nb-actions>
-										</nb-list-item>
-									</nb-list>
+									<nb-card class="mt-3">
+										<nb-card-body>
+											<nb-tag-list>
+												<nb-tag *ngFor="let award of awards" (remove)="removeAward(award)" [text]="award.name + ' (' + award.year + ')'" removable></nb-tag>
+											</nb-tag-list>
+										</nb-card-body>
+									</nb-card>
 								</div>
 							</div>
 						</div>
@@ -516,34 +500,13 @@
 							</div>
 							<div class="row" *ngIf="languageExist">
 								<div class="col">
-									<nb-list class="nb_list block_style">
-										<nb-list-item
-											*ngFor="
-												let l of organization_languages
-											"
-											class="nb_list_item item"
-										>
-											<span
-												class="award_title"
-												[textContent]="
-													l.name +
-													' (' +
-													l.level +
-													')'
-												"
-											></span>
-											<nb-actions
-												class="nb_action float-left"
-												e="medium"
-											>
-												<nb-action
-													(click)="removeLanguage(l)"
-													class="d-inline pr-0 block_style"
-													icon="close"
-												></nb-action>
-											</nb-actions>
-										</nb-list-item>
-									</nb-list>
+									<nb-card class="mt-3">
+										<nb-card-body>
+											<nb-tag-list>
+												<nb-tag *ngFor="let lang of organization_languages" (remove)="removeLanguage(lang)" [text]="lang.name + ' (' + lang.level + ')'" removable></nb-tag>
+											</nb-tag-list>
+										</nb-card-body>
+									</nb-card>
 								</div>
 							</div>
 						</div>
