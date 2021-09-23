@@ -473,7 +473,7 @@ And('User can verify Employee administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(53, checked);
 	rolesPermissionsPage.verifyState(54, checked);
 	rolesPermissionsPage.verifyState(55, notChecked);
-	rolesPermissionsPage.verifyState(56, notChecked);
+	rolesPermissionsPage.verifyState(56, checked);
 	rolesPermissionsPage.verifyState(57, checked);
 	rolesPermissionsPage.verifyState(58, notChecked);
 	rolesPermissionsPage.verifyState(59, checked);
