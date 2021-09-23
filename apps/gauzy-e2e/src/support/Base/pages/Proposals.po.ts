@@ -120,8 +120,8 @@ export const detailsButtonVisible = () => {
 };
 
 export const clickDetailsButton = (index) => {
-	clickButtonByIndex(ProposalsPage.detailsButtonCss, index);
 	cy.intercept('GET', '/api/proposal/*').as('waitToLoad');
+	clickButtonByIndex(ProposalsPage.detailsButtonCss, index);
 	cy.wait('@waitToLoad');
 };
 
