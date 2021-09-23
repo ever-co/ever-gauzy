@@ -133,7 +133,6 @@ export class InvitesComponent
 			context: {
 				invitationType: this.invitationType,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId,
 				selectedOrganization: this.selectedOrganization
 			}
 		});

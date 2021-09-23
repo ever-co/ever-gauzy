@@ -27,9 +27,7 @@ export class UrlPatternValidator {
 
     static isValidUrl(urlString: string, regExp: RegExp): boolean {
         try {
-            let pattern = new RegExp(regExp);
-            let valid = pattern.test(urlString);
-            return valid;
+            return new RegExp(regExp).test(urlString);
         } catch (TypeError) {
             return false;
         }

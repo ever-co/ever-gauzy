@@ -4,7 +4,7 @@ import { IEmployee } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmployeeStore } from './../../../../../@core/services';
-import { CompareDateValidators } from './../../../../../@core/validators';
+import { CompareDateValidator } from './../../../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,8 +25,8 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 			rejectDate: []
 		}, { 
 			validators: [
-				CompareDateValidators.validateDate('offerDate', 'acceptDate'),
-				CompareDateValidators.validateDate('offerDate', 'rejectDate')
+				CompareDateValidator.validateDate('offerDate', 'acceptDate'),
+				CompareDateValidator.validateDate('offerDate', 'rejectDate')
 			]
 		});
 	}
