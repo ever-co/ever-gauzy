@@ -30,10 +30,12 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
             /**
              * Use a dummy image avatar if no image is uploaded for any of the employee
              */
-            if (!entity.user.imageUrl) {
-                entity.user.imageUrl = getUserDummyImage(entity.user)
+            if (entity.user) {
+                if (!entity.user.imageUrl) {
+                    entity.user.imageUrl = getUserDummyImage(entity.user)
+                }
+                entity.profile_link = generateSlug(`${entity.user.firstName} ${entity.user.lastName}`);
             }
-            entity.profile_link = generateSlug(entity.user.firstName+" "+entity.user.lastName);            
         }
     }
 }

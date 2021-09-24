@@ -283,7 +283,7 @@ export class Employee
 	@Index({ unique: false })
 	@IsOptional()
 	@Column({ nullable: true })
-	profile_link: string;
+	profile_link?: string;
 
 	/*
     |--------------------------------------------------------------------------

@@ -71,7 +71,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	isVetted?: boolean;
 	totalJobs?: number;
 	fullName?: string;
-	profile_link: string;
+	profile_link?: string;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &
