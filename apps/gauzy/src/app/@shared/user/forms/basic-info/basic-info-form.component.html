@@ -1,53 +1,42 @@
-<form [formGroup]="form" *ngIf="form">
+<form [formGroup]="form" *ngIf="form" autocomplete-off no-validate>
 	<div class="row">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="inputFirstName" class="label">{{
+				<label for="firstName" class="label">{{
 					'FORM.LABELS.FIRST_NAME' | translate
 				}}</label>
 				<input
 					nbInput
 					type="text"
-					id="inputFirstName"
+					id="firstName"
 					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.FIRST_NAME' | translate
-					}}"
+					[placeholder]="'FORM.PLACEHOLDERS.FIRST_NAME' | translate"
 					formControlName="firstName"
-					[ngClass]="{
-						'status-danger':
-							firstName.invalid &&
-							(firstName.dirty || firstName.touched),
-						'status-success':
-							firstName.valid &&
-							(firstName.dirty || firstName.touched)
-					}"
-					[autocomplete]="off"
+					[status]="
+						isInvalidControl('firstName')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="inputLastName" class="label">{{
+				<label for="lastName" class="label">{{
 					'FORM.LABELS.LAST_NAME' | translate
 				}}</label>
 				<input
 					nbInput
 					type="text"
-					id="inputLastName"
+					id="lastName"
 					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.LAST_NAME' | translate
-					}}"
+					[placeholder]="'FORM.PLACEHOLDERS.LAST_NAME' | translate"
 					formControlName="lastName"
-					[ngClass]="{
-						'status-danger':
-							lastName.invalid &&
-							(lastName.dirty || lastName.touched),
-						'status-success':
-							lastName.valid &&
-							(lastName.dirty || lastName.touched)
-					}"
+					[status]="
+						isInvalidControl('lastName')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 			</div>
 		</div>
@@ -55,45 +44,41 @@
 	<div class="row">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="inputUsername" class="label">{{
+				<label for="username" class="label">{{
 					'FORM.USERNAME' | translate
 				}}</label>
 				<input
 					nbInput
 					type="text"
-					id="inputUsername"
+					id="username"
 					fullWidth
-					placeholder="{{ 'FORM.USERNAME' | translate }}"
+					[placeholder]="'FORM.USERNAME' | translate"
 					formControlName="username"
-					[ngClass]="{
-						'status-danger':
-							username.invalid &&
-							(username.dirty || username.touched),
-						'status-success':
-							username.valid &&
-							(username.dirty || username.touched)
-					}"
+					[status]="
+						isInvalidControl('username')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="inputEmail" class="label">{{
+				<label for="email" class="label">{{
 					'FORM.EMAIL' | translate
 				}}</label>
 				<input
 					nbInput
 					type="email"
-					id="inputEmail"
+					id="email"
 					fullWidth
-					placeholder="{{ 'FORM.EMAIL' | translate }}"
+					[placeholder]="'FORM.EMAIL' | translate"
 					formControlName="email"
-					[ngClass]="{
-						'status-danger':
-							email.invalid && (email.dirty || email.touched),
-						'status-success':
-							email.valid && (email.dirty || email.touched)
-					}"
+					[status]="
+						isInvalidControl('email')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 			</div>
 		</div>
@@ -105,15 +90,13 @@
 					'FORM.LABELS.START_DATE' | translate
 				}}</label>
 				<input
-					[nbDatepicker]="datepicker"
+					[nbDatepicker]="startWorkOnDatepicker"
 					nbInput
 					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.START_DATE' | translate
-					}}"
+					[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
 					formControlName="startedWorkOn"
 				/>
-				<nb-datepicker #datepicker></nb-datepicker>
+				<nb-datepicker #startWorkOnDatepicker></nb-datepicker>
 				<div
 					class="notes"
 					*ngIf="
@@ -126,7 +109,6 @@
 				</div>
 			</div>
 		</div>
-
 		<div class="col-sm-6" *ngIf="!(isEmployee || isCandidate)">
 			<div class="form-group">
 				<label for="role" class="label">{{
@@ -135,7 +117,7 @@
 				<nb-select
 					id="role"
 					class="d-block"
-					placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
+					[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
 					formControlName="role"
 					fullWidth
 				>
@@ -148,80 +130,63 @@
 			</div>
 		</div>
 		<div class="col-sm-6">
-			<div class="form-group">
-				<label for="inputPassword" class="label">{{
-					'FORM.PASSWORD' | translate
-				}}</label>
-				<input
-					nbInput
-					type="password"
-					id="inputPassword"
-					fullWidth
-					placeholder="{{ 'FORM.PASSWORD' | translate }}"
-					formControlName="password"
-					[ngClass]="{
-						'status-danger':
-							password.invalid &&
-							(password.dirty || password.touched),
-						'status-success':
-							password.valid &&
-							(password.dirty || password.touched)
-					}"
-				/>
-			</div>
+			<ngx-password-form-field
+				[id]="'password'"
+				[placeholder]="'FORM.PASSWORD' | translate"
+				[ctrl]="form.controls.password"
+				formControlName="password"
+			></ngx-password-form-field>
 		</div>
 		<div class="col-sm-6" *ngIf="isCandidate">
 			<div class="form-group">
-				<label for="appliedDateInput" class="label">{{
+				<label for="appliedDate" class="label">{{
 					'FORM.LABELS.APPLIED_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="appliedDateInput"
+					id="appliedDate"
 					formControlName="appliedDate"
 					nbInput
 					[nbDatepicker]="appliedDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 				/>
 				<nb-datepicker #appliedDatePicker></nb-datepicker>
 			</div>
 		</div>
 	</div>
-
 	<div class="row" *ngIf="isEmployee">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="offerDateInput" class="label">{{
+				<label for="offerDate" class="label">{{
 					'FORM.LABELS.OFFER_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="offerDateInput"
+					id="offerDate"
 					formControlName="offerDate"
 					nbInput
 					[nbDatepicker]="offerDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 				/>
 				<nb-datepicker #offerDatePicker></nb-datepicker>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="acceptDateInput" class="label">{{
+				<label for="acceptDate" class="label">{{
 					'FORM.LABELS.ACCEPT_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="acceptDateInput"
+					id="acceptDate"
 					formControlName="acceptDate"
 					nbInput
 					[nbDatepicker]="acceptDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 					[status]="
-						form.get('acceptDate').invalid ? 'danger' : 'basic'
+						isInvalidControl('acceptDate')
+							? 'danger'
+							: 'basic'
 					"
 				/>
 				<nb-datepicker #acceptDatePicker></nb-datepicker>
@@ -231,19 +196,20 @@
 	<div class="row" *ngIf="isEmployee || isCandidate">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="rejectDateInput" class="label">{{
+				<label for="rejectDate" class="label">{{
 					'FORM.LABELS.REJECT_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="rejectDateInput"
+					id="rejectDate"
 					formControlName="rejectDate"
 					nbInput
 					[nbDatepicker]="rejectDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 					[status]="
-						form.get('rejectDate').invalid ? 'danger' : 'basic'
+						isInvalidControl('rejectDate')
+							? 'danger'
+							: 'basic'
 					"
 				/>
 				<nb-datepicker #rejectDatePicker></nb-datepicker>
@@ -263,48 +229,46 @@
 	<div class="row" *ngIf="isCandidate">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="hiredDateInput" class="label">{{
+				<label for="hiredDate" class="label">{{
 					'FORM.LABELS.HIRED_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="hiredDateInput"
+					id="hiredDate"
 					formControlName="hiredDate"
 					nbInput
 					[nbDatepicker]="hiredDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
-					[ngClass]="{
-						'status-danger': !hiredDate.valid
-					}"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
+					[status]="
+						isInvalidControl('hiredDate')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 				<nb-datepicker #hiredDatePicker></nb-datepicker>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="sourceInput" class="label">{{
+				<label for="source" class="label">{{
 					'FORM.LABELS.SOURCE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="sourceInput"
+					id="source"
 					formControlName="source"
 					nbInput
-					placeholder="{{ 'POP_UPS.SOURCE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.SOURCE' | translate"
 				/>
 			</div>
 		</div>
 	</div>
-
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="inputImageUrl" class="label">{{
 					'FORM.LABELS.IMAGE_URL' | translate
 				}}</label>
-
 				<ngx-file-uploader-input
 					id="inputImageUrl"
 					[placeholder]="uploaderPlaceholder"
@@ -314,7 +278,6 @@
 			</div>
 		</div>
 	</div>
-
 	<div class="row" *ngIf="enableEmployee()">
 		<div class="col-sm-12">
 			<div class="form-group">
@@ -324,14 +287,13 @@
 			</div>
 		</div>
 	</div>
-
 	<div class="form-group row" [hidden]="imageUrl.invalid">
 		<div class="col-sm-12">
 			<div class="row preview-img" [hidden]="!showImageMeta">
 				<div>
 					<img
 						#imagePreview
-						src="{{ imageUrl.value }}"
+						[src]="imageUrl.value"
 						alt="Invalid image"
 						class="img-rounded"
 					/>
@@ -340,9 +302,7 @@
 					<div
 						class="ion-md-remove-circle"
 						placeholder="Remove image"
-						title="{{
-							'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate
-						}}"
+						[title]="'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate"
 					></div>
 				</div>
 			</div>

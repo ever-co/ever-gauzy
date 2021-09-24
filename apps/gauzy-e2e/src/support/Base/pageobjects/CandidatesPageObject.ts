@@ -1,7 +1,7 @@
 export const CandidatesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	inviteButtonCss: 'div.float-left > button[status="primary"]',
-	emailInputCss: '#emailsSelect',
+	emailInputCss: '#emails',
 	dateInputCss: '[placeholder="Date"]',
 	sendInviteButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	addButtonCss: 'div.float-left > button[status="success"]',

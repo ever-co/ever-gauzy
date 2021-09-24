@@ -64,6 +64,9 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			this.employeeStore.userForm = {
 				...this.form.value
 			};
+			this.employeeStore.employeeForm = {
+				...this.form.value
+			};
 		}
 	}
 
@@ -74,7 +77,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			firstName: [employee.user.firstName],
 			lastName: [employee.user.lastName],
 			imageUrl: [employee.user.imageUrl, Validators.required],
-			preferredLanguage: [employee.user.preferredLanguage]
+			preferredLanguage: [employee.user.preferredLanguage],
+			profile_link: [employee.profile_link],
 		});
 	}
 

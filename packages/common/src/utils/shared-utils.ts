@@ -103,3 +103,23 @@ export function average(items: any, column: string) {
 export const ArraySum = function (t, n) {
 	return parseFloat(t) + parseFloat(n);
 };
+
+/*
+ * Retrieve name from email address
+ */
+export function retrieveNameFromEmail(email: string): string {
+	if (email) {
+		return ucFirst(email.substring(0, email.lastIndexOf('@')), true);
+	}
+	return;
+}
+
+/*
+ * Capitalize the first letter of a string being
+ */
+export function ucFirst(str: string, force: boolean): string {
+	str = force ? str.toLowerCase() : str;
+	return str.replace(/(\b)([a-zA-Z])/, function (firstLetter: string) {
+		return firstLetter.toUpperCase();
+	});
+}

@@ -244,4 +244,18 @@ export class BasicInfoFormComponent
 			}
 		};
 	}
+
+	/**
+	 * Form invalid control validate
+	 * 
+	 * @param control 
+	 * @returns 
+	 */
+	 isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && 
+			this.form.get(control).invalid;
+	}
 }

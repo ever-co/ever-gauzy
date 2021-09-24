@@ -305,6 +305,7 @@
 			"GITHUB": "Github",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Обновления",
+			"STACK_OVERFLOW": "Переполнение стекла",
 			"PROJECT_URL": "URL проекта",
 			"CLIENTS": "Клиенты",
 			"IS_PROJECT_OPEN_SOURCE": "Является проектом открытым исходным кодом",
@@ -437,6 +438,7 @@
 			"GITHUB": "Github",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Обновления",
+			"STACK_OVERFLOW": "Переполнение стекла",
 			"STATUS": "Статус",
 			"INVOICE_NUMBER": "Номер счёта",
 			"PROJECT_URL": "URL проекта",
@@ -633,8 +635,8 @@
 		"SHOW_CLIENTS": "Показать клиентов",
 		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса",
 		"SOURCE": "Источник",
-		"DESCRIPTION": "Description",
-		"MAIN": "Main"
+		"DESCRIPTION": "Описание",
+		"MAIN": "Главная"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",

@@ -8,7 +8,7 @@ const routes: Routes = [
 		component: OrganizationComponent
 	},
 	{
-		path: ':employeeId',
+		path: ':slug/:employeeId',
 		loadChildren: () =>
 			import('../employee/employee.module').then((m) => m.EmployeeModule)
 	}

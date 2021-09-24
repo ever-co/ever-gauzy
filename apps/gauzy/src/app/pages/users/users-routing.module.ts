@@ -38,11 +38,27 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				component: EditUserDataComponent
+				component: EditUserDataComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false,
+						organization: false
+					}
+				},
 			},
 			{
 				path: 'organizations',
-				component: EditUserOrganizationsComponent
+				component: EditUserOrganizationsComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false,
+						organization: false
+					}
+				},
 			}
 		]
 	},

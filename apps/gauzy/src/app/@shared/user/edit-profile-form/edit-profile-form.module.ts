@@ -22,6 +22,7 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 import { TranslateModule } from '../../translate/translate.module';
 import { LanguageSelectorModule } from '../../language/language-selector';
 import { SharedModule } from '../../shared.module';
+import { PasswordFormFieldModule } from '../forms/fields/password';
 
 @NgModule({
 	imports: [
@@ -40,7 +41,8 @@ import { SharedModule } from '../../shared.module';
 		ImageUploaderModule,
 		TranslateModule,
 		LanguageSelectorModule,
-		SharedModule
+		SharedModule,
+		PasswordFormFieldModule
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],
