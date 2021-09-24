@@ -9,8 +9,7 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyElementNotExist,
-	clickButtonWithForce,
-	clickByText
+	clickButtonWithForce
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
 
