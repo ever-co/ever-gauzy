@@ -74,7 +74,9 @@ And('User can visit Contacts customers page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.intercept('GET', ' /api/organization-projects*').as('waitToLoad');
 	cy.visit('/#/pages/contacts/customers', { timeout: pageLoadTimeout });
+	cy.wait('@waitToLoad');
 });
 
 Then('User can see grid button', () => {
