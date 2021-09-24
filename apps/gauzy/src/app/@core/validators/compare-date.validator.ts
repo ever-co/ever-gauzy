@@ -1,6 +1,6 @@
 import { AbstractControl, ValidatorFn } from "@angular/forms";
 
-export class CompareDateValidators {
+export class CompareDateValidator {
     static validateDate(fromField: string, toField: string): ValidatorFn {
         return (formGroup: AbstractControl): { [key: string]: boolean } | null => {
             const fromDate = formGroup.get(fromField);

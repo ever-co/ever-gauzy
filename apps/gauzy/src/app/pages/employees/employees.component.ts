@@ -206,7 +206,6 @@ export class EmployeesComponent
 			context: {
 				invitationType: InvitationTypeEnum.EMPLOYEE,
 				selectedOrganizationId,
-				currentUserId: this.store.userId,
 				selectedOrganization: this.organization
 			}
 		});

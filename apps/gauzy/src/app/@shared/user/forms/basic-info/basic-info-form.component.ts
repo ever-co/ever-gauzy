@@ -12,7 +12,7 @@ import { first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
 import { AuthService, EmployeesService, RoleService, Store } from './../../../../@core/services';
-import { CompareDateValidators } from './../../../../@core/validators';
+import { CompareDateValidator } from './../../../../@core/validators';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -143,8 +143,8 @@ export class BasicInfoFormComponent
 			},
 			{ 
 				validators: [
-					CompareDateValidators.validateDate('offerDate', 'acceptDate'),
-					CompareDateValidators.validateDate('offerDate', 'rejectDate')
+					CompareDateValidator.validateDate('offerDate', 'acceptDate'),
+					CompareDateValidator.validateDate('offerDate', 'rejectDate')
 				] 
 			}
 		);

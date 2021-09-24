@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-body>
-		<form [formGroup]="form" (ngSubmit)="submitForm()">
+		<form [formGroup]="form" (ngSubmit)="submitForm()" autocomplete-off>
 			<div class="row">
 				<div class="col-sm-3">
 					<div class="form-group">
@@ -124,6 +124,23 @@
 							nbInput
 							formControlName="upworkUrl"
 							[placeholder]="'FORM.PLACEHOLDERS.UPWORK' | translate"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label
+							class="label"
+							for="stackoverflow"
+							[innerHtml]="'FORM.LABELS.STACK_OVERFLOW' | translate"
+						></label>
+						<input
+							fullWidth
+							id="stackoverflow"
+							type="text"
+							nbInput
+							formControlName="stackoverflowUrl"
+							[placeholder]="'FORM.PLACEHOLDERS.STACK_OVERFLOW' | translate"
 						/>
 					</div>
 				</div>

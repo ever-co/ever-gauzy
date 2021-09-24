@@ -210,7 +210,6 @@ export class UsersComponent
 			context: {
 				invitationType: InvitationTypeEnum.USER,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId,
 				isSuperAdmin: this.hasSuperAdminPermission,
 				selectedOrganization: this.organization
 			}
