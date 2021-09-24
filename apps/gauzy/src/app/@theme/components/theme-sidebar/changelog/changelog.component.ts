@@ -24,7 +24,7 @@ export class ChangelogComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.updateLogs$.next();
+		// this.updateLogs$.next();
 	}
 
 	getLogs() {

@@ -50,8 +50,33 @@
 							</div>
 						</div>
 					</div>
+					{{ form.value | json }}
 					<div class="row">
 						<div class="col">
+							<ngx-password-form-field
+								[id]="'password'"
+								[placeholder]="'PROFILE_PAGE.PASSWORD' | translate"
+								[ctrl]="form.controls.password"
+								formControlName="password"
+							></ngx-password-form-field>
+						</div>
+						<div class="col">
+							<ngx-password-form-field
+								[id]="'password'"
+								[placeholder]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
+								[ctrl]="form.controls.repeatPassword"
+								formControlName="repeatPassword"
+							></ngx-password-form-field>
+							<div 
+								*ngIf="isInvalidControl('repeatPassword')"
+								class="invalid-feedback d-block"
+							>
+								<div *ngIf="form.get('repeatPassword').errors.mustMatch">
+									{{ 'PROFILE_PAGE.VALIDATION.PASSWORDS_DO_NOT_MATCH' | translate }}
+								</div>
+							</div>
+						</div>
+						<!-- <div class="col">
 							<div class="form-group">
 								<label
 									class="label"
@@ -121,7 +146,7 @@
 									</div>
 								</div>
 							</div>
-						</div>
+						</div> -->
 					</div>
 					<div class="row">
 						<div class="col-6">

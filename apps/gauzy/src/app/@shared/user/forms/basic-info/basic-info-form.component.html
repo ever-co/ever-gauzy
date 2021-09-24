@@ -1,53 +1,42 @@
-<form [formGroup]="form" *ngIf="form">
+<form [formGroup]="form" *ngIf="form" autocomplete-off no-validate>
 	<div class="row">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="inputFirstName" class="label">{{
+				<label for="firstName" class="label">{{
 					'FORM.LABELS.FIRST_NAME' | translate
 				}}</label>
 				<input
 					nbInput
 					type="text"
-					id="inputFirstName"
+					id="firstName"
 					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.FIRST_NAME' | translate
-					}}"
+					[placeholder]="'FORM.PLACEHOLDERS.FIRST_NAME' | translate"
 					formControlName="firstName"
-					[ngClass]="{
-						'status-danger':
-							firstName.invalid &&
-							(firstName.dirty || firstName.touched),
-						'status-success':
-							firstName.valid &&
-							(firstName.dirty || firstName.touched)
-					}"
-					[autocomplete]="off"
+					[status]="
+						isInvalidControl('firstName')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="inputLastName" class="label">{{
+				<label for="lastName" class="label">{{
 					'FORM.LABELS.LAST_NAME' | translate
 				}}</label>
 				<input
 					nbInput
 					type="text"
-					id="inputLastName"
+					id="lastName"
 					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.LAST_NAME' | translate
-					}}"
+					[placeholder]="'FORM.PLACEHOLDERS.LAST_NAME' | translate"
 					formControlName="lastName"
-					[ngClass]="{
-						'status-danger':
-							lastName.invalid &&
-							(lastName.dirty || lastName.touched),
-						'status-success':
-							lastName.valid &&
-							(lastName.dirty || lastName.touched)
-					}"
+					[status]="
+						isInvalidControl('lastName')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 			</div>
 		</div>
@@ -55,45 +44,41 @@
 	<div class="row">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="inputUsername" class="label">{{
+				<label for="username" class="label">{{
 					'FORM.USERNAME' | translate
 				}}</label>
 				<input
 					nbInput
 					type="text"
-					id="inputUsername"
+					id="username"
 					fullWidth
-					placeholder="{{ 'FORM.USERNAME' | translate }}"
+					[placeholder]="'FORM.USERNAME' | translate"
 					formControlName="username"
-					[ngClass]="{
-						'status-danger':
-							username.invalid &&
-							(username.dirty || username.touched),
-						'status-success':
-							username.valid &&
-							(username.dirty || username.touched)
-					}"
+					[status]="
+						isInvalidControl('username')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="inputEmail" class="label">{{
+				<label for="email" class="label">{{
 					'FORM.EMAIL' | translate
 				}}</label>
 				<input
 					nbInput
 					type="email"
-					id="inputEmail"
+					id="email"
 					fullWidth
-					placeholder="{{ 'FORM.EMAIL' | translate }}"
+					[placeholder]="'FORM.EMAIL' | translate"
 					formControlName="email"
-					[ngClass]="{
-						'status-danger':
-							email.invalid && (email.dirty || email.touched),
-						'status-success':
-							email.valid && (email.dirty || email.touched)
-					}"
+					[status]="
+						isInvalidControl('email')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 			</div>
 		</div>
@@ -126,7 +111,6 @@
 				</div>
 			</div>
 		</div>
-
 		<div class="col-sm-6" *ngIf="!(isEmployee || isCandidate)">
 			<div class="form-group">
 				<label for="role" class="label">{{
@@ -148,27 +132,12 @@
 			</div>
 		</div>
 		<div class="col-sm-6">
-			<div class="form-group">
-				<label for="inputPassword" class="label">{{
-					'FORM.PASSWORD' | translate
-				}}</label>
-				<input
-					nbInput
-					type="password"
-					id="inputPassword"
-					fullWidth
-					placeholder="{{ 'FORM.PASSWORD' | translate }}"
-					formControlName="password"
-					[ngClass]="{
-						'status-danger':
-							password.invalid &&
-							(password.dirty || password.touched),
-						'status-success':
-							password.valid &&
-							(password.dirty || password.touched)
-					}"
-				/>
-			</div>
+			<ngx-password-form-field
+				[id]="'password'"
+				[placeholder]="'FORM.PASSWORD' | translate"
+				[ctrl]="form.controls.password"
+				formControlName="password"
+			></ngx-password-form-field>
 		</div>
 		<div class="col-sm-6" *ngIf="isCandidate">
 			<div class="form-group">
@@ -188,7 +157,6 @@
 			</div>
 		</div>
 	</div>
-
 	<div class="row" *ngIf="isEmployee">
 		<div class="col-sm-6">
 			<div class="form-group">
@@ -273,7 +241,6 @@
 					nbInput
 					[nbDatepicker]="hiredDatePicker"
 					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
 					[ngClass]="{
 						'status-danger': !hiredDate.valid
 					}"
@@ -291,20 +258,17 @@
 					id="sourceInput"
 					formControlName="source"
 					nbInput
-					placeholder="{{ 'POP_UPS.SOURCE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.SOURCE' | translate"
 				/>
 			</div>
 		</div>
 	</div>
-
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="inputImageUrl" class="label">{{
 					'FORM.LABELS.IMAGE_URL' | translate
 				}}</label>
-
 				<ngx-file-uploader-input
 					id="inputImageUrl"
 					[placeholder]="uploaderPlaceholder"
@@ -314,7 +278,6 @@
 			</div>
 		</div>
 	</div>
-
 	<div class="row" *ngIf="enableEmployee()">
 		<div class="col-sm-12">
 			<div class="form-group">
@@ -324,14 +287,13 @@
 			</div>
 		</div>
 	</div>
-
 	<div class="form-group row" [hidden]="imageUrl.invalid">
 		<div class="col-sm-12">
 			<div class="row preview-img" [hidden]="!showImageMeta">
 				<div>
 					<img
 						#imagePreview
-						src="{{ imageUrl.value }}"
+						[src]="imageUrl.value"
 						alt="Invalid image"
 						class="img-rounded"
 					/>
@@ -340,9 +302,7 @@
 					<div
 						class="ion-md-remove-circle"
 						placeholder="Remove image"
-						title="{{
-							'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate
-						}}"
+						[title]="'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate"
 					></div>
 				</div>
 			</div>
