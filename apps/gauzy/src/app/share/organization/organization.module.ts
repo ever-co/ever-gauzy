@@ -8,7 +8,8 @@ import {
 	NbDialogModule,
 	NbListModule,
 	NbUserModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbTagModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationComponent } from './organization.component';
@@ -33,7 +34,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule,
 		NbListModule,
 		NbUserModule,
-		NbTabsetModule
+		NbTabsetModule,
+		NbTagModule
 	],
 	declarations: [OrganizationComponent],
 	providers: []

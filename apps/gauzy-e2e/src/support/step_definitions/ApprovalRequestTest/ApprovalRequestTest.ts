@@ -224,7 +224,7 @@ Then('User can see name input field', () => {
 });
 
 And('User can enter new value for name', () => {
-	approvalRequestPage.enterNameInputData(ApprovalRequestPageData.editName);
+	approvalRequestPage.enterNameInputData('-Edited');
 });
 
 And('User can see min count input field', () => {
@@ -250,7 +250,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify request was edited', () => {
-	approvalRequestPage.verifyRequestExists(ApprovalRequestPageData.editName);
+	approvalRequestPage.verifyRequestExists(ApprovalRequestPageData.dafaultName + '-Edited');
 });
 
 // Delete approval request

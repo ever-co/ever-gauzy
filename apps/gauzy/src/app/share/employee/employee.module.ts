@@ -7,7 +7,8 @@ import {
 	NbIconModule,
 	NbListModule,
 	NbUserModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbTagModule
 } from '@nebular/theme';
 import { EmployeeRoutingModule } from './employee-routing.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
@@ -28,7 +29,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule,
 		NbListModule,
 		NbUserModule,
-		NbTabsetModule
+		NbTabsetModule,
+		NbTagModule
 	],
 	declarations: [EmployeeComponent],
 	providers: []

@@ -6,28 +6,39 @@ import {
 	NbCardModule,
 	NbInputModule,
 	NbSelectModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbTagModule,
+	NbIconModule,
+	NbFormFieldModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { InviteService } from '../../../@core/services/invite.service';
-import { RoleService } from '../../../@core/services/role.service';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.component';
+import { InviteService, RoleService } from '../../../@core/services';
+import { SharedModule } from '../../shared.module';
+import { ContactSelectModule } from '../../contact-select/contact-select.module';
 
 @NgModule({
 	imports: [
-		ThemeModule,
-		NbDatepickerModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbInputModule,
-		NbCardModule,
-		NbButtonModule,
-		NgSelectModule,
-		NbSelectModule,
 		NbAlertModule,
-		TranslateModule
+		NbButtonModule,
+		NbCardModule,
+		NbDatepickerModule,
+		NbFormFieldModule,
+		NbIconModule,
+		NbInputModule,
+		NbSelectModule,
+		NbTagModule,
+		NbTooltipModule,
+		NgSelectModule,
+		ThemeModule,
+		TranslateModule,
+		SharedModule,
+		ContactSelectModule
 	],
 	exports: [EmailInviteFormComponent],
 	declarations: [EmailInviteFormComponent],

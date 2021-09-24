@@ -15,10 +15,9 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '../../@core/services/store.service';
-import { ErrorHandlingService, OrganizationContactService, ToastrService } from '../../@core/services';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ErrorHandlingService, OrganizationContactService, Store, ToastrService } from '../../@core/services';
+import { TranslationBaseComponent } from '../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,7 +31,8 @@ import { TranslateService } from '@ngx-translate/core';
 		}
 	]
 })
-export class ContactSelectComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class ContactSelectComponent extends TranslationBaseComponent 
+	implements OnInit, OnDestroy {
 
 	contacts: IOrganizationContact[] = [];
 	organization: IOrganization;

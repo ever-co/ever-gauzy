@@ -254,6 +254,11 @@ export class Employee
 	@Column({ nullable: true })
 	upworkUrl?: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@Column({ nullable: true })
+	stackoverflowUrl?: string;
+
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })

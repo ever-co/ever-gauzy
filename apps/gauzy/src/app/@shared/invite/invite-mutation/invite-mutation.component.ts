@@ -9,12 +9,9 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { EmailInviteFormComponent } from '../forms/email-invite-form/email-invite-form.component';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { EmailInviteFormComponent } from '../forms';
+import { TranslationBaseComponent } from '../../language-base';
+import { OrganizationContactService, OrganizationDepartmentsService, OrganizationProjectsService, ToastrService } from '../../../@core/services';
 
 @Component({
 	selector: 'ga-invite-mutation',
@@ -34,25 +31,22 @@ export class InviteMutationComponent
 	selectedOrganization: IOrganization;
 
 	@Input()
-	currentUserId: string;
-
-	@Input()
 	isSuperAdmin: boolean;
 
 	@ViewChild('emailInviteForm')
 	emailInviteForm: EmailInviteFormComponent;
 
-	organizationProjects: IOrganizationProject[];
-	organizationContact: IOrganizationContact[];
-	organizationDepartments: IOrganizationDepartment[];
+	organizationProjects: IOrganizationProject[] = [];
+	organizationContacts: IOrganizationContact[] = [];
+	organizationDepartments: IOrganizationDepartment[] = [];
 
 	constructor(
-		private dialogRef: NbDialogRef<InviteMutationComponent>,
-		private organizationProjectsService: OrganizationProjectsService,
-		private organizationContactService: OrganizationContactService,
-		private organizationDepartmentsService: OrganizationDepartmentsService,
-		readonly translateService: TranslateService,
-		private toastrService: ToastrService
+		private readonly dialogRef: NbDialogRef<InviteMutationComponent>,
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly organizationContactService: OrganizationContactService,
+		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
+		public readonly translateService: TranslateService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -95,7 +89,7 @@ export class InviteMutationComponent
 				tenantId: this.selectedOrganization.tenantId
 			}
 		);
-		this.organizationContact = items;
+		this.organizationContacts = items;
 	}
 
 	async loadDepartments() {

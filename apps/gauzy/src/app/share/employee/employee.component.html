@@ -225,11 +225,13 @@
 				</div>
 			</nb-tab>
 			<nb-tab tabTitle="Skills" class="o__p__s__t">
-				<ul class="skill-items">
-					<li *ngFor="let skill of employee.skills">
-						<span class="tag tag-sm">{{ skill.name }}</span>
-					</li>
-				</ul>
+				<nb-tag-list>
+					<nb-tag 
+						*ngFor="let skill of employee.skills" 
+						[text]="skill.name" 
+						[removable]="false"
+					></nb-tag>
+				</nb-tag-list>
 			</nb-tab>
 			<nb-tab tabTitle="Portfolio" class="o__p__s__t"> </nb-tab>
 		</nb-tabset>

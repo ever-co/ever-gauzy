@@ -38,7 +38,6 @@ export const nameInputVisible = () => {
 };
 
 export const enterNameInputData = (data) => {
-	clearField(ApprovalRequestPage.nameInputCss);
 	enterInput(ApprovalRequestPage.nameInputCss, data);
 };
 

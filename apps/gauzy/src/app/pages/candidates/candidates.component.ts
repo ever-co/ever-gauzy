@@ -223,7 +223,6 @@ export class CandidatesComponent
 			context: {
 				invitationType: InvitationTypeEnum.CANDIDATE,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId,
 				selectedOrganization: this.selectedOrganization
 			}
 		});

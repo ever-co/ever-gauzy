@@ -1,210 +1,250 @@
-<form [formGroup]="form" *ngIf="form">
+<form [formGroup]="form" autocomplete-off>
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
-				<label for="emailsSelect" class="label">{{
-					'FORM.LABELS.EMAILS' | translate
-				}}</label>
-				<ng-select
-					id="emailsSelect"
-					class="adjust-height"
-					[items]="[]"
-					[addTag]="addTagFn"
-					[hideSelected]="true"
-					appendTo="body"
-					multiple="true"
-					bindLabel="emailAddress"
-					formControlName="emails"
-					[placeholder]="'FORM.PLACEHOLDERS.EMAILS' | translate"
-					[notFoundText]="'FORM.PLACEHOLDERS.EMAILS' | translate"
-					[ngClass]="{
-						'item-invalid':
-							emails.invalid && (emails.dirty || emails.touched),
-						'item-valid':
-							emails.valid && (emails.dirty || emails.touched)
-					}"
+				<label 
+					for="emails" 
+					class="label"
 				>
-				</ng-select>
+					{{ 'FORM.LABELS.EMAILS' | translate }}
+				</label>
+				<nb-form-field>
+					<nb-tag-list (tagRemove)="onEmailRemove($event)">
+						<nb-tag 
+							*ngFor="let email of emails"
+							[text]="email"
+							[size]="'tiny'"
+							removable
+						></nb-tag>
+						<input 
+							id="emails"
+							type="text"
+							name="emails"
+							nbTagInput
+							fullWidth
+							(tagAdd)="onEmailAdd($event)"
+							(focusout)="onFocusOut($event)"
+							[status]="
+								isInvalidControl('emails')
+									? 'danger'
+									: 'basic'
+							"
+						>
+					</nb-tag-list>
+					<nb-icon
+						*ngIf="emails.size > 0"
+						nbSuffix
+						icon="close-outline"
+						pack="eva"
+						(click)="onResetEmails()"
+					></nb-icon>
+				</nb-form-field>
 			</div>
 		</div>
 	</div>
-	<div class="row" *ngIf="invitationType !== invitationTypeEnum.CANDIDATE">
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="startedWork" class="label">{{
-					'FORM.LABELS.START_DATE' | translate
-				}}</label>
-				<input
-					[nbDatepicker]="datepicker"
-					nbInput
-					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.START_DATE' | translate
-					}}"
-					formControlName="startedWorkOn"
-				/>
-				<nb-datepicker #datepicker></nb-datepicker>
-				<div
-					class="notes"
-					*ngIf="
-						form.touched && form.get('startedWorkOn').value == null
-					"
-				>
-					<p>
-						{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
-					</p>
+	<ng-container *ngIf="invitationType !== invitationTypeEnum.CANDIDATE">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label 
+						for="startedWorkOn"
+						class="label"
+					>
+						{{ 'FORM.LABELS.START_DATE' | translate }}
+						<nb-icon 
+							[nbTooltip]="'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate" 
+							icon="question-mark-circle-outline"
+						></nb-icon>	
+					</label>
+					<nb-form-field>
+						<input
+							id="startedWorkOn"
+							[nbDatepicker]="startedWorkDatepicker"
+							nbInput
+							fullWidth
+							[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
+							formControlName="startedWorkOn"
+						/>
+						<nb-datepicker #startedWorkDatepicker></nb-datepicker>
+					</nb-form-field>
 				</div>
 			</div>
 		</div>
-	</div>
-	<div class="row" *ngIf="invitationType === invitationTypeEnum.CANDIDATE">
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="appliedDate" class="label">{{
-					'FORM.LABELS.APPLIED_DATE_LABEL' | translate
-				}}</label>
-				<input
-					[nbDatepicker]="datepicker"
-					nbInput
-					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.START_DATE' | translate
-					}}"
-					formControlName="appliedDate"
-				/>
-				<nb-datepicker #datepicker></nb-datepicker>
+	</ng-container>
+	<ng-container *ngIf="invitationType === invitationTypeEnum.CANDIDATE">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label
+						for="appliedDate"
+						class="label"
+					>
+						{{ 'FORM.LABELS.APPLIED_DATE_LABEL' | translate }}
+					</label>
+					<input
+						id="appliedDate"
+						[nbDatepicker]="appliedDatePicker"
+						nbInput
+						fullWidth
+						[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
+						formControlName="appliedDate"
+					/>
+					<nb-datepicker #appliedDatePicker></nb-datepicker>
+				</div>
 			</div>
 		</div>
-	</div>
-	<div class="row" *ngIf="invitationType === invitationTypeEnum.EMPLOYEE">
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="projectsSelect" class="label label-with-select"
-					>{{ 'FORM.LABELS.PROJECTS_OPTIONAL' | translate }}
-					<button
-						nbButton
-						ghost
-						size="tiny"
-						(click)="selectAllProjects()"
+	</ng-container>
+	<ng-container *ngIf="invitationType === invitationTypeEnum.EMPLOYEE">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label
+						for="projectSelection"
+						class="label label-with-select"
 					>
-						{{ 'BUTTONS.SELECT_ALL' | translate }}
-					</button>
-				</label>
-				<ng-select
-					id="projectsSelect"
-					class="adjust-height"
-					[hideSelected]="true"
-					multiple="true"
-					bindLabel="name"
-					appendTo="body"
-					formControlName="projects"
-					placeholder="{{ 'FORM.PLACEHOLDERS.PROJECTS' | translate }}"
-				>
-					<ng-option
-						*ngFor="let project of organizationProjects"
-						value="{{ project.id }}"
-						>{{ project.name }}</ng-option
+						{{ 'FORM.LABELS.PROJECTS_OPTIONAL' | translate }}
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							(click)="selectAllProjects()"
+						>
+							{{ 'BUTTONS.SELECT_ALL' | translate }}
+						</button>
+					</label>
+					<ng-select
+						id="projectSelection"
+						class="adjust-height"
+						[hideSelected]="true"
+						[multiple]="true"
+						bindLabel="name"
+						appendTo="body"
+						formControlName="projects"
+						[placeholder]="'FORM.PLACEHOLDERS.PROJECTS' | translate"
 					>
-				</ng-select>
+						<ng-option
+							*ngFor="let project of organizationProjects"
+							[value]="project.id"
+						>
+							{{ project.name }}
+						</ng-option>
+					</ng-select>
+				</div>
+			</div>
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label
+						for="contactSelection"
+						class="label label-with-select"
+					>
+						{{ 'FORM.LABELS.CONTACTS_OPTIONAL' | translate }}
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							(click)="selectAllOrganizationContacts()"
+						>
+							{{ 'BUTTONS.SELECT_ALL' | translate }}
+						</button>
+					</label>
+					<ng-select
+						id="contactSelection"
+						class="adjust-height"
+						[multiple]="true"
+						bindLabel="name"
+						appendTo="body"
+						formControlName="organizationContacts"
+						[placeholder]="'FORM.PLACEHOLDERS.CONTACTS' | translate"
+					>
+						<ng-option
+							*ngFor="let contact of organizationContacts"
+							[value]="contact.id"
+						>
+							{{ contact.name }}
+						</ng-option>
+					</ng-select>
+				</div>
 			</div>
 		</div>
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="contactsSelect" class="label label-with-select"
-					>{{ 'FORM.LABELS.CONTACTS_OPTIONAL' | translate }}
-					<button
-						nbButton
-						ghost
-						size="tiny"
-						(click)="selectAllOrganizationContacts()"
+	</ng-container>
+	<ng-container 
+		*ngIf="
+			invitationType === invitationTypeEnum.EMPLOYEE || 
+			invitationType === invitationTypeEnum.CANDIDATE
+	">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label
+						for="departmentSelection"
+						class="label label-with-select"
 					>
-						{{ 'BUTTONS.SELECT_ALL' | translate }}
-					</button>
-				</label>
-				<ng-select
-					id="contactsSelect"
-					class="adjust-height"
-					[hideSelected]="true"
-					multiple="true"
-					bindLabel="name"
-					appendTo="body"
-					formControlName="organizationContacts"
-					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
-				>
-					<ng-option
-						*ngFor="let contact of organizationContact"
-						value="{{ contact.id }}"
-						>{{ contact.name }}</ng-option
+						{{ 'FORM.LABELS.DEPARTMENTS_OPTIONAL' | translate }}
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							(click)="selectAllDepartments()"
+						>
+							{{ 'BUTTONS.SELECT_ALL' | translate }}
+						</button>
+					</label>
+					<ng-select
+						id="departmentSelection"
+						class="adjust-height"
+						[hideSelected]="true"
+						[multiple]="true"
+						bindLabel="name"
+						appendTo="body"
+						formControlName="departments"
+						[placeholder]="'FORM.PLACEHOLDERS.DEPARTMENTS' | translate"
 					>
-				</ng-select>
+						<ng-option
+							*ngFor="let department of organizationDepartments"
+							[value]="department.id"
+						>
+							{{ department.name }}
+						</ng-option>
+					</ng-select>
+				</div>
 			</div>
 		</div>
-	</div>
-	<div
-		class="row"
-		*ngIf="invitationType === invitationTypeEnum.EMPLOYEE || invitationType === invitationTypeEnum.CANDIDATE"
-	>
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="departmentsSelect" class="label label-with-select"
-					>{{ 'FORM.LABELS.DEPARTMENTS_OPTIONAL' | translate }}
-					<button
-						nbButton
-						ghost
-						size="tiny"
-						(click)="selectAllDepartments()"
-					>
-						{{ 'BUTTONS.SELECT_ALL' | translate }}
-					</button>
-				</label>
-				<ng-select
-					id="departmentsSelect"
-					class="adjust-height"
-					[hideSelected]="true"
-					multiple="true"
-					bindLabel="name"
-					appendTo="body"
-					formControlName="departments"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.DEPARTMENTS' | translate
-					}}"
-				>
-					<ng-option
-						*ngFor="let department of organizationDepartments"
-						value="{{ department.id }}"
-						>{{ department.name }}</ng-option
-					>
-				</ng-select>
+	</ng-container>
+	<ng-container *ngIf="invitationType === invitationTypeEnum.USER">
+		<ng-template [ngIf]="roles.length > 0">
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label
+							for="roleName"
+							class="label"
+						>
+							{{ 'FORM.LABELS.ROLE' | translate }}
+						</label>
+						<nb-select
+							id="roleName"
+							fullWidth
+							[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+							formControlName="roleName"
+							[status]="
+								isInvalidControl('roleName')
+									? 'danger'
+									: 'basic'
+							"
+						>
+							<nb-option
+								*ngFor="let role of roles"
+								[value]="role"
+							>
+								{{ 'USERS_PAGE.ROLE.' + role | translate }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
 			</div>
-		</div>
-	</div>
-	<div class="row" *ngIf="invitationType === invitationTypeEnum.USER">
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="startedWork" class="label">{{
-					'FORM.LABELS.ROLE' | translate
-				}}</label>
-				<nb-select
-					class="d-block"
-					fullWidth
-					placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
-					formControlName="roleName"
-					[ngClass]="{
-						'status-danger':
-							roleName.invalid &&
-							(roleName.dirty || roleName.touched),
-						'status-success':
-							roleName.valid &&
-							(roleName.dirty || roleName.touched)
-					}"
-				>
-					<nb-option
-						*ngFor="let role of allRoles"
-						value="{{ role }}"
-						>{{ 'USERS_PAGE.ROLE.' + role | translate }}</nb-option
-					>
-				</nb-select>
-			</div>
-		</div>
-	</div>
+		</ng-template>
+	</ng-container>
 </form>

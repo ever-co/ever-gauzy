@@ -21,15 +21,26 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 
 	public form: FormGroup = EditEmployeeNetworksComponent.buildForm(this.fb);
-	static buildForm(formBuilder: FormBuilder): FormGroup {
-		const form = formBuilder.group({
-			linkedInUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
-			facebookUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
-			instagramUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
-			twitterUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
-			githubUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
-			gitlabUrl: ['', [UrlPatternValidator.urlAbstractValidator]],
-			upworkUrl: ['', [UrlPatternValidator.urlAbstractValidator]]
+	static buildForm(fb: FormBuilder): FormGroup {
+		const form = fb.group({
+			linkedInUrl: [],
+			facebookUrl: [],
+			instagramUrl: [],
+			twitterUrl: [],
+			githubUrl: [],
+			gitlabUrl: [],
+			upworkUrl: [],
+			stackoverflowUrl: []
+		}, { 
+			validators: [
+				UrlPatternValidator.websiteUrlValidator('linkedInUrl'),
+				UrlPatternValidator.websiteUrlValidator('facebookUrl'),
+				UrlPatternValidator.websiteUrlValidator('instagramUrl'),
+				UrlPatternValidator.websiteUrlValidator('twitterUrl'),
+				UrlPatternValidator.websiteUrlValidator('githubUrl'),
+				UrlPatternValidator.websiteUrlValidator('gitlabUrl'),
+				UrlPatternValidator.websiteUrlValidator('upworkUrl')
+			] 
 		});
 		return form;
 	}
@@ -61,7 +72,16 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 		if (!employee) {
 			return;
 		}
-		const { linkedInUrl, facebookUrl, instagramUrl, twitterUrl, githubUrl, gitlabUrl, upworkUrl } = employee;
+		const {
+			linkedInUrl,
+			facebookUrl,
+			instagramUrl,
+			twitterUrl,
+			githubUrl,
+			gitlabUrl,
+			upworkUrl,
+			stackoverflowUrl
+		} = employee;
 		this.form.patchValue({
 			linkedInUrl,
 			facebookUrl,
@@ -69,7 +89,8 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 			twitterUrl,
 			githubUrl,
 			gitlabUrl,
-			upworkUrl
+			upworkUrl,
+			stackoverflowUrl
 		});
 	}
 

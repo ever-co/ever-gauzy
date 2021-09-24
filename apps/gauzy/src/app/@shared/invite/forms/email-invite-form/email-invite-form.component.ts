@@ -1,5 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
 	ICreateEmailInvitesOutput,
 	InvitationTypeEnum,
@@ -7,143 +8,163 @@ import {
 	RolesEnum,
 	IOrganizationContact,
 	IOrganizationDepartment,
-	IOrganization
+	IOrganization,
+	IUser
 } from '@gauzy/contracts';
-import { InviteService } from '../../../../@core/services/invite.service';
-import { RoleService } from '../../../../@core/services/role.service';
-import { first } from 'rxjs/operators';
-import { Router } from '@angular/router';
-import { Store } from '../../../../@core/services/store.service';
+import { filter, first, tap } from 'rxjs/operators';
+import { NbTagComponent, NbTagInputAddEvent, NbTagInputDirective } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { InviteService, RoleService, Store } from './../../../../@core/services';
+import { EmailValidator } from '../../../../@core/validators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-email-invite-form',
 	templateUrl: 'email-invite-form.component.html',
 	styleUrls: ['email-invite-form.component.scss']
 })
-export class EmailInviteFormComponent implements OnInit {
-	
-	@Input() public organizationProjects: IOrganizationProject[];
-
-	@Input() public organizationContact: IOrganizationContact[];
-
-	@Input() public organizationDepartments: IOrganizationDepartment[];
-
-	@Input() public selectedOrganization: IOrganization;
-
-	@Input() public currentUserId: string;
-
-	@Input() public isSuperAdmin: boolean;
-
-	@Input()
-	invitationType: InvitationTypeEnum;
+export class EmailInviteFormComponent 
+	implements OnInit, OnDestroy {
 
 	invitationTypeEnum = InvitationTypeEnum;
+	roles: string[] = [];
+	
+	@Input() public organizationProjects: IOrganizationProject[];
+	@Input() public organizationContacts: IOrganizationContact[];
+	@Input() public organizationDepartments: IOrganizationDepartment[];
 
-	allRoles: string[] = Object.values(RolesEnum).filter(
-		(e) => e !== RolesEnum.EMPLOYEE
-	);
-
-	emailAddresses: any[] = [];
-	alertText = '';
-
-	//Fields for the form
-	form: any;
-	emails: any;
-	projects: any;
-	organizationContacts: any;
-	departments: any;
-	roleName: any;
-	startedWorkOn: string;
-	appliedDate: string;
-
-	constructor(
-		private readonly fb: FormBuilder,
-		private readonly inviteService: InviteService,
-		private readonly roleService: RoleService,
-		private router: Router,
-		private store: Store
-	) {}
-
-	ngOnInit(): void {
-		this.allRoles = this.allRoles.filter((role) =>
-			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
-		);
-		this.loadFormData();
+	/*
+	* Getter & Setter for check Super Admin
+	*/
+	_isSuperAdmin: boolean;
+	get isSuperAdmin(): boolean {
+		return this._isSuperAdmin;
+	}
+	@Input() set isSuperAdmin(value: boolean) {
+		this._isSuperAdmin = value;
 	}
 
-	emailListValidator(
-		control: AbstractControl
-	): { [key: string]: boolean } | null {
-		const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
-		const invalid = (control.value || []).find((tag) => {
-			return !emailPattern.test(tag.emailAddress || '');
-		});
-		return invalid ? { emails: invalid } : null;
+	/*
+	* Getter & Setter for InvitationTypeEnum
+	*/
+	_invitationType: InvitationTypeEnum;
+	get invitationType(): InvitationTypeEnum {
+		return this._invitationType;
+	}
+	@Input() set invitationType(value: InvitationTypeEnum) {
+		this._invitationType = value;
+		this.setFormValidators();
 	}
 
-	isEmployeeInvitation = () => {
-		return this.invitationType === InvitationTypeEnum.EMPLOYEE;
-	};
-
-	isCandidateInvitation = () => {
-		return this.invitationType === InvitationTypeEnum.CANDIDATE;
-	};
-
-	addTagFn(emailAddress: string) {
-		return { emailAddress: emailAddress, tag: true };
-	}
-
-	loadFormData = () => {
-		this.form = this.fb.group({
-			emails: [
-				'',
-				Validators.compose([
-					Validators.required,
-					this.emailListValidator
-				])
-			],
+	/**
+	 * Build email invite form group
+	 * 
+	 */
+	public form: FormGroup = EmailInviteFormComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			emails: ['', Validators.required],
 			projects: [],
 			startedWorkOn: [],
 			appliedDate: [],
 			departments: [],
 			organizationContacts: [],
-			roleName: [
-				'',
-				this.isEmployeeInvitation() || this.isCandidateInvitation()
-					? null
-					: Validators.required
-			]
+			roleName: []
+		}, {
+			validators: [
+				EmailValidator.pattern('emails')
+			] 
 		});
+	}
 
-		this.emails = this.form.get('emails');
-		this.projects = this.form.get('projects');
-		this.organizationContacts = this.form.get('organizationContacts');
-		this.departments = this.form.get('departments');
-		this.roleName = this.form.get('roleName');
-	};
+	@ViewChild(NbTagInputDirective, { read: ElementRef }) 
+	tagInput: ElementRef<HTMLInputElement>;
 
+	user: IUser;
+	organization: IOrganization;
+
+	emails: Set<string> = new Set([]);
+
+	constructor(
+		private readonly fb: FormBuilder,
+		private readonly inviteService: InviteService,
+		private readonly roleService: RoleService,
+		private readonly router: Router,
+		private readonly store: Store
+	) {}
+
+	ngOnInit(): void {
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				tap(() => this.renderRoles()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	renderRoles() {
+		this.roles = Object.values(RolesEnum).filter(
+			(role) => role !== RolesEnum.EMPLOYEE
+		).filter((role) =>
+			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
+		);
+	}
+
+	ngOnDestroy() {
+		this.emails.clear();
+	}
+
+	isEmployeeInvitation() {
+		return this.invitationType === InvitationTypeEnum.EMPLOYEE;
+	}
+
+	isCandidateInvitation() {
+		return this.invitationType === InvitationTypeEnum.CANDIDATE;
+	}
+
+	/**
+	 * SELECT all organization projects
+	 */
 	selectAllProjects() {
-		this.projects.setValue(
-			this.organizationProjects
-				.filter((project) => !!project.id)
-				.map((project) => project.id)
-		);
+		const organizationProjects = this.organizationProjects
+			.filter((project) => !!project.id)
+			.map((project) => project.id);
+
+		this.form.get('projects').setValue(organizationProjects);
+		this.form.get('projects').updateValueAndValidity();
 	}
 
+	/**
+	 * SELECT all organization departments
+	 */
 	selectAllDepartments() {
-		this.departments.setValue(
-			this.organizationDepartments
-				.filter((department) => !!department.id)
-				.map((department) => department.id)
-		);
+		const organizationDepartments = this.organizationDepartments
+			.filter((department) => !!department.id)
+			.map((department) => department.id)
+
+		this.form.get('departments').setValue(organizationDepartments);
+		this.form.get('departments').updateValueAndValidity();
 	}
 
+	/**
+	 * SELECT all organization contacts
+	 */
 	selectAllOrganizationContacts() {
-		this.organizationContacts.setValue(
-			this.organizationContact
-				.filter((organizationContact) => !!organizationContact.id)
-				.map((organizationContact) => organizationContact.id)
-		);
+		const organizationContacts = this.organizationContacts
+			.filter((organizationContact) => !!organizationContact.id)
+			.map((organizationContact) => organizationContact.id)
+
+		this.form.get('organizationContacts').setValue(organizationContacts);
+		this.form.get('organizationContacts').updateValueAndValidity();
 	}
 
 	getRoleNameFromForm = () => {
@@ -153,36 +174,132 @@ export class EmailInviteFormComponent implements OnInit {
 		if (this.isCandidateInvitation()) {
 			return RolesEnum.CANDIDATE;
 		}
-		return this.roleName.value || RolesEnum.VIEWER;
+		return this.form.get('roleName').value || RolesEnum.VIEWER;
 	};
 
 	async saveInvites(): Promise<ICreateEmailInvitesOutput> {
-		if (this.form.valid) {
-			const { tenantId } = this.store.user;
-			const role = await this.roleService
-				.getRoleByName({
-					name: this.getRoleNameFromForm(),
-					tenantId
-				})
-				.pipe(first())
-				.toPromise();
-			
-			const { startedWorkOn, appliedDate } = this.form.value;
-			return this.inviteService.createWithEmails({
-				emailIds: this.emails.value.map((email: any) => email.emailAddress),
-				projectIds: this.projects.value,
-				departmentIds: this.departments.value,
-				organizationContactIds: this.organizationContacts.value,
-				roleId: role.id,
-				organizationId: this.selectedOrganization.id,
-				tenantId,
-				invitedById: this.currentUserId,
-				inviteType: this.router.url,
-				startedWorkOn: startedWorkOn ? new Date(startedWorkOn) : null,
-				appliedDate: appliedDate ? new Date(appliedDate) : null
-			});
+		if (this.form.invalid) {
+			return;
 		}
 
-		return;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const role = await this.roleService
+			.getRoleByName({
+				name: this.getRoleNameFromForm(),
+				tenantId
+			})
+			.pipe(first())
+			.toPromise();
+		
+		const {
+			startedWorkOn,
+			appliedDate,
+			emails,
+			projects = [],
+			departments = [],
+			organizationContacts = []
+		} = this.form.value;
+
+		return this.inviteService.createWithEmails({
+			emailIds: emails,
+			projectIds: projects,
+			departmentIds: departments,
+			organizationContactIds: organizationContacts,
+			roleId: role.id,
+			organizationId,
+			tenantId,
+			invitedById: this.user.id,
+			inviteType: this.router.url,
+			startedWorkOn: startedWorkOn ? new Date(startedWorkOn) : null,
+			appliedDate: appliedDate ? new Date(appliedDate) : null
+		});
+	}
+
+	/**
+	 * Remove email from emails form control
+	 * 
+	 * @param tagToRemove 
+	 */
+	onEmailRemove(tagToRemove: NbTagComponent): void {
+		this.emails.delete(tagToRemove.text);
+		this.form.patchValue({
+			emails: [
+				...this.emails.entries()
+			].map(([email]) => email)
+		});
+	}
+	
+	/**
+	 * Add emails to form emails control
+	 * 
+	 * @param param0 
+	 */
+	onEmailAdd({ value, input }: NbTagInputAddEvent): void {
+		if (value) {
+			this.emails.add(value)
+		}
+		input.nativeElement.value = '';
+
+		this.form.patchValue({
+			emails: [
+				...this.emails.entries()
+			].map(([email]) => email)
+		});
+	}
+
+	/**
+	 * Email focus out event fire
+	 * 
+	 * @param event 
+	 */
+	onFocusOut(event: any) {
+		const value = event.target.value;
+		this.onEmailAdd({
+			value,
+			input: this.tagInput
+		});
+	}
+
+	/**
+	 * Reset emails form control
+	 * 
+	 */
+	onResetEmails() {
+		[...this.emails.entries()].forEach(([email]) => {
+			this.emails.delete(email);
+		});
+
+		this.form.patchValue({
+			emails: [
+				...this.emails.entries()
+			].map(([email]) => email)
+		});
+	}
+
+	/**
+	 * Form invalid control validate
+	 * 
+	 * @param control 
+	 * @returns 
+	 */
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && 
+			this.form.get(control).invalid;
+	}
+
+	setFormValidators() {
+		if (this.isEmployeeInvitation() || this.isCandidateInvitation()) {
+			this.form.get('roleName').clearValidators();
+		} else {
+			this.form.get('roleName').setValidators([
+				Validators.required
+			]);
+		}
+		this.form.updateValueAndValidity();
 	}
 }

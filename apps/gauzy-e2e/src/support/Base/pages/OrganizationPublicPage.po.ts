@@ -150,6 +150,14 @@ export const selectClientFocusDropdownOptions = (text: string) => {
 	clickByText(OrganizationPublicPage.clientFocusDropdownOptionsCss, text);
 };
 
+export const descriptionTabVisible = () => {
+	verifyElementIsVisible(OrganizationPublicPage.awardsTabCss);
+};
+
+export const clickDescriptionTab = () => {
+	clickByText(OrganizationPublicPage.awardsTabCss, 'Description');
+};
+
 export const shortDescriptionVisible = () => {
 	verifyElementIsVisible(OrganizationPublicPage.shortDescriptionInputCss);
 };

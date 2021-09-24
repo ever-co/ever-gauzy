@@ -86,7 +86,9 @@ Feature: Organization public page test
     And User can see client focus dropdown
     When User clicks on client focus dropdown
     Then User can select client focus from dropdown options
-    And User can see short description input field
+    And User can see description tab
+    When User clicks on description tab
+    Then User can see short description input field
     And User enters short description value
     And User can see awards tab
     When User clicks on awards tab
