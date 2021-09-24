@@ -1,6 +1,6 @@
 export const ManageCandidatesInvitesPage = {
 	inviteButtonCss: 'div.mb-3 > button[status="primary"]',
-	emailInputCss: '#emailsSelect',
+	emailInputCss: '#emails',
 	dateInputCss: 'input[formcontrolname="appliedDate"]',
 	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
