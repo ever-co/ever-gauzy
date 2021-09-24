@@ -39,16 +39,12 @@ import { MatchValidator } from '../../../@core/validators';
 export class EditProfileFormComponent 
 	implements OnInit, OnDestroy {
 
-	showPassword: boolean = false;
-	showConfirmPassword: boolean = false;
-
 	hoverState: boolean;
 	loading: boolean;
 
 	role: IRole;
 	user: IUser;
 
-	accountInfo: IUserUpdateInput;
 	user$: Subject<any> = new Subject();
 
 	/*
