@@ -38,6 +38,7 @@ export const nameInputVisible = () => {
 };
 
 export const enterNameInputData = (data) => {
+	clearField(ApprovalRequestPage.nameInputCss);
 	enterInput(ApprovalRequestPage.nameInputCss, data);
 };
 
@@ -153,4 +154,20 @@ export const verifyElementIsDeleted = () => {
 
 export const clickSaveButtonWithForce = () =>{
 	clickButtonWithForce(ApprovalRequestPage.saveButtonCss);
+};
+
+export const tagsDropdownVisible = () => {
+	verifyElementIsVisible(ApprovalRequestPage.addTagsDropdownCss);
+};
+
+export const clickTagsDropdwon = () => {
+	clickButton(ApprovalRequestPage.addTagsDropdownCss);
+};
+
+export const selectTagFromDropdown = (index) => {
+	clickButtonByIndex(ApprovalRequestPage.tagsDropdownOption, index);
+};
+
+export const clickCardBody = () => {
+	clickButton(ApprovalRequestPage.nameInputCss);
 };

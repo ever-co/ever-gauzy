@@ -17,5 +17,8 @@ export const ApprovalRequestPage = {
 	backButtonCss: 'g[data-name="arrow-back"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyApprovalPolicyCss: 'div.ng-star-inserted',
-	verifyRequestCss: 'div.d-block'
+	verifyRequestCss: 'div.d-block',
+	addTagsDropdownCss: '#addTags',
+	tagsDropdownOption: 'div.ng-option',
+	headerCss: 'nb-dialog-container > nb-card.main'
 };
