@@ -10,6 +10,7 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import { GoalCustomUnitModule } from '../goal-custom-unit/goal-custom-unit.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	declarations: [GoalTemplatesComponent],
@@ -21,7 +22,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbSelectModule,
 		NbButtonModule,
 		GoalCustomUnitModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	exports: [GoalTemplatesComponent]
 })

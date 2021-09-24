@@ -22,6 +22,7 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -44,7 +45,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbSpinnerModule,
 		AceEditorModule,
 		LanguageSelectorModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		SharedModule
 	],
 	providers: [EmailTemplateService],
 	declarations: [EmailTemplatesComponent]

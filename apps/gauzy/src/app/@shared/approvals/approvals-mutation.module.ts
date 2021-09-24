@@ -18,6 +18,7 @@ import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/emp
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { TranslateModule } from '../translate/translate.module';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	imports: [
@@ -34,7 +35,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NgSelectModule,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	declarations: [RequestApprovalMutationComponent],
 	providers: [RequestApprovalService, ApprovalPolicyService, Store]

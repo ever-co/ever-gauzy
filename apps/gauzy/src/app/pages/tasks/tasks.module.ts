@@ -45,6 +45,7 @@ import { TableFiltersModule } from '../../@shared/table-filters/table-filters.mo
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 import { TaskStatusSelectModule } from '../../@shared/tasks/task-status-select/task-status-select.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	declarations: [
@@ -95,6 +96,7 @@ import { TaskStatusSelectModule } from '../../@shared/tasks/task-status-select/t
 		PaginationModule,
 		ProjectSelectModule,
 		TaskStatusSelectModule,
+		SharedModule
 	]
 })
 export class TasksModule {}

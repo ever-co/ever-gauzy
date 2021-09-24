@@ -24,6 +24,7 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { LanguageSelectorModule } from '../../language/language-selector';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -51,6 +52,7 @@ import { LanguageSelectorModule } from '../../language/language-selector';
 		TagsColorInputModule,
 		CurrencyModule,
 		LanguageSelectorModule,
+		SharedModule
 	],
 	declarations: [PublicPageEmployeeMutationComponent],
 	providers: []

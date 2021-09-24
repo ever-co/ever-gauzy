@@ -3,7 +3,7 @@
 		{{ 'GOALS_PAGE.SETTINGS.ADD_KPI' | translate }}
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="kpiForm">
+		<form [formGroup]="kpiForm" autocomplete-off>
 			<div
 				class="row"
 				(mouseenter)="helper = 'kpi-title'"

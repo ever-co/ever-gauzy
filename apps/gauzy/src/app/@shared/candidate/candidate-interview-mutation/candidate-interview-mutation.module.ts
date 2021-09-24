@@ -27,6 +27,7 @@ import { CandidateEmailComponent } from './candidate-notification-form/candidate
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -50,7 +51,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		EmployeeMultiSelectModule,
 		CandidateSelectModule,
 		CandidateCalendarInfoModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	exports: [
 		CandidateInterviewMutationComponent,

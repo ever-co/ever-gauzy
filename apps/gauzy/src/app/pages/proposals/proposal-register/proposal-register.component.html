@@ -8,7 +8,7 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" #proposalForm="ngForm" (ngSubmit)="registerProposal()">
+		<form [formGroup]="form" #proposalForm="ngForm" (ngSubmit)="registerProposal()" autocomplete-off>
 			<div class="row">
 				<div class="col-sm-3">
 					<div class="form-group">

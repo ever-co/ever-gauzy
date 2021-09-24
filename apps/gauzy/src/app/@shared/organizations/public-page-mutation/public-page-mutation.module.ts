@@ -25,6 +25,7 @@ import { SkillsService } from '../../../@core/services/skills.service';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -49,7 +50,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbToggleModule,
 		NbTabsetModule,
 		CKEditorModule,
-		NbTagModule
+		NbTagModule,
+		SharedModule
 	],
 	declarations: [PublicPageMutationComponent],
 	providers: [SkillsService, LanguagesService]

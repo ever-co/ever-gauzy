@@ -13,6 +13,7 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GoalLevelSelectModule } from '../goal-level-select/goal-level-select.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	declarations: [GoalTemplateSelectComponent],
@@ -29,7 +30,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbIconModule,
 		NbStepperModule,
 		GoalLevelSelectModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	exports: [GoalTemplateSelectComponent]
 })

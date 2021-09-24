@@ -10,7 +10,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" *ngIf="form" autocomplete-off>
 			<!-- group title -->
 			<div class="row option-row">
 				<div class="col-md-3 col-sm-12" *ngFor="let ln of languages">

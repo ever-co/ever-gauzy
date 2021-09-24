@@ -15,6 +15,7 @@ import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.comp
 import { Store } from '../../@core/services/store.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '../translate/translate.module';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	imports: [
@@ -29,7 +30,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	declarations: [ApprovalPolicyMutationComponent],
 	providers: [ApprovalPolicyService, Store]

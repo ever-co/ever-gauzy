@@ -11,7 +11,7 @@
 		<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="card-body">
-		<form [formGroup]="form" (ngSubmit)="submit()" #knowledgeBaseForm="ngForm">
+		<form [formGroup]="form" (ngSubmit)="submit()" #knowledgeBaseForm="ngForm" autocomplete-off>
 			<div class="row">
 				<div class="col-12">
 					<div class="form-group">

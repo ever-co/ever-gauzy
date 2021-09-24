@@ -41,6 +41,7 @@
 									[formGroup]="form"
 									*ngIf="form"
 									class="mb-4"
+									autocomplete-off
 								>
 									<div class="form-group">
 										<div class="form-group mb-3">
@@ -56,7 +57,7 @@
 												size="medium"
 												template="ng-select"
 												formControlName="languageCode"
-												(selectedLanguageEvent)="onLangChange($event)"
+												(selectedLanguageEv	ent)="onLangChange($event)"
 											>
 											</ngx-language-selector>
 										</div>

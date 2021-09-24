@@ -8,7 +8,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" *ngIf="form" autocomplete-off>
 			<div class="row">
 				<div class="form-group col-12">
 					<label for="emailsSelect" class="label">{{

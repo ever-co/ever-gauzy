@@ -60,7 +60,7 @@
 
 		<div *ngIf="showAddCard" class="add-card">
 			<div class="feedbacks-card-wrap">
-				<form class="form" [formGroup]="form" *ngIf="form">
+				<form class="form" [formGroup]="form" *ngIf="form" autocomplete-off>
 					<div class="w-100" formArrayName="feedbacks">
 						<div
 							*ngFor="

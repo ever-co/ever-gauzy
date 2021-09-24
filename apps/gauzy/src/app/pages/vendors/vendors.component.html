@@ -21,7 +21,7 @@
 			</ng-container>
 			<ng-template #editableTemplate>
 				<div>
-					<form [formGroup]="form" *ngIf="form" class="form">
+					<form [formGroup]="form" *ngIf="form" class="form" autocomplete-off>
 						<div class="row">
 							<div class="col-sm-12 col-md-4">
 								<label class="label" for="name">{{

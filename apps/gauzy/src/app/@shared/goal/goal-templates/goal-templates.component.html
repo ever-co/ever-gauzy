@@ -3,7 +3,7 @@
 		'GOALS_PAGE.GOAL_TEMPLATES' | translate
 	}}</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="goalTemplateForm">
+		<form [formGroup]="goalTemplateForm" autocomplete-off>
 			<label class="label" for="existing-goal">
 				{{ 'FORM.LABELS.SELECT_EXISTING_OBJECTIVE' | translate }}
 			</label>

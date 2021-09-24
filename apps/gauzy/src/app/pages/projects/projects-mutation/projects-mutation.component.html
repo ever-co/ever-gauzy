@@ -6,7 +6,7 @@
 		) | translate
 	}}</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" *ngIf="form" autocomplete-off>
 			<nb-tabset>
 				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate">
 					<div class="row">

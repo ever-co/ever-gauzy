@@ -21,7 +21,7 @@
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 			<div *ngIf="showAddCard" class="row m-0">
-				<form class="col-3 pl-0" [formGroup]="form" *ngIf="form">
+				<form class="col-3 pl-0" [formGroup]="form" *ngIf="form" autocomplete-off>
 					<div formArrayName="documents">
 						<div
 							*ngFor="

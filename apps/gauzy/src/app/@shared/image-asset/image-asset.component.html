@@ -15,7 +15,7 @@
 				/>
 			</div>
 			<div class="col md-8 col-sm-12">
-				<form [formGroup]="form" *ngIf="form">
+				<form [formGroup]="form" *ngIf="form" autocomplete-off>
 					<div class="form-group">
 						<label class="label" for="nameInput">
 							{{ 'INVENTORY_PAGE.NAME' | translate }}

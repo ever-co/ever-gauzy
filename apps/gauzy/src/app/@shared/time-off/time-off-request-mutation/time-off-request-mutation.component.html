@@ -15,7 +15,7 @@
 		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" *ngIf="form" autocomplete-off>
 			<div class="row">
 				<div class="form-group col-6" *ngIf="isHoliday">
 					<label class="label">{{

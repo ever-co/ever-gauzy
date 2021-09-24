@@ -17,7 +17,7 @@
 			<nb-step 
 				[label]="'INVENTORY_PAGE.MAIN' | translate"
 			>
-				<form [formGroup]="form">
+				<form [formGroup]="form" autocomplete-off>
 					<div class="row">
 						<div class="col-md-3 col-sm-12 image-container">
 							<ng-container *ngTemplateOutlet="warehouseImage"></ng-container>

@@ -16,6 +16,7 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 import { CurrencyModule } from '../currency/currency.module';
 import { TranslateModule } from '../translate/translate.module';
 import { ImageAssetService } from '../../@core';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	imports: [
@@ -30,7 +31,8 @@ import { ImageAssetService } from '../../@core';
 		NbInputModule,
 		NbSelectModule,
 		TranslateModule,
-		CurrencyModule
+		CurrencyModule,
+		SharedModule
 	],
 	declarations: [EquipmentMutationComponent],
 	providers: [EquipmentService, ImageAssetService, Store]

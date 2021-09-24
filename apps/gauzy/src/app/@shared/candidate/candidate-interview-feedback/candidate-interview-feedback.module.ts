@@ -17,6 +17,7 @@ import { CandidateTechnologiesService } from '../../../@core/services/candidate-
 import { StarRatingOutputModule } from '../../star-rating/star-rating-output/star-rating-output.module';
 import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -33,7 +34,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		StarRatingOutputModule,
 		CandidateSelectModule,
 		NbAccordionModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],

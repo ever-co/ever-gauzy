@@ -10,6 +10,7 @@ import {
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
+import { SharedModule } from '../../@shared/shared.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { AccountingTemplatesComponent } from './accounting-templates.component';
@@ -28,6 +29,7 @@ import { AccountingTemplatesComponent } from './accounting-templates.component';
 		AceEditorModule,
 		HeaderTitleModule,
 		LanguageSelectorModule,
+		SharedModule
 	],
 	providers: [],
 	declarations: [AccountingTemplatesComponent]

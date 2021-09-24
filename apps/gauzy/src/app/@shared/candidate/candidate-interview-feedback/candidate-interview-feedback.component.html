@@ -6,7 +6,7 @@
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<form class="form" [formGroup]="form" *ngIf="form">
+		<form class="form" [formGroup]="form" *ngIf="form" autocomplete-off>
 			<ga-candidate-select
 				class="select"
 				[allCandidates]="currentInterview.employees"

@@ -11,7 +11,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" *ngIf="form" autocomplete-off>
 			<nb-tabset class="tab_sections">
 				<nb-tab
 					tabTitle="{{ 'POP_UPS.MAIN' | translate }}"

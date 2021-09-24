@@ -5,6 +5,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NbBadgeModule } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -13,7 +14,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbBadgeModule,
 		FormsModule,
 		ReactiveFormsModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	exports: [SkillsInputComponent],
 	declarations: [SkillsInputComponent]

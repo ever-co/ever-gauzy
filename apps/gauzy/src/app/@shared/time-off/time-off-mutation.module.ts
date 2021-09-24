@@ -17,6 +17,7 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 import { TimeOffRequestMutationComponent } from './time-off-request-mutation/time-off-request-mutation.component';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../translate/translate.module';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	imports: [
@@ -34,7 +35,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NbTooltipModule,
 		EmployeeSelectorsModule,
 		FileUploaderModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	declarations: [
 		TimeOffSettingsMutationComponent,

@@ -19,6 +19,7 @@ import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -38,7 +39,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbSpinnerModule,
 		EmployeeSelectorsModule,
 		TranslateModule,
-		CurrencyModule
+		CurrencyModule,
+		SharedModule
 	],
 	exports: [RecurringExpenseMutationComponent],
 	declarations: [RecurringExpenseMutationComponent],

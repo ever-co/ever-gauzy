@@ -23,7 +23,7 @@
 		></ga-layout-selector>
 
 		<div *ngIf="showAddCard" class="row m-0 w-100">
-			<form class="col-8" [formGroup]="form" *ngIf="form">
+			<form class="col-8" [formGroup]="form" *ngIf="form" autocomplete-off>
 				<div formArrayName="skills">
 					<div *ngFor="let skill of skills?.controls; let i = index">
 						<div [formGroupName]="i">

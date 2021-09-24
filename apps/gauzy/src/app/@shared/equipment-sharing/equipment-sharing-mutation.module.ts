@@ -18,6 +18,7 @@ import { EquipmentService } from '../../@core/services/equipment.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 import { TranslateModule } from '../translate/translate.module';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	imports: [
@@ -34,7 +35,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NbDatepickerModule,
 		NgSelectModule,
 		NbRadioModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	declarations: [EquipmentSharingMutationComponent],
 	providers: [

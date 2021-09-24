@@ -31,6 +31,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { DealsService, PipelinesService } from '../../@core/services';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	declarations: [
@@ -74,7 +75,8 @@ import { DealsService, PipelinesService } from '../../@core/services';
 		BackNavigationModule,
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
-		PaginationModule
+		PaginationModule,
+		SharedModule
 	]
 })
 export class PipelinesModule {}

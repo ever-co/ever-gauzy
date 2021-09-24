@@ -19,6 +19,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';
 import { IncomeService, OrganizationsService } from '../../../@core/services';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -38,7 +39,8 @@ import { IncomeService, OrganizationsService } from '../../../@core/services';
 		EmployeeSelectorsModule,
 		TranslateModule,
 		CurrencyModule,
-		ContactSelectModule
+		ContactSelectModule,
+		SharedModule
 	],
 	declarations: [IncomeMutationComponent],
 	providers: [IncomeService, OrganizationsService]

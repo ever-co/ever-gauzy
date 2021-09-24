@@ -14,6 +14,7 @@ import { CandidateStore } from '../../../@core/services/candidate-store.service'
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +29,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		ThemeModule,
 		NbActionsModule,
 		TranslateModule,
-		CurrencyModule
+		CurrencyModule,
+		SharedModule
 	],
 	exports: [EmployeeRatesComponent],
 	declarations: [EmployeeRatesComponent],

@@ -11,7 +11,7 @@
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</div>
-		<form #form="ngForm">
+		<form #form="ngForm" autocomplete-off>
 			<div class="timer-container form-group pr-4">
 				<ng-template 
 					[ngIf]="(trackType$ | async) == timeLogType.TRACKED"

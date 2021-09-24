@@ -1,4 +1,4 @@
-<form [formGroup]="form" *ngIf="form">
+<form [formGroup]="form" *ngIf="form" autocomplete-off>
 	<label class="label" for="addSkills">
 		{{ 'SKILLS_PAGE.HEADER' | translate }}
 	</label>
@@ -39,7 +39,7 @@
 	</ng-select>
 </form>
 
-<form *ngIf="!form">
+<form *ngIf="!form" autocomplete-off>
 	<label class="label" for="addSkills">
 		{{ 'SKILLS_PAGE.HEADER' | translate }}
 	</label>

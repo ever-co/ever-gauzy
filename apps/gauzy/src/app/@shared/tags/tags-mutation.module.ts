@@ -14,6 +14,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { TagsMutationComponent } from './tags-mutation.component';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { TranslateModule } from '../translate/translate.module';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +29,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NbInputModule,
 		NbSelectModule,
 		ColorPickerModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	declarations: [TagsMutationComponent],
 	providers: [TagsService]

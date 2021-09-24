@@ -4,7 +4,7 @@
 		<nb-icon class="ml-auto mt-1 close" (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="custom-scroll">
-		<form class="dialog-from" #formDirective="ngForm" (ngSubmit)="submit()" [formGroup]="form">
+		<form class="dialog-from" #formDirective="ngForm" (ngSubmit)="submit()" [formGroup]="form" autocomplete-off>
 			<div class="row">
 				<div class="col-12">
 					<label>{{ data?.label }}</label>

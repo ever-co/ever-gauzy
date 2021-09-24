@@ -15,7 +15,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" *ngIf="form" autocomplete-off>
 			<div class="row" *ngIf="isAdd">
 				<div class="col-sm-12 mb-3">
 					<ga-employee-selector

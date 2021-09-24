@@ -98,7 +98,7 @@
 			class="criterions-list card my-3 p-4"
 			*ngFor="let criterion of criterions; let index = index"
 		>
-			<form #form (ngSubmit)="saveCriterion(criterion)">
+			<form #form (ngSubmit)="saveCriterion(criterion)" autocomplete-off>
 				<div class="row">
 					<div class="col-auto">
 						<h6>{{ index + 1 }}</h6>

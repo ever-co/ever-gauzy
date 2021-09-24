@@ -23,6 +23,7 @@ import { ProductOptionGroupTranslationsComponent } from './product-option-group-
 import { LanguageSelectorModule } from '../language/language-selector';
 import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	declarations: [
@@ -41,7 +42,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		ImageUploaderModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NgSelectModule
+		NgSelectModule,
+		SharedModule
 	],
 	providers: [
 		ProductTypeService,

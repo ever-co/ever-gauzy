@@ -21,6 +21,7 @@ import {
 	NbFormFieldModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from '../shared.module';
 
 const directives = [AlertDirective, ConfirmDirective, PromptDirective];
 
@@ -41,7 +42,8 @@ const components = [AlertComponent, ConfirmComponent, PromptComponent];
 		NbCardModule,
 		NbIconModule,
 		TranslateModule,
-		NbFormFieldModule
+		NbFormFieldModule,
+		SharedModule
 	],
 	declarations: [...components, ...directives],
 	exports: [...directives],
