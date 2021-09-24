@@ -1,4 +1,5 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import { retrieveNameFromEmail } from "@gauzy/common";
 import { Employee } from "./employee.entity";
 import { generateSlug, getUserDummyImage } from "./../core/utils";
 
@@ -34,8 +35,24 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
                 if (!entity.user.imageUrl) {
                     entity.user.imageUrl = getUserDummyImage(entity.user)
                 }
-                entity.profile_link = generateSlug(`${entity.user.firstName} ${entity.user.lastName}`);
+                this.createSlug(entity);
             }
+        }
+    }
+
+    /**
+     * Generate employee public profile slug
+     */
+    createSlug(entity: Employee) {
+        if (entity.user.firstName || entity.user.lastName) { // Use first & last name to create slug
+            const { firstName, lastName } = entity.user;
+            entity.profile_link = generateSlug(`${firstName} ${lastName}`);
+        } else if (entity.user.username) { // Use username to create slug if first & last name not found
+            const { username } = entity.user;
+            entity.profile_link = generateSlug(`${username}`);
+        } else { // Use email to create slug if nothing found
+            const { email } = entity.user;
+            entity.profile_link = generateSlug(`${retrieveNameFromEmail(email)}`);
         }
     }
 }

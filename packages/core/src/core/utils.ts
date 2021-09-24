@@ -4,6 +4,7 @@ import * as moment from 'moment';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import slugify from 'slugify';
 import { getConfig } from '@gauzy/config';
 
 namespace Utils {
@@ -188,6 +189,11 @@ export function getDateRangeFormat(
 	};
 }
 
-export function generateSlug(name: string) {
-	return name.trim().replace(/[^A-Z0-9]+/gi, '-').toLowerCase();
+export function generateSlug(string: string) {
+	return slugify(string, {
+		replacement: '-', // replace spaces with replacement character, defaults to `-`
+		remove: /[*+~()'"!:@]/g, // remove characters that match regex, defaults to `undefined`
+		lower: true, // convert to lower case, defaults to `false`
+		trim: true // trim leading and trailing replacement chars, defaults to `true`
+	});
 }
