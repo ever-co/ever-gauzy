@@ -1,9 +1,9 @@
 export const ManageEmployeesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	inviteButtonCss: 'div.mb-3 > button[status="primary"]',
-	emailsInputCss: '#emailsSelect',
+	emailsInputCss: '#emails',
 	dateInputCss: '[formcontrolname="startedWorkOn"]',
-	selectProjectDropdownCss: '#projectsSelect',
+	selectProjectDropdownCss: '#projectSelection',
 	selectProjectDropdownOptionCss: 'div.ng-option > span.ng-option-label',
 	sendInviteButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	addEmployeeButtonCss: 'div.mb-3 > button[status="success"]',
