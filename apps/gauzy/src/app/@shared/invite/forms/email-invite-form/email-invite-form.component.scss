@@ -62,4 +62,7 @@
 			line-height: initial;
 		}
 	}
+	nb-tag-list nb-tag::ng-deep {
+		text-transform: initial;
+	}
 }
