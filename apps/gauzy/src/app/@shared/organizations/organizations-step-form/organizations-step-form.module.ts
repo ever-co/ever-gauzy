@@ -25,6 +25,7 @@ import { CountryModule } from '../../country/country.module';
 import { LocationFormModule } from '../../forms/location';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { SharedModule } from '../../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -50,7 +51,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		CurrencyModule,
 		CountryModule,
 		LocationFormModule,
-		LeafletMapModule
+		LeafletMapModule,
+		SharedModule
 	],
 	declarations: [OrganizationsStepFormComponent],
 	providers: [OrganizationDepartmentsService],

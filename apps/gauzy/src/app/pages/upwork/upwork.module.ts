@@ -28,6 +28,7 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 import { ReportsComponent } from './components/reports/reports.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	declarations: [
@@ -60,7 +61,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbActionsModule,
 		NbContextMenuModule,
 		BackNavigationModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	]
 })
 export class UpworkModule {}

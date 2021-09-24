@@ -25,6 +25,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	declarations: [
@@ -54,7 +55,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbDatepickerModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	]
 })
 export class HubstaffModule {}

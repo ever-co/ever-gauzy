@@ -8,6 +8,7 @@
 			<form
 				[formGroup]="upworkConfigForm"
 				(ngSubmit)="authorizeUpwork(upworkConfigForm.value)"
+				autocomplete-off
 			>
 				<div class="form-group">
 					<label for="consumerKey" class="label">{{

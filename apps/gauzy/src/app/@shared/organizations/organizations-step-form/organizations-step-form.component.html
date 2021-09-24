@@ -76,6 +76,7 @@
 						[formGroup]="orgMainForm"
 						(ngSubmit)="this.orgMainForm.markAsDirty()"
 						class="step-container"
+						autocomplete-off
 					>
 						<div class="fields">
 							<div class="row">
@@ -207,6 +208,7 @@
 					[formGroup]="locationForm"
 					*ngIf="locationForm"
 					(ngSubmit)="this.locationForm.markAsDirty()"
+					autocomplete-off
 				>
 					<ga-location-form
 						#locationFormDirective
@@ -264,6 +266,7 @@
 					[formGroup]="orgBonusForm"
 					*ngIf="orgBonusForm"
 					(ngSubmit)="this.orgBonusForm.markAsDirty()"
+					autocomplete-off
 				>
 					<div class="row justify-content-center">
 						<div [ngClass]="onboarding ? 'col-3' : 'col-6'">
@@ -356,6 +359,7 @@
 					[formGroup]="orgSettingsForm"
 					*ngIf="orgSettingsForm"
 					(ngSubmit)="this.orgSettingsForm.markAsDirty()"
+					autocomplete-off
 				>
 					<div class="fields">
 						<div class="row">

@@ -8,6 +8,7 @@
 			[formGroup]="authorizeForm"
 			(ngSubmit)="authorizeHubstaff()"
 			*ngIf="!hubStaffAppCode; else clientFormVar"
+			autocomplete-off
 		>
 			<div class="form-group">
 				<label for="client_id" class="label">{{

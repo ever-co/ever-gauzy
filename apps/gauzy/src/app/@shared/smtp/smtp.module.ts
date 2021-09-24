@@ -11,6 +11,7 @@ import { SMTPComponent } from './smtp.component';
 import { CustomSmtpService } from '../../@core/services/custom-smtp.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TranslateModule } from '../translate/translate.module';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	imports: [
@@ -22,7 +23,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NbSpinnerModule,
 		ReactiveFormsModule,
 		ThemeModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	],
 	exports: [SMTPComponent],
 	declarations: [SMTPComponent],
