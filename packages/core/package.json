@@ -116,6 +116,7 @@
 		"rimraf": "^3.0.2",
 		"rxjs": "^6.6.3",
 		"sharp": "^0.28.3",
+		"slugify": "^1.6.0",
 		"sql.js": "^1.5.0",
 		"sqlite3": "^5.0.2",
 		"swagger-ui-express": "^4.1.4",

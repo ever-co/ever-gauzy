@@ -20,7 +20,7 @@ export const createDefaultEmployees = async (
 	organization: IOrganization,
 	users: IUser[],
 	defaultEmployees: any
-): Promise<Employee[]> => {
+): Promise<IEmployee[]> => {
 	const employees: IEmployee[] = [];
 	for (const user of users) {
 		const employee = new Employee();
@@ -83,11 +83,9 @@ export const createRandomEmployees = async (
 						Object.keys(PayPeriodEnum)
 					);
 					employee.billRateValue = faker.datatype.number({ min: 25, max: 50 });
-					employee.billRateCurrency =
-						organization.currency || env.defaultCurrency;
+					employee.billRateCurrency = organization.currency || env.defaultCurrency;
 					employee.reWeeklyLimit = faker.datatype.number({ min: 25, max: 40 });
 					employee.tenant = tenant;
-
 					if (employee.user) {
 						employees.push(employee);
 					}
