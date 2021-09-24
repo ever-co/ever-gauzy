@@ -50,7 +50,11 @@ Feature: Approval request test
     And User can enter new value for name
     And User can see min count input field
     And User can enter new value for min count
-    And User can see save button
+    And User can see tags dropdown
+    When User click on tags dropdown
+    Then User can select tag from dropdown options
+    When User click on card body
+    Then User can see save button
     When User click on save button
     Then Notification message will appear
     And User can verify request was edited
