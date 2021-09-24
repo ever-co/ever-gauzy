@@ -65,87 +65,14 @@
 								[placeholder]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
 								[ctrl]="form.controls.repeatPassword"
 								formControlName="repeatPassword"
-							></ngx-password-form-field>
-							<div 
-								*ngIf="isInvalidControl('repeatPassword')"
-								class="invalid-feedback d-block"
 							>
-								<div *ngIf="form.get('repeatPassword').errors.mustMatch">
-									{{ 'PROFILE_PAGE.VALIDATION.PASSWORDS_DO_NOT_MATCH' | translate }}
-								</div>
-							</div>
-						</div>
-						<!-- <div class="col">
-							<div class="form-group">
-								<label
-									class="label"
-									for="password"
-									[innerText]="'PROFILE_PAGE.PASSWORD' | translate"
-								></label>
-								<nb-form-field>
-									<input
-										fullWidth
-										nbInput
-										id="password"
-										formControlName="password"
-										[type]="showPassword ? 'text' : 'password'"
-									/>
-									<button 
-										nbSuffix
-										nbButton
-										ghost
-										(click)="showPassword = !showPassword"
-									>
-										<nb-icon 
-											[icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'"
-											pack="eva"
-											[attr.aria-label]="showPassword ? 'hide password' : 'show password'">
-										</nb-icon>
-									</button>
-								</nb-form-field>
-							</div>
-						</div>
-						<div class="col">
-							<div class="form-group">
-								<label
-									class="label"
-									for="repeatPassword"
-									[innerText]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
-								></label>
-								<nb-form-field>
-									<input
-										fullWidth
-										nbInput
-										id="repeatPassword"
-										formControlName="repeatPassword"
-										[type]="showConfirmPassword ? 'text' : 'password'"
-										[status]="
-											isInvalidControl('repeatPassword') ? 'danger' : 'basic'
-										"
-									/>
-									<button 
-										nbSuffix
-										nbButton
-										ghost
-										(click)="showConfirmPassword = !showConfirmPassword"
-									>
-										<nb-icon 
-											[icon]="showConfirmPassword ? 'eye-outline' : 'eye-off-2-outline'"
-											pack="eva"
-											[attr.aria-label]="showConfirmPassword ? 'hide password' : 'show password'">
-										</nb-icon>
-									</button>
-								</nb-form-field>
-								<div 
-									*ngIf="isInvalidControl('repeatPassword')"
-									class="invalid-feedback d-block"
-								>
+								<div *ngIf="isInvalidControl('repeatPassword')" class="invalid-feedback d-block">
 									<div *ngIf="form.get('repeatPassword').errors.mustMatch">
 										{{ 'PROFILE_PAGE.VALIDATION.PASSWORDS_DO_NOT_MATCH' | translate }}
 									</div>
 								</div>
-							</div>
-						</div> -->
+							</ngx-password-form-field>
+						</div>
 					</div>
 					<div class="row">
 						<div class="col-6">

@@ -90,15 +90,13 @@
 					'FORM.LABELS.START_DATE' | translate
 				}}</label>
 				<input
-					[nbDatepicker]="datepicker"
+					[nbDatepicker]="startWorkOnDatepicker"
 					nbInput
 					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.START_DATE' | translate
-					}}"
+					[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
 					formControlName="startedWorkOn"
 				/>
-				<nb-datepicker #datepicker></nb-datepicker>
+				<nb-datepicker #startWorkOnDatepicker></nb-datepicker>
 				<div
 					class="notes"
 					*ngIf="
@@ -119,7 +117,7 @@
 				<nb-select
 					id="role"
 					class="d-block"
-					placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
+					[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
 					formControlName="role"
 					fullWidth
 				>
@@ -141,17 +139,16 @@
 		</div>
 		<div class="col-sm-6" *ngIf="isCandidate">
 			<div class="form-group">
-				<label for="appliedDateInput" class="label">{{
+				<label for="appliedDate" class="label">{{
 					'FORM.LABELS.APPLIED_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="appliedDateInput"
+					id="appliedDate"
 					formControlName="appliedDate"
 					nbInput
 					[nbDatepicker]="appliedDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 				/>
 				<nb-datepicker #appliedDatePicker></nb-datepicker>
 			</div>
@@ -160,36 +157,36 @@
 	<div class="row" *ngIf="isEmployee">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="offerDateInput" class="label">{{
+				<label for="offerDate" class="label">{{
 					'FORM.LABELS.OFFER_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="offerDateInput"
+					id="offerDate"
 					formControlName="offerDate"
 					nbInput
 					[nbDatepicker]="offerDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 				/>
 				<nb-datepicker #offerDatePicker></nb-datepicker>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="acceptDateInput" class="label">{{
+				<label for="acceptDate" class="label">{{
 					'FORM.LABELS.ACCEPT_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="acceptDateInput"
+					id="acceptDate"
 					formControlName="acceptDate"
 					nbInput
 					[nbDatepicker]="acceptDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 					[status]="
-						form.get('acceptDate').invalid ? 'danger' : 'basic'
+						isInvalidControl('acceptDate')
+							? 'danger'
+							: 'basic'
 					"
 				/>
 				<nb-datepicker #acceptDatePicker></nb-datepicker>
@@ -199,19 +196,20 @@
 	<div class="row" *ngIf="isEmployee || isCandidate">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="rejectDateInput" class="label">{{
+				<label for="rejectDate" class="label">{{
 					'FORM.LABELS.REJECT_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="rejectDateInput"
+					id="rejectDate"
 					formControlName="rejectDate"
 					nbInput
 					[nbDatepicker]="rejectDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[autocomplete]="off"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 					[status]="
-						form.get('rejectDate').invalid ? 'danger' : 'basic'
+						isInvalidControl('rejectDate')
+							? 'danger'
+							: 'basic'
 					"
 				/>
 				<nb-datepicker #rejectDatePicker></nb-datepicker>
@@ -231,31 +229,33 @@
 	<div class="row" *ngIf="isCandidate">
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="hiredDateInput" class="label">{{
+				<label for="hiredDate" class="label">{{
 					'FORM.LABELS.HIRED_DATE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="hiredDateInput"
+					id="hiredDate"
 					formControlName="hiredDate"
 					nbInput
 					[nbDatepicker]="hiredDatePicker"
-					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-					[ngClass]="{
-						'status-danger': !hiredDate.valid
-					}"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
+					[status]="
+						isInvalidControl('hiredDate')
+							? 'danger'
+							: 'basic'
+					"
 				/>
 				<nb-datepicker #hiredDatePicker></nb-datepicker>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<div class="form-group">
-				<label for="sourceInput" class="label">{{
+				<label for="source" class="label">{{
 					'FORM.LABELS.SOURCE' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="sourceInput"
+					id="source"
 					formControlName="source"
 					nbInput
 					[placeholder]="'POP_UPS.SOURCE' | translate"
