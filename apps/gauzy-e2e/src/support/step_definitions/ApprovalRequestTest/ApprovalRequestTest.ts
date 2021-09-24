@@ -224,7 +224,7 @@ Then('User can see name input field', () => {
 });
 
 And('User can enter new value for name', () => {
-	approvalRequestPage.enterNameInputData('-Edited');
+	approvalRequestPage.enterNameInputData(ApprovalRequestPageData.editName);
 });
 
 And('User can see min count input field', () => {
@@ -237,7 +237,23 @@ And('User can enter new value for min count', () => {
 	);
 });
 
-And('User can see save button', () => {
+And('User can see tags dropdown', () => {
+	approvalRequestPage.tagsDropdownVisible();
+});
+
+When('User click on tags dropdown', () => {
+	approvalRequestPage.clickTagsDropdwon();
+});
+
+Then('User can select tag from dropdown options', () => {
+	approvalRequestPage.selectTagFromDropdown(0);
+});
+
+When('User click on card body', () => {
+	approvalRequestPage.clickCardBody();
+})
+
+Then('User can see save button', () => {
 	approvalRequestPage.saveButtonVisible();
 });
 
@@ -250,7 +266,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify request was edited', () => {
-	approvalRequestPage.verifyRequestExists(ApprovalRequestPageData.dafaultName + '-Edited');
+	approvalRequestPage.verifyRequestExists(ApprovalRequestPageData.editName);
 });
 
 // Delete approval request
