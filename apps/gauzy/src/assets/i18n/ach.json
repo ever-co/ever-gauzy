@@ -305,6 +305,7 @@
 			"GITHUB": "crwdns8620:0crwdne8620:0",
 			"GITLAB": "crwdns8622:0crwdne8622:0",
 			"UPWORK": "crwdns8624:0crwdne8624:0",
+			"STACK_OVERFLOW": "crwdns10555:0crwdne10555:0",
 			"PROJECT_URL": "crwdns8648:0crwdne8648:0",
 			"CLIENTS": "crwdns8650:0crwdne8650:0",
 			"IS_PROJECT_OPEN_SOURCE": "crwdns8652:0crwdne8652:0",
@@ -437,6 +438,7 @@
 			"GITHUB": "crwdns8634:0crwdne8634:0",
 			"GITLAB": "crwdns8636:0crwdne8636:0",
 			"UPWORK": "crwdns8638:0crwdne8638:0",
+			"STACK_OVERFLOW": "crwdns10557:0crwdne10557:0",
 			"STATUS": "crwdns8660:0crwdne8660:0",
 			"INVOICE_NUMBER": "crwdns8662:0crwdne8662:0",
 			"PROJECT_URL": "crwdns8664:0crwdne8664:0",
@@ -633,8 +635,8 @@
 		"SHOW_CLIENTS": "crwdns7948:0crwdne7948:0",
 		"DISPLAY_BONUS_ANONYMOUSLY": "crwdns7990:0crwdne7990:0",
 		"SOURCE": "crwdns8112:0crwdne8112:0",
-		"DESCRIPTION": "Description",
-		"MAIN": "Main"
+		"DESCRIPTION": "crwdns10551:0crwdne10551:0",
+		"MAIN": "crwdns10553:0crwdne10553:0"
 	},
 	"MENU": {
 		"PIPELINES": "crwdns4734:0crwdne4734:0",
