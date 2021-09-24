@@ -35,7 +35,6 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@Index({ unique: true })
-	@Exclude()
 	@Column()
 	token: string;
 
