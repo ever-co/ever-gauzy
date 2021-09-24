@@ -271,46 +271,29 @@
 								<h5 class="org-title org-key label-text">
 									{{ 'PUBLIC_PAGE.LANGUAGES' | translate }}:
 								</h5>
-								<span class="org-value">
-									<span
-										class="org_list_data"
-										*ngFor="
-											let l of organizationLanguages;
-											let i = index
-										"
-										[textContent]="
-											(i !== 0 ? ', ' : ' ') +
-											l.name +
-											' (' +
-											l.level +
-											')'
-										"
-									>
-									</span>
-								</span>
+								<nb-tag-list class="mt-1">
+									<nb-tag 
+										*ngFor="let lang of organizationLanguages" 
+										[text]="lang.name + ' (' + lang.level +')'" 
+										[removable]="false"
+									></nb-tag>
+								</nb-tag-list>
 							</div>
 						</div>
 					</div>
 					<div class="row mb-3" *ngIf="awardExist">
 						<div class="col">
-							<div class="org-year-found">
+							<div class="org-skills">
 								<h5 class="org-title org-key label-text">
 									{{ 'PUBLIC_PAGE.AWARDS' | translate }}:
 								</h5>
-								<span class="org-value">
-									<span
-										class="org_list_data"
-										*ngFor="let a of awards; let i = index"
-										[textContent]="
-											(i !== 0 ? ', ' : ' ') +
-											a.name +
-											' (' +
-											a.year +
-											')'
-										"
-									>
-									</span>
-								</span>
+								<nb-tag-list class="ml-1">
+									<nb-tag 
+										*ngFor="let award of awards" 
+										[text]="award.name + ' (' + award.year +')'" 
+										[removable]="false"
+									></nb-tag>
+								</nb-tag-list>
 							</div>
 						</div>
 					</div>
@@ -384,17 +367,13 @@
 								<p class="org-title org-key label-text">
 									{{ 'PUBLIC_PAGE.SKILLS' | translate }}:
 								</p>
-								<ul class="org-value">
-									<li
-										class="org_list_data"
-										*ngFor="
-											let skill of organization.skills;
-											let i = index
-										"
-									>
-										<span [textContent]="skill.name"></span>
-									</li>
-								</ul>
+								<nb-tag-list class="ml-1">
+									<nb-tag 
+										*ngFor="let skill of organization.skills" 
+										[text]="skill.name" 
+										[removable]="false">
+									</nb-tag>
+								</nb-tag-list>
 							</div>
 						</div>
 					</div>

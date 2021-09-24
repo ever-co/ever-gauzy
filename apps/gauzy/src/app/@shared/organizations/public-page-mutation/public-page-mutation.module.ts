@@ -14,7 +14,8 @@ import {
 	NbTooltipModule,
 	NbBadgeModule,
 	NbToggleModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbTagModule
 } from '@nebular/theme';
 import { PublicPageMutationComponent } from './public-page-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -47,7 +48,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbBadgeModule,
 		NbToggleModule,
 		NbTabsetModule,
-		CKEditorModule
+		CKEditorModule,
+		NbTagModule
 	],
 	declarations: [PublicPageMutationComponent],
 	providers: [SkillsService, LanguagesService]
