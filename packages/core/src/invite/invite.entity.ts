@@ -8,7 +8,6 @@ import {
 	IRole
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
 import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import {
 	Column,
@@ -35,7 +34,6 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@Index({ unique: true })
-	@Exclude()
 	@Column()
 	token: string;
 
