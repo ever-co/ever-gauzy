@@ -337,4 +337,13 @@ export function ipcTimer(
 		LocalStore.updateAuthSetting({ isLogout: true })
 		settingWindow.webContents.send('logout_success');
 	})
+
+	ipcMain.on('expand', (event, arg) => {
+		if (arg) {
+			timeTrackerWindow.setSize(1024, 940);
+		} else {
+			timeTrackerWindow.setSize(400, 940);
+		}
+		timeTrackerWindow.center();
+	})
 }

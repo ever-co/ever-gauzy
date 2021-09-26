@@ -1,7 +1,16 @@
 <nb-layout>
 	<nb-layout-column class="top-space">
+		<button 
+			nbButton
+			ghost
+			status="primary"
+			(click)="expand()"
+			class="expand-icon"
+		>
+			<nb-icon [icon]="expandIcon"></nb-icon>
+		</button>
 		<div class="row full-height">
-			<div class="col-12 full-height no-padding full-width">
+			<div [class]="timerWindow">
 				<nb-card class="full-height max-width">
 					<nb-card-body>
 						<div class="row">
@@ -293,6 +302,28 @@
 									</nb-card-footer>
 								</nb-card>
 							</ng-template>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-7 full-heigh no-padding full-width" *ngIf="isExpand">
+				<nb-card class="full-height max-width-search">
+					<nb-card-body>
+						<div class="row">
+							<div class="col-12">
+								<nb-form-field>
+										<nb-icon nbPrefix icon="search-outline"></nb-icon>
+										<input type="text" fullWidth nbInput placeholder="Search">
+								</nb-form-field>
+							</div>
+							<div class="col-12 top-space-1">
+								<ng2-smart-table 
+									[settings]="tableHeader" 
+									[source]="tableData"
+									class="tb-custom"
+									(userRowSelect)="rowSelect($event)"
+								></ng2-smart-table>
+							</div>
 						</div>
 					</nb-card-body>
 				</nb-card>
