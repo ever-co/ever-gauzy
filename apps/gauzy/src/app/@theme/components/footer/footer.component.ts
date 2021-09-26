@@ -19,6 +19,7 @@ export class FooterComponent
 	companyLink: string;
 	companySiteLink: string;
 	companyGithubLink: string;
+	companyGitlabLink: string;
 	companyFacebookLink: string;
 	companyTwitterLink: string;
 	companyLinkedinLink: string;
@@ -35,6 +36,7 @@ export class FooterComponent
 		this.companyLink = environment.COMPANY_LINK;
 		this.companySiteLink = environment.COMPANY_SITE_LINK;
 		this.companyGithubLink = environment.COMPANY_GITHUB_LINK;
+		this.companyGitlabLink = environment.COMPANY_GITLAB_LINK;
 		this.companyFacebookLink = environment.COMPANY_FACEBOOK_LINK;
 		this.companyTwitterLink = environment.COMPANY_TWITTER_LINK;
 		this.companyLinkedinLink = environment.COMPANY_LINKEDIN_LINK;

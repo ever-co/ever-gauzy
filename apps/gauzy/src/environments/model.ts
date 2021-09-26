@@ -9,6 +9,7 @@ export interface Environment {
 	COMPANY_LINK: string;
 	COMPANY_SITE_LINK: string;
 	COMPANY_GITHUB_LINK: string;
+	COMPANY_GITLAB_LINK: string;
 	COMPANY_FACEBOOK_LINK: string;
 	COMPANY_TWITTER_LINK: string;
 	COMPANY_LINKEDIN_LINK: string;

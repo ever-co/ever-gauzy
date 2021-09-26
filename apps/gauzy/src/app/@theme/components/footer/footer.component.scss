@@ -20,6 +20,9 @@
         color: nb-theme(text-basic-color);
       }
     }
+    .ion-logo-gitlab svg {
+      vertical-align: text-top;
+    }
   }
   .right-side {
     display: flex;
