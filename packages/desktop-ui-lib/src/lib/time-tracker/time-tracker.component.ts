@@ -14,6 +14,7 @@ import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
+import { CustomRenderComponent } from './custom-render-cell.component';
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -80,6 +81,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 	invalidTimeLog = null;
 	loading = false;
 	appSetting = null;
+	isExpand = false;
+	timerWindow = 'col-12 full-height no-padding full-width';
 	dialogType = {
 		deleteLog: {
 			name: 'deleteLog',
@@ -97,6 +100,33 @@ export class TimeTrackerComponent implements AfterViewInit {
 	};
 
 	timerStatus: any;
+
+	expandIcon = 'arrow-right';
+	tableHeader = {
+		columns: {
+			title: {
+			  title: 'Task',
+			  type: 'custom',
+			  renderComponent: CustomRenderComponent
+			  
+			},
+			description: {
+			  title: 'Description',
+			  type: 'text'
+			},
+			dueDate: {
+			  title: 'Due',
+			  type: 'text',
+			  valuePrepareFunction: (due) => {
+				return moment(due).format('YYYY-MM-DD');
+			  }
+			}
+		  },
+		hideSubHeader: true,
+		actions: false
+	};
+
+	tableData = [];
 
 	constructor(
 		private electronService: ElectronService,
@@ -378,6 +408,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	async getTask(arg) {
 		this.tasks = await this.timeTrackerService.getTasks(arg);
+		this.tableData = this.tasks;
 	}
 
 	async getProjects(arg) {
@@ -726,5 +757,32 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	openSetting() {
 		this.electronService.ipcRenderer.send('open_setting_window');
+	}
+
+	expand() {
+		this.isExpand = !this.isExpand;
+		if (this.isExpand) {
+			this.timerWindow = 'col-5 full-height no-padding full-width timer-max';
+			this.expandIcon = 'arrow-left';
+		} else {
+			this.timerWindow = 'col-12 full-height no-padding full-width';
+			this.expandIcon = 'arrow-right';
+		}
+		this.electronService.ipcRenderer.send('expand', this.isExpand);
+		this._cdr.detectChanges();
+	}
+
+	rowSelect(value) {
+		this.taskSelect = value.data.id;
+		value.data.isSelected = true;
+		const selectedLast = value.source.data.findIndex((row) => row.isSelected && row.id !== value.data.id);
+		if (selectedLast > -1) {
+			value.source.data[selectedLast].isSelected = false;
+		}
+		const idx = value.source.data.findIndex((row) => row.id === value.data.id);
+		value.source.data.splice(idx, 1, value.data);
+		this.setTask(value.data.id);
+		value.source.refresh();
+		this._cdr.detectChanges();
 	}
 }
