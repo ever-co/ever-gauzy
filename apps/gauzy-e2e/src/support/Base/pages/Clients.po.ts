@@ -13,7 +13,9 @@ import {
 import { ClientsPage } from '../pageobjects/ClientsPageObject';
 
 export const gridBtnExists = () => {
+	cy.intercept('/api/organization-contact*').as('waitClient');
 	verifyElementIsVisible(ClientsPage.gridButtonCss);
+	cy.wait('@waitClient');
 };
 
 export const gridBtnClick = (index) => {
