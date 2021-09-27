@@ -1,23 +1,24 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	IOrganization,
 	IUserOrganizationCreateInput,
 	RolesEnum
 } from '@gauzy/contracts';
-import { first, filter } from 'rxjs/operators';
-import { FormGroup } from '@angular/forms';
+import { first, filter, tap, debounceTime } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { UsersOrganizationsService } from '../../../../@core/services/users-organizations.service';
-import { NbDialogService } from '@nebular/theme';
-import { Store } from '../../../../@core/services/store.service';
-import { OrganizationsService } from '../../../../@core/services/organizations.service';
-import { UsersService } from '../../../../@core/services';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { UserIdService } from '../../../../@core/services/edit-user-data.service';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { NbDialogService } from '@nebular/theme';
+import {
+	OrganizationsService,
+	Store,
+	ToastrService,
+	UsersOrganizationsService,
+	UsersService
+} from '../../../../@core/services';
+import { TranslationBaseComponent } from '../../../../@shared/language-base';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,47 +28,50 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 export class EditUserOrganizationsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@Input()
-	organization: IOrganization;
-
-	form: FormGroup;
-	organizations: IOrganization[];
-	selectedOrganizationsId: string[];
+	
 	showAddCard: boolean;
-	selectedOrganizationId: string;
 	selectedUserId: string;
 	selectedUserName: string;
 	orgUserId: string;
 	userToRemove: any;
 
+	loading: boolean;
+	paramId: string;
+	organizations: IOrganization[] = [];
+	subject$: Subject<any> = new Subject();
+
 	constructor(
-		readonly translateService: TranslateService,
-		private userOrganizationsService: UsersOrganizationsService,
+		public readonly translateService: TranslateService,
+		private readonly userOrganizationsService: UsersOrganizationsService,
 		private readonly toastrService: ToastrService,
-		private organizationsService: OrganizationsService,
-		private userIdService: UserIdService,
-		private dialogService: NbDialogService,
-		private store: Store,
-		private router: Router,
-		private readonly usersService: UsersService
+		private readonly organizationsService: OrganizationsService,
+		private readonly dialogService: NbDialogService,
+		private readonly store: Store,
+		private readonly router: Router,
+		private readonly usersService: UsersService,
+		private readonly route: ActivatedRoute
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
+		this.subject$
 			.pipe(
-				filter((organization) => !!organization),
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.showAddCard = false),
+				tap(() => this.loadOrganizations()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.showAddCard = false;
-					this.selectedOrganizationId = organization.id;
-				}
-			});
-
-		this.loadPage();
+			.subscribe();
+		this.route.parent.params
+			.pipe(
+				filter((params) => !!params),
+				tap((params) => this.paramId = params.id),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async addOrg(user: IUserOrganizationCreateInput) {
@@ -88,8 +92,7 @@ export class EditUserOrganizationsComponent
 					}
 				)
 			);
-			this.showAddCard = false;
-			this.loadPage();
+			this.subject$.next();
 		}
 	}
 
@@ -164,7 +167,8 @@ export class EditUserOrganizationsComponent
 							)
 					}
 				})
-				.onClose.pipe(untilDestroyed(this))
+				.onClose
+				.pipe(untilDestroyed(this))
 				.subscribe(async (result) => {
 					if (result) {
 						try {
@@ -179,7 +183,7 @@ export class EditUserOrganizationsComponent
 								)
 							);
 
-							this.loadPage();
+							this.loadOrganizations();
 						} catch (error) {
 							this.toastrService.danger(error);
 						}
@@ -188,25 +192,24 @@ export class EditUserOrganizationsComponent
 		}
 	}
 
-	private async loadPage() {
+	private async loadOrganizations() {
 		const { tenantId } = this.store.user;
 		const users = await this.userOrganizationsService.getAll(
 			['user', 'user.role'],
 			{ tenantId }
 		);
 
-		const { items } = await this.userOrganizationsService.getAll([], {
-			id: this.userIdService.userId,
+		const { items } = await this.userOrganizationsService.getAll(['user'], {
+			id: this.paramId,
 			tenantId
 		});
 
 		this.selectedUserId = items[0].userId;
 
-		const user = await this.usersService.getUserById(items[0].userId);
-		this.selectedUserName =
-			(user.firstName || '') + ' ' + (user.lastName || '');
+		const user = items[0]['user'];
+		this.selectedUserName = (user.name || '');
 
-		const all_orgs = await this.organizationsService.getAll([], {
+		const { items: organizations } = await this.organizationsService.getAll([], {
 			tenantId
 		});
 
@@ -214,11 +217,12 @@ export class EditUserOrganizationsComponent
 			(item) => item.user.id === items[0].userId
 		);
 
-		const filtered = all_orgs.items.filter(
+		const filtered = organizations.filter(
 			(a) => includedOrgs.filter((b) => b.organizationId === a.id).length
 		);
 
 		this.organizations = filtered;
+		this.loading = false;
 	}
 
 	cancel() {
