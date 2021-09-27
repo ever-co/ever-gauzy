@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	IOrganization,
-	IUser,
 	IUserOrganizationCreateInput,
 	RolesEnum
 } from '@gauzy/contracts';
