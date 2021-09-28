@@ -352,6 +352,9 @@ And('User can see save button', () => {
 });
 
 When('User click on save button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	customersPage.clickSaveButton();
 });
 
