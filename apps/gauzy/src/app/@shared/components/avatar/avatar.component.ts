@@ -1,6 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { identity } from 'underscore';
 
 @Component({
 	selector: 'ngx-avatar',
