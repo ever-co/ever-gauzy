@@ -1,7 +1,11 @@
 :host {
   display: block;
+  .name-text {
+    cursor: pointer;
+  }
   .image-container {
     width: 48px;
+    cursor: pointer;
     img {
       width: 48px;
       height: 48px;

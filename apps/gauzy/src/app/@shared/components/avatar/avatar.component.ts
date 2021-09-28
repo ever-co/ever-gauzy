@@ -1,4 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-avatar',
@@ -10,6 +11,7 @@ export class AvatarComponent implements OnInit {
 	@Input() src: string;
 	@Input() name: string;
 	@Input() caption: string;
+	@Input() id: string;
 
 	// Added for set component value when used for ng2-smart-table renderer.
 	@Input() set value(object) {
@@ -20,7 +22,15 @@ export class AvatarComponent implements OnInit {
 		}
 	}
 
-	constructor() {}
+	constructor(private router: Router,) {}
 
 	ngOnInit() {}
+
+	edit(id: string) {
+		if(id) {
+			this.router.navigate([
+				'/pages/employees/edit/' + id
+			]);
+		}	
+	}
 }

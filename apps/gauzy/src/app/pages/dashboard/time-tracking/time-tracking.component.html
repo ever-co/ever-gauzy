@@ -189,6 +189,7 @@
 													(employee?.timeSlots)[0]
 														?.startedAt | date
 												"
+												[id]="employee?.id"
 											></ngx-avatar>
 										</div>
 										<div
@@ -320,6 +321,7 @@
 												[src]="
 													manualTime?.user?.imageUrl
 												"
+												[id]="manualTime?.employeeId"
 											></ngx-avatar>
 										</div>
 										<div class="col-sm-4">
@@ -479,6 +481,7 @@
 											<ngx-avatar
 												[name]="member?.user?.name"
 												[src]="member?.user?.imageUrl"
+												[id]="member?.id"
 											></ngx-avatar>
 										</div>
 										<div class="col-sm-2 text-center">
