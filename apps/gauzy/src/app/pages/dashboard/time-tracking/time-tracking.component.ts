@@ -297,8 +297,6 @@ export class TimeTrackingComponent
 			.getManualTimes(request)
 			.then((resp) => {
 				this.manualTimes = resp;
-				console.log(this.manualTimes, 'this.manualTimes');
-				
 			})
 			.finally(() => {
 				this.manualTimeLoading = false;

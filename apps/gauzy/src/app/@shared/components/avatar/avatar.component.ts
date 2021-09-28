@@ -28,10 +28,10 @@ export class AvatarComponent implements OnInit {
 	ngOnInit() {}
 
 	edit(id: string) {
-		if(identity) {
+		if(id) {
 			this.router.navigate([
 				'/pages/employees/edit/' + id
 			]);
-		}		
+		}	
 	}
 }
