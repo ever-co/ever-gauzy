@@ -13,7 +13,9 @@ import {
 import { OrganizationProjectsPage } from '../pageobjects/OrganizationProjectsPageObject';
 
 export const gridBtnExists = () => {
+	cy.intercept('/api/organization-contact*').as('waitToLoad');
 	verifyElementIsVisible(OrganizationProjectsPage.gridButtonCss);
+	cy.wait('@waitToLoad');
 };
 
 export const gridBtnClick = (index) => {

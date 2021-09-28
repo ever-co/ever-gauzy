@@ -32,6 +32,10 @@ export const ManageEmployeesPage = {
 	emailEditInputCss: '#email',
 	firstNameEditInputCss: '#firstName',
 	lastNameEditInputCss: '#lastName',
+	usernameEditSecondInputCss: '#usernameInput',
+	emailEditSecondInputCss: '#emailInput',
+	firstNameSecondEditInputCss: '#firstNameInput',
+	lastNameSecondEditInputCss: '#lastNameInput',
 	preferredLanguageDropdownCss:
 		'div.col-sm-6 > div.form-group > ngx-language-selector > ng-select',
 	preferredLanguageOptionCss:
