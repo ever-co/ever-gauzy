@@ -63,7 +63,7 @@ if (isProd) {
 				}
 			}
 		);
-	} else {
+	} else if (desktop === 'desktop-timer') {
 		writeFile(
 			`./apps/desktop-timer/src/environments/${envFileDestProd}`,
 			envFileContent,
@@ -90,7 +90,35 @@ if (isProd) {
 				}
 			}
 		);
-	}
+	} else if (desktop === 'server') {
+		writeFile(
+			`./apps/server/src/environments/${envFileDestProd}`,
+			envFileContent,
+			function (err) {
+				if (err) {
+					console.log(err);
+				} else {
+					console.log(
+						`Generated server production environment file: ${envFileDestProd}`
+					);
+				}
+			}
+		);
+		writeFile(
+			`./apps/server/src/environments/${envFileDest}`,
+			envFileContent,
+			function (err) {
+				if (err) {
+					console.log(err);
+				} else {
+					console.log(
+						`Generated desktop environment file: ${envFileDest}`
+					);
+				}
+			}
+		);
+	} else 
+		throw `Incorrect value of desktop parameter ${desktop}`;
 }
 
 // we always want first to remove old generated files (one of them is not needed for current build)
