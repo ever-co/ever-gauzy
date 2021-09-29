@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpression } from 'typeorm';
+import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
 	IUpdateTimesheetStatusInput,
@@ -145,7 +145,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		}
 
 		qb.andWhere(
-			new Brackets((qb: WhereExpression) => { 
+			new Brackets((qb: WhereExpressionBuilder) => { 
 				qb.where(						{
 					startedAt: Between( start, end ),
 					...(employeeIds.length > 0 ? { employeeId: In(employeeIds) } : {})
