@@ -138,7 +138,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		const { data } = input;
 		const tenantId = RequestContext.currentTenantId();
 
-		const { success, record } = await this.findOneOrFail({
+		const { success, record } = await this.findOneOrFailByConditions({
 			languageCode: data.languageCode,
 			templateType: data.templateType,
 			organizationId: data.organizationId,
@@ -187,7 +187,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 				tenantId
 			});
 		} catch (error) {
-			const { success, record } = await this.findOneOrFail({
+			const { success, record } = await this.findOneOrFailByConditions({
 				languageCode,
 				templateType,
 				organizationId: IsNull(),

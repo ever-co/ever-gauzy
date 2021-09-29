@@ -165,7 +165,7 @@ export class HubstaffService {
 	async getHubstaffToken(integrationId): Promise<IIntegrationSetting> {
 		const {
 			record: integrationSetting
-		} = await this._integrationSettingService.findOneOrFail({
+		} = await this._integrationSettingService.findOneOrFailByOptions({
 			where: {
 				integration: { id: integrationId },
 				settingsName: 'access_token'
@@ -299,7 +299,7 @@ export class HubstaffService {
 				};
 				const {
 					record
-				} = await this._integrationMapService.findOneOrFail({
+				} = await this._integrationMapService.findOneOrFailByOptions({
 					where: {
 						sourceId,
 						entity: IntegrationEntity.PROJECT,
@@ -342,7 +342,7 @@ export class HubstaffService {
 				const { sourceId } = organization;
 				const {
 					record
-				} = await this._integrationMapService.findOneOrFail({
+				} = await this._integrationMapService.findOneOrFailByOptions({
 					where: {
 						sourceId,
 						entity: IntegrationEntity.ORGANIZATION,
@@ -505,7 +505,7 @@ export class HubstaffService {
 				//if task already integrated then only update model/entity
 				const {
 					record
-				} = await this._integrationMapService.findOneOrFail({
+				} = await this._integrationMapService.findOneOrFailByOptions({
 					where: {
 						sourceId: id,
 						entity: IntegrationEntity.TASK,
@@ -544,7 +544,7 @@ export class HubstaffService {
 		organizationId
 	) {
 		const tenantId = RequestContext.currentTenantId();
-		const { record } = await this._integrationMapService.findOneOrFail({
+		const { record } = await this._integrationMapService.findOneOrFailByOptions({
 			where: {
 				sourceId: user_id,
 				entity: IntegrationEntity.EMPLOYEE,
@@ -672,7 +672,7 @@ export class HubstaffService {
 
 	async syncEmployee({ integrationId, user, organizationId }) {
 		const tenantId = RequestContext.currentTenantId();
-		const { record } = await this._userService.findOneOrFail({
+		const { record } = await this._userService.findOneOrFailByOptions({
 			where: { email: user.email }
 		});
 		let employee;
@@ -809,7 +809,7 @@ export class HubstaffService {
 			const { id, site, tracked, user_id } = activity;
 			let { date } = activity;
 
-			const { record } = await this._integrationMapService.findOneOrFail({
+			const { record } = await this._integrationMapService.findOneOrFailByOptions({
 				where: {
 					sourceId: id,
 					entity: IntegrationEntity.ACTIVITY
@@ -936,7 +936,7 @@ export class HubstaffService {
 			const { id, name, tracked, user_id } = activity;
 			let { date } = activity;
 
-			const { record } = await this._integrationMapService.findOneOrFail({
+			const { record } = await this._integrationMapService.findOneOrFailByOptions({
 				where: {
 					sourceId: id,
 					entity: IntegrationEntity.ACTIVITY,

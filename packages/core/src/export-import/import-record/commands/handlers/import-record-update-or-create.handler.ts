@@ -18,7 +18,7 @@ export class ImportRecordUpdateOrCreateHandler
 		event: ImportRecordUpdateOrCreateCommand
 	): Promise<IImportRecord> {
 		const { find = {} as IImportRecordFind, input = {} as IImportRecord } = event;
-		const { record } = await this._importRecordService.findOneOrFail({
+		const { record } = await this._importRecordService.findOneOrFailByOptions({
 			where: {
 				...find
 			}

@@ -32,7 +32,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		where?: FindConditions<T> | ObjectLiteral | FindConditions<T>[]
 	): FindConditions<T> | ObjectLiteral | FindConditions<T>[] {
 		if (Array.isArray(where)) {
-			return where.map((options) => ({
+			return (where as FindConditions<T>[]).map((options: FindConditions<T>) => ({
 				...options,
 				tenant: {
 					id: user.tenantId
@@ -89,11 +89,31 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		return await super.findAll(this.findManyWithTenant(filter));
 	}
 
-	public async findOneOrFail(
-		id: string | number | FindOneOptions<T> | FindConditions<T>,
+	public async findOneOrFailByIdString(
+		id: string,
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
-		return await super.findOneOrFail(id, this.findManyWithTenant(options));
+		return await super.findOneOrFailByIdString(id, this.findManyWithTenant(options));
+	}
+
+	public async findOneOrFailByIdNumber(
+		id: number,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		return await super.findOneOrFailByIdNumber(id, this.findManyWithTenant(options));
+	}
+
+	public async findOneOrFailByOptions(		
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		return await super.findOneOrFailByOptions(this.findManyWithTenant(options));
+	}
+
+	public async findOneOrFailByConditions(
+		id: FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		return await super.findOneOrFailByConditions(id, this.findManyWithTenant(options));
 	}
 
 	public async findOne(

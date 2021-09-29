@@ -19,7 +19,7 @@ export class IntegrationSettingGetHandler
 		if (input.where instanceof Object) {
 			input.where = Object.assign(input.where, { tenantId });
 		}
-		const { record } = await this.integrationSettingService.findOneOrFail(
+		const { record } = await this.integrationSettingService.findOneOrFailByOptions(
 			input
 		);
 		return record;

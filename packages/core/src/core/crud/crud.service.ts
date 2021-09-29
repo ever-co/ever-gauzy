@@ -89,13 +89,13 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 
-	public async findOneOrFail(
-		id: string|number|Date|ObjectID|FindOneOptions<T>|FindConditions<T>,
+	public async findOneOrFailByIdString(
+		id: string,
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
 		try {
 			const record = await this.repository.findOneOrFail(
-				id as any,
+				id,
 				options
 			);
 			return {
@@ -110,6 +110,87 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 	
+	public async findOneOrFailByIdNumber(
+		id: number,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				id,
+				options
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
+	}
+
+	public async findOneOrFailByDate(
+		id: Date,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				id,
+				options
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
+	}
+
+	public async findOneOrFailByOptions(
+		options: FindOneOptions<T>		
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				options				
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
+	}
+
+	public async findOneOrFailByConditions(
+		conditions: FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				conditions,
+				options
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
+	}
 
 	public async findOne(
 		id: string|number|Date|ObjectID|FindOneOptions<T>|FindConditions<T>,

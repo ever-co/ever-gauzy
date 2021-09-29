@@ -233,7 +233,7 @@ export class UpworkTransactionService {
 	}
 
 	private async _findRecordOrThrow(service, condition, errorMsg) {
-		const response = await service.findOneOrFail(condition);
+		const response = await service.findOneOrFailByOptions(condition);
 		if (response.success) {
 			return { record: response.record };
 		}

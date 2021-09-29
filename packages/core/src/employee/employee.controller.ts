@@ -226,7 +226,7 @@ export class EmployeeController extends CrudController<Employee> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<ITryRequest> {
 		const { relations = [] } = data;
-		return this.employeeService.findOneOrFail({
+		return this.employeeService.findOneOrFailByOptions({
 			where: {
 				userId
 			},

@@ -23,16 +23,17 @@ export class IntegrationService extends CrudService<Integration> {
 	/*
 	 * Check upwork remember state for logged in user
 	 */
-	public async checkIntegrationRemeberState(
+	public async checkIntegrationRememberState(
 		integration: IntegrationEnum,
 		organizationId: string
 	) {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { record: tenant } = await this._tenantService.findOneOrFail(
+			const { record: tenant } = await this._tenantService.findOneOrFailByIdString(
 				tenantId
 			);
-			return await this._integrationTenantService.findOneOrFail({
+
+			return await this._integrationTenantService.findOneOrFailByOptions({
 				where: {
 					tenant,
 					organizationId,
@@ -42,6 +43,7 @@ export class IntegrationService extends CrudService<Integration> {
 					updatedAt: 'DESC'
 				}
 			});
+
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
