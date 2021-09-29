@@ -27,18 +27,30 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		super(repository);
 	}
 
+	private findConditionsWithTenantByUser(
+		user: User		
+	): FindConditions<T>[] | FindConditions<T> | ObjectLiteral | string {		
+		return {
+					tenant: {
+						id: user.tenantId
+					}
+			  };
+	}
+
 	private findConditionsWithTenant(
 		user: User,
-		where?: FindConditions<T> | ObjectLiteral | FindConditions<T>[]
-	): FindConditions<T> | ObjectLiteral | FindConditions<T>[] {
-		if (Array.isArray(where)) {
-			return (where as FindConditions<T>[]).map((options: FindConditions<T>) => ({
+		where?: FindConditions<T>[] | FindConditions<T> | ObjectLiteral
+	): FindConditions<T>[] | FindConditions<T> | ObjectLiteral {
+				
+		if (where && Array.isArray(where)) {
+			const w = where as FindConditions<T>[];
+			return w.map((options: FindConditions<T>) => ({
 				...options,
 				tenant: {
 					id: user.tenantId
 				}
 			}));
-		}
+		}		
 
 		return where
 			? {
@@ -54,30 +66,69 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			  };
 	}
 
-	private findManyWithTenant(
-		filter?: FindManyOptions<T>
-	): FindManyOptions<T> {
+	private findOneWithTenant(
+		filter?: FindOneOptions<T>
+	): FindOneOptions<T> {
+
 		const user = RequestContext.currentUser();
+		
 		if (!user || !user.tenantId) {
 			return filter;
 		}
+		
 		if (!filter) {
 			return {
-				where: this.findConditionsWithTenant(user)
+				where: this.findConditionsWithTenantByUser(user)
 			};
 		}
+		
 		if (!filter.where) {
 			return {
 				...filter,
-				where: this.findConditionsWithTenant(user)
+				where: this.findConditionsWithTenantByUser(user)
 			};
 		}
+		
 		if (filter.where instanceof Object) {
 			return {
 				...filter,
 				where: this.findConditionsWithTenant(user, filter.where)
 			};
 		}
+
+		return filter;
+	}
+
+	private findManyWithTenant(
+		filter?: FindManyOptions<T>
+	): FindManyOptions<T> {
+
+		const user = RequestContext.currentUser();
+		
+		if (!user || !user.tenantId) {
+			return filter;
+		}
+		
+		if (!filter) {
+			return {
+				where: this.findConditionsWithTenantByUser(user)
+			};
+		}
+		
+		if (!filter.where) {
+			return {
+				...filter,
+				where: this.findConditionsWithTenantByUser(user)
+			};
+		}
+		
+		if (filter.where instanceof Object) {
+			return {
+				...filter,
+				where: this.findConditionsWithTenant(user, filter.where)
+			};
+		}
+
 		return filter;
 	}
 
@@ -93,27 +144,27 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		id: string,
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
-		return await super.findOneOrFailByIdString(id, this.findManyWithTenant(options));
+		return await super.findOneOrFailByIdString(id, this.findOneWithTenant(options));
 	}
 
 	public async findOneOrFailByIdNumber(
 		id: number,
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
-		return await super.findOneOrFailByIdNumber(id, this.findManyWithTenant(options));
+		return await super.findOneOrFailByIdNumber(id, this.findOneWithTenant(options));
 	}
 
 	public async findOneOrFailByOptions(		
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
-		return await super.findOneOrFailByOptions(this.findManyWithTenant(options));
+		return await super.findOneOrFailByOptions(this.findOneWithTenant(options));
 	}
 
 	public async findOneOrFailByConditions(
 		id: FindConditions<T>,
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
-		return await super.findOneOrFailByConditions(id, this.findManyWithTenant(options));
+		return await super.findOneOrFailByConditions(id, this.findOneWithTenant(options));
 	}
 
 	/*
@@ -135,7 +186,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	): Promise<T> {
 		return await super.findOneByIdString(
 			id,
-			this.findManyWithTenant(options)
+			this.findOneWithTenant(options)
 		);
 	}
 
@@ -152,7 +203,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	): Promise<T> {
 		return await super.findOneByIdNumber(
 			id,
-			this.findManyWithTenant(options)
+			this.findOneWithTenant(options)
 		);
 	}
 
@@ -169,7 +220,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	): Promise<T> {
 		return await super.findOneByConditions(
 			id,
-			this.findManyWithTenant(options)
+			this.findOneWithTenant(options)
 		);
 	}
 
@@ -183,7 +234,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		options: FindOneOptions<T>
 	): Promise<T> {
 		return await super.findOneByOptions(
-			this.findManyWithTenant(options)
+			this.findOneWithTenant(options)
 		);
 	}
 
