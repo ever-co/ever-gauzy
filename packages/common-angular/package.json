@@ -30,7 +30,7 @@
 	"dependencies": {
 		"moment": "^2.29.0",
 		"moment-timezone": "^0.5.31",
-		"rxjs": "^6.6.3",
+		"rxjs": "^7.3.0",
 		"rxjs-compat": "^6.6.3"
 	},
 	"devDependencies": {

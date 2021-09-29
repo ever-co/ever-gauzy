@@ -27,7 +27,7 @@
 	},
 	"keywords": [],
 	"dependencies": {
-		"@nestjs/config": "^1.0.0"
+		"@nestjs/config": "^1.0.1"
 	},
 	"devDependencies": {
 		"@gauzy/common": "^0.1.0",
