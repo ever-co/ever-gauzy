@@ -221,9 +221,7 @@ export class CandidatesComponent
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
-				invitationType: InvitationTypeEnum.CANDIDATE,
-				selectedOrganizationId: this.selectedOrganizationId,
-				selectedOrganization: this.selectedOrganization
+				invitationType: InvitationTypeEnum.CANDIDATE
 			}
 		});
 		await dialog.onClose.pipe(first()).toPromise();

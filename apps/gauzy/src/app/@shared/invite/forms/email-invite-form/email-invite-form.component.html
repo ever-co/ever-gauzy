@@ -247,4 +247,31 @@
 			</div>
 		</ng-template>
 	</ng-container>
+	<ng-container *ngIf="invitationExpiryOptions.length > 0">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label
+						for="invitationExpirationPeriod"
+						class="label"
+					>
+						{{ 'FORM.LABELS.INVITATION_EXPIRATION' | translate }}
+					</label>
+					<nb-select
+						id="invitationExpirationPeriod"
+						fullWidth
+						[placeholder]="'FORM.PLACEHOLDERS.INVITATION_EXPIRATION' | translate"
+						formControlName="invitationExpirationPeriod"
+					>
+						<nb-option
+							*ngFor="let option of invitationExpiryOptions"
+							[value]="option?.value"
+						>
+							{{ option?.label }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+		</div>
+	</ng-container>
 </form>
