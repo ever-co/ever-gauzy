@@ -83,7 +83,7 @@ export class TenantController extends CrudController<Tenant> {
 		if (id !== tenantId) {
 			throw new ForbiddenException();
 		}
-		return this.tenantService.findOne(tenantId);
+		return this.tenantService.findOneByIdString(tenantId);
 	}
 
 	@ApiOperation({

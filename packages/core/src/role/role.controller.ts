@@ -31,7 +31,7 @@ export class RoleController extends CrudController<Role> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<Role> {
 		const { findInput } = data;
-		return this.roleService.findOne({ where: findInput });
+		return this.roleService.findOneByOptions({ where: findInput });
 	}
 
 	@ApiOperation({ summary: 'Find roles.' })

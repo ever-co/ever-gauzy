@@ -65,7 +65,7 @@ export abstract class RecurringExpenseDeleteHandler<
 		id: string,
 		deleteInput: IRecurringExpenseDeleteInput
 	): Promise<IOrganizationRecurringExpense | UpdateResult | DeleteResult> {
-		const originalExpense = await this.crudService.findOne(id);
+		const originalExpense = await this.crudService.findOneByIdString(id);
 
 		const deleteDate = new Date(deleteInput.year, deleteInput.month);
 		const deleteId: any = {

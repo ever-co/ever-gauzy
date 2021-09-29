@@ -20,11 +20,11 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 		id: string,
 		request: ITaskUpdateInput
 	): Promise<ITask> {
-		const task = await this._taskService.findOne(id);
+		const task = await this._taskService.findOneByIdString(id);
 		if (task) {
 			delete request.id;
 			await this._taskService.update(id, request);
-			return await this._taskService.findOne(id);
+			return await this._taskService.findOneByIdString(id);
 		}
 
 		return task;
