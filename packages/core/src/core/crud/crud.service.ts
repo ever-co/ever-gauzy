@@ -9,7 +9,6 @@ import {
 	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
-	ObjectID,
 	Repository,
 	SelectQueryBuilder,
 	UpdateResult
@@ -191,13 +190,88 @@ export abstract class CrudService<T extends BaseEntity>
 			};
 		}
 	}
-	
 
-	public async findOne(
-		id: string|number|Date|ObjectID|FindOneOptions<T>|FindConditions<T>,
+	/*
+    |--------------------------------------------------------------------------
+    | @FindOne
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Finds first entity that matches given id and options.
+	 *
+	 * @param id {string}
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByIdString(
+		id: string,
 		options?: FindOneOptions<T>
 	): Promise<T> {
-		const record = await this.repository.findOne(id as any, options);
+		const record = await this.repository.findOne(
+			id,
+			options
+		);
+		if (!record) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
+		return record;
+	}
+
+	/**
+	 * Finds first entity that matches given id and options.
+	 *
+	 * @param id {number}
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByIdNumber(
+		id: number,
+		options?: FindOneOptions<T>
+	): Promise<T> {
+		const record = await this.repository.findOne(
+			id,
+			options
+		);
+		if (!record) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
+		return record;
+	}
+
+	/**
+	 * Finds first entity that matches given options.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByOptions(
+		options: FindOneOptions<T>
+	): Promise<T> {
+		const record = await this.repository.findOne(
+			options
+		);
+		if (!record) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
+		return record;
+	}
+
+	/**
+	 * Finds first entity that matches given conditions and options.
+	 *
+	 * @param conditions
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByConditions(
+		conditions: FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<T> {
+		const record = await this.repository.findOne(
+			conditions,
+			options
+		);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}

@@ -116,19 +116,75 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		return await super.findOneOrFailByConditions(id, this.findManyWithTenant(options));
 	}
 
-	public async findOne(
-		id: string | number | FindOneOptions<T> | FindConditions<T>,
+	/*
+    |--------------------------------------------------------------------------
+    | @FindOne
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Finds first entity that matches given id and options with current tenant.
+	 *
+	 * @param id {string}
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByIdString(
+		id: string,
 		options?: FindOneOptions<T>
 	): Promise<T> {
-		if (typeof id === 'object') {
-			const firstOptions = id as FindOneOptions<T>;
-			return await super.findOne(
-				this.findManyWithTenant(firstOptions),
-				options
-			);
-		}
+		return await super.findOneByIdString(
+			id,
+			this.findManyWithTenant(options)
+		);
+	}
 
-		return await super.findOne(id, this.findManyWithTenant(options));
+	/**
+	 * Finds first entity that matches given id and options with current tenant.
+	 *
+	 * @param id {number}
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByIdNumber(
+		id: number,
+		options?: FindOneOptions<T>
+	): Promise<T> {
+		return await super.findOneByIdNumber(
+			id,
+			this.findManyWithTenant(options)
+		);
+	}
+
+	/**
+	 * Finds first entity that matches given conditions and options with current tenant.
+	 *
+	 * @param id
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByConditions(
+		id: FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<T> {
+		return await super.findOneByConditions(
+			id,
+			this.findManyWithTenant(options)
+		);
+	}
+
+	/**
+	 * Finds first entity that matches given options with current tenant.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByOptions(
+		options: FindOneOptions<T>
+	): Promise<T> {
+		return await super.findOneByOptions(
+			this.findManyWithTenant(options)
+		);
 	}
 
 	public async create(entity: DeepPartial<T>, ...options: any[]): Promise<T> {
@@ -155,7 +211,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		options?: FindOneOptions<T>
 	): Promise<DeleteResult> {
 		try {
-			const record = await this.findOne(criteria, options);
+			let record;
+			if (typeof criteria === 'string') {
+				record = await this.findOneByIdString(criteria, options);
+			} else if (typeof criteria === 'number') {
+				record = await this.findOneByIdNumber(criteria, options);
+			} else {
+				record = await this.findOneByConditions(criteria, options);
+			}
 			if (!record) {
 				throw new NotFoundException(`The requested record was not found`);
 			}
