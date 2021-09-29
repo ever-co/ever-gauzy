@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"types": ["node", "jest", "googlemaps"],
 		"target": "es2016",
-		"downlevelIteration": true,
+		"downlevelIteration": true
 	},
 	"angularCompilerOptions": {
 		"fullTemplateTypeCheck": false,

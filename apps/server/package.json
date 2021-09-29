@@ -31,7 +31,7 @@
     "node-mac": "^1.0.1"
   },  
 	"dependencies": {
-		"@nestjs/typeorm": "^7.1.4",
+		"@nestjs/typeorm": "^8.0.1",
 		"electron-store": "^8.0.0",
 		"electron-log": "^4.3.5",
 		"form-data": "^3.0.0",

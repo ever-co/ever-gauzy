@@ -22,7 +22,7 @@ export abstract class PaginationParams<T> {
 	@IsOptional()
 	@Min(0)
 	@Max(50)
-	@Transform((val: string) => parseInt(val, 10))
+	@Transform((value: any) => parseInt(value, 10))
 	readonly take = 10;
 
 	/**
@@ -31,7 +31,7 @@ export abstract class PaginationParams<T> {
 	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
 	@IsOptional()
 	@Min(0)
-	@Transform((val: string) => parseInt(val, 10))
+	@Transform((value: any) => parseInt(value, 10))
 	readonly skip = 0;
 
 	/**

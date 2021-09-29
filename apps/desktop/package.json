@@ -27,7 +27,7 @@
 		"electron-reload": "~1.5.0"
 	},
 	"dependencies": {
-		"@nestjs/typeorm": "^7.1.4",
+		"@nestjs/typeorm": "^8.0.1",
 		"electron-store": "^8.0.0",
 		"electron-log": "^4.3.5",
 		"form-data": "^3.0.0",
@@ -41,7 +41,7 @@
 		"consolidate": "^0.16.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"typeorm": "^0.2.37",
+		"typeorm": "^0.2.34",
 		"typeorm-aurora-data-api-driver": "^2.3.3",
 		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git",
 		"electron-updater": "~4.3.8",

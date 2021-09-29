@@ -117,7 +117,7 @@
 		"electron-updater": "~4.3.8",
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
-		"@nestjs/platform-express": "^7.6.5",
+		"@nestjs/platform-express": "^8.0.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/auth": "^0.1.0",
 		"sound-play": "1.1.0",
