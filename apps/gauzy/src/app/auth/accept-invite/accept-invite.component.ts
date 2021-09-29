@@ -47,6 +47,9 @@ export class AcceptInvitePage
 				email,
 				token
 			});
+			if (!this.invitation) {
+				throw new Error();
+			}
 		} catch (error) {
 			this.inviteLoadErrorMessage = this.getTranslation('ACCEPT_INVITE.INVITATION_NO_LONGER_VALID');
 		}

@@ -52,7 +52,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
-	@Column()
+	@Column({ nullable: true })
 	expireDate: Date;
 
 	@ApiPropertyOptional({ type: () => Date })

@@ -44,6 +44,7 @@ export interface ICreateEmailInvitesInput
 	inviteType: any;
 	startedWorkOn: Date;
 	appliedDate?: Date;
+	invitationExpirationPeriod?: number | string;
 }
 
 export interface ICreateOrganizationContactInviteInput
@@ -86,9 +87,19 @@ export enum InvitationTypeEnum {
 	EMPLOYEE = 'EMPLOYEE',
 	CANDIDATE = 'CANDIDATE'
 }
+
+export enum InvitationExpirationEnum {
+	DAY = 1,
+	WEEK = 7,
+	TWO_WEEK = 14,
+	MONTH = 30,
+	NEVER = 'Never'
+}
+
 export interface IInviteViewModel {
 	email: string;
 	expireDate: string;
+	createdDate: string;
 	imageUrl: string;
 	fullName: string;
 	roleName?: string;

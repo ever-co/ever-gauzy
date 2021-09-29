@@ -209,12 +209,9 @@ export class UsersComponent
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
 				invitationType: InvitationTypeEnum.USER,
-				selectedOrganizationId: this.selectedOrganizationId,
-				isSuperAdmin: this.hasSuperAdminPermission,
-				selectedOrganization: this.organization
+				isSuperAdmin: this.hasSuperAdminPermission
 			}
 		});
-
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 

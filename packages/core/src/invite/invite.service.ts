@@ -13,11 +13,14 @@ import {
 	DEFAULT_INVITE_EXPIRY_PERIOD,
 	IOrganization,
 	IEmployee,
+	IRole,
+	InvitationExpirationEnum,
+	IInvite
 } from '@gauzy/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { Brackets, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpression } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
@@ -109,7 +112,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			organizationId,
 			invitedById,
 			startedWorkOn,
-			appliedDate
+			appliedDate,
+			invitationExpirationPeriod
 		} = emailInvites;
 
 		const projects: IOrganizationProject[] = await this.organizationProjectsRepository.findByIds(
@@ -124,29 +128,34 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			organizationContactIds || []
 		);
 
-		const organization: Organization = await this.organizationRepository.findOne(
+		const organization: IOrganization = await this.organizationRepository.findOne(
 			organizationId
 		);
-		const role: Role = await this.roleRepository.findOne(roleId);
-
-		const user = await this.userService.findOne(invitedById, {
+		const role: IRole = await this.roleRepository.findOne(roleId);
+		const user: IUser = await this.userService.findOne(invitedById, {
 			relations: ['role']
 		});
-		const tenantId = RequestContext.currentTenantId();
 
+		const tenantId = RequestContext.currentTenantId();
 		if (role.name === RolesEnum.SUPER_ADMIN) {
 			const { role: inviterRole } = user;
-
-			if (inviterRole.name !== RolesEnum.SUPER_ADMIN)
+			if (inviterRole.name !== RolesEnum.SUPER_ADMIN) {
 				throw new UnauthorizedException();
+			}
 		}
 
-		const inviteExpiryPeriod =
-			organization && organization.inviteExpiryPeriod
-				? organization.inviteExpiryPeriod
-				: DEFAULT_INVITE_EXPIRY_PERIOD;
-
-		const expireDate = addDays(new Date(), inviteExpiryPeriod);
+		let expireDate: any;
+		if (invitationExpirationPeriod === InvitationExpirationEnum.NEVER) {
+			expireDate = null;
+		} else {
+			if (invitationExpirationPeriod) {
+				const inviteExpiryPeriod = invitationExpirationPeriod;
+				expireDate = addDays(new Date(), inviteExpiryPeriod as number);
+			} else {
+				const inviteExpiryPeriod = (organization.inviteExpiryPeriod) || DEFAULT_INVITE_EXPIRY_PERIOD;
+				expireDate = addDays(new Date(), inviteExpiryPeriod as number);
+			}
+		}
 
 		const existingInvites = (
 			await this.repository
@@ -291,15 +300,32 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return createdInvite;
 	}
 
-	async validate(relations, email, token): Promise<Invite> {
-		return this.findOne({
-			relations,
-			where: {
-				email,
-				token,
-				expireDate: MoreThanOrEqual(new Date()),
-				status: InviteStatusEnum.INVITED
-			}
+	async validate(relations, email, token): Promise<IInvite> {
+		return await this.repository.findOne({
+			where: (query: SelectQueryBuilder<Invite>) => {
+				query.andWhere(
+					new Brackets((qb: WhereExpression) => { 
+						qb.where(
+							[
+								{
+									expireDate: MoreThanOrEqual(new Date())
+								},
+								{
+									expireDate: IsNull()
+								}
+							]
+						);
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpression) => { 
+						qb.andWhere(`"${query.alias}"."email" = :email`, { email });
+						qb.andWhere(`"${query.alias}"."token" = :token`, { token });
+						qb.andWhere(`"${query.alias}"."status" = :status`, { status: InviteStatusEnum.INVITED });
+					})
+				);
+			},
+			relations
 		});
 	}
 

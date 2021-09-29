@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	InvitationTypeEnum,
 	RolesEnum,
@@ -7,23 +7,22 @@ import {
 	IInviteViewModel
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { filter, first, tap } from 'rxjs/operators';
-import { InviteService } from '../../../@core/services/invite.service';
-import { Store } from '../../../@core/services/store.service';
-import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import * as moment from 'moment-timezone';
+import { InviteService, Store, ToastrService } from '../../../@core/services';
+import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
-import moment = require('moment-timezone');
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { ComponentEnum } from '../../../@core/constants/layout.constants';
-import { RouterEvent, NavigationEnd, Router } from '@angular/router';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { ComponentEnum } from '../../../@core/constants';
+import { DateViewComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,22 +32,23 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 })
 export class InvitesComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	@Input()
 	invitationType: InvitationTypeEnum;
 
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedInvite: IInviteViewModel;
-	selectedOrganizationId: string;
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	invitedName = 'Employee / User';
-	manageInvites: IInviteViewModel[];
-	loading = true;
-	selectedOrganization: IOrganization;
+	invites: IInviteViewModel[] = [];
+	loading: boolean;
+
+	invites$: Subject<any> = new Subject();
+	public organization: IOrganization;
 
 	invitesTable: Ng2SmartTableComponent;
 	@ViewChild('invitesTable') set content(content: Ng2SmartTableComponent) {
@@ -59,12 +59,11 @@ export class InvitesComponent
 	}
 
 	constructor(
-		private dialogService: NbDialogService,
-		private store: Store,
-		private toastrService: ToastrService,
-		private translate: TranslateService,
-		private inviteService: InviteService,
-		private router: Router
+		private readonly dialogService: NbDialogService,
+		private readonly store: Store,
+		private readonly toastrService: ToastrService,
+		private readonly translate: TranslateService,
+		private readonly inviteService: InviteService
 	) {
 		super(translate);
 		this.setView();
@@ -73,26 +72,26 @@ export class InvitesComponent
 	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-
-		this.store.selectedOrganization$
+		this.invites$
 			.pipe(
-				filter((organization) => !!organization),
+				debounceTime(200),
+				tap(() => this.loading = true),
+				tap(() => this.loadInvites()),
+				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.selectedOrganization = organization;
-					this.selectedOrganizationId = organization.id;
-					this.loadPage();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.invites$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy(): void {}
@@ -101,10 +100,11 @@ export class InvitesComponent
 		this.viewComponentName = ComponentEnum.MANAGE_INVITES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -119,31 +119,24 @@ export class InvitesComponent
 			.subscribe();
 	}
 
-	selectEmployeeTmp({ isSelected, data }) {
+	selectInvite({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedInvite = isSelected ? data : null;
-		if (this.selectedInvite) {
-			const checkName = this.selectedInvite.fullName.trim();
-			this.invitedName = checkName ? checkName : 'Employee / User';
-		}
 	}
 
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
-				invitationType: this.invitationType,
-				selectedOrganizationId: this.selectedOrganizationId,
-				selectedOrganization: this.selectedOrganization
+				invitationType: this.invitationType
 			}
 		});
-
 		await dialog.onClose.pipe(first()).toPromise();
-		this.loadPage();
+		this.loadInvites();
 	}
 
 	copyToClipboard(selectedItem?: IInviteViewModel) {
 		if (selectedItem) {
-			this.selectEmployeeTmp({
+			this.selectInvite({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -160,19 +153,15 @@ export class InvitesComponent
 		this.clearItem();
 	}
 
-	private async loadPage() {
+	private async loadInvites() {
 		let invites = [];
 		try {
 			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
 			const { items } = await this.inviteService.getAll(
-				[
-					'projects',
-					'invitedBy',
-					'role',
-					'organizationContact',
-					'departments'
-				],
-				{ organizationId: this.selectedOrganizationId, tenantId }
+				[ 'projects', 'invitedBy', 'role', 'organizationContact', 'departments' ],
+				{ organizationId, tenantId }
 			);
 			invites = items.filter((invite) => {
 				if(this.invitationType === InvitationTypeEnum.EMPLOYEE) {
@@ -188,11 +177,11 @@ export class InvitesComponent
 		}
 
 		const invitesVm: IInviteViewModel[] = [];
-
 		for (const invite of invites) {
 			invitesVm.push({
 				email: invite.email,
-				expireDate: moment(invite.expireDate).fromNow(),
+				expireDate: invite.expireDate ? moment(invite.expireDate).fromNow() : null,
+				createdDate: invite.createdAt,
 				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
 				fullName: `${
 					(invite.invitedBy && invite.invitedBy.firstName) || ''
@@ -216,7 +205,7 @@ export class InvitesComponent
 				inviteUrl: `auth/accept-invite?email=${invite.email}&token=${invite.token}`
 			});
 		}
-		this.manageInvites = invitesVm;
+		this.invites = invitesVm;
 		this.sourceSmartTable.load(invitesVm);
 		this.loading = false;
 	}
@@ -255,6 +244,12 @@ export class InvitesComponent
 					title: this.getTranslation('SM_TABLE.INVITED_BY'),
 					type: 'text'
 				},
+				createdDate: {
+					title: this.getTranslation('SM_TABLE.CREATED'),
+					type: 'custom',
+					renderComponent: DateViewComponent,
+					filter: false
+				},
 				expireDate: {
 					title: this.getTranslation('SM_TABLE.EXPIRE_DATE'),
 					type: 'text'
@@ -284,13 +279,12 @@ export class InvitesComponent
 			delete settingsSmartTable['columns']['contact'];
 			delete settingsSmartTable['columns']['roleName'];
 		}
-
 		this.settingsSmartTable = settingsSmartTable;
 	}
 
 	async deleteInvite(selectedItem?: IInviteViewModel) {
 		if (selectedItem) {
-			this.selectEmployeeTmp({
+			this.selectInvite({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -306,17 +300,25 @@ export class InvitesComponent
 						)
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.inviteService.delete(this.selectedInvite.id);
-						this.toastrService.success(
-							'TOASTR.MESSAGE.INVITES_DELETE',
-							{ email: this.selectedInvite.email }
-						);
-						this.clearItem();
-						this.loadPage();
+						if (!this.selectedInvite) {
+							this.toastrService.danger('Invitation is not selected');
+							return;
+						}
+						const { id, email } = this.selectedInvite;
+						await this.inviteService.delete(id)
+							.then(() => {
+								this.toastrService.success('TOASTR.MESSAGE.INVITES_DELETE', {
+									email: email
+								});
+							})
+							.finally(() => {
+								this.invites$.next();
+							});
 					} catch (error) {
 						this.toastrService.danger(
 							error.error.message || error.message
@@ -328,7 +330,7 @@ export class InvitesComponent
 
 	async resendInvite(selectedItem?: IInviteViewModel) {
 		if (selectedItem) {
-			this.selectEmployeeTmp({
+			this.selectInvite({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -339,21 +341,28 @@ export class InvitesComponent
 					email: this.selectedInvite.email
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						if (!this.selectedInvite) {
+							this.toastrService.danger('Invitation is not selected');
+							return;
+						}
+
+						const { id, email } = this.selectedInvite;
 						await this.inviteService.resendInvite({
-							id: this.selectedInvite.id,
+							id,
 							invitedById: this.store.userId
+						}).then(() => {
+							this.toastrService.success('TOASTR.MESSAGE.INVITES_RESEND', {
+								email
+							});
+						})
+						.finally(() => {
+							this.invites$.next();
 						});
-
-						this.toastrService.success(
-							'TOASTR.MESSAGE.INVITES_RESEND',
-							{ email: this.selectedInvite.email }
-						);
-
-						this.loadPage();
 					} catch (error) {
 						this.toastrService.danger(error);
 					}
@@ -362,16 +371,18 @@ export class InvitesComponent
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this._loadSmartTableSettings();
-		});
+		this.translate.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			).subscribe();
 	}
 
 	/*
 	 * Clear selected item
 	 */
 	clearItem() {
-		this.selectEmployeeTmp({
+		this.selectInvite({
 			isSelected: false,
 			data: null
 		});

@@ -9,13 +9,16 @@ import {
 	IOrganizationContact,
 	IOrganizationDepartment,
 	IOrganization,
-	IUser
+	IUser,
+	InvitationExpirationEnum
 } from '@gauzy/contracts';
 import { filter, first, tap } from 'rxjs/operators';
 import { NbTagComponent, NbTagInputAddEvent, NbTagInputDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { InviteService, RoleService, Store } from './../../../../@core/services';
 import { EmailValidator } from '../../../../@core/validators';
+import { TranslationBaseComponent } from '../../../language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,11 +26,12 @@ import { EmailValidator } from '../../../../@core/validators';
 	templateUrl: 'email-invite-form.component.html',
 	styleUrls: ['email-invite-form.component.scss']
 })
-export class EmailInviteFormComponent 
+export class EmailInviteFormComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	invitationTypeEnum = InvitationTypeEnum;
-	roles: string[] = [];
+	roles: any[] = [];
+	invitationExpiryOptions: any = [];
 	
 	@Input() public organizationProjects: IOrganizationProject[];
 	@Input() public organizationContacts: IOrganizationContact[];
@@ -69,7 +73,8 @@ export class EmailInviteFormComponent
 			appliedDate: [],
 			departments: [],
 			organizationContacts: [],
-			roleName: []
+			roleName: [],
+			invitationExpirationPeriod: []
 		}, {
 			validators: [
 				EmailValidator.pattern('emails')
@@ -90,8 +95,11 @@ export class EmailInviteFormComponent
 		private readonly inviteService: InviteService,
 		private readonly roleService: RoleService,
 		private readonly router: Router,
-		private readonly store: Store
-	) {}
+		private readonly store: Store,
+		public readonly translateService: TranslateService
+	) {
+		super(translateService)
+	}
 
 	ngOnInit(): void {
 		this.store.user$
@@ -106,6 +114,9 @@ export class EmailInviteFormComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.renderInvitationExpiryOptions()),
+				filter((organization) => !!organization.invitesAllowed),
+				tap((organization) => this.setInvitationPeriodFormValue(organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -117,6 +128,31 @@ export class EmailInviteFormComponent
 		).filter((role) =>
 			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
 		);
+	}
+
+	renderInvitationExpiryOptions() {
+		this.invitationExpiryOptions = [
+			{
+				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.DAY'),
+				value: InvitationExpirationEnum.DAY
+			},
+			{
+				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.WEEK'),
+				value: InvitationExpirationEnum.WEEK
+			},
+			{
+				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.TWO_WEEK'),
+				value: InvitationExpirationEnum.TWO_WEEK
+			},
+			{
+				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.MONTH'),
+				value: InvitationExpirationEnum.MONTH
+			},
+			{
+				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.NEVER'),
+				value: InvitationExpirationEnum.NEVER
+			}
+		]
 	}
 
 	ngOnDestroy() {
@@ -197,6 +233,7 @@ export class EmailInviteFormComponent
 			startedWorkOn,
 			appliedDate,
 			emails,
+			invitationExpirationPeriod,
 			projects = [],
 			departments = [],
 			organizationContacts = []
@@ -213,7 +250,8 @@ export class EmailInviteFormComponent
 			invitedById: this.user.id,
 			inviteType: this.router.url,
 			startedWorkOn: startedWorkOn ? new Date(startedWorkOn) : null,
-			appliedDate: appliedDate ? new Date(appliedDate) : null
+			appliedDate: appliedDate ? new Date(appliedDate) : null,
+			invitationExpirationPeriod
 		});
 	}
 
@@ -292,6 +330,10 @@ export class EmailInviteFormComponent
 			this.form.get(control).invalid;
 	}
 
+	/**
+	 * SET form validators
+	 * 
+	 */
 	setFormValidators() {
 		if (this.isEmployeeInvitation() || this.isCandidateInvitation()) {
 			this.form.get('roleName').clearValidators();
@@ -301,5 +343,17 @@ export class EmailInviteFormComponent
 			]);
 		}
 		this.form.updateValueAndValidity();
+	}
+
+	/**
+	 * SET invitation period as per organization selection 
+	 * 
+	 * @param organization 
+	 */
+	setInvitationPeriodFormValue(organization: IOrganization) {
+		this.form.get('invitationExpirationPeriod').setValue(
+			organization.inviteExpiryPeriod || InvitationExpirationEnum.TWO_WEEK
+		);
+		this.form.get('invitationExpirationPeriod').updateValueAndValidity();
 	}
 }
