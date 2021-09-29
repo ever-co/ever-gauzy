@@ -187,7 +187,8 @@
 		"LAST_UPDATED": "crwdns8772:0crwdne8772:0",
 		"CREATED_BY": "crwdns9192:0crwdne9192:0",
 		"NO_DATA_MESSAGE": "crwdns9194:0crwdne9194:0",
-		"TAGS": "crwdns10402:0crwdne10402:0"
+		"TAGS": "crwdns10402:0crwdne10402:0",
+		"CREATED": "crwdns10559:0crwdne10559:0"
 	},
 	"FORM": {
 		"USERNAME": "crwdns68:0crwdne68:0",
@@ -335,7 +336,8 @@
 			"DEFAULT_INVOICE_TEMPLATE": "crwdns10376:0crwdne10376:0",
 			"DEFAULT_ESTIMATE_TEMPLATE": "crwdns10378:0crwdne10378:0",
 			"DEFAULT_RECEIPT_TEMPLATE": "crwdns10380:0crwdne10380:0",
-			"DEFAULT": "crwdns10382:0crwdne10382:0"
+			"DEFAULT": "crwdns10382:0crwdne10382:0",
+			"INVITATION_EXPIRATION": "crwdns10561:0crwdne10561:0"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "crwdns90:0crwdne90:0",
@@ -505,7 +507,8 @@
 			"TEMPLATES": "crwdns10234:0crwdne10234:0",
 			"INVOICE_TEMPLATE": "crwdns10244:0crwdne10244:0",
 			"ESTIMATE_TEMPLATE": "crwdns10246:0crwdne10246:0",
-			"RECEIPT_TEMPLATE": "crwdns10248:0crwdne10248:0"
+			"RECEIPT_TEMPLATE": "crwdns10248:0crwdne10248:0",
+			"INVITATION_EXPIRATION": "crwdns10563:0crwdne10563:0"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "crwdns2407:0crwdne2407:0",
@@ -2404,6 +2407,13 @@
 			"INVITED": "crwdns2383:0crwdne2383:0",
 			"EXPIRED": "crwdns2385:0crwdne2385:0",
 			"ACCEPTED": "crwdns2387:0crwdne2387:0"
+		},
+		"INVITATION_EXPIRATION_OPTIONS": {
+			"DAY": "crwdns10565:0crwdne10565:0",
+			"WEEK": "crwdns10567:0crwdne10567:0",
+			"TWO_WEEK": "crwdns10569:0crwdne10569:0",
+			"MONTH": "crwdns10571:0crwdne10571:0",
+			"NEVER": "crwdns10573:0crwdne10573:0"
 		}
 	},
 	"INVOICES_PAGE": {
