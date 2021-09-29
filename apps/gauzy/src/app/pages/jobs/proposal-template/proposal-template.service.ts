@@ -3,12 +3,13 @@ import { Injectable } from '@angular/core';
 import { IEmployeeProposalTemplate, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../../../@core/constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ProposalTemplateService {
-	API_URL = 'api/employee-proposal-template';
+	API_URL = `${API_PREFIX}/employee-proposal-template`;
 
 	constructor(private http: HttpClient) {}
 

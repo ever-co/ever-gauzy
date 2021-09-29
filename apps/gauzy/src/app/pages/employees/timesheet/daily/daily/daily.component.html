@@ -202,8 +202,8 @@
 		ngxConfirmDialog
 		[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 		(confirm)="onDeleteConfirm(timeLog)"
+		[nbTooltip]="'TIMESHEET.DELETE' | translate"
 	>
 		<nb-icon icon="trash-2-outline"></nb-icon>
-		{{ 'TIMESHEET.DELETE' | translate }}
 	</button>
 </ng-template>
