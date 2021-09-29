@@ -13,10 +13,6 @@ import { waitUntil } from '../../Base/utils/util';
 import { TimeTrackingForClientPageData } from '../../Base/pagedata/TimeTrackingForClientPageData';
 
 
-const pageLoadTimeout = Cypress.config('pageLoadTimeout');
-
-let projectName = faker.name.jobTitle()
-
 let email = faker.internet.email();
 let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
 let city = faker.address.city();
