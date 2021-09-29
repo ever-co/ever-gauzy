@@ -187,7 +187,8 @@
 		"LAST_UPDATED": "Last Updated",
 		"CREATED_BY": "Created By",
 		"NO_DATA_MESSAGE": "No Data",
-		"TAGS": "Тагове"
+		"TAGS": "Тагове",
+		"CREATED": "Created"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -335,7 +336,8 @@
 			"DEFAULT_INVOICE_TEMPLATE": "Default Invoice Template",
 			"DEFAULT_ESTIMATE_TEMPLATE": "Default Estimate Template",
 			"DEFAULT_RECEIPT_TEMPLATE": "Default Receipt Template",
-			"DEFAULT": "Default Organization"
+			"DEFAULT": "Default Organization",
+			"INVITATION_EXPIRATION": "Invitation Expiration"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -505,7 +507,8 @@
 			"TEMPLATES": "Templates",
 			"INVOICE_TEMPLATE": "Invoice Template",
 			"ESTIMATE_TEMPLATE": "Estimate Template",
-			"RECEIPT_TEMPLATE": "Receipt Template"
+			"RECEIPT_TEMPLATE": "Receipt Template",
+			"INVITATION_EXPIRATION": "Invitation Expiration"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -2404,6 +2407,13 @@
 			"INVITED": "Invited",
 			"EXPIRED": "Expired",
 			"ACCEPTED": "Прието"
+		},
+		"INVITATION_EXPIRATION_OPTIONS": {
+			"DAY": "1 Day",
+			"WEEK": "7 Days",
+			"TWO_WEEK": "14 Days",
+			"MONTH": "30 Days",
+			"NEVER": "Never"
 		}
 	},
 	"INVOICES_PAGE": {
