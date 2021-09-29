@@ -61,7 +61,7 @@
 		"@nebular/security": "^8.0.0",
 		"@nebular/theme": "^8.0.0",
 		"@ng-select/ng-select": "6.1.0",
-		"@ngneat/until-destroy": "^8.0.3",
+		"@ngneat/until-destroy": "^8.1.4",
 		"@ngx-translate/core": "^13.0.0",
 		"@ngx-translate/http-loader": "^6.0.0",
 		"@sentry/angular": "^5.30.0",
