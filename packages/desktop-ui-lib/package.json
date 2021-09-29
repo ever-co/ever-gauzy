@@ -31,7 +31,7 @@
     },
     "peerDependencies": {
         "@angular/core": "^12.2.7",
-        "@nebular/theme": "^7.0.0",
+        "@nebular/theme": "^8.0.0",
         "ngx-electron": "^2.2.0",
         "@angular/animations": "^12.2.7",
         "@angular/common": "^12.2.7",

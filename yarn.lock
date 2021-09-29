@@ -3931,30 +3931,30 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
-"@nebular/auth@^7.0.0":
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-7.0.1.tgz#8f5db05300f1da2a5c2ffd68d86278b41cc2c3a7"
-  integrity sha512-tE15RGhoI3vRxDw6zMSxEh1B72URDurP7Ak6OQV+zqgG9913Qj0znPAQBoeQP9+nHhMYq5NO7yTr47rdi8Ayvg==
+"@nebular/auth@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-8.0.0.tgz#f34dccb80e7d34a4a75baf1a751952935ebdba9a"
+  integrity sha512-2bL4XsyoN3+Hb14fAFvxjnj3I5KX5Xi7QBSquiSfo5u1PDJKCTRA8TVuKmmOqSNJ7Y7ztbA+qR2Q5BY6KXTspg==
 
-"@nebular/bootstrap@^7.0.0":
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/@nebular/bootstrap/-/bootstrap-7.0.1.tgz#c8fe188d5470c8a97cdc929e3dd32091d8435fce"
-  integrity sha512-elqVkbCiXnsgvU8kukcy9+HDGGdNk15VduS3uKDKu8ltSF39Jx6TPstGZbfgFWIx9eJBDCsFzEwqPruRiZPnUA==
+"@nebular/bootstrap@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/bootstrap/-/bootstrap-8.0.0.tgz#248cf67796a3904498dbecd59957f76c01ba5d0a"
+  integrity sha512-XcqSS0A0qTg2ZC3PfmGJ54dEe1W2VK5Vdw2y02DxGPaWe9ZaYCRLOhpeXG5Sckxzo8yPuOmpyg2xAv20PguiUA==
 
-"@nebular/eva-icons@^7.0.0":
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/@nebular/eva-icons/-/eva-icons-7.0.1.tgz#41894bcc7017f8da5c7f2a854cbc3683694831d3"
-  integrity sha512-YaHp5hEbsXEmwnULPKkylLmYBx8n1dlWurXyzR1jGgS7VGX6Snqm1eOd4q2HyqaL/qVhzqHYmzxLTu3u3t4njg==
+"@nebular/eva-icons@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/eva-icons/-/eva-icons-8.0.0.tgz#186bfda564be9521b0584eb23a09e4a1be036bb9"
+  integrity sha512-eUNEQJP5w+XiAW1FyEVneno0qiNKoDZlobkglhdvVR1u7e3D4a5IxwnaKK0Izl/6j6eSs/qoBuzrBkJ4alaNjw==
 
-"@nebular/security@^7.0.0":
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/@nebular/security/-/security-7.0.1.tgz#a1fe52186e746c9888f2337c577ad172b33da0b1"
-  integrity sha512-ljOds45qtcdIzWXIDMwfGeUdGb0E7/ZD5/XLcPik4dEjlivqI2IOpRENP616shLIQuiJ4fKvNkeEMmW9lS5C3Q==
+"@nebular/security@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/security/-/security-8.0.0.tgz#b336210936e30d2dc6f127c6634e23558819555d"
+  integrity sha512-ak/kNqGhu9MuPZfKW+JrvXGyI2QslEfjsnQm3KwjAcx+n9JIYpwBwk+aJhS/R+OOnPWYPL7dhxg8lWi1mBZ8GQ==
 
-"@nebular/theme@^7.0.0":
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-7.0.1.tgz#d2ea22ff85a49fd8c7316f84df5d64ee5fd4ee2a"
-  integrity sha512-CrGbRGL8bc+MJ0FrrDQUfNmigMhNC8SxDXekD9JTEhlp0ySsxIKoQxmk9ewGvK6hEEgr+ivdxkMpo4Eix6kHiA==
+"@nebular/theme@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-8.0.0.tgz#808ba716cd96dc02d14aeec5583daf6d71ddec26"
+  integrity sha512-Lq1a3IgjfU1bqwCrsPQBd3nGmjK61fND+6r4lmXFWDRvXti18k5KMIvzY+KryNsTEhEOyby+V5R16T67MKZs6g==
   dependencies:
     intersection-observer "0.7.0"
 

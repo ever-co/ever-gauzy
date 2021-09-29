@@ -41,7 +41,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		user: User,
 		where?: FindConditions<T>[] | FindConditions<T> | ObjectLiteral
 	): FindConditions<T>[] | FindConditions<T> | ObjectLiteral {
-				
+
+		
 		if (where && Array.isArray(where)) {
 			const w = where as FindConditions<T>[];
 			return w.map((options: FindConditions<T>) => ({
@@ -50,7 +51,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 					id: user.tenantId
 				}
 			}));
-		}		
+		}
+		
 
 		return where
 			? {
