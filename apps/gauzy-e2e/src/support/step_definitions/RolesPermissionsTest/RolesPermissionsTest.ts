@@ -135,7 +135,7 @@ And('User can verify Super admin administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(91, checked);
 	rolesPermissionsPage.verifyState(92, checked);
 	rolesPermissionsPage.verifyState(93, checked);
-	rolesPermissionsPage.verifyState(94, notChecked);
+	rolesPermissionsPage.verifyState(94, checked);
 	rolesPermissionsPage.verifyState(95, checked);
 	rolesPermissionsPage.verifyState(96, checked);
 	rolesPermissionsPage.verifyState(97, checked);
