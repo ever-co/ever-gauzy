@@ -45,6 +45,7 @@ import {
 	InviteAcceptEmployeeCommand,
 	InviteAcceptOrganizationContactCommand,
 	InviteAcceptUserCommand,
+	InviteBulkCreateCommand,
 	InviteOrganizationContactCommand,
 	InviteResendCommand
 } from './commands';
@@ -77,10 +78,8 @@ export class InviteController {
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
-		return this.inviteService.createBulk(
-			entity,
-			request.get('Origin'),
-			languageCode
+		return await this.commandBus.execute(
+			new InviteBulkCreateCommand(entity, request, languageCode)
 		);
 	}
 

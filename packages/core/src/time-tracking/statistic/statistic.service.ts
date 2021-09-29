@@ -1057,7 +1057,8 @@ export class StatisticService {
 							'name',
 							'imageUrl'
 						]),
-						project: _.pick(timeLog.employee.user, ['name'])
+						project: _.pick(timeLog.employee.user, ['name']),
+						employeeId: timeLog.employee.id
 					} as IManualTimesStatistics;
 				}
 			);

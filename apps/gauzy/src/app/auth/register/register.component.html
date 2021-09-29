@@ -50,6 +50,7 @@
 			[attr.aria-invalid]="
 				fullName.invalid && fullName.touched ? true : null
 			"
+			autocomplete="full-name"
 		/>
 		<ng-container *ngIf="fullName.invalid && fullName.touched">
 			<p class="caption status-danger" *ngIf="fullName.errors?.required">
@@ -84,6 +85,7 @@
 			"
 			[required]="getConfigValue('forms.validation.email.required')"
 			[attr.aria-invalid]="email.invalid && email.touched ? true : null"
+			autocomplete="off"
 		/>
 		<ng-container *ngIf="email.invalid && email.touched">
 			<p class="caption status-danger" *ngIf="email.errors?.required">
@@ -120,6 +122,7 @@
 			[attr.aria-invalid]="
 				password.invalid && password.touched ? true : null
 			"
+			autocomplete="off"
 		/>
 		<ng-container *ngIf="password.invalid && password.touched">
 			<p class="caption status-danger" *ngIf="password.errors?.required">
@@ -158,6 +161,7 @@
 			"
 			[required]="getConfigValue('forms.validation.password.required')"
 			[attr.aria-invalid]="rePass.invalid && rePass.touched ? true : null"
+			autocomplete="off"
 		/>
 		<ng-container *ngIf="rePass.invalid && rePass.touched">
 			<p class="caption status-danger" *ngIf="rePass.errors?.required">

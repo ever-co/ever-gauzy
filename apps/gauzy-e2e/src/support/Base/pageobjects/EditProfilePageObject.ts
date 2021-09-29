@@ -2,7 +2,7 @@ export const EditProfilePage = {
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	passwordInputCss: '#password',
-	repeatPasswordInputCss: '#repeatPassword',
+	repeatPasswordInputCss: '[placeholder="Repeat Password"]',
 	emailInputCss: '#email',
 	preferredLanguageCss: '#preferredLanguage',
 	languageSelectCss: 'div > div.form-group > ngx-language-selector > ng-select',

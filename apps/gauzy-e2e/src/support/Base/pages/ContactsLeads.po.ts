@@ -13,7 +13,9 @@ import {
 import { ContactsLeadsPage } from '../pageobjects/ContactsLeadsPageObject';
 
 export const gridBtnExists = () => {
+	cy.intercept('GET', '/api/organization-projects*').as('waitToLoad');
 	verifyElementIsVisible(ContactsLeadsPage.gridButtonCss);
+	cy.wait('@waitToLoad');
 };
 
 export const gridBtnClick = (index) => {

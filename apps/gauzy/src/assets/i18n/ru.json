@@ -187,7 +187,8 @@
 		"LAST_UPDATED": "Последнее обновление",
 		"CREATED_BY": "Создано",
 		"NO_DATA_MESSAGE": "Нет данных",
-		"TAGS": "Теги"
+		"TAGS": "Теги",
+		"CREATED": "Создано"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
@@ -335,7 +336,8 @@
 			"DEFAULT_INVOICE_TEMPLATE": "Шаблон счета по умолчанию",
 			"DEFAULT_ESTIMATE_TEMPLATE": "Стандартный шаблон оценки",
 			"DEFAULT_RECEIPT_TEMPLATE": "Шаблон чека по умолчанию",
-			"DEFAULT": "Организация по умолчанию"
+			"DEFAULT": "Организация по умолчанию",
+			"INVITATION_EXPIRATION": "Срок приглашения истекает"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -505,7 +507,8 @@
 			"TEMPLATES": "Шаблоны",
 			"INVOICE_TEMPLATE": "Шаблон счета",
 			"ESTIMATE_TEMPLATE": "Расчет шаблона",
-			"RECEIPT_TEMPLATE": "Шаблон чека"
+			"RECEIPT_TEMPLATE": "Шаблон чека",
+			"INVITATION_EXPIRATION": "Срок приглашения истекает"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -2404,6 +2407,13 @@
 			"INVITED": "Приглашен",
 			"EXPIRED": "Истёк",
 			"ACCEPTED": "Принято"
+		},
+		"INVITATION_EXPIRATION_OPTIONS": {
+			"DAY": "1 день",
+			"WEEK": "7 дней",
+			"TWO_WEEK": "14 дней",
+			"MONTH": "30 Дней",
+			"NEVER": "Никогда"
 		}
 	},
 	"INVOICES_PAGE": {

@@ -2,7 +2,8 @@ import {
 	clickButton,
 	clickButtonByIndex,
 	verifyElementIsVisible,
-    verifyByText
+    verifyByText,
+	clickButtonDouble
 } from '../utils/util';
 
 import { TimeTrackingForClient } from '../pageobjects/TimeTrackingForClientPageObject';
@@ -25,7 +26,10 @@ export const clientSelectVisible = () => {
 };
 
 export const clickClientSelect = () => {
+	cy.intercept('GET', '/api/tasks/employee/*').as('waitClient');
 	clickButton(TimeTrackingForClient.clientSelectCss);
+	cy.wait('@waitClient');
+	clickButtonDouble(TimeTrackingForClient.clientSelectCss);
 };
 
 export const selectOptionFromDropdown = (index) => {

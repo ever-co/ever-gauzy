@@ -21,13 +21,24 @@ import { monthNames } from '../../@core/utils/date';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { TranslationBaseComponent } from '../../@shared/language-base';
+import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeesService, EmployeeStore, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
-import { EmployeeAverageIncomeComponent, EmployeeAverageExpensesComponent, EmployeeAverageBonusComponent, EmployeeWorkStatusComponent } from './table-components';
+import {
+	EmployeesService,
+	EmployeeStore,
+	ErrorHandlingService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	EmployeeAverageIncomeComponent,
+	EmployeeAverageExpensesComponent,
+	EmployeeAverageBonusComponent,
+	EmployeeWorkStatusComponent
+} from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -201,12 +212,9 @@ export class EmployeesComponent
 	}
 
 	async invite() {
-		const { id: selectedOrganizationId } = this.organization;
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
-				invitationType: InvitationTypeEnum.EMPLOYEE,
-				selectedOrganizationId,
-				selectedOrganization: this.organization
+				invitationType: InvitationTypeEnum.EMPLOYEE
 			}
 		});
 		await dialog.onClose.pipe(first()).toPromise();

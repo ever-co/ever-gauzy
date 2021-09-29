@@ -9,10 +9,19 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmailInviteFormComponent } from '../forms';
 import { TranslationBaseComponent } from '../../language-base';
-import { OrganizationContactService, OrganizationDepartmentsService, OrganizationProjectsService, ToastrService } from '../../../@core/services';
+import {
+	OrganizationContactService,
+	OrganizationDepartmentsService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invite-mutation',
 	templateUrl: './invite-mutation.component.html',
@@ -21,17 +30,28 @@ import { OrganizationContactService, OrganizationDepartmentsService, Organizatio
 export class InviteMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	@Input()
-	invitationType: InvitationTypeEnum;
+	
+	/*
+	* Getter & Setter for InvitationTypeEnum
+	*/
+	_invitationType: InvitationTypeEnum;
+	get invitationType(): InvitationTypeEnum {
+		return this._invitationType;
+	}
+	@Input() set invitationType(value: InvitationTypeEnum) {
+		this._invitationType = value;
+	}
 
-	@Input()
-	selectedOrganizationId: string;
-
-	@Input()
-	selectedOrganization: IOrganization;
-
-	@Input()
-	isSuperAdmin: boolean;
+	/*
+	* Getter & Setter for check Super Admin
+	*/
+	_isSuperAdmin: boolean;
+	get isSuperAdmin(): boolean {
+		return this._isSuperAdmin;
+	}
+	@Input() set isSuperAdmin(value: boolean) {
+		this._isSuperAdmin = value;
+	}
 
 	@ViewChild('emailInviteForm')
 	emailInviteForm: EmailInviteFormComponent;
@@ -39,6 +59,7 @@ export class InviteMutationComponent
 	organizationProjects: IOrganizationProject[] = [];
 	organizationContacts: IOrganizationContact[] = [];
 	organizationDepartments: IOrganizationDepartment[] = [];
+	public organization: IOrganization;
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<InviteMutationComponent>,
@@ -46,21 +67,27 @@ export class InviteMutationComponent
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		public readonly translateService: TranslateService,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.loadOrganizationData();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loadOrganizationData()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async loadOrganizationData() {
-		if (!this.selectedOrganizationId) {
-			this.toastrService.warning('TOASTR.MESSAGE.PROJECT_LOAD');
+		if (!this.organization) {
 			return;
 		}
-
 		try {
 			await this.loadProjects();
 			await this.loadOrganizationContacts();
@@ -71,34 +98,34 @@ export class InviteMutationComponent
 	}
 
 	async loadProjects() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { items = [] } = await this.organizationProjectsService.getAll(
 			[],
-			{
-				organizationId: this.selectedOrganizationId,
-				tenantId: this.selectedOrganization.tenantId
-			}
+			{ organizationId, tenantId }
 		);
 		this.organizationProjects = items;
 	}
 
 	async loadOrganizationContacts() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { items = [] } = await this.organizationContactService.getAll(
 			[],
-			{
-				organizationId: this.selectedOrganizationId,
-				tenantId: this.selectedOrganization.tenantId
-			}
+			{ organizationId, tenantId }
 		);
 		this.organizationContacts = items;
 	}
 
 	async loadDepartments() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { items = [] } = await this.organizationDepartmentsService.getAll(
 			[],
-			{
-				organizationId: this.selectedOrganizationId,
-				tenantId: this.selectedOrganization.tenantId
-			}
+			{ organizationId, tenantId }
 		);
 		this.organizationDepartments = items;
 	}

@@ -43,6 +43,7 @@
 			"
 			[required]="getConfigValue('forms.validation.email.required')"
 			[attr.aria-invalid]="email.invalid && email.touched ? true : null"
+			autocomplete="off"
 		/>
 		<ng-container *ngIf="email.invalid && email.touched">
 			<p class="caption status-danger" *ngIf="email.errors?.required">
@@ -86,6 +87,7 @@
 			[attr.aria-invalid]="
 				password.invalid && password.touched ? true : null
 			"
+			autocomplete="off"
 		/>
 		<ng-container *ngIf="password.invalid && password.touched">
 			<p class="caption status-danger" *ngIf="password.errors?.required">

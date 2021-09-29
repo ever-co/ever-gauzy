@@ -1,11 +1,11 @@
 <div class="row align-items-center">
 	<div class="col-auto pr-0">
-		<div class="image-container {{ size }}">
+		<div class="image-container {{ size }}" (click)="edit(id)">
 			<img class="rounded-circle" type="user" [src]="src" />
 		</div>
 	</div>
 	<div class="col">
-		<div *ngIf="name">{{ name }}</div>
+		<div *ngIf="name" class="name-text" (click)="edit(id)">{{ name }}</div>
 		<div class="text-caption caption" *ngIf="caption">{{ caption }}</div>
 	</div>
 </div>

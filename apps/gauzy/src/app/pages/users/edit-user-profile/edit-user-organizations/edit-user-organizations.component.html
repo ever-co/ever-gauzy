@@ -1,14 +1,19 @@
-<nb-card>
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header>
-		<button
-			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
-			nbButton
-			status="success"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
+		<ng-container *ngIf="!showAddCard">
+			<button
+				(click)="showAddCard = !showAddCard"
+				nbButton
+				status="success"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		</ng-container>
 		<ga-edit-user-organizations-mutation
 			*ngIf="showAddCard"
 			(canceled)="cancel()"
@@ -18,31 +23,34 @@
 	</nb-card-header>
 	<nb-card-body *ngIf="organizations?.length">
 		<div class="ml-3 mb-4">
-			<strong>{{
-				'ORGANIZATIONS_PAGE.EDIT.USER_ORGANIZATIONS'
-					| translate: { name: selectedUserName }
-			}}</strong>
+			<strong>
+				{{
+					'ORGANIZATIONS_PAGE.EDIT.USER_ORGANIZATIONS' | translate: {
+						name: selectedUserName
+					}
+				}}
+			</strong>
 		</div>
-
-		<nb-card *ngFor="let item of organizations">
-			<nb-card-body>
-				<img
-					src="{{ item.imageUrl }}"
-					alt="Smiley face"
-					height="40"
-					width="40"
-					style="margin-right:10px"
-				/>
-				<strong>{{ item.name }}</strong>
-				<nb-actions class="float-right" e="medium">
-					<nb-action
-						(click)="remove(item.id)"
-						class="d-inline pr-0"
-						icon="close"
-					>
-					</nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+		<ng-container *ngFor="let organization of organizations">
+			<nb-card>
+				<nb-card-body>
+					<img
+						[src]="organization.imageUrl"
+						alt="Smiley face"
+						height="40"
+						width="40"
+						style="margin-right:10px"
+					/>
+					<strong>{{ organization.name }}</strong>
+					<nb-actions class="float-right" e="medium">
+						<nb-action
+							(click)="remove(organization.id)"
+							class="d-inline pr-0"
+							icon="close"
+						></nb-action>
+					</nb-actions>
+				</nb-card-body>
+			</nb-card>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
