@@ -49,7 +49,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	}
 
 	async validate(relations, email, token): Promise<EstimateEmail> {
-		return this.findOne({
+		return this.findOneByOptions({
 			relations,
 			where: {
 				email,

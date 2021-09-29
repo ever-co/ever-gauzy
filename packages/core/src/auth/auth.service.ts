@@ -61,7 +61,7 @@ export class AuthService extends SocialAuthService {
 
 				const {
 					organizationId
-				} = await this.userOrganizationService.findOneByConditions({
+				} = await this.userOrganizationService.findOneByOptions({
 					where: {
 						user
 					}
@@ -117,7 +117,7 @@ export class AuthService extends SocialAuthService {
 		let tenant = input.user.tenant;
 
 		if (input.createdById) {
-			const creatingUser = await this.userService.findOneByConditions(
+			const creatingUser = await this.userService.findOneByIdString(
 				input.createdById,
 				{
 					relations: ['tenant']
