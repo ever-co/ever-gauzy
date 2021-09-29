@@ -197,7 +197,7 @@ export class EmployeeController extends CrudController<Employee> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IEmployee> {
 		const { relations = [] } = data;
-		return this.employeeService.findOne(id, {
+		return this.employeeService.findOneByIdString(id, {
 			relations
 		});
 	}
@@ -352,7 +352,7 @@ export class EmployeeController extends CrudController<Employee> {
 	): Promise<Employee> {
 		const { relations = [], useTenant } = data;
 		if (useTenant) {
-			return this.employeeService.findOne(id, {
+			return this.employeeService.findOneByIdString(id, {
 				relations
 			});
 		} else {

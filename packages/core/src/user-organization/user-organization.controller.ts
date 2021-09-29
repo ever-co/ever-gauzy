@@ -117,6 +117,6 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	// @Get()
 	// async findOne(@Query('findInputStr') findInputStr: string): Promise<IUserOrganization> {
 	//     const findInput = JSON.parse(findInputStr);
-	//     return this.userOrganizationService.findOne({ where: findInput });
+	//     return this.userOrganizationService.findOneByIdString({ where: findInput });
 	// }
 }

@@ -299,7 +299,7 @@ export class AggregateOrganizationQueryHandler
 		const employeeIds = [...employeeMap.keys()];
 		const {
 			organization: { bonusType, bonusPercentage }
-		} = await this.employeeService.findOne(employeeIds[0], {
+		} = await this.employeeService.findOneByIdString(employeeIds[0], {
 			relations: ['organization']
 		});
 

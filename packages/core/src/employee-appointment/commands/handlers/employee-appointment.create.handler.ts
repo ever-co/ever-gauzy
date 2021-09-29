@@ -25,11 +25,11 @@ export class EmployeeAppointmentCreateHandler
 
 		const appointment = new EmployeeAppointment();
 		const employee = employeeAppointmentInput.employeeId
-			? await this.employeeService.findOne(
+			? await this.employeeService.findOneByIdString(
 					employeeAppointmentInput.employeeId
 			  )
 			: null;
-		const organization = await this.organizationService.findOne(
+		const organization = await this.organizationService.findOneByIdString(
 			employeeAppointmentInput.organizationId
 		);
 

@@ -75,7 +75,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	async changePassword(id: string, hash: string) {
-		const user = await this.findOne(id);
+		const user = await this.findOneByIdString(id);
 		user.hash = hash;
 		return await this.repository.save(user);
 	}
@@ -89,7 +89,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		...options: any[]
 	): Promise<User> {
 		try {
-			const user = await this.findOne(id);
+			const user = await this.findOneByIdString(id);
 			if (!user) {
 				throw new NotFoundException(`The user was not found`);
 			}
@@ -135,7 +135,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		preferredLanguage: LanguagesEnum
 	): Promise<IUser> {
 		try {
-			const user = await this.findOne(id);
+			const user = await this.findOneByIdString(id);
 			if (!user) {
 				throw new NotFoundException(`The user was not found`);
 			}
@@ -154,7 +154,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		preferredComponentLayout: ComponentLayoutStyleEnum
 	): Promise<IUser> {
 		try {
-			const user = await this.findOne(id);
+			const user = await this.findOneByIdString(id);
 			if (!user) {
 				throw new NotFoundException(`The user was not found`);
 			}

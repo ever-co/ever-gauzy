@@ -19,7 +19,7 @@ export class ProductVariantDeleteHandler
 	): Promise<DeleteResult> {
 		const { productVariantId } = command;
 
-		const productVariant = await this.productVariantService.findOne(
+		const productVariant = await this.productVariantService.findOneByIdString(
 			productVariantId
 		);
 

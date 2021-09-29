@@ -80,7 +80,7 @@ export class UserController extends CrudController<User> {
 	): Promise<User> {
 		const { relations = [] } = data;
 		const id = RequestContext.currentUserId();
-		return await this.userService.findOne(id, {
+		return await this.userService.findOneByIdString(id, {
 			relations
 		});
 	}
@@ -254,7 +254,7 @@ export class UserController extends CrudController<User> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<User> {
 		const { relations } = data;
-		return this.userService.findOne(id, { relations });
+		return this.userService.findOneByIdString(id, { relations });
 	}
 
 	/**

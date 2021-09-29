@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpression } from 'typeorm';
+import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { AccountingTemplateTypeEnum, IAccountingTemplate, IListQueryInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
@@ -180,7 +180,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
-			template = await this.findOne({
+			template = await this.findOneByConditions({
 				languageCode,
 				templateType,
 				organizationId,
@@ -197,14 +197,14 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 				template = record
 			} else {
 				try {
-					template = await this.findOne({
+					template = await this.findOneByConditions({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId,
 						tenantId
 					});
 				} catch (error) {
-					template = await this.findOne({
+					template = await this.findOneByConditions({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId: IsNull(),
@@ -231,7 +231,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 			],
 			where: (qb: SelectQueryBuilder<AccountingTemplate>) => {
 				qb.where(
-					new Brackets((bck: WhereExpression) => { 
+					new Brackets((bck: WhereExpressionBuilder) => { 
 						const tenantId = RequestContext.currentTenantId();
 						const { organizationId, languageCode } = findInput;
 						if (organizationId) {
@@ -250,7 +250,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 					})
 				);
 				qb.orWhere(
-					new Brackets((bck: WhereExpression) => { 
+					new Brackets((bck: WhereExpressionBuilder) => { 
 						bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
 						bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
 					})

@@ -63,7 +63,7 @@ export class ScreenshotCreateHandler
 					file,
 					thumb
 				});
-				return await this._screenshotService.findOne(id);
+				return await this._screenshotService.findOneByIdString(id);
 			}
 			return await this._screenshotService.create({
 				timeSlotId: timeSlot,

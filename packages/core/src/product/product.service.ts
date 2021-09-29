@@ -121,7 +121,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		relations?: string[]
 	): Promise<Product | IProductTranslated> {
 		return await this
-			.findOne({
+			.findOneByOptions({
 				where: { id: id },
 				relations: relations
 			})
@@ -137,12 +137,12 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	}
 
 	async findById(id: string, options: any): Promise<Product> {
-		return await this.findOne(id, options);
+		return await this.findOneByIdString(id, options);
 	}
 
 	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
 		let res = await this.create(<any>productRequest);
-		return await this.findOne(res.id, {
+		return await this.findOneByIdString(res.id, {
 			relations: [
 				'variants',
 				'optionGroups',
@@ -159,7 +159,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		images: IImageAsset[]
 	): Promise<Product> {
 		try {
-			let product = await this.findOne(productId, {
+			let product = await this.findOneByIdString(productId, {
 				relations: ['gallery']
 			});
 			product.gallery = product.gallery.concat(images);
@@ -174,7 +174,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		image: IImageAsset
 	): Promise<Product> {
 		try {
-			let product = await this.findOne(productId);
+			let product = await this.findOneByIdString(productId);
 			product.featuredImage = image;
 			return await this.productRepository.save(product);
 		} catch (err) {
@@ -187,7 +187,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		imageId: string
 	): Promise<Product> {
 		try {
-			let product = await this.findOne(productId, {
+			let product = await this.findOneByIdString(productId, {
 				relations: ['gallery', 'variants']
 			})
 
@@ -211,7 +211,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 
 	async deleteFeaturedImage(productId: string): Promise<Product> {
 		try {
-			let product = await this.findOne(productId);
+			let product = await this.findOneByIdString(productId);
 			product.featuredImage = null;
 			return await this.productRepository.save(product);
 		} catch (err) {

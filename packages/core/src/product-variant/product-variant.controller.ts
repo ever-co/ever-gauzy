@@ -108,7 +108,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IProductVariant> {
-		return this.productVariantService.findOne(id);
+		return this.productVariantService.findOneByIdString(id);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })

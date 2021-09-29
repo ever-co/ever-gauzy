@@ -81,7 +81,7 @@ export class ProposalController extends CrudController<Proposal> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IProposal> {
 		const { relations, findInput } = data;
-		return this.proposalService.findOne(id, {
+		return this.proposalService.findOneByIdString(id, {
 			where: findInput,
 			relations
 		});

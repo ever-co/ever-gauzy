@@ -682,10 +682,10 @@ export class HubstaffService {
 			);
 		} else {
 			const [role, organization] = await Promise.all([
-				await this._roleService.findOne({
+				await this._roleService.findOneByOptions({
 					where: { name: RolesEnum.EMPLOYEE }
 				}),
-				await this._organizationService.findOne({
+				await this._organizationService.findOneByOptions({
 					where: { id: organizationId }
 				})
 			]);
