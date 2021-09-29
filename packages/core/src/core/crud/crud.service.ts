@@ -9,6 +9,7 @@ import {
 	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
+	ObjectID,
 	Repository,
 	SelectQueryBuilder,
 	UpdateResult
@@ -89,7 +90,7 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	public async findOneOrFail(
-		id: string | number | FindOneOptions<T> | FindConditions<T>,
+		id: string|number|Date|ObjectID|FindOneOptions<T>|FindConditions<T>,
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
 		try {
@@ -108,9 +109,10 @@ export abstract class CrudService<T extends BaseEntity>
 			};
 		}
 	}
+	
 
 	public async findOne(
-		id: string | number | FindOneOptions<T> | FindConditions<T>,
+		id: string|number|Date|ObjectID|FindOneOptions<T>|FindConditions<T>,
 		options?: FindOneOptions<T>
 	): Promise<T> {
 		const record = await this.repository.findOne(id as any, options);
