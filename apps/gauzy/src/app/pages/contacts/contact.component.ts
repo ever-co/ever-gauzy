@@ -15,7 +15,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IContact,
-	ICountry
+	ICountry,
+	ContactType
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -144,7 +145,10 @@ export class ContactComponent
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
-				tap(() => this.add()),
+				tap(() => {
+					this.contactType = ContactType.CUSTOMER,
+					this.add();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
