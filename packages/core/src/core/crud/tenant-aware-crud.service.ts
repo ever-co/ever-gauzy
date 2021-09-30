@@ -27,18 +27,33 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		super(repository);
 	}
 
+	private findConditionsWithTenantByUser(
+		user: User		
+	): FindConditions<T>[] | FindConditions<T> | ObjectLiteral | string {		
+		return {
+					tenant: {
+						id: user.tenantId
+					}
+			  };
+	}
+
 	private findConditionsWithTenant(
 		user: User,
-		where?: FindConditions<T> | ObjectLiteral | FindConditions<T>[]
-	): FindConditions<T> | ObjectLiteral | FindConditions<T>[] {
-		if (Array.isArray(where)) {
-			return where.map((options) => ({
-				...options,
-				tenant: {
-					id: user.tenantId
-				}
-			}));
-		}
+		where?: FindConditions<T>[] | FindConditions<T> | ObjectLiteral
+	): FindConditions<T>[] | FindConditions<T> | ObjectLiteral {
+				
+		if (where && Array.isArray(where)) {
+			const wheres: FindConditions<T>[] = [];
+			where.forEach((options: FindConditions<T>) => {
+				wheres.push({
+					...options,
+					tenant: {
+						id: user.tenantId
+					}
+				})
+			});
+			return wheres;
+		}		
 
 		return where
 			? {
@@ -54,30 +69,69 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			  };
 	}
 
-	private findManyWithTenant(
-		filter?: FindManyOptions<T>
-	): FindManyOptions<T> {
+	private findOneWithTenant(
+		filter?: FindOneOptions<T>
+	): FindOneOptions<T> {
+
 		const user = RequestContext.currentUser();
+		
 		if (!user || !user.tenantId) {
 			return filter;
 		}
+		
 		if (!filter) {
 			return {
-				where: this.findConditionsWithTenant(user)
+				where: this.findConditionsWithTenantByUser(user)
 			};
 		}
+		
 		if (!filter.where) {
 			return {
 				...filter,
-				where: this.findConditionsWithTenant(user)
+				where: this.findConditionsWithTenantByUser(user)
 			};
 		}
+		
 		if (filter.where instanceof Object) {
 			return {
 				...filter,
 				where: this.findConditionsWithTenant(user, filter.where)
 			};
 		}
+
+		return filter;
+	}
+
+	private findManyWithTenant(
+		filter?: FindManyOptions<T>
+	): FindManyOptions<T> {
+
+		const user = RequestContext.currentUser();
+		
+		if (!user || !user.tenantId) {
+			return filter;
+		}
+		
+		if (!filter) {
+			return {
+				where: this.findConditionsWithTenantByUser(user)
+			};
+		}
+		
+		if (!filter.where) {
+			return {
+				...filter,
+				where: this.findConditionsWithTenantByUser(user)
+			};
+		}
+		
+		if (filter.where instanceof Object) {
+			return {
+				...filter,
+				where: this.findConditionsWithTenant(user, filter.where)
+			};
+		}
+
 		return filter;
 	}
 
@@ -89,26 +143,102 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		return await super.findAll(this.findManyWithTenant(filter));
 	}
 
-	public async findOneOrFail(
-		id: string | number | FindOneOptions<T> | FindConditions<T>,
+	public async findOneOrFailByIdString(
+		id: string,
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
-		return await super.findOneOrFail(id, this.findManyWithTenant(options));
+		return await super.findOneOrFailByIdString(id, this.findOneWithTenant(options));
 	}
 
-	public async findOne(
-		id: string | number | FindOneOptions<T> | FindConditions<T>,
+	public async findOneOrFailByIdNumber(
+		id: number,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		return await super.findOneOrFailByIdNumber(id, this.findOneWithTenant(options));
+	}
+
+	public async findOneOrFailByOptions(		
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		return await super.findOneOrFailByOptions(this.findOneWithTenant(options));
+	}
+
+	public async findOneOrFailByConditions(
+		id: FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		return await super.findOneOrFailByConditions(id, this.findOneWithTenant(options));
+	}
+
+	/*
+    |--------------------------------------------------------------------------
+    | @FindOne
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Finds first entity that matches given id and options with current tenant.
+	 *
+	 * @param id {string}
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByIdString(
+		id: string,
 		options?: FindOneOptions<T>
 	): Promise<T> {
-		if (typeof id === 'object') {
-			const firstOptions = id as FindOneOptions<T>;
-			return await super.findOne(
-				this.findManyWithTenant(firstOptions),
-				options
-			);
-		}
+		return await super.findOneByIdString(
+			id,
+			this.findOneWithTenant(options)
+		);
+	}
 
-		return await super.findOne(id, this.findManyWithTenant(options));
+	/**
+	 * Finds first entity that matches given id and options with current tenant.
+	 *
+	 * @param id {number}
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByIdNumber(
+		id: number,
+		options?: FindOneOptions<T>
+	): Promise<T> {
+		return await super.findOneByIdNumber(
+			id,
+			this.findOneWithTenant(options)
+		);
+	}
+
+	/**
+	 * Finds first entity that matches given conditions and options with current tenant.
+	 *
+	 * @param id
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByConditions(
+		id: FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<T> {
+		return await super.findOneByConditions(
+			id,
+			this.findOneWithTenant(options)
+		);
+	}
+
+	/**
+	 * Finds first entity that matches given options with current tenant.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByOptions(
+		options: FindOneOptions<T>
+	): Promise<T> {
+		return await super.findOneByOptions(
+			this.findOneWithTenant(options)
+		);
 	}
 
 	public async create(entity: DeepPartial<T>, ...options: any[]): Promise<T> {
@@ -135,7 +265,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		options?: FindOneOptions<T>
 	): Promise<DeleteResult> {
 		try {
-			const record = await this.findOne(criteria, options);
+			let record;
+			if (typeof criteria === 'string') {
+				record = await this.findOneByIdString(criteria, options);
+			} else if (typeof criteria === 'number') {
+				record = await this.findOneByIdNumber(criteria, options);
+			} else {
+				record = await this.findOneByConditions(criteria, options);
+			}
 			if (!record) {
 				throw new NotFoundException(`The requested record was not found`);
 			}

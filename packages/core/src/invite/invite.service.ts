@@ -20,7 +20,7 @@ import {
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import { Brackets, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpression } from 'typeorm';
+import { Brackets, IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
@@ -132,7 +132,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			organizationId
 		);
 		const role: IRole = await this.roleRepository.findOne(roleId);
-		const user: IUser = await this.userService.findOne(invitedById, {
+		const user: IUser = await this.userService.findOneByIdString(invitedById, {
 			relations: ['role']
 		});
 
@@ -267,7 +267,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			organizationId
 		);
 
-		const inviterUser: IUser = await this.userService.findOne(invitedById);
+		const inviterUser: IUser = await this.userService.findOneByIdString(invitedById);
 
 		const inviteExpiryPeriod =
 			organization && organization.inviteExpiryPeriod
@@ -304,7 +304,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return await this.repository.findOne({
 			where: (query: SelectQueryBuilder<Invite>) => {
 				query.andWhere(
-					new Brackets((qb: WhereExpression) => { 
+					new Brackets((qb: WhereExpressionBuilder) => { 
 						qb.where(
 							[
 								{
@@ -318,7 +318,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					})
 				);
 				query.andWhere(
-					new Brackets((qb: WhereExpression) => { 
+					new Brackets((qb: WhereExpressionBuilder) => { 
 						qb.andWhere(`"${query.alias}"."email" = :email`, { email });
 						qb.andWhere(`"${query.alias}"."token" = :token`, { token });
 						qb.andWhere(`"${query.alias}"."status" = :status`, { status: InviteStatusEnum.INVITED });

@@ -108,7 +108,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IImageAsset> {
-		return this.imageAssetService.findOne(id);
+		return this.imageAssetService.findOneByIdString(id);
 	}
 
 	/**

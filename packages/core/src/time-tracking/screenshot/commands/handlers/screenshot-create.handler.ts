@@ -27,7 +27,7 @@ export class ScreenshotCreateHandler
 
 			let {
 				record: timeSlot
-			} = await this._timeSlotService.findOneOrFail({
+			} = await this._timeSlotService.findOneOrFailByOptions({
 				where: {
 					startedAt: new Date(
 						moment(activityTimestamp).format('YYYY-MM-DD HH:mm:ss')
@@ -51,7 +51,7 @@ export class ScreenshotCreateHandler
 
 			const {
 				record: screenshot
-			} = await this._screenshotService.findOneOrFail({
+			} = await this._screenshotService.findOneOrFailByOptions({
 				where: {
 					timeSlotId: timeSlot
 				}
@@ -63,7 +63,7 @@ export class ScreenshotCreateHandler
 					file,
 					thumb
 				});
-				return await this._screenshotService.findOne(id);
+				return await this._screenshotService.findOneByIdString(id);
 			}
 			return await this._screenshotService.create({
 				timeSlotId: timeSlot,

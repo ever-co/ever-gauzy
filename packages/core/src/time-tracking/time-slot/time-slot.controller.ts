@@ -48,7 +48,7 @@ export class TimeSlotController {
 		@Param('id', UUIDValidationPipe) { id },
 		@Query() option: FindOneOptions
 	): Promise<TimeSlot> {
-		return await this.timeSlotService.findOne(id, option);
+		return await this.timeSlotService.findOneByIdString(id, option);
 	}
 
 	@ApiOperation({ summary: 'Create Time Slot' })

@@ -233,7 +233,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IWarehouse> {
 		const { relations = [], findInput = null } = data;
-		return await this.warehouseService.findOne(id, {
+		return await this.warehouseService.findOneByIdString(id, {
 			where: {
 				...findInput
 			},

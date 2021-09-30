@@ -31,7 +31,7 @@ export abstract class FindRecurringExpenseStartDateUpdateTypeHandler<
 	): Promise<IStartUpdateTypeInfo> {
 		const { newStartDate, recurringExpenseId } = input;
 
-		const originalExpense = await this.crudService.findOne(
+		const originalExpense = await this.crudService.findOneByIdString(
 			recurringExpenseId
 		);
 

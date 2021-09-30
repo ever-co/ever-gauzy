@@ -31,7 +31,7 @@ export class OrganizationCreateHandler
 		const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;
 
 		//1. Get roleId for Super Admin user of the Tenant
-		const { id: roleId } = await this.roleService.findOne({
+		const { id: roleId } = await this.roleService.findOneByOptions({
 			where: {
 				name: RolesEnum.SUPER_ADMIN,
 				tenantId: RequestContext.currentTenantId()
@@ -126,6 +126,6 @@ export class OrganizationCreateHandler
 			);
 		}
 
-		return await this.organizationService.findOne(id);
+		return await this.organizationService.findOneByIdString(id);
 	}
 }

@@ -139,7 +139,7 @@ export class EmployeeStatisticsService {
 
 		const {
 			organization: { bonusType, bonusPercentage }
-		} = await this.employeeService.findOne(employeeId, {
+		} = await this.employeeService.findOneByIdString(employeeId, {
 			relations: ['organization']
 		});
 
@@ -345,7 +345,7 @@ export class EmployeeStatisticsService {
 		organizationId: string
 	): Promise<Map<string, IMonthAggregatedSplitExpense>> => {
 		// 1 Get Employee's Organization
-		const employee = await this.employeeService.findOne({
+		const employee = await this.employeeService.findOneByOptions({
 			where: {
 				id: employeeId,
 				organizationId
@@ -417,7 +417,7 @@ export class EmployeeStatisticsService {
 		organizationId: string
 	) => {
 		// 1 Get Employee's Organization
-		const employee = await this.employeeService.findOne({
+		const employee = await this.employeeService.findOneByOptions({
 			where: {
 				id: employeeId,
 				organizationId

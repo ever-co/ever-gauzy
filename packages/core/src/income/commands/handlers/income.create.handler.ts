@@ -46,9 +46,9 @@ export class IncomeCreateHandler
 
 		const income = new Income();
 		const employee = input.employeeId
-			? await this.employeeService.findOne(input.employeeId)
+			? await this.employeeService.findOneByIdString(input.employeeId)
 			: null;
-		const organization = await this.organizationService.findOne(
+		const organization = await this.organizationService.findOneByIdString(
 			input.organizationId
 		);
 

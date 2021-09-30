@@ -33,7 +33,7 @@ export class InviteOrganizationContactHandler
 			input: { id, originalUrl, inviterUser, languageCode }
 		} = command;
 
-		const organizationContact: IOrganizationContact = await this.organizationContactService.findOne(
+		const organizationContact: IOrganizationContact = await this.organizationContactService.findOneByIdString(
 			id
 		);
 
@@ -52,7 +52,7 @@ export class InviteOrganizationContactHandler
 			);
 		}
 
-		const { id: roleId } = await this.roleService.findOne({
+		const { id: roleId } = await this.roleService.findOneByOptions({
 			where: { name: RolesEnum.VIEWER }
 		});
 

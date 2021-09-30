@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Brackets, Repository, SelectQueryBuilder, WhereExpression } from 'typeorm';
+import { Between, Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { ITimesheet } from '@gauzy/contracts';
 import { Employee, Timesheet } from './../../../../core/entities/internal';
@@ -49,7 +49,7 @@ export class TimesheetFirstOrCreateHandler
 		let timesheet = await this.timeSheetRepository.findOne({
 			where: (query: SelectQueryBuilder<Timesheet>) => {
 				query.andWhere(
-					new Brackets((qb: WhereExpression) => { 
+					new Brackets((qb: WhereExpressionBuilder) => { 
 						qb.where(
 							[
 								{
@@ -69,7 +69,7 @@ export class TimesheetFirstOrCreateHandler
 					})
 				);
 				query.andWhere(
-					new Brackets((qb: WhereExpression) => { 
+					new Brackets((qb: WhereExpressionBuilder) => { 
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 						qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });

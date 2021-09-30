@@ -18,7 +18,7 @@ export class ImportRecordFindOrFailHandler
 	): Promise<ITryRequest> {
 		try {
 			const { input = [] } = event; 
-			return await this._importRecordService.findOneOrFail({
+			return await this._importRecordService.findOneOrFailByOptions({
 				where: input
 			});
 		} catch (error) {

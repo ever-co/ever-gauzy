@@ -206,7 +206,7 @@ export class TimeLogController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query() options: FindOneOptions
 	): Promise<ITimeLog> {
-		return this.timeLogService.findOne(id, options);
+		return this.timeLogService.findOneByIdString(id, options);
 	}
 
 	@ApiOperation({ summary: 'Add manual time' })

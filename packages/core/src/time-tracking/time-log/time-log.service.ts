@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder, Brackets, WhereExpression } from 'typeorm';
+import { Repository, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -531,13 +531,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
-			new Brackets((qb: WhereExpression) => {
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
 			})
 		);
 		query.andWhere(
-			new Brackets((qb: WhereExpression) => {
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
 			})
@@ -597,19 +597,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
-			new Brackets((qb: WhereExpression) => {
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
 			})
 		);
 		query.andWhere(
-			new Brackets((qb: WhereExpression) => {
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(`"organizationContact"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"organizationContact"."tenantId" =:tenantId`, { tenantId });
 			})
 		);
 		query.andWhere(
-			new Brackets((qb: WhereExpression) => {
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
 			})

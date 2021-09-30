@@ -38,7 +38,7 @@ export class IntegrationTenantController {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IIntegrationTenant> {
 		const { relations } = data;
-		return this._integrationTenantService.findOne(id, {
+		return this._integrationTenantService.findOneByIdString(id, {
 			relations
 		});
 	}

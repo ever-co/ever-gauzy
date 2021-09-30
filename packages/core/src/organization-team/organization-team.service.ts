@@ -50,10 +50,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			managers: managerIds
 		} = entity;
 		try {
-			const { tenantId } = await this.organizationService.findOne(
+			const { tenantId } = await this.organizationService.findOneByIdString(
 				organizationId
 			);
-			const role = await this.roleService.findOne({
+			const role = await this.roleService.findOneByOptions({
 				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
 			});
 			const employees = await this.employeeRepository.findByIds(
@@ -97,11 +97,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			managers: managerIds
 		} = entity;
 		try {
-			const { tenantId } = await this.organizationService.findOne(
+			const { tenantId } = await this.organizationService.findOneByIdString(
 				organizationId
 			);
 
-			const role = await this.roleService.findOne({
+			const role = await this.roleService.findOneByOptions({
 				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
 			});
 			const employees = await this.employeeRepository.findByIds(
@@ -120,7 +120,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				memberIds
 			);
 
-			const organizationTeam = await this.findOne(id);
+			const organizationTeam = await this.findOneByIdString(id);
 			this.repository.merge(organizationTeam, { name, tags });
 
 			return this.repository.save(organizationTeam);
@@ -153,7 +153,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		let employee: any = { id: undefined };
 		let role;
 		try {
-			employee = await this.employeeService.findOne({
+			employee = await this.employeeService.findOneByOptions({
 				where: {
 					user: { id: RequestContext.currentUserId() }
 				}
@@ -163,7 +163,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		try {
 			const roleId = RequestContext.currentRoleId();
 			if (roleId) {
-				role = await this.roleService.findOne(roleId);
+				role = await this.roleService.findOneByIdString(roleId);
 			}
 		} catch (e) {}
 

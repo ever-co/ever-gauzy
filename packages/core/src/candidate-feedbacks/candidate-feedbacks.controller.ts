@@ -181,7 +181,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<ICandidateFeedback> {
-		return this.candidateFeedbacksService.findOne(id);
+		return this.candidateFeedbacksService.findOneByIdString(id);
 	}
 
 	/**
