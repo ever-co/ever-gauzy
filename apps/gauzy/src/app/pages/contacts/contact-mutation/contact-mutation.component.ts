@@ -280,7 +280,7 @@ export class ContactMutationComponent
 							: OrganizationContactBudgetTypeEnum.HOURS,
 			budget: this.organizationContact 
 						? this.organizationContact.budget
-						: ''
+						: null
 		});
 		this.budgetForm.updateValueAndValidity();
 
