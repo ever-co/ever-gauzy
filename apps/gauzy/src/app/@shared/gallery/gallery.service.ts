@@ -1,10 +1,11 @@
 import { Injectable, OnInit, OnDestroy, Input } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Router, NavigationStart } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as _ from 'underscore';
 import { GalleryItem } from './gallery.directive';
+import { HttpClient } from '@angular/common/http';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({
@@ -22,7 +23,10 @@ export class GalleryService implements OnInit, OnDestroy {
 		return this._items.asObservable();
 	}
 
-	constructor(private router: Router) {}
+	constructor(
+		private router: Router, 
+		private http: HttpClient
+	) {}
 
 	ngOnInit(): void {
 		this.router.events
@@ -84,6 +88,15 @@ export class GalleryService implements OnInit, OnDestroy {
 	clearGallery() {
 		this.dataStore = [];
 		this._items.next(this.dataStore);
+	}
+
+	/*
+	 * Convert blob data from file url
+	 */
+	downloadFile(url: string): Observable<Blob> {
+		return this.http.get(url, {
+		  responseType: 'blob'
+		});
 	}
 
 	ngOnDestroy(): void {}
