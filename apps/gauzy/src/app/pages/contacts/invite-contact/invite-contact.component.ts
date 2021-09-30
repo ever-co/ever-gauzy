@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -25,7 +25,8 @@ export class InviteContactComponent
 		private readonly fb: FormBuilder,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly usersService: UsersService,
-		private readonly inviteService: InviteService
+		private readonly inviteService: InviteService,
+		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -81,6 +82,10 @@ export class InviteContactComponent
 		);
 	}
 
+	ngAfterViewInit() {
+		this.cdr.detectChanges();
+	}
+	
 	closeDialog(organizationContact?) {
 		this.dialogRef.close(organizationContact);
 	}
