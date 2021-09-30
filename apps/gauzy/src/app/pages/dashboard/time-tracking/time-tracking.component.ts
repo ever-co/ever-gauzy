@@ -73,7 +73,7 @@ export class TimeTrackingComponent
 	isAllowedMembers: boolean;
 
 	private autoRefresh$: Subscription;
-	autoRefresh: boolean = false;
+	autoRefresh: boolean = true;
 
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
@@ -103,7 +103,7 @@ export class TimeTrackingComponent
 			.subscribe();
 		this.logs$
 			.pipe(
-				debounceTime(800),
+				debounceTime(500),
 				tap(() => this.getStatistics()),
 				untilDestroyed(this)
 			)
@@ -127,6 +127,7 @@ export class TimeTrackingComponent
 
 					this.logs$.next();
 				}),
+				tap(() => this.setAutoRefresh(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -149,7 +150,10 @@ export class TimeTrackingComponent
 		}
 	}
 
-	setAutoRefresh(value) {
+	setAutoRefresh(value: boolean) {
+		if (this.autoRefresh$) {
+			this.autoRefresh$.unsubscribe();
+		}
 		if (value) {
 			this.autoRefresh$ = timer(0, 60000)
 				.pipe(
@@ -158,10 +162,6 @@ export class TimeTrackingComponent
 					untilDestroyed(this)
 				)
 				.subscribe();
-		} else {
-			if (this.autoRefresh$) {
-				this.autoRefresh$.unsubscribe();
-			}
 		}
 	}
 
