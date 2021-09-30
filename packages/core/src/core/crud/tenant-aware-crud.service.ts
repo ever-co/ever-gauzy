@@ -43,13 +43,16 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	): FindConditions<T>[] | FindConditions<T> | ObjectLiteral {
 				
 		if (where && Array.isArray(where)) {
-			const w = where as FindConditions<T>[];
-			return w.map((options: FindConditions<T>) => ({
-				...options,
-				tenant: {
-					id: user.tenantId
-				}
-			}));
+			const wheres: FindConditions<T>[] = [];
+			where.forEach((options: FindConditions<T>) => {
+				wheres.push({
+					...options,
+					tenant: {
+						id: user.tenantId
+					}
+				})
+			});
+			return wheres;
 		}		
 
 		return where
