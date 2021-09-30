@@ -17,6 +17,8 @@ import {
 import { EstimatesPage } from '../pageobjects/EstimatesPageObject';
 
 export const gridBtnExists = () => {
+	cy.intercept('GET', '/api/invoices/*').as('waitUserOrganization');
+	cy.wait('@waitUserOrganization');
 	verifyElementIsVisible(EstimatesPage.gridButtonCss);
 };
 
