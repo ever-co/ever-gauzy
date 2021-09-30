@@ -53,7 +53,7 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 			]
 		});
 
-		const organization = await this.organizationService.findOne({
+		const organization = await this.organizationService.findOneByConditions({
 			id: orgId
 		});
 

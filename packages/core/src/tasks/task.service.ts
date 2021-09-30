@@ -28,7 +28,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const { where : { organizationId, employeeId, projectId, status, title, organizationSprintId = null } } = filter;
 
 		//If user is not an employee, then this will return 404
-		const employee = await this.employeeService.findOne({
+		const employee = await this.employeeService.findOneByOptions({
 			where: {
 				user: { id: RequestContext.currentUser().id }
 			}
@@ -182,7 +182,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		let employee: IEmployee;
 		let role;
 		try {
-			employee = await this.employeeService.findOne({
+			employee = await this.employeeService.findOneByOptions({
 				where: {
 					user: { id: RequestContext.currentUser().id }
 				}
@@ -192,7 +192,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			const roleId = RequestContext.currentUser().roleId;
 			if (roleId) {
-				role = await this.roleService.findOne(roleId);
+				role = await this.roleService.findOneByIdString(roleId);
 			}
 		} catch (e) {}
 		

@@ -30,7 +30,7 @@ export class PermissionGuard implements CanActivate {
 				role: string;
 			};
 
-			const user = await this.userService.findOne(id, {
+			const user = await this.userService.findOneByIdString(id, {
 				relations: ['role', 'role.rolePermissions']
 			});
 

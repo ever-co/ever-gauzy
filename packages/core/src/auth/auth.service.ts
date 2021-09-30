@@ -29,7 +29,7 @@ export class AuthService extends SocialAuthService {
 	}
 
 	async login(findObj: any, password: string): Promise<IAuthResponse | null> {
-		const user = await this.userService.findOne(findObj, {
+		const user = await this.userService.findOneByConditions(findObj, {
 			relations: ['role', 'role.rolePermissions', 'employee'],
 			order: {
 				createdAt: 'DESC'
@@ -50,7 +50,7 @@ export class AuthService extends SocialAuthService {
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<{ id: string; token: string } | null> {
-		const user = await this.userService.findOne(findObj, {
+		const user = await this.userService.findOneByConditions(findObj, {
 			relations: ['role', 'employee']
 		});
 
@@ -61,7 +61,7 @@ export class AuthService extends SocialAuthService {
 
 				const {
 					organizationId
-				} = await this.userOrganizationService.findOne({
+				} = await this.userOrganizationService.findOneByOptions({
 					where: {
 						user
 					}
@@ -117,7 +117,7 @@ export class AuthService extends SocialAuthService {
 		let tenant = input.user.tenant;
 
 		if (input.createdById) {
-			const creatingUser = await this.userService.findOne(
+			const creatingUser = await this.userService.findOneByIdString(
 				input.createdById,
 				{
 					relations: ['tenant']
@@ -253,7 +253,7 @@ export class AuthService extends SocialAuthService {
 
 	async createToken(user: Partial<User>): Promise<{ token: string }> {
 		if (!user.role || !user.employee) {
-			user = await this.userService.findOne(user.id, {
+			user = await this.userService.findOneByIdString(user.id, {
 				relations: ['role', 'role.rolePermissions', 'employee']
 			});
 		}

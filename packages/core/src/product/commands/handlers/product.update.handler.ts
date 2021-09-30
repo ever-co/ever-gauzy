@@ -147,7 +147,7 @@ export class ProductUpdateHandler
 
 						let existingOption = isNewOption
 							? null
-							: await this.productOptionService.findOne(
+							: await this.productOptionService.findOneByIdString(
 									option.id
 							  );
 
@@ -191,7 +191,7 @@ export class ProductUpdateHandler
 					/**
 					 * save group translations.
 					 */
-					let existingGroup = await this.productOptionsGroupService.findOne(
+					let existingGroup = await this.productOptionsGroupService.findOneByIdString(
 						group.id
 					);
 

@@ -410,7 +410,7 @@ export class UpworkService {
 					const tenantId = RequestContext.currentTenantId();
 					const {
 						record: integrationMap
-					} = await this._integrationMapService.findOneOrFail({
+					} = await this._integrationMapService.findOneOrFailByOptions({
 						where: {
 							sourceId,
 							entity: IntegrationEntity.PROJECT,
@@ -746,7 +746,7 @@ export class UpworkService {
 				minutes.map(async (minute) => {
 					const {
 						record: findTimeSlot
-					} = await this._timeSlotService.findOneOrFail({
+					} = await this._timeSlotService.findOneOrFailByOptions({
 						where: {
 							employeeId: employeeId,
 							startedAt: moment
@@ -941,7 +941,7 @@ export class UpworkService {
 		config: IUpworkApiConfig
 	) {
 		const tenantId = RequestContext.currentTenantId();
-		const { record } = await this._integrationMapService.findOneOrFail({
+		const { record } = await this._integrationMapService.findOneOrFailByOptions({
 			where: {
 				sourceId: providerRefernceId,
 				entity: IntegrationEntity.EMPLOYEE,
@@ -961,7 +961,7 @@ export class UpworkService {
 
 	async syncEmployee({ integrationId, user, organizationId }) {
 		const { reference: userId, email, info } = user;
-		const { record } = await this._userService.findOneOrFail({
+		const { record } = await this._userService.findOneOrFailByOptions({
 			where: { email: email }
 		});
 
@@ -975,10 +975,10 @@ export class UpworkService {
 			);
 		} else {
 			const [role, organization] = await Promise.all([
-				await this._roleService.findOne({
+				await this._roleService.findOneByOptions({
 					where: { name: RolesEnum.EMPLOYEE }
 				}),
-				await this._organizationService.findOne({
+				await this._organizationService.findOneByOptions({
 					where: { id: organizationId }
 				})
 			]);
@@ -1023,7 +1023,7 @@ export class UpworkService {
 		client
 	): Promise<OrganizationContact> {
 		const { company_id: sourceId, company_name: name } = client;
-		const { record } = await this._orgClientService.findOneOrFail({
+		const { record } = await this._orgClientService.findOneOrFailByOptions({
 			where: {
 				name,
 				organizationId: organizationId
@@ -1140,7 +1140,7 @@ export class UpworkService {
 					} = row;
 					const {
 						record: category
-					} = await this._expenseCategoryService.findOneOrFail({
+					} = await this._expenseCategoryService.findOneOrFailByOptions({
 						where: {
 							name: ExpenseCategoriesEnum.SERVICE_FEE,
 							organizationId
@@ -1149,7 +1149,7 @@ export class UpworkService {
 
 					const {
 						record: vendor
-					} = await this._orgVendorService.findOneOrFail({
+					} = await this._orgVendorService.findOneOrFailByOptions({
 						where: {
 							name: OrganizationVendorEnum.UPWORK,
 							organizationId
@@ -1158,7 +1158,7 @@ export class UpworkService {
 
 					const {
 						record: integrationMap
-					} = await this._integrationMapService.findOneOrFail({
+					} = await this._integrationMapService.findOneOrFailByOptions({
 						where: {
 							integrationId,
 							sourceId: reference,
@@ -1249,7 +1249,7 @@ export class UpworkService {
 			//sync upwork contract client
 			await this.syncClient(integrationId, organizationId, row);
 
-			const { record: income } = await this._incomeService.findOneOrFail({
+			const { record: income } = await this._incomeService.findOneOrFailByOptions({
 				where: {
 					employeeId,
 					clientId,
@@ -1263,7 +1263,7 @@ export class UpworkService {
 
 			let integratedIncome;
 			if (income) {
-				const findIntegration = await this._integrationMapService.findOneOrFail(
+				const findIntegration = await this._integrationMapService.findOneOrFailByOptions(
 					{
 						where: {
 							gauzyId: income.id,
@@ -1506,7 +1506,7 @@ export class UpworkService {
 						}
 
 						const tenantId = RequestContext.currentTenantId();
-						const integrationMap = await this._integrationMapService.findOneOrFail(
+						const integrationMap = await this._integrationMapService.findOneOrFailByOptions(
 							{
 								where: {
 									sourceId,

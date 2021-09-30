@@ -25,7 +25,7 @@ export class ProductDeleteHandler
 	): Promise<DeleteResult> {
 		const { productId } = command;
 
-		const product = await this.productService.findOne({
+		const product = await this.productService.findOneByOptions({
 			where: { id: productId },
 			relations: ['variants', 'optionGroups']
 		});

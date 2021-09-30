@@ -17,7 +17,7 @@ export class IntegrationEntitySettingTiedUpdateHandler
 	): Promise<any> {
 		const { input, integrationId } = command;
 
-		await this._integrationTenantService.findOne(integrationId);
+		await this._integrationTenantService.findOneByIdString(integrationId);
 		return await this.integrationEntitySettingTiedService.bulkUpdateOrCreate(input);
 	}
 }

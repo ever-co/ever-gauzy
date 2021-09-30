@@ -332,7 +332,7 @@ export class ProductController extends CrudController<Product> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Product> {
 		const { relations = [], findInput = null } = data;
-		return this.productService.findOne(id, {
+		return this.productService.findOneByIdString(id, {
 			relations,
 			where: findInput
 		});

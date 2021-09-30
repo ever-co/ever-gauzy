@@ -22,12 +22,12 @@ export class EmployeeAppointmentUpdateHandler
 
 		const appointment = new EmployeeAppointment();
 		const employee = employeeAppointmentUpdateRequest.employeeId
-			? await this.employeeService.findOne(
+			? await this.employeeService.findOneByIdString(
 					employeeAppointmentUpdateRequest.employeeId
 			  )
 			: null;
 		const organization = employeeAppointmentUpdateRequest.organizationId
-			? await this.organizationService.findOne(
+			? await this.organizationService.findOneByIdString(
 					employeeAppointmentUpdateRequest.organizationId
 			  )
 			: null;

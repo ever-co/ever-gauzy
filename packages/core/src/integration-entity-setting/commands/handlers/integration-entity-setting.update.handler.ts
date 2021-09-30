@@ -18,7 +18,7 @@ export class IntegrationEntitySettingUpdateHandler
 	): Promise<IIntegrationEntitySetting[]> {
 		const { input, integrationId } = command;
 		
-		await this._integrationTenantService.findOne(integrationId);
+		await this._integrationTenantService.findOneByIdString(integrationId);
 		return await this._integrationEntitySettingService.bulkUpdateOrCreate(input);
 	}
 }

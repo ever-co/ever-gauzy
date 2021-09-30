@@ -17,7 +17,7 @@ export class MerchantService extends TenantAwareCrudService<Merchant> {
 		id: string,
 		relations: string[]
 	): Promise<IMerchant> {
-        return await this.findOne(id, { relations });
+        return await this.findOneByIdString(id, { relations });
     }
 
     async findAllMerchants(

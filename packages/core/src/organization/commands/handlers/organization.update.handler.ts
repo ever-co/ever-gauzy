@@ -20,7 +20,7 @@ export class OrganizationUpdateHandler
 		id: string,
 		input: IOrganizationUpdateInput
 	): Promise<IOrganization> {
-		const organization: IOrganization = await this.organizationService.findOne(
+		const organization: IOrganization = await this.organizationService.findOneByIdString(
 			id
 		);
 		if (organization) {
@@ -50,6 +50,6 @@ export class OrganizationUpdateHandler
 			});
 		}
 		
-		return await this.organizationService.findOne(id);
+		return await this.organizationService.findOneByIdString(id);
 	}
 }

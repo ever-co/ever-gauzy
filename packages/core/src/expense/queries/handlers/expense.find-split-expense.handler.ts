@@ -26,7 +26,7 @@ export class FindSplitExpenseHandler
 			findInput: { relations, filterDate, employeeId }
 		} = query;
 
-		const employee = await this.employeeService.findOne({
+		const employee = await this.employeeService.findOneByOptions({
 			where: {
 				id: employeeId
 			},

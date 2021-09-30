@@ -153,7 +153,7 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IEmployeeAppointment> {
-		return this.employeeAppointmentService.findOne(id);
+		return this.employeeAppointmentService.findOneByIdString(id);
 	}
 
 	/**

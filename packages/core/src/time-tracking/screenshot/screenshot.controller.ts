@@ -96,6 +96,6 @@ export class ScreenshotController {
 		const screenshot = await this.screenshotService.create(entity);
 		console.log(`Screenshot Created API:`, screenshot);
 
-		return this.screenshotService.findOne(screenshot.id);
+		return this.screenshotService.findOneByIdString(screenshot.id);
 	}
 }

@@ -62,7 +62,7 @@ export class TenantService extends CrudService<Tenant> {
 		);
 
 		//4. Find SUPER_ADMIN role to relative tenant.
-		const role = await this.roleService.findOne({
+		const role = await this.roleService.findOneByConditions({
 			tenant,
 			name: RolesEnum.SUPER_ADMIN
 		});

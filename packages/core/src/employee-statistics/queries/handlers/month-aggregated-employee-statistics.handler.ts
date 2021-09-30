@@ -380,7 +380,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	) {
 		const {
 			organization: { bonusType, bonusPercentage }
-		} = await this.employeeService.findOne(input.employeeId, {
+		} = await this.employeeService.findOneByIdString(input.employeeId, {
 			relations: ['organization']
 		});
 		statisticsMap.forEach((stat) => {

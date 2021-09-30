@@ -85,7 +85,7 @@ export abstract class CrudController<T extends BaseEntity> {
 		@Param('id', UUIDValidationPipe) id: string,
 		...options: any[]
 	): Promise<T> {
-		return this.crudService.findOne(id);
+		return this.crudService.findOneByIdString(id);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

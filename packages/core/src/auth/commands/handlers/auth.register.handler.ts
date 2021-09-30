@@ -24,7 +24,7 @@ export class AuthRegisterHandler
 				throw new BadRequestException()
 			};
 
-			const { role } = await this.userService.findOne(input.createdById, {
+			const { role } = await this.userService.findOneByIdString(input.createdById, {
 				relations: ['role']
 			});
 

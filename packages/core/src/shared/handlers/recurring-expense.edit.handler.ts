@@ -28,7 +28,7 @@ export abstract class RecurringExpenseEditHandler<
 		id: string,
 		input: IRecurringExpenseEditInput
 	): Promise<any> {
-		const originalExpense: any = await this.crudService.findOne(id);
+		const originalExpense: any = await this.crudService.findOneByIdString(id);
 		const { startDateUpdateType } = input;
 
 		switch (startDateUpdateType) {
@@ -277,7 +277,7 @@ export abstract class RecurringExpenseEditHandler<
 		const inputEndDate = new Date(year, month, 1);
 
 		try {
-			const expense = await this.crudService.findOne({
+			const expense = await this.crudService.findOneByOptions({
 				where: [
 					{
 						parentRecurringExpenseId: parentRecurringExpenseId,

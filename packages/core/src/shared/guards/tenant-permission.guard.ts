@@ -48,7 +48,7 @@ export class TenantPermissionGuard
 			context.getHandler()
 		);
 		if (permissions) {
-			const tenant = await this.tenantService.findOne(currentTenantId, {
+			const tenant = await this.tenantService.findOneByIdString(currentTenantId, {
 				relations: ['rolePermissions']
 			});
 			isAuthorized = !!tenant.rolePermissions.find(
