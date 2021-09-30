@@ -77,7 +77,7 @@ export class ContactComponent
 	/*
 	* Getter & Setter for contact type
 	*/
-	_contactType: string;
+	_contactType: string = ContactType.CUSTOMER;
 	get contactType(): string {
 		return this._contactType;
 	}
@@ -145,10 +145,7 @@ export class ContactComponent
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
-				tap(() => {
-					this.contactType = ContactType.CUSTOMER,
-					this.add();
-				}),
+				tap(() => this.add()),
 				untilDestroyed(this)
 			)
 			.subscribe();
