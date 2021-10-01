@@ -8,6 +8,7 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
 import { CrudController } from './../core/crud';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
@@ -15,12 +16,16 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { IPagination, ITag, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe } from './../shared/pipes';
+import { TagListCommand } from './commands';
 
 @ApiTags('Tags')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class TagController extends CrudController<Tag> {
-	constructor(private readonly tagService: TagService) {
+	constructor(
+		private readonly tagService: TagService,
+		private readonly commandBus: CommandBus
+	) {
 		super(tagService);
 	}
 
@@ -36,6 +41,7 @@ export class TagController extends CrudController<Tag> {
 		const { relations, findInput } = data;
 		return this.tagService.findTagsByOrgLevel(relations, findInput);
 	}
+	
 	@Get('getByTenantId')
 	async getAllTagsByTenantLevel(
 		@Query('data', ParseJsonPipe) data: any
@@ -61,6 +67,16 @@ export class TagController extends CrudController<Tag> {
 			where: findInput,
 			relations
 		});
+	}
+
+	@Get('list')
+	async getTagsList(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<ITag>> {
+		const { relations, findInput } = data;
+		return await this.commandBus.execute(
+			new TagListCommand(findInput, relations)
+		);
 	}
 
 	@UseGuards(PermissionGuard)

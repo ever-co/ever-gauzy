@@ -1,9 +1,16 @@
-import { Repository } from 'typeorm';
-import { Tag } from './tag.entity';
-import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ITag } from '@gauzy/contracts';
+import {
+	Brackets,
+	IsNull,
+	Repository,
+	SelectQueryBuilder,
+	WhereExpressionBuilder
+} from 'typeorm';
+import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { Tag } from './tag.entity';
+import { CrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class TagService extends CrudService<Tag> {
@@ -48,16 +55,23 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	async getTagUsageCount(organizationId: any): Promise<any> {
+		const tenantId = RequestContext.currentTenantId();
+
 		const allTagsInOrg = await this.tagRepository
 			.createQueryBuilder('tag')
 			.select('*')
 			.where('tag.organization = :organizationId', {
 				organizationId
 			})
+			.andWhere('tag.tenantId = :tenantId', {
+				tenantId
+			})
 			.andWhere('tag.isSystem = :action', {
 				action: false
 			})
 			.getRawMany();
+
+		console.log(allTagsInOrg, 'allTagsInOrg');
 
 		const allTagsIds = [];
 		allTagsInOrg.forEach((tag) => allTagsIds.push(tag.id));
@@ -96,6 +110,8 @@ export class TagService extends CrudService<Tag> {
 			.where('tag.id IN (:...id)', { id: allTagsIds })
 			.andWhere('tag.isSystem = :action', { action: false })
 			.getMany();
+
+		console.log(tagCounterAllRelations, 'tagCounterAllRelations');
 
 		let tagWithCounter = {};
 		const tagsWithCounter = [];
@@ -139,5 +155,109 @@ export class TagService extends CrudService<Tag> {
 		}
 
 		return tagsWithCounter;
+	}
+
+	/**
+	 * GET tenant/organization level tags
+	 * 
+	 * @param input 
+	 * @param relations 
+	 * @returns 
+	 */
+	async getTenantOrganizationLevelTags(
+		input: ITagFindInput,
+		relations: string[]
+	): Promise<IPagination<ITag>> {
+		// const query = this.tagRepository.createQueryBuilder('tag');
+		// await query
+		// 	.leftJoin('tag.candidate', 'candidate')
+		// 	.leftJoin('tag.employee', 'employee')
+		// 	.leftJoin('tag.equipment', 'equipment')
+		// 	.leftJoin('tag.eventType', 'eventType')
+		// 	.leftJoin('tag.income', 'income')
+		// 	.leftJoin('tag.expense', 'expense')
+		// 	.leftJoin('tag.invoice', 'invoice')
+		// 	.leftJoin('tag.task', 'task')
+		// 	.leftJoin('tag.proposal', 'proposal')
+		// 	.leftJoin('tag.organizationVendor', 'organizationVendor')
+		// 	.leftJoin('tag.organizationTeam', 'organizationTeam')
+		// 	.leftJoin('tag.organizationProject', 'organizationProject')
+		// 	.leftJoin('tag.organizationPosition', 'organizationPosition')
+		// 	.leftJoin('tag.expenseCategory', 'expenseCategory')
+		// 	.leftJoin('tag.organizationEmploymentType', 'organizationEmploymentType')
+		// 	.leftJoin('tag.employeeLevel', 'employeeLevel')
+		// 	.leftJoin( 'tag.organizationDepartment', 'organizationDepartment')
+		// 	.leftJoin('tag.organizationContact', 'organizationContact')
+		// 	.leftJoin('tag.product', 'product')
+		// 	.leftJoin('tag.payment', 'payment')
+		// 	.andWhere(
+		// 		new Brackets((qb: WhereExpressionBuilder) => { 
+		// 			const { organizationId } = input;
+		// 			qb.where(
+		// 				[
+		// 					{
+		// 						organizationId: IsNull()
+		// 					}, 
+		// 					{
+		// 						organizationId
+		// 					}
+		// 				]
+		// 			);
+		// 		})
+		// 	)
+		// 	.andWhere(
+		// 		new Brackets((qb: WhereExpressionBuilder) => {
+		// 			const tenantId = RequestContext.currentTenantId();
+		// 			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+		// 				tenantId
+		// 			});
+		// 		})
+		// 	)
+		// 	.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
+		// 		isSystem: false
+		// 	});
+		const [ items, total ] = await this.tagRepository.findAndCount({
+			join: {
+				alias: 'tag',
+				leftJoin: {
+					candidate: 'tag.candidate',
+					invoice: 'tag.invoice'
+				}
+			},
+			relations: [
+				...relations
+			],
+			where: (query: SelectQueryBuilder<Tag>) => {
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						const { organizationId } = input;
+						qb.where(
+							[
+								{
+									organizationId: IsNull()
+								}, 
+								{
+									organizationId
+								}
+							]
+						);
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						const tenantId = RequestContext.currentTenantId();
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+							tenantId
+						});
+					})
+				);
+				query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
+					isSystem: false
+				});
+				console.log(query.getQueryAndParameters());
+			}
+		});
+		console.log({ items, total });
+		return { items, total };
 	}
 }

@@ -10,3 +10,8 @@ export interface ITag extends IBasePerTenantAndOrganizationEntityModel {
 export interface ITagName {
 	name?: string;
 }
+
+export interface ITagFindInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	isSystem?: boolean
+}

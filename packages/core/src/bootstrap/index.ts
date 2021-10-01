@@ -24,9 +24,7 @@ export async function bootstrap(
 	const config = await registerPluginConfig(pluginConfig);
 	
 	const { BootstrapModule } = await import('./bootstrap.module');
-	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
-		logger: ['error', 'warn']
-	});
+	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule);
 
 	// This will lockdown all routes and make them accessible by authenticated users only.
 	const reflector = app.get(Reflector);

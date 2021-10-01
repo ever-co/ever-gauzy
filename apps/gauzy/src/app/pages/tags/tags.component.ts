@@ -1,24 +1,23 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { TagsService } from '../../@core/services/tags.service';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ITag,
 	IOrganization,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { filter, first, tap } from 'rxjs/operators';
-import { FormGroup } from '@angular/forms';
+import { distinctUntilChange, splitCamelCase } from '@gauzy/common-angular';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../@core/services/store.service';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { RouterEvent, NavigationEnd, Router } from '@angular/router';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
+import { TranslationBaseComponent } from '../../@shared/language-base';
+import { Store, TagsService, ToastrService } from '../../@core/services';
+import { ComponentEnum } from '../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,21 +27,24 @@ import { ToastrService } from '../../@core/services/toastr.service';
 })
 export class TagsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean;
-	selectedTag: ITag;
 	smartTableSource = new LocalDataSource();
-	tag: ITag;
+	selectedTag: ITag;
 	form: FormGroup;
 	disableButton = true;
-	private selectedOrganization: IOrganization;
 	private allTags = [];
 	filterOptions = [{ property: 'all', displayName: 'All' }];
 	private filterOption: any;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	tagsData: ITag[];
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	tags: ITag[] = [];
+
+	private organization: IOrganization;
+	tags$: Subject<any> = new Subject();
 
 	tagsTable: Ng2SmartTableComponent;
 	@ViewChild('tagsTable') set content(content: Ng2SmartTableComponent) {
@@ -53,36 +55,40 @@ export class TagsComponent
 	}
 
 	constructor(
-		private dialogService: NbDialogService,
-		private tagsService: TagsService,
-		readonly translateService: TranslateService,
-		private toastrService: ToastrService,
-		private router: Router,
-		private store: Store
+		private readonly dialogService: NbDialogService,
+		private readonly tagsService: TagsService,
+		public readonly translateService: TranslateService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+		this.tags$
+			.pipe(
+				debounceTime(100),
+				tap(() => this.loading = true),
+				tap(() => this.clearItem()),
+				tap(() => this.getTags()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization) => this.organization = organization),
+				distinctUntilChange(),
+				tap(() => this.tags$.next()),
 				untilDestroyed(this)
 			)
-			.subscribe((org) => {
-				this.selectedOrganization = org;
-				this.loadSettings();
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
+			.subscribe();
 	}
 
 	search(e) {
@@ -109,15 +115,16 @@ export class TagsComponent
 		this.viewComponentName = ComponentEnum.TAGS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async selectTag({ isSelected, data }) {
 		this.disableButton = !isSelected;
-		this.tag = isSelected ? data : null;
+		this.selectedTag = isSelected ? data : null;
 	}
 
 	async add() {
@@ -130,7 +137,7 @@ export class TagsComponent
 				name: addData.name
 			});
 		}
-		this.loadSettings();
+		this.getTags();
 		this.clearItem();
 	}
 
@@ -147,14 +154,15 @@ export class TagsComponent
 			.toPromise();
 
 		if (result) {
-			await this.tagsService.delete(this.tag.id);
-			this.loadSettings();
+			await this.tagsService.delete(this.selectedTag.id);
+			this.getTags();
 			this.toastrService.success('TAGS_PAGE.TAGS_DELETE_TAG', {
-				name: this.tag.name
+				name: this.selectedTag.name
 			});
 		}
 		this.clearItem();
 	}
+
 	async edit(selectedItem?: ITag) {
 		if (selectedItem) {
 			this.selectTag({
@@ -164,21 +172,21 @@ export class TagsComponent
 		}
 		const dialog = this.dialogService.open(TagsMutationComponent, {
 			context: {
-				tag: this.tag
+				tag: this.selectedTag
 			}
 		});
 
 		const editData = await dialog.onClose.pipe(first()).toPromise();
 		if (editData) {
 			this.toastrService.success('TAGS_PAGE.TAGS_EDIT_TAG', {
-				name: this.tag.name
+				name: this.selectedTag.name
 			});
 		}
-		this.loadSettings();
+		this.getTags();
 		this.clearItem();
 	}
 
-	async loadSmartTable() {
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -204,56 +212,43 @@ export class TagsComponent
 		};
 	}
 
-	async loadSettings() {
-		this.loading = true;
-		this.selectedTag = null;
+	async getTags() {
+		if (!this.organization) {
+			return;
+		}
+
 		this.allTags = [];
-		this.filterOptions = [{ property: 'all', displayName: 'All' }];
-		if (this.selectedOrganization) {
-			const { id: organizationId, tenantId } = this.selectedOrganization;
-			const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
-				{ organizationId, tenantId },
-				['organization']
+		this.filterOptions = [
+			{ property: 'all', displayName: 'All' }
+		];
+		if (this.organization) {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			const { items } = await this.tagsService.getAllTags(
+				['organization'],
+				{ tenantId, organizationId }
 			);
-			const tagsByTenantLevel = await this.tagsService.getAllTagsByTenantLevel(
-				{ tenantId },
-				['tenant']
+			const result = await this.tagsService.getTagUsageCount(
+				organizationId
 			);
-			if (tagsByOrgLevel.length) {
-				const result = await this.tagsService.getTagUsageCount(
-					organizationId
-				);
-				this.allTags = result.concat(tagsByTenantLevel);
-				this.allTags.map((t) => !t.counter && (t.counter = 0));
-				this._generateUniqueTags(this.allTags);
-				this.tagsData = this.allTags;
-				this.smartTableSource.load(this.allTags);
-			} else if (tagsByTenantLevel.length) {
-				this._generateUniqueTags(this.allTags);
-				this.tagsData = tagsByTenantLevel;
-				this.smartTableSource.load(tagsByTenantLevel);
-			} else {
-				this.tagsData = [];
-				this.smartTableSource.load([]);
-			}
+
+			this.allTags = result.concat(items);
+			this.allTags.map((t) => !t.counter && (t.counter = 0));
+			
+			this._generateUniqueTags(this.allTags);
+			this.tags = this.allTags;
+			this.smartTableSource.load(this.allTags);
 		}
 		this.loading = false;
 	}
 
 	ngOnDestroy() {}
 
-	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
-	}
-
 	selectedFilterOption(value) {
 		this.filterOption = value;
 		if (value === 'all') {
-			this.loadSettings();
+			this.getTags();
 			this.smartTableSource.load(this.allTags);
 			return;
 		}
@@ -277,37 +272,26 @@ export class TagsComponent
 				) {
 					this.filterOptions.push({
 						property,
-						displayName: this._splitCamelCase(property)
+						displayName: splitCamelCase(property)
 					});
 				}
 			}
 		});
 	}
 
-	private _splitCamelCase(word: string): string {
-		let output: string[], i: number, l: number;
-		const capRe = /[A-Z]/;
-		if (typeof word !== 'string') {
-			throw new Error('The "word" parameter must be a string.');
-		}
-		output = [];
-		for (i = 0, l = word.length; i < l; i++) {
-			if (i === 0) {
-				output.push(word[i].toUpperCase());
-			} else {
-				if (i > 0 && capRe.test(word[i])) {
-					output.push(' ');
-				}
-				output.push(word[i]);
-			}
-		}
-		return output.join('');
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
 	 * Table on changed source event
 	 */
-	onChangedSource() {
+	private onChangedSource() {
 		this.tagsTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
@@ -319,17 +303,18 @@ export class TagsComponent
 	/*
 	 * Clear selected item
 	 */
-	clearItem() {
+	private clearItem() {
 		this.selectTag({
 			isSelected: false,
 			data: null
 		});
 		this.deselectAll();
 	}
+
 	/*
 	 * Deselect all table rows
 	 */
-	deselectAll() {
+	private deselectAll() {
 		if (this.tagsTable && this.tagsTable.grid) {
 			this.tagsTable.grid.dataSet['willSelect'] = 'false';
 			this.tagsTable.grid.dataSet.deselectAll();

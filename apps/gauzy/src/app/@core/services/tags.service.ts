@@ -29,7 +29,7 @@ export class TagsService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: ITag[] }>(`${API_PREFIX}/tags`, {
+			.get<{ items: ITag[] }>(`${API_PREFIX}/tags/list`, {
 				params: { data }
 			})
 			.pipe(first())
