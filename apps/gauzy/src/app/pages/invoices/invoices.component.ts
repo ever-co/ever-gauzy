@@ -179,8 +179,8 @@ export class InvoicesComponent
 	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
 				debounceTime(300),
+				tap(() => this.loading = true),
 				tap(() => this.cdr.detectChanges()),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
