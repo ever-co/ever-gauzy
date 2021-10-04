@@ -26,9 +26,7 @@ Given('Login with default credentials', () => {
 
 // Add new employee
 And('User can add new employee', () => {
-	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
