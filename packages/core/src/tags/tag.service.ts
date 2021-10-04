@@ -1,16 +1,9 @@
+import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Tag } from './tag.entity';
+import { CrudService, RequestContext } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	Brackets,
-	IsNull,
-	Repository,
-	SelectQueryBuilder,
-	WhereExpressionBuilder
-} from 'typeorm';
 import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
-import { Tag } from './tag.entity';
-import { CrudService } from './../core/crud';
-import { RequestContext } from './../core/context';
 
 @Injectable()
 export class TagService extends CrudService<Tag> {
@@ -56,26 +49,6 @@ export class TagService extends CrudService<Tag> {
 
 	async getTagUsageCount(organizationId: any): Promise<any> {
 		const tenantId = RequestContext.currentTenantId();
-
-		const allTagsInOrg = await this.tagRepository
-			.createQueryBuilder('tag')
-			.select('*')
-			.where('tag.organization = :organizationId', {
-				organizationId
-			})
-			.andWhere('tag.tenantId = :tenantId', {
-				tenantId
-			})
-			.andWhere('tag.isSystem = :action', {
-				action: false
-			})
-			.getRawMany();
-
-		console.log(allTagsInOrg, 'allTagsInOrg');
-
-		const allTagsIds = [];
-		allTagsInOrg.forEach((tag) => allTagsIds.push(tag.id));
-
 		const tagCounterAllRelations = await this.tagRepository
 			.createQueryBuilder('tag')
 			.leftJoinAndSelect('tag.candidate', 'candidate')
@@ -90,35 +63,33 @@ export class TagService extends CrudService<Tag> {
 			.leftJoinAndSelect('tag.organizationVendor', 'organizationVendor')
 			.leftJoinAndSelect('tag.organizationTeam', 'organizationTeam')
 			.leftJoinAndSelect('tag.organizationProject', 'organizationProject')
-			.leftJoinAndSelect(
-				'tag.organizationPosition',
-				'organizationPosition'
-			)
+			.leftJoinAndSelect('tag.organizationPosition', 'organizationPosition')
 			.leftJoinAndSelect('tag.expenseCategory', 'expenseCategory')
-			.leftJoinAndSelect(
-				'tag.organizationEmploymentType',
-				'organizationEmploymentType'
-			)
+			.leftJoinAndSelect('tag.organizationEmploymentType', 'organizationEmploymentType')
 			.leftJoinAndSelect('tag.employeeLevel', 'employeeLevel')
-			.leftJoinAndSelect(
-				'tag.organizationDepartment',
-				'organizationDepartment'
-			)
+			.leftJoinAndSelect('tag.organizationDepartment', 'organizationDepartment')
 			.leftJoinAndSelect('tag.organizationContact', 'organizationContact')
 			.leftJoinAndSelect('tag.product', 'product')
 			.leftJoinAndSelect('tag.payment', 'payment')
-			.where('tag.id IN (:...id)', { id: allTagsIds })
-			.andWhere('tag.isSystem = :action', { action: false })
+			.where((qb: SelectQueryBuilder<Tag>) => {
+				qb.andWhere(`"tag"."tenantId" = :tenantId`, {
+					tenantId
+				});
+				qb.andWhere(`"tag"."organizationId" = :organizationId`, {
+					organizationId
+				});
+				qb.andWhere(`"tag"."isSystem" = :isSystem`, {
+					isSystem: false
+				});
+			})
 			.getMany();
-
-		console.log(tagCounterAllRelations, 'tagCounterAllRelations');
 
 		let tagWithCounter = {};
 		const tagsWithCounter = [];
 
 		for (
 			let arrayIndex = 0;
-			arrayIndex < allTagsInOrg.length;
+			arrayIndex < tagCounterAllRelations.length;
 			arrayIndex++
 		) {
 			tagWithCounter = {
@@ -168,66 +139,56 @@ export class TagService extends CrudService<Tag> {
 		input: ITagFindInput,
 		relations: string[]
 	): Promise<IPagination<ITag>> {
-		// const query = this.tagRepository.createQueryBuilder('tag');
-		// await query
-		// 	.leftJoin('tag.candidate', 'candidate')
-		// 	.leftJoin('tag.employee', 'employee')
-		// 	.leftJoin('tag.equipment', 'equipment')
-		// 	.leftJoin('tag.eventType', 'eventType')
-		// 	.leftJoin('tag.income', 'income')
-		// 	.leftJoin('tag.expense', 'expense')
-		// 	.leftJoin('tag.invoice', 'invoice')
-		// 	.leftJoin('tag.task', 'task')
-		// 	.leftJoin('tag.proposal', 'proposal')
-		// 	.leftJoin('tag.organizationVendor', 'organizationVendor')
-		// 	.leftJoin('tag.organizationTeam', 'organizationTeam')
-		// 	.leftJoin('tag.organizationProject', 'organizationProject')
-		// 	.leftJoin('tag.organizationPosition', 'organizationPosition')
-		// 	.leftJoin('tag.expenseCategory', 'expenseCategory')
-		// 	.leftJoin('tag.organizationEmploymentType', 'organizationEmploymentType')
-		// 	.leftJoin('tag.employeeLevel', 'employeeLevel')
-		// 	.leftJoin( 'tag.organizationDepartment', 'organizationDepartment')
-		// 	.leftJoin('tag.organizationContact', 'organizationContact')
-		// 	.leftJoin('tag.product', 'product')
-		// 	.leftJoin('tag.payment', 'payment')
-		// 	.andWhere(
-		// 		new Brackets((qb: WhereExpressionBuilder) => { 
-		// 			const { organizationId } = input;
-		// 			qb.where(
-		// 				[
-		// 					{
-		// 						organizationId: IsNull()
-		// 					}, 
-		// 					{
-		// 						organizationId
-		// 					}
-		// 				]
-		// 			);
-		// 		})
-		// 	)
-		// 	.andWhere(
-		// 		new Brackets((qb: WhereExpressionBuilder) => {
-		// 			const tenantId = RequestContext.currentTenantId();
-		// 			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-		// 				tenantId
-		// 			});
-		// 		})
-		// 	)
-		// 	.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
-		// 		isSystem: false
-		// 	});
-		const [ items, total ] = await this.tagRepository.findAndCount({
-			join: {
-				alias: 'tag',
-				leftJoin: {
-					candidate: 'tag.candidate',
-					invoice: 'tag.invoice'
-				}
-			},
-			relations: [
-				...relations
-			],
-			where: (query: SelectQueryBuilder<Tag>) => {
+		const query = this.tagRepository.createQueryBuilder('tag');
+		query
+			.leftJoin(`tag.candidate`, 'candidate')
+			.leftJoin('tag.employee', 'employee')
+			.leftJoin('tag.equipment', 'equipment')
+			.leftJoin('tag.eventType', 'eventType')
+			.leftJoin('tag.income', 'income')
+			.leftJoin('tag.expense', 'expense')
+			.leftJoin('tag.invoice', 'invoice')
+			.leftJoin('tag.task', 'task')
+			.leftJoin('tag.proposal', 'proposal')
+			.leftJoin('tag.organizationVendor', 'organizationVendor')
+			.leftJoin('tag.organizationTeam', 'organizationTeam')
+			.leftJoin('tag.organizationProject', 'organizationProject')
+			.leftJoin('tag.organizationPosition', 'organizationPosition')
+			.leftJoin('tag.expenseCategory', 'expenseCategory')
+			.leftJoin('tag.organizationEmploymentType', 'organizationEmploymentType')
+			.leftJoin('tag.employeeLevel', 'employeeLevel')
+			.leftJoin('tag.organizationDepartment', 'organizationDepartment')
+			.leftJoin('tag.organizationContact', 'organizationContact')
+			.leftJoin('tag.product', 'product')
+			.leftJoin('tag.payment', 'payment')
+			.addSelect(`"tag"."name"`, `name`)
+			.addSelect(`"tag"."color"`, `color`)
+			.addSelect(`"tag"."description"`, `description`)
+			.addSelect(`COUNT("candidate"."id")`, `candidate_counter`)
+			.addSelect(`COUNT("employee"."id")`, `employee_counter`)
+			.addSelect(`COUNT("equipment"."id")`, `equipment_counter`)
+			.addSelect(`COUNT("eventType"."id")`, `event_type_counter`)
+			.addSelect(`COUNT("income"."id")`, `income_counter`)
+			.addSelect(`COUNT("expense"."id")`, `expense_counter`)
+			.addSelect(`COUNT("invoice"."id")`, `invoice_counter`)
+			.addSelect(`COUNT("task"."id")`, `task_counter`)
+			.addSelect(`COUNT("proposal"."id")`, `proposal_counter`)
+			.addSelect(`COUNT("organizationVendor"."id")`, `organization_vendor_counter`)
+			.addSelect(`COUNT("organizationTeam"."id")`, `organization_team_counter`)
+			.addSelect(`COUNT("organizationProject"."id")`, `organization_project_counter`)
+			.addSelect(`COUNT("organizationPosition"."id")`, `organization_position_counter`)
+			.addSelect(`COUNT("expenseCategory"."id")`, `expense_category_counter`)
+			.addSelect(`COUNT("organizationEmploymentType"."id")`, `organization_employment_type_counter`)
+			.addSelect(`COUNT("employeeLevel"."id")`, `employee_level_counter`)
+			.addSelect(`COUNT("organizationDepartment"."id")`, `organization_department_counter`)
+			.addSelect(`COUNT("organizationContact"."id")`, `organization_contact_counter`)
+			.addSelect(`COUNT("product"."id")`, `product_counter`)
+			.addSelect(`COUNT("payment"."id")`, `payment_counter`)
+			.addGroupBy('tag.id');
+
+		// Add additional where conditions here
+		const items = await query
+			.where((query: SelectQueryBuilder<Tag>) => {
 				query.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => { 
 						const { organizationId } = input;
@@ -246,18 +207,18 @@ export class TagService extends CrudService<Tag> {
 				query.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+						qb.andWhere(`"tag"."tenantId" = :tenantId`, {
 							tenantId
 						});
 					})
 				);
-				query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
+				query.andWhere(`"tag"."isSystem" = :isSystem`, {
 					isSystem: false
 				});
-				console.log(query.getQueryAndParameters());
-			}
-		});
-		console.log({ items, total });
+			})
+			.getRawMany();
+
+		const total = items.length;
 		return { items, total };
 	}
 }

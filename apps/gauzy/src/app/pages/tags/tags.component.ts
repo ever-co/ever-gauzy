@@ -36,7 +36,9 @@ export class TagsComponent
 	form: FormGroup;
 	disableButton = true;
 	private allTags = [];
-	filterOptions = [{ property: 'all', displayName: 'All' }];
+	filterOptions = [
+		{ property: 'all', displayName: 'All' }
+	];
 	private filterOption: any;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -68,12 +70,13 @@ export class TagsComponent
 	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
+
 		this.tags$
 			.pipe(
-				debounceTime(100),
+				debounceTime(300),
 				tap(() => this.loading = true),
-				tap(() => this.clearItem()),
 				tap(() => this.getTags()),
+				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -125,6 +128,7 @@ export class TagsComponent
 	async selectTag({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedTag = isSelected ? data : null;
+		console.log(this.selectedTag);
 	}
 
 	async add() {
@@ -148,19 +152,25 @@ export class TagsComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
 
-		if (result) {
-			await this.tagsService.delete(this.selectedTag.id);
-			this.getTags();
-			this.toastrService.success('TAGS_PAGE.TAGS_DELETE_TAG', {
-				name: this.selectedTag.name
-			});
-		}
-		this.clearItem();
+		if (this.selectedTag) {
+			const result = await this.dialogService
+				.open(DeleteConfirmationComponent)
+				.onClose.pipe(first())
+				.toPromise();
+
+			if (result) {
+				const { id, name } = this.selectedTag; 
+				await this.tagsService.delete(id).then(() => {
+					this.toastrService.success('TAGS_PAGE.TAGS_DELETE_TAG', {
+						name
+					});
+				})
+				.finally(() => {
+					this.tags$.next();
+				});
+			}
+		}	
 	}
 
 	async edit(selectedItem?: ITag) {
@@ -170,20 +180,22 @@ export class TagsComponent
 				data: selectedItem
 			});
 		}
-		const dialog = this.dialogService.open(TagsMutationComponent, {
-			context: {
-				tag: this.selectedTag
-			}
-		});
 
-		const editData = await dialog.onClose.pipe(first()).toPromise();
-		if (editData) {
-			this.toastrService.success('TAGS_PAGE.TAGS_EDIT_TAG', {
-				name: this.selectedTag.name
+		if (this.selectedTag) {
+			const dialog = this.dialogService.open(TagsMutationComponent, {
+				context: {
+					tag: this.selectedTag
+				}
 			});
+	
+			const editData = await dialog.onClose.pipe(first()).toPromise();
+			if (editData) {
+				this.toastrService.success('TAGS_PAGE.TAGS_EDIT_TAG', {
+					name: this.selectedTag.name
+				});
+			}
+			this.tags$.next();
 		}
-		this.getTags();
-		this.clearItem();
 	}
 
 	private _loadSmartTableSettings() {
@@ -221,25 +233,21 @@ export class TagsComponent
 		this.filterOptions = [
 			{ property: 'all', displayName: 'All' }
 		];
-		if (this.organization) {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
 
-			const { items } = await this.tagsService.getAllTags(
-				['organization'],
-				{ tenantId, organizationId }
-			);
-			const result = await this.tagsService.getTagUsageCount(
-				organizationId
-			);
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-			this.allTags = result.concat(items);
-			this.allTags.map((t) => !t.counter && (t.counter = 0));
-			
-			this._generateUniqueTags(this.allTags);
-			this.tags = this.allTags;
-			this.smartTableSource.load(this.allTags);
-		}
+		const { items } = await this.tagsService.getAllTags(
+			['organization'],
+			{ tenantId, organizationId }
+		);
+	
+		this.allTags = items;
+		
+		// this._generateUniqueTags(this.allTags);
+		this.tags = this.allTags;
+		this.smartTableSource.load(this.allTags);
+
 		this.loading = false;
 	}
 
@@ -260,24 +268,24 @@ export class TagsComponent
 		}
 	}
 
-	private _generateUniqueTags(tags: any[]) {
-		tags.forEach((tag) => {
-			for (const property in tag) {
-				if (
-					Array.isArray(tag[property]) &&
-					tag[property].length &&
-					!this.filterOptions.find(
-						(option) => option.property === property
-					)
-				) {
-					this.filterOptions.push({
-						property,
-						displayName: splitCamelCase(property)
-					});
-				}
-			}
-		});
-	}
+	// private _generateUniqueTags(tags: any[]) {
+	// 	tags.forEach((tag) => {
+	// 		for (const property in tag) {
+	// 			if (
+	// 				Array.isArray(tag[property]) &&
+	// 				tag[property].length &&
+	// 				!this.filterOptions.find(
+	// 					(option) => option.property === property
+	// 				)
+	// 			) {
+	// 				this.filterOptions.push({
+	// 					property,
+	// 					displayName: splitCamelCase(property)
+	// 				});
+	// 			}
+	// 		}
+	// 	});
+	// }
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
