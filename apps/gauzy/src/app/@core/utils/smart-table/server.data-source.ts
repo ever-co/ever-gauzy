@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ServerSourceConf } from './server-source.conf';
 import { LocalDataSource } from 'ng2-smart-table';
-import { map, tap } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { isNotEmpty, toParams } from '@gauzy/common-angular';
 
 export class ServerDataSource extends LocalDataSource {
@@ -39,6 +39,13 @@ export class ServerDataSource extends LocalDataSource {
                         this.conf.finalize();
                     }
                 }),
+                catchError((error) => {
+                    if (this.conf.finalize) {
+                        this.conf.finalize();
+                    }
+                    // failed from server then call finalize method 
+                    throw new Error(error)
+                })
             ).toPromise();
     }
 

@@ -84,8 +84,8 @@ export class PaymentsComponent
 		this._applyTranslationOnSmartTable();
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
 				debounceTime(300),
+				tap(() => this.loading = true),
 				tap(() => this.clearItem()),
 				tap(() => this.getPayments()),
 				untilDestroyed(this)
