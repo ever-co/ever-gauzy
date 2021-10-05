@@ -11,6 +11,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { GalleryItem } from './gallery.directive';
 import { GalleryService } from './gallery.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { saveAs } from 'file-saver';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -43,7 +44,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	constructor(
 		private dialogRef: NbDialogRef<GalleryComponent>,
 		private galleryService: GalleryService
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.galleryService.items$
@@ -112,5 +113,15 @@ export class GalleryComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
+
+	downloadFile(url: string) {
+		if(url) {
+			this.galleryService
+			.downloadFile(url)
+			.subscribe(blob => {
+				saveAs(blob, url.replace(/^.*[\\\/]/, ''))
+			});
+		}		
+	}
 }

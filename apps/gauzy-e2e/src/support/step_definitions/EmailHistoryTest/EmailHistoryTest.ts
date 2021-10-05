@@ -34,6 +34,7 @@ Then('User can see email templates dropdown', () => {
 
 When('User click on email templates dropdown', () => {
 	emailHistoryPage.clickTemplatesDropdown();
+	emailHistoryPage.clickTemplatesDropdownDouble();
 });
 
 And('User can verify  Appointment Cancellation templates', () => {

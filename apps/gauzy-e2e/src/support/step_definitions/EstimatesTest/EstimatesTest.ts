@@ -40,7 +40,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboard()
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -97,9 +97,7 @@ Then('User can visit Estimates page', () => {
 });
 
 And('User can see grid button', () => {
-	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
 	estimatesPage.gridBtnExists();
-	cy.wait('@waitUserOrganization');
 });
 
 And('User can click on second grid button to change view', () => {
