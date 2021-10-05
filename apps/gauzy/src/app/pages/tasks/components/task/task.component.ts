@@ -207,19 +207,25 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		}
 	
 		const relations = [];
+		let join: any = {};
 		let endPoint: string; 
 
 		if (this.viewComponentName == ComponentEnum.ALL_TASKS) {
 			endPoint = `${API_PREFIX}/tasks/pagination`;
 			relations.push(...[
-				'project', 
-				'tags', 
-				'members', 
-				'members.user', 
-				'teams', 
-				'creator', 
+				'project',
+				'tags',
+				'teams',
+				'creator',
 				'organizationSprint'
 			]);
+			join = {
+				alias: 'task',
+				leftJoinAndSelect: {
+					'members': 'task.members',
+					'user': 'members.user'
+				}
+			}
 		}
 		if (this.viewComponentName == ComponentEnum.TEAM_TASKS) {
 			if (this.selectedEmployee && this.selectedEmployee.id) {
@@ -237,6 +243,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint,
 			relations,
+			join,
 			where: {
 				...{ organizationId, tenantId },
 				...request,
