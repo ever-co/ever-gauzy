@@ -153,7 +153,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * Tags
 	 */
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.task)
+	@ManyToMany(() => Tag, (tag) => tag.task, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	tags?: ITag[];
 
 	/**
