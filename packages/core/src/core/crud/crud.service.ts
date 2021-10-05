@@ -84,6 +84,7 @@ export abstract class CrudService<T extends BaseEntity>
 			const [items, total] = await this.repository.findAndCount(options);
 			return { items, total };
 		} catch (error) {
+			console.log(error);
 			throw new BadRequestException(error);
 		}
 	}

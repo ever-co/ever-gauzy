@@ -172,14 +172,15 @@ export class PaymentsComponent
 				'invoice',
 				'invoice.toContact',
 				'recordedBy',
-				'contact',
+				'organizationContact',
 				'project',
 				'tags'
 			],
 			join: {
 				alias: 'payment',
 				leftJoin: {
-					tags: 'payment.tags'
+					tags: 'payment.tags',
+					organizationContact: 'payment.organizationContact'
 				},
 				...(this.filters.join) ? this.filters.join : {}
 			},
@@ -190,10 +191,10 @@ export class PaymentsComponent
 			},
 			resultMap: (payment: IPayment) => {
 				try {
-					const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
+					const { invoice, project, organizationContact, recordedBy, paymentMethod, overdue } = payment;
 					let organizationContactName: string;
-					if (contact) {
-						organizationContactName = contact.name;
+					if (organizationContact) {
+						organizationContactName = organizationContact.name;
 					} else if (invoice && invoice.toContact) {
 						organizationContactName = invoice.toContact.name;
 					}
@@ -206,7 +207,6 @@ export class PaymentsComponent
 						organizationContactName: organizationContactName
 					});
 				} catch (error) {
-					console.log(error);
 					return Object.assign({}, payment);
 				}
 			},
