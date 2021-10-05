@@ -80,6 +80,10 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
     | @ManyToOne 
     |--------------------------------------------------------------------------
     */
+
+	/**
+	 * Employee
+	 */
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.employee)
 	@IsString()
@@ -94,6 +98,9 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@JoinColumn()
 	employee?: IEmployee;
 
+	/**
+	 * Invoice
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.invoice)
 	@IsString()
@@ -109,6 +116,9 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@JoinColumn()
 	invoice?: IInvoice;
 
+	/**
+	 * User
+	 */
 	@ApiPropertyOptional({ type: () => User })
 	@ManyToOne(() => User)
 	@JoinColumn()
@@ -121,6 +131,9 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@Column()
 	recordedById?: string;
 
+	/**
+	 * OrganizationProject
+	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, (project) => project.payments, {
 		onDelete: 'SET NULL'
@@ -136,20 +149,23 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@Column({ nullable: true })
 	projectId?: string;
 
+	/**
+	 * OrganizationContact
+	 */
 	@ApiPropertyOptional({ type: () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (contact) => contact.payments, {
+	@ManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.payments, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	contact?: IOrganizationContact;
+	organizationContact?: IOrganizationContact;
 
 	@ApiPropertyOptional({ type: () => String })
-	@RelationId((it: Payment) => it.contact)
+	@RelationId((it: Payment) => it.organizationContact)
 	@IsString()
 	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
-	contactId?: string;
+	organizationContactId?: string;
 
 	/*
     |--------------------------------------------------------------------------

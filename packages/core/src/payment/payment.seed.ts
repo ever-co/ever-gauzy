@@ -62,7 +62,7 @@ export const createDefaultPayment = async (
 					.take(faker.datatype.number({ min: 1, max: 3 }))
 					.values()
 					.value();
-			payment.contact = invoice.toContact;
+			payment.organizationContact = invoice.toContact;
 			payment.employeeId = faker.random.arrayElement(employees).id;
 			payment.recordedBy = faker.random.arrayElement(users);
 
@@ -145,7 +145,7 @@ export const createRandomPayment = async (
 					.take(faker.datatype.number({ min: 1, max: 3 }))
 					.values()
 					.value();
-				payment.contact = invoice.toContact;
+				payment.organizationContact = invoice.toContact;
 				payment.employeeId = faker.random.arrayElement(tenantEmployees).id;
 				payment.recordedBy = faker.random.arrayElement(users);
 
