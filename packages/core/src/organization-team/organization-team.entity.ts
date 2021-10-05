@@ -65,7 +65,7 @@ export class OrganizationTeam
 	/**
 	 * Task
 	 */
-	 @ManyToMany(() => Task, (task) => task.teams, {
+	@ManyToMany(() => Task, (task) => task.teams, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
