@@ -160,7 +160,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * Members
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToMany(() => Employee, { cascade: ['update'] })
+	@ManyToMany(() => Employee, (employee) => employee.tasks, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
 	@JoinTable({ name: 'task_employee' })
 	members?: IEmployee[];
 
@@ -168,7 +171,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * OrganizationTeam
 	 */
 	@ApiProperty({ type: () => OrganizationTeam })
-	@ManyToMany(() => OrganizationTeam, { cascade: ['update'] })
+	@ManyToMany(() => OrganizationTeam, (team) => team.tasks, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
 	@JoinTable({ name: 'task_team' })
 	teams?: IOrganizationTeam[];
 }
