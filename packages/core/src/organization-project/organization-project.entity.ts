@@ -247,10 +247,16 @@ export class OrganizationProject
     */
 	// Organization Project Tags
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.organizationProject)
+	@ManyToMany(() => Tag, (tag) => tag.organizationProject, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
 	tags: ITag[];
 
 	// Organization Project Employees
-	@ManyToMany(() => Employee, (employee) => employee.projects)
+	@ManyToMany(() => Employee, (employee) => employee.projects, {
+        onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+    })
 	members?: IEmployee[];
 }
