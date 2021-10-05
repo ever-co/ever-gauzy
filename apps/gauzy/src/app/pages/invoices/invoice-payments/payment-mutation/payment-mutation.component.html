@@ -11,107 +11,106 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
-			<div class="row" *ngIf="!invoice">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="inputInvoiceNumber" class="label">
-							{{
-								'INVOICES_PAGE.PAYMENTS.SELECT_INVOICE'
-									| translate
-							}}
-						</label>
-						<nb-select
-							class="d-block"
-							formControlName="invoice"
-							[placeholder]="'FORM.PLACEHOLDERS.INVOICE_NUMBER' | translate"
-							fullWidth
-							id="inputInvoiceNumber"
-						>
-							<nb-option
-								*ngFor="let invoice of invoices"
-								[value]="invoice"
+			<ng-container *ngIf="!invoice">
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label for="inputInvoiceNumber" class="label">
+								{{
+									'INVOICES_PAGE.PAYMENTS.SELECT_INVOICE'
+										| translate
+								}}
+							</label>
+							<nb-select
+								class="d-block"
+								formControlName="invoice"
+								[placeholder]="'FORM.PLACEHOLDERS.INVOICE_NUMBER' | translate"
+								fullWidth
+								id="inputInvoiceNumber"
 							>
-								{{ invoice.invoiceNumber }}
-							</nb-option>
-						</nb-select>
+								<nb-option
+									*ngFor="let invoice of invoices"
+									[value]="invoice"
+								>
+									{{ invoice.invoiceNumber }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
 					</div>
 				</div>
-				<div class="col-sm-6">
-					<ga-tags-color-input
-						[selectedTags]="form.get('tags').value"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
-					>
-					</ga-tags-color-input>
-				</div>
-			</div>
-			<div class="row" *ngIf="!invoice">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="inputOrganizationContact" class="label">
-							{{ 'INVOICES_PAGE.CONTACT' | translate }}
-						</label>
-						<ng-select
-							[items]="organizationContacts"
-							bindName="name"
-							[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
-							formControlName="contact"
-							id="inputOrganizationContact"
-							(change)="selectOrganizationContact($event)"
-							[searchFn]="searchOrganizationContact"
-							appendTo="body"
-						>
-							<ng-template
-								ng-option-tmp
-								let-item="item"
-								let-index="index"
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label for="inputOrganizationContact" class="label">
+								{{ 'INVOICES_PAGE.CONTACT' | translate }}
+							</label>
+							<ng-select
+								[items]="organizationContacts"
+								bindName="name"
+								[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+								formControlName="organizationContact"
+								id="inputOrganizationContact"
+								(change)="selectOrganizationContact($event)"
+								[searchFn]="searchOrganizationContact"
+								appendTo="body"
 							>
-								{{ item.name }}
-							</ng-template>
-							<ng-template ng-label-tmp let-item="item">
-								<div class="selector-template">
-									<span>{{ item.name }}</span>
-								</div>
-							</ng-template>
-						</ng-select>
+								<ng-template
+									ng-option-tmp
+									let-item="item"
+									let-index="index"
+								>
+									{{ item.name }}
+								</ng-template>
+								<ng-template ng-label-tmp let-item="item">
+									<div class="selector-template">
+										<span>{{ item.name }}</span>
+									</div>
+								</ng-template>
+							</ng-select>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label">
+								{{
+									'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
+										| translate
+								}}
+							</label>
+							<ng-select
+								[(items)]="projects"
+								bindName="name"
+								[placeholder]="'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS' | translate"
+								formControlName="project"
+								id="inputProject"
+								(change)="selectProject($event)"
+								appendTo="body"
+							>
+								<ng-template
+									ng-option-tmp
+									let-item="item"
+									let-index="index"
+								>
+									{{ item.name }}
+								</ng-template>
+								<ng-template ng-label-tmp let-item="item">
+									<div class="selector-template">
+										<span>{{ item.name }}</span>
+									</div>
+								</ng-template>
+							</ng-select>
+						</div>
 					</div>
 				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label class="label">
-							{{
-								'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
-									| translate
-							}}
-						</label>
-						<ng-select
-							[(items)]="projects"
-							bindName="name"
-							placeholder="{{
-								'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
-									| translate
-							}}"
-							formControlName="project"
-							id="inputProject"
-							(change)="selectProject($event)"
-							appendTo="body"
-						>
-							<ng-template
-								ng-option-tmp
-								let-item="item"
-								let-index="index"
-							>
-								{{ item.name }}
-							</ng-template>
-							<ng-template ng-label-tmp let-item="item">
-								<div class="selector-template">
-									<span>{{ item.name }}</span>
-								</div>
-							</ng-template>
-						</ng-select>
-					</div>
-				</div>
-			</div>
+			</ng-container>
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
@@ -123,10 +122,7 @@
 						</label>
 						<input
 							nbInput
-							placeholder="{{
-								'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
-									| translate
-							}}"
+							[placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE' | translate"
 							[nbDatepicker]="paymentDatePicker"
 							formControlName="paymentDate"
 							id="inputPaymentDate"
@@ -146,10 +142,7 @@
 						<nb-select
 							class="d-block"
 							formControlName="paymentMethod"
-							placeholder="{{
-								'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
-									| translate
-							}}"
+							[placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate"
 							fullWidth
 						>
 							<nb-option
@@ -184,9 +177,7 @@
 						<input
 							type="number"
 							nbInput
-							placeholder="{{
-								'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate
-							}}"
+							[placeholder]="'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate"
 							formControlName="amount"
 							id="inputAmount"
 							fullWidth
@@ -202,9 +193,7 @@
 						</label>
 						<textarea
 							nbInput
-							placeholder="{{
-								'INVOICES_PAGE.PAYMENTS.NOTE' | translate
-							}}"
+							[placeholder]="'INVOICES_PAGE.PAYMENTS.NOTE' | translate"
 							formControlName="note"
 							id="inputNote"
 							fullWidth

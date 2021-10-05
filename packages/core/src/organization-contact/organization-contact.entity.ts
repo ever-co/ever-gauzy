@@ -157,7 +157,7 @@ export class OrganizationContact
 
 	// Organization Payments
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (it) => it.contact, {
+	@OneToMany(() => Payment, (it) => it.organizationContact, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

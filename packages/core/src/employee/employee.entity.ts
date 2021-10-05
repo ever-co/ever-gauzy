@@ -20,7 +20,8 @@ import {
 	ITimeOffPolicy,
 	ITimeOff as ITimeOffRequest,
 	IExpense,
-	ITimesheet
+	ITimesheet,
+	ITask
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -59,6 +60,7 @@ import {
 	RequestApprovalEmployee,
 	Skill,
 	Tag,
+	Task,
 	TenantOrganizationBaseEntity,
 	TimeLog,
 	TimeOffPolicy,
@@ -477,4 +479,14 @@ export class Employee
 		name: 'time_off_request_employee'
 	})
 	timeOffRequests?: ITimeOffRequest[];
+
+	/**
+	 * Task
+	 */
+	@ManyToMany(() => Task, (task) => task.members, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable()
+	tasks?: ITask[];
 }

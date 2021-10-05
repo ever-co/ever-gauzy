@@ -3,7 +3,8 @@ import {
 	clickButton,
 	verifyText,
 	clickKeyboardBtnByKeycode,
-	clickElementByText
+	clickElementByText,
+	clickButtonDouble
 } from '../utils/util';
 import { EmailHistoryPage } from '../pageobjects/EmailHistoryPageObject';
 
@@ -16,7 +17,9 @@ export const filterButtonVisible = () => {
 };
 
 export const clickFilterButton = () => {
+	cy.intercept('GET', '/api/email-template*').as('waitTemplate');
 	clickButton(EmailHistoryPage.filterButtonCss);
+	cy.wait('@waitTemplate');
 };
 
 export const templatesDropdownVisible = () => {
@@ -49,4 +52,8 @@ export const clickSaveButton = () => {
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
+};
+
+export const clickTemplatesDropdownDouble = () => {
+	clickButtonDouble(EmailHistoryPage.emailTemplatesDropdownCss);
 };
