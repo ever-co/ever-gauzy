@@ -86,7 +86,7 @@ export class PaymentMapService {
 
 				const client =
 					byClientPayment.length > 0 && byClientPayment[0]
-						? byClientPayment[0].contact
+						? byClientPayment[0].organizationContact
 						: null;
 				return {
 					client,
