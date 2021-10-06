@@ -203,8 +203,7 @@ export class TagsComponent
 				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
-					type: 'string',
-					filter: false
+					type: 'string'
 				},
 				counter: {
 					title: this.getTranslation('Counter'),
