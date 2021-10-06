@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
@@ -33,13 +32,9 @@ export class TagsComponent
 	loading: boolean;
 	smartTableSource = new LocalDataSource();
 	selectedTag: ITag;
-	form: FormGroup;
 	disableButton = true;
 	private allTags = [];
-	filterOptions = [
-		{ property: 'all', displayName: 'All' }
-	];
-	private filterOption: any;
+	filterOptions: Array<any> = [];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -70,7 +65,6 @@ export class TagsComponent
 	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-
 		this.tags$
 			.pipe(
 				debounceTime(300),
@@ -128,7 +122,6 @@ export class TagsComponent
 	async selectTag({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedTag = isSelected ? data : null;
-		console.log(this.selectedTag);
 	}
 
 	async add() {
@@ -141,8 +134,7 @@ export class TagsComponent
 				name: addData.name
 			});
 		}
-		this.getTags();
-		this.clearItem();
+		this.tags$.next();
 	}
 
 	async delete(selectedItem?: ITag) {
@@ -218,17 +210,30 @@ export class TagsComponent
 					title: this.getTranslation('Counter'),
 					type: 'string',
 					width: '25%',
-					filter: false
+					filter: false,
+					valuePrepareFunction: (value, item) => {
+						return this.getCounter(item);
+					}
 				}
 			}
 		};
 	}
 
-	async getTags() {
-		if (!this.organization) {
-			return;
+	/**
+	 * GET tag usages counter
+	 */
+	getCounter = (item): number => {
+		const substring = "_counter";
+		let counter = 0; 
+		for (const property in item) {
+			if (property.includes(substring)) {
+				counter = counter + parseInt(item[property]);
+			}
 		}
+		return counter;
+	}
 
+	async getTags() {
 		this.allTags = [];
 		this.filterOptions = [
 			{ property: 'all', displayName: 'All' }
@@ -243,49 +248,60 @@ export class TagsComponent
 		);
 	
 		this.allTags = items;
-		
-		// this._generateUniqueTags(this.allTags);
 		this.tags = this.allTags;
+		
+		this._generateUniqueTags(this.allTags);
 		this.smartTableSource.load(this.allTags);
 
 		this.loading = false;
 	}
 
-	ngOnDestroy() {}
-
-	selectedFilterOption(value) {
-		this.filterOption = value;
+	/**
+	 * Select Filter 
+	 * 
+	 * @param value 
+	 * @returns 
+	 */
+	selectedFilterOption(value: string) {
 		if (value === 'all') {
-			this.getTags();
+			this.tags$.next();
 			this.smartTableSource.load(this.allTags);
 			return;
 		}
-		if (this.filterOption) {
-			const filterTags = this.allTags.filter(
-				(tag) => tag[value] && tag[value].length
+		if (value) {
+			const tags = this.allTags.filter(
+				(tag) => tag[value] && parseInt(tag[value]) > 0
 			);
-			this.smartTableSource.load(filterTags);
+			this.smartTableSource.load(tags);
 		}
 	}
 
-	// private _generateUniqueTags(tags: any[]) {
-	// 	tags.forEach((tag) => {
-	// 		for (const property in tag) {
-	// 			if (
-	// 				Array.isArray(tag[property]) &&
-	// 				tag[property].length &&
-	// 				!this.filterOptions.find(
-	// 					(option) => option.property === property
-	// 				)
-	// 			) {
-	// 				this.filterOptions.push({
-	// 					property,
-	// 					displayName: splitCamelCase(property)
-	// 				});
-	// 			}
-	// 		}
-	// 	});
-	// }
+	/**
+	 * Generate Unique Tags
+	 * 
+	 * @param tags 
+	 */
+	private _generateUniqueTags(tags: any[]) {
+		tags.forEach((tag) => {
+			for (const property in tag) {
+				const substring = "_counter";
+				if (
+					property.includes(substring) &&
+					parseInt(tag[property]) > 0
+				) {
+					const options = this.filterOptions.find(
+						(option) => option.property === property
+					);
+					if (!options) {
+						this.filterOptions.push({
+							property,
+							displayName: splitCamelCase(property.replace(substring, ''))
+						});
+					}
+				}
+			}
+		});
+	}
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
@@ -328,4 +344,6 @@ export class TagsComponent
 			this.tagsTable.grid.dataSet.deselectAll();
 		}
 	}
+
+	ngOnDestroy() {}
 }
