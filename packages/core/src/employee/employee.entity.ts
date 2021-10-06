@@ -414,7 +414,9 @@ export class Employee
     projects?: IOrganizationProject[];
 
 	// Employee Tags
-	@ManyToMany(() => Tag, (tag) => tag.employee)
+	@ManyToMany(() => Tag, (tag) => tag.employee, {
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_employee'
 	})

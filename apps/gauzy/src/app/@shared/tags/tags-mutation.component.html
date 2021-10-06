@@ -24,13 +24,9 @@
 							class="select-name"
 							type="text"
 							nbInput
-							placeholder="{{
-								'TAGS_PAGE.TAGS_SELECT_NAME' | translate
-							}}"
+							[placeholder]="'TAGS_PAGE.TAGS_SELECT_NAME' | translate"
 							id="inputName"
 							fullWidth
-							required
-							[(ngModel)]="name"
 						/>
 					</div>
 				</div>
@@ -42,9 +38,7 @@
 						<input
 							class="select-color"
 							nbInput
-							placeholder="{{
-								'TAGS_PAGE.TAGS_SELECT_COLOR' | translate
-							}}"
+							[placeholder]="'TAGS_PAGE.TAGS_SELECT_COLOR' | translate"
 							formControlName="color"
 							[(colorPicker)]="color"
 							[value]="color"
@@ -78,9 +72,7 @@
 							nbInput
 							fullWidth
 							class="description"
-							placeholder="{{
-								'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate
-							}}"
+							[placeholder]="'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate"
 							id="inputDescription"
 							fullWidth
 						></textarea>
@@ -94,7 +86,7 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			[disabled]="!name"
+			[disabled]="form.invalid"
 			(click)="tag ? editTag() : addTag()"
 			status="success"
 			nbButton
