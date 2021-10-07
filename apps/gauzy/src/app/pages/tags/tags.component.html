@@ -4,18 +4,19 @@
 			<nb-card-header>
 				{{ 'TAGS_PAGE.TAGS_TYPE' | translate }}
 			</nb-card-header>
-			<nb-list>
-				<nb-list-item
-					*ngFor="let option of filterOptions"
-					class="filter-item"
-					(click)="selectedFilterOption(option.property)"
-				>
-					{{ option.displayName }}
-				</nb-list-item>
-			</nb-list>
+			<ng-container *ngIf="filterOptions.length">
+				<nb-list>
+					<nb-list-item
+						*ngFor="let option of filterOptions"
+						class="filter-item"
+						(click)="selectedFilterOption(option.property)"
+					>
+						{{ option.displayName }}
+					</nb-list-item>
+				</nb-list>
+			</ng-container>
 		</nb-card>
 	</div>
-
 	<div class="col-10">
 		<nb-card
 			class="tags-component card-scroll"
@@ -44,34 +45,36 @@
 						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 						>{{ 'BUTTONS.ADD' | translate }}
 					</button>
-					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 						<ng-container
 							*ngTemplateOutlet="actionButtons"
 						></ng-container>
 					</ng-container>
-
 					<ngx-search-input
 						(search)="search($event)"
 						class="search"
 					></ngx-search-input>
 				</div>
-
-				<ng2-smart-table
-					class="tags-table"
-					[settings]="settingsSmartTable"
-					[source]="smartTableSource"
-					(userRowSelect)="selectTag($event)"
-					style="cursor: pointer;"
-					*ngIf="dataLayoutStyle === 'TABLE'"
-					#tagsTable
+				<ng-template 
+					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+					[ngIfElse]="gridLayout"
 				>
-				</ng2-smart-table>
-				<ga-card-grid
-					[settings]="settingsSmartTable"
-					[source]="tagsData"
-					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-					[buttonTemplate]="actionButtons"
-				></ga-card-grid>
+					<ng2-smart-table
+						[settings]="settingsSmartTable"
+						[source]="smartTableSource"
+						(userRowSelect)="selectTag($event)"
+						style="cursor: pointer;"
+						#tagsTable
+					>
+					</ng2-smart-table>
+				</ng-template>
+				<ng-template #gridLayout>
+					<ga-card-grid
+						[settings]="settingsSmartTable"
+						[source]="tags"
+						[buttonTemplate]="actionButtons"
+					></ga-card-grid>
+				</ng-template>
 			</nb-card-body>
 		</nb-card>
 		<ng-template

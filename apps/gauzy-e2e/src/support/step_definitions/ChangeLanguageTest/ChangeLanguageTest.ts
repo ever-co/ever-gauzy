@@ -1,12 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as changeLanguage from '../../Base/pages/ChangeLanguage.po'
-import * as faker from 'faker';
-import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
-import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { ChangeLanguagePageData } from '../../Base/pagedata/ChangeLanguagePageData';
 import { CustomCommands } from '../../commands';
 

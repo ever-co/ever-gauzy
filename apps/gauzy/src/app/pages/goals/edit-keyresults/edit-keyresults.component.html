@@ -81,7 +81,7 @@
 					<ga-employee-multi-select
 						[multiple]="false"
 						[allEmployees]="employees"
-						[selectedEmployeeIds]="keyResultsForm.value.owner"
+						[selectedEmployeeIds]="keyResultsForm.value.ownerId"
 						[label]="false"
 						(selectedChange)="selectEmployee($event, 'owner')"
 						id="key-result-owner"
@@ -118,7 +118,7 @@
 					<ga-employee-multi-select
 						[multiple]="false"
 						[allEmployees]="employees"
-						[selectedEmployeeIds]="keyResultsForm.value.lead"
+						[selectedEmployeeIds]="keyResultsForm.value.leadId"
 						[label]="false"
 						(selectedChange)="selectEmployee($event, 'lead')"
 						id="key-result-lead"

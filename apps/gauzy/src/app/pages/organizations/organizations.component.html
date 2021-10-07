@@ -62,13 +62,13 @@
 								'SM_TABLE.STATUS' | translate
 							}}</span>
 							<div class="text-center" *ngIf="x.isActive; else archived">
-								<div class="text-center badge-success">
+								<div class="text-center badge badge-success">
 									{{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
 								</div>
 							</div>
 							<ng-template #archived>
 								<div class="text-center">
-									<div class="badge-danger d-block">
+									<div class="badge badge-danger d-block">
 										{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
 									</div>
 								</div>

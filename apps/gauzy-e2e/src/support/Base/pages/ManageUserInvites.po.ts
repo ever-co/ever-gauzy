@@ -13,9 +13,6 @@ import {
 import { ManageUserInvitesPage } from '../pageobjects/ManageUserInvitesPageObject';
 
 export const manageInvitesButtonVisible = () => {
-	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
-	cy.intercept('GET', '/api/employee/user/*').as('waitUsers');
-	cy.wait(['@waitUserOrganization','@waitUsers']);
 	verifyElementIsVisible(ManageUserInvitesPage.manageInvitesButtonCss);
 };
 

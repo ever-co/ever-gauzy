@@ -26,7 +26,9 @@ export const employeeDropdownVisible = () => {
 };
 
 export const clickEmployeeDropdown = () => {
+	cy.intercept('GET','/api/employee/working*').as('waitEmployees');
 	clickButton(RecurringExpensesPage.employeeDropdownCss);
+	cy.wait('@waitEmployees')
 };
 
 export const selectEmployeeFromDropdown = (index) => {
