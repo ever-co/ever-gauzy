@@ -174,6 +174,7 @@ export const nameFilterInputVisible = () => {
 };
 
 export const enterNameFilterInputData = (text: string) => {
+	clearField(ManageInterviewsPage.nameFilterInputCss);
 	enterInput(ManageInterviewsPage.nameFilterInputCss, text);
 	waitUntil(2000);
 };
@@ -338,3 +339,7 @@ export const verifyDeleteButtonVisible = () => {
 export const clickDeleteButton = () => {
 	clickButton(ManageInterviewsPage.deleteButtonCss);
 };
+
+export const clearFieldForSearch = () => {
+	clearField(ManageInterviewsPage.titleFilterInputCss);
+}

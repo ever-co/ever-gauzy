@@ -319,6 +319,7 @@ And('User clicks on Only Future checkbox', () => {
 });
 
 When('User enters title filter input value for future interview', () => {
+	manageInterviewsPage.clearFieldForSearch();
 	manageInterviewsPage.enterTitleFilterInputData(`${futureInterviewTitle}`);
 });
 
