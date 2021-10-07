@@ -276,6 +276,8 @@ export class GoalsComponent
 				const keyResultData = response;
 				delete keyResultData.goal;
 				delete keyResultData.updates;
+				keyResultData.ownerId = response.owner;
+				keyResultData.leadId = response.lead;
 				await this.keyResultService
 					.update(keyResult.id, keyResultData)
 					.then((val) => {
@@ -291,6 +293,8 @@ export class GoalsComponent
 			} else {
 				const data = {
 					...response,
+					ownerId:response.owner,
+					leadId:response.lead,
 					goalId: this.goals[index].id
 				};
 				await this.keyResultService
