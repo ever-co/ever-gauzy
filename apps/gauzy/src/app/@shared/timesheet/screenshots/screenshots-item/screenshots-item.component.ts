@@ -15,7 +15,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { isEmpty, toLocal } from '@gauzy/common-angular';
+import { isEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import * as _ from 'underscore';
 import { GalleryService } from '../../../gallery/gallery.service';
@@ -27,9 +27,11 @@ import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
 	styleUrls: ['./screenshots-item.component.scss']
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
+	
 	private _screenshots: IScreenshot[] = [];
 	private _timeSlot: ITimeSlot;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	progressStatus = progressStatus;
 
 	@Input() selectionMode = false;
 	@Input() galleryItems: GalleryItem[] = [];
@@ -83,18 +85,6 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		if (timeSlot.isAllowDelete) {
 			const slotId = timeSlot.id;
 			this.toggle.emit(slotId);
-		}
-	}
-
-	progressStatus(value) {
-		if (value <= 25) {
-			return 'danger';
-		} else if (value <= 50) {
-			return 'warning';
-		} else if (value <= 75) {
-			return 'info';
-		} else {
-			return 'success';
 		}
 	}
 

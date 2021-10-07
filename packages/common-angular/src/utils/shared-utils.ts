@@ -106,14 +106,14 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 }
 
 export function progressStatus(value) {
-	if (value >= 75) {
-		return 'success';
-	} else if (value >= 50) {
+	if (value <= 25) {
+		return 'danger';
+	} else if (value <= 50) {
 		return 'warning';
-	} else if (value >= 25) {
+	} else if (value <= 75) {
 		return 'info';
 	} else {
-		return 'danger';
+		return 'success';
 	}
 }
 

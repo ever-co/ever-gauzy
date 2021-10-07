@@ -14,7 +14,7 @@ import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IEmployeeSetting } from './employee-settings.model';
 import { IExpense } from './expense.model';
-import { ITimesheet } from './timesheet.model';
+import { ITimesheet, ITimeSlot } from './timesheet.model';
 import { ITask } from './task-entity.model';
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
@@ -49,6 +49,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	expenses?: IExpense[];
 	timesheets?: ITimesheet[];
 	tasks?: ITask[];
+	timeSlots?: ITimeSlot[];
 	contact: IContact;
 	averageIncome?: number;
 	totalWorkHours?: number;

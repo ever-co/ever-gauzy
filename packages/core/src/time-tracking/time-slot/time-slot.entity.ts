@@ -69,7 +69,7 @@ export class TimeSlot
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee)
+	@ManyToOne(() => Employee, (employee) => employee.timeSlots)
 	@JoinColumn()
 	employee?: IEmployee;
 
