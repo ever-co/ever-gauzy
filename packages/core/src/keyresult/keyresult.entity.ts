@@ -96,6 +96,15 @@ export class KeyResult
 	@IsOptional()
 	weight?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Owner Employee
+	 */
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
@@ -108,6 +117,9 @@ export class KeyResult
 	@Column()
 	ownerId: string;
 
+	/**
+	 * Lead Employee
+	 */
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
@@ -122,6 +134,9 @@ export class KeyResult
 	@Column({ nullable: true })
 	leadId?: string;
 
+	/**
+	 * Organization Project
+	 */
 	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn({ name: 'projectId' })
@@ -136,6 +151,9 @@ export class KeyResult
 	@Column({ nullable: true })
 	readonly projectId?: string;
 
+	/**
+	 * Task
+	 */
 	@ApiProperty({ type: () => Task })
 	@ManyToOne(() => Task, { nullable: true })
 	@JoinColumn({ name: 'taskId' })
@@ -150,6 +168,9 @@ export class KeyResult
 	@Column({ nullable: true })
 	readonly taskId?: string;
 
+	/**
+	 * GoalKPI
+	 */
 	@ApiProperty({ type: () => GoalKPI })
 	@ManyToOne(() => GoalKPI, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
@@ -164,6 +185,9 @@ export class KeyResult
 	@Column({ nullable: true })
 	readonly kpiId?: string;
 
+	/**
+	 * Goal
+	 */
 	@ApiProperty({ type: () => Goal })
 	@ManyToOne(() => Goal, (goal) => goal.keyResults, {
 		onDelete: 'CASCADE'
@@ -179,10 +203,15 @@ export class KeyResult
 	@Column({ nullable: true })
 	readonly goalId?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
 	@ApiProperty({ type: () => KeyResultUpdate })
 	@OneToMany(() => KeyResultUpdate, (keyResultUpdate) => keyResultUpdate.keyResult, {
 		cascade: true
 	})
-	@IsOptional()
 	updates?: KeyResultUpdate[];
 }

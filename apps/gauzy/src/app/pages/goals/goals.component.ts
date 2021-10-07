@@ -291,6 +291,8 @@ export class GoalsComponent
 			} else {
 				const data = {
 					...response,
+					ownerId:response.ownerId,
+					leadId:response.leadId,
 					goalId: this.goals[index].id
 				};
 				await this.keyResultService
