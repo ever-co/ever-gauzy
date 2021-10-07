@@ -65,7 +65,7 @@
 
 							<img
 								*ngIf="orgMainForm"
-								[src]="orgMainForm.get('imageUrl').value"
+								[src]="!orgMainForm.get('imageUrl').value ? dummyImage : orgMainForm.get('imageUrl').value"
 								alt="Organization Photo"
 								(mouseenter)="hoverState = true"
 								(mouseleave)="hoverState = false"

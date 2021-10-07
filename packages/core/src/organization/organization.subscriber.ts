@@ -1,7 +1,7 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
 import * as faker from 'faker';
 import { Organization } from "./organization.entity";
-import { generateSlug } from "core/utils";
+import { generateSlug, getOrganizationDummyImage } from "core/utils";
 
 @EventSubscriber()
 export class OrganizationSubscriber implements EntitySubscriberInterface<Organization> {
@@ -31,6 +31,12 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
             
             if(entity.name) {
                 entity.profile_link = generateSlug(`${entity.name}`);
+            }
+
+            if (!entity.imageUrl) {
+                entity.imageUrl = getOrganizationDummyImage(entity.name);
+                console.log(entity.imageUrl, "entity.imageUrl");
+                
             }
         }
     }
