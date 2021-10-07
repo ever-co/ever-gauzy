@@ -1,6 +1,7 @@
-import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
 import * as faker from 'faker';
 import { Organization } from "./organization.entity";
+import { generateSlug, getOrganizationDummyImage } from "core/utils";
 
 @EventSubscriber()
 export class OrganizationSubscriber implements EntitySubscriberInterface<Organization> {
@@ -18,6 +19,25 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
     afterLoad(entity: Organization) {
         if (!entity.brandColor) {
             entity.brandColor = faker.internet.color();
+        }
+    }
+
+    /**
+     * Called before employee insertion.
+     */
+     beforeInsert(event: InsertEvent<Organization>) {
+        if (event) {
+            const { entity } = event;
+            
+            if(entity.name) {
+                entity.profile_link = generateSlug(`${entity.name}`);
+            }
+
+            if (!entity.imageUrl) {
+                entity.imageUrl = getOrganizationDummyImage(entity.name);
+                console.log(entity.imageUrl, "entity.imageUrl");
+                
+            }
         }
     }
 }

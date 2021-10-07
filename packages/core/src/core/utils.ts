@@ -197,3 +197,8 @@ export function generateSlug(string: string) {
 		trim: true // trim leading and trailing replacement chars, defaults to `true`
 	});
 }
+
+export const getOrganizationDummyImage = (name: string) => {
+	const firstNameLetter = name ? name.charAt(0).toUpperCase() : '';
+	return getDummyImage(330, 300, firstNameLetter);
+};
