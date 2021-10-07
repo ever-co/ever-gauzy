@@ -6,7 +6,9 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
+import { progressStatus } from '@gauzy/common-angular';
 import { IDailyActivity } from '@gauzy/contracts';
+
 @Component({
 	selector: 'ngx-activity-item',
 	templateUrl: './activity-item.component.html',
@@ -29,21 +31,11 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 		this._item = value;
 	}
 
+	progressStatus = progressStatus;
+
 	constructor() {}
 
 	ngOnInit(): void {}
-
-	progressStatus(value) {
-		if (value <= 25) {
-			return 'danger';
-		} else if (value <= 50) {
-			return 'warning';
-		} else if (value <= 75) {
-			return 'info';
-		} else {
-			return 'success';
-		}
-	}
 
 	toggleChild() {
 		this.childOpen = !this.childOpen;
@@ -51,5 +43,6 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 			this.loadChild.emit(this.item);
 		}
 	}
+	
 	ngOnDestroy(): void {}
 }

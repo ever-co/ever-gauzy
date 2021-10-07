@@ -1224,8 +1224,10 @@ export class StatisticService {
 	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics) {
 		let employees: ITimeSlotStatistics[] = [];
 		const date = request.date || new Date();
+		
 		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
+		const tenantId = RequestContext.currentTenantId();
+		
 		const { employeeId, organizationId, projectId } = request;
 		const { start, end } = getDateRange(date, 'week');
 
@@ -1287,8 +1289,7 @@ export class StatisticService {
 			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
 			.getRawMany();
 
-		for (let index = 0; index < employees.length; index++) {
-			const employee = employees[index];
+		for await (const employee of employees) {
 			employee.user = {
 				imageUrl: employee.user_image_url,
 				name: employee.user_name
@@ -1299,33 +1300,27 @@ export class StatisticService {
 			employee.timeSlots = await this.timeSlotRepository.find({
 				join: {
 					alias: 'time_slot',
-					innerJoin: {
+					innerJoinAndSelect: {
 						timeLogs: 'time_slot.timeLogs'
 					}
 				},
-				relations: ['screenshots', 'timeLogs'],
+				relations: ['screenshots'],
 				where: (qb: SelectQueryBuilder<TimeSlot>) => {
 					const employeeId = employee.id;
 					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 						employeeId
 					});
-					qb.andWhere(
-						`"${qb.alias}"."organizationId" = :organizationId`,
-						{
-							organizationId
-						}
-					);
+					qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
 					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 						tenantId
 					});
 					// project filter query
 					if (isNotEmpty(projectIds)) {
-						qb.andWhere(
-							`"timeLogs"."projectId" IN (:...projectIds)`,
-							{
-								projectIds
-							}
-						);
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
 					}
 				},
 				take: 3,
