@@ -24,14 +24,14 @@ export class KeyResultService {
 
 	createKeyResult(keyResult): Promise<IKeyResult> {
 		return this._http
-			.post<IKeyResult>(`${this.API_URL}/create`, keyResult)
+			.post<IKeyResult>(`${this.API_URL}`, keyResult)
 			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
 
 	createBulkKeyResult(keyResults): Promise<IKeyResult[]> {
 		return this._http
-			.post<IKeyResult[]>(`${this.API_URL}/createBulk`, keyResults)
+			.post<IKeyResult[]>(`${this.API_URL}/bulk`, keyResults)
 			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
