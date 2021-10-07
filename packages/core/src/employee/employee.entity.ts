@@ -21,7 +21,8 @@ import {
 	ITimeOff as ITimeOffRequest,
 	IExpense,
 	ITimesheet,
-	ITask
+	ITask,
+	ITimeSlot
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -66,6 +67,7 @@ import {
 	TimeOffPolicy,
 	TimeOffRequest,
 	Timesheet,
+	TimeSlot,
 	User
 } from '../core/entities/internal';
 
@@ -359,10 +361,19 @@ export class Employee
 	@OneToMany(() => OrganizationTeamEmployee, (it) => it.employee)
 	teams?: IOrganizationTeam[];
 
-	// Employee Time Logs
+	/**
+	 * Employee Time Logs
+	 */
 	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
 	@OneToMany(() => TimeLog, (it) => it.employee)
 	timeLogs?: ITimeLog[];
+
+	/**
+	 * Employee Time Slots
+	 */
+	@ApiPropertyOptional({ type: () => TimeSlot, isArray: true })
+	@OneToMany(() => TimeSlot, (it) => it.employee)
+	timeSlots?: ITimeSlot[];
 
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (it) => it.employee, {
