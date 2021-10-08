@@ -206,14 +206,14 @@ export class PublicPageEmployeeMutationComponent
 		}
 	}
 
-	removeAward(awardId: string) {
+	async removeAward(award) {
 		this.employeeAwardService
-			.delete(awardId)
+			.delete(award.id)
 			.pipe(
 				tap(
 					() =>
 						(this.employeeAwards = this.employeeAwards.filter(
-							(a) => a.id !== awardId
+							(a) => a.id !== award.id
 						))
 				),
 				tap(() => {
