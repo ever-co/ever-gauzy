@@ -441,34 +441,18 @@
 							</div>
 							<div class="row" *ngIf="employeeAwards.length">
 								<div class="col">
-									<nb-list class="nb_list awards-list">
-										<nb-list-item
-											*ngFor="let award of employeeAwards"
-											class="nb_list_item item"
-										>
-											<span
-												class="award_title"
-												[textContent]="
-													award.name +
-													' (' +
-													award.year +
-													')'
-												"
-											></span>
-											<nb-actions
-												class="nb_action float-left"
-												e="medium"
-											>
-												<nb-action
-													(click)="
-														removeAward(award.id)
-													"
-													class="d-inline pr-0"
-													icon="close"
-												></nb-action>
-											</nb-actions>
-										</nb-list-item>
-									</nb-list>
+									<nb-card class="mt-3">
+										<nb-card-body>
+											<nb-tag-list>
+												<nb-tag 
+													*ngFor="let award of employeeAwards" 
+													(remove)="removeAward(award)" 
+													[text]="award.name + ' (' + award.year + ')'" 
+													removable>
+												</nb-tag>
+											</nb-tag-list>
+										</nb-card-body>
+									</nb-card>
 								</div>
 							</div>
 						</div>
