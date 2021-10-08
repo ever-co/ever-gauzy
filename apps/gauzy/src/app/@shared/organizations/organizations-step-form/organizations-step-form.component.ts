@@ -79,6 +79,7 @@ export class OrganizationsStepFormComponent
 	country: ICountry;
 	user: IUser;
 	retriveEmail: string;
+	dummyImage=DUMMY_PROFILE_IMAGE;
 
 	@Input('onboarding') onboarding?: boolean;
 
@@ -119,10 +120,7 @@ export class OrganizationsStepFormComponent
 
 	private _initializedForm() {
 		this.orgMainForm = this.fb.group({
-			imageUrl: [
-				DUMMY_PROFILE_IMAGE,
-				Validators.required
-			],
+			imageUrl: [],
 			currency: [ENV.DEFAULT_CURRENCY || CurrenciesEnum.USD],
 			name: [retrieveNameFromEmail(this.user?.email || this.retriveEmail), Validators.required],
 			officialName: [],

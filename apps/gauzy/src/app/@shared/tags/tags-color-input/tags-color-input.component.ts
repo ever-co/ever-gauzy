@@ -6,12 +6,11 @@ import {
 	EventEmitter,
 	OnDestroy
 } from '@angular/core';
-import { TagsService } from '../../../@core/services/tags.service';
 import { ITag, IOrganization } from '@gauzy/contracts';
 import { getContrastColor } from '@gauzy/common-angular';
-import { Store } from '../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
+import { Store, TagsService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -62,7 +61,7 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly tagsService: TagsService,
-		private store: Store
+		private readonly store: Store
 	) {}
 
 	async onChange(currentSelection: string[]) {

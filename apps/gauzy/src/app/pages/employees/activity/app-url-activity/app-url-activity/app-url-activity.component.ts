@@ -79,18 +79,6 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	progressStatus(value) {
-		if (value <= 25) {
-			return 'danger';
-		} else if (value <= 50) {
-			return 'warning';
-		} else if (value <= 75) {
-			return 'info';
-		} else {
-			return 'success';
-		}
-	}
-
 	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
 		this.timesheetFilterService.filter = $event;

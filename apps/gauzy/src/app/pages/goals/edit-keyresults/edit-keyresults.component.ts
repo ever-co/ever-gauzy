@@ -81,8 +81,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			unit: [KeyResultNumberUnitsEnum.ITEMS],
 			targetValue: [1],
 			initialValue: [0],
-			owner: [null, Validators.required],
-			lead: [null],
+			ownerId: [null, Validators.required],
+			leadId: [null],
 			deadline: [
 				this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE,
 				Validators.required
@@ -110,8 +110,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				hardDeadline: this.data.hardDeadline
 					? new Date(this.data.hardDeadline)
 					: null,
-				lead: !!this.data.lead ? this.data.lead.id : null,
-				owner: this.data.owner.id
+				leadId: !!this.data.lead ? this.data.lead.id : null,
+				ownerId: this.data.owner.id
 			});
 		} else {
 			await this.getKPI();
@@ -204,11 +204,11 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 
 	selectEmployee(event, control) {
 		if (control === 'lead') {
-			this.keyResultsForm.patchValue({ lead: event });
+			this.keyResultsForm.patchValue({ leadId: event });
 		} else if (control === 'alignedGoalOwner') {
 			this.keyResultsForm.patchValue({ alignedGoalOwner: event });
 		} else {
-			this.keyResultsForm.patchValue({ owner: event });
+			this.keyResultsForm.patchValue({ ownerId: event });
 		}
 	}
 
@@ -259,7 +259,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				});
 		}
 
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		if (!!this.data) {
 			// Delete all updates and progress when keyresult type is changed.
 			if (this.data.type !== this.keyResultsForm.value.type) {

@@ -84,6 +84,7 @@ export abstract class CrudService<T extends BaseEntity>
 			const [items, total] = await this.repository.findAndCount(options);
 			return { items, total };
 		} catch (error) {
+			console.log(error);
 			throw new BadRequestException(error);
 		}
 	}
@@ -311,8 +312,9 @@ export abstract class CrudService<T extends BaseEntity>
 	): Promise<DeleteResult> {
 		try {
 			return await this.repository.delete(criteria);
-		} catch (err) {
-			throw new NotFoundException(`The record was not found`, err);
+		} catch (error) {
+			console.log(error)
+			throw new NotFoundException(`The record was not found`, error);
 		}
 	}
 

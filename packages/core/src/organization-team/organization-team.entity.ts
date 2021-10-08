@@ -12,12 +12,14 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IRequestApprovalTeam,
-	ITag
+	ITag,
+	ITask
 } from '@gauzy/contracts';
 import {
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,
 	Tag,
+	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 
@@ -59,4 +61,14 @@ export class OrganizationTeam
 		name: 'tag_organization_team'
 	})
 	tags?: ITag[];
+
+	/**
+	 * Task
+	 */
+	@ManyToMany(() => Task, (task) => task.teams, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable()
+	tasks?: ITask[];
 }

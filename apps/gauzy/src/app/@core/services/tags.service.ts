@@ -29,7 +29,7 @@ export class TagsService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: ITag[] }>(`${API_PREFIX}/tags`, {
+			.get<{ items: ITag[] }>(`${API_PREFIX}/tags/list`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -73,16 +73,6 @@ export class TagsService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<any>(`${API_PREFIX}/tags/getByTenantId/`, {
-				params: { data }
-			})
-			.pipe(first())
-			.toPromise();
-	}
-
-	getTagUsageCount(organizationId: any): Promise<any> {
-		const data = JSON.stringify({ organizationId });
-		return this.http
-			.get<any>(`${API_PREFIX}/tags/getTagsWithCount`, {
 				params: { data }
 			})
 			.pipe(first())

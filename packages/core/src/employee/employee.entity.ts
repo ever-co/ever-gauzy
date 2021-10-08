@@ -20,7 +20,9 @@ import {
 	ITimeOffPolicy,
 	ITimeOff as ITimeOffRequest,
 	IExpense,
-	ITimesheet
+	ITimesheet,
+	ITask,
+	ITimeSlot
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -59,11 +61,13 @@ import {
 	RequestApprovalEmployee,
 	Skill,
 	Tag,
+	Task,
 	TenantOrganizationBaseEntity,
 	TimeLog,
 	TimeOffPolicy,
 	TimeOffRequest,
 	Timesheet,
+	TimeSlot,
 	User
 } from '../core/entities/internal';
 
@@ -357,10 +361,19 @@ export class Employee
 	@OneToMany(() => OrganizationTeamEmployee, (it) => it.employee)
 	teams?: IOrganizationTeam[];
 
-	// Employee Time Logs
+	/**
+	 * Employee Time Logs
+	 */
 	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
 	@OneToMany(() => TimeLog, (it) => it.employee)
 	timeLogs?: ITimeLog[];
+
+	/**
+	 * Employee Time Slots
+	 */
+	@ApiPropertyOptional({ type: () => TimeSlot, isArray: true })
+	@OneToMany(() => TimeSlot, (it) => it.employee)
+	timeSlots?: ITimeSlot[];
 
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (it) => it.employee, {
@@ -412,7 +425,9 @@ export class Employee
     projects?: IOrganizationProject[];
 
 	// Employee Tags
-	@ManyToMany(() => Tag, (tag) => tag.employee)
+	@ManyToMany(() => Tag, (tag) => tag.employee, {
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_employee'
 	})
@@ -477,4 +492,14 @@ export class Employee
 		name: 'time_off_request_employee'
 	})
 	timeOffRequests?: ITimeOffRequest[];
+
+	/**
+	 * Task
+	 */
+	@ManyToMany(() => Task, (task) => task.members, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable()
+	tasks?: ITask[];
 }

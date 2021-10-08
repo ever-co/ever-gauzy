@@ -106,14 +106,14 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 }
 
 export function progressStatus(value) {
-	if (value >= 75) {
-		return 'success';
-	} else if (value >= 50) {
+	if (value <= 25) {
+		return 'danger';
+	} else if (value <= 50) {
 		return 'warning';
-	} else if (value >= 25) {
+	} else if (value <= 75) {
 		return 'info';
 	} else {
-		return 'danger';
+		return 'success';
 	}
 }
 
@@ -196,4 +196,24 @@ export const compareDate = (date1: any, date2: any) => {
 		return false;
 	}
 	return d1 > d2;
+}
+
+export function splitCamelCase(word: string): string {
+	let output: string[], i: number, l: number;
+	const RegExp = /[A-Z]/;
+	if (typeof word !== 'string') {
+		throw new Error('The "word" parameter must be a string.');
+	}
+	output = [];
+	for (i = 0, l = word.length; i < l; i++) {
+		if (i === 0) {
+			output.push(word[i].toUpperCase());
+		} else {
+			if (i > 0 && RegExp.test(word[i])) {
+				output.push(' ');
+			}
+			output.push(word[i]);
+		}
+	}
+	return output.join('');
 }

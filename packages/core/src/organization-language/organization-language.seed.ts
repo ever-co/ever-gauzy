@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { Connection, In } from 'typeorm';
 import { OrganizationLanguage } from './organization-language.entity';
 import * as faker from 'faker';
 import { IOrganization, IOrganizationLanguage, ITenant } from '@gauzy/contracts';
@@ -11,8 +11,11 @@ export const createDefaultOrganizationLanguage = async (
 	defaultOrganizations: IOrganization[]
 ): Promise<IOrganizationLanguage[]> => {
 	const mapOrganizationLanguage: IOrganizationLanguage[] = [];
-	const allLanguage = await connection.manager.find(Language, {});
-
+	
+	const allLanguage = await connection.getRepository(Language).find({
+		code: In(["en", "he", "ru", "bg"])
+	});
+	
 	for (const defaultOrganization of defaultOrganizations) {
 		for (const language of allLanguage) {
 			const organization = new OrganizationLanguage();
@@ -42,8 +45,11 @@ export const createRandomOrganizationLanguage = async (
 	}
 
 	const mapOrganizationLanguage: IOrganizationLanguage[] = [];
-	const allLanguage = await connection.manager.find(Language, {});
-
+	const allLanguage = await connection.manager.createQueryBuilder(Language, "language")
+	.orderBy("random()")
+	.limit(4)
+	.getMany();
+	
 	for (const tenant of tenants) {
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {

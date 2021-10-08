@@ -9,7 +9,8 @@ import {
 	getLastElement,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	clickButtonDouble
 } from '../utils/util';
 import { RecurringExpensesPage } from '../pageobjects/RecurringExpensesPageObject';
 
@@ -26,7 +27,11 @@ export const employeeDropdownVisible = () => {
 };
 
 export const clickEmployeeDropdown = () => {
+	cy.intercept('GET','/api/employee/working*').as('waitEmployees');
 	clickButton(RecurringExpensesPage.employeeDropdownCss);
+	cy.wait('@waitEmployees').then(() => {
+		clickButtonDouble(RecurringExpensesPage.employeeDropdownCss);
+	});
 };
 
 export const selectEmployeeFromDropdown = (index) => {

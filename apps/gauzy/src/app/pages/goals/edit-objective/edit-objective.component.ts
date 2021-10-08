@@ -121,18 +121,20 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		};
 		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
 			if (res) {
-				this.timeFrames = res.items.filter(
+				let timeFrames = [];
+				timeFrames = res.items.filter(
 					(timeframe) =>
 						timeframe.status === this.timeFrameStatusEnum.ACTIVE &&
 						isFuture(new Date(timeframe.endDate))
 				);
 				if (!!this.data) {
-					this.timeFrames.push(
+					timeFrames.push(
 						res.items.find(
 							(timeFrame) => this.data.deadline === timeFrame.name
 						)
 					);
 				}
+				this.timeFrames = timeFrames.filter(elm => elm);
 			}
 		});
 	}
