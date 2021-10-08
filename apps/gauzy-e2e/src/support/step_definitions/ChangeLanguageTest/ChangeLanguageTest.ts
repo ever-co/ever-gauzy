@@ -43,27 +43,6 @@ Then('User can verify language is changed to Bulgarian', () => {
     changeLanguage.verifyLanguageIsChanged(ChangeLanguagePageData.Bulgarian);
 })
 
-//Change language to English
-Then('User see language selector', () => {
-    changeLanguage.verifyLanguageSelectorVisible();
-});
-
-When('User click on language select button', () => {
-    changeLanguage.clickLanguageSelector();
-})
-
-Then('User see language options', () => {
-    changeLanguage.verifyLanguageOptionsVisible();
-})
-
-And('User click on English language', () => {
-    changeLanguage.clickOnLanguageOption(1);
-});
-
-Then('User can verify language is changed to English', () => {
-    changeLanguage.verifyLanguageIsChanged(ChangeLanguagePageData.English);
-})
-
 //Change language to Russian
 Then('User see language selector', () => {
     changeLanguage.verifyLanguageSelectorVisible();
@@ -105,4 +84,26 @@ And('User click on Hebrew language', () => {
 Then('User can verify language is changed to Hebrew', () => {
     changeLanguage.verifyLanguageIsChanged(ChangeLanguagePageData.Hebrew);
 })
+
+//Change language to English
+Then('User see language selector', () => {
+    changeLanguage.verifyLanguageSelectorVisible();
+});
+
+When('User click on language select button', () => {
+    changeLanguage.clickLanguageSelector();
+})
+
+Then('User see language options', () => {
+    changeLanguage.verifyLanguageOptionsVisible();
+})
+
+And('User click on English language', () => {
+    changeLanguage.clickOnLanguageOption(1);
+});
+
+Then('User can verify language is changed to English', () => {
+    changeLanguage.verifyLanguageIsChanged(ChangeLanguagePageData.English);
+})
+
 

@@ -15,9 +15,7 @@ export const bookPublicAppointmentButtonVisible = () => {
 };
 
 export const clickBookPublicAppointmentButton = (text) => {
-	cy.intercept('GET', '/api/event-type*').as('waitEventType');
 	clickElementByText(AppointmentsPage.bookPublicAppointmentButtonCss, text);
-	cy.wait('@waitEventType');
 };
 
 // Employee select functions
@@ -26,7 +24,7 @@ export const employeeDropdownVisible = () => {
 };
 
 export const clickEmployeeDropdown = () => {
-	cy.intercept('GET', '/api/employee-appointment*').as('getUserXhr');
+	cy.intercept('GET', '/api/employee/working*').as('getUserXhr');
 	clickButton(AppointmentsPage.employeeDropdownCss);
 	cy.wait('@getUserXhr').then(() =>{
 		clickButtonDouble(AppointmentsPage.employeeDropdownCss);
