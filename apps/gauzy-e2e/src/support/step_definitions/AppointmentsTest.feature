@@ -37,11 +37,12 @@ Feature: Appointments test
     Then Notification message will appear
   Scenario: Book public appointment
     And User can visit Employees appointments page
+    And User can see Book Public Appointment button
+    When User click on Book Public Appointment button
     And User can see employee select dropdown
     When User click on employee select dropdown
     Then User can select employee from dropdown options
-    And User can see Book Public Appointment button
-    When User click on Book Public Appointment button
+    Then User clicks on Event Type select button
     Then User can see available time in Calendar table
     When User clicks on available time in Calendar table
     Then User can see Agenda input field

@@ -183,9 +183,10 @@
 					<h5 class="employee-profile-item-title">
 						{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
 					</h5>
-					<span>
-						{{ employee.description }}
-					</span>
+					<div
+						class="org-banner"
+						[textContent]="employee.short_description"
+					></div>
 				</div>
 
 				<div

@@ -68,7 +68,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		DangerZoneComponent,
 		EmailHistoryComponent,
 		EmailFiltersComponent,
-		SmsGatewayComponent
+		SmsGatewayComponent,
 	],
 	providers: [RolePermissionsService, RoleService]
 })

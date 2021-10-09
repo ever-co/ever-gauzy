@@ -1,4 +1,9 @@
-<nb-card>
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex justify-content-between">
+		<h4 class="email-history-header">
+			{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.FEATURES' | translate }}
+		</h4>
+	</nb-card-header>
 	<nb-card-body class="tabset">
 		<nb-route-tabset [tabs]="tabs"></nb-route-tabset>
 	</nb-card-body>

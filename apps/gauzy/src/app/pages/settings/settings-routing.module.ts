@@ -4,12 +4,10 @@ import { EditRolesPermissionsComponent } from './edit-roles-permissions/edit-rol
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { SettingsComponent } from './settings.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
-import { EmailTemplatesComponent } from '../email-templates/email-templates.component';
 import { FileStorageComponent } from './file-storage/file-storage.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
-import { AccountingTemplatesComponent } from '../accounting-templates/accounting-templates.component';
 
 const routes: Routes = [
 	{
@@ -18,7 +16,10 @@ const routes: Routes = [
 		children: [
 			{
 				path: 'general',
-				component: SettingsComponent
+				loadChildren: () =>
+					import('./general-setting/general-setting.module').then(
+						(m) => m.GeneralSettingModule
+					)
 			},
 			{
 				path: 'features',
@@ -46,37 +47,17 @@ const routes: Routes = [
 			},
 			{
 				path: 'email-templates',
-				component: EmailTemplatesComponent,
-				canActivate: [NgxPermissionsGuard],
-				data: {
-					permissions: {
-						only: [PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES],
-						redirectTo: '/pages/settings'
-					},
-					selectors: {
-						project: false,
-						employee: false,
-						date: false,
-						organization: true
-					}
-				}
+				loadChildren: () =>
+					import('../email-templates/email-templates.module').then(
+						(m) => m.EmailTemplatesModule
+					)
 			},
 			{
 				path: 'accounting-templates',
-				component: AccountingTemplatesComponent,
-				canActivate: [NgxPermissionsGuard],
-				data: {
-					permissions: {
-						only: [PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES],
-						redirectTo: '/pages/settings'
-					},
-					selectors: {
-						project: false,
-						employee: false,
-						date: false,
-						organization: true
-					}
-				}
+				loadChildren: () =>
+					import('../accounting-templates/accounting-templates.module').then(
+						(m) => m.AccountingTemplatesModule
+					)
 			},
 			{
 				path: 'roles',

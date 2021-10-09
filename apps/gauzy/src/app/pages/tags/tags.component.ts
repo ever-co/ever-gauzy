@@ -241,7 +241,7 @@ export class TagsComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.tagsService.getAllTags(
+		const { items } = await this.tagsService.getTags(
 			['organization'],
 			{ tenantId, organizationId }
 		);

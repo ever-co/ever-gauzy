@@ -84,7 +84,7 @@
 		"express-session": "^1.17.1",
 		"faker": "^5.5.3",
 		"fast-json-stringify": "^2.4.1",
-		"fastify-swagger": "^3.3.0",
+		"fastify-swagger": "^4.12.4",
 		"fs-extra": "^9.1.0",
 		"graphql": "^15.4.0",
 		"graphql-tools": "^7.0.2",

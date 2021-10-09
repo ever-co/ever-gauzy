@@ -5,19 +5,25 @@ import {
 	IEmployee,
 	ITimeOffPolicy,
 	ITimeOff,
-	IOrganization
+	IOrganization,
+	StatusTypesEnum
 } from '@gauzy/contracts';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { Store } from '../../../@core/services/store.service';
-import { TimeOffService } from '../../../@core/services/time-off.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { first } from 'rxjs/operators';
-import { EmployeesService } from '../../../@core/services';
-import { OrganizationDocumentsService } from '../../../@core/services/organization-documents.service';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { environment as ENV } from 'apps/gauzy/src/environments/environment';
+import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import {
+	EmployeesService,
+	OrganizationDocumentsService,
+	OrganizationsService,
+	Store,
+	TimeOffService,
+	ToastrService
+} from '../../../@core/services';
+import { environment as ENV } from './../../../../environments/environment';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-time-off-request-mutation',
 	templateUrl: './time-off-request-mutation.component.html',
@@ -25,14 +31,14 @@ import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 })
 export class TimeOffRequestMutationComponent implements OnInit {
 	constructor(
-		protected dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
-		private fb: FormBuilder,
-		private toastrService: ToastrService,
-		private timeOffService: TimeOffService,
-		private employeesService: EmployeesService,
-		private documentsService: OrganizationDocumentsService,
-		private store: Store,
-		private organizationService: OrganizationsService
+		protected readonly dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
+		private readonly fb: FormBuilder,
+		private readonly toastrService: ToastrService,
+		private readonly timeOffService: TimeOffService,
+		private readonly employeesService: EmployeesService,
+		private readonly documentsService: OrganizationDocumentsService,
+		private readonly store: Store,
+		private readonly organizationService: OrganizationsService
 	) {}
 
 	@ViewChild('employeeSelector')
@@ -40,9 +46,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	@Input() type: ITimeOff | string;
 
-	form: FormGroup;
 	policies: ITimeOffPolicy[] = [];
-	orgEmployees: IEmployee[];
+	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
 	holidays = [];
 	selectedEmployee: any;
@@ -52,8 +57,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	uploadDocUrl = '';
 	status: string;
 	holidayName: string;
-	organizationId: string;
-	tenantId: string;
 	policy: ITimeOffPolicy;
 	startDate: Date = null;
 	endDate: Date = null;
@@ -62,13 +65,37 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	isHoliday = false;
 	isEditMode = false;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
-	organization: IOrganization;
+	public organization: IOrganization;
 	organizationCountryCode: string;
 	currentUserCountryCode: string;
 	employeeIds: string[];
 
+	/*
+	* Time Off Request Mutation Form 
+	*/
+	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			description: [],
+			start: ['', Validators.required],
+			end: ['', Validators.required],
+			policy: ['', Validators.required],
+			requestDate: [new Date()],
+			documentUrl: [],
+			status: []
+		});
+	}
+
 	ngOnInit() {
-		this._initializeForm();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._initializeForm()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private async _getAllHolidays() {
@@ -88,21 +115,18 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	private async _initializeForm() {
 		await this._getFormData();
-
 		this.setForm();
 	}
 
 	setForm() {
-		this.form = this.fb.group({
-			description: [this.description],
-			start: [this.startDate, Validators.required],
-			end: [this.endDate, Validators.required],
-			policy: [this.policy, Validators.required],
-			requestDate: [new Date()],
-			documentUrl: [this.uploadDocUrl],
-			status: ['']
+		this.form.patchValue({
+			description: this.description,
+			start: this.startDate,
+			end: this.endDate,
+			policy: this.policy,
+			documentUrl: this.uploadDocUrl,
+			status: ''
 		});
-
 		this.documentUrl = this.form.get('documentUrl');
 	}
 
@@ -118,8 +142,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	getRequestForm(reqType: string) {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		this.documentsService
-			.getAll({ organizationId: this.organizationId })
+			.getAll({ tenantId, organizationId })
 			.pipe(first())
 			.subscribe((docs) => {
 				if (reqType === 'paid') {
@@ -143,12 +170,15 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	private _createNewRecord() {
 		if (this.form.valid && !this.invalidInterval) {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
 			this.dialogRef.close(
 				Object.assign(
 					{
 						employees: this.employeesArr,
-						organizationId: this.organizationId,
-						tenantId: this.tenantId,
+						organizationId,
+						tenantId,
 						isHoliday: this.isHoliday
 					},
 					this.form.value
@@ -168,19 +198,23 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		}
 
 		if (this.policy.requiresApproval) {
-			this.form.value.status = 'Requested';
+			this.form.patchValue({
+				status: StatusTypesEnum.REQUESTED
+			});
 		} else {
-			this.form.value.status = 'Approved';
+			this.form.patchValue({
+				status: StatusTypesEnum.APPROVED
+			});
 		}
 	}
 
 	private async _getFormData() {
-		this.organizationId = this.store.selectedOrganization.id;
-		this.tenantId = this.store.selectedOrganization.tenantId;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
 		const { items } = await this.organizationService.getAll(['contact'], {
-			id: this.organizationId,
-			tenantId: this.tenantId
+			id: organizationId,
+			tenantId
 		});
 		this.organization = items[0];
 
@@ -216,36 +250,39 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	private _getPolicies() {
-		if (this.organizationId) {
-			const findObj: {} = {
-				organization: {
-					id: this.organizationId
-				},
-				tenantId: this.tenantId
-			};
-
-			this.timeOffService
-				.getAllPolicies(['employees'], findObj)
-				.pipe(first())
-				.subscribe((res) => {
-					this.policies = res.items;
-					this.policy = this.policies[0];
-				});
-		}
-	}
-
-	private _getOrganizationEmployees() {
-		if (!this.organizationId) {
+		if (!this.organization) {
 			return;
 		}
 
-		this.employeesService
-			.getAll(['user', 'tags'], {
-				organization: { id: this.organizationId },
-				tenantId: this.tenantId
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.timeOffService
+			.getAllPolicies(['employees'], {
+				organizationId,
+				tenantId
 			})
 			.pipe(first())
-			.subscribe((res) => (this.orgEmployees = res.items));
+			.subscribe((res) => {
+				this.policies = res.items;
+				this.policy = this.policies[0];
+			});
+	}
+
+	private _getOrganizationEmployees() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.employeesService.getAll(['user', 'tags'], {
+			organizationId,
+			tenantId
+		})
+		.pipe(first())
+		.subscribe((res) => (this.orgEmployees = res.items));
 	}
 
 	onPolicySelected(policy: ITimeOffPolicy) {
