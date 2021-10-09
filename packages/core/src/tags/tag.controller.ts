@@ -34,35 +34,19 @@ export class TagController extends CrudController<Tag> {
 		return this.tagService.findOneByName(name);
 	}
 
-	@Get('getByOrgId')
-	async getAllTagsByOrgLevel(
+	@Get('level')
+	async findAllTags(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
+	): Promise<IPagination<ITag>> {
 		const { relations, findInput } = data;
-		return this.tagService.findTagsByOrgLevel(relations, findInput);
-	}
-	
-	@Get('getByTenantId')
-	async getAllTagsByTenantLevel(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
-		const { relations, findInput } = data;
-		return this.tagService.findTagsByTenantLevel(relations, findInput);
+		return await this.tagService.findAllTags(
+			findInput,
+			relations
+		);
 	}
 
 	@Get()
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ITag>> {
-		const { relations, findInput } = data;
-		return this.tagService.findAll({
-			where: findInput,
-			relations
-		});
-	}
-
-	@Get('list')
-	async getTagsList(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITag>> {
 		const { relations, findInput } = data;

@@ -19,9 +19,10 @@ import { Store, TagsService } from '../../../@core/services';
 	styleUrls: ['./tags-color-input.component.scss']
 })
 export class TagsColorInputComponent implements OnInit, OnDestroy {
-	tags: ITag[];
-	loading = false;
-	private selectedOrganization: IOrganization;
+	
+	tags: ITag[] = [];
+	loading: boolean;
+	private organization: IOrganization;
 
 	@Input('isOrgLevel')
 	isOrgLevel: boolean = false;
@@ -72,24 +73,28 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	}
 
 	addTag = async (tagName: string) => {
-		this.loading = true;
-		const newTag: ITag = {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const tag: ITag = {
 			name: tagName,
 			color: '#' + Math.floor(Math.random() * 16777215).toString(16),
 			description: '',
-			organization: this.selectedOrganization,
-			tenantId: this.selectedOrganization.tenantId
+			organizationId,
+			tenantId
 		};
-		const tag = await this.tagsService.insertTag(newTag);
-		this.loading = false;
-		return tag;
+		this.loading = true;
+		return await this.tagsService.insertTag(tag)
+			.finally(() => {
+				this.loading = false
+			});
 	};
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.selectedOrganization = organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.getAllTags()),
 				untilDestroyed(this)
 			)
@@ -98,24 +103,23 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	}
 
 	async getAllTags() {
-		if (this.selectedOrganization) {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-			if (this.isOrgLevel) {
-				const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
-					{ organizationId, tenantId },
-					['organization']
-				);
-				this.tags = tagsByOrgLevel;
-			}
-			if (this.isTenantLevel) {
-				const tagsByTenantLevel = await this.tagsService.getAllTagsByTenantLevel(
-					{ tenantId },
-					['tenant']
-				);
-				this.tags = tagsByTenantLevel;
-			}
+		if (this.isOrgLevel) {
+			const { items } = await this.tagsService.getTagsByLevel(
+				{ organizationId, tenantId },
+				['organization']
+			);
+			this.tags = items;
+		}
+
+		if (this.isTenantLevel) {
+			const { items } = await this.tagsService.getTagsByLevel(
+				{ tenantId },
+				['tenant']
+			);
+			this.tags = items;
 		}
 	}
 

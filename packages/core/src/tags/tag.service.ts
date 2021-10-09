@@ -24,27 +24,52 @@ export class TagService extends CrudService<Tag> {
 		return item;
 	}
 
-	async findTagsByOrgLevel(
-		relations: string[],
-		findInput: ITag
-	): Promise<any> {
-		const { organizationId, tenantId } = findInput;
-		const allTags = await this.tagRepository.find({
-			where: [{ organizationId, tenantId, isSystem: false }],
-			relations: relations
+	/**
+	 * GET tenant/organization level tags
+	 * 
+	 * @param input 
+	 * @param relations 
+	 * @returns 
+	 */
+	async findAllTags(
+		input: ITagFindInput,
+		relations: string[]
+	): Promise<IPagination<ITag>> {
+		const [ items, total ] = await this.tagRepository.findAndCount({
+			relations: [
+				...relations
+			],
+			where: (query: SelectQueryBuilder<Tag>) => {
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						const { organizationId } = input;
+						qb.where(
+							[
+								{
+									organizationId: IsNull()
+								}, 
+								{
+									organizationId
+								}
+							]
+						);
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						const tenantId = RequestContext.currentTenantId();
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+							tenantId
+						});
+					})
+				);
+				query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
+					isSystem: false
+				});
+				console.log(query.getQueryAndParameters());
+			}
 		});
-		return allTags;
-	}
-	async findTagsByTenantLevel(
-		relations: string[],
-		findInput: ITag
-	): Promise<any> {
-		const { tenantId } = findInput;
-		const allTags = await this.tagRepository.find({
-			where: [{ tenantId, isSystem: false }],
-			relations: relations
-		});
-		return allTags;
+		return { items, total };
 	}
 
 	/**
