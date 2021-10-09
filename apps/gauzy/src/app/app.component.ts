@@ -5,6 +5,7 @@
  */
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
+import { SeoService } from './@core/utils/seo.service';
 import { Store } from './@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
@@ -24,6 +25,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	constructor(
 		private analytics: AnalyticsService,
+		private seoService: SeoService,
 		private store: Store,
 		private languagesService: LanguagesService,
 		public translate: TranslateService
@@ -33,7 +35,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (environment.CHATWOOT_SDK_TOKEN) {
 			this.loadChatwoot(document, 'script');
 		}
+
 		this.analytics.trackPageViews();
+		this.seoService.trackCanonicalChanges();
+
 		this.store.systemLanguages$
 			.pipe(untilDestroyed(this))
 			.subscribe((languages) => {

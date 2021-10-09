@@ -7,7 +7,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { NbAuthModule } from '@nebular/auth';
 import { NbSecurityModule, NbRoleProvider } from '@nebular/security';
-import { of as observableOf } from 'rxjs';
+import { Observable, of as observableOf } from 'rxjs';
 
 import { throwIfAlreadyLoaded } from './module-import-guard';
 import { AnalyticsService, LayoutService } from './utils';
@@ -16,7 +16,7 @@ import { AuthModule } from './auth/auth.module';
 const DATA_SERVICES = [];
 
 export class NbSimpleRoleProvider extends NbRoleProvider {
-	getRole() {
+	getRole(): Observable<string | string[]> {
 		// here you could provide any role based on any auth flow
 		return observableOf('guest');
 	}

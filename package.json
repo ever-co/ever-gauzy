@@ -207,7 +207,8 @@
 	"resolutions": {
 		"@angular-devkit/build-angular": "~12.2.7",
 		"@angular-devkit/architect": "^0.1202.7",
-		"@angular-devkit/core": "^12.2.7"
+		"@angular-devkit/core": "^12.2.7",
+		"rxjs": "^7.4.0"
 	},
 	"dependencies": {
 		"@angular/animations": "^12.2.7",
@@ -218,7 +219,10 @@
 		"@angular/platform-browser": "^12.2.7",
 		"@angular/platform-browser-dynamic": "^12.2.7",
 		"@angular/router": "^12.2.7",
-		"@angular/service-worker": "^12.2.7"
+		"@angular/service-worker": "^12.2.7",
+		"rxjs": "^7.4.0",
+		"ng2-smart-table": "^1.7.2",
+		"unleash": "^2.0.2"
 	},
 	"devDependencies": {
 		"@angular-devkit/architect": "^0.1202.7",
@@ -257,6 +261,10 @@
 		"@semantic-release/npm": "^7.1.1",
 		"@types/jest": "~25.1.4",
 		"@types/yargs": "^15.0.9",
+		"cypress": "8.3.1",
+		"@cypress/browserify-preprocessor": "^3.0.1",
+		"cypress-cucumber-preprocessor": "^4.2.0",
+		"cypress-file-upload": "^5.0.8",
 		"cloc": "^2.7.0",
 		"codelyzer": "^6.0.1",
 		"commitizen": "^4.2.1",
@@ -270,7 +278,7 @@
 		"electron-builder": "^22.11.5",
 		"envalid": "^6.0.2",
 		"eslint-plugin-cypress": "^2.10.3",
-		"fork-ts-checker-webpack-plugin": "^5.2.0",
+		"fork-ts-checker-webpack-plugin": "^5.2.0",		
 		"husky": "^6.0.0",
 		"jest": "26.2.2",
 		"jest-jasmine2": "~25.2.0",
@@ -285,8 +293,7 @@
 		"prettier-tslint": "^0.4.2",
 		"pretty-quick": "^3.1.0",
 		"protractor": "^7.0.0",
-		"rimraf": "^3.0.2",
-		"rxjs-tslint": "0.1.5",
+		"rimraf": "^3.0.2",				
 		"semantic-release": "^17.4.2",
 		"snyk": "^1.573.0",
 		"stylelint": "^13.7.2",
@@ -297,12 +304,15 @@
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",
 		"tslint-language-service": "^0.9.9",
-		"typescript": "~4.2.4",
-		"unleash": "^2.0.2",
-		"webpack-bundle-analyzer": "^4.4.1",
+		"typescript": "~4.2.4",		
 		"yargs": "^16.2.0",
-		"pkg": "^5.3.0",
-		"ng2-smart-table": "^1.7.2"
+		"pkg": "^5.3.0",		
+		"webpack": "^5.58.1",
+		"webpack-cli": "^4.9.0",
+		"webpack-merge": "^5.8.0",
+		"copy-webpack-plugin": "^9.0.1",
+		"webpack-node-externals": "^3.0.0",
+		"webpack-bundle-analyzer": "^4.4.2"
 	},
 	"engines": {
 		"node": ">=14.0.0",

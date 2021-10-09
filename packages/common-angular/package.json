@@ -28,10 +28,10 @@
 		"compile": "tsc -p tsconfig.build.json"
 	},
 	"dependencies": {
+		"@angular/common": "^12.2.7",
 		"moment": "^2.29.0",
 		"moment-timezone": "^0.5.31",
-		"rxjs": "^7.3.0",
-		"rxjs-compat": "^6.6.3"
+		"rxjs": "^7.4.0"
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.22",

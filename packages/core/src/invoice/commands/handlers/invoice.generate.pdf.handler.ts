@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InvoiceService } from './../../../invoice';
-import { InvoiceGeneratePdfCommand } from './../invoice.generate.pdf.command';
+import { InvoiceService } from '../../invoice.service';
+import { InvoiceGeneratePdfCommand } from '../invoice.generate.pdf.command';
 
 @CommandHandler(InvoiceGeneratePdfCommand)
 export class InvoiceGeneratePdfHandler
