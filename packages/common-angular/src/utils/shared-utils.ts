@@ -199,21 +199,16 @@ export const compareDate = (date1: any, date2: any) => {
 }
 
 export function splitCamelCase(word: string): string {
-	let output: string[], i: number, l: number;
-	const RegExp = /[A-Z]/;
+	let output: string[];
 	if (typeof word !== 'string') {
 		throw new Error('The "word" parameter must be a string.');
 	}
+
 	output = [];
-	for (i = 0, l = word.length; i < l; i++) {
-		if (i === 0) {
-			output.push(word[i].toUpperCase());
-		} else {
-			if (i > 0 && RegExp.test(word[i])) {
-				output.push(' ');
-			}
-			output.push(word[i]);
-		}
-	}
-	return output.join('');
+
+	const spliter = word.split('_');
+	spliter.forEach((text: string) => {
+		output.push(ucFirst(text, true));
+	});
+	return output.join(' ');	
 }
