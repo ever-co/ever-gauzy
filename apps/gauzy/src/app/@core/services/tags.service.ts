@@ -22,14 +22,28 @@ export class TagsService {
 			.toPromise();
 	}
 
-	getAllTags(
+	getTags(
 		relations?: string[],
 		findInput?: ITag
 	): Promise<{ items: ITag[] }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: ITag[] }>(`${API_PREFIX}/tags/list`, {
+			.get<{ items: ITag[] }>(`${API_PREFIX}/tags`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getTagsByLevel(
+		findInput?: ITag,
+		relations?: string[]
+	): Promise<{ items: ITag[] }> {
+		const data = JSON.stringify({ relations, findInput });
+
+		return this.http
+			.get<{ items: ITag[] }>(`${API_PREFIX}/tags/level`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -49,32 +63,10 @@ export class TagsService {
 			.pipe(first())
 			.toPromise();
 	}
+	
 	findByName(name: string): Promise<{ item: ITag }> {
 		return this.http
 			.get<{ item: ITag }>(`${API_PREFIX}/tags/getByName/${name}`)
-			.pipe(first())
-			.toPromise();
-	}
-
-	getAllTagsByOrgLevel(findInput: ITag, relations?: string[]): Promise<any> {
-		const data = JSON.stringify({ relations, findInput });
-		return this.http
-			.get<any>(`${API_PREFIX}/tags/getByOrgId/`, {
-				params: { data }
-			})
-			.pipe(first())
-			.toPromise();
-	}
-
-	getAllTagsByTenantLevel(
-		findInput: ITag,
-		relations?: string[]
-	): Promise<any> {
-		const data = JSON.stringify({ relations, findInput });
-		return this.http
-			.get<any>(`${API_PREFIX}/tags/getByTenantId/`, {
-				params: { data }
-			})
 			.pipe(first())
 			.toPromise();
 	}

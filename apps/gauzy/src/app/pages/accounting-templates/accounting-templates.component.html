@@ -1,11 +1,11 @@
 <form [formGroup]="form" *ngIf="form">
-	<nb-card>
+	<nb-card class="card-scroll">
 		<nb-card-header>
-			<div class="row">
+			<div class="row align-items-center">
 				<div class="col-6">
 					<h4>
 						<ngx-header-title>
-							{{ 'ACCOUNTING_TEMPLATES_PAGE.HEADER' | translate }}
+							{{ 'MENU.SETTINGS' | translate }} - {{ 'ACCOUNTING_TEMPLATES_PAGE.HEADER' | translate }}
 						</ngx-header-title>
 					</h4>
 				</div>
@@ -48,7 +48,7 @@
 					</nb-select>
 				</div>
 				<div
-					class="col-2 d-flex justify-content-end align-items-center"
+					class="col-2 d-flex justify-content-end"
 				>
 					<button nbButton status="success" (click)="onSave()">
 						{{ 'EMAIL_TEMPLATES_PAGE.SAVE' | translate }}
