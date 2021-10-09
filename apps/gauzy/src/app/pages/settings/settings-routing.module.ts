@@ -8,7 +8,6 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
-import { AccountingTemplatesComponent } from '../accounting-templates/accounting-templates.component';
 import { GeneralComponent } from './general/general.component';
 
 const routes: Routes = [
@@ -51,23 +50,6 @@ const routes: Routes = [
 						(m) => m.EmailTemplatesModule
 					)
 			},
-			// {
-			// 	path: 'email-templates',
-			// 	component: EmailTemplatesComponent,
-			// 	canActivate: [NgxPermissionsGuard],
-			// 	data: {
-			// 		permissions: {
-			// 			only: [PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES],
-			// 			redirectTo: '/pages/settings'
-			// 		},
-			// 		selectors: {
-			// 			project: false,
-			// 			employee: false,
-			// 			date: false,
-			// 			organization: true
-			// 		}
-			// 	}
-			// },
 			{
 				path: 'accounting-templates',
 				loadChildren: () =>
@@ -75,23 +57,6 @@ const routes: Routes = [
 						(m) => m.AccountingTemplatesModule
 					)
 			},
-			// {
-			// 	path: 'accounting-templates',
-			// 	component: AccountingTemplatesComponent,
-			// 	canActivate: [NgxPermissionsGuard],
-			// 	data: {
-			// 		permissions: {
-			// 			only: [PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES],
-			// 			redirectTo: '/pages/settings'
-			// 		},
-			// 		selectors: {
-			// 			project: false,
-			// 			employee: false,
-			// 			date: false,
-			// 			organization: true
-			// 		}
-			// 	}
-			// },
 			{
 				path: 'roles',
 				component: EditRolesPermissionsComponent,
