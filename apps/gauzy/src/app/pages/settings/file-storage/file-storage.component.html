@@ -1,4 +1,7 @@
-<nb-card>
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex justify-content-between">
+		<h4>{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.FILE_STORAGE' | translate }}</h4>
+	</nb-card-header>
 	<nb-card-body>
 		<div class="form-group">
 			<ng-template [ngIf]="fileStorageProviders.length > 0">
