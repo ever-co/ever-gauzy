@@ -85,7 +85,7 @@ export class ApprovalPolicyComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.policies$.next()),
+				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -190,7 +190,7 @@ export class ApprovalPolicyComponent
 				{ name: requestApproval.name }
 			);
 		}
-		this.policies$.next();
+		this.policies$.next(true);
 	}
 
 	async selectApprovalPolicy({ isSelected, data }) {
@@ -219,7 +219,7 @@ export class ApprovalPolicyComponent
 				name 
 			});
 		}
-		this.policies$.next();
+		this.policies$.next(true);
 	}
 
 	/*

@@ -95,7 +95,7 @@ export class MerchantTableComponent
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(() => this.merchants$.next()),
+				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -110,7 +110,7 @@ export class MerchantTableComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.merchants$.next()),
+				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -238,7 +238,7 @@ export class MerchantTableComponent
 					}
 				})
 				.finally(() => {
-					this.merchants$.next();
+					this.merchants$.next(true);
 				});
 		}
 	}

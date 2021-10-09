@@ -91,7 +91,7 @@ export class ApprovalsComponent
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
-				tap(() => this.timesheets$.next()),
+				tap(() => this.timesheets$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -100,7 +100,7 @@ export class ApprovalsComponent
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.timesheetFilterService.filter = $event;
-		this.timesheets$.next();
+		this.timesheets$.next(true);
 	}
 
 	async getTimeSheets() {
@@ -143,7 +143,7 @@ export class ApprovalsComponent
 				}
 			})
 			.finally(() => {
-				this.timesheets$.next();
+				this.timesheets$.next(true);
 			});
 	}
 
@@ -160,7 +160,7 @@ export class ApprovalsComponent
 				}
 			})
 			.finally(() => {
-				this.timesheets$.next();
+				this.timesheets$.next(true);
 			});
 	}
 

@@ -68,7 +68,7 @@ export class EmployeesComponent
 			)
 			.subscribe(() => {
 				this.loadSmartTable();
-				this.updateJobs$.next();
+				this.updateJobs$.next(true);
 			});
 	}
 

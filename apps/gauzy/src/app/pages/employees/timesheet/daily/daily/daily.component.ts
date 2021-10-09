@@ -123,7 +123,7 @@ export class DailyComponent
 					this.selectedEmployeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
 				}),
-				tap(() => this.logs$.next()),
+				tap(() => this.logs$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -132,7 +132,7 @@ export class DailyComponent
 	async filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.timesheetFilterService.filter = $event;
-		this.logs$.next();
+		this.logs$.next(true);
 	}
 
 	async getLogs() {
@@ -197,7 +197,7 @@ export class DailyComponent
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.logs$.next();
+					this.logs$.next(true);
 				}
 			});
 	}
@@ -207,7 +207,7 @@ export class DailyComponent
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.logs$.next();
+					this.logs$.next(true);
 				}
 			});
 	}
@@ -223,7 +223,7 @@ export class DailyComponent
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.logs$.next();
+					this.logs$.next(true);
 				}
 			});
 	}
@@ -234,7 +234,7 @@ export class DailyComponent
 				this.checkTimerStatus();
 			})
 			.finally(() => {
-				this.logs$.next();
+				this.logs$.next(true);
 			});
 	}
 
@@ -261,7 +261,7 @@ export class DailyComponent
 							this.checkTimerStatus();
 						})
 						.finally(() => {
-							this.logs$.next();
+							this.logs$.next(true);
 						});
 				}
 			});

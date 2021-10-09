@@ -107,7 +107,7 @@ export class EmailHistoryComponent
 			.toPromise();
 
 		if (filters) {
-			this.emails$.next();
+			this.emails$.next(true);
 			const getCount = function (obj) {
 				return Object.values(obj).filter(
 					(value) => typeof value !== 'undefined'
@@ -215,7 +215,7 @@ export class EmailHistoryComponent
 			);
 		})
 		.finally(() => {
-			this.emails$.next();
+			this.emails$.next(true);
 		});
 	}
 
@@ -231,7 +231,7 @@ export class EmailHistoryComponent
 		}
 		this.nextDataLoading = true;
 		this.threshholdHitCount++;
-		this.emails$.next();
+		this.emails$.next(true);
 	}
 
 	getUrl(email: string): string {

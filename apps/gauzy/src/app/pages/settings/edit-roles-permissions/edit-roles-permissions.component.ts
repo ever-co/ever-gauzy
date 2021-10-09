@@ -134,7 +134,7 @@ export class EditRolesPermissionsComponent
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		} finally {
-			this.permissions$.next();
+			this.permissions$.next(true);
 		}
 	}
 
@@ -143,7 +143,7 @@ export class EditRolesPermissionsComponent
 	 */
 	onSelectedRole() {
 		this.role = this.getRoleByName(this.selectedRole);
-		this.permissions$.next();
+		this.permissions$.next(true);
 	}
 
 	/**

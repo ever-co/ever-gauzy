@@ -105,7 +105,7 @@ export class ProductTypesComponent
 				filter(([organization, language]) => !!organization && !!language),
 				tap(([ organization ]) => this.organization = organization),
 				distinctUntilChange(),
-				tap(() => this.types$.next()),
+				tap(() => this.types$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -120,7 +120,7 @@ export class ProductTypesComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.types$.next()),
+				tap(() => this.types$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -200,10 +200,10 @@ export class ProductTypesComponent
 				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
 					name: productTranslations.name
 				});
-				this.types$.next();
+				this.types$.next(true);
 			}
 		} catch (error) {
-			this.types$.next();
+			this.types$.next(true);
 		}		
 	}
 
@@ -230,12 +230,12 @@ export class ProductTypesComponent
 							});
 						}) 
 						.finally(() => {
-							this.types$.next();
+							this.types$.next(true);
 						});
 				}
 			}	
 		} catch (error) {
-			this.types$.next();
+			this.types$.next(true);
 		}
 	}
 

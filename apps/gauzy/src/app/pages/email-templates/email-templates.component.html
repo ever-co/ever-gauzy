@@ -14,7 +14,7 @@
 						size="small"
 						template="ng-select"
 						formControlName="languageCode"
-						(selectedLanguageEvent)="subject$.next()"
+						(selectedLanguageEvent)="subject$.next(true)"
 					>
 					</ngx-language-selector>
 				</div>
@@ -34,7 +34,7 @@
 							'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.TEMPLATE_NAMES'
 								| translate
 						}}"
-						(selectedChange)="subject$.next()"
+						(selectedChange)="subject$.next(true)"
 					>
 						<nb-option
 							*ngFor="let name of templateNames"

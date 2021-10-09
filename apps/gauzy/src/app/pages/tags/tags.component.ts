@@ -82,7 +82,7 @@ export class TagsComponent
 				filter((organization) => !!organization),
 				tap((organization) => this.organization = organization),
 				distinctUntilChange(),
-				tap(() => this.tags$.next()),
+				tap(() => this.tags$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -134,7 +134,7 @@ export class TagsComponent
 				name: addData.name
 			});
 		}
-		this.tags$.next();
+		this.tags$.next(true);
 	}
 
 	async delete(selectedItem?: ITag) {
@@ -159,7 +159,7 @@ export class TagsComponent
 					});
 				})
 				.finally(() => {
-					this.tags$.next();
+					this.tags$.next(true);
 				});
 			}
 		}	
@@ -186,7 +186,7 @@ export class TagsComponent
 					name: this.selectedTag.name
 				});
 			}
-			this.tags$.next();
+			this.tags$.next(true);
 		}
 	}
 
@@ -263,7 +263,7 @@ export class TagsComponent
 	 */
 	selectedFilterOption(value: string) {
 		if (value === 'all') {
-			this.tags$.next();
+			this.tags$.next(true);
 			this.smartTableSource.load(this.allTags);
 			return;
 		}

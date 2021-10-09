@@ -120,7 +120,7 @@ export class EditProfileFormComponent
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				tap(() => this.user$.next()),
+				tap(() => this.user$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

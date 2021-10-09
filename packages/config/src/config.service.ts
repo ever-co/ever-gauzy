@@ -17,7 +17,8 @@ export class ConfigService {
 		for (const [key, value] of Object.entries(environment.env)) {
 			process.env[key] = value;
 		}
-		this.logger.log('Is Production: ' + environment.production);
+
+		this.logger.log(`Is Production: ${environment.production}`);
 	}
 
 	get apiConfigOptions(): IApiServerOptions {

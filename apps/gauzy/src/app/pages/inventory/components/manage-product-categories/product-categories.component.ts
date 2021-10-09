@@ -96,7 +96,7 @@ export class ProductCategoriesComponent
 				filter(([organization, language]) => !!organization && !!language),
 				tap(([ organization ]) => this.organization = organization),
 				distinctUntilChange(),
-				tap(() => this.categories$.next()),
+				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -123,7 +123,7 @@ export class ProductCategoriesComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.categories$.next()),
+				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -193,7 +193,7 @@ export class ProductCategoriesComponent
 				name: productCatTranslaction?.name
 			});
 		}
-		this.categories$.next();
+		this.categories$.next(true);
 	}
 
 	async delete(selectedItem?: IProductCategoryTranslated) {
@@ -218,7 +218,7 @@ export class ProductCategoriesComponent
 						});
 					})
 					.finally(() => {
-						this.categories$.next();
+						this.categories$.next(true);
 					});
 			}
 		}

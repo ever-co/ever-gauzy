@@ -88,7 +88,7 @@ export class InvitesComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.invites$.next()),
+				tap(() => this.invites$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -317,7 +317,7 @@ export class InvitesComponent
 								});
 							})
 							.finally(() => {
-								this.invites$.next();
+								this.invites$.next(true);
 							});
 					} catch (error) {
 						this.toastrService.danger(
@@ -361,7 +361,7 @@ export class InvitesComponent
 							});
 						})
 						.finally(() => {
-							this.invites$.next();
+							this.invites$.next(true);
 						});
 					} catch (error) {
 						this.toastrService.danger(error);

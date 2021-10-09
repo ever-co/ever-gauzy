@@ -11,7 +11,7 @@ export class LayoutService {
   );
 
   changeLayoutSize() {
-    this.layoutSize$.next();
+    this.layoutSize$.next(true);
   }
 
   onChangeLayoutSize(): Observable<any> {

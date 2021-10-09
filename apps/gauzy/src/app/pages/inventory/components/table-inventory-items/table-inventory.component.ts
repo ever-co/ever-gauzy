@@ -98,7 +98,7 @@ export class TableInventoryComponent
 				filter(([organization, language]) => !!organization && !!language),
 				tap(([ organization ]) => this.organization = organization),
 				distinctUntilChange(),
-				tap(() => this.products$.next()),
+				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -113,7 +113,7 @@ export class TableInventoryComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.products$.next()),
+				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -260,7 +260,7 @@ export class TableInventoryComponent
 		} catch {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		} finally {
-			this.products$.next();
+			this.products$.next(true);
 		}
 	}
 

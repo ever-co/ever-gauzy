@@ -51,7 +51,7 @@ export class ManageCandidateInterviewsComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.interviews$.next()),
+				tap(() => this.interviews$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -104,7 +104,7 @@ export class ManageCandidateInterviewsComponent
 				name: data.title
 			});
 		}
-		this.interviews$.next();
+		this.interviews$.next(true);
 	}
 	
 	private async _getInterviews() {
