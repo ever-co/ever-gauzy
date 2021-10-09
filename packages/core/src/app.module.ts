@@ -132,19 +132,25 @@ import { WarehouseModule } from './warehouse/warehouse.module';
 import { MerchantModule } from './merchant/merchant.module';
 import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 
-
 const { unleashConfig } = environment;
+
 if (unleashConfig.url) {
-	const instance = initializeUnleash({
+	const unleashInstanceConfig = {
 		appName: unleashConfig.appName,
 		url: unleashConfig.url,
 		instanceId: unleashConfig.instanceId,
 		refreshInterval: unleashConfig.refreshInterval,
 		metricsInterval: unleashConfig.metricsInterval
-	});
+	};
+
+	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);	
+
+	const instance = initializeUnleash(unleashInstanceConfig);
 
 	// metrics hooks
-	instance.on('registered', (client) => {});
+	instance.on('registered', (client) => {
+		console.log('Unleash Client Registered');
+	});
 }
 
 const sentryIntegrations = [];
