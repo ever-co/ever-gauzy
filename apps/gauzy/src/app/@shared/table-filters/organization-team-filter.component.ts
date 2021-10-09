@@ -56,7 +56,7 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
                     this.organization = organization;
                     this.selectedEmployee = employee;
                 }),
-                tap(() => this.subject$.next()),
+                tap(() => this.subject$.next(true)),
                 untilDestroyed(this)
             )
             .subscribe();

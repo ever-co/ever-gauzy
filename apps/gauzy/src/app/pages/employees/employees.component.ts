@@ -123,7 +123,7 @@ export class EmployeesComponent
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
 				tap(({ invitesAllowed }) => this.organizationInvitesAllowed = invitesAllowed),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -193,7 +193,7 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -254,7 +254,7 @@ export class EmployeesComponent
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}
 			});
@@ -287,7 +287,7 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -318,7 +318,7 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -432,7 +432,7 @@ export class EmployeesComponent
 
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	private _applyTranslationOnSmartTable() {

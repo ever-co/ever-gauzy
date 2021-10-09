@@ -55,7 +55,7 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 						} else {
 							delete this.request.projectIds;
 						}
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)

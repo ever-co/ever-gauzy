@@ -85,7 +85,7 @@ export class ProposalTemplateComponent
 				tap(([organization, employee]) => {
 					if (organization) {
 						this.selectedEmployee = (employee && employee.id) ? employee : null;
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -224,7 +224,7 @@ export class ProposalTemplateComponent
 			})
 			.onClose
 			.pipe(
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -240,7 +240,7 @@ export class ProposalTemplateComponent
 			})
 			.onClose
 			.pipe(
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -253,7 +253,7 @@ export class ProposalTemplateComponent
 					name: this.selectedItem.name
 				});
 			}).finally(() => {
-				this.subject$.next();
+				this.subject$.next(true);
 			});
 	}
 
@@ -266,7 +266,7 @@ export class ProposalTemplateComponent
 				});
 			})
 			.finally(() => {
-				this.subject$.next();
+				this.subject$.next(true);
 			});
 	}
 

@@ -38,7 +38,7 @@ export class DailyGridComponent extends ReportBaseComponent implements OnInit, A
 	@Input()
 	set filters(value: ITimeLogFilters) {
 		this.logRequest = value;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	constructor(
@@ -68,11 +68,11 @@ export class DailyGridComponent extends ReportBaseComponent implements OnInit, A
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	groupByChange() {
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	async getLogs() {

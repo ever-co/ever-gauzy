@@ -127,7 +127,7 @@ export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => (this.organization = organization)),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

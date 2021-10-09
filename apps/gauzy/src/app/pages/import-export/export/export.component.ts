@@ -43,13 +43,13 @@ export class ExportComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	ngAfterViewInit() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

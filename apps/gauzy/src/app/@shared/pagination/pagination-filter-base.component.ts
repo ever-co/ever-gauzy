@@ -59,12 +59,12 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 			}
 		}
 		if (doEmit) {
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
     protected onPageChange(selectedPage: number) {
 		this.pagination['activePage'] = selectedPage;
-        this.subject$.next();
+        this.subject$.next(true);
 	}
 }

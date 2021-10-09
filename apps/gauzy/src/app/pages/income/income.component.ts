@@ -109,7 +109,7 @@ export class IncomeComponent
 						this.selectedEmployeeId = employee ? employee.id : null;
 
 						this.refreshPagination();
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -143,7 +143,7 @@ export class IncomeComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -271,7 +271,7 @@ export class IncomeComponent
 							});
 						})
 						.finally(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 						});
 					} catch (error) {
 						this.toastrService.danger(error);
@@ -319,7 +319,7 @@ export class IncomeComponent
 							});
 						})
 						.finally(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -356,7 +356,7 @@ export class IncomeComponent
 							});
 						})
 						.finally(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 						});						
 					} catch (error) {
 						this.errorHandler.handleError(error);

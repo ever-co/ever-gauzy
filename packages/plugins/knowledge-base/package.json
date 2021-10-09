@@ -40,7 +40,7 @@
 		"class-validator": "^0.13.0",
 		"faker": "^5.5.3",
 		"nest-router": "^1.0.9",
-		"typeorm": "^0.2.37",
+		"typeorm": "^0.2.38",
 		"typeorm-aurora-data-api-driver": "^2.3.3",
 		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git"	
 	},

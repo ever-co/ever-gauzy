@@ -68,7 +68,7 @@ export class EditUserOrganizationsComponent
 			.pipe(
 				filter((params) => !!params),
 				tap((params) => this.paramId = params.id),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -92,7 +92,7 @@ export class EditUserOrganizationsComponent
 					}
 				)
 			);
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 

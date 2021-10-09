@@ -71,7 +71,7 @@ export class ImportComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	initUploader() {
@@ -89,7 +89,7 @@ export class ImportComponent
 			form.append('importType', this.importType);
 		};
 		this.uploader.onCompleteItem = () => {
-			this.subject$.next();
+			this.subject$.next(true);
 		};
 		this.hasBaseDropZoneOver = false;
 	}

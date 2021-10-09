@@ -56,7 +56,7 @@ export class EditEmployeeProfileComponent
 				filter((params) => !!params),
 				tap((params) => this.routeParams = params),
 				tap(() => this.loadTabs()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -166,7 +166,7 @@ export class EditEmployeeProfileComponent
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			} finally {
-				this.subject$.next();
+				this.subject$.next(true);
 			}
 		}
 	}
@@ -189,7 +189,7 @@ export class EditEmployeeProfileComponent
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			} finally {
-				this.subject$.next();
+				this.subject$.next(true);
 			}
 		}
 	}

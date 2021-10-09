@@ -104,7 +104,7 @@ export class ProposalsComponent
 						this.selectedDate = date;
 						this.employeeId = employee ? employee.id : null;
 						this.refreshPagination();
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -128,7 +128,7 @@ export class ProposalsComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -176,7 +176,7 @@ export class ProposalsComponent
 						await this.proposalsService.delete(
 							this.selectedProposal.id
 						);
-						this.subject$.next();
+						this.subject$.next(true);
 						this.toastrService.success('NOTES.PROPOSALS.DELETE_PROPOSAL');
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -207,7 +207,7 @@ export class ProposalsComponent
 							this.selectedProposal.id,
 							{ status: ProposalStatusEnum.ACCEPTED, tenantId }
 						);
-						this.subject$.next();
+						this.subject$.next(true);
 						// TODO translate
 						this.toastrService.success(
 							'NOTES.PROPOSALS.PROPOSAL_ACCEPTED'
@@ -241,7 +241,7 @@ export class ProposalsComponent
 							this.selectedProposal.id,
 							{ status: ProposalStatusEnum.SENT, tenantId }
 						);
-						this.subject$.next();
+						this.subject$.next(true);
 						this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_SENT');
 					} catch (error) {
 						this.errorHandler.handleError(error);
