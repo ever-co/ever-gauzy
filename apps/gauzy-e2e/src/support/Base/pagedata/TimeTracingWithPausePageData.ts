@@ -4,9 +4,9 @@ export const TimeTrackingWithPausePageData = {
     tracked: 'TRACKED',
     timerTime: '00:00:00',
     urlConfirmDashboardLoad: '/api/employee-statistics/months*',
-    tableColumnXX1: 1, 
-    tableColumnXX7: 7, 
-    buttonIndexXX0: 0,
-    buttonIndexXX1: 1
+    firstTimeTable: 1, 
+    secondTimeTable: 7, 
+    firstDeleteBtn: 0,
+    secondDeleteBtn: 1
 
 }
