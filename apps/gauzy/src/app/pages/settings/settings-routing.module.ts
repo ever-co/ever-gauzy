@@ -8,7 +8,6 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
-import { GeneralComponent } from './general/general.component';
 
 const routes: Routes = [
 	{
@@ -17,7 +16,10 @@ const routes: Routes = [
 		children: [
 			{
 				path: 'general',
-				component: GeneralComponent
+				loadChildren: () =>
+					import('./general-setting/general-setting.module').then(
+						(m) => m.GeneralSettingModule
+					)
 			},
 			{
 				path: 'features',
