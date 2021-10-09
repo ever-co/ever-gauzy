@@ -33,6 +33,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { GeneralComponent } from './general/general.component';
 
 @NgModule({
 	imports: [
@@ -68,7 +69,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		DangerZoneComponent,
 		EmailHistoryComponent,
 		EmailFiltersComponent,
-		SmsGatewayComponent
+		SmsGatewayComponent,
+		GeneralComponent
 	],
 	providers: [RolePermissionsService, RoleService]
 })

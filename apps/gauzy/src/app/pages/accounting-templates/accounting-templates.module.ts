@@ -12,6 +12,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { ThemeModule } from '../../@theme/theme.module';
+import { AccountingTemplatesRoutingModule } from './accounting-templates-routing.module';
 import { AccountingTemplatesComponent } from './accounting-templates.component';
 
 @NgModule({
@@ -28,6 +29,7 @@ import { AccountingTemplatesComponent } from './accounting-templates.component';
 		AceEditorModule,
 		HeaderTitleModule,
 		LanguageSelectorModule,
+		AccountingTemplatesRoutingModule,
 	],
 	providers: [],
 	declarations: [AccountingTemplatesComponent]
