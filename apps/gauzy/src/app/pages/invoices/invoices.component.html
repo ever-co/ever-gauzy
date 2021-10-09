@@ -36,6 +36,7 @@
 									class="mr-2"
 								>
 									<nb-icon icon="plus-outline"> </nb-icon>
+									{{ 'BUTTONS.ADD' | translate }}
 								</button>
 								<ng-container
 									*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
@@ -53,7 +54,7 @@
 									class="mr-2"
 									[disabled]="disableButton"
 								>
-									<nb-icon icon="file-outline"></nb-icon>
+									<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 									{{ 'BUTTONS.VIEW' | translate }}
 								</button>
 							</ng-template>
@@ -337,7 +338,6 @@
 		>
 			<div class="table-scroll-container">
 				<ng2-smart-table
-					class="tags-table"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
 					(userRowSelect)="selectInvoice($event)"
@@ -390,6 +390,7 @@
 				[size]="buttonSize || 'medium'"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
 				nbButton
@@ -399,18 +400,19 @@
 				[disabled]="!selectedItem && disableButton"
 				[size]="buttonSize || 'medium'"
 			>
-				<nb-icon icon="download-outline"> </nb-icon>
+				<nb-icon icon="download-outline"></nb-icon>
+				{{ 'BUTTONS.DOWNLOAD' | translate }}
 			</button>
 			<nb-select
 				filled
 				status="info"
 				class="mr-2"
 				*ngIf="!isEstimate"
-				placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
-				[size]="dataLayoutStyle === 'CARDS_GRID' ? 'tiny' : 'medium'"
+				[size]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID ? 'tiny' : 'medium'"
 			>
 				<nb-option
 					*ngFor="let status of invoiceStatusTypes"
@@ -424,11 +426,11 @@
 				status="info"
 				class="mr-2"
 				*ngIf="isEstimate"
-				placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
-				[size]="dataLayoutStyle === 'CARDS_GRID' ? 'tiny' : 'medium'"
+				[size]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID ? 'tiny' : 'medium'"
 			>
 				<nb-option
 					*ngFor="let status of estimateStatusTypes"
@@ -443,7 +445,7 @@
 			[nbContextMenu]="settingsContextMenu"
 			nbContextMenuPlacement="top"
 			(click)="selectMenu(selectedItem)"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 			[ngStyle]="{ transform: 'scale(0.65)' }"
 		>
 			<nb-icon class="icons" icon="settings-2-outline"></nb-icon>
@@ -536,89 +538,83 @@
 
 <ng-template #actionsPopover>
 	<div class="popover-container d-flex flex-column">
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			status="info"
-			(click)="addInternalNote()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="book-open-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.NOTE' | translate }}</span>
-		</button>
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			status="info"
-			(click)="duplicated()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="copy-outline"></nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.DUPLICATE' | translate }}</span>
-		</button>
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			status="info"
-			(click)="send()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="upload-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.SEND' | translate }}</span>
-		</button>
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			status="info"
-			(click)="generatePublicLink()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="link-2-outline"> </nb-icon>
-			<span class="icon-text">{{
-				'BUTTONS.PUBLIC_LINK' | translate
-			}}</span>
-		</button>
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			status="info"
-			(click)="email()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="email-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.EMAIL' | translate }}</span>
-		</button>
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			status="info"
-			(click)="exportToCsv()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="file-text-outline"> </nb-icon>
-			<span class="icon-text">{{
-				'BUTTONS.EXPORT_TO_CSV' | translate
-			}}</span>
-		</button>
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			status="info"
-			(click)="archive()"
-			[disabled]="disableButton || selectedInvoice.isArchived"
-		>
-			<nb-icon icon="archive-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.ARCHIVE' | translate }}</span>
-		</button>
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			status="danger"
-			(click)="delete()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="trash-2-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.DELETE' | translate }}</span>
-		</button>
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+			<button
+				nbButton
+				status="info"
+				(click)="addInternalNote()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="book-open-outline"> </nb-icon>
+				<span class="icon-text">{{ 'BUTTONS.NOTE' | translate }}</span>
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="duplicated()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="copy-outline"></nb-icon>
+				<span class="icon-text">{{ 'BUTTONS.DUPLICATE' | translate }}</span>
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="send()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="upload-outline"> </nb-icon>
+				<span class="icon-text">{{ 'BUTTONS.SEND' | translate }}</span>
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="generatePublicLink()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="link-2-outline"> </nb-icon>
+				<span class="icon-text">{{
+					'BUTTONS.PUBLIC_LINK' | translate
+				}}</span>
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="email()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="email-outline"> </nb-icon>
+				<span class="icon-text">{{ 'BUTTONS.EMAIL' | translate }}</span>
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="exportToCsv()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="file-text-outline"> </nb-icon>
+				<span class="icon-text">{{
+					'BUTTONS.EXPORT_TO_CSV' | translate
+				}}</span>
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="archive()"
+				[disabled]="disableButton || selectedInvoice.isArchived"
+			>
+				<nb-icon icon="archive-outline"> </nb-icon>
+				<span class="icon-text">{{ 'BUTTONS.ARCHIVE' | translate }}</span>
+			</button>
+			<button
+				nbButton
+				status="danger"
+				(click)="delete()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="trash-2-outline"> </nb-icon>
+				<span class="icon-text">{{ 'BUTTONS.DELETE' | translate }}</span>
+			</button>
+		</ng-container>
 	</div>
 </ng-template>
