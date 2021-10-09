@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IImportHistory, IPagination } from '@gauzy/contracts';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { API_PREFIX } from '../constants';
 import { tap } from 'rxjs/operators';
 

@@ -13,7 +13,7 @@ import {
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import * as moment from 'moment';

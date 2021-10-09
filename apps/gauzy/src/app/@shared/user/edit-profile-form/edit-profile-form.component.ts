@@ -19,7 +19,7 @@ import {
 	IUserUpdateInput
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import {
 	ErrorHandlingService,

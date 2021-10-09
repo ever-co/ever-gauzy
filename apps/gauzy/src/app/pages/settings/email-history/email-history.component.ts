@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { DomSanitizer } from '@angular/platform-browser';
 import { first, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';

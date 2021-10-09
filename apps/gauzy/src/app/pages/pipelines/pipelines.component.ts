@@ -13,7 +13,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, PipelinesService, Store, ToastrService } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { InputFilterComponent } from '../../@shared/table-filters/input-filter.component';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { FormControl } from '@angular/forms';

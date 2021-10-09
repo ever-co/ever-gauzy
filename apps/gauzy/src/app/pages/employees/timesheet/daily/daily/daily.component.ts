@@ -9,7 +9,7 @@ import {
 } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as _ from 'underscore';

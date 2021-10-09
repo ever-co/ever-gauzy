@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as _ from 'underscore';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { IEntityModel } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';

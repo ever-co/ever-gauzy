@@ -17,7 +17,7 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../../@core/constants';
 import { HttpClient } from '@angular/common/http';

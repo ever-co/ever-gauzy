@@ -12,7 +12,7 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

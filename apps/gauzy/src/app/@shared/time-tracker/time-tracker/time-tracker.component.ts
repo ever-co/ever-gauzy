@@ -14,7 +14,7 @@ import { TimesheetService } from '../../timesheet/timesheet.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

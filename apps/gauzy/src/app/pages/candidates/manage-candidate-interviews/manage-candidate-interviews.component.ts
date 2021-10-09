@@ -2,7 +2,7 @@ import { ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { first, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';

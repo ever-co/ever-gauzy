@@ -21,7 +21,7 @@ import {
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { API_PREFIX } from '../../@core/constants/app.constants';
 
 @Injectable({

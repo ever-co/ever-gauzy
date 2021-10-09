@@ -11,7 +11,7 @@ import {
 	IOrganizationContact,
 	ITag
 } from '@gauzy/contracts';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';

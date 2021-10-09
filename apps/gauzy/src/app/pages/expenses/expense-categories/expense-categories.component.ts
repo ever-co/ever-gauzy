@@ -10,7 +10,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';

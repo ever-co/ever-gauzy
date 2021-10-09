@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { combineLatest } from 'rxjs';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
