@@ -71,7 +71,7 @@
 								>
 								</ng-select>
 							</div>
-							<div class="col-12 form-group">
+							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
 								<ng-select
 									[class]="errors.task ? 'error-border' : ''"
@@ -313,13 +313,20 @@
 							<div class="col-12">
 								<nb-form-field>
 										<nb-icon nbPrefix icon="search-outline"></nb-icon>
-										<input type="text" fullWidth nbInput placeholder="Search">
+										<input 
+											type="text" 
+											fullWidth 
+											nbInput 
+											placeholder="Search"
+											#search
+											(keydown.enter)="onSearch(search.value)"
+										>
 								</nb-form-field>
 							</div>
 							<div class="col-12 top-space-1">
 								<ng2-smart-table 
 									[settings]="tableHeader" 
-									[source]="tableData"
+									[source]="sourceData"
 									class="tb-custom"
 									(userRowSelect)="rowSelect($event)"
 								></ng2-smart-table>
