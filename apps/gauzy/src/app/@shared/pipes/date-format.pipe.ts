@@ -35,15 +35,18 @@ export class DateFormatPipe implements PipeTransform {
 		if (!value) {
 			return;
 		}
+
 		let date = moment(new Date(value));
 		if (!date.isValid()) {
 			date = moment.utc(value);
 		}
-
+		
 		if (isEmpty(locale)) {
 			locale = this.regionCode;
 		}
-
-		return date.locale(locale).format(this.dateFormat);
+		if (date && this.dateFormat) {
+			return date.locale(locale).format(this.dateFormat);
+		}
+		return;
 	}
 }
