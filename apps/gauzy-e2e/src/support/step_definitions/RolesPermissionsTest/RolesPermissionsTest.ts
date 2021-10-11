@@ -220,7 +220,7 @@ And('User can verify Admin general roles and permissions', () => {
 
 And('User can verify Admin administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.EditInventoryGallery, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipment, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipment, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.EditOrganizationEquipment, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharing, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.EditOrganizationEquipmentSharing, checked);
@@ -515,11 +515,11 @@ And('User can verify Employee administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewJobEmployees, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewJobMatching, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewInventoryGalleryAdmin, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentAdmin, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, checked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, notChecked);
 });
