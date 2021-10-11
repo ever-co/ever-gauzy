@@ -5,7 +5,7 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import { app, BrowserWindow, ipcMain, Tray, nativeImage, Menu, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, nativeImage, Menu, shell, MenuItemConstructorOptions, screen } from 'electron';
 import { environment } from './environments/environment';
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 
@@ -88,7 +88,8 @@ const runMainWindow = () => {
 		settingsWindow,
 		null,
 		null,
-		pathWindow
+		pathWindow,
+		serverWindow
 	);
 	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById(
 		'window-setting'
@@ -180,9 +181,14 @@ const createTray = () => {
 	));
 	iconNativePath.resize({ width: 16, height: 16 });
 	tray = new Tray(iconNativePath);
-	const serverMenu = [
+	const serverMenu = contextMenu();
+	tray.setContextMenu(Menu.buildFromTemplate(serverMenu));
+}
+
+const contextMenu = () => {
+	const serverMenu:MenuItemConstructorOptions[] = [
 		{
-			id: '1',
+			id: 'server_browser',
 			label: 'Open Gauzy In Browser',
 			click() {
 				const config = LocalStore.getStore('configs');
@@ -190,7 +196,7 @@ const createTray = () => {
 			}
 		},
 		{
-			id: '2',
+			id: 'check_for_update',
 			label: 'Check For Update',
 			click() {
 				const appSetting = LocalStore.getStore('appSetting');
@@ -210,14 +216,47 @@ const createTray = () => {
 			}
 		},
 		{
-			id: '3',
+			type: 'separator'
+		},
+		{
+			id: 'start_server',
+			label: 'Start Server',
+			click() {
+				runServer(false);
+			}
+		},
+		{
+			id: 'stop_server',
+			label: 'Stop Server',
+			click() {
+				stopServer(false);
+			}
+		},
+		{
+			type: 'separator'
+		},
+		{
+			id: 'server_help',
+			label: 'Help',
+			click() {
+				shell.openExternal('https://gauzy.co/');
+			}
+		},
+		{
+			id: 'server_about',
+			label: 'About',
+			role: 'about'
+		},
+		{
+			id: 'server_exit',
 			label: 'Exit',
 			click() {
 				app.quit();
 			}
 		}
 	]
-	tray.setContextMenu(Menu.buildFromTemplate(serverMenu));
+
+	return serverMenu;
 }
 
 ipcMain.on('start_server', (event, arg) => {
@@ -340,7 +379,37 @@ ipcMain.on('resp_msg_server', (event, arg) => {
 
 ipcMain.on('running_state', (event, arg) => {
 	settingsWindow.webContents.send('server_status', arg);
+	const trayContextMenu = contextMenu();;
+	if (arg) {
+		const start = trayContextMenu[3];
+		start.enabled = false;
+	} else {
+		const stop = trayContextMenu[4];
+		stop.enabled = false;
+	}
+	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu))
 	isServerRun = arg;
+
+})
+
+ipcMain.on('loading_state', (event, arg) => {
+	const trayContextMenu = contextMenu();;
+	trayContextMenu[3].enabled = false;
+	trayContextMenu[4].enabled = false;
+	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu))
+})
+
+ipcMain.on('expand_window', (event, arg) => {
+	const display = screen.getPrimaryDisplay();
+	const { width, height } = display.workArea;
+	console.log('width ', width);
+	console.log('height ', height);
+	serverWindow.setBounds({
+		width: 980,
+		height: 860,
+		x: (width - 980) * (0.5),
+		y: (height - 860) * (0.5)
+	}, true)
 })
 
 function quit() {

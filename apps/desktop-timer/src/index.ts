@@ -139,9 +139,10 @@ function startServer(value, restart = false) {
 			host: value.awHost,
 			isAw: value.aw
 		};
+		const projectConfig = store.get('project');
 		store.set({
 			configs: config,
-			project: {
+			project: projectConfig ? projectConfig : {
 				projectId: null,
 				taskId: null,
 				note: null,

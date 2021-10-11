@@ -15,6 +15,7 @@ import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
+import { LocalDataSource } from 'ng2-smart-table';
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -123,10 +124,12 @@ export class TimeTrackerComponent implements AfterViewInit {
 			}
 		  },
 		hideSubHeader: true,
-		actions: false
+		actions: false,
+		noDataMessage: 'No Tasks Found'
 	};
 
 	tableData = [];
+	sourceData: LocalDataSource;
 
 	constructor(
 		private electronService: ElectronService,
@@ -138,6 +141,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.electronService.ipcRenderer.on('timer_push', (event, arg) => {
 			this.setTime(arg);
 		});
+		this.sourceData = new LocalDataSource(this.tableData);
 
 		this.electronService.ipcRenderer.on(
 			'timer_tracker_show',
@@ -408,7 +412,12 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	async getTask(arg) {
 		this.tasks = await this.timeTrackerService.getTasks(arg);
+		const idx = this.tasks.findIndex((row) => row.id === this.taskSelect);
+		if (idx > -1) {
+			this.tasks[idx].isSelected = true;
+		}
 		this.tableData = this.tasks;
+		this.sourceData.load(this.tableData);
 	}
 
 	async getProjects(arg) {
@@ -785,4 +794,18 @@ export class TimeTrackerComponent implements AfterViewInit {
 		value.source.refresh();
 		this._cdr.detectChanges();
 	}
+
+	onSearch(query: string = '') {
+		if (query) {
+			this.sourceData.setFilter([
+				{
+					field: 'title',
+					search: query
+				}
+				], false);
+		} else {
+			this.sourceData.reset();
+			this.sourceData.refresh();
+		}
+  }
 }

@@ -16,6 +16,7 @@ import { ElectronService } from 'ngx-electron';
 })
 export class ServerDashboardComponent implements OnInit {
 	@ViewChild('logbox') logbox: ElementRef;
+	@ViewChild('logServer') logAccordion;
 	active_index: any;
     gauzyIcon = './assets/images/logos/logo_Gauzy.svg';
 	running=false;
@@ -25,6 +26,12 @@ export class ServerDashboardComponent implements OnInit {
 		icon: 'play-circle-outline'
 	}
 	logContents:any = [];
+	isExpandWindow = false;
+	logIsOpen:boolean = false;
+	styles = {
+		btnStart: 'button-small',
+		icon: 'margin-icon-small'
+	}
 
     constructor(
 		private electronService: ElectronService,
@@ -62,6 +69,17 @@ export class ServerDashboardComponent implements OnInit {
 		this.electronService.ipcRenderer.on('resp_msg', (event, arg) => {
 			event.sender.send('resp_msg_server', arg);
 		})
+
+		this.electronService.ipcRenderer.on('loading_state', (event, arg) => {
+			this.loading = arg;
+			event.sender.send('loading_state');
+			this.electronService.ipcRenderer.send('expand_window');
+			this.isExpandWindow = true;
+			this.styles.btnStart = 'button-big';
+			this.styles.icon = 'margin-icon';
+			this.logIsOpen = true;
+			this._cdr.detectChanges();
+		})
 	}
 
 	
@@ -80,7 +98,12 @@ export class ServerDashboardComponent implements OnInit {
 			name: '',
 			icon: ''
 		};
+		this.logIsOpen = true;
         this.electronService.ipcRenderer.send('run_gauzy_server');
+		this.electronService.ipcRenderer.send('expand_window');
+		this.isExpandWindow = true;
+		this.styles.btnStart = 'button-big';
+		this.styles.icon = 'margin-icon'
 		this._cdr.detectChanges();
     }
 
@@ -90,7 +113,16 @@ export class ServerDashboardComponent implements OnInit {
 			name: '',
 			icon: ''
 		};
+		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('stop_gauzy_server');
 		this._cdr.detectChanges();
+	}
+
+	logBoxChange(e) {
+		if (e) {
+			this.logIsOpen = false;
+		} else {
+			this.logIsOpen = true;
+		}
 	}
 }

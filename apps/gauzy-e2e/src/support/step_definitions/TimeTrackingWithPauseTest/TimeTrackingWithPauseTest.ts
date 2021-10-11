@@ -168,23 +168,23 @@ When('Employee click on view timesheet button', () => {
 });
 
 Then('Employee verify first time record', () =>{
-	timeTrackingWithPausePage.verifyWorkTimeRecorded(1, TimeTrackingWithPausePageData.tracked)
+	timeTrackingWithPausePage.verifyWorkTimeRecorded(TimeTrackingWithPausePageData.firstTimeTable, TimeTrackingWithPausePageData.tracked)
 });
 
 And('Employee verify second time record', () =>{
-	timeTrackingWithPausePage.verifyWorkTimeRecorded(7, TimeTrackingWithPausePageData.tracked)
+	timeTrackingWithPausePage.verifyWorkTimeRecorded(TimeTrackingWithPausePageData.secondTimeTable, TimeTrackingWithPausePageData.tracked)
 });
 
 Then('Employee can see first delete button',()=>{
-	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(0)
+	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.firstDeleteBtn)
 });
 
 Then('Employee can see second delete button',()=>{
-	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(1)
+	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.secondDeleteBtn)
 });
 
 When ('Employee click on delete button',()=>{
-	timeTrackingWithPausePage.clickRecordedTimeDeleteBtn(1)
+	timeTrackingWithPausePage.clickRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.firstDeleteBtn)
 });
 
 Then ('Employee can see confirm dialog', ()=> {

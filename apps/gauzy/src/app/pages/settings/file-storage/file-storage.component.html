@@ -1,3 +1,4 @@
+<form (ngSubmit)="submit()" #form="ngForm" aria-labelledby="title">
 <nb-card class="card-scroll">
 	<nb-card-header class="d-flex justify-content-between">
 		<h4>{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.FILE_STORAGE' | translate }}</h4>
@@ -48,6 +49,7 @@
 									'SETTINGS_FILE_STORAGE.ACCESS_KEY_ID'
 										| translate
 								"
+								required
 							/>
 						</div>
 					</div>
@@ -67,6 +69,7 @@
 									'SETTINGS_FILE_STORAGE.SECRET_ACCESS_KEY'
 										| translate
 								"
+								required
 							/>
 						</div>
 					</div>
@@ -109,8 +112,9 @@
 		</ng-template>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button class="mr-3" (click)="submit()" nbButton status="success">
+		<button class="mr-3" nbButton status="success" [disabled]="!form.valid">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
+</form>

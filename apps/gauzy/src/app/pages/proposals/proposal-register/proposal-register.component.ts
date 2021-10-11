@@ -46,13 +46,22 @@ export class ProposalRegisterComponent
 
 	public ckConfig: any = {
 		width: '100%',
-		height: '320'
+		height: '320',
+    toolbar: [
+      { name: 'document', items: [ 'Source', '-', 'Save', 'NewPage', 'ExportPdf', 'Preview', 'Print', '-', 'Templates' ] },
+      { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+      { name: 'editing', items: [ 'Find', 'Replace', '-', 'SelectAll', '-', 'Scayt' ] },
+      { name: 'forms', items: [ 'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField' ] },
+      '/',
+      { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat' ] }
+    ],
+    toolbarCanCollapse: true
 	};
 	minDate = new Date(moment().subtract(1, 'days').format('YYYY-MM-DD'));
 	selectedEmployee: IEmployee;
 
 	/*
-	* Payment Mutation Form 
+	* Payment Mutation Form
 	*/
 	public form: FormGroup = ProposalRegisterComponent.buildForm(this.fb);
 	static buildForm( fb: FormBuilder): FormGroup {

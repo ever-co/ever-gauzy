@@ -62,7 +62,16 @@ export class ProjectsMutationComponent
 	openSource: boolean;
 	public ckConfig: any = {
 		width: '100%',
-		height: '320'
+		height: '320',
+    toolbar: [
+      { name: 'document', items: [ 'Source', '-', 'Save', 'NewPage', 'ExportPdf', 'Preview', 'Print', '-', 'Templates' ] },
+      { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+      { name: 'editing', items: [ 'Find', 'Replace', '-', 'SelectAll', '-', 'Scayt' ] },
+      { name: 'forms', items: [ 'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField' ] },
+      '/',
+      { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat' ] }
+    ],
+    toolbarCanCollapse: true
 	};
 
 	constructor(
@@ -132,8 +141,8 @@ export class ProjectsMutationComponent
 				this.project ? this.project.currency : this.defaultCurrency
 			],
 			startDate: [
-				this.project && this.project.startDate ? 
-					new Date(this.project.startDate) : 
+				this.project && this.project.startDate ?
+					new Date(this.project.startDate) :
 					null
 			],
 			endDate: [this.project ? this.project.endDate : null],

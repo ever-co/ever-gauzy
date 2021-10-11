@@ -10,6 +10,7 @@ export async function apiServer(servicePath, envValue, serverWindow, uiPort, isR
             ...process.env,
             ...envValue
         } });
+        serverWindow.webContents.send('loading_state', true);
 
         console.log('new api pid', uiService.pid);
 

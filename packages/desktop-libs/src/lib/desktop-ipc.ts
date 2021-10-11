@@ -339,11 +339,22 @@ export function ipcTimer(
 	})
 
 	ipcMain.on('expand', (event, arg) => {
+		const display = screen.getPrimaryDisplay();
+		const { width, height } = display.workArea;
 		if (arg) {
-			timeTrackerWindow.setSize(1024, 940);
+			timeTrackerWindow.setBounds({
+				width: 1024,
+				height: 940,
+				x: (width - 1024) * (0.5),
+				y: (height - 940) * (0.5)
+			}, true)
 		} else {
-			timeTrackerWindow.setSize(400, 940);
+			timeTrackerWindow.setBounds({
+				width: 400,
+				height: 940,
+				x: (width - 400) * (0.5),
+				y: (height - 940) * (0.5)
+			}, true)
 		}
-		timeTrackerWindow.center();
 	})
 }
