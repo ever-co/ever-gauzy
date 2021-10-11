@@ -201,7 +201,9 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	warehouses?: IWarehouse[];
 
 	// organizations Tags
-	@ManyToMany(() => Organization, (organization) => organization.tags)
+	@ManyToMany(() => Organization, (organization) => organization.tags, {
+		onDelete: 'CASCADE'
+	})
     @JoinTable({
 		name: 'tag_organization'
 	})
