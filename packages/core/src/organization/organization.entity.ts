@@ -488,7 +488,9 @@ export class Organization extends TenantBaseEntity implements IOrganization {
     */
 	// Tags
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (it) => it.organizations)
+	@ManyToMany(() => Tag, (it) => it.organizations, {
+		onDelete: 'CASCADE'
+	})
 	tags: ITag[];
 
 	@ApiProperty({ type: () => Skill })
