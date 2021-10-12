@@ -52,7 +52,7 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post('/bulk')
-	async createManyWithEmailsId(
+	async createBulkAvailabilitySlot(
 		@Body() entity: IAvailabilitySlotsCreateInput[]
 	): Promise<IAvailabilitySlot[]> {
 		return await this.commandBus.execute(
