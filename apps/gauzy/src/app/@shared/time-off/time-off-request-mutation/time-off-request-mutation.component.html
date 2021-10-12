@@ -25,19 +25,7 @@
 						formControlName="description"
 						(selectedChange)="onHolidaySelected($event)"
 						fullWidth
-						placeholder="{{
-							description ||
-								('TIME_OFF_PAGE.SELECT_HOLIDAY_NAME'
-									| translate)
-						}}"
-						[ngClass]="{
-							'status-danger':
-								form.controls['start'].invalid &&
-								form.controls['start'].dirty,
-							'status-success':
-								form.controls['start'].valid &&
-								form.controls['start'].dirty
-						}"
+						[placeholder]="description || ('TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate)"
 					>
 						<nb-option
 							*ngFor="let holiday of holidays"

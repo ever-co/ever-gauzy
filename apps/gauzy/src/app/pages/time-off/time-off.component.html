@@ -86,7 +86,7 @@
 			</nb-checkbox>
 		</div>
 		<ng-template ngxPermissionsOnly="TIME_OFF_EDIT">
-			<div class="row" *ngIf="isRecordSelected">
+			<div class="row actions-container" *ngIf="isRecordSelected">
 				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
@@ -204,7 +204,6 @@
 		<nb-icon class="mr-2" icon="checkmark-circle-outline"></nb-icon>
 		{{ 'BUTTONS.APPROVE' | translate }}
 	</button>
-
 	<button
 		(click)="denyDaysOff(selectedItem)"
 		nbButton
@@ -215,7 +214,6 @@
 		<nb-icon class="mr-2" icon="close-outline"></nb-icon>
 		{{ 'BUTTONS.DENY' | translate }}
 	</button>
-
 	<ng-template #additionalActions>
 		<button
 			(click)="updateTimeOffRecord()"

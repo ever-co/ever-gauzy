@@ -33,10 +33,10 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 @Controller()
 export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	constructor(
-		private readonly requestService: TimeOffRequestService,
+		private readonly timeOffRequestService: TimeOffRequestService,
 		private readonly commandBus: CommandBus
 	) {
-		super(requestService);
+		super(timeOffRequestService);
 	}
 
 	/**
@@ -118,7 +118,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITimeOffRequest>> {
 		const { relations, findInput, filterDate } = data;
-		return this.requestService.getAllTimeOffRequests(
+		return this.timeOffRequestService.getAllTimeOffRequests(
 			relations,
 			findInput,
 			filterDate
@@ -144,7 +144,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	async create(
 		@Body() entity: ITimeOffCreateInput
 	): Promise<ITimeOffRequest> {
-		return this.requestService.create(entity);
+		return this.timeOffRequestService.create(entity);
 	}
 
 	/**
@@ -172,6 +172,6 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ITimeOffUpdateInput
 	): Promise<ITimeOffRequest> {
-		return this.requestService.updateTimeOffByAdmin(id, entity);
+		return this.timeOffRequestService.updateTimeOffByAdmin(id, entity);
 	}
 }
