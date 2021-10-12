@@ -405,14 +405,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	// Contact
 	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.organization, {
-		nullable: true,
 		cascade: true,
 		onDelete: 'SET NULL'
 	})
 	contact: IContact;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((organization: Organization) => organization.contact)
+	@RelationId((it: Organization) => it.contact)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
 	readonly contactId?: string;
 
 	/*

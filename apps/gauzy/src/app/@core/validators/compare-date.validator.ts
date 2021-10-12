@@ -11,8 +11,27 @@ export class CompareDateValidator {
                 return { [toField]: true };
             }
 
-			toDate.setErrors(null);
+            if (hasRequiredField(fromDate)) {
+                fromDate.setErrors({ invalid: true });
+            } else {
+                fromDate.setErrors(null);
+            }
+            if (hasRequiredField(toDate)) {
+                toDate.setErrors({ invalid: true });
+            } else {
+                toDate.setErrors(null);
+            }
             return null;
         };
     }
 }
+
+export const hasRequiredField = (control: AbstractControl): boolean => {
+    if (!control) {
+        return false;
+    }
+    if (!control.validator) {
+        return false;
+    }
+    return (control.errors && control.errors.required);
+};
