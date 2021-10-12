@@ -63,10 +63,7 @@ export class TimeTrackingComponent
 
 	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
-
-	// startDate: Date = moment().startOf('week').toDate();
-	// endDate: Date = moment().endOf('week').toDate();
-
+	
 	employeeId: string = null;
 	projectId: string = null;
 	tenantId: string = null;

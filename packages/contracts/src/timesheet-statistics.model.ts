@@ -125,3 +125,9 @@ export interface ICountsStatistics {
 	todayActivities: number;
 	todayDuration: number;
 }
+
+export interface ISelectedDateRange {
+	start: Date;
+	end: Date;
+	isCustomeDate: boolean;
+}
