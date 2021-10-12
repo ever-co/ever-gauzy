@@ -2,13 +2,58 @@
 	<nb-card-header>
 		<h4>
 			<ngx-header-title>
-				{{ 'TIMESHEET.TIME_TRACKING' | translate }}
+				{{!selectedDateRange.isCustomeDate ? ('TIMESHEET.WEEKLY' | translate) : ""}} {{ 'TIMESHEET.TIME_TRACKING' | translate }}
 			</ngx-header-title>
 		</h4>
-		<div>{{ startDate | dateFormat }} - {{ endDate | dateFormat }}</div>
+		<div>{{ this.selectedDateRange.start | dateFormat }} - {{ this.selectedDateRange.end | dateFormat }}</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
+			<div class="col">
+				<div class="row">
+					<div class="bulk-actions col-auto">
+						<div
+							class="input-group"
+						>
+							<div class="input-group-append mr-1" id="button-addon4">
+								<button nbButton status="primary" (click)="previousDay()">
+									<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+								</button>
+							</div>
+							<div>
+								<input
+									class="date-range-input"
+									type="text"
+									nbInput
+									placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_DATE' | translate }}"
+									[(ngModel)]="selectedDateRange"
+									[nbDatepicker]="formRangePicker"
+								/>
+								<nb-rangepicker #formRangePicker></nb-rangepicker>
+							</div>							
+							<div class="input-group-append ml-1" id="button-addon4">
+								<button
+									nbButton
+									status="primary"
+									(click)="nextDay()"
+								>
+									<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+								</button>
+							</div>
+							<div class="input-group-append ml-1" id="button-addon4">
+								<button									
+									nbButton
+									status="primary"
+									(click)="todayDate()"
+								>
+									{{ 'TIMESHEET.TODAY' | translate }}
+								</button>
+							</div>
+						</div>
+						
+					</div>
+				</div>
+			</div>
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
 				<nb-toggle
 					class="mr-3"
@@ -87,8 +132,9 @@
 						>
 							<nb-card-body>
 								<p>
-									{{
-										'TIMESHEET.WEEKLY_ACTIVITY' | translate
+									{{selectedDateRange.isCustomeDate ? 
+										('TIMESHEET.ACTIVITY' | translate) : 
+										('TIMESHEET.WEEKLY_ACTIVITY' | translate)
 									}}
 								</p>
 								<div class="h1">
@@ -105,8 +151,9 @@
 						>
 							<nb-card-body>
 								<p>
-									{{
-										'TIMESHEET.WORKED_THIS_WEEK' | translate
+									{{selectedDateRange.isCustomeDate ? 
+										('TIMESHEET.THIS_WEEK' | translate) : 
+										('TIMESHEET.WORKED_THIS_WEEK' | translate)
 									}}
 								</p>
 								<div class="h1">
