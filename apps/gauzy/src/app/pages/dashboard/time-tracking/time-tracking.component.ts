@@ -80,7 +80,7 @@ export class TimeTrackingComponent
 	}
 
 	set selectedDateRange(range: ISelectedDateRange) {
-		range.isCustomeDate = range.isCustomeDate === undefined ? true : false
+		range.isCustomDate = range.isCustomDate === undefined ? true : false
 		this._selectedDateRange = range;
 		if (range.start && range.end) {
 			this.getCounts();
@@ -99,7 +99,7 @@ export class TimeTrackingComponent
 		this.selectedDateRange = {
 			start: moment().startOf('week').toDate(),
 			end: moment().endOf('week').toDate(),
-			isCustomeDate: false
+			isCustomDate: false
 		}
 	}
 
@@ -373,7 +373,7 @@ export class TimeTrackingComponent
 		this.selectedDateRange = {
 			start: startDate,
 			end: moment(startDate).endOf("week").toDate(),
-			isCustomeDate: false
+			isCustomDate: false
 		}
 	}
 
@@ -382,7 +382,7 @@ export class TimeTrackingComponent
 		this.selectedDateRange = {
 			start: startDate,
 			end: moment(startDate).endOf("week").toDate(),
-			isCustomeDate: false
+			isCustomDate: false
 		}
 	}
 

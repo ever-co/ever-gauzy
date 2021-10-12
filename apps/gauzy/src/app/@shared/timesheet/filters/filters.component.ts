@@ -236,12 +236,9 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	previousDay() {
 		const range = this.dateRange as 'day' | 'week' | 'month';
-		const prevDate = moment(this.selectedDate)
+		this.selectedDate = moment(this.selectedDate)
 			.subtract(1, range)
 			.toDate();
-		console.log(prevDate, "prevDate");
-			
-		this.selectedDate = prevDate;
 	}
 
 	setActivityLevel($event: ChangeContext): void {

@@ -129,5 +129,5 @@ export interface ICountsStatistics {
 export interface ISelectedDateRange {
 	start: Date;
 	end: Date;
-	isCustomeDate?: boolean;
+	isCustomDate?: boolean;
 }

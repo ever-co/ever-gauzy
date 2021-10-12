@@ -2,10 +2,10 @@
 	<nb-card-header>
 		<h4>
 			<ngx-header-title>
-				{{!selectedDateRange.isCustomeDate ? ('TIMESHEET.WEEKLY' | translate) : ""}} {{ 'TIMESHEET.TIME_TRACKING' | translate }}
+				{{ !selectedDateRange.isCustomDate ? ('TIMESHEET.WEEKLY' | translate) : '' }} {{ 'TIMESHEET.TIME_TRACKING' | translate }}
 			</ngx-header-title>
 		</h4>
-		<div>{{ this.selectedDateRange.start | dateFormat }} - {{ this.selectedDateRange.end | dateFormat }}</div>
+		<div>{{ selectedDateRange.start | dateFormat }} - {{ selectedDateRange.end | dateFormat }}</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
@@ -25,7 +25,7 @@
 									class="date-range-input"
 									type="text"
 									nbInput
-									placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_DATE' | translate }}"
+									[placeholder]="'FORM.PLACEHOLDERS.SELECT_DATE' | translate"
 									[(ngModel)]="selectedDateRange"
 									[nbDatepicker]="formRangePicker"
 								/>
@@ -132,7 +132,7 @@
 						>
 							<nb-card-body>
 								<p>
-									{{selectedDateRange.isCustomeDate ? 
+									{{ selectedDateRange.isCustomDate ? 
 										('TIMESHEET.ACTIVITY' | translate) : 
 										('TIMESHEET.WEEKLY_ACTIVITY' | translate)
 									}}
@@ -151,7 +151,7 @@
 						>
 							<nb-card-body>
 								<p>
-									{{selectedDateRange.isCustomeDate ? 
+									{{ selectedDateRange.isCustomDate ? 
 										('TIMESHEET.THIS_WEEK' | translate) : 
 										('TIMESHEET.WORKED_THIS_WEEK' | translate)
 									}}
