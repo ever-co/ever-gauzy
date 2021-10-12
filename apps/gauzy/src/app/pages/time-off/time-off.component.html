@@ -110,7 +110,7 @@
 			<div class="grid-scroll-container">
 				<ul class="flex-container">
 					<li class="flex-item" *ngFor="let x of timeOffData">
-						<div class="fullName">
+						<div class="fullName" (click)="navigateToEmployee(x)">
 							<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
 							<span>{{ x.fullName }}</span>
 						</div>
@@ -124,7 +124,7 @@
 							<span class="info-meta">{{
 								'TIME_OFF_PAGE.POLICY.POLICY' | translate
 							}}</span>
-							<span class="info-value">{{ x.policy.name }}</span>
+							<span class="info-value">{{ x.description }}</span>
 						</div>
 						<div class="info-line">
 							<span class="info-meta">{{

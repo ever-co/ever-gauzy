@@ -12,7 +12,6 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request-mutation.component';
 import { TimeOffService } from '../../@core/services/time-off.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ToastrService } from '../../@core/services/toastr.service';
@@ -22,6 +21,8 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { EmployeeNameTagsLinkComponent } from '../../@shared/table-components';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-time-off',
@@ -396,7 +397,7 @@ export class TimeOffComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent,
+					renderComponent: EmployeeNameTagsLinkComponent,
 					class: 'align-row'
 				},
 				description: {
@@ -594,6 +595,12 @@ export class TimeOffComponent
 		if (this.timeOffTable && this.timeOffTable.grid) {
 			this.timeOffTable.grid.dataSet['willSelect'] = 'false';
 			this.timeOffTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	navigateToEmployee(rowData) {
+		if(rowData?.employees.length > 0) {
+			this.router.navigate([`/pages/employees/edit/${rowData.employees[0].id}`]);	
 		}
 	}
 
