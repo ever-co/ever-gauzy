@@ -13,7 +13,7 @@ export class GetConflictAvailabilitySlotsHandler
 	implements ICommandHandler<GetConflictAvailabilitySlotsCommand> {
 	constructor(
 		@InjectRepository(AvailabilitySlot)
-		private readonly timeLogRepository: Repository<AvailabilitySlot>,
+		private readonly availabilitySlotRepository: Repository<AvailabilitySlot>,
 
 		private readonly configService: ConfigService
 	) {}
@@ -29,45 +29,45 @@ export class GetConflictAvailabilitySlotsHandler
 		const startedAt = moment(startTime).toISOString();
 		const stoppedAt = moment(endTime).toISOString();
 
-		const conflictQuery = this.timeLogRepository.createQueryBuilder();
-		conflictQuery.andWhere(`"${conflictQuery.alias}"."tenantId" = :tenantId`, {
+		const query = this.availabilitySlotRepository.createQueryBuilder();
+		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 			tenantId
 		});
-		conflictQuery.andWhere(`"${conflictQuery.alias}"."employeeId" = :employeeId`, {
+		query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
 			employeeId
 		});
 
-		conflictQuery.andWhere(
+		query.andWhere(
 			this.configService.dbConnectionOptions.type === 'sqlite'
-				? `'${startedAt}' >= "${conflictQuery.alias}"."startTime" AND '${startedAt}' <= "${conflictQuery.alias}"."endTime"`
-				: `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
+				? `'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`
+				: `("${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 		);
 
 		// organization and tenant for availability slots conflicts
 		if (organizationId) {
-			conflictQuery.andWhere(`"${conflictQuery.alias}"."organizationId" = :organizationId`, {
+			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
 				organizationId
 			});
 		}
 
 		if (input.type) {
-			conflictQuery.andWhere(`${conflictQuery.alias}.type = :type`, {
+			query.andWhere(`${query.alias}.type = :type`, {
 				type: input.type 
 			});
 		}
 
 		if (input.relations) {
 			input.relations.forEach((relation) => {
-				conflictQuery.leftJoinAndSelect(
-					`${conflictQuery.alias}.${relation}`,
+				query.leftJoinAndSelect(
+					`${query.alias}.${relation}`,
 					relation
 				);
 			});
 		}
 
 		if (input.ignoreId) {
-			conflictQuery.andWhere(
-				`${conflictQuery.alias}.id NOT IN (:...id)`,
+			query.andWhere(
+				`${query.alias}.id NOT IN (:...id)`,
 				{
 					id:
 						input.ignoreId instanceof Array
@@ -77,6 +77,6 @@ export class GetConflictAvailabilitySlotsHandler
 			);
 		}
 
-		return await conflictQuery.getMany();
+		return await query.getMany();
 	}
 }
