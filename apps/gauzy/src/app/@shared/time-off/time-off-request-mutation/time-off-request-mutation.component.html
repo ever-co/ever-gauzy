@@ -25,19 +25,7 @@
 						formControlName="description"
 						(selectedChange)="onHolidaySelected($event)"
 						fullWidth
-						placeholder="{{
-							description ||
-								('TIME_OFF_PAGE.SELECT_HOLIDAY_NAME'
-									| translate)
-						}}"
-						[ngClass]="{
-							'status-danger':
-								form.controls['start'].invalid &&
-								form.controls['start'].dirty,
-							'status-success':
-								form.controls['start'].valid &&
-								form.controls['start'].dirty
-						}"
+						[placeholder]="description || ('TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate)"
 					>
 						<nb-option
 							*ngFor="let holiday of holidays"
@@ -100,9 +88,12 @@
 						formControlName="policy"
 						(selectedChange)="onPolicySelected($event)"
 						fullWidth
-						placeholder="{{
-							'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate
-						}}"
+						[placeholder]="'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate"
+						[status]="
+						isInvalidControl('policy')
+							? 'danger'
+							: 'basic'
+						"
 					>
 						<nb-option
 							*ngFor="let policy of policies"
@@ -122,18 +113,15 @@
 						nbInput
 						fullWidth
 						required
-						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-						[nbDatepicker]="startDate"
-						[ngClass]="{
-							'status-danger':
-								form.controls['start'].invalid &&
-								form.controls['start'].dirty,
-							'status-success':
-								form.controls['start'].valid &&
-								form.controls['start'].dirty
-						}"
+						[placeholder]="'POP_UPS.PICK_DATE' | translate"
+						[nbDatepicker]="startDatePicker"
+						[status]="
+							isInvalidControl('start')
+								? 'danger'
+								: 'basic'
+						"
 					/>
-					<nb-datepicker [min]="minDate" #startDate></nb-datepicker>
+					<nb-datepicker [min]="minDate" #startDatePicker></nb-datepicker>
 				</div>
 				<div class="form-group col-6">
 					<label class="label" for="end">{{
@@ -143,20 +131,15 @@
 						formControlName="end"
 						nbInput
 						fullWidth
-						required
-						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-						[nbDatepicker]="endDate"
-						[ngClass]="{
-							'status-danger':
-								form.controls['end'].invalid &&
-								form.controls['end'].touched &&
-								form.controls['end'].dirty,
-							'status-success':
-								form.controls['end'].valid &&
-								form.controls['end'].dirty
-						}"
+						[placeholder]="'POP_UPS.PICK_DATE' | translate"
+						[nbDatepicker]="endDatePicker"
+						[status]="
+							isInvalidControl('end')
+								? 'danger'
+								: 'basic'
+						"
 					/>
-					<nb-datepicker [min]="minDate" #endDate></nb-datepicker>
+					<nb-datepicker [min]="minDate" #endDatePicker></nb-datepicker>
 				</div>
 			</div>
 
@@ -197,20 +180,15 @@
 						"
 						[fileUrl]="uploadDocUrl"
 						(uploadedImgUrl)="documentUrl.setValue($event)"
-						[ngClass]="{
-							'status-danger':
-								form.controls['end'].invalid &&
-								form.controls['end'].touched &&
-								form.controls['end'].dirty,
-							'status-success':
-								form.controls['end'].valid &&
-								form.controls['end'].dirty
-						}"
+						[status]="
+							isInvalidControl('documentUrl')
+								? 'danger'
+								: 'basic'
+						"
 					>
 					</ngx-file-uploader-input>
 				</div>
 			</div>
-
 			<div class="row" *ngIf="!isHoliday">
 				<div class="form-group col-12">
 					<div class="form-group">
@@ -222,9 +200,7 @@
 							type="text-area"
 							nbInput
 							formControlName="description"
-							placeholder="{{
-								'TIME_OFF_PAGE.ADD_A_DESCRIPTION' | translate
-							}}"
+							[placeholder]="'TIME_OFF_PAGE.ADD_A_DESCRIPTION' | translate"
 						></textarea>
 					</div>
 				</div>
@@ -232,7 +208,12 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button (click)="close()" status="danger" class="mr-3" nbButton>
+		<button 
+			(click)="close()"
+			status="danger"
+			class="mr-3"
+			nbButton
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
@@ -244,7 +225,11 @@
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 		<ng-template #isRequest>
-			<button (click)="addRequest()" status="success" nbButton>
+			<button
+				(click)="addRequest()"
+				status="success"
+				nbButton
+			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</ng-template>
