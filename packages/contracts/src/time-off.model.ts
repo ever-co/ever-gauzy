@@ -75,10 +75,10 @@ export interface ITimeOffCreateInput
 }
 
 export enum StatusTypesEnum {
-	REQUESTED = 'Requested',
-	APPROVED = 'Approved',
-	DENIED = 'Denied',
-	ALL = 'All'
+	REQUESTED = 'REQUESTED',
+	APPROVED = 'APPROVED',
+	DENIED = 'DENIED',
+	ALL = 'ALL'
 }
 
 export enum StatusTypesMapRequestApprovalEnum {
