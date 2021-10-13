@@ -14,5 +14,14 @@ export const OrganizationHelpCenterPage = {
 	settingsDropdownOptionCss: 'nb-menu.context-menu > ul.menu-items li',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyBaseCss: 'div.base > div > span.text',
-	closeDeleteButtonCss: 'g[data-name="close"]'
+	closeDeleteButtonCss: 'g[data-name="close"]',
+	verifyCategortCss: 'div[class="base ng-star-inserted child"]',
+	arrowButtonCss:'span.toggle-children',
+	addArticleButtonCss: 'button[status="success"]',
+	nameOfTheArticleInputCss: 'input[formcontrolname="name"]',
+	descOfTheArticleInputCss: 'input[formcontrolname="desc"]',
+	employeePlaceholderCss: 'nb-select[ng-reflect-placeholder="Add or Remove Employees"]',
+	employeeDropdownCss: 'ul.option-list > nb-option',
+	articleTextCss: 'div[id="cke_1_contents"] > iframe[class="cke_wysiwyg_frame cke_reset"]',
+	articleSaveBtnCss: 'div.save-button > button[status="success"]'
 };

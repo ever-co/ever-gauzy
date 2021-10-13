@@ -9,7 +9,9 @@ import {
 	getLastElement,
 	verifyText,
 	verifyElementNotExist,
-	clickButtonMultipleTimes
+	clickButtonMultipleTimes,
+	verifyElementIsVisibleByIndex,
+	enterTextInIFrame
 } from '../utils/util';
 import { OrganizationHelpCenterPage } from '../pageobjects/OrganizationHelpCenterPageObject';
 
@@ -147,4 +149,89 @@ export const verifybaseExists = (text) => {
 
 export const verifyBaseIsDeleted = () => {
 	verifyElementNotExist(OrganizationHelpCenterPage.verifyBaseCss);
+};
+
+export const clickAddCategotyOption = (text) => {
+	clickElementByText(
+		OrganizationHelpCenterPage.settingsDropdownOptionCss,
+		text
+	);
+};
+
+export const addCategoryOptionVisible = () => {
+	verifyElementIsVisible(
+		OrganizationHelpCenterPage.settingsDropdownOptionCss
+	);
+};
+
+export const verifyCategoryExists = (text) => {
+	verifyElementIsVisible(OrganizationHelpCenterPage.verifyCategortCss);
+};
+
+export const arrowButtonVisible = () => {
+	verifyElementIsVisible(OrganizationHelpCenterPage.arrowButtonCss);
+};
+
+export const clickArrowButton = () => {
+	clickButton(OrganizationHelpCenterPage.arrowButtonCss);
+};
+
+export const clickOnCategory = (index) => {
+	clickButtonByIndex(OrganizationHelpCenterPage.verifyCategortCss, index)
+};
+
+export const verifyAddArticleButton = (index) => {
+	verifyElementIsVisibleByIndex(OrganizationHelpCenterPage.addArticleButtonCss, index)
+};
+
+export const clickOnAddArticleButton = (index) => {
+	clickButtonByIndex(OrganizationHelpCenterPage.addArticleButtonCss, index)
+};
+
+export const verifyNameOfTheArticleInput = () => {
+	verifyElementIsVisible(OrganizationHelpCenterPage.nameOfTheArticleInputCss);
+};
+
+export const enterArticleName = (articleName) => {
+	enterInput(OrganizationHelpCenterPage.nameOfTheArticleInputCss, articleName);
+}
+
+export const verifyDescOfTheArticleInput = () => {
+	verifyElementIsVisible(OrganizationHelpCenterPage.descOfTheArticleInputCss);
+};
+
+export const enterDescName = (descName) => {
+	enterInput(OrganizationHelpCenterPage.descOfTheArticleInputCss, descName);
+}
+
+export const verifyEmployeePlaceholderField = (index) => {
+	verifyElementIsVisibleByIndex(OrganizationHelpCenterPage.employeePlaceholderCss, index);
+};
+
+export const clickOnEmployeePlaceholderField = (index) => {
+	clickButtonByIndex(OrganizationHelpCenterPage.employeePlaceholderCss, index);
+};
+
+export const clickEmployeeDropdown = (index) => {
+	clickButtonByIndex(OrganizationHelpCenterPage.employeeDropdownCss, index);
+};
+
+export const verifyArticleText = () => {
+	verifyElementIsVisible(OrganizationHelpCenterPage.articleTextCss);
+};
+
+export const enterArticleText = (text) => {
+	enterTextInIFrame(OrganizationHelpCenterPage.articleTextCss, text);
+};
+
+export const clickArticleText = () => {
+	clickButton(OrganizationHelpCenterPage.articleTextCss);
+};
+
+export const verifyArticleSaveBtn = () => {
+	verifyElementIsVisible(OrganizationHelpCenterPage.articleSaveBtnCss);
+};
+
+export const clickArticleSaveBtn = () => {
+	clickButton(OrganizationHelpCenterPage.articleSaveBtnCss);
 };

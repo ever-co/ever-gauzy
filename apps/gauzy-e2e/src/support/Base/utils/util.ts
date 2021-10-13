@@ -268,3 +268,14 @@ export const waitForDropdownToLoad = (loc: any) => {
 export const clickButtonByIndexNoForce = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click();
 }
+
+export const enterTextInIFrame= (loc, text ) => {
+	cy.get(loc)
+  		.then(($iframe) => {
+    		const $body = $iframe.contents().find('body')
+
+    		cy.wrap($body)
+      			.find('p')
+      			.type(text);
+	})
+};
