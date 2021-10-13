@@ -137,25 +137,8 @@
   margin: 4px;
 }
 
-.search-bar {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-end;
-}
-
-.column-first {
-  display: flex;
-  flex-direction: column;
-  width: 40%;
-  margin: 1rem;
-}
-
-.column-second {
-  display: flex;
-  flex-direction: column;
-  min-width: 24rem;
-  margin: 1rem;
+.row-search {
+  width: 98%;
 }
 
 .clear-button {
