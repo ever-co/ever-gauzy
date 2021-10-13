@@ -13,9 +13,7 @@ import { throwIfAlreadyLoaded } from './module-import-guard';
 import { AnalyticsService, LayoutService, SeoService } from './utils';
 import { AuthModule } from './auth/auth.module';
 
-const DATA_SERVICES = [
-	SeoService
-];
+const DATA_SERVICES = [];
 
 export class NbSimpleRoleProvider extends NbRoleProvider {
 	getRole(): Observable<string | string[]> {
@@ -46,7 +44,8 @@ export const NB_CORE_PROVIDERS = [
 		useClass: NbSimpleRoleProvider
 	},
 	AnalyticsService,
-	LayoutService
+	LayoutService,
+	SeoService
 ];
 
 @NgModule({
