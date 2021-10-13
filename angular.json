@@ -395,7 +395,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
+                  "maximumWarning": "10mb",
                   "maximumError": "40mb"
                 }
               ]
@@ -515,8 +515,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
+                  "maximumWarning": "10mb",
+                  "maximumError": "40mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -743,8 +743,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "20mb"
+                  "maximumWarning": "10mb",
+                  "maximumError": "40mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -865,8 +865,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "20mb"
+                  "maximumWarning": "10mb",
+                  "maximumError": "40mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -987,7 +987,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
+                  "maximumWarning": "10mb",
                   "maximumError": "40mb"
                 }
               ]
