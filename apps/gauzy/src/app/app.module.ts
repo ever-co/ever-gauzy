@@ -61,12 +61,12 @@ import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module
 import * as moment from 'moment';
 import { NgxAuthModule } from './auth/auth.module';
 import { LegalModule } from './legal/legal.module';
-import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.service';
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
-import { FeatureService } from './@core/services/feature/feature.service';
 import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { HttpLoaderFactory } from './@shared/translate/translate.module';
+import { SeoService } from './@core/utils';
+import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 
 // TODO: we should use some internal function which returns version of Gauzy;
@@ -208,7 +208,8 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 			useClass: SentryErrorHandler
 		},
 		AppModuleGuard,
-		ColorPickerService
+		ColorPickerService,
+		SeoService
 	]
 })
 export class AppModule {
