@@ -7,7 +7,7 @@
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ever-co/ever-gauzy.git"
+		"url": "https://github.com/ever-co/ever-gauzy.git"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
@@ -39,6 +39,7 @@
 	},
 	"build": {
 		"appId": "com.company.gauzyserver",
+		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
@@ -58,7 +59,7 @@
 				"zip",
 				"dmg"
 			],
-			"artifactName": "gauzy-server-${version}.${ext}"
+			"artifactName": "${name}-${version}.${ext}"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -81,8 +82,8 @@
 				"deb",
 				"tar.gz"
 			],
-			"executableName": "gauzy",
-			"artifactName": "gauzy-server-${version}.${ext}",
+			"executableName": "gauzy-server",
+			"artifactName": "${name}-${version}.${ext}",
 			"synopsis": "Server",
 			"category": "Development"
 		},
@@ -94,7 +95,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "gauzy-server-${version}.${ext}",
+			"artifactName": "${name}-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},

@@ -7,6 +7,7 @@ Object.assign(console, log.functions);
 
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
+
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
@@ -21,7 +22,7 @@ log.catchErrors({
 			})
 			.then((result) => {
 				if (result.response === 1) {
-					submitIssue('https://github.com/ever-co/gauzy/issues/new', {
+					submitIssue('https://github.com/ever-co/ever-gauzy/issues/new', {
 						title: `Automatic error report for Desktop App ${versions.app}`,
 						body:
 							'Error:\n```' +
@@ -40,9 +41,16 @@ log.catchErrors({
 });
 
 import * as path from 'path';
+
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
+
+app.setName('gauzy-desktop');
+
+console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+
 const Store = require('electron-store');
+
 import {
 	ipcMainHandler,
 	ipcTimer,
@@ -101,6 +109,11 @@ let NotificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
+
+console.log(
+	'App UI Render Path:',
+	path.join(__dirname, './index.html')
+);
 
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
@@ -555,8 +568,9 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 });
 
 autoUpdater.on('error', () => {
-	console.log('eroro');
+	console.log('error');
 });
+
 app.on('activate', () => {
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {

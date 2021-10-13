@@ -7,10 +7,10 @@
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ever-co/gauzy.git"
+		"url": "https://github.com/ever-co/ever-gauzy.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/gauzy/issues"
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"private": true,
 	"author": {
@@ -37,7 +37,8 @@
 		]
 	},
 	"build": {
-		"appId": "com.company.gauzydesktop",
+		"appId": "com.ever.gauzydesktop",
+		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
@@ -57,7 +58,7 @@
 				"zip",
 				"dmg"
 			],
-			"artifactName": "gauzy-desktop-${version}.${ext}"
+			"artifactName": "${name}-${version}.${ext}"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -79,8 +80,8 @@
 				"deb",
 				"tar.gz"
 			],
-			"executableName": "gauzy",
-			"artifactName": "gauzy-desktop-${version}.${ext}",
+			"executableName": "gauzy-desktop",
+			"artifactName": "${name}-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
 		},
@@ -92,7 +93,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "gauzy-desktop-${version}.${ext}",
+			"artifactName": "${name}-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},

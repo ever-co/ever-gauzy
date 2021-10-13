@@ -7,10 +7,10 @@
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/gauzy.git"
+		"url": "https://github.com/ever-co/ever-gauzy.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/gauzy/issues"
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"private": true,
 	"author": {
@@ -26,7 +26,8 @@
 		]
 	},
 	"build": {
-		"appId": "com.company.gauzydesktoptimer",
+		"appId": "com.ever.gauzydesktoptimer",
+		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Desktop Timer",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
@@ -37,6 +38,7 @@
 		},
 		"publish": {
 			"provider": "github",
+			"repo": "https://github.com/ever-co/ever-gauzy-desktop-timer.git" ,
 			"releaseType": "release"
 		},
 		"mac": {
@@ -46,7 +48,7 @@
 				"zip",
 				"dmg"
 			],
-			"artifactName": "gauzy-desktop-timer-${version}.${ext}"
+			"artifactName": "${name}-${version}.${ext}"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -69,7 +71,7 @@
 				"tar.gz"
 			],
 			"executableName": "gauzy-desktop-timer",
-			"artifactName": "gauzy-desktop-timer-${version}.${ext}",
+			"artifactName": "${name}-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
 		},
@@ -81,7 +83,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "gauzy-desktop-timer-${version}.${ext}",
+			"artifactName": "${name}-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
