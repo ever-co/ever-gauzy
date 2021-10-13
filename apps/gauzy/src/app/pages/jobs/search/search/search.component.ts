@@ -318,6 +318,9 @@ export class SearchComponent
 										src:
 											row.employee && row.employee.user
 												? row.employee.user.imageUrl
+												: null,
+										id: row.employee 
+												? row.employee.id 
 												: null
 									};
 								}
