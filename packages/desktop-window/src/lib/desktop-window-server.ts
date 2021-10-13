@@ -1,13 +1,18 @@
 import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
+import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
 
 export function createServerWindow(serverWindow, config, filePath) {
+
+	remoteMain.initialize();
 
     let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
     mainWindowSettings = windowSetting();
 
     serverWindow = new BrowserWindow(mainWindowSettings);
+
+	remoteMain.enable(serverWindow.webContents);
 
     let launchPath;
 
@@ -42,8 +47,7 @@ const windowSetting = () => {
 		fullscreenable: true,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false,
-			enableRemoteModule: true,
+			webSecurity: false,			
 			contextIsolation: false
 		},
 		width: 380,
