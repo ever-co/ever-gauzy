@@ -61,7 +61,7 @@
 		"@nestjs/websockets": "^8.0.8",
 		"@nestjsx/crud": "^5.0.0-alpha.3",
 		"@nestjsx/crud-typeorm": "^5.0.0-alpha.3",
-		"@ntegral/nestjs-sentry": "https://github.com/ever-co/nestjs-sentry",
+		"@ntegral/nestjs-sentry": "^3.0.6",
 		"@sentry/node": "^6.8.0",
 		"@sentry/tracing": "^6.8.0",
 		"apollo-server-core": "^3.3.0",

@@ -2486,6 +2486,15 @@
     unixify "1.0.0"
     valid-url "1.0.9"
 
+"@graphql-tools/merge@6.2.14":
+  version "6.2.14"
+  resolved "https://registry.yarnpkg.com/@graphql-tools/merge/-/merge-6.2.14.tgz#694e2a2785ba47558e5665687feddd2935e9d94e"
+  integrity sha512-RWT4Td0ROJai2eR66NHejgf8UwnXJqZxXgDWDI+7hua5vNA2OW8Mf9K1Wav1ZkjWnuRp4ztNtkZGie5ISw55ow==
+  dependencies:
+    "@graphql-tools/schema" "^7.0.0"
+    "@graphql-tools/utils" "^7.7.0"
+    tslib "~2.2.0"
+
 "@graphql-tools/merge@6.2.5":
   version "6.2.5"
   resolved "https://registry.yarnpkg.com/@graphql-tools/merge/-/merge-6.2.5.tgz#a03d6711f2a468b8de97c0fe9092469280ca66c9"
@@ -4044,6 +4053,23 @@
   resolved "https://registry.yarnpkg.com/@nestjs/cqrs/-/cqrs-8.0.0.tgz#ef5e8ddc9d50eae5ca18f0c86c8928e072ba1d93"
   integrity sha512-6Fy0jgUZatRXirfAhDVy3Du2UYoBLrlT7yjK4ZX3L7rBMdfTYPqmn8wE2JH3kXW3yUqLDdnS9PotHf6Y0UzLxw==
 
+"@nestjs/graphql@8.0.2":
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/@nestjs/graphql/-/graphql-8.0.2.tgz#8b0d4c47f536b98902c8953e785c251fba3624a4"
+  integrity sha512-LOg5nwmX3DvU/dHH3p4w6bYeEr7IpFNe8rbODzMmwnDnby7Rp89Ug4ItdyHyqy6VirHAGHMf86uXzvF85CfCVA==
+  dependencies:
+    "@graphql-tools/merge" "6.2.14"
+    "@graphql-tools/schema" "7.1.5"
+    "@graphql-tools/utils" "7.10.0"
+    "@nestjs/mapped-types" "1.0.0"
+    chokidar "3.5.2"
+    fast-glob "3.2.6"
+    iterall "1.3.0"
+    lodash "4.17.21"
+    normalize-path "3.0.0"
+    tslib "2.3.0"
+    uuid "8.3.2"
+
 "@nestjs/graphql@^9.0.5":
   version "9.0.6"
   resolved "https://registry.yarnpkg.com/@nestjs/graphql/-/graphql-9.0.6.tgz#f1bb2047691813a271cf0b3827cd07b25d623543"
@@ -4866,11 +4892,12 @@
     "@nstudio/focus" "12.7.0"
     "@nstudio/xplat-utils" "12.7.0"
 
-"@ntegral/nestjs-sentry@https://github.com/ever-co/nestjs-sentry":
-  version "1.0.5"
-  resolved "https://github.com/ever-co/nestjs-sentry#401168a96e0fe41749401f2cf04961ce57a7f17b"
-  dependencies:
-    "@sentry/node" "^5.24.2"
+"@ntegral/nestjs-sentry@^3.0.6":
+  version "3.0.6"
+  resolved "https://registry.yarnpkg.com/@ntegral/nestjs-sentry/-/nestjs-sentry-3.0.6.tgz#723f829f15532be8f3064a2df45f5a56b32fd4c5"
+  integrity sha512-UfBZeamrRlZ1IukRrNJ/fsJjxVHD9WGAGQ3wwBIlpLNFNHAyj+hedtkAnq8vcRECpndDnKeIH5X84L1pBgo5CQ==
+  optionalDependencies:
+    "@nestjs/graphql" "8.0.2"
 
 "@nuxtjs/opencollective@0.3.2":
   version "0.3.2"
@@ -5579,21 +5606,6 @@
     lru_map "^0.3.3"
     tslib "^1.9.3"
 
-"@sentry/node@^5.24.2":
-  version "5.30.0"
-  resolved "https://registry.yarnpkg.com/@sentry/node/-/node-5.30.0.tgz#4ca479e799b1021285d7fe12ac0858951c11cd48"
-  integrity sha512-Br5oyVBF0fZo6ZS9bxbJZG4ApAjRqAnqFFurMVJJdunNb80brh7a5Qva2kjhm+U6r9NJAB5OmDyPkA1Qnt+QVg==
-  dependencies:
-    "@sentry/core" "5.30.0"
-    "@sentry/hub" "5.30.0"
-    "@sentry/tracing" "5.30.0"
-    "@sentry/types" "5.30.0"
-    "@sentry/utils" "5.30.0"
-    cookie "^0.4.1"
-    https-proxy-agent "^5.0.0"
-    lru_map "^0.3.3"
-    tslib "^1.9.3"
-
 "@sentry/node@^6.8.0":
   version "6.13.3"
   resolved "https://registry.yarnpkg.com/@sentry/node/-/node-6.13.3.tgz#94c646c31fd240ab68ee8b85aa663e65eb499d06"
@@ -5620,17 +5632,6 @@
     "@sentry/utils" "5.27.6"
     tslib "^1.9.3"
 
-"@sentry/tracing@5.30.0", "@sentry/tracing@^5.30.0":
-  version "5.30.0"
-  resolved "https://registry.yarnpkg.com/@sentry/tracing/-/tracing-5.30.0.tgz#501d21f00c3f3be7f7635d8710da70d9419d4e1f"
-  integrity sha512-dUFowCr0AIMwiLD7Fs314Mdzcug+gBVo/+NCMyDw8tFxJkwWAKl7Qa2OZxLQ0ZHjakcj1hNKfCQJ9rhyfOl4Aw==
-  dependencies:
-    "@sentry/hub" "5.30.0"
-    "@sentry/minimal" "5.30.0"
-    "@sentry/types" "5.30.0"
-    "@sentry/utils" "5.30.0"
-    tslib "^1.9.3"
-
 "@sentry/tracing@6.13.3", "@sentry/tracing@^6.8.0":
   version "6.13.3"
   resolved "https://registry.yarnpkg.com/@sentry/tracing/-/tracing-6.13.3.tgz#ca657d4afa99c50f15e638fe38405bac33e780ee"
@@ -5640,6 +5641,17 @@
     "@sentry/minimal" "6.13.3"
     "@sentry/types" "6.13.3"
     "@sentry/utils" "6.13.3"
+    tslib "^1.9.3"
+
+"@sentry/tracing@^5.30.0":
+  version "5.30.0"
+  resolved "https://registry.yarnpkg.com/@sentry/tracing/-/tracing-5.30.0.tgz#501d21f00c3f3be7f7635d8710da70d9419d4e1f"
+  integrity sha512-dUFowCr0AIMwiLD7Fs314Mdzcug+gBVo/+NCMyDw8tFxJkwWAKl7Qa2OZxLQ0ZHjakcj1hNKfCQJ9rhyfOl4Aw==
+  dependencies:
+    "@sentry/hub" "5.30.0"
+    "@sentry/minimal" "5.30.0"
+    "@sentry/types" "5.30.0"
+    "@sentry/utils" "5.30.0"
     tslib "^1.9.3"
 
 "@sentry/types@5.27.6":
@@ -14824,6 +14836,17 @@ fast-deep-equal@^3.1.1:
   version "3.1.3"
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz#3a7d56b559d6cbc3eb512325244e619a65c6c525"
   integrity sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==
+
+fast-glob@3.2.6:
+  version "3.2.6"
+  resolved "https://registry.yarnpkg.com/fast-glob/-/fast-glob-3.2.6.tgz#434dd9529845176ea049acc9343e8282765c6e1a"
+  integrity sha512-GnLuqj/pvQ7pX8/L4J84nijv6sAnlwvSDpMkJi9i7nPmPxGtRPkBSStfvDW5l6nMdX9VWe+pkKWFTgD+vF2QSQ==
+  dependencies:
+    "@nodelib/fs.stat" "^2.0.2"
+    "@nodelib/fs.walk" "^1.2.3"
+    glob-parent "^5.1.2"
+    merge2 "^1.3.0"
+    micromatch "^4.0.4"
 
 fast-glob@3.2.7, fast-glob@^3.0.3, fast-glob@^3.1.1, fast-glob@^3.2.4, fast-glob@^3.2.5, fast-glob@^3.2.7:
   version "3.2.7"
