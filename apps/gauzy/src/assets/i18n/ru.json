@@ -915,7 +915,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Английский",
+		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -2343,7 +2343,7 @@
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации",
 			"PREFERRED_LANGUAGE": {
-				"en": "Английский",
+				"en": "Russian",
 				"he": "Иврит",
 				"bg": "Болгарский",
 				"ru": "Русский"
@@ -3166,7 +3166,7 @@
 		"TIME_TRACKING": "Время отслеживания",
 		"MEMBERS_WORKED": "Пользователи работали",
 		"PROJECTS_WORKED": "Выполнено проектов",
-		"ACTIVITY": "Activity",
+		"ACTIVITY": "Активность",
 		"WEEKLY_ACTIVITY": "Еженедельная активность",
 		"WORKED_THIS_WEEK": "Работал на этой неделе",
 		"TODAY_ACTIVITY": "Текущая активность",
@@ -3327,7 +3327,7 @@
 			"TEMPLATE_NAMES": "Названия шаблонов"
 		},
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
@@ -3422,7 +3422,7 @@
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
