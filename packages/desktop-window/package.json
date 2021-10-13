@@ -26,7 +26,7 @@
 	},
 	"keywords": [],
 	"dependencies": {
-        "electron": "12.0.5",
+        "electron": "12.1.0",
         "electron-log": "^4.3.5"
 	},
     "devDependencies": {
