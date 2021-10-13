@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
 import { MulterModule } from '@nestjs/platform-express';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import {
@@ -175,12 +174,6 @@ if (process.env.DB_TYPE === 'postgres') {
 			imports: []
 		}),
 		MulterModule.register(),
-		RouterModule.forRoutes([
-			{
-				path: '',
-				children: [{ path: '/', module: HomeModule }]
-			}
-		]),
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			parser: I18nJsonParser,
