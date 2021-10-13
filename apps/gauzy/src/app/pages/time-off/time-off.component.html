@@ -113,8 +113,8 @@
 		<ng-template #gridLayout>		
 			<div class="grid-scroll-container">
 				<ul class="flex-container">
-					<li class="flex-item" *ngFor="let x of timeOffs">
-						<div class="fullName">
+					<li class="flex-item" *ngFor="let x of timeOffData">
+						<div class="fullName" (click)="navigateToEmployee(x)">
 							<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
 							<span>{{ x.fullName }}</span>
 						</div>
@@ -122,7 +122,7 @@
 							<span class="info-meta">{{
 								'TIME_OFF_PAGE.DESCRIPTION' | translate
 							}}</span>
-							<span class="info-value">{{ x.description }}</span>
+							<span class="info-value" [innerHTML]="x.description"></span>
 						</div>
 						<div class="info-line">
 							<span class="info-meta">{{
@@ -153,17 +153,17 @@
 								'TIME_OFF_PAGE.STATUS' | translate
 							}}</span>
 							<div class="text-center d-block" *ngIf="x.status">
-								<div class="badge-danger" *ngIf="x.status == 'Denied'">
+								<div class="badge badge-danger" *ngIf="x.status == 'Denied'">
 									{{ 'TIME_OFF_PAGE.STATUSES.DENIED' | translate }}
 								</div>
 								<div
-									class="badge-success"
+									class="badge badge-success"
 									*ngIf="x.status == 'Approved'"
 								>
 									{{ 'TIME_OFF_PAGE.STATUSES.APPROVED' | translate }}
 								</div>
 								<div
-									class="badge-warning"
+									class="badge badge-warning"
 									*ngIf="x.status == 'Requested'"
 								>
 									{{ 'TIME_OFF_PAGE.STATUSES.REQUESTED' | translate }}

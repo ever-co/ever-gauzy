@@ -38,10 +38,21 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	timeLogType = TimeLogType;
 	allowFutureDate: boolean;
-
 	@ViewChild(NgForm) form: NgForm;
 
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
+
+	private _position = { x: 0, y: 0 };
+	get position() {
+		const positionData = localStorage.getItem('position') || null;
+		return positionData ? JSON.parse(positionData) : this._position
+	}
+	set position(offSet) {
+		if (offSet) {
+			localStorage.setItem('position', JSON.stringify(offSet));
+		}
+		this._position = offSet;
+	}
 
 	constructor(
 		private readonly timeTrackerService: TimeTrackerService,
@@ -50,7 +61,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly store: Store,
 		private readonly _errorHandlingService: ErrorHandlingService
-	) {}
+	) { }
 
 	public get isBillable(): boolean {
 		return this.timeTrackerService.timerConfig.isBillable;
@@ -226,7 +237,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			},
 			this.timeTrackerService.timerConfig
 		);
-		
+
 		this.timesheetService
 			.addTime(payload)
 			.then((timeLog) => {
@@ -256,5 +267,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		this.timeTrackerService.setTimeLogType(type);
 	}
 
-	ngOnDestroy() {}
+	onMoveEnd(event) {
+		this.position = event;
+	}
+
+	ngOnDestroy() { }
 }

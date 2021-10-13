@@ -184,21 +184,21 @@ if (process.env.DB_TYPE === 'postgres') {
 			resolvers: [new HeaderResolver(['language'])]
 		}),
 		...(environment.sentry
-			? [
-					SentryModule.forRoot({
-						dsn: environment.sentry.dns,
-						debug: !environment.production,
-						environment: environment.production
-							? 'production'
-							: 'development',
-						// TODO: we should use some internal function which returns version of Gauzy
-						release: 'gauzy@' + process.env.npm_package_version,
-						logLevel: LogLevel.Error,
-						integrations: sentryIntegrations,
-						tracesSampleRate: 1.0
-					})
-			  ]
-			: []),
+		 	? [
+		 			SentryModule.forRoot({
+		 				dsn: environment.sentry.dns,
+		 				debug: !environment.production,
+		 				environment: environment.production
+		 					? 'production'
+		 					: 'development',
+		 				// TODO: we should use some internal function which returns version of Gauzy
+		 				release: 'gauzy@' + process.env.npm_package_version,
+		 				logLevel: LogLevel.Error,
+		 				integrations: sentryIntegrations,
+		 				tracesSampleRate: 1.0
+		 			})
+		 	  ]
+		: []),
 		CoreModule,
 		AuthModule,
 		UserModule,
