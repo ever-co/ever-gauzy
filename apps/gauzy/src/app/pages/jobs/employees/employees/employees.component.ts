@@ -106,7 +106,7 @@ export class EmployeesComponent
 						return {
 							name: row.user ? row.user.name : null,
 							src: row.user ? row.user.imageUrl : null,
-							id: row.user ? row.user.id : null
+							id: row.id
 						};
 					}
 				},
