@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { ICurrency, IPagination } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
 @UntilDestroy()

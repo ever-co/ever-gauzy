@@ -7,12 +7,18 @@
 // framework component themes (styles tied to theme variables)
 @import '~@nebular/theme/styles/globals';
 @import '~@nebular/auth/styles/globals';
-@import '~@nebular/bootstrap/styles/globals';
+
+@import '~bootstrap/scss/functions';
+@import '~bootstrap/scss/variables';
+@import '~bootstrap/scss/mixins';
+@import '~bootstrap/scss/grid';
 
 // loading progress bar theme
 @import './pace.theme';
 
+@import './layout';
 @import './overrides';
+
 @import './site-menu.scss';
 
 // install ng-select default theme
@@ -26,11 +32,12 @@
 
 // install the framework and custom global styles
 @include nb-install() {
+
   // framework global styles
   @include nb-theme-global();
   @include nb-auth-global();
-  @include nb-bootstrap-global();
 
+  @include ngx-layout();  
   // loading progress bar
   @include ngx-pace-theme();
 

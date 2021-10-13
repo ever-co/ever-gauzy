@@ -6,7 +6,15 @@
 		"baseUrl": "./src",
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["node", "reflect-metadata", "jest"]
+		"types": ["node", "reflect-metadata", "jest"],
+		"paths": {
+			"rxjs": [
+			  	"node_modules/rxjs"
+			],
+			"rxjs/*": [
+			  	"node_modules/rxjs/*"
+			]
+		}
 	},
 	"include": ["./src/**/*"]
 }

@@ -6,7 +6,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ActivatedRoute } from '@angular/router';
 import { IImportHistory, ImportTypeEnum, ImportHistoryStatusEnum } from '@gauzy/contracts';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { API_PREFIX } from '../../../@core/constants';
@@ -71,7 +71,7 @@ export class ImportComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	initUploader() {
@@ -89,7 +89,7 @@ export class ImportComponent
 			form.append('importType', this.importType);
 		};
 		this.uploader.onCompleteItem = () => {
-			this.subject$.next();
+			this.subject$.next(true);
 		};
 		this.hasBaseDropZoneOver = false;
 	}

@@ -13,7 +13,7 @@ import {
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import * as moment from 'moment';
@@ -113,7 +113,7 @@ export class ExpensesComponent
 						this.projectId = project ? project.id : null;
 						
 						this.refreshPagination();
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -146,7 +146,7 @@ export class ExpensesComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -322,7 +322,7 @@ export class ExpensesComponent
 				organizationId,
 				tenantId
 			}).then(() => {
-				this.subject$.next();
+				this.subject$.next(true);
 				this.toastrService.success('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: this.employeeName(employee)
 				});
@@ -373,7 +373,7 @@ export class ExpensesComponent
 							...this.getFormData(data),
 							employeeId: employee ? employee.id : null
 						}).then(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 							this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', { 
 								name: this.employeeName(employee) 
 							});
@@ -442,7 +442,7 @@ export class ExpensesComponent
 							id,
 							isNotEmpty(employee) ? employee.id : null
 						).then(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 							this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', { 
 								name: this.employeeName(employee) 
 							});

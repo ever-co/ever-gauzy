@@ -17,7 +17,7 @@ import { ICurrency } from '@gauzy/contracts';
 import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CurrencyService } from '../../@core/services/currency.service';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';

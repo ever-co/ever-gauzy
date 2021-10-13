@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { catchError, tap } from 'rxjs/operators';
-import { of as observableOf } from 'rxjs/internal/observable/of';
+import { of as observableOf } from 'rxjs';
 import { ITenant } from '@gauzy/contracts';
 import { GauzyCloudService } from '../../gauzy-cloud.service';
 import { RoleService } from './../../../role/role.service';
@@ -23,8 +23,8 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 				if (response && response.data) {
 					const tenant = response.data;
 
-					await this.migrateRoles(tenant, token);
-					await this.migratePermissions(tenant, token);
+					this.migrateRoles(tenant, token);
+					this.migratePermissions(tenant, token);
 				}
 			}),
 			catchError((error) => {
@@ -43,7 +43,7 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 			token, 
 			tenant
 		)
-		.toPromise();
+		.subscribe();
 	}
 
 	private async migratePermissions(
@@ -55,6 +55,6 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 			token, 
 			tenant
 		)
-		.toPromise();
+		.subscribe();
 	}
 }

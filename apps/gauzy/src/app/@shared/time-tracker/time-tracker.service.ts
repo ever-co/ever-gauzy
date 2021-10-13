@@ -16,7 +16,7 @@ import { Store as AppStore } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { API_PREFIX } from '../../@core/constants/app.constants';
 
 export function createInitialTimerState(): TimerState {

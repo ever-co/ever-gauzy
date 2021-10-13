@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import {
@@ -134,7 +134,7 @@ export class EditRolesPermissionsComponent
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		} finally {
-			this.permissions$.next();
+			this.permissions$.next(true);
 		}
 	}
 
@@ -143,7 +143,7 @@ export class EditRolesPermissionsComponent
 	 */
 	onSelectedRole() {
 		this.role = this.getRoleByName(this.selectedRole);
-		this.permissions$.next();
+		this.permissions$.next(true);
 	}
 
 	/**

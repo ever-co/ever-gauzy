@@ -13,7 +13,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, PipelinesService, Store, ToastrService } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { InputFilterComponent } from '../../@shared/table-filters/input-filter.component';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { FormControl } from '@angular/forms';
@@ -80,7 +80,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -109,7 +109,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -256,7 +256,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', {
 				name: this.pipeline.name
 			});
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -305,7 +305,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 							name: data.name
 						}
 				  );
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 

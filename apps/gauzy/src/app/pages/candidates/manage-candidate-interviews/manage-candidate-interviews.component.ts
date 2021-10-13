@@ -2,7 +2,7 @@ import { ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { first, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
@@ -51,7 +51,7 @@ export class ManageCandidateInterviewsComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.interviews$.next()),
+				tap(() => this.interviews$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -104,7 +104,7 @@ export class ManageCandidateInterviewsComponent
 				name: data.title
 			});
 		}
-		this.interviews$.next();
+		this.interviews$.next(true);
 	}
 	
 	private async _getInterviews() {

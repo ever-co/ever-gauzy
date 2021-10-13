@@ -125,7 +125,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					this.viewMode = !!project ? (project.taskListType as TaskListTypeEnum) : TaskListTypeEnum.GRID;
 				}),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -164,7 +164,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -429,7 +429,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
-						tap(() => this.subject$.next()),
+						tap(() => this.subject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -486,7 +486,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 
 				this.storeInstance.editTask({ ...payload, id: this.selectedTask.id })
 					.pipe(
-						tap(() => this.subject$.next()),
+						tap(() => this.subject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -545,7 +545,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
-						tap(() => this.subject$.next()),
+						tap(() => this.subject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -568,7 +568,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (result) {
 			this.storeInstance.delete(this.selectedTask.id)
 				.pipe(
-					tap(() => this.subject$.next()),
+					tap(() => this.subject$.next(true)),
 					untilDestroyed(this)
 				)
 				.subscribe();

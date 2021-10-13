@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { IChangelog, IPagination } from '@gauzy/contracts';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
 

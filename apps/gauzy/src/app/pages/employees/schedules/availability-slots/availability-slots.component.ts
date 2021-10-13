@@ -142,7 +142,7 @@ export class AvailabilitySlotsComponent
 						this.selectedEmployee = null;
 					}
 				}),
-				tap(() => this.availableSlots$.next()),
+				tap(() => this.availableSlots$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -337,7 +337,7 @@ export class AvailabilitySlotsComponent
 		}
 
 		await this.availabilitySlotsService.createBulk(payload);
-		this.availableSlots$.next();
+		this.availableSlots$.next(true);
 	}
 
 	async saveSelectedDateRange() {
@@ -377,7 +377,7 @@ export class AvailabilitySlotsComponent
 			this.toastrService.success('NOTES.AVAILABILITY_SLOTS.SAVE');
 
 			this.removedEvents = [];
-			this.availableSlots$.next()
+			this.availableSlots$.next(true)
 			this.dateSelected = false;
 		} catch (error) {
 			this.errorHandler.handleError(error);

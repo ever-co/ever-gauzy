@@ -40,7 +40,7 @@ import {
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -194,7 +194,7 @@ export class InvoicesComponent
 				distinctUntilChange(),
 				tap((organization) => (this.organization = organization)),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -221,7 +221,7 @@ export class InvoicesComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -468,7 +468,7 @@ export class InvoicesComponent
 				})
 				.onClose
 				.pipe(
-					tap(() => this.subject$.next()),
+					tap(() => this.subject$.next(true)),
 					untilDestroyed(this)
 				)
 				.subscribe();
@@ -495,7 +495,7 @@ export class InvoicesComponent
 		await this.createInvoiceHistory(action);
 
 		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	async delete(selectedItem?: IInvoice) {
@@ -519,7 +519,7 @@ export class InvoicesComponent
 			} else {
 				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
 			}
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -548,7 +548,7 @@ export class InvoicesComponent
 			})
 			.onClose
 			.pipe(
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -568,7 +568,7 @@ export class InvoicesComponent
 			})
 			.onClose
 			.pipe(
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -771,7 +771,7 @@ export class InvoicesComponent
 		await this.invoicesService.update(this.selectedInvoice.id, {
 			isArchived: true
 		});
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	async selectInvoice({ isSelected, data }) {
@@ -946,7 +946,7 @@ export class InvoicesComponent
 			});
 			
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				this.subject$.next();
+				this.subject$.next(true);
 			} else {
 				this.smartTableSource.setPaging(page, this.perPage, false);
 				this._loadSmartTableSettings();
@@ -996,19 +996,19 @@ export class InvoicesComponent
 		}
 		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();
-			this.subject$.next();		
+			this.subject$.next(true);		
 		}
 	}
 
 	toggleIncludeArchived(event) {
 		this.includeArchived = event;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	reset() {
 		this.searchForm.reset();
 		this._filters = {};
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	selectedTagsEvent(currentTagSelection: ITag[]) {
@@ -1021,7 +1021,7 @@ export class InvoicesComponent
 		await this.invoicesService.update(this.selectedInvoice.id, {
 			status: $event
 		});
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	selectColumn($event: string[]) {

@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbMenuModule, NbToastrModule, NbSpinnerModule } from '@nebular/theme';
+
 import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
 import { PagesRoutingModule } from './pages-routing.module';
@@ -23,4 +24,5 @@ import { TranslateModule } from '../@shared/translate/translate.module';
 	declarations: [PagesComponent],
 	providers: [AuthService, RoleGuard]
 })
-export class PagesModule {}
+export class PagesModule {	
+}

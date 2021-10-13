@@ -36,7 +36,7 @@ export class AmountsOwedGridComponent
 	@Input()
 	set filters(value) {
 		this.logRequest = value || {};
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	constructor(
@@ -66,11 +66,11 @@ export class AmountsOwedGridComponent
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	groupByChange() {
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	getExpenses() {

@@ -108,7 +108,7 @@ export class PaymentsComponent
 						this.projectId = project ? project.id : null;
 
 						this.refreshPagination();
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -133,7 +133,7 @@ export class PaymentsComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -258,7 +258,7 @@ export class PaymentsComponent
 			}
 		
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -296,7 +296,7 @@ export class PaymentsComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -329,7 +329,7 @@ export class PaymentsComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 

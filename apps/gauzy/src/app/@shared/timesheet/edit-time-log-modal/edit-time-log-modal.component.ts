@@ -140,7 +140,7 @@ export class EditTimeLogModalComponent
 			this.form.get('selectedRange').valueChanges.pipe(
 				tap((value: IDateRange) => {
 					this.selectedRange = value;
-					this.subject$.next();
+					this.subject$.next(true);
 					return value;
 				})
 			)
@@ -155,7 +155,7 @@ export class EditTimeLogModalComponent
 					this.selectedRange.start &&
 					this.selectedRange.end
 				) {
-					this.subject$.next();
+					this.subject$.next(true);
 					this.checkOverlaps();
 				}
 			});

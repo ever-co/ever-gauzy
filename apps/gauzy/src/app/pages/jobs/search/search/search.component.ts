@@ -134,14 +134,14 @@ export class SearchComponent
 					this.selectedEmployee = null;
 					this.jobRequest.employeeIds = [];
 				}
-				this.updateJobs$.next();
+				this.updateJobs$.next(true);
 			});
 	}
 
 	redirectToView() {}
 
 	applyFilter() {
-		this.updateJobs$.next();
+		this.updateJobs$.next(true);
 	}
 
 	getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
@@ -201,7 +201,7 @@ export class SearchComponent
 			this.autoRefreshTimer = timer(0, 60000)
 				.pipe(untilDestroyed(this))
 				.subscribe(() => {
-					this.updateJobs$.next();
+					this.updateJobs$.next(true);
 				});
 		} else {
 			if (this.autoRefreshTimer) {
@@ -406,7 +406,7 @@ export class SearchComponent
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
-				this.updateJobs$.next();
+				this.updateJobs$.next(true);
 			});
 	}
 

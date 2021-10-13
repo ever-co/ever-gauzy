@@ -11,7 +11,7 @@ import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
@@ -91,7 +91,7 @@ export class ApprovalsComponent
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
-				tap(() => this.timesheets$.next()),
+				tap(() => this.timesheets$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -100,7 +100,7 @@ export class ApprovalsComponent
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.timesheetFilterService.filter = $event;
-		this.timesheets$.next();
+		this.timesheets$.next(true);
 	}
 
 	async getTimeSheets() {
@@ -143,7 +143,7 @@ export class ApprovalsComponent
 				}
 			})
 			.finally(() => {
-				this.timesheets$.next();
+				this.timesheets$.next(true);
 			});
 	}
 
@@ -160,7 +160,7 @@ export class ApprovalsComponent
 				}
 			})
 			.finally(() => {
-				this.timesheets$.next();
+				this.timesheets$.next(true);
 			});
 	}
 

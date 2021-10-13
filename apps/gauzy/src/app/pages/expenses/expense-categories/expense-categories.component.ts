@@ -10,7 +10,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -85,7 +85,7 @@ export class ExpenseCategoriesComponent
 					this.organization = organization;
 					this.dataLayoutStyle = componentLayout;
 					this.refreshPagination();
-					this.subject$.next();
+					this.subject$.next(true);
 				}),
 				untilDestroyed(this)
 			)
@@ -136,7 +136,7 @@ export class ExpenseCategoriesComponent
 
 			if (result) {
 				await this.organizationExpenseCategoryService.delete(id);
-				this.subject$.next();
+				this.subject$.next(true);
 				this.toastrService.success(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
 					{ name }
@@ -164,7 +164,7 @@ export class ExpenseCategoriesComponent
 			id,
 			expenseCategory
 		);
-		this.subject$.next();
+		this.subject$.next(true);
 		this.toastrService.success(
 			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY',
 			{ name }
@@ -182,7 +182,7 @@ export class ExpenseCategoriesComponent
 				tenantId,
 				tags: this.tags
 			});
-			this.subject$.next();
+			this.subject$.next(true);
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
 				{ name }
@@ -261,7 +261,7 @@ export class ExpenseCategoriesComponent
 
 	onPageChange(selectedPage: number) {
 		this.pagination['activePage'] = selectedPage;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	/*

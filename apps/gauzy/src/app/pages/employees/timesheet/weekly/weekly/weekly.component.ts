@@ -56,7 +56,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 
 	addTimeCallback = (data) => {
 		if (data) {
-			this.updateLogs$.next();
+			this.updateLogs$.next(true);
 		}
 	};
 
@@ -76,7 +76,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
-						this.updateLogs$.next();
+						this.updateLogs$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -122,7 +122,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.logRequest = $event;
 		this.updateWeekDayList();
 		this.timesheetFilterService.filter = $event;
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	async getLogs() {
@@ -202,7 +202,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.updateLogs$.next();
+					this.updateLogs$.next(true);
 				}
 			});
 	}
@@ -237,7 +237,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.updateLogs$.next();
+					this.updateLogs$.next(true);
 				}
 			});
 	}

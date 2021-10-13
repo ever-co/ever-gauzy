@@ -19,7 +19,7 @@ import {
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
-import { NgxPermissionsModule } from 'ngx-permissions';
+
 import {
 	FooterComponent,
 	HeaderComponent,
@@ -33,13 +33,15 @@ import {
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent
 } from './layouts';
+
+import { DEFAULT_THEME } from './styles/theme.default';
+import { COSMIC_THEME } from './styles/theme.cosmic';
+import { CORPORATE_THEME } from './styles/theme.corporate';
+import { DARK_THEME } from './styles/theme.dark';
+
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { WindowModeBlockScrollService } from './services';
-import {
-	DEFAULT_THEME,
-	COSMIC_THEME,
-	CORPORATE_THEME,
-	DARK_THEME
-} from './styles';
+
 import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';

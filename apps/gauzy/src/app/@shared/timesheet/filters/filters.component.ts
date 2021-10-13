@@ -251,7 +251,7 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	triggerFilterChange(): void {
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	clearFilters(): void {
@@ -263,7 +263,7 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 			this._employeeIds = '';
 		}
 		this.setDefaultEmployee();
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	private async loadEmployees(): Promise<void> {

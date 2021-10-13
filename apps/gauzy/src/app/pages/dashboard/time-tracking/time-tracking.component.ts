@@ -142,7 +142,7 @@ export class TimeTrackingComponent
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
 
-					this.logs$.next();
+					this.logs$.next(true);
 				}),
 				tap(() => this.setAutoRefresh(true)),
 				untilDestroyed(this)
@@ -175,7 +175,7 @@ export class TimeTrackingComponent
 			this.autoRefresh$ = timer(0, 60000)
 				.pipe(
 					filter((timer) => !!timer),
-					tap(() => this.logs$.next()),
+					tap(() => this.logs$.next(true)),
 					untilDestroyed(this)
 				)
 				.subscribe();
@@ -203,7 +203,7 @@ export class TimeTrackingComponent
 	}
 
 	onDelete() {
-		this.logs$.next();
+		this.logs$.next(true);
 	}
 
 	getCounts() {

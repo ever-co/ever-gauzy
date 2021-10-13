@@ -12,7 +12,8 @@ import { DEFAULT_DB_CONNECTION } from '@gauzy/common';
 	imports: [
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
-			useFactory: (configService: ConfigService) => {
+			name: DEFAULT_DB_CONNECTION,
+			useFactory: async (configService: ConfigService) => {
 				const { dbConnectionOptions } = configService.config;
 				return {
 					name: DEFAULT_DB_CONNECTION,

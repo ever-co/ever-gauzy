@@ -69,7 +69,7 @@ export class TimeLimitReportComponent
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	getLogs() {

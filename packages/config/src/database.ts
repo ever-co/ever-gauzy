@@ -2,50 +2,53 @@ import * as path from 'path';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConnectionOptions } from 'typeorm';
 
-const defaultConnection =
+const dbType =
 	process.env.DB_TYPE && process.env.DB_TYPE === 'postgres'
 		? 'postgres'
 		: 'sqlite';
 
-const dbPath =
-	process.env.DB_PATH ||
-	path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
 
-console.log('Sqlite DB Path: ' + dbPath);
+let connectionConfig: TypeOrmModuleOptions;
 
-const ssl = process.env.DB_SSL_MODE === 'true' ? true : undefined;
+if (dbType === 'sqlite') {
 
-const postgreSQLConfig: ConnectionOptions = {
-	type: 'postgres',
-	host: process.env.DB_HOST || 'localhost',
-	port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
-	database: process.env.DB_NAME || 'postgres',
-	username: process.env.DB_USER || 'postgres',
-	password: process.env.DB_PASS || 'root',
-	ssl: ssl,
-	logging: true,
-	logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
-	synchronize: true,
-	uuidExtension: 'pgcrypto'
-};
+	const dbPath =
+		process.env.DB_PATH ||
+		path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 
-const sqliteConfig: ConnectionOptions = {
-	type: 'sqlite',
-	database: dbPath,
-	logging: true,
-	logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
-	synchronize: true
-};
+	console.log('Sqlite DB Path: ' + dbPath);	
 
-export const connections = {
-	postgres: postgreSQLConfig,
-	sqlite: sqliteConfig
-};
+	const sqliteConfig: ConnectionOptions = {
+		type: 'sqlite',
+		database: dbPath,
+		logging: true,
+		logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
+		synchronize: true
+	};
 
-export function getConnectionOptions(connection: string) {
-	return connections[connection];
+	connectionConfig = sqliteConfig;
+
+} else if (dbType === 'postgres') {
+
+	const ssl = process.env.DB_SSL_MODE === 'true' ? true : undefined;
+
+	const postgreSQLConfig: ConnectionOptions = {
+		type: 'postgres',
+		host: process.env.DB_HOST || 'localhost',
+		port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
+		database: process.env.DB_NAME || 'postgres',
+		username: process.env.DB_USER || 'postgres',
+		password: process.env.DB_PASS || 'root',
+		ssl: ssl,
+		logging: true,
+		logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
+		synchronize: true,
+		uuidExtension: 'pgcrypto'
+	};
+
+	connectionConfig = postgreSQLConfig;
+
 }
 
-export const dbConnectionConfig = getConnectionOptions(
-	defaultConnection
-) as TypeOrmModuleOptions;
+export const dbConnectionConfig = connectionConfig;

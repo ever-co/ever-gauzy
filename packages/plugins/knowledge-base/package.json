@@ -32,15 +32,15 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/common": "^7.6.5",
-		"@nestjs/cqrs": "^7.0.1",
-		"@nestjs/passport": "^7.1.0",
-		"@nestjs/swagger": "^4.7.9",
-		"@nestjs/typeorm": "^7.1.5",
+		"@nestjs/common": "^8.0.8",
+		"@nestjs/cqrs": "^8.0.0",
+		"@nestjs/passport": "^8.0.1",
+		"@nestjs/swagger": "^5.1.0",
+		"@nestjs/typeorm": "^8.0.2",
 		"class-validator": "^0.13.0",
 		"faker": "^5.5.3",
 		"nest-router": "^1.0.9",
-		"typeorm": "^0.2.37",
+		"typeorm": "^0.2.38",
 		"typeorm-aurora-data-api-driver": "^2.3.3",
 		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git"	
 	},
@@ -48,6 +48,6 @@
 		"@types/node": "^14.14.22",
 		"@types/faker": "5.5.3",
 		"rimraf": "^3.0.2",
-		"typescript": "~4.1.6"
+		"typescript": "~4.2.4"
 	}
 }

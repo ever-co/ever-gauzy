@@ -4,6 +4,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  */
 import { APP_BASE_HREF } from '@angular/common';
+
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
@@ -109,8 +110,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		DangerZoneMutationModule,
 		AppRoutingModule,
 		NbCalendarModule,
-		NbCalendarKitModule,
-		ThemeModule.forRoot(),
+		NbCalendarKitModule,		
 		NbSidebarModule.forRoot(),
 		NbMenuModule.forRoot(),
 		NbDatepickerModule.forRoot(),
@@ -121,6 +121,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
 		}),
 		CoreModule.forRoot(),
+		ThemeModule.forRoot(),
 		TranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,

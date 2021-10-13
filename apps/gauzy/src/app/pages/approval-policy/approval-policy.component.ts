@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy, AfterViewInit } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { first, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -85,7 +85,7 @@ export class ApprovalPolicyComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.policies$.next()),
+				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -190,7 +190,7 @@ export class ApprovalPolicyComponent
 				{ name: requestApproval.name }
 			);
 		}
-		this.policies$.next();
+		this.policies$.next(true);
 	}
 
 	async selectApprovalPolicy({ isSelected, data }) {
@@ -219,7 +219,7 @@ export class ApprovalPolicyComponent
 				name 
 			});
 		}
-		this.policies$.next();
+		this.policies$.next(true);
 	}
 
 	/*
