@@ -10,10 +10,12 @@ import { NbSecurityModule, NbRoleProvider } from '@nebular/security';
 import { Observable, of as observableOf } from 'rxjs';
 
 import { throwIfAlreadyLoaded } from './module-import-guard';
-import { AnalyticsService, LayoutService } from './utils';
+import { AnalyticsService, LayoutService, SeoService } from './utils';
 import { AuthModule } from './auth/auth.module';
 
-const DATA_SERVICES = [];
+const DATA_SERVICES = [
+	SeoService
+];
 
 export class NbSimpleRoleProvider extends NbRoleProvider {
 	getRole(): Observable<string | string[]> {

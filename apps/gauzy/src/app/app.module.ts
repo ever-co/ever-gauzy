@@ -65,7 +65,6 @@ import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { HttpLoaderFactory } from './@shared/translate/translate.module';
-import { SeoService } from './@core/utils';
 import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 
@@ -208,8 +207,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 			useClass: SentryErrorHandler
 		},
 		AppModuleGuard,
-		ColorPickerService,
-		SeoService
+		ColorPickerService
 	]
 })
 export class AppModule {
