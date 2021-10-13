@@ -32,8 +32,7 @@ const windowSetting = () => {
 		fullscreenable: false,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false,
-			enableRemoteModule: true,
+			webSecurity: false,			
 			contextIsolation: false
 		},
 		width: 400,
