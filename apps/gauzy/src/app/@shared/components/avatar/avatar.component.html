@@ -1,5 +1,5 @@
 <div class="row align-items-center">
-	<div class="col-auto pr-0">
+	<div class="col-auto pr-0" *ngIf="src">
 		<div class="image-container {{ size }}" (click)="edit(id)">
 			<img class="rounded-circle" type="user" [src]="src" />
 		</div>

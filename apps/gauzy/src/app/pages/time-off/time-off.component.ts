@@ -4,7 +4,8 @@ import {
 	StatusTypesEnum,
 	ITimeOff,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IEmployeeJobsStatisticsResponse
 } from '@gauzy/contracts';
 import { Store } from '../../@core/services/store.service';
 import { filter, first, tap } from 'rxjs/operators';
@@ -21,7 +22,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { EmployeeNameTagsLinkComponent } from '../../@shared/table-components';
+import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -397,7 +398,19 @@ export class TimeOffComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'custom',
-					renderComponent: EmployeeNameTagsLinkComponent,
+					renderComponent: AvatarComponent,
+					valuePrepareFunction: (
+						cell,
+						row: IEmployeeJobsStatisticsResponse
+					) => {
+						return {
+							name: row.fullName ? row.fullName : null,
+							src: row.imageUrl ? row.imageUrl : null,
+							id: (row.employees && row.employees.length === 1) ?
+								row.employees[0].id :
+								null
+						};
+					},
 					class: 'align-row'
 				},
 				description: {
@@ -448,8 +461,8 @@ export class TimeOffComponent
 							)
 								? 'success'
 								: ['requested'].includes(cell.toLowerCase())
-								? 'warning'
-								: 'danger';
+									? 'warning'
+									: 'danger';
 						}
 						return {
 							text: cell,
@@ -499,11 +512,10 @@ export class TimeOffComponent
 						}
 
 						if (result.documentUrl) {
-							extendedDescription = `<a href=${
-								result.documentUrl
-							} target="_blank">${this.getTranslation(
-								'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
-							)}</a><br>${result.description}`;
+							extendedDescription = `<a href=${result.documentUrl
+								} target="_blank">${this.getTranslation(
+									'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
+								)}</a><br>${result.description}`;
 						} else {
 							extendedDescription = result.description;
 						}
@@ -570,11 +582,13 @@ export class TimeOffComponent
 	}
 
 	private _removeDocUrl() {
-		const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
-		const nativeDescription = this.selectedTimeOffRecord.description;
-		this.selectedTimeOffRecord.description = nativeDescription.substr(
-			index + 1
-		);
+		if (this.selectedTimeOffRecord.description) {
+			const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
+			const nativeDescription = this.selectedTimeOffRecord.description;
+			this.selectedTimeOffRecord.description = nativeDescription.substr(
+				index + 1
+			);
+		}
 	}
 
 	/*
@@ -599,10 +613,10 @@ export class TimeOffComponent
 	}
 
 	navigateToEmployee(rowData) {
-		if(rowData?.employees.length > 0) {
-			this.router.navigate([`/pages/employees/edit/${rowData.employees[0].id}`]);	
+		if (rowData?.employees.length > 0) {
+			this.router.navigate([`/pages/employees/edit/${rowData.employees[0].id}`]);
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }
