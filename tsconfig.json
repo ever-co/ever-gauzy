@@ -18,6 +18,9 @@
 		"skipDefaultLibCheck": true,
 		"baseUrl": ".",
 		"paths": {
+			"@angular/*": [
+				"./node_modules/@angular/*"
+			],
 			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
 			"@gauzy/wakatime": ["libs/wakatime/src/index.ts"],
 			"@gauzy/desktop-timer": ["packages/desktop-timer/src/index.ts"],
