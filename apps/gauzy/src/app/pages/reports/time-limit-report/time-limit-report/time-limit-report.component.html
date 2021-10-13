@@ -137,6 +137,7 @@
 		*ngIf="employee"
 		[src]="employee?.user?.imageUrl"
 		[name]="employee?.user?.name"
+		[id]="employee?.id"
 	></ngx-avatar>
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>

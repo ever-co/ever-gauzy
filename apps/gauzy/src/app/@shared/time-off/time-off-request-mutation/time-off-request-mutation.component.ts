@@ -22,6 +22,7 @@ import {
 	ToastrService
 } from '../../../@core/services';
 import { environment as ENV } from './../../../../environments/environment';
+import { CompareDateValidator } from '../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -68,14 +69,14 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	public organization: IOrganization;
 	organizationCountryCode: string;
 	currentUserCountryCode: string;
-	employeeIds: string[];
+	employeeIds: string[] = [];
 
 	/*
 	* Time Off Request Mutation Form 
 	*/
 	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
-		return fb.group({
+		const form = fb.group({
 			description: [],
 			start: ['', Validators.required],
 			end: ['', Validators.required],
@@ -83,7 +84,12 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			requestDate: [new Date()],
 			documentUrl: [],
 			status: []
+		}, { 
+			validators: [
+				CompareDateValidator.validateDate('start', 'end')
+			]
 		});
+		return form;
 	}
 
 	ngOnInit() {
@@ -169,22 +175,23 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	private _createNewRecord() {
-		if (this.form.valid && !this.invalidInterval) {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-
-			this.dialogRef.close(
-				Object.assign(
-					{
-						employees: this.employeesArr,
-						organizationId,
-						tenantId,
-						isHoliday: this.isHoliday
-					},
-					this.form.value
-				)
-			);
+		if (this.form.invalid && this.invalidInterval) {
+			return;
 		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.dialogRef.close(
+			Object.assign(
+				{
+					employees: this.employeesArr,
+					organizationId,
+					tenantId,
+					isHoliday: this.isHoliday
+				},
+				this.form.value
+			)
+		);
 
 		this.invalidInterval = false;
 	}
@@ -303,5 +310,19 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	close() {
 		this.dialogRef.close();
+	}
+
+	/**
+	 * Form invalid control validate
+	 * 
+	 * @param control 
+	 * @returns 
+	 */
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && 
+			this.form.get(control).invalid;
 	}
 }
