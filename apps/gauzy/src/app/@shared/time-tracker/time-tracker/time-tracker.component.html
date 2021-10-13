@@ -1,5 +1,5 @@
 <ng-template [ngIf]="isOpen">
-	<div class="timer-card card" ngDraggable>
+	<div class="timer-card card" ngDraggable (endOffset)="onMoveEnd($event)" [position]="position">
 		<div class="header">
 			<button
 				class="btn-close"
