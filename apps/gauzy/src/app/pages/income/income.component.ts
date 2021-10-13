@@ -9,9 +9,10 @@ import {
 	IOrganization,
 	IEmployee,
 	IOrganizationContact,
-	ITag
+	ITag,
+	IEmployeeProposalTemplate
 } from '@gauzy/contracts';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
@@ -29,6 +30,7 @@ import { ServerDataSource } from '../../@core/utils/smart-table/server.data-sour
 import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { OrganizationContactFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -109,7 +111,7 @@ export class IncomeComponent
 						this.selectedEmployeeId = employee ? employee.id : null;
 
 						this.refreshPagination();
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -143,7 +145,7 @@ export class IncomeComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -188,9 +190,19 @@ export class IncomeComponent
 				},
 				employeeName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-					type: 'string',
 					filter: false,
-					sort: false
+					type: 'custom',
+					sort: false,
+					renderComponent: AvatarComponent,
+					valuePrepareFunction: (
+						cell,
+						row: IEmployeeProposalTemplate
+					) => {
+						return {
+							name: row.employee && row.employee.user ? row.employee.fullName : null,
+							id: row.employee ? row.employee.id : null
+						};
+					}
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -271,7 +283,7 @@ export class IncomeComponent
 							});
 						})
 						.finally(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 						});
 					} catch (error) {
 						this.toastrService.danger(error);
@@ -319,7 +331,7 @@ export class IncomeComponent
 							});
 						})
 						.finally(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -356,7 +368,7 @@ export class IncomeComponent
 							});
 						})
 						.finally(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 						});						
 					} catch (error) {
 						this.errorHandler.handleError(error);

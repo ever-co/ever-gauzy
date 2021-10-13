@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InvoiceService } from './../../../invoice';
+import { InvoiceService } from '../../invoice.service';
 import { InvoicePaymentGeneratePdfCommand } from '../invoice-payment.generate.pdf.command';
 
 @CommandHandler(InvoicePaymentGeneratePdfCommand)

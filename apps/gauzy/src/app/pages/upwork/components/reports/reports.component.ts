@@ -185,7 +185,7 @@ export class ReportsComponent
 			tap(
 				(dateRange) => (
 					(this.selectedDateRange = dateRange),
-					this.updateReports$.next()
+					this.updateReports$.next(true)
 				)
 			),
 			tap(
@@ -206,7 +206,7 @@ export class ReportsComponent
 			moment(end, 'YYYY-MM-DD').isValid()
 		) {
 			this._upworkStoreService.setFilterDateRange({ start, end });
-			this.updateReports$.next();
+			this.updateReports$.next(true);
 		}
 	}
 

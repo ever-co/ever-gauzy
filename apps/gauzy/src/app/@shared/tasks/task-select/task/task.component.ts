@@ -54,7 +54,7 @@ export class TaskSelectorComponent
 	}
 	@Input() public set projectId(value: string) {
 		this._projectId = value;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	/*
@@ -66,7 +66,7 @@ export class TaskSelectorComponent
 	}
 	@Input() public set employeeId(value: string) {
 		this._employeeId = value;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	/*
@@ -113,7 +113,7 @@ export class TaskSelectorComponent
 	}
 
 	ngAfterViewInit() {
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	writeValue(value: any) {

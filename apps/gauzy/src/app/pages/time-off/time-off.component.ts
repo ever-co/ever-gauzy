@@ -6,7 +6,8 @@ import {
 	StatusTypesEnum,
 	ITimeOff,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IEmployeeJobsStatisticsResponse
 } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
@@ -17,10 +18,10 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { ComponentEnum } from '../../@core/constants';
 import { Store, TimeOffService, ToastrService } from '../../@core/services';
 import { TimeOffRequestMutationComponent } from '../../@shared/time-off';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
+import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -102,7 +103,7 @@ export class TimeOffComponent
 					this.selectedDate = date;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
-				tap(() => this.timeoff$.next()),
+				tap(() => this.timeoff$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -198,7 +199,7 @@ export class TimeOffComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED'
 						);
-						this.timeoff$.next();
+						this.timeoff$.next(true);
 					},
 					() =>
 						this.toastrService.danger(
@@ -210,7 +211,7 @@ export class TimeOffComponent
 				'TIME_OFF_PAGE.NOTIFICATIONS.APPROVED_NO_CHANGES',
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
-			this.timeoff$.next();
+			this.timeoff$.next(true);
 		}
 	}
 
@@ -232,7 +233,7 @@ export class TimeOffComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED'
 						);
-						this.timeoff$.next();
+						this.timeoff$.next(true);
 					},
 					() =>
 						this.toastrService.danger(
@@ -244,7 +245,7 @@ export class TimeOffComponent
 				'TIME_OFF_PAGE.NOTIFICATIONS.DENIED_NO_CHANGES',
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
-			this.timeoff$.next();
+			this.timeoff$.next(true);
 		}
 	}
 
@@ -274,7 +275,7 @@ export class TimeOffComponent
 								this.toastrService.success(
 									'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DELETED'
 								);
-								this.timeoff$.next();
+								this.timeoff$.next(true);
 							},
 							() =>
 								this.toastrService.danger(
@@ -337,7 +338,7 @@ export class TimeOffComponent
 
 	changeIncludeArchived($event) {
 		this.includeArchived = $event;
-		this.timeoff$.next();
+		this.timeoff$.next(true);
 	}
 
 	showHideFilter() {
@@ -352,7 +353,19 @@ export class TimeOffComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent,
+					renderComponent: AvatarComponent,
+					valuePrepareFunction: (
+						cell,
+						row: IEmployeeJobsStatisticsResponse
+					) => {
+						return {
+							name: row.fullName ? row.fullName : null,
+							src: row.imageUrl ? row.imageUrl : null,
+							id: (row.employees && row.employees.length === 1) ?
+								row.employees[0].id :
+								null
+						};
+					},
 					class: 'align-row'
 				},
 				description: {
@@ -403,8 +416,8 @@ export class TimeOffComponent
 							)
 								? 'success'
 								: ['requested'].includes(cell.toLowerCase())
-								? 'warning'
-								: 'danger';
+									? 'warning'
+									: 'danger';
 						}
 						return {
 							text: cell,
@@ -495,7 +508,7 @@ export class TimeOffComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
 						);
-						this.timeoff$.next();
+						this.timeoff$.next(true);
 					},
 					() =>
 						this.toastrService.danger(
@@ -514,7 +527,7 @@ export class TimeOffComponent
 					this.toastrService.success(
 						'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED'
 					);
-					this.timeoff$.next();
+					this.timeoff$.next(true);
 				},
 				() =>
 					this.toastrService.danger(
@@ -524,11 +537,13 @@ export class TimeOffComponent
 	}
 
 	private _removeDocUrl() {
-		const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
-		const nativeDescription = this.selectedTimeOffRecord.description;
-		this.selectedTimeOffRecord.description = nativeDescription.substr(
-			index + 1
-		);
+		if (this.selectedTimeOffRecord.description) {
+			const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
+			const nativeDescription = this.selectedTimeOffRecord.description;
+			this.selectedTimeOffRecord.description = nativeDescription.substr(
+				index + 1
+			);
+		}
 	}
 
 	/*
@@ -564,5 +579,11 @@ export class TimeOffComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	navigateToEmployee(rowData) {
+		if (rowData?.employees.length > 0) {
+			this.router.navigate([`/pages/employees/edit/${rowData.employees[0].id}`]);
+		}
+	}
+
+	ngOnDestroy(): void { }
 }

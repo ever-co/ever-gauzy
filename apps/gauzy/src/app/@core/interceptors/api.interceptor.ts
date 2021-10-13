@@ -5,7 +5,7 @@ import {
 	HttpEvent,
 	HttpInterceptor
 } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { environment } from 'apps/gauzy/src/environments/environment';
 import { API_PREFIX } from './../constants/app.constants';
 

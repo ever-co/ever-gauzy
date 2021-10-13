@@ -57,7 +57,7 @@ export class ViewComponent
 			.pipe(
 				tap((params) => !!params),
 				tap(({ id }) => this.timesheetId = id),
-				tap(() => this.logs$.next()),
+				tap(() => this.logs$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -90,7 +90,7 @@ export class ViewComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((resp) => {
 				if (resp) {
-					this.logs$.next();
+					this.logs$.next(true);
 				}
 			});
 	}
@@ -99,7 +99,7 @@ export class ViewComponent
 		this.timesheetService.deleteLogs([log.id])
 			.then(() => {})
 			.finally(() => {
-				this.logs$.next();
+				this.logs$.next(true);
 			});
 	}
 

@@ -3,7 +3,7 @@ import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { IUser, ITag, ITenant, IAuthResponse } from '@gauzy/contracts';
+import { IUser, IAuthResponse } from '@gauzy/contracts';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
@@ -78,12 +78,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		return [AuthStrategy, options];
 	}
 
-	authenticate(args: {
-		email: string;
-		password: string;
-		rememberMe?: boolean | null;
-	}): Observable<NbAuthResult> {
-		const { email, password } = args;
+	authenticate(data?: any): Observable<NbAuthResult> {
+		const { email, password } = data;
 
 		// TODO implement remember me feature
 		// const rememberMe = !!args.rememberMe;
@@ -98,15 +94,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		return this.login(loginInput);
 	}
 
-	register(args: {
-		email: string;
-		fullName: string;
-		password: string;
-		confirmPassword: string;
-		terms: boolean;
-		tenant: ITenant;
-		tags: ITag[];
-	}): Observable<NbAuthResult> {
+	register(data?: any): Observable<NbAuthResult> {
 		const {
 			email,
 			fullName,
@@ -114,7 +102,7 @@ export class AuthStrategy extends NbAuthStrategy {
 			confirmPassword,
 			tenant,
 			tags
-		} = args;
+		} = data;
 
 		if (password !== confirmPassword) {
 			return of(
@@ -171,8 +159,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		return from(this._logout());
 	}
 
-	requestPassword(args: { email: string }): Observable<NbAuthResult> {
-		const { email } = args;
+	requestPassword(data?: any): Observable<NbAuthResult> {
+		const { email } = data;
 
 		const requestPasswordInput = {
 			findObj: {
@@ -227,11 +215,8 @@ export class AuthStrategy extends NbAuthStrategy {
 			);
 	}
 
-	resetPassword(args: {
-		password: string;
-		confirmPassword: string;
-	}): Observable<NbAuthResult> {
-		const { password, confirmPassword } = args;
+	resetPassword(data?: any): Observable<NbAuthResult> {
+		const { password, confirmPassword } = data;
 
 		const indexToken = this.router.url.indexOf('=');
 		const indexId = this.router.url.lastIndexOf('=');

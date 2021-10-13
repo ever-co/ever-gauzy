@@ -8,7 +8,10 @@ import {
 	NbBadgeModule,
 	NbToggleModule,
 	NbIconModule,
-	NbButtonModule
+	NbButtonModule,
+	NbCalendarRangeModule,
+	NbInputModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'angular2-chartjs';
@@ -19,6 +22,7 @@ import { ScreenshotsItemModule } from '../../../@shared/timesheet/screenshots/sc
 import { ActivityItemModule } from '../../../@shared/timesheet/activities/activity-item/activity-item.module';
 import { GalleryModule } from '../../../@shared/gallery/gallery.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 
 @NgModule({
 	imports: [
@@ -39,6 +43,10 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		TranslateModule,
 		GalleryModule,
 		HeaderTitleModule,
+		FiltersModule,
+		NbCalendarRangeModule,
+		NbInputModule,
+		NbDatepickerModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

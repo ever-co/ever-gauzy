@@ -41,8 +41,8 @@ console.log('Plugin Config -> assetPublicPath: ' + assetPublicPath);
 
 export const pluginConfig: IPluginConfig = {
 	apiConfigOptions: {
-		host: process.env.HOST || DEFAULT_API_HOST,
-		port: process.env.PORT || DEFAULT_API_PORT,
+		host: process.env.API_HOST || DEFAULT_API_HOST,
+		port: process.env.API_PORT || DEFAULT_API_PORT,
 		baseUrl: process.env.API_BASE_URL || DEFAULT_API_BASE_URL,
 		middleware: [],
 		graphqlConfigOptions: {

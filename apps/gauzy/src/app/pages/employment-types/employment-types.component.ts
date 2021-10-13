@@ -17,7 +17,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({

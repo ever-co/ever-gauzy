@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -98,7 +98,7 @@ export class TableInventoryComponent
 				filter(([organization, language]) => !!organization && !!language),
 				tap(([ organization ]) => this.organization = organization),
 				distinctUntilChange(),
-				tap(() => this.products$.next()),
+				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -113,7 +113,7 @@ export class TableInventoryComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.products$.next()),
+				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -260,7 +260,7 @@ export class TableInventoryComponent
 		} catch {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		} finally {
-			this.products$.next();
+			this.products$.next(true);
 		}
 	}
 

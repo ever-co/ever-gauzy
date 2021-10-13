@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentLayoutStyleEnum, IOrganization, IWarehouse } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -89,7 +89,7 @@ export class WarehousesTableComponent
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(() => this.warhouses$.next()),
+				tap(() => this.warhouses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -104,7 +104,7 @@ export class WarehousesTableComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.warhouses$.next()),
+				tap(() => this.warhouses$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -211,7 +211,7 @@ export class WarehousesTableComponent
 					}
 				})
 				.finally(() => {
-					this.warhouses$.next();
+					this.warhouses$.next(true);
 				});
 		}
 	}

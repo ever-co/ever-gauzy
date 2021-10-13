@@ -28,7 +28,7 @@ export class ChangelogComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	getLogs() {

@@ -3166,6 +3166,7 @@
 		"TIME_TRACKING": "crwdns8048:0crwdne8048:0",
 		"MEMBERS_WORKED": "crwdns8050:0crwdne8050:0",
 		"PROJECTS_WORKED": "crwdns8052:0crwdne8052:0",
+		"ACTIVITY": "crwdns10575:0crwdne10575:0",
 		"WEEKLY_ACTIVITY": "crwdns8054:0crwdne8054:0",
 		"WORKED_THIS_WEEK": "crwdns8056:0crwdne8056:0",
 		"TODAY_ACTIVITY": "crwdns8058:0crwdne8058:0",

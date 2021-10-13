@@ -10,7 +10,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { EmployeesService, EmployeeStore, ErrorHandlingService, ToastrService, UsersService } from './../../../../@core/services';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,7 +56,7 @@ export class EditEmployeeProfileComponent
 				filter((params) => !!params),
 				tap((params) => this.routeParams = params),
 				tap(() => this.loadTabs()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -166,7 +166,7 @@ export class EditEmployeeProfileComponent
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			} finally {
-				this.subject$.next();
+				this.subject$.next(true);
 			}
 		}
 	}
@@ -189,7 +189,7 @@ export class EditEmployeeProfileComponent
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			} finally {
-				this.subject$.next();
+				this.subject$.next(true);
 			}
 		}
 	}

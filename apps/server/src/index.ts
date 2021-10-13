@@ -162,7 +162,7 @@ const getEnvApi = () => {
         DB_NAME: config.dbName,
         DB_USER: config.dbUsername,
         DB_PASS: config.dbPassword,
-        PORT: config.port ? config.port.toString() : '',
+        API_PORT: config.port ? config.port.toString() : '',
 		...addsConfig
 	}
 }

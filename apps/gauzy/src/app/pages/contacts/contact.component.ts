@@ -136,7 +136,7 @@ export class ContactComponent
 				tap(([organization, employee]) => {
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
-					this.subject$.next();
+					this.subject$.next(true);
 				}),
 				untilDestroyed(this)
 			)

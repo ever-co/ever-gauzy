@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { of as observableOf } from 'rxjs/internal/observable/of';
+import { of as observableOf } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 import { GauzyCloudService } from '../../gauzy-cloud.service';
 import { GauzyCloudUserMigrateCommand } from './../gauzy-cloud-user.migrate.command';

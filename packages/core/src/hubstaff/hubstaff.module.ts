@@ -1,4 +1,5 @@
-import { Module, HttpModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { HubstaffService } from './hubstaff.service';

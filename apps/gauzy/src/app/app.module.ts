@@ -4,6 +4,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  */
 import { APP_BASE_HREF } from '@angular/common';
+
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
@@ -60,13 +61,13 @@ import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module
 import * as moment from 'moment';
 import { NgxAuthModule } from './auth/auth.module';
 import { LegalModule } from './legal/legal.module';
-import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.service';
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
-import { FeatureService } from './@core/services/feature/feature.service';
 import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { HttpLoaderFactory } from './@shared/translate/translate.module';
+import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -109,8 +110,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		DangerZoneMutationModule,
 		AppRoutingModule,
 		NbCalendarModule,
-		NbCalendarKitModule,
-		ThemeModule.forRoot(),
+		NbCalendarKitModule,		
 		NbSidebarModule.forRoot(),
 		NbMenuModule.forRoot(),
 		NbDatepickerModule.forRoot(),
@@ -120,7 +120,9 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		NbChatModule.forRoot({
 			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
 		}),
+		NbEvaIconsModule,
 		CoreModule.forRoot(),
+		ThemeModule.forRoot(),
 		TranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,

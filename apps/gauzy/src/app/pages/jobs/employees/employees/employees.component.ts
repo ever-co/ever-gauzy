@@ -68,7 +68,7 @@ export class EmployeesComponent
 			)
 			.subscribe(() => {
 				this.loadSmartTable();
-				this.updateJobs$.next();
+				this.updateJobs$.next(true);
 			});
 	}
 
@@ -105,7 +105,8 @@ export class EmployeesComponent
 					) => {
 						return {
 							name: row.user ? row.user.name : null,
-							src: row.user ? row.user.imageUrl : null
+							src: row.user ? row.user.imageUrl : null,
+							id: row.id
 						};
 					}
 				},

@@ -14,7 +14,7 @@ import { DatabaseProviderModule } from './../../core/database-provider.module';
 	exports: [SeedDataService]
 })
 export class SeederModule {
-	static forPluings(): DynamicModule {
+	static forPlugins(): DynamicModule {
 		return {
 			module: SeederModule,
 			providers: [],

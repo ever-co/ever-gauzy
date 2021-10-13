@@ -17,7 +17,8 @@ import {
 	ITasksStatistics,
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
-	IUser
+	IUser,
+	ISelectedDateRange
 } from '@gauzy/contracts';
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -37,10 +38,10 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 	templateUrl: './time-tracking.component.html',
 	styleUrls: ['./time-tracking.component.scss']
 })
-export class TimeTrackingComponent 
+export class TimeTrackingComponent
 	extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
-	
+
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
 	activities: IActivitiesStatistics[] = [];
 	projects: IProjectsStatistics[] = [];
@@ -62,10 +63,7 @@ export class TimeTrackingComponent
 
 	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
-
-	startDate: Date = moment().startOf('week').toDate();
-	endDate: Date = moment().endOf('week').toDate();
-
+	
 	employeeId: string = null;
 	projectId: string = null;
 	tenantId: string = null;
@@ -74,6 +72,20 @@ export class TimeTrackingComponent
 
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
+	today: Date = new Date(moment().format('YYYY-MM-DD HH:mm:ss'));
+
+	private _selectedDateRange: ISelectedDateRange;
+	get selectedDateRange(): ISelectedDateRange {
+		return this._selectedDateRange;
+	}
+
+	set selectedDateRange(range: ISelectedDateRange) {
+		range.isCustomDate = range.isCustomDate === undefined ? true : false
+		this._selectedDateRange = range;
+		if (range.start && range.end) {
+			this.getCounts();
+		}
+	}
 
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
@@ -84,6 +96,11 @@ export class TimeTrackingComponent
 		private readonly changeRef: ChangeDetectorRef
 	) {
 		super(translateService);
+		this.selectedDateRange = {
+			start: moment().startOf('week').toDate(),
+			end: moment().endOf('week').toDate(),
+			isCustomDate: false
+		}
 	}
 
 	ngOnInit() {
@@ -125,7 +142,7 @@ export class TimeTrackingComponent
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
 
-					this.logs$.next();
+					this.logs$.next(true);
 				}),
 				tap(() => this.setAutoRefresh(true)),
 				untilDestroyed(this)
@@ -158,7 +175,7 @@ export class TimeTrackingComponent
 			this.autoRefresh$ = timer(0, 60000)
 				.pipe(
 					filter((timer) => !!timer),
-					tap(() => this.logs$.next()),
+					tap(() => this.logs$.next(true)),
 					untilDestroyed(this)
 				)
 				.subscribe();
@@ -186,7 +203,7 @@ export class TimeTrackingComponent
 	}
 
 	onDelete() {
-		this.logs$.next();
+		this.logs$.next(true);
 	}
 
 	getCounts() {
@@ -194,17 +211,16 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			startDate,
-			endDate,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
 		const request: IGetCountsStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(selectedDateRange.start).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(selectedDateRange.end).format('YYYY-MM-DD HH:mm')
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService
@@ -245,7 +261,7 @@ export class TimeTrackingComponent
 				this.activitiesLoading = false;
 			});
 	}
-	
+
 	getProjects() {
 		const { tenantId, organizationId, employeeId, projectId } = this;
 		const projectRequest: IGetProjectsStatistics = {
@@ -342,9 +358,38 @@ export class TimeTrackingComponent
 			});
 	}
 
-	getMembChartData(member) {}
+	getMembChartData(member) { }
 
 	ngOnDestroy() {
 		this.galleryService.clearGallery();
+	}
+
+	nextDay() {
+		const startDate = moment(this.selectedDateRange.end).add(1, "week").startOf("week").toDate();
+		const date = moment(startDate);
+		if (date.isAfter(this.today)) {
+			return;
+		}
+		this.selectedDateRange = {
+			start: startDate,
+			end: moment(startDate).endOf("week").toDate(),
+			isCustomDate: false
+		}
+	}
+
+	previousDay() {
+		const startDate = moment(this.selectedDateRange.end).subtract(1, "week").startOf("week").toDate();
+		this.selectedDateRange = {
+			start: startDate,
+			end: moment(startDate).endOf("week").toDate(),
+			isCustomDate: false
+		}
+	}
+
+	todayDate () {
+		this.selectedDateRange = {
+			start: this.today,
+			end: this.today,
+		}
 	}
 }

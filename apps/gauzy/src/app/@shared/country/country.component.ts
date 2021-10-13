@@ -16,7 +16,7 @@ import {
 import { ICountry } from '@gauzy/contracts';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { CountryService } from '../../@core/services/country.service';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 

@@ -137,7 +137,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				tap((selectors) => {
 					this.selectorsVisibility = Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors);
 				}),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -206,7 +206,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			.subscribe(([organization, date]) => {
 				this.organization = organization;
 				this.selectedDate = date;
-				this.subject$.next();
+				this.subject$.next(true);
 			});
 		this.themeService
 			.onThemeChange()

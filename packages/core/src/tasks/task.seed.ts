@@ -1,7 +1,8 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
-import { HttpService } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { AxiosResponse } from 'axios';
 import {
 	IOrganization,
 	ITag,
@@ -18,6 +19,7 @@ import {
 	User,
 	Employee 
 } from './../core/entities/internal';
+import { lastValueFrom, map } from 'rxjs';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
@@ -30,17 +32,18 @@ export const createDefaultTask = async (
 	const tasks: ITask[] = [];
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
-	const issues: any[] = await httpService
-		.get(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`)
-		.toPromise()
-		.then((resp) => resp.data);
-
+	const issues$ = httpService
+			.get(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`)
+			.pipe(
+				map(
+					(response: AxiosResponse<any>) => response.data
+				)
+			);
+	const issues: any[] = await lastValueFrom(issues$);
 	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
 
 	let labels = [];
-	issues.forEach(async (issue) => {
-		labels = labels.concat(issue.labels);
-	});
+	issues.forEach(async (issue) => { labels = labels.concat(issue.labels); });
 
 	labels = _.uniq(labels, (label) => label.name);
 	const tags: ITag[] = await createTags(connection, labels);
@@ -98,17 +101,18 @@ export const createRandomTask = async (
 	const tasks: ITask[] = [];
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
-	const issues: any[] = await httpService
-		.get(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`)
-		.toPromise()
-		.then((resp) => resp.data);
-
+	const issues$ = httpService
+			.get(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`)
+			.pipe(
+				map(
+					(response: AxiosResponse<any>) => response.data
+				)
+			);
+	const issues: any[] = await lastValueFrom(issues$);
 	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
 
 	let labels = [];
-	issues.forEach(async (issue) => {
-		labels = labels.concat(issue.labels);
-	});
+	issues.forEach(async (issue) => { labels = labels.concat(issue.labels); });
 
 	labels = _.uniq(labels, (label) => label.name);
 	const tags: ITag[] = await createTags(connection, labels);

@@ -73,7 +73,7 @@ export class AccountingTemplatesComponent
 					this.organizationName = organization.name;
 					this.form.patchValue({ languageCode: language });
 				}),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

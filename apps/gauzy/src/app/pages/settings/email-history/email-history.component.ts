@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { DomSanitizer } from '@angular/platform-browser';
 import { first, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -107,7 +107,7 @@ export class EmailHistoryComponent
 			.toPromise();
 
 		if (filters) {
-			this.emails$.next();
+			this.emails$.next(true);
 			const getCount = function (obj) {
 				return Object.values(obj).filter(
 					(value) => typeof value !== 'undefined'
@@ -215,7 +215,7 @@ export class EmailHistoryComponent
 			);
 		})
 		.finally(() => {
-			this.emails$.next();
+			this.emails$.next(true);
 		});
 	}
 
@@ -231,7 +231,7 @@ export class EmailHistoryComponent
 		}
 		this.nextDataLoading = true;
 		this.threshholdHitCount++;
-		this.emails$.next();
+		this.emails$.next(true);
 	}
 
 	getUrl(email: string): string {

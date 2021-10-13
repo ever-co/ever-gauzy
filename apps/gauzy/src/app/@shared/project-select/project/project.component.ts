@@ -56,7 +56,7 @@ export class ProjectSelectorComponent
 	}
 	public set employeeId(value) {
 		this._employeeId = value;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	@Input()
@@ -67,7 +67,7 @@ export class ProjectSelectorComponent
 	public set organizationContactId(value: string) {
 		this._organizationContactId = value;
 		if (this._organizationContactId) {
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -153,7 +153,7 @@ export class ProjectSelectorComponent
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => (this.organization = organization)),
 				tap(({ id }) => (this.organizationId = id)),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

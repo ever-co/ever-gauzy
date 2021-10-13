@@ -1,10 +1,11 @@
 import {
 	Injectable,
-	HttpService,
 	BadRequestException,
 	HttpStatus,
 	UnauthorizedException
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { AxiosResponse } from 'axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeepPartial } from 'typeorm';
 import { map, catchError, switchMap } from 'rxjs/operators';
@@ -31,6 +32,7 @@ import {
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/integration-hubstaff';
+import { lastValueFrom } from 'rxjs';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
@@ -60,7 +62,6 @@ import { TaskUpdateCommand } from '../tasks/commands';
 import { getDummyImage } from '../core/utils';
 import { RequestContext } from '../core/context';
 
-
 @Injectable()
 export class HubstaffService {
 	constructor(
@@ -79,10 +80,11 @@ export class HubstaffService {
 			Authorization: `Bearer ${token}`
 		};
 		try {
-			return await this._httpService
-				.get(url, { headers })
-				.pipe(map((response) => response.data))
-				.toPromise();
+			return this._httpService.get(url, { headers }).pipe(
+				map(
+					(response: AxiosResponse<any>) => response.data
+				)
+			).subscribe();
 		} catch (error) {
 			if (error.response.status === HttpStatus.UNAUTHORIZED) {
 				throw new UnauthorizedException();
@@ -131,18 +133,19 @@ export class HubstaffService {
 		);
 		urlParams.append('grant_type', 'refresh_token');
 		urlParams.append('refresh_token', refresh_token);
-
 		urlParams.append('client_id', client_id);
 		urlParams.append('client_secret', client_secret);
 
 		try {
-			const tokens = await this._httpService
-				.post('https://account.hubstaff.com/access_tokens', urlParams, {
-					headers
-				})
-				.pipe(map((response) => response.data))
-				.toPromise();
-
+			const tokens$ = this._httpService.post('https://account.hubstaff.com/access_tokens', urlParams, {
+				headers
+			})
+			.pipe(
+				map(
+					(response: AxiosResponse<any>) => response.data
+				)
+			);
+			const tokens = await lastValueFrom(tokens$);
 			const settingsDto = settings.map((setting) => {
 				if (setting.settingsName === 'access_token') {
 					setting.settingsValue = tokens.access_token;
@@ -210,7 +213,7 @@ export class HubstaffService {
 				: settingEntity
 		) as IIntegrationEntitySetting[];
 
-		return this._httpService
+		const tokens$ = this._httpService
 			.post('https://account.hubstaff.com/access_tokens', urlParams, {
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded'
@@ -241,15 +244,16 @@ export class HubstaffService {
 								settingsValue: data.refresh_token
 							}
 						].map((setting) => {
-							return { organizationId, ...setting };
+							return { organizationId,  ...setting };
 						})
 					})
 				),
 				catchError((err) => {
 					throw new BadRequestException(err);
 				})
-			)
-			.toPromise();
+			);
+
+		return await lastValueFrom(tokens$);
 	}
 
 	/*

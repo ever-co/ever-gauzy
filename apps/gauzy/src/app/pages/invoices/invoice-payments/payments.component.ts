@@ -12,7 +12,7 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -85,7 +85,7 @@ export class InvoicePaymentsComponent
 			.pipe(
 				filter((params) => !!params && !!params.get('id')),
 				tap((params) => this.invoiceId = params.get('id')),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			).subscribe();
 	}
@@ -177,7 +177,7 @@ export class InvoicePaymentsComponent
 		if (result) {
 			await this.paymentService.add(result);
 			this.totalPaid = 0;
-			this.subject$.next();
+			this.subject$.next(true);
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -208,7 +208,7 @@ export class InvoicePaymentsComponent
 
 		if (result) {
 			await this.paymentService.update(result.id, result);
-			this.subject$.next();
+			this.subject$.next(true);
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -233,7 +233,7 @@ export class InvoicePaymentsComponent
 
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
-			this.subject$.next();
+			this.subject$.next(true);
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -406,7 +406,7 @@ export class InvoicePaymentsComponent
 		}
 
 		await this.paymentService.add(payment);
-		this.subject$.next();
+		this.subject$.next(true);
 
 		const { amount, currency, invoice } = payment;
 		if (payment.invoice) {

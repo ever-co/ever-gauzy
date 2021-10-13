@@ -13,7 +13,7 @@ import {
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import * as moment from 'moment';
@@ -34,6 +34,7 @@ import { ServerDataSource } from '../../@core/utils/smart-table/server.data-sour
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { ErrorHandlingService, ExpensesService, Store, ToastrService } from '../../@core/services';
 import { ExpenseCategoryFilterComponent, VendorFilterComponent } from '../../@shared/table-filters';
+import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -112,7 +113,7 @@ export class ExpensesComponent
 						this.projectId = project ? project.id : null;
 						
 						this.refreshPagination();
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -145,7 +146,7 @@ export class ExpensesComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -216,9 +217,19 @@ export class ExpensesComponent
 				},
 				employeeName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-					type: 'string',
+					type: 'custom',
 					filter: false,
-					sort: false
+					sort: false,
+					renderComponent: AvatarComponent,
+					valuePrepareFunction: (
+						cell,
+						row
+					) => {
+						return {
+							name: row.employee && row.employee.user ? row.employee.fullName : null,
+							id: row.employee ? row.employee.id : null
+						};
+					}
 				},
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
@@ -311,7 +322,7 @@ export class ExpensesComponent
 				organizationId,
 				tenantId
 			}).then(() => {
-				this.subject$.next();
+				this.subject$.next(true);
 				this.toastrService.success('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: this.employeeName(employee)
 				});
@@ -362,7 +373,7 @@ export class ExpensesComponent
 							...this.getFormData(data),
 							employeeId: employee ? employee.id : null
 						}).then(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 							this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', { 
 								name: this.employeeName(employee) 
 							});
@@ -431,7 +442,7 @@ export class ExpensesComponent
 							id,
 							isNotEmpty(employee) ? employee.id : null
 						).then(() => {
-							this.subject$.next();
+							this.subject$.next(true);
 							this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', { 
 								name: this.employeeName(employee) 
 							});

@@ -6,10 +6,9 @@ import {
 	HttpInterceptor,
 	HttpErrorResponse
 } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { HubstaffService } from './../services/hubstaff.service';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
-import { BehaviorSubject, throwError } from 'rxjs';
 import { HttpStatus } from '@gauzy/contracts';
 
 @Injectable()

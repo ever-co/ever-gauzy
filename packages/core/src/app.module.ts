@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
 import { MulterModule } from '@nestjs/platform-express';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import {
@@ -132,19 +131,25 @@ import { WarehouseModule } from './warehouse/warehouse.module';
 import { MerchantModule } from './merchant/merchant.module';
 import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 
-
 const { unleashConfig } = environment;
+
 if (unleashConfig.url) {
-	const instance = initializeUnleash({
+	const unleashInstanceConfig = {
 		appName: unleashConfig.appName,
 		url: unleashConfig.url,
 		instanceId: unleashConfig.instanceId,
 		refreshInterval: unleashConfig.refreshInterval,
 		metricsInterval: unleashConfig.metricsInterval
-	});
+	};
+
+	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);	
+
+	const instance = initializeUnleash(unleashInstanceConfig);
 
 	// metrics hooks
-	instance.on('registered', (client) => {});
+	instance.on('registered', (client) => {
+		console.log('Unleash Client Registered');
+	});
 }
 
 const sentryIntegrations = [];
@@ -169,12 +174,6 @@ if (process.env.DB_TYPE === 'postgres') {
 			imports: []
 		}),
 		MulterModule.register(),
-		RouterModule.forRoutes([
-			{
-				path: '',
-				children: [{ path: '/', module: HomeModule }]
-			}
-		]),
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			parser: I18nJsonParser,
@@ -185,21 +184,21 @@ if (process.env.DB_TYPE === 'postgres') {
 			resolvers: [new HeaderResolver(['language'])]
 		}),
 		...(environment.sentry
-			? [
-					SentryModule.forRoot({
-						dsn: environment.sentry.dns,
-						debug: !environment.production,
-						environment: environment.production
-							? 'production'
-							: 'development',
-						// TODO: we should use some internal function which returns version of Gauzy
-						release: 'gauzy@' + process.env.npm_package_version,
-						logLevel: LogLevel.Error,
-						integrations: sentryIntegrations,
-						tracesSampleRate: 1.0
-					})
-			  ]
-			: []),
+		 	? [
+		 			SentryModule.forRoot({
+		 				dsn: environment.sentry.dns,
+		 				debug: !environment.production,
+		 				environment: environment.production
+		 					? 'production'
+		 					: 'development',
+		 				// TODO: we should use some internal function which returns version of Gauzy
+		 				release: 'gauzy@' + process.env.npm_package_version,
+		 				logLevel: LogLevel.Error,
+		 				integrations: sentryIntegrations,
+		 				tracesSampleRate: 1.0
+		 			})
+		 	  ]
+		: []),
 		CoreModule,
 		AuthModule,
 		UserModule,
