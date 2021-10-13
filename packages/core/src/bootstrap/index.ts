@@ -32,7 +32,7 @@ export async function bootstrap(
 	const reflector = app.get(Reflector);
 	app.useGlobalGuards(new AuthGuard(reflector));
 
-	// app.useLogger(app.get(SentryService));
+	app.useLogger(app.get(SentryService));
 	app.use(json({ limit: '50mb' }));
 	app.use(urlencoded({ extended: true, limit: '50mb' }));
   
