@@ -14,8 +14,8 @@ ARG DEFAULT_LATITUDE
 ARG DEFAULT_LONGITUDE
 ARG DEFAULT_CURRENCY
 ARG DEMO
-ARG HOST
-ARG PORT
+ARG WEB_HOST
+ARG WEB_PORT
 
 FROM node:16-alpine3.11 AS dependencies
 
@@ -111,11 +111,11 @@ RUN chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && \
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
 ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
-ENV HOST=${HOST:-0.0.0.0}
-ENV PORT=${PORT:-4200}
+ENV WEB_HOST=${WEB_HOST:-0.0.0.0}
+ENV WEB_PORT=${WEB_PORT:-4200}
 ENV DEMO=${DEMO:-false}
 
-EXPOSE ${PORT}
+EXPOSE ${WEB_PORT}
 
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
 

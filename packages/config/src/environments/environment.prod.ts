@@ -8,8 +8,8 @@ if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 }
 
 export const environment: IEnvironment = {
-	port: process.env.PORT || 3000,
-	host: process.env.HOST || 'http://localhost',
+	port: process.env.API_PORT || 3000,
+	host: process.env.API_HOST || 'http://localhost',
 	baseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
 	clientBaseUrl: process.env.CLIENT_BASE_URL || 'http://localhost:4200',
 	production: true,
@@ -46,7 +46,7 @@ export const environment: IEnvironment = {
 		fbGraphVersion: process.env.FACEBOOK_GRAPH_VERSION,
 		oauthRedirectUri:
 			process.env.FACEBOOK_CALLBACK_URL ||
-			`${process.env.HOST}:${process.env.PORT}/api/auth/facebook/callback`,
+			`${process.env.API_HOST}:${process.env.API_PORT}/api/auth/facebook/callback`,
 		state: '{fbstate}'
 	},
 
@@ -55,7 +55,7 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.GOOGLE_CLIENT_SECRET,
 		callbackUrl:
 			process.env.GOOGLE_CALLBACK_URL ||
-			`${process.env.HOST}:${process.env.PORT}/api/auth/google/callback`
+			`${process.env.API_HOST}:${process.env.API_PORT}/api/auth/google/callback`
 	},
 
 	githubConfig: {
@@ -63,7 +63,7 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.GITHUB_CLIENT_SECRET,
 		callbackUrl:
 			process.env.GITHUB_CALLBACK_URL ||
-			`http://${process.env.HOST}:${process.env.PORT}/api/auth/google/callback`
+			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/google/callback`
 	},
 
 	microsoftConfig: {
@@ -73,7 +73,7 @@ export const environment: IEnvironment = {
 		tenant: process.env.MICROSOFT_TENANT,
 		callbackUrl:
 			process.env.MICROSOFT_CALLBACK_URL ||
-			`http://${process.env.HOST}:${process.env.PORT}/api/auth/microsoft/callback`
+			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/microsoft/callback`
 	},
 
 	linkedinConfig: {
@@ -81,7 +81,7 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
 		callbackUrl:
 			process.env.LINKEDIN_CALLBACK_URL ||
-			`http://${process.env.HOST}:${process.env.PORT}/api/auth/linked/callback`
+			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/linked/callback`
 	},
 
 	twitterConfig: {
@@ -89,7 +89,7 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.TWITTER_CLIENT_SECRET,
 		callbackUrl:
 			process.env.TWITTER_CALLBACK_URL ||
-			`http://${process.env.HOST}:${process.env.PORT}/api/auth/twitter/callback`
+			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/twitter/callback`
 	},
 
 	fiverrConfig: {
@@ -121,7 +121,7 @@ export const environment: IEnvironment = {
 	upworkConfig: {
 		callbackUrl:
 			process.env.UPWORK_CALLBACK_URL ||
-			`http://${process.env.HOST}:${process.env.PORT}/api/integrations/upwork`
+			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/integrations/upwork`
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,

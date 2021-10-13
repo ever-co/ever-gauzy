@@ -96,8 +96,8 @@ services:
         container_name: api
         image: ghcr.io/ever-co/gauzy-api:latest
         environment:
-            HOST: ${API_HOST:-api}
-            PORT: ${API_PORT:-3000}
+            API_HOST: ${API_HOST:-api}
+            API_PORT: ${API_PORT:-3000}
             NODE_ENV: ${NODE_ENV:-development}
             DB_HOST: db
             API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
@@ -123,8 +123,8 @@ services:
         container_name: webapp
         image: ghcr.io/ever-co/gauzy-webapp:latest
         environment:
-            HOST: ${WEB_HOST:-webapp}
-            PORT: ${WEB_PORT:-4200}
+            WEB_HOST: ${WEB_HOST:-webapp}
+            WEB_PORT: ${WEB_PORT:-4200}
             NODE_ENV: ${NODE_ENV:-development}
             API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
             CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}

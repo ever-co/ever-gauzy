@@ -10,8 +10,8 @@ export interface IEnvApi {
     DB_NAME: string,
     DB_USER: string,
     DB_PASS: string,
-    PORT: string,
-    HOST: string,
+    API_PORT: string,
+    API_HOST: string,
     API_BASE_URL: string
 }
 
@@ -27,8 +27,8 @@ const runServerApi = () => {
         DB_NAME: dbName,
         DB_USER: dbUsername,
         DB_PASS: dbPassword,
-        PORT: port ? port.toString() : '',
-        HOST: apiHost,
+        API_PORT: port ? port.toString() : '',
+        API_HOST: apiHost,
         API_BASE_URL: apiBaseUrl
     }
     const uiService = fork(apiPath, { silent: true, detached: true, env: {
