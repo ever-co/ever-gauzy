@@ -1,7 +1,15 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary" 
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
-			<h4> <ngx-header-title> {{ 'TIME_OFF_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
+			<h4>
+				<ngx-header-title>
+					{{ 'TIME_OFF_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
 		<div>
 			<ga-layout-selector
@@ -27,7 +35,6 @@
 					{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
 				</button>
 			</div>
-
 			<nb-checkbox
 				(checkedChange)="changeDisplayHolidays($event)"
 				class="my-auto align-center ml-auto mr-5"
@@ -35,7 +42,6 @@
 				checked
 				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
 			</nb-checkbox>
-
 			<div>
 				<button
 					(click)="showHideFilter()"
@@ -46,7 +52,6 @@
 					<nb-icon icon="funnel-outline"></nb-icon>
 					{{ 'BUTTONS.FILTER' | translate }}
 				</button>
-
 				<ng-template ngxPermissionsOnly="POLICY_VIEW">
 					<button
 						(click)="openTimeOffSettings()"
@@ -72,7 +77,6 @@
 					>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
 				</nb-radio>
 			</nb-radio-group>
-
 			<nb-checkbox
 				(checkedChange)="changeIncludeArchived($event)"
 				status="warning"
@@ -200,7 +204,6 @@
 		<nb-icon class="mr-2" icon="checkmark-circle-outline"></nb-icon>
 		{{ 'BUTTONS.APPROVE' | translate }}
 	</button>
-
 	<button
 		(click)="denyDaysOff(selectedItem)"
 		nbButton
@@ -211,7 +214,6 @@
 		<nb-icon class="mr-2" icon="close-outline"></nb-icon>
 		{{ 'BUTTONS.DENY' | translate }}
 	</button>
-
 	<ng-template #additionalActions>
 		<button
 			(click)="updateTimeOffRecord()"
@@ -225,7 +227,6 @@
 			<nb-icon class="mr-2" icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
-
 		<button
 			nbButton
 			(click)="archive()"
@@ -240,7 +241,6 @@
 			<nb-icon class="mr-2" icon="archive-outline"></nb-icon
 			>{{ 'BUTTONS.ARCHIVE' | translate }}
 		</button>
-
 		<button
 			(click)="deleteRequest(selectedItem)"
 			#deleteButton
@@ -253,8 +253,7 @@
 			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 	</ng-template>
-
-	<ng-container *ngIf="dataLayoutStyle === 'TABLE'; else cardsView">
+	<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE; else cardsView">
 		<ng-container *ngTemplateOutlet="additionalActions"></ng-container>
 	</ng-container>
 	<ng-template #cardsView>
@@ -267,7 +266,7 @@
 		</button>
 	</ng-template>
 	<div
-		*ngIf="showActions && dataLayoutStyle != 'TABLE'"
+		*ngIf="showActions && dataLayoutStyle != componentLayoutStyleEnum.TABLE"
 		class="aditional-actions"
 	>
 		<ng-container *ngTemplateOutlet="additionalActions"></ng-container>
