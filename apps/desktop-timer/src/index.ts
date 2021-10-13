@@ -23,8 +23,8 @@ log.catchErrors({
 			})
 			.then((result) => {
 				if (result.response === 1) {
-					submitIssue('https://github.com/ever-co/gauzy/issues/new', {
-						title: `Automatic error report for Desktop App ${versions.app}`,
+					submitIssue('https://github.com/ever-co/ever-gauzy/issues/new', {
+						title: `Automatic error report for Desktop Timer App ${versions.app}`,
 						body:
 							'Error:\n```' +
 							error.stack +
@@ -45,11 +45,13 @@ log.catchErrors({
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
+
 app.setName('gauzy-desktop-timer');
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
 const Store = require('electron-store');
+
 import {
 	ipcMainHandler,
 	ipcTimer,
@@ -125,6 +127,7 @@ console.log(
 	'Time Tracker UI Render Path:',
 	path.join(__dirname, './index.html')
 );
+
 const pathWindow = {
 	timeTrackerUi: path.join(__dirname, './index.html')
 };
@@ -401,7 +404,7 @@ ipcMain.on('open_browser', (event, arg) => {
 
 ipcMain.on('check_for_update', async (event, arg) => {
 	const updaterConfig = {
-		repo: 'gauzy',
+		repo: 'ever-gauzy',
 		owner: 'ever-co',
 		typeRelease: 'releases'
 	};
@@ -420,7 +423,7 @@ ipcMain.on('check_for_update', async (event, arg) => {
 
 	if (latestReleaseTag) {
 		autoUpdater.setFeedURL({
-			channel: 'desktop-timer-latest',
+			channel: 'latest',
 			provider: 'generic',
 			url: `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
 		});
@@ -513,8 +516,9 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 });
 
 autoUpdater.on('error', () => {
-	console.log('eroro');
+	console.log('error');
 });
+
 app.on('activate', () => {
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {
