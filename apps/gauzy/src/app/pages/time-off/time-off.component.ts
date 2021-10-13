@@ -102,7 +102,7 @@ export class TimeOffComponent
 					this.selectedDate = date;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
-				tap(() => this.timeoff$.next()),
+				tap(() => this.timeoff$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -198,7 +198,7 @@ export class TimeOffComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED'
 						);
-						this.timeoff$.next();
+						this.timeoff$.next(true);
 					},
 					() =>
 						this.toastrService.danger(
@@ -210,7 +210,7 @@ export class TimeOffComponent
 				'TIME_OFF_PAGE.NOTIFICATIONS.APPROVED_NO_CHANGES',
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
-			this.timeoff$.next();
+			this.timeoff$.next(true);
 		}
 	}
 
@@ -232,7 +232,7 @@ export class TimeOffComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED'
 						);
-						this.timeoff$.next();
+						this.timeoff$.next(true);
 					},
 					() =>
 						this.toastrService.danger(
@@ -244,7 +244,7 @@ export class TimeOffComponent
 				'TIME_OFF_PAGE.NOTIFICATIONS.DENIED_NO_CHANGES',
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
-			this.timeoff$.next();
+			this.timeoff$.next(true);
 		}
 	}
 
@@ -274,7 +274,7 @@ export class TimeOffComponent
 								this.toastrService.success(
 									'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DELETED'
 								);
-								this.timeoff$.next();
+								this.timeoff$.next(true);
 							},
 							() =>
 								this.toastrService.danger(
@@ -337,7 +337,7 @@ export class TimeOffComponent
 
 	changeIncludeArchived($event) {
 		this.includeArchived = $event;
-		this.timeoff$.next();
+		this.timeoff$.next(true);
 	}
 
 	showHideFilter() {
@@ -495,7 +495,7 @@ export class TimeOffComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
 						);
-						this.timeoff$.next();
+						this.timeoff$.next(true);
 					},
 					() =>
 						this.toastrService.danger(
@@ -514,7 +514,7 @@ export class TimeOffComponent
 					this.toastrService.success(
 						'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED'
 					);
-					this.timeoff$.next();
+					this.timeoff$.next(true);
 				},
 				() =>
 					this.toastrService.danger(
