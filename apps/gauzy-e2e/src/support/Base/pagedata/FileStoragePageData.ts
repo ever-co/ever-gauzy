@@ -1,5 +1,5 @@
 export const FileStoragePageData = {
-	header: 'Settings',
+	header: 'Settings - File Storage',
 	subheader: 'S3 details',
 	accessKeyId: 'replace_me',
 	secretAccessKey: 'replace_me',
