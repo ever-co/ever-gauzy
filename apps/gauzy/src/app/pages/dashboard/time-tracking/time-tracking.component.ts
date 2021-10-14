@@ -74,7 +74,11 @@ export class TimeTrackingComponent
 	autoRefresh: boolean = true;
 	today: Date = new Date(moment().format('YYYY-MM-DD HH:mm:ss'));
 
-	private _selectedDateRange: ISelectedDateRange;
+	private _selectedDateRange: ISelectedDateRange = {
+		start: moment().startOf('week').toDate(),
+		end: moment().endOf('week').toDate(),
+		isCustomDate: false
+	};
 	get selectedDateRange(): ISelectedDateRange {
 		return this._selectedDateRange;
 	}
@@ -83,7 +87,7 @@ export class TimeTrackingComponent
 		range.isCustomDate = range.isCustomDate === undefined ? true : false
 		this._selectedDateRange = range;
 		if (range.start && range.end) {
-			this.getCounts();
+			this.logs$.next(true);
 		}
 	}
 
@@ -96,11 +100,6 @@ export class TimeTrackingComponent
 		private readonly changeRef: ChangeDetectorRef
 	) {
 		super(translateService);
-		this.selectedDateRange = {
-			start: moment().startOf('week').toDate(),
-			end: moment().endOf('week').toDate(),
-			isCustomDate: false
-		}
 	}
 
 	ngOnInit() {
@@ -155,6 +154,9 @@ export class TimeTrackingComponent
 	}
 
 	getStatistics() {
+		if (!this.organization) {
+			return;
+		}
 		this.getCounts();
 		this.getTimeSlots();
 		this.getActivities();

@@ -15,11 +15,7 @@ import {
 	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Task } from './task.entity';
-import { CrudController, PaginationParams } from '../core';
-import { TaskService } from './task.service';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
+import { CommandBus } from '@nestjs/cqrs';
 import {
 	PermissionsEnum,
 	IGetTaskByEmployeeOptions,
@@ -28,9 +24,13 @@ import {
 	ITaskCreateInput,
 	IPagination
 } from '@gauzy/contracts';
-import { RequestContext } from '../core/context';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CommandBus } from '@nestjs/cqrs';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { CrudController, PaginationParams } from './../core/crud';
+import { RequestContext } from '../core/context';
+import { Task } from './task.entity';
+import { TaskService } from './task.service';
 import { TaskCreateCommand } from './commands';
 
 @ApiTags('Tasks')
