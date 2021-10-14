@@ -1,8 +1,11 @@
 name: Desktop App Build
 
 on:
-    push:
+    workflow_run:
+        workflows: ['Release']
         branches: [master]
+        types:
+            - completed
 
 jobs:
     release-linux:
@@ -32,11 +35,6 @@ jobs:
 
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
-
-            - name: Bump version and push tag
-              uses: mathieudutour/github-tag-action@v4.5
-              with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Bump version desktop app
               uses: actions/github-script@v4

@@ -1,0 +1,32 @@
+name: Release
+
+on:
+    push:
+        branches: [master]
+
+jobs:
+    release:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [ubuntu-latest]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+            
+            - name: Bump version and push tag
+              uses: mathieudutour/github-tag-action@v5.6
+              id: tag_version
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+          
+            - name: Create a GitHub release
+              uses: ncipollo/release-action@v1
+              with:
+                  allowUpdates: true
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  tag: ${{ steps.tag_version.outputs.new_tag }}
+                  name: ${{ steps.tag_version.outputs.new_tag }}
+                  body: ${{ steps.tag_version.outputs.changelog }}      
