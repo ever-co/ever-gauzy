@@ -49,6 +49,7 @@
 		},
 		"publish": {
 			"provider": "github",
+			"repo": "ever-gauzy-desktop",
 			"releaseType": "release"
 		},
 		"mac": {

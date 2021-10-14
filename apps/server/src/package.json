@@ -50,6 +50,7 @@
 		},
 		"publish": {
 			"provider": "github",
+			"repo": "ever-gauzy-server",
 			"releaseType": "release"
 		},
 		"mac": {

@@ -23,7 +23,7 @@ log.catchErrors({
 			})
 			.then((result) => {
 				if (result.response === 1) {
-					submitIssue('https://github.com/ever-co/ever-gauzy/issues/new', {
+					submitIssue('https://github.com/ever-co/ever-gauzy-desktop-timer/issues/new', {
 						title: `Automatic error report for Desktop Timer App ${versions.app}`,
 						body:
 							'Error:\n```' +
@@ -404,7 +404,7 @@ ipcMain.on('open_browser', (event, arg) => {
 
 ipcMain.on('check_for_update', async (event, arg) => {
 	const updaterConfig = {
-		repo: 'ever-gauzy',
+		repo: 'ever-gauzy-desktop-timer',
 		owner: 'ever-co',
 		typeRelease: 'releases'
 	};

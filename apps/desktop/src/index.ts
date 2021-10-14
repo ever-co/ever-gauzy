@@ -22,7 +22,7 @@ log.catchErrors({
 			})
 			.then((result) => {
 				if (result.response === 1) {
-					submitIssue('https://github.com/ever-co/ever-gauzy/issues/new', {
+					submitIssue('https://github.com/ever-co/ever-gauzy-desktop/issues/new', {
 						title: `Automatic error report for Desktop App ${versions.app}`,
 						body:
 							'Error:\n```' +
@@ -490,10 +490,38 @@ ipcMain.on('open_browser', (event, arg) => {
 	shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', (event, arg) => {
-	autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-		cancellationToken = downloadPromise.cancellationToken;
-	});
+ipcMain.on('check_for_update', async (event, arg) => {
+	const updaterConfig = {
+		repo: 'ever-gauzy-desktop',
+		owner: 'ever-co',
+		typeRelease: 'releases'
+	};
+	let latestReleaseTag = null;
+	try {
+		latestReleaseTag = await fetch(
+			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
+			{
+				method: 'GET',
+				headers: {
+					Accept: 'application/json'
+				}
+			}
+		).then((res) => res.json());
+	} catch (error) {}
+
+	if (latestReleaseTag) {
+		autoUpdater.setFeedURL({
+			channel: 'latest',
+			provider: 'generic',
+			url: `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
+		});
+		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
+			if (cancellationToken)
+				cancellationToken = downloadPromise.cancellationToken;
+		});
+	} else {
+		settingsWindow.webContents.send('error_update');
+	}
 });
 
 autoUpdater.on('update-available', () => {
