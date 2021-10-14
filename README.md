@@ -73,7 +73,13 @@ Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 ### Download
 
-You can download Gauzy Platform, Gauzy Server or Desktop Apps (Windows/Mac/Linux) directly from [Github Releases](https://github.com/ever-co/ever-gauzy/releases) page or check https://web.gauzy.co/downloads if you want more simple way to download different Gauzy installations.
+You can download Gauzy Platform, Gauzy Server or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
+
+In addition, all downloads are also available from the following pages:
+- [Gauzy Releases](https://github.com/ever-co/ever-gauzy/releases)
+- [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
+- [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
+- [Desktop Timer App Releases](https://github.com/ever-co/ever-gauzy-desktop-timer/releases)
 
 ### Production (SaaS, WIP)
 
@@ -95,7 +101,7 @@ We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux):
 
 More information about our Server & Desktop Apps:
 
--   Download for your OS directly from [Github Releases](https://github.com/ever-co/ever-gauzy/releases) page or check https://web.gauzy.co/downloads if you want more simple way to download different Gauzy installations.
+-   Download for your OS from the official [Downloads](https://web.gauzy.co/downloads) page or see section "Download" above for other links to our releases pages.
 -   Setup Gauzy Server with default choices in Setup Wizard and run it.
 -   You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such Admin user is not an employee, so you will not be able to track time.
