@@ -106,13 +106,12 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	private async _getAllHolidays() {
 		const holidays = new Holidays();
-		const currentMoment = new Date();
-		const countryCode = this.currentUserCountryCode || this.organizationCountryCode || ENV.DEFAULT_COUNTRY;
+		const countryCode = this.organizationCountryCode || this.currentUserCountryCode || ENV.DEFAULT_COUNTRY;
 
 		if (countryCode) {
 			holidays.init(countryCode);
 			this.holidays = holidays
-				.getHolidays(currentMoment.getFullYear())
+				.getHolidays(moment().year())
 				.filter((holiday) => holiday.type === 'public');
 		} else {
 			this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
@@ -270,9 +269,9 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				tenantId
 			})
 			.pipe(first())
-			.subscribe((res) => {
-				this.policies = res.items;
-				this.policy = this.policies[0];
+			.subscribe(({ items }) => {
+				this.policies = items;
+				this.policy = items[0];
 			});
 	}
 

@@ -82,9 +82,7 @@ export class TimeOffRequest
     */
 	// TimeOff Policy
 	@ApiProperty({ type: () => TimeOffPolicy })
-	@IsOptional()
-	@ManyToOne(() => TimeOffPolicy, {
-		nullable: false,
+	@ManyToOne(() => TimeOffPolicy, (policy) => policy.timeOffRequests, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -94,7 +92,7 @@ export class TimeOffRequest
 	@RelationId((it: TimeOffRequest) => it.policy)
 	@IsString()
 	@Index()
-	@Column({ nullable: false })
+	@Column()
 	policyId?: string;
 
 	/*
