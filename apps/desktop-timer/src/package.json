@@ -38,7 +38,7 @@
 		},
 		"publish": {
 			"provider": "github",
-			"repo": "ever-co/ever-gauzy-desktop-timer" ,
+			"repo": "ever-gauzy-desktop-timer",
 			"releaseType": "release"
 		},
 		"mac": {
