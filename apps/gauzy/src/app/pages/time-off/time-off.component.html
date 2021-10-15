@@ -113,7 +113,7 @@
 		<ng-template #gridLayout>		
 			<div class="grid-scroll-container">
 				<ul class="flex-container">
-					<li class="flex-item" *ngFor="let x of timeOffData">
+					<li class="flex-item" *ngFor="let x of timeOffs">
 						<div class="fullName" (click)="navigateToEmployee(x)">
 							<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
 							<span>{{ x.fullName }}</span>

@@ -12,6 +12,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
+import { isNotEmpty } from '@gauzy/common-angular';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import {
 	EmployeesService,
@@ -42,27 +43,36 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		private readonly organizationService: OrganizationsService
 	) {}
 
-	@ViewChild('employeeSelector')
+	/**
+	 * Employee Selector
+	 */
 	employeeSelector: EmployeeSelectorComponent;
+	@ViewChild('employeeSelector') set content(component: EmployeeSelectorComponent) {
+		if (component) {
+			this.employeeSelector = component;
+		}
+	}
 
-	@Input() type: ITimeOff | string;
+	@Input() type: string;
+
+	/*
+	* Getter & Setter
+	*/
+	_timeOff: ITimeOff;
+	get timeOff(): ITimeOff {
+		return this._timeOff;
+	}
+	@Input() set timeOff(value: ITimeOff) {
+		this._timeOff = value;
+		this.patchFormValue();
+	};
 
 	policies: ITimeOffPolicy[] = [];
 	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
 	holidays = [];
 	selectedEmployee: any;
-	documentUrl: any;
-	description = '';
-	downloadDocUrl = '';
-	uploadDocUrl = '';
-	status: string;
-	holidayName: string;
 	policy: ITimeOffPolicy;
-	startDate: Date = null;
-	endDate: Date = null;
-	requestDate: Date;
-	invalidInterval: boolean;
 	isHoliday = false;
 	isEditMode = false;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
@@ -81,7 +91,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			start: ['', Validators.required],
 			end: ['', Validators.required],
 			policy: ['', Validators.required],
-			requestDate: [new Date()],
 			documentUrl: [],
 			status: []
 		}, { 
@@ -99,6 +108,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				debounceTime(200),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this._initializeForm()),
+				tap(() => this._getPolicies()),
+				tap(() => this._getOrganizationEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -120,24 +131,29 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	private async _initializeForm() {
 		await this._getFormData();
-		this.setForm();
 	}
 
-	setForm() {
+	/**
+	 * Patch form value on edit section 
+	 */
+	patchFormValue() {
+		// patch form value
 		this.form.patchValue({
-			description: this.description,
-			start: this.startDate,
-			end: this.endDate,
-			policy: this.policy,
-			documentUrl: this.uploadDocUrl,
-			status: ''
+			start: this.timeOff.start,
+			end: this.timeOff.end,
+			description: this.timeOff.description,
+			policy: this.timeOff.policy,
+			status: this.timeOff.status,
+			documentUrl: this.timeOff.documentUrl
 		});
-		this.documentUrl = this.form.get('documentUrl');
+
+		this.policy = this.timeOff.policy;
+		this.selectedEmployee = this.timeOff['employees'][0];
+		this.employeesArr = this.timeOff['employees'];
 	}
 
 	addRequest() {
 		this.selectedEmployee = this.employeeSelector.selectedEmployee;
-
 		this._checkFormData();
 
 		if (this.selectedEmployee.id) {
@@ -153,14 +169,16 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this.documentsService
 			.getAll({ tenantId, organizationId })
 			.pipe(first())
-			.subscribe((docs) => {
-				if (reqType === 'paid') {
-					this.downloadDocUrl = docs.items[0].documentUrl;
-				} else {
-					this.downloadDocUrl = docs.items[1].documentUrl;
+			.subscribe(({ items }) => {
+				if (isNotEmpty(items)) {
+					let downloadDocUrl: string; 
+					if (reqType === 'paid') {
+						downloadDocUrl = items[0].documentUrl;
+					} else {
+						downloadDocUrl = items[1].documentUrl;
+					}
+					window.open(`${downloadDocUrl}`);
 				}
-
-				window.open(`${this.downloadDocUrl}`);
 			});
 	}
 
@@ -174,7 +192,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	private _createNewRecord() {
-		if (this.form.invalid && this.invalidInterval) {
+		if (this.form.invalid) {
 			return;
 		}
 		const { tenantId } = this.store.user;
@@ -186,23 +204,15 @@ export class TimeOffRequestMutationComponent implements OnInit {
 					employees: this.employeesArr,
 					organizationId,
 					tenantId,
-					isHoliday: this.isHoliday
+					isHoliday: this.isHoliday,
+					requestDate: new Date()
 				},
-				this.form.value
+				this.form.getRawValue()
 			)
 		);
-
-		this.invalidInterval = false;
 	}
 
 	private _checkFormData() {
-		const { start, end, requestDate } = this.form.value;
-
-		if (start > end || requestDate > start) {
-			this.invalidInterval = true;
-			this.toastrService.danger('TOASTR.MESSAGE.INTERVAL_ERROR');
-		}
-
 		if (this.policy.requiresApproval) {
 			this.form.patchValue({
 				status: StatusTypesEnum.REQUESTED
@@ -241,18 +251,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		if (this.type === 'holiday') {
 			this.isHoliday = true;
 			this._getAllHolidays();
-		} else if (this.type.hasOwnProperty('id')) {
-			this.isEditMode = true;
-			this.selectedEmployee = this.type['employees'][0];
-			this.policy = this.type['policy'];
-			this.startDate = this.type['start'];
-			this.endDate = this.type['end'];
-			this.description = this.type['description'];
-			this.employeesArr = this.type['employees'];
 		}
-
-		this._getPolicies();
-		this._getOrganizationEmployees();
 	}
 
 	private _getPolicies() {
@@ -263,16 +262,15 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.timeOffService
-			.getAllPolicies(['employees'], {
-				organizationId,
-				tenantId
-			})
-			.pipe(first())
-			.subscribe(({ items }) => {
-				this.policies = items;
-				this.policy = items[0];
-			});
+		this.timeOffService.getAllPolicies(['employees'], {
+			organizationId,
+			tenantId
+		})
+		.pipe(
+			first(),
+			tap(({ items }) => this.policies = items)
+		)
+		.subscribe();
 	}
 
 	private _getOrganizationEmployees() {
@@ -287,8 +285,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			organizationId,
 			tenantId
 		})
-		.pipe(first())
-		.subscribe((res) => (this.orgEmployees = res.items));
+		.pipe(
+			first(),
+			tap(({ items }) => this.orgEmployees = items)
+		)
+		.subscribe();
 	}
 
 	onPolicySelected(policy: ITimeOffPolicy) {
@@ -299,12 +300,17 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this.employeeIds = employees;
 	}
 
-	onHolidaySelected(holiday) {
-		this.startDate = holiday.start;
-		this.endDate = holiday.end || null;
-		this.description = holiday.name;
-
-		this.setForm();
+	/**
+	 * Patch value on holiday selected
+	 * 
+	 * @param holiday 
+	 */
+	onHolidaySelected(holiday: any) {
+		this.form.patchValue({
+			start: holiday.start,
+			end: holiday.end || null,
+			description: holiday.name
+		});
 	}
 
 	close() {
