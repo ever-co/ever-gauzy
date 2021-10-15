@@ -192,7 +192,7 @@ export function getDateRangeFormat(
 export function generateSlug(string: string) {
 	return slugify(string, {
 		replacement: '-', // replace spaces with replacement character, defaults to `-`
-		remove: /[*+~()'"!:@]/g, // remove characters that match regex, defaults to `undefined`
+		remove: /[*+~()'"!:@,.]/g, // remove characters that match regex, defaults to `undefined`
 		lower: true, // convert to lower case, defaults to `false`
 		trim: true // trim leading and trailing replacement chars, defaults to `true`
 	});
