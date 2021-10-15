@@ -16,7 +16,17 @@
 				[nbDatepicker]="formRangePicker"
 			/>
 			<nb-rangepicker #formRangePicker></nb-rangepicker>
+			<div *ngIf="hasTodaybtnWithCustom" class="input-group-append ml-2" id="button-addon4">
+				<button
+					nbButton
+					status="primary"
+					(click)="customRangeToday()"
+				>
+					{{ 'TIMESHEET.TODAY' | translate }}
+				</button>
+			</div>
 		</div>
+		
 		<ng-template #datePicker>
 			<div class="input-group" *ngIf="hasDateRangeFilter">
 				<div class="input-group-append" id="button-addon4">

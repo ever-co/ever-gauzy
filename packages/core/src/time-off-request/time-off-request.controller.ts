@@ -18,14 +18,15 @@ import {
 	ITimeOffCreateInput,
 	ITimeOffUpdateInput,
 	PermissionsEnum,
+	RolesEnum,
 	StatusTypesEnum
 } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffStatusCommand } from './commands';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
+import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions, Roles } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffRequest')
@@ -56,7 +57,8 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(RoleGuard, PermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put('approval/:id')
 	async timeOffRequestApproved(
@@ -84,7 +86,8 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(RoleGuard, PermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put('denied/:id')
 	async timeOffRequestDenied(

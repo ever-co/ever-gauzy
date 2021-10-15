@@ -93,6 +93,7 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
+	@Input() hasTodaybtnWithCustom = false;
 
 	activityLevel = ActivityLevel;
 	sliderOptions: Partial<Options> = {
@@ -223,6 +224,13 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	isTodayDisabled() {
 		return moment(this.selectedDate).isSame(moment(), 'day');
+	}
+
+	customRangeToday() {
+		this.selectedDateRange = {
+			start: this.today,
+			end: this.today
+		};
 	}
 
 	nextDay() {

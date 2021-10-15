@@ -82,9 +82,9 @@ export enum StatusTypesEnum {
 }
 
 export enum StatusTypesMapRequestApprovalEnum {
-	Requested = 1,
-	Approved = 2,
-	Denied = 3
+	REQUESTED = 1,
+	APPROVED = 2,
+	DENIED = 3
 }
 export interface ITimeOffPolicyVM {
 	id: string;

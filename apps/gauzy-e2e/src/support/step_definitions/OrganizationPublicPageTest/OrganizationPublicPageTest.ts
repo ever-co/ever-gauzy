@@ -34,6 +34,7 @@ const imgUrl = faker.image.avatar();
 const employeeFullName = `${firstName} ${lastName}`;
 
 const organizationName = faker.company.companyName();
+const organizationNameTrim = organizationName.toLocaleLowerCase().replace(' ', '');
 const taxId = faker.random.alphaNumeric();
 
 // Login with email
@@ -46,6 +47,7 @@ Given('Login with default credentials', () => {
 // Add new organization
 Then('User can see grid button', () => {
 	organizationPublicPage.gridBtnExists();
+	console.log(organizationNameTrim)
 });
 
 And('User can click on second grid button to change view', () => {
@@ -370,7 +372,7 @@ Then('Notification message will appear', () => {
 And('User can navigate to organization public page', () => {
 	logoutLogin();
 
-	cy.visit(`/#/share/organization/${organizationName}`);
+	cy.visit(`/#/share/organization/${organizationNameTrim}`);
 });
 
 And('User can see Edit Page button', () => {
