@@ -18,9 +18,9 @@ Given('Login with default credentials', () => {
 
 // Create new invite
 Then('User can visit Candidates invites page', () => {
-	dashboardPage.verifyAccountingDashboardIfVisible();
-	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
 	cy.intercept('GET', '/api/report/menu-items*').as('waitMenuItems');
+	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/employees/candidates/invites', { timeout: pageLoadTimeout });
 
 	cy.wait(['@waitMenuItems','@waitUserOrganization']);
