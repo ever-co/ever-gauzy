@@ -76,7 +76,9 @@ export class DailyStatisticsComponent extends ReportBaseComponent implements OnI
 			this.logRequest,
 			'source',
 			'activityLevel',
-			'logType'
+			'logType',
+			'startDate',
+			'endDate'
 		);
 		const {
 			employeeIds = [],
