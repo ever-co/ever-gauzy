@@ -6,10 +6,9 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import { SeoService } from './@core/utils/seo.service';
-import { Store } from './@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { LanguagesService } from './@core/services/languages.service';
++import { LanguagesService, Store } from './@core/services';
 import { environment } from '../environments/environment';
 import * as _ from 'underscore';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -24,11 +23,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 	loading: boolean = true;
 
 	constructor(
-		private analytics: AnalyticsService,
-		private seoService: SeoService,
-		private store: Store,
-		private languagesService: LanguagesService,
-		public translate: TranslateService
+		private readonly analytics: AnalyticsService,
+		private readonly seoService: SeoService,
+		private readonly store: Store,
+		private readonly languagesService: LanguagesService,
+		public readonly translate: TranslateService
 	) {}
 
 	async ngOnInit() {
