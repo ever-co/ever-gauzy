@@ -174,8 +174,8 @@
 							'FORM.PLACEHOLDERS.UPLOADER_DOCUMENT_PLACEHOLDER'
 								| translate
 						"
-						[fileUrl]="uploadDocUrl"
-						(uploadedImgUrl)="documentUrl.setValue($event)"
+						[fileUrl]="form.get('documentUrl').value"
+						(uploadedImgUrl)="form.get('documentUrl').setValue($event)"
 						[status]="
 							isInvalidControl('documentUrl')
 								? 'danger'
