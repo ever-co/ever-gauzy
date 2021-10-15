@@ -7,6 +7,9 @@
     }
   }
 }
+::ng-deep nb-auth-block {
+  max-width: 90% !important;
+}
 
 ::ng-deep {
   .iubenda_fluid_policy h2 {
@@ -43,138 +46,19 @@
     color: #615e5e;
   }
 
-
-
-  ol,
-  ul {
-    list-style: none
-  }
-
-  q:before,
-  q:after,
-  blockquote:before,
-  blockquote:after {
-    content: ""
-  }
-
-  a:focus {
-    outline: thin dotted
-  }
-
-  a:hover,
-  a:active {
-    outline: 0
-  }
-
-  article,
-  aside,
-  details,
-  figcaption,
-  figure,
-  footer,
-  header,
-  hgroup,
-  nav,
-  section {
-    display: block
-  }
-
-  audio,
-  canvas,
-  video {
-    display: inline-block;
-    *display: inline;
-    *zoom: 1
-  }
-
-  audio:not([controls]) {
-    display: none
-  }
-
-  sub,
-  sup {
-    font-size: 75%;
-    line-height: 0;
-    position: relative;
-    vertical-align: baseline
-  }
-
-  sup {
-    top: -0.5em
-  }
-
-  sub {
-    bottom: -0.25em
-  }
-
-  img {
-    border: 0;
-    -ms-interpolation-mode: bicubic
-  }
-
-  button,
-  input,
-  select,
-  textarea {
-    font-size: 100%;
-    margin: 0;
-    vertical-align: baseline;
-    *vertical-align: middle
-  }
-
-  button,
-  input {
-    line-height: normal;
-    *overflow: visible
-  }
-
-  button::-moz-focus-inner,
-  input::-moz-focus-inner {
-    border: 0;
-    padding: 0
-  }
-
-  button,
-  input[type="button"],
-  input[type="reset"],
-  input[type="submit"] {
-    cursor: pointer;
-    -webkit-appearance: button
-  }
-
-  input[type="search"] {
-    -webkit-appearance: textfield;
-    -webkit-box-sizing: content-box;
-    -moz-box-sizing: content-box;
-    box-sizing: content-box
-  }
-
-  input[type="search"]::-webkit-search-decoration {
-    -webkit-appearance: none
-  }
-
-  textarea {
-    overflow: auto;
-    vertical-align: top
-  }
-
-  html {
-    -webkit-font-smoothing: antialiased
-  }
-
-  p {
+  .iubenda_policy p {
     font-size: 13px;
     font-weight: normal;
     line-height: 18px;
     margin-bottom: 9px
   }
 
-  p small {
+  .iubenda_policy p small {
     font-size: 11px;
     color: #bfbfbf
   }
 
-  h1,
+  .iubenda_policy h1,
   h2,
   h3,
   h4,
@@ -184,76 +68,71 @@
     color: #59636D
   }
 
-  h1 {
+  .iubenda_policy h1 {
     margin-bottom: 18px;
     font-size: 30px;
     line-height: 2
   }
 
-  h1 small {
+  .iubenda_policy h1 small {
     font-size: 18px
   }
 
-  h2 {
+  .iubenda_policy h2 {
     font-size: 24px;
     margin-bottom: 18px;
     line-height: 1.5
   }
 
-  h2 small {
+  .iubenda_policy h2 small {
     font-size: 14px
   }
 
-  h3,
+  .iubenda_policy h3,
   h4,
   h5,
   h6 {
     margin-bottom: 9px
   }
 
-  h3 {
+  .iubenda_policy h3 {
     font-size: 18px
   }
 
-  h3 small {
+  .iubenda_policy h3 small {
     font-size: 14px
   }
 
-  h4 {
+  .iubenda_policy h4 {
     font-size: 16px
   }
 
-  h4 small {
+  .iubenda_policy h4 small {
     font-weight: bold;
     font-size: 13px
   }
 
-  h5 {
+  .iubenda_policy h5 {
     font-size: 13px;
     padding-top: 19px
   }
 
-  h6 {
+  .iubenda_policy h6 {
     font-size: 13px;
     color: #bfbfbf;
     text-transform: uppercase
   }
 
-  ul ul,
-  ul ol,
-  ol ol,
-  ol ul {
+  .iubenda_policy ul ul {
     margin: 0
   }
 
-  ul.styled,
-  ul {
+  .iubenda_policy ul.styled {
     list-style: disc;
     padding-top: 5px
   }
 
-  ul.styled li,
-  ul li {
+  .iubenda_policy ul.styled li {
     list-style: disc;
     line-height: 19px;
     font-size: 13px;
@@ -261,67 +140,67 @@
     margin-top: 2px
   }
 
-  ol {
+  .iubenda_policy ol {
     list-style: decimal
   }
 
-  ul.unstyled {
+  .iubenda_policy ul.unstyled {
     list-style: none;
     margin-left: 0
   }
 
-  dl {
+  .iubenda_policy dl {
     margin-bottom: 18px
   }
 
-  dl dt,
+  .iubenda_policy dl dt,
   dl dd {
     line-height: 18px
   }
 
-  dl dt {
+  .iubenda_policy dl dt {
     font-weight: bold
   }
 
-  dl dd {
+  .iubenda_policy dl dd {
     margin-left: 9px
   }
 
-  hr {
+  .iubenda_policy hr {
     margin: 0 0 19px;
     border: 0;
     border-bottom: 1px solid #eee
   }
 
-  strong {
+  .iubenda_policy strong {
     font-style: inherit;
     font-weight: bold
   }
 
-  em {
+  .iubenda_policy em {
     font-style: italic;
     font-weight: inherit;
     line-height: inherit
   }
 
-  .muted {
+  .iubenda_policy .muted {
     color: #bfbfbf
   }
 
-  blockquote {
+  .iubenda_policy blockquote {
     margin-bottom: 18px;
     border-left: 5px solid #eee;
     padding-left: 15px
   }
 
-  blockquote p {
+  .iubenda_policy blockquote p {
     font-size: 14px;
     font-weight: 300;
     line-height: 18px;
     margin-bottom: 0
   }
 
-  blockquote small {
+  .iubenda_policy blockquote small {
     display: block;
     font-size: 12px;
     font-weight: 300;
@@ -329,17 +208,17 @@
     color: #bfbfbf
   }
 
-  blockquote small:before {
+  .iubenda_policy blockquote small:before {
     content: '\2014 \00A0'
   }
 
-  address {
+  .iubenda_policy address {
     display: block;
     line-height: 18px;
     margin-bottom: 18px
   }
 
-  code,
+  .iubenda_policy code,
   pre {
     padding: 0 3px 2px;
     font-family: Monaco, Andale Mono, Courier New, monospace;
@@ -347,13 +226,13 @@
     border-radius: 3px
   }
 
-  code {
+  .iubenda_policy code {
     background-color: #fee9cc;
     color: rgba(0, 0, 0, 0.75);
     padding: 1px 3px
   }
 
-  pre {
+  .iubenda_policy pre {
     background-color: #f5f5f5;
     display: block;
     padding: 17px;
@@ -368,14 +247,14 @@
     word-wrap: break-word
   }
 
-  .breadcrumbs {
+  .iubenda_policy .breadcrumbs {
     padding: 0 0 10px 0;
     margin-bottom: 30px;
     border-bottom: 1px solid #F6F6F6;
     width: 100%
   }
 
-  .breadcrumbs>li {
+  .iubenda_policy .breadcrumbs>li {
     float: left;
     filter: alpha(opacity=50);
     -khtml-opacity: 0.5;
@@ -383,30 +262,23 @@
     opacity: 0.5
   }
 
-  .breadcrumbs>li:not(:last-child):after {
+  .iubenda_policy .breadcrumbs>li:not(:last-child):after {
     color: #333B43;
     padding: 0 10px;
     content: "\203a"
   }
 
-  .breadcrumbs+.pills,
+  .iubenda_policy .breadcrumbs+.pills,
   .breadcrumbs+.sec_tabs {
     margin-top: -15px
   }
 
-  .table {
-    display: table;
-    border-collapse: collapse;
-    padding: 0 !important;
-    margin: 0
-  }
-
-  .cust_row {
+  .iubenda_policy .cust_row {
     display: table-row;
     margin: 0
   }
 
-  .column {
+  .iubenda_policy .column {
     display: table-cell;
     vertical-align: top;
     padding: 30px
@@ -730,34 +602,34 @@
     margin-left: 240px
   }
 
-  a {
+  .iubenda_policy a {
     text-decoration: none;
     font-weight: bold;
     border-bottom: 1px solid #F6F6F6;
     color: #333b43
   }
 
-  a.unstyled {
+  .iubenda_policy a.unstyled {
     border-bottom: 0
   }
 
-  a:hover:not(.btn) {
+  .iubenda_policy a:hover:not(.btn) {
     color: #121518;
     border-bottom-color: #D6D6D6;
     -webkit-transition: 0.1s linear all;
     transition: 0.1s linear all
   }
 
-  a:focus {
+  .iubenda_policy a:focus {
     outline: none
   }
 
-  a.no_border,
+  .iubenda_policy a.no_border,
   a.no_border:hover {
     border-bottom-width: 0
   }
 
-  .pull-right {
+  .iubenda_policy .pull-right {
     float: right
   }
 
@@ -873,26 +745,14 @@
     width: 23px
   }
 
-  p {
-    line-height: 19px;
-    margin: 0;
-    padding-top: 11px
-  }
-
-  address {
-    margin: 0;
-    line-height: inherit;
-    display: inline
-  }
-
-  a {
+  .iubenda_policy a {
     font-weight: normal;
     border-bottom: 1px solid #F0F0F0
   }
 
   .iub_content {
     position: relative;
-    padding: 25px 30px;
+    padding: 10px 30px;
     margin: 0 auto;
     border-radius: 3px 3px 0 0
   }
@@ -1260,7 +1120,6 @@
   }
 
   .iubenda_fluid_policy .iub_container {
-    margin-top: 30px;
     margin-bottom: 30px
   }
 
