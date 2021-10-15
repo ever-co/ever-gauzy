@@ -44,7 +44,7 @@ export class TimeOffComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	rows: Array<any> = [];
-	selectedStatus = 'ALL';
+	selectedStatus = StatusTypesEnum.ALL;
 	timeOffStatuses = Object.keys(StatusTypesEnum);
 	loading: boolean;
 	isRecordSelected: boolean = false;
@@ -317,7 +317,7 @@ export class TimeOffComponent
 
 		this.dialogService
 			.open(TimeOffRequestMutationComponent, {
-				context: { type: this.selectedTimeOffRecord }
+				context: { timeOff: this.selectedTimeOffRecord }
 			})
 			.onClose.pipe(untilDestroyed(this), first())
 			.subscribe((res) => {
@@ -458,13 +458,12 @@ export class TimeOffComponent
 						let employeeName: string;
 						let employeeImage: string;
 						let extendedDescription = '';
-						console.log(timeOff);
 
 						if (timeOff.employees.length !== 1) {
 							employeeName = this.getTranslation('TIME_OFF_PAGE.MULTIPLE_EMPLOYEES');
 							employeeImage = 'assets/images/avatars/people-outline.svg';
 						} else {
-							employeeName = `${timeOff.employees[0].user.firstName} ${timeOff.employees[0].user.lastName}`;
+							employeeName = `${timeOff.employees[0].fullName}`;
 							employeeImage = timeOff.employees[0].user.imageUrl;
 						}
 
@@ -579,9 +578,17 @@ export class TimeOffComponent
 		}
 	}
 
-	navigateToEmployee(rowData) {
-		if (rowData?.employees.length > 0) {
-			this.router.navigate([`/pages/employees/edit/${rowData.employees[0].id}`]);
+	/**
+	 * Navigate to employee edit section
+	 * 
+	 * @param row 
+	 */
+	navigateToEmployee(row: ITimeOff) {
+		if (row?.employees.length > 0) {
+			this.router.navigate([
+				`/pages/employees/edit`,
+				row.employees[0].id
+			]);
 		}
 	}
 

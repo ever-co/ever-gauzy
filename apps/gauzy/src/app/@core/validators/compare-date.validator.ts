@@ -10,14 +10,13 @@ export class CompareDateValidator {
 				toDate.setErrors({ invalid: true });
                 return { [toField]: true };
             }
-
             if (hasRequiredField(fromDate)) {
-                fromDate.setErrors({ invalid: true });
+                fromDate.setErrors({ required: true });
             } else {
                 fromDate.setErrors(null);
             }
             if (hasRequiredField(toDate)) {
-                toDate.setErrors({ invalid: true });
+                toDate.setErrors({ required: true });
             } else {
                 toDate.setErrors(null);
             }

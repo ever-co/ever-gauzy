@@ -66,7 +66,6 @@ export class TagService extends CrudService<Tag> {
 				query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
 					isSystem: false
 				});
-				console.log(query.getQueryAndParameters());
 			}
 		});
 		return { items, total };

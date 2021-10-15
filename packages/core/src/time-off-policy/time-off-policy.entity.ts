@@ -1,10 +1,15 @@
-import { Entity, Index, Column, ManyToMany } from 'typeorm';
-import { IEmployee, ITimeOffPolicy } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { Entity, Index, Column, ManyToMany, OneToMany } from 'typeorm';
+import {
+	IEmployee,
+	ITimeOff as ITimeOffRequest,
+	ITimeOffPolicy
+} from '@gauzy/contracts';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 import {
 	Employee,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	TimeOffRequest
 } from '../core/entities/internal';
 
 @Entity('time_off_policy')
@@ -27,6 +32,15 @@ export class TimeOffPolicy
 	@IsBoolean()
 	@Column()
 	paid: boolean;
+
+	/**
+	 * TimeOffRequest
+	 */
+	@ApiPropertyOptional({ type: () => TimeOffRequest, isArray: true })
+	@OneToMany(() => TimeOffRequest, (it) => it.policy, {
+		onDelete: 'SET NULL' 
+	})
+	timeOffRequests?: ITimeOffRequest[];
 
 	/*
     |--------------------------------------------------------------------------
