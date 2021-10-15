@@ -8,7 +8,7 @@ import { AnalyticsService } from './@core/utils/analytics.service';
 import { SeoService } from './@core/utils/seo.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
-+import { LanguagesService, Store } from './@core/services';
+import { LanguagesService, Store } from './@core/services';
 import { environment } from '../environments/environment';
 import * as _ from 'underscore';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
