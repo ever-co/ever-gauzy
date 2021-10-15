@@ -28,15 +28,12 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
      beforeInsert(event: InsertEvent<Organization>) {
         if (event) {
             const { entity } = event;
-            
-            if(entity.name) {
-                entity.profile_link = generateSlug(`${entity.name}`);
+            if(entity.name || entity.officialName) {
+                entity.profile_link = generateSlug(`${entity.name || entity.officialName}`);
             }
-
+ 
             if (!entity.imageUrl) {
-                entity.imageUrl = getOrganizationDummyImage(entity.name);
-                console.log(entity.imageUrl, "entity.imageUrl");
-                
+                entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
             }
         }
     }

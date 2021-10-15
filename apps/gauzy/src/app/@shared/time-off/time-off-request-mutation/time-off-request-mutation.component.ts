@@ -6,7 +6,8 @@ import {
 	ITimeOffPolicy,
 	ITimeOff,
 	IOrganization,
-	StatusTypesEnum
+	StatusTypesEnum,
+	IUser
 } from '@gauzy/contracts';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
@@ -17,7 +18,6 @@ import { EmployeeSelectorComponent } from '../../../@theme/components/header/sel
 import {
 	EmployeesService,
 	OrganizationDocumentsService,
-	OrganizationsService,
 	Store,
 	TimeOffService,
 	ToastrService
@@ -39,8 +39,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		private readonly timeOffService: TimeOffService,
 		private readonly employeesService: EmployeesService,
 		private readonly documentsService: OrganizationDocumentsService,
-		private readonly store: Store,
-		private readonly organizationService: OrganizationsService
+		private readonly store: Store
 	) {}
 
 	/**
@@ -77,8 +76,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	isEditMode = false;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
 	public organization: IOrganization;
-	organizationCountryCode: string;
-	currentUserCountryCode: string;
+	countryCode: string;
 	employeeIds: string[] = [];
 
 	/*
@@ -102,14 +100,30 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	ngOnInit() {
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user.employee),
+				tap(({ employee : { contact } }: IUser) => {
+					if (contact && contact.country) {
+						this.countryCode = contact.country;
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
 				debounceTime(200),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this._initializeForm()),
-				tap(() => this._getPolicies()),
+				tap((organization) => this.organization = organization),
+				tap(({ contact } : IOrganization) => {
+					if (contact && contact.country) {
+						this.countryCode = contact.country;
+					}
+				}),
+				tap(() => this._getFormData()),
 				tap(() => this._getOrganizationEmployees()),
+				tap(() => this._getPolicies()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -117,7 +131,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	private async _getAllHolidays() {
 		const holidays = new Holidays();
-		const countryCode = this.organizationCountryCode || this.currentUserCountryCode || ENV.DEFAULT_COUNTRY;
+		const countryCode = this.countryCode || ENV.DEFAULT_COUNTRY;
 
 		if (countryCode) {
 			holidays.init(countryCode);
@@ -127,10 +141,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		} else {
 			this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
 		}
-	}
-
-	private async _initializeForm() {
-		await this._getFormData();
 	}
 
 	/**
@@ -225,29 +235,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	private async _getFormData() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		const { items } = await this.organizationService.getAll(['contact'], {
-			id: organizationId,
-			tenantId
-		});
-		this.organization = items[0];
-
-		if (this.organization.contact) {
-			this.organizationCountryCode = this.organization.contact.country;
-		}
-
-		if (this.store.user.employeeId) {
-			this.employeesService
-				.getEmployeeById(this.store.user.employeeId, ['contact'])
-				.then((data) => {
-					if (data.contact) {
-						this.currentUserCountryCode = data.contact.country;
-					}
-				});
-		}
-
 		if (this.type === 'holiday') {
 			this.isHoliday = true;
 			this._getAllHolidays();

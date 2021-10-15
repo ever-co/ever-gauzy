@@ -35,16 +35,13 @@ export class TimeOffStatusHandler
 		if (!timeOffRequest) {
 			throw new NotFoundException('Request time off not found');
 		}
-		if (timeOffRequest.status === StatusTypesEnum.REQUESTED) {
-			timeOffRequest.status = status;
-			if (requestApproval) {
-				requestApproval.status =
-					StatusTypesMapRequestApprovalEnum[status];
-				await this.requestApprovalRepository.save(requestApproval);
-			}
-		} else {
-			throw new ConflictException('Request time off is Conflict');
+
+		timeOffRequest.status = status;
+		if (requestApproval) {
+			requestApproval.status = StatusTypesMapRequestApprovalEnum[status];
+			await this.requestApprovalRepository.save(requestApproval);
 		}
+
 		return await this.timeOffRequestRepository.save(timeOffRequest);
 	}
 }
