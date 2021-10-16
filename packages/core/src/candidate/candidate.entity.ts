@@ -126,25 +126,33 @@ export class Candidate
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @OneToOne 
     |--------------------------------------------------------------------------
     */
 
+	/**
+	 * Contact
+	 */
 	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.candidates, {
-		nullable: true,
-		onDelete: 'CASCADE'
+	@OneToOne(() => Contact, (contact) => contact.candidate, {
+		cascade: true,
+		onDelete: 'SET NULL'
 	})
-	contact: IContact;
+	@JoinColumn()
+	contact?: IContact;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.contact)
 	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	readonly contactId?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
 	@ApiProperty({ type: () => OrganizationPosition })
 	@ManyToOne(() => OrganizationPosition, { nullable: true })
 	@JoinColumn()

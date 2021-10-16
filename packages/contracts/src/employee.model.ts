@@ -50,7 +50,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	timesheets?: ITimesheet[];
 	tasks?: ITask[];
 	timeSlots?: ITimeSlot[];
-	contact: IContact;
+	contact?: IContact;
 	averageIncome?: number;
 	totalWorkHours?: number;
 	averageExpenses?: number;
