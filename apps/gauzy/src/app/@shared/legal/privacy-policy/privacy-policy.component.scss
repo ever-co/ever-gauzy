@@ -1,7 +1,7 @@
 @import 'themes';
 
-nb-auth-block {
-  max-width: 90% !important;
+::ng-deep nb-auth-block {
+  max-width: 90%;
 }
 
 ::ng-deep {
