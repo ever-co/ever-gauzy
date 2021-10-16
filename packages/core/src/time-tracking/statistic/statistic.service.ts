@@ -56,28 +56,29 @@ export class StatisticService {
 		private readonly configService: ConfigService
 	) {}
 
+	/**
+	 * GET Time Tracking Dashboard Counts Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
 		const {
 			employeeId,
 			organizationId,
 			startDate,
 			endDate,
-			date = new Date(),
 			projectId,
 			logType = [],
-			source = []
+			source = [],
+			date = new Date(),
 		} = request;
-
-		let { start, end } = getDateRange(date, 'week');
-		if (startDate && endDate) {
-			const range = getDateRange(startDate, endDate);
-			start = range['start'];
-			end = range['end'];
-		}
 
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
-
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -376,17 +377,27 @@ export class StatisticService {
 		};
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Worked Members Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
 		const {
 			employeeId,
 			organizationId,
-			date = new Date(),
-			projectId
+			projectId,
+			startDate,
+			endDate,
+			date = new Date()
 		} = request;
+
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
-		const { start, end } = getDateRange(date, 'week');
-
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -699,16 +710,27 @@ export class StatisticService {
 		return employees;
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Projects Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getProjects(request: IGetProjectsStatistics): Promise<IProjectsStatistics[]> {
-		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
 		const {
 			employeeId,
 			organizationId,
+			projectId,
 			date = new Date(),
-			projectId
+			startDate,
+			endDate
 		} = request;
-		const { start, end } = getDateRange(date, 'week');
+		
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 
 		const query = this.organizationProjectsRepository.createQueryBuilder();
 		query
@@ -835,17 +857,27 @@ export class StatisticService {
 		return [];
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Tasks Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getTasks(request: IGetTasksStatistics) {
-		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
 		const {
 			employeeId,
 			organizationId,
+			projectId,
 			date = new Date(),
-			projectId
+			startDate,
+			endDate
 		} = request;
-		const { start, end } = getDateRange(date, 'week');
 
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -966,13 +998,27 @@ export class StatisticService {
 		}
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Manual Time Logs Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async manualTimes(request: IGetManualTimesStatistics) {
-		const date = request.date || new Date();
-		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
-		const { employeeId, organizationId, projectId } = request;
-		const { start, end } = getDateRange(date, 'week');
+		const {
+			employeeId,
+			organizationId,
+			projectId,
+			date = new Date(),
+			startDate,
+			endDate
+		} = request;
 
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -1068,11 +1114,27 @@ export class StatisticService {
 		}
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Activities Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getActivites(request: IGetActivitiesStatistics) {
-		const date = request.date || new Date();
+		const {
+			employeeId,
+			organizationId,
+			projectId,
+			date = new Date(),
+			startDate,
+			endDate
+		} = request;
+
 		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
-		const { employeeId, organizationId, projectId } = request;
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -1110,7 +1172,6 @@ export class StatisticService {
 				.addGroupBy(`"${query.alias}"."title"`)
 				.andWhere(
 					new Brackets((qb) => {
-						const { start, end } = getDateRange(date, 'week');
 						if (
 							this.configService.dbConnectionOptions.type ===
 							'sqlite'
@@ -1170,7 +1231,6 @@ export class StatisticService {
 				)
 				.andWhere(
 					new Brackets((qb) => {
-						const { start, end } = getDateRange(date, 'week');
 						if (
 							this.configService.dbConnectionOptions.type ===
 							'sqlite'
@@ -1221,15 +1281,27 @@ export class StatisticService {
 		}
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Time Slots Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics) {
-		let employees: ITimeSlotStatistics[] = [];
-		const date = request.date || new Date();
-		
+		const {
+			employeeId,
+			organizationId,
+			projectId,
+			date = new Date(),
+			startDate,
+			endDate
+		} = request;
+
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		
-		const { employeeId, organizationId, projectId } = request;
-		const { start, end } = getDateRange(date, 'week');
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 
 		const query = this.employeeRepository.createQueryBuilder();
 		query
@@ -1282,6 +1354,7 @@ export class StatisticService {
 			});
 		}
 
+		let employees: ITimeSlotStatistics[] = [];
 		employees = await query
 			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
 				organizationId

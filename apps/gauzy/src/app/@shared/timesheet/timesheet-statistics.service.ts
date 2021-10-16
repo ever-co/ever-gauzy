@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import {
 	IGetTimeSlotStatistics,
 	IGetActivitiesStatistics,
@@ -26,81 +27,85 @@ export class TimesheetStatisticsService {
 
 	getCounts(request: IGetCountsStatistics) {
 		const params = toParams(request);
-		return this.http
-			.get<ICountsStatistics>(
+		return firstValueFrom(
+			this.http.get<ICountsStatistics>(
 				`${API_PREFIX}/timesheet/statistics/counts`,
 				{
 					params
 				}
 			)
-			.toPromise();
+		);
 	}
 
 	getTimeSlots(request?: IGetTimeSlotStatistics) {
 		const params = toParams(request);
-		return this.http
-			.get<ITimeSlotStatistics[]>(
+		return firstValueFrom(
+			this.http.get<ITimeSlotStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/time-slots`,
 				{
 					params
 				}
 			)
-			.toPromise();
+		);
 	}
 
 	getActivities(request?: IGetActivitiesStatistics) {
 		const params = toParams(request);
-		return this.http
-			.get<IActivitiesStatistics[]>(
+		return firstValueFrom(
+			this.http.get<IActivitiesStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/activities`,
-				{ params }
+				{
+					params
+				}
 			)
-			.toPromise();
+		);
 	}
 
 	getTasks(request: IGetTasksStatistics) {
 		const params = toParams(request);
-		return this.http
-			.get<ITasksStatistics[]>(
+		return firstValueFrom(
+			this.http.get<ITasksStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/tasks`,
 				{
 					params
 				}
 			)
-			.toPromise();
+		);
 	}
 
 	getManualTimes(request: any) {
 		const params = toParams(request);
-		return this.http
-			.get<IManualTimesStatistics[]>(
+		return firstValueFrom(
+			this.http.get<IManualTimesStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/manual-times`,
-				{ params }
+				{
+					params
+				}
 			)
-			.toPromise();
+		);
 	}
 
 	getProjects(request?: IGetProjectsStatistics) {
 		const params = toParams(request);
-		return this.http
-			.get<IProjectsStatistics[]>(
+		return firstValueFrom(
+			this.http.get<IProjectsStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/projects`,
 				{
 					params
 				}
 			)
-			.toPromise();
+		);
 	}
 
 	getMembers(request: IGetMembersStatistics) {
 		const params = toParams(request);
-		return this.http
-			.get<IMembersStatistics[]>(
+		return firstValueFrom(
+			this.http.get<IMembersStatistics[]>(
 				`${API_PREFIX}/timesheet/statistics/members`,
 				{
 					params
 				}
 			)
-			.toPromise();
+		);
 	}
 }
