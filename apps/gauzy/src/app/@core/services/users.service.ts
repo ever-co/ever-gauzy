@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IUser, IUserFindInput, IUserUpdateInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -59,17 +60,17 @@ export class UsersService {
 	}
 
 	delete(userId, user) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.API_URL}/${userId}`, user)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	deleteAllData(userId) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.API_URL}/reset/${userId}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	updatePreferredLanguage(

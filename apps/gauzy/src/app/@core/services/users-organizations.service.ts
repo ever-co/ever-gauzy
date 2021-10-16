@@ -5,7 +5,7 @@ import {
 	IUserOrganizationCreateInput,
 	IUserOrganizationFindInput
 } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -18,16 +18,15 @@ export class UsersOrganizationsService {
 		findInput?: IUserOrganizationFindInput
 	): Promise<{ items: IUserOrganization[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IUserOrganization[]; total: number }>(
 				`${API_PREFIX}/user-organization`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	setUserAsInactive(id: string): Promise<IUserOrganization> {
