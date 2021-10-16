@@ -34,5 +34,8 @@ export const TimeOffPage = {
 	addNewPolicyInputCss: '[placeholder="Policy Name"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyPolicyCss: 'div.ng-star-inserted'
+	verifyPolicyCss: 'div.ng-star-inserted',
+	holidayNameSelectCss: 'nb-select[ng-reflect-placeholder="Select Holiday name"]',
+	employeeSelectorCss: 'nb-select[ng-reflect-placeholder="Add or Remove Employees"]',
+	timeOffPolicySelectorCss: 'nb-select[ng-reflect-placeholder="Select Time-off Policy"]'
 };

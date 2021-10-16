@@ -222,7 +222,7 @@ export const waitElementToLoad = (loc: any) => {
 export const dragNDrop = (source: any, index: number, target: any) => {
 	cy.get(source, { timeout: defaultCommandTimeout })
 		.eq(index)
-		.move({ x: 100, y: 100, force: true });
+		.move({ deltaX: 100, deltaY: 100, force: true });
 };
 
 export const triggerSlider = (loc: any) => {
