@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IUser, IUserFindInput, IUserUpdateInput } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
