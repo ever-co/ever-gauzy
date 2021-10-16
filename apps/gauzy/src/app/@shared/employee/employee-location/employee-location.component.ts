@@ -72,16 +72,16 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 			...location,
 			...{ latitude, longitude }
 		};
-		const contactData = {
-			...this.form.value,
-			contact
-		};
-
+		
 		if (this.form.valid && this.isCandidate) {
-			this.candidateStore.candidateForm = contactData;
+			this.candidateStore.candidateForm = {
+				contact
+			};
 		}
 		if (this.form.valid && this.isEmployee) {
-			this.employeeStore.employeeForm = contactData;
+			this.employeeStore.employeeForm = {
+				contact
+			};
 		}
 	}
 

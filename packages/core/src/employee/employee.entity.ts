@@ -300,8 +300,7 @@ export class Employee
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => User })
-	@OneToOne(() => User, {
-		nullable: false,
+	@OneToOne(() => User, (user) => user.employee, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -315,20 +314,16 @@ export class Employee
 	@Column()
 	readonly userId: string;
 
-	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
-
-	// Employee Contact
+	/**
+	 * Contact
+	 */
 	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.employees, {
-		nullable: true,
+	@OneToOne(() => Contact, (contact) => contact.employee, {
+		cascade: true,
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	contact: IContact;
+	contact?: IContact;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.contact)
@@ -336,6 +331,12 @@ export class Employee
 	@Index()
 	@Column({ nullable: true })
 	readonly contactId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
 
 	// Employee Organization Position
 	@ApiProperty({ type: () => OrganizationPosition })

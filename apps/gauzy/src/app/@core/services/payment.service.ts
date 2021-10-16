@@ -12,6 +12,7 @@ import {
 import { first } from 'rxjs/operators';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root'
@@ -62,15 +63,15 @@ export class PaymentService {
 			.toPromise();
 	}
 	getReportChartData(request: IGetPaymentInput) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IPaymentReportChartData[]>(
 				`${API_PREFIX}/payments/report/chart-data`,
 				{
 					params: toParams(request)
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	sendReceipt(payment: IPayment, invoice: IInvoice): Promise<any> {
