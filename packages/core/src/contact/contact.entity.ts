@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import {
@@ -99,6 +99,21 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@IsOptional()
 	@Column({ nullable: true })
 	website?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@OneToOne(() => Employee, (user) => user.contact, {
+		onDelete: 'SET NULL'
+	})
+	employee?: IEmployee;
 
 	/*
     |--------------------------------------------------------------------------

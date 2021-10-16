@@ -136,7 +136,11 @@ export class User extends TenantBaseEntity implements IUser {
     | @OneToOne 
     |--------------------------------------------------------------------------
     */
-   	// Employee
+   	
+	/**
+	 * Employee
+	 */
+	@ApiPropertyOptional({ type: () => Employee })
 	@OneToOne(() => Employee, (employee: Employee) => employee.user)
 	employee?: IEmployee;
 
