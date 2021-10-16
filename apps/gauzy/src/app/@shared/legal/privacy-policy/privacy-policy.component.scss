@@ -1,13 +1,6 @@
 @import 'themes';
 
-.privacy__policy {
-  .legal_pp {
-    h2 {
-      font-size: 20px;
-    }
-  }
-}
-::ng-deep nb-auth-block {
+nb-auth-block {
   max-width: 90% !important;
 }
 

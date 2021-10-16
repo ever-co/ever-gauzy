@@ -1,3 +1,7 @@
+:host ::ng-deep nb-auth-block {
+  max-width: 35rem !important;
+}
+
 .demo-credentials-card {
   position: absolute;
   top: 150px;
