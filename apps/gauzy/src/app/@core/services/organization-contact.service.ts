@@ -9,6 +9,7 @@ import {
 import { first } from 'rxjs/operators';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root'
@@ -61,14 +62,13 @@ export class OrganizationContactService {
 		findInput?: IOrganizationContactFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationContact[]; total: number }>(
 				`${API_PREFIX}/organization-contact`,
 				{ params: toParams({ data }) }
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getByName(
