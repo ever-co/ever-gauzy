@@ -41,7 +41,7 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	rating?: number;
 	isArchived?: boolean;
 	interview?: ICandidateInterview[];
-	contact: IContact;
+	contact?: IContact;
 	ratings?: number;
 }
 
