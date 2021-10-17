@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
-import { ElectronService } from 'ngx-electron';
+import { ElectronServices } from '../electron/services';
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
 		// :enter is alias to 'void => *'
@@ -37,7 +37,7 @@ export class ImageViewerComponent implements OnInit {
 	item: any = {};
 	constructor(
 		// private dialogRef: NbDialogRef<any>
-		private electronService: ElectronService,
+		private electronService: ElectronServices,
 		private _cdr: ChangeDetectorRef
 	) {
 		this.electronService.ipcRenderer.on('show_image', (event, arg) => {

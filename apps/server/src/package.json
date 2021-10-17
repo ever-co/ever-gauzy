@@ -132,7 +132,8 @@
 		"@sentry/tracing": "^6.8.0",	
 		"node-static": "^0.7.11",
 		"pdfmake": "^0.2.0",
-		"htmlparser2": "^3.10.1"
+		"htmlparser2": "^3.10.1",
+		"@electron/remote": "^2.0.1"
 	},
   "optionalDependencies": {
     "node-windows": "^1.0.0-beta.5",

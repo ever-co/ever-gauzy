@@ -61,6 +61,7 @@
 		"sound-play": "1.1.0",
 		"auto-launch": "5.0.5",
 		"@sentry/electron": "2.4.0",
-		"@gauzy/desktop-ui-lib": "^0.1.0"
+		"@gauzy/desktop-ui-lib": "^0.1.0",
+		"@electron/remote": "^2.0.1"
 	}
 }

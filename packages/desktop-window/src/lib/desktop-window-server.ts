@@ -5,8 +5,6 @@ import * as url from 'url';
 
 export function createServerWindow(serverWindow, config, filePath) {
 
-	remoteMain.initialize();
-
     let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
     mainWindowSettings = windowSetting();
 
