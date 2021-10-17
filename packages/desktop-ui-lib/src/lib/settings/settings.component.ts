@@ -7,9 +7,9 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbToastrService } from '@nebular/theme';
+import { ElectronServices } from '../electron/services';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -337,11 +337,11 @@ export class SettingsComponent implements OnInit {
 	driverOptions = ['sqlite', 'postgres'];
 
 	constructor(
-		private electronService: ElectronService,
+		private electronService: ElectronServices,
 		private _cdr: ChangeDetectorRef,
 		private readonly router: Router,
 		private readonly timeTrackerService: TimeTrackerService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
 	) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
 			const { setting, config, auth, additionalSetting } = arg;

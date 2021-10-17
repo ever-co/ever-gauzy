@@ -20,7 +20,6 @@
 	"scripts": {},
 	"devDependencies": {
 		"electron": "^15.1.2",
-		"@electron/remote": "^2.0.1",
 		"electron-builder": "^22.14.5",
 		"electron-installer-dmg": "~3.0.0",
 		"electron-packager": "~15.2.0",
@@ -32,6 +31,7 @@
 		"sound-play": "1.1.0",
 		"auto-launch": "5.0.5",
 		"@sentry/electron": "2.4.0",
-		"@gauzy/desktop-ui-lib": "^0.1.0"
+		"@gauzy/desktop-ui-lib": "^0.1.0",
+		"@electron/remote": "^2.0.1"
 	}
 }

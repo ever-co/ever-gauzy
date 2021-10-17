@@ -51,6 +51,8 @@ app.setName('gauzy-desktop-timer');
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
 const Store = require('electron-store');
+import * as remoteMain from '@electron/remote/main';
+remoteMain.initialize();
 
 import {
 	ipcMainHandler,

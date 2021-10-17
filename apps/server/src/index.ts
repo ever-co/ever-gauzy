@@ -31,6 +31,8 @@ import {
 // import { initSentry } from './sentry';
 import os from 'os';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
+import * as remoteMain from '@electron/remote/main';
+remoteMain.initialize();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-server

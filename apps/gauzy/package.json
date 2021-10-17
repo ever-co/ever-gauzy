@@ -147,7 +147,8 @@
 		"uuid": "^8.3.0",
 		"web-animations-js": "^2.3.2",
 		"yargs": "^16.2.0",
-		"zone.js": "~0.11.4"
+		"zone.js": "~0.11.4",
+		"@electron/remote": "^2.0.1"
 	},
 	"devDependencies": {
 		"@angular-builders/custom-webpack": "^12.1.2",

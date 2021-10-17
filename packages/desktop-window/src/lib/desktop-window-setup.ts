@@ -1,10 +1,12 @@
 import { BrowserWindow, Menu, app } from 'electron';
 import * as url from 'url';
+import * as remoteMain from '@electron/remote/main';
 
 export function createSetupWindow(setupWindow, value, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	setupWindow = new BrowserWindow(mainWindowSettings);
+	remoteMain.enable(setupWindow.webContents);
 
 	const launchPath = url.format({
 		pathname: filePath,

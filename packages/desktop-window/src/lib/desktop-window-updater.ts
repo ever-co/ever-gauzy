@@ -1,11 +1,10 @@
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
-
+import * as remoteMain from '@electron/remote/main';
 export function createUpdaterWindow(updaterWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
-
 	updaterWindow = new BrowserWindow(mainWindowSettings);
-
+	remoteMain.enable(updaterWindow.webContents);
 	const launchPath = url.format({
 		pathname: filePath,
 		protocol: 'file:',
