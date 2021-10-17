@@ -55,7 +55,7 @@ Please see [CREDITS.md](CREDITS.md) files for a list of libraries and software i
 
 ## Trademarks
 
-**Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).
+**Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).  
 **Gauzy**™ is a trademark of [Ever Co. LTD](https://ever.co).
 
 The trademarks and logos may only be used with the written permission of Ever Co. LTD. and may not be used to promote or otherwise market competitive products or services. If you wish to use these trademarks and logos you should contact our licensing department at <mailto:legal@ever.co> to determine the necessary steps you must take.
