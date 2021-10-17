@@ -27,7 +27,8 @@
 	"keywords": [],
     "devDependencies": {
         "@gauzy/desktop-window": "^0.1.0",
-		"@types/node": "^14.14.22"
+		"@types/node": "^14.14.22",
+		"@electron/remote": "^2.0.1"
     },
     "peerDependencies": {
         "@angular/core": "^12.2.7",
@@ -39,6 +40,5 @@
         "@angular/forms": "^12.2.7",
         "moment": "^2.29.0",
         "underscore": "^1.13.0",
-		"ng2-smart-table": "^1.7.2"
-    }
+		"ng2-smart-table": "^1.7.2"    }
 }

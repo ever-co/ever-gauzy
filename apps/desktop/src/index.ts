@@ -50,6 +50,8 @@ app.setName('gauzy-desktop');
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
 const Store = require('electron-store');
+import * as remoteMain from '@electron/remote/main';
+remoteMain.initialize();
 
 import {
 	ipcMainHandler,

@@ -5,6 +5,7 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
+import { ElectronServices } from '../electron/services';
 
 @Component({
 	selector: 'ngx-updater',
@@ -15,7 +16,8 @@ import { ElectronService } from 'ngx-electron';
 export class UpdaterComponent implements OnInit {
 	constructor(
 		private electronService: ElectronService,
-		private _cdr: ChangeDetectorRef
+		private _cdr: ChangeDetectorRef,
+		private electronServices: ElectronServices
 	) {
 		electronService.ipcRenderer.on('update-not-available', () => {
 			this.notAvailable = true;
@@ -52,7 +54,7 @@ export class UpdaterComponent implements OnInit {
 	downloadFinish = false;
 
 	ngOnInit(): void {
-		this.version = this.electronService.remote.app.getVersion();
+		this.version = this.electronServices.remote.app.getVersion();
 	}
 
 	checkForUpdate() {

@@ -5,8 +5,7 @@ import {
 	IUserOrganizationCreateInput,
 	IUserOrganizationFindInput
 } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { firstValueFrom, Observable } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -18,39 +17,38 @@ export class UsersOrganizationsService {
 		findInput?: IUserOrganizationFindInput
 	): Promise<{ items: IUserOrganization[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IUserOrganization[]; total: number }>(
 				`${API_PREFIX}/user-organization`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	setUserAsInactive(id: string): Promise<IUserOrganization> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`, {
 				isActive: false
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getUserOrganizationCount(id: string): Promise<number> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<number>(`${API_PREFIX}/user-organization/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	removeUserFromOrg(id: string): Promise<IUserOrganization> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	create(

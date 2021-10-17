@@ -6,8 +6,6 @@ import * as url from 'url';
 export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	log.info('createGauzyWindow started');
 
-	remoteMain.initialize();
-
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 
   	mainWindowSettings = windowSetting();

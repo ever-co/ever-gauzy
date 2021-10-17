@@ -2,6 +2,11 @@
 
 Copyright © 2019-present, Ever Co. LTD. All rights reserved.
 
+This document represent official information about our licensing, make sure you read and understand it before start using software and source code.
+
+- Check more detailed information about licensing in our [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Licensing).
+- You can also ask any questions in the [Issue](https://github.com/ever-co/ever-gauzy/issues/3686) or [Contact Us](https://github.com/ever-co/ever-gauzy#contact-us).
+
 This software is available under an Open Source Licenses ("Community Edition"). It is suitable if your business can comply with the requirements of corresponding open-source licenses, see more information below (e.g. requirements to release your modifications under the same open-source licenses for the benefits of our community).
 
 Alternatively, commercial versions of the software must be used in accordance with the terms and conditions of separate written license agreement between you and Ever Co. LTD. With commercial license, your source code (including your changes) is kept proprietary. You can purchase a commercial licenses at <https://gauzy.co/pricing>.
@@ -14,7 +19,7 @@ We support the open-source community. If you're building awesome non-profit/open
 
 ### _Gauzy Platform Community Edition_ License
 
-Gauzy™ Platform Community Edition available at https://github.com/ever-co/gauzy released under [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.txt).
+Gauzy™ Platform Community Edition available at https://github.com/ever-co/ever-gauzy released under [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.txt).
 
 If you decide to choose the Gauzy™ Platform Community Edition License, you must comply with the following terms:
 
@@ -32,7 +37,7 @@ For example, for AGPL v3 (strongest copyleft license we use) conditions can be s
 -   Contributors provide an express grant of patent rights.
 -   When a modified version is used to provide a service over a network, the complete source code of the modified version must be made available.
 
-Feel free to [Contact Us](https://github.com/ever-co/gauzy#contact-us) for an additional information about used open-source licenses!
+Feel free to [Contact Us](https://github.com/ever-co/ever-gauzy#contact-us) for an additional information about used open-source licenses!
 
 ### _Gauzy Platform Small Business_ License
 
@@ -50,6 +55,7 @@ Please see [CREDITS.md](CREDITS.md) files for a list of libraries and software i
 
 ## Trademarks
 
+**Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).  
 **Gauzy**™ is a trademark of [Ever Co. LTD](https://ever.co).
 
 The trademarks and logos may only be used with the written permission of Ever Co. LTD. and may not be used to promote or otherwise market competitive products or services. If you wish to use these trademarks and logos you should contact our licensing department at <mailto:legal@ever.co> to determine the necessary steps you must take.

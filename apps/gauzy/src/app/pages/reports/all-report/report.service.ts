@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
 import {
 	GetReportMenuItemsInput,
 	IGetReport,
@@ -12,6 +11,7 @@ import {
 import { toParams } from '@gauzy/common-angular';
 import { Query, Store, StoreConfig } from '@datorama/akita';
 import { API_PREFIX } from '../../../@core/constants/app.constants';
+import { firstValueFrom } from 'rxjs';
 
 export function initialReportFilterState(): IReport[] {
 	return [];
@@ -52,43 +52,42 @@ export class ReportService {
 	) {}
 
 	getReportMenuItems(request: GetReportMenuItemsInput = {}) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IReport[]>(`${API_PREFIX}/report/menu-items`, {
 				params: request ? toParams(request) : {}
 			})
-			.pipe(first())
-			.toPromise()
-			.then((resp) => {
-				this.menuItems = resp;
-				return resp;
-			});
+		).then((resp) => {
+			this.menuItems = resp;
+			return resp;
+		});
 	}
 
 	getReports(request?: IGetReport) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IPagination<IReport>>(`${API_PREFIX}/report`, {
 				params: request ? toParams(request) : {}
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	updateReport(request?: UpdateReportMenuInput) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IPagination<IReport>>(
 				`${API_PREFIX}/report/menu-item`,
 				request
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getReportCategories(request?: IGetReportCategory) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IPagination<IReport>>(`${API_PREFIX}/report/category`, {
 				params: request ? toParams(request) : {}
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

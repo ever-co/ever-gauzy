@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronServices } from '../electron/services';
 @Component({
 	selector: 'ngx-screen-capture',
 	templateUrl: './screen-capture.component.html',
@@ -10,7 +10,7 @@ export class ScreenCaptureComponent implements OnInit {
 	note: string;
 
 	constructor(
-		private readonly electronService: ElectronService,
+		private readonly electronService: ElectronServices,
 		private _cdr: ChangeDetectorRef
 	) {
 		this.electronService.ipcRenderer.on(

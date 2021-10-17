@@ -23,13 +23,14 @@ export const clickRequestButton = () => {
 };
 
 export const employeeSelectorVisible = () => {
+	cy.intercept('GET', '/api/employee/working*').as('getUsersXhr');
 	verifyElementIsVisible(TimeOffPage.employeeDropdownCss);
+	cy.wait('@getUsersXhr');
+
 };
 
 export const clickEmployeeSelector = () => {
-	cy.intercept('GET', '/api/employee/working*').as('getUsersXhr')
 	clickButton(TimeOffPage.employeeDropdownCss);
-	cy.wait('@getUsersXhr')
 	clickButtonDouble(TimeOffPage.employeeDropdownCss);
 };
 
@@ -41,7 +42,7 @@ export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(TimeOffPage.employeeDropdownOptionCss, index);
 };
 
-export const selectTiemOffPolicyVisible = () => {
+export const selectTimeOffPolicyVisible = () => {
 	verifyElementIsVisible(TimeOffPage.timeOffPolicyDropdownCss);
 };
 
@@ -99,15 +100,17 @@ export const addHolidayButtonVisible = () => {
 };
 
 export const clickAddHolidayButton = () => {
+	cy.intercept('GET', '/api/employee*').as('waitForm');
 	clickButton(TimeOffPage.addHolidayButtonCss);
+	cy.wait('@waitForm');
 };
 
 export const selectHolidayNameVisible = () => {
-	verifyElementIsVisible(TimeOffPage.descriptionInputCss);
+	verifyElementIsVisible(TimeOffPage.holidayNameSelectCss);
 };
 
 export const clickSelectHolidayName = () => {
-	clickButton(TimeOffPage.descriptionInputCss);
+	clickButton(TimeOffPage.holidayNameSelectCss);
 };
 
 export const selectHolidayOption = (index) => {
@@ -256,4 +259,20 @@ export const backButtonVisible = () => {
 
 export const clickBackButton = () => {
 	clickButton(TimeOffPage.backButtonCss);
+};
+
+export const verifyEmployeeSelectorVisible = () => {
+	verifyElementIsVisible(TimeOffPage.employeeSelectorCss);
+};
+
+export const clickEmployeeSelectorDropdown = () => {
+	clickButton(TimeOffPage.employeeSelectorCss);
+};
+
+export const verifyTimeOffPolicyVisible = () => {
+	verifyElementIsVisible(TimeOffPage.timeOffPolicySelectorCss);
+};
+
+export const clickTimeOffPolicySelector = () => {
+	clickButton(TimeOffPage.timeOffPolicySelectorCss);
 };
