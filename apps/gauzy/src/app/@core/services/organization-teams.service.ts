@@ -5,7 +5,7 @@ import {
 	IOrganizationTeamFindInput,
 	IOrganizationTeamCreateInput
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -24,13 +24,13 @@ export class OrganizationTeamsService {
 	create(
 		createInput: IOrganizationTeamCreateInput
 	): Promise<IOrganizationTeam> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IOrganizationTeam>(
 				`${API_PREFIX}/organization-team/create`,
 				createInput
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -38,33 +38,32 @@ export class OrganizationTeamsService {
 		findInput?: IOrganizationTeamFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationTeam[]; total: number }>(
 				`${API_PREFIX}/organization-team`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(
 		id: string,
 		updateInput: IOrganizationTeamCreateInput
 	): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${API_PREFIX}/organization-team/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${API_PREFIX}/organization-team/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getMyTeams(
@@ -73,15 +72,14 @@ export class OrganizationTeamsService {
 		employeeId: string = ''
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, employeeId });
-
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationTeam[]; total: number }>(
 				`${API_PREFIX}/organization-team/me`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }
