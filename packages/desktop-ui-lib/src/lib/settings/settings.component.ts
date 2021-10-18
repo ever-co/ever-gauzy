@@ -309,7 +309,7 @@ export class SettingsComponent implements OnInit {
 	loading = false;
 	version = '0.0.0';
 	notAvailable = false;
-	message = 'Application Uptodate';
+	message = 'Application Update';
 	downloadFinish = false;
 	progressDownload = 0;
 	showProgressBar = false;
@@ -379,7 +379,7 @@ export class SettingsComponent implements OnInit {
 
 		electronService.ipcRenderer.on('update_not_available', () => {
 			this.notAvailable = true;
-			this.message = 'Application Uptodate';
+			this.message = 'Update Not Available';
 			this.loading = false;
 			this._cdr.detectChanges();
 		});
