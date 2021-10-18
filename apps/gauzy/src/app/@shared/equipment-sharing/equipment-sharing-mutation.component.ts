@@ -114,7 +114,8 @@ export class EquipmentSharingMutationComponent
 				this.equipmentSharing &&
 				this.equipmentSharing.equipmentSharingPolicyId
 					? this.equipmentSharing.equipmentSharingPolicyId
-					: ''
+					: '',
+				Validators.required
 			],
 			employees: [
 				this.equipmentSharing

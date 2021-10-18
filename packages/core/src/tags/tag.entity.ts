@@ -88,7 +88,10 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	})
 	employee?: IEmployee[];
 
-	@ManyToMany(() => Equipment, (equipment) => equipment.tags)
+	@ManyToMany(() => Equipment, (equipment) => equipment.tags, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	equipment?: IEquipment[];
 
 	@ManyToMany(() => EventType, (eventType) => eventType.tags)
