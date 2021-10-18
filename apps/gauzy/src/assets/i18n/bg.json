@@ -2030,9 +2030,9 @@
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
-		"ADD_EQUIPMENT_REQUEST": "Request equipment",
-		"EDIT_EQUIPMENT_REQUEST": "Edit equipment request",
-		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
+		"ADD_EQUIPMENT_REQUEST": "Add Equipment Request",
+		"EDIT_EQUIPMENT_REQUEST": "Edit Equipment Request",
+		"DELETE_EQUIPMENT_REQUEST": "Delete Equipment Request",
 		"REQUEST": "Request",
 		"EQUIPMENT_NAME": "Equipment name",
 		"EQUIPMENT_SHARING_POLICY": "Equipment Sharing Policy",

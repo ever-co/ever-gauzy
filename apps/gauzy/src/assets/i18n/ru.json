@@ -2030,9 +2030,9 @@
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Совместное использование снаряжения",
-		"ADD_EQUIPMENT_REQUEST": "Запросить оборудование",
-		"EDIT_EQUIPMENT_REQUEST": "Изменить запрос на оборудование",
-		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на оборудование",
+		"ADD_EQUIPMENT_REQUEST": "Добавить запрос на снаряжение",
+		"EDIT_EQUIPMENT_REQUEST": "Изменить запрос на снаряжение",
+		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на снаряжение",
 		"REQUEST": "Запросить",
 		"EQUIPMENT_NAME": "Название оборудования",
 		"EQUIPMENT_SHARING_POLICY": "Совместное использование снаряжения",

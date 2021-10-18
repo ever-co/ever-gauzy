@@ -170,6 +170,7 @@
 				{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
+			[disabled]="form.invalid"
 			status="success" 
 			nbButton 
 			(click)="onSaveRequest()">

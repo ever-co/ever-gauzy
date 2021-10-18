@@ -7,7 +7,7 @@ import {
 	IEditEntityByMemberInput,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { first, take } from 'rxjs/operators';
+import { firstValueFrom, take } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -22,22 +22,22 @@ export class OrganizationProjectsService {
 	create(
 		createInput: IOrganizationProjectsCreateInput
 	): Promise<IOrganizationProject> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IOrganizationProject>(this.API_URL, createInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	edit(
 		editInput: Partial<IOrganizationProjectsCreateInput & { id: string }>
 	): Promise<IOrganizationProject> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<IOrganizationProject>(
 				`${this.API_URL}/${editInput.id}`,
 				editInput
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAllByEmployee(
@@ -45,12 +45,12 @@ export class OrganizationProjectsService {
 		findInput?: IOrganizationProjectsFindInput
 	): Promise<IOrganizationProject[]> {
 		const data = JSON.stringify({ findInput });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IOrganizationProject[]>(`${this.API_URL}/employee/${id}`, {
 				params: toParams({ data })
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -58,21 +58,21 @@ export class OrganizationProjectsService {
 		findInput?: IOrganizationProjectsFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationProject[]; total: number }>(
 				`${this.API_URL}`,
 				{
 					params: toParams({ data })
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 	getById(id: string) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IOrganizationProject>(`${this.API_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getCount(
@@ -80,22 +80,22 @@ export class OrganizationProjectsService {
 		findInput?: IOrganizationProjectsFindInput
 	): Promise<any> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationProject[]; total: number }>(
 				`${this.API_URL}/count`,
 				{
 					params: toParams({ data })
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${this.API_URL}/employee`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	updateTaskViewMode(
@@ -103,15 +103,15 @@ export class OrganizationProjectsService {
 		taskViewMode: TaskListTypeEnum
 	): Promise<any> {
 		return this.http
-			.put(`${this.API_URL}/task-view/${id}`, { taskViewMode })
-			.pipe(take(1))
-			.toPromise();
+		.put(`${this.API_URL}/task-view/${id}`, { taskViewMode })
+		.pipe(take(1))
+		.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.API_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }
