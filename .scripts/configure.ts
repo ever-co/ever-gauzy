@@ -30,8 +30,7 @@ declare const window:any;
 
 import { Environment } from './model';
 import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
-import { ElectronService } from 'ngx-electron';
-const remote = window.require('@electron/remote');
+
 `;
 
 if (!env.IS_DOCKER) {
@@ -47,11 +46,13 @@ if (!env.IS_DOCKER) {
 	const userAgent = navigator.userAgent.toLowerCase();
 	if (userAgent.indexOf(' electron/') > -1) {
 		try {
+			const remote = window.require('@electron/remote');
 			const variableGlobal = remote.getGlobal('variableGlobal');
 			API_BASE_URL = variableGlobal.API_BASE_URL;
 			IS_ELECTRON = true;
 			IS_INTEGRATED_DESKTOP = variableGlobal.IS_INTEGRATED_DESKTOP
 		} catch(e) {
+			console.log(e);
 		}
 	}
 
@@ -130,11 +131,13 @@ if (!env.IS_DOCKER) {
 	const userAgent = navigator.userAgent.toLowerCase();
 	if (userAgent.indexOf(' electron/') > -1) {
 		try {
+			const remote = window.require('@electron/remote');
 			const variableGlobal = remote.getGlobal('variableGlobal');
 			API_BASE_URL = variableGlobal.API_BASE_URL;
 			IS_ELECTRON = true;
 			IS_INTEGRATED_DESKTOP = variableGlobal.IS_INTEGRATED_DESKTOP
 		} catch(e) {
+			console.log(e);
 		}
 	}
 

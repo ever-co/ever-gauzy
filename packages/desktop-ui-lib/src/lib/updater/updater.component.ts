@@ -21,7 +21,7 @@ export class UpdaterComponent implements OnInit {
 	) {
 		electronService.ipcRenderer.on('update-not-available', () => {
 			this.notAvailable = true;
-			this.message = 'Application Uptodate';
+			this.message = 'Application Update';
 			this._cdr.detectChanges();
 		});
 
@@ -50,7 +50,7 @@ export class UpdaterComponent implements OnInit {
 	version = '0.0.0';
 	loading = false;
 	notAvailable = false;
-	message = 'Application Uptodate';
+	message = 'Application Update';
 	downloadFinish = false;
 
 	ngOnInit(): void {
