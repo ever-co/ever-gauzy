@@ -125,8 +125,8 @@ const updateConfigUi = (config) => {
 	
 	const configStr = `
 		<script> window._env = { api: '${apiBaseUrl}' }; 
-		if (typeof global === "undefined") {
-			let global = window;
+		if (global === undefined) {
+			var global = window;
 		}; </script>`;
 
 	const elementToReplace = '<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>';
