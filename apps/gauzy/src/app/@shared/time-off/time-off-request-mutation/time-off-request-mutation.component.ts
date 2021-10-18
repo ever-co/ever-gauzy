@@ -5,8 +5,7 @@ import {
 	ITimeOffPolicy,
 	ITimeOff,
 	IOrganization,
-	StatusTypesEnum,
-	IUser
+	StatusTypesEnum
 } from '@gauzy/contracts';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
@@ -62,15 +61,12 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	};
 
 	policies: ITimeOffPolicy[] = [];
-	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
 	selectedEmployee: any;
 	policy: ITimeOffPolicy;
-	isHoliday = false;
 	isEditMode = false;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
 	public organization: IOrganization;
-	countryCode: string;
 	employeeIds: string[] = [];
 
 	/*
@@ -94,28 +90,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		this.store.user$
-			.pipe(
-				filter((user: IUser) => !!user.employee),
-				tap(({ employee : { contact } }: IUser) => {
-					if (contact && contact.country) {
-						this.countryCode = contact.country;
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				debounceTime(200),
 				tap((organization) => this.organization = organization),
-				tap(({ contact } : IOrganization) => {
-					if (contact && contact.country) {
-						this.countryCode = contact.country;
-					}
-				}),
-				tap(() => this._getOrganizationEmployees()),
 				tap(() => this._getPolicies()),
 				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
@@ -144,7 +123,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		}		
 	}
 
-	addRequest() {
+	saveRequest() {
 		this.selectedEmployee = this.employeeSelector.selectedEmployee;
 		this._checkFormData();
 
@@ -174,15 +153,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			});
 	}
 
-	addHolidays() {
-		this._checkFormData();
-		this.employeeIds.forEach((element) => {
-			const employee = this.orgEmployees.find((e) => e.id === element);
-			this.employeesArr.push(employee);
-		});
-		this._createNewRecord();
-	}
-
 	private _createNewRecord() {
 		if (this.form.invalid) {
 			return;
@@ -196,7 +166,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 					employees: this.employeesArr,
 					organizationId,
 					tenantId,
-					isHoliday: this.isHoliday,
+					isHoliday: false,
 					requestDate: new Date()
 				},
 				this.form.getRawValue()
@@ -231,25 +201,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		.pipe(
 			first(),
 			tap(({ items }) => this.policies = items)
-		)
-		.subscribe();
-	}
-
-	private _getOrganizationEmployees() {
-		if (!this.organization) {
-			return;
-		}
-
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		this.employeesService.getAll(['user', 'tags'], {
-			organizationId,
-			tenantId
-		})
-		.pipe(
-			first(),
-			tap(({ items }) => this.orgEmployees = items)
 		)
 		.subscribe();
 	}

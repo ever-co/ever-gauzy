@@ -11,12 +11,12 @@
 		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="row">
 				<div class="form-group col-6">
-					<label class="label">{{
-						'TIME_OFF_PAGE.HOLIDAY_NAME' | translate
-					}}</label>
+					<label class="label">
+						{{ 'TIME_OFF_PAGE.HOLIDAY_NAME' | translate }}
+					</label>
 					<nb-select
 						(selectedChange)="onHolidaySelected($event)"
 						fullWidth
@@ -131,7 +131,7 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			(click)="addHolidays()"
+			(click)="saveHoliday()"
 			status="success"
 			nbButton
 			[disabled]="form.invalid"

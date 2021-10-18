@@ -11,7 +11,7 @@
 		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="row">
 				<div class="form-group col-6">
 					<label class="label">{{
@@ -89,7 +89,7 @@
 				</div>
 			</div>
 
-			<div class="row" *ngIf="!isHoliday">
+			<div class="row">
 				<div class="form-group col-6">
 					<div>
 						<label class="label" for="end">{{
@@ -126,11 +126,6 @@
 						"
 						[fileUrl]="form.get('documentUrl').value"
 						(uploadedImgUrl)="form.get('documentUrl').setValue($event)"
-						[status]="
-							isInvalidControl('documentUrl')
-								? 'danger'
-								: 'basic'
-						"
 					>
 					</ngx-file-uploader-input>
 				</div>
@@ -163,7 +158,7 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			(click)="addRequest()"
+			(click)="saveRequest()"
 			status="success"
 			nbButton
 			[disabled]="form.invalid"

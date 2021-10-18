@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
 import {
@@ -13,7 +13,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import {
 	EmployeesService,
 	Store,
@@ -38,16 +37,6 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store
 	) {}
-
-	/**
-	 * Employee Selector
-	 */
-	employeeSelector: EmployeeSelectorComponent;
-	@ViewChild('employeeSelector') set content(component: EmployeeSelectorComponent) {
-		if (component) {
-			this.employeeSelector = component;
-		}
-	}
 
 	/*
 	* Getter & Setter
@@ -155,7 +144,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		}		
 	}
 
-	addHolidays() {
+	saveHoliday() {
 		this._checkFormData();
 		this.employeeIds.forEach((element) => {
 			const employee = this.orgEmployees.find((e) => e.id === element);
@@ -209,7 +198,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		await this.timeOffService.getAllPolicies(['employees'], {
+		this.timeOffService.getAllPolicies(['employees'], {
 			organizationId,
 			tenantId
 		})
