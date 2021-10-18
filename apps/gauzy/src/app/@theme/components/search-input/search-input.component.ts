@@ -13,7 +13,7 @@ import {
 		<i class="control-icon ion ion-ios-search" (click)="showInput()"></i>
 		<input
 			placeholder="{{
-				'FORM.PLACHOLDERS.TYPE_SEARCH_REQUEST' | translate
+				'FORM.PLACEHOLDERS.TYPE_SEARCH_REQUEST' | translate
 			}}"
 			#input
 			[class.hidden]="!isInputShown"
