@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
+import * as Holidays from 'date-holidays';
 import {
 	IEmployee,
 	ITimeOffPolicy,
@@ -12,29 +13,29 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { isNotEmpty } from '@gauzy/common-angular';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import {
 	EmployeesService,
-	OrganizationDocumentsService,
 	Store,
 	TimeOffService,
+	ToastrService
 } from '../../../@core/services';
+import { environment as ENV } from './../../../../environments/environment';
 import { CompareDateValidator } from '../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-time-off-request-mutation',
-	templateUrl: './time-off-request-mutation.component.html',
+	selector: 'ngx-time-off-holiday-mutation',
+	templateUrl: './time-off-holiday-mutation.component.html',
 	styleUrls: ['../time-off-mutation.components.scss']
 })
-export class TimeOffRequestMutationComponent implements OnInit {
+export class TimeOffHolidayMutationComponent implements OnInit {
 	constructor(
-		protected readonly dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
+		protected readonly dialogRef: NbDialogRef<TimeOffHolidayMutationComponent>,
 		private readonly fb: FormBuilder,
+		private readonly toastrService: ToastrService,
 		private readonly timeOffService: TimeOffService,
 		private readonly employeesService: EmployeesService,
-		private readonly documentsService: OrganizationDocumentsService,
 		private readonly store: Store
 	) {}
 
@@ -47,8 +48,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			this.employeeSelector = component;
 		}
 	}
-
-	@Input() type: string;
 
 	/*
 	* Getter & Setter
@@ -64,9 +63,9 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	policies: ITimeOffPolicy[] = [];
 	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
+	holidays = [];
 	selectedEmployee: any;
 	policy: ITimeOffPolicy;
-	isHoliday = false;
 	isEditMode = false;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
 	public organization: IOrganization;
@@ -74,16 +73,14 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	employeeIds: string[] = [];
 
 	/*
-	* Time Off Request Mutation Form 
+	* Time Off Holiday Mutation Form 
 	*/
-	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
+	public form: FormGroup = TimeOffHolidayMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
-			description: [],
 			start: ['', Validators.required],
 			end: ['', Validators.required],
 			policy: ['', Validators.required],
-			documentUrl: [],
 			status: []
 		}, { 
 			validators: [
@@ -115,12 +112,28 @@ export class TimeOffRequestMutationComponent implements OnInit {
 						this.countryCode = contact.country;
 					}
 				}),
+				tap(() => this._getFormData()),
 				tap(() => this._getOrganizationEmployees()),
 				tap(() => this._getPolicies()),
-				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe(() => {
+				this.patchFormValue()
+			});
+	}
+
+	private async _getAllHolidays() {
+		const holidays = new Holidays();
+		const countryCode = this.countryCode || ENV.DEFAULT_COUNTRY;
+
+		if (countryCode) {
+			holidays.init(countryCode);
+			this.holidays = holidays
+				.getHolidays(moment().year())
+				.filter((holiday) => holiday.type === 'public');
+		} else {
+			this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
+		}
 	}
 
 	/**
@@ -132,46 +145,14 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			this.form.patchValue({
 				start: this.timeOff.start,
 				end: this.timeOff.end,
-				description: this.timeOff.description,
 				policy: this.timeOff.policy,
 				status: this.timeOff.status,
-				documentUrl: this.timeOff.documentUrl
 			});
-			
+	
 			this.policy = this.timeOff.policy;
 			this.selectedEmployee = this.timeOff['employees'][0];
 			this.employeesArr = this.timeOff['employees'];
 		}		
-	}
-
-	addRequest() {
-		this.selectedEmployee = this.employeeSelector.selectedEmployee;
-		this._checkFormData();
-
-		if (this.selectedEmployee.id) {
-			this.employeesArr.push(this.selectedEmployee);
-			this._createNewRecord();
-		}
-	}
-
-	getRequestForm(reqType: string) {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		this.documentsService
-			.getAll({ tenantId, organizationId })
-			.pipe(first())
-			.subscribe(({ items }) => {
-				if (isNotEmpty(items)) {
-					let downloadDocUrl: string; 
-					if (reqType === 'paid') {
-						downloadDocUrl = items[0].documentUrl;
-					} else {
-						downloadDocUrl = items[1].documentUrl;
-					}
-					window.open(`${downloadDocUrl}`);
-				}
-			});
 	}
 
 	addHolidays() {
@@ -196,7 +177,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 					employees: this.employeesArr,
 					organizationId,
 					tenantId,
-					isHoliday: this.isHoliday,
+					isHoliday: true,
 					requestDate: new Date()
 				},
 				this.form.getRawValue()
@@ -216,7 +197,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		}
 	}
 
-	private _getPolicies() {
+	private async _getFormData() {
+		this._getAllHolidays();
+	}
+
+	private async _getPolicies() {
 		if (!this.organization) {
 			return;
 		}
@@ -224,7 +209,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.timeOffService.getAllPolicies(['employees'], {
+		await this.timeOffService.getAllPolicies(['employees'], {
 			organizationId,
 			tenantId
 		})
@@ -256,6 +241,23 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	onPolicySelected(policy: ITimeOffPolicy) {
 		this.policy = policy;
+	}
+
+	onEmployeesSelected(employees: string[]) {
+		this.employeeIds = employees;
+	}
+
+	/**
+	 * Patch value on holiday selected
+	 * 
+	 * @param holiday 
+	 */
+	onHolidaySelected(holiday: any) {
+		this.form.patchValue({
+			start: holiday.start,
+			end: holiday.end || null,
+			description: holiday.name
+		});
 	}
 
 	close() {

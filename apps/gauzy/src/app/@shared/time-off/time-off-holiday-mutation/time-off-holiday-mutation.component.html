@@ -3,7 +3,7 @@
 		<h5>
 			{{
 				(!isEditMode
-					? 'TIME_OFF_PAGE.REQUEST_TIME_OFF'
+					? 'TIME_OFF_PAGE.ADD_HOLIDAYS'
 					: 'TIME_OFF_PAGE.ACTIONS.EDIT'
 				) | translate
 			}}
@@ -15,17 +15,48 @@
 			<div class="row">
 				<div class="form-group col-6">
 					<label class="label">{{
-						'FORM.LABELS.EMPLOYEE' | translate
+						'TIME_OFF_PAGE.HOLIDAY_NAME' | translate
 					}}</label>
-					<ga-employee-selector
-						#employeeSelector
+					<nb-select
+						(selectedChange)="onHolidaySelected($event)"
+						fullWidth
+						[placeholder]="'TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate"
+					>
+						<nb-option
+							*ngFor="let holiday of holidays"
+							[value]="holiday"
+						>
+							{{ holiday.name }}
+						</nb-option>
+					</nb-select>
+				</div>
+				<div class="form-group col-6">
+					<label class="label">{{
+						'TIME_OFF_PAGE.SELECT_EMPLOYEES' | translate
+					}}</label>
+					<nb-select
+						multiple
+						[selected]="employeesArr"
+						(selectedChange)="onEmployeesSelected($event)"
 						fullWidth
 						required
-						[skipGlobalChange]="true"
-						class="employees"
+						[placeholder]="'TIME_OFF_PAGE.ADD_OR_REMOVE_EMPLOYEES' | translate"
 					>
-					</ga-employee-selector>
-				</div>				
+						<nb-option
+							*ngFor="let employee of orgEmployees"
+							[value]="employee.id"
+						>
+							<img
+								[src]="employee.user.imageUrl"
+								alt="Smiley face"
+								height="40"
+								width="40"
+								style="margin-right: 10px"
+							/>
+							{{ employee.fullName }}
+						</nb-option>
+					</nb-select>
+				</div>
 				<div class="form-group col-6">
 					<label class="label">{{
 						'TIME_OFF_PAGE.POLICY.POLICY' | translate
@@ -88,69 +119,6 @@
 					<nb-datepicker [min]="minDate" #endDatePicker></nb-datepicker>
 				</div>
 			</div>
-
-			<div class="row" *ngIf="!isHoliday">
-				<div class="form-group col-6">
-					<div>
-						<label class="label" for="end">{{
-							'FORM.LABELS.DOWNLOAD_REQUEST_FORM' | translate
-						}}</label>
-					</div>
-					<button
-						nbButton
-						status="basic"
-						class="download-btn mr-4"
-						(click)="getRequestForm('paid')"
-					>
-						{{ 'BUTTONS.PAID_DAYS_OFF' | translate }}
-					</button>
-					<button
-						nbButton
-						status="basic"
-						class="download-btn"
-						(click)="getRequestForm('unpaid')"
-					>
-						{{ 'BUTTONS.UNPAID_DAYS_OFF' | translate }}
-					</button>
-				</div>
-				<div class="form-group col-6">
-					<div class="label">
-						{{
-							'TIME_OFF_PAGE.UPLOAD_REQUEST_DOCUMENT' | translate
-						}}
-					</div>
-					<ngx-file-uploader-input
-						[placeholder]="
-							'FORM.PLACEHOLDERS.UPLOADER_DOCUMENT_PLACEHOLDER'
-								| translate
-						"
-						[fileUrl]="form.get('documentUrl').value"
-						(uploadedImgUrl)="form.get('documentUrl').setValue($event)"
-						[status]="
-							isInvalidControl('documentUrl')
-								? 'danger'
-								: 'basic'
-						"
-					>
-					</ngx-file-uploader-input>
-				</div>
-			</div>
-			<div class="row">
-				<div class="form-group col-12">
-					<div class="form-group">
-						<label class="label" for="description">{{
-							'FORM.LABELS.DESCRIPTION' | translate
-						}}</label>
-						<textarea
-							fullWidth
-							type="text-area"
-							nbInput
-							formControlName="description"
-							[placeholder]="'TIME_OFF_PAGE.ADD_A_DESCRIPTION' | translate"
-						></textarea>
-					</div>
-				</div>
-			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
@@ -163,7 +131,7 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			(click)="addRequest()"
+			(click)="addHolidays()"
 			status="success"
 			nbButton
 			[disabled]="form.invalid"
