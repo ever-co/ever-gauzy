@@ -18,6 +18,7 @@ import { TimeOffRequestMutationComponent } from './time-off-request-mutation/tim
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../translate/translate.module';
 import { TimeOffHolidayMutationComponent } from './time-off-holiday-mutation/time-off-holiday-mutation.component';
+import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-policy-select.module';
 
 @NgModule({
 	imports: [
@@ -35,7 +36,8 @@ import { TimeOffHolidayMutationComponent } from './time-off-holiday-mutation/tim
 		NbTooltipModule,
 		EmployeeSelectorsModule,
 		FileUploaderModule,
-		TranslateModule
+		TranslateModule,
+		TimeOffPolicySelectModule
 	],
 	declarations: [
 		TimeOffSettingsMutationComponent,

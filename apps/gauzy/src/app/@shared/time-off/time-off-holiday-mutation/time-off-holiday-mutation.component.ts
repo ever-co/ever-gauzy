@@ -1,10 +1,9 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
 import {
 	IEmployee,
 	ITimeOffPolicy,
-	ITimeOff,
 	IOrganization,
 	StatusTypesEnum,
 	IUser
@@ -16,7 +15,6 @@ import * as moment from 'moment';
 import {
 	EmployeesService,
 	Store,
-	TimeOffService,
 	ToastrService
 } from '../../../@core/services';
 import { environment as ENV } from './../../../../environments/environment';
@@ -33,29 +31,14 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		protected readonly dialogRef: NbDialogRef<TimeOffHolidayMutationComponent>,
 		private readonly fb: FormBuilder,
 		private readonly toastrService: ToastrService,
-		private readonly timeOffService: TimeOffService,
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store
 	) {}
 
-	/*
-	* Getter & Setter
-	*/
-	_timeOff: ITimeOff;
-	get timeOff(): ITimeOff {
-		return this._timeOff;
-	}
-	@Input() set timeOff(value: ITimeOff) {
-		this._timeOff = value;
-	};
-
-	policies: ITimeOffPolicy[] = [];
 	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
 	holidays = [];
-	selectedEmployee: any;
 	policy: ITimeOffPolicy;
-	isEditMode = false;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
 	public organization: IOrganization;
 	countryCode: string;
@@ -70,7 +53,8 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 			start: ['', Validators.required],
 			end: ['', Validators.required],
 			policy: ['', Validators.required],
-			status: []
+			status: [],
+			description: []
 		}, { 
 			validators: [
 				CompareDateValidator.validateDate('start', 'end')
@@ -103,12 +87,9 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 				}),
 				tap(() => this._getFormData()),
 				tap(() => this._getOrganizationEmployees()),
-				tap(() => this._getPolicies()),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this.patchFormValue()
-			});
+			.subscribe();
 	}
 
 	private async _getAllHolidays() {
@@ -123,25 +104,6 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		} else {
 			this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
 		}
-	}
-
-	/**
-	 * Patch form value on edit section 
-	 */
-	patchFormValue() {
-		// patch form value
-		if(this.timeOff) {
-			this.form.patchValue({
-				start: this.timeOff.start,
-				end: this.timeOff.end,
-				policy: this.timeOff.policy,
-				status: this.timeOff.status,
-			});
-	
-			this.policy = this.timeOff.policy;
-			this.selectedEmployee = this.timeOff['employees'][0];
-			this.employeesArr = this.timeOff['employees'];
-		}		
 	}
 
 	saveHoliday() {
@@ -188,25 +150,6 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 
 	private async _getFormData() {
 		this._getAllHolidays();
-	}
-
-	private async _getPolicies() {
-		if (!this.organization) {
-			return;
-		}
-
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		this.timeOffService.getAllPolicies(['employees'], {
-			organizationId,
-			tenantId
-		})
-		.pipe(
-			first(),
-			tap(({ items }) => this.policies = items)
-		)
-		.subscribe();
 	}
 
 	private _getOrganizationEmployees() {

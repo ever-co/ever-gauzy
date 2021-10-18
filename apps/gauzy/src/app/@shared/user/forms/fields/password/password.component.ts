@@ -47,7 +47,6 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
         return this.innerValue;
     };
 	set value(v: any) {
-		console.log(v);
         if (v !== this.innerValue) {
             this.innerValue = v;
         }
