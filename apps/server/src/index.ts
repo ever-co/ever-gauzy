@@ -121,14 +121,17 @@ const getApiBaseUrl = (config) => {
 
 const updateConfigUi = (config) => {
 	const apiBaseUrl = getApiBaseUrl(config);
-	let filestr = readFileSync(pathWindow.gauzyUi, 'utf8');
+	let fileStr = readFileSync(pathWindow.gauzyUi, 'utf8');
+	
 	const configStr = `
 		<script> window._env = { api: '${apiBaseUrl}' }; 
-		if (global === undefined) {
+		if (typeof global === "undefined") {
 			let global = window;
 		}; </script>`;
-	const elementToReplace = '<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>'
-	filestr = filestr.replace(elementToReplace, `
+
+	const elementToReplace = '<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>';
+
+	fileStr = fileStr.replace(elementToReplace, `
 		${configStr}
 		${elementToReplace}
 	`);
@@ -142,12 +145,10 @@ const updateConfigUi = (config) => {
 	}
 
 	try {
-		writeFileSync(pathWindow.gauzyUi, filestr);
+		writeFileSync(pathWindow.gauzyUi, fileStr);
 	} catch (error) {
 		console.log('Cannot change html file', error);
 	}
-
-	
 }
 
 const runServer = (isRestart) => {
