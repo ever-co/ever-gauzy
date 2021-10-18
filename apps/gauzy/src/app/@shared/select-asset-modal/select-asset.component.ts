@@ -1,13 +1,12 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { IImageAsset, IOrganization } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
-import { Store } from '../../@core/services/store.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ImageAssetService } from '../../@core/services/image-asset.service';
 import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IImageAsset, IOrganization } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '../language-base';
+import { ImageAssetService, Store } from '../../@core/services';
 
 export interface SelectAssetSettings {
 	uploadImageEnabled?: boolean;
@@ -26,7 +25,7 @@ export class SelectAssetComponent
 	implements OnInit {
 	activeImage: IImageAsset;
 	selectedImages: IImageAsset[] = [];
-	loading = true;
+	loading: boolean = true;
 
 	gallery: IImageAsset[] = [];
 
@@ -43,7 +42,7 @@ export class SelectAssetComponent
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<any>,
-		readonly translationService: TranslateService,
+		public readonly translationService: TranslateService,
 		private readonly imageAssetService: ImageAssetService,
 		private readonly store: Store
 	) {
@@ -54,6 +53,7 @@ export class SelectAssetComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.getAvailableImages()),
 				untilDestroyed(this)
 			)
@@ -71,8 +71,13 @@ export class SelectAssetComponent
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		this.gallery = (await this.imageAssetService.getAll({ tenantId, organizationId })).items;
-		this.loading = false;
+		await this.imageAssetService.getAll({ tenantId, organizationId })
+			.then(({ items }) => {
+				this.gallery = items;
+			})
+			.finally(() => {
+				this.loading = false;
+			});
 	}
 
 	onSelectImage(selectedImage: IImageAsset) {
@@ -118,11 +123,11 @@ export class SelectAssetComponent
 
 	setImageStoredEvent() {
 		if (!this.newImageStoredEvent) return;
-
 		this.newImageStoredEvent
-			.pipe(untilDestroyed(this))
-			.subscribe((image: IImageAsset) => {
-				this.gallery.push(image);
-			});
+			.pipe(
+				tap((image: IImageAsset) => this.gallery.push(image)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

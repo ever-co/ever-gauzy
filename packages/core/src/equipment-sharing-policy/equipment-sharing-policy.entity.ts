@@ -36,7 +36,7 @@ export class EquipmentSharingPolicy
     */
 	@ApiProperty({ type: () => EquipmentSharing, isArray: true })	
 	@OneToMany(() => EquipmentSharing, (it) => it.equipmentSharingPolicy, {
-		cascade: true
+		onDelete: 'CASCADE'
 	})
 	equipmentSharings?: IEquipmentSharing[];
 }
