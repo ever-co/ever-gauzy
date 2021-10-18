@@ -915,7 +915,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Английский",
+		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -2030,9 +2030,9 @@
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Совместное использование снаряжения",
-		"ADD_EQUIPMENT_REQUEST": "Запросить оборудование",
-		"EDIT_EQUIPMENT_REQUEST": "Изменить запрос на оборудование",
-		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на оборудование",
+		"ADD_EQUIPMENT_REQUEST": "Добавить запрос на снаряжение",
+		"EDIT_EQUIPMENT_REQUEST": "Изменить запрос на снаряжение",
+		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на снаряжение",
 		"REQUEST": "Запросить",
 		"EQUIPMENT_NAME": "Название оборудования",
 		"EQUIPMENT_SHARING_POLICY": "Совместное использование снаряжения",
@@ -2343,7 +2343,7 @@
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации",
 			"PREFERRED_LANGUAGE": {
-				"en": "Английский",
+				"en": "Russian",
 				"he": "Иврит",
 				"bg": "Болгарский",
 				"ru": "Русский"
@@ -3327,7 +3327,7 @@
 			"TEMPLATE_NAMES": "Названия шаблонов"
 		},
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
@@ -3422,7 +3422,7 @@
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
