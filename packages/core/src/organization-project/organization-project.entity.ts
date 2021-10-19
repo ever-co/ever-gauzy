@@ -6,7 +6,8 @@ import {
 	ManyToOne,
 	ManyToMany,
 	OneToMany,
-	RelationId
+	RelationId,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -247,10 +248,13 @@ export class OrganizationProject
     */
 	// Organization Project Tags
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.organizationProject, {
+	@ManyToMany(() => Tag, (tag) => tag.organizationProjects, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
     })
+	@JoinTable({
+		name: 'tag_organization_project'
+	})
 	tags: ITag[];
 
 	// Organization Project Employees

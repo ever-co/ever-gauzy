@@ -17,7 +17,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ComponentEnum } from '../../@core/constants';
 import { Store, TimeOffService, ToastrService } from '../../@core/services';
-import { TimeOffRequestMutationComponent } from '../../@shared/time-off';
+import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
@@ -300,9 +300,7 @@ export class TimeOffComponent
 
 	addHolidays() {
 		this.dialogService
-			.open(TimeOffRequestMutationComponent, {
-				context: { type: 'holiday' }
-			})
+			.open(TimeOffHolidayMutationComponent)
 			.onClose.pipe(untilDestroyed(this), first())
 			.subscribe((res) => {
 				if (res) {

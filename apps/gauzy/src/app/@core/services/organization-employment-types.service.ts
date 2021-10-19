@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { Observable } from 'rxjs';
 import {
 	IOrganizationEmploymentType,
@@ -41,19 +41,19 @@ export class OrganizationEmploymentTypesService {
 	}
 
 	deleteEmploymentType(id: number): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.API_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	editEmploymentType(id: string, updateInput: any): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(
 				`${API_PREFIX}/organization-employment-type/${id}`,
 				updateInput
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

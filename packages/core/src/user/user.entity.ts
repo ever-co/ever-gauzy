@@ -150,8 +150,13 @@ export class User extends TenantBaseEntity implements IUser {
     |--------------------------------------------------------------------------
     */
     // Tags
-	@ManyToMany(() => Tag)
-	@JoinTable({ name: 'tag_user' })
+	@ManyToMany(() => Tag, (tag) => tag.users, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_user'
+	})
 	tags?: ITag[];
 
 	/*

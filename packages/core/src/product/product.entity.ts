@@ -167,7 +167,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.product)
+	@ManyToMany(() => Tag, (tag) => tag.products, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_product'
 	})

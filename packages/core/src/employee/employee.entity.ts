@@ -327,6 +327,7 @@ export class Employee
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.contact)
+	@IsOptional()
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
@@ -426,7 +427,8 @@ export class Employee
     projects?: IOrganizationProject[];
 
 	// Employee Tags
-	@ManyToMany(() => Tag, (tag) => tag.employee, {
+	@ManyToMany(() => Tag, (tag) => tag.employees, {
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
 	@JoinTable({

@@ -57,7 +57,10 @@ export class OrganizationVendor
 	 * Tag
 	 */
 	@ApiPropertyOptional({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.organizationVendor)
+	@ManyToMany(() => Tag, (tag) => tag.organizationVendors, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_organization_vendor'
 	})

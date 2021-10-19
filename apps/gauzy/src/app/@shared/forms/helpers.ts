@@ -23,4 +23,24 @@ export class FormHelpers {
 			}
 		});
 	}
+
+	/**
+	 * Deep check invalid control
+	 * 
+	 * @param {FormGroup} formGroup
+	 * @param control 
+	 * @returns 
+	 */
+	static isInvalidControl(
+		formGroup: FormGroup,
+		control: string
+	): boolean {
+		if (!formGroup.contains(control)) {
+			return true;
+		}
+		return (
+			formGroup.get(control).touched && 
+			formGroup.get(control).invalid
+		);
+	}
 }

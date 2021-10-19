@@ -5,7 +5,8 @@ import {
 	JoinColumn,
 	RelationId,
 	ManyToOne,
-	ManyToMany
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDate } from 'class-validator';
@@ -95,6 +96,12 @@ export class Proposal
     */
 	// Tags
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.proposal)
+	@ManyToMany(() => Tag, (tag) => tag.proposals, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_proposal'
+	})
 	tags?: ITag[];
 }

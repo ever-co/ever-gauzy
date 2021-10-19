@@ -7,7 +7,7 @@ import {
 	OneToMany,
 	JoinTable,
 	RelationId,
-	ManyToOne
+	OneToOne
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -123,17 +123,21 @@ export class OrganizationContact
     | @ManyToOne 
     |--------------------------------------------------------------------------
     */
-	// Client Contact 
+
+	/**
+	 * Contact
+	 */
 	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
-		nullable: true,
+	@OneToOne(() => Contact, (contact) => contact.organizationContact, {
+		cascade: true,
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	contact: IContact;
+	contact?: IContact;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: OrganizationContact) => it.contact)
+	@IsOptional()
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
@@ -193,7 +197,10 @@ export class OrganizationContact
     */
 	// Organization Contact Tags
 	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.organizationContact)
+	@ManyToMany(() => Tag, (tag) => tag.organizationContacts, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_organization_contact'
 	})
