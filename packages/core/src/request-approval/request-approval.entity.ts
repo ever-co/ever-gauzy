@@ -129,7 +129,10 @@ export class RequestApproval
     |--------------------------------------------------------------------------
     */
 	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.requestApproval)
+	@ManyToMany(() => Tag, (tag) => tag.requestApprovals, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_request_approval'
 	})

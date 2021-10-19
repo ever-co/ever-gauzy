@@ -55,8 +55,11 @@ export class OrganizationTeam
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
-	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.organizationTeam)
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.organizationTeams, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_organization_team'
 	})

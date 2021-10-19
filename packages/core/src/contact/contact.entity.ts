@@ -124,16 +124,12 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	})
 	candidate?: ICandidate;
 
-	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
-
 	/**
-	 * OrganizationContact
+	 * Organization Contact
 	 */
-	@ApiProperty({ type: () => OrganizationContact, isArray: true })
-	@OneToMany(() => OrganizationContact, (organizationContact) => organizationContact.contact)
-	public organization_contacts?: IOrganizationContact[];
+	@ApiProperty({ type: () => OrganizationContact })
+	@OneToOne(() => OrganizationContact, (contact) => contact.contact, {
+		onDelete: 'SET NULL'
+	})
+	organizationContact?: IOrganizationContact;
 }

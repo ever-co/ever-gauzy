@@ -27,7 +27,8 @@ import {
 	OneToOne,
 	RelationId,
 	OneToMany,
-	Index
+	Index,
+	JoinTable
 } from 'typeorm';
 import {
 	CandidateDocument,
@@ -143,6 +144,7 @@ export class Candidate
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.contact)
+	@IsOptional()
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
@@ -249,7 +251,15 @@ export class Candidate
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
-	@ManyToMany(() => Tag, (tag) => tag.candidate)
+
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.candidates, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_candidate'
+	})
 	tags: ITag[];
 
 	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates)

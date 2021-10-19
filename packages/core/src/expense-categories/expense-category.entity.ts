@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToMany, JoinTable, OneToMany, JoinColumn } from 'typeorm';
+import { Column, Entity, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IExpense, IExpenseCategory, ITag } from '@gauzy/contracts';
@@ -25,8 +25,9 @@ export class ExpenseCategory
 	 * Expense
 	 */
 	@ApiPropertyOptional({ type: () => Expense, isArray: true })
-	@OneToMany(() => Expense, (expense) => expense.category)
-	@JoinColumn()
+	@OneToMany(() => Expense, (expense) => expense.category, {
+		onDelete: 'SET NULL'
+	})
 	expenses?: IExpense[];
 
 	/*
@@ -34,8 +35,15 @@ export class ExpenseCategory
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
+		
+	/**
+	 * Tag
+	 */
 	@ApiPropertyOptional({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.expenseCategory)
+	@ManyToMany(() => Tag, (tag) => tag.expenseCategories, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_organization_expense_category'
 	})

@@ -120,7 +120,7 @@ export class Equipment
     */
 
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.equipment, {
+	@ManyToMany(() => Tag, (tag) => tag.equipments, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
