@@ -5,16 +5,12 @@ import { EmployeeDashboardPageData } from '../../Base/pagedata/EmployeeDashboard
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
-import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as faker from 'faker';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import * as clientsPage from '../../Base/pages/Clients.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-import * as addTaskPage from '../../Base/pages/AddTasks.po';
-import { AddTasksPageData } from '../../Base/pagedata/AddTasksPageData';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 
@@ -33,8 +29,6 @@ let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 let employeeFullName = `${firstName} ${lastName}`;
-
-let description = faker.lorem.text();
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 

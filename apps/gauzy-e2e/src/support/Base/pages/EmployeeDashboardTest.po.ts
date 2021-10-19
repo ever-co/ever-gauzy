@@ -4,22 +4,13 @@ import {
 	clickButton,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex,
 	clickElementByText,
     clickButtonDouble,
 	waitElementToHide,
     clickByText,
-	clickButtonByText,
-	verifyValue,
-	verifyTextNotExisting,
-	scrollDown,
-	verifyElementIsNotVisible,
-	waitUntil,
     verifyByText
 } from '../utils/util';
 import { EmployeeDashboardPage } from '../pageobjects/EmployeeDashboardPageObject';
-import { verify } from 'cypress/types/sinon';
-
 
 export const addNewExpenseButtonVisible = () => {
 	verifyElementIsVisible(EmployeeDashboardPage.addNewExpenseButtonCss);
