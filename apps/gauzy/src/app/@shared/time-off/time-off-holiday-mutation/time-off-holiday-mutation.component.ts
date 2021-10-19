@@ -19,6 +19,7 @@ import {
 } from '../../../@core/services';
 import { environment as ENV } from './../../../../environments/environment';
 import { CompareDateValidator } from '../../../@core/validators';
+import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,6 +28,8 @@ import { CompareDateValidator } from '../../../@core/validators';
 	styleUrls: ['../time-off-mutation.components.scss']
 })
 export class TimeOffHolidayMutationComponent implements OnInit {
+	FormHelpers: typeof FormHelpers = FormHelpers;
+
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TimeOffHolidayMutationComponent>,
 		private readonly fb: FormBuilder,
@@ -38,7 +41,6 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
 	holidays = [];
-	policy: ITimeOffPolicy;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
 	public organization: IOrganization;
 	countryCode: string;
@@ -107,7 +109,6 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 	}
 
 	saveHoliday() {
-		this._checkFormData();
 		this.employeeIds.forEach((element) => {
 			const employee = this.orgEmployees.find((e) => e.id === element);
 			this.employeesArr.push(employee);
@@ -136,18 +137,6 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		);
 	}
 
-	private _checkFormData() {
-		if (this.policy.requiresApproval) {
-			this.form.patchValue({
-				status: StatusTypesEnum.REQUESTED
-			});
-		} else {
-			this.form.patchValue({
-				status: StatusTypesEnum.APPROVED
-			});
-		}
-	}
-
 	private async _getFormData() {
 		this._getAllHolidays();
 	}
@@ -172,7 +161,15 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 	}
 
 	onPolicySelected(policy: ITimeOffPolicy) {
-		this.policy = policy;
+		if (policy.requiresApproval) {
+			this.form.patchValue({
+				status: StatusTypesEnum.REQUESTED
+			});
+		} else {
+			this.form.patchValue({
+				status: StatusTypesEnum.APPROVED
+			});
+		}
 	}
 
 	onEmployeesSelected(employees: string[]) {
@@ -194,19 +191,5 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 
 	close() {
 		this.dialogRef.close();
-	}
-
-	/**
-	 * Form invalid control validate
-	 * 
-	 * @param control 
-	 * @returns 
-	 */
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return this.form.get(control).touched && 
-			this.form.get(control).invalid;
 	}
 }

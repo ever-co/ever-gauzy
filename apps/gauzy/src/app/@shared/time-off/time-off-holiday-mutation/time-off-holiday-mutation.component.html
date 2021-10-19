@@ -81,7 +81,7 @@
 							[placeholder]="'POP_UPS.PICK_DATE' | translate"
 							[nbDatepicker]="startDatePicker"
 							[status]="
-								isInvalidControl('start')
+								FormHelpers.isInvalidControl(form, 'start')
 									? 'danger'
 									: 'basic'
 							"
@@ -101,7 +101,7 @@
 							[placeholder]="'POP_UPS.PICK_DATE' | translate"
 							[nbDatepicker]="endDatePicker"
 							[status]="
-								isInvalidControl('end')
+								FormHelpers.isInvalidControl(form, 'end')
 									? 'danger'
 									: 'basic'
 							"

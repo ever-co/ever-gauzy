@@ -14,12 +14,11 @@ import * as moment from 'moment';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import {
-	EmployeesService,
 	OrganizationDocumentsService,
 	Store,
-	TimeOffService,
 } from '../../../@core/services';
 import { CompareDateValidator } from '../../../@core/validators';
+import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,11 +27,12 @@ import { CompareDateValidator } from '../../../@core/validators';
 	styleUrls: ['../time-off-mutation.components.scss']
 })
 export class TimeOffRequestMutationComponent implements OnInit {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
+
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
 		private readonly fb: FormBuilder,
-		private readonly timeOffService: TimeOffService,
-		private readonly employeesService: EmployeesService,
 		private readonly documentsService: OrganizationDocumentsService,
 		private readonly store: Store
 	) {}
@@ -60,14 +60,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this._timeOff = value;
 	};
 
-	policies: ITimeOffPolicy[] = [];
 	employeesArr: IEmployee[] = [];
 	selectedEmployee: any;
-	policy: ITimeOffPolicy;
 	isEditMode = false;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
 	public organization: IOrganization;
-	employeeIds: string[] = [];
 
 	/*
 	* Time Off Request Mutation Form 
@@ -75,12 +72,12 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
-			description: [],
 			start: ['', Validators.required],
 			end: ['', Validators.required],
 			policy: ['', Validators.required],
 			documentUrl: [],
-			status: []
+			status: [],
+			description: []
 		}, { 
 			validators: [
 				CompareDateValidator.validateDate('start', 'end')
@@ -95,7 +92,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				filter((organization: IOrganization) => !!organization),
 				debounceTime(200),
 				tap((organization) => this.organization = organization),
-				tap(() => this._getPolicies()),
 				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
 			)
@@ -117,7 +113,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				documentUrl: this.timeOff.documentUrl
 			});
 			
-			this.policy = this.timeOff.policy;
 			this.selectedEmployee = this.timeOff['employees'][0];
 			this.employeesArr = this.timeOff['employees'];
 		}		
@@ -125,8 +120,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	saveRequest() {
 		this.selectedEmployee = this.employeeSelector.selectedEmployee;
-		this._checkFormData();
-
 		if (this.selectedEmployee.id) {
 			this.employeesArr.push(this.selectedEmployee);
 			this._createNewRecord();
@@ -174,8 +167,13 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		);
 	}
 
-	private _checkFormData() {
-		if (this.policy.requiresApproval) {
+	/**
+	 * On Policy Selection
+	 * 
+	 * @param policy 
+	 */
+	onPolicySelected(policy: ITimeOffPolicy) {
+		if (policy.requiresApproval) {
 			this.form.patchValue({
 				status: StatusTypesEnum.REQUESTED
 			});
@@ -186,44 +184,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		}
 	}
 
-	private _getPolicies() {
-		if (!this.organization) {
-			return;
-		}
-
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		this.timeOffService.getAllPolicies(['employees'], {
-			organizationId,
-			tenantId
-		})
-		.pipe(
-			first(),
-			tap(({ items }) => this.policies = items)
-		)
-		.subscribe();
-	}
-
-	onPolicySelected(policy: ITimeOffPolicy) {
-		this.policy = policy;
-	}
-
 	close() {
 		this.dialogRef.close();
-	}
-
-	/**
-	 * Form invalid control validate
-	 * 
-	 * @param control 
-	 * @returns 
-	 */
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return this.form.get(control).touched && 
-			this.form.get(control).invalid;
 	}
 }
