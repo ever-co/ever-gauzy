@@ -125,7 +125,7 @@ const updateConfigUi = (config) => {
 	
 	const configStr = `
 		<script> window._env = { api: '${apiBaseUrl}' }; 
-		if (global === undefined) {
+		if (typeof global === "undefined") {
 			var global = window;
 		}; </script>`;
 
