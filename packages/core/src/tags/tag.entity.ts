@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, ManyToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidate,
