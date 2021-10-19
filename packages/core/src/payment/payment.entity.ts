@@ -172,7 +172,11 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
-	@ManyToMany(() => Tag, (tag) => tag.payment)
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.payments, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_payment'
 	})

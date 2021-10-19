@@ -23,7 +23,10 @@ export class OrganizationEmploymentType
     */
 
 	@ApiPropertyOptional({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.organizationEmploymentType)
+	@ManyToMany(() => Tag, (tag) => tag.organizationEmploymentTypes, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_organization_employment_type'
 	})

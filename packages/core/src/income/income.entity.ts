@@ -119,8 +119,17 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
-	// Tags
-	@ManyToMany(() => Tag, (tag) => tag.income)
-	@JoinTable({ name: 'tag_income' })
+    
+	/**
+	* 
+    */
+	@ApiProperty({ type: () => () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.incomes, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_income'
+	})
 	tags: ITag[];
 }

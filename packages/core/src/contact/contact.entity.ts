@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, OneToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import {
@@ -124,16 +124,12 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	})
 	candidate?: ICandidate;
 
-	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
-
 	/**
-	 * OrganizationContact
+	 * Organization Contact
 	 */
-	@ApiProperty({ type: () => OrganizationContact, isArray: true })
-	@OneToMany(() => OrganizationContact, (organizationContact) => organizationContact.contact)
-	public organization_contacts?: IOrganizationContact[];
+	@ApiProperty({ type: () => OrganizationContact })
+	@OneToOne(() => OrganizationContact, (contact) => contact.contact, {
+		onDelete: 'SET NULL'
+	})
+	organizationContact?: IOrganizationContact;
 }

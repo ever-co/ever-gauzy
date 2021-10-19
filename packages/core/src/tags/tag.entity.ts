@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, ManyToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidate,
@@ -77,138 +77,243 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@Column({ default: false })
 	isSystem?: boolean;
 
-	@ManyToMany(() => Candidate, (candidate) => candidate.tags)
-	@JoinTable({
-		name: 'tag_candidate'
-	})
-	candidate?: ICandidate[];
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
 
+	/**
+	 * Candidate
+	 */
+	@ApiProperty({ type: () => Candidate, isArray: true })
+	@ManyToMany(() => Candidate, (candidate) => candidate.tags, {
+		onDelete: 'CASCADE'
+	})
+	candidates?: ICandidate[];
+
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee, isArray: true })
 	@ManyToMany(() => Employee, (employee) => employee.tags, {
 		onDelete: 'CASCADE'
 	})
-	employee?: IEmployee[];
+	employees?: IEmployee[];
 
+	/**
+	 * Equipment
+	 */
+	@ApiProperty({ type: () => Equipment, isArray: true })
 	@ManyToMany(() => Equipment, (equipment) => equipment.tags, {
-		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	equipment?: IEquipment[];
+	equipments?: IEquipment[];
 
-	@ManyToMany(() => EventType, (eventType) => eventType.tags)
-	eventType?: IEventType[];
-
-	@ManyToMany(() => Income, (income) => income.tags)
-	income?: IIncome[];
-
-	@ManyToMany(() => Expense, (expense) => expense.tags)
-	expense?: IExpense[];
-
-	@ManyToMany(() => Invoice, (invoice) => invoice.tags)
-	@JoinTable({
-		name: 'tag_invoice'
+	/**
+	 * EventType
+	 */
+	@ApiProperty({ type: () => EventType, isArray: true })
+	@ManyToMany(() => EventType, (eventType) => eventType.tags, {
+		onDelete: 'CASCADE'
 	})
-	invoice?: IInvoice[];
+	eventTypes?: IEventType[];
 
-	@ManyToMany(() => Task, (task) => task.tags)
-	@JoinTable({
-		name: 'tag_task'
+	/**
+	 * Income
+	 */
+	@ApiProperty({ type: () => Income, isArray: true })
+	@ManyToMany(() => Income, (income) => income.tags, {
+		onDelete: 'CASCADE'
 	})
-	task?: ITask[];
+	incomes?: IIncome[];
 
-	@ManyToMany(() => Proposal, (proposal) => proposal.tags)
-	@JoinTable({ name: 'tag_proposal' })
-	proposal?: IProposal[];
+	/**
+	 * Expense
+	 */
+	@ApiProperty({ type: () => Expense, isArray: true })
+	@ManyToMany(() => Expense, (expense) => expense.tags, {
+		onDelete: 'CASCADE'
+	})
+	expenses?: IExpense[];
 
-	@ManyToMany(
-		() => OrganizationVendor,
-		(organizationVendor) => organizationVendor.tags
-	)
-	organizationVendor?: IOrganizationVendor[];
+	/**
+	 * Invoice
+	 */
+	@ApiProperty({ type: () => Invoice, isArray: true })
+	@ManyToMany(() => Invoice, (invoice) => invoice.tags, {
+		onDelete: 'CASCADE'
+	})
+	invoices?: IInvoice[];
 
-	@ManyToMany(
-		() => OrganizationTeam,
-		(organizationTeam) => organizationTeam.tags
-	)
-	organizationTeam?: IOrganizationTeam[];
+	/**
+	 * Income
+	 */
+	@ApiProperty({ type: () => Task, isArray: true })
+	@ManyToMany(() => Task, (task) => task.tags, {
+		onDelete: 'CASCADE'
+	})
+	tasks?: ITask[];
 
+	/**
+	 * Proposal
+	 */
+	@ApiProperty({ type: () => Proposal, isArray: true })
+	@ManyToMany(() => Proposal, (proposal) => proposal.tags, {
+		onDelete: 'CASCADE'
+	})
+	proposals?: IProposal[];
+
+	/**
+	 * OrganizationVendor
+	 */
+	@ApiProperty({ type: () => OrganizationVendor, isArray: true })
+	@ManyToMany(() => OrganizationVendor, (organizationVendor) => organizationVendor.tags, {
+		onDelete: 'CASCADE'
+	})
+	organizationVendors?: IOrganizationVendor[];
+
+	/**
+	 * OrganizationTeam
+	 */
+	@ApiProperty({ type: () => OrganizationTeam, isArray: true })
+	@ManyToMany(() => OrganizationTeam, (organizationTeam) => organizationTeam.tags, {
+		onDelete: 'CASCADE'
+	})
+	organizationTeams?: IOrganizationTeam[];
+
+	/**
+	 * OrganizationProject
+	 */
+	@ApiProperty({ type: () => OrganizationProject, isArray: true })
 	@ManyToMany(() => OrganizationProject, (organizationProject) => organizationProject.tags, {
-		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	@JoinTable({
-		name: 'tag_organization_project'
+	organizationProjects?: IOrganizationProject[];
+
+	/**
+	 * OrganizationPosition
+	 */
+	@ApiProperty({ type: () => OrganizationPosition, isArray: true })
+	@ManyToMany(() => OrganizationPosition, (organizationPosition) => organizationPosition.tags, {
+		onDelete: 'CASCADE'
 	})
-	organizationProject?: IOrganizationProject[];
+	organizationPositions?: IOrganizationPosition[];
 
-	@ManyToMany(
-		() => OrganizationPosition,
-		(organizationPosition) => organizationPosition.tags
-	)
-	organizationPosition?: IOrganizationPosition[];
+	/**
+	 * ExpenseCategory
+	 */
+	@ApiProperty({ type: () => ExpenseCategory, isArray: true })
+	@ManyToMany(() => ExpenseCategory, (expenseCategory) => expenseCategory.tags, {
+		onDelete: 'CASCADE'
+	})
+	expenseCategories?: IExpenseCategory[];
 
-	@ManyToMany(
-		() => ExpenseCategory,
-		(expenseCategory) => expenseCategory.tags
-	)
-	expenseCategory?: IExpenseCategory[];
+	/**
+	 * OrganizationEmploymentType
+	 */
+	@ApiProperty({ type: () => OrganizationEmploymentType, isArray: true })
+	@ManyToMany(() => OrganizationEmploymentType, (organizationEmploymentType) => organizationEmploymentType.tags, {
+		onDelete: 'CASCADE'
+	})
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
-	@ManyToMany(
-		() => OrganizationEmploymentType,
-		(organizationEmploymentType) => organizationEmploymentType.tags
-	)
-	organizationEmploymentType?: IOrganizationEmploymentType[];
+	/**
+	 * EmployeeLevel
+	 */
+	@ApiProperty({ type: () => EmployeeLevel, isArray: true })
+	@ManyToMany(() => EmployeeLevel, (employeeLevel) => employeeLevel.tags, {
+		onDelete: 'CASCADE'
+	})
+	employeeLevels?: IEmployeeLevel[];
 
-	@ManyToMany(() => EmployeeLevel, (employeeLevel) => employeeLevel.tags)
-	employeeLevel?: IEmployeeLevel[];
+	/**
+	 * OrganizationDepartment
+	 */
+	@ApiProperty({ type: () => OrganizationDepartment, isArray: true })
+	@ManyToMany(() => OrganizationDepartment, (organizationDepartment) => organizationDepartment.tags, {
+		onDelete: 'CASCADE'
+	})
+	organizationDepartments?: IOrganizationDepartment[];
 
-	@ManyToMany(
-		() => OrganizationDepartment,
-		(organizationDepartment) => organizationDepartment.tags
-	)
-	organizationDepartment?: IOrganizationDepartment[];
+	/**
+	 * OrganizationContact
+	 */
+	@ApiProperty({ type: () => OrganizationContact, isArray: true })
+	@ManyToMany(() => OrganizationContact, (organizationContact) => organizationContact.tags, {
+		onDelete: 'CASCADE'
+	})
+	organizationContacts?: IOrganizationContact[];
 
-	@ManyToMany(
-		() => OrganizationContact,
-		(organizationContact) => organizationContact.tags
-	)
-	organizationContact?: IOrganizationContact[];
+	/**
+	 * Product
+	 */
+	@ApiProperty({ type: () => Product, isArray: true })
+	@ManyToMany(() => Product, (product) => product.tags, {
+		onDelete: 'CASCADE'
+	})
+	products?: IProduct[];
 
-	@ManyToMany(() => Product, (product) => product.tags)
-	product?: IProduct[];
+	/**
+	 * Payment
+	 */
+	@ApiProperty({ type: () => Payment, isArray: true })
+	@ManyToMany(() => Payment, (payment) => payment.tags, {
+		onDelete: 'CASCADE'
+	})
+	payments?: IPayment[];
 
-	@ManyToMany(() => Payment, (payment) => payment.tags)
-	payment?: IPayment[];
+	/**
+	 * RequestApproval
+	 */
+	@ApiProperty({ type: () => RequestApproval, isArray: true })
+	@ManyToMany(() => RequestApproval, (requestApproval) => requestApproval.tags, {
+		onDelete: 'CASCADE'
+	})
+	requestApprovals?: IRequestApproval[];
 
-	@ManyToMany(
-		() => RequestApproval,
-		(requestApproval) => requestApproval.tags
-	)
-	requestApproval?: IRequestApproval[];
-
-	@ManyToMany(() => User)
-	@JoinTable({
-		name: 'tag_user'
+	/**
+	 * User
+	 */
+	@ApiProperty({ type: () => User, isArray: true })
+	@ManyToMany(() => User, (user) => user.tags, {
+		onDelete: 'CASCADE'
 	})
 	users?: IUser[];
 
-	@ManyToMany(() => Integration)
-	@JoinTable({
-		name: 'tag_integration'
+	/**
+	 * Integration
+	 */
+	@ApiProperty({ type: () => Integration, isArray: true })
+	@ManyToMany(() => Integration, (integration) => integration.tags, {
+		onDelete: 'CASCADE'
 	})
 	integrations?: IIntegration[];
 
-	@ManyToMany(() => Merchant, (merchant) => merchant.tags)
-	merchants?: IMerchant[];
-
-	@ManyToMany(() => Warehouse, (warehouse) => warehouse.tags)
-	warehouses?: IWarehouse[];
-
-	// organizations Tags
-	@ManyToMany(() => Organization, (organization) => organization.tags, {
+	/**
+	 * Merchant
+	 */
+	@ApiProperty({ type: () => Merchant, isArray: true })
+	@ManyToMany(() => Merchant, (merchant) => merchant.tags, {
 		onDelete: 'CASCADE'
 	})
-    @JoinTable({
-		name: 'tag_organization'
+	merchants?: IMerchant[];
+
+	/**
+	 * Warehouse
+	 */
+	@ApiProperty({ type: () => Warehouse, isArray: true })
+	@ManyToMany(() => Warehouse, (warehouse) => warehouse.tags, {
+		onDelete: 'CASCADE'
+	})
+	warehouses?: IWarehouse[];
+
+	/**
+	 * Organization
+	 */
+	@ApiProperty({ type: () => Organization, isArray: true })
+	@ManyToMany(() => Organization, (organization) => organization.tags, {
+		onDelete: 'CASCADE'
 	})
     organizations?: IOrganization[];
 }

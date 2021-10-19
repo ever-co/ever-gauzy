@@ -3,6 +3,7 @@ import {
 	Entity,
 	Index,
 	JoinColumn,
+	JoinTable,
 	ManyToMany,
 	ManyToOne,
 	OneToMany,
@@ -492,7 +493,11 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	// Tags
 	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (it) => it.organizations, {
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_organization'
 	})
 	tags: ITag[];
 

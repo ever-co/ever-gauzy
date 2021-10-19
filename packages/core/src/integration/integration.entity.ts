@@ -56,7 +56,10 @@ export class Integration extends BaseEntity implements IIntegration {
 	integrationTypes?: IIntegrationType[];
 
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag)
+	@ManyToMany(() => Tag, (tag) => tag.integrations, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_integration'
 	})

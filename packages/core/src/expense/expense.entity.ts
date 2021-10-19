@@ -246,8 +246,11 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	/**
 	 * Tag
 	 */
-	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.expense)
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.expenses, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_expense'
 	})

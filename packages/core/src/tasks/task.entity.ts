@@ -153,9 +153,12 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * Tags
 	 */
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.task, {
+	@ManyToMany(() => Tag, (tag) => tag.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_task'
 	})
 	tags?: ITag[];
 
@@ -167,7 +170,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
     })
-	@JoinTable({ name: 'task_employee' })
+	@JoinTable({
+		name: 'task_employee'
+	})
 	members?: IEmployee[];
 
 	/**
@@ -178,6 +183,8 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
     })
-	@JoinTable({ name: 'task_team' })
+	@JoinTable({
+		name: 'task_team'
+	})
 	teams?: IOrganizationTeam[];
 }
