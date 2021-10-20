@@ -79,6 +79,10 @@ And('User can see only selected user', () => {
 	manageCandidatesInvitesPage.verifySearchResult(ManageCandidatesInvitesPageData.tableResult);
 });
 
+Then('User clear field', () => {
+	manageCandidatesInvitesPage.clearEmailField();
+});
+
 // Resend invite
 And('User can see invites table', () => {
 	manageCandidatesInvitesPage.tableRowVisible();

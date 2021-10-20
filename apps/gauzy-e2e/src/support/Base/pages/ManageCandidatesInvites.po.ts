@@ -119,3 +119,7 @@ export const enterEmailPlaceholder = (email: string) => {
 export const verifySearchResult = (length: number) =>{
 	vefiryByLength(ManageCandidatesInvitesPage.selectTableRowCss, length);
 };
+
+export const clearEmailField = () => {
+	clearField(ManageCandidatesInvitesPage.emailPlaceholderCss);
+};
