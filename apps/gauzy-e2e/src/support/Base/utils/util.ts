@@ -279,3 +279,7 @@ export const enterTextInIFrame= (loc, text ) => {
       			.type(text);
 	})
 };
+
+export const vefiryByLength = (loc:any, length: number) => {
+	cy.get(loc, { timeout: defaultCommandTimeout}).should('have.length', length);
+};
