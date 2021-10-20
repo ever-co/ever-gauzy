@@ -9,7 +9,8 @@ import {
 	enterInputConditionally,
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
-	verifyByText
+	verifyByText,
+	vefiryByLength
 } from '../utils/util';
 import { ManageCandidatesInvitesPage } from '../pageobjects/ManageCandidatesInvitesPageObject';
 
@@ -105,4 +106,16 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 
 export const verifyHeaderOfThePage = (header: string) => {
 	verifyByText(ManageCandidatesInvitesPage.headerPageCss, header)
+};
+
+export const verifyEmailPlaceholder = () => {
+	verifyElementIsVisible(ManageCandidatesInvitesPage.emailPlaceholderCss)
+};
+
+export const enterEmailPlaceholder = (email: string) => {
+	enterInput(ManageCandidatesInvitesPage.emailPlaceholderCss, email)
+}
+
+export const verifySearchResult = (length: number) =>{
+	vefiryByLength(ManageCandidatesInvitesPage.selectTableRowCss, length);
 };

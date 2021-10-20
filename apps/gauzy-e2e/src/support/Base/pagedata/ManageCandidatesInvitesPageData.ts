@@ -1,3 +1,4 @@
 export const ManageCandidatesInvitesPageData = {
-    headerText: 'Manage Candidate Invites'
+    headerText: 'Manage Candidate Invites',
+    tableResult: 1
 };

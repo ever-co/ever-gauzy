@@ -14,6 +14,10 @@ Feature: Candidates invites test
     When User click on save button
     Then Notification message will appear
     And User can verify invite was created
+  Scenario: Search by Email
+    When User see email input field
+    Then User can enter email in email field
+    And User can see only selected user
   Scenario: Resend invite
     And User can see invites table
     When User click on table row

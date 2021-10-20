@@ -67,6 +67,17 @@ Then('Notification message will appear', () => {
 And('User can verify invite was created', () => {
 	manageCandidatesInvitesPage.verifyInviteExist(email);
 });
+//Search by Email
+When ('User see email input field', () => {
+	manageCandidatesInvitesPage.verifyEmailPlaceholder();
+});
+Then('User can enter email in email field', () => {
+	manageCandidatesInvitesPage.enterEmailPlaceholder(email);
+});
+
+And('User can see only selected user', () => {
+	manageCandidatesInvitesPage.verifySearchResult(ManageCandidatesInvitesPageData.tableResult);
+});
 
 // Resend invite
 And('User can see invites table', () => {
