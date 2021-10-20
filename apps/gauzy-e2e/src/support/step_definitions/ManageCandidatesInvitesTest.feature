@@ -3,8 +3,9 @@ Feature: Candidates invites test
     Given Login with default credentials
   Scenario: Create new invite
     Then User can visit Candidates invites page
-    And User can see invite button
-    When User click on invite button
+    Then User can see header of the page
+    When User see invite button
+    Then User click on invite button
     And User can see email input field
     And User can enter value for email
     And User can see date input field

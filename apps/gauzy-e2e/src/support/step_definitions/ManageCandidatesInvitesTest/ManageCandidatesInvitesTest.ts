@@ -4,6 +4,7 @@ import * as manageCandidatesInvitesPage from '../../Base/pages/ManageCandidatesI
 import { CustomCommands } from '../../commands';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as faker from 'faker';
+import { ManageCandidatesInvitesPageData } from '../../Base/pagedata/ManageCandidatesInvitesPageData'
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -18,19 +19,19 @@ Given('Login with default credentials', () => {
 
 // Create new invite
 Then('User can visit Candidates invites page', () => {
-	cy.intercept('GET', '/api/report/menu-items*').as('waitMenuItems');
-	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
 	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/employees/candidates/invites', { timeout: pageLoadTimeout });
-
-	cy.wait(['@waitMenuItems','@waitUserOrganization']);
 });
 
-And('User can see invite button', () => {
+Then('User can see header of the page', () => {
+	manageCandidatesInvitesPage.verifyHeaderOfThePage(ManageCandidatesInvitesPageData.headerText);
+});
+
+When('User see invite button', () => {
 	manageCandidatesInvitesPage.inviteButtonVisible();
 });
 
-When('User click on invite button', () => {
+Then('User click on invite button', () => {
 	manageCandidatesInvitesPage.clickInviteButton();
 });
 
