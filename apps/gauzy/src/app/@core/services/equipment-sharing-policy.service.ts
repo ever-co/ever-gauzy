@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IEquipmentSharingPolicy, IEquipmentSharingPolicyFindInput } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -15,43 +15,43 @@ export class EquipmentSharingPolicyService {
 		findInput?: IEquipmentSharingPolicyFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IEquipmentSharingPolicy[]; total: number }>(
 				`${this.EQUIPMENT_SHARING_POLICY_URL}`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.EQUIPMENT_SHARING_POLICY_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	save(
 		equipmentSharingPolicy: IEquipmentSharingPolicy
 	): Promise<IEquipmentSharingPolicy> {
 		if (!equipmentSharingPolicy.id) {
-			return this.http
+			return firstValueFrom(
+				this.http
 				.post<IEquipmentSharingPolicy>(
 					this.EQUIPMENT_SHARING_POLICY_URL,
 					equipmentSharingPolicy
 				)
-				.pipe(first())
-				.toPromise();
+			);
 		} else {
-			return this.http
+			return firstValueFrom(
+				this.http
 				.put<IEquipmentSharingPolicy>(
 					`${this.EQUIPMENT_SHARING_POLICY_URL}/${equipmentSharingPolicy.id}`,
 					equipmentSharingPolicy
 				)
-				.pipe(first())
-				.toPromise();
+			);
 		}
 	}
 }
