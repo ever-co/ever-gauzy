@@ -18,6 +18,7 @@ Feature: Candidates invites test
     When User see email input field
     Then User can enter email in email field
     And User can see only selected user
+    Then User clear field
   Scenario: Resend invite
     And User can see invites table
     When User click on table row
