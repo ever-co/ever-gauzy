@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import {
 	IOrganizationExpenseCategoryCreateInput,
 	IOrganizationExpenseCategory,
@@ -17,13 +17,13 @@ export class OrganizationExpenseCategoriesService {
 	create(
 		createInput: IOrganizationExpenseCategoryCreateInput
 	): Promise<IOrganizationExpenseCategory> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IOrganizationExpenseCategory>(
 				`${API_PREFIX}/expense-categories`,
 				createInput
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -32,28 +32,28 @@ export class OrganizationExpenseCategoriesService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput, relations });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationExpenseCategory[]; total: number }>(
 				`${API_PREFIX}/expense-categories`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${API_PREFIX}/expense-categories/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${API_PREFIX}/expense-categories/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

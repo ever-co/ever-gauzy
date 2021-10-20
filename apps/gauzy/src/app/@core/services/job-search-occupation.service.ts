@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { IJobSearchOccupation, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,22 +12,24 @@ export class JobSearchOccupationService {
 	constructor(private http: HttpClient) {}
 
 	getAll(request?: any) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IPagination<IJobSearchOccupation>>(
 				`${API_PREFIX}/job-preset/job-search-occupation`,
 				{
 					params: request ? toParams(request) : {}
 				}
 			)
-			.toPromise();
+		);
 	}
 
 	create(request?: IJobSearchOccupation) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IJobSearchOccupation>(
 				`${API_PREFIX}/job-preset/job-search-occupation`,
 				request
 			)
-			.toPromise();
+		);
 	}
 }
