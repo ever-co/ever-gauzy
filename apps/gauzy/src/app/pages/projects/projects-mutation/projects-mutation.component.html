@@ -421,7 +421,7 @@
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 			<button
-				*ngIf="form.controls['taskViewMode'].value === 'SPRINT'"
+				*ngIf="form.controls['taskViewMode'].value === 'SPRINT' && project"
 				nbButton
 				class="float-right"
 				status="success"
@@ -433,7 +433,7 @@
 	</nb-card-body>
 </nb-card>
 
-<div *ngIf="form?.controls?.taskViewMode?.value == TaskListTypeEnum.SPRINT">
+<div *ngIf="form?.controls?.taskViewMode?.value == TaskListTypeEnum.SPRINT && project">
 	<ngx-tasks-sprint-settings-view
 		[project]="project"
 	></ngx-tasks-sprint-settings-view>

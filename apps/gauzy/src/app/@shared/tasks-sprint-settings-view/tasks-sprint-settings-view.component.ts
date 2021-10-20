@@ -24,7 +24,7 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
 			sprints.filter(
 				(sprint: IOrganizationSprint) =>
-					sprint.projectId === this.project.id
+					sprint.projectId === this.project?.id
 			)
 		),
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] => {
@@ -50,7 +50,7 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 					this.store.fetchSprints({
 						organizationId: this.organization.id,
 						tenantId: this.storeService.user.tenantId,
-						projectId: this.project.id
+						projectId: this.project?.id
 					})
 				),
 				untilDestroyed(this)
