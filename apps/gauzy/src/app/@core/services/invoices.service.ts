@@ -6,7 +6,7 @@ import {
 	IInvoiceFindInput,
 	IInvoiceUpdateInput
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
@@ -23,90 +23,91 @@ export class InvoicesService {
 		findInput?: IInvoiceFindInput
 	): Promise<{ items: IInvoice[] }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+
+		return firstValueFrom(
+			this.http
 			.get<{ items: IInvoice[] }>(`${API_PREFIX}/invoices`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getHighestInvoiceNumber(tenantId: string): Promise<IInvoice> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IInvoice>(`${API_PREFIX}/invoices/highest`, {
 				params: toParams({ tenantId })
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getById(id: string, relations?: string[], findInput?: IInvoiceFindInput) {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IInvoice>(`${API_PREFIX}/invoices/${id}`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getWithoutAuth(id: string, token: string, relations?: string[]) {
 		const data = JSON.stringify({ relations });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IInvoice>(`${API_PREFIX}/invoices/public/${id}/${token}`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	add(invoice: IInvoiceCreateInput): Promise<IInvoice> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IInvoice>(`${API_PREFIX}/invoices`, invoice)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<IInvoice>(`${API_PREFIX}/invoices/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	updateWithoutAuth(
 		id: string,
 		updateInput: IInvoiceUpdateInput
 	): Promise<IInvoice> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<IInvoice>(`${API_PREFIX}/invoices/estimate/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	edit(invoice: IInvoice): Promise<IInvoice> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<IInvoice>(`${API_PREFIX}/invoices/${invoice.id}`, invoice)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	generateLink(id: string, isEstimate: boolean): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<any>(`${API_PREFIX}/invoices/generate/${id}`, {
 				params: {
 					isEstimate
 				}
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${API_PREFIX}/invoices/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	sendEmail(
@@ -117,7 +118,8 @@ export class InvoicesService {
 		organizationId: string,
 		tenantId: string
 	): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<any>(`${API_PREFIX}/invoices/email/${email}`, {
 				params: {
 					isEstimate,
@@ -127,8 +129,7 @@ export class InvoicesService {
 					tenantId
 				}
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	changeValue(message: boolean) {

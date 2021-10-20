@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { IKeyResultUpdate } from '@gauzy/contracts';
 import { throwError } from 'rxjs';
-import { catchError, first } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -26,12 +27,12 @@ export class KeyResultUpdateService {
 
 	deleteBulkByKeyResultId(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
-		return this._http
+		return firstValueFrom(
+			this._http
 			.delete(`${this.API_URL}/deleteBulkByKeyResultId`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	errorHandler(error: HttpErrorResponse) {

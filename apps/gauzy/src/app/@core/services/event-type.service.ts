@@ -6,7 +6,7 @@ import {
 	IEventTypeCreateInput,
 	IEventTypeUpdateInput
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -16,20 +16,20 @@ export class EventTypeService {
 	constructor(private http: HttpClient) {}
 
 	create(createInput: IEventTypeCreateInput): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IEventType>(this.EVENT_TYPE_BASE_URI, createInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getEventTypeById(id: string, relations?: string[]) {
 		const data = JSON.stringify({ relations });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IEventType>(`${this.EVENT_TYPE_BASE_URI}/${id}`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -37,28 +37,28 @@ export class EventTypeService {
 		findInput?: IEventTypeFindInput
 	): Promise<{ items: IEventType[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IEventType[]; total: number }>(
 				this.EVENT_TYPE_BASE_URI,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id: string, updateInput: IEventTypeUpdateInput): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${this.EVENT_TYPE_BASE_URI}/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.EVENT_TYPE_BASE_URI}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

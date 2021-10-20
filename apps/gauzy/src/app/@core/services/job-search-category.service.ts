@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { IJobSearchCategory, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,23 +12,24 @@ export class JobSearchCategoryService {
 	constructor(private http: HttpClient) {}
 
 	getAll(request?: any) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IPagination<IJobSearchCategory>>(
 				`${API_PREFIX}/job-preset/job-search-category`,
 				{
 					params: request ? toParams(request) : {}
 				}
 			)
-			.toPromise();
+		);
 	}
 
 	create(request?: IJobSearchCategory) {
-		console.log('createNewCategories', { request });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IJobSearchCategory>(
 				`${API_PREFIX}/job-preset/job-search-category`,
 				request
 			)
-			.toPromise();
+		);
 	}
 }

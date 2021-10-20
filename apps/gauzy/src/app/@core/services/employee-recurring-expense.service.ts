@@ -9,7 +9,7 @@ import {
 	IRecurringExpenseDeleteInput,
 	IRecurringExpenseOrderFields
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -21,10 +21,10 @@ export class EmployeeRecurringExpenseService {
 	constructor(private http: HttpClient) {}
 
 	create(createInput: IEmployeeRecurringExpense): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IEmployeeRecurringExpense>(this.API_URL, createInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -37,15 +37,15 @@ export class EmployeeRecurringExpenseService {
 	}> {
 		const data = JSON.stringify({ relations, findInput, order });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{
 				items: IEmployeeRecurringExpense[];
 				total: number;
 			}>(this.API_URL, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAllByMonth(
@@ -57,15 +57,15 @@ export class EmployeeRecurringExpenseService {
 	}> {
 		const data = JSON.stringify({ relations, findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{
 				items: IEmployeeRecurringExpense[];
 				total: number;
 			}>(`${this.API_URL}/month`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(
@@ -74,19 +74,19 @@ export class EmployeeRecurringExpenseService {
 	): Promise<any> {
 		const data = JSON.stringify({ deleteInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.API_URL}/${id}`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id: string, updateInput: IEmployeeRecurringExpense): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${this.API_URL}/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getStartDateUpdateType(
@@ -94,11 +94,11 @@ export class EmployeeRecurringExpenseService {
 	): Promise<IStartUpdateTypeInfo> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IStartUpdateTypeInfo>(`${this.API_URL}/date-update-type`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

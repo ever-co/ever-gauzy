@@ -9,7 +9,6 @@ import {
 	IPaymentReportData,
 	IPaymentUpdateInput
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 import { firstValueFrom } from 'rxjs';
@@ -25,42 +24,43 @@ export class PaymentService {
 		findInput?: IPaymentFindInput
 	): Promise<{ items: IPayment[] }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+
+		return firstValueFrom(
+			this.http
 			.get<{ items: IPayment[] }>(`${API_PREFIX}/payments`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	add(payment: IPayment): Promise<IPayment> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IPayment>(`${API_PREFIX}/payments`, payment)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id: string, updateInput: IPaymentUpdateInput): Promise<IPayment> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<IPayment>(`${API_PREFIX}/payments/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${API_PREFIX}/payments/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getReportData(request: IGetPaymentInput) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IPaymentReportData[]>(`${API_PREFIX}/payments/report`, {
 				params: toParams(request)
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 	getReportChartData(request: IGetPaymentInput) {
 		return firstValueFrom(
@@ -75,14 +75,14 @@ export class PaymentService {
 	}
 
 	sendReceipt(payment: IPayment, invoice: IInvoice): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<any>(`${API_PREFIX}/payments/receipt`, {
 				params: {
 					payment,
 					invoice
 				}
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }
