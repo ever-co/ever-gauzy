@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { IEmployeeProposalTemplate, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../../../@core/constants';
 
 @Injectable({
@@ -14,42 +14,42 @@ export class ProposalTemplateService {
 	constructor(private http: HttpClient) {}
 
 	getAll(request: any = {}) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IPagination<IEmployeeProposalTemplate>>(this.API_URL, {
 				params: toParams(request)
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	create(request) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IEmployeeProposalTemplate>(this.API_URL, request)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id, request: IEmployeeProposalTemplate) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put<IEmployeeProposalTemplate>(`${this.API_URL}/${id}`, request)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	makeDefault(id) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IEmployeeProposalTemplate>(
 				`${this.API_URL}/${id}/make-default`,
 				{}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.API_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

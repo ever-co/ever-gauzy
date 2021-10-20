@@ -13,7 +13,7 @@
 					[placeholder]="'FORM.PLACEHOLDERS.FIRST_NAME' | translate"
 					formControlName="firstName"
 					[status]="
-						isInvalidControl('firstName')
+						FormHelpers.isInvalidControl(form, 'firstName')
 							? 'danger'
 							: 'basic'
 					"
@@ -33,7 +33,7 @@
 					[placeholder]="'FORM.PLACEHOLDERS.LAST_NAME' | translate"
 					formControlName="lastName"
 					[status]="
-						isInvalidControl('lastName')
+						FormHelpers.isInvalidControl(form, 'lastName')
 							? 'danger'
 							: 'basic'
 					"
@@ -55,7 +55,7 @@
 					[placeholder]="'FORM.USERNAME' | translate"
 					formControlName="username"
 					[status]="
-						isInvalidControl('username')
+						FormHelpers.isInvalidControl(form, 'username')
 							? 'danger'
 							: 'basic'
 					"
@@ -75,7 +75,7 @@
 					[placeholder]="'FORM.EMAIL' | translate"
 					formControlName="email"
 					[status]="
-						isInvalidControl('email')
+						FormHelpers.isInvalidControl(form, 'email')
 							? 'danger'
 							: 'basic'
 					"
@@ -123,7 +123,7 @@
 				>
 					<nb-option
 						*ngFor="let role of allRoles"
-						value="{{ role }}"
+						[value]="role"
 						>{{ 'USERS_PAGE.ROLE.' + role | translate }}</nb-option
 					>
 				</nb-select>
@@ -184,7 +184,7 @@
 					[nbDatepicker]="acceptDatePicker"
 					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 					[status]="
-						isInvalidControl('acceptDate')
+						FormHelpers.isInvalidControl(form, 'acceptDate')
 							? 'danger'
 							: 'basic'
 					"
@@ -207,7 +207,7 @@
 					[nbDatepicker]="rejectDatePicker"
 					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 					[status]="
-						isInvalidControl('rejectDate')
+						FormHelpers.isInvalidControl(form, 'rejectDate')
 							? 'danger'
 							: 'basic'
 					"
@@ -218,7 +218,7 @@
 		<div class="col-sm-6">
 			<div class="form-group">
 				<ga-tags-color-input
-					[selectedTags]="tags"
+					[selectedTags]="form.get('tags').value"
 					(selectedTagsEvent)="selectedTagsHandler($event)"
 					[isOrgLevel]="true"
 				>
@@ -240,7 +240,7 @@
 					[nbDatepicker]="hiredDatePicker"
 					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 					[status]="
-						isInvalidControl('hiredDate')
+						FormHelpers.isInvalidControl(form, 'hiredDate')
 							? 'danger'
 							: 'basic'
 					"
@@ -271,7 +271,7 @@
 				}}</label>
 				<ngx-file-uploader-input
 					id="inputImageUrl"
-					[placeholder]="uploaderPlaceholder"
+					[placeholder]="'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER' | translate"
 					[fileUrl]="imageUrl?.value"
 					(uploadedImgUrl)="imageUrl.setValue($event)"
 				></ngx-file-uploader-input>

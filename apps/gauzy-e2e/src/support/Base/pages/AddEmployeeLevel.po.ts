@@ -13,9 +13,10 @@ import {
 import { AddEmployeeLevelPage } from '../pageobjects/AddEmployeeLevelPageObject';
 
 export const gridBtnExists = () => {
-	cy.intercept('GET','/api/user-organization*').as('waitOrganization');
+	cy.intercept('GET','/api/employee-level*').as('waitLevel');
+	cy.wait('@waitLevel');
 	verifyElementIsVisible(AddEmployeeLevelPage.gridButtonCss);
-	cy.wait('@waitOrganization');
+
 };
 
 export const gridBtnClick = (index) => {

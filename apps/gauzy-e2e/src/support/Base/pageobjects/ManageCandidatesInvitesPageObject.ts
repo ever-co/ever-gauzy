@@ -9,5 +9,7 @@ export const ManageCandidatesInvitesPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	confirmResendInviteButtonCss: 'nb-card-footer > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyEmailCss: 'table-cell-view-mode > div > div.ng-star-inserted'
+	verifyEmailCss: 'table-cell-view-mode > div > div.ng-star-inserted',
+	headerPageCss: 'ngx-header-title',
+	emailPlaceholderCss: 'input-filter > input[placeholder="Email"]'
 };

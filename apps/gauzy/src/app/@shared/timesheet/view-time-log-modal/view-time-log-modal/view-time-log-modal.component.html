@@ -1,20 +1,10 @@
-<button
-	size="small"
-	class="close-button"
-	nbButton
-	ghost
-	(click)="close()"
-	type="button"
->
-	<nb-icon icon="close-outline"></nb-icon>
-</button>
 <nb-card>
 	<nb-card-header>
 		<div
 			class="row"
 			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
 		>
-			<div class="col">
+			<div class="col-10">
 				<ngx-avatar
 					[name]="timeLog?.employee?.user?.name"
 					[src]="timeLog?.employee?.user?.imageUrl"
@@ -32,12 +22,24 @@
 					"
 				></ngx-avatar>
 			</div>
-			<div class="col-auto">
+			<div class="col-1">
 				<ngx-label
 					[status]="TimeLogsLabel[timeLog?.logType].status"
 					[text]="TimeLogsLabel[timeLog?.logType].text"
 				>
 				</ngx-label>
+			</div>
+			<div class="col-1 mt-2">
+				<button
+					size="small"
+					class="close-button"
+					nbButton
+					ghost
+					(click)="close()"
+					type="button"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
 			</div>
 		</div>
 	</nb-card-header>

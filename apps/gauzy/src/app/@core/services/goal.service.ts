@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { IGoal, IGoalFindInput, IGoalResponse } from '@gauzy/contracts';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
-import { catchError, first } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -25,10 +26,10 @@ export class GoalService {
 	}
 
 	update(id: string, goal: IGoal): Promise<IGoal> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.put<IGoal>(`${this.API_URL}/${id}`, goal)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAllGoals(
@@ -43,10 +44,10 @@ export class GoalService {
 	}
 
 	delete(id: string): Promise<any> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.delete(`${this.API_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	errorHandler(error: HttpErrorResponse) {

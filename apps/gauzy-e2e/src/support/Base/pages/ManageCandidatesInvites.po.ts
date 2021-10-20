@@ -8,11 +8,15 @@ import {
 	verifyText,
 	enterInputConditionally,
 	clickKeyboardBtnByKeycode,
-	clickElementByText
+	clickElementByText,
+	verifyByText,
+	vefiryByLength
 } from '../utils/util';
 import { ManageCandidatesInvitesPage } from '../pageobjects/ManageCandidatesInvitesPageObject';
 
 export const inviteButtonVisible = () => {
+	cy.intercept('GET', '/api/invite*').as('waitInvites');
+	cy.wait('@waitInvites');
 	verifyElementIsVisible(ManageCandidatesInvitesPage.inviteButtonCss);
 };
 
@@ -98,4 +102,24 @@ export const clickConfirmDeleteButton = () => {
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
+};
+
+export const verifyHeaderOfThePage = (header: string) => {
+	verifyByText(ManageCandidatesInvitesPage.headerPageCss, header)
+};
+
+export const verifyEmailPlaceholder = () => {
+	verifyElementIsVisible(ManageCandidatesInvitesPage.emailPlaceholderCss)
+};
+
+export const enterEmailPlaceholder = (email: string) => {
+	enterInput(ManageCandidatesInvitesPage.emailPlaceholderCss, email)
+}
+
+export const verifySearchResult = (length: number) =>{
+	vefiryByLength(ManageCandidatesInvitesPage.selectTableRowCss, length);
+};
+
+export const clearEmailField = () => {
+	clearField(ManageCandidatesInvitesPage.emailPlaceholderCss);
 };

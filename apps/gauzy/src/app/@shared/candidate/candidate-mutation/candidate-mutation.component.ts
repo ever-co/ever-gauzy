@@ -4,7 +4,8 @@ import {
 	NbDialogRef,
 	NbStepperComponent
 } from '@nebular/theme';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	RolesEnum,
@@ -74,13 +75,12 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		this.formCV = this.candidateCv.form;
 		
 		const { tenantId } = this.store.user;
-		this.role = await this.roleService
-			.getRoleByName({
+		this.role = await firstValueFrom(
+			this.roleService.getRoleByName({
 				name: RolesEnum.CANDIDATE,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	closeDialog(candidate: ICandidate[] = null) {
@@ -88,15 +88,24 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	addCandidate() {
+		const {
+			username,
+			firstName,
+			lastName,
+			email,
+			imageUrl,
+			tags,
+			password
+		} = this.form.getRawValue();
 		const user: IUser = {
-			username: this.form.get('username').value,
-			firstName: this.form.get('firstName').value,
-			lastName: this.form.get('lastName').value,
-			email: this.form.get('email').value,
-			imageUrl: this.form.get('imageUrl').value,
+			username,
+			firstName,
+			lastName,
+			email,
+			imageUrl,
 			tenant: null,
 			role: this.role,
-			tags: this.userBasicInfo.selectedTags
+			tags
 		};
 		const appliedDate = this.form.get('appliedDate').value || null;
 		const rejectDate = this.form.get('rejectDate').value || null;
@@ -132,13 +141,13 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			user,
 			cvUrl,
 			documents,
-			password: this.form.get('password').value,
+			password,
 			organization: this.organization,
 			appliedDate,
 			hiredDate,
 			source,
 			rejectDate,
-			tags: this.userBasicInfo.selectedTags,
+			tags,
 			tenantId,
 			organizationId
 		};
@@ -150,13 +159,13 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		this.formCV = this.candidateCv.form;
 		this.stepper.reset();
 	}
+
 	async add() {
 		this.addCandidate();
 		try {
-			const candidates = await this.candidatesService
-				.createBulk(this.candidates)
-				.pipe(first())
-				.toPromise();
+			const candidates = await firstValueFrom(
+				this.candidatesService.createBulk(this.candidates)
+			);
 			this.updateSource(candidates);
 			this.closeDialog(candidates);
 		} catch (error) {
@@ -167,14 +176,14 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	async updateSource(createdCandidates: ICandidate[]) {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const { items = [] } = await this.candidatesService
-			.getAll(['user', 'source'], {
+		
+		const { items = [] } = await firstValueFrom(
+			this.candidatesService.getAll(['user', 'source'], {
 				tenantId,
 				organizationId
 			})
-			.pipe(first())
-			.toPromise();
+		);
+
 		const updateInput = [];
 		items.forEach((item) => {
 			createdCandidates.forEach((cc) => {

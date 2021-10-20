@@ -8,11 +8,12 @@ import {
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
 import { RolesEnum, ITag, ITenant, IUser } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
 import { AuthService, EmployeesService, RoleService, Store } from './../../../../@core/services';
 import { CompareDateValidator } from './../../../../@core/validators';
+import { FormHelpers } from '../../../forms/helpers';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -22,7 +23,6 @@ import { CompareDateValidator } from './../../../../@core/validators';
 export class BasicInfoFormComponent
 	extends TranslationBaseComponent
 	implements OnInit, AfterViewInit {
-	UPLOADER_PLACEHOLDER = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
 	@ViewChild('imagePreview')
 	imagePreviewElement: ElementRef;
@@ -58,12 +58,14 @@ export class BasicInfoFormComponent
 	items: any;
 	createEmployee: any;
 
+	FormHelpers: typeof FormHelpers = FormHelpers;
+
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly authService: AuthService,
 		private readonly roleService: RoleService,
 		private readonly employeesService: EmployeesService,
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -81,20 +83,6 @@ export class BasicInfoFormComponent
 			this.form.get('role').value === RolesEnum.SUPER_ADMIN ||
 			this.form.get('role').value === RolesEnum.ADMIN
 		);
-	}
-
-	get uploaderPlaceholder() {
-		return this._translate(this.UPLOADER_PLACEHOLDER);
-	}
-
-	private _translate(key: string): string {
-		let translationResult = '';
-
-		this.translateService.get(key).subscribe((res) => {
-			translationResult = res;
-		});
-
-		return translationResult;
 	}
 
 	loadFormData = () => {
@@ -177,13 +165,12 @@ export class BasicInfoFormComponent
 	) {
 		if (this.form.valid) {
 			const { tenant } = this.store.user;
-			const role = await this.roleService
-				.getRoleByName({
+			const role = await firstValueFrom(
+				this.roleService.getRoleByName({
 					name: this.role.value ? this.role.value : defaultRoleName,
 					tenantId: tenant.id
 				})
-				.pipe(first())
-				.toPromise();
+			);
 
 			const user: IUser = {
 				firstName: this.firstName.value,
@@ -197,24 +184,22 @@ export class BasicInfoFormComponent
 			};
 
 			if (this.createEmployee.value) {
-				return this.employeesService
-					.create({
+				return await firstValueFrom(
+					this.employeesService.create({
 						user,
 						organization: this.store.selectedOrganization,
 						password: this.password.value
 					})
-					.pipe(first())
-					.toPromise();
+				);
 			} else {
-				return this.authService
-					.register({
+				return await firstValueFrom(
+					this.authService.register({
 						user,
 						password: this.password.value,
 						organizationId,
 						createdById
 					})
-					.pipe(first())
-					.toPromise();
+				);
 			}
 		}
 
@@ -227,6 +212,7 @@ export class BasicInfoFormComponent
 
 	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	ngAfterViewInit() {
@@ -243,19 +229,5 @@ export class BasicInfoFormComponent
 				this.imageUrl.setErrors({ invalidUrl: true });
 			}
 		};
-	}
-
-	/**
-	 * Form invalid control validate
-	 * 
-	 * @param control 
-	 * @returns 
-	 */
-	 isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return this.form.get(control).touched && 
-			this.form.get(control).invalid;
 	}
 }

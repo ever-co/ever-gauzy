@@ -5,7 +5,7 @@ import {
 	IOrganizationPosition,
 	IOrganizationPositionFindInput
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -17,13 +17,13 @@ export class OrganizationPositionsService {
 	create(
 		createInput: IOrganizationPositionCreateInput
 	): Promise<IOrganizationPosition> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IOrganizationPosition>(
 				`${API_PREFIX}/organization-positions`,
 				createInput
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -32,28 +32,28 @@ export class OrganizationPositionsService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationPosition[]; total: number }>(
 				`${API_PREFIX}/organization-positions`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${API_PREFIX}/organization-positions/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${API_PREFIX}/organization-positions/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }
