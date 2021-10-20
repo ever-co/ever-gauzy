@@ -109,6 +109,7 @@ When('User visit Add new employee level page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/employees/employee-level', { timeout: responseTimeout });
 });
 
