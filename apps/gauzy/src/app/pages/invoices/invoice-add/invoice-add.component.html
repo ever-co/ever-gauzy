@@ -35,6 +35,7 @@
 								</label>
 								<input
 									type="number"
+									[min]="0"
 									nbInput
 									[placeholder]="
 										(isEstimate
@@ -396,6 +397,7 @@
 											| translate
 									}}"
 									type="number"
+									[min]="0"
 									formControlName="discountValue"
 									id="inputDiscountValue"
 									(ngModelChange)="calculateTotal()"
@@ -450,6 +452,7 @@
 											'INVOICES_PAGE.TAX' | translate
 										}}"
 										type="number"
+										[min]="0"
 										formControlName="tax"
 										id="inputTax"
 										(ngModelChange)="calculateTotal()"
@@ -502,6 +505,7 @@
 											'INVOICES_PAGE.TAX_2' | translate
 										}}"
 										type="number"
+										[min]="0"
 										formControlName="tax2"
 										id="inputTax2"
 										(ngModelChange)="calculateTotal()"

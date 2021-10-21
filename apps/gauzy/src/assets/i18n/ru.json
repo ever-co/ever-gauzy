@@ -639,7 +639,8 @@
 		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса",
 		"SOURCE": "Источник",
 		"DESCRIPTION": "Описание",
-		"MAIN": "Главная"
+		"MAIN": "Главная",
+		"CATEGORIES": "Categories"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
