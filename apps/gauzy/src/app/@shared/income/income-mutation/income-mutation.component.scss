@@ -1,6 +1,6 @@
 .main {
   .body {
-    width: 505px;
+    width: 605px;
   }
 
   .close {
@@ -8,7 +8,8 @@
   }
 
   .notes {
-    height: 198px;
+    min-height: 5.5rem;
+    resize: none;
   }
 
   nb-card-header .employees {

@@ -118,6 +118,7 @@
 					</label>
 					<input
 						type="number"
+						[min]="0"
 						id="initial-value"
 						nbInput
 						fullWidth
@@ -142,6 +143,7 @@
 						type="number"
 						id="target-value"
 						nbInput
+						[min]="0"
 						fullWidth
 						formControlName="targetValue"
 						placeholder="{{

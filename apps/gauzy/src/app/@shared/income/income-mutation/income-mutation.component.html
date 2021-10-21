@@ -84,6 +84,7 @@
 							nbInput
 							type="number"
 							step="1"
+							[min]="0"
 							fullWidth
 							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
@@ -147,13 +148,16 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
+		<button (click)="close()" status="danger" class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
 		<button
 			[disabled]="form.invalid"
 			(click)="formDirective.ngSubmit.emit()"
 			status="success"
 			nbButton
 		>
-			{{ (income ? 'BUTTONS.EDIT' : 'BUTTONS.ADD') | translate }}
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

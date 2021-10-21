@@ -639,7 +639,8 @@
 		"DISPLAY_BONUS_ANONYMOUSLY": "crwdns7990:0crwdne7990:0",
 		"SOURCE": "crwdns8112:0crwdne8112:0",
 		"DESCRIPTION": "crwdns10551:0crwdne10551:0",
-		"MAIN": "crwdns10553:0crwdne10553:0"
+		"MAIN": "crwdns10553:0crwdne10553:0",
+		"CATEGORIES": "Categories"
 	},
 	"MENU": {
 		"PIPELINES": "crwdns4734:0crwdne4734:0",

@@ -141,7 +141,11 @@ export class EditOrganizationMainComponent
 			currency: ['', Validators.required],
 			name: ['', Validators.required],
 			officialName: [''],
-			profile_link: [''],
+			profile_link: ['', [
+					Validators.required,
+					Validators.pattern('^[a-z0-9-]+$')
+				]
+			],
 			taxId: [''],
 			registrationDate: [''],
 			website: ['']
