@@ -9,7 +9,6 @@ import {
 	waitElementToHide,
     clickByText,
     verifyByText,
-	clickButtonByIndexNoForce,
 	clickButtonByIndex,
 	verifyText,
 	enterInputConditionally
