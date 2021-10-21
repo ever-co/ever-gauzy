@@ -372,7 +372,7 @@ Then('Notification message will appear', () => {
 And('User can navigate to organization public page', () => {
 	logoutLogin();
 
-	cy.visit(`/#/share/organization/${organizationNameTrim}`);
+	cy.visit(`/#/share/organization/${organizationName}`);
 });
 
 And('User can see Edit Page button', () => {
