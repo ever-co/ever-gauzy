@@ -93,7 +93,7 @@ And('User can add new client', () => {
 	);
 });
 
-// Add new expense
+// Add employee salary
 And('User can visit Employees recurring expense page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
@@ -162,14 +162,107 @@ Then('Notification message will appear', () => {
 	employeeDashboard.waitMessageToHide();
 });
 
+//Add income for employee
+When('User see Accounting button', () => {
+	employeeDashboard.verifyMenuBtnByText(EmployeeDashboardPageData.accountingTxt);
+});
+
+Then('User click on Accounting button', () => {
+	employeeDashboard.clickMenuButtonsByText(EmployeeDashboardPageData.accountingTxt);
+})
+
+When('User see income button', () => {
+	employeeDashboard.verifyMenuBtnByText(EmployeeDashboardPageData.incomeTxt);
+})
+Then('User click on income button', () => {
+	employeeDashboard.clickOnIncomeBtn();
+});
+
+And('User can see grid button', () => {
+	employeeDashboard.gridBtnExists();
+});
+
+And('User can click on second grid button to change view', () => {
+	employeeDashboard.gridBtnClick(1);
+});
+
+And('User can see add income button', () => {
+	employeeDashboard.verifyIncomeAddButton();
+});
+
+When('User click on add income button', () => {
+	employeeDashboard.clickIncomeAddButton();
+});
+
+Then('User can see employee dropdown again', () => {
+	employeeDashboard.selectEmployeeDropdownVisible();
+});
+
+When('User click on employee dropdown again', () => {
+	employeeDashboard.clickEmployeeSelector();
+});
+
+Then('User can select employee from dropdown options again', () => {
+	employeeDashboard.selectEmployeeFromDrodpwonByName(employeeFullName);
+});
+
+And('User can see date input field', () => {
+	employeeDashboard.dateInputVisible();
+});
+
+And('User can enter value for date', () => {
+	employeeDashboard.enterDateInputData();
+	employeeDashboard.clickKeyboardButtonByKeyCode(9);
+});
+
+And('User can see contact input field', () => {
+	employeeDashboard.contactInputVisible();
+});
+
+And('User can enter value for contact', () => {
+	employeeDashboard.enterContactInputData(name);
+});
+
+And('User can see amount input field', () => {
+	employeeDashboard.amountInputVisible();
+});
+
+And('User can enter value for amount', () => {
+	employeeDashboard.enterAmountInputData(EmployeeDashboardPageData.anountInput);
+});
+
+And('User can see notes textarea input field', () => {
+	employeeDashboard.notesTextareaVisible();
+});
+
+And('User can add value for notes', () => {
+	employeeDashboard.enterNotesInputData(EmployeeDashboardPageData.defaultNote);
+});
+
+And('User can see save button', () => {
+	employeeDashboard.saveIncomeButtonVisible();
+});
+
+When('User click on save button', () => {
+	employeeDashboard.clickSaveIncomeButton();
+});
+
+Then('Notification message will appear', () => {
+	employeeDashboard.waitMessageToHide();
+});
+
+And('User can verify income was created', () => {
+	employeeDashboard.verifyIncomeExists(EmployeeDashboardPageData.defaultNote);
+});
+
 //User go to dashboard to verify employee salary
 
 When('User see dashboard button on main manu', () => {
-	employeeDashboard.verifyDashboardButton(EmployeeDashboardPageData.dashboardTxt);
+	employeeDashboard.verifyMenuBtnByText(EmployeeDashboardPageData.dashboardTxt);
 });
 
 Then ('User click on dashboard button', () => {
-	employeeDashboard.clickOnDashboardButton(EmployeeDashboardPageData.dashboardTxt)
+	employeeDashboard.clickMenuButtonsByText(EmployeeDashboardPageData.dashboardTxt)
 });
 
 When('User see employee selector', () => {
@@ -190,4 +283,8 @@ Then ('User click on employee', () => {
 
 And('User can verify salary', () => {
 	employeeDashboard.verifyEmployeeSalary(EmployeeDashboardPageData.employeeSalary);
+});
+
+And('User can verify income', () => {
+	employeeDashboard.verifyEmployeeIncome(EmployeeDashboardPageData.dashboardIncomeTxt);
 });
