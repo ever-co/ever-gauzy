@@ -107,7 +107,7 @@
 								</div>
 								<div class="col">
 									<ga-currency
-										formControlName="currency"
+										[formControl]="orgMainForm.get('currency')"
 										(optionChange)="currencyChanged($event)"
 									></ga-currency>
 								</div>
