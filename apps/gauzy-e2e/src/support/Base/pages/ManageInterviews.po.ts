@@ -20,8 +20,9 @@ import { ManageInterviewsPage } from '../pageobjects/ManageInterviewsPageObject'
 
 export const addInterviewButtonVisible = () => {
 	cy.intercept('GET', '/api/employee/working*').as('waitScheduleLoad');
+	cy.intercept('GET', '/api/employee*').as('waitEmployee');
+	cy.wait(['@waitScheduleLoad','@waitEmployee']);
 	verifyElementIsVisible(ManageInterviewsPage.addInterviewButtonCss);
-	cy.wait('@waitScheduleLoad');
 };
 
 export const addInterviewButtonVisibleSecond = () => {
