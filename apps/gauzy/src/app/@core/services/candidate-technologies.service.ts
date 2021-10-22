@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import {
 	ICandidateTechnologies,
 	ICandidateTechnologiesCreateInput,
@@ -10,31 +10,31 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidateTechnologiesService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	create(
 		createInput: ICandidateTechnologiesCreateInput
 	): Promise<ICandidateTechnologies> {
-		return this.http
-			.post<ICandidateTechnologies>(
-				`${API_PREFIX}/candidate-technologies`,
-				createInput
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ICandidateTechnologies>(
+					`${API_PREFIX}/candidate-technologies`,
+					createInput
+				)
+		);
 	}
 
 	createBulk(
 		interviewId: string,
 		technologies: string[]
 	): Promise<ICandidateTechnologies[]> {
-		return this.http
-			.post<ICandidateTechnologies[]>(
-				`${API_PREFIX}/candidate-technologies/bulk`,
-				{ interviewId, technologies }
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ICandidateTechnologies[]>(
+					`${API_PREFIX}/candidate-technologies/bulk`,
+					{ interviewId, technologies }
+				)
+		);
 	}
 
 	getAll(
@@ -42,47 +42,47 @@ export class CandidateTechnologiesService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
-			.get<{ items: ICandidateTechnologies[]; total: number }>(
-				`${API_PREFIX}/candidate-technologies`,
-				{
-					params: { data }
-				}
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<{ items: ICandidateTechnologies[]; total: number }>(
+					`${API_PREFIX}/candidate-technologies`,
+					{
+						params: { data }
+					}
+				)
+		);
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return this.http
-			.put(`${API_PREFIX}/candidate-technologies/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put(`${API_PREFIX}/candidate-technologies/${id}`, updateInput)
+		);
 	}
 	updateBulk(technologies: ICandidateTechnologies[]): Promise<any> {
-		return this.http
-			.put(
-				`${API_PREFIX}/candidate-technologies/bulk`,
-				technologies
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put(
+					`${API_PREFIX}/candidate-technologies/bulk`,
+					technologies
+				)
+		);
 	}
 
 	findByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
-		return this.http
-			.get<ICandidateTechnologies[]>(
-				`${API_PREFIX}/candidate-technologies/interview/${interviewId}`
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<ICandidateTechnologies[]>(
+					`${API_PREFIX}/candidate-technologies/interview/${interviewId}`
+				)
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`${API_PREFIX}/candidate-technologies/${id}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${API_PREFIX}/candidate-technologies/${id}`)
+		);
 	}
 
 	deleteBulkByInterviewId(
@@ -90,11 +90,11 @@ export class CandidateTechnologiesService {
 		technologies?: ICandidateTechnologies[]
 	): Promise<any> {
 		const data = JSON.stringify({ technologies });
-		return this.http
-			.delete(`${API_PREFIX}/candidate-technologies/bulk/${id}`, {
-				params: { data }
-			})
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${API_PREFIX}/candidate-technologies/bulk/${id}`, {
+					params: { data }
+				})
+		);
 	}
 }

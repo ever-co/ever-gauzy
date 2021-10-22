@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import {
 	ICandidateInterviewersFindInput,
 	ICandidateInterviewersCreateInput,
@@ -11,75 +11,75 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidateInterviewersService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	create(
 		createInput: ICandidateInterviewersCreateInput
 	): Promise<ICandidateInterviewers> {
-		return this.http
-			.post<ICandidateInterviewers>(
-				`${API_PREFIX}/candidate-interviewers`,
-				createInput
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ICandidateInterviewers>(
+					`${API_PREFIX}/candidate-interviewers`,
+					createInput
+				)
+		);
 	}
 
 	createBulk(
 		createInput: ICandidateInterviewersCreateInput
 	): Promise<ICandidateInterviewers[]> {
-		return this.http
-			.post<ICandidateInterviewers[]>(
-				`${API_PREFIX}/candidate-interviewers/bulk`,
-				createInput
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ICandidateInterviewers[]>(
+					`${API_PREFIX}/candidate-interviewers/bulk`,
+					createInput
+				)
+		);
 	}
 
 	getAll(
 		findInput?: ICandidateInterviewersFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
-		return this.http
-			.get<{ items: ICandidateInterviewers[]; total: number }>(
-				`${API_PREFIX}/candidate-interviewers`,
-				{
-					params: { data }
-				}
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<{ items: ICandidateInterviewers[]; total: number }>(
+					`${API_PREFIX}/candidate-interviewers`,
+					{
+						params: { data }
+					}
+				)
+		);
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return this.http
-			.put(`${API_PREFIX}/candidate-interviewers/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put(`${API_PREFIX}/candidate-interviewers/${id}`, updateInput)
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`${API_PREFIX}/candidate-interviewers/${id}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${API_PREFIX}/candidate-interviewers/${id}`)
+		);
 	}
 
 	findByInterviewId(interviewId: string): Promise<ICandidateInterviewers[]> {
-		return this.http
-			.get<ICandidateInterviewers[]>(
-				`${API_PREFIX}/candidate-interviewers/interview/${interviewId}`
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<ICandidateInterviewers[]>(
+					`${API_PREFIX}/candidate-interviewers/interview/${interviewId}`
+				)
+		);
 	}
 
 	deleteBulkByInterviewId(interviewId: string): Promise<any> {
-		return this.http
-			.delete(`${API_PREFIX}/candidate-interviewers/interview/${interviewId}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${API_PREFIX}/candidate-interviewers/interview/${interviewId}`)
+		);
 	}
 
 	deleteBulkByEmployeeId(
@@ -87,14 +87,14 @@ export class CandidateInterviewersService {
 	): Promise<any> {
 		const data = JSON.stringify({ deleteInput });
 
-		return this.http
-			.delete(
-				`${API_PREFIX}/candidate-interviewers/deleteBulkByEmployeeId`,
-				{
-					params: { data }
-				}
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(
+					`${API_PREFIX}/candidate-interviewers/deleteBulkByEmployeeId`,
+					{
+						params: { data }
+					}
+				)
+		);
 	}
 }
