@@ -2344,7 +2344,7 @@
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации",
 			"PREFERRED_LANGUAGE": {
-				"en": "Russian",
+				"en": "Английский",
 				"he": "Иврит",
 				"bg": "Болгарский",
 				"ru": "Русский"
@@ -3328,7 +3328,7 @@
 			"TEMPLATE_NAMES": "Названия шаблонов"
 		},
 		"LANGUAGE_CODES": {
-			"en": "Russian",
+			"en": "Английский",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
@@ -3423,7 +3423,7 @@
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
 		"LANGUAGE_CODES": {
-			"en": "Russian",
+			"en": "Английский",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
