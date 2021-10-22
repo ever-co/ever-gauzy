@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { firstValueFrom, Observable, throwError } from 'rxjs';
 import {
 	ITask,
 	IGetTaskOptions,
 	IGetTaskByEmployeeOptions
 } from '@gauzy/contracts';
-import { tap, catchError, first } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { toParams } from '@gauzy/common-angular';
@@ -90,10 +90,10 @@ export class TasksService extends TranslationBaseComponent {
 	}
 
 	getById(id: string) {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.get<ITask>(`${this.API_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	createTask(task): Observable<ITask> {
