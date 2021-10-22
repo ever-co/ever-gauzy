@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { LegalService } from '../legal.service';
 
@@ -18,12 +19,14 @@ export class PrivacyPolicyComponent
 	cookie_policy: string;
 
 	constructor(
-		private legalService: LegalService
+		private legalService: LegalService,
+		@Inject(DOCUMENT) private _document: Document,
 	) { }
 
 	ngOnInit(): void {
 		this.getPrivacyPolicyJsonFromUrl(PRIVACY_POLICY_ENDPOINT);
 		this.getCookiePolicyJsonFromUrl(COOKIE_PRIVACY_POLICY_ENDPOINT);
+		this._document.body.classList.add('privacy-container');
 	}
 
 	/**
@@ -56,5 +59,7 @@ export class PrivacyPolicyComponent
 			});
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy() {
+		this._document.body.classList.remove('privacy-container');
+	}
 }
