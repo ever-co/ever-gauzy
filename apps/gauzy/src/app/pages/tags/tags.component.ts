@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -128,7 +128,7 @@ export class TagsComponent
 		const dialog = this.dialogService.open(TagsMutationComponent, {
 			context: {}
 		});
-		const addData = await dialog.onClose.pipe(first()).toPromise();
+		const addData = await firstValueFrom(dialog.onClose);
 		if (addData) {
 			this.toastrService.success('TAGS_PAGE.TAGS_ADD_TAG', {
 				name: addData.name
@@ -146,23 +146,22 @@ export class TagsComponent
 		}
 
 		if (this.selectedTag) {
-			const result = await this.dialogService
+			const result = await firstValueFrom(this.dialogService
 				.open(DeleteConfirmationComponent)
-				.onClose.pipe(first())
-				.toPromise();
+				.onClose);
 
 			if (result) {
-				const { id, name } = this.selectedTag; 
+				const { id, name } = this.selectedTag;
 				await this.tagsService.delete(id).then(() => {
 					this.toastrService.success('TAGS_PAGE.TAGS_DELETE_TAG', {
 						name
 					});
 				})
-				.finally(() => {
-					this.tags$.next(true);
-				});
+					.finally(() => {
+						this.tags$.next(true);
+					});
 			}
-		}	
+		}
 	}
 
 	async edit(selectedItem?: ITag) {
@@ -179,8 +178,8 @@ export class TagsComponent
 					tag: this.selectedTag
 				}
 			});
-	
-			const editData = await dialog.onClose.pipe(first()).toPromise();
+
+			const editData = await firstValueFrom(dialog.onClose);
 			if (editData) {
 				this.toastrService.success('TAGS_PAGE.TAGS_EDIT_TAG', {
 					name: this.selectedTag.name
@@ -223,7 +222,7 @@ export class TagsComponent
 	 */
 	getCounter = (item): number => {
 		const substring = "_counter";
-		let counter = 0; 
+		let counter = 0;
 		for (const property in item) {
 			if (property.includes(substring)) {
 				counter = counter + parseInt(item[property]);
@@ -245,10 +244,10 @@ export class TagsComponent
 			['organization'],
 			{ tenantId, organizationId }
 		);
-	
+
 		this.allTags = items;
 		this.tags = this.allTags;
-		
+
 		this._generateUniqueTags(this.allTags);
 		this.smartTableSource.load(this.allTags);
 
@@ -344,5 +343,5 @@ export class TagsComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

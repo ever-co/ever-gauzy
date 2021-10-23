@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import {
 	FormBuilder,
 	Validators,
@@ -490,7 +490,7 @@ export class EditCandidateFeedbacksComponent
 				feedbackId: id ? id : this.selectedFeedback.id
 			}
 		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success(
 				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_DELETED'

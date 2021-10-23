@@ -12,10 +12,10 @@ import { CandidatesService } from '../../../@core/services/candidates.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
-import { first } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
+
 @Component({
 	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
@@ -68,7 +68,7 @@ export class CandidateInterviewInfoComponent
 				}
 			}
 		);
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrSuccess('UPDATED');
 			this.loadData();
@@ -115,10 +115,9 @@ export class CandidateInterviewInfoComponent
 
 	async getData(id: string) {
 		const { id: organizationId, tenantId } = this.organization;
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user'], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
+		);
 		const employeeList = items;
 		this.interviewerNames = [];
 		this.interviewers = await this.candidateInterviewersService.findByInterviewId(
@@ -130,8 +129,8 @@ export class CandidateInterviewInfoComponent
 					if (interviewer.employeeId === employee.id) {
 						this.interviewerNames.push(
 							employee.user.firstName +
-								' ' +
-								employee.user.lastName
+							' ' +
+							employee.user.lastName
 						);
 						this.nameList = this.interviewerNames.join(', ');
 					}

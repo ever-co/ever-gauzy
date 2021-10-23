@@ -14,8 +14,8 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { EmployeesService } from '../../../@core/services';
-import { takeUntil, first } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { EditTimeFrameComponent } from '../../goal-settings/edit-time-frame/edit-time-frame.component';
 import { Store } from '../../../@core/services/store.service';
@@ -146,7 +146,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (response) {
 			await this.getTimeFrames();
 		}

@@ -7,7 +7,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { NbDialogService } from '@nebular/theme';
-import { filter, first } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import {
 	ICandidate,
 	IEmployee,
@@ -227,7 +228,7 @@ export class InterviewCalendarComponent
 				}
 			}
 		);
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success(
 				`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`,

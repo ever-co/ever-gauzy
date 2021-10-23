@@ -15,8 +15,8 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
@@ -178,7 +178,7 @@ export class EmployeesComponent
 	async add() {
 		try {
 			const dialog = this.dialogService.open(EmployeeMutationComponent);
-			const response = await dialog.onClose.pipe(first()).toPromise();
+			const response = await firstValueFrom(dialog.onClose);
 			if (response) {
 				response.map((data: any) => {
 					if (data.user.firstName || data.user.lastName) {
@@ -188,7 +188,7 @@ export class EmployeesComponent
 						name: this.employeeName.trim(),
 						organization: data.organization.name
 					});
-				});	
+				});
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -204,7 +204,7 @@ export class EmployeesComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate([ '/pages/employees/edit/', this.selectedEmployee.id ]);
+		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
 	}
 
 	manageInvites() {
@@ -217,7 +217,7 @@ export class EmployeesComponent
 				invitationType: InvitationTypeEnum.EMPLOYEE
 			}
 		});
-		await dialog.onClose.pipe(first()).toPromise();
+		await firstValueFrom(dialog.onClose);
 	}
 
 	async delete(selectedItem?: EmployeeViewModel) {
@@ -248,8 +248,8 @@ export class EmployeesComponent
 							action: CrudActionEnum.DELETED,
 							employee: this.selectedEmployee as any
 						};
-						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', { 
-							name: this.employeeName.trim() 
+						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
+							name: this.employeeName.trim()
 						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -274,7 +274,7 @@ export class EmployeesComponent
 					employeeFullName: this.selectedEmployee.fullName
 				}
 			});
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
 				await this.employeesService.setEmployeeEndWork(
 					this.selectedEmployee.id,
@@ -305,7 +305,7 @@ export class EmployeesComponent
 					employeeFullName: this.selectedEmployee.fullName
 				}
 			});
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
 				await this.employeesService.setEmployeeEndWork(
 					this.selectedEmployee.id,
@@ -329,10 +329,9 @@ export class EmployeesComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user', 'tags'], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
+		);
 
 		let employeesVm = [];
 		const result = [];
@@ -465,5 +464,5 @@ export class EmployeesComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

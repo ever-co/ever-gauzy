@@ -13,8 +13,8 @@ import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.servi
 import { ImageAssetComponent } from 'apps/gauzy/src/app/@shared/image-asset/image-asset.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
-import { Subject } from 'rxjs';
-import { first, take } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { take } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -112,7 +112,7 @@ export class ProductGalleryComponent
 			}
 		});
 
-		let selectedImages = await dialog.onClose.pipe(first()).toPromise();
+		let selectedImages = await firstValueFrom(dialog.onClose);
 
 		selectedImages = selectedImages.length
 			? selectedImages.filter((image) => {

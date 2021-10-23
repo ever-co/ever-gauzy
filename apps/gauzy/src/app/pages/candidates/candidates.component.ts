@@ -7,7 +7,8 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { first, filter, tap, debounceTime } from 'rxjs/operators';
+import { filter, tap, debounceTime } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
@@ -148,7 +149,7 @@ export class CandidatesComponent
 	}
 	async add() {
 		const dialog = this.dialogService.open(CandidateMutationComponent);
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 
 		if (response) {
 			response.map((data) => {
@@ -174,8 +175,8 @@ export class CandidatesComponent
 		}
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' +
-				this.selectedCandidate.id +
-				'/profile'
+			this.selectedCandidate.id +
+			'/profile'
 		]);
 	}
 	async archive(selectedItem?: ICandidateViewModel) {
@@ -224,7 +225,7 @@ export class CandidatesComponent
 				invitationType: InvitationTypeEnum.CANDIDATE
 			}
 		});
-		await dialog.onClose.pipe(first()).toPromise();
+		await firstValueFrom(dialog.onClose);
 	}
 	manageInvites() {
 		this.router.navigate(['/pages/employees/candidates/invites']);
@@ -235,13 +236,11 @@ export class CandidatesComponent
 
 	private async loadPage() {
 		const { tenantId } = this.store.user;
-		const { items } = await this.candidatesService
+		const { items } = await firstValueFrom(this.candidatesService
 			.getAll(['user', 'source', 'tags'], {
 				organizationId: this.selectedOrganizationId,
 				tenantId
-			})
-			.pipe(first())
-			.toPromise();
+			}));
 
 		let candidatesVm = [];
 		const result = [];
@@ -416,5 +415,5 @@ export class CandidatesComponent
 			this.candidatesTable.grid.dataSet.deselectAll();
 		}
 	}
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

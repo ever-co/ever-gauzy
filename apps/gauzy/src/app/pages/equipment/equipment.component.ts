@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -21,6 +21,7 @@ import { Store } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { ImageRowComponent } from '../inventory/components/table-components/image-row.component';
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -86,7 +87,7 @@ export class EquipmentComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT;
@@ -197,7 +198,7 @@ export class EquipmentComponent
 				selectedOrganization: this.selectedOrganization
 			}
 		});
-		const equipment = await dialog.onClose.pipe(first()).toPromise();
+		const equipment = await firstValueFrom(dialog.onClose);
 		this.clearItem();
 
 		if (equipment) {
@@ -216,10 +217,9 @@ export class EquipmentComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.equipmentService.delete(this.selectedEquipment.id);

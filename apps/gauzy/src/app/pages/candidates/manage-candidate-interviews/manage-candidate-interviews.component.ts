@@ -1,8 +1,8 @@
 import { ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { first, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
@@ -98,7 +98,7 @@ export class ManageCandidateInterviewsComponent
 				}
 			}
 		);
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success( `TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`, {
 				name: data.title

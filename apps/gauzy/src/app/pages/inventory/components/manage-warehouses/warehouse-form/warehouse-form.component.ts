@@ -6,8 +6,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { filter, first, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { LocationFormComponent } from './../../../../../@shared/forms/location';
 import { LeafletMapComponent } from './../../../../../@shared/forms/maps';
@@ -135,7 +135,7 @@ export class WarehouseFormComponent
 			}
 		});
 
-		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+		let selectedImage = await firstValueFrom(dialog.onClose);
 		if(selectedImage) {
 			this.logo = selectedImage;
 		}
