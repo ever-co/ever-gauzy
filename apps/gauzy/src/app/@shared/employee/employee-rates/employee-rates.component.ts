@@ -9,8 +9,7 @@ import {
 	ICurrency
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -38,7 +37,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		private employeeStore: EmployeeStore,
 		private candidateStore: CandidateStore,
 		private readonly organizationsService: OrganizationsService
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
@@ -87,13 +86,12 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	private async getDefaultCurrency(role: IEmployee | ICandidate) {
-		const orgData = await this.organizationsService
+		const orgData = await firstValueFrom(this.organizationsService
 			.getById(role.organizationId, [OrganizationSelectInput.currency])
-			.pipe(first())
-			.toPromise();
+		);
 
 		return orgData.currency;
 	}
@@ -101,5 +99,5 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 }

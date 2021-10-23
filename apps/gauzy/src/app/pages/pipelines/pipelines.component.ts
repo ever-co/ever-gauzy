@@ -240,7 +240,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			});
 		}
 
-		const canProceed: 'ok' = await this.dialogService
+		const canProceed: 'ok' = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: this.getTranslation(
@@ -249,7 +249,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					)
 				}
 			})
-			.onClose.toPromise();
+			.onClose);
 
 		if ('ok' === canProceed) {
 			await this.pipelinesService.delete(this.pipeline.id);

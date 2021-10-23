@@ -8,14 +8,14 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { OrganizationPositionsService } from '../../@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { ToastrService } from '../../@core/services/toastr.service';
 @Component({
 	selector: 'ga-positions',
@@ -84,16 +84,17 @@ export class PositionsComponent
 		};
 	}
 	async removePosition(id: string, name: string) {
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: {
-					recordType: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION'
-					)
-				}
-			})
-			.onClose.pipe(first())
-			.toPromise();
+		const result = await firstValueFrom(
+			this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: {
+						recordType: this.getTranslation(
+							'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION'
+						)
+					}
+				})
+				.onClose
+		);
 
 		if (result) {
 			await this.organizationPositionsService.delete(id);
