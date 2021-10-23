@@ -18,8 +18,8 @@ import {
 	IInvoiceItemCreateInput,
 	IProductTranslatable
 } from '@gauzy/contracts';
-import { filter, first, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { Observable, firstValueFrom } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
@@ -749,15 +749,14 @@ export class InvoiceEditComponent
 
 			invoice.invoiceItems = invoiceItems;
 
-			const result = await this.dialogService
+			const result = await firstValueFrom(this.dialogService
 				.open(InvoiceEmailMutationComponent, {
 					context: {
 						invoice: invoice,
 						isEstimate: this.isEstimate
 					}
 				})
-				.onClose.pipe(first())
-				.toPromise();
+				.onClose);
 
 			if (result) {
 				await this.updateInvoice('SENT');

@@ -11,7 +11,8 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -144,9 +145,7 @@ export class EquipmentSharingPolicyComponent
 				}
 			}
 		);
-		const equipmentSharingPolicy = await dialog.onClose
-			.pipe(first())
-			.toPromise();
+		const equipmentSharingPolicy = await firstValueFrom(dialog.onClose);
 		this.selectedEquipmentSharingPolicy = null;
 		this.disableButton = true;
 
@@ -170,10 +169,9 @@ export class EquipmentSharingPolicyComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.equipmentSharingPolicyService.delete(

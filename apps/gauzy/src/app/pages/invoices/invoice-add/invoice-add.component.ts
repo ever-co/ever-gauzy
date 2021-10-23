@@ -20,10 +20,10 @@ import {
 	IInvoiceItemCreateInput,
 	IProductTranslatable
 } from '@gauzy/contracts';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { compareDate, isEmpty } from '@gauzy/common-angular';
 import { LocalDataSource } from 'ng2-smart-table';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -663,7 +663,7 @@ export class InvoiceAddComponent
 		);
 		const invoiceItems = await this.createInvoiceEstimateItems();
 
-		await this.dialogService
+		await firstValueFrom(this.dialogService
 			.open(InvoiceEmailMutationComponent, {
 				context: {
 					invoice: invoice,
@@ -671,8 +671,7 @@ export class InvoiceAddComponent
 					isEstimate: this.isEstimate
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (this.isEstimate) {
 			this.toastrService.success(

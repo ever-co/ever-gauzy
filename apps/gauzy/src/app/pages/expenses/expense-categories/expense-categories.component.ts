@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import {
 	ITag,
@@ -10,7 +10,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -79,7 +79,7 @@ export class ExpenseCategoriesComponent
 		combineLatest([storeOrganization$, componentLayout$])
 			.pipe(
 				debounceTime(300),
-				filter(([ organization, componentLayout ]) => !!organization && !!componentLayout),
+				filter(([organization, componentLayout]) => !!organization && !!componentLayout),
 				distinctUntilChange(),
 				tap(([organization, componentLayout]) => {
 					this.organization = organization;
@@ -92,7 +92,7 @@ export class ExpenseCategoriesComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
 		this.showEditDiv = true;
@@ -125,14 +125,14 @@ export class ExpenseCategoriesComponent
 
 	async removeCategory(id: string, name: string) {
 		try {
-			const result = await this.dialogService
-				.open(DeleteConfirmationComponent, {
-					context: {
-						recordType: 'EXPENSES_PAGE.EXPENSE_CATEGORY'
-					}
-				})
-				.onClose.pipe(first())
-				.toPromise();
+			const result = await firstValueFrom(
+				this.dialogService
+					.open(DeleteConfirmationComponent, {
+						context: {
+							recordType: 'EXPENSES_PAGE.EXPENSE_CATEGORY'
+						}
+					})
+					.onClose);
 
 			if (result) {
 				await this.organizationExpenseCategoryService.delete(id);
@@ -231,8 +231,8 @@ export class ExpenseCategoriesComponent
 
 			await this.smartTableSource.getElements();
 			this.expenseCategories = this.smartTableSource.getData();
-			
-			this.pagination['totalItems'] =  this.smartTableSource.count();
+
+			this.pagination['totalItems'] = this.smartTableSource.count();
 			this.emptyListInvoke();
 		} catch (error) {
 			this.errorHandlingService.handleError(error);

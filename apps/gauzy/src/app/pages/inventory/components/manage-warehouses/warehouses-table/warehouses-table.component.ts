@@ -5,8 +5,8 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentLayoutStyleEnum, IOrganization, IWarehouse } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -51,7 +51,7 @@ export class WarehousesTableComponent
 	/*
 	* Actions Buttons directive 
 	*/
-	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -179,7 +179,7 @@ export class WarehousesTableComponent
 			});
 		}
 		this.router.navigate([
-			'/pages/organization/inventory/warehouses/edit' , this.selectedWarehouse.id
+			'/pages/organization/inventory/warehouses/edit', this.selectedWarehouse.id
 		]);
 	}
 
@@ -194,10 +194,10 @@ export class WarehousesTableComponent
 			return;
 		}
 
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+		const result = await firstValueFrom(
+			this.dialogService
+				.open(DeleteConfirmationComponent)
+				.onClose);
 
 		if (result) {
 			await this.warehouseService
@@ -243,7 +243,7 @@ export class WarehousesTableComponent
 	 * GET warehouse smart table source
 	 */
 	private async getWarehouses() {
-		try { 
+		try {
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 
@@ -254,7 +254,7 @@ export class WarehousesTableComponent
 				await this.smartTableSource.getElements();
 				this.warehouses = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
