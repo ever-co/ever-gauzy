@@ -7,8 +7,12 @@
     }
   }
 }
-::ng-deep nb-auth-block {
-  max-width: 90%;
+::ng-deep {
+  .privacy-container {
+    & nb-auth-block {
+      max-width: 90%;
+    }
+  }
 }
 
 ::ng-deep {

@@ -107,7 +107,7 @@
 								</div>
 								<div class="col">
 									<ga-currency
-										formControlName="currency"
+										[formControl]="orgMainForm.get('currency')"
 										(optionChange)="currencyChanged($event)"
 									></ga-currency>
 								</div>
@@ -309,6 +309,7 @@
 								<input
 									nbInput
 									type="number"
+									[min]="0"
 									formControlName="bonusPercentage"
 									placeholder="{{
 										'FORM.PLACEHOLDERS.BONUS_PERCENTAGE'
@@ -607,6 +608,7 @@
 									<input
 										nbInput
 										type="number"
+										[min]="0"
 										formControlName="inviteExpiryPeriod"
 										placeholder="{{
 											'FORM.PLACEHOLDERS.INVITE_EXPIRY_PERIOD'

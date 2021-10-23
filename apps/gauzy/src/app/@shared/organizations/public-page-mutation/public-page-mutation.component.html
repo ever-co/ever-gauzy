@@ -54,6 +54,7 @@
 									id="companySize"
 									nbInput
 									type="number"
+									[min]="0"
 									fullWidth
 									placeholder="{{
 										'POP_UPS.SIZE' | translate
@@ -343,6 +344,7 @@
 										nbInput
 										class="input_year"
 										type="number"
+										[min]="0"
 										placeholder="{{
 											'POP_UPS.YEAR' | translate
 										}}"

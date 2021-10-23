@@ -113,6 +113,7 @@
 								<input
 									formControlName="estimateDays"
 									type="number"
+									[min]="0"
 									nbInput
 									placeholder="{{
 										'TASKS_PAGE.ESTIMATE_DAYS' | translate
@@ -122,6 +123,7 @@
 								<input
 									formControlName="estimateHours"
 									type="number"
+									[min]="0"
 									[status]="
 										form.get('estimateHours').errors
 											? 'danger'
@@ -138,6 +140,7 @@
 								<input
 									formControlName="estimateMinutes"
 									type="number"
+									[min]="0"
 									[status]="
 										form.get('estimateMinutes').errors
 											? 'danger'

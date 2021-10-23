@@ -1,12 +1,12 @@
 import { BaseEntityModel } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 
 export abstract class Service<
 	BE extends BaseEntityModel,
 	FI = Partial<BE>,
 	CI = Partial<BE>
-> {
+	> {
 	protected basePath: string;
 
 	protected http: HttpClient;
@@ -23,10 +23,10 @@ export abstract class Service<
 	}
 
 	public create(data: CI): Promise<BE> {
-		return this.http
-			.post<BE>(this.basePath, data)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<BE>(this.basePath, data)
+		);
 	}
 
 	public find<L extends { items: BE[]; total: number }>(): Promise<L>;
@@ -42,10 +42,10 @@ export abstract class Service<
 		if (!arguments.length) {
 			return this.http.get<LBE>(this.basePath).toPromise();
 		} else if ('string' === typeof idOrRelations) {
-			return this.http
-				.get<BE>(`${this.basePath}/${idOrRelations}`)
-				.pipe(first())
-				.toPromise();
+			return firstValueFrom(
+				this.http
+					.get<BE>(`${this.basePath}/${idOrRelations}`)
+			);
 		}
 
 		return this.http
@@ -61,16 +61,16 @@ export abstract class Service<
 	}
 
 	public update(id: string, data: CI): Promise<BE> {
-		return this.http
-			.put<BE>(`${this.basePath}/${id}`, data)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put<BE>(`${this.basePath}/${id}`, data)
+		);
 	}
 
 	public delete(id: string): Promise<unknown> {
-		return this.http
-			.delete(`${this.basePath}/${id}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${this.basePath}/${id}`)
+		);
 	}
 }

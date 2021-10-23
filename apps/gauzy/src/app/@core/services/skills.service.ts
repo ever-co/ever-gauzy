@@ -1,51 +1,51 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ISkill } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class SkillsService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	insertSkills(createSkills: ISkill[]): Promise<ISkill[]> {
-		return this.http
-			.post<ISkill[]>(`${API_PREFIX}/skills`, createSkills)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ISkill[]>(`${API_PREFIX}/skills`, createSkills)
+		);
 	}
 
 	insertSkill(createSkill: ISkill): Promise<ISkill> {
-		return this.http
-			.post<ISkill>(`${API_PREFIX}/skills`, createSkill)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ISkill>(`${API_PREFIX}/skills`, createSkill)
+		);
 	}
 
 	getAllSkills(): Promise<{ items: ISkill[] }> {
-		return this.http
-			.get<{ items: ISkill[] }>(`${API_PREFIX}/skills`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<{ items: ISkill[] }>(`${API_PREFIX}/skills`)
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`${API_PREFIX}/skills/${id}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${API_PREFIX}/skills/${id}`)
+		);
 	}
 
 	update(id: string, updateInput: ISkill) {
-		return this.http
-			.put(`${API_PREFIX}/skills/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put(`${API_PREFIX}/skills/${id}`, updateInput)
+		);
 	}
 	findByName(name: string): Promise<{ item: ISkill }> {
-		return this.http
-			.get<{ item: ISkill }>(`${API_PREFIX}/skills/getByName/${name}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<{ item: ISkill }>(`${API_PREFIX}/skills/getByName/${name}`)
+		);
 	}
 }

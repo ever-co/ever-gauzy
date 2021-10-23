@@ -639,7 +639,8 @@
 		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously",
 		"SOURCE": "Source",
 		"DESCRIPTION": "Description",
-		"MAIN": "Main"
+		"MAIN": "Main",
+		"CATEGORIES": "Categories"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",

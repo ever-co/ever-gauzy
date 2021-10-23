@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import {
 	IUser,
 	RolesEnum,
@@ -13,13 +13,13 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class AuthService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	isAuthenticated(): Promise<boolean> {
-		return this.http
-			.get<boolean>(`${API_PREFIX}/auth/authenticated`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<boolean>(`${API_PREFIX}/auth/authenticated`)
+		);
 	}
 
 	login(loginInput): Observable<IAuthResponse> {

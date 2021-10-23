@@ -13,6 +13,8 @@ import {
 import { ManageUserInvitesPage } from '../pageobjects/ManageUserInvitesPageObject';
 
 export const manageInvitesButtonVisible = () => {
+	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
+	cy.wait('@waitUserOrganization');
 	verifyElementIsVisible(ManageUserInvitesPage.manageInvitesButtonCss);
 };
 
@@ -21,7 +23,9 @@ export const clickManageInvitesButton = () => {
 };
 
 export const gridButtonVisible = () => {
+	cy.intercept('GET', '/api/invite*').as('waitInvites');
 	verifyElementIsVisible(ManageUserInvitesPage.gridButtonCss);
+	cy.wait('@waitInvites')
 };
 
 export const clickGridButton = (index) => {

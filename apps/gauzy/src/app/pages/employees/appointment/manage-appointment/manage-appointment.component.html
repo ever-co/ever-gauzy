@@ -92,6 +92,7 @@
 							id="bufferTimeInMins"
 							type="number"
 							nbInput
+							[min]="0"
 							formControlName="bufferTimeInMins"
 							placeholder="{{
 								'FORM.PLACEHOLDERS.BUFFER_TIME' | translate
@@ -130,6 +131,7 @@
 							fullWidth
 							id="breakTimeInMins"
 							type="number"
+							[min]="0"
 							nbInput
 							formControlName="breakTimeInMins"
 							placeholder="{{

@@ -519,7 +519,7 @@ And('User can verify Employee administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, notChecked);
 });
