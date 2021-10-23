@@ -19,7 +19,8 @@ import {
 	ICandidateTechnologies,
 	IOrganization
 } from '@gauzy/contracts';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	CandidateInterviewersService,
@@ -141,12 +142,11 @@ export class CandidateInterviewMutationComponent
 		const { id: organizationId } = this.organization;
 
 		this.candidates = (
-			await this.candidatesService.getAll(['user'], {
+			await firstValueFrom(this.candidatesService.getAll(['user'], {
 				organizationId,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise()
+		)
 		).items;
 	}
 
@@ -193,10 +193,9 @@ export class CandidateInterviewMutationComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user'], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
+		);
 		const employeeList = items;
 		employeeIds.forEach((id) => {
 			employeeList.forEach((item) => {

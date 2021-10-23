@@ -9,6 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { API_PREFIX } from '../constants/app.constants';
+import { firstValueFrom } from "rxjs";
 
 @Injectable()
 export class PipelinesService extends Service<
@@ -25,11 +26,11 @@ export class PipelinesService extends Service<
 		findInput?: IPipelineFindInput
 	): Promise<{ items: IPipeline[] }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+		return firstValueFrom(this.http
 			.get<{ items: IPipeline[]; total: number }>(`${this.basePath}`, {
 				params: { data }
 			})
-			.toPromise();
+		);
 	}
 
 	public findDeals(
@@ -37,11 +38,11 @@ export class PipelinesService extends Service<
 		findInput?: IPipelineFindInput
 	): Promise<{ items: IDeal[]; total: number }> {
 		const data = JSON.stringify({ findInput });
-		return this.http
+		return firstValueFrom(this.http
 			.get<{ items: IDeal[]; total: number }>(
 				`${this.basePath}/${id}/deals`,
 				{ params: { data } }
 			)
-			.toPromise();
+		);
 	}
 }
