@@ -7,7 +7,6 @@ import {
 	IOrganizationContact,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { DomSanitizer } from '@angular/platform-browser';
 import { first, filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -49,16 +48,9 @@ export class EmailHistoryComponent
 	private organization: IOrganization;
 	emails$: Subject<any> = new Subject();
 
-	get selectedEmailHTML() {
-		return this.sanitizer.bypassSecurityTrustHtml(
-			this.selectedEmail.content
-		);
-	}
-
 	constructor(
 		private readonly dialogService: NbDialogService,
 		private readonly emailService: EmailService,
-		private readonly sanitizer: DomSanitizer,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly organizationContactService: OrganizationContactService,

@@ -116,7 +116,7 @@
 					{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
 				</button>
 				<div
-					[innerHTML]="selectedEmailHTML"
+					[innerHtml]="selectedEmail.content | safeHtml"
 					*ngIf="selectedEmail; else emailNotSelected"
 					class="email-content"
 				></div>
