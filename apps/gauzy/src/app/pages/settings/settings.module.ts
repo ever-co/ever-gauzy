@@ -33,6 +33,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -60,6 +61,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		BackNavigationModule,
 		HeaderTitleModule,
 		NgxPermissionsModule.forChild(),
+		SharedModule,
 	],
 	declarations: [
 		FileStorageComponent,
