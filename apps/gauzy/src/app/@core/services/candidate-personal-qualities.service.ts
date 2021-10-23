@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import {
 	ICandidatePersonalQualities,
 	ICandidatePersonalQualitiesCreateInput,
@@ -10,31 +10,31 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidatePersonalQualitiesService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	create(
 		createInput: ICandidatePersonalQualitiesCreateInput
 	): Promise<ICandidatePersonalQualities> {
-		return this.http
-			.post<ICandidatePersonalQualities>(
-				`${API_PREFIX}/candidate-personal-qualities`,
-				createInput
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ICandidatePersonalQualities>(
+					`${API_PREFIX}/candidate-personal-qualities`,
+					createInput
+				)
+		);
 	}
 
 	createBulk(
 		interviewId: string,
 		personalQualities: string[]
 	): Promise<ICandidatePersonalQualities[]> {
-		return this.http
-			.post<ICandidatePersonalQualities[]>(
-				`${API_PREFIX}/candidate-personal-qualities/bulk`,
-				{ interviewId, personalQualities }
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ICandidatePersonalQualities[]>(
+					`${API_PREFIX}/candidate-personal-qualities/bulk`,
+					{ interviewId, personalQualities }
+				)
+		);
 	}
 
 	getAll(
@@ -42,43 +42,43 @@ export class CandidatePersonalQualitiesService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
-			.get<{ items: ICandidatePersonalQualities[]; total: number }>(
-				`${API_PREFIX}/candidate-personal-qualities`,
-				{
-					params: { data }
-				}
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<{ items: ICandidatePersonalQualities[]; total: number }>(
+					`${API_PREFIX}/candidate-personal-qualities`,
+					{
+						params: { data }
+					}
+				)
+		);
 	}
 
 	findByInterviewId(
 		interviewId: string
 	): Promise<ICandidatePersonalQualities[]> {
-		return this.http
-			.get<ICandidatePersonalQualities[]>(
-				`${API_PREFIX}/candidate-personal-qualities/interview/${interviewId}`
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<ICandidatePersonalQualities[]>(
+					`${API_PREFIX}/candidate-personal-qualities/interview/${interviewId}`
+				)
+		);
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return this.http
-			.put(
-				`${API_PREFIX}/candidate-personal-qualities/${id}`,
-				updateInput
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put(
+					`${API_PREFIX}/candidate-personal-qualities/${id}`,
+					updateInput
+				)
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`${API_PREFIX}/candidate-personal-qualities/${id}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${API_PREFIX}/candidate-personal-qualities/${id}`)
+		);
 	}
 
 	deleteBulkByInterviewId(
@@ -86,14 +86,14 @@ export class CandidatePersonalQualitiesService {
 		personalQualities?: ICandidatePersonalQualities[]
 	): Promise<any> {
 		const data = JSON.stringify({ personalQualities });
-		return this.http
-			.delete(
-				`${API_PREFIX}/candidate-personal-qualities/bulk/${id}`,
-				{
-					params: { data }
-				}
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(
+					`${API_PREFIX}/candidate-personal-qualities/bulk/${id}`,
+					{
+						params: { data }
+					}
+				)
+		);
 	}
 }

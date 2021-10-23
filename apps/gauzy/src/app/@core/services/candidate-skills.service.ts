@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ISkillCreateInput, ISkill, ISkillFindInput } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -8,41 +8,41 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class CandidateSkillsService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	create(createInput: ISkillCreateInput): Promise<ISkill> {
-		return this.http
-			.post<ISkill>(`${API_PREFIX}/candidate-skills`, createInput)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ISkill>(`${API_PREFIX}/candidate-skills`, createInput)
+		);
 	}
 
 	getAll(
 		findInput?: ISkillFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
-		return this.http
-			.get<{ items: ISkill[]; total: number }>(
-				`${API_PREFIX}/candidate-skills`,
-				{
-					params: { data }
-				}
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<{ items: ISkill[]; total: number }>(
+					`${API_PREFIX}/candidate-skills`,
+					{
+						params: { data }
+					}
+				)
+		);
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return this.http
-			.put(`${API_PREFIX}/candidate-skills/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put(`${API_PREFIX}/candidate-skills/${id}`, updateInput)
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`${API_PREFIX}/candidate-skills/${id}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${API_PREFIX}/candidate-skills/${id}`)
+		);
 	}
 }
