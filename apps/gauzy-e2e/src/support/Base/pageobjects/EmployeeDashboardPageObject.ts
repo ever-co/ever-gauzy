@@ -25,6 +25,7 @@ export const EmployeeDashboardPage = {
 	notesInputCss: '[formcontrolname="notes"]',
 	saveIncomeButtonCss: 'nb-card-footer > button[status="success"]',
 	verifyIncomeCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
-	verifyDashboardIncomeCss: 'ga-info-block[ng-reflect-title="Total Income"]'
+	verifyDashboardIncomeCss: 'ga-info-block[ng-reflect-title="Total Income"]',
+	verifyDashboardBonusCss: 'div[class="bonus ng-star-inserted"]'
 
 };
