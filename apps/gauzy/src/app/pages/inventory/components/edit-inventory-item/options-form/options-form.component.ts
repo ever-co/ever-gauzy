@@ -8,7 +8,8 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, first } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -168,7 +169,7 @@ export class OptionsFormComponent implements OnInit {
 			}
 		);
 
-		let result = await dialog.onClose.pipe(first()).toPromise();
+		let result = await firstValueFrom(dialog.onClose);
 
 		if (result) {
 			this.activeOptionGroup = result;

@@ -13,7 +13,8 @@ import {
 	CrudActionEnum
 } from '@gauzy/contracts';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { EmployeesService } from '../../../../../@core/services';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
@@ -61,7 +62,7 @@ export class EditOrganizationMainComponent
 		this.imageUrl = url;
 	}
 
-	handleImageUploadError(event: any) {}
+	handleImageUploadError(event: any) { }
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
@@ -79,7 +80,7 @@ export class EditOrganizationMainComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
@@ -91,10 +92,10 @@ export class EditOrganizationMainComponent
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { total } = await this.employeesService
-			.getAll([], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
+		const { total } = await firstValueFrom(
+			this.employeesService
+				.getAll([], { organizationId, tenantId })
+		);
 
 		this.employeesCount = total;
 	}
@@ -142,9 +143,9 @@ export class EditOrganizationMainComponent
 			name: ['', Validators.required],
 			officialName: [''],
 			profile_link: ['', [
-					Validators.required,
-					Validators.pattern('^[a-z0-9-]+$')
-				]
+				Validators.required,
+				Validators.pattern('^[a-z0-9-]+$')
+			]
 			],
 			taxId: [''],
 			registrationDate: [''],
@@ -200,5 +201,5 @@ export class EditOrganizationMainComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 }

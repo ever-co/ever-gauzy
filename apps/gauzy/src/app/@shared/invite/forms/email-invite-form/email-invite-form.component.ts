@@ -12,7 +12,8 @@ import {
 	IUser,
 	InvitationExpirationEnum
 } from '@gauzy/contracts';
-import { filter, first, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { NbTagComponent, NbTagInputAddEvent, NbTagInputDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +33,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	invitationTypeEnum = InvitationTypeEnum;
 	roles: any[] = [];
 	invitationExpiryOptions: any = [];
-	
+
 	@Input() public organizationProjects: IOrganizationProject[];
 	@Input() public organizationContacts: IOrganizationContact[];
 	@Input() public organizationDepartments: IOrganizationDepartment[];
@@ -78,11 +79,11 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		}, {
 			validators: [
 				EmailValidator.pattern('emails')
-			] 
+			]
 		});
 	}
 
-	@ViewChild(NbTagInputDirective, { read: ElementRef }) 
+	@ViewChild(NbTagInputDirective, { read: ElementRef })
 	tagInput: ElementRef<HTMLInputElement>;
 
 	user: IUser;
@@ -221,14 +222,12 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const role = await this.roleService
+		const role = await firstValueFrom(this.roleService
 			.getRoleByName({
 				name: this.getRoleNameFromForm(),
 				tenantId
-			})
-			.pipe(first())
-			.toPromise();
-		
+			}));
+
 		const {
 			startedWorkOn,
 			appliedDate,
@@ -268,7 +267,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			].map(([email]) => email)
 		});
 	}
-	
+
 	/**
 	 * Add emails to form emails control
 	 * 
@@ -326,7 +325,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		if (!this.form.contains(control)) {
 			return true;
 		}
-		return this.form.get(control).touched && 
+		return this.form.get(control).touched &&
 			this.form.get(control).invalid;
 	}
 

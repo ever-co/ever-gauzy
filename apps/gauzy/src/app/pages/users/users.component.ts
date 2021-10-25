@@ -22,7 +22,8 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -170,7 +171,7 @@ export class UsersComponent
 			}
 		});
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data && data.user) {
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
@@ -188,10 +189,9 @@ export class UsersComponent
 
 	async addOrEditUser(user: IUserOrganizationCreateInput) {
 		if (user.isActive) {
-			await this.userOrganizationsService
+			await firstValueFrom(this.userOrganizationsService
 				.create(user)
-				.pipe(first())
-				.toPromise();
+			);
 
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
@@ -212,7 +212,7 @@ export class UsersComponent
 				isSuperAdmin: this.hasSuperAdminPermission
 			}
 		});
-		await dialog.onClose.pipe(first()).toPromise();
+		await firstValueFrom(dialog.onClose);
 	}
 
 	edit(selectedItem?: IUser) {
@@ -337,9 +337,8 @@ export class UsersComponent
 					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
 			) {
 				usersVm.push({
-					fullName: `${orgUser.user.firstName || ''} ${
-						orgUser.user.lastName || ''
-					}`,
+					fullName: `${orgUser.user.firstName || ''} ${orgUser.user.lastName || ''
+						}`,
 					email: orgUser.user.email,
 					tags: orgUser.user.tags,
 					id: orgUser.id,
@@ -348,8 +347,8 @@ export class UsersComponent
 					role: orgUser.user.role.name,
 					roleName: orgUser.user.role
 						? this.getTranslation(
-								`USERS_PAGE.ROLE.${orgUser.user.role.name}`
-						  )
+							`USERS_PAGE.ROLE.${orgUser.user.role.name}`
+						)
 						: ''
 				});
 			}
@@ -423,5 +422,5 @@ export class UsersComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

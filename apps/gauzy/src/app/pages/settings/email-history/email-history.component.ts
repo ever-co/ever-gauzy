@@ -7,8 +7,8 @@ import {
 	IOrganizationContact,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { first, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { filter, tap, debounceTime } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -88,15 +88,14 @@ export class EmailHistoryComponent
 	}
 
 	async openFiltersDialog() {
-		const filters = await this.dialogService
+		const filters = await firstValueFrom(this.dialogService
 			.open(EmailFiltersComponent, {
 				context: {
 					filters: this.filters,
 					organization: this.organization
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (filters) {
 			this.emails$.next(true);
@@ -134,14 +133,14 @@ export class EmailHistoryComponent
 			const filters = this.filters;
 
 			await this.emailService.getAll(['emailTemplate', 'user'],
-					{
-						organizationId,
-						tenantId,
-						isArchived: false || null,
-						...filters
-					},
-					this.threshholdHitCount * this.pageSize
-				)
+				{
+					organizationId,
+					tenantId,
+					isArchived: false || null,
+					...filters
+				},
+				this.threshholdHitCount * this.pageSize
+			)
 				.then((data) => {
 					this.emails = data.items;
 					this.selectedEmail = this.emails ? this.emails[0] : null;
@@ -172,13 +171,11 @@ export class EmailHistoryComponent
 		const { id: organizationId } = this.organization;
 
 		this.employees = (
-			await (
+			await firstValueFrom(
 				this.employeesService.getAll(['user'], {
 					organizationId,
 					tenantId
-				})
-				.pipe(first())
-				.toPromise())
+				}))
 		).items;
 	}
 
@@ -201,14 +198,14 @@ export class EmailHistoryComponent
 		await this.emailService.update(this.selectedEmail.id, {
 			isArchived: true
 		})
-		.then(() => {
-			this.toastrService.success(
-				this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
-			);
-		})
-		.finally(() => {
-			this.emails$.next(true);
-		});
+			.then(() => {
+				this.toastrService.success(
+					this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
+				);
+			})
+			.finally(() => {
+				this.emails$.next(true);
+			});
 	}
 
 	getEmailDate(createdAt: string): string {
@@ -253,5 +250,5 @@ export class EmailHistoryComponent
 		this.filteredCount = 0;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

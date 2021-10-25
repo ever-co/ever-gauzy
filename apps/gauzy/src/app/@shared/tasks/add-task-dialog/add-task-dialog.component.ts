@@ -12,10 +12,11 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '../../../@core/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +27,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class AddTaskDialogComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-		
+
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
@@ -35,7 +36,7 @@ export class AddTaskDialogComponent
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
-	
+
 	@Input() createTask = false;
 
 	/*
@@ -65,7 +66,7 @@ export class AddTaskDialogComponent
 			status: [self.getTranslation('TASKS_PAGE.TODO')],
 			members: [],
 			estimateDays: [],
-			estimateHours: [ '', [Validators.min(0), Validators.max(23)]],
+			estimateHours: ['', [Validators.min(0), Validators.max(23)]],
 			estimateMinutes: ['', [Validators.min(0), Validators.max(59)]],
 			dueDate: [],
 			description: [],
@@ -96,7 +97,7 @@ export class AddTaskDialogComponent
 				tap(() => this.initializeForm()),
 				untilDestroyed(this)
 			)
-			.subscribe();		
+			.subscribe();
 	}
 
 	initializeForm() {
@@ -134,7 +135,7 @@ export class AddTaskDialogComponent
 				.setValue((this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e));
 			this.form
 				.get('teams')
-				.setValue((this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)) .filter((e) => !!e));
+				.setValue((this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e));
 
 			const {
 				estimateDays,
@@ -175,10 +176,11 @@ export class AddTaskDialogComponent
 	async loadEmployees() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items = [] } = await this.employeesService.getAll(['user'], {
-			organizationId,
-			tenantId
-		}).pipe(first()).toPromise();
+		const { items = [] } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
+				organizationId,
+				tenantId
+			}));
 		this.employees = items;
 	}
 

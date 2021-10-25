@@ -13,13 +13,14 @@ import { AddArticleComponent } from './add-article/add-article.component';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteArticleComponent } from './delete-article/delete-article.component';
 import { HelpCenterArticleService } from '../../@core/services/help-center-article.service';
-import { filter, first } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { HelpCenterAuthorService } from '../../@core/services/help-center-author.service';
 import { EmployeesService } from '../../@core/services';
 import { FormControl } from '@angular/forms';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { firstValueFrom } from "rxjs";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -205,7 +206,7 @@ export class HelpCenterComponent
 				id: this.categoryId
 			}
 		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 
 		if (data) {
 			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICLE_CREATED');
@@ -219,7 +220,7 @@ export class HelpCenterComponent
 				article: this.articleList[i]
 			}
 		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICLE_DELETED', {
 				name: data.name
@@ -238,7 +239,7 @@ export class HelpCenterComponent
 				id: this.categoryId
 			}
 		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICLE_UPDATED', {
 				name: data.name

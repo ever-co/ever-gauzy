@@ -20,7 +20,7 @@ import {
 	NbStepperComponent
 } from '@nebular/theme';
 import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { GoalService } from '../../../@core/services/goal.service';
 import { EmployeesService } from '../../../@core/services';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
@@ -125,7 +125,7 @@ export class GoalTemplateSelectComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (response) {
 			await this.getTimeFrames();
 		}

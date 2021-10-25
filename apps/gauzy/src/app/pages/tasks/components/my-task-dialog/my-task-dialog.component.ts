@@ -9,7 +9,7 @@ import { ErrorHandlingService } from '../../../../@core/services/error-handling.
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import * as moment from 'moment';
 import { EmployeesService } from '../../../../@core/services';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 const initialTaskValue = {
@@ -112,7 +112,7 @@ export class MyTaskDialogComponent
 			title: [title, Validators.required],
 			project: [project],
 			projectId: (project) ? project.id : null,
-			status: [status? status :this.getTranslation('TASKS_PAGE.TODO')],
+			status: [status ? status : this.getTranslation('TASKS_PAGE.TODO')],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [
@@ -176,10 +176,9 @@ export class MyTaskDialogComponent
 			return;
 		}
 
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user'], { organization: { id: organizationId } })
-			.pipe(first())
-			.toPromise();
+		);
 
 		this.employees = items;
 	}

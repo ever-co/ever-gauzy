@@ -20,11 +20,10 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import {
 	debounceTime,
 	filter,
-	first,
 	tap
 } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -96,7 +95,7 @@ export class ContactComponent
 	/*
 	* Actions Buttons directive 
 	*/
-	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
@@ -234,14 +233,13 @@ export class ContactComponent
 	}
 
 	async removeOrganizationContact(id?: string, name?: string) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Contact'
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.organizationContactService.delete(
@@ -437,7 +435,7 @@ export class ContactComponent
 				}
 			});
 
-			const result = await dialog.onClose.pipe(first()).toPromise();
+			const result = await firstValueFrom(dialog.onClose);
 
 			if (result) {
 				await this.loadOrganizationContacts();
@@ -503,5 +501,5 @@ export class ContactComponent
 		return find ? find.country : row.country;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -10,7 +10,8 @@ import { NbDialogService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -126,15 +127,14 @@ export class DepartmentsComponent
 		if (!this.organizationId) {
 			return;
 		}
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user'], {
 				organization: {
 					id: this.organizationId,
 					tenantId: this.tenantId
 				}
 			})
-			.pipe(first())
-			.toPromise();
+		);
 
 		this.employees = items;
 		this.loading = false;
@@ -154,14 +154,13 @@ export class DepartmentsComponent
 			});
 	}
 	async removeDepartment(id?: string, name?: string) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Department'
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.organizationDepartmentsService.delete(

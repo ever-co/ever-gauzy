@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy, AfterViewInit } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { first, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { filter, tap, debounceTime } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -181,7 +181,7 @@ export class ApprovalPolicyComponent
 				}
 			}
 		);
-		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
+		const requestApproval = await firstValueFrom(dialog.onClose);
 		if (requestApproval) {
 			this.toastrService.success(
 				this.selectedApprovalPolicy?.id
@@ -205,10 +205,9 @@ export class ApprovalPolicyComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.approvalPolicyService.delete(

@@ -9,7 +9,8 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from './../../@shared/language-base/translation-base.component';
@@ -27,7 +28,7 @@ import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService 
 export class VendorsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-		
+
 	organization: IOrganization;
 	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
@@ -74,7 +75,7 @@ export class VendorsComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	private _initializeForm() {
 		this.form = this.fb.group({
@@ -190,14 +191,13 @@ export class VendorsComponent
 	}
 
 	async removeVendor(id: string, name: string) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: this.getTranslation('ORGANIZATIONS_PAGE.VENDOR')
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			try {
@@ -251,7 +251,7 @@ export class VendorsComponent
 			.getAll(
 				{ organizationId, tenantId },
 				['tags'],
-				{ createdAt:'DESC' }
+				{ createdAt: 'DESC' }
 			)
 			.then(({ items }) => {
 				this.vendors = items;

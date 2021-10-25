@@ -10,8 +10,8 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import * as moment from 'moment-timezone';
 import { InviteService, Store, ToastrService } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';
@@ -130,7 +130,7 @@ export class InvitesComponent
 				invitationType: this.invitationType
 			}
 		});
-		await dialog.onClose.pipe(first()).toPromise();
+		await firstValueFrom(dialog.onClose);
 		this.loadInvites();
 	}
 

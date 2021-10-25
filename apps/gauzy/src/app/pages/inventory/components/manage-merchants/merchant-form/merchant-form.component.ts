@@ -4,8 +4,8 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { filter, first, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { LatLng } from 'leaflet';
 import {
 	ITag,
@@ -218,7 +218,7 @@ export class MerchantFormComponent
 			}
 		});
 
-		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+		let selectedImage = await firstValueFrom(dialog.onClose);
 		if (selectedImage) {
 			this.image = selectedImage;
 		}

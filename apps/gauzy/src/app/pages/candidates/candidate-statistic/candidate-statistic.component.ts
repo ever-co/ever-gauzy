@@ -6,7 +6,8 @@ import {
 } from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { filter, first } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
 import { Store } from '../../../@core/services/store.service';
@@ -48,13 +49,12 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	async loadData() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
-		const { items } = await this.candidatesService
+		const { items } = await firstValueFrom(this.candidatesService
 			.getAll(['user', 'interview', 'feedbacks'], {
 				organizationId,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
 		const interviews = await this.candidateInterviewService.getAll(
 			['feedbacks', 'interviewers', 'technologies', 'personalQualities'],
 			{ organizationId, tenantId }
@@ -70,10 +70,9 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	async loadEmployee() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user'], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
+		);
 		this.employeeList = items;
 	}
 	ngOnDestroy() {}

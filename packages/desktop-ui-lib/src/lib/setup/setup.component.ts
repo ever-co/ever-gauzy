@@ -123,8 +123,8 @@ export class SetupComponent implements OnInit {
 			portUi: '8084'
 		},
 		localNetwork: {
-			apiHost: '',
-			port: ''
+			apiHost: '127.0.0.1',
+			port: '5620'
 		},
 		live: {
 			url: 'https://api.gauzy.co'

@@ -10,7 +10,8 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { first, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
@@ -79,7 +80,7 @@ export class OrganizationComponent
 		this.imageUpdateButton = true;
 	}
 
-	handleImageUploadError(event: any) {}
+	handleImageUploadError(event: any) { }
 
 	ngOnInit() {
 		this.store.userRolePermissions$
@@ -97,15 +98,14 @@ export class OrganizationComponent
 
 	private async getPublicOrganization() {
 		try {
-			this.organization = await this.organizationsService
+			this.organization = await firstValueFrom(this.organizationsService
 				.getByProfileLink(this.profileLink, null, [
 					'skills',
 					'awards',
 					'languages',
 					'languages.language'
 				])
-				.pipe(first())
-				.toPromise();
+			);
 
 			this.tenantId = this.store.user.tenantId;
 			if (this.store.userId) {
@@ -176,13 +176,12 @@ export class OrganizationComponent
 		const { tenantId } = this;
 		const { id: organizationId } = this.organization;
 
-		const employees = await this.employeesService
+		const employees = await firstValueFrom(this.employeesService
 			.getAllPublic(['user', 'skills', 'organization'], {
 				organizationId,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
 
 		this.employees = employees.items;
 		this.totalEmployees = employees.total;
@@ -266,5 +265,5 @@ export class OrganizationComponent
 		this.tabTitle = e.tabTitle;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

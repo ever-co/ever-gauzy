@@ -3,7 +3,8 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { CandidateInterviewMutationComponent } from '../../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
-import { filter, first } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { CandidateInterviewService } from '../../../../../@core/services/candidate-interview.service';
 import { CandidateStore } from '../../../../../@core/services/candidate-store.service';
 import { FormGroup } from '@angular/forms';
@@ -216,7 +217,7 @@ export class EditCandidateInterviewComponent
 				}
 			}
 		);
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success(
 				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_CREATED',
@@ -239,13 +240,12 @@ export class EditCandidateInterviewComponent
 		});
 		this.allFeedbacks = allFeedbacks;
 
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user'], {
 				organizationId,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
 		this.employeeList = items;
 		const interviews = await this.candidateInterviewService.getAll(
 			[
@@ -282,7 +282,7 @@ export class EditCandidateInterviewComponent
 							interview.candidate.user = item.user;
 						}
 					});
-	
+
 					interview.employees = employees;
 					this.tableInterviewList.push({
 						...interview,
@@ -333,7 +333,7 @@ export class EditCandidateInterviewComponent
 					}
 				}
 			);
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
 				this.toastrService.success(
 					'TOASTR.MESSAGE.INTERVIEW_FEEDBACK_CREATED',
@@ -368,7 +368,7 @@ export class EditCandidateInterviewComponent
 				}
 			}
 		);
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success(
 				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_UPDATED',
@@ -420,7 +420,7 @@ export class EditCandidateInterviewComponent
 				interview: currentInterview
 			}
 		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success(
 				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_DELETED',
@@ -439,7 +439,7 @@ export class EditCandidateInterviewComponent
 				this.loadSmartTable();
 			});
 	}
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
-	openEmployees(employeeId?: string) {}
+	openEmployees(employeeId?: string) { }
 }

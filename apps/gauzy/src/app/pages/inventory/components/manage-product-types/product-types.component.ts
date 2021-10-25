@@ -9,8 +9,8 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -62,15 +62,15 @@ export class ProductTypesComponent
 			this.onChangedSource();
 		}
 	}
-	
+
 	/*
 	* Actions Buttons directive 
 	*/
-	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
- 
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+
 	constructor(
 		public readonly translateService: TranslateService,
-		private readonly http: HttpClient, 
+		private readonly http: HttpClient,
 		private readonly dialogService: NbDialogService,
 		private readonly productTypeService: ProductTypeService,
 		private readonly toastrService: ToastrService,
@@ -95,7 +95,7 @@ export class ProductTypesComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const preferredLanguage$ = this.store.preferredLanguage$
 
@@ -103,7 +103,7 @@ export class ProductTypesComponent
 			.pipe(
 				debounceTime(300),
 				filter(([organization, language]) => !!organization && !!language),
-				tap(([ organization ]) => this.organization = organization),
+				tap(([organization]) => this.organization = organization),
 				distinctUntilChange(),
 				tap(() => this.types$.next(true)),
 				untilDestroyed(this)
@@ -187,14 +187,14 @@ export class ProductTypesComponent
 			const editProductType = this.selectedProductType
 				? await this.productTypeService.getById(this.selectedProductType.id)
 				: null;
-	
+
 			const dialog = this.dialogService.open(ProductTypeMutationComponent, {
 				context: {
 					productType: editProductType
 				}
 			});
-	
-			const productType = await dialog.onClose.pipe(first()).toPromise();
+
+			const productType = await firstValueFrom(dialog.onClose);
 			if (productType) {
 				let productTranslations = productType.translations[0];
 				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
@@ -204,7 +204,7 @@ export class ProductTypesComponent
 			}
 		} catch (error) {
 			this.types$.next(true);
-		}		
+		}
 	}
 
 	async delete(selectedItem?: IProductTypeTranslated) {
@@ -215,11 +215,10 @@ export class ProductTypesComponent
 					data: selectedItem
 				});
 			}
-	
-			const result = await this.dialogService
+
+			const result = await firstValueFrom(this.dialogService
 				.open(DeleteConfirmationComponent)
-				.onClose.pipe(first())
-				.toPromise();
+				.onClose);
 
 			if (result) {
 				if (this.selectedProductType) {
@@ -228,12 +227,12 @@ export class ProductTypesComponent
 							this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_DELETED', {
 								name: this.selectedProductType.name
 							});
-						}) 
+						})
 						.finally(() => {
 							this.types$.next(true);
 						});
 				}
-			}	
+			}
 		} catch (error) {
 			this.types$.next(true);
 		}
@@ -270,8 +269,8 @@ export class ProductTypesComponent
 	/**
 	 * GET product types smart table source
 	 */
-	 private async getTranslatedProductTypes() {
-		try { 
+	private async getTranslatedProductTypes() {
+		try {
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 
@@ -282,7 +281,7 @@ export class ProductTypesComponent
 				await this.smartTableSource.getElements();
 				this.productTypes = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -309,5 +308,5 @@ export class ProductTypesComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

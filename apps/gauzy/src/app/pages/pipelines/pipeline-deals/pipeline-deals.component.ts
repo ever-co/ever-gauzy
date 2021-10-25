@@ -16,6 +16,7 @@ import { DealsService } from '../../../@core/services/deals.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Store } from '../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
@@ -165,16 +166,18 @@ export class PipelineDealsComponent
 	}
 
 	async deleteDeal(): Promise<void> {
-		const canProceed: 'ok' = await this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: {
-					recordType: this.getTranslation(
-						'PIPELINE_DEALS_PAGE.RECORD_TYPE',
-						this.deal
-					)
-				}
-			})
-			.onClose.toPromise();
+		const canProceed: 'ok' = await firstValueFrom(
+			this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: {
+						recordType: this.getTranslation(
+							'PIPELINE_DEALS_PAGE.RECORD_TYPE',
+							this.deal
+						)
+					}
+				})
+				.onClose
+		);
 
 		if ('ok' === canProceed) {
 			await this.dealsService.delete(this.deal.id);
@@ -260,5 +263,5 @@ export class PipelineDealsComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
