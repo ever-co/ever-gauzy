@@ -288,3 +288,7 @@ And('User can verify salary', () => {
 And('User can verify income', () => {
 	employeeDashboard.verifyEmployeeIncome(EmployeeDashboardPageData.dashboardIncomeTxt);
 });
+
+And ('User can verify bonus', () => {
+	employeeDashboard.verifyEmployeeBonus(EmployeeDashboardPageData.bonusTxt);
+});

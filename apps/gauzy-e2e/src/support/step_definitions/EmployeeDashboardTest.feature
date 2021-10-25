@@ -55,3 +55,4 @@ Feature: Employee dashboard test
     Then User click on employee
     And User can verify salary
     And User can verify income
+    And User can verify bonus
