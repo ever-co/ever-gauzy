@@ -10,7 +10,8 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { first, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '../../@core/services/store.service';
 import { EmployeesService } from '../../@core/services';
@@ -96,7 +97,7 @@ export class TeamsComponent
 			});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	setView() {
 		this.viewComponentName = ComponentEnum.TEAMS;
@@ -163,14 +164,13 @@ export class TeamsComponent
 	}
 
 	async removeTeam(id?: string, name?: string) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Team'
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			try {
@@ -211,15 +211,14 @@ export class TeamsComponent
 			return;
 		}
 
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user', 'tags'], {
 				organization: {
 					id: this.organizationId,
 					tenantId: this.tenantId
 				}
 			})
-			.pipe(first())
-			.toPromise();
+		);
 		this.employees = items;
 	}
 	public getTagsByEmployeeId(id: string) {

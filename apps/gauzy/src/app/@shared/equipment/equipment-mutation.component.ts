@@ -9,8 +9,7 @@ import { Store } from '../../@core/services/store.service';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
-import { first } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ImageAssetService, ToastrService } from '../../@core';
 
@@ -138,7 +137,7 @@ export class EquipmentMutationComponent
 			}
 		});
 
-		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+		let selectedImage = await firstValueFrom(dialog.onClose);
 		this.image = selectedImage ? selectedImage : this.image;
 	}
 

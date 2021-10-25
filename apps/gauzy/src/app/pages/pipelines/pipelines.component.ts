@@ -3,7 +3,7 @@ import { IPipeline, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contr
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { debounceTime, distinctUntilChanged, filter, first, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
@@ -13,7 +13,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, PipelinesService, Store, ToastrService } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { InputFilterComponent } from '../../@shared/table-filters/input-filter.component';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { FormControl } from '@angular/forms';
@@ -240,7 +240,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			});
 		}
 
-		const canProceed: 'ok' = await this.dialogService
+		const canProceed: 'ok' = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: this.getTranslation(
@@ -249,7 +249,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					)
 				}
 			})
-			.onClose.toPromise();
+			.onClose);
 
 		if ('ok' === canProceed) {
 			await this.pipelinesService.delete(this.pipeline.id);
@@ -286,7 +286,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		const dialogRef = this.dialogService.open(PipelineFormComponent, {
 			context
 		});
-		const data = await dialogRef.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialogRef.onClose);
 		const {
 			pipeline: { id, name }
 		} = context;

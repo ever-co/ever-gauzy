@@ -11,9 +11,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
 import { ProductVariantPriceService } from 'apps/gauzy/src/app/@core/services/product-variant-price.service';
 import { ProductVariantSettingService } from 'apps/gauzy/src/app/@core/services/product-variant-setting.service';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
@@ -265,7 +265,7 @@ export class InventoryVariantFormComponent
 			}
 		});
 
-		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+		let selectedImage = await firstValueFrom(dialog.onClose);
 
 		if (selectedImage) {
 			this.image = selectedImage;

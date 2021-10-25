@@ -8,7 +8,7 @@ import {
 	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -17,7 +17,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({
@@ -163,14 +163,13 @@ export class EmploymentTypesComponent
 	}
 
 	async deleteEmploymentType(id, name) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE'
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.organizationEmploymentTypesService.deleteEmploymentType(

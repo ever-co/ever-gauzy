@@ -11,7 +11,7 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
-import { first, switchMap, tap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
@@ -22,7 +22,7 @@ import {
 	EquipmentSharingPolicyComponent
 } from './table-components';
 import { EmployeesService, EquipmentSharingService, Store, ToastrService } from '../../@core/services';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
@@ -265,7 +265,7 @@ export class EquipmentSharingComponent
 			dialog = this.dialogService.open(EquipmentSharingMutationComponent);
 		}
 
-		const equipmentSharing = await dialog.onClose.pipe(first()).toPromise();
+		const equipmentSharing = await firstValueFrom(dialog.onClose);
 		if (equipmentSharing) {
 			this.toastrService.success('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED');
 		}
@@ -280,10 +280,10 @@ export class EquipmentSharingComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+		const result = await firstValueFrom(
+			this.dialogService
+				.open(DeleteConfirmationComponent)
+				.onClose);
 
 		if (result) {
 			await this.equipmentSharingService.delete(
@@ -368,7 +368,7 @@ export class EquipmentSharingComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	manageApprovalPolicy() {
 		this.router.navigate(['/pages/organization/equipment-sharing-policy']);

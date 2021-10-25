@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { ManageVariantsQuantityFormComponent } from '../manage-variants-quantity-form/manage-variants-quantity-form.component';
 import { InventoryStore } from 'apps/gauzy/src/app/@core';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
 	templateUrl: './manage-variants-quantity.component.html',
@@ -35,9 +35,7 @@ export class ManageVariantsQuantityComponent
 			}
 		);
 
-		dialog.onClose
-			.pipe(first())
-			.toPromise()
+		firstValueFrom(dialog.onClose)
 			.then((res) => {
 				this.inventoryStore.warehouseProductsCountUpdate$.next();
 			});

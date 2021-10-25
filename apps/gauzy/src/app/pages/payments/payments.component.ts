@@ -2,11 +2,11 @@ import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
-import { first, filter, tap, debounceTime } from 'rxjs/operators';
+import { filter, tap, debounceTime } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import {
@@ -236,14 +236,13 @@ export class PaymentsComponent
 	}
 
 	async recordPayment() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					organization: this.organization,
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.paymentService.add(result);
@@ -269,15 +268,14 @@ export class PaymentsComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					payment: this.selectedPayment,
 					invoice: this.selectedPayment.invoice
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			if (!this.selectedPayment) {
@@ -308,10 +306,9 @@ export class PaymentsComponent
 			});
 		}
 
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			if (!this.selectedPayment) {

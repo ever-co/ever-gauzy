@@ -8,11 +8,11 @@ import {
 	RecurringExpenseDefaultCategoriesEnum,
 	RecurringExpenseDeletionEnum
 } from '@gauzy/contracts';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationRecurringExpenseService } from '../../@core/services/organization-recurring-expense.service';
-import { takeUntil, first, filter } from 'rxjs/operators';
+import { takeUntil, filter } from 'rxjs/operators';
 import { monthNames } from '../../@core/utils/date';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
 import {
@@ -100,8 +100,8 @@ export class ExpenseRecurringComponent
 	getCategoryName(categoryName: string) {
 		return categoryName in RecurringExpenseDefaultCategoriesEnum
 			? this.getTranslation(
-					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			  )
+				`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			)
 			: categoryName;
 	}
 
@@ -111,25 +111,24 @@ export class ExpenseRecurringComponent
 
 	async deleteOrgRecurringExpense(index: number) {
 		const selectedExpense = this.selectedOrgRecurringExpense[index];
-		const result: RecurringExpenseDeletionEnum = await this.dialogService
-			.open(RecurringExpenseDeleteConfirmationComponent, {
-				context: {
-					recordType: 'Organization recurring expense',
-					start: `${this.getMonthString(
-						selectedExpense.startMonth
-					)}, ${selectedExpense.startYear}`,
-					current: `${this.getMonthString(
-						this.selectedDate.getMonth()
-					)}, ${this.selectedDate.getFullYear()}`,
-					end: selectedExpense.endMonth
-						? `${this.getMonthString(selectedExpense.endMonth)}, ${
-								selectedExpense.endYear
-						  }`
-						: 'end'
-				}
-			})
-			.onClose.pipe(first())
-			.toPromise();
+		const result: RecurringExpenseDeletionEnum = await firstValueFrom(
+			this.dialogService
+				.open(RecurringExpenseDeleteConfirmationComponent, {
+					context: {
+						recordType: 'Organization recurring expense',
+						start: `${this.getMonthString(
+							selectedExpense.startMonth
+						)}, ${selectedExpense.startYear}`,
+						current: `${this.getMonthString(
+							this.selectedDate.getMonth()
+						)}, ${this.selectedDate.getFullYear()}`,
+						end: selectedExpense.endMonth
+							? `${this.getMonthString(selectedExpense.endMonth)}, ${selectedExpense.endYear
+							}`
+							: 'end'
+					}
+				}).onClose
+		);
 
 		if (result) {
 			try {
@@ -160,15 +159,15 @@ export class ExpenseRecurringComponent
 	}
 
 	async addOrganizationRecurringExpense() {
-		const result = await this.dialogService
-			.open(RecurringExpenseMutationComponent, {
-				context: {
-					componentType: COMPONENT_TYPE.ORGANIZATION,
-					selectedDate: this.selectedDate
-				}
-			})
-			.onClose.pipe(first())
-			.toPromise();
+		const result = await firstValueFrom(
+			this.dialogService
+				.open(RecurringExpenseMutationComponent, {
+					context: {
+						componentType: COMPONENT_TYPE.ORGANIZATION,
+						selectedDate: this.selectedDate
+					}
+				}).onClose
+		);
 
 		if (result) {
 			try {
@@ -194,16 +193,17 @@ export class ExpenseRecurringComponent
 	}
 
 	async editOrganizationRecurringExpense(index: number) {
-		const result = await this.dialogService
-			.open(RecurringExpenseMutationComponent, {
-				context: {
-					recurringExpense: this.selectedOrgRecurringExpense[index],
-					componentType: COMPONENT_TYPE.ORGANIZATION,
-					selectedDate: this.selectedDate
-				}
-			})
-			.onClose.pipe(first())
-			.toPromise();
+		const result = await firstValueFrom(
+			this.dialogService
+				.open(RecurringExpenseMutationComponent, {
+					context: {
+						recurringExpense: this.selectedOrgRecurringExpense[index],
+						componentType: COMPONENT_TYPE.ORGANIZATION,
+						selectedDate: this.selectedDate
+					}
+				})
+				.onClose
+		);
 		if (result) {
 			try {
 				const id = this.selectedOrgRecurringExpense[index].id;

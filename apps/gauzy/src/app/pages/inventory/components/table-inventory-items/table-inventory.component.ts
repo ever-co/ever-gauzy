@@ -4,8 +4,8 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -32,7 +32,7 @@ import { ItemImgTagsComponent } from '../table-components';
 export class TableInventoryComponent
 	extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
-	
+
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedProduct: IProduct;
@@ -58,7 +58,7 @@ export class TableInventoryComponent
 	/*
 	* Actions Buttons directive 
 	*/
-	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly http: HttpClient,
@@ -88,7 +88,7 @@ export class TableInventoryComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const preferredLanguage$ = this.store.preferredLanguage$
 
@@ -96,7 +96,7 @@ export class TableInventoryComponent
 			.pipe(
 				debounceTime(300),
 				filter(([organization, language]) => !!organization && !!language),
-				tap(([ organization ]) => this.organization = organization),
+				tap(([organization]) => this.organization = organization),
 				distinctUntilChange(),
 				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
@@ -241,10 +241,11 @@ export class TableInventoryComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+		const result = await firstValueFrom(
+			this.dialogService
+				.open(DeleteConfirmationComponent)
+				.onClose
+		);
 
 		if (!result) return;
 
@@ -294,8 +295,8 @@ export class TableInventoryComponent
 	/**
 	 * GET product inventory smart table source
 	 */
-	 private async getTranslatedProducts() {
-		try { 
+	private async getTranslatedProducts() {
+		try {
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 
@@ -306,7 +307,7 @@ export class TableInventoryComponent
 				await this.smartTableSource.getElements();
 				this.products = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

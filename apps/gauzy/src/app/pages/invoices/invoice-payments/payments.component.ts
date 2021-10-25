@@ -12,8 +12,8 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -165,14 +165,13 @@ export class InvoicePaymentsComponent
 	}
 
 	async recordPayment() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.paymentService.add(result);
@@ -196,15 +195,14 @@ export class InvoicePaymentsComponent
 	}
 
 	async editPayment() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice,
 					payment: this.selectedPayment
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.paymentService.update(result.id, result);
@@ -226,10 +224,9 @@ export class InvoicePaymentsComponent
 	}
 
 	async deletePayment() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
@@ -465,15 +462,14 @@ export class InvoicePaymentsComponent
 	}
 
 	async sendReceipt() {
-		await this.dialogService
+		await firstValueFrom(this.dialogService
 			.open(InvoicePaymentReceiptMutationComponent, {
 				context: {
 					invoice: this.invoice,
 					payment: this.selectedPayment
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 	}
 
 	private _applyTranslationOnSmartTable() {

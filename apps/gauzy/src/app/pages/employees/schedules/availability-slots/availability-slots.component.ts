@@ -17,8 +17,8 @@ import {
 	StatusTypesEnum,
 	WeekDaysEnum
 } from '@gauzy/contracts';
-import { first, filter, tap, debounceTime } from 'rxjs/operators';
-import { combineLatest, Subject } from 'rxjs';
+import { filter, tap, debounceTime } from 'rxjs/operators';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -54,15 +54,15 @@ export class AvailabilitySlotsComponent
 		center: string;
 		right: string;
 	} = {
-		left: 'next',
-		center: 'title',
-		right: 'dayGridMonth,timeGridWeek'
-	};
+			left: 'next',
+			center: 'title',
+			right: 'dayGridMonth,timeGridWeek'
+		};
 
 	recurringAvailabilityMode: boolean;
 	dateSelected: boolean;
 	hiddenDays: number[] = [];
-	
+
 	removedEvents: EventInput[] = [];
 	timeOffs: ITimeOff[] = [];
 	public loading: boolean = true;
@@ -201,7 +201,7 @@ export class AvailabilitySlotsComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		
+
 		const input = {
 			startTime: event.start,
 			endTime: event.end,
@@ -236,8 +236,8 @@ export class AvailabilitySlotsComponent
 				? this.hiddenDays
 				: [];
 			this.calendar.getApi().setOption('hiddenDays', hideDays);
-			this.headerToolbarOptions.left = moment(currentStart).isSameOrBefore(moment(),'day') ? 
-				'next' : 
+			this.headerToolbarOptions.left = moment(currentStart).isSameOrBefore(moment(), 'day') ?
+				'next' :
 				'prev,next';
 			this.calendar
 				.getApi()
@@ -398,21 +398,20 @@ export class AvailabilitySlotsComponent
 				employeeId
 			}
 		}
-		const { items = [] } = await this.timeOffService
+		const { items = [] } = await firstValueFrom(this.timeOffService
 			.getAllTimeOffRecords(['employees', 'employees.user'], { ...request })
-			.pipe(first())
-			.toPromise();
+		);
 		this.timeOffs = items;
 	}
 
 	async fetchAvailableSlots() {
 		this.calendarEvents = [];
 		const { tenantId } = this.store.user;
-		const { id: organizationId  } = this.organization;
+		const { id: organizationId } = this.organization;
 		let findObj: any = {
-			type: this.recurringAvailabilityMode ? 
-					AvailabilitySlotType.RECURRING : 
-					AvailabilitySlotType.DEFAULT,
+			type: this.recurringAvailabilityMode ?
+				AvailabilitySlotType.RECURRING :
+				AvailabilitySlotType.DEFAULT,
 			organizationId,
 			tenantId
 		};
@@ -500,5 +499,5 @@ export class AvailabilitySlotsComponent
 		this.calendar.getApi().refetchEvents();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

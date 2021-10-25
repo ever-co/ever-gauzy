@@ -21,8 +21,8 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OrganizationsMutationComponent } from '../../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 
@@ -147,10 +147,9 @@ export class AcceptClientInviteFormComponent
 	}
 
 	async addClientOrganization() {
-		this.organizationCreateInput = await this.dialogService
+		this.organizationCreateInput = await firstValueFrom(this.dialogService
 			.open(OrganizationsMutationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 		this.addedOrganization = !!this.organizationCreateInput;
 	}
 

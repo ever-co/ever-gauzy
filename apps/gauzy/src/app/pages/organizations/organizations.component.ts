@@ -9,7 +9,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, OrganizationsService, OrganizationEditStore, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
@@ -18,6 +18,7 @@ import { OrganizationsCurrencyComponent, OrganizationsEmployeesComponent, Organi
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -146,10 +147,9 @@ export class OrganizationsComponent
 	}
 
 	async addOrganization() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(OrganizationsMutationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 		if (result) {
 			try {
 				this.organizationsService
@@ -199,14 +199,13 @@ export class OrganizationsComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'ORGANIZATIONS_PAGE.ORGANIZATION'
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			try {

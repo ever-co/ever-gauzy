@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { IImageAsset } from '@gauzy/contracts';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ImageAssetService } from '../../../@core/services/image-asset.service';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 
@@ -43,10 +43,9 @@ export class ImageAssetComponent implements OnInit {
 	}
 
 	async onDeleteAsset($event) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.imageAssetService

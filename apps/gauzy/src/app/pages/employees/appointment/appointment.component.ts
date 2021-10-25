@@ -13,7 +13,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Router } from '@angular/router';
-import { debounceTime, filter, first } from 'rxjs/operators';
+import { debounceTime, filter } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -246,7 +247,7 @@ export class AppointmentComponent
 	}
 
 	async fetchTimeOff() {
-		const data = await this.timeOffService
+		const data = await firstValueFrom(this.timeOffService
 			.getAllTimeOffRecords(['employees', 'employees.user'], {
 				organizationId: this._selectedOrganizationId,
 				tenantId: this.organization.tenantId,
@@ -255,8 +256,7 @@ export class AppointmentComponent
 					(this.employee && this.employee.id) ||
 					null
 			})
-			.pipe(first())
-			.toPromise();
+		);
 
 		this.timeOff = data.items;
 	}

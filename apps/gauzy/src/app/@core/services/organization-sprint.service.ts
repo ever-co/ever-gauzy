@@ -6,7 +6,8 @@ import {
 	IOrganizationSprint,
 	IGetSprintsOptions
 } from '@gauzy/contracts';
-import { tap, catchError, first } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { ToastrService } from './toastr.service';
@@ -39,10 +40,9 @@ export class SprintService extends TranslationBaseComponent {
 	}
 
 	getById(id: string) {
-		return this._http
+		return firstValueFrom(this._http
 			.get<ITask>(`${this.API_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	createSprint(sprint: IOrganizationSprint): Observable<IOrganizationSprint> {

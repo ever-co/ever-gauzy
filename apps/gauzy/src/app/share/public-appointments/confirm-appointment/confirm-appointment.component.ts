@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../@core/services';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import * as moment from 'moment';
@@ -55,10 +55,9 @@ export class ConfirmAppointmentComponent
 	}
 
 	async loadAppointment(appointmentId: string, employeeId: string = '') {
-		this.appointment = await this.employeeAppointmentService
+		this.appointment = await firstValueFrom(this.employeeAppointmentService
 			.getById(appointmentId)
-			.pipe(first())
-			.toPromise();
+		);
 
 		if (employeeId) {
 			this.employee = await this.employeeService.getEmployeeById(
@@ -86,7 +85,7 @@ export class ConfirmAppointmentComponent
 				}
 			}
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
 				await this.employeeAppointmentService.update(appointmentId, {

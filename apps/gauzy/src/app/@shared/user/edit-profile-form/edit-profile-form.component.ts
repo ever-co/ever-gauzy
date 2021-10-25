@@ -19,8 +19,8 @@ import {
 	IUserUpdateInput
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
 	ErrorHandlingService,
 	RoleService,
@@ -163,13 +163,12 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await this.roleService
+			const role = await firstValueFrom(this.roleService
 				.getRoleByName({
 					name: this.form.value['roleName'],
 					tenantId
 				})
-				.pipe(first())
-				.toPromise();
+			);
 
 			request = {
 				...request,

@@ -18,7 +18,8 @@ import {
 	Validators,
 	AbstractControl
 } from '@angular/forms';
-import { first, filter } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
 	IEmployee,
@@ -134,8 +135,8 @@ export class ManageAppointmentComponent
 		this.form.patchValue({
 			emails: this.employeeAppointment.emails
 				? this.employeeAppointment.emails
-						.split(', ')
-						.map((o) => ({ emailAddress: o }))
+					.split(', ')
+					.map((o) => ({ emailAddress: o }))
 				: '',
 			agenda: this.employeeAppointment.agenda,
 			location: this.employeeAppointment.location,
@@ -214,10 +215,9 @@ export class ManageAppointmentComponent
 				const id = params.appointmentId || this.appointmentID;
 				if (id) {
 					this.editMode = true;
-					const appointment = await this.employeeAppointmentService
+					const appointment = await firstValueFrom(this.employeeAppointmentService
 						.getById(id)
-						.pipe(first())
-						.toPromise();
+					);
 
 					const selectedEmployees = await this.appointmentEmployeesService
 						.getById(appointment.id)
@@ -261,7 +261,7 @@ export class ManageAppointmentComponent
 					}
 				}
 			});
-			const response = await dialog.onClose.pipe(first()).toPromise();
+			const response = await firstValueFrom(dialog.onClose);
 			if (!!response) {
 				if (response === 'yes') {
 					await this.employeeAppointmentService.update(
@@ -299,8 +299,8 @@ export class ManageAppointmentComponent
 				(this.employee
 					? this.employee.id
 					: this.store.selectedEmployee
-					? this.store.selectedEmployee.id
-					: null)
+						? this.store.selectedEmployee.id
+						: null)
 		);
 
 		this.employees.map((e) => {
@@ -363,14 +363,14 @@ export class ManageAppointmentComponent
 					moment(this.form.get('selectedRange').value.start).format(
 						'YYYY-MM-DD'
 					) +
-						' ' +
-						this.form.get('breakStartTime').value
+					' ' +
+					this.form.get('breakStartTime').value
 				),
 				employeeId: this.employee
 					? this.employee.id
 					: this.store.selectedEmployee
-					? this.store.selectedEmployee.id
-					: null,
+						? this.store.selectedEmployee.id
+						: null,
 				organizationId: this._selectedOrganizationId,
 				tenantId
 			};
@@ -402,8 +402,8 @@ export class ManageAppointmentComponent
 			this.toastrService.success('APPOINTMENTS_PAGE.SAVE_SUCCESS');
 			this.employee
 				? this.router.navigate([
-						`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`
-				  ])
+					`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`
+				])
 				: this.router.navigate(['/pages/employees/appointments']);
 		} catch (error) {
 			this.toastrService.danger('APPOINTMENTS_PAGE.SAVE_FAILED');
@@ -452,7 +452,7 @@ export class ManageAppointmentComponent
 					}
 				);
 
-				const response = await dialog.onClose.pipe(first()).toPromise();
+				const response = await firstValueFrom(dialog.onClose);
 
 				if (response !== 'yes') {
 					this.employeeSelector.employeeId = ev.filter(
@@ -466,5 +466,5 @@ export class ManageAppointmentComponent
 		this.selectedEmployeeIds = ev;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
