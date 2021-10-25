@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
+import { EmployeesService } from '../../../@core/services/employees.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import {
@@ -27,6 +28,7 @@ export class AccountingComponent implements OnInit, OnDestroy {
 	isEmployee: boolean;
 
 	constructor(
+		private readonly employeesService: EmployeesService,
 		private store: Store,
 		private readonly router: Router,
 		private employeeStatisticsService: EmployeeStatisticsService
@@ -90,20 +92,25 @@ export class AccountingComponent implements OnInit, OnDestroy {
 					filterDate:
 						this.selectedDate || this.store.selectedDate || null
 				}
-			);
+			);	
 		}
 	};
 
-	selectEmployee(
+	async selectEmployee(
 		employee: ISelectedEmployee,
 		firstName: string,
 		lastName: string,
 		imageUrl: string
 	) {
+		const people  = await this.employeesService.getEmployeeById(
+			employee.id	
+		);
 		this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		this.store.selectedEmployee.firstName = firstName;
 		this.store.selectedEmployee.lastName = lastName;
 		this.store.selectedEmployee.imageUrl = imageUrl;
+		this.store.selectedEmployee.employeeLevel = people.employeeLevel;
+		this.store.selectedEmployee.shortDescription = people.short_description;
 		this.navigateToEmployeeStatistics();
 	}
 

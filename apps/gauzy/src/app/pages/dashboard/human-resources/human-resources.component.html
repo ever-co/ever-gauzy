@@ -37,10 +37,17 @@
 					></span>
 
 					<div class="employee-position">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }}
-						<span *ngIf="selectedEmployee['employeeLevel']">
-							| </span
-						>{{ selectedEmployee['employeeLevel'] }}
+						<span *ngIf="
+						selectedEmployee.shortDescription && 
+						selectedEmployee.shortDescription != null || 
+						selectedEmployee.shortDescription != ''">
+							{{ selectedEmployee.shortDescription }}
+						</span>
+						<span *ngIf="
+							selectedEmployee.shortDescription &&
+							selectedEmployee.employeeLevel">
+						|  </span>
+						{{ selectedEmployee.employeeLevel }}
 					</div>
 				</div>
 			</div>

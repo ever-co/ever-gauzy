@@ -297,7 +297,9 @@ export class EmployeeSelectorComponent
 					firstName: e.user.firstName,
 					lastName: e.user.lastName,
 					fullName: e.user.name,
-					imageUrl: e.user.imageUrl
+					imageUrl: e.user.imageUrl,
+					shortDescription: e.short_description,
+					employeeLevel: e.employeeLevel
 				};
 			})
 		];
