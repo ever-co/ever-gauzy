@@ -451,13 +451,14 @@ autoUpdater.on('update-not-available', () => {
 });
 
 autoUpdater.on('download-progress', (event) => {
+	console.log('update log', event);
 	if (settingsWindow) {
 		settingsWindow.webContents.send('download_on_progress', event);
 	}
 });
 
 autoUpdater.on('error', (e) => {
-	settingsWindow.webContents.send('error_update');
+	settingsWindow.webContents.send('error_update', e);
 });
 
 ipcMain.on('restart_and_update', () => {

@@ -190,6 +190,26 @@
 									[displayValue]="true"
 								></nb-progress-bar>
 							</div>
+							<div class="col-12 text-center update-message" *ngIf="loading">
+								<nb-accordion multi>
+									<nb-accordion-item 
+										#logUpdate
+										[expanded]="logIsOpen"
+										(collapsedChange)="logBoxChange($event)"
+									>
+									  <nb-accordion-item-header>
+										Logs Upadte
+									  </nb-accordion-item-header>
+									  <nb-accordion-item-body class="log-box">
+										  <div class="log-content" #logbox>
+											  <p class="content-text" *ngFor="let content of logContents">
+												  {{content}}
+											  </p>
+										  </div>
+									  </nb-accordion-item-body>
+									</nb-accordion-item>
+								  </nb-accordion>
+							</div>
 						</div>
 					</nb-card-body>
 				</nb-card>
