@@ -160,7 +160,8 @@ export abstract class RecurringExpenseDeleteHandler<
 			if (originalExpense.organizationId) {
 				createOptions.organizationId = originalExpense.organizationId;
 				createOptions.splitExpense = originalExpense.splitExpense;
-			} else if (originalExpense.employeeId) {
+			} 
+			if (originalExpense.employeeId) {
 				createOptions.employeeId = originalExpense.employeeId;
 			}
 			//Create new expense for the remaining time
