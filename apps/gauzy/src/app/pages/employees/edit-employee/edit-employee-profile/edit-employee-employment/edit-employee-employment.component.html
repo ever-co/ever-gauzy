@@ -113,7 +113,10 @@
 									| translate
 							}}
 						</label>
-						<ng-select appendTo="body" formControlName="employeeLevel">
+						<ng-select
+							appendTo="body"
+							formControlName="employeeLevel"
+							placeholder="{{ 'FORM.LABELS.EMPLOYEE_LEVEL' | translate}} ">
 							<ng-option
 								*ngFor="let empL of employeeLevels"
 								[value]="empL.level"
