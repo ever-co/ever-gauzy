@@ -22,7 +22,6 @@ export class DateFormatPipe implements PipeTransform {
 				untilDestroyed(this)
 			)
 			.subscribe((organization: IOrganization) => {
-				let [regionCode] = Object.keys(RegionsEnum);
 				this.regionCode = organization.regionCode;
 				this.dateFormat = organization.dateFormat;
 			});
