@@ -77,8 +77,8 @@ export class ProposalRegisterComponent
 				])
 			],
 			valueDate: [new Date(), Validators.required],
-			jobPostContent: [],
-			proposalContent: [],
+			jobPostContent: ["", Validators.required],
+			proposalContent: ["", Validators.required],
 			tags: [],
 			organizationContact: []
 		});
