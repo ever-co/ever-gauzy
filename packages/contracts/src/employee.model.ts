@@ -149,6 +149,8 @@ export interface ISelectedEmployee {
 	lastName: string;
 	fullName?: string;
 	imageUrl: string;
+	shortDescription?: string;
+	employeeLevel?: string;
 	defaultType?: DEFAULT_TYPE;
 	tags?: ITag[];
 	skills?: ISkill[];

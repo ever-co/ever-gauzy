@@ -289,7 +289,7 @@ export class EmployeeSelectorComponent
 			selectedDate,
 			true
 		);
-
+		
 		this.people = [
 			...items.map((e) => {
 				return {
@@ -300,7 +300,7 @@ export class EmployeeSelectorComponent
 					imageUrl: e.user.imageUrl,
 					shortDescription: e.short_description,
 					employeeLevel: e.employeeLevel
-				};
+				} as ISelectedEmployee;
 			})
 		];
 

@@ -11,6 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { Router } from '@angular/router';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-accounting',
@@ -96,22 +97,19 @@ export class AccountingComponent implements OnInit, OnDestroy {
 		}
 	};
 
-	async selectEmployee(
-		employee: ISelectedEmployee,
-		firstName: string,
-		lastName: string,
-		imageUrl: string
-	) {
+	async selectEmployee(employee: ISelectedEmployee) {
 		const people  = await this.employeesService.getEmployeeById(
-			employee.id	
+			employee.id,
+			['user']
 		);
-		this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
-		this.store.selectedEmployee.firstName = firstName;
-		this.store.selectedEmployee.lastName = lastName;
-		this.store.selectedEmployee.imageUrl = imageUrl;
-		this.store.selectedEmployee.employeeLevel = people.employeeLevel;
-		this.store.selectedEmployee.shortDescription = people.short_description;
-		this.navigateToEmployeeStatistics();
+		this.store.selectedEmployee = (employee.id) ? {
+			id: people.id,
+			firstName: people.user.firstName,
+			lastName: people.user.lastName,
+			imageUrl: people.user.imageUrl,
+			employeeLevel: people.employeeLevel,
+			shortDescription: people.short_description
+		} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
 	}
 
 	ngOnDestroy(): void {}
