@@ -72,14 +72,7 @@
 		>
 			<div
 				class="block-content"
-				(click)="
-					selectEmployee(
-						employeeExpense.employee,
-						employeeExpense.employee.user.firstName,
-						employeeExpense.employee.user.lastName,
-						employeeExpense.employee.user.imageUrl
-					)
-				"
+				(click)="selectEmployee(employeeExpense.employee)"
 			>
 				<div class="block-info">
 					<div class="row">

@@ -289,7 +289,7 @@ export class EmployeeSelectorComponent
 			selectedDate,
 			true
 		);
-
+		
 		this.people = [
 			...items.map((e) => {
 				return {
@@ -297,8 +297,10 @@ export class EmployeeSelectorComponent
 					firstName: e.user.firstName,
 					lastName: e.user.lastName,
 					fullName: e.user.name,
-					imageUrl: e.user.imageUrl
-				};
+					imageUrl: e.user.imageUrl,
+					shortDescription: e.short_description,
+					employeeLevel: e.employeeLevel
+				} as ISelectedEmployee;
 			})
 		];
 
