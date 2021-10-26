@@ -10,8 +10,6 @@ import {
     clickByText,
     verifyByText,
 	clickButtonByIndex,
-	verifyText,
-	enterInputConditionally,
 	scrollDown
 	
 } from '../utils/util';
