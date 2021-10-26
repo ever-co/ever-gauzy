@@ -209,3 +209,8 @@ export const verifyIncomeExists = (text) => {
 export const verifyEmployeeIncome = (text: string) => {
 	verifyByText(EmployeeDashboardPage.verifyDashboardIncomeCss, text)
 };
+
+export const verifyEmployeeBonus = (text: string) => {
+	verifyByText(EmployeeDashboardPage.verifyDashboardBonusCss, text)
+
+}

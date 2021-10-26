@@ -8,5 +8,6 @@ export const EmployeeDashboardPageData = {
     incomeBtn: 2,
     anountInput: '250',
     defaultNote: 'No bonus included',
-    dashboardIncomeTxt: '$250.00'
+    dashboardIncomeTxt: '$250.00',
+    bonusTxt: 'Bonus : 25 USD'
 };

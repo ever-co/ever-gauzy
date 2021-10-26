@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
+import { EmployeesService } from '../../../@core/services/employees.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import {
@@ -10,6 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { Router } from '@angular/router';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-accounting',
@@ -27,6 +29,7 @@ export class AccountingComponent implements OnInit, OnDestroy {
 	isEmployee: boolean;
 
 	constructor(
+		private readonly employeesService: EmployeesService,
 		private store: Store,
 		private readonly router: Router,
 		private employeeStatisticsService: EmployeeStatisticsService
@@ -90,21 +93,23 @@ export class AccountingComponent implements OnInit, OnDestroy {
 					filterDate:
 						this.selectedDate || this.store.selectedDate || null
 				}
-			);
+			);	
 		}
 	};
 
-	selectEmployee(
-		employee: ISelectedEmployee,
-		firstName: string,
-		lastName: string,
-		imageUrl: string
-	) {
-		this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
-		this.store.selectedEmployee.firstName = firstName;
-		this.store.selectedEmployee.lastName = lastName;
-		this.store.selectedEmployee.imageUrl = imageUrl;
-		this.navigateToEmployeeStatistics();
+	async selectEmployee(employee: ISelectedEmployee) {
+		const people  = await this.employeesService.getEmployeeById(
+			employee.id,
+			['user']
+		);
+		this.store.selectedEmployee = (employee.id) ? {
+			id: people.id,
+			firstName: people.user.firstName,
+			lastName: people.user.lastName,
+			imageUrl: people.user.imageUrl,
+			employeeLevel: people.employeeLevel,
+			shortDescription: people.short_description
+		} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
 	}
 
 	ngOnDestroy(): void {}

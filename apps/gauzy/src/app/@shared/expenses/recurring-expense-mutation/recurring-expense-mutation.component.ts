@@ -187,7 +187,7 @@ export class RecurringExpenseMutationComponent
 		return { value: term, label: term };
 	}
 
-	addNewCustomCategoryName = (name: string): Promise<IExpenseCategory> => {
+	addNewCustomCategoryName = async (name: string): Promise<IExpenseCategory> => {
 		try {
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
@@ -195,7 +195,18 @@ export class RecurringExpenseMutationComponent
 					name
 				}
 			);
-			return firstValueFrom(this.expenseCategoriesStore.create(name));
+
+      const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
+
+      this.defaultFilteredCategories = [
+        ...this.defaultFilteredCategories,
+        {
+          value: createdCategory.name,
+          label: createdCategory.name
+        }
+      ];
+
+			return createdCategory;
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}

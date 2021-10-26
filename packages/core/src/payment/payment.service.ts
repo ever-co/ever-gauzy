@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, ILike, In, Repository } from 'typeorm';
+import { Between, Like, In, Repository } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
@@ -188,7 +188,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 			const { filters } = filter;
 			if ('note' in filters) {
 				const { search } = filters.note;
-				filter.where.note = ILike(`%${search}%`);
+				filter.where.note = Like(`%${search}%`);
 			}
 			delete filter['filters'];
 		}

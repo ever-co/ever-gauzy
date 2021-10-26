@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './task.entity';
-import { ILike, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
+import { Like, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
@@ -79,7 +79,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					query.andWhere(`"${qb.alias}"."status" = :status`, { status });
 				}
 				if (title) {
-					query.andWhere(`"${qb.alias}"."title" ILIKE :title`, { title: `%${title}%` });
+					query.andWhere(`"${qb.alias}"."title" LIKE :title`, { title: `%${title}%` });
 				}
 				if (organizationSprintId) {
 					query.andWhere(`"${qb.alias}"."organizationSprintId" IS NULL`);
@@ -165,7 +165,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					query.andWhere(`"${qb.alias}"."status" = :status`, { status });
 				}
 				if (title) {
-					query.andWhere(`"${qb.alias}"."title" ILIKE :title`, { title: `%${title}%` });
+					query.andWhere(`"${qb.alias}"."title" LIKE :title`, { title: `%${title}%` });
 				}
 				if (organizationSprintId) {
 					query.andWhere(`"${qb.alias}"."organizationSprintId" IS NULL`);
@@ -220,7 +220,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { where } = filter;
 			if ('title' in where) {
 				const { title } = where;
-				filter.where.title = ILike(`%${title}%`)	
+				filter.where.title = Like(`%${title}%`)	
 			}
 			if ('organizationSprintId' in where) {
 				filter.where.organizationSprintId = IsNull();	
