@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination } from '@gauzy/contracts';
-import { Repository, FindManyOptions, Between, ILike, In } from 'typeorm';
+import { Repository, FindManyOptions, Between, Like, In } from 'typeorm';
 import * as moment from 'moment';
 import { Income } from './income.entity';
 import { getDateRangeFormat } from './../core/utils';
@@ -52,7 +52,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			const { filters } = filter;
 			if ('notes' in filters) {
 				const { search } = filters.notes;
-				filter.where.notes = ILike(`%${search}%`)
+				filter.where.notes = Like(`%${search}%`)
 			}
 			delete filter['filters'];
 		}

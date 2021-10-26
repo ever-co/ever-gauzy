@@ -25,6 +25,11 @@ export const filterQuery = <T>(
                                     [column]: value
                                 });
                                 break;
+                            case 'like':
+                                bck.andWhere(`LOWER("${qb.alias}"."${column}") ${type} LOWER(:${column})`, { 
+                                    [column]: value
+                                });
+                                break;
                             case 'in':
                                 bck.andWhere(`"${qb.alias}"."${column}" ${type} (:...${column})`, { 
                                     [column]: value
