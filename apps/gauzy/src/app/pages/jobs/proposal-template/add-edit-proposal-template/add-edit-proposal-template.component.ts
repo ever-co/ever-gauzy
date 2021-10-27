@@ -29,7 +29,7 @@ export class AddEditProposalTemplateComponent
 	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
 
 	organization: IOrganization;
-	public ckConfig = ckEditorConfig;
+	public ckConfig: any = ckEditorConfig;
 	public form: FormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({

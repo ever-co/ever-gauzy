@@ -46,7 +46,7 @@ export class PublicPageMutationComponent
 	skills: ISkill[] = [];
 	languages: ILanguage[] = [];
 	moment = moment;
-	ckConfig = {
+	ckConfig: any = {
 		...ckEditorConfig,
 		height: "200"
 	};

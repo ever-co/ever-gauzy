@@ -39,7 +39,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	employeeLevels: IEmployeeLevel[] = [];
 	departments: IOrganizationDepartment[] = [];
 	positions: IOrganizationPosition[] = [];
-	ckConfig = {
+	ckConfig: any = {
 		...ckEditorConfig,
 		height: "200"
 	};

@@ -21,7 +21,7 @@ export class CandidateEmailComponent implements OnInit {
 	emailText: string;
 	candidateNameTemplate: string;
 	textTemplate: string;
-	ckConfig = ckEditorConfig;
+	ckConfig: any = ckEditorConfig;
 
 	constructor(
 		protected candidatesService: CandidatesService,

@@ -53,7 +53,7 @@ export class ProposalEditComponent
 	form: FormGroup;
 	organizationContact: IOrganizationContact;
 	organizationContacts: Object[] = [];
-	public ckConfig = ckEditorConfig;
+	ckConfig: any = ckEditorConfig;
 
 	ngOnInit() {
 		this.route.params

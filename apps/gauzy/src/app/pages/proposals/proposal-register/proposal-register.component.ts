@@ -44,7 +44,7 @@ export class ProposalRegisterComponent
 	organization: IOrganization;
 	organizationContact: IOrganizationContact;
 	tags: ITag[] = [];
-	public ckConfig = ckEditorConfig;
+	ckConfig: any = ckEditorConfig;
 	minDate = new Date(moment().subtract(1, 'days').format('YYYY-MM-DD'));
 	selectedEmployee: IEmployee;
 

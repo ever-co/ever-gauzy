@@ -52,7 +52,7 @@ export class PublicPageEmployeeMutationComponent
 	privacySettings: any[];
 	employeeAwards: IEmployeeAward[];
 	showAddAward: boolean;
-	ckConfig = {
+	ckConfig: any = {
 		...ckEditorConfig,
 		height: "200"
 	};

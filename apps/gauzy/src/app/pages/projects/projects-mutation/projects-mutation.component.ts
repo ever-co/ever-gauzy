@@ -63,7 +63,7 @@ export class ProjectsMutationComponent
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	showSprintManage = false;
 	openSource: boolean;
-	ckConfig = ckEditorConfig;
+	ckConfig: any = ckEditorConfig;
 		
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	

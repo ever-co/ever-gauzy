@@ -58,7 +58,7 @@ export class AddArticleComponent
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];
 	organization: IOrganization;
-	ckConfig = {
+	ckConfig : any = {
 		...ckEditorConfig,
 		height: "100"
 	};
