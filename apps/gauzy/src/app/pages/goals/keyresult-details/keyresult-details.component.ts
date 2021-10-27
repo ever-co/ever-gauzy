@@ -94,6 +94,7 @@ export class KeyResultDetailsComponent
 			.getAllTimeFrames(findInput)
 			.then(async (res) => {
 				const timeFrame = res.items[0];
+				
 				if (timeFrame) {
 					this.startDate = new Date(timeFrame.startDate);
 					if (
