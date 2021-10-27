@@ -289,8 +289,8 @@ export class GoalSettingsComponent
 		});
 
 		const response = await firstValueFrom(dialog.onClose);
+		this.clearItem();
 		if (!!response) {
-			this.clearItem();
 			this._loadTableSettings('timeframe');
 			await this._loadTableData('timeframe');
 		}
@@ -314,8 +314,8 @@ export class GoalSettingsComponent
 			closeOnBackdropClick: false
 		});
 		const response = await firstValueFrom(kpiDialog.onClose);
+		this.clearItem();
 		if (!!response) {
-			this.clearItem();
 			this._loadTableSettings('kpi');
 			await this._loadTableData('kpi');
 		}

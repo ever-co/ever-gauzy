@@ -1244,9 +1244,11 @@
 		},
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
+			"EDIT_TIME_FRAME_TITLE": "Edit Time Frame",
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
 			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames",
 			"ADD_KPI": "Add KPI",
+			"EDIT_KPI": "Edit KPI",
 			"MAX_ENTITIES": "Max Number of entities that can be created",
 			"EMPLOYEE_OBJECTIVES": "Employees can create their own objectives",
 			"WHO_CAN_OWN_OBJECTIVES": "Who can own Objectives?",

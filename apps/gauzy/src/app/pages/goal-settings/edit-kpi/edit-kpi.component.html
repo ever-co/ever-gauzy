@@ -1,6 +1,11 @@
 <nb-card class="min-width-60vw">
 	<nb-card-header>
-		{{ 'GOALS_PAGE.SETTINGS.ADD_KPI' | translate }}
+		{{ (selectedKPI ? 'GOALS_PAGE.SETTINGS.EDIT_KPI' : 'GOALS_PAGE.SETTINGS.ADD_KPI' ) | translate }}
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog(null)"
+		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="kpiForm">
