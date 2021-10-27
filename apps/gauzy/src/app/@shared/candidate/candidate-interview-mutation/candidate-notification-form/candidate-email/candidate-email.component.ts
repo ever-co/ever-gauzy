@@ -2,6 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
+import { ckEditorConfig } from "../../../../ckeditor.config";
 
 @Component({
 	selector: 'ga-candidate-email',
@@ -20,6 +21,7 @@ export class CandidateEmailComponent implements OnInit {
 	emailText: string;
 	candidateNameTemplate: string;
 	textTemplate: string;
+	ckConfig: any = ckEditorConfig;
 
 	constructor(
 		protected candidatesService: CandidatesService,
