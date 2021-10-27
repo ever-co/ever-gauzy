@@ -94,21 +94,24 @@ export class KeyResultDetailsComponent
 			.getAllTimeFrames(findInput)
 			.then(async (res) => {
 				const timeFrame = res.items[0];
-				this.startDate = new Date(timeFrame.startDate);
-				if (
-					this.keyResult.deadline ===
-					this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
-				) {
-					this.endDate = new Date(timeFrame.endDate);
-					this.isUpdatable =
-						(isFuture(this.endDate) || isToday(this.endDate)) &&
-						isPast(this.startDate);
-				} else {
-					this.endDate = new Date(this.keyResult.hardDeadline);
-					this.isUpdatable =
-						(isFuture(this.endDate) || isToday(this.endDate)) &&
-						isPast(this.startDate);
+				if (timeFrame) {
+					this.startDate = new Date(timeFrame.startDate);
+					if (
+						this.keyResult.deadline ===
+						this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+					) {
+						this.endDate = new Date(timeFrame.endDate);
+						this.isUpdatable =
+							(isFuture(this.endDate) || isToday(this.endDate)) &&
+							isPast(this.startDate);
+					} else {
+						this.endDate = new Date(this.keyResult.hardDeadline);
+						this.isUpdatable =
+							(isFuture(this.endDate) || isToday(this.endDate)) &&
+							isPast(this.startDate);
+					}
 				}
+								
 				this.store.user$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((user) => {

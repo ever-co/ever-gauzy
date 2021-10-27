@@ -2,7 +2,7 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h5>
-				{{ 'GOALS_PAGE.SETTINGS.ADD_TIME_FRAME_TITLE' | translate }}
+				{{ (timeFrame ? 'GOALS_PAGE.SETTINGS.EDIT_TIME_FRAME_TITLE' : 'GOALS_PAGE.SETTINGS.ADD_TIME_FRAME_TITLE' ) | translate }}
 			</h5>
 			<nb-icon
 				class="ml-auto mt-1 close"
