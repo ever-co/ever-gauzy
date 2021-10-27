@@ -12,7 +12,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Store, ToastrService } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
 import { ProposalTemplateService } from '../proposal-template.service';
-import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
+import { ckEditorConfig } from "../../../../@shared/ckeditor.config";
 
 @UntilDestroy()
 @Component({

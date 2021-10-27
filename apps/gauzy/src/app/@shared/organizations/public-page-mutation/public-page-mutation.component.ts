@@ -18,7 +18,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import * as moment from 'moment';
 import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
-import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
+import { ckEditorConfig } from "../../ckeditor.config";
 
 @Component({
 	selector: 'ngx-public-page-mutation',

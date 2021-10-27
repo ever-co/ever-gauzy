@@ -25,7 +25,7 @@ import { uniq } from 'underscore';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 import { CompareDateValidator } from '../../../@core/validators';
 import { FormHelpers } from '../../../@shared/forms/helpers';
-import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
+import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 
 @Component({
 	selector: 'ga-projects-mutation',

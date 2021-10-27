@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
-import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
+import { ckEditorConfig } from "../../../../ckeditor.config";
 
 @Component({
 	selector: 'ga-candidate-email',

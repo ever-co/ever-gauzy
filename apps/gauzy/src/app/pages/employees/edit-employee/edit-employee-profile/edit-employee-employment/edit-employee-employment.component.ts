@@ -23,7 +23,7 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
-import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
+import { ckEditorConfig } from "../../../../../@shared/ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
 @Component({

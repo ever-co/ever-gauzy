@@ -21,7 +21,7 @@ import { filter, tap } from 'rxjs/operators';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
-import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
+import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
 @Component({

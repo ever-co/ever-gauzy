@@ -16,7 +16,7 @@ import { takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
 import { Store } from '../../../@core/services/store.service';
-import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
+import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 
 @Component({
 	selector: 'ga-add-article',
