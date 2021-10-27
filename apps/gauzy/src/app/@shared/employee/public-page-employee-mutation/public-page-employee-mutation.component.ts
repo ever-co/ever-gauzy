@@ -30,6 +30,7 @@ import {
 	ToastrService
 } from '../../../@core/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,6 +52,10 @@ export class PublicPageEmployeeMutationComponent
 	privacySettings: any[];
 	employeeAwards: IEmployeeAward[];
 	showAddAward: boolean;
+	ckConfig = {
+		...ckEditorConfig,
+		height: "200"
+	};
 
 	constructor(
 		private readonly fb: FormBuilder,

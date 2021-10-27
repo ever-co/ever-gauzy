@@ -16,6 +16,7 @@ import { takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
 import { Store } from '../../../@core/services/store.service';
+import { ckEditorConfig } from "apps/gauzy/ckeditor.config.js";
 
 @Component({
 	selector: 'ga-add-article',
@@ -57,6 +58,10 @@ export class AddArticleComponent
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];
 	organization: IOrganization;
+	ckConfig = {
+		...ckEditorConfig,
+		height: "100"
+	};
 
 	ngOnInit() {
 		this.organization = this.store.selectedOrganization;
