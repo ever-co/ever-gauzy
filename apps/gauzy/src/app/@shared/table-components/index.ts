@@ -12,3 +12,5 @@ export * from './status-view/status-view.component';
 export * from './task-estimate/task-estimate.component';
 export * from './task-teams/task-teams.component';
 export * from './value-with-units/value-with-units.component';
+export * from './tags-only/tags-only.component';
+
