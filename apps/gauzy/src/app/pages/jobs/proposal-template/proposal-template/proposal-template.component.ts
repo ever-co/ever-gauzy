@@ -163,7 +163,8 @@ export class ProposalTemplateComponent
 						return {
 							name: row.employee && row.employee.user ? row.employee.fullName : null,
 							src: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
-							id: row.employee ? row.employee.id : null
+							id: row.employee ? row.employee.id : null,
+							isLink: true
 						};
 					}
 				},

@@ -227,7 +227,8 @@ export class ExpensesComponent
 					) => {
 						return {
 							name: row.employee && row.employee.user ? row.employee.fullName : null,
-							id: row.employee ? row.employee.id : null
+							id: row.employee ? row.employee.id : null,
+							isLink: true
 						};
 					}
 				},
