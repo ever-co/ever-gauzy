@@ -15,6 +15,8 @@ import { DocumentUrlTableComponent } from './document-url/document-url.component
 import { DocumentDateTableComponent } from './document-date/document-date.component';
 import { TranslateModule } from '../translate/translate.module';
 import { SharedModule } from '../shared.module';
+import { TagsOnlyComponent } from './tags-only/tags-only.component';
+
 
 @NgModule({
 	imports: [
@@ -37,7 +39,8 @@ import { SharedModule } from '../shared.module';
 		StatusViewComponent,
 		ValueWithUnitComponent,
 		DocumentUrlTableComponent,
-		DocumentDateTableComponent
+		DocumentDateTableComponent,
+		TagsOnlyComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
