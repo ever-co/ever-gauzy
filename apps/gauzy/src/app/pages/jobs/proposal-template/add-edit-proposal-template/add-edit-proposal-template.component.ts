@@ -12,6 +12,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Store, ToastrService } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
 import { ProposalTemplateService } from '../proposal-template.service';
+import { ckEditorConfig } from "../../../../@shared/ckeditor.config";
 
 @UntilDestroy()
 @Component({
@@ -28,20 +29,7 @@ export class AddEditProposalTemplateComponent
 	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
 
 	organization: IOrganization;
-	public ckConfig: any = {
-		width: '100%',
-		height: '320',
-    toolbar: [
-      { name: 'document', items: [ 'Source', '-', 'Save', 'NewPage', 'ExportPdf', 'Preview', 'Print', '-', 'Templates' ] },
-      { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
-      { name: 'editing', items: [ 'Find', 'Replace', '-', 'SelectAll', '-', 'Scayt' ] },
-      { name: 'forms', items: [ 'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField' ] },
-      '/',
-      { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat' ] }
-    ],
-    toolbarCanCollapse: true
-	};
-
+	public ckConfig: any = ckEditorConfig;
 	public form: FormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({

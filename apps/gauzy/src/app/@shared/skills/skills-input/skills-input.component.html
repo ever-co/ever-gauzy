@@ -10,6 +10,7 @@
 		[(ngModel)]="selectedSkills"
 		multiple="true"
 		(change)="onChange()"
+		placeholder=" {{ 'SKILLS_PAGE.HEADER' | translate }} "
 		appendTo="body"
 	>
 		<ng-template ng-label-tmp let-item="item" let-clear="clear">
@@ -50,6 +51,7 @@
 		multiple="true"
 		(change)="onChange()"
 		[ngModelOptions]="{ standalone: true }"
+		placeholder=" {{ 'SKILLS_PAGE.HEADER' | translate }} "
 		appendTo="body"
 	>
 		<ng-template ng-label-tmp let-item="item" let-clear="clear">

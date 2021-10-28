@@ -64,19 +64,7 @@
 							<ckeditor
 								[formControl]="form.get('description')"
 								class="description"
-								[config]="{
-									width: '100%',
-									height: '200',
-									toolbar: [
-                    { name: 'document', items: [ 'Source', '-', 'Save', 'NewPage', 'ExportPdf', 'Preview', 'Print', '-', 'Templates' ] },
-                    { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
-                    { name: 'editing', items: [ 'Find', 'Replace', '-', 'SelectAll', '-', 'Scayt' ] },
-                    { name: 'forms', items: [ 'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField' ] },
-                    '/',
-                    { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat' ] }
-                  ],
-                  toolbarCanCollapse: true
-								}"
+								[config]="ckConfig"
 							></ckeditor>
 						</div>
 					</div>
@@ -113,7 +101,10 @@
 									| translate
 							}}
 						</label>
-						<ng-select appendTo="body" formControlName="employeeLevel">
+						<ng-select
+							appendTo="body"
+							formControlName="employeeLevel"
+							placeholder="{{ 'FORM.LABELS.EMPLOYEE_LEVEL' | translate}} ">
 							<ng-option
 								*ngFor="let empL of employeeLevels"
 								[value]="empL.level"

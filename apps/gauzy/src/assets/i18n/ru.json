@@ -1244,9 +1244,11 @@
 		},
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Добавить временной кадр",
+			"EDIT_TIME_FRAME_TITLE": "Изменить кадр времени",
 			"TIME_FRAME_PAGE_TITLE": "Установить время",
 			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров",
 			"ADD_KPI": "Добавить KPI",
+			"EDIT_KPI": "Изменить KPI",
 			"MAX_ENTITIES": "Максимальное количество сущностей, которые могут быть созданы",
 			"EMPLOYEE_OBJECTIVES": "Сотрудники могут самостоятельно решать свои задачи",
 			"WHO_CAN_OWN_OBJECTIVES": "Кто может владеть целями?",

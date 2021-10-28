@@ -25,6 +25,7 @@ import { uniq } from 'underscore';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 import { CompareDateValidator } from '../../../@core/validators';
 import { FormHelpers } from '../../../@shared/forms/helpers';
+import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 
 @Component({
 	selector: 'ga-projects-mutation',
@@ -62,19 +63,8 @@ export class ProjectsMutationComponent
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	showSprintManage = false;
 	openSource: boolean;
-	public ckConfig: any = {
-		width: '100%',
-		height: '320',
-    toolbar: [
-      { name: 'document', items: [ 'Source', '-', 'Save', 'NewPage', 'ExportPdf', 'Preview', 'Print', '-', 'Templates' ] },
-      { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
-      { name: 'editing', items: [ 'Find', 'Replace', '-', 'SelectAll', '-', 'Scayt' ] },
-      { name: 'forms', items: [ 'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField' ] },
-      '/',
-      { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat' ] }
-    ],
-    toolbarCanCollapse: true
-	};
+	ckConfig: any = ckEditorConfig;
+		
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	
 	constructor(
@@ -85,7 +75,7 @@ export class ProjectsMutationComponent
 		private errorHandler: ErrorHandlingService,
 		private readonly router: Router
 	) {
-		super(translateService);
+		super(translateService);		
 	}
 
 	ngOnInit() {

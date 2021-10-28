@@ -174,14 +174,16 @@ export class InvoiceViewInnerComponent
 	}
 
 	async checkUser() {
-		const userOrg = await this.userOrganizationService.getAll([], {
-			userId: this.store.user.id,
-			organizationId: this.invoice.organizationId
-		});
-
-		if (userOrg.items.length !== 0) {
-			this.showInternalNote = true;
-		}
+		if(this.store.user && this.store.user.id) {
+			const userOrg = await this.userOrganizationService.getAll([], {
+				userId: this.store.user.id,
+				organizationId: this.invoice.organizationId
+			});
+	
+			if (userOrg.items.length !== 0) {
+				this.showInternalNote = true;
+			}
+		}		
 	}
 
 	_applyTranslationOnSmartTable() {
