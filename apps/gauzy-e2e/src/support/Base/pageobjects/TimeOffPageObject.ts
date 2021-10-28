@@ -3,7 +3,7 @@ export const TimeOffPage = {
 	employeeDropdownCss:
 		'ngx-time-off-request-mutation > nb-card.main ga-employee-selector.employees',
 	employeeDropdownOptionCss: 'div.ng-option[role="option"]',
-	timeOffPolicyDropdownCss: '[formControlName="policy"]',
+	timeOffPolicyDropdownCss: 'nb-select[id="policy"]',
 	timeOffPolicyDropdownOptionCss: '.option-list nb-option',
 	startDateInputCss: '[formControlName="start"]',
 	endDateInputCss: '[formControlName="end"]',

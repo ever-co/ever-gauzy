@@ -15,8 +15,7 @@ import {
 import { ManageCandidatesInvitesPage } from '../pageobjects/ManageCandidatesInvitesPageObject';
 
 export const inviteButtonVisible = () => {
-	cy.intercept('GET', '/api/invite*').as('waitInvites');
-	cy.wait('@waitInvites');
+	
 	verifyElementIsVisible(ManageCandidatesInvitesPage.inviteButtonCss);
 };
 
