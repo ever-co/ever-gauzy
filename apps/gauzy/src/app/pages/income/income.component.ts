@@ -22,7 +22,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
-import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -179,7 +179,11 @@ export class IncomeComponent
 				},
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
-					type: 'string',
+					type: 'custom',
+					renderComponent: ContactLinksComponent,
+					valuePrepareFunction: (cell, row) => {
+						return row.client;
+					},
 					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
@@ -200,8 +204,7 @@ export class IncomeComponent
 					) => {
 						return {
 							name: row.employee && row.employee.user ? row.employee.fullName : null,
-							id: row.employee ? row.employee.id : null,
-							isLink: true
+							id: row.employee ? row.employee.id : null
 						};
 					}
 				},

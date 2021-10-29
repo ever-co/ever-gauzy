@@ -2,6 +2,11 @@
   display: block;
   .link-text {
     cursor: pointer;
+    text-decoration: none;
+    color: #1e6bb8;
+  }
+  .link-text:hover {
+    text-decoration: underline;
   }
   .image-container {
     width: 48px;

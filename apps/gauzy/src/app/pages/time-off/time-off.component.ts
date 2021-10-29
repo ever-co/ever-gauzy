@@ -361,8 +361,7 @@ export class TimeOffComponent
 							src: row.imageUrl ? row.imageUrl : null,
 							id: (row.employees && row.employees.length === 1) ?
 								row.employees[0].id :
-								null,
-							isLink: true
+								null
 						};
 					},
 					class: 'align-row'

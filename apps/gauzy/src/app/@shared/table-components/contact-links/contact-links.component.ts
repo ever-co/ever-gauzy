@@ -1,19 +1,28 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 import { Router } from '@angular/router';
+import { ContactType } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-contact-links',
-	template: `<ng-container *ngIf="rowData">
-				<a
-					*ngIf="rowData.name"
-					(click)="navigateToContact()"
-				>
-					{{rowData.name}}
-				</a>
-			</ng-container>`
+	template: `<ng-container *ngIf="value">
+		<a *ngIf="value?.name" (click)="navigateToContact()" class="link-text">
+			{{ value.name }}
+		</a>
+	</ng-container>`,
+	styles: [
+		`
+			.link-text {
+				cursor: pointer;
+				text-decoration: none;
+				color: #1e6bb8;
+			}
+			.link-text:hover {
+				text-decoration: underline;
+			}
+		`
+	]
 })
-export class ContactLinksComponent implements ViewCell {
+export class ContactLinksComponent {
 	@Input()
 	rowData: any;
 	@Input()
@@ -21,8 +30,24 @@ export class ContactLinksComponent implements ViewCell {
 
 	constructor(private readonly router: Router) { }
 
-
 	navigateToContact() {
-		this.router.navigate([`/pages/contacts/clients/${this.rowData.id}`]);
+
+		if (this.value.contactType == ContactType.CLIENT) {
+			this.router.navigate([`/pages/contacts/clients`], {
+				queryParams: { id: this.value.id }
+			});
+		}
+
+		if (this.value.contactType == ContactType.CUSTOMER) {
+			this.router.navigate([`/pages/contacts/customers`], {
+				queryParams: { id: this.value.id }
+			});
+		}
+
+		if (this.value.contactType == ContactType.LEAD) {
+			this.router.navigate([`/pages/contacts/leads`], {
+				queryParams: { id: this.value.id }
+			});
+		}
 	}
 }
