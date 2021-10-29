@@ -128,7 +128,7 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 * Organization Contact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@OneToOne(() => OrganizationContact, (contact) => contact.contact, {
+	@OneToOne(() => OrganizationContact, (organizationContact) => organizationContact.contact, {
 		onDelete: 'SET NULL'
 	})
 	organizationContact?: IOrganizationContact;
