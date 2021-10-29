@@ -363,14 +363,14 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				throw new NotFoundException('Request Approval not found');
 			}
 
-			if (
-				requestApproval.status ===
-					RequestApprovalStatusTypesEnum.APPROVED ||
-				requestApproval.status ===
-					RequestApprovalStatusTypesEnum.REFUSED
-			) {
-				throw new ConflictException('Request Approval is Conflict');
-			}
+			// if (
+			// 	requestApproval.status ===
+			// 		RequestApprovalStatusTypesEnum.APPROVED ||
+			// 	requestApproval.status ===
+			// 		RequestApprovalStatusTypesEnum.REFUSED
+			// ) {
+			// 	throw new ConflictException('Request Approval is Conflict');
+			// }
 
 			requestApproval.status = status;
 

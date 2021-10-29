@@ -92,7 +92,6 @@ export class RequestApprovalMutationComponent
 				tenantId: this.tenantId
 			})
 		).items;
-
 		if (this.requestApproval) {
 			if (this.requestApproval.approvalPolicy) {
 				switch (this.requestApproval.approvalPolicy.approvalType) {
@@ -104,6 +103,15 @@ export class RequestApprovalMutationComponent
 						break;
 				}
 			}
+		}
+		if(!this.requestApproval && this.approvalPolicies && this.approvalPolicies.length > 0) {
+			this.approvalPolicies.filter(item => {
+				if(item.approvalType == "DEFAULT_APPROVAL_POLICY") {
+					this.form.patchValue({
+						approvalPolicyId:  item.id
+					});
+				}
+			});
 		}
 	}
 
@@ -118,6 +126,8 @@ export class RequestApprovalMutationComponent
 	}
 
 	onApprovalPolicySelected(approvalPolicySelection: string[]) {
+		console.log(approvalPolicySelection, "approvalPolicySelection");
+		
 		this.selectedApprovalPolicy = approvalPolicySelection;
 	}
 
@@ -157,7 +167,7 @@ export class RequestApprovalMutationComponent
 			min_count: [
 				this.requestApproval && this.requestApproval.min_count
 					? this.requestApproval.min_count
-					: '',
+					: 1,
 				Validators.required
 			],
 			approvalPolicyId: [
@@ -176,7 +186,9 @@ export class RequestApprovalMutationComponent
 					? [this.requestApproval.tags]
 					: []
 		});
-
+		this.participants = (this.requestApproval && this.requestApproval.teamApprovals.length > 0) 
+							? "teams" 
+							: "employees"
 		this.tags = this.form.get('tags').value || [];
 
 		if (this.requestApproval) {
@@ -255,6 +267,11 @@ export class RequestApprovalMutationComponent
 	}
 
 	onParticipantsChange(participants: string) {
+		if(participants === "employees") {
+			this.form.get('teams').setValue([]);
+		} else {
+			this.form.get('employees').setValue([]);
+		}
 		this.participants = participants;
 	}
 }
