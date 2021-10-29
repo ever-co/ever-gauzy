@@ -404,7 +404,7 @@ export class PaymentsComponent
 						component: OrganizationContactFilterComponent
 					},
 					filterFunction: (value: IOrganizationContact | null) => {
-						this.setFilter({ field: 'contactId', search: (value)?.id || null });
+						this.setFilter({ field: 'organizationContactId', search: (value)?.id || null });
 					},
 					sort: false
 				},

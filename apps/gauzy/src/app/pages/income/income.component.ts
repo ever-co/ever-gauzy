@@ -179,10 +179,10 @@ export class IncomeComponent
 				},
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CONTACT'),
-					type: 'string',
+					type: 'custom',
 					renderComponent: ContactLinksComponent,
 					valuePrepareFunction: (cell, row) => {
-						return row.client;
+						return row.client ?  row.client : null;
 					},
 					filter: {
 						type: 'custom',
