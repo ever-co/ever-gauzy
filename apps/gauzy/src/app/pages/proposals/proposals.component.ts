@@ -331,9 +331,8 @@ export class ProposalsComponent
 	selectProposal({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedProposal = isSelected ? data : null;
-
 		if (this.selectedProposal) {
-			this.proposalStatus = this.selectedProposal.status;
+			this.proposalStatus = this.selectedProposal.status.text.toUpperCase();
 		}
 	}
 

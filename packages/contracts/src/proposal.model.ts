@@ -55,7 +55,10 @@ export interface IProposalViewModel
 	jobPostLink?: string;
 	jobPostContent?: string;
 	proposalContent?: string;
-	status?: string;
+	status?: {
+        text: string;
+        class: string;
+    }
 	author?: string;
 	organizationContact?: IOrganizationContact;
 }
