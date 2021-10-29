@@ -16,3 +16,23 @@
 		}
 	}
 }
+
+//Smart-table Column's Header
+:host ::ng-deep ng2-smart-table-title{
+    font-weight: 900;
+}
+:host ::ng-deep a.ng2-smart-sort-link{ 
+    font-weight: 900;
+}
+:host ::ng-deep a.ng2-smart-sort-link.sort.ng-star-inserted.asc{
+    font-weight: 900;
+}
+:host ::ng-deep a.ng2-smart-sort-link.sort.ng-star-inserted.desc{
+    font-weight: 900;
+}
+:host ::ng-deep a.ng2-smart-sort-link.sort.ng-star-inserted.asc:hover{
+    color: #274bdb
+}
+:host ::ng-deep a.ng2-smart-sort-link.sort.ng-star-inserted.desc:hover{
+	color: #274bdb
+}
