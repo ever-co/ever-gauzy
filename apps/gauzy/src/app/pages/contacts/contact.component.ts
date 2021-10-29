@@ -148,6 +148,13 @@ export class ContactComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.route.queryParamMap
+			.pipe(untilDestroyed(this))
+			.subscribe((params) => {
+				if (params.get('id')) {
+					this._initEditMethod(params.get('id'));
+				}
+			});
 		this.countryService.countries$
 			.pipe(
 				tap((countries: ICountry[]) => (this.countries = countries)),
@@ -157,6 +164,29 @@ export class ContactComponent
 			.subscribe();
 	}
 
+	private _initEditMethod(id: string) {
+		if (id) {
+			const { tenantId } = this.store.user;
+			this.organizationContactService
+				.getById(id, 
+					tenantId, 
+					['projects', 'members', 'members.user', 'tags', 'contact'])
+				.then((items) => {
+					if (items) {
+						this.editOrganizationContact(items);
+					}
+				})
+				.catch(() => {
+					this.toastrService.danger(
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+				})
+				.finally(() => {
+					this.loading = false;
+					this.cd.detectChanges();
+				});
+		}
+	}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {

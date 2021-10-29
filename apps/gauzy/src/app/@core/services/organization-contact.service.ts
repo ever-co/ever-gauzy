@@ -44,13 +44,14 @@ export class OrganizationContactService {
 		);
 	}
 
-	getById(id: string, tenantId: string) {
+	getById(id: string, tenantId: string, relations?: string[]) {
+		const data = JSON.stringify({ relations, tenantId });
 		return firstValueFrom(
 			this.http
 			.get<IOrganizationContact>(
 				`${API_PREFIX}/organization-contact/${id}`,
 				{
-					params: toParams({ tenantId })
+					params: { data }
 				}
 			)
 		);

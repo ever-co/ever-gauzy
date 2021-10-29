@@ -48,7 +48,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
-import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -913,10 +913,14 @@ export class InvoicesComponent
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
 			this.settingsSmartTable['columns']['organizationContactName'] = {
 				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
-				type: 'text',
+				type: 'custom',
 				width: '12%',
 				filter: false,
-				sort: false
+				sort: false,
+				renderComponent: ContactLinksComponent,
+				valuePrepareFunction: (cell, row) => {
+					return row.toContact;
+				},
 			};
 		}
 		if (!this.isEstimate) {

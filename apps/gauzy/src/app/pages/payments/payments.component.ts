@@ -22,7 +22,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
@@ -192,11 +192,11 @@ export class PaymentsComponent
 			resultMap: (payment: IPayment) => {
 				try {
 					const { invoice, project, organizationContact, recordedBy, paymentMethod, overdue } = payment;
-					let organizationContactName: string;
+					let organizationContactName: any;
 					if (organizationContact) {
-						organizationContactName = organizationContact.name;
+						organizationContactName = organizationContact;
 					} else if (invoice && invoice.toContact) {
-						organizationContactName = invoice.toContact.name;
+						organizationContactName = invoice.toContact;
 					}
 					return Object.assign({}, payment, {
 						overdue: this.statusMapper(overdue),
@@ -393,14 +393,18 @@ export class PaymentsComponent
 				},
 				organizationContactName: {
 					title: this.getTranslation('PAYMENTS_PAGE.CONTACT'),
-					type: 'text',
+					type: 'custom',
+					renderComponent: ContactLinksComponent,
+					valuePrepareFunction: (cell, row) => {
+						return row.organizationContactName;
+					},
 					width: '12%',
 					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
 					filterFunction: (value: IOrganizationContact | null) => {
-						this.setFilter({ field: 'contactId', search: (value)?.id || null });
+						this.setFilter({ field: 'organizationContactId', search: (value)?.id || null });
 					},
 					sort: false
 				},

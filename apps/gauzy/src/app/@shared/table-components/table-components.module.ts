@@ -15,8 +15,8 @@ import { DocumentUrlTableComponent } from './document-url/document-url.component
 import { DocumentDateTableComponent } from './document-date/document-date.component';
 import { TranslateModule } from '../translate/translate.module';
 import { SharedModule } from '../shared.module';
+import { ContactLinksComponent } from './contact-links/contact-links.component';
 import { TagsOnlyComponent } from './tags-only/tags-only.component';
-
 
 @NgModule({
 	imports: [
@@ -40,14 +40,16 @@ import { TagsOnlyComponent } from './tags-only/tags-only.component';
 		ValueWithUnitComponent,
 		DocumentUrlTableComponent,
 		DocumentDateTableComponent,
-		TagsOnlyComponent
+		TagsOnlyComponent,
+		ContactLinksComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
 		PictureNameTagsComponent,
 		EmployeeWithLinksComponent,
 		StatusViewComponent,
-		ValueWithUnitComponent
+		ValueWithUnitComponent,
+		ContactLinksComponent
 	],
 	providers: []
 })
