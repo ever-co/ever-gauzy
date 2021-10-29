@@ -22,7 +22,8 @@ import {
 	IExpense,
 	ITimesheet,
 	ITask,
-	ITimeSlot
+	ITimeSlot,
+	IGoal
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -49,6 +50,7 @@ import {
 	Contact,
 	EmployeeSetting,
 	Expense,
+	Goal,
 	InvoiceItem,
 	JobPreset,
 	OrganizationContact,
@@ -410,6 +412,24 @@ export class Employee
 	})
 	timesheets?: ITimesheet[];
 
+	/**
+	 * Goal
+	 */
+	@ApiPropertyOptional({ type: () => Goal, isArray: true })
+	@OneToMany(() => Goal, (it) => it.ownerEmployee, {
+		onDelete: 'SET NULL'
+	})
+	goals?: IGoal[];
+	
+	/**
+	 * Lead
+	 */
+	@ApiPropertyOptional({ type: () => Goal, isArray: true })
+	@OneToMany(() => Goal, (it) => it.lead, {
+		onDelete: 'SET NULL'
+	})
+	leads?: IGoal[];
+	
 	/*
     |--------------------------------------------------------------------------
     | @ManyToMany 
