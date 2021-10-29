@@ -40,8 +40,8 @@ import { TagsOnlyComponent } from './tags-only/tags-only.component';
 		ValueWithUnitComponent,
 		DocumentUrlTableComponent,
 		DocumentDateTableComponent,
+		TagsOnlyComponent,
 		ContactLinksComponent
-		TagsOnlyComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
