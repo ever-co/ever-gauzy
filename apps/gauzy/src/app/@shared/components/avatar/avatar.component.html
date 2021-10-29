@@ -5,9 +5,10 @@
 		</div>
 	</div>
 	<div class="col">
-		<ng-container *ngIf="name">
+		<ng-container *ngIf="name && !isOption">
 			<a class="link-text" *ngIf="name" (click)="edit(id)">{{ name }}</a>
 		</ng-container>
+		<div *ngIf="name && isOption">{{ name }}</div>
 		<div class="text-caption caption" *ngIf="caption">{{ caption }}</div>
 	</div>
 </div>
