@@ -22,7 +22,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
-import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -173,13 +173,13 @@ export class IncomeComponent
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
-					width: '20%',
+					width: '3em',
 					renderComponent: DateViewComponent,
 					filter: false
 				},
 				clientName: {
-					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
-					type: 'custom',
+					title: this.getTranslation('SM_TABLE.CONTACT'),
+					type: 'string',
 					renderComponent: ContactLinksComponent,
 					valuePrepareFunction: (cell, row) => {
 						return row.client;
@@ -223,8 +223,9 @@ export class IncomeComponent
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
+					width: '20%',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent,
+					renderComponent: TagsOnlyComponent,
 					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent

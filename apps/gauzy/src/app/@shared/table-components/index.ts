@@ -13,3 +13,4 @@ export * from './task-estimate/task-estimate.component';
 export * from './task-teams/task-teams.component';
 export * from './value-with-units/value-with-units.component';
 export * from './contact-links/contact-links.component';
+export * from './tags-only/tags-only.component';
