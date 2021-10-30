@@ -1,7 +1,16 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header>
 		<div class="card-header-title">
-			<h4><ngx-header-title>{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}</ngx-header-title></h4>
+			<h4>
+				<ngx-header-title>
+					{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}
+				</ngx-header-title>
+			</h4>
 			<div class="card-header-title" *ngIf="!showAddCard">
 				<ga-layout-selector
 					[componentName]="viewComponentName"
@@ -13,7 +22,7 @@
 		<div>
 			<button
 				*ngIf="!showAddCard"
-				(click)="showAddCard = !showAddCard; this.loadTeams()"
+				(click)="showAddCard = !showAddCard;"
 				nbButton
 				status="success"
 				class="mb-0 mr-2"
@@ -21,15 +30,13 @@
 				<nb-icon class="mr-2" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE && !showAddCard">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 			<ga-teams-mutation
 				*ngIf="showAddCard"
 				[employees]="employees"
-				[organization]="selectedOrg"
-				[team]="teamToEdit"
-				[isGridEdit]="isGridEdit"
+				[team]="selectedTeam"
 				(canceled)="cancel()"
 				(addOrEditTeam)="addOrEditTeam($event)"
 			></ga-teams-mutation>
@@ -38,7 +45,7 @@
 			class="card-container"
 			*ngIf="
 				teams?.length &&
-				dataLayoutStyle === 'CARDS_GRID' &&
+				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
 				!showAddCard
 			"
 		>
@@ -49,8 +56,7 @@
 			>
 				<nb-card-header style="padding: 0.5rem">
 					<div class="header-container">
-						<ga-notes-with-tags [rowData]="team">
-						</ga-notes-with-tags>
+						<ga-notes-with-tags [rowData]="team"></ga-notes-with-tags>
 						<div class="members-count">
 							{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
 							{{ team.members.length }}
@@ -72,27 +78,26 @@
 							<div
 								class="name-container"
 								*ngFor="let manager of team.managers"
-								(click)="openEmployees(manager.employee.id)"
+								(click)="openEmployees(manager.id)"
 							>
 								<div class="image-container">
 									<img
-										[src]="manager.employee.user.imageUrl"
+										[src]="manager.user.imageUrl"
 									/>
 								</div>
-								<span
-									>{{ manager.employee.user.firstName }}
-									{{ manager.employee.user.lastName }}
+								<span>
+									{{ manager.fullName }}
 									<div class="tags-container">
 										<nb-badge
 											*ngFor="
 												let tag of getTagsByEmployeeId(
-													manager.employee.id
+													manager.id
 												)
 											"
 											class="tags"
 											position="centered"
 											[style.background]="tag.color"
-											text="{{ tag.name }}"
+											[text]="tag.name"
 										>
 										</nb-badge>
 									</div>
@@ -113,27 +118,26 @@
 							<div
 								class="name-container"
 								*ngFor="let member of team.members"
-								(click)="openEmployees(member.employee.id)"
+								(click)="openEmployees(member.id)"
 							>
 								<div class="image-container">
 									<img
-										[src]="member.employee.user.imageUrl"
+										[src]="member.user.imageUrl"
 									/>
 								</div>
-								<span
-									>{{ member.employee.user.firstName }}
-									{{ member.employee.user.lastName }}
+								<span>
+									{{ member.fullName }}
 									<div class="tags-container">
 										<nb-badge
 											*ngFor="
 												let tag of getTagsByEmployeeId(
-													member.employee.id
+													member.id
 												)
 											"
 											class="tags"
 											position="centered"
 											[style.background]="tag.color"
-											text="{{ tag.name }}"
+											[text]="tag.name"
 										>
 										</nb-badge>
 									</div>
@@ -170,10 +174,7 @@
 		</div>
 		<div class="mt-4">
 			<ng2-smart-table
-				*ngIf="
-					teams?.length && dataLayoutStyle === 'TABLE' && !showAddCard
-				"
-				class="tags-table w-100"
+				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE && !showAddCard"
 				(userRowSelect)="selectTeam($event)"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
@@ -201,7 +202,6 @@
 		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 		>{{ 'BUTTONS.EDIT' | translate }}
 	</button>
-
 	<button
 		nbButton
 		status="danger"
@@ -210,7 +210,7 @@
 		(click)="removeTeam(selectedItem?.id, selectedItem?.name)"
 		[size]="buttonSize || 'medium'"
 	>
-		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
-		>{{ 'BUTTONS.DELETE' | translate }}
+		<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
 	</button>
 </ng-template>
