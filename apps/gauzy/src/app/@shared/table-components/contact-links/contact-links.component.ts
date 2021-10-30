@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { ContactType } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-contact-links',
@@ -31,23 +30,23 @@ export class ContactLinksComponent {
 	constructor(private readonly router: Router) { }
 
 	navigateToContact() {
+		this.router.navigate([`/pages/contacts/view/${this.value.id}`]);
+		// if (this.value.contactType == ContactType.CLIENT) {
+		// 	this.router.navigate([`/pages/contacts/view/${this.value.id}`], {
+		// 		queryParams: { id: this.value.id }
+		// 	});
+		// }
 
-		if (this.value.contactType == ContactType.CLIENT) {
-			this.router.navigate([`/pages/contacts/clients`], {
-				queryParams: { id: this.value.id }
-			});
-		}
+		// if (this.value.contactType == ContactType.CUSTOMER) {
+		// 	this.router.navigate([`/pages/contacts/customers`], {
+		// 		queryParams: { id: this.value.id }
+		// 	});
+		// }
 
-		if (this.value.contactType == ContactType.CUSTOMER) {
-			this.router.navigate([`/pages/contacts/customers`], {
-				queryParams: { id: this.value.id }
-			});
-		}
-
-		if (this.value.contactType == ContactType.LEAD) {
-			this.router.navigate([`/pages/contacts/leads`], {
-				queryParams: { id: this.value.id }
-			});
-		}
+		// if (this.value.contactType == ContactType.LEAD) {
+		// 	this.router.navigate([`/pages/contacts/leads`], {
+		// 		queryParams: { id: this.value.id }
+		// 	});
+		// }
 	}
 }
