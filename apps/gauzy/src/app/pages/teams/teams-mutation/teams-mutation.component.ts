@@ -1,7 +1,11 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IEmployee, IOrganization, ITag } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter, tap } from 'rxjs/operators';
+import { Store } from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-teams-mutation',
 	templateUrl: './teams-mutation.component.html',
@@ -10,63 +14,108 @@ import { Store } from '../../../@core/services/store.service';
 export class TeamsMutationComponent implements OnInit {
 	@Input()
 	employees: IEmployee[];
-	@Input()
-	organization: IOrganization;
+
 	@Input()
 	team?: any;
-	@Input()
-	isGridEdit: boolean;
+
 	@Output()
 	canceled = new EventEmitter();
+
 	@Output()
 	addOrEditTeam = new EventEmitter();
 
-	members: string[];
-	managers: string[];
-	name: string;
-	selectedEmployees: string[];
-	selectedManagers: string[];
-	tags: ITag[] = [];
+	public organization: IOrganization;
 
-	constructor(private readonly store: Store) {}
+	/*
+	* Team Mutation Form 
+	*/
+	public form: FormGroup = TeamsMutationComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		const form = fb.group({
+			name: ['', Validators.required],
+			members: [[], Validators.required],
+			tags: [],
+			managers: []
+		}) as FormGroup;
+		form.controls['managers'].setValue([]);
+		return form;
+	}
+
+	constructor(
+		private readonly fb: FormBuilder,
+		private readonly store: Store
+	) {}
 
 	ngOnInit() {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization) => this.organization = organization),
+				tap(() => this.patchFormValue()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	patchFormValue() {
 		if (this.team) {
-			this.selectedEmployees = this.team.members.map((member) =>
-				this.isGridEdit ? member.id : member.employeeId
-			);
-			this.selectedManagers = this.team.managers.map((manager) =>
-				this.isGridEdit ? manager.id : manager.employeeId
-			);
-			this.name = this.isGridEdit ? this.team.team_name : this.team.name;
-			this.tags = this.team.tags;
+			const selectedEmployees = this.team.members.map((member) => member.id);
+			const selectedManagers = this.team.managers.map((manager) => manager.id);
+			this.form.patchValue({
+				name: this.team.name,
+				tags: this.team.tags,
+				members: selectedEmployees,
+				managers: selectedManagers
+			});
 		}
 	}
 
 	addOrEditTeams() {
-		const { id: organizationId, tenantId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+	
 		this.addOrEditTeam.emit({
-			name: this.name,
-			members: this.members || this.selectedEmployees,
-			managers: this.managers || this.selectedManagers,
+			...this.form.getRawValue(),
 			organizationId,
 			tenantId,
-			tags: this.tags
 		});
 	}
 
+	/**
+	 * On Selected Members Handler
+	 * 
+	 * @param members 
+	 */
 	onMembersSelected(members: string[]) {
-		this.members = members;
+		this.form.get('members').setValue(members);
+		this.form.updateValueAndValidity();
 	}
 
+	/**
+	 * On Selected Managers Handler
+	 * 
+	 * @param managers 
+	 */
 	onManagersSelected(managers: string[]) {
-		this.managers = managers;
+		this.form.get('managers').setValue(managers);
+		this.form.updateValueAndValidity();
 	}
 
 	cancel() {
 		this.canceled.emit();
 	}
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+
+	/**
+	 * On Selected Tags Handler
+	 * 
+	 * @param tags 
+	 */
+	selectedTagsEvent(tags: ITag[]) {
+		this.form.get('tags').setValue(tags);
+		this.form.updateValueAndValidity();
 	}
 }

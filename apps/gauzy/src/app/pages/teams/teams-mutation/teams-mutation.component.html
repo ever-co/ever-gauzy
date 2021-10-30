@@ -1,115 +1,79 @@
 <nb-card>
 	<nb-card-header>
-		<span *ngIf="!team">
-			{{ 'FORM.LABELS.ADD_TEAM' | translate }}
-		</span>
-		<span *ngIf="team">
-			{{ 'FORM.LABELS.EDIT_TEAM' | translate }}
+		<span>
+			{{
+				(!team
+					? 'FORM.LABELS.ADD_TEAM'
+					: 'FORM.LABELS.EDIT_TEAM'
+				) | translate
+			}}
 		</span>
 	</nb-card-header>
-
 	<nb-card-body>
-		<form>
+		<form [formGroup]="form">
 			<div class="row">
-				<div class="form-group col-6">
-					<label class="label">{{
-						'FORM.PLACEHOLDERS.TEAM_NAME' | translate
-					}}</label>
-					<input
-						type="text"
-						[(ngModel)]="name"
-						[ngModelOptions]="{ standalone: true }"
-						nbInput
-						fullWidth
-						placeholder="{{
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">{{
 							'FORM.PLACEHOLDERS.TEAM_NAME' | translate
-						}}"
-					/>
+						}}</label>
+						<input
+							formControlName="name"
+							type="text"
+							nbInput
+							fullWidth
+							[placeholder]="'FORM.PLACEHOLDERS.TEAM_NAME' | translate"
+						/>
+					</div>
 				</div>
-				<div class="form-group col-6">
-					<ga-tags-color-input
-						[selectedTags]="tags"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
-					>
-					</ga-tags-color-input>
+				<div class="col-6">
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						></ga-tags-color-input>
+					</div>
 				</div>
 			</div>
 			<div class="row">
 				<div class="form-group col-6">
-					<label class="label">{{
-						'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate
-					}}</label>
-					<nb-select
-						multiple
-						[selected]="selectedEmployees"
+					<ga-employee-multi-select
+						[label]="'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate"
+						[selectedEmployeeIds]="form.get('members').value"
+						[allEmployees]="employees"
 						(selectedChange)="onMembersSelected($event)"
-						fullWidth
-						placeholder="{{
-							'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate
-						}}"
-					>
-						<nb-option
-							*ngFor="let employee of employees"
-							[value]="employee.id"
-						>
-							<img
-								src="{{ employee.user.imageUrl }}"
-								alt="Smiley face"
-								height="40"
-								width="40"
-								style="margin-right: 10px"
-							/>
-							{{ employee.user.firstName }}
-							{{ employee.user.lastName }}</nb-option
-						>
-					</nb-select>
+					></ga-employee-multi-select>
 				</div>
 				<div class="form-group col-6">
-					<label class="label">{{
-						'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate
-					}}</label>
-					<nb-select
-						multiple
-						[selected]="selectedManagers"
+					<ga-employee-multi-select
+						[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
+						[selectedEmployeeIds]="form.get('managers').value"
+						[allEmployees]="employees"
 						(selectedChange)="onManagersSelected($event)"
-						fullWidth
-						placeholder="{{
-							'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate
-						}}"
-					>
-						<nb-option
-							*ngFor="let manager of employees"
-							[value]="manager.id"
-						>
-							<img
-								src="{{ manager.user.imageUrl }}"
-								alt="Smiley face"
-								height="40"
-								width="40"
-								style="margin-right: 10px"
-							/>
-							{{ manager.user.firstName }}
-							{{ manager.user.lastName }}</nb-option
-						>
-					</nb-select>
+					></ga-employee-multi-select>
 				</div>
 			</div>
 		</form>
-		<div
-			class="form-group"
-			style="
-				display: flex;
-				flex-direction: row;
-				justify-content: flex-end;
-			"
-		>
-			<button (click)="cancel()" nbButton status="danger" class="mr-2">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button (click)="addOrEditTeams()" nbButton status="success">
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</div>
 	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="cancel()"
+			nbButton
+			status="danger"
+			class="mr-2"
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			[disabled]="form.invalid"
+			(click)="addOrEditTeams()"
+			nbButton
+			status="success"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

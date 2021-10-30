@@ -50,9 +50,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			managers: managerIds
 		} = entity;
 		try {
-			const { tenantId } = await this.organizationService.findOneByIdString(
-				organizationId
-			);
+			const tenantId = RequestContext.currentTenantId();
+
 			const role = await this.roleService.findOneByOptions({
 				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
 			});
@@ -66,8 +65,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const teamEmployees: OrganizationTeamEmployee[] = [];
 			employees.forEach((employee) => {
 				const teamEmployee = new OrganizationTeamEmployee();
-				teamEmployee.employee = employee;
 				teamEmployee.employeeId = employee.id;
+				teamEmployee.organizationId = organizationId;
+				teamEmployee.tenantId = tenantId;
 				teamEmployee.role = managerIds.includes(employee.id)
 					? role
 					: null;
@@ -97,9 +97,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			managers: managerIds
 		} = entity;
 		try {
-			const { tenantId } = await this.organizationService.findOneByIdString(
-				organizationId
-			);
+			const tenantId = RequestContext.currentTenantId();
 
 			const role = await this.roleService.findOneByOptions({
 				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
@@ -114,6 +112,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			// Update nested entity
 			await this.organizationTeamEmployeeService.updateOrganizationTeam(
 				id,
+				organizationId,
 				employees,
 				role,
 				managerIds,
