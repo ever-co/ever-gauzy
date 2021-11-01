@@ -1282,7 +1282,6 @@ export class UpworkService {
 					new IncomeCreateCommand({
 						employeeId,
 						organizationId,
-						clientName,
 						clientId,
 						amount,
 						valueDate: new Date(

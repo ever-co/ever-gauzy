@@ -1,12 +1,20 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { IOrganization, IEmployee, ITenant } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IEmployee,
+	ITenant,
+	ContactType,
+	OrganizationContactBudgetTypeEnum,
+	IIncome
+} from '@gauzy/contracts';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
 import * as path from 'path';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { Income, OrganizationContact } from './../core/entities/internal';
+import { getDummyImage } from './../core/utils';
 
 export const createDefaultIncomes = async (
 	connection: Connection,
@@ -30,24 +38,16 @@ export const createDefaultIncomes = async (
 	let defaultIncomes = [];
 
 	for await (const organization of organizations) {
-		const organizationContacts = await connection.manager.find(OrganizationContact, { 
-			where: { 
-				tenant,
-				organization 
-			} 
-		}); 
-
 		fs.createReadStream(filePath)
 			.pipe(csv())
 			.on('data', (data) => incomeFromFile.push(data))
 			.on('end', async () => {
-				defaultIncomes = incomeFromFile.map((seedIncome) => {
+				const incomes: IIncome[] = [];
+				for await (const seedIncome of incomeFromFile) {
 					const income = new Income();
-					const foundEmployee = employees.find((emp) => emp.user.email === seedIncome.email);
-					income.employee = foundEmployee;
-					income.clientName = seedIncome.clientName;
+					income.employee = employees.find((emp) => emp.user.email === seedIncome.email);
 					income.organization = organization;
-					income.tenant = organization.tenant;
+					income.tenant = tenant;
 					income.amount = seedIncome.amount;
 					income.currency = seedIncome.currency || env.defaultCurrency;
 					income.valueDate = faker.date.between(
@@ -55,12 +55,30 @@ export const createDefaultIncomes = async (
 						moment(new Date()).add(10, 'days').toDate()
 					);
 					income.notes = seedIncome.notes;
-					if (organizationContacts.length) {
-						income.client = faker.random.arrayElement(organizationContacts); 
+					
+					const payload = {
+						name: `Client ${seedIncome.clientName}`,
+						tenant: tenant,
+						organization: organization,
+						contactType: ContactType.CLIENT,
+						budgetType: OrganizationContactBudgetTypeEnum.HOURS
 					}
-					return income;
-				});
-				await insertIncome(connection, defaultIncomes);
+					income.client = await connection.manager.findOne(OrganizationContact, { 
+						where: {
+							...payload
+						} 
+					});
+					if (!income.client) {
+						/**
+						 * Create income related client
+						 */
+						income.client = await connection.manager.save(
+							new OrganizationContact(payload)
+						);
+					}
+					incomes.push(income);
+				}
+				await insertIncome(connection, incomes);
 			});
 	}
 
@@ -72,8 +90,7 @@ export const createRandomIncomes = async (
 	tenants: ITenant[],
 	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<void> => {
-	const clientsArray = ['NA', 'UR', 'CA', 'ET', 'GA'];
-	const notesArray = [
+	const notes = [
 		'Great job!',
 		'Well done!',
 		'Nice!',
@@ -98,18 +115,16 @@ export const createRandomIncomes = async (
 				income.organization = employee.organization;
 				income.tenant = tenant;
 				income.employee = employee;
-				income.clientName = clientsArray[currentIndex];
 				income.amount = faker.datatype.number({ min: 10, max: 9999 });
 				if (organizationContacts.length) {
 					income.client = faker.random.arrayElement(organizationContacts); 
 				}
-				income.currency =
-					employee.organization.currency || env.defaultCurrency;
+				income.currency = employee.organization.currency || env.defaultCurrency;
 				income.valueDate = faker.date.between(
 					new Date(),
 					moment(new Date()).add(10, 'days').toDate()
 				);
-				income.notes = notesArray[currentIndex];
+				income.notes = notes[currentIndex];
 				randomIncomes.push(income);
 			}
 		}
@@ -122,5 +137,9 @@ const insertIncome = async (
 	connection: Connection,
 	incomes: Income[]
 ): Promise<void> => {
-	await connection.manager.save(incomes);
+	try {
+		await connection.manager.save(incomes);
+	} catch (error) {
+		console.log(error);
+	}
 };

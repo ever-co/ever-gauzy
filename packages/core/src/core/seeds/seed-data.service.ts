@@ -1096,7 +1096,7 @@ export class SeedDataService {
 			createDefaultIncomes(
 				this.connection,
 				this.tenant,
-				this.organizations,
+				[this.defaultOrganization],
 				this.defaultEmployees
 			)
 		);
@@ -1617,7 +1617,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Incomes',
-			createRandomIncomes(this.connection, tenants, tenantEmployeeMap)
+			createRandomIncomes(
+				this.connection,
+				tenants,
+				tenantEmployeeMap
+			)
 		);
 
 		await this.tryExecute(

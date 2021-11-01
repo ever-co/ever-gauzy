@@ -29,12 +29,14 @@ import {
 	IPayment,
 	OrganizationContactBudgetTypeEnum,
 	IExpense,
-	ITimeLog
+	ITimeLog,
+	IIncome
 } from '@gauzy/contracts';
 import {
 	Contact,
 	Employee,
 	Expense,
+	Income,
 	Invoice,
 	OrganizationProject,
 	Payment,
@@ -70,9 +72,6 @@ export class OrganizationContact
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	primaryPhone: string;
-
-	@ApiPropertyOptional({ type: () => String, isArray: true })
-	phones?: string[];
 
 	@ApiProperty({ type: () => String, enum: ContactOrganizationInviteStatus })
 	@IsEnum(ContactOrganizationInviteStatus)
@@ -182,6 +181,14 @@ export class OrganizationContact
 	})
 	expenses?: IExpense[];
 
+	/**
+	 * Income
+	 */
+	@ApiPropertyOptional({ type: () => Income, isArray: true })
+	@OneToMany(() => Income, (it) => it.client, {
+		onDelete: 'SET NULL'
+	})
+	incomes?: IIncome[];
 
 	/**
 	 * TimeLog

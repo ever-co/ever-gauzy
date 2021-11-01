@@ -419,7 +419,7 @@ export class IncomeComponent
 			resultMap: (income: IIncome) => {
 				return Object.assign({}, income, {
 					employeeName: income.employee ? income.employee.fullName : null,
-					clientName: income.client ? income.client.name : income.clientName,
+					clientName: income.client ? income.client.name : null,
 				});
 			},
 			finalize: () => {

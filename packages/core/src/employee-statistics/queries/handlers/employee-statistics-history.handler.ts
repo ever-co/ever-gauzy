@@ -52,8 +52,8 @@ export class EmployeeStatisticsHistoryQueryHandler
 		);
 		const history: IEmployeeStatisticsHistory[] = [];
 		// 2. Populate  EmployeeStatisticsHistory
-		incomes.forEach(({ amount, clientName, valueDate, notes, isBonus }) => {
-			history.push({ valueDate, amount, notes, clientName, isBonus });
+		incomes.forEach(({ amount, client, valueDate, notes, isBonus }) => {
+			history.push({ valueDate, amount, notes, client, isBonus });
 		});
 
 		// 3. Filter Bonus, Non-Bonus or All incomes
