@@ -382,7 +382,7 @@ export class ProposalsComponent
 		this.countAccepted = 0
 		const proposals = this.smartTableSource.getData();
 		for (const proposal of proposals) {
-			if (proposal.status === ProposalStatusEnum.ACCEPTED) {
+			if (proposal.status.text.toUpperCase() === ProposalStatusEnum.ACCEPTED) {
 				this.countAccepted++;
 			}
 		}
