@@ -1238,7 +1238,6 @@ export class UpworkService {
 		for await (const row of rows) {
 			const {
 				company_id: clientId,
-				company_name: clientName,
 				memo: notes,
 				worked_on,
 				assignment_rate,

@@ -73,7 +73,10 @@ export const createDefaultIncomes = async (
 						 * Create income related client
 						 */
 						income.client = await connection.manager.save(
-							new OrganizationContact(payload)
+							new OrganizationContact({
+								...payload,
+								imageUrl: getDummyImage(330, 300, (seedIncome.clientName).charAt(0).toUpperCase())
+							})
 						);
 					}
 					incomes.push(income);
