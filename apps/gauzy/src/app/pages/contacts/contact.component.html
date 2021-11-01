@@ -85,6 +85,7 @@
 							[layout]="dataLayoutStyle"
 							(remove)="removeOrganizationContact(c.id, c.name)"
 							(edit)="editOrganizationContact(c)"
+							(view)="navigateToContact(c)"
 							class="member-card"
 						>
 							<div class="contact-info">
@@ -240,13 +241,23 @@
 			status="info"
 			class="mr-2"
 			[disabled]="!selectedItem && disableButton"
+			(click)="navigateToContact(selectedItem)"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			nbButton
+			status="success"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
 			(click)="editOrganizationContact(selectedItem)"
 			[size]="buttonSize || 'medium'"
 		>
 			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
-
 		<button
 			nbButton
 			status="danger"
