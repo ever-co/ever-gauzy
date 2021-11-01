@@ -99,8 +99,8 @@ export class ProposalController extends CrudController<Proposal> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
-	@Post('/create')
-	async createOrganizationTeam(
+	@Post()
+	async create(
 		@Body() entity: IProposalCreateInput,
 		...options: any[]
 	): Promise<IProposal> {

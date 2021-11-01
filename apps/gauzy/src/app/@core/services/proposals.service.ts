@@ -16,7 +16,7 @@ export class ProposalsService {
 	create(createInput: IProposalCreateInput): Promise<any> {
 		return firstValueFrom(
 			this.http
-			.post<IProposal>(`${API_PREFIX}/proposal/create`, createInput)
+			.post<IProposal>(`${API_PREFIX}/proposal`, createInput)
 		);
 	}
 

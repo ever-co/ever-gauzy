@@ -7,10 +7,11 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
+import { DateViewComponent, IncomeExpenseAmountComponent } from '../../table-components';
 import { tap } from 'rxjs/operators';
+import { ContactLinksComponent } from '../../table-components';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-records-history',
@@ -120,9 +121,13 @@ export class RecordsHistoryComponent
 							renderComponent: DateViewComponent,
 							filter: false
 						},
-						clientName: {
-							title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
-							type: 'string'
+						client: {
+							title: this.getTranslation('SM_TABLE.CONTACT'),
+							type: 'custom',
+							renderComponent: ContactLinksComponent,
+							valuePrepareFunction: (cell, row) => {
+								return row.client ?  row.client : null;
+							}
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
@@ -138,7 +143,7 @@ export class RecordsHistoryComponent
 					},
 					pager: {
 						display: true,
-						perPage: 8
+						perPage: 5
 					}
 				};
 				break;
