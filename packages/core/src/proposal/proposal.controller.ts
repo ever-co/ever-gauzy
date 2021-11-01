@@ -101,7 +101,8 @@ export class ProposalController extends CrudController<Proposal> {
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	@Post()
 	async create(
-		@Body() entity: Proposal,
+		@Body() entity: IProposalCreateInput,
+		...options: any[]
 	): Promise<IProposal> {
 		return this.proposalService.create(entity);
 	}
