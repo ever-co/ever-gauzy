@@ -23,6 +23,7 @@ Feature: Proposals test
     When User click on tags dropdown
     Then User can select tag from dropdown options
     And User can enter job proposal content
+    And User can enter job proposal content again
     And User can see save button
     When User click on save button
     Then Notification message will appear
