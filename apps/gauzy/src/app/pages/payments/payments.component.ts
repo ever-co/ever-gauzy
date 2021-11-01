@@ -203,7 +203,7 @@ export class PaymentsComponent
 						invoiceNumber: invoice ? invoice.invoiceNumber : null,
 						projectName: project ? project.name : null,
 						recordedByName: recordedBy ? recordedBy.name: null,
-						paymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
+						paymentMethodEnum: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
 						organizationContactName: organizationContactName
 					});
 				} catch (error) {
@@ -367,7 +367,7 @@ export class PaymentsComponent
 					width: '10%',
 					renderComponent: DateViewComponent
 				},
-				paymentMethod: {
+				paymentMethodEnum: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
 					width: '10%',
