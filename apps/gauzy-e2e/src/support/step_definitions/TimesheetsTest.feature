@@ -15,12 +15,12 @@ Feature: Time sheet test
     And User can visit Employees timesheets daily page
     And User can see add time log button
     When User click on add time log button
-    Then User can see project dropdown
-    When User click on project dropdown
-    Then User can select project from dropdown options
     Then User can see client dropdown
     When User click on client dropdown
     Then User can select client from dropdown options
+    Then User can see project dropdown
+    When User click on project dropdown
+    Then User can select project from dropdown options
     And User can see task dropdown
     When User click on task dropdown
     Then User can select task from dropdown options

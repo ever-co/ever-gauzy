@@ -11,7 +11,8 @@ import {
 	verifyText,
 	clickButtonWithForce,
 	waitForDropdownToLoad,
-	clickButtonDouble
+	clickButtonDouble,
+	verifyByText
 } from '../utils/util';
 import { ProposalsPage } from '../pageobjects/ProposalsPageObject';
 import { CustomCommands } from '../../../support/commands';
@@ -272,4 +273,8 @@ export const selectEmployeeFromMultiSelectDropdown = (index) => {
 export const verifyEmployeeDropdownVisible = () => {
 	verifyElementIsVisible(ProposalsPage.selectEmployeeDropdownOptionCss)
 	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss)
+}
+
+export const verifyHeaderTitle = (text: string) => {
+	verifyByText(ProposalsPage.headerTitleCss, text)
 }
