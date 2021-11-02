@@ -12,13 +12,11 @@ import {
 	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { IProposal, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
-import { CrudController } from './../core/crud';
-import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
-import { PaginationParams } from '../core';
+import { CrudController, PaginationParams } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
@@ -35,7 +33,7 @@ export class ProposalController extends CrudController<Proposal> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<IProposal>
+		@Query() filter: PaginationParams<Proposal>
 	): Promise<IPagination<IProposal>> {
 		return this.proposalService.pagination(filter);
 	}
@@ -101,8 +99,7 @@ export class ProposalController extends CrudController<Proposal> {
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	@Post()
 	async create(
-		@Body() entity: IProposalCreateInput,
-		...options: any[]
+		@Body() entity: Proposal
 	): Promise<IProposal> {
 		return this.proposalService.create(entity);
 	}
@@ -120,7 +117,7 @@ export class ProposalController extends CrudController<Proposal> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	@Put(':id')
-	async updateProposal(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: any
 	): Promise<IProposal> {
