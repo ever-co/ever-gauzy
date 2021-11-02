@@ -139,17 +139,8 @@ When('User click on save button', () => {
 	proposalsPage.clickSaveProposalButton();
 });
 
-Then('Notification message will appear', () => {
-	proposalsPage.waitMessageToHide();
-});
-
 // Edit proposal
-And('User can see proposals table', () => {
-	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	dashboardPage.verifyAccountingDashboardIfVisible();
-	cy.visit('/#/pages/sales/proposals', { timeout: pageLoadTimeout });
+Then('User can see proposals table', () => {
 	proposalsPage.tableRowVisible();
 });
 
