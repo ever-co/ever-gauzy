@@ -44,7 +44,9 @@ Then('User can visit Income page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.intercept('GET', '/api/income/pagination*').as('waitTable');
 	cy.visit('/#/pages/accounting/income', { timeout: pageLoadTimeout });
+	cy.wait('@waitTable');
 });
 
 And('User can see grid button', () => {
