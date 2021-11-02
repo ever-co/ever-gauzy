@@ -249,7 +249,7 @@ export class ExpensesComponent
 					type: 'string'
 				},
 				purpose: {
-					title: 'Purpose',
+					title:  this.getTranslation('POP_UPS.PURPOSE'),
 					type: 'custom',
 					class: 'align-row',
 					renderComponent: NotesWithTagsComponent
