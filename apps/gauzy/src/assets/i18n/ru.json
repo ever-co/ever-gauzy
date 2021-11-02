@@ -2644,7 +2644,7 @@
 			"REJECTED": "Отклонено"
 		},
 		"ACTION": {
-			"DUPLICATE": "Duplicate",
+			"DUPLICATE": "Дублировать",
 			"SEND": "Отправить",
 			"CONVERT_TO_INVOICE": "Преобразовать в счет",
 			"EMAIL": "Электронная почта",

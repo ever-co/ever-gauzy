@@ -2645,11 +2645,11 @@
 		},
 		"ACTION": {
 			"DUPLICATE": "Дублиране",
-			"SEND": "Send",
-			"CONVERT_TO_INVOICE": "Convert to invoice",
+			"SEND": "Изпрати",
+			"CONVERT_TO_INVOICE": "Преобразуване във фактура",
 			"EMAIL": "Eлектронна поща",
 			"DELETE": "Изтрий",
-			"NOTE": "Note",
+			"NOTE": "Бележка",
 			"PAYMENTS": "Payments"
 		},
 		"PUBLIC_LINK": {
