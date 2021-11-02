@@ -2,10 +2,10 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-	selector: 'ngx-contact-links',
+	selector: 'ngx-employee-links',
 	template: `
 		<ng-container *ngIf="value">
-			<a *ngIf="value?.name" (click)="navigateToContact()" class="link-text">
+			<a *ngIf="value?.name" (click)="navigateToEmployee()" class="link-text">
 				{{ value.name }}
 			</a>
 		</ng-container>
@@ -23,7 +23,7 @@ import { Router } from '@angular/router';
 		`
 	]
 })
-export class ContactLinksComponent {
+export class EmployeeLinksComponent {
 	@Input()
 	rowData: any;
 
@@ -32,13 +32,15 @@ export class ContactLinksComponent {
 
 	constructor(
 		private readonly _router: Router
-	) {}
+	) { }
 
-	navigateToContact() {
+	navigateToEmployee() {
 		if (!this.value) {
 			return;
 		}
 		
-		this._router.navigate([`/pages/contacts/view/${this.value.id}`, ]);
+		this._router.navigate([
+			'/pages/employees/edit/' + this.value.id
+		]);
 	}
 }

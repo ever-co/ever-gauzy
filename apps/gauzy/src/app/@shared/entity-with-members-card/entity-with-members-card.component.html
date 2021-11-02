@@ -53,6 +53,16 @@
 				class="mr-2"
 				status="info"
 				size="tiny"
+				(click)="navigateContact(entityWithMembers)"
+			>
+				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+			<button
+				nbButton
+				class="mr-2"
+				status="success"
+				size="tiny"
 				(click)="editEntity(entityWithMembers.id)"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon

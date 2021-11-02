@@ -32,7 +32,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, PictureNameTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
@@ -311,16 +311,9 @@ export class ProjectsComponent
 					title: this.getTranslation(
 						'ORGANIZATIONS_PAGE.EDIT.CONTACT'
 					),
-					type: 'string',
+					type: 'custom',
 					class: 'text-center',
-					valuePrepareFunction: (value, item) => {
-						if (item.hasOwnProperty('organizationContact')) {
-							return item.organizationContact
-								? item.organizationContact.name
-								: null;
-						}
-						return value;
-					}
+					renderComponent: ContactLinksComponent,
 				},
 				startDate: {
 					title: this.getTranslation(
