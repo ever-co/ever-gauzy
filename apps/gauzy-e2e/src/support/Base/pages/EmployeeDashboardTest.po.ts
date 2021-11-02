@@ -107,7 +107,9 @@ export const verifyEmployeeSalary = (salary: string) => {
 };
 
 export const clickOnIncomeBtn= () => {
+	cy.intercept('GET', 'api/organization-contact*').as('waitOrganization');
 	clickButton(EmployeeDashboardPage.incomeBtn);
+	cy.wait('@waitOrganization');
 };
 
 export const verifyIncomeAddButton = () => {
@@ -119,8 +121,6 @@ export const clickIncomeAddButton = () => {
 }
 
 export const gridBtnExists = () => {
-	cy.intercept('GET', 'api/organization-contact*').as('waitOrganization');
-	cy.wait('@waitOrganization');
 	verifyElementIsVisible(EmployeeDashboardPage.gridButtonCss);
 };
 
@@ -212,5 +212,12 @@ export const verifyEmployeeIncome = (text: string) => {
 
 export const verifyEmployeeBonus = (text: string) => {
 	verifyByText(EmployeeDashboardPage.verifyDashboardBonusCss, text)
-
 }
+
+export const clickOnCurrencyField = () => {
+	clickButton(EmployeeDashboardPage.currencyFieldCss)
+};
+
+export const selectCurrency = (currency: string) => {
+	clickByText(EmployeeDashboardPage.currenctOptionCss, currency)
+};
