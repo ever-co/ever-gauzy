@@ -17,7 +17,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest, Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
-import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, EmployeeLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -306,9 +306,10 @@ export class ProposalsComponent
 					filter: false,
 					renderComponent: StatusBadgeComponent
 				},
-				organizationContactName: {
+				organizationContact: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
-					type: 'text',
+					type: 'custom',
+					renderComponent: ContactLinksComponent,
 					width: '20%',
 					filter: {
 						type: 'custom',
@@ -320,9 +321,10 @@ export class ProposalsComponent
 				},
 				author: {
 					title: this.getTranslation('SM_TABLE.AUTHOR'),
-					type: 'string',
+					type: 'custom',
 					width: '20%',
-					filter: false
+					filter: false,
+					renderComponent: EmployeeLinksComponent,
 				}
 			}
 		};
@@ -417,9 +419,8 @@ export class ProposalsComponent
 			proposalContent: i.proposalContent,
 			tags: i.tags,
 			status: this.statusMapper(i.status),
-			author: i.employee ? i.employee.user ? i.employee.user.name : '' : '',
+			author: i.employee ? i.employee.user ? i.employee.user : '' : '',
 			organizationContact: i.organizationContact ? i.organizationContact : null,
-			organizationContactName: i.organizationContact ? i.organizationContact.name : null
 		};
 	}
 
@@ -438,7 +439,7 @@ export class ProposalsComponent
 
 				await this.smartTableSource.getElements();
 				this.proposals = this.smartTableSource.getData();
-
+				
 				const count = this.smartTableSource.count();
 				this.pagination['totalItems'] =  count;
 			}

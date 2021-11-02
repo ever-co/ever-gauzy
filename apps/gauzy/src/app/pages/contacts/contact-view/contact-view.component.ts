@@ -116,10 +116,5 @@ export class ContactViewComponent
 		};
 
 		await this.organizationContactService.create(organizationContactData);
-
-		// let toasterMessage: string = 'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT';
-		// this.toastrService.success(toasterMessage, {
-		// 	name: this.selectedContact.name
-		// });
 	}
 }
