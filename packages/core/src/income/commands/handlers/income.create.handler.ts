@@ -52,7 +52,6 @@ export class IncomeCreateHandler
 			input.organizationId
 		);
 
-		income.clientName = input.clientName;
 		income.clientId = input.clientId;
 		income.employee = employee;
 		income.organization = organization;

@@ -253,12 +253,17 @@ export class EmployeeStatisticsService {
 			select: [
 				'employeeId',
 				'valueDate',
-				'clientName',
 				'amount',
 				'currency',
 				'notes',
 				'isBonus'
 			],
+			join : {
+				alias: 'income',
+				leftJoinAndSelect: {
+					client: 'income.client'
+				}
+			},
 			where: {
 				organizationId,
 				employee: {

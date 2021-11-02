@@ -2,6 +2,7 @@ import { IUser } from './user.model';
 import { IExpense } from './expense.model';
 import { IOrganizationRecurringExpense } from './organization-recurring-expense.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganizationContact } from './organization-contact.model';
 
 export interface IEmployeeStatisticsFindInput {
 	valueDate: Date;
@@ -80,7 +81,7 @@ export interface IEmployeeStatisticsHistory {
 	amount: number;
 	notes?: string;
 	vendorName?: string;
-	clientName?: string;
+	client?: IOrganizationContact;
 	categoryName?: string;
 	isRecurring?: boolean;
 	isBonus?: boolean;
