@@ -90,11 +90,12 @@ export class ContactViewComponent
 		this.employees = items;
 		if (this.selectedContact) {
 			this.selectedMembers = this.selectedContact.members;
-			this.selectedEmployeeIds = this.selectedContact.members.map(
-				(member) => member.id
-			);
-		}
-		this.cd.detectChanges();
+			setTimeout(() => {
+				this.selectedEmployeeIds = this.selectedContact.members.map(
+					(member) => member.id
+				);
+			}, 200);
+		}		
 	}
 
 	onMembersSelected(members: string[]) {
