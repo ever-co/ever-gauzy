@@ -55,7 +55,6 @@ export class ProposalsComponent
 	viewComponentName: ComponentEnum = ComponentEnum.PROPOSALS;
 	selectedProposal: IProposalViewModel;
 	proposalStatusEnum = ProposalStatusEnum;
-	proposalStatus: string;
 	successRate: string;
 	totalProposals: number;
 	countAccepted: number = 0;
@@ -298,7 +297,7 @@ export class ProposalsComponent
 					width: '25%',
 					filter: false
 				},
-				status: {
+				statusBadge: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '10%',
@@ -333,9 +332,6 @@ export class ProposalsComponent
 	selectProposal({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedProposal = isSelected ? data : null;
-		if (this.selectedProposal) {
-			this.proposalStatus = this.selectedProposal.status.text.toUpperCase();
-		}
 	}
 
 	/*
@@ -382,9 +378,9 @@ export class ProposalsComponent
 
 	private calculateStatistics() {
 		this.countAccepted = 0
-		const proposals = this.smartTableSource.getData();
+		const proposals = this.smartTableSource.getData();		
 		for (const proposal of proposals) {
-			if (proposal.status.text.toUpperCase() === ProposalStatusEnum.ACCEPTED) {
+			if (proposal.status === ProposalStatusEnum.ACCEPTED) {
 				this.countAccepted++;
 			}
 		}
@@ -418,7 +414,8 @@ export class ProposalsComponent
 			jobPostContent: i.jobPostContent,
 			proposalContent: i.proposalContent,
 			tags: i.tags,
-			status: this.statusMapper(i.status),
+			status: i.status,
+			statusBadge: this.statusMapper(i.status),
 			author: i.employee ? i.employee.user ? i.employee.user : '' : '',
 			organizationContact: i.organizationContact ? i.organizationContact : null,
 		};
