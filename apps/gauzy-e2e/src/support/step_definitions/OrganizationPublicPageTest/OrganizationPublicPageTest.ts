@@ -33,8 +33,9 @@ const employeeEmail = faker.internet.email();
 const imgUrl = faker.image.avatar();
 const employeeFullName = `${firstName} ${lastName}`;
 
-const organizationName = faker.company.companyName();
-const organizationNameTrim = organizationName.toLocaleLowerCase().replace(' ', '');
+const organizationName = faker.name.firstName();
+const newOrgProfileLink = faker.name.firstName().toLocaleLowerCase().trimEnd();
+const organizationNameTrim = organizationName.toLocaleLowerCase().trimEnd();
 const taxId = faker.random.alphaNumeric();
 
 // Login with email
@@ -42,6 +43,8 @@ Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/organizations', { timeout: pageLoadTimeout });
+	console.log(newOrgProfileLink);
+
 });
 
 // Add new organization
@@ -353,7 +356,7 @@ Then('User can see profile link input field', () => {
 });
 
 And('User enters profile link value', () => {
-	organizationPublicPage.enterProfileLinkInputData(organizationName);
+	organizationPublicPage.enterProfileLinkInputData(newOrgProfileLink);
 });
 
 Then('User can see save button', () => {
@@ -371,8 +374,7 @@ Then('Notification message will appear', () => {
 // Edit public page
 And('User can navigate to organization public page', () => {
 	logoutLogin();
-
-	cy.visit(`/#/share/organization/${organizationName}`);
+	cy.visit(`/#/share/organization/${newOrgProfileLink}`);
 });
 
 And('User can see Edit Page button', () => {
