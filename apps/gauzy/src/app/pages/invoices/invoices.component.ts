@@ -911,16 +911,13 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
-			this.settingsSmartTable['columns']['organizationContactName'] = {
+			this.settingsSmartTable['columns']['toContact'] = {
 				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
 				type: 'custom',
 				width: '12%',
 				filter: false,
 				sort: false,
 				renderComponent: ContactLinksComponent,
-				valuePrepareFunction: (cell, row) => {
-					return row.toContact;
-				},
 			};
 		}
 		if (!this.isEstimate) {

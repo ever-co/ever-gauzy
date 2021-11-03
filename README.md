@@ -209,7 +209,7 @@ View full list of our [contributors](https://github.com/ever-co/ever-gauzy/graph
 
 Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!  
 Gauzy™ is provided AS IS without any warranty. Use at your own risk!  
-See more details in the [LICENSE](LICENSE).
+See more details in the [LICENSE](LICENSE.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
@@ -227,7 +227,7 @@ This software is available under following licenses:
 
 #### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License.
 
-#### Please see [LICENSE.md](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare).
+#### Please see [LICENSE](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare).
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_large)
 

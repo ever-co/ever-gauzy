@@ -36,7 +36,14 @@ const routes: Routes = [
 		component: LeadsComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: CONTACT_VIEW_PERMISSION
-	}
+	},
+	{
+		path: 'view/:id',
+		loadChildren: () =>
+			import('./contact-view/contact-view.module').then(
+				(m) => m.ContactViewModule
+			)
+	},
 ];
 
 @NgModule({

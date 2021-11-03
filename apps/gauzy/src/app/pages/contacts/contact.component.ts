@@ -7,7 +7,7 @@ import {
 	ChangeDetectorRef,
 	TemplateRef
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
@@ -106,7 +106,8 @@ export class ContactComponent
 		private readonly dialogService: NbDialogService,
 		private readonly route: ActivatedRoute,
 		private readonly countryService: CountryService,
-		private readonly cd: ChangeDetectorRef
+		private readonly cd: ChangeDetectorRef,
+		private readonly _router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -451,6 +452,25 @@ export class ContactComponent
 	async add() {
 		this.organizationContactToEdit = null;
 		this.showAddCard = true;
+	}
+
+	/**
+	 * Redirect contact/client/customer to view page
+	 * 
+	 * @returns 
+	 */
+	navigateToContact(selectedItem?: IContact) {
+		if (selectedItem) {
+			this.selectContact({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		if (!this.selectedContact) {
+			return;
+		}
+		const { id } = this.selectedContact;
+		this._router.navigate([`/pages/contacts/view`, id]);
 	}
 
 	async invite(selectedOrganizationContact?: IOrganizationContact) {

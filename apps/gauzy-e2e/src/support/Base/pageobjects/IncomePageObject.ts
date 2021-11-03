@@ -16,5 +16,5 @@ export const IncomePage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-footer.text-right',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyIncomeCss: 'ga-notes-with-tags > div > div.ng-star-inserted'
+	verifyIncomeCss: 'div.ng-star-inserted'
 };
