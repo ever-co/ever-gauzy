@@ -3,6 +3,7 @@
         <div class="col-md-3">
             <div class="profile-sidebar">
                 <nb-card>
+                    <ngx-back-navigation></ngx-back-navigation>
                     <div class="profile-userpic">
                         <img class="rounded-circle" type="user" [src]="selectedContact?.imageUrl" />
                     </div>
@@ -13,7 +14,7 @@
                         <div class="profile-usertitle-type">
                             {{ selectedContact?.contactType }}
                         </div>
-                    </div>  
+                    </div>
                 </nb-card>                        
                 <nb-accordion>
                     <nb-accordion-item [expanded]="true" class="about-accordion-item">
