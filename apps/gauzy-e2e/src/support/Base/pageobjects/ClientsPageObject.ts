@@ -35,4 +35,7 @@ export const ClientsPage = {
 	clientsTableData: 'td.ng-star-inserted',
 	clientsTableRow: 'tr[class="ng2-smart-row ng-star-inserted"]',
 	viewButtonCss: 'div.mb-3 > button[status="info"]',
+	clientNameViewCss: 'div.profile-usertitle-name',
+	clientTypeViewCss: 'div.profile-usertitle-type',
+	backBtn: 'ngx-back-navigation > div > button[status="primary"]'
 };

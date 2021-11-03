@@ -305,5 +305,23 @@ export const viewButtonVisible = () => {
 };
 
 export const clickViewButton = () => {
+	cy.intercept('GET','/api/employee*').as('waitClient');
 	clickButton(ClientsPage.viewButtonCss);
+	cy.wait('@waitClient')
+};
+
+export const verifyClientNameView = (name: string) => {
+	verifyByText(ClientsPage.clientNameViewCss, name)
+};
+
+export const verifyContactType = (type: string) => {
+	verifyByText(ClientsPage.clientTypeViewCss, type)
+};
+
+export const verifyBackBtn = () => {
+	verifyElementIsVisible(ClientsPage.backBtn)
+};
+
+export const clickOnBackBtn = () => {
+	clickButton(ClientsPage.backBtn);
 };

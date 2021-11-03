@@ -57,6 +57,15 @@ Feature: Clients test
     When User click on next step button
     Then Notification message will appear
     And User can verify client was edited
+  Scenario: View client information
+    And User can see clients table
+    When User click on table first row
+    Then View button will become active
+    When User click on view button
+    And User can verify client name in view
+    And User can verify contact type
+    Then User can see back button
+    And User click on back button
   Scenario: Delete client
     Then User can see clients table
     When User select table first row

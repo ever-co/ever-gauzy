@@ -264,6 +264,22 @@ When('User click on view button', () => {
 	clientsPage.clickViewButton();
 });
 
+And('User can verify client name in view', () => {
+	clientsPage.verifyClientNameView(deleteName);
+});
+
+And('User can verify contact type', () => {
+	clientsPage.verifyContactType(ClientsData.clientType);
+});
+
+Then('User can see back button', () => {
+	clientsPage.verifyBackBtn();
+});
+
+And('User click on back button', () => {
+	clientsPage.clickOnBackBtn();
+});
+
 // Delete client
 Then('User can see clients table', () => {
 	clientsPage.tableRowVisible();
