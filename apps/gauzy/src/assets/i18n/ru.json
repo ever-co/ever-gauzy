@@ -2279,7 +2279,7 @@
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Настройка соответствия заданий сотрудникам",
 		"SOURCE": "Источник",
-		"PRESET": "Preset",
+		"PRESET": "Предустановка",
 		"KEYWORDS": "Ключевые слова",
 		"CATEGORY": "Категория",
 		"OCCUPATION": "Занятость",
