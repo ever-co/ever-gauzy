@@ -2726,6 +2726,9 @@
 		"CATEGORY_EDIT_UPDATED": "Категория была изменена",
 		"CATEGORY_EDIT_DELETED": "Категория была удалена"
 	},
+	"PROJECT_MANAGEMENT_PAGE": {
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "На этой вкладке будут отображаться диаграммы управления проектами и агрегированные данные."
+	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
 	},

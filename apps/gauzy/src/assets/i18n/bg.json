@@ -2726,6 +2726,9 @@
 		"CATEGORY_EDIT_UPDATED": "Category was changed",
 		"CATEGORY_EDIT_DELETED": "Category was removed"
 	},
+	"PROJECT_MANAGEMENT_PAGE": {
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Този раздел ще показва диаграми за управление на проекти и обобщени данни."
+	},
 	"ABOUT_PAGE": {
 		"ABOUT": "За нас"
 	},
