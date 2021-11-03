@@ -21,6 +21,9 @@ Feature: Clients test
     Then Notification message will appear
     And User can verify client was created
   Scenario: Edit client
+    When User see name input field
+    Then User enter client name
+    And User can verify client name
     And User can see clients table
     When User click on table first row
     Then Edit button will become active
