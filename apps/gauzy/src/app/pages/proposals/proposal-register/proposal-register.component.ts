@@ -25,6 +25,7 @@ import { EmployeeSelectorComponent } from '../../../@theme/components/header/sel
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
 import { ckEditorConfig } from "../../../@shared/ckeditor.config";
+import { UrlPatternValidator } from '../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,21 +55,16 @@ export class ProposalRegisterComponent
 	public form: FormGroup = ProposalRegisterComponent.buildForm(this.fb);
 	static buildForm( fb: FormBuilder): FormGroup {
 		return fb.group({
-			jobPostUrl: [
-				'',
-				Validators.compose([
-					Validators.pattern(
-						new RegExp(
-							/^((?:https?:\/\/)[^./]+(?:\.[^./]+)+(?:\/.*)?)$/
-						)
-					)
-				])
-			],
+			jobPostUrl: [],
 			valueDate: [new Date(), Validators.required],
-			jobPostContent: ["", Validators.required],
-			proposalContent: ["", Validators.required],
+			jobPostContent: ['', Validators.required],
+			proposalContent: ['', Validators.required],
 			tags: [],
 			organizationContact: []
+		}, {
+			validators: [
+				UrlPatternValidator.websiteUrlValidator('jobPostUrl'),
+			]
 		});
 	}
 
