@@ -2729,6 +2729,249 @@
 	"PROJECT_MANAGEMENT_PAGE": {
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "На этой вкладке будут отображаться диаграммы управления проектами и агрегированные данные."
 	},
+	"SETTINGS_FEATURES": {
+		"INVOICE": "Счет",
+		"INCOME": "Доход",
+		"EXPENSE": "Расходная",
+		"PAYMENT": "Оплата",
+		"PROPOSAL": "Предложение",
+		"SALES_PIPELINE": "Трубопровод продаж",
+		"TASK_DASHBOARD": "Панель задач",
+		"JOBS": "Задания",
+		"EMPLOYEES": "Сотрудники",
+		"TIME_ACTIVITY": "Время и активность",
+		"TIMESHEET": "Расписание",
+		"APPOINTMENT_SCHEDULE": "Назначение и расписание",
+		"CANDIDATE": "Кандидат",
+		"MANAGE_ORGANIZATION": "Управление организацией",
+		"PRODUCT_INVENTORY": "Инвентарь продукции",
+		"PROJECT":"Проект",
+		"ORGANIZATION_TEAM": "Команда организации",
+		"ORGANIZATION_DOCUMENT": "Документ организации",
+		"LEAD_CUSTOMER_CLIENT": "Ведущий, заказчик и клиент",
+		"GOAL_AND_OBJECTIVE": "Цель и задача",
+		"ALL_REPORT": "Все отчеты",
+		"USERS": "Пользователи",
+		"ORGANIZATIONS": "Организации",
+		"APPS_INTEGRATIONS": "Приложения и интеграции",
+		"EMAIL_HISTORY": "История писем",
+		"SETTING": "Настройки",
+		"ENTITY_IMPORT_EXPORT": "Импорт и экспорт сущностей",
+		"CUSTOM_SMTP": "Пользовательский SMTP",
+		"ROLES_PERMISSIONS": "Роли и разрешения",
+		"TIME_TRACKING": "Время отслеживания",
+		"ESTIMATE": "Оценить",
+		"DASHBOARD": "Приборная доска"
+	},
+	"SETTINGS_FEATURES_DESCRIPTION": {
+		"INVOICE": {
+			"MANAGE_INVOICE_CREATE_FIRST_INVOICE": "Управление счетом-фактурой, создание первого счета-фактуры"
+		},
+		"INCOME": {
+			"CREATE_FIRST_INCOME": "Создайте первый доход"
+		},
+		"EXPENSE": {
+			"CREATE_FIRST_EXPENSE": "Создать первый расход"
+		},
+		"PAYMENT": {
+			"MANAGE_PAYMENT_CREATE_FIRST_PAYMENT": "Управление платежами, создание первого платежа"
+		},
+		"PROPOSAL": {
+			"MANAGE_PROPOSAL_REGISTER_FIRST_PROPOSAL": "Управление предложением, регистрация первого предложения"
+		},
+		"SALES_PIPELINE": {
+			"CREATE_SALES_PIPELINE": "Создать воронку продаж"
+		},
+		"TASK_DASHBOARD": {
+			"TASK_DASHBOARD": "Панель задач"
+		},
+		"JOBS": {
+			"JOB_SEARCH_JOBS_MATCHING": "Поиск работы и подбор вакансий"
+		},
+		"EMPLOYEES": {
+			"MANAGE_EMPLOYEES_ADD_OR_INVITE_EMPLOYEES": "Управляйте сотрудниками, добавляйте или приглашайте сотрудников"
+		},
+		"TIME_ACTIVITY": {
+			"MANAGE_TIME_ACTIVITY_SCREENSHOTS_APP_VISITED_SITES_ACTIVITIES": "Управляйте сотрудниками, добавляйте или приглашайте сотрудников"
+		},
+		"TIMESHEET": {
+			"MANAGE_EMPLOYEE_TIMESHEET_DAILY_WEEKLY_CALENDAR_CREATE_FIRST_TIMESHEET": "Управляйте расписанием сотрудников ежедневно, еженедельно, календарем, создавайте первое расписание"
+		},
+		"APPOINTMENT_SCHEDULE": {
+			"EMPLOYEE_APPOINTMENT_SCHEDULES_BOOK_PUBLIC_APPOINTMENT": "Назначение сотрудников, расписание и запись на общественные встречи"
+		},
+		"CANDIDATE": {
+			"MANAGE_CANDIDATES_INTERVIEWS_INVITES": "Управление кандидатами, интервью и приглашения"
+		},
+		"MANAGE_ORGANIZATION": {
+			"MANAGE_ORGANIZATION_DETAILS_LOCATION_AND_SETTINGS": "Управление данными, местонахождением и настройками организации"
+		},
+		"PRODUCT_INVENTORY": {
+			"MANAGE_PRODUCT_INVENTORY_CREATE_FIRST_PRODUCT": "Управление инвентаризацией продуктов, создание первого продукта"
+		},
+		"PROJECT": {
+			"MANAGE_PROJECT_CREATE_FIRST_PROJECT": "Управление проектом, создание первого проекта"
+		},
+		"ORGANIZATION_TEAM": {
+			"MANAGE_ORGANIZATION_TEAM_CREATE_FIRST_TEAM": "Управляйте командой организации, создайте первую команду"
+		},
+		"ORGANIZATION_DOCUMENT": {
+			"MANAGE_ORGANIZATION_DOCUMENT_CREATE_FIRST_DOCUMENT": "Управление документом организации, создание первого документа"
+		},
+		"LEAD_CUSTOMER_CLIENT": {
+			"MANAGE_LEADS_CUSTOMERS_AND_CLIENTS_CREATE_FIRST_CUSTOMER/CLIENTS": "Управляйте лидами, клиентами и клиентами, создавайте первого клиента/клиентов"
+		},
+		"GOAL_AND_OBJECTIVE": {
+			"MANAGE_GOALS_AND_OBJECTIVES": "Управляйте целями и задачами"
+		},
+		"ALL_REPORT": {
+			"MANAGE_EXPENSE_WEEKLY_TIME_ACTIVITY_AND_ETC_REPORTS": "Управляйте отчетами о расходах, неделях, времени и активности и т. д."
+		},
+		"USERS": {
+			"MANAGE_TENANT_USERS": "Управление пользователями-арендаторами"
+		},
+		"ORGANIZATIONS": {
+			"MANAGE_TENANT_ORGANIZATIONS": "Управление организациями арендаторов"
+		},
+		"APPS_INTEGRATIONS": {
+			"MANAGE_AVAILABLE_APPS_INTEGRATIONS_LIKE_UPWORK_HUBSTAFF": "Управляйте доступными приложениями и интеграциями, такими как Upwork и Hubstaff"
+		},
+		"EMAIL_HISTORY": {
+			"MANAGE_EMAIL_HISTORY": "Управление история писем"
+		},
+		"SETTING": {
+			"MANAGE_SETTING": "Управление настройки"
+		},
+		"ENTITY_IMPORT_EXPORT": {
+			"MANAGE_ENTITY_IMPORT_AND_EXPORT": "Управление импорт и экспорт сущностей"
+		},
+		"CUSTOM_SMTP": {
+			"MANAGE_TENANT_ORGANIZATION_CUSTOM_SMTP": "Управление настраиваемым SMTP-протоколом арендатора и организации"
+		},
+		"ROLES_PERMISSIONS": {
+			"MANAGE_ROLES_PERMISSIONS": "Управление роли и разрешения"
+		},
+		"TIME_TRACKING": {
+			"DOWNLOAD_DESKTOP_APP_CREATE_FIRST_TIMESHEET": "Скачать настольное приложение, создать первое табель учета рабочего времени"
+		},
+		"ESTIMATE": {
+			"MANAGE_ESTIMATE_CREATE_FIRST_ESTIMATE": "Управление оценкой, создание первой оценки"
+		},
+		"DASHBOARD": {
+			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Перейдите в панель управления, управление статистикой сотрудников, панель учета рабочего времени"
+		}
+	},
+	"SETTINGS_FEATURES_TEXT": {
+		"INVOICE": {
+			"INVOICE_RECEIVED": "Счет получен"
+		},
+		"INCOME": {
+			"": ""
+		},
+		"EXPENSE": {
+			"EMPLOYEE_RECURRING_EXPENSE": "Текущие расходы сотрудника",
+			"ORGANIZATION_RECURRING_EXPENSES": "Текущие расходы организации"
+		},
+		"PAYMENT": {
+			"": ""
+		},
+		"PROPOSAL": {
+			"PROPOSAL_TEMPLATE": "Шаблон предложения"
+		},
+		"SALES_PIPELINE": {
+			"SALES_PIPELINE_DEAL": "Сделка по конвейеру продаж"
+		},
+		"TASK_DASHBOARD": {
+			"TEAM_TASK_DASHBOARD": "Панель задач команды",
+			"MY_TASK_DASHBOARD": "Моя панель задач"
+		},
+		"JOBS": {
+			"": ""
+		},
+		"EMPLOYEES": {
+			"EMPLOYEE_LEVEL": "Уровень сотрудника",
+			"EMPLOYEE_POSITION": "Должность сотрудника",
+			"EMPLOYEE_TIME_OFF": "Выходной сотрудник",
+			"EMPLOYEE_APPROVAL": "Утверждение сотрудника",
+			"EMPLOYEE_APPROVAL_POLICY": "Политика одобрения сотрудников"
+		},
+		"TIME_ACTIVITY": {
+			"": ""
+		},
+		"TIMESHEET": {
+			"": ""
+		},
+		"APPOINTMENT_SCHEDULE": {
+			"": ""
+		},
+		"CANDIDATE": {
+			"MANAGE_INTERVIEW": "Управление интервью",
+			"MANAGE_INVITE": "Управление приглашениями"
+		},
+		"MANAGE_ORGANIZATION": {
+			"HELP_CENTER": "Центр помощи",
+			"ORGANIZATION_TAG": "Тег организации",
+			"ORGANIZATION_EQUIPMENT": "Организационное оборудование",
+			"ORGANIZATION_VENDOR": "Поставщик организации",
+			"ORGANIZATION_DEPARTMENT": "Организационный отдел",
+			"ORGANIZATION_EMPLOYMENT_TYPE": "Тип занятости в организации"
+		},
+		"PRODUCT_INVENTORY": {
+			"": ""
+		},
+		"PROJECT":{
+			"": ""
+		},
+		"ORGANIZATION_TEAM": {
+			"": ""
+		},
+		"ORGANIZATION_DOCUMENT": {
+			"": ""
+		},
+		"LEAD_CUSTOMER_CLIENT": {
+			"": ""
+		},
+		"GOAL_AND_OBJECTIVE": {
+			"GOAL_TIME_FRAME_KPI": "Сроки достижения цели и KPI"
+		},
+		"ALL_REPORT": {
+			"": ""
+		},
+		"USERS": {
+			"": ""
+		},
+		"ORGANIZATIONS": {
+			"": ""
+		},
+		"APPS_INTEGRATIONS": {
+			"": ""
+		},
+		"EMAIL_HISTORY": {
+			"CUSTOM_EMAIL_TEMPLATE": "Пользовательский шаблон электронного письма"
+		},
+		"SETTING": {
+			"FILE_STORAGE": "Файловое хранилище",
+			"SMS_GATEWAY": "SMS-шлюз"
+		},
+		"ENTITY_IMPORT_EXPORT": {
+			"": ""
+		},
+		"CUSTOM_SMTP": {
+			"": ""
+		},
+		"ROLES_PERMISSIONS": {
+			"": ""
+		},
+		"TIME_TRACKING": {
+			"": ""
+		},
+		"ESTIMATE": {
+			"ESTIMATE_RECEIVED": "Полученная оценка"
+		},
+		"DASHBOARD": {
+			"": ""
+		}
+	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
 	},
