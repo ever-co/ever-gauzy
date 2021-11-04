@@ -9,8 +9,7 @@ import {
 	IOrganization,
 	IEmployee,
 	IOrganizationContact,
-	ITag,
-	IEmployeeProposalTemplate
+	ITag
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
@@ -22,7 +21,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
-import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, EmployeeLinksComponent, IncomeExpenseAmountComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -30,7 +29,6 @@ import { ServerDataSource } from '../../@core/utils/smart-table/server.data-sour
 import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { OrganizationContactFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
-import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -131,7 +129,6 @@ export class IncomeComponent
 	ngAfterViewInit() {
 		const { employeeId } = this.store.user;
 		if (employeeId) {
-			delete this.smartTableSettings['columns']['employeeName'];
 			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
 		}
 	}
@@ -173,13 +170,14 @@ export class IncomeComponent
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
-					width: '20%',
+					width: '3em',
 					renderComponent: DateViewComponent,
 					filter: false
 				},
-				clientName: {
-					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
-					type: 'string',
+				client: {
+					title: this.getTranslation('SM_TABLE.CONTACT'),
+					type: 'custom',
+					renderComponent: ContactLinksComponent,
 					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
@@ -188,15 +186,15 @@ export class IncomeComponent
 						this.setFilter({ field: 'clientId', search: (value)?.id || null });
 					}
 				},
-				employeeName: {
+				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					filter: false,
 					type: 'custom',
 					sort: false,
-					renderComponent: AvatarComponent,
+					renderComponent: EmployeeLinksComponent,
 					valuePrepareFunction: (
 						cell,
-						row: IEmployeeProposalTemplate
+						row
 					) => {
 						return {
 							name: row.employee && row.employee.user ? row.employee.fullName : null,
@@ -219,8 +217,9 @@ export class IncomeComponent
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
+					width: '20%',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent,
+					renderComponent: TagsOnlyComponent,
 					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
@@ -414,7 +413,7 @@ export class IncomeComponent
 			resultMap: (income: IIncome) => {
 				return Object.assign({}, income, {
 					employeeName: income.employee ? income.employee.fullName : null,
-					clientName: income.client ? income.client.name : income.clientName,
+					clientName: income.client ? income.client.name : null,
 				});
 			},
 			finalize: () => {

@@ -12,6 +12,7 @@ export class AvatarComponent implements OnInit {
 	@Input() name: string;
 	@Input() caption: string;
 	@Input() id: string;
+	@Input() isOption: boolean;
 
 	// Added for set component value when used for ng2-smart-table renderer.
 	@Input() set value(object) {

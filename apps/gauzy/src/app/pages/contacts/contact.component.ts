@@ -7,7 +7,7 @@ import {
 	ChangeDetectorRef,
 	TemplateRef
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
@@ -106,7 +106,8 @@ export class ContactComponent
 		private readonly dialogService: NbDialogService,
 		private readonly route: ActivatedRoute,
 		private readonly countryService: CountryService,
-		private readonly cd: ChangeDetectorRef
+		private readonly cd: ChangeDetectorRef,
+		private readonly _router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -148,6 +149,13 @@ export class ContactComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.route.queryParamMap
+			.pipe(untilDestroyed(this))
+			.subscribe((params) => {
+				if (params.get('id')) {
+					this._initEditMethod(params.get('id'));
+				}
+			});
 		this.countryService.countries$
 			.pipe(
 				tap((countries: ICountry[]) => (this.countries = countries)),
@@ -157,6 +165,29 @@ export class ContactComponent
 			.subscribe();
 	}
 
+	private _initEditMethod(id: string) {
+		if (id) {
+			const { tenantId } = this.store.user;
+			this.organizationContactService
+				.getById(id, 
+					tenantId, 
+					['projects', 'members', 'members.user', 'tags', 'contact'])
+				.then((items) => {
+					if (items) {
+						this.editOrganizationContact(items);
+					}
+				})
+				.catch(() => {
+					this.toastrService.danger(
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+				})
+				.finally(() => {
+					this.loading = false;
+					this.cd.detectChanges();
+				});
+		}
+	}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -421,6 +452,25 @@ export class ContactComponent
 	async add() {
 		this.organizationContactToEdit = null;
 		this.showAddCard = true;
+	}
+
+	/**
+	 * Redirect contact/client/customer to view page
+	 * 
+	 * @returns 
+	 */
+	navigateToContact(selectedItem?: IContact) {
+		if (selectedItem) {
+			this.selectContact({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		if (!this.selectedContact) {
+			return;
+		}
+		const { id } = this.selectedContact;
+		this._router.navigate([`/pages/contacts/view`, id]);
 	}
 
 	async invite(selectedOrganizationContact?: IOrganizationContact) {

@@ -220,7 +220,15 @@ And('User can see contact input field', () => {
 });
 
 And('User can enter value for contact', () => {
-	employeeDashboard.enterContactInputData(name);
+	employeeDashboard.enterContactInputData(fullName);
+});
+
+And('User click on currency input field', () => {
+	employeeDashboard.clickOnCurrencyField();
+});
+
+And('User select currency',() => {
+	employeeDashboard.selectCurrency(EmployeeDashboardPageData.bgnCurrency);
 });
 
 And('User can see amount input field', () => {
@@ -287,8 +295,4 @@ And('User can verify salary', () => {
 
 And('User can verify income', () => {
 	employeeDashboard.verifyEmployeeIncome(EmployeeDashboardPageData.dashboardIncomeTxt);
-});
-
-And ('User can verify bonus', () => {
-	employeeDashboard.verifyEmployeeBonus(EmployeeDashboardPageData.bonusTxt);
 });

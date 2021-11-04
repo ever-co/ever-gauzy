@@ -22,6 +22,7 @@ import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+// import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -192,6 +193,24 @@ export class ApprovalsComponent
 					type: 'string',
 					filter: false
 				},
+				// employeeApprovals: {
+				// 	title: this.getTranslation('APPROVAL_REQUEST_PAGE.EMPLOYEES'),
+				// 	type: 'custom',
+				// 	filter: false,
+				// 	renderComponent: EmployeeWithLinksComponent,
+				// 	valuePrepareFunction: (cell, row) => {
+				// 		return row.employeeApprovals
+				// 	}, 
+				// },
+				// teamApprovals: {
+				// 	title: this.getTranslation('APPROVAL_REQUEST_PAGE.TEAMS'),
+				// 	type: 'custom',
+				// 	filter: false,
+				// 	renderComponent: TaskTeamsComponent,
+				// 	valuePrepareFunction: (cell, row) => {
+				// 		return row.teamApprovals
+				// 	}, 
+				// },
 				status: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'

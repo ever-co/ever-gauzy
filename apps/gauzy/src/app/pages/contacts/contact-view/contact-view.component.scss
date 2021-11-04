@@ -1,0 +1,52 @@
+.profile-sidebar nb-card {    
+    border: none;
+    margin-bottom: -1px;
+    border-radius: 0px;
+}
+.profile-userpic {
+    display: flex;
+    align-items: center;
+}
+
+.profile-userpic img {
+    float: none;
+    margin: 0 auto;
+    width: 30%;
+    height: 30%;
+    -webkit-border-radius: 50% !important;
+    -moz-border-radius: 50% !important;
+    border-radius: 50% !important;
+}
+
+.profile-usertitle {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.profile-usertitle-name {
+    color: #5a7391;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 7px;
+}
+
+.profile-usertitle-type {
+    padding-bottom: 25px;
+    text-transform: uppercase;
+    color: #5b9bd1;
+    font-size: 12px;
+    font-weight: 600;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: #edf1f7;
+}
+
+.address-details {
+    margin-top: 10px;
+    .label {
+        font-size: 1rem;
+    }
+}
+.about-accordion-item {
+    border-radius: 0px !important;
+}

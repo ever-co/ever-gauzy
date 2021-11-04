@@ -13,7 +13,7 @@ import {
 	NbBadgeModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
 import { TeamsRoutingModule } from './teams-routing.module';
@@ -24,12 +24,14 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 
 @NgModule({
 	imports: [
 		ThemeModule,
 		NbCardModule,
 		FormsModule,
+		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -46,7 +48,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		EmployeeMultiSelectModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],
 	providers: [OrganizationTeamsService]

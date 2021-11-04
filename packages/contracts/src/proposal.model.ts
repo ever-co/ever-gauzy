@@ -10,7 +10,7 @@ export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
-	status?: string;
+	status?: ProposalStatusEnum;
 	tags?: ITag[];
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: string;
@@ -23,7 +23,7 @@ export interface IProposalCreateInput
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
-	status?: string;
+	status?: ProposalStatusEnum;
 	tags?: ITag[];
 	organizationContactId?: string;
 }
@@ -36,7 +36,7 @@ export interface IProposalFindInput
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
-	status?: string;
+	status?: ProposalStatusEnum;
 	tags?: ITag[];
 }
 
@@ -55,7 +55,7 @@ export interface IProposalViewModel
 	jobPostLink?: string;
 	jobPostContent?: string;
 	proposalContent?: string;
-	status?: string;
+	status?: ProposalStatusEnum;
 	author?: string;
 	organizationContact?: IOrganizationContact;
 }

@@ -27,6 +27,7 @@ let city = faker.address.city();
 let postcode = faker.address.zipCode();
 let street = faker.address.streetAddress();
 let website = faker.internet.url();
+let projectName = faker.name.jobTitle();
 
 let firstName = faker.name.firstName();
 let lastName = faker.name.lastName();
@@ -53,7 +54,13 @@ And('User can add new project', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	CustomCommands.addProject(
 		organizationProjectsPage,
-		OrganizationProjectsPageData
+		{
+			name: projectName,
+			hours: OrganizationProjectsPageData.hours,
+			editName: OrganizationProjectsPageData.editName,
+			description: OrganizationProjectsPageData.description,
+			color: OrganizationProjectsPageData.color
+		}
 	);
 });
 
@@ -86,7 +93,12 @@ And('User can add new client', () => {
 		city,
 		postcode,
 		street,
-		ClientsData
+		{
+			defaultProject: projectName,
+			country: ClientsData.country,
+			defaultPhone: ClientsData.defaultPhone,
+			hours: ClientsData.hours
+		}
 	);
 });
 
@@ -95,7 +107,17 @@ And('User can add new task', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addTask(addTaskPage, AddTasksPageData);
+	CustomCommands.addTask(
+		addTaskPage,
+		{
+			defaultTaskProject: projectName,
+			defaultTaskTitle: AddTasksPageData.defaultTaskTitle,
+			editTaskTitle: AddTasksPageData.editTaskTitle,
+			defaultTaskEstimateDays: AddTasksPageData.defaultTaskEstimateDays,
+			defaultTaskEstimateHours: AddTasksPageData.defaultTaskEstimateHours,
+			defaultTaskEstimateMinutes: AddTasksPageData.defaultTaskEstimateMinutes,
+			defaultTaskDescription: AddTasksPageData.defaultTaskDescription
+		});
 });
 
 // Add time
@@ -125,9 +147,7 @@ When('User click on project dropdown', () => {
 });
 
 Then('User can select project from dropdown options', () => {
-	timesheetsPage.selectProjectFromDropdown(
-		TimesheetsPageData.defaultProjectName
-	);
+	timesheetsPage.selectProjectFromDropdown(projectName);
 });
 
 Then('User can see client dropdown', () => {
@@ -136,10 +156,11 @@ Then('User can see client dropdown', () => {
 
 When('User click on client dropdown', () => {
 	timesheetsPage.clickClientDropdown();
+	timesheetsPage.doubleClickClientDropdown();
 });
 
 Then('User can select client from dropdown options', () => {
-	timesheetsPage.selectClientFromDropdown(0);
+	timesheetsPage.selectClientFromDropdown(fullName);
 });
 
 

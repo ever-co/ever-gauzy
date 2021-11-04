@@ -1,0 +1,165 @@
+<ng-container>
+    <div class="row profile">
+        <div class="col-md-3">
+            <div class="profile-sidebar">
+                <nb-card>
+                    <ngx-back-navigation></ngx-back-navigation>
+                    <div class="profile-userpic">
+                        <img class="rounded-circle" type="user" [src]="selectedContact?.imageUrl" />
+                    </div>
+                    <div class="profile-usertitle">
+                        <div class="profile-usertitle-name">
+                            {{selectedContact?.name}}
+                        </div>
+                        <div class="profile-usertitle-type">
+                            {{ selectedContact?.contactType }}
+                        </div>
+                    </div>
+                </nb-card>                        
+                <nb-accordion>
+                    <nb-accordion-item [expanded]="true" class="about-accordion-item">
+                        <nb-accordion-item-header>
+                            {{'MENU.ABOUT'| translate}}
+                        </nb-accordion-item-header>
+                        <nb-accordion-item-body>
+                            <label class="label mt-3">
+                                {{'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'| translate}}
+                            </label>
+                            <div class="text-caption caption">
+                                {{ selectedContact?.primaryEmail }}
+                            </div>
+
+                            <label class="label mt-3">
+                                {{'ORGANIZATIONS_PAGE.EDIT.PHONE'| translate}}
+                            </label>
+                            <div class="text-caption caption">
+                                {{ selectedContact?.primaryPhone }}
+                            </div>
+
+                            <label class="label mt-3">
+                                {{'ORGANIZATIONS_PAGE.EDIT.FAX'| translate}}
+                            </label>
+                            <div class="text-caption caption">
+                                {{ selectedContact?.contact?.fax }}
+                            </div>
+
+                            <label class="label mt-3">
+                                {{'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'| translate}}
+                            </label>
+                            <div class="text-caption caption">
+                                {{ selectedContact?.contact?.fiscalInformation }}
+                            </div>
+
+                            <label class="label mt-3">
+                                {{'ORGANIZATIONS_PAGE.EDIT.WEBSITE'| translate}}
+                            </label>
+                            <div class="text-caption caption">
+                                {{ selectedContact?.contact?.website }}
+                            </div>
+
+                            <label class="label mt-3">
+                                {{'MENU.TAGS'| translate}}
+                            </label>
+                            <div class="text-caption caption">
+                                <nb-tag-list *ngIf="selectedContact?.tags?.length">
+                                    <nb-tag size="tiny" [removable]="false" *ngFor="let tag of selectedContact?.tags"
+                                        [text]="tag.name">
+                                    </nb-tag>
+                                </nb-tag-list>
+                            </div>
+                        </nb-accordion-item-body>
+                    </nb-accordion-item>
+
+                    <nb-accordion-item [expanded]="true">
+                        <nb-accordion-item-header>
+                            {{'ORGANIZATIONS_PAGE.EDIT.PROJECTS'| translate}}
+                        </nb-accordion-item-header>
+                        <nb-accordion-item-body>
+                            <nb-tag-list *ngIf="selectedContact?.projects?.length">
+                                <nb-tag size="tiny" [removable]="false"
+                                    *ngFor="let project of selectedContact?.projects" [text]="project.name">
+                                </nb-tag>
+                            </nb-tag-list>
+                        </nb-accordion-item-body>
+                    </nb-accordion-item>
+
+                    <nb-accordion-item [expanded]="true">
+                        <nb-accordion-item-header>
+                            {{ 'CONTACTS_PAGE.BUDGET'| translate }}
+                        </nb-accordion-item-header>
+                        <nb-accordion-item-body>
+                            <label class="label mt-3">
+                                {{'FORM.PLACEHOLDERS.BUDGET_TYPE'| translate}}
+                            </label>
+                            <div class="text-caption caption">
+                                {{ selectedContact?.budgetType }}
+                            </div>
+
+                            <label class="label mt-3">
+                                {{'FORM.PLACEHOLDERS.HOURS'| translate}}
+                            </label>
+                            <div class="text-caption caption">
+                                {{ selectedContact?.budget }}
+                            </div>
+                        </nb-accordion-item-body>
+                    </nb-accordion-item>
+                </nb-accordion>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <nb-card class="card-scroll">
+                <nb-card-body>
+                    <nb-tabset>
+                        <nb-tab [tabTitle]="'CONTACTS_PAGE.ADDRESS' | translate">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <ga-leaflet-map #leafletTemplate> </ga-leaflet-map>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="address-details">
+                                        <label class="label">
+                                            <h6>{{ selectedContact?.contact?.address }}</h6>
+                                        </label>
+                                        <label class="label">
+                                            {{ selectedContact?.contact?.address2 }}
+                                        </label>
+                                        <label class="label mt-2">
+                                            {{ selectedContact?.contact?.city }}
+                                        </label>
+                                        <label class="label mt-2">
+                                            {{ selectedContact?.contact?.country }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </nb-tab>
+                        <nb-tab [tabTitle]="'CONTACTS_PAGE.MEMBERS' | translate">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <ga-employee-multi-select [selectedEmployeeIds]="selectedEmployeeIds"
+                                            [allEmployees]="employees" (selectedChange)="onMembersSelected($event)"
+                                            class="select" [multiple]="true" [label]="false">
+                                        </ga-employee-multi-select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <nb-card class="card-scroll" *ngIf="selectedMembers?.length > 0">
+                                        <nb-list>
+                                            <nb-list-item *ngFor="let member of selectedMembers">
+                                                <ngx-avatar [name]="member?.user?.name" [src]="member.user?.imageUrl"
+                                                    [id]="member?.id">
+                                                </ngx-avatar>
+                                            </nb-list-item>
+                                        </nb-list>
+                                    </nb-card>
+                                </div>
+                            </div>
+                        </nb-tab>
+                    </nb-tabset>
+                </nb-card-body>
+            </nb-card>
+        </div>
+    </div>
+</ng-container>

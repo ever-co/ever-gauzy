@@ -9,7 +9,9 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	clickByText,
+	clickButtonDouble
 } from '../utils/util';
 import { TimesheetsPage } from '../pageobjects/TimesheetsPageObject';
 
@@ -67,8 +69,8 @@ export const clickClientDropdown = () => {
 	clickButton(TimesheetsPage.clientDropdownCss);
 };
 
-export const selectClientFromDropdown = (index) => {
-	clickButtonByIndex(TimesheetsPage.dropdownOptionCss, index);
+export const selectClientFromDropdown = (text: string) => {
+	clickByText(TimesheetsPage.dropdownOptionCss, text);
 };
 
 export const selectProjectDropdownVisible = () => {
@@ -162,4 +164,8 @@ export const verifyTimeExists = (text) => {
 
 export const verifyTimeIsDeleted = (text) => {
 	verifyTextNotExisting(TimesheetsPage.verifyTimeCss, text);
+};
+
+export const doubleClickClientDropdown = () => {
+	clickButtonDouble(TimesheetsPage.clientDropdownCss);
 };

@@ -1,5 +1,5 @@
-import { IGoal, GoalLevelEnum, IKeyResult } from '@gauzy/contracts';
-import { Entity, Column, OneToMany, ManyToOne, JoinColumn, Index, RelationId } from 'typeorm';
+import { IGoal, GoalLevelEnum, IKeyResult, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
+import { Entity, Column, OneToMany, ManyToOne, Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString } from 'class-validator';
 import {
@@ -34,9 +34,20 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@Column()
 	progress: number;
 
-	@ManyToOne(() => OrganizationTeam)
-	@JoinColumn()
-	ownerTeam?: OrganizationTeam;
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * OrganizationTeam
+	 */
+	@ApiProperty({ type: () => OrganizationTeam })
+	@ManyToOne(() => OrganizationTeam, (team) => team.goals, {
+		onDelete: 'CASCADE'
+	})
+	ownerTeam?: IOrganizationTeam;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Goal) => it.ownerTeam)
@@ -46,10 +57,15 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@Column({ nullable: true })
 	ownerTeamId?: string;
 
-	@ManyToOne(() => Employee)
-	@JoinColumn()
-	ownerEmployee?: Employee;
-
+	/**
+	 * Owner Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, (employee) => employee.goals, {
+		onDelete: 'CASCADE'
+	})
+	ownerEmployee?: IEmployee;
+ 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Goal) => it.ownerEmployee)
 	@IsString()
@@ -58,12 +74,14 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@Column({ nullable: true })
 	ownerEmployeeId?: string;
 
+	/**
+	 * Lead Employee
+	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, {
-		nullable: true
+	@ManyToOne(() => Employee, (employee) => employee.leads, {
+		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
-	lead?: Employee;
+	lead?: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Goal) => it.lead)
@@ -73,15 +91,33 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@Column({ nullable: true })
 	leadId?: string;
 
+	/**
+	 * KeyResult
+	 */
 	@ApiProperty({ type: () => KeyResult })
-	@OneToMany(() => KeyResult, (keyResult) => keyResult.goal)
-	@IsOptional()
-	keyResults?: IKeyResult[];
-
 	@ManyToOne(() => KeyResult, (keyResult) => keyResult.id)
 	alignedKeyResult?: IKeyResult;
 
 	@ApiProperty({ type: () => String })
+	@RelationId((it: Goal) => it.alignedKeyResult)
+	@IsString()
+	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
-	alignedKeyResultId: string;
+	alignedKeyResultId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @OneToMany 
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * KeyResult
+	 */
+	@ApiProperty({ type: () => KeyResult, isArray: true })
+	@OneToMany(() => KeyResult, (keyResult) => keyResult.goal, {
+		cascade: true
+	})
+	keyResults?: IKeyResult[];
 }

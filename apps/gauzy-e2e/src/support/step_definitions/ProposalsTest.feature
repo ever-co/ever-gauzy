@@ -23,11 +23,11 @@ Feature: Proposals test
     When User click on tags dropdown
     Then User can select tag from dropdown options
     And User can enter job proposal content
+    And User can enter job proposal content again
     And User can see save button
     When User click on save button
-    Then Notification message will appear
   Scenario: Edit proposal
-    And User can see proposals table
+    Then User can see proposals table
     When User click on proposals table row
     Then User can see details button
     When User click on details button

@@ -1,22 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { IEmployee } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from './../core/context';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { Role } from '../role/role.entity';
-import { IEmployee } from '@gauzy/contracts';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
 	constructor(
 		@InjectRepository(OrganizationTeamEmployee)
-		private readonly OrganizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>
+		private readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>
 	) {
-		super(OrganizationTeamEmployeeRepository);
+		super(organizationTeamEmployeeRepository);
 	}
 
 	async updateOrganizationTeam(
 		teamId: string,
+		organizationId: string,
 		employeesToUpdate: IEmployee[],
 		role: Role,
 		managerIds: string[],
@@ -53,14 +55,17 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					});
 				});
 
+			const tenantId = RequestContext.currentTenantId();
+			
 			// 3. Add new team members
 			employeesToUpdate
 				.filter((emp) => !existingMembers.includes(emp.id))
 				.forEach(async (employee) => {
 					const teamEmployee = new OrganizationTeamEmployee();
 					teamEmployee.organizationTeamId = teamId;
-					teamEmployee.employee = employee;
 					teamEmployee.employeeId = employee.id;
+					teamEmployee.tenantId = tenantId;
+					teamEmployee.organizationId = organizationId;
 					teamEmployee.role = managerIds.includes(employee.id)
 						? role
 						: null;
@@ -68,6 +73,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				});
 		}
 	}
+	
 	deleteMemberByIds(memberIds: string[]) {
 		memberIds.forEach(async (memberId) => {
 			await this.delete(memberId);

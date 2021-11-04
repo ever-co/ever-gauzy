@@ -19,6 +19,8 @@ Feature: Employee dashboard test
     Then User can select expense from dropdown options
     And User can see expense value input field
     And User can enter expense value
+    And User click on currency input field
+    And User select currency
     And User can see save button
     When User click on save button
     Then Notification message will appear
@@ -38,6 +40,8 @@ Feature: Employee dashboard test
     And User can enter value for date
     And User can see contact input field
     And User can enter value for contact
+    And User click on currency input field
+    And User select currency
     And User can see amount input field
     And User can enter value for amount
     And User can see notes textarea input field
@@ -45,7 +49,6 @@ Feature: Employee dashboard test
     And User can see save button
     When User click on save button
     Then Notification message will appear
-    And User can verify income was created
   Scenario: User go to dashboard to verify employee salary
     When User see dashboard button on main manu
     Then User click on dashboard button
@@ -55,4 +58,3 @@ Feature: Employee dashboard test
     Then User click on employee
     And User can verify salary
     And User can verify income
-    And User can verify bonus

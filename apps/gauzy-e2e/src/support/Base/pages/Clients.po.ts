@@ -8,7 +8,9 @@ import {
 	clickElementByText,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	verifyByText,
+	vefiryByLength
 } from '../utils/util';
 import { ClientsPage } from '../pageobjects/ClientsPageObject';
 
@@ -27,7 +29,7 @@ export const addButtonVisible = () => {
 };
 
 export const clickAddButton = () => {
-	clickButton(ClientsPage.addButtonCss);
+	clickButtonByIndex(ClientsPage.addButtonCss, 0);
 };
 
 export const nameInputVisible = () => {
@@ -200,8 +202,8 @@ export const editButtonVisible = () => {
 	verifyElementIsVisible(ClientsPage.editButtonCss);
 };
 
-export const clickEditButton = () => {
-	clickButton(ClientsPage.editButtonCss);
+export const clickEditButton = (index) => {
+	clickButtonByIndex(ClientsPage.editButtonCss, index);
 };
 
 export const deleteButtonVisible = () => {
@@ -278,4 +280,48 @@ export const budgetInputVisible = () => {
 export const enterBudgetData = (data) => {
 	clearField(ClientsPage.budgetInpuCss);
 	enterInput(ClientsPage.budgetInpuCss, data);
+};
+
+export const verifyNameInput = () => {
+	verifyElementIsVisible(ClientsPage.searchNameInputCss);
+};
+
+export const searchClientName = (name: string) => {
+	clearField(ClientsPage.searchNameInputCss);
+	enterInput(ClientsPage.searchNameInputCss, name);
+};
+
+export const verifyClientNameInTable = (name: string) => {
+	verifyByText(ClientsPage.clientsTableData, name)
+	vefiryByLength(ClientsPage.clientsTableRow, 1)
+};
+
+export const clearSearchInput = () => {
+	clearField(ClientsPage.searchNameInputCss);
+};
+
+export const viewButtonVisible = () => {
+	verifyElementIsVisible(ClientsPage.viewButtonCss);
+};
+
+export const clickViewButton = () => {
+	cy.intercept('GET','/api/employee*').as('waitClient');
+	clickButton(ClientsPage.viewButtonCss);
+	cy.wait('@waitClient')
+};
+
+export const verifyClientNameView = (name: string) => {
+	verifyByText(ClientsPage.clientNameViewCss, name)
+};
+
+export const verifyContactType = (type: string) => {
+	verifyByText(ClientsPage.clientTypeViewCss, type)
+};
+
+export const verifyBackBtn = () => {
+	verifyElementIsVisible(ClientsPage.backBtn)
+};
+
+export const clickOnBackBtn = () => {
+	clickButton(ClientsPage.backBtn);
 };

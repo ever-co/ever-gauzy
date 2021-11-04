@@ -1,7 +1,7 @@
 export const ClientsPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addButtonCss: 'div.mb-3 > button[status="success"]',
-	editButtonCss: 'div.mb-3 > button[status="info"]',
+	editButtonCss: 'div.mb-3 > button[status="success"]',
 	inviteButtonCss: 'div.mb-3 > button[status="primary"]',
 	deleteButtonCss: 'div.mb-3 > button[status="danger"]',
 	nameInputCss: '#name',
@@ -30,5 +30,12 @@ export const ClientsPage = {
 	clientEmailCss: '#emailInput',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	saveInviteButtonCss: 'nb-card-footer > button[status="success"]',
-	verifyClientCss: 'div.d-block'
+	verifyClientCss: 'div.d-block',
+	searchNameInputCss: 'input-filter > input[placeholder="Name"]',
+	clientsTableData: 'td.ng-star-inserted',
+	clientsTableRow: 'tr[class="ng2-smart-row ng-star-inserted"]',
+	viewButtonCss: 'div.mb-3 > button[status="info"]',
+	clientNameViewCss: 'div.profile-usertitle-name',
+	clientTypeViewCss: 'div.profile-usertitle-type',
+	backBtn: 'ngx-back-navigation > div > button[status="primary"]'
 };

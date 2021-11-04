@@ -14962,9 +14962,9 @@ fastify-plugin@^3.0.0:
   integrity sha512-ZdCvKEEd92DNLps5n0v231Bha8bkz1DjnPP/aEz37rz/q42Z5JVLmgnqR4DYuNn3NXAO3IDCPyRvgvxtJ4Ym4w==
 
 fastify-static@^4.0.0:
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/fastify-static/-/fastify-static-4.4.0.tgz#663d33d5cea9045710943b5a0c3082ef4d7846b3"
-  integrity sha512-YInDwELexeGmTYliX4pPaRT0biIJgluj/pOG4un9EOBmDDY39MQ91GFehb2PgOhV+8U8n7yNHJzQSsAO0mZNZA==
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/fastify-static/-/fastify-static-4.5.0.tgz#0d3feff5373f5ed9c4e4cf31a2b84c2f70c35bb2"
+  integrity sha512-Q7Tgl55AjsmBwiO4hKYib2BUCt+XTWLJ6Xp8YPPHU3EsrKNpevJ4cz8pjf1Ey1QhHw9O8Y2FDKdu+IC74oHvqw==
   dependencies:
     content-disposition "^0.5.3"
     encoding-negotiator "^2.0.1"
@@ -32866,9 +32866,9 @@ validate-npm-package-name@^3.0.0, validate-npm-package-name@~3.0.0:
     builtins "^1.0.3"
 
 validator@^13.0.0, validator@^13.5.2:
-  version "13.6.0"
-  resolved "https://registry.yarnpkg.com/validator/-/validator-13.6.0.tgz#1e71899c14cdc7b2068463cb24c1cc16f6ec7059"
-  integrity sha512-gVgKbdbHgtxpRyR8K0O6oFZPhhB5tT1jeEHZR0Znr9Svg03U0+r9DXWMrnRAB+HtCStDQKlaIZm42tVsVjqtjg==
+  version "13.7.0"
+  resolved "https://registry.yarnpkg.com/validator/-/validator-13.7.0.tgz#4f9658ba13ba8f3d82ee881d3516489ea85c0857"
+  integrity sha512-nYXQLCBkpJ8X6ltALua9dRrZDHVYxjJ1wgskNt1lH9fzGjs3tgojGSCBjmEPwkWS1y29+DrizMTW19Pr9uB2nw==
 
 value-or-promise@1.0.10:
   version "1.0.10"
