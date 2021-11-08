@@ -33,9 +33,8 @@ const employeeEmail = faker.internet.email();
 const imgUrl = faker.image.avatar();
 const employeeFullName = `${firstName} ${lastName}`;
 
-const organizationName = faker.name.firstName();
-const newOrgProfileLink = faker.name.firstName().toLocaleLowerCase().trimEnd();
-const organizationNameTrim = organizationName.toLocaleLowerCase().trimEnd();
+const organizationName = faker.company.companyName().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').trim();
+const newOrgProfileLink = faker.company.companyName().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').trim();
 const taxId = faker.random.alphaNumeric();
 
 // Login with email
@@ -43,14 +42,12 @@ Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/organizations', { timeout: pageLoadTimeout });
-	console.log(newOrgProfileLink);
 
 });
 
 // Add new organization
 Then('User can see grid button', () => {
 	organizationPublicPage.gridBtnExists();
-	console.log(organizationNameTrim)
 });
 
 And('User can click on second grid button to change view', () => {
