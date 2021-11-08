@@ -2729,6 +2729,249 @@
   "PROJECT_MANAGEMENT_PAGE": {
     "THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
   },
+  "SETTINGS_FEATURES": {
+	"INVOICE": "Invoice",
+	"INCOME": "Income",
+	"EXPENSE": "Expense",
+	"PAYMENT": "Payment",
+	"PROPOSAL": "Proposal",
+	"SALES_PIPELINE": "Sales Pipeline",
+	"TASK_DASHBOARD": " Task Dashboard",
+	"JOBS": "Jobs",
+	"EMPLOYEES": "Employees",
+	"TIME_ACTIVITY": "Time Activity",
+	"TIMESHEET": "Timesheet",
+	"APPOINTMENT_SCHEDULE": "Appointment & Schedule",
+	"CANDIDATE": "Candidate",
+	"MANAGE_ORGANIZATION": "Manage Organization",
+	"PRODUCT_INVENTORY": "Product Inventory",
+	"PROJECT":"Project",
+	"ORGANIZATION_TEAM": "Organization Team",
+	"ORGANIZATION_DOCUMENT": "Organization Document",
+	"LEAD_CUSTOMER_CLIENT": "Lead, Customer & Client",
+	"GOAL_AND_OBJECTIVE": "Goal and Objective",
+	"ALL_REPORT": "All Report",
+	"USERS": "Users",
+	"ORGANIZATIONS": "Organizations",
+	"APPS_INTEGRATIONS": "Apps & Integrations",
+	"EMAIL_HISTORY": "Email History",
+	"SETTING": "Setting",
+	"ENTITY_IMPORT_EXPORT": "Entity Import & Export",
+	"CUSTOM_SMTP": "Custom SMTP",
+	"ROLES_PERMISSIONS": "Roles & Permissions",
+	"TIME_TRACKING": "Time Tracking",
+	"ESTIMATE": "Estimate",
+	"DASHBOARD": "Dashboard"
+},
+"SETTINGS_FEATURES_DESCRIPTION": {
+	"INVOICE": {
+		"MANAGE_INVOICE_CREATE_FIRST_INVOICE": "Manage Invoice, Create First Invoice"
+	},
+	"INCOME": {
+		"CREATE_FIRST_INCOME": "Create First Income"
+	},
+	"EXPENSE": {
+		"CREATE_FIRST_EXPENSE": "Create First Expense"
+	},
+	"PAYMENT": {
+		"MANAGE_PAYMENT_CREATE_FIRST_PAYMENT": "Manage Payment, Create First Payment"
+	},
+	"PROPOSAL": {
+		"MANAGE_PROPOSAL_REGISTER_FIRST_PROPOSAL": "Manage Proposal, Register First Proposal"
+	},
+	"SALES_PIPELINE": {
+		"CREATE_SALES_PIPELINE": "Create Sales Pipeline"
+	},
+	"TASK_DASHBOARD": {
+		"TASK_DASHBOARD": "Task Dashboard"
+	},
+	"JOBS": {
+		"JOB_SEARCH_JOBS_MATCHING": "Job Search & Jobs Matching"
+	},
+	"EMPLOYEES": {
+		"MANAGE_EMPLOYEES_ADD_OR_INVITE_EMPLOYEES": "Manage Employees, Add or Invite Employees"
+	},
+	"TIME_ACTIVITY": {
+		"MANAGE_TIME_ACTIVITY_SCREENSHOTS_APP_VISITED_SITES_ACTIVITIES": "Manage Time Activity, Screenshots, App, Visited Sites, Activities"
+	},
+	"TIMESHEET": {
+		"MANAGE_EMPLOYEE_TIMESHEET_DAILY_WEEKLY_CALENDAR_CREATE_FIRST_TIMESHEET": "Manage Employee Timesheet Daily, Weekly, Calendar, Create First Timesheet"
+	},
+	"APPOINTMENT_SCHEDULE": {
+		"EMPLOYEE_APPOINTMENT_SCHEDULES_BOOK_PUBLIC_APPOINTMENT": "Employee Appointment, Schedules & Book Public Appointment"
+	},
+	"CANDIDATE": {
+		"MANAGE_CANDIDATES_INTERVIEWS_INVITES": "Manage Candidates, Interviews & Invites"
+	},
+	"MANAGE_ORGANIZATION": {
+		"MANAGE_ORGANIZATION_DETAILS_LOCATION_AND_SETTINGS": "Manage Organization Details, Location and Settings"
+	},
+	"PRODUCT_INVENTORY": {
+		"MANAGE_PRODUCT_INVENTORY_CREATE_FIRST_PRODUCT": "Manage Product Inventory, Create First Product"
+	},
+	"PROJECT": {
+		"MANAGE_PROJECT_CREATE_FIRST_PROJECT": "Manage Project, Create First Project"
+	},
+	"ORGANIZATION_TEAM": {
+		"MANAGE_ORGANIZATION_TEAM_CREATE_FIRST_TEAM": "Manage Organization Team, Create First Team"
+	},
+	"ORGANIZATION_DOCUMENT": {
+		"MANAGE_ORGANIZATION_DOCUMENT_CREATE_FIRST_DOCUMENT": "Manage Organization Document, Create First Document"
+	},
+	"LEAD_CUSTOMER_CLIENT": {
+		"MANAGE_LEADS_CUSTOMERS_AND_CLIENTS_CREATE_FIRST_CUSTOMER/CLIENTS": "Manage Leads, Customers and Clients, Create First Customer/Clients"
+	},
+	"GOAL_AND_OBJECTIVE": {
+		"MANAGE_GOALS_AND_OBJECTIVES": "Manage Goals and Objectives"
+	},
+	"ALL_REPORT": {
+		"MANAGE_EXPENSE_WEEKLY_TIME_ACTIVITY_AND_ETC_REPORTS": "Manage Expense, Weekly, Time & Activity and etc reports"
+	},
+	"USERS": {
+		"MANAGE_TENANT_USERS": "Manage Tenant Users"
+	},
+	"ORGANIZATIONS": {
+		"MANAGE_TENANT_ORGANIZATIONS": "Manage Tenant Organizations"
+	},
+	"APPS_INTEGRATIONS": {
+		"MANAGE_AVAILABLE_APPS_INTEGRATIONS_LIKE_UPWORK_HUBSTAFF": "Manage Available Apps & Integrations Like Upwork & Hubstaff"
+	},
+	"EMAIL_HISTORY": {
+		"MANAGE_EMAIL_HISTORY": "Manage Email History"
+	},
+	"SETTING": {
+		"MANAGE_SETTING": "Manage Setting"
+	},
+	"ENTITY_IMPORT_EXPORT": {
+		"MANAGE_ENTITY_IMPORT_AND_EXPORT": "Manage Entity Import and Export"
+	},
+	"CUSTOM_SMTP": {
+		"MANAGE_TENANT_ORGANIZATION_CUSTOM_SMTP": "Manage Tenant & Organization Custom SMTP"
+	},
+	"ROLES_PERMISSIONS": {
+		"MANAGE_ROLES_PERMISSIONS": "Manage Roles & Permissions"
+	},
+	"TIME_TRACKING": {
+		"DOWNLOAD_DESKTOP_APP_CREATE_FIRST_TIMESHEET": "Download Desktop App, Create First Timesheet"
+	},
+	"ESTIMATE": {
+		"MANAGE_ESTIMATE_CREATE_FIRST_ESTIMATE": "Manage Estimate, Create First Estimate"
+	},
+	"DASHBOARD": {
+		"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+	}
+},
+"SETTINGS_FEATURES_TEXT": {
+	"INVOICE": {
+		"INVOICE_RECEIVED": "Invoice Received"
+	},
+	"INCOME": {
+		"": ""
+	},
+	"EXPENSE": {
+		"EMPLOYEE_RECURRING_EXPENSE": "Employee Recurring Expense",
+		"ORGANIZATION_RECURRING_EXPENSES": "Organization Recurring Expenses"
+	},
+	"PAYMENT": {
+		"": ""
+	},
+	"PROPOSAL": {
+		"PROPOSAL_TEMPLATE": "Proposal Template"
+	},
+	"SALES_PIPELINE": {
+		"SALES_PIPELINE_DEAL": "Sales Pipeline Deal"
+	},
+	"TASK_DASHBOARD": {
+		"TEAM_TASK_DASHBOARD": "Team Task Dashboard",
+		"MY_TASK_DASHBOARD": "My Task Dashboard"
+	},
+	"JOBS": {
+		"": ""
+	},
+	"EMPLOYEES": {
+		"EMPLOYEE_LEVEL": "Employee Level",
+		"EMPLOYEE_POSITION": "Employee Position",
+		"EMPLOYEE_TIME_OFF": "Employee Time Off",
+		"EMPLOYEE_APPROVAL": "Employee Approval",
+		"EMPLOYEE_APPROVAL_POLICY": "Employee Approval Policy"
+	},
+	"TIME_ACTIVITY": {
+		"": ""
+	},
+	"TIMESHEET": {
+		"": ""
+	},
+	"APPOINTMENT_SCHEDULE": {
+		"": ""
+	},
+	"CANDIDATE": {
+		"MANAGE_INTERVIEW": "Manage Interview",
+		"MANAGE_INVITE": "Manage Invite"
+	},
+	"MANAGE_ORGANIZATION": {
+		"HELP_CENTER": "Help Center",
+		"ORGANIZATION_TAG": "Organization Tag",
+		"ORGANIZATION_EQUIPMENT": "Organization Equipment",
+		"ORGANIZATION_VENDOR": "Organization Vendor",
+		"ORGANIZATION_DEPARTMENT": "Organization Department",
+		"ORGANIZATION_EMPLOYMENT_TYPE": "Organization Employment Type"
+	},
+	"PRODUCT_INVENTORY": {
+		"": ""
+	},
+	"PROJECT":{
+		"": ""
+	},
+	"ORGANIZATION_TEAM": {
+		"": ""
+	},
+	"ORGANIZATION_DOCUMENT": {
+		"": ""
+	},
+	"LEAD_CUSTOMER_CLIENT": {
+		"": ""
+	},
+	"GOAL_AND_OBJECTIVE": {
+		"GOAL_TIME_FRAME_KPI": "Goal Time Frame & KPI"
+	},
+	"ALL_REPORT": {
+		"": ""
+	},
+	"USERS": {
+		"": ""
+	},
+	"ORGANIZATIONS": {
+		"": ""
+	},
+	"APPS_INTEGRATIONS": {
+		"": ""
+	},
+	"EMAIL_HISTORY": {
+		"CUSTOM_EMAIL_TEMPLATE": "Custom Email Template"
+	},
+	"SETTING": {
+		"FILE_STORAGE": "File Storage",
+		"SMS_GATEWAY": "SMS Gateway"
+	},
+	"ENTITY_IMPORT_EXPORT": {
+		"": ""
+	},
+	"CUSTOM_SMTP": {
+		"": ""
+	},
+	"ROLES_PERMISSIONS": {
+		"": ""
+	},
+	"TIME_TRACKING": {
+		"": ""
+	},
+	"ESTIMATE": {
+		"ESTIMATE_RECEIVED": "Estimate Received"
+	},
+	"DASHBOARD": {
+		"": ""
+	}
+},
 	"ABOUT_PAGE": {
 		"ABOUT": "עלינו"
 	},
