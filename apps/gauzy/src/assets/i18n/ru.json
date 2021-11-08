@@ -2847,54 +2847,54 @@
 			"MANAGE_ENTITY_IMPORT_AND_EXPORT": "Управление импортом и экспортом сущностей"
 		},
 		"CUSTOM_SMTP": {
-			"MANAGE_TENANT_ORGANIZATION_CUSTOM_SMTP": "Manage Tenant & Organization Custom SMTP"
+			"MANAGE_TENANT_ORGANIZATION_CUSTOM_SMTP": "Управление собственными SMTP владельцами и организациями"
 		},
 		"ROLES_PERMISSIONS": {
-			"MANAGE_ROLES_PERMISSIONS": "Manage Roles & Permissions"
+			"MANAGE_ROLES_PERMISSIONS": "Управление ролями и разрешениями"
 		},
 		"TIME_TRACKING": {
-			"DOWNLOAD_DESKTOP_APP_CREATE_FIRST_TIMESHEET": "Download Desktop App, Create First Timesheet"
+			"DOWNLOAD_DESKTOP_APP_CREATE_FIRST_TIMESHEET": "Скачать приложение для рабочего стола, создать таблицу первого времени"
 		},
 		"ESTIMATE": {
-			"MANAGE_ESTIMATE_CREATE_FIRST_ESTIMATE": "Manage Estimate, Create First Estimate"
+			"MANAGE_ESTIMATE_CREATE_FIRST_ESTIMATE": "Управление оценкой, Создать первую оценку"
 		},
 		"DASHBOARD": {
-			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Перейти к панели инструментов, управлять статистикой сотрудников, отслеживать время"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
 		"INVOICE": {
-			"INVOICE_RECEIVED": "Invoice Received"
+			"INVOICE_RECEIVED": "Счет получен"
 		},
 		"INCOME": {
 			"": ""
 		},
 		"EXPENSE": {
-			"EMPLOYEE_RECURRING_EXPENSE": "Employee Recurring Expense",
-			"ORGANIZATION_RECURRING_EXPENSES": "Organization Recurring Expenses"
+			"EMPLOYEE_RECURRING_EXPENSE": "Расход Сотрудника",
+			"ORGANIZATION_RECURRING_EXPENSES": "Регулярные расходы организации"
 		},
 		"PAYMENT": {
 			"": ""
 		},
 		"PROPOSAL": {
-			"PROPOSAL_TEMPLATE": "Proposal Template"
+			"PROPOSAL_TEMPLATE": "Шаблон предложения"
 		},
 		"SALES_PIPELINE": {
-			"SALES_PIPELINE_DEAL": "Sales Pipeline Deal"
+			"SALES_PIPELINE_DEAL": "Сделка Трубопровода"
 		},
 		"TASK_DASHBOARD": {
-			"TEAM_TASK_DASHBOARD": "Team Task Dashboard",
-			"MY_TASK_DASHBOARD": "My Task Dashboard"
+			"TEAM_TASK_DASHBOARD": "Панель задач команды",
+			"MY_TASK_DASHBOARD": "Моя панель задач"
 		},
 		"JOBS": {
 			"": ""
 		},
 		"EMPLOYEES": {
-			"EMPLOYEE_LEVEL": "Employee Level",
-			"EMPLOYEE_POSITION": "Employee Position",
-			"EMPLOYEE_TIME_OFF": "Employee Time Off",
-			"EMPLOYEE_APPROVAL": "Employee Approval",
-			"EMPLOYEE_APPROVAL_POLICY": "Employee Approval Policy"
+			"EMPLOYEE_LEVEL": "Уровень сотрудника",
+			"EMPLOYEE_POSITION": "Должность сотрудника",
+			"EMPLOYEE_TIME_OFF": "Время работы сотрудника",
+			"EMPLOYEE_APPROVAL": "Утверждение сотрудника",
+			"EMPLOYEE_APPROVAL_POLICY": "Политика утверждения сотрудников"
 		},
 		"TIME_ACTIVITY": {
 			"": ""
@@ -2906,16 +2906,16 @@
 			"": ""
 		},
 		"CANDIDATE": {
-			"MANAGE_INTERVIEW": "Manage Interview",
-			"MANAGE_INVITE": "Manage Invite"
+			"MANAGE_INTERVIEW": "Управление интервью,",
+			"MANAGE_INVITE": "Управление приглашением"
 		},
 		"MANAGE_ORGANIZATION": {
-			"HELP_CENTER": "Help Center",
-			"ORGANIZATION_TAG": "Organization Tag",
-			"ORGANIZATION_EQUIPMENT": "Organization Equipment",
-			"ORGANIZATION_VENDOR": "Organization Vendor",
-			"ORGANIZATION_DEPARTMENT": "Organization Department",
-			"ORGANIZATION_EMPLOYMENT_TYPE": "Organization Employment Type"
+			"HELP_CENTER": "Центр поддержки",
+			"ORGANIZATION_TAG": "Тег организации",
+			"ORGANIZATION_EQUIPMENT": "Оборудование организации",
+			"ORGANIZATION_VENDOR": "Поставщик организации",
+			"ORGANIZATION_DEPARTMENT": "Отдел организации",
+			"ORGANIZATION_EMPLOYMENT_TYPE": "Организационный тип"
 		},
 		"PRODUCT_INVENTORY": {
 			"": ""
@@ -2933,7 +2933,7 @@
 			"": ""
 		},
 		"GOAL_AND_OBJECTIVE": {
-			"GOAL_TIME_FRAME_KPI": "Goal Time Frame & KPI"
+			"GOAL_TIME_FRAME_KPI": "Диаграмма времени и KPI"
 		},
 		"ALL_REPORT": {
 			"": ""
@@ -2948,11 +2948,11 @@
 			"": ""
 		},
 		"EMAIL_HISTORY": {
-			"CUSTOM_EMAIL_TEMPLATE": "Custom Email Template"
+			"CUSTOM_EMAIL_TEMPLATE": "Пользовательский шаблон E-mail"
 		},
 		"SETTING": {
-			"FILE_STORAGE": "File Storage",
-			"SMS_GATEWAY": "SMS Gateway"
+			"FILE_STORAGE": "Файловое хранилище",
+			"SMS_GATEWAY": "SMS шлюз"
 		},
 		"ENTITY_IMPORT_EXPORT": {
 			"": ""
@@ -2967,7 +2967,7 @@
 			"": ""
 		},
 		"ESTIMATE": {
-			"ESTIMATE_RECEIVED": "Estimate Received"
+			"ESTIMATE_RECEIVED": "Получено оценок"
 		},
 		"DASHBOARD": {
 			"": ""
