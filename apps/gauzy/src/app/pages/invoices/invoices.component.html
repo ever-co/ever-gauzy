@@ -561,7 +561,7 @@
 				nbButton
 				status="info"
 				(click)="send()"
-				[disabled]="disableButton"
+				[disabled]="!canBeSend"
 			>
 				<nb-icon icon="upload-outline"> </nb-icon>
 				<span class="icon-text">{{ 'BUTTONS.SEND' | translate }}</span>

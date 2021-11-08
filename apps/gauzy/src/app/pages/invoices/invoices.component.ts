@@ -80,6 +80,7 @@ export class InvoicesComponent
 	selectedInvoice: IInvoice;
 	loading: boolean;
 	disableButton = true;
+	canBeSend = true;
 	invoices: IInvoice[] = [];
 	organization: IOrganization;
 	viewComponentName: ComponentEnum;
@@ -776,6 +777,12 @@ export class InvoicesComponent
 	async selectInvoice({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedInvoice = isSelected ? data : null;
+		
+		if(isSelected){
+			this.canBeSend = data.toContact ? isSelected : !isSelected;
+		}else{
+			this.canBeSend = isSelected;
+		}
 
 		if (isSelected) {
 			const { historyRecords = [] } = data;
