@@ -67,6 +67,9 @@ Feature: Clients test
     Then User can see back button
     And User click on back button
   Scenario: Delete client
+    When User see name input field again
+    Then User enter client name again
+    And User can see only selected user
     Then User can see clients table
     When User select table first row
     Then Delete button will become active
