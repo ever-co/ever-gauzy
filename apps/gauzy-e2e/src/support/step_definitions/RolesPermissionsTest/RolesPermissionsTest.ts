@@ -433,7 +433,7 @@ And('User can verify Employee general roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewTimeOffPage, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationInvites, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.CreateResendDeleteInvites, notChecked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewTimeOffPolicy, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewTimeOffPolicy, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.EditTimeOffPolicy, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.EditTimeOff, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.EditApprovalsPolicy, checked);
