@@ -2753,16 +2753,16 @@
 		"GOAL_AND_OBJECTIVE": "Goal and Objective",
 		"ALL_REPORT": "All Report",
 		"USERS": "Users",
-		"ORGANIZATIONS": "Organizations",
+		"ORGANIZATIONS": "Организации",
 		"APPS_INTEGRATIONS": "Apps & Integrations",
 		"EMAIL_HISTORY": "Email History",
 		"SETTING": "Setting",
 		"ENTITY_IMPORT_EXPORT": "Entity Import & Export",
 		"CUSTOM_SMTP": "Custom SMTP",
-		"ROLES_PERMISSIONS": "Roles & Permissions",
+		"ROLES_PERMISSIONS": "Роли и Позволения",
 		"TIME_TRACKING": "Time Tracking",
 		"ESTIMATE": "Estimate",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Табло"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -2870,7 +2870,7 @@
 			"": ""
 		},
 		"EXPENSE": {
-			"EMPLOYEE_RECURRING_EXPENSE": "Employee Recurring Expense",
+			"EMPLOYEE_RECURRING_EXPENSE": "Разходи, повтарящи се за служителя",
 			"ORGANIZATION_RECURRING_EXPENSES": "Organization Recurring Expenses"
 		},
 		"PAYMENT": {
