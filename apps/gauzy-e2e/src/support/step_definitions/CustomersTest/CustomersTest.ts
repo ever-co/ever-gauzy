@@ -92,7 +92,7 @@ And('User can see Add button', () => {
 });
 
 When('User click Add button', () => {
-	customersPage.clickAddButton();
+	customersPage.clickAddButton(CustomersPageData.addBtn);
 });
 
 Then('User can see name input field', () => {
@@ -312,7 +312,7 @@ Then('Edit button will become active', () => {
 });
 
 When('User click on edit button', () => {
-	customersPage.clickEditButton();
+	customersPage.clickEditButton(CustomersPageData.editBtn);
 });
 
 Then('User can see name input field', () => {
