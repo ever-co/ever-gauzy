@@ -2646,11 +2646,11 @@
 		},
 		"ACTION": {
 			"DUPLICATE": "Дублиране",
-			"SEND": "Изпрати",
-			"CONVERT_TO_INVOICE": "Преобразуване във фактура",
+			"SEND": "Send",
+			"CONVERT_TO_INVOICE": "Convert to invoice",
 			"EMAIL": "Eлектронна поща",
 			"DELETE": "Изтрий",
-			"NOTE": "Бележка",
+			"NOTE": "Note",
 			"PAYMENTS": "Payments"
 		},
 		"PUBLIC_LINK": {
@@ -2728,173 +2728,173 @@
 		"CATEGORY_EDIT_DELETED": "Category was removed"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Този раздел ще показва диаграми за управление на проекти и обобщени данни."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Фактура",
-		"INCOME": "Приходи",
-		"EXPENSE": "Разход",
-		"PAYMENT": "Плащане",
+		"INCOME": "Доход",
+		"EXPENSE": "Разходи",
+		"PAYMENT": "Payment",
 		"PROPOSAL": "Предложение",
-		"SALES_PIPELINE": "Продажби",
-		"TASK_DASHBOARD": "Табло за управление на задачите",
-		"JOBS": "Работни места",
+		"SALES_PIPELINE": "Sales Pipeline",
+		"TASK_DASHBOARD": " Task Dashboard",
+		"JOBS": "Jobs",
 		"EMPLOYEES": "Служители",
-		"TIME_ACTIVITY": "Дейност във времето",
-		"TIMESHEET": "График",
-		"APPOINTMENT_SCHEDULE": "График за срещи",
-		"CANDIDATE": "Кандидат",
-		"MANAGE_ORGANIZATION": "Управление на организацията",
-		"PRODUCT_INVENTORY": "Инвентаризация на продукти",
-		"PROJECT":"Проект",
-		"ORGANIZATION_TEAM": "Организационен екип",
-		"ORGANIZATION_DOCUMENT": "Организационен документ",
-		"LEAD_CUSTOMER_CLIENT": "Водещ клиент",
-		"GOAL_AND_OBJECTIVE": "Цел",
-		"ALL_REPORT": "Всички отчети",
-		"USERS": "Потребители",
+		"TIME_ACTIVITY": "Time Activity",
+		"TIMESHEET": "Timesheet",
+		"APPOINTMENT_SCHEDULE": "Appointment & Schedule",
+		"CANDIDATE": "Candidate",
+		"MANAGE_ORGANIZATION": "Manage Organization",
+		"PRODUCT_INVENTORY": "Product Inventory",
+		"PROJECT": "Проект",
+		"ORGANIZATION_TEAM": "Organization Team",
+		"ORGANIZATION_DOCUMENT": "Organization Document",
+		"LEAD_CUSTOMER_CLIENT": "Lead, Customer & Client",
+		"GOAL_AND_OBJECTIVE": "Goal and Objective",
+		"ALL_REPORT": "All Report",
+		"USERS": "Users",
 		"ORGANIZATIONS": "Организации",
-		"APPS_INTEGRATIONS": "Интеграции на приложения",
-		"EMAIL_HISTORY": "История на имейли",
-		"SETTING": "Настройка",
-		"ENTITY_IMPORT_EXPORT": "Експортиране и импортиране на обект",
-		"CUSTOM_SMTP": "Персонализиран SMTP",
-		"ROLES_PERMISSIONS": "Роли и права на достъп",
-		"TIME_TRACKING": "Проследяване на времето",
-		"ESTIMATE": "Оценка",
+		"APPS_INTEGRATIONS": "Apps & Integrations",
+		"EMAIL_HISTORY": "Email History",
+		"SETTING": "Setting",
+		"ENTITY_IMPORT_EXPORT": "Entity Import & Export",
+		"CUSTOM_SMTP": "Custom SMTP",
+		"ROLES_PERMISSIONS": "Роли и Позволения",
+		"TIME_TRACKING": "Time Tracking",
+		"ESTIMATE": "Estimate",
 		"DASHBOARD": "Табло"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
-			"MANAGE_INVOICE_CREATE_FIRST_INVOICE": "Управление на фактура, създаване на първа фактура"
+			"MANAGE_INVOICE_CREATE_FIRST_INVOICE": "Manage Invoice, Create First Invoice"
 		},
 		"INCOME": {
-			"CREATE_FIRST_INCOME": "Създаване на първи доход"
+			"CREATE_FIRST_INCOME": "Create First Income"
 		},
 		"EXPENSE": {
-			"CREATE_FIRST_EXPENSE": "Създаване на първи разход"
+			"CREATE_FIRST_EXPENSE": "Create First Expense"
 		},
 		"PAYMENT": {
-			"MANAGE_PAYMENT_CREATE_FIRST_PAYMENT": "Управление на плащането, създаване на първо плащане"
+			"MANAGE_PAYMENT_CREATE_FIRST_PAYMENT": "Manage Payment, Create First Payment"
 		},
 		"PROPOSAL": {
-			"MANAGE_PROPOSAL_REGISTER_FIRST_PROPOSAL": "Управление на предложението, регистрирайте първо предложение"
+			"MANAGE_PROPOSAL_REGISTER_FIRST_PROPOSAL": "Manage Proposal, Register First Proposal"
 		},
 		"SALES_PIPELINE": {
-			"CREATE_SALES_PIPELINE": "Създаване на линия за продажби"
+			"CREATE_SALES_PIPELINE": "Create Sales Pipeline"
 		},
 		"TASK_DASHBOARD": {
-			"TASK_DASHBOARD": "Табло за управление на задачите"
+			"TASK_DASHBOARD": "Task Dashboard"
 		},
 		"JOBS": {
-			"JOB_SEARCH_JOBS_MATCHING": "Търсене на работа и съвпадение на работни места"
+			"JOB_SEARCH_JOBS_MATCHING": "Job Search & Jobs Matching"
 		},
 		"EMPLOYEES": {
-			"MANAGE_EMPLOYEES_ADD_OR_INVITE_EMPLOYEES": "Управление на служители, добавяне или покана на служители"
+			"MANAGE_EMPLOYEES_ADD_OR_INVITE_EMPLOYEES": "Manage Employees, Add or Invite Employees"
 		},
 		"TIME_ACTIVITY": {
-			"MANAGE_TIME_ACTIVITY_SCREENSHOTS_APP_VISITED_SITES_ACTIVITIES": "Управление на времевата активност, екранни снимки, приложение, посетени сайтове, дейности"
+			"MANAGE_TIME_ACTIVITY_SCREENSHOTS_APP_VISITED_SITES_ACTIVITIES": "Manage Time Activity, Screenshots, App, Visited Sites, Activities"
 		},
 		"TIMESHEET": {
-			"MANAGE_EMPLOYEE_TIMESHEET_DAILY_WEEKLY_CALENDAR_CREATE_FIRST_TIMESHEET": "Управление на разписанието на служителите eжедневно, седмично, календарно, създаване на първо разписание"
+			"MANAGE_EMPLOYEE_TIMESHEET_DAILY_WEEKLY_CALENDAR_CREATE_FIRST_TIMESHEET": "Manage Employee Timesheet Daily, Weekly, Calendar, Create First Timesheet"
 		},
 		"APPOINTMENT_SCHEDULE": {
-			"EMPLOYEE_APPOINTMENT_SCHEDULES_BOOK_PUBLIC_APPOINTMENT": "Назначаване на служители, графици и записване на публични срещи"
+			"EMPLOYEE_APPOINTMENT_SCHEDULES_BOOK_PUBLIC_APPOINTMENT": "Employee Appointment, Schedules & Book Public Appointment"
 		},
 		"CANDIDATE": {
-			"MANAGE_CANDIDATES_INTERVIEWS_INVITES": "Управление на кандидати, интервюта и покани"
+			"MANAGE_CANDIDATES_INTERVIEWS_INVITES": "Manage Candidates, Interviews & Invites"
 		},
 		"MANAGE_ORGANIZATION": {
-			"MANAGE_ORGANIZATION_DETAILS_LOCATION_AND_SETTINGS": "Управление на подробности за организацията, местоположение и настройки"
+			"MANAGE_ORGANIZATION_DETAILS_LOCATION_AND_SETTINGS": "Manage Organization Details, Location and Settings"
 		},
 		"PRODUCT_INVENTORY": {
-			"MANAGE_PRODUCT_INVENTORY_CREATE_FIRST_PRODUCT": "Управление на инвентара на продуктите, създаване на първи продукт"
+			"MANAGE_PRODUCT_INVENTORY_CREATE_FIRST_PRODUCT": "Manage Product Inventory, Create First Product"
 		},
 		"PROJECT": {
-			"MANAGE_PROJECT_CREATE_FIRST_PROJECT": "Управление на проект, създаване на първи проект"
+			"MANAGE_PROJECT_CREATE_FIRST_PROJECT": "Manage Project, Create First Project"
 		},
 		"ORGANIZATION_TEAM": {
-			"MANAGE_ORGANIZATION_TEAM_CREATE_FIRST_TEAM": "Управление на организационния екип, създаване на първи екип"
+			"MANAGE_ORGANIZATION_TEAM_CREATE_FIRST_TEAM": "Manage Organization Team, Create First Team"
 		},
 		"ORGANIZATION_DOCUMENT": {
-			"MANAGE_ORGANIZATION_DOCUMENT_CREATE_FIRST_DOCUMENT": "Управление на организационен документ, създаване на първи документ"
+			"MANAGE_ORGANIZATION_DOCUMENT_CREATE_FIRST_DOCUMENT": "Manage Organization Document, Create First Document"
 		},
 		"LEAD_CUSTOMER_CLIENT": {
-			"MANAGE_LEADS_CUSTOMERS_AND_CLIENTS_CREATE_FIRST_CUSTOMER/CLIENTS": "Управление на потенциални клиенти, създаване на първи клиент/клиенти"
+			"MANAGE_LEADS_CUSTOMERS_AND_CLIENTS_CREATE_FIRST_CUSTOMER/CLIENTS": "Manage Leads, Customers and Clients, Create First Customer/Clients"
 		},
 		"GOAL_AND_OBJECTIVE": {
-			"MANAGE_GOALS_AND_OBJECTIVES": "Управление на цели и задачи"
+			"MANAGE_GOALS_AND_OBJECTIVES": "Manage Goals and Objectives"
 		},
 		"ALL_REPORT": {
-			"MANAGE_EXPENSE_WEEKLY_TIME_ACTIVITY_AND_ETC_REPORTS": "Управление на отчети за разходи, седмични, времеви и дейности и др"
+			"MANAGE_EXPENSE_WEEKLY_TIME_ACTIVITY_AND_ETC_REPORTS": "Manage Expense, Weekly, Time & Activity and etc reports"
 		},
 		"USERS": {
-			"MANAGE_TENANT_USERS": "Управление на потребителите на наематели"
+			"MANAGE_TENANT_USERS": "Manage Tenant Users"
 		},
 		"ORGANIZATIONS": {
-			"MANAGE_TENANT_ORGANIZATIONS": "Управление на организации на наематели"
+			"MANAGE_TENANT_ORGANIZATIONS": "Manage Tenant Organizations"
 		},
 		"APPS_INTEGRATIONS": {
-			"MANAGE_AVAILABLE_APPS_INTEGRATIONS_LIKE_UPWORK_HUBSTAFF": "Управление на наличните приложения и интеграции като Upwork & Hubstaff"
+			"MANAGE_AVAILABLE_APPS_INTEGRATIONS_LIKE_UPWORK_HUBSTAFF": "Manage Available Apps & Integrations Like Upwork & Hubstaff"
 		},
 		"EMAIL_HISTORY": {
-			"MANAGE_EMAIL_HISTORY": "Управление на историята на имейлите"
+			"MANAGE_EMAIL_HISTORY": "Manage Email History"
 		},
 		"SETTING": {
-			"MANAGE_SETTING": "Управление на настройки"
+			"MANAGE_SETTING": "Manage Setting"
 		},
 		"ENTITY_IMPORT_EXPORT": {
-			"MANAGE_ENTITY_IMPORT_AND_EXPORT": "Управление на импортиране и експортиране на обекти"
+			"MANAGE_ENTITY_IMPORT_AND_EXPORT": "Manage Entity Import and Export"
 		},
 		"CUSTOM_SMTP": {
-			"MANAGE_TENANT_ORGANIZATION_CUSTOM_SMTP": "Управление на наемател и организация на персонализиран SMTP"
+			"MANAGE_TENANT_ORGANIZATION_CUSTOM_SMTP": "Manage Tenant & Organization Custom SMTP"
 		},
 		"ROLES_PERMISSIONS": {
-			"MANAGE_ROLES_PERMISSIONS": "Управление роли и разрешения"
+			"MANAGE_ROLES_PERMISSIONS": "Manage Roles & Permissions"
 		},
 		"TIME_TRACKING": {
-			"DOWNLOAD_DESKTOP_APP_CREATE_FIRST_TIMESHEET": "Изтегляне на приложението за настолни компютри, създаване на първия график"
+			"DOWNLOAD_DESKTOP_APP_CREATE_FIRST_TIMESHEET": "Download Desktop App, Create First Timesheet"
 		},
 		"ESTIMATE": {
-			"MANAGE_ESTIMATE_CREATE_FIRST_ESTIMATE": "Управление на оценка, създаване на първа оценка"
+			"MANAGE_ESTIMATE_CREATE_FIRST_ESTIMATE": "Manage Estimate, Create First Estimate"
 		},
 		"DASHBOARD": {
-			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Tтабло за управление, управление на статистиката на служителите, таблото за проследяване на времето"
+			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
 		"INVOICE": {
-			"INVOICE_RECEIVED": "Получена фактура"
+			"INVOICE_RECEIVED": "Invoice Received"
 		},
 		"INCOME": {
 			"": ""
 		},
 		"EXPENSE": {
-			"EMPLOYEE_RECURRING_EXPENSE": "Периодични разходи за служители",
-			"ORGANIZATION_RECURRING_EXPENSES": "Периодични разходи на организацията"
+			"EMPLOYEE_RECURRING_EXPENSE": "Разходи, повтарящи се за служителя",
+			"ORGANIZATION_RECURRING_EXPENSES": "Organization Recurring Expenses"
 		},
 		"PAYMENT": {
 			"": ""
 		},
 		"PROPOSAL": {
-			"PROPOSAL_TEMPLATE": "Шаблон за предложение"
+			"PROPOSAL_TEMPLATE": "Proposal Template"
 		},
 		"SALES_PIPELINE": {
-			"SALES_PIPELINE_DEAL": "Сделка за тръбопровод за продажби"
+			"SALES_PIPELINE_DEAL": "Sales Pipeline Deal"
 		},
 		"TASK_DASHBOARD": {
-			"TEAM_TASK_DASHBOARD": "Табло за управление на екипните задачи",
-			"MY_TASK_DASHBOARD": "Таблото за управление на моята задача"
+			"TEAM_TASK_DASHBOARD": "Team Task Dashboard",
+			"MY_TASK_DASHBOARD": "My Task Dashboard"
 		},
 		"JOBS": {
 			"": ""
 		},
 		"EMPLOYEES": {
-			"EMPLOYEE_LEVEL": "Ниво на служителите",
-			"EMPLOYEE_POSITION": "Позиция на служител",
-			"EMPLOYEE_TIME_OFF": "Време за почивка на служителите",
-			"EMPLOYEE_APPROVAL": "Отпуск на служителите Одобрение на служителите",
-			"EMPLOYEE_APPROVAL_POLICY": "Политика за одобрение на служителите"
+			"EMPLOYEE_LEVEL": "Employee Level",
+			"EMPLOYEE_POSITION": "Employee Position",
+			"EMPLOYEE_TIME_OFF": "Employee Time Off",
+			"EMPLOYEE_APPROVAL": "Employee Approval",
+			"EMPLOYEE_APPROVAL_POLICY": "Employee Approval Policy"
 		},
 		"TIME_ACTIVITY": {
 			"": ""
@@ -2906,21 +2906,21 @@
 			"": ""
 		},
 		"CANDIDATE": {
-			"MANAGE_INTERVIEW": "Управление на интервюто",
-			"MANAGE_INVITE": "Управление на поканата"
+			"MANAGE_INTERVIEW": "Manage Interview",
+			"MANAGE_INVITE": "Manage Invite"
 		},
 		"MANAGE_ORGANIZATION": {
-			"HELP_CENTER": "Помощен център",
-			"ORGANIZATION_TAG": "Етикет за организация",
-			"ORGANIZATION_EQUIPMENT": "Организационно оборудване",
-			"ORGANIZATION_VENDOR": "Доставчик на организация",
-			"ORGANIZATION_DEPARTMENT": "Организационен отдел",
-			"ORGANIZATION_EMPLOYMENT_TYPE": "Организация тип заетост"
+			"HELP_CENTER": "Help Center",
+			"ORGANIZATION_TAG": "Organization Tag",
+			"ORGANIZATION_EQUIPMENT": "Organization Equipment",
+			"ORGANIZATION_VENDOR": "Organization Vendor",
+			"ORGANIZATION_DEPARTMENT": "Organization Department",
+			"ORGANIZATION_EMPLOYMENT_TYPE": "Organization Employment Type"
 		},
 		"PRODUCT_INVENTORY": {
 			"": ""
 		},
-		"PROJECT":{
+		"PROJECT": {
 			"": ""
 		},
 		"ORGANIZATION_TEAM": {
@@ -2933,7 +2933,7 @@
 			"": ""
 		},
 		"GOAL_AND_OBJECTIVE": {
-			"GOAL_TIME_FRAME_KPI": "Времева рамка на целта и KPI"
+			"GOAL_TIME_FRAME_KPI": "Goal Time Frame & KPI"
 		},
 		"ALL_REPORT": {
 			"": ""
@@ -2948,11 +2948,11 @@
 			"": ""
 		},
 		"EMAIL_HISTORY": {
-			"CUSTOM_EMAIL_TEMPLATE": "Персонализиран шаблон за имейл"
+			"CUSTOM_EMAIL_TEMPLATE": "Custom Email Template"
 		},
 		"SETTING": {
-			"FILE_STORAGE": "Съхранение на файлове",
-			"SMS_GATEWAY": "SMS портал"
+			"FILE_STORAGE": "File Storage",
+			"SMS_GATEWAY": "SMS Gateway"
 		},
 		"ENTITY_IMPORT_EXPORT": {
 			"": ""
@@ -2967,7 +2967,7 @@
 			"": ""
 		},
 		"ESTIMATE": {
-			"ESTIMATE_RECEIVED": "Оценката е получена"
+			"ESTIMATE_RECEIVED": "Estimate Received"
 		},
 		"DASHBOARD": {
 			"": ""
