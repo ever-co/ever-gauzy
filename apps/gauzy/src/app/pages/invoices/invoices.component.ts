@@ -1064,7 +1064,9 @@ export class InvoicesComponent
 			.subscribe();
 	}
 
- 	onChangeTab(event) {}
+ 	onChangeTab(event) {
+		this.closeActionsPopover();
+	}
 
 	clearItem() {
 		this.selectInvoice({
