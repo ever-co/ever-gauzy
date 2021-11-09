@@ -397,8 +397,8 @@ export class ProposalsComponent
 		return {
 			id: i.id,
 			valueDate: i.valueDate,
-			jobPostUrl: 
-				'<a href="' + i.jobPostUrl +`" target="_blank">${i.jobPostUrl}</a>`,
+			jobPostUrl: i.jobPostUrl ? 
+				'<a href="' + i.jobPostUrl +`" target="_blank">${i.jobPostUrl}</a>`: '',
 			jobTitle: i.jobPostContent
 				.toString()
 				.replace(/<[^>]*(>|$)|&nbsp;/g, '')
