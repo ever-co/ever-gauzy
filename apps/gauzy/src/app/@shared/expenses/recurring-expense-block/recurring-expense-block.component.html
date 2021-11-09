@@ -1,6 +1,9 @@
 <div class="setting-block">
 	<div class="setting-row">
-		<div class="block-content">
+		<div class="block-content" [ngStyle]="{
+			float: showMenu ? 'none' : 'left',
+			width: showMenu ? '88%' : '100%'
+		}">
 			<div class="block-info">
 				<div class="expense">
 					<ngx-avatar
