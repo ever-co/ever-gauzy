@@ -163,7 +163,7 @@
 			[attr.aria-invalid]="rePass.invalid && rePass.touched ? true : null"
 			autocomplete="off"
 		/>
-		<ng-container *ngIf="rePass.invalid && rePass.touched">
+		<ng-container *ngIf="rePass.touched">
 			<p class="caption status-danger" *ngIf="rePass.errors?.required">
 				Password confirmation is required!
 			</p>
