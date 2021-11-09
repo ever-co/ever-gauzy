@@ -23,7 +23,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
-import * as _ from 'underscore';
+import { pluck } from 'underscore'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -157,8 +157,8 @@ export class ApprovalsComponent
 
 			if (items.length > 0) {
 				items.filter((item) => {
-					item.employees = _.pluck(item.employeeApprovals, 'employee');
-					item.teams = _.pluck(item.teamApprovals, 'team');
+					item.employees = pluck(item.employeeApprovals, 'employee');
+					item.teams = pluck(item.teamApprovals, 'team');
 					return item;
 				});
 			}
