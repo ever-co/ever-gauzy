@@ -20,7 +20,7 @@ Feature: Human resources test
     When User click on total income section
     Then User can see popup with income header
     And user can see total income date table column
-    And User can see total income client name table column
+    And User can see total income contact table column
     And User can see total income value table column
     And Uer can see total income notes table column
   Scenario: Verify Total Expenses without salary

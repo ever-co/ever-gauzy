@@ -4,5 +4,7 @@ export const ClientsData = {
 	defaultPhone: '00359878561239',
 	hours: 12,
 	editButton: 1,
-	clientType: 'CLIENT'
+	clientType: 'CLIENT',
+	tableResult: 1
+
 };
