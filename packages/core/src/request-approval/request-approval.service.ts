@@ -27,7 +27,6 @@ import {
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
 import { getConfig } from '@gauzy/config';
-import * as _ from 'lodash';
 
 const config = getConfig();
 
