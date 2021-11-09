@@ -152,7 +152,7 @@ Then('Edit button will become active', () => {
 });
 
 When('User click on edit button', () => {
-	contactsLeadsPage.clickEditButton();
+	contactsLeadsPage.clickEditButton(ContactsLeadsPageData.editBtn);
 });
 
 Then('User can see name input field', () => {

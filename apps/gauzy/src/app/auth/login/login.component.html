@@ -126,8 +126,24 @@
 	</button>
 </form>
 
-<div *ngIf="environment.DEMO" class="demo-credentials-card">
+<div class="demo-credentials-btn">
+	<button *ngIf="!isShown" (click)="collapseDemo()">
+		<span>Demo Credentials</span>
+		<nb-icon
+			class="info-btn ml-2"
+			status="info"
+			icon="info-outline"
+		></nb-icon>
+	</button>
+</div>
+
+<div *ngIf="environment.DEMO && isShown" class="demo-credentials-card">
 	<nb-card>
+		<nb-icon
+			class="ml-auto mt-1 close close-demo-credentials-card"
+			icon="close-outline"
+			(click)="collapseDemo()"
+		></nb-icon>
 		<nb-card-body>
 			<div>Demo Credentials</div>
 			<br />

@@ -11,6 +11,7 @@ import { environment } from './../../../environments/environment';
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	
 	environment = environment;
+	isShown: boolean = false ;
 
 	constructor(
 		public readonly nbAuthService: NbAuthService,
@@ -26,5 +27,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 			this.user.email = 'admin@ever.co';
 			this.user.password = 'admin';
 		}
+	}
+
+	collapseDemo() {
+		this.isShown = !this.isShown;
 	}
 }

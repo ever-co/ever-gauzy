@@ -281,6 +281,20 @@ And('User click on back button', () => {
 });
 
 // Delete client
+When('User see name input field again', () => {
+	cy.intercept('GET', '/api/organization-projects*').as('waitOrg');
+	cy.wait('@waitOrg');
+	clientsPage.verifyNameInput();
+});
+
+Then('User enter client name again', () => {
+	clientsPage.searchClientName(deleteName);
+});
+
+And('User can see only selected user', () => {
+	clientsPage.verifySearchResult(ClientsData.tableResult);
+});
+
 Then('User can see clients table', () => {
 	clientsPage.tableRowVisible();
 });

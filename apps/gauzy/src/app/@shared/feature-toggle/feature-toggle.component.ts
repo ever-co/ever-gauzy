@@ -207,4 +207,8 @@ export class FeatureToggleComponent
 		}
 		return true;
 	}
+
+	getTranslationFormat(text: string) {
+		return text.replace(/ /g, '_').replace(/,|&/g, '').replace(/__/g, '_').toUpperCase();
+	}
 }

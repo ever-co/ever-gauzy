@@ -7,7 +7,7 @@
 >
 	<div class="shadow py-5">
 		<div class="d-flex justify-content-between">
-			<div class="ml-5">
+			<div class="ml-5 mr-5">
 				<div class="mb-5">
 					<div class="font-weight-bold">
 						{{ 'INVOICES_PAGE.VIEW.FROM' | translate }}:
@@ -21,7 +21,7 @@
 					<div>{{ invoice?.toContact?.name }}</div>
 				</div>
 			</div>
-			<div class="mr-5">
+			<div class="mr-5 ml-5">
 				<div class="mb-5 font-weight-bold">
 					<h4 class="d-inline mr-2">
 						{{ ((!isEstimate) ? 'INVOICES_PAGE.INVOICE_NUMBER' : 'INVOICES_PAGE.ESTIMATE_NUMBER') | translate}}
@@ -67,8 +67,8 @@
 				</h5>
 				{{ invoice.internalNote }}
 			</div>
-			<div class="d-flex bottom-data-container mt-5">
-				<div class="d-flex flex-column text-right font-weight-bold">
+			<div class="d-flex bottom-data-container mt-5 ">
+				<div class="d-flex flex-column text-right font-weight-bold mr-5">
 					<div class="mt-2">
 						{{ 'INVOICES_PAGE.TAX' | translate }}:
 					</div>

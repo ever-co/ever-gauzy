@@ -119,6 +119,9 @@ export class PipelineDealsComponent
 		this.smartTableSettings.columns.createdBy.title = this.getTranslation(
 			'SM_TABLE.CREATED_BY'
 		);
+		this.smartTableSettings.columns.probability.title = this.getTranslation(
+			'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY'
+		);
 
 		this.router.events
 			.pipe(untilDestroyed(this))

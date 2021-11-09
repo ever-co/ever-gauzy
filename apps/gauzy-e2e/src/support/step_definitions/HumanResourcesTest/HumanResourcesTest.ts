@@ -122,7 +122,7 @@ And('user can see total income date table column', () => {
 	);
 });
 
-And('User can see total income client name table column', () => {
+And('User can see total income contact table column', () => {
 	humanResourcesPage.verifyPopupTableHeaderText(
 		HumanResourcesPageData.incomeTableHeaderClientNameText
 	);

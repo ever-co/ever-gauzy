@@ -30,7 +30,7 @@
 											[icon]="row?.icon"
 											*ngIf="row?.icon"
 										></nb-icon>
-										<span>{{ row?.name }}</span>
+										<span>{{ getTranslationFormat('SETTINGS_FEATURES.' + row?.name) | translate }}</span>
 									</div>
 									<div
 										class="col-6 float-right text-right"
@@ -45,7 +45,7 @@
 							<nb-card-body>
 								<div class="row">
 									<div class="col-10 float-left text-left">
-										{{ row?.description }}
+										{{ getTranslationFormat('SETTINGS_FEATURES_DESCRIPTION' + '.' + row?.name + '.' + row?.description) | translate }}
 									</div>
 									<div class="col-2 float-right text-right">
 										<nb-toggle
@@ -78,7 +78,7 @@
 												"
 												status="basic"
 											>
-												{{ child?.name }}
+												{{ getTranslationFormat('SETTINGS_FEATURES_TEXT' + '.' + row?.name + '.' + child?.name) | translate }}
 											</nb-checkbox>
 										</nb-list-item>
 									</nb-list>

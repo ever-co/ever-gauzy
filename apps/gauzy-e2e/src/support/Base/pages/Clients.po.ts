@@ -325,3 +325,7 @@ export const verifyBackBtn = () => {
 export const clickOnBackBtn = () => {
 	clickButton(ClientsPage.backBtn);
 };
+
+export const verifySearchResult = (length: number) =>{
+	vefiryByLength(ClientsPage.selectTableRowCss, length);
+};
