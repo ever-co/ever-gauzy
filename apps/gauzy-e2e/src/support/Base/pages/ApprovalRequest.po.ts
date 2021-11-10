@@ -8,7 +8,6 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist,
 	clickButtonWithForce,
 	clickByText,
 	verifyTextByIndex,
