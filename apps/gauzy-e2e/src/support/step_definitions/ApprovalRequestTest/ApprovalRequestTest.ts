@@ -21,6 +21,9 @@ let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 
+let dafaultName = faker.name.title() + ' ' + ApprovalRequestPageData.defaultRequest;
+let editName = faker.name.title() + ' ' + ApprovalRequestPageData.defaultRequest
+
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -53,7 +56,10 @@ Then('User can visit Employees approvals page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
+	cy.intercept('GET','/api/request-approval*').as('waitApproval');
 	cy.visit('/#/pages/employees/approvals', { timeout: pageLoadTimeout });
+	cy.wait('@waitApproval');
 });
 
 And('User can see Approval policy button', () => {
@@ -148,7 +154,7 @@ Then('User can see approval name input field', () => {
 });
 
 And('User can enter value for approval name', () => {
-	approvalRequestPage.enterNameInputData(ApprovalRequestPageData.dafaultName);
+	approvalRequestPage.enterNameInputData(dafaultName);
 });
 
 And('User can see min count input field', () => {
@@ -201,9 +207,53 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify request was created', () => {
-	approvalRequestPage.verifyRequestExists(
-		ApprovalRequestPageData.dafaultName
-	);
+	approvalRequestPage.verifyRequestExists(dafaultName);
+});
+
+//Approve approval request
+When('User see name input field',() => {
+	approvalRequestPage.verifyNameInput();
+});
+
+Then('User can search approval by name', () => {
+	approvalRequestPage.searchApprovalRequest(dafaultName, ApprovalRequestPageData.searchResult);
+});
+
+When('User can see approval button', () => {
+	approvalRequestPage.verifyApprovalRefuseButton(ApprovalRequestPageData.approvalBtn, ApprovalRequestPageData.approvalRefuseBtnIndex);
+});
+
+Then('User click on approval button', () => {
+	approvalRequestPage.clickOnApprovalRefuseButton(ApprovalRequestPageData.approvalBtn);
+});
+
+Then('Notification message will appear', () => {
+	approvalRequestPage.waitMessageToHide();
+});
+
+And('User cant see approval button', () => {
+	approvalRequestPage.verifyApprovalButtonNotExist(ApprovalRequestPageData.approvalBtn, ApprovalRequestPageData.approvalRefuseBtnIndex);
+});
+
+And('User can see status is Approved', () => {
+	approvalRequestPage.verifyStatus(ApprovalRequestPageData.approvalStatus);
+});
+//Refuse approval request
+
+When('User see refuse button', () => {
+	approvalRequestPage.verifyApprovalRefuseButton(ApprovalRequestPageData.refuseBtn, ApprovalRequestPageData.approvalRefuseBtnIndex)
+});
+
+Then('User click on refuse button', () => {
+	approvalRequestPage.clickOnApprovalRefuseButton(ApprovalRequestPageData.refuseBtn);
+});
+
+Then('Notification message will appear', () => {
+	approvalRequestPage.waitMessageToHide();
+});
+
+And('User can see status is Refused', () => {
+	approvalRequestPage.verifyStatus(ApprovalRequestPageData.refusedStatus);
 });
 
 // Edit approval request
@@ -224,7 +274,7 @@ Then('User can see name input field', () => {
 });
 
 And('User can enter new value for name', () => {
-	approvalRequestPage.enterNameInputData(ApprovalRequestPageData.editName);
+	approvalRequestPage.enterNameInputData(editName);
 });
 
 And('User can see min count input field', () => {
@@ -265,8 +315,16 @@ Then('Notification message will appear', () => {
 	approvalRequestPage.waitMessageToHide();
 });
 
+When('User see name input field again',() => {
+	approvalRequestPage.verifyNameInput();
+});
+
+Then('User can search approval by name again', () => {
+	approvalRequestPage.searchApprovalRequest(editName, ApprovalRequestPageData.searchResult);
+});
+
 And('User can verify request was edited', () => {
-	approvalRequestPage.verifyRequestExists(ApprovalRequestPageData.editName);
+	approvalRequestPage.verifyRequestExists(editName);
 });
 
 // Delete approval request
@@ -286,6 +344,10 @@ Then('Notification message will appear', () => {
 	approvalRequestPage.waitMessageToHide();
 });
 
+And('User clear search field', () => {
+	approvalRequestPage.clearNameSearchInput();
+})
+
 And('User can verify request was deleted', () => {
-	approvalRequestPage.verifyElementIsDeleted();
+	approvalRequestPage.verifyElementIsDeleted(editName);
 });
