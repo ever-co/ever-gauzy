@@ -84,7 +84,7 @@ Then('User can see name input field again', () => {
 });
 
 And('User can enter new pipeline name', () => {
-	pipelinesPage.enterNameInputData(PipelinesPageData.editPipelineName);
+	pipelinesPage.enterNameInputDataByIndex(PipelinesPageData.editPipelineName,PipelinesPageData.nameInputIndex);
 });
 
 And('User can see description input field again', () => {

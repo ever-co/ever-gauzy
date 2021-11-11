@@ -6,7 +6,8 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyTextNotExisting,
-	verifyText
+	verifyText,
+	enterInputByIndex
 } from '../utils/util';
 import { PipelinesPage } from '../pageobjects/PipelinesPageObject';
 
@@ -102,4 +103,9 @@ export const verifyPipelineIsDeleted = (text) => {
 
 export const verifyPipelineExists = (text) => {
 	verifyText(PipelinesPage.verifyPipelineCss, text);
+};
+
+export const enterNameInputDataByIndex = (data:string, index: number) => {
+	clearField(PipelinesPage.pipelineNameInputCss);
+	enterInputByIndex(PipelinesPage.pipelineNameInputCss, data ,index);
 };
