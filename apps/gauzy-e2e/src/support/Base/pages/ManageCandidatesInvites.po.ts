@@ -10,7 +10,8 @@ import {
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
 	verifyByText,
-	vefiryByLength
+	vefiryByLength,
+	verifyTextNotExisting
 } from '../utils/util';
 import { ManageCandidatesInvitesPage } from '../pageobjects/ManageCandidatesInvitesPageObject';
 
@@ -122,3 +123,7 @@ export const verifySearchResult = (length: number) =>{
 export const clearEmailField = () => {
 	clearField(ManageCandidatesInvitesPage.emailPlaceholderCss);
 };
+
+export const verifyInviteIsDeleted = (text: string) => {
+	verifyTextNotExisting(ManageCandidatesInvitesPage.selectTableRowCss, text)
+}

@@ -93,7 +93,10 @@ Then('User can visit Invoices page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
+	cy.intercept('GET', '/api/invoices/pagination*').as('waitInvoices');
 	cy.visit('/#/pages/sales/invoices', { timeout: pageLoadTimeout });
+	cy.wait('@waitInvoices');
 });
 
 And('User can see grid button', () => {

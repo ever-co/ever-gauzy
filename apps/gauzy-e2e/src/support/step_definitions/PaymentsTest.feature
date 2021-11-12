@@ -46,9 +46,6 @@ Feature: Payments test
     When User select table row
     Then Edit payment button will become active
     When User click on edit payment button
-    Then User can see project dropdown
-    When User click on project dropdown
-    Then User can select project from dropdown options
     And User can see date input field
     And User can enter value for date
     And User can see payment method dropdown

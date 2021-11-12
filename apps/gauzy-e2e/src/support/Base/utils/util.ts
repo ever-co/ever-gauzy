@@ -283,3 +283,8 @@ export const enterTextInIFrame= (loc, text ) => {
 export const vefiryByLength = (loc:any, length: number) => {
 	cy.get(loc, { timeout: defaultCommandTimeout}).should('have.length', length);
 };
+
+export const enterInputByIndex = (loc, data,index) => {
+	cy.get(loc, { timeout: taskTimeout })
+		.eq(index).type(data);
+};
