@@ -42,7 +42,10 @@ const routes: Routes = [
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.ORG_EMPLOYEES_EDIT],
+				only: [
+					PermissionsEnum.ORG_EMPLOYEES_EDIT,
+					PermissionsEnum.PROFILE_EDIT
+				],
 				redirectTo
 			}
 		},

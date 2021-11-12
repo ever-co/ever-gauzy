@@ -1,8 +1,9 @@
-import { IEmployee } from '@gauzy/contracts';
+import { IEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
-import { BadRequestException } from '@nestjs/common';
+import { RequestContext } from './../../../core/context';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler
@@ -14,6 +15,19 @@ export class EmployeeUpdateHandler
 	public async execute(command: EmployeeUpdateCommand): Promise<IEmployee> {
 		const { input } = command;
 		const { id } = input;
+
+		/**
+		 * If user/employee has only own profile edit permission
+		 */
+		if (
+			RequestContext.hasPermission(PermissionsEnum.PROFILE_EDIT) &&
+			!RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+		) {
+			const user = RequestContext.currentUser();
+			if (user.employeeId !== id) {
+				throw new ForbiddenException();
+			}
+		}
 
 		try {
 			//We are using create here because create calls the method save()
