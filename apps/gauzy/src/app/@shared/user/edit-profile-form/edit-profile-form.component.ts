@@ -29,6 +29,7 @@ import {
 	UsersService
 } from '../../../@core/services';
 import { MatchValidator } from '../../../@core/validators';
+import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,6 +39,8 @@ import { MatchValidator } from '../../../@core/validators';
 })
 export class EditProfileFormComponent 
 	implements OnInit, OnDestroy {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	hoverState: boolean;
 	loading: boolean;
@@ -214,13 +217,6 @@ export class EditProfileFormComponent
 	selectedTagsHandler(tags: ITag[]) {
 		this.form.get('tags').setValue(tags);
 		this.form.updateValueAndValidity();
-	}
-
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 
 	ngOnDestroy(): void { }

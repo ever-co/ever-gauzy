@@ -37,7 +37,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { TransformInterceptor } from './../core/interceptors';
 import { RequestContext } from '../core/context';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { User, UserPreferredComponentLayoutDTO, UserPreferredLanguageDTO } from './user.entity';
 import { UserService } from './user.service';
@@ -296,13 +296,13 @@ export class UserController extends CrudController<User> {
 	 * @returns 
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard, RoleGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IUserUpdateInput
-	): Promise<any> {
+	): Promise<IUser> {
 		return await this.userService.updateProfile(id, {
 			id,
 			...entity

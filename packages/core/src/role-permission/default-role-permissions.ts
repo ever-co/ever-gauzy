@@ -243,7 +243,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
 			PermissionsEnum.EQUIPMENT_MAKE_REQUEST,
 			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
-			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW
+			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
+			PermissionsEnum.ORG_USERS_EDIT
 		]
 	},
 	{

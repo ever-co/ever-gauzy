@@ -87,7 +87,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		id: string | number,
 		partialEntity: User,
 		...options: any[]
-	): Promise<User> {
+	): Promise<IUser> {
 		try {
 
 			let user: User;
