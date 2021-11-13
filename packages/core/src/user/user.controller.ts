@@ -297,12 +297,12 @@ export class UserController extends CrudController<User> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IUserUpdateInput
-	): Promise<any> {
+	): Promise<IUser> {
 		return await this.userService.updateProfile(id, {
 			id,
 			...entity

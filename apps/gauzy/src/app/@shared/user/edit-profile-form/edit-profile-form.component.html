@@ -55,18 +55,21 @@
 							<ngx-password-form-field
 								[id]="'password'"
 								[placeholder]="'PROFILE_PAGE.PASSWORD' | translate"
-								[ctrl]="form.controls.password"
+								[ctrl]="form.get('password')"
 								formControlName="password"
 							></ngx-password-form-field>
 						</div>
 						<div class="col">
 							<ngx-password-form-field
-								[id]="'password'"
+								[id]="'reset-password'"
 								[placeholder]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
-								[ctrl]="form.controls.repeatPassword"
+								[ctrl]="form.get('repeatPassword')"
 								formControlName="repeatPassword"
 							>
-								<div *ngIf="isInvalidControl('repeatPassword')" class="invalid-feedback d-block">
+								<div 
+									*ngIf="FormHelpers.isInvalidControl(form, 'repeatPassword')"
+									class="invalid-feedback d-block"
+								>
 									<div *ngIf="form.get('repeatPassword').errors.mustMatch">
 										{{ 'PROFILE_PAGE.VALIDATION.PASSWORDS_DO_NOT_MATCH' | translate }}
 									</div>
@@ -89,11 +92,13 @@
 									nbInput
 									formControlName="email"
 									[status]="
-										isInvalidControl('email') ? 'danger' : 'basic'
+										FormHelpers.isInvalidControl(form, 'email')
+											? 'danger'
+											: 'basic'
 									"
 								/>
 								<div 
-									*ngIf="isInvalidControl('email')"
+									*ngIf="FormHelpers.isInvalidControl(form, 'email')"
 									class="invalid-feedback d-block"
 								>
 									<div *ngIf="form.get('email').errors.required">

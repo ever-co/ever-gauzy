@@ -2,12 +2,13 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, InsertResult, SelectQueryBuilder } from 'typeorm';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
+import { RequestContext } from './../core/context';
+import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -87,15 +88,24 @@ export class UserService extends TenantAwareCrudService<User> {
 		id: string | number,
 		partialEntity: User,
 		...options: any[]
-	): Promise<User> {
+	): Promise<IUser> {
+		/**
+		 * If user has only own profile edit permission
+		 */
+		 if (
+			RequestContext.hasPermission(PermissionsEnum.PROFILE_EDIT) &&
+			!RequestContext.hasPermission(PermissionsEnum.ORG_USERS_EDIT)
+		) {
+			if (RequestContext.currentUserId() !== id) {
+				throw new ForbiddenException();
+			}
+		}
 		try {
-
-			let user: User;
+			let user: IUser;
 
 			if (typeof(id) == 'string') {
 				user = await this.findOneByIdString(id);
 			}
-
 			if (typeof(id) == 'number') {
 				user = await this.findOneByIdNumber(id);
 			}
