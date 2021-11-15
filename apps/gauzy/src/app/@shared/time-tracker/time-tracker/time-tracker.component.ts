@@ -42,18 +42,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
 
-	private _position = { x: 0, y: 0 };
-	get position() {
-		const positionData = localStorage.getItem('position') || null;
-		return positionData ? JSON.parse(positionData) : this._position
-	}
-	set position(offSet) {
-		if (offSet) {
-			localStorage.setItem('position', JSON.stringify(offSet));
-		}
-		this._position = offSet;
-	}
-
 	constructor(
 		private readonly timeTrackerService: TimeTrackerService,
 		private readonly timesheetService: TimesheetService,
@@ -127,6 +115,16 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			...this.timeTrackerService.timerConfig,
 			description: value
 		};
+	}
+
+	/**
+	 * Remember timer position
+	 */
+	public get position() {
+		return this.timeTrackerService.position;
+	}
+	public set position(offSet: any) {
+		this.timeTrackerService.position = offSet;
 	}
 
 	ngOnInit() {

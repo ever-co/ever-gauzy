@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { ServerSourceConf } from './server-source.conf';
 import { LocalDataSource } from 'ng2-smart-table';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -27,26 +27,28 @@ export class ServerDataSource extends LocalDataSource {
     }
 
     getElements(): Promise<any> {
-        return this.requestElements()
-            .pipe(
-                map((res) => {
-                    this.lastRequestCount = this.extractTotalFromResponse(res);
-                    this.data = this.extractDataFromResponse(res);
-                    return this.data;
-                }),
-                tap(() => {
-                    if (this.conf.finalize) {
-                        this.conf.finalize();
-                    }
-                }),
-                catchError((error) => {
-                    if (this.conf.finalize) {
-                        this.conf.finalize();
-                    }
-                    // failed from server then call finalize method 
-                    throw new Error(error)
-                })
-            ).toPromise();
+        return firstValueFrom(
+            this.requestElements()
+                .pipe(
+                    map((res) => {
+                        this.lastRequestCount = this.extractTotalFromResponse(res);
+                        this.data = this.extractDataFromResponse(res);
+                        return this.data;
+                    }),
+                    tap(() => {
+                        if (this.conf.finalize) {
+                            this.conf.finalize();
+                        }
+                    }),
+                    catchError((error) => {
+                        if (this.conf.finalize) {
+                            this.conf.finalize();
+                        }
+                        // failed from server then call finalize method 
+                        throw new Error(error)
+                    })
+                )
+        );
     }
 
     /**

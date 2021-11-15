@@ -40,16 +40,15 @@ export abstract class Service<
 		filter?: FI
 	): Promise<BE | LBE> {
 		if (!arguments.length) {
-			return this.http.get<LBE>(this.basePath).toPromise();
+			return firstValueFrom(this.http.get<LBE>(this.basePath));
 		} else if ('string' === typeof idOrRelations) {
 			return firstValueFrom(
 				this.http
 					.get<BE>(`${this.basePath}/${idOrRelations}`)
 			);
 		}
-
-		return this.http
-			.get<LBE>(this.basePath, {
+		return firstValueFrom(
+			this.http.get<LBE>(this.basePath, {
 				params: {
 					data: JSON.stringify({
 						relations: idOrRelations,
@@ -57,7 +56,7 @@ export abstract class Service<
 					})
 				}
 			})
-			.toPromise();
+		);
 	}
 
 	public update(id: string, data: CI): Promise<BE> {

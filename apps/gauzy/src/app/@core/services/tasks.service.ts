@@ -54,12 +54,16 @@ export class TasksService extends TranslationBaseComponent {
 
 	getAllTasksByEmployee(id, findInput: IGetTaskByEmployeeOptions = {}) {
 		const data = toParams(findInput);
-		return this._http
-			.get<ITask[]>(`${this.API_URL}/employee/${id}`, {
+		return firstValueFrom(
+			this._http.get<ITask[]>(`${this.API_URL}/employee/${id}`, {
 				params: data
 			})
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	getMyTasks(findInput: IGetTaskOptions = {}): Observable<ITaskResponse> {

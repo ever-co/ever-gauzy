@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
@@ -9,14 +10,15 @@ import {
 	IEmployeeCreateInput,
 	CrudActionEnum
 } from '@gauzy/contracts';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
-import { RoleService } from '../../../@core/services/role.service';
-import { Store } from '../../../@core/services/store.service';
-import { first } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { FormGroup } from '@angular/forms';
-import { EmployeeStore } from '../../../@core/services/employee-store.service';
+import { firstValueFrom } from 'rxjs';
+import {
+	EmployeesService,
+	EmployeeStore,
+	ErrorHandlingService,
+	OrganizationsService,
+	RoleService,
+	Store
+} from '../../../@core/services';
 
 @Component({
 	selector: 'ga-employee-mutation',
@@ -47,13 +49,12 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	async ngAfterViewInit() {
 		const { tenantId } = this.store.user;
 		this.form = this.userBasicInfo.form;
-		this.role = await this.roleService
-			.getRoleByName({
+		this.role = await firstValueFrom(
+			this.roleService.getRoleByName({
 				name: RolesEnum.EMPLOYEE,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	closeDialog(employee: IEmployee[] = null) {
@@ -95,11 +96,9 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	async add() {
 		this.addEmployee();
 		try {
-			const employee = await this.employeesService
-				.createBulk(this.employees)
-				.pipe(first())
-				.toPromise();
-
+			const employee =  await firstValueFrom(
+				this.employeesService.createBulk(this.employees)
+			);
 			this._employeeStore.employeeAction = {
 				action: CrudActionEnum.CREATED,
 				employee
