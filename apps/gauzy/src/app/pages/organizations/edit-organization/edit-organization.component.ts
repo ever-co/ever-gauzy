@@ -1,13 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { filter, first } from 'rxjs/operators';
-import { EmployeesService } from '../../../@core/services';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { Store } from '../../../@core/services/store.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { filter } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	EmployeesService,
+	OrganizationsService,
+	Store
+} from '../../../@core/services';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -38,12 +42,11 @@ export class EditOrganizationComponent
 	async ngOnInit() {
 		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
 			if (params.id) {
-				this.organizationsService
-					.getById(params.id, null, ['tags'])
-					.toPromise()
-					.then((selectedOrg) => {
-						this.setSelectedOrg(selectedOrg);
-					});
+				firstValueFrom(
+					this.organizationsService.getById(params.id, null, ['tags'])
+				).then((organization) => {
+					this.setSelectedOrg(organization);
+				});
 			}
 		});
 
@@ -88,13 +91,12 @@ export class EditOrganizationComponent
 
 	private async loadEmployeesCount() {
 		const { tenantId } = this.store.user;
-		const { total } = await this.employeesService
-			.getAll([], {
+		const { total } = await firstValueFrom(
+			this.employeesService.getAll([], {
 				organizationId: this.selectedOrg.id,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
 		this.employeesCount = total;
 	}
 }
