@@ -81,9 +81,6 @@ And('User can see only selected user', () => {
 	manageCandidatesInvitesPage.verifySearchResult(ManageCandidatesInvitesPageData.tableResult);
 });
 
-Then('User clear field', () => {
-	manageCandidatesInvitesPage.clearEmailField();
-});
 
 // Resend invite
 And('User can see invites table', () => {
@@ -141,4 +138,12 @@ When('User click on confirm delete button', () => {
 
 Then('Notification message will appear', () => {
 	manageCandidatesInvitesPage.waitMessageToHide();
+});
+
+Then('User clear field', () => {
+	manageCandidatesInvitesPage.clearEmailField();
+});
+
+And('User verify invite is deleted', () => {
+	manageCandidatesInvitesPage.verifyInviteIsDeleted(email);
 });

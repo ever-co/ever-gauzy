@@ -24,17 +24,27 @@ export class KeyResultService {
 	) {}
 
 	createKeyResult(keyResult): Promise<IKeyResult> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.post<IKeyResult>(`${this.API_URL}`, keyResult)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	createBulkKeyResult(keyResults): Promise<IKeyResult[]> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.post<IKeyResult[]>(`${this.API_URL}/bulk`, keyResults)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	async update(id: string, keyResult: IKeyResult): Promise<IKeyResult> {
@@ -45,10 +55,14 @@ export class KeyResultService {
 	}
 
 	findKeyResult(id: string): Promise<IKeyResultResponse> {
-		return this._http
-			.get<IKeyResultResponse>(`${this.API_URL}/${id}`)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		return firstValueFrom(
+			this._http.get<IKeyResultResponse>(`${this.API_URL}/${id}`)
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	getAllKeyResults(keyResult): Observable<IKeyResultResponse> {

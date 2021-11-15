@@ -42,6 +42,19 @@ Feature: Approval request test
     When User click on save approval button
     Then Notification message will appear
     And User can verify request was created
+  Scenario: Approve approval request
+    When User see name input field
+    Then User can search approval by name
+    When User can see approval button
+    Then User click on approval button
+    Then Notification message will appear
+    And User cant see approval button
+    And User can see status is Approved
+  Scenario: Refuse approval request
+    When User see refuse button
+    Then User click on refuse button
+    Then Notification message will appear
+    And User can see status is Refused
   Scenario: Edit approval request
     When User can select first table row
     Then Edit request button will become active
@@ -57,10 +70,13 @@ Feature: Approval request test
     Then User can see save button
     When User click on save button
     Then Notification message will appear
+    When User see name input field again
+    Then User can search approval by name again
     And User can verify request was edited
   Scenario: Delete approval request
     When User select first table row
     Then Delete request button will become active
     When User click on delete request button
     Then Notification message will appear
+    And User clear search field
     And User can verify request was deleted

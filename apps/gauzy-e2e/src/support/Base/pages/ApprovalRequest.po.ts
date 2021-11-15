@@ -8,8 +8,13 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist,
-	clickButtonWithForce
+	clickButtonWithForce,
+	clickByText,
+	verifyTextByIndex,
+	verifyTextNotExistByIndex,
+	verifyByText,
+	vefiryByLength,
+	verifyTextNotExisting
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
 
@@ -148,8 +153,8 @@ export const verifyRequestExists = (text) => {
 	verifyText(ApprovalRequestPage.verifyRequestCss, text);
 };
 
-export const verifyElementIsDeleted = () => {
-	verifyElementNotExist(ApprovalRequestPage.verifyRequestCss);
+export const verifyElementIsDeleted = (text: string) => {
+	verifyTextNotExisting(ApprovalRequestPage.rowCss, text);
 };
 
 export const clickSaveButtonWithForce = () =>{
@@ -170,4 +175,35 @@ export const selectTagFromDropdown = (index) => {
 
 export const clickCardBody = () => {
 	clickButton(ApprovalRequestPage.nameInputCss);
+};
+
+export const verifyApprovalRefuseButton = (text: string, index: number) => {
+	verifyTextByIndex(ApprovalRequestPage.approvalRefuseButtonCss, text, index)
+};
+
+export const clickOnApprovalRefuseButton = (text: string) => {
+	clickByText(ApprovalRequestPage.approvalRefuseButtonCss, text);
+	
+};
+
+export const verifyApprovalButtonNotExist = (text: string, index: number) => {
+	verifyTextNotExistByIndex(ApprovalRequestPage.approvalRefuseButtonCss, index, text)
+};
+
+export const verifyStatus = (text: string) => {
+	verifyByText(ApprovalRequestPage.rowCss, text)
+};
+
+export const verifyNameInput = () => {
+	verifyElementIsVisible(ApprovalRequestPage.searchByNameInputCss);
+};
+
+export const searchApprovalRequest = (text: string, length: number) => {
+	clearField(ApprovalRequestPage.searchByNameInputCss);
+	enterInput(ApprovalRequestPage.searchByNameInputCss, text);
+	vefiryByLength(ApprovalRequestPage.approvalStatusCss, length);
+};
+
+export const clearNameSearchInput = () => {
+	clearField(ApprovalRequestPage.searchByNameInputCss);
 };

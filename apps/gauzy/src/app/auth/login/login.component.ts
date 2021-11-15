@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
+import { ElectronService } from 'ngx-electron';
 import { environment } from './../../../environments/environment';
 
 @Component({
@@ -14,6 +15,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	isShown: boolean = false ;
 
 	constructor(
+		public readonly electronService: ElectronService,
 		public readonly nbAuthService: NbAuthService,
 		public readonly cdr: ChangeDetectorRef, 
 		public readonly router: Router,

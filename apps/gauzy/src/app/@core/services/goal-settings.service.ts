@@ -41,12 +41,12 @@ export class GoalSettingsService {
 		findInput: IGoalTimeFrameFindInput
 	): Promise<IGoalTimeFrameResponse> {
 		const data = JSON.stringify({ findInput });
-		return this._http
-			.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}`, {
+		return firstValueFrom(
+			this._http.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		);
 	}
 
 	deleteTimeFrame(id: string): Promise<any> {
@@ -76,12 +76,12 @@ export class GoalSettingsService {
 
 	getAllKPI(findInput?: ISettingFindInput): Promise<IKpiResponse> {
 		const data = JSON.stringify({ findInput });
-		return this._http
-			.get<IKpiResponse>(`${this.KPI_URL}`, {
+		return firstValueFrom(
+			this._http.get<IKpiResponse>(`${this.KPI_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		);
 	}
 
 	deleteKPI(id: string): Promise<any> {
@@ -103,12 +103,12 @@ export class GoalSettingsService {
 		findInput?: ISettingFindInput
 	): Promise<IGeneralSettingResponse> {
 		const data = JSON.stringify({ findInput });
-		return this._http
-			.get<IGeneralSettingResponse>(`${this.GENERAL_SETTINGS_URL}`, {
+		return firstValueFrom(
+			this._http.get<IGeneralSettingResponse>(`${this.GENERAL_SETTINGS_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		);
 	}
 
 	updateGeneralSettings(

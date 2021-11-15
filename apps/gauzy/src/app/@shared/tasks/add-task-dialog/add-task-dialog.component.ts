@@ -13,10 +13,10 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '../../../@core/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -153,12 +153,11 @@ export class AddTaskDialogComponent
 				: (this.form.value.estimate = null);
 
 			if (this.createTask) {
-				this.tasksService
-					.createTask(this.form.value)
-					.toPromise()
-					.then((task) => {
-						this.dialogRef.close(task);
-					});
+				firstValueFrom(
+					this.tasksService.createTask(this.form.value)
+				).then((task) => {
+					this.dialogRef.close(task);
+				});
 			} else {
 				this.dialogRef.close(this.form.value);
 			}

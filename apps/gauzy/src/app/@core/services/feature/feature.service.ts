@@ -8,7 +8,7 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { API_PREFIX } from '../../constants/app.constants';
 
 @Injectable()
@@ -18,7 +18,9 @@ export class FeatureService {
 	constructor(private http: HttpClient) {}
 
 	getFeatureToggleDefinition() {
-		return this.http.get(`${this.API_URL}/definition`).toPromise();
+		return firstValueFrom(
+			this.http.get(`${this.API_URL}/definition`)
+		);
 	}
 
 	getParentFeatures(

@@ -82,13 +82,7 @@ export class ProposalEditComponent
 			['employee', 'employee.user', 'tags', 'organizationContact']
 		);
 		this.proposal = Object.assign({}, proposal, {
-			jobPostLink:
-				'<a href="' +
-				proposal.jobPostUrl +
-				`" target="_blank">${proposal.jobPostUrl.substr(
-					8,
-					14
-				)}</nb-icon></a>`,
+			jobPostLink: proposal.jobPostUrl ? proposal.jobPostUrl : '',
 			jobTitle: proposal.jobPostContent
 				.toString()
 				.replace(/<[^>]*(>|$)|&nbsp;/g, '')

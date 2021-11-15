@@ -5,8 +5,8 @@ import {
 	Router,
 	RouterStateSnapshot
 } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { first } from 'rxjs/operators';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -20,11 +20,9 @@ export class RoleGuard implements CanActivate {
 		state: RouterStateSnapshot
 	) {
 		const expectedRole = route.data.expectedRole;
-		const hasRole = await this.authService
-			.hasRole(expectedRole)
-			.pipe(first())
-			.toPromise();
-
+		const hasRole = await firstValueFrom(
+			this.authService.hasRole(expectedRole)
+		);
 		if (hasRole) {
 			return true;
 		}
@@ -32,7 +30,6 @@ export class RoleGuard implements CanActivate {
 		this.router.navigate(['/auth/login'], {
 			queryParams: { returnUrl: state.url }
 		});
-
 		return false;
 	}
 }

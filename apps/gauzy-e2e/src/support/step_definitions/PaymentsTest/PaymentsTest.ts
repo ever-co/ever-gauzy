@@ -277,7 +277,7 @@ Then('User can see again payments table', () => {
 });
 
 When('User select table row again', () => {
-	paymentsPage.selectTableRow(0);
+	paymentsPage.selectTableRowByNote(PaymentsPageData.defaultNote);
 });
 
 Then('Delete payment button will become active', () => {

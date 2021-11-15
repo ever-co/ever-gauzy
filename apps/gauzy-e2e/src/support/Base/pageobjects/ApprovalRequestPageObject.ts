@@ -20,5 +20,9 @@ export const ApprovalRequestPage = {
 	verifyRequestCss: 'div.d-block',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
-	headerCss: 'nb-dialog-container > nb-card.main'
+	headerCss: 'nb-dialog-container > nb-card.main',
+	approvalRefuseButtonCss: 'table > tbody > tr.ng2-smart-row > td.ng-star-inserted',
+	approvalStatusCss: 'table > tbody > tr.ng2-smart-row',
+	searchByNameInputCss: 'input[placeholder="Name"]',
+	rowCss: 'table > tbody > tr.ng2-smart-row'
 };

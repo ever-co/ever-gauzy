@@ -418,7 +418,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT)
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Employee
