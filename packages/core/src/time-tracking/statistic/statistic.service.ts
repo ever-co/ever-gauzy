@@ -114,6 +114,7 @@ export class StatisticService {
 			.innerJoin(`${employeesCountQuery.alias}.timeLogs`, 'timeLogs')
 			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 			.andWhere(`"${employeesCountQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${employeesCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
@@ -152,7 +153,6 @@ export class StatisticService {
 							source
 						});
 					}
-					qb.andWhere(`"${employeesCountQuery.alias}"."organizationId" = :organizationId`, { organizationId });
 				})
 			)
 			
@@ -166,6 +166,7 @@ export class StatisticService {
 			.innerJoin(`${projectsCountQuery.alias}.timeLogs`, 'timeLogs')
 			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 			.andWhere(`"${projectsCountQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${projectsCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
@@ -204,7 +205,6 @@ export class StatisticService {
 							source
 						});
 					}
-					qb.andWhere(`"${projectsCountQuery.alias}"."organizationId" = :organizationId`, { organizationId });
 				})
 			)
 			.getCount();
@@ -231,6 +231,7 @@ export class StatisticService {
 				.addSelect(`COUNT("${query.alias}"."id")`, `count`)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
+				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
@@ -267,7 +268,6 @@ export class StatisticService {
 								source
 							});
 						}
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 					})
 				)
 				.groupBy(`"timeLogs"."id"`)
@@ -304,6 +304,7 @@ export class StatisticService {
 				.addSelect(`COUNT("${query.alias}"."id")`, `count`)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
+				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
@@ -340,7 +341,6 @@ export class StatisticService {
 								source
 							});
 						}
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 					})
 				)
 				.groupBy(`"timeLogs"."id"`)
@@ -373,7 +373,6 @@ export class StatisticService {
 	 * @returns 
 	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
-		console.time();
 		const {
 			employeeId,
 			organizationId,
@@ -383,8 +382,8 @@ export class StatisticService {
 			date = new Date()
 		} = request;
 
-		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
@@ -416,12 +415,9 @@ export class StatisticService {
 		}
 
 		const query = this.employeeRepository.createQueryBuilder();
-		query
+		let employees: IMembersStatistics[] = await query
 			.select(`"${query.alias}".id`)
-			.addSelect(
-				`("user"."firstName" || ' ' ||  "user"."lastName")`,
-				'user_name'
-			)
+			.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name')
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
 				`${
@@ -434,33 +430,34 @@ export class StatisticService {
 			.innerJoin(`${query.alias}.user`, 'user')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			})
 			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
-			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			});
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+					/**
+					 * If Employee Selected
+					 */
+					qb.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
+						employeeIds
+					})
+					.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+						employeeIds
+					});
 
-		if (isNotEmpty(employeeIds)) {
-			query
-				.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
-					employeeIds
+					/**
+					 * If Project Selected
+					 */
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
 				})
-				.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				});
-		}
-
-		// project filter query
-		if (isNotEmpty(projectIds)) {
-			query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
-		let employees: IMembersStatistics[] = await query
+			)
 			.addGroupBy(`"${query.alias}"."id"`)
 			.addGroupBy(`"user"."id"`)
 			.orderBy('duration', 'DESC')
@@ -470,11 +467,13 @@ export class StatisticService {
 		if (employees.length > 0) {
 			const employeeIds = pluck(employees, 'id');
 
-			let weekTimeQuery = this.timeSlotRepository.createQueryBuilder(
+			/**
+			 * Weekly Member Activity
+			 */
+			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder(
 				'time_slot'
 			);
 			weekTimeQuery
-				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
@@ -486,35 +485,35 @@ export class StatisticService {
 				.addSelect(`AVG("${weekTimeQuery.alias}"."overall")`, `overall`)
 				.addSelect(`COUNT("${weekTimeQuery.alias}"."id")`, `count`)
 				.addSelect(`${weekTimeQuery.alias}.employeeId`, 'employeeId')
+				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
+				.andWhere(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+				.andWhere(`"${weekTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
-					`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`,
-					{
-						employeeIds
-					}
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+						/**
+						 * If Employee Selected
+						 */
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`, {
+								employeeIds
+							});
+						}
+						/**
+						 * If Project Selected
+						 */
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(`"timeLogs"."projectId" IN(:...projectIds)`, {
+								projectIds
+							});
+						}
+					})
 				)
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
-				.andWhere(
-					`"${weekTimeQuery.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				)
-				.andWhere(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
 				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
-
-			// project filter query
-			if (isNotEmpty(projectIds)) {
-				weekTimeQuery.andWhere(
-					`"timeLogs"."projectId" IN (:...projectIds)`,
-					{
-						projectIds
-					}
-				);
-			}
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
 			weekTimeSlots = mapObject(
@@ -545,11 +544,13 @@ export class StatisticService {
 				.indexBy('employeeId')
 				.value();
 
+			/**
+			 * Daily Member Activity
+			 */
 			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder(
 				'time_slot'
 			);
 			dayTimeQuery
-				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
@@ -561,40 +562,36 @@ export class StatisticService {
 				.addSelect(`AVG("${dayTimeQuery.alias}"."overall")`, `overall`)
 				.addSelect(`COUNT("${dayTimeQuery.alias}"."id")`, `count`)
 				.addSelect(`${dayTimeQuery.alias}.employeeId`, 'employeeId')
+				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
+				.andWhere(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
-					`"${dayTimeQuery.alias}"."employeeId" IN(:...employeeIds)`,
-					{
-						employeeIds
-					}
-				)
-				.andWhere(
-					new Brackets((qb) => {
+					new Brackets((qb: WhereExpressionBuilder) => {
 						const { start, end } = getDateRange();
 						qb.where(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 							start,
 							end
 						});
+						/**
+						 * If Employee Selected
+						 */
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(`"${dayTimeQuery.alias}"."employeeId" IN(:...employeeIds)`, {
+								employeeIds
+							});
+						}
+						/**
+						 * If Project Selected
+						 */
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(`"timeLogs"."projectId" IN(:...projectIds)`, {
+								projectIds
+							});
+						}
 					})
 				)
-				.andWhere(
-					`"${dayTimeQuery.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				)
-				.andWhere(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
 				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${dayTimeQuery.alias}.employeeId`);
-
-			// project filter query
-			if (isNotEmpty(projectIds)) {
-				dayTimeQuery.andWhere(
-					`"timeLogs"."projectId" IN (:...projectIds)`,
-					{
-						projectIds
-					}
-				);
-			}
 
 			let dayTimeSlots: any = await dayTimeQuery.getRawMany();
 			dayTimeSlots = mapObject(
@@ -693,7 +690,6 @@ export class StatisticService {
 					.getRawMany();
 			}
 		}
-		console.timeEnd();
 		return employees;
 	}
 
