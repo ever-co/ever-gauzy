@@ -22,7 +22,7 @@ import {
 } from '@gauzy/contracts';
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import _ from 'underscore';
+import { indexBy, range, reduce } from 'underscore';
 import { distinctUntilChange, progressStatus, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -256,7 +256,7 @@ export class TimeTrackingComponent
 		this.timesheetStatisticsService
 			.getActivities(activityRequest)
 			.then((resp) => {
-				const sum = _.reduce(
+				const sum = reduce(
 					resp,
 					(memo, activity) =>
 						memo + parseInt(activity.duration + '', 10),
@@ -351,15 +351,15 @@ export class TimeTrackingComponent
 			.getMembers(memberRequest)
 			.then((resp: any) => {
 				this.members = resp.map((member) => {
-					const week: any = _.indexBy(member.weekHours, 'day');
+					const week: any = indexBy(member.weekHours, 'day');
 
-					const sum = _.reduce(
+					const sum = reduce(
 						member.weekHours,
 						(memo, day: any) =>
 							memo + parseInt(day.duration + '', 10),
 						0
 					);
-					member.weekHours = _.range(0, 7).map((day) => {
+					member.weekHours = range(0, 7).map((day) => {
 						if (week[day]) {
 							week[day].duration =
 								(week[day].duration * 100) / sum;

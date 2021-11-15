@@ -126,16 +126,18 @@
 	</button>
 </form>
 
-<div class="demo-credentials-btn">
-	<button *ngIf="!isShown" (click)="collapseDemo()">
-		<span>Demo Credentials</span>
-		<nb-icon
-			class="info-btn ml-2"
-			status="info"
-			icon="info-outline"
-		></nb-icon>
-	</button>
-</div>
+<ng-container *ngIf="!electronService.isElectronApp">
+	<div class="demo-credentials-btn">
+		<button *ngIf="!isShown" (click)="collapseDemo()">
+			<span>Demo Credentials</span>
+			<nb-icon
+				class="info-btn ml-2"
+				status="info"
+				icon="info-outline"
+			></nb-icon>
+		</button>
+	</div>
+</ng-container>
 
 <div *ngIf="environment.DEMO && isShown" class="demo-credentials-card">
 	<nb-card>
