@@ -32,7 +32,7 @@ import {
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/integration-hubstaff';
-import { lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
@@ -76,15 +76,17 @@ export class HubstaffService {
 	) {}
 
 	async fetchIntegration(url, token): Promise<any> {
-		const headers = {
-			Authorization: `Bearer ${token}`
-		};
 		try {
-			return this._httpService.get(url, { headers }).pipe(
-				map(
-					(response: AxiosResponse<any>) => response.data
+			const headers = {
+				Authorization: `Bearer ${token}`
+			};
+			return firstValueFrom(
+				this._httpService.get(url, { headers }).pipe(
+					map(
+						(response: AxiosResponse<any>) => response.data
+					)
 				)
-			).subscribe();
+			);
 		} catch (error) {
 			if (error.response.status === HttpStatus.UNAUTHORIZED) {
 				throw new UnauthorizedException();
