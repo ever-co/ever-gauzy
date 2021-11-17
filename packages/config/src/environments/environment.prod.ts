@@ -121,7 +121,7 @@ export const environment: IEnvironment = {
 	upworkConfig: {
 		callbackUrl:
 			process.env.UPWORK_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/integrations/upwork`
+			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/integrations/upwork/callback`
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
