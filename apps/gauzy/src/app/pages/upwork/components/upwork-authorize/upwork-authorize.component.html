@@ -4,53 +4,51 @@
 		<h5>{{ 'MENU.UPWORK' | translate }}</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngIf="upworkConfigForm">
-			<form
-				[formGroup]="upworkConfigForm"
-				(ngSubmit)="authorizeUpwork(upworkConfigForm.value)"
+		<form
+			[formGroup]="form"
+			(ngSubmit)="authorizeUpwork(form.value)"
+		>
+			<div class="form-group">
+				<label for="consumerKey" class="label">{{
+					'INTEGRATIONS.UPWORK_PAGE.API_KEY' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="consumerKey"
+					formControlName="consumerKey"
+					type="text"
+					nbInput
+					[placeholder]="
+						'FORM.PLACEHOLDERS.UPWORK_API_KEY' | translate
+					"
+				/>
+			</div>
+			<div class="form-group">
+				<label for="consumerSecret" class="label">{{
+					'INTEGRATIONS.UPWORK_PAGE.SECRET' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="consumerSecret"
+					formControlName="consumerSecret"
+					type="text"
+					nbInput
+					[placeholder]="
+						'FORM.PLACEHOLDERS.UPWORK_SECRET' | translate
+					"
+				/>
+			</div>
+			<div class="hint">
+				<nb-icon icon="info-outline"></nb-icon>
+				{{ 'INTEGRATIONS.UPWORK_PAGE.NEXT_STEP_INFO' | translate }}
+			</div>
+			<button
+				nbButton
+				status="primary"
+				[disabled]="form.invalid"
 			>
-				<div class="form-group">
-					<label for="consumerKey" class="label">{{
-						'INTEGRATIONS.UPWORK_PAGE.API_KEY' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="consumerKey"
-						formControlName="consumerKey"
-						type="text"
-						nbInput
-						placeholder="{{
-							'FORM.PLACEHOLDERS.UPWORK_API_KEY' | translate
-						}}"
-					/>
-				</div>
-				<div class="form-group">
-					<label for="consumerSecret" class="label">{{
-						'INTEGRATIONS.UPWORK_PAGE.SECRET' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="consumerSecret"
-						formControlName="consumerSecret"
-						type="text"
-						nbInput
-						placeholder="{{
-							'FORM.PLACEHOLDERS.UPWORK_SECRET' | translate
-						}}"
-					/>
-				</div>
-				<div class="hint">
-					<nb-icon icon="info-outline"></nb-icon>
-					{{ 'INTEGRATIONS.UPWORK_PAGE.NEXT_STEP_INFO' | translate }}
-				</div>
-				<button
-					nbButton
-					status="primary"
-					[disabled]="!upworkConfigForm.valid"
-				>
-					{{ 'BUTTONS.NEXT' | translate }}
-				</button>
-			</form>
-		</ng-container>
+				{{ 'BUTTONS.NEXT' | translate }}
+			</button>
+		</form>
 	</nb-card-body>
 </nb-card>

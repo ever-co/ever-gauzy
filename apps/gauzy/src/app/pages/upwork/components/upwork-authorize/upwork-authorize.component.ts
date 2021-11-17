@@ -8,14 +8,12 @@ import {
 	debounceTime
 } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
+import { IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-	PersistQuery,
-	PersistStore,
 	Store,
 	UpworkService
 } from './../../../../@core/services';
-import { IOrganization } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,47 +22,42 @@ import { IOrganization } from '@gauzy/contracts';
 	styleUrls: ['./upwork-authorize.component.scss']
 })
 export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
-	upworkConfigForm: FormGroup;
 	rememberState: boolean;
 	organization: IOrganization;
+
+	readonly form: FormGroup = UpworkAuthorizeComponent.buildForm(this._fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			consumerKey: ['', Validators.required],
+			consumerSecret: ['', Validators.required]
+		});
+	}
 
 	constructor(
 		private readonly _fb: FormBuilder,
 		private readonly _upworkService: UpworkService,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
-		private readonly _storeService: Store,
-		private readonly _persistStore: PersistStore,
-		private readonly _persistQuery: PersistQuery
+		private readonly _store: Store
 	) {}
 
 	ngOnInit() {
-		this._storeService.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				this._persistStore.update({
-					organizationId: this.organization.id
-				});
-			});
+			.subscribe();
 		this._activatedRoute.data
-			.pipe(untilDestroyed(this), debounceTime(100))
-			.subscribe((data: any) => {
-				if (data.hasOwnProperty('state')) {
-					this.rememberState = data['state'];
-					this._getUpworkVerifier();
-				}
-			});
-	}
-
-	private _initializeForm() {
-		this.upworkConfigForm = this._fb.group({
-			consumerKey: ['', Validators.required],
-			consumerSecret: ['', Validators.required]
-		});
+			.pipe(
+				debounceTime(100),
+				filter(({ state }) => !!state),
+				tap(({ state }) => this.rememberState = state),
+				tap(() => this._getUpworkVerifier()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private _getUpworkVerifier() {
@@ -72,22 +65,21 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 			.pipe(
 				switchMap((params) => {
 					if (params && params.oauth_verifier) {
-						const {
-							organizationId
-						} = this._persistQuery.getValue();
-						return this._upworkService.getAccessToken(
-							{
-								requestToken: params.oauth_token,
-								verifier: params.oauth_verifier
-							},
-							organizationId
-						);
+						if (this.organization) {
+							const { id: organizationId } = this.organization;
+							return this._upworkService.getAccessToken(
+								{
+									requestToken: params.oauth_token,
+									verifier: params.oauth_verifier
+								},
+								organizationId
+							);
+						}
 					}
 					// if remember state is true
 					if (this.rememberState) {
 						this._checkRemeberState();
 					}
-					this._initializeForm();
 					return EMPTY;
 				}),
 				tap((res) =>
@@ -99,7 +91,10 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	}
 
 	private _checkRemeberState() {
-		const { organizationId } = this._persistQuery.getValue();
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
 		this._upworkService
 			.checkRemeberState(organizationId)
 			.pipe(
@@ -115,6 +110,9 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	}
 
 	authorizeUpwork(config) {
+		if (!this.organization) {
+			return;
+		}
 		const { id: organizationId } = this.organization;
 		this._upworkService
 			.getAccessTokenSecretPair(config, organizationId)
@@ -133,9 +131,5 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 		this._router.navigate(['pages/integrations/upwork', integrationId]);
 	}
 
-	ngOnDestroy(): void {
-		this._persistStore.update({
-			organizationId: null
-		});
-	}
+	ngOnDestroy(): void { }
 }

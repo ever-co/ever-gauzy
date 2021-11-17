@@ -18,7 +18,6 @@ import {
 export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 
 	hubStaffAuthorizeCode: string;
-	rememberState: boolean;
 	public organization: IOrganization;
 
 	public clientIdForm: FormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);

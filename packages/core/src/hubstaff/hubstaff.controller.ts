@@ -30,7 +30,7 @@ export class HubstaffController {
 	 */
 	@Public()
 	@Get('callback')
-	async hubstaffCallback(
+	async hubstaffIntegrationCallback(
 		@Query('code') code: string,
 		@Query('state') state: string,
 		@Res() res
