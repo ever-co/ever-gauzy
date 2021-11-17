@@ -13,11 +13,11 @@ import {
 	IntegrationEnum
 } from '@gauzy/contracts';
 import { v4 as uuid } from 'uuid';
-import { Store } from './store.service';
 import { switchMap, tap } from 'rxjs/operators';
-import { environment } from 'apps/gauzy/src/environments/environment';
 import { clone } from 'underscore';
 import * as moment from 'moment';
+import { Store } from './store.service';
+import { environment } from './../../../environments/environment';
 import { API_PREFIX } from '../constants/app.constants';
 
 const TODAY = new Date();
@@ -57,7 +57,10 @@ export class HubstaffService {
 
 	integrationId: string;
 
-	constructor(private _http: HttpClient, private _store: Store) {}
+	constructor(
+		private readonly _http: HttpClient,
+		private readonly _store: Store
+	) {}
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
 		const data = JSON.stringify({
@@ -124,7 +127,7 @@ export class HubstaffService {
 	authorizeClient(client_id: string): void {
 		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${
 			environment.HUBSTAFF_REDIRECT_URI
-		}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=oauth2&nonce=${uuid()}`;
+		}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=${client_id}&nonce=${uuid()}`;
 
 		window.location.replace(url);
 	}
@@ -132,11 +135,11 @@ export class HubstaffService {
 	addIntegration({
 		code,
 		client_secret,
-		clientId,
+		client_id,
 		organizationId
 	}): Observable<IIntegrationTenant> {
 		const getAccessTokensDto = {
-			client_id: clientId,
+			client_id,
 			code,
 			redirect_uri: environment.HUBSTAFF_REDIRECT_URI,
 			client_secret,

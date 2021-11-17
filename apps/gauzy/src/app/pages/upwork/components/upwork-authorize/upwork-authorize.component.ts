@@ -4,45 +4,45 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
 	tap,
 	switchMap,
-	takeUntil,
 	filter,
 	debounceTime
 } from 'rxjs/operators';
-import { EMPTY, Subject } from 'rxjs';
-import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
+import { EMPTY } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	PersistQuery,
 	PersistStore,
-	Store
-} from 'apps/gauzy/src/app/@core/services/store.service';
+	Store,
+	UpworkService
+} from './../../../../@core/services';
 import { IOrganization } from '@gauzy/contracts';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-upwork-authorize',
 	templateUrl: './upwork-authorize.component.html',
 	styleUrls: ['./upwork-authorize.component.scss']
 })
 export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
-	private _ngDestroy$: Subject<void> = new Subject();
 	upworkConfigForm: FormGroup;
 	rememberState: boolean;
 	organization: IOrganization;
 
 	constructor(
-		private _fb: FormBuilder,
-		private _upworkService: UpworkService,
-		private _activatedRoute: ActivatedRoute,
-		private _router: Router,
-		private _storeService: Store,
-		private _persistStore: PersistStore,
-		private _persistQuery: PersistQuery
+		private readonly _fb: FormBuilder,
+		private readonly _upworkService: UpworkService,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _router: Router,
+		private readonly _storeService: Store,
+		private readonly _persistStore: PersistStore,
+		private readonly _persistQuery: PersistQuery
 	) {}
 
 	ngOnInit() {
 		this._storeService.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
@@ -51,7 +51,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 				});
 			});
 		this._activatedRoute.data
-			.pipe(takeUntil(this._ngDestroy$), debounceTime(100))
+			.pipe(untilDestroyed(this), debounceTime(100))
 			.subscribe((data: any) => {
 				if (data.hasOwnProperty('state')) {
 					this.rememberState = data['state'];
@@ -93,7 +93,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 				tap((res) =>
 					this._redirectToUpworkIntegration(res.integrationId)
 				),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -109,7 +109,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 						this._redirectToUpworkIntegration(record.id);
 					}
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -124,7 +124,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 						? this._redirectToUpworkIntegration(res.integrationId)
 						: window.location.replace(res.url);
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -137,7 +137,5 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 		this._persistStore.update({
 			organizationId: null
 		});
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 }
