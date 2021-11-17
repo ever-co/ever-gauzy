@@ -59,7 +59,7 @@ export const env: Env = cleanEnv(
 		GOOGLE_MAPS_API_KEY: str({ default: '' }),
 		GOOGLE_PLACE_AUTOCOMPLETE: bool({ default: false }),
 
-		HUBSTAFF_REDIRECT_URI: str({ default: '' }),
+		HUBSTAFF_REDIRECT_URI: str({ default: 'http://localhost:3000/api/integrations/hubstaff/callback' }),
 
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),

@@ -1,5 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
-import { HubstaffService } from './hubstaff.service';
+import { Controller, Post, Body, Get, Param, Query, Res } from '@nestjs/common';
 import {
 	IIntegrationTenant,
 	IHubstaffOrganization,
@@ -8,14 +7,49 @@ import {
 	IIntegrationSetting
 } from '@gauzy/contracts';
 import { ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@gauzy/config';
 import { UUIDValidationPipe } from './../shared/pipes';
+import { Public } from './../shared/decorators';
+import { HubstaffService } from './hubstaff.service';
 
 @ApiTags('Integrations')
 @Controller()
 export class HubstaffController {
 	constructor(
-		private readonly _hubstaffService: HubstaffService
+		private readonly _hubstaffService: HubstaffService,
+		private readonly _config: ConfigService
 	) {}
+
+	/**
+	 * Hubstaff Authorization Flow Callback
+	 * 
+	 * @param code 
+	 * @param state 
+	 * @param res 
+	 * @returns 
+	 */
+	@Public()
+	@Get('callback')
+	async hubstaffCallback(
+		@Query('code') code: string,
+		@Query('state') state: string,
+		@Res() res
+	) {
+		try {
+			if (code) {
+				return res.redirect(
+					`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff?code=${code}&state=${state}`
+				);
+			}
+			return res.redirect(
+				`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff`
+			);
+		} catch (error) {
+			return res.redirect(
+				`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff`
+			);
+		}
+	}
 
 	@Get('/token/:integrationId')
 	async getHubstaffTokenByIntegration(

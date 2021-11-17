@@ -175,8 +175,10 @@ export class UpworkService {
 			this._upworkApi.getAuthorizationUrl(
 				authUrl,
 				async (error, url, requestToken, requestTokenSecret) => {
-					if (error)
+					if (error) {
 						reject(`can't get authorization url, error: ${error}`);
+						return;
+					}
 
 					await this.commandBus.execute(
 						new IntegrationTenantCreateCommand({

@@ -1,14 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbMenuItem } from '@nebular/theme';
-import { filter, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { filter } from 'rxjs/operators';
+import { tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
-import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ActivatedRoute, Params } from '@angular/router';
 import { IOrganization } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../../../@shared/language-base';
+import { Store, UpworkStoreService } from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-upwork',
 	templateUrl: './upwork.component.html'
@@ -16,42 +17,50 @@ import { IOrganization } from '@gauzy/contracts';
 export class UpworkComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$: Subject<void> = new Subject();
+
 	tabs: any[];
 	supportContextActions: NbMenuItem[];
 	integrationId: string;
 	organization: IOrganization;
 
 	constructor(
-		readonly translateService: TranslateService,
-		private _ar: ActivatedRoute,
-		private _us: UpworkStoreService,
-		private readonly _storeService: Store
+		public readonly translateService: TranslateService,
+		private readonly _router: ActivatedRoute,
+		private readonly _upworkStore: UpworkStoreService,
+		private readonly _store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.loadTabs();
-		this.loadActions();
-		this._applyTranslationOnTabs();
-		this._storeService.selectedOrganization$
+		this._loadTabs();
+		this._applyTranslationOnTabsActions();
+
+		this._router.params
+			.pipe(
+				tap(
+					(params: Params) => this.integrationId = params['id']
+				),
+				tap(() => this._loadActions())
+			)
+			.subscribe();
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._getConfig()),
+				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				this._getConfig();
-			});
+			.subscribe();
 	}
 
 	private _getConfig() {
-		const { id: organizationId, tenantId } = this.organization;
-		const integrationId = (this.integrationId = this._ar.snapshot.params.id);
-		this._us
+		const { tenantId } = this._store.user;
+		const { id: organizationId } = this.organization;
+		const integrationId = this.integrationId;
+		this._upworkStore
 			.getConfig({ integrationId, organizationId, tenantId })
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe();
 	}
 
@@ -59,7 +68,7 @@ export class UpworkComponent
 		return `./${tabName}`;
 	}
 
-	loadTabs() {
+	private _loadTabs() {
 		this.tabs = [
 			{
 				title: this.getTranslation(
@@ -94,7 +103,7 @@ export class UpworkComponent
 		];
 	}
 
-	loadActions() {
+	private _loadActions() {
 		this.supportContextActions = [
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
@@ -109,17 +118,17 @@ export class UpworkComponent
 		];
 	}
 
-	private _applyTranslationOnTabs() {
+	private _applyTranslationOnTabsActions() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.loadTabs();
-				this.loadActions();
-			});
+			.pipe(
+				tap(() => {
+					this._loadTabs();
+					this._loadActions();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void { }
 }
