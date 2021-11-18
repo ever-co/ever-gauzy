@@ -364,15 +364,7 @@ export class HubstaffService {
 						new OrganizationUpdateCommand(
 							Object.assign(organization, {
 								id: gauzyId,
-								imageUrl:
-									organization.imageUrl ||
-									getDummyImage(
-										330,
-										300,
-										organization.name
-											.charAt(0)
-											.toUpperCase()
-									)
+								imageUrl: organization.imageUrl
 							})
 						)
 					);
@@ -381,13 +373,7 @@ export class HubstaffService {
 				const gauzyOrganization = await this.commandBus.execute(
 					new OrganizationCreateCommand({
 						...organization,
-						imageUrl:
-							organization.imageUrl ||
-							getDummyImage(
-								330,
-								300,
-								organization.name.charAt(0).toUpperCase()
-							)
+						imageUrl: organization.imageUrl
 					})
 				);
 				return await this._integrationMapService.create({

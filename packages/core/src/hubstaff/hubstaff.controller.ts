@@ -21,7 +21,7 @@ export class HubstaffController {
 	) {}
 
 	/**
-	 * Hubstaff Authorization Flow Callback
+	 * Hubstaff Integration Authorization Flow Callback
 	 * 
 	 * @param code 
 	 * @param state 

@@ -181,17 +181,22 @@ export class HubstaffComponent
 				this.integrationId,
 				this.organizationId
 			)
-			.subscribe(
-				(res) => {
+			.pipe(
+				tap(() => {
 					this.toastrService.success(
 						this.getTranslation(
 							'INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_PROJECTS'
 						),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
-				},
-				(err) => this._errorHandlingService.handleError(err)
-			);
+				}),
+				catchError((error) => {
+					this._errorHandlingService.handleError(error);
+					return of(null);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	autoSync() {
