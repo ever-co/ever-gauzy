@@ -78,7 +78,6 @@ export class HubstaffController {
 		@Body() body
 	): Promise<IHubstaffOrganization[]> {
 		return await this._hubstaffService.fetchOrganizations({
-			integrationId,
 			...body
 		});
 	}
