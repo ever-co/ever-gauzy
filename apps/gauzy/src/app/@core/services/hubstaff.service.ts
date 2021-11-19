@@ -10,13 +10,14 @@ import {
 	DefaultValueDateTypeEnum,
 	IIntegrationMap,
 	IntegrationEntity,
-	IntegrationEnum
+	IntegrationEnum,
+	IDateRangeActivityFilter,
+	IEntitySettingToSync
 } from '@gauzy/contracts';
 import { v4 as uuid } from 'uuid';
 import { switchMap, tap } from 'rxjs/operators';
 import { clone } from 'underscore';
 import * as moment from 'moment';
-import { Store } from './store.service';
 import { environment } from './../../../environments/environment';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -26,16 +27,6 @@ const DEFAULT_DATE_RANGE = {
 	start: new Date(moment().subtract(7, 'days').format('YYYY-MM-DD')),
 	end: TODAY
 };
-
-interface IEntitySettingToSync {
-	previousValue: IIntegrationEntitySetting[];
-	currentValue: IIntegrationEntitySetting[];
-}
-
-interface IDateRangeActivityFilter {
-	start: Date;
-	end: Date;
-}
 
 @Injectable({
 	providedIn: 'root'
@@ -58,8 +49,7 @@ export class HubstaffService {
 	integrationId: string;
 
 	constructor(
-		private readonly _http: HttpClient,
-		private readonly _store: Store
+		private readonly _http: HttpClient
 	) {}
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {

@@ -21,7 +21,7 @@ export class HubstaffController {
 	) {}
 
 	/**
-	 * Hubstaff Authorization Flow Callback
+	 * Hubstaff Integration Authorization Flow Callback
 	 * 
 	 * @param code 
 	 * @param state 
@@ -78,7 +78,6 @@ export class HubstaffController {
 		@Body() body
 	): Promise<IHubstaffOrganization[]> {
 		return await this._hubstaffService.fetchOrganizations({
-			integrationId,
 			...body
 		});
 	}

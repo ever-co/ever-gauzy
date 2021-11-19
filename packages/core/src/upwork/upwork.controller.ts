@@ -39,6 +39,14 @@ export class UpworkController {
 		private readonly _config: ConfigService
 	) {}
 
+	/**
+	 * Upwork Integration Authorization Flow Callback
+	 * 
+	 * @param oauth_token 
+	 * @param oauth_verifier 
+	 * @param res 
+	 * @returns 
+	 */
 	@Public()
 	@Get('callback')
 	async upworkIntegrationCallback(
