@@ -7,6 +7,7 @@ import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
+import { RequestContext } from './../../../../core/context';
 
 
 @CommandHandler(TimeSlotMergeCommand)
@@ -21,6 +22,7 @@ export class TimeSlotMergeHandler
 
 	public async execute(command: TimeSlotMergeCommand) {
 		let { employeeId, start, end } = command;
+		const tenantId = RequestContext.currentTenantId();
 
 		let startMinute = moment(start).utc().get('minute');
 		startMinute = startMinute - (startMinute % 10);
@@ -61,8 +63,10 @@ export class TimeSlotMergeHandler
 				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
+				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				});
 				query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
-				console.log(query.getQueryAndParameters());
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
@@ -140,7 +144,8 @@ export class TimeSlotMergeHandler
 						screenshots,
 						activities,
 						timeLogs,
-						startedAt: moment(slotStart).toDate()
+						startedAt: moment(slotStart).toDate(),
+						tenantId
 					});
 					await this.timeSlotRepository.save(newTimeSlot);
 					createdTimeslots.push(newTimeSlot);

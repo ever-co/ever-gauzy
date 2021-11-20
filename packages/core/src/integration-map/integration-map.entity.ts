@@ -31,9 +31,7 @@ export class IntegrationMap
     */
 
 	@ApiProperty({ type: () => IntegrationTenant })
-	@ManyToOne(() => IntegrationTenant, {
-		nullable: false
-	})
+	@ManyToOne(() => IntegrationTenant, (integration) => integration.entityMaps)
 	@JoinColumn()
 	integration: IIntegrationTenant;
 
