@@ -4,6 +4,7 @@ import * as moment from 'moment';
 import { IntegrationEntity, ITimeSlot } from '@gauzy/contracts';
 import { TimeSlotCreateCommand } from './../time-slot-create.command';
 import { TimeSlotService } from './../../time-slot.service';
+import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(TimeSlotCreateCommand)
 export class TimeSlotCreateHandler
@@ -16,6 +17,8 @@ export class TimeSlotCreateHandler
 	public async execute(command: TimeSlotCreateCommand): Promise<ITimeSlot> {
 		try {
 			const { input } = command;
+			const tenantId = RequestContext.currentTenantId();
+
 			const {
 				employeeId,
 				duration,
@@ -35,7 +38,8 @@ export class TimeSlotCreateHandler
 				startedAt: new Date(
 					moment(time_slot).format('YYYY-MM-DD HH:mm:ss')
 				),
-				organizationId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t create ${IntegrationEntity.TIME_SLOT}`);

@@ -481,6 +481,7 @@ export class UpworkService {
 
 	async syncTimeLog(timeLog): Promise<ITimeLog> {
 		const organizationId = timeLog.organizationId;
+		const tenantId = RequestContext.currentTenantId();
 		
 		const gauzyTimeLog = await this.commandBus.execute(
 			new TimeLogCreateCommand({
@@ -490,7 +491,8 @@ export class UpworkService {
 				startedAt: timeLog.startedAt,
 				stoppedAt: timeLog.stoppedAt,
 				source: TimeLogSourceEnum.UPWORK,
-				organizationId
+				organizationId,
+				tenantId
 			})
 		);
 
@@ -515,6 +517,7 @@ export class UpworkService {
 		organizationId
 	}) {
 		let integratedTimeSlots = [];
+		const tenantId = RequestContext.currentTenantId();
 
 		for await (const timeSlot of timeSlots) {
 			const multiply = 10;
@@ -538,7 +541,8 @@ export class UpworkService {
 					),
 					overall: activity * multiply,
 					duration: durtion,
-					organizationId
+					organizationId,
+					tenantId
 				})
 			);
 			const integratedSlot = await this.commandBus.execute(
@@ -610,15 +614,9 @@ export class UpworkService {
 						sourceId,
 						organizationId
 					};
-					integratedTimeLogs.push(
-						await this.syncTimeLog(timeLogDto)
-					);
-					integratedTimeSlots.push(
-						await this.syncTimeSlots(timeSlotsDto)
-					);
-					integratedScreenshots.push(
-						await this.syncSnapshots(timeSlotsDto)
-					);
+					integratedTimeLogs.push(await this.syncTimeLog(timeLogDto));
+					integratedTimeSlots.push(await this.syncTimeSlots(timeSlotsDto));
+					integratedScreenshots.push(await this.syncSnapshots(timeSlotsDto));
 					timeSlotsActivities.push(
 						await this.getTimeSlotActivitiesByContractId({
 							contractId: sourceId,
@@ -768,6 +766,7 @@ export class UpworkService {
 		try {
 			const { minutes } = timeSlotActivity;
 			const { cell_time } = timeSlot;
+			const tenantId = RequestContext.currentTenantId();
 
 			const integratedTimeSlotsMinutes = await Promise.all(
 				minutes.map(async (minute) => {
@@ -775,7 +774,8 @@ export class UpworkService {
 						record: findTimeSlot
 					} = await this._timeSlotService.findOneOrFailByOptions({
 						where: {
-							employeeId: employeeId,
+							tenantId,
+							employeeId,
 							startedAt: moment
 								.unix(cell_time)
 								.format('YYYY-MM-DD HH:mm:ss')
@@ -795,7 +795,8 @@ export class UpworkService {
 								moment.unix(time).format('YYYY-MM-DD HH:mm:ss')
 							),
 							timeSlot: findTimeSlot,
-							organizationId
+							organizationId,
+							tenantId
 						})
 					);
 					return gauzyTimeSlotMinute;

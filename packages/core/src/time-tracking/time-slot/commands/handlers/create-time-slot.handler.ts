@@ -93,6 +93,8 @@ export class CreateTimeSlotHandler
 
 		if (!timeSlot) {
 			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
+			timeSlot.tenantId = tenantId;
+			timeSlot.organizationId = organizationId;
 			console.log('Omit New Timeslot:', timeSlot);
 		}
 
