@@ -76,7 +76,6 @@ export class TimesheetFirstOrCreateHandler
 						qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 					})
 				);
-				console.log(query.getQueryAndParameters(), 'Timesheet Query Paramerts');
 			}
 		});
 		if (!timesheet) {

@@ -5,6 +5,7 @@ import { ExpenseCategory } from './expense-category.entity';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategoriesController } from './expense-categories.controller';
 import { TenantModule } from '../tenant/tenant.module';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -15,7 +16,13 @@ import { TenantModule } from '../tenant/tenant.module';
 		TenantModule
 	],
 	controllers: [ExpenseCategoriesController],
-	providers: [ExpenseCategoriesService],
-	exports: [ExpenseCategoriesService]
+	providers: [
+		ExpenseCategoriesService,
+		...CommandHandlers
+	],
+	exports: [
+		TypeOrmModule,
+		ExpenseCategoriesService
+	]
 })
 export class ExpenseCategoriesModule {}

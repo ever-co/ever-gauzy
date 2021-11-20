@@ -46,8 +46,8 @@ import {
 		OrganizationVendorModule,
 		OrganizationContactModule,
 		IntegrationMapModule,
-		ExpenseModule,
 		IncomeModule,
+		ExpenseModule,
 		ExpenseCategoriesModule,
 		CqrsModule
 	],

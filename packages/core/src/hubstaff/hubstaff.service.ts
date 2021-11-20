@@ -729,7 +729,7 @@ export class HubstaffService {
 							tenantId,
 							thirdPartyId: user.id
 						},
-						password: env.defaultHubstaffUserPass,
+						password: env.defaultIntegratedUserPass,
 						organization,
 						startedWorkOn: new Date(
 							moment().format('YYYY-MM-DD HH:mm:ss')

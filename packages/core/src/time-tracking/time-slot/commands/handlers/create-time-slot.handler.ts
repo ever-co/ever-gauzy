@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository } from 'typeorm';
+import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -13,6 +13,7 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
+import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -95,8 +96,6 @@ export class CreateTimeSlotHandler
 			console.log('Omit New Timeslot:', timeSlot);
 		}
 
-		console.log('Timelog ID:', input.timeLogId);
-
 		if (input.timeLogId) {
 			let timeLogIds = [];
 			if (input.timeLogId instanceof Array) {
@@ -111,20 +110,31 @@ export class CreateTimeSlotHandler
 				employeeId
 			});
 		} else {
-			let query = this.timeLogRepository.createQueryBuilder('time_log');
-			query = query
-				.andWhere(`${query.alias}.tenantId = ${tenantId}`)
-				.andWhere(`${query.alias}.organizationId = ${organizationId}`)
-				.andWhere(`${query.alias}.employeeId = ${employeeId}`)
-				.andWhere(
-					new Brackets((qb: any) => {
-						const { startedAt } = timeSlot;
-						qb.orWhere('"startedAt" <= :startedAt AND "stoppedAt" > :startedAt', { startedAt });
-						qb.orWhere('"startedAt" <= :startedAt AND "stoppedAt" IS NULL', { startedAt });
-					})
-				);
-			timeSlot.timeLogs = await query.getMany();
-			console.log('Else Timelog Timeslot:', query.getQueryAndParameters(), timeSlot);
+			try {
+				/**
+				 * Find TimeLog for TimeSlot Range 
+				 */
+				 timeSlot.timeLogs = await this.timeLogRepository.find({
+					where: (query: SelectQueryBuilder<TimeLog>) => {
+						query.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => { 
+								qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+								qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+								qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
+							})
+						);
+						query.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => {
+								const { startedAt } = timeSlot;
+								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" > :startedAt`, { startedAt });
+								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" IS NULL`, { startedAt });
+							})
+						);
+					}
+				});
+			} catch (error) {
+				throw new BadRequestException('Can\'t find Timelog for timeslot');
+			}
 		}
 
 		if (input.activities) {

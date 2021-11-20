@@ -119,8 +119,8 @@ export const environment: IEnvironment = {
 		dns: process.env.SENTRY_DSN
 	},
 
-	defaultHubstaffUserPass:
-		process.env.INTEGRATED_HUBSTAFF_USER_PASS || 'hubstaff',
+	defaultIntegratedUserPass:
+		process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upworkConfig: {
 		callbackUrl:
