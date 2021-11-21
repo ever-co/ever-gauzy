@@ -23,6 +23,7 @@ export default class Timerhandler {
 	timeSlotStart = null;
 	isPaused = false;
 	listener = false;
+	nextScreenshot = 0;
 
 	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		// store timer is start to electron-store
@@ -51,11 +52,18 @@ export default class Timerhandler {
 		}
 
 		const appSetting = LocalStore.getStore('appSetting');
+		
 		appSetting.timerStarted = true;
 		LocalStore.updateApplicationSetting(appSetting);
 
 		this.notificationDesktop.timerActionNotification(true);
 		this.configs = LocalStore.getStore('configs');
+		if (appSetting.randomScreenshotTime) {
+			this.nextScreenshot = 0;
+			this.timeSlotStart = moment();
+			this.nextTickScreenshot();
+
+		}
 
 		this.timeStart = moment();
 
@@ -66,11 +74,14 @@ export default class Timerhandler {
 			/*
 			 * Start time interval for get set activities and screenshots
 			 */
-			this.startTimerIntervalPeriod(setupWindow, knex);
+			if (!appSetting.randomScreenshotTime) {
+				this.startTimerIntervalPeriod(setupWindow, knex);
+			}
+			
 
 			/*
 			 * Create screenshots at begining of timer
-			 */
+			//  */
 			(async () => {
 				await this.makeScreenshot(setupWindow, knex, false);
 			})();
@@ -86,6 +97,7 @@ export default class Timerhandler {
 	 */
 	collectActivities(setupWindow, knex, timeTrackerWindow) {
 		const projectInfo = LocalStore.getStore('project');
+		const appSetting = LocalStore.getStore('appSetting');
 		this.intevalTimer = setInterval(() => {
 			try {
 				TimerData.updateDurationOfTimer(knex, {
@@ -136,6 +148,12 @@ export default class Timerhandler {
 					minute: this.timeRecordMinute,
 					hours: this.timeRecordHours
 				});
+				
+				if (appSetting.randomScreenshotTime) {
+					if (this.nextScreenshot === this.timeRecordSecond) {
+						this.randomScreenshotUpdate(setupWindow, knex);
+					}
+				}
 			} catch (error) {
 				console.log('errr', error);
 			}
@@ -147,6 +165,18 @@ export default class Timerhandler {
 		this.timeRecordSecond = now.diff(moment(this.timeStart), 'seconds');
 		this.timeRecordHours = now.diff(moment(this.timeStart), 'hours');
 		this.timeRecordMinute = now.diff(moment(this.timeStart), 'minutes');
+	}
+
+	async randomScreenshotUpdate(setupWindow, knex) {
+		await this.getSetActivity(
+			knex,
+			setupWindow,
+			this.timeSlotStart,
+			false
+		);
+		this.nextTickScreenshot();
+		console.log('Timeslot Start Time', this.timeSlotStart);
+		this.timeSlotStart = moment();
 	}
 
 	startTimerIntervalPeriod(setupWindow, knex) {
@@ -169,6 +199,36 @@ export default class Timerhandler {
 			console.log('Timeslot Start Time', this.timeSlotStart);
 			this.timeSlotStart = moment();
 		}, 60 * 1000 * updatePeriod);
+	}
+
+	nextTickScreenshot() {
+		const appSetting = LocalStore.getStore('appSetting');
+		const updatePeriod = appSetting.timer.updatePeriod;
+		const tickAdd = this.maxMinAdditionalTime(updatePeriod);
+		const randomSecond = Math.floor(Math.random() * (tickAdd.max - tickAdd.min)) + tickAdd.min;
+		this.nextScreenshot = this.nextScreenshot + randomSecond;
+	}
+
+	maxMinAdditionalTime(updatePeriod) {
+		switch (updatePeriod) {
+			case 1:
+				return {
+					max: (updatePeriod * 60) + 20,
+					min: (updatePeriod * 60) - 20,
+				}
+			case 5:
+				return {
+					max: (updatePeriod * 60) + 60,
+					min: (updatePeriod * 60) - 60
+				}
+			case 10:
+				return {
+					max: (updatePeriod * 60) + 60,
+					min: (updatePeriod * 60) - 20
+				}
+			default:
+				break;
+		}
 	}
 
 	/*
