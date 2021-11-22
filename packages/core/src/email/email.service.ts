@@ -38,7 +38,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 		super(emailRepository);
 		const config: Email.EmailConfig<any> = {
 			message: {
-				from: env.smtpConfig.from || 'gauzy@ever.co'
+				from: env.smtpConfig.from || 'ever@ever.co'
 			},
 
 			// if you want to send emails in development or test environments, set options.send to true.
