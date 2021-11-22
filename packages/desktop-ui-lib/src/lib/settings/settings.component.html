@@ -103,6 +103,7 @@
 					placeholder="Select Period"
 					[(ngModel)]="selectedPeriod"
 					(ngModelChange)="selectPeriod($event)"
+					[disabled]="appSetting.timerStarted"
 				>
 					<nb-option *ngFor="let item of periodOption" [value]="item"
 						>{{ item }} Minute</nb-option
@@ -114,6 +115,7 @@
 					[(ngModel)]="appSetting.randomScreenshotTime"
 					(ngModelChange)="toggleRandomScreenshot($event)"
 					status="basic"
+					[disabled]="appSetting.timerStarted"
 					>Random Screenshot Time
 				</nb-toggle>
 			</div>
