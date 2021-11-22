@@ -7,12 +7,11 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	Param
+	Param,
+	Res
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { UpworkTransactionService } from './upwork-transaction.service';
-import { UpworkService } from './upwork.service';
 import {
 	IAccessToken,
 	IAccessTokenSecretPair,
@@ -24,16 +23,52 @@ import {
 	IUpworkClientSecretPair,
 	IPagination
 } from '@gauzy/contracts';
+import { ConfigService } from '@gauzy/config';
+import { UpworkTransactionService } from './upwork-transaction.service';
+import { UpworkService } from './upwork.service';
 import { Expense, Income } from './../core/entities/internal';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { Public } from './../shared/decorators';
 
 @ApiTags('Integrations')
 @Controller()
 export class UpworkController {
 	constructor(
 		private readonly _upworkTransactionService: UpworkTransactionService,
-		private readonly _upworkService: UpworkService
+		private readonly _upworkService: UpworkService,
+		private readonly _config: ConfigService
 	) {}
+
+	/**
+	 * Upwork Integration Authorization Flow Callback
+	 * 
+	 * @param oauth_token 
+	 * @param oauth_verifier 
+	 * @param res 
+	 * @returns 
+	 */
+	@Public()
+	@Get('callback')
+	async upworkIntegrationCallback(
+		@Query('oauth_token') oauth_token: string,
+		@Query('oauth_verifier') oauth_verifier: string,
+		@Res() res: any
+	) {
+		try {
+			if (oauth_token && oauth_verifier) {
+				return res.redirect(
+					`${this._config.get('clientBaseUrl')}/#/pages/integrations/upwork?oauth_token=${oauth_token}&oauth_verifier=${oauth_verifier}`
+				);
+			}
+			return res.redirect(
+				`${this._config.get('clientBaseUrl')}/#/pages/integrations/upwork`
+			);
+		} catch (error) {
+			return res.redirect(
+				`${this._config.get('clientBaseUrl')}/#/pages/integrations/upwork`
+			);
+		}
+	}
 
 	@ApiOperation({ summary: 'Upload Upwork transaction.' })
 	@ApiResponse({

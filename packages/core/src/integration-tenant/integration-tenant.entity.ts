@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
-import { IIntegrationEntitySetting, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import {
 	IntegrationEntitySetting,
+	IntegrationMap,
 	IntegrationSetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
@@ -41,4 +42,14 @@ export class IntegrationTenant
 	})
 	@JoinColumn()
 	entitySettings?: IIntegrationEntitySetting[];
+
+	/**
+	 * IntegrationMap
+	 */
+	@ApiPropertyOptional({ type: () => IntegrationMap, isArray: true })
+	@OneToMany(() => IntegrationMap, (map) => map.integration, {
+		cascade: true
+	})
+	@JoinColumn()
+	entityMaps?: IIntegrationMap[];
 }

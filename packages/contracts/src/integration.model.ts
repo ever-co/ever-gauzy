@@ -183,3 +183,16 @@ export const DEFAULT_INTEGRATIONS = [
 		order: 3
 	}
 ];
+
+/**
+* Hubstaff Integration
+*/
+export interface IEntitySettingToSync {
+	previousValue: IIntegrationEntitySetting[];
+	currentValue: IIntegrationEntitySetting[];
+}
+
+export interface IDateRangeActivityFilter {
+	start: Date;
+	end: Date;
+}

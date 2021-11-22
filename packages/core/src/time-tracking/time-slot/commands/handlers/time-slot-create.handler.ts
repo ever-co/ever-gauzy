@@ -1,18 +1,24 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
-import { ITimeSlot } from '@gauzy/contracts';
+import { IntegrationEntity, ITimeSlot } from '@gauzy/contracts';
 import { TimeSlotCreateCommand } from './../time-slot-create.command';
 import { TimeSlotService } from './../../time-slot.service';
+import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(TimeSlotCreateCommand)
 export class TimeSlotCreateHandler
 	implements ICommandHandler<TimeSlotCreateCommand> {
-	constructor(private _timeSlotService: TimeSlotService) {}
+
+	constructor(
+		private readonly _timeSlotService: TimeSlotService
+	) {}
 
 	public async execute(command: TimeSlotCreateCommand): Promise<ITimeSlot> {
 		try {
 			const { input } = command;
+			const tenantId = RequestContext.currentTenantId();
+
 			const {
 				employeeId,
 				duration,
@@ -32,10 +38,11 @@ export class TimeSlotCreateHandler
 				startedAt: new Date(
 					moment(time_slot).format('YYYY-MM-DD HH:mm:ss')
 				),
-				organizationId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
-			throw new BadRequestException('Cant create time slot');
+			throw new BadRequestException(error, `Can\'t create ${IntegrationEntity.TIME_SLOT}`);
 		}
 	}
 }

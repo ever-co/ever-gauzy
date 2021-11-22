@@ -115,13 +115,13 @@ export const environment: IEnvironment = {
 		dns: process.env.SENTRY_DSN
 	},
 
-	defaultHubstaffUserPass:
-		process.env.INTEGRATED_HUBSTAFF_USER_PASS || 'hubstaff',
+	defaultIntegratedUserPass:
+		process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upworkConfig: {
 		callbackUrl:
 			process.env.UPWORK_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/integrations/upwork`
+			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/integrations/upwork/callback`
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,

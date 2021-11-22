@@ -10,14 +10,15 @@ import {
 	DefaultValueDateTypeEnum,
 	IIntegrationMap,
 	IntegrationEntity,
-	IntegrationEnum
+	IntegrationEnum,
+	IDateRangeActivityFilter,
+	IEntitySettingToSync
 } from '@gauzy/contracts';
 import { v4 as uuid } from 'uuid';
-import { Store } from './store.service';
 import { switchMap, tap } from 'rxjs/operators';
-import { environment } from 'apps/gauzy/src/environments/environment';
 import { clone } from 'underscore';
 import * as moment from 'moment';
+import { environment } from './../../../environments/environment';
 import { API_PREFIX } from '../constants/app.constants';
 
 const TODAY = new Date();
@@ -26,16 +27,6 @@ const DEFAULT_DATE_RANGE = {
 	start: new Date(moment().subtract(7, 'days').format('YYYY-MM-DD')),
 	end: TODAY
 };
-
-interface IEntitySettingToSync {
-	previousValue: IIntegrationEntitySetting[];
-	currentValue: IIntegrationEntitySetting[];
-}
-
-interface IDateRangeActivityFilter {
-	start: Date;
-	end: Date;
-}
 
 @Injectable({
 	providedIn: 'root'
@@ -57,7 +48,9 @@ export class HubstaffService {
 
 	integrationId: string;
 
-	constructor(private _http: HttpClient, private _store: Store) {}
+	constructor(
+		private readonly _http: HttpClient
+	) {}
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
 		const data = JSON.stringify({
@@ -124,7 +117,7 @@ export class HubstaffService {
 	authorizeClient(client_id: string): void {
 		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${
 			environment.HUBSTAFF_REDIRECT_URI
-		}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=oauth2&nonce=${uuid()}`;
+		}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=${client_id}&nonce=${uuid()}`;
 
 		window.location.replace(url);
 	}
@@ -132,11 +125,11 @@ export class HubstaffService {
 	addIntegration({
 		code,
 		client_secret,
-		clientId,
+		client_id,
 		organizationId
 	}): Observable<IIntegrationTenant> {
 		const getAccessTokensDto = {
-			client_id: clientId,
+			client_id,
 			code,
 			redirect_uri: environment.HUBSTAFF_REDIRECT_URI,
 			client_secret,

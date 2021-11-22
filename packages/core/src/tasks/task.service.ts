@@ -4,20 +4,21 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Task } from './task.entity';
 import { Like, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
-import { TenantAwareCrudService } from './../core/crud';
-import { EmployeeService } from '../employee/employee.service';
-import { RoleService } from '../role/role.service';
-import { RequestContext } from '../core/context';
 import { IEmployee, IGetTaskByEmployeeOptions, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
+import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from '../core/context';
+import { Task } from './task.entity';
+import { EmployeeService } from '../employee/employee.service';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		@InjectRepository(Task)
 		private readonly taskRepository: Repository<Task>,
+
 		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService
 	) {
@@ -30,7 +31,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		//If user is not an employee, then this will return 404
 		const employee = await this.employeeService.findOneByOptions({
 			where: {
-				user: { id: RequestContext.currentUser().id }
+				user: { id: RequestContext.currentUserId() }
 			}
 		});
 
@@ -51,10 +52,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			.leftJoinAndSelect(`${query.alias}.project`, 'project')
 			.leftJoinAndSelect(`${query.alias}.tags`, 'tags')
 			.leftJoinAndSelect(`${query.alias}.organizationSprint`, 'sprint')
-			.leftJoinAndSelect(`${query.alias}.members`, 'members')
 			.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
 			.leftJoinAndSelect(`${query.alias}.creator`, 'creator')
-			.leftJoinAndSelect('members.user', 'users')
+			.leftJoinAndSelect(`${query.alias}.members`, 'members')
+			.leftJoinAndSelect('members.user', 'user')
 			.where((qb: SelectQueryBuilder<Task>) => {
 				qb
 				.andWhere((cb) => {
