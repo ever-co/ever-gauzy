@@ -130,7 +130,7 @@
 		"ngx-perfect-scrollbar": "^10.1.0",
 		"ngx-permissions": "^8.1.1",
 		"normalize.css": "^8.0.1",
-		"pug": "^2.0.4",
+		"pug": "^3.0.0",
 		"randomcolor": "^0.6.2",
 		"reflect-metadata": "^0.1.13",
 		"roboto-fontface": "^0.10.0",
