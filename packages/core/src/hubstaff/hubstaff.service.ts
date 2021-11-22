@@ -1,17 +1,16 @@
 import {
 	Injectable,
 	BadRequestException,
-	HttpStatus,
-	UnauthorizedException
+	HttpException
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeepPartial } from 'typeorm';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
-import { isEmpty, isObject } from '@gauzy/common';
+import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
 import {
 	ICreateIntegrationDto,
 	IIntegrationTenant,
@@ -28,7 +27,10 @@ import {
 	IHubstaffOrganization,
 	IHubstaffProject,
 	IIntegrationEntitySetting,
-	IDateRangeActivityFilter
+	IDateRangeActivityFilter,
+	ComponentLayoutStyleEnum,
+	ActivityType,
+	IDateRange
 } from '@gauzy/contracts';
 import {
 	DEFAULT_ENTITY_SETTINGS,
@@ -49,20 +51,18 @@ import { EmployeeCreateCommand, EmployeeGetCommand } from '../employee/commands'
 import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
 import { UserService } from '../user/user.service';
-import {
-	TimesheetGetCommand,
-	TimesheetCreateCommand,
-} from './../time-tracking/timesheet/commands';
 import { ScreenshotCreateCommand } from './../time-tracking/screenshot/commands';
 import { TimeSlotCreateCommand } from './../time-tracking/time-slot/commands';
 import { ActivityCreateCommand } from './../time-tracking/activity/commands';
 import { TimeLogCreateCommand } from '../time-tracking/time-log/commands';
+import { IntegrationMapSyncEntityCommand } from './../integration-map/commands';
 import {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectUpdateCommand
 } from '../organization-project/commands';
 import { TaskUpdateCommand } from '../tasks/commands';
 import { RequestContext } from '../core/context';
+import { mergeOverlappingDateRanges } from 'core/utils';
 
 @Injectable()
 export class HubstaffService {
@@ -77,24 +77,33 @@ export class HubstaffService {
 		private readonly commandBus: CommandBus
 	) {}
 
-	async fetchIntegration(url, token): Promise<any> {
-		try {
-			const headers = {
-				Authorization: `Bearer ${token}`
-			};
-			return firstValueFrom(
-				this._httpService.get(url, { headers }).pipe(
-					map(
-						(response: AxiosResponse<any>) => response.data
-					)
+	async fetchIntegration<T = any>(url: string, token: string): Promise<any> {
+		const headers = {
+			Authorization: `Bearer ${token}`
+		};
+		return firstValueFrom(
+			this._httpService.get(url, { headers }).pipe(
+				catchError((error: AxiosError<any>) => {
+					const response: AxiosResponse<any>  = error.response;
+
+					const status = response.status;
+					const statusText = response.statusText;
+					const data = response.data;
+
+					/**
+					 * Handle hubstaff http exception
+					 */
+					throw new HttpException({
+						statusCode: status,
+						error: statusText,
+						message: data.error
+					}, response.status);
+				}),
+				map(
+					(response: AxiosResponse<T>) => response.data
 				)
-			);
-		} catch (error) {
-			if (error.response.status === HttpStatus.UNAUTHORIZED) {
-				throw new UnauthorizedException();
-			}
-			throw new BadRequestException(error);
-		}
+			)
+		);
 	}
 
 	async refreshToken(integrationId) {
@@ -266,7 +275,7 @@ export class HubstaffService {
 	async fetchOrganizations({
 		token
 	}): Promise<IHubstaffOrganization[]> {
-		const { organizations } = await this.fetchIntegration(
+		const { organizations } = await this.fetchIntegration<IHubstaffOrganization[]>(
 			'organizations',
 			token
 		);
@@ -304,7 +313,8 @@ export class HubstaffService {
 							billing: ProjectBillingEnum.RATE,
 							currency: env.defaultCurrency as CurrenciesEnum,
 							billable,
-							description
+							description,
+							tenantId
 						};
 						const {
 							record
@@ -328,13 +338,15 @@ export class HubstaffService {
 						const gauzyProject = await this.commandBus.execute(
 							new OrganizationProjectCreateCommand(payload)
 						);
-						return await this._integrationMapService.create({
-							gauzyId: gauzyProject.id,
-							integrationId,
-							sourceId,
-							entity: IntegrationEntity.PROJECT,
-							organizationId
-						});
+						return await this.commandBus.execute(
+							new IntegrationMapSyncEntityCommand({
+								gauzyId: gauzyProject.id,
+								integrationId,
+								sourceId,
+								entity: IntegrationEntity.PROJECT,
+								organizationId
+							})
+						);
 					}
 				)
 			)
@@ -383,13 +395,15 @@ export class HubstaffService {
 								imageUrl: organization.imageUrl
 							})
 						);
-						return await this._integrationMapService.create({
-							gauzyId: gauzyOrganization.id,
-							integrationId,
-							sourceId,
-							entity: IntegrationEntity.ORGANIZATION,
-							organizationId: gauzyOrganization.id
-						});
+						return await this.commandBus.execute(
+							new IntegrationMapSyncEntityCommand({
+								gauzyId: gauzyOrganization.id,
+								integrationId,
+								sourceId,
+								entity: IntegrationEntity.ORGANIZATION,
+								organizationId: gauzyOrganization.id
+							})
+						);
 					}
 				)
 			);
@@ -415,14 +429,16 @@ export class HubstaffService {
 								contactType: ContactType.CLIENT
 							})
 						);
-		
-						return await this._integrationMapService.create({
-							gauzyId: gauzyClient.id,
-							integrationId,
-							sourceId: id,
-							entity: IntegrationEntity.CLIENT,
-							organizationId
-						});
+
+						return await this.commandBus.execute(
+							new IntegrationMapSyncEntityCommand({
+								gauzyId: gauzyClient.id,
+								integrationId,
+								sourceId: id,
+								entity: IntegrationEntity.CLIENT,
+								organizationId
+							})
+						);
 					}
 				)
 			);
@@ -467,17 +483,16 @@ export class HubstaffService {
 						organizationId
 					})
 				);
-				const integratedScreenshot = await this._integrationMapService.create(
-					{
-						gauzyId: gauzyScreenshot.id,
-						integrationId,
-						sourceId: id,
-						entity: IntegrationEntity.SCREENSHOT,
-						organizationId
-					}
-				);
-				integratedScreenshots = integratedScreenshots.concat(
-					integratedScreenshot
+				integratedScreenshots.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyScreenshot.id,
+							integrationId,
+							sourceId: id,
+							entity: IntegrationEntity.SCREENSHOT,
+							organizationId
+						})
+					)
 				);
 			}
 			return integratedScreenshots;	
@@ -536,13 +551,15 @@ export class HubstaffService {
 						const gauzyTask = await this.commandBus.execute(
 							new TaskCreateCommand(payload)
 						);
-						return await this._integrationMapService.create({
-							gauzyId: gauzyTask.id,
-							integrationId,
-							sourceId: id,
-							entity: IntegrationEntity.TASK,
-							organizationId
-						});
+						return await this.commandBus.execute(
+							new IntegrationMapSyncEntityCommand({
+								gauzyId: gauzyTask.id,
+								integrationId,
+								sourceId: id,
+								entity: IntegrationEntity.TASK,
+								organizationId
+							})
+						);
 					}
 				)
 			);
@@ -552,10 +569,10 @@ export class HubstaffService {
 	}
 
 	private async _getEmployeeByHubstaffUserId(
-		user_id,
-		token,
-		integrationId,
-		organizationId
+		user_id: string,
+		token: string,
+		integrationId: string,
+		organizationId: string
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { record } = await this._integrationMapService.findOneOrFailByOptions({
@@ -604,14 +621,17 @@ export class HubstaffService {
 						organizationId
 					})
 				);
-				const integratedSlots = await this._integrationMapService.create({
-					gauzyId: gauzyTimeSlot.id,
-					integrationId,
-					sourceId: timeSlot.id,
-					entity: IntegrationEntity.TIME_SLOT,
-					organizationId
-				});
-				integratedTimeSlots = integratedTimeSlots.concat(integratedSlots);
+				integratedTimeSlots.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyTimeSlot.id,
+							integrationId,
+							sourceId: timeSlot.id,
+							entity: IntegrationEntity.TIME_SLOT,
+							organizationId
+						})
+					)
+				);
 			}
 			return integratedTimeSlots;
 		} catch (error) {
@@ -639,32 +659,6 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
-
-				let timesheet = await this.commandBus.execute(
-					new TimesheetGetCommand({
-						where: {
-							employeeId: employee.gauzyId,
-							organizationId,
-							tenantId
-						}
-					})
-				);
-
-				if (!timesheet) {
-					timesheet = await this.commandBus.execute(
-						new TimesheetCreateCommand({
-							startedAt: start,
-							stoppedAt: end,
-							employeeId: employee.gauzyId,
-							// to be get from formatedLogs, filtered by user and get totals
-							mouse: 0,
-							keyboard: 0,
-							duration: 0,
-							organizationId
-						})
-					);
-				}
-
 				const gauzyTimeLog = await this.commandBus.execute(
 					new TimeLogCreateCommand({
 						projectId,
@@ -672,22 +666,23 @@ export class HubstaffService {
 						logType: timeLog.logType,
 						duration: timeLog.tracked,
 						startedAt: timeLog.starts_at,
-						timesheetId: timesheet.id,
 						source: TimeLogSourceEnum.HUBSTAFF,
-						organizationId
+						organizationId,
+						tenantId
 					})
 				);
-
-				const integratedLogs = await this._integrationMapService.create({
-					gauzyId: gauzyTimeLog.id,
-					integrationId,
-					sourceId: timeLog.id,
-					entity: IntegrationEntity.TIME_LOG,
-					organizationId
-				});
-				integratedTimeLogs = integratedTimeLogs.concat(integratedLogs);
+				integratedTimeLogs.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyTimeLog.id,
+							integrationId,
+							sourceId: timeLog.id,
+							entity: IntegrationEntity.TIME_LOG,
+							organizationId
+						})
+					)
+				);
 			}
-
 			return integratedTimeLogs;
 		} catch (error) {
 			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.TIME_LOG}`);
@@ -698,7 +693,10 @@ export class HubstaffService {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { record } = await this._userService.findOneOrFailByOptions({
-				where: { email: user.email }
+				where: {
+					email: user.email,
+					tenantId
+				}
 			});
 			let employee;
 			if (record) {
@@ -709,11 +707,15 @@ export class HubstaffService {
 				const [role, organization] = await Promise.all([
 					await this._roleService.findOneByOptions({
 						where: {
-							name: RolesEnum.EMPLOYEE
+							name: RolesEnum.EMPLOYEE,
+							tenantId
 						}
 					}),
 					await this._organizationService.findOneByOptions({
-						where: { id: organizationId }
+						where: {
+							id: organizationId,
+							tenantId
+						}
 					})
 				]);
 				const [firstName, lastName] = user.name.split(' ');
@@ -727,6 +729,7 @@ export class HubstaffService {
 							role,
 							tags: null,
 							tenantId,
+							preferredComponentLayout: ComponentLayoutStyleEnum.TABLE,
 							thirdPartyId: user.id
 						},
 						password: env.defaultIntegratedUserPass,
@@ -734,17 +737,20 @@ export class HubstaffService {
 						startedWorkOn: new Date(
 							moment().format('YYYY-MM-DD HH:mm:ss')
 						),
-						isActive
+						isActive,
+						tenantId
 					})
 				);
 			}
-			return await this._integrationMapService.create({
-				gauzyId: employee.id,
-				integrationId,
-				sourceId: user.id,
-				entity: IntegrationEntity.EMPLOYEE,
-				organizationId
-			});
+			return await this.commandBus.execute(
+				new IntegrationMapSyncEntityCommand({
+					gauzyId: employee.id,
+					integrationId,
+					sourceId: user.id,
+					entity: IntegrationEntity.EMPLOYEE,
+					organizationId
+				})
+			);
 		} catch (error) {
 			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.EMPLOYEE}`);
 		}
@@ -882,22 +888,26 @@ export class HubstaffService {
 					new ActivityCreateCommand({
 						title: site,
 						duration: tracked,
-						type: 'URL',
+						type: ActivityType.URL,
 						date,
 						time,
 						projectId,
-						employeeId: employee.gauzyId
+						employeeId: employee.gauzyId,
+						organizationId
 					})
 				);
-				const integrationMap = await this._integrationMapService.create({
-					gauzyId: gauzyActivity.id,
-					integrationId,
-					sourceId: id,
-					entity: IntegrationEntity.ACTIVITY
-				});
-				integrationMaps = integrationMaps.concat(integrationMap);
+				integrationMaps.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyActivity.id,
+							integrationId,
+							sourceId: id,
+							entity: IntegrationEntity.ACTIVITY,
+							organizationId
+						})
+					)
+				);
 			}
-
 			return integrationMaps;
 		} catch (error) {
 			throw new BadRequestException(`Can\'t sync URL ${IntegrationEntity.ACTIVITY}`);
@@ -1014,7 +1024,7 @@ export class HubstaffService {
 					new ActivityCreateCommand({
 						title: name,
 						duration: tracked,
-						type: 'APP',
+						type: ActivityType.APP,
 						time,
 						date,
 						projectId,
@@ -1022,17 +1032,16 @@ export class HubstaffService {
 						organizationId
 					})
 				);
-				const integartedActivity = await this._integrationMapService.create(
-					{
-						gauzyId: gauzyActivity.id,
-						integrationId,
-						sourceId: id,
-						entity: IntegrationEntity.ACTIVITY,
-						organizationId
-					}
-				);
-				integratedAppActivities = integratedAppActivities.concat(
-					integartedActivity
+				integratedAppActivities.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyActivity.id,
+							integrationId,
+							sourceId: id,
+							entity: IntegrationEntity.ACTIVITY,
+							organizationId
+						})
+					)
 				);
 			}
 			return integratedAppActivities;
@@ -1122,7 +1131,7 @@ export class HubstaffService {
 		try {
 			const start = moment(dateRange.start).format('YYYY-MM-DD');
 			const end = moment(dateRange.end).format('YYYY-MM-DD');
-			
+						
 			const syncedActivities = {
 				integratedTimeLogs: [],
 				integratedTimeSlots: []
@@ -1136,33 +1145,40 @@ export class HubstaffService {
 				if (isEmpty(activities)) {
 					continue;
 				}
+				console.log(activities, 'activities');
+				const timeLogs = this.formatLogsFromSlots(activities);
+				console.log(timeLogs, 'timeLogs');
 
-				const integratedTimeLogs = await this.syncTimeLogs(
-					this.formatedLogsFromSlots(activities),
-					token,
-					integrationId,
-					organizationId,
-					project.gauzyId,
-					start,
-					end
-				);
-				const integratedTimeSlots = await this.syncTimeSlots(
-					activities,
-					token,
-					integrationId,
-					organizationId
-				);
+				// for await (const timeLog of timeLogs) {
+					// const integratedTimeLogs = await this.syncTimeLogs(
+					// 	this.formatedLogsFromSlots(activities),
+					// 	token,
+					// 	integrationId,
+					// 	organizationId,
+					// 	project.gauzyId,
+					// 	start,
+					// 	end
+					// );
+					// const integratedTimeSlots = await this.syncTimeSlots(
+					// 	activities,
+					// 	token,
+					// 	integrationId,
+					// 	organizationId
+					// );
 
-				syncedActivities.integratedTimeLogs = syncedActivities.integratedTimeLogs.concat(
-					integratedTimeLogs
-				);
-				syncedActivities.integratedTimeSlots = syncedActivities.integratedTimeSlots.concat(
-					integratedTimeSlots
-				);
+					// syncedActivities.integratedTimeLogs = syncedActivities.integratedTimeLogs.concat(
+					// 	integratedTimeLogs
+					// );
+					// syncedActivities.integratedTimeSlots = syncedActivities.integratedTimeSlots.concat(
+					// 	integratedTimeSlots
+					// );
+				// }
 			}
-
 			return syncedActivities;
 		} catch (error) {
+			if (error instanceof HttpException) {
+				throw new HttpException(error.getResponse(), error.getStatus());
+			}
 			throw new BadRequestException(`Can\'t handle ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
@@ -1286,37 +1302,37 @@ export class HubstaffService {
 								gauzyId,
 								dateRange
 							);
-							activities.application = await this._handleAppActivities(
-								projectsMap,
-								integrationId,
-								token,
-								gauzyId,
-								dateRange
-							);
-							activities.urls = await this._handleUrlActivities(
-								projectsMap,
-								integrationId,
-								token,
-								gauzyId,
-								dateRange
-							);
+							// activities.application = await this._handleAppActivities(
+							// 	projectsMap,
+							// 	integrationId,
+							// 	token,
+							// 	gauzyId,
+							// 	dateRange
+							// );
+							// activities.urls = await this._handleUrlActivities(
+							// 	projectsMap,
+							// 	integrationId,
+							// 	token,
+							// 	gauzyId,
+							// 	dateRange
+							// );
 						}
 
 						/**
 						 * Activity Screenshot Sync
 						 */
-						const screenshotSetting: IIntegrationEntitySetting = setting.tiedEntities.find(
-							(res) => res.entity === IntegrationEntity.SCREENSHOT
-						);
-						if (isObject(screenshotSetting) && screenshotSetting.sync) {
-							screenshots = await this._handleScreenshots(
-								projectsMap,
-								integrationId,
-								token,
-								gauzyId,
-								dateRange
-							);
-						}
+						// const screenshotSetting: IIntegrationEntitySetting = setting.tiedEntities.find(
+						// 	(res) => res.entity === IntegrationEntity.SCREENSHOT
+						// );
+						// if (isObject(screenshotSetting) && screenshotSetting.sync) {
+						// 	screenshots = await this._handleScreenshots(
+						// 		projectsMap,
+						// 		integrationId,
+						// 		token,
+						// 		gauzyId,
+						// 		dateRange
+						// 	);
+						// }
 						return { tasks, projectsMap, activities, screenshots };
 					case IntegrationEntity.CLIENT:
 						const clients = await this._handleClients(
@@ -1330,6 +1346,51 @@ export class HubstaffService {
 			})
 		);
 		return integratedMaps;
+	}
+
+	formatLogsFromSlots(slots) {
+		if (isEmpty(slots)) {
+			return;
+		}
+
+		const range = [];
+		let i = 0;
+		while (slots[i]) {
+			const start = moment(slots[i].time_slot);
+			const end = moment(slots[i].time_slot).add(10, 'minute');
+
+			range.push({
+				start: start.toDate(),
+				end: end.toDate()
+			});
+			i++;
+		}
+
+		const timeLogs = [];
+		const dates: IDateRange[] = mergeOverlappingDateRanges(range);
+
+		if (isNotEmpty(dates)) {
+			dates.forEach(({ start, end}) => {
+				let i = 0;
+				const timeSlots = new Array();
+
+				while (slots[i]) {
+					const slotTime = moment(slots[i].starts_at);
+					if (slotTime.isBetween(moment(start), moment(end), null, '[]')) {
+						timeSlots.push(slots[i]);
+					}
+					i++;
+				}
+
+				timeLogs.push({
+					startedAt: start,
+					stoppedAt: end,
+					timeSlots
+				});
+			});
+		}
+
+		return timeLogs;
 	}
 
 	formatedLogsFromSlots(timeSlots) {
