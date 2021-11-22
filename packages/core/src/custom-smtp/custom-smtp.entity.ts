@@ -1,6 +1,8 @@
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICustomSmtp } from '@gauzy/contracts';
+import { Exclude } from 'class-transformer';
+import { IsNotEmpty } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('custom_smtp')
@@ -20,10 +22,14 @@ export class CustomSmtp
 	secure: boolean;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@Exclude({ toPlainOnly: true })
 	@Column()
 	username: string;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@Exclude({ toPlainOnly: true })
 	@Column()
 	password: string;
 

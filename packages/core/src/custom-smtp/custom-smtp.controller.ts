@@ -8,15 +8,16 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	ICustomSmtp,
-	ICustomSmtpCreateInput,
-	ICustomSmtpFindInput,
-	ICustomSmtpUpdateInput
+	ICustomSmtpFindInput
 } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
 import { CrudController } from './../core/crud';
@@ -25,9 +26,11 @@ import { TenantPermissionGuard } from './../shared/guards';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
+import { TransformInterceptor } from './../core/interceptors';
 
 @ApiTags('CustomSmtp')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class CustomSmtpController extends CrudController<CustomSmtp> {
 	constructor(
@@ -74,7 +77,10 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post('validate')
-	async validateSmtpSetting(@Body() entity: ICustomSmtpCreateInput) {
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async validateSmtpSetting(
+		@Body() entity: CustomSmtp
+	) {
 		return await this.customSmtpService.verifyTransporter(entity);
 	}
 
@@ -96,8 +102,9 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
-		@Body() entity: ICustomSmtpCreateInput
+		@Body() entity: CustomSmtp
 	): Promise<ICustomSmtp> {
 		return await this.commandBus.execute(
 			new CustomSmtpCreateCommand(entity)
@@ -127,9 +134,10 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ICustomSmtpUpdateInput
+		@Body() entity: CustomSmtp
 	): Promise<ICustomSmtp> {
 		return await this.commandBus.execute(
 			new CustomSmtpUpdateCommand({ id, ...entity })

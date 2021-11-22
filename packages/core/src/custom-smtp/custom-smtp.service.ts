@@ -11,7 +11,7 @@ import { ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { CustomSmtp } from './custom-smtp.entity';
 import { EmailService } from '../email/email.service';
-import { RequestContext } from 'core';
+import { RequestContext } from './../core/context';
 
 @Injectable()
 export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
@@ -30,17 +30,18 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	): Promise<ICustomSmtp | ISMTPConfig> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = query;
+		
 		const globalSmtp = this.emailService.createSMTPTransporter();
+		delete globalSmtp['auth'];
+	
 		try {
 			if (!organizationId) {
-				const tenantSmtp = await this.customSmtpRepository.findOne(
-					{
-						where: {
-							tenantId,
-							organizationId: IsNull()
-						}
+				const tenantSmtp = await this.customSmtpRepository.findOne({
+					where: {
+						tenantId,
+						organizationId: IsNull()
 					}
-				);
+				});
 				return tenantSmtp || globalSmtp;
 			}
 			const organizationSmtp = await this.customSmtpRepository.findOne({
