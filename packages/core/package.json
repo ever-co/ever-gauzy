@@ -83,7 +83,7 @@
 		"csv-writer": "^1.6.0",
 		"currency.js": "^2.0.3",
 		"date-fns": "^2.22.1",
-		"email-templates": "^7.1.1",
+		"email-templates": "^8.0.8",
 		"express-session": "^1.17.1",
 		"faker": "^5.5.3",
 		"fast-json-stringify": "^2.4.1",
