@@ -228,6 +228,7 @@ export interface IActivity extends IBasePerTenantAndOrganizationEntityModel {
 	type?: string;
 	source?: string;
 	id?: string;
+	activityTimestamp?: string;
 }
 
 export interface IDailyActivity {

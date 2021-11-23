@@ -1,17 +1,16 @@
 import {
 	Injectable,
 	BadRequestException,
-	HttpStatus,
-	UnauthorizedException
+	HttpException
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeepPartial } from 'typeorm';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
-import { isEmpty, isObject } from '@gauzy/common';
+import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
 import {
 	ICreateIntegrationDto,
 	IIntegrationTenant,
@@ -28,7 +27,10 @@ import {
 	IHubstaffOrganization,
 	IHubstaffProject,
 	IIntegrationEntitySetting,
-	IDateRangeActivityFilter
+	IDateRangeActivityFilter,
+	ComponentLayoutStyleEnum,
+	ActivityType,
+	IDateRange
 } from '@gauzy/contracts';
 import {
 	DEFAULT_ENTITY_SETTINGS,
@@ -49,20 +51,18 @@ import { EmployeeCreateCommand, EmployeeGetCommand } from '../employee/commands'
 import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
 import { UserService } from '../user/user.service';
-import {
-	TimesheetGetCommand,
-	TimesheetCreateCommand,
-} from './../time-tracking/timesheet/commands';
 import { ScreenshotCreateCommand } from './../time-tracking/screenshot/commands';
 import { TimeSlotCreateCommand } from './../time-tracking/time-slot/commands';
 import { ActivityCreateCommand } from './../time-tracking/activity/commands';
 import { TimeLogCreateCommand } from '../time-tracking/time-log/commands';
+import { IntegrationMapSyncEntityCommand } from './../integration-map/commands';
 import {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectUpdateCommand
 } from '../organization-project/commands';
 import { TaskUpdateCommand } from '../tasks/commands';
 import { RequestContext } from '../core/context';
+import { mergeOverlappingDateRanges } from 'core/utils';
 
 @Injectable()
 export class HubstaffService {
@@ -77,24 +77,33 @@ export class HubstaffService {
 		private readonly commandBus: CommandBus
 	) {}
 
-	async fetchIntegration(url, token): Promise<any> {
-		try {
-			const headers = {
-				Authorization: `Bearer ${token}`
-			};
-			return firstValueFrom(
-				this._httpService.get(url, { headers }).pipe(
-					map(
-						(response: AxiosResponse<any>) => response.data
-					)
+	async fetchIntegration<T = any>(url: string, token: string): Promise<any> {
+		const headers = {
+			Authorization: `Bearer ${token}`
+		};
+		return firstValueFrom(
+			this._httpService.get(url, { headers }).pipe(
+				catchError((error: AxiosError<any>) => {
+					const response: AxiosResponse<any>  = error.response;
+
+					const status = response.status;
+					const statusText = response.statusText;
+					const data = response.data;
+
+					/**
+					 * Handle hubstaff http exception
+					 */
+					throw new HttpException({
+						statusCode: status,
+						error: statusText,
+						message: data.error
+					}, response.status);
+				}),
+				map(
+					(response: AxiosResponse<T>) => response.data
 				)
-			);
-		} catch (error) {
-			if (error.response.status === HttpStatus.UNAUTHORIZED) {
-				throw new UnauthorizedException();
-			}
-			throw new BadRequestException(error);
-		}
+			)
+		);
 	}
 
 	async refreshToken(integrationId) {
@@ -266,7 +275,7 @@ export class HubstaffService {
 	async fetchOrganizations({
 		token
 	}): Promise<IHubstaffOrganization[]> {
-		const { organizations } = await this.fetchIntegration(
+		const { organizations } = await this.fetchIntegration<IHubstaffOrganization[]>(
 			'organizations',
 			token
 		);
@@ -304,7 +313,8 @@ export class HubstaffService {
 							billing: ProjectBillingEnum.RATE,
 							currency: env.defaultCurrency as CurrenciesEnum,
 							billable,
-							description
+							description,
+							tenantId
 						};
 						const {
 							record
@@ -328,18 +338,21 @@ export class HubstaffService {
 						const gauzyProject = await this.commandBus.execute(
 							new OrganizationProjectCreateCommand(payload)
 						);
-						return await this._integrationMapService.create({
-							gauzyId: gauzyProject.id,
-							integrationId,
-							sourceId,
-							entity: IntegrationEntity.PROJECT,
-							organizationId
-						});
+						return await this.commandBus.execute(
+							new IntegrationMapSyncEntityCommand({
+								gauzyId: gauzyProject.id,
+								integrationId,
+								sourceId,
+								entity: IntegrationEntity.PROJECT,
+								organizationId
+							})
+						);
 					}
 				)
 			)
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.PROJECT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.PROJECT}`);
 		}
 	}
 
@@ -383,18 +396,21 @@ export class HubstaffService {
 								imageUrl: organization.imageUrl
 							})
 						);
-						return await this._integrationMapService.create({
-							gauzyId: gauzyOrganization.id,
-							integrationId,
-							sourceId,
-							entity: IntegrationEntity.ORGANIZATION,
-							organizationId: gauzyOrganization.id
-						});
+						return await this.commandBus.execute(
+							new IntegrationMapSyncEntityCommand({
+								gauzyId: gauzyOrganization.id,
+								integrationId,
+								sourceId,
+								entity: IntegrationEntity.ORGANIZATION,
+								organizationId: gauzyOrganization.id
+							})
+						);
 					}
 				)
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.ORGANIZATION}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.ORGANIZATION}`);
 		}
 	}
 
@@ -415,19 +431,22 @@ export class HubstaffService {
 								contactType: ContactType.CLIENT
 							})
 						);
-		
-						return await this._integrationMapService.create({
-							gauzyId: gauzyClient.id,
-							integrationId,
-							sourceId: id,
-							entity: IntegrationEntity.CLIENT,
-							organizationId
-						});
+
+						return await this.commandBus.execute(
+							new IntegrationMapSyncEntityCommand({
+								gauzyId: gauzyClient.id,
+								integrationId,
+								sourceId: id,
+								entity: IntegrationEntity.CLIENT,
+								organizationId
+							})
+						);
 					}
 				)
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.CLIENT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.CLIENT}`);
 		}
 	}
 
@@ -467,22 +486,22 @@ export class HubstaffService {
 						organizationId
 					})
 				);
-				const integratedScreenshot = await this._integrationMapService.create(
-					{
-						gauzyId: gauzyScreenshot.id,
-						integrationId,
-						sourceId: id,
-						entity: IntegrationEntity.SCREENSHOT,
-						organizationId
-					}
-				);
-				integratedScreenshots = integratedScreenshots.concat(
-					integratedScreenshot
+				integratedScreenshots.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyScreenshot.id,
+							integrationId,
+							sourceId: id,
+							entity: IntegrationEntity.SCREENSHOT,
+							organizationId
+						})
+					)
 				);
 			}
 			return integratedScreenshots;	
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.SCREENSHOT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.SCREENSHOT}`);
 		}		
 	}
 
@@ -536,26 +555,29 @@ export class HubstaffService {
 						const gauzyTask = await this.commandBus.execute(
 							new TaskCreateCommand(payload)
 						);
-						return await this._integrationMapService.create({
-							gauzyId: gauzyTask.id,
-							integrationId,
-							sourceId: id,
-							entity: IntegrationEntity.TASK,
-							organizationId
-						});
+						return await this.commandBus.execute(
+							new IntegrationMapSyncEntityCommand({
+								gauzyId: gauzyTask.id,
+								integrationId,
+								sourceId: id,
+								entity: IntegrationEntity.TASK,
+								organizationId
+							})
+						);
 					}
 				)
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.TASK}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TASK}`);
 		}
 	}
 
 	private async _getEmployeeByHubstaffUserId(
-		user_id,
-		token,
-		integrationId,
-		organizationId
+		user_id: string,
+		token: string,
+		integrationId: string,
+		organizationId: string
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { record } = await this._integrationMapService.findOneOrFailByOptions({
@@ -604,18 +626,22 @@ export class HubstaffService {
 						organizationId
 					})
 				);
-				const integratedSlots = await this._integrationMapService.create({
-					gauzyId: gauzyTimeSlot.id,
-					integrationId,
-					sourceId: timeSlot.id,
-					entity: IntegrationEntity.TIME_SLOT,
-					organizationId
-				});
-				integratedTimeSlots = integratedTimeSlots.concat(integratedSlots);
+				integratedTimeSlots.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyTimeSlot.id,
+							integrationId,
+							sourceId: timeSlot.id,
+							entity: IntegrationEntity.TIME_SLOT,
+							organizationId
+						})
+					)
+				);
 			}
 			return integratedTimeSlots;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.TIME_SLOT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TIME_SLOT}`);
 		}
 	}
 
@@ -624,9 +650,7 @@ export class HubstaffService {
 		token: string,
 		integrationId: string,
 		organizationId: string,
-		projectId: string,
-		start,
-		end
+		projectId: string
 	) {
 		try {
 			let integratedTimeLogs = [];
@@ -640,57 +664,44 @@ export class HubstaffService {
 					organizationId
 				);
 
-				let timesheet = await this.commandBus.execute(
-					new TimesheetGetCommand({
-						where: {
-							employeeId: employee.gauzyId,
-							organizationId,
-							tenantId
-						}
-					})
-				);
-
-				if (!timesheet) {
-					timesheet = await this.commandBus.execute(
-						new TimesheetCreateCommand({
-							startedAt: start,
-							stoppedAt: end,
-							employeeId: employee.gauzyId,
-							// to be get from formatedLogs, filtered by user and get totals
-							mouse: 0,
-							keyboard: 0,
-							duration: 0,
-							organizationId
-						})
-					);
-				}
-
+				const { record } = await this._integrationMapService.findOneOrFailByOptions({
+					where: {
+						sourceId: timeLog.task_id,
+						entity: IntegrationEntity.TASK,
+						organizationId,
+						tenantId
+					}
+				});
 				const gauzyTimeLog = await this.commandBus.execute(
 					new TimeLogCreateCommand({
 						projectId,
 						employeeId: employee.gauzyId,
+						taskId: record ? record.gauzyId : null,
 						logType: timeLog.logType,
 						duration: timeLog.tracked,
-						startedAt: timeLog.starts_at,
-						timesheetId: timesheet.id,
+						startedAt: timeLog.startedAt,
+						stoppedAt: timeLog.stoppedAt,
 						source: TimeLogSourceEnum.HUBSTAFF,
-						organizationId
+						organizationId,
+						tenantId
 					})
 				);
-
-				const integratedLogs = await this._integrationMapService.create({
-					gauzyId: gauzyTimeLog.id,
-					integrationId,
-					sourceId: timeLog.id,
-					entity: IntegrationEntity.TIME_LOG,
-					organizationId
-				});
-				integratedTimeLogs = integratedTimeLogs.concat(integratedLogs);
+				integratedTimeLogs.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyTimeLog.id,
+							integrationId,
+							sourceId: timeLog.id,
+							entity: IntegrationEntity.TIME_LOG,
+							organizationId
+						})
+					)
+				);
 			}
-
 			return integratedTimeLogs;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.TIME_LOG}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TIME_LOG}`);
 		}
 	}
 
@@ -698,7 +709,10 @@ export class HubstaffService {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { record } = await this._userService.findOneOrFailByOptions({
-				where: { email: user.email }
+				where: {
+					email: user.email,
+					tenantId
+				}
 			});
 			let employee;
 			if (record) {
@@ -709,11 +723,15 @@ export class HubstaffService {
 				const [role, organization] = await Promise.all([
 					await this._roleService.findOneByOptions({
 						where: {
-							name: RolesEnum.EMPLOYEE
+							name: RolesEnum.EMPLOYEE,
+							tenantId
 						}
 					}),
 					await this._organizationService.findOneByOptions({
-						where: { id: organizationId }
+						where: {
+							id: organizationId,
+							tenantId
+						}
 					})
 				]);
 				const [firstName, lastName] = user.name.split(' ');
@@ -727,6 +745,7 @@ export class HubstaffService {
 							role,
 							tags: null,
 							tenantId,
+							preferredComponentLayout: ComponentLayoutStyleEnum.TABLE,
 							thirdPartyId: user.id
 						},
 						password: env.defaultIntegratedUserPass,
@@ -734,19 +753,23 @@ export class HubstaffService {
 						startedWorkOn: new Date(
 							moment().format('YYYY-MM-DD HH:mm:ss')
 						),
-						isActive
+						isActive,
+						tenantId
 					})
 				);
 			}
-			return await this._integrationMapService.create({
-				gauzyId: employee.id,
-				integrationId,
-				sourceId: user.id,
-				entity: IntegrationEntity.EMPLOYEE,
-				organizationId
-			});
+			return await this.commandBus.execute(
+				new IntegrationMapSyncEntityCommand({
+					gauzyId: employee.id,
+					integrationId,
+					sourceId: user.id,
+					entity: IntegrationEntity.EMPLOYEE,
+					organizationId
+				})
+			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.EMPLOYEE}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.EMPLOYEE}`);
 		}
 	}
 
@@ -767,7 +790,8 @@ export class HubstaffService {
 				organizationId
 			});	
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle ${IntegrationEntity.EMPLOYEE}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle ${IntegrationEntity.EMPLOYEE}`);
 		}
 	}
 
@@ -838,7 +862,8 @@ export class HubstaffService {
 			);
 			return tasksMap;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle ${IntegrationEntity.TASK}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle ${IntegrationEntity.TASK}`);
 		}
 	}
 
@@ -853,15 +878,16 @@ export class HubstaffService {
 		organizationId
 	}): Promise<IIntegrationMap[]> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+
 			let integrationMaps = [];
 			for await (const activity of activities) {
-				const { id, site, tracked, user_id } = activity;
-				let { date } = activity;
-
+				const { id, site, tracked, user_id, time_slot, task_id } = activity;
 				const { record } = await this._integrationMapService.findOneOrFailByOptions({
 					where: {
 						sourceId: id,
-						entity: IntegrationEntity.ACTIVITY
+						entity: IntegrationEntity.ACTIVITY,
+						organizationId
 					}
 				});
 				//if activity already integrated then no need to create new one
@@ -875,32 +901,48 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
-				const time = moment(date).format('HH:mm:ss');
-				date = moment(date).format('YYYY-MM-DD');
+				const time = moment(time_slot).format('HH:mm:ss');
+				const date = moment(time_slot).format('YYYY-MM-DD');
+
+				const { record: task } = await this._integrationMapService.findOneOrFailByOptions({
+					where: {
+						sourceId: task_id,
+						entity: IntegrationEntity.TASK,
+						organizationId,
+						tenantId
+					}
+				});
 
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
 						title: site,
 						duration: tracked,
-						type: 'URL',
+						type: ActivityType.URL,
 						date,
 						time,
 						projectId,
-						employeeId: employee.gauzyId
+						employeeId: employee.gauzyId,
+						taskId: task ? task.gauzyId : null,
+						organizationId,
+						activityTimestamp: time_slot
 					})
 				);
-				const integrationMap = await this._integrationMapService.create({
-					gauzyId: gauzyActivity.id,
-					integrationId,
-					sourceId: id,
-					entity: IntegrationEntity.ACTIVITY
-				});
-				integrationMaps = integrationMaps.concat(integrationMap);
+				integrationMaps.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyActivity.id,
+							integrationId,
+							sourceId: id,
+							entity: IntegrationEntity.ACTIVITY,
+							organizationId
+						})
+					)
+				);
 			}
-
 			return integrationMaps;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync URL ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync URL ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -969,7 +1011,8 @@ export class HubstaffService {
 			);
 			return urlActivitiesMapped;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle URL ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle URL ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -984,11 +1027,12 @@ export class HubstaffService {
 		organizationId
 	}): Promise<IIntegrationMap[]> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+
 			let integratedAppActivities = [];
 			for await (const activity of activities) {
-				const { id, name, tracked, user_id } = activity;
-				let { date } = activity;
-
+				console.log(activity);
+				const { id, name, tracked, user_id, time_slot, task_id } = activity;
 				const { record } = await this._integrationMapService.findOneOrFailByOptions({
 					where: {
 						sourceId: id,
@@ -1007,37 +1051,48 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
-				const time = moment(date).format('HH:mm:ss');
-				date = moment(date).format('YYYY-MM-DD');
+				const time = moment(time_slot).format('HH:mm:ss');
+				const date = moment(time_slot).format('YYYY-MM-DD');
+				
+				const { record: task } = await this._integrationMapService.findOneOrFailByOptions({
+					where: {
+						sourceId: task_id,
+						entity: IntegrationEntity.TASK,
+						organizationId,
+						tenantId
+					}
+				});
 
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
 						title: name,
 						duration: tracked,
-						type: 'APP',
+						type: ActivityType.APP,
 						time,
 						date,
 						projectId,
 						employeeId: employee.gauzyId,
-						organizationId
+						taskId: task ? task.gauzyId : null,
+						organizationId,
+						activityTimestamp: time_slot
 					})
 				);
-				const integartedActivity = await this._integrationMapService.create(
-					{
-						gauzyId: gauzyActivity.id,
-						integrationId,
-						sourceId: id,
-						entity: IntegrationEntity.ACTIVITY,
-						organizationId
-					}
-				);
-				integratedAppActivities = integratedAppActivities.concat(
-					integartedActivity
+				integratedAppActivities.push(
+					await this.commandBus.execute(
+						new IntegrationMapSyncEntityCommand({
+							gauzyId: gauzyActivity.id,
+							integrationId,
+							sourceId: id,
+							entity: IntegrationEntity.ACTIVITY,
+							organizationId
+						})
+					)
 				);
 			}
 			return integratedAppActivities;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync APP ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync APP ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -1108,7 +1163,8 @@ export class HubstaffService {
 			);
 			return appActivitiesMapped;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle APP ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle APP ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -1122,7 +1178,7 @@ export class HubstaffService {
 		try {
 			const start = moment(dateRange.start).format('YYYY-MM-DD');
 			const end = moment(dateRange.end).format('YYYY-MM-DD');
-			
+						
 			const syncedActivities = {
 				integratedTimeLogs: [],
 				integratedTimeSlots: []
@@ -1137,15 +1193,15 @@ export class HubstaffService {
 					continue;
 				}
 
+				const timeLogs = this.formatLogsFromSlots(activities);
 				const integratedTimeLogs = await this.syncTimeLogs(
-					this.formatedLogsFromSlots(activities),
+					timeLogs,
 					token,
 					integrationId,
 					organizationId,
-					project.gauzyId,
-					start,
-					end
+					project.gauzyId
 				);
+
 				const integratedTimeSlots = await this.syncTimeSlots(
 					activities,
 					token,
@@ -1160,10 +1216,13 @@ export class HubstaffService {
 					integratedTimeSlots
 				);
 			}
-
 			return syncedActivities;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			if (error instanceof HttpException) {
+				throw new HttpException(error.getResponse(), error.getStatus());
+			}
+			throw new BadRequestException(error, `Can\'t handle ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -1232,7 +1291,8 @@ export class HubstaffService {
 				})
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle activities ${IntegrationEntity.SCREENSHOT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle activities ${IntegrationEntity.SCREENSHOT}`);
 		}
 	}
 
@@ -1332,7 +1392,55 @@ export class HubstaffService {
 		return integratedMaps;
 	}
 
-	formatedLogsFromSlots(timeSlots) {
+	formatLogsFromSlots(slots) {
+		if (isEmpty(slots)) {
+			return;
+		}
+
+		const range = [];
+		let i = 0;
+		while (slots[i]) {
+
+			const start = moment(slots[i].starts_at);
+			const end = moment(slots[i].starts_at).add(slots[i].input_tracked, 'seconds');
+
+			range.push({
+				start: start.toDate(),
+				end: end.toDate()
+			});
+			i++;
+		}
+
+		const timeLogs = [];
+		const dates: IDateRange[] = mergeOverlappingDateRanges(range);
+
+		if (isNotEmpty(dates)) {
+			dates.forEach(({ start, end}) => {
+				let i = 0;
+				const timeSlots = new Array();
+
+				while (slots[i]) {
+					const slotTime = moment(slots[i].starts_at);
+					if (slotTime.isBetween(moment(start), moment(end), null, '[]')) {
+						timeSlots.push(slots[i]);
+					}
+					i++;
+				}
+
+				const [ activity ] = this.getLogsActivityFromSlots(timeSlots);
+				timeLogs.push({
+					startedAt: start,
+					stoppedAt: end,
+					timeSlots,
+					...activity
+				});
+			});
+		}
+
+		return timeLogs;
+	}
+
+	getLogsActivityFromSlots(timeSlots): any {
 		const timeLogs = timeSlots.reduce((prev, current) => {
 			const prevLog = prev[current.date];
 			return {
@@ -1343,9 +1451,7 @@ export class HubstaffService {
 							date: current.date,
 							user_id: prevLog.user_id,
 							project_id: prevLog.project_id,
-							starts_at: moment
-								.utc(prevLog.starts_at)
-								.format('YYYY-MM-DD HH:mm:ss'),
+							task_id: prevLog.task_id,
 							keyboard: (prevLog.keyboard += current.keyboard),
 							mouse: (prevLog.mouse += current.mouse),
 							overall: (prevLog.overall += current.overall),
@@ -1361,9 +1467,7 @@ export class HubstaffService {
 							date: current.date,
 							user_id: current.user_id,
 							project_id: current.project_id,
-							starts_at: moment
-								.utc(current.starts_at)
-								.format('YYYY-MM-DD HH:mm:ss'),
+							task_id: current.task_id,
 							keyboard: current.keyboard,
 							mouse: current.mouse,
 							overall: current.overall,

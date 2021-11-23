@@ -8,9 +8,10 @@ import { TimeSlotService } from './../../../time-slot/time-slot.service';
 @CommandHandler(ScreenshotCreateCommand)
 export class ScreenshotCreateHandler
 	implements ICommandHandler<ScreenshotCreateCommand> {
+
 	constructor(
-		private _screenshotService: ScreenshotService,
-		private _timeSlotService: TimeSlotService
+		private readonly _screenshotService: ScreenshotService,
+		private readonly _timeSlotService: TimeSlotService
 	) {}
 
 	public async execute(command: ScreenshotCreateCommand): Promise<any> {
@@ -31,13 +32,16 @@ export class ScreenshotCreateHandler
 				where: {
 					startedAt: new Date(
 						moment(activityTimestamp).format('YYYY-MM-DD HH:mm:ss')
-					)
+					),
+					employeeId,
+					organizationId
 				}
 			});
 
 			//if timeslot not found for this screenshot then create new timeslot
 			if (!timeSlot) {
 				timeSlot = await this._timeSlotService.create({
+					organizationId,
 					employeeId,
 					duration: 600,
 					keyboard: 0,

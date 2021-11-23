@@ -24,8 +24,8 @@ import { API_PREFIX } from '../constants/app.constants';
 const TODAY = new Date();
 
 const DEFAULT_DATE_RANGE = {
-	start: new Date(moment().subtract(7, 'days').format('YYYY-MM-DD')),
-	end: TODAY
+	start: new Date(moment().subtract(6, 'days').format('YYYY-MM-DD')),
+	end: new Date(moment().add(1, 'days').format('YYYY-MM-DD'))
 };
 
 @Injectable({
