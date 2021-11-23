@@ -8,19 +8,20 @@ import { Pipeline } from './pipeline.entity';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { DealModule } from '../deal/deal.module';
 import { Deal } from '../deal/deal.entity';
-import { User } from '../user/user.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{ path: '/pipelines', module: PipelineModule }
 		]),
-		TypeOrmModule.forFeature([Pipeline, Deal, User]),
+		TypeOrmModule.forFeature([Pipeline, Deal]),
 		StageModule,
 		DealModule,
 		AuthModule,
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	controllers: [PipelineController],
 	providers: [PipelineService],
