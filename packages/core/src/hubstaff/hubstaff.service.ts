@@ -351,7 +351,8 @@ export class HubstaffService {
 				)
 			)
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.PROJECT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.PROJECT}`);
 		}
 	}
 
@@ -408,7 +409,8 @@ export class HubstaffService {
 				)
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.ORGANIZATION}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.ORGANIZATION}`);
 		}
 	}
 
@@ -443,7 +445,8 @@ export class HubstaffService {
 				)
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.CLIENT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.CLIENT}`);
 		}
 	}
 
@@ -497,7 +500,8 @@ export class HubstaffService {
 			}
 			return integratedScreenshots;	
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.SCREENSHOT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.SCREENSHOT}`);
 		}		
 	}
 
@@ -564,7 +568,8 @@ export class HubstaffService {
 				)
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.TASK}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TASK}`);
 		}
 	}
 
@@ -635,7 +640,8 @@ export class HubstaffService {
 			}
 			return integratedTimeSlots;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.TIME_SLOT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TIME_SLOT}`);
 		}
 	}
 
@@ -644,9 +650,7 @@ export class HubstaffService {
 		token: string,
 		integrationId: string,
 		organizationId: string,
-		projectId: string,
-		start,
-		end
+		projectId: string
 	) {
 		try {
 			let integratedTimeLogs = [];
@@ -659,13 +663,24 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
+
+				const { record } = await this._integrationMapService.findOneOrFailByOptions({
+					where: {
+						sourceId: timeLog.task_id,
+						entity: IntegrationEntity.TASK,
+						organizationId,
+						tenantId
+					}
+				});
 				const gauzyTimeLog = await this.commandBus.execute(
 					new TimeLogCreateCommand({
 						projectId,
 						employeeId: employee.gauzyId,
+						taskId: record ? record.gauzyId : null,
 						logType: timeLog.logType,
 						duration: timeLog.tracked,
-						startedAt: timeLog.starts_at,
+						startedAt: timeLog.startedAt,
+						stoppedAt: timeLog.stoppedAt,
 						source: TimeLogSourceEnum.HUBSTAFF,
 						organizationId,
 						tenantId
@@ -685,7 +700,8 @@ export class HubstaffService {
 			}
 			return integratedTimeLogs;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.TIME_LOG}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TIME_LOG}`);
 		}
 	}
 
@@ -752,7 +768,8 @@ export class HubstaffService {
 				})
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync ${IntegrationEntity.EMPLOYEE}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.EMPLOYEE}`);
 		}
 	}
 
@@ -773,7 +790,8 @@ export class HubstaffService {
 				organizationId
 			});	
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle ${IntegrationEntity.EMPLOYEE}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle ${IntegrationEntity.EMPLOYEE}`);
 		}
 	}
 
@@ -844,7 +862,8 @@ export class HubstaffService {
 			);
 			return tasksMap;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle ${IntegrationEntity.TASK}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle ${IntegrationEntity.TASK}`);
 		}
 	}
 
@@ -859,15 +878,16 @@ export class HubstaffService {
 		organizationId
 	}): Promise<IIntegrationMap[]> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+
 			let integrationMaps = [];
 			for await (const activity of activities) {
-				const { id, site, tracked, user_id } = activity;
-				let { date } = activity;
-
+				const { id, site, tracked, user_id, time_slot, task_id } = activity;
 				const { record } = await this._integrationMapService.findOneOrFailByOptions({
 					where: {
 						sourceId: id,
-						entity: IntegrationEntity.ACTIVITY
+						entity: IntegrationEntity.ACTIVITY,
+						organizationId
 					}
 				});
 				//if activity already integrated then no need to create new one
@@ -881,8 +901,17 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
-				const time = moment(date).format('HH:mm:ss');
-				date = moment(date).format('YYYY-MM-DD');
+				const time = moment(time_slot).format('HH:mm:ss');
+				const date = moment(time_slot).format('YYYY-MM-DD');
+
+				const { record: task } = await this._integrationMapService.findOneOrFailByOptions({
+					where: {
+						sourceId: task_id,
+						entity: IntegrationEntity.TASK,
+						organizationId,
+						tenantId
+					}
+				});
 
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
@@ -893,7 +922,9 @@ export class HubstaffService {
 						time,
 						projectId,
 						employeeId: employee.gauzyId,
-						organizationId
+						taskId: task ? task.gauzyId : null,
+						organizationId,
+						activityTimestamp: time_slot
 					})
 				);
 				integrationMaps.push(
@@ -910,7 +941,8 @@ export class HubstaffService {
 			}
 			return integrationMaps;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync URL ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync URL ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -979,7 +1011,8 @@ export class HubstaffService {
 			);
 			return urlActivitiesMapped;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle URL ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle URL ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -994,11 +1027,12 @@ export class HubstaffService {
 		organizationId
 	}): Promise<IIntegrationMap[]> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+
 			let integratedAppActivities = [];
 			for await (const activity of activities) {
-				const { id, name, tracked, user_id } = activity;
-				let { date } = activity;
-
+				console.log(activity);
+				const { id, name, tracked, user_id, time_slot, task_id } = activity;
 				const { record } = await this._integrationMapService.findOneOrFailByOptions({
 					where: {
 						sourceId: id,
@@ -1017,8 +1051,17 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
-				const time = moment(date).format('HH:mm:ss');
-				date = moment(date).format('YYYY-MM-DD');
+				const time = moment(time_slot).format('HH:mm:ss');
+				const date = moment(time_slot).format('YYYY-MM-DD');
+				
+				const { record: task } = await this._integrationMapService.findOneOrFailByOptions({
+					where: {
+						sourceId: task_id,
+						entity: IntegrationEntity.TASK,
+						organizationId,
+						tenantId
+					}
+				});
 
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
@@ -1029,7 +1072,9 @@ export class HubstaffService {
 						date,
 						projectId,
 						employeeId: employee.gauzyId,
-						organizationId
+						taskId: task ? task.gauzyId : null,
+						organizationId,
+						activityTimestamp: time_slot
 					})
 				);
 				integratedAppActivities.push(
@@ -1046,7 +1091,8 @@ export class HubstaffService {
 			}
 			return integratedAppActivities;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t sync APP ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t sync APP ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -1117,7 +1163,8 @@ export class HubstaffService {
 			);
 			return appActivitiesMapped;
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle APP ${IntegrationEntity.ACTIVITY}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle APP ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -1145,41 +1192,37 @@ export class HubstaffService {
 				if (isEmpty(activities)) {
 					continue;
 				}
-				console.log(activities, 'activities');
+
 				const timeLogs = this.formatLogsFromSlots(activities);
-				console.log(timeLogs, 'timeLogs');
+				const integratedTimeLogs = await this.syncTimeLogs(
+					timeLogs,
+					token,
+					integrationId,
+					organizationId,
+					project.gauzyId
+				);
 
-				// for await (const timeLog of timeLogs) {
-					// const integratedTimeLogs = await this.syncTimeLogs(
-					// 	this.formatedLogsFromSlots(activities),
-					// 	token,
-					// 	integrationId,
-					// 	organizationId,
-					// 	project.gauzyId,
-					// 	start,
-					// 	end
-					// );
-					// const integratedTimeSlots = await this.syncTimeSlots(
-					// 	activities,
-					// 	token,
-					// 	integrationId,
-					// 	organizationId
-					// );
+				const integratedTimeSlots = await this.syncTimeSlots(
+					activities,
+					token,
+					integrationId,
+					organizationId
+				);
 
-					// syncedActivities.integratedTimeLogs = syncedActivities.integratedTimeLogs.concat(
-					// 	integratedTimeLogs
-					// );
-					// syncedActivities.integratedTimeSlots = syncedActivities.integratedTimeSlots.concat(
-					// 	integratedTimeSlots
-					// );
-				// }
+				syncedActivities.integratedTimeLogs = syncedActivities.integratedTimeLogs.concat(
+					integratedTimeLogs
+				);
+				syncedActivities.integratedTimeSlots = syncedActivities.integratedTimeSlots.concat(
+					integratedTimeSlots
+				);
 			}
 			return syncedActivities;
 		} catch (error) {
+			console.log(error);
 			if (error instanceof HttpException) {
 				throw new HttpException(error.getResponse(), error.getStatus());
 			}
-			throw new BadRequestException(`Can\'t handle ${IntegrationEntity.ACTIVITY}`);
+			throw new BadRequestException(error, `Can\'t handle ${IntegrationEntity.ACTIVITY}`);
 		}
 	}
 
@@ -1248,7 +1291,8 @@ export class HubstaffService {
 				})
 			);
 		} catch (error) {
-			throw new BadRequestException(`Can\'t handle activities ${IntegrationEntity.SCREENSHOT}`);
+			console.log(error);
+			throw new BadRequestException(error, `Can\'t handle activities ${IntegrationEntity.SCREENSHOT}`);
 		}
 	}
 
@@ -1302,37 +1346,37 @@ export class HubstaffService {
 								gauzyId,
 								dateRange
 							);
-							// activities.application = await this._handleAppActivities(
-							// 	projectsMap,
-							// 	integrationId,
-							// 	token,
-							// 	gauzyId,
-							// 	dateRange
-							// );
-							// activities.urls = await this._handleUrlActivities(
-							// 	projectsMap,
-							// 	integrationId,
-							// 	token,
-							// 	gauzyId,
-							// 	dateRange
-							// );
+							activities.application = await this._handleAppActivities(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+							activities.urls = await this._handleUrlActivities(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
 						}
 
 						/**
 						 * Activity Screenshot Sync
 						 */
-						// const screenshotSetting: IIntegrationEntitySetting = setting.tiedEntities.find(
-						// 	(res) => res.entity === IntegrationEntity.SCREENSHOT
-						// );
-						// if (isObject(screenshotSetting) && screenshotSetting.sync) {
-						// 	screenshots = await this._handleScreenshots(
-						// 		projectsMap,
-						// 		integrationId,
-						// 		token,
-						// 		gauzyId,
-						// 		dateRange
-						// 	);
-						// }
+						const screenshotSetting: IIntegrationEntitySetting = setting.tiedEntities.find(
+							(res) => res.entity === IntegrationEntity.SCREENSHOT
+						);
+						if (isObject(screenshotSetting) && screenshotSetting.sync) {
+							screenshots = await this._handleScreenshots(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+						}
 						return { tasks, projectsMap, activities, screenshots };
 					case IntegrationEntity.CLIENT:
 						const clients = await this._handleClients(
@@ -1356,8 +1400,9 @@ export class HubstaffService {
 		const range = [];
 		let i = 0;
 		while (slots[i]) {
-			const start = moment(slots[i].time_slot);
-			const end = moment(slots[i].time_slot).add(10, 'minute');
+
+			const start = moment(slots[i].starts_at);
+			const end = moment(slots[i].starts_at).add(slots[i].input_tracked, 'seconds');
 
 			range.push({
 				start: start.toDate(),
@@ -1382,10 +1427,12 @@ export class HubstaffService {
 					i++;
 				}
 
+				const [ activity ] = this.getLogsActivityFromSlots(timeSlots);
 				timeLogs.push({
 					startedAt: start,
 					stoppedAt: end,
-					timeSlots
+					timeSlots,
+					...activity
 				});
 			});
 		}
@@ -1393,7 +1440,7 @@ export class HubstaffService {
 		return timeLogs;
 	}
 
-	formatedLogsFromSlots(timeSlots) {
+	getLogsActivityFromSlots(timeSlots): any {
 		const timeLogs = timeSlots.reduce((prev, current) => {
 			const prevLog = prev[current.date];
 			return {
@@ -1404,9 +1451,7 @@ export class HubstaffService {
 							date: current.date,
 							user_id: prevLog.user_id,
 							project_id: prevLog.project_id,
-							starts_at: moment
-								.utc(prevLog.starts_at)
-								.format('YYYY-MM-DD HH:mm:ss'),
+							task_id: prevLog.task_id,
 							keyboard: (prevLog.keyboard += current.keyboard),
 							mouse: (prevLog.mouse += current.mouse),
 							overall: (prevLog.overall += current.overall),
@@ -1422,9 +1467,7 @@ export class HubstaffService {
 							date: current.date,
 							user_id: current.user_id,
 							project_id: current.project_id,
-							starts_at: moment
-								.utc(current.starts_at)
-								.format('YYYY-MM-DD HH:mm:ss'),
+							task_id: current.task_id,
 							keyboard: current.keyboard,
 							mouse: current.mouse,
 							overall: current.overall,
