@@ -1,42 +1,45 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { IsNull, Repository } from 'typeorm';
+import * as nodemailer from 'nodemailer';
 import {
 	ICustomSmtp,
 	ICustomSmtpCreateInput,
 	ICustomSmtpFindInput
 } from '@gauzy/contracts';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
 import { ISMTPConfig } from '@gauzy/common';
+import { environment as env } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
-import { CustomSmtp } from './custom-smtp.entity';
-import { EmailService } from '../email/email.service';
 import { RequestContext } from './../core/context';
+import { CustomSmtp } from './custom-smtp.entity';
 
 @Injectable()
 export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	constructor(
 		@InjectRepository(CustomSmtp)
-		private readonly customSmtpRepository: Repository<CustomSmtp>,
-
-		@Inject(forwardRef(() => EmailService))
-		private readonly emailService: EmailService
+		protected readonly customSmtpRepository: Repository<CustomSmtp>
 	) {
 		super(customSmtpRepository);
 	}
 
-	async getSmtpSetting(
+	/**
+	 * GET SMTP settings for tenant/organization
+	 * 
+	 * @param query 
+	 * @returns 
+	 */
+	public async getSmtpSetting(
 		query: ICustomSmtpFindInput
 	): Promise<ICustomSmtp | ISMTPConfig> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = query;
 		
-		const globalSmtp = this.emailService.createSMTPTransporter();
+		const globalSmtp = this.defaultSMTPTransporter();
 		delete globalSmtp['auth'];
 	
 		try {
 			if (!organizationId) {
-				const tenantSmtp = await this.customSmtpRepository.findOne({
+				const tenantSmtp = await this.findOneByOptions({
 					where: {
 						tenantId,
 						organizationId: IsNull()
@@ -44,7 +47,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 				});
 				return tenantSmtp || globalSmtp;
 			}
-			const organizationSmtp = await this.customSmtpRepository.findOne({
+			const organizationSmtp = await this.findOneByOptions({
 				where: {
 					tenantId,
 					organizationId
@@ -57,7 +60,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	}
 
 	// Verify connection configuration
-	async verifyTransporter(configuration: ICustomSmtpCreateInput) {
+	public async verifyTransporter(configuration: ICustomSmtpCreateInput) {
 		return new Promise((resolve, reject) => {
 			try {
 				const transporter = nodemailer.createTransport({
@@ -69,6 +72,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 						pass: configuration.password
 					}
 				});
+				console.log(transporter, 'Verify Transport Payload');
 				transporter.verify(function (error, success) {
 					if (error) {
 						console.log(error);
@@ -82,5 +86,21 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 				reject(false);
 			}
 		});
+	}
+
+	/*
+	 * This example would connect to a SMTP server separately for every single message
+	 */
+	public defaultSMTPTransporter(): ISMTPConfig {
+		const smtp: ISMTPConfig = env.smtpConfig;
+		return {
+			host: smtp.host,
+			port: smtp.port,
+			secure: smtp.secure, // true for 465, false for other ports
+			auth: {
+				user: smtp.auth.user,
+				pass: smtp.auth.pass
+			}
+		};
 	}
 }

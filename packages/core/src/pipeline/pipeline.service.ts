@@ -23,8 +23,10 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public constructor(
 		@InjectRepository(Deal)
 		protected dealRepository: Repository<Deal>,
+
 		@InjectRepository(Pipeline)
 		protected pipelineRepository: Repository<Pipeline>,
+		
 		@InjectRepository(User)
 		protected userRepository: Repository<User>
 	) {

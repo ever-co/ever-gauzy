@@ -1,5 +1,5 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CustomSmtp } from './custom-smtp.entity';
@@ -7,7 +7,6 @@ import { CustomSmtpController } from './custom-smtp.controller';
 import { CustomSmtpService } from './custom-smtp.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands';
-import { EmailModule } from '../email/email.module';
 
 @Module({
 	imports: [
@@ -15,12 +14,11 @@ import { EmailModule } from '../email/email.module';
 			{ path: '/smtp', module: CustomSmtpModule }
 		]),
 		TypeOrmModule.forFeature([CustomSmtp]),
-		TenantModule,
-		EmailModule,
+		forwardRef(() => TenantModule),
 		CqrsModule
 	],
 	controllers: [CustomSmtpController],
 	providers: [CustomSmtpService, ...CommandHandlers],
-	exports: [CustomSmtpService]
+	exports: [TypeOrmModule, CustomSmtpService]
 })
 export class CustomSmtpModule {}
