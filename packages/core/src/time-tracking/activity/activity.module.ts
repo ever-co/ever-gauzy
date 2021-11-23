@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from './../../tenant/tenant.module';
@@ -9,6 +9,7 @@ import { ActivityController } from './activity.controller';
 import { ActivityService } from './activity.service';
 import { Activity } from './activity.entity';
 import { ActivityMapService } from './activity.map.service';
+import { TimeSlotModule } from './../time-slot/time-slot.module';
 
 @Module({
 	controllers: [
@@ -19,6 +20,7 @@ import { ActivityMapService } from './activity.map.service';
 		TenantModule,
 		EmployeeModule,
 		OrganizationProjectModule,
+		forwardRef(() => TimeSlotModule),
 		CqrsModule
 	],
 	providers: [
