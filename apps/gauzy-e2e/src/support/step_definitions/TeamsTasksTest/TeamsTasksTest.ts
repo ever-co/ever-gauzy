@@ -52,7 +52,10 @@ And('User can visit Tasks team page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.intercept('GET', '/api/organization-projects/count*').as('waitOrg');
+	cy.intercept('GET', '/api/employee/working/count*').as('waitWorking');
 	cy.visit('/#/pages/tasks/team', { timeout: pageLoadTimeout });
+	cy.wait(['@waitOrg','@waitWorking']);
 });
 
 And('User can see grid button', () => {

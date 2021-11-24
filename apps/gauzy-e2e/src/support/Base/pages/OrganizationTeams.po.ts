@@ -52,8 +52,8 @@ export const employeeDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationTeamsPage.employeeMultiSelectCss);
 };
 
-export const clickEmployeeDropdown = () => {
-	clickButton(OrganizationTeamsPage.employeeMultiSelectCss);
+export const clickEmployeeDropdown = (index) => {
+	clickButtonByIndex(OrganizationTeamsPage.employeeMultiSelectCss, index);
 };
 
 export const selectEmployeeFromDropdown = (index) => {
@@ -64,8 +64,8 @@ export const managerDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationTeamsPage.managerMultiSelectCss);
 };
 
-export const clickManagerDropdown = () => {
-	clickButton(OrganizationTeamsPage.managerMultiSelectCss);
+export const clickManagerDropdown = (index) => {
+	clickButtonByIndex(OrganizationTeamsPage.managerMultiSelectCss, index);
 };
 
 export const selectManagerFromDropdown = (index) => {
