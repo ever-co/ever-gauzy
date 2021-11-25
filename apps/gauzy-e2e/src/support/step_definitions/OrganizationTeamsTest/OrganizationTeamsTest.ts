@@ -99,7 +99,7 @@ And('User can see employee dropdown', () => {
 });
 
 When('User click on employee dropdown', () => {
-	organizationTeamsPage.clickEmployeeDropdown();
+	organizationTeamsPage.clickEmployeeDropdown(OrganizationTeamsPageData.employeeDropdown);
 });
 
 Then('User can select employee from dropdown options', () => {
@@ -112,7 +112,7 @@ And('User can see manager dropdown', () => {
 });
 
 When('User click on manager dropdown', () => {
-	organizationTeamsPage.clickManagerDropdown();
+	organizationTeamsPage.clickManagerDropdown(OrganizationTeamsPageData.managerDropdown);
 });
 
 Then('User can select manager from dropdown options', () => {

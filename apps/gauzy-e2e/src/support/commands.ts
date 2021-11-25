@@ -135,10 +135,10 @@ export const CustomCommands = {
 		organizationTeamsPage.clickTagsMultiSelect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
 		organizationTeamsPage.clickCardBody(0);
-		organizationTeamsPage.clickEmployeeDropdown();
+		organizationTeamsPage.clickEmployeeDropdown(1);
 		organizationTeamsPage.selectEmployeeFromDropdown(0);
 		organizationTeamsPage.clickCardBody(0);
-		organizationTeamsPage.clickManagerDropdown();
+		organizationTeamsPage.clickManagerDropdown(1);
 		organizationTeamsPage.selectManagerFromDropdown(0);
 		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.saveButtonVisible();

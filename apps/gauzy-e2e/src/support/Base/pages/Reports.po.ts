@@ -34,8 +34,13 @@ export const clickSidebarBtn = (text) => {
 	clickElementByText(ReportsPage.sidebarBtnCss, text);
 };
 
-export const clickInnerSidebarBtn = (text) => {
+export const clickInnerSidebarBtn = (text) => {	
 	forceClickElementByText(ReportsPage.sidebarBtnCss, text);
+};
+export const clickInnerSidebarBtnAmounts = (text) => {	
+	cy.intercept('GET', '/api/timesheet/time-log/report/owed-report*').as('waitTable');
+	forceClickElementByText(ReportsPage.sidebarBtnCss, text);
+	cy.wait('@waitTable');
 };
 
 export const activityLevelBtnVisible = () => {
