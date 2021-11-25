@@ -234,7 +234,7 @@ export class HubstaffService {
 		organizationId?
 	) {
 		return forkJoin(
-			organizations.filter((organization) => organization.sourceId != 79548).map((organization) =>
+			organizations.map((organization) =>
 				this._http.post(
 					`${API_PREFIX}/integrations/hubstaff/auto-sync/${integrationId}`,
 					{
