@@ -21,9 +21,48 @@ export interface IHubstaffOrganization {
 	status: string;
 }
 
+export interface IHubstaffOrganizationsResponse {
+	organizations: IHubstaffOrganization[]
+}
+
+
 export interface IHubstaffProject {
 	id: number;
 	name: string;
 	status: string;
+	created_at: Date;
+	updated_at: Date;
 	client_id: number;
+	billable: boolean;
+	metadata: any
+}
+
+export interface IHubstaffProjectsResponse {
+	projects: IHubstaffProject[],
+	clients: Array<any>
+}
+
+export interface IHubstaffProjectResponse {
+	project: IHubstaffProject
+}
+export interface IHubstaffTimeSlotActivity {
+	id: number,
+	date: string,
+	time_slot: string,
+	starts_at: string,
+	user_id: number,
+	project_id: number,
+	keyboard: number,
+	mouse: number,
+	overall: number,
+	tracked: number,
+	input_tracked: number,
+	tracks_input: boolean,
+	billable: boolean,
+	paid: boolean,
+	client_invoiced: boolean,
+	team_invoiced: boolean,
+	immutable: boolean,
+	time_type: string,
+	client: string
 }

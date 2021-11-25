@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, forkJoin } from 'rxjs';
+import { Observable, BehaviorSubject, forkJoin, debounceTime } from 'rxjs';
 import {
 	IIntegrationTenant,
 	IIntegrationSetting,
@@ -159,13 +159,11 @@ export class HubstaffService {
 	}
 
 	syncProjects(projects, integrationId, organizationId) {
-		return this._http.post(
-			`${API_PREFIX}/integrations/hubstaff/sync-projects/${integrationId}`,
-			{
-				projects: this._mapProjectPayload(projects),
-				organizationId
-			}
-		);
+		return this._http.post(`${API_PREFIX}/integrations/hubstaff/sync-projects/${integrationId}`, {
+			projects: this._mapProjectPayload(projects),
+			organizationId,
+			token: this.ACCESS_TOKEN
+		});
 	}
 
 	setActivityDateRange({ start, end }) {
@@ -181,19 +179,20 @@ export class HubstaffService {
 	}
 
 	autoSync({ integrationId, hubstaffOrganizations, organizationId }) {
-		const entitiesToSync = this._entitiesToSync$
-			.getValue()
-			.currentValue.filter((setting) => setting.sync);
 		const dateRange = this._dateRangeActivity$.getValue();
+
 		// organizations are already fetched ---> skip fetch for this just integrate in DB
-
-		const organizationSetting = entitiesToSync.find(
-			(setting) => setting.entity === IntegrationEntity.ORGANIZATION
-		);
-
+		const organizationEntityToSync = this._entitiesToSync$
+			.getValue()
+			.currentValue
+			.filter((setting) => setting.sync)
+			.find((setting) => setting.entity === IntegrationEntity.ORGANIZATION)
+			
 		// if organization is set to true, map all entities to this organizations, else use hubstaff organizations id and map all entities to current selected gauzy organization
-
-		if (organizationSetting.sync) {
+		if (
+			organizationEntityToSync &&
+			organizationEntityToSync.sync
+		) {
 			const organizationsMap$ = this._http.post<IIntegrationMap[]>(
 				`${API_PREFIX}/integrations/hubstaff/sync-organizations/${integrationId}`,
 				{
@@ -209,9 +208,9 @@ export class HubstaffService {
 			);
 
 			return organizationsMap$.pipe(
+				debounceTime(1000),
 				switchMap((organizations) =>
 					this._forkEntities(
-						entitiesToSync,
 						organizations,
 						integrationId,
 						dateRange
@@ -221,7 +220,6 @@ export class HubstaffService {
 		}
 
 		return this._forkEntities(
-			entitiesToSync,
 			hubstaffOrganizations,
 			integrationId,
 			dateRange,
@@ -230,18 +228,16 @@ export class HubstaffService {
 	}
 
 	private _forkEntities(
-		entitiesToSync,
 		organizations,
 		integrationId,
 		dateRange,
 		organizationId?
 	) {
 		return forkJoin(
-			organizations.map((organization) =>
+			organizations.filter((organization) => organization.sourceId != 79548).map((organization) =>
 				this._http.post(
 					`${API_PREFIX}/integrations/hubstaff/auto-sync/${integrationId}`,
 					{
-						entitiesToSync,
 						dateRange,
 						gauzyId: organizationId
 							? organizationId
@@ -253,7 +249,8 @@ export class HubstaffService {
 					}
 				)
 			)
-		);
+		)
+		.pipe(debounceTime(2000));
 	}
 
 	private _mapProjectPayload(data: any[]) {

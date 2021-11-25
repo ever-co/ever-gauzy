@@ -62,7 +62,7 @@ export class TimeLogCreateHandler
 			timeSlots = this.timeSlotService.generateTimeSlots(
 				input.startedAt,
 				input.stoppedAt
-			).map((slot) => ({
+			).map((slot: ITimeSlot) => ({
 				...slot,
 				employeeId,
 				organizationId,
@@ -80,29 +80,21 @@ export class TimeLogCreateHandler
 			 * Time Logs is : 04:00:00 to  05:00:00 and pass time slots for 04:00:00, 04:20:00, 04:30:00, 04:40:00
 			 * then it will add  04:10:00,  04:50:00 as blank time slots in array to instert
 			 */
-			input.timeSlots = input.timeSlots.map((timeSlot: ITimeSlot) => {
-				timeSlot.startedAt = moment.utc(startedAt).toDate();
-				timeSlot.employeeId = employeeId;
-				timeSlot.organizationId = organizationId;
-				timeSlot.tenantId = tenantId;
-				return timeSlot;
-			});
+			input.timeSlots = input.timeSlots.map((timeSlot: ITimeSlot) => ({
+				// startedAt: moment.utc(startedAt).toDate(),
+				...timeSlot,
+				employeeId,
+				organizationId,
+				tenantId
+			}));
 
 			timeSlots = timeSlots.map((blankTimeSlot) => {
 				let timeSlot = input.timeSlots.find((requestTimeSlot) => {
-					return (
-						moment
-							.utc(requestTimeSlot.startedAt)
-							.format('YYYY-MM-DD HH:mm') ===
-						moment
-							.utc(blankTimeSlot.startedAt)
-							.format('YYYY-MM-DD HH:mm')
-					);
+					return moment(requestTimeSlot.startedAt).isSame(blankTimeSlot.startedAt); // true
 				});
 
 				timeSlot = timeSlot ? timeSlot : blankTimeSlot;
 				timeSlot.employeeId = input.employeeId;
-
 				return timeSlot;
 			});
 		}

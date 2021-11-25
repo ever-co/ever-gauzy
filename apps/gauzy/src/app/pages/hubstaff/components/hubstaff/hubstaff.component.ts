@@ -1,8 +1,6 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { HubstaffService } from 'apps/gauzy/src/app/@core/services/hubstaff.service';
 import { ActivatedRoute } from '@angular/router';
 import {
 	switchMap,
@@ -11,14 +9,14 @@ import {
 	finalize,
 	map
 } from 'rxjs/operators';
-import { IHubstaffOrganization, IHubstaffProject } from '@gauzy/contracts';
+import { IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
 import { Observable, of, firstValueFrom } from 'rxjs';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { filter } from 'rxjs/operators';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
-import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
+import { ErrorHandlingService, HubstaffService, Store, ToastrService } from './../../../../@core/services';
+import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,56 +28,55 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class HubstaffComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+		
 	@ViewChild('projectsTable') projectsTable;
+
 	settingsSmartTable: object;
 	organizations$: Observable<IHubstaffOrganization[]>;
 	projects$: Observable<IHubstaffProject[]>;
-	organizations: IHubstaffOrganization[];
-	projects: IHubstaffProject[];
-	selectedOrganization: IHubstaffOrganization;
-	selectedProjects: IHubstaffProject[];
+	organizations: IHubstaffOrganization[] = [];
+	projects: IHubstaffProject[] = [];
+	organization: IOrganization;
+	selectedProjects: IHubstaffProject[] = [];
 	loading: boolean;
 	integrationId: string;
-	organizationId: string;
 	supportContextActions: NbMenuItem[];
 
 	constructor(
-		public translateService: TranslateService,
-		private _hubstaffService: HubstaffService,
-		private _activatedRoute: ActivatedRoute,
-		private _errorHandlingService: ErrorHandlingService,
-		private toastrService: ToastrService,
-		private _dialogService: NbDialogService,
-		private _store: Store,
-		private _titlecasePipe: TitleCasePipe,
-		private nbMenuService: NbMenuService
+		public readonly _translateService: TranslateService,
+		private readonly _hubstaffService: HubstaffService,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _toastrService: ToastrService,
+		private readonly _dialogService: NbDialogService,
+		private readonly _store: Store,
+		private readonly _titlecasePipe: TitleCasePipe,
+		private readonly nbMenuService: NbMenuService
 	) {
-		super(translateService);
+		super(_translateService);
 	}
 
 	ngOnInit() {
-		this.loadSettingsSmartTable();
+		this._loadSettingsSmartTable();
 		this._loadActions();
 		this._applyTranslationOnSmartTable();
 		this._setTokenAndloadOrganizations();
 
 		this._store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe(
-				(organization) =>
-					(this.organizationId = organization
-						? organization.id
-						: null)
-			);
-
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.nbMenuService
 			.onItemClick()
 			.pipe(
-				map(({ item: { title } }) => title),
+				map(({ item: { icon } }) => icon),
 				untilDestroyed(this)
 			)
-			.subscribe((title) => {
-				if (title === 'Settings') {
+			.subscribe((icon) => {
+				if (icon === 'settings-2-outline') {
 					this.setSettings();
 				}
 			});
@@ -111,16 +108,16 @@ export class HubstaffComponent
 			);
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
-				this.loadSettingsSmartTable();
+				this._loadSettingsSmartTable();
 				this._loadActions();
 			});
 	}
 
-	loadSettingsSmartTable() {
+	private _loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			selectMode: 'multi',
 			actions: {
@@ -175,15 +172,19 @@ export class HubstaffComponent
 	}
 
 	syncProjects() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
 		this._hubstaffService
 			.syncProjects(
 				this.selectedProjects,
 				this.integrationId,
-				this.organizationId
+				organizationId
 			)
 			.pipe(
 				tap(() => {
-					this.toastrService.success(
+					this._toastrService.success(
 						this.getTranslation(
 							'INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_PROJECTS'
 						),
@@ -200,16 +201,20 @@ export class HubstaffComponent
 	}
 
 	autoSync() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
 		this.loading = true;
 		this._hubstaffService
 			.autoSync({
 				integrationId: this.integrationId,
 				hubstaffOrganizations: this.organizations,
-				organizationId: this.organizationId
+				organizationId
 			})
 			.pipe(
 				tap((res) => {
-					this.toastrService.success(
+					this._toastrService.success(
 						this.getTranslation(
 							'INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_ENTITIES'
 						),
@@ -241,7 +246,7 @@ export class HubstaffComponent
 			.updateSettings(this.integrationId)
 			.pipe(
 				tap(() => {
-					this.toastrService.success(
+					this._toastrService.success(
 						this.getTranslation(
 							'INTEGRATIONS.HUBSTAFF_PAGE.SETTINGS_UPDATED'
 						),

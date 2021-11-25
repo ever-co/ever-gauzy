@@ -4,26 +4,29 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { HubstaffService } from 'apps/gauzy/src/app/@core/services/hubstaff.service';
 import { NbDialogRef } from '@nebular/theme';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
 import { tap } from 'rxjs/operators';
+import { IDateRangeActivityFilter, IntegrationEntity } from '@gauzy/contracts';
+import { HubstaffService } from './../../../../@core/services/hubstaff.service';
 
 @Component({
-	selector: 'ngx-settings-dialog',
+	selector: 'ngx-hubstaff-settings-dialog',
 	templateUrl: './settings-dialog.component.html',
 	styleUrls: ['./settings-dialog.component.scss']
 })
 export class SettingsDialogComponent implements OnInit, AfterViewInit {
+	
 	entitiesToSync$: Observable<any> = this._hubstaffService.entitiesToSync$;
 	expandOptions: boolean;
+
 	maxDate: Date = new Date();
-	minDate: Date = new Date(
-		moment().subtract(6, 'months').format('YYYY-MM-DD')
-	);
-	defaultRange$;
+	minDate: Date = new Date(moment().subtract(6, 'months').format('YYYY-MM-DD'));
+
+	defaultRange$: Observable<IDateRangeActivityFilter>;
 	dispayDate: any;
+	IntegrationEntity = IntegrationEntity;
 
 	constructor(
 		private _hubstaffService: HubstaffService,

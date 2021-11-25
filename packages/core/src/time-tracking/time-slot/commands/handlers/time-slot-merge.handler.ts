@@ -42,10 +42,6 @@ export class TimeSlotMergeHandler
 			.set('second', 0)
 			.set('millisecond', 0);
 
-		console.log(
-			`Timeslot merge startDate=${startDate} and endDate=${endDate}`
-		);
-
 		if (this.configService.dbConnectionOptions.type === 'sqlite') {
 			startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
 			endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
@@ -70,8 +66,6 @@ export class TimeSlotMergeHandler
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
-
-		console.log('Previous Inserted Timeslots:', timerSlots);
 
 		const createdTimeslots: any = [];
 		if (timerSlots.length > 0) {
@@ -112,7 +106,6 @@ export class TimeSlotMergeHandler
 					}
 
 					const timeSlotslength = oldTimeslots.filter((item) => item.keyboard !== 0).length;
-					console.log('Valid TimeSlots length:', timeSlotslength);
 					const activity = {
 						duration,
 						keyboard: Math.round(keyboard / timeSlotslength || 0),
@@ -136,7 +129,6 @@ export class TimeSlotMergeHandler
 
 
 					timeLogs = _.uniq(timeLogs, x => x.id);
-					console.log('Created Timelogs:',  timeLogs);
 
 					const newTimeSlot = new TimeSlot({
 						..._.omit(oldTimeslot),
@@ -164,7 +156,6 @@ export class TimeSlotMergeHandler
 				.value();
 			await Promise.all(savePromises);
 		}
-		console.log('Created Timeslots Merge Handler:',  createdTimeslots);
 		return createdTimeslots;
 	}
 }
