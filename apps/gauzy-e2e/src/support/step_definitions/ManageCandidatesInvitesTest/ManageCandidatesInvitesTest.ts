@@ -26,7 +26,9 @@ Then('User can visit Candidates invites page', () => {
 });
 
 Then('User can see header of the page', () => {
+	cy.intercept('GET', '/api/invite*').as('waitInvitesSecond');
 	manageCandidatesInvitesPage.verifyHeaderOfThePage(ManageCandidatesInvitesPageData.headerText);
+	cy.wait('@waitInvitesSecond');
 });
 
 When('User see invite button', () => {
