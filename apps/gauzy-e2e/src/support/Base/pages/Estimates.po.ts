@@ -177,7 +177,9 @@ export const backButtonVisible = () => {
 };
 
 export const clickBackButton = () => {
+	cy.intercept('GET', '/api/invoices/pagination*').as('waitTable');
 	clickButton(EstimatesPage.backButtonCss);
+	cy.wait('@waitTable');
 };
 
 export const confirmButtonVisible = () => {
