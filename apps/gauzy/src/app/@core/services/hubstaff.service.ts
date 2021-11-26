@@ -203,7 +203,8 @@ export class HubstaffService {
 							currency: environment.DEFAULT_CURRENCY,
 							defaultValueDateType: DefaultValueDateTypeEnum.TODAY
 						})
-					)
+					),
+					organizationId
 				}
 			);
 

@@ -36,8 +36,7 @@ import {
 	IHubstaffProjectsResponse,
 	IHubstaffOrganizationsResponse,
 	IHubstaffProjectResponse,
-	IHubstaffTimeSlotActivity,
-	ITimeSlot
+	IHubstaffTimeSlotActivity
 } from '@gauzy/contracts';
 import {
 	DEFAULT_ENTITY_SETTINGS,
@@ -48,12 +47,7 @@ import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
-import {
-	OrganizationCreateCommand,
-	OrganizationUpdateCommand
-} from '../organization/commands';
 import { OrganizationContactCreateCommand } from '../organization-contact/commands';
-import { TaskCreateCommand } from '../tasks/commands';
 import { EmployeeCreateCommand, EmployeeGetCommand } from '../employee/commands';
 import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
@@ -62,12 +56,13 @@ import { ScreenshotCreateCommand } from './../time-tracking/screenshot/commands'
 import { TimeSlotCreateCommand } from './../time-tracking/time-slot/commands';
 import { ActivityCreateCommand } from './../time-tracking/activity/commands';
 import { TimeLogCreateCommand } from '../time-tracking/time-log/commands';
-import { IntegrationMapSyncEntityCommand } from './../integration-map/commands';
 import {
-	OrganizationProjectCreateCommand,
-	OrganizationProjectUpdateCommand
-} from '../organization-project/commands';
-import { TaskUpdateCommand } from '../tasks/commands';
+	IntegrationMapSyncEntityCommand,
+	IntegrationMapSyncOrganizationCommand,
+	IntegrationMapSyncProjectCommand,
+	IntegrationMapSyncTaskCommand,
+	IntegrationMapSyncTimeSlotCommand
+} from './../integration-map/commands';
 import { RequestContext } from '../core/context';
 import { mergeOverlappingDateRanges } from 'core/utils';
 
@@ -81,7 +76,7 @@ export class HubstaffService {
 		private readonly _roleService: RoleService,
 		private readonly _organizationService: OrganizationService,
 		private readonly _userService: UserService,
-		private readonly commandBus: CommandBus
+		private readonly _commandBus: CommandBus
 	) {}
 
 	async fetchIntegration<T = any>(url: string, token: string): Promise<any> {
@@ -338,36 +333,15 @@ export class HubstaffService {
 							tenantId,
 							...budget
 						};
-						const {
-							record
-						} = await this._integrationMapService.findOneOrFailByOptions({
-							where: {
-								sourceId,
-								entity: IntegrationEntity.PROJECT,
-								organizationId,
-								tenantId
-							}
-						});
-						//if project already integrated then only update model/entity
-						if (record) {
-							await this.commandBus.execute(
-								new OrganizationProjectUpdateCommand(
-									Object.assign(payload, { id: record.gauzyId })
-								)
-							);
-							return record;
-						}
-						const gauzyProject = await this.commandBus.execute(
-							new OrganizationProjectCreateCommand(payload)
-						);
-						return await this.commandBus.execute(
-							new IntegrationMapSyncEntityCommand({
-								gauzyId: gauzyProject.id,
-								integrationId,
-								sourceId,
-								entity: IntegrationEntity.PROJECT,
-								organizationId
-							})
+						return await this._commandBus.execute(
+							new IntegrationMapSyncProjectCommand(
+								Object.assign({
+									organizationProjectInput: payload,
+									sourceId,
+									integrationId,
+									organizationId
+								})
+							)
 						);
 					}
 				)
@@ -380,52 +354,23 @@ export class HubstaffService {
 
 	async syncOrganizations({
 		integrationId,
+		organizationId,
 		organizations
 	}): Promise<IIntegrationMap[]> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
 			return await Promise.all(
 				await organizations.map(
 					async (organization) => {
 						const { sourceId } = organization;
-						const {
-							record
-						} = await this._integrationMapService.findOneOrFailByOptions({
-							where: {
-								sourceId,
-								entity: IntegrationEntity.ORGANIZATION,
-								tenantId
-							}
-						});
-						//if organization already integrated then only update model/entity
-						if (record) {
-							//unset sourceId before update organization
-							delete organization['sourceId'];
-							const { gauzyId } = record;
-							await this.commandBus.execute(
-								new OrganizationUpdateCommand(
-									Object.assign(organization, {
-										id: gauzyId,
-										imageUrl: organization.imageUrl
-									})
-								)
-							);
-							return record;
-						}
-						const gauzyOrganization = await this.commandBus.execute(
-							new OrganizationCreateCommand({
-								...organization,
-								imageUrl: organization.imageUrl
-							})
-						);
-						return await this.commandBus.execute(
-							new IntegrationMapSyncEntityCommand({
-								gauzyId: gauzyOrganization.id,
-								integrationId,
-								sourceId,
-								entity: IntegrationEntity.ORGANIZATION,
-								organizationId: gauzyOrganization.id
-							})
+						return await this._commandBus.execute(
+							new IntegrationMapSyncOrganizationCommand(
+								Object.assign({
+									organizationInput: organization,
+									sourceId,
+									integrationId,
+									organizationId
+								})
+							)
 						);
 					}
 				)
@@ -465,7 +410,7 @@ export class HubstaffService {
 							clientBudget['budget'] = budget[clientBudget['budgetType']];
 						}
 
-						const gauzyClient = await this.commandBus.execute(
+						const gauzyClient = await this._commandBus.execute(
 							new OrganizationContactCreateCommand({
 								name,
 								organizationId,
@@ -475,7 +420,7 @@ export class HubstaffService {
 								...clientBudget
 							})
 						);
-						return await this.commandBus.execute(
+						return await this._commandBus.execute(
 							new IntegrationMapSyncEntityCommand({
 								gauzyId: gauzyClient.id,
 								integrationId,
@@ -519,7 +464,7 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
-				const gauzyScreenshot = await this.commandBus.execute(
+				const gauzyScreenshot = await this._commandBus.execute(
 					new ScreenshotCreateCommand({
 						file: full_url,
 						thumb: thumb_url,
@@ -530,7 +475,7 @@ export class HubstaffService {
 					})
 				);
 				integratedScreenshots.push(
-					await this.commandBus.execute(
+					await this._commandBus.execute(
 						new IntegrationMapSyncEntityCommand({
 							gauzyId: gauzyScreenshot.id,
 							integrationId,
@@ -562,11 +507,9 @@ export class HubstaffService {
 				await tasks.map(
 					async ({ summary: title, id, status, due_at }) => {
 						if (!due_at) {
-							due_at = new Date(
-								moment().add(2, 'week').format('YYYY-MM-DD HH:mm:ss')
-							);
+							due_at = new Date(moment().add(2, 'week').format('YYYY-MM-DD HH:mm:ss'));
 						}
-						const payload = {
+						const task = {
 							title,
 							projectId,
 							description: 'Hubstaff Task',
@@ -576,36 +519,15 @@ export class HubstaffService {
 							organizationId,
 							tenantId
 						};
-						//if task already integrated then only update model/entity
-						const {
-							record
-						} = await this._integrationMapService.findOneOrFailByOptions({
-							where: {
-								sourceId: id,
-								entity: IntegrationEntity.TASK,
-								organizationId,
-								tenantId
-							}
-						});
-						if (record) {
-							await this.commandBus.execute(
-								new TaskUpdateCommand(
-									Object.assign(payload, { id: record.gauzyId })
-								)
-							);
-							return record;
-						}
-						const gauzyTask = await this.commandBus.execute(
-							new TaskCreateCommand(payload)
-						);
-						return await this.commandBus.execute(
-							new IntegrationMapSyncEntityCommand({
-								gauzyId: gauzyTask.id,
-								integrationId,
-								sourceId: id,
-								entity: IntegrationEntity.TASK,
-								organizationId
-							})
+						return await this._commandBus.execute(
+							new IntegrationMapSyncTaskCommand(
+								Object.assign({
+									taskInput: task,
+									sourceId: id,
+									integrationId,
+									organizationId
+								})
+							)
 						);
 					}
 				)
@@ -617,7 +539,7 @@ export class HubstaffService {
 	}
 
 	private async _getEmployeeByHubstaffUserId(
-		user_id: string,
+		user_id: number,
 		token: string,
 		integrationId: string,
 		organizationId: string
@@ -642,46 +564,42 @@ export class HubstaffService {
 			  });
 	}
 
+	/**
+	 * Map worked timeslot activity
+	 * 
+	 * @param timeSlots 
+	 * @returns 
+	 */
 	async syncTimeSlots(
-		timeSlots: Array<any>,
-		token: string,
 		integrationId: string,
-		organizationId: string
-	): Promise<IIntegrationMap[]> {
+		organizationId: string,
+		employee: IIntegrationMap,
+		timeSlots: IHubstaffTimeSlotActivity[],
+	): Promise<any> {
 		try {
-			let integratedTimeSlots = [];
-			for await (const timeSlot of timeSlots) {
-				const employee = await this._getEmployeeByHubstaffUserId(
-					timeSlot.user_id,
-					token,
-					integrationId,
-					organizationId
-				);
-				const gauzyTimeSlot = await this.commandBus.execute(
-					new TimeSlotCreateCommand({
-						employeeId: employee.gauzyId,
-						startedAt: timeSlot.starts_at,
-						keyboard: timeSlot.keyboard,
-						mouse: timeSlot.mouse,
-						overall: timeSlot.overall,
-						duration: timeSlot.tracked,
-						time_slot: timeSlot.time_slot,
-						organizationId
+			return timeSlots
+				.filter(async (timeslot: IHubstaffTimeSlotActivity) => {
+					return !!await this._commandBus.execute(
+						new IntegrationMapSyncTimeSlotCommand(
+							Object.assign({
+								employee,
+								timeSlot: timeslot,
+								sourceId: timeslot.id,
+								integrationId,
+								organizationId
+							})
+						)
+					);
+				})
+				.map(
+					({ keyboard, mouse, overall, tracked, time_slot }) => ({
+						keyboard,
+						mouse,
+						overall,
+						duration: tracked,
+						startedAt: time_slot
 					})
 				);
-				integratedTimeSlots.push(
-					await this.commandBus.execute(
-						new IntegrationMapSyncEntityCommand({
-							gauzyId: gauzyTimeSlot.id,
-							integrationId,
-							sourceId: timeSlot.id,
-							entity: IntegrationEntity.TIME_SLOT,
-							organizationId
-						})
-					)
-				);
-			}
-			return integratedTimeSlots;
 		} catch (error) {
 			console.log(error);
 			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TIME_SLOT}`);
@@ -714,7 +632,13 @@ export class HubstaffService {
 						tenantId
 					}
 				});
-				const gauzyTimeLog = await this.commandBus.execute(
+				const timeSlots = await this.syncTimeSlots(
+					integrationId,
+					organizationId,
+					employee,
+					timeLog.timeSlots
+				);
+				const gauzyTimeLog = await this._commandBus.execute(
 					new TimeLogCreateCommand({
 						projectId,
 						employeeId: employee.gauzyId,
@@ -725,11 +649,11 @@ export class HubstaffService {
 						source: TimeLogSourceEnum.HUBSTAFF,
 						organizationId,
 						tenantId,
-						timeSlots: this._mapTimeslotPayload(timeLog.timeSlots)
+						timeSlots
 					})
 				);
 				integratedTimeLogs.push(
-					await this.commandBus.execute(
+					await this._commandBus.execute(
 						new IntegrationMapSyncEntityCommand({
 							gauzyId: gauzyTimeLog.id,
 							integrationId,
@@ -758,7 +682,7 @@ export class HubstaffService {
 			});
 			let employee;
 			if (record) {
-				employee = await this.commandBus.execute(
+				employee = await this._commandBus.execute(
 					new EmployeeGetCommand({ where: { userId: record.id } })
 				);
 			} else {
@@ -778,7 +702,7 @@ export class HubstaffService {
 				]);
 				const [firstName, lastName] = user.name.split(' ');
 				const isActive = user.status === 'active' ? true : false;
-				employee = await this.commandBus.execute(
+				employee = await this._commandBus.execute(
 					new EmployeeCreateCommand({
 						user: {
 							email: user.email,
@@ -800,7 +724,7 @@ export class HubstaffService {
 					})
 				);
 			}
-			return await this.commandBus.execute(
+			return await this._commandBus.execute(
 				new IntegrationMapSyncEntityCommand({
 					gauzyId: employee.id,
 					integrationId,
@@ -956,7 +880,7 @@ export class HubstaffService {
 					}
 				});
 
-				const gauzyActivity = await this.commandBus.execute(
+				const gauzyActivity = await this._commandBus.execute(
 					new ActivityCreateCommand({
 						title: site,
 						duration: tracked,
@@ -971,7 +895,7 @@ export class HubstaffService {
 					})
 				);
 				integrationMaps.push(
-					await this.commandBus.execute(
+					await this._commandBus.execute(
 						new IntegrationMapSyncEntityCommand({
 							gauzyId: gauzyActivity.id,
 							integrationId,
@@ -1105,7 +1029,7 @@ export class HubstaffService {
 					}
 				});
 
-				const gauzyActivity = await this.commandBus.execute(
+				const gauzyActivity = await this._commandBus.execute(
 					new ActivityCreateCommand({
 						title: name,
 						duration: tracked,
@@ -1120,7 +1044,7 @@ export class HubstaffService {
 					})
 				);
 				integratedAppActivities.push(
-					await this.commandBus.execute(
+					await this._commandBus.execute(
 						new IntegrationMapSyncEntityCommand({
 							gauzyId: gauzyActivity.id,
 							integrationId,
@@ -1232,6 +1156,8 @@ export class HubstaffService {
 					continue;
 				}
 				const timeLogs = this.formatLogsFromSlots(activities);
+				console.log(timeLogs, 'timeLogs');
+
 				const integratedTimeLogs = await this.syncTimeLogs(
 					timeLogs,
 					token,
@@ -1487,8 +1413,8 @@ export class HubstaffService {
 							id: current.id,
 							date: current.date,
 							user_id: prevLog.user_id,
-							project_id: prevLog.project_id,
-							task_id: prevLog.task_id,
+							project_id: prevLog.project_id || null,
+							task_id: prevLog.task_id || null,
 							// this will take the last chunk(slot), maybe we should allow percentage for this, as one time log can have both manual and tracked
 							logType:
 								current.client === 'windows'
@@ -1499,8 +1425,8 @@ export class HubstaffService {
 							id: current.id,
 							date: current.date,
 							user_id: current.user_id,
-							project_id: current.project_id,
-							task_id: current.task_id,
+							project_id: current.project_id || null,
+							task_id: current.task_id || null,
 							logType:
 								current.client === 'windows'
 									? TimeLogType.TRACKED
@@ -1509,23 +1435,5 @@ export class HubstaffService {
 			};
 		}, {});
 		return Object.values(timeLogs);
-	}
-
-	/**
-	 * Map worked timeslot activity
-	 * 
-	 * @param timeSlots 
-	 * @returns 
-	 */
-	private _mapTimeslotPayload(timeSlots: IHubstaffTimeSlotActivity[]): any {
-		return timeSlots.map(
-			({ keyboard, mouse, overall, tracked, time_slot }) => ({
-				keyboard,
-				mouse,
-				overall,
-				duration: tracked,
-				startedAt: time_slot
-			})
-		);
 	}
 }

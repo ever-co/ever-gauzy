@@ -1,8 +1,10 @@
+import { IHubstaffTimeSlotActivity } from 'hubstaff.model';
+import { IOrganizationUpdateInput, ITaskUpdateInput } from 'index';
 import {
 	IBaseEntityModel,
 	IBasePerTenantAndOrganizationEntityModel
 } from './base-entity.model';
-import { IOrganizationProjectsCreateInput } from './organization-projects.model';
+import { IOrganizationProjectsCreateInput, IOrganizationProjectsUpdateInput } from './organization-projects.model';
 import { ITag } from './tag-entity.model';
 
 export interface IIntegrationSetting
@@ -76,8 +78,31 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
-export interface IIntegrationMapSyncProject {
-	organizationProjectCreateInput: IOrganizationProjectsCreateInput;
+export interface IIntegrationMapSyncTimeSlot 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	employee: IIntegrationMap;
+	timeSlot: IHubstaffTimeSlotActivity;
+	integrationId: string;
+	sourceId: string;
+}
+
+export interface IIntegrationMapSyncTask 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	taskInput: ITaskUpdateInput;
+	integrationId: string;
+	sourceId: string;
+}
+
+export interface IIntegrationMapSyncProject 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	organizationProjectInput: IOrganizationProjectsUpdateInput;
+	integrationId: string;
+	sourceId: string;
+}
+
+export interface IIntegrationMapSyncOrganization 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	organizationInput: IOrganizationUpdateInput;
 	integrationId: string;
 	sourceId: string;
 }
