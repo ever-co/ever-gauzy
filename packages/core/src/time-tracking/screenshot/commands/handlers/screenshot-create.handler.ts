@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import * as moment from 'moment';
-import { ScreenshotCreateCommand } from '..';
+import { ScreenshotCreateCommand } from './../screenshot-create.command';
 import { ScreenshotService } from './../../../screenshot/screenshot.service';
 import { TimeSlotService } from './../../../time-slot/time-slot.service';
 
@@ -43,7 +43,7 @@ export class ScreenshotCreateHandler
 				timeSlot = await this._timeSlotService.create({
 					organizationId,
 					employeeId,
-					duration: 600,
+					duration: 0,
 					keyboard: 0,
 					mouse: 0,
 					overall: 0,
@@ -52,23 +52,7 @@ export class ScreenshotCreateHandler
 					)
 				});
 			}
-
-			const {
-				record: screenshot
-			} = await this._screenshotService.findOneOrFailByOptions({
-				where: {
-					timeSlotId: timeSlot
-				}
-			});
-
-			if (screenshot) {
-				const { id } = screenshot;
-				await this._screenshotService.update(id, {
-					file,
-					thumb
-				});
-				return await this._screenshotService.findOneByIdString(id);
-			}
+			
 			return await this._screenshotService.create({
 				timeSlotId: timeSlot,
 				file,

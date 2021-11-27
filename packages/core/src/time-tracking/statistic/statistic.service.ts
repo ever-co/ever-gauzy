@@ -219,17 +219,19 @@ export class StatisticService {
 		if (isNotEmpty(employeeIds)) {
 			const query = this.timeSlotRepository.createQueryBuilder();
 			const weekTimeStatistics = await query
+				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
 							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
 							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
 					}`,
-					`duration`
+					`week_duration`
 				)
-				.addSelect(`AVG("${query.alias}"."overall")`, `overall`)
-				.addSelect(`COUNT("${query.alias}"."id")`, `count`)
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.addSelect(`COALESCE(((SUM("${query.alias}"."overall") * 100) / (SUM("${query.alias}"."duration"))), 0)`, `percentage`)
+				.addSelect(`COALESCE(SUM("${query.alias}"."overall"), 0)`, `overall`)
+				.addSelect(`COALESCE(SUM("${query.alias}"."duration"), 0)`, `duration`)
+				.addSelect(`COUNT("${query.alias}"."id")`, `timeslot_count`)
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
 				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
@@ -273,11 +275,14 @@ export class StatisticService {
 				.groupBy(`"timeLogs"."id"`)
 				.getRawMany();
 
-			const duration = reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0);
-			const overall = average(weekTimeStatistics, 'overall');
+			const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
+			const weekPercentage = (
+				(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
+				(reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0))
+			);
 
-			weekActivities['duration'] = duration;
-			weekActivities['overall'] = overall;
+			weekActivities['duration'] = weekDuration;
+			weekActivities['overall'] = weekPercentage;
 		}
 
 		/*
@@ -292,17 +297,19 @@ export class StatisticService {
 			let { start, end } = getDateRange();
 			const query = this.timeSlotRepository.createQueryBuilder();
 			const todayTimeStatistics = await query
+				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
 							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
 							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
 					}`,
-					`duration`
+					`today_duration`
 				)
-				.addSelect(`AVG("${query.alias}"."overall")`, `overall`)
-				.addSelect(`COUNT("${query.alias}"."id")`, `count`)
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.addSelect(`COALESCE(((SUM("${query.alias}"."overall") * 100) / (SUM("${query.alias}"."duration"))), 0)`, `percentage`)
+				.addSelect(`COALESCE(SUM("${query.alias}"."overall"), 0)`, `overall`)
+				.addSelect(`COALESCE(SUM("${query.alias}"."duration"), 0)`, `duration`)
+				.addSelect(`COUNT("${query.alias}"."id")`, `timeslot_count`)
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
 				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
@@ -345,12 +352,15 @@ export class StatisticService {
 				)
 				.groupBy(`"timeLogs"."id"`)
 				.getRawMany();
-	
-			const duration = reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0);
-			const overall = average(todayTimeStatistics, 'overall');
 
-			todayActivities['duration'] = duration;
-			todayActivities['overall'] = overall;
+			const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
+			const todayPercentage = (
+				(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
+				(reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0))
+			);
+
+			todayActivities['duration'] = todayDuration;
+			todayActivities['overall'] = todayPercentage;
 		}
 		return {
 			employeesCount,

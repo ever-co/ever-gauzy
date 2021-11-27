@@ -5,8 +5,5 @@
 		"incremental": true,
 		"tsBuildInfoFile": "./tsconfig.tsbuildinfo"
 	},
-	"include": [
-		"**/*.ts",
-		"../../libs/integration-hubstaff/src/lib/hubstaff-entity-settings.ts"
-	]
+	"include": ["**/*.ts"]
 }

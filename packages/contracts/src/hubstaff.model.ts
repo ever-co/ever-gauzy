@@ -46,23 +46,39 @@ export interface IHubstaffProjectResponse {
 	project: IHubstaffProject
 }
 export interface IHubstaffTimeSlotActivity {
-	id: number,
+	id: number;
+	date: string;
+	time_slot: string;
+	starts_at: string;
+	user_id: number;
+	project_id: number;
+	keyboard: number;
+	mouse: number;
+	overall: number;
+	tracked: number;
+	input_tracked: number;
+	tracks_input: boolean;
+	billable: boolean;
+	paid: boolean;
+	client_invoiced: boolean;
+	team_invoiced: boolean;
+	immutable: boolean;
+	time_type: string;
+	client: string;
+}
+
+export interface IHubstaffScreenshotActivity {
+	id: number;
+	full_url: string;
+	thumb_url: string;
 	date: string,
-	time_slot: string,
-	starts_at: string,
+	time_slot: string;
+	recorded_at: string
 	user_id: number,
 	project_id: number,
-	keyboard: number,
-	mouse: number,
-	overall: number,
-	tracked: number,
-	input_tracked: number,
-	tracks_input: boolean,
-	billable: boolean,
-	paid: boolean,
-	client_invoiced: boolean,
-	team_invoiced: boolean,
-	immutable: boolean,
-	time_type: string,
-	client: string
+	offset_x: number,
+	offset_y: number,
+	width: number,
+	height: number,
+	screen: number
 }

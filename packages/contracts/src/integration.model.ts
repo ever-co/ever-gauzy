@@ -1,4 +1,4 @@
-import { IHubstaffTimeSlotActivity } from 'hubstaff.model';
+import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from 'hubstaff.model';
 import { IOrganizationUpdateInput, ITaskUpdateInput } from 'index';
 import {
 	IBaseEntityModel,
@@ -76,6 +76,14 @@ export interface IIntegrationFilter {
 	integrationTypeId: string;
 	searchQuery: string;
 	filter: string;
+}
+
+export interface IIntegrationMapSyncScreenshot 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	employee: IIntegrationMap;
+	screenshot: IHubstaffScreenshotActivity;
+	integrationId: string;
+	sourceId: string;
 }
 
 export interface IIntegrationMapSyncTimeSlot 

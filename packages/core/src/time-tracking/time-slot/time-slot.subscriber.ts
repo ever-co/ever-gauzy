@@ -1,6 +1,6 @@
 import { EntitySubscriberInterface, EventSubscriber, RemoveEvent } from "typeorm";
 import * as moment from 'moment';
-import { IScreenshot } from "@gauzy/contracts";
+import { IScreenshot, ITimeSlot } from "@gauzy/contracts";
 import { TimeSlot } from "./time-slot.entity";
 import { FileStorage } from "./../../core/file-storage";
 
@@ -18,6 +18,7 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
     */
     afterLoad(entity: TimeSlot) {
 		entity.stoppedAt = moment(entity.startedAt).add(10, 'minutes').toDate();
+        entity.percentage = this.calculateActivityPercentage(entity);
     }
 
     /**
@@ -41,5 +42,11 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
                 });
             }
         }
+    }
+
+    private calculateActivityPercentage(entity: ITimeSlot): number {
+        return parseFloat(
+            Math.round(((entity.overall * 100) / (entity.duration))).toFixed(2)
+        ) || 0;
     }
 }

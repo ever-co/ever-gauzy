@@ -3,11 +3,13 @@ import { IntegrationMapSyncEntityHandler } from './integration-map.sync-entity.h
 import { IntegrationMapSyncOrganizationHandler } from './integration-map.sync-organization.handler';
 import { IntegrationMapSyncTaskHandler } from './integration-map.sync-task.handler';
 import { IntegrationMapSyncTimeSlotHandler } from './integration-map.sync-time-slot.handler';
+import { IntegrationMapSyncScreenshotHandler } from './integration-map.sync-screenshot.handler';
 
 export const CommandHandlers = [
 	IntegrationMapSyncEntityHandler,
 	IntegrationMapSyncOrganizationHandler,
 	IntegrationMapSyncProjectHandler,
 	IntegrationMapSyncTaskHandler,
-	IntegrationMapSyncTimeSlotHandler
+	IntegrationMapSyncTimeSlotHandler,
+	IntegrationMapSyncScreenshotHandler
 ];

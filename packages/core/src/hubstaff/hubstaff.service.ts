@@ -36,7 +36,8 @@ import {
 	IHubstaffProjectsResponse,
 	IHubstaffOrganizationsResponse,
 	IHubstaffProjectResponse,
-	IHubstaffTimeSlotActivity
+	IHubstaffTimeSlotActivity,
+	IHubstaffScreenshotActivity
 } from '@gauzy/contracts';
 import {
 	DEFAULT_ENTITY_SETTINGS,
@@ -52,14 +53,13 @@ import { EmployeeCreateCommand, EmployeeGetCommand } from '../employee/commands'
 import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
 import { UserService } from '../user/user.service';
-import { ScreenshotCreateCommand } from './../time-tracking/screenshot/commands';
-import { TimeSlotCreateCommand } from './../time-tracking/time-slot/commands';
 import { ActivityCreateCommand } from './../time-tracking/activity/commands';
 import { TimeLogCreateCommand } from '../time-tracking/time-log/commands';
 import {
 	IntegrationMapSyncEntityCommand,
 	IntegrationMapSyncOrganizationCommand,
 	IntegrationMapSyncProjectCommand,
+	IntegrationMapSyncScreenshotCommand,
 	IntegrationMapSyncTaskCommand,
 	IntegrationMapSyncTimeSlotCommand
 } from './../integration-map/commands';
@@ -448,45 +448,30 @@ export class HubstaffService {
 		organizationId
 	}): Promise<IIntegrationMap[]> {
 		try {
-			let integratedScreenshots = [];
-			for await (const screenshot of screenshots) {
-				const {
-					id,
-					time_slot,
-					full_url,
-					thumb_url,
-					recorded_at,
-					user_id
-				} = screenshot;
-				const employee = await this._getEmployeeByHubstaffUserId(
-					user_id,
-					token,
-					integrationId,
-					organizationId
-				);
-				const gauzyScreenshot = await this._commandBus.execute(
-					new ScreenshotCreateCommand({
-						file: full_url,
-						thumb: thumb_url,
-						recordedAt: recorded_at,
-						activityTimestamp: time_slot,
-						employeeId: employee.gauzyId,
-						organizationId
-					})
-				);
-				integratedScreenshots.push(
-					await this._commandBus.execute(
-						new IntegrationMapSyncEntityCommand({
-							gauzyId: gauzyScreenshot.id,
+			return await Promise.all(
+				await screenshots.map(
+					async (screenshot: IHubstaffScreenshotActivity) => {
+						const { id, user_id } = screenshot;
+						const employee = await this._getEmployeeByHubstaffUserId(
+							user_id,
+							token,
 							integrationId,
-							sourceId: id,
-							entity: IntegrationEntity.SCREENSHOT,
 							organizationId
-						})
-					)
-				);
-			}
-			return integratedScreenshots;	
+						);
+						return await this._commandBus.execute(
+							new IntegrationMapSyncScreenshotCommand(
+								Object.assign({
+									employee,
+									screenshot,
+									sourceId: id,
+									integrationId,
+									organizationId
+								})
+							)
+						);
+					}
+				)
+			);	
 		} catch (error) {
 			console.log(error);
 			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.SCREENSHOT}`);
@@ -1309,20 +1294,20 @@ export class HubstaffService {
 								gauzyId,
 								dateRange
 							);
-							activities.application = await this._handleAppActivities(
-								projectsMap,
-								integrationId,
-								token,
-								gauzyId,
-								dateRange
-							);
-							activities.urls = await this._handleUrlActivities(
-								projectsMap,
-								integrationId,
-								token,
-								gauzyId,
-								dateRange
-							);
+							// activities.application = await this._handleAppActivities(
+							// 	projectsMap,
+							// 	integrationId,
+							// 	token,
+							// 	gauzyId,
+							// 	dateRange
+							// );
+							// activities.urls = await this._handleUrlActivities(
+							// 	projectsMap,
+							// 	integrationId,
+							// 	token,
+							// 	gauzyId,
+							// 	dateRange
+							// );
 						}
 
 						/**
