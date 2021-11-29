@@ -9,7 +9,9 @@ import {
 	verifyText,
 	enterInputByIndex,
 	verifyElementIsVisibleByIndex,
-	clearFieldByIndex
+	clearFieldByIndex,
+	vefiryByLength
+
 } from '../utils/util';
 import { PipelinesPage } from '../pageobjects/PipelinesPageObject';
 
@@ -121,10 +123,56 @@ export const clickOnStageButton = () => {
 };
 
 export const verifyStageNameInput = (index: number) => {
-	verifyElementIsVisibleByIndex(PipelinesPage.pipelineNameInputCss, index)
-}
+	verifyElementIsVisibleByIndex(PipelinesPage.pipelineNameInputCss, index);
+};
 
 export const enterDescriptionInputDataByIndex = (data:string, index: number) => {
-	clearFieldByIndex(PipelinesPage.pipelineNameInputCss, index);
-	enterInputByIndex(PipelinesPage.pipelineNameInputCss, data ,index);
+	clearFieldByIndex(PipelinesPage.descriptioninputCss, index);
+	enterInputByIndex(PipelinesPage.descriptioninputCss, data ,index);
+};
+
+export const verifySearchResult = (length: number) =>{
+	vefiryByLength(PipelinesPage.selectTableRowCss, length);
+};
+
+export const verifyNamePlaceholder = () => {
+	verifyElementIsVisible(PipelinesPage.namePlaceholderCss);
+};
+
+export const enterNamePlaceholder = (name: string) => {
+	enterInput(PipelinesPage.namePlaceholderCss, name);
+};
+
+export const verifyDetailsButton = () => {
+	verifyElementIsVisible(PipelinesPage.detailsButtonCss);
+};
+
+export const clickViewDetailsButton = () => {
+	cy.intercept('GET', '/api/pipelines*').as('waitPipelines');
+	clickButton(PipelinesPage.detailsButtonCss);
+	cy.wait('@waitPipelines');
+};
+
+export const verifyTitleInput = () => {
+	verifyElementIsVisible(PipelinesPage.titleInputCss);
+};
+
+export const enterTitleInput = (data: string) => {
+	enterInput(PipelinesPage.titleInputCss, data);
+};
+
+export const verifyCreateButton = () => {
+	verifyElementIsVisible(PipelinesPage.createDealButtonCss);
+};
+
+export const clickOnCreateDealButton = () => {
+	clickButton(PipelinesPage.createDealButtonCss);
+};
+
+export const verifyAddDealButton = () => {
+	verifyElementIsVisible(PipelinesPage.addDealPipelineButtonCss);
+};
+
+export const clickAddDealButton = () => {
+	clickButton(PipelinesPage.addDealPipelineButtonCss);
 };

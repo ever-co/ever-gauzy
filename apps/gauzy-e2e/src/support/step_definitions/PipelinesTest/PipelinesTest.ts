@@ -123,6 +123,50 @@ Then('Notification message will appear', () => {
 	pipelinesPage.waitMessageToHide();
 });
 
+//Add pipeline deals
+When ('User see name input field search', () => {
+	pipelinesPage.verifyNamePlaceholder();
+});
+Then('User can enter name', () => {
+	pipelinesPage.enterNamePlaceholder(PipelinesPageData.editPipelineName);
+});
+
+And('User can see only the result', () => {
+	pipelinesPage.verifySearchResult(PipelinesPageData.tableResult);
+});
+
+When('User see view details button', () => {
+	pipelinesPage.verifyDetailsButton()
+});
+
+Then('User can click view details button', () => {
+	pipelinesPage.clickViewDetailsButton()
+});
+
+And('User can see add pipeline button again', () => {
+	pipelinesPage.verifyAddDealButton();
+});
+
+When('User click on add pipeline button again', () => {
+	pipelinesPage.clickAddDealButton();
+});
+
+Then ('User can see title input field',() => {
+	pipelinesPage.verifyTitleInput();
+});
+
+And ('User enter title', () => {
+	pipelinesPage.enterTitleInput(PipelinesPageData.titleInputData);
+});
+
+Then ('User can see create button',() => {
+	pipelinesPage.verifyCreateButton();
+});
+
+And ('User click on create button', () => {
+	pipelinesPage.clickOnCreateDealButton();
+});
+
 // Delete pipeline
 And('User can see pipelines table again', () => {
 	pipelinesPage.tableRowVisible();

@@ -29,6 +29,20 @@ Feature: Pipelines test
     And User can see update button
     When User click on update button
     Then Notification message will appear
+  Scenario: Add pipeline deals
+    When User see name input field search
+    Then User can enter name
+    And User can see only the result
+    And User can see pipelines table
+    When User click on pipelines table row
+    When User see view details button
+    Then User can click view details button
+    And User can see add pipeline button again
+    When User click on add pipeline button again
+    Then User can see title input field
+    And User enter title
+    Then User can see create button
+    And User click on create button
   Scenario: Delete pipeline
     And User can see pipelines table again
     When User click on pipelines table row again

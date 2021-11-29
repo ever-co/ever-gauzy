@@ -5,5 +5,7 @@ export const PipelinesPageData = {
 	nameInputIndex: 0,
 	stageNameInputIndex: 1,
 	stageName: 'The main stage',
-	pipelineDescriptionIndex: 0
+	pipelineDescriptionIndex: 0,
+	tableResult: 1,
+	titleInputData: 'Big deal'
 };

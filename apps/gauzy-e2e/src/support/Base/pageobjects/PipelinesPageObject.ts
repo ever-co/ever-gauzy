@@ -11,5 +11,11 @@ export const PipelinesPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyPipelineCss: 'div.ng-star-inserted',
-	stageButtonCss: 'nb-card-header > button'
+	stageButtonCss: 'nb-card-header > button',
+	namePlaceholderCss: 'input[placeholder="Name"]',
+	detailsButtonCss: 'div.mb-3 > button[status="basic"]',
+	titleInputCss: 'input[placeholder="Title"]',
+	createDealButtonCss: 'nb-card-footer > button[ng-reflect-status="primary"]',
+	addDealPipelineButtonCss: 'div.mb-3 > div > button[status="success"]',
+
 };
