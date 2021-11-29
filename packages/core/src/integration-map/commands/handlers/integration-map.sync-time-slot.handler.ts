@@ -25,8 +25,10 @@ export class IntegrationMapSyncTimeSlotHandler
 		command: IntegrationMapSyncTimeSlotCommand
 	) {
 		const { input } = command;
-		const { sourceId, organizationId, integrationId, timeSlot, employee } = input;
 		const tenantId = RequestContext.currentTenantId();
+
+		const { sourceId, organizationId, integrationId, timeSlot } = input;
+		const { employeeId } = timeSlot;		
 
 		try {
 			return await this._integrationMapService.findOneByOptions({
@@ -41,7 +43,7 @@ export class IntegrationMapSyncTimeSlotHandler
 			const { time_slot } = timeSlot;
 			const gauzyTimeSlot = await this._commandBus.execute(
 				new TimeSlotCreateCommand({
-					employeeId: employee.gauzyId,
+					employeeId,
 					startedAt: timeSlot.starts_at,
 					overall: 0,
 					keyboard: 0,

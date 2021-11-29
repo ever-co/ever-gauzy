@@ -27,8 +27,8 @@ export class IntegrationMapSyncScreenshotHandler
 		const { input } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		const { screenshot, integrationId, sourceId, organizationId, employee } = input;
-		const { time_slot, full_url, thumb_url, recorded_at } = screenshot;
+		const { screenshot, integrationId, sourceId, organizationId } = input;
+		const { time_slot, full_url, thumb_url, recorded_at, employeeId } = screenshot;
 
 		try {
 			const screenshotMap = await this._integrationMapService.findOneByOptions({
@@ -47,7 +47,7 @@ export class IntegrationMapSyncScreenshotHandler
 						activityTimestamp: time_slot,
 						file: full_url,
 						thumb: thumb_url,
-						employeeId: employee.gauzyId
+						employeeId
 					})
 				)
 			);
@@ -59,7 +59,7 @@ export class IntegrationMapSyncScreenshotHandler
 					thumb: thumb_url,
 					recordedAt: recorded_at,
 					activityTimestamp: time_slot,
-					employeeId: employee.gauzyId,
+					employeeId,
 					organizationId
 				})
 			);

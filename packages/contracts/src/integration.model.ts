@@ -1,10 +1,11 @@
-import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from 'hubstaff.model';
-import { IOrganizationUpdateInput, ITaskUpdateInput } from 'index';
+import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
+import { IOrganizationUpdateInput, ITaskUpdateInput } from './index';
+import { IActivity } from './timesheet.model';
 import {
 	IBaseEntityModel,
 	IBasePerTenantAndOrganizationEntityModel
 } from './base-entity.model';
-import { IOrganizationProjectsCreateInput, IOrganizationProjectsUpdateInput } from './organization-projects.model';
+import { IOrganizationProjectsUpdateInput } from './organization-projects.model';
 import { ITag } from './tag-entity.model';
 
 export interface IIntegrationSetting
@@ -78,17 +79,29 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
+export interface IIntegrationMapSyncActivity 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	activity: IActivity;
+	integrationId: string;
+	sourceId: string;
+}
+
 export interface IIntegrationMapSyncScreenshot 
 	extends IBasePerTenantAndOrganizationEntityModel {
-	employee: IIntegrationMap;
 	screenshot: IHubstaffScreenshotActivity;
+	integrationId: string;
+	sourceId: string;
+}
+
+export interface IIntegrationMapSyncTimeLog
+	extends IBasePerTenantAndOrganizationEntityModel {
+	timeLog: any;
 	integrationId: string;
 	sourceId: string;
 }
 
 export interface IIntegrationMapSyncTimeSlot 
 	extends IBasePerTenantAndOrganizationEntityModel {
-	employee: IIntegrationMap;
 	timeSlot: IHubstaffTimeSlotActivity;
 	integrationId: string;
 	sourceId: string;

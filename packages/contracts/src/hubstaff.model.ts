@@ -48,8 +48,8 @@ export interface IHubstaffProjectResponse {
 export interface IHubstaffTimeSlotActivity {
 	id: number;
 	date: string;
-	time_slot: string;
-	starts_at: string;
+	time_slot: Date;
+	starts_at: Date;
 	user_id: number;
 	project_id: number;
 	keyboard: number;
@@ -65,6 +65,7 @@ export interface IHubstaffTimeSlotActivity {
 	immutable: boolean;
 	time_type: string;
 	client: string;
+	employeeId?: string;
 }
 
 export interface IHubstaffScreenshotActivity {
@@ -73,12 +74,13 @@ export interface IHubstaffScreenshotActivity {
 	thumb_url: string;
 	date: string,
 	time_slot: string;
-	recorded_at: string
-	user_id: number,
-	project_id: number,
-	offset_x: number,
-	offset_y: number,
-	width: number,
-	height: number,
-	screen: number
+	recorded_at: string;
+	user_id: number;
+	project_id: number;
+	offset_x: number;
+	offset_y: number;
+	width: number;
+	height: number;
+	screen: number;
+	employeeId?: string;
 }

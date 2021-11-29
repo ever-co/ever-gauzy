@@ -1,9 +1,13 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
+import { Between } from 'typeorm';
 import * as moment from 'moment';
+import { IntegrationEntity, ITimeSlot } from '@gauzy/contracts';
+import { TimeSlotCreateCommand } from './../../../time-slot/commands';
 import { ScreenshotCreateCommand } from './../screenshot-create.command';
 import { ScreenshotService } from './../../../screenshot/screenshot.service';
 import { TimeSlotService } from './../../../time-slot/time-slot.service';
+import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(ScreenshotCreateCommand)
 export class ScreenshotCreateHandler
@@ -11,7 +15,8 @@ export class ScreenshotCreateHandler
 
 	constructor(
 		private readonly _screenshotService: ScreenshotService,
-		private readonly _timeSlotService: TimeSlotService
+		private readonly _timeSlotService: TimeSlotService,
+		private readonly _commandBus: CommandBus
 	) {}
 
 	public async execute(command: ScreenshotCreateCommand): Promise<any> {
@@ -25,45 +30,46 @@ export class ScreenshotCreateHandler
 				employeeId,
 				organizationId
 			} = input;
+			const tenantId = RequestContext.currentTenantId();
 
-			let {
-				record: timeSlot
-			} = await this._timeSlotService.findOneOrFailByOptions({
-				where: {
-					startedAt: new Date(
-						moment(activityTimestamp).format('YYYY-MM-DD HH:mm:ss')
-					),
-					employeeId,
-					organizationId
-				}
-			});
+			const startedAt = moment.utc(activityTimestamp).format('YYYY-MM-DD HH:mm:ss');
+			const stoppedAt = moment.utc(activityTimestamp).add(10, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 
-			//if timeslot not found for this screenshot then create new timeslot
-			if (!timeSlot) {
-				timeSlot = await this._timeSlotService.create({
-					organizationId,
-					employeeId,
-					duration: 0,
-					keyboard: 0,
-					mouse: 0,
-					overall: 0,
-					startedAt: new Date(
-						moment(activityTimestamp).format('YYYY-MM-DD HH:mm:ss')
-					)
+			let timeSlot: ITimeSlot;
+			try {
+				timeSlot = await this._timeSlotService.findOneByOptions({
+					where: {
+						employeeId,
+						organizationId,
+						tenantId,
+						startedAt: Between(startedAt, stoppedAt),
+					}
 				});
+			} catch (error) {
+				timeSlot = await this._commandBus.execute(
+					new TimeSlotCreateCommand({
+						tenantId,
+						organizationId,
+						employeeId,
+						duration: 0,
+						keyboard: 0,
+						mouse: 0,
+						overall: 0,
+						startedAt: new Date(moment.utc(activityTimestamp).format()),
+						time_slot: new Date(moment.utc(activityTimestamp).format())
+					})
+				);
 			}
 			
 			return await this._screenshotService.create({
-				timeSlotId: timeSlot,
+				timeSlot,
 				file,
 				thumb,
 				recordedAt,
 				organizationId
 			});
 		} catch (error) {
-			throw new BadRequestException(
-				'Cant create screenshot for time slot'
-			);
+			throw new BadRequestException(error, `Can'\t create ${IntegrationEntity.SCREENSHOT} for ${IntegrationEntity.TIME_SLOT}`);
 		}
 	}
 }
