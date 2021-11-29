@@ -27,7 +27,8 @@ import {
 	OneToOne,
 	RelationId,
 	OneToMany,
-	Index
+	Index,
+	JoinTable
 } from 'typeorm';
 import {
 	CandidateDocument,
@@ -126,25 +127,34 @@ export class Candidate
 
 	/*
     |--------------------------------------------------------------------------
-    | @ManyToOne 
+    | @OneToOne 
     |--------------------------------------------------------------------------
     */
 
+	/**
+	 * Contact
+	 */
 	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.candidates, {
-		nullable: true,
-		onDelete: 'CASCADE'
+	@OneToOne(() => Contact, (contact) => contact.candidate, {
+		cascade: true,
+		onDelete: 'SET NULL'
 	})
-	contact: IContact;
+	@JoinColumn()
+	contact?: IContact;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.contact)
-	@IsString()
 	@IsOptional()
+	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	readonly contactId?: string;
 
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
 	@ApiProperty({ type: () => OrganizationPosition })
 	@ManyToOne(() => OrganizationPosition, { nullable: true })
 	@JoinColumn()
@@ -241,7 +251,15 @@ export class Candidate
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
-	@ManyToMany(() => Tag, (tag) => tag.candidate)
+
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.candidates, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_candidate'
+	})
 	tags: ITag[];
 
 	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates)

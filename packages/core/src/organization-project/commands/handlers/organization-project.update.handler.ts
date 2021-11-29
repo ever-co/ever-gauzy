@@ -26,11 +26,11 @@ export class OrganizationProjectUpdateHandler
 		id: string,
 		request: IOrganizationProjectsUpdateInput
 	): Promise<IOrganizationProject> {
-		const project = await this._organizationProjectService.findOne(id);
+		const project = await this._organizationProjectService.findOneByIdString(id);
 		if (project) {
 			delete request.id;
 			await this._organizationProjectService.update(id, request);
-			return await this._organizationProjectService.findOne(id);
+			return await this._organizationProjectService.findOneByIdString(id);
 		}
 
 		return project;

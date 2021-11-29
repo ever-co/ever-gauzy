@@ -15,8 +15,8 @@ import { SeederModule } from './seeder.module';
 export async function seedJob(devConfig: Partial<IPluginConfig>) {
 	await registerPluginConfig(devConfig);
 
-	NestFactory.createApplicationContext(SeederModule.forPluings(), {
-		logger: false
+	NestFactory.createApplicationContext(SeederModule.forPlugins(), {
+		logger: ['log', 'error', 'warn', 'debug', 'verbose']
 	})
 		.then((app) => {
 			const seeder = app.get(SeedDataService);

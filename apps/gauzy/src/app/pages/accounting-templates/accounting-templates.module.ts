@@ -13,6 +13,7 @@ import { LanguageSelectorModule } from '../../@shared/language/language-selector
 import { SharedModule } from '../../@shared/shared.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { ThemeModule } from '../../@theme/theme.module';
+import { AccountingTemplatesRoutingModule } from './accounting-templates-routing.module';
 import { AccountingTemplatesComponent } from './accounting-templates.component';
 
 @NgModule({
@@ -30,6 +31,7 @@ import { AccountingTemplatesComponent } from './accounting-templates.component';
 		HeaderTitleModule,
 		LanguageSelectorModule,
 		SharedModule
+		AccountingTemplatesRoutingModule,
 	],
 	providers: [],
 	declarations: [AccountingTemplatesComponent]

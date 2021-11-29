@@ -12,12 +12,12 @@ import { EmployeeProposalTemplateService } from './employee-proposal-template.se
 		RouterModule.forRoutes([
 			{ path: '/employee-proposal-template', module: EmployeeProposalTemplateModule }
 		]),
-		TypeOrmModule.forFeature([EmployeeProposalTemplate]),
+		TypeOrmModule.forFeature([ EmployeeProposalTemplate ]),
 		forwardRef(() => TenantModule),
 		CqrsModule
 	],
 	controllers: [EmployeeProposalTemplateController],
 	providers: [EmployeeProposalTemplateService],
-	exports: [EmployeeProposalTemplateService]
+	exports: [TypeOrmModule, EmployeeProposalTemplateService]
 })
 export class EmployeeProposalTemplateModule {}

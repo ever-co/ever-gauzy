@@ -1,7 +1,16 @@
 :host {
   display: block;
+  .link-text {
+    cursor: pointer;
+    text-decoration: none;
+    color: #1e6bb8;
+  }
+  .link-text:hover {
+    text-decoration: underline;
+  }
   .image-container {
     width: 48px;
+    cursor: pointer;
     img {
       width: 48px;
       height: 48px;

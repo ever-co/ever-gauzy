@@ -25,10 +25,7 @@
 			<ckeditor
 				formControlName="text"
 				(change)="onChange($event)"
-				[config]="{
-					width: '100%',
-					height: '200'
-				}"
+				[config]="ckConfig"
 			></ckeditor>
 		</form>
 	</nb-card-body>

@@ -1,6 +1,6 @@
 export const SettingsFeaturesPageData = {
 	hedearText: 'Settings',
-	subheaderTextTenant: "Manage Features for 'Default Tenant'",
+	subheaderTextTenant: "Manage Features for",
 	subheaderTextOrganization: "Manage Features for 'Ever Technologies LTD'",
 	// Tenant
 	taskDashboard: 'Task Dashboard',

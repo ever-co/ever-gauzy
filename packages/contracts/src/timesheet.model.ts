@@ -228,6 +228,7 @@ export interface IActivity extends IBasePerTenantAndOrganizationEntityModel {
 	type?: string;
 	source?: string;
 	id?: string;
+	activityTimestamp?: string;
 }
 
 export interface IDailyActivity {
@@ -308,7 +309,13 @@ export interface TimerState {
 	duration: number;
 	currentSessionDuration: number;
 	running: boolean;
+	position: ITimerPosition;
 	timerConfig: ITimerToggleInput;
+}
+
+export interface ITimerPosition {
+	x: number;
+	y: number;
 }
 
 export interface ITimerToggleInput

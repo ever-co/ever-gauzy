@@ -141,6 +141,6 @@ export class TimeSheetController {
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<ITimesheet> {
-		return this.timeSheetService.findOne(id);
+		return this.timeSheetService.findOneByIdString(id);
 	}
 }

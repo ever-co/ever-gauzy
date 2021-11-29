@@ -32,7 +32,7 @@
 							| translate
 					}}
 				</h6>
-				<a *ngIf="jobPostLink" href="jobPostLink" target="_blank">{{
+				<a *ngIf="jobPostLink" [href]="jobPostLink" target="_blank">{{
 					'PROPOSALS_PAGE.PROPOSAL_DETAILS.VIEW_JOB_POST' | translate
 				}}</a>
 			</nb-card>
@@ -49,10 +49,10 @@
 				<h6>
 					{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS' | translate }}
 				</h6>
-				<ga-propsal-status
+				<ga-proposal-status
 					*ngIf="proposal"
 					[rowData]="proposal"
-				></ga-propsal-status>
+				></ga-proposal-status>
 			</nb-card>
 		</div>
 		<div class="wrapper-bottom">
@@ -70,7 +70,7 @@
 						class="color"
 						position="centered"
 						[style.background]="tag.color"
-						text="{{ tag.name }}"
+						[text]="tag.name"
 					>
 					</nb-badge>
 				</div>

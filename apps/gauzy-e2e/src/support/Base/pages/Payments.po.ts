@@ -193,3 +193,7 @@ export const verifyDropdownOption = (text) => {
 export const selectOptionFromDropdown = (text) => {
 	clickElementByText(PaymentsPage.dropdownOptionCss, text);
 };
+
+export const selectTableRowByNote = (text) => {
+	clickElementByText(PaymentsPage.selectTableRowCss, text)
+}

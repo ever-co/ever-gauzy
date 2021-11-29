@@ -1,8 +1,8 @@
 export const FileStoragePage = {
-	headerTextCss: 'div.card-header-title > h4',
+	headerTextCss: 'nb-card-header > h4',
 	subheaderTextCss: 'nb-card-header > h6',
 	selectDropdownCss:
-		'ga-file-storage > nb-card > nb-card-body > div.form-group > nb-select > button.select-button',
+		'nb-card-body > div.form-group > nb-select > button.select-button',
 	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	optionDropdownCss: '.option-list nb-option',
 	accesskeyIdInputCss: '[name="aws_access_key_id"]',

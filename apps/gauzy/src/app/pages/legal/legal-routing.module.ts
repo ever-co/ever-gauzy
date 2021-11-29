@@ -1,8 +1,18 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { NbAuthComponent } from '@nebular/auth';
-import { PrivacyPolicyComponent } from '../../@shared/legal/privacy-policy/privacy-policy.component';
-import { TermsAndConditionsComponent } from '../../@shared/legal/terms-and-conditions/terms-and-conditions.component';
+import { ISelectorVisibility } from '../../@core/services';
+import { PrivacyPolicyComponent, TermsAndConditionsComponent } from '../../@shared/legal';
+
+/**
+ * Disabled header selectors for privacy/terms pages
+ */
+const selectors: ISelectorVisibility = {
+	organization: false,
+	date: false,
+	employee: false,
+	project: false
+};
 
 export const routes: Routes = [
 	{
@@ -11,11 +21,17 @@ export const routes: Routes = [
 		children: [
 			{
 				path: 'terms',
-				component: TermsAndConditionsComponent
+				component: TermsAndConditionsComponent,
+				data: {
+					selectors
+				}
 			},
 			{
 				path: 'privacy',
-				component: PrivacyPolicyComponent
+				component: PrivacyPolicyComponent,
+				data: {
+					selectors
+				}
 			}
 		]
 	}

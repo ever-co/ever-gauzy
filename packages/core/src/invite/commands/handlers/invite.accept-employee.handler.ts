@@ -35,7 +35,7 @@ export class InviteAcceptEmployeeHandler
 	): Promise<UpdateResult | IInvite> {
 		const { input, languageCode } = command;
 
-		const invite = await this.inviteService.findOne({
+		const invite = await this.inviteService.findOneByOptions({
 			where: { id: input.inviteId },
 			relations: [
 				'projects',
@@ -50,7 +50,7 @@ export class InviteAcceptEmployeeHandler
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
-		const organization = await this.organizationService.findOne(
+		const organization = await this.organizationService.findOneByIdString(
 			input.organization.id
 		);
 		if (!organization.invitesAllowed) {

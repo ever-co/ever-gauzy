@@ -72,7 +72,11 @@ export interface IEnvironment {
 		dns: string;
 	};
 
-	defaultHubstaffUserPass?: string;
+	/**
+	 * Default Integrated User Password 
+	 */
+	defaultIntegratedUserPass?: string;
+	
 	upworkConfig?: IUpworkConfig;
 	isElectron?: boolean;
 	gauzyUserPath?: string;

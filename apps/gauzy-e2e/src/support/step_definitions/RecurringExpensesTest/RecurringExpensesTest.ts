@@ -26,9 +26,7 @@ Given('Login with default credentials', () => {
 
 // Add new employee
 And('User can add new employee', () => {
-	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
-	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
@@ -45,9 +43,12 @@ And('User can visit Employees recurring expense page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
+	cy.intercept('/api/employee-recurring-expense*').as('waitTable');
 	cy.visit('/#/pages/employees/recurring-expenses', {
 		timeout: pageLoadTimeout
 	});
+	cy.wait('@waitTable');
 });
 
 And('User can see add new expense button', () => {

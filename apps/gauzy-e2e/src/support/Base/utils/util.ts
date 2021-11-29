@@ -222,7 +222,7 @@ export const waitElementToLoad = (loc: any) => {
 export const dragNDrop = (source: any, index: number, target: any) => {
 	cy.get(source, { timeout: defaultCommandTimeout })
 		.eq(index)
-		.move({ x: 100, y: 100, force: true });
+		.move({ deltaX: 100, deltaY: 100, force: true });
 };
 
 export const triggerSlider = (loc: any) => {
@@ -268,3 +268,23 @@ export const waitForDropdownToLoad = (loc: any) => {
 export const clickButtonByIndexNoForce = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click();
 }
+
+export const enterTextInIFrame= (loc, text ) => {
+	cy.get(loc)
+  		.then(($iframe) => {
+    		const $body = $iframe.contents().find('body')
+
+    		cy.wrap($body)
+      			.find('p')
+      			.type(text);
+	})
+};
+
+export const vefiryByLength = (loc:any, length: number) => {
+	cy.get(loc, { timeout: defaultCommandTimeout}).should('have.length', length);
+};
+
+export const enterInputByIndex = (loc, data,index) => {
+	cy.get(loc, { timeout: taskTimeout })
+		.eq(index).type(data);
+};

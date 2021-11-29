@@ -15,7 +15,7 @@ export class OrganizationSprintUpdateHandler
 		command: OrganizationSprintUpdateCommand
 	): Promise<IOrganizationSprint> {
 		const { id, input } = command;
-		const record = await this.organizationSprintService.findOne(id as any);
+		const record = await this.organizationSprintService.findOneByIdString(id);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}

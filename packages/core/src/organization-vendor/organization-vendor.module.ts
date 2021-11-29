@@ -5,6 +5,7 @@ import { OrganizationVendor } from './organization-vendor.entity';
 import { OrganizationVendorController } from './organization-vendor.controller';
 import { OrganizationVendorService } from './organization-vendor.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -15,7 +16,10 @@ import { TenantModule } from '../tenant/tenant.module';
 		TenantModule
 	],
 	controllers: [OrganizationVendorController],
-	providers: [OrganizationVendorService],
-	exports: [OrganizationVendorService]
+	providers: [
+		OrganizationVendorService,
+		...CommandHandlers
+	],
+	exports: [TypeOrmModule, OrganizationVendorService]
 })
 export class OrganizationVendorModule {}

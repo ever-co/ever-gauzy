@@ -1,10 +1,10 @@
-import { Brackets, FindOperator, ObjectLiteral, SelectQueryBuilder, WhereExpression } from "typeorm";
+import { Brackets, FindOperator, ObjectLiteral, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
 
 export const filterQuery = <T>(
     qb: SelectQueryBuilder<T>, 
     wheres: ObjectLiteral
 ) => {
-    qb.andWhere(new Brackets((bck: WhereExpression) => { 
+    qb.andWhere(new Brackets((bck: WhereExpressionBuilder) => { 
         const args = Object.entries(wheres);
         args.forEach((arg) => {
             const [column, entry] = arg;
@@ -14,7 +14,7 @@ export const filterQuery = <T>(
                 const operator = entry;
                 const { type, value } = operator;
                 bck.andWhere(
-                    new Brackets((bck: WhereExpression) => { 
+                    new Brackets((bck: WhereExpressionBuilder) => { 
                         switch (type) {
                             case 'between':
                                 const [start, end ] = value;
@@ -22,6 +22,11 @@ export const filterQuery = <T>(
                                 break;
                             case 'ilike':
                                 bck.andWhere(`"${qb.alias}"."${column}" ${type} :${column}`, { 
+                                    [column]: value
+                                });
+                                break;
+                            case 'like':
+                                bck.andWhere(`LOWER("${qb.alias}"."${column}") ${type} LOWER(:${column})`, { 
                                     [column]: value
                                 });
                                 break;
@@ -56,12 +61,12 @@ export const filterQuery = <T>(
 }
 
 export const objectQueryMapper = (
-    query: WhereExpression, 
+    query: WhereExpressionBuilder, 
     value: ObjectLiteral,
     alias: string
 ) => {
     if (value instanceof Object) {
-        query.andWhere(new Brackets((bck: WhereExpression) => { 
+        query.andWhere(new Brackets((bck: WhereExpressionBuilder) => { 
              // relational tables query
             for (let [column, entry] of Object.entries(value)) {
                 if (entry instanceof FindOperator) {

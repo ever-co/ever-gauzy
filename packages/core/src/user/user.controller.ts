@@ -80,7 +80,7 @@ export class UserController extends CrudController<User> {
 	): Promise<User> {
 		const { relations = [] } = data;
 		const id = RequestContext.currentUserId();
-		return await this.userService.findOne(id, {
+		return await this.userService.findOneByIdString(id, {
 			relations
 		});
 	}
@@ -254,7 +254,7 @@ export class UserController extends CrudController<User> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<User> {
 		const { relations } = data;
-		return this.userService.findOne(id, { relations });
+		return this.userService.findOneByIdString(id, { relations });
 	}
 
 	/**
@@ -297,12 +297,12 @@ export class UserController extends CrudController<User> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IUserUpdateInput
-	): Promise<any> {
+	): Promise<IUser> {
 		return await this.userService.updateProfile(id, {
 			id,
 			...entity

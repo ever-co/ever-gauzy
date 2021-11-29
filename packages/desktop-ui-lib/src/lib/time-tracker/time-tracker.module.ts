@@ -1,7 +1,9 @@
 import { NgModule } from '@angular/core';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { CommonModule } from '@angular/common';
 import { TimeTrackerComponent } from './time-tracker.component';
 import { TimeTrackerService } from './time-tracker.service';
+import { CustomRenderComponent } from './custom-render-cell.component';
 import {
 	NbLayoutModule,
 	NbCardModule,
@@ -16,14 +18,15 @@ import {
 	NbCheckboxModule,
 	NbDialogService,
 	NbDialogModule,
-	NbToastrService
+	NbToastrService,
+	NbFormFieldModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 
 @NgModule({
-	declarations: [TimeTrackerComponent],
+	declarations: [TimeTrackerComponent, CustomRenderComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -40,7 +43,9 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		NbCheckboxModule,
 		ReactiveFormsModule,
 		NgSelectModule,
-		NbDialogModule
+		NbDialogModule,
+		NbFormFieldModule,
+		Ng2SmartTableModule
 	],
 	providers: [
 		NbSidebarService,

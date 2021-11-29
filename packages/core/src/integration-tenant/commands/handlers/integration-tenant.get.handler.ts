@@ -12,6 +12,6 @@ export class IntegrationTenantGetHandler
 		command: IntegrationTenantGetCommand
 	): Promise<IntegrationTenant> {
 		const { input } = command;
-		return await this._integrationTenantService.findOne(input);
+		return await this._integrationTenantService.findOneByOptions(input);
 	}
 }

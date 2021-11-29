@@ -11,7 +11,7 @@ export class TimesheetGetHandler
 	public async execute(command: TimesheetGetCommand): Promise<ITimesheet> {
 		const { input } = command;
 
-		const { record } = await this._timesheetService.findOneOrFail(input);
+		const { record } = await this._timesheetService.findOneOrFailByOptions(input);
 		return record;
 	}
 }

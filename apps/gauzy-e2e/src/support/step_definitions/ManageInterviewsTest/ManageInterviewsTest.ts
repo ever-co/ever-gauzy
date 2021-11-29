@@ -45,6 +45,7 @@ Given('Login with default credentials', () => {
 
 // Add new employee
 And('User can add new employee', () => {
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		empFirstName,
@@ -77,6 +78,7 @@ And('User can visit Candidates interviews calendar page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/employees/candidates/interviews/calendar', {
 		timeout: pageLoadTimeout
 	});
@@ -319,6 +321,7 @@ And('User clicks on Only Future checkbox', () => {
 });
 
 When('User enters title filter input value for future interview', () => {
+	manageInterviewsPage.clearFieldForSearch();
 	manageInterviewsPage.enterTitleFilterInputData(`${futureInterviewTitle}`);
 });
 

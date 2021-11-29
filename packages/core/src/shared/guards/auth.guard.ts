@@ -13,7 +13,7 @@ export class AuthGuard extends PassportAuthGaurd('jwt') {
 	canActivate(context: ExecutionContext) {
 		
 		/*
-		* PUBLIC recorator method level 
+		* PUBLIC decorator method level 
 		*/
 		const isMethodPublic = this._reflector.get<boolean>(
 			'isPublic',
@@ -21,7 +21,7 @@ export class AuthGuard extends PassportAuthGaurd('jwt') {
 		);
 
 		/*
-		* PUBLIC recorator class level 
+		* PUBLIC decorator class level 
 		*/
 		const isClassPublic = this._reflector.get<boolean>(
 			'isPublic', 

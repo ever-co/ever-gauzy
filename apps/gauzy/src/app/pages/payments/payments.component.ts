@@ -2,11 +2,11 @@ import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
-import { first, filter, tap, debounceTime } from 'rxjs/operators';
+import { filter, tap, debounceTime } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import {
@@ -22,7 +22,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
@@ -84,8 +84,8 @@ export class PaymentsComponent
 		this._applyTranslationOnSmartTable();
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
 				debounceTime(300),
+				tap(() => this.loading = true),
 				tap(() => this.clearItem()),
 				tap(() => this.getPayments()),
 				untilDestroyed(this)
@@ -108,7 +108,7 @@ export class PaymentsComponent
 						this.projectId = project ? project.id : null;
 
 						this.refreshPagination();
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -133,7 +133,7 @@ export class PaymentsComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -172,14 +172,15 @@ export class PaymentsComponent
 				'invoice',
 				'invoice.toContact',
 				'recordedBy',
-				'contact',
+				'organizationContact',
 				'project',
 				'tags'
 			],
 			join: {
 				alias: 'payment',
 				leftJoin: {
-					tags: 'payment.tags'
+					tags: 'payment.tags',
+					organizationContact: 'payment.organizationContact'
 				},
 				...(this.filters.join) ? this.filters.join : {}
 			},
@@ -190,23 +191,22 @@ export class PaymentsComponent
 			},
 			resultMap: (payment: IPayment) => {
 				try {
-					const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
-					let organizationContactName: string;
-					if (contact) {
-						organizationContactName = contact.name;
+					const { invoice, project, organizationContact, recordedBy, paymentMethod, overdue } = payment;
+					let organizationContactName: any;
+					if (organizationContact) {
+						organizationContactName = organizationContact;
 					} else if (invoice && invoice.toContact) {
-						organizationContactName = invoice.toContact.name;
+						organizationContactName = invoice.toContact;
 					}
 					return Object.assign({}, payment, {
 						overdue: this.statusMapper(overdue),
 						invoiceNumber: invoice ? invoice.invoiceNumber : null,
 						projectName: project ? project.name : null,
 						recordedByName: recordedBy ? recordedBy.name: null,
-						paymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
+						paymentMethodEnum: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
 						organizationContactName: organizationContactName
 					});
 				} catch (error) {
-					console.log(error);
 					return Object.assign({}, payment);
 				}
 			},
@@ -236,14 +236,13 @@ export class PaymentsComponent
 	}
 
 	async recordPayment() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					organization: this.organization,
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.paymentService.add(result);
@@ -258,7 +257,7 @@ export class PaymentsComponent
 			}
 		
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -269,15 +268,14 @@ export class PaymentsComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					payment: this.selectedPayment,
 					invoice: this.selectedPayment.invoice
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			if (!this.selectedPayment) {
@@ -296,7 +294,7 @@ export class PaymentsComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -308,10 +306,9 @@ export class PaymentsComponent
 			});
 		}
 
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			if (!this.selectedPayment) {
@@ -329,7 +326,7 @@ export class PaymentsComponent
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -370,7 +367,7 @@ export class PaymentsComponent
 					width: '10%',
 					renderComponent: DateViewComponent
 				},
-				paymentMethod: {
+				paymentMethodEnum: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
 					width: '10%',
@@ -396,14 +393,18 @@ export class PaymentsComponent
 				},
 				organizationContactName: {
 					title: this.getTranslation('PAYMENTS_PAGE.CONTACT'),
-					type: 'text',
+					type: 'custom',
+					renderComponent: ContactLinksComponent,
+					valuePrepareFunction: (cell, row) => {
+						return row.organizationContactName;
+					},
 					width: '12%',
 					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
 					filterFunction: (value: IOrganizationContact | null) => {
-						this.setFilter({ field: 'contactId', search: (value)?.id || null });
+						this.setFilter({ field: 'organizationContactId', search: (value)?.id || null });
 					},
 					sort: false
 				},
@@ -418,7 +419,7 @@ export class PaymentsComponent
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
 					type: 'custom',
 					width: '12%',
-					renderComponent: NotesWithTagsComponent,
+					renderComponent: TagsOnlyComponent,
 					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent

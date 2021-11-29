@@ -6,8 +6,7 @@ import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactController } from './organization-contact.controller';
 import { OrganizationContactService } from './organization-contact.service';
 import { CommandHandlers } from './commands/handlers';
-import { EmailService, Email } from '../email';
-import { EmailTemplate } from '../email-template';
+import { EmailModule } from './../email/email.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { UserModule } from './../user/user.module';
@@ -17,20 +16,16 @@ import { UserModule } from './../user/user.module';
 		RouterModule.forRoutes([
 			{ path: '/organization-contact', module: OrganizationContactModule }
 		]),
-		TypeOrmModule.forFeature([
-			OrganizationContact,
-			Email,
-			EmailTemplate
-		]),
+		TypeOrmModule.forFeature([ OrganizationContact ]),
 		CqrsModule,
 		TenantModule,
 		OrganizationModule,
-		UserModule
+		UserModule,
+		EmailModule
 	],
 	controllers: [OrganizationContactController],
 	providers: [
 		OrganizationContactService,
-		EmailService,
 		...CommandHandlers
 	],
 	exports: [

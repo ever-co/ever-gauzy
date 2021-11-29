@@ -7,10 +7,10 @@
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/gauzy.git"
+		"url": "https://github.com/ever-co/ever-gauzy.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/gauzy/issues"
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"private": true,
 	"author": {
@@ -26,7 +26,8 @@
 		]
 	},
 	"build": {
-		"appId": "com.company.gauzydesktoptimer",
+		"appId": "com.ever.gauzydesktoptimer",
+		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Desktop Timer",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
@@ -37,8 +38,8 @@
 		},
 		"publish": {
 			"provider": "github",
-			"releaseType": "release",
-			"channel": "desktop-timer-latest"
+			"repo": "ever-gauzy-desktop-timer",
+			"releaseType": "release"
 		},
 		"mac": {
 			"category": "public.app-category.developer-tools",
@@ -47,7 +48,7 @@
 				"zip",
 				"dmg"
 			],
-			"artifactName": "gauzy-desktop-timer-${version}.${ext}"
+			"artifactName": "${name}-${version}.${ext}"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -70,7 +71,7 @@
 				"tar.gz"
 			],
 			"executableName": "gauzy-desktop-timer",
-			"artifactName": "gauzy-desktop-timer-${version}.${ext}",
+			"artifactName": "${name}-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
 		},
@@ -82,7 +83,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "gauzy-desktop-timer-${version}.${ext}",
+			"artifactName": "${name}-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
@@ -100,7 +101,8 @@
 		"consolidate": "^0.16.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"mac-screen-capture-permissions": "https://github.com/ever-co/mac-screen-capture-permissions.git",
+		"mac-screen-capture-permissions": "^2.0.0",
+		"electron-util": "^0.17.2",
 		"form-data": "^3.0.0",
 		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.2",
@@ -112,6 +114,7 @@
 		"@sentry/electron": "2.4.0",
 		"underscore": "^1.13.0",
 		"@gauzy/desktop-window": "^0.1.0",
-		"@gauzy/desktop-libs": "^0.1.0"
+		"@gauzy/desktop-libs": "^0.1.0",
+		"@electron/remote": "^2.0.1"
 	}
 }

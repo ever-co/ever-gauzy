@@ -7,7 +7,7 @@ import {
 	IGoalTemplateFind
 } from '@gauzy/contracts';
 import { catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -30,42 +30,52 @@ export class GoalTemplatesService {
 	) {}
 
 	createGoalTemplate(goalTemplate): Promise<IGoalTemplate> {
-		return this._http
-			.post<IGoalTemplate>(`${this.GOAL_URL}`, goalTemplate)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		return firstValueFrom(
+			this._http.post<IGoalTemplate>(`${this.GOAL_URL}`, goalTemplate)
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	createKeyResultTemplate(keyResultTemplate): Promise<IKeyResultTemplate> {
-		return this._http
-			.post<IKeyResultTemplate>(
-				`${this.KEYRESULT_URL}`,
-				keyResultTemplate
+		return firstValueFrom(
+			this._http.post<IKeyResultTemplate>( `${this.KEYRESULT_URL}`, keyResultTemplate)
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
 			)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		);
 	}
 
 	createGoalKpiTemplate(goalKpiTemplate): Promise<IGoalKPITemplate> {
-		return this._http
-			.post<IGoalKPITemplate>(
-				`${this.GOAL_KPI_URL}`,
-				goalKpiTemplate
+		return firstValueFrom(
+			this._http.post<IGoalKPITemplate>(`${this.GOAL_KPI_URL}`, goalKpiTemplate)
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
 			)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		);
 	}
 
 	getAllGoalTemplates(
 		findInput?: IGoalTemplateFind
 	): Promise<IGoalTemplateResponse> {
 		const data = JSON.stringify({ findInput });
-		return this._http
-			.get<IGoalTemplateResponse>(`${this.GOAL_URL}`, {
+		return firstValueFrom(
+			this._http.get<IGoalTemplateResponse>(`${this.GOAL_URL}`, {
 				params: { data }
 			})
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)	
+		);
 	}
 
 	errorHandler(error: HttpErrorResponse) {

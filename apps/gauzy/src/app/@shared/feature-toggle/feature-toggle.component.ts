@@ -8,7 +8,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Observable } from 'rxjs/Observable';
+import { Observable, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as _ from 'underscore';
@@ -137,7 +137,7 @@ export class FeatureToggleComponent
 	}
 
 	async featureChanged(isEnabled: boolean, feature: IFeature) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(CountdownConfirmationComponent, {
 				context: {
 					recordType: feature.description,
@@ -145,8 +145,7 @@ export class FeatureToggleComponent
 				},
 				closeOnBackdropClick: false
 			})
-			.onClose.pipe()
-			.toPromise();
+			.onClose);
 
 		if (result && result === "continue") {
 			this.emitFeatureToggle(feature, isEnabled);
@@ -207,5 +206,9 @@ export class FeatureToggleComponent
 			return featureToggle.enabled;
 		}
 		return true;
+	}
+
+	getTranslationFormat(text: string) {
+		return text.replace(/ /g, '_').replace(/,|&/g, '').replace(/__/g, '_').toUpperCase();
 	}
 }

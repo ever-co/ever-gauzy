@@ -30,7 +30,6 @@ declare const window:any;
 
 import { Environment } from './model';
 import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
-import { ElectronService } from 'ngx-electron';
 
 `;
 
@@ -47,12 +46,13 @@ if (!env.IS_DOCKER) {
 	const userAgent = navigator.userAgent.toLowerCase();
 	if (userAgent.indexOf(' electron/') > -1) {
 		try {
-			const el: ElectronService = new ElectronService();
-			const variableGlobal = el.remote.getGlobal('variableGlobal');
+			const remote = window.require('@electron/remote');
+			const variableGlobal = remote.getGlobal('variableGlobal');
 			API_BASE_URL = variableGlobal.API_BASE_URL;
 			IS_ELECTRON = true;
 			IS_INTEGRATED_DESKTOP = variableGlobal.IS_INTEGRATED_DESKTOP
 		} catch(e) {
+			console.log(e);
 		}
 	}
 
@@ -78,6 +78,7 @@ if (!env.IS_DOCKER) {
 		COMPANY_LINK: 'https://ever.co/',
 		COMPANY_SITE_LINK: 'https://gauzy.co',
 		COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
+		COMPANY_GITLAB_LINK: 'https://gitlab.com/ever-co',
 		COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/gauzyplatform',
 		COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
 		COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
@@ -97,7 +98,7 @@ if (!env.IS_DOCKER) {
 
 		SENTRY_DSN: '${env.SENTRY_DSN}',
 
-		HUBSTAFF_REDIRECT_URI: CLIENT_BASE_URL + '/pages/integrations/hubstaff',
+		HUBSTAFF_REDIRECT_URI: '${env.HUBSTAFF_REDIRECT_URI}',
 
 		IS_ELECTRON: IS_ELECTRON,
 		IS_INTEGRATED_DESKTOP: IS_INTEGRATED_DESKTOP,
@@ -130,12 +131,13 @@ if (!env.IS_DOCKER) {
 	const userAgent = navigator.userAgent.toLowerCase();
 	if (userAgent.indexOf(' electron/') > -1) {
 		try {
-			const el: ElectronService = new ElectronService();
-			const variableGlobal = el.remote.getGlobal('variableGlobal');
+			const remote = window.require('@electron/remote');
+			const variableGlobal = remote.getGlobal('variableGlobal');
 			API_BASE_URL = variableGlobal.API_BASE_URL;
 			IS_ELECTRON = true;
 			IS_INTEGRATED_DESKTOP = variableGlobal.IS_INTEGRATED_DESKTOP
 		} catch(e) {
+			console.log(e);
 		}
 	}
 
@@ -151,6 +153,7 @@ if (!env.IS_DOCKER) {
 		COMPANY_LINK: 'https://ever.co/',
 		COMPANY_SITE_LINK: 'https://gauzy.co',
 		COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
+		COMPANY_GITLAB_LINK: 'https://gitlab.com/ever-co',
 		COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/gauzyplatform',
 		COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
 		COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
@@ -170,7 +173,7 @@ if (!env.IS_DOCKER) {
 
 		SENTRY_DSN: 'DOCKER_SENTRY_DSN',
 
-		HUBSTAFF_REDIRECT_URI: CLIENT_BASE_URL + '/pages/integrations/hubstaff',
+		HUBSTAFF_REDIRECT_URI: '${env.HUBSTAFF_REDIRECT_URI}',
 
 		IS_ELECTRON: IS_ELECTRON,
 		IS_INTEGRATED_DESKTOP: IS_INTEGRATED_DESKTOP,
@@ -209,7 +212,7 @@ if (!isProd) {
 
 	// For easier debugging in development mode, you can import the following file
 	// to ignore zone related error stack frames such as 'zone.run', 'zoneDelegate.invokeTask'.
-	import 'zone.js/dist/zone-error';  // Included with Angular CLI.
+	import 'zone.js';  // Included with Angular CLI.
 
 	`;
 }

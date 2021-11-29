@@ -4,7 +4,7 @@ import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from '../../../../@core/services/tasks.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
@@ -22,7 +22,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 })
 export class TaskSelectorComponent
 	implements AfterViewInit, OnInit, OnDestroy, ControlValueAccessor {
-	
+
 	/*
 	* Getter & Setter for dynamic enabled/disabled element
 	*/
@@ -54,7 +54,7 @@ export class TaskSelectorComponent
 	}
 	@Input() public set projectId(value: string) {
 		this._projectId = value;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	/*
@@ -66,7 +66,7 @@ export class TaskSelectorComponent
 	}
 	@Input() public set employeeId(value: string) {
 		this._employeeId = value;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	/*
@@ -90,10 +90,10 @@ export class TaskSelectorComponent
 		private tasksService: TasksService,
 		private toastrService: ToastrService,
 		private store: Store
-	) {}
+	) { }
 
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	onChange: any = () => { };
+	onTouched: any = () => { };
 
 	ngOnInit() {
 		this.store.userRolePermissions$
@@ -113,7 +113,7 @@ export class TaskSelectorComponent
 	}
 
 	ngAfterViewInit() {
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	writeValue(value: any) {
@@ -138,15 +138,14 @@ export class TaskSelectorComponent
 			const member: any = {
 				id: this.employeeId || this.store.user.employeeId
 			};
-			const task = await this.tasksService
+			const task = await firstValueFrom(this.tasksService
 				.createTask({
 					title,
 					organizationId: organizationId,
 					members: [member],
 					status: TaskStatusEnum.IN_PROGRESS,
 					...(this.projectId ? { projectId: this.projectId } : {})
-				})
-				.toPromise();
+				}));
 			this.tasks = this.tasks.concat(task);
 			this.taskId = task.id;
 		} catch (error) {
@@ -165,14 +164,13 @@ export class TaskSelectorComponent
 				}
 			);
 		} else {
-			const { items = [] } = await this.tasksService
+			const { items = [] } = await firstValueFrom(this.tasksService
 				.getAllTasks({
 					projectId: this.projectId
-				})
-				.toPromise();
+				}));
 			this.tasks = items;
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

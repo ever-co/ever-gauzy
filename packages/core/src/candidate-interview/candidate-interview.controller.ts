@@ -160,7 +160,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<ICandidateInterview> {
-		return this.candidateInterviewService.findOne(id);
+		return this.candidateInterviewService.findOneByIdString(id);
 	}
 
 	/**

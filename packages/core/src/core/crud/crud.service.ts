@@ -14,8 +14,6 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { mergeMap } from 'rxjs/operators';
-import { of, throwError } from 'rxjs';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
@@ -24,7 +22,9 @@ import { ICrudService } from './icrud.service';
 import { IPagination } from '@gauzy/contracts';
 import { ITryRequest } from './try-request';
 import { filterQuery } from './query-builder';
+import { mergeMap } from 'rxjs/operators';
 import { RequestContext } from 'core/context';
+import { of as observableOf, throwError } from 'rxjs';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -84,17 +84,39 @@ export abstract class CrudService<T extends BaseEntity>
 			const [items, total] = await this.repository.findAndCount(options);
 			return { items, total };
 		} catch (error) {
+			console.log(error);
 			throw new BadRequestException(error);
 		}
 	}
 
-	public async findOneOrFail(
-		id: string | number | FindOneOptions<T> | FindConditions<T>,
+	public async findOneOrFailByIdString(
+		id: string,
 		options?: FindOneOptions<T>
 	): Promise<ITryRequest> {
 		try {
 			const record = await this.repository.findOneOrFail(
-				id as any,
+				id,
+				options
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
+	}
+	
+	public async findOneOrFailByIdNumber(
+		id: number,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				id,
 				options
 			);
 			return {
@@ -109,11 +131,148 @@ export abstract class CrudService<T extends BaseEntity>
 		}
 	}
 
-	public async findOne(
-		id: string | number | FindOneOptions<T> | FindConditions<T>,
+	public async findOneOrFailByDate(
+		id: Date,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				id,
+				options
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
+	}
+
+	public async findOneOrFailByOptions(
+		options: FindOneOptions<T>		
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				options				
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
+	}
+
+	public async findOneOrFailByConditions(
+		conditions: FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				conditions,
+				options
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
+	}
+
+	/*
+    |--------------------------------------------------------------------------
+    | @FindOne
+    |--------------------------------------------------------------------------
+    */
+
+	/**
+	 * Finds first entity that matches given id and options.
+	 *
+	 * @param id {string}
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByIdString(
+		id: string,
 		options?: FindOneOptions<T>
 	): Promise<T> {
-		const record = await this.repository.findOne(id as any, options);
+		const record = await this.repository.findOne(
+			id,
+			options
+		);
+		if (!record) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
+		return record;
+	}
+
+	/**
+	 * Finds first entity that matches given id and options.
+	 *
+	 * @param id {number}
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByIdNumber(
+		id: number,
+		options?: FindOneOptions<T>
+	): Promise<T> {
+		const record = await this.repository.findOne(
+			id,
+			options
+		);
+		if (!record) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
+		return record;
+	}
+
+	/**
+	 * Finds first entity that matches given options.
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByOptions(
+		options: FindOneOptions<T>
+	): Promise<T> {
+		const record = await this.repository.findOne(
+			options
+		);
+		if (!record) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
+		return record;
+	}
+
+	/**
+	 * Finds first entity that matches given conditions and options.
+	 *
+	 * @param conditions
+	 * @param options
+	 * @returns
+	 */
+	public async findOneByConditions(
+		conditions: FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<T> {
+		const record = await this.repository.findOne(
+			conditions,
+			options
+		);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -153,8 +312,9 @@ export abstract class CrudService<T extends BaseEntity>
 	): Promise<DeleteResult> {
 		try {
 			return await this.repository.delete(criteria);
-		} catch (err) {
-			throw new NotFoundException(`The record was not found`, err);
+		} catch (error) {
+			console.log(error)
+			throw new NotFoundException(`The record was not found`, error);
 		}
 	}
 
@@ -166,13 +326,13 @@ export abstract class CrudService<T extends BaseEntity>
 			stream$.pipe(
 				mergeMap((signal) => {
 					if (!signal) {
-						return throwError(
+						return throwError(() =>
 							new NotFoundException(
 								`The requested record was not found`
 							)
 						);
 					}
-					return of(signal);
+					return observableOf(signal);
 				})
 			);
 	}

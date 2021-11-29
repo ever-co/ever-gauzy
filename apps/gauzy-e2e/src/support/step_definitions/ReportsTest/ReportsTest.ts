@@ -250,7 +250,7 @@ And('Employee can verify Time and Activity project worked', () => {
 });
 
 When('Employee can click on Amounts owed sidebar button', () => {
-	reportsPage.clickInnerSidebarBtn(ReportsPageData.amountsOwed);
+	reportsPage.clickInnerSidebarBtnAmounts(ReportsPageData.amountsOwed);
 });
 
 Then('Employee can verify his own name under employee section', () => {

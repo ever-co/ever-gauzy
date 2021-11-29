@@ -121,4 +121,35 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 			data
 		);
 	}
+
+	/**
+	 * GET organization contacts by id
+	 * 
+	 * @param id 
+	 * @param data 
+	 * @returns 
+	 */
+	 @ApiOperation({
+		summary: 'Get organization contacts by id.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization contacts.',
+		type: OrganizationContact
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IOrganizationContact> {
+		const {relations = []} = data;
+		return this.organizationContactService.findById(
+			id,
+			relations
+		);
+	}
 }

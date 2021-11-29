@@ -22,6 +22,7 @@ Given('Login with default credentials', () => {
 
 // Add new organization
 And('User can add new organization', () => {
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addOrganization(
 		addOrganizationPage,
 		organizationName,

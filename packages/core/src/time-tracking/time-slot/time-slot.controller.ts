@@ -37,7 +37,7 @@ export class TimeSlotController {
 		return await this.timeSlotService.getTimeSlots(entity);
 	}
 
-	@ApiOperation({ summary: 'Get Time Slots' })
+	@ApiOperation({ summary: 'Get Time Slot By Id' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
@@ -45,10 +45,10 @@ export class TimeSlotController {
 	})
 	@Get('/:id')
 	async getOne(
-		@Param('id', UUIDValidationPipe) { id },
+		@Param('id', UUIDValidationPipe) id: string,
 		@Query() option: FindOneOptions
-	): Promise<TimeSlot> {
-		return await this.timeSlotService.findOne(id, option);
+	): Promise<ITimeSlot> {
+		return await this.timeSlotService.findOneByIdString(id, option);
 	}
 
 	@ApiOperation({ summary: 'Create Time Slot' })

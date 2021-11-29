@@ -9,7 +9,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import {
@@ -22,6 +22,7 @@ import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { firstValueFrom } from "rxjs";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -131,7 +132,7 @@ export class CandidateInterviewFormComponent
 
 	async findTime() {
 		const dialog = this.dialogService.open(CandidateCalendarInfoComponent);
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.selectedRange = { start: data.startTime, end: data.endTime };
 		}

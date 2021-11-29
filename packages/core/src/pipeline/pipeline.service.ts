@@ -4,7 +4,7 @@ import {
 	DeepPartial,
 	EntityManager,
 	FindConditions,
-	ILike,
+	Like,
 	Repository,
 	Transaction,
 	TransactionManager,
@@ -23,8 +23,10 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public constructor(
 		@InjectRepository(Deal)
 		protected dealRepository: Repository<Deal>,
+
 		@InjectRepository(Pipeline)
 		protected pipelineRepository: Repository<Pipeline>,
+		
 		@InjectRepository(User)
 		protected userRepository: Repository<User>
 	) {
@@ -123,11 +125,11 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			const { where } = filter;
 			if ('name' in where) {
 				const { name } = where;
-				filter.where.name = ILike(`%${name}%`)
+				filter.where.name = Like(`%${name}%`)
 			}
 			if ('description' in where) {
 				const { description } = where;
-				filter.where.description = ILike(`%${description}%`)
+				filter.where.description = Like(`%${description}%`)
 			}
 		}
 		return super.paginate(filter);

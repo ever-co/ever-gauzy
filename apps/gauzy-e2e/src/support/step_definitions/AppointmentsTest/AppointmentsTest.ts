@@ -185,7 +185,7 @@ Then('User can see Event Type Select button', () => {
 	appointmentsPage.eventTypeSelectButtonVisible();
 });
 
-When('User clicks on Event Type select button', () => {
+Then('User clicks on Event Type select button', () => {
 	appointmentsPage.clickEventTypeSelectButton(0);
 });
 

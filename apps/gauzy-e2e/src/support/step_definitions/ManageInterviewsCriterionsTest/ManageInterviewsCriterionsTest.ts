@@ -17,14 +17,11 @@ Given('Login with default credentials', () => {
 // Add technology stack
 And('User can visit Candidates interview criterion page', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	cy.visit('/#/pages/employees/candidates/interviews/criterion', { timeout: pageLoadTimeout });
-	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
 	cy.intercept('GET', '/api/candidate-technologies*').as('waitCandidateTechnologies');
 	cy.intercept('GET', '/api/candidate-personal-qualities*').as('waitCandidatePersonalQualities');
-	cy.intercept('GET', '/api/candidate-interview*').as('waitCandidateInterview');
-	cy.intercept('GET', '/api/employee/user/*').as('waitUsers');
-
-	cy.wait(['@waitCandidateTechnologies','@waitUserOrganization', '@waitCandidatePersonalQualities', '@waitCandidateInterview', '@waitUsers']);
+	cy.visit('/#/pages/employees/candidates/interviews/criterion', { timeout: pageLoadTimeout });
+	cy.wait(['@waitCandidateTechnologies', '@waitCandidatePersonalQualities']);
+	
 });
 
 And('User can see technology stack input field', () => {

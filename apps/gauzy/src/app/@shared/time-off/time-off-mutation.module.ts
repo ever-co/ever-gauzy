@@ -18,6 +18,8 @@ import { TimeOffRequestMutationComponent } from './time-off-request-mutation/tim
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../translate/translate.module';
 import { SharedModule } from '../shared.module';
+import { TimeOffHolidayMutationComponent } from './time-off-holiday-mutation/time-off-holiday-mutation.component';
+import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-policy-select.module';
 
 @NgModule({
 	imports: [
@@ -37,10 +39,12 @@ import { SharedModule } from '../shared.module';
 		FileUploaderModule,
 		TranslateModule,
 		SharedModule
+		TimeOffPolicySelectModule
 	],
 	declarations: [
 		TimeOffSettingsMutationComponent,
-		TimeOffRequestMutationComponent
+		TimeOffRequestMutationComponent,
+		TimeOffHolidayMutationComponent
 	],
 	providers: []
 })

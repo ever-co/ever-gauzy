@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, OneToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import {
@@ -102,28 +102,34 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 
 	/*
     |--------------------------------------------------------------------------
-    | @OneToMany 
+    | @OneToOne 
     |--------------------------------------------------------------------------
     */
 
 	/**
-	 * OrganizationContact
+	 * Employee
 	 */
-	@ApiProperty({ type: () => OrganizationContact, isArray: true })
-	@OneToMany(() => OrganizationContact, (organizationContact) => organizationContact.contact)
-	public organization_contacts?: IOrganizationContact[];
+	@ApiProperty({ type: () => Employee })
+	@OneToOne(() => Employee, (employee) => employee.contact, {
+		onDelete: 'SET NULL'
+	})
+	employee?: IEmployee;
 
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee, isArray: true })
-	@OneToMany(() => Employee, (employee) => employee.contact)
-	public employees?: IEmployee[];
+	@ApiProperty({ type: () => Candidate })
+	@OneToOne(() => Candidate, (candidate) => candidate.contact, {
+		onDelete: 'SET NULL'
+	})
+	candidate?: ICandidate;
 
 	/**
-	 * Candidate
+	 * Organization Contact
 	 */
-	@ApiProperty({ type: () => Candidate, isArray: true })
-	@OneToMany(() => Candidate, (candidate) => candidate.contact)
-	public candidates?: ICandidate[];
+	@ApiProperty({ type: () => OrganizationContact })
+	@OneToOne(() => OrganizationContact, (organizationContact) => organizationContact.contact, {
+		onDelete: 'SET NULL'
+	})
+	organizationContact?: IOrganizationContact;
 }

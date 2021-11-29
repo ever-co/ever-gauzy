@@ -4,20 +4,21 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Task } from './task.entity';
-import { ILike, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
-import { TenantAwareCrudService } from './../core/crud';
-import { EmployeeService } from '../employee/employee.service';
-import { RoleService } from '../role/role.service';
-import { RequestContext } from '../core/context';
+import { Like, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
 import { IEmployee, IGetTaskByEmployeeOptions, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
+import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from '../core/context';
+import { Task } from './task.entity';
+import { EmployeeService } from '../employee/employee.service';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		@InjectRepository(Task)
 		private readonly taskRepository: Repository<Task>,
+
 		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService
 	) {
@@ -28,9 +29,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const { where : { organizationId, employeeId, projectId, status, title, organizationSprintId = null } } = filter;
 
 		//If user is not an employee, then this will return 404
-		const employee = await this.employeeService.findOne({
+		const employee = await this.employeeService.findOneByOptions({
 			where: {
-				user: { id: RequestContext.currentUser().id }
+				user: { id: RequestContext.currentUserId() }
 			}
 		});
 
@@ -51,10 +52,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			.leftJoinAndSelect(`${query.alias}.project`, 'project')
 			.leftJoinAndSelect(`${query.alias}.tags`, 'tags')
 			.leftJoinAndSelect(`${query.alias}.organizationSprint`, 'sprint')
-			.leftJoinAndSelect(`${query.alias}.members`, 'members')
 			.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
 			.leftJoinAndSelect(`${query.alias}.creator`, 'creator')
-			.leftJoinAndSelect('members.user', 'users')
+			.leftJoinAndSelect(`${query.alias}.members`, 'members')
+			.leftJoinAndSelect('members.user', 'user')
 			.where((qb: SelectQueryBuilder<Task>) => {
 				qb
 				.andWhere((cb) => {
@@ -79,7 +80,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					query.andWhere(`"${qb.alias}"."status" = :status`, { status });
 				}
 				if (title) {
-					query.andWhere(`"${qb.alias}"."title" ILIKE :title`, { title: `%${title}%` });
+					query.andWhere(`"${qb.alias}"."title" LIKE :title`, { title: `%${title}%` });
 				}
 				if (organizationSprintId) {
 					query.andWhere(`"${qb.alias}"."organizationSprintId" IS NULL`);
@@ -165,7 +166,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					query.andWhere(`"${qb.alias}"."status" = :status`, { status });
 				}
 				if (title) {
-					query.andWhere(`"${qb.alias}"."title" ILIKE :title`, { title: `%${title}%` });
+					query.andWhere(`"${qb.alias}"."title" LIKE :title`, { title: `%${title}%` });
 				}
 				if (organizationSprintId) {
 					query.andWhere(`"${qb.alias}"."organizationSprintId" IS NULL`);
@@ -182,7 +183,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		let employee: IEmployee;
 		let role;
 		try {
-			employee = await this.employeeService.findOne({
+			employee = await this.employeeService.findOneByOptions({
 				where: {
 					user: { id: RequestContext.currentUser().id }
 				}
@@ -192,7 +193,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			const roleId = RequestContext.currentUser().roleId;
 			if (roleId) {
-				role = await this.roleService.findOne(roleId);
+				role = await this.roleService.findOneByIdString(roleId);
 			}
 		} catch (e) {}
 		
@@ -220,7 +221,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { where } = filter;
 			if ('title' in where) {
 				const { title } = where;
-				filter.where.title = ILike(`%${title}%`)	
+				filter.where.title = Like(`%${title}%`)	
 			}
 			if ('organizationSprintId' in where) {
 				filter.where.organizationSprintId = IsNull();	

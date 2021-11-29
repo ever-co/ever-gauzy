@@ -3,7 +3,7 @@ import { IGoal, IKeyResult, IKeyResultUpdate } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { GoalService } from '../../../@core/services/goal.service';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
@@ -67,7 +67,7 @@ export class GoalDetailsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
 				await this.goalService
@@ -94,7 +94,7 @@ export class GoalDetailsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'deleted') {
 				this.goal.keyResults.splice(index, 1);
@@ -119,7 +119,7 @@ export class GoalDetailsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			const keyResultData = response;
 			delete keyResultData.goal;

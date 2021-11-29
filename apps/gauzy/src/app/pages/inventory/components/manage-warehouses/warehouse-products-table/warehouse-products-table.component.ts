@@ -18,7 +18,7 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { InventoryStore } from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ImageRowComponent } from '../../table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
 import { ManageVariantsQuantityComponent } from '../manage-variants-quantity/manage-variants-quantity.component';
@@ -163,7 +163,7 @@ export class WarehouseProductsTableComponent
 	async onAddProduct() {
 		const dialog = this.dialogService.open(SelectProductComponent, {});
 
-		const selectedProducts = await dialog.onClose.pipe(first()).toPromise();
+		const selectedProducts = await firstValueFrom(dialog.onClose);
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization || { id: null };

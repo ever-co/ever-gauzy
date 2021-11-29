@@ -29,7 +29,7 @@ $status: 'basic';
   }
   .filter-item-list {
     .filter-item {
-      max-width: 250px;
+      max-width: 263px;
     }
     .select-box,
     nb-select {
@@ -96,4 +96,8 @@ $status: 'basic';
   .slider-dropdown {
     width: 300px;
   }
+}
+button.activity-level-filter.text-capitalize.appearance-outline.size-medium.shape-rectangle.icon-end.status-basic.nb-transition {
+  inline-size: -webkit-fill-available;
+  overflow: hidden;
 }

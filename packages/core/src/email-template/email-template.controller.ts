@@ -155,7 +155,7 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IEmailTemplate> {
-		return this.emailTemplateService.findOne(id, {
+		return this.emailTemplateService.findOneByIdString(id, {
 			where: {
 				tenantId: RequestContext.currentTenantId(),
 			}

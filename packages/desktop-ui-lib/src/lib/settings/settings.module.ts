@@ -15,7 +15,8 @@ import {
 	NbAlertModule,
 	NbProgressBarModule,
 	NbTabsetModule,
-	NbToastrService
+	NbToastrService,
+	NbAccordionModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 
@@ -36,7 +37,8 @@ import { FormsModule } from '@angular/forms';
 		NbButtonModule,
 		NbAlertModule,
 		NbProgressBarModule,
-		NbTabsetModule
+		NbTabsetModule,
+		NbAccordionModule
 	],
 	providers: [
 		NbToastrService

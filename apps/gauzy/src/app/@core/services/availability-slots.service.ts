@@ -5,33 +5,33 @@ import {
 	IAvailabilitySlotsCreateInput,
 	IAvailabilitySlotsFindInput
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class AvailabilitySlotsService {
 	AVAILABILITY_SLOTS_BASE_URI = `${API_PREFIX}/availability-slots`;
 
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	create(createInput: IAvailabilitySlotsCreateInput): Promise<any> {
-		return this.http
-			.post<IAvailabilitySlot>(
-				this.AVAILABILITY_SLOTS_BASE_URI,
-				createInput
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<IAvailabilitySlot>(
+					this.AVAILABILITY_SLOTS_BASE_URI,
+					createInput
+				)
+		);
 	}
 
 	createBulk(createInput: IAvailabilitySlotsCreateInput[]): Promise<any> {
-		return this.http
-			.post<IAvailabilitySlot[]>(
-				this.AVAILABILITY_SLOTS_BASE_URI + '/bulk',
-				createInput
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<IAvailabilitySlot[]>(
+					this.AVAILABILITY_SLOTS_BASE_URI + '/bulk',
+					createInput
+				)
+		);
 	}
 
 	getAll(
@@ -39,31 +39,31 @@ export class AvailabilitySlotsService {
 		findInput?: IAvailabilitySlotsFindInput
 	): Promise<{ items: IAvailabilitySlot[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
-			.get<{ items: IAvailabilitySlot[]; total: number }>(
-				this.AVAILABILITY_SLOTS_BASE_URI,
-				{
-					params: { data }
-				}
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.get<{ items: IAvailabilitySlot[]; total: number }>(
+					this.AVAILABILITY_SLOTS_BASE_URI,
+					{
+						params: { data }
+					}
+				)
+		);
 	}
 
 	update(
 		id: string,
 		updateInput: IAvailabilitySlotsCreateInput
 	): Promise<any> {
-		return this.http
-			.put(`${this.AVAILABILITY_SLOTS_BASE_URI}/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put(`${this.AVAILABILITY_SLOTS_BASE_URI}/${id}`, updateInput)
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`${this.AVAILABILITY_SLOTS_BASE_URI}/${id}`)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.delete(`${this.AVAILABILITY_SLOTS_BASE_URI}/${id}`)
+		);
 	}
 }

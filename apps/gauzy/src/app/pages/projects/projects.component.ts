@@ -8,7 +8,8 @@ import {
 } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -31,7 +32,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, PictureNameTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
@@ -122,7 +123,7 @@ export class ProjectsComponent
 			});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	private _initMethod() {
 		if (!this.organization) {
@@ -137,13 +138,13 @@ export class ProjectsComponent
 	private async loadEmployees() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items } = await this.employeesService
-			.getAll(['user'], {
-				organization: { id: organizationId },
-				tenantId
-			})
-			.pipe(first())
-			.toPromise();
+		const { items } = await firstValueFrom(
+			this.employeesService
+				.getAll(['user'], {
+					organization: { id: organizationId },
+					tenantId
+				})
+		);
 
 		this.employees = items;
 	}
@@ -162,14 +163,14 @@ export class ProjectsComponent
 	}
 
 	async removeProject(id?: string, name?: string) {
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: {
-					recordType: 'Project'
-				}
-			})
-			.onClose.pipe(first())
-			.toPromise();
+		const result = await firstValueFrom(
+			this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: {
+						recordType: 'Project'
+					}
+				})
+				.onClose);
 
 		if (result) {
 			await this.organizationProjectsService
@@ -310,16 +311,9 @@ export class ProjectsComponent
 					title: this.getTranslation(
 						'ORGANIZATIONS_PAGE.EDIT.CONTACT'
 					),
-					type: 'string',
+					type: 'custom',
 					class: 'text-center',
-					valuePrepareFunction: (value, item) => {
-						if (item.hasOwnProperty('organizationContact')) {
-							return item.organizationContact
-								? item.organizationContact.name
-								: null;
-						}
-						return value;
-					}
+					renderComponent: ContactLinksComponent,
 				},
 				startDate: {
 					title: this.getTranslation(

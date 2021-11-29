@@ -45,7 +45,7 @@ export class ExpensesReportGridComponent
 	@Input()
 	set filters(value) {
 		this.logRequest = value || {};
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	constructor(
@@ -79,11 +79,11 @@ export class ExpensesReportGridComponent
 
 	filtersChange($event) {
 		this.logRequest = $event;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	groupByChange() {
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	async getExpenses() {

@@ -29,7 +29,7 @@ Given('Login with default credentials', () => {
 
 // Add tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboard();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -111,6 +111,18 @@ And('User can verify client was created', () => {
 });
 
 // Edit client
+When('User see name input field', () => {
+	clientsPage.verifyNameInput();
+});
+
+Then('User enter client name', () => {
+	clientsPage.searchClientName(fullName);
+});
+
+And('User can verify client name', () => {
+	clientsPage.verifyClientNameInTable(fullName);
+})
+
 And('User can see clients table', () => {
 	clientsPage.tableRowVisible();
 });
@@ -124,7 +136,7 @@ Then('Edit button will become active', () => {
 });
 
 When('User click on edit button', () => {
-	clientsPage.clickEditButton();
+	clientsPage.clickEditButton(ClientsData.editButton);
 });
 
 Then('User can see name input field', () => {
@@ -240,10 +252,49 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify client was edited', () => {
+	clientsPage.searchClientName(deleteName);
 	clientsPage.verifyClientExists(deleteName);
+});
+//View client information
+Then('View button will become active', () => {
+	clientsPage.viewButtonVisible();
+});
+
+When('User click on view button', () => {
+	clientsPage.clickViewButton();
+});
+
+And('User can verify client name in view', () => {
+	clientsPage.verifyClientNameView(deleteName);
+});
+
+And('User can verify contact type', () => {
+	clientsPage.verifyContactType(ClientsData.clientType);
+});
+
+Then('User can see back button', () => {
+	clientsPage.verifyBackBtn();
+});
+
+And('User click on back button', () => {
+	clientsPage.clickOnBackBtn();
 });
 
 // Delete client
+When('User see name input field again', () => {
+	cy.intercept('GET', '/api/organization-projects*').as('waitOrg');
+	cy.wait('@waitOrg');
+	clientsPage.verifyNameInput();
+});
+
+Then('User enter client name again', () => {
+	clientsPage.searchClientName(deleteName);
+});
+
+And('User can see only selected user', () => {
+	clientsPage.verifySearchResult(ClientsData.tableResult);
+});
+
 Then('User can see clients table', () => {
 	clientsPage.tableRowVisible();
 });
@@ -273,5 +324,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify client was deleted', () => {
+	clientsPage.clearSearchInput();
 	clientsPage.verifyElementIsDeleted(deleteName);
 });
+

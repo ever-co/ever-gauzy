@@ -125,7 +125,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					this.viewMode = !!project ? (project.taskListType as TaskListTypeEnum) : TaskListTypeEnum.GRID;
 				}),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -164,7 +164,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -207,19 +207,25 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		}
 	
 		const relations = [];
+		let join: any = {};
 		let endPoint: string; 
 
 		if (this.viewComponentName == ComponentEnum.ALL_TASKS) {
 			endPoint = `${API_PREFIX}/tasks/pagination`;
 			relations.push(...[
-				'project', 
-				'tags', 
-				'members', 
-				'members.user', 
-				'teams', 
-				'creator', 
+				'project',
+				'tags',
+				'teams',
+				'creator',
 				'organizationSprint'
 			]);
+			join = {
+				alias: 'task',
+				leftJoinAndSelect: {
+					'members': 'task.members',
+					'user': 'members.user'
+				}
+			}
 		}
 		if (this.viewComponentName == ComponentEnum.TEAM_TASKS) {
 			if (this.selectedEmployee && this.selectedEmployee.id) {
@@ -237,6 +243,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint,
 			relations,
+			join,
 			where: {
 				...{ organizationId, tenantId },
 				...request,
@@ -422,7 +429,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
-						tap(() => this.subject$.next()),
+						tap(() => this.subject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -479,7 +486,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 
 				this.storeInstance.editTask({ ...payload, id: this.selectedTask.id })
 					.pipe(
-						tap(() => this.subject$.next()),
+						tap(() => this.subject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -538,7 +545,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
-						tap(() => this.subject$.next()),
+						tap(() => this.subject$.next(true)),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -561,7 +568,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (result) {
 			this.storeInstance.delete(this.selectedTask.id)
 				.pipe(
-					tap(() => this.subject$.next()),
+					tap(() => this.subject$.next(true)),
 					untilDestroyed(this)
 				)
 				.subscribe();

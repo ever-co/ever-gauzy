@@ -10,6 +10,8 @@ import {
 import { FileStoragePage } from '../pageobjects/FileStoragePageObject';
 
 export const verifyHeader = (text) => {
+	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
+	cy.wait('@waitUserOrganization');
 	verifyText(FileStoragePage.headerTextCss, text);
 };
 

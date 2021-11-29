@@ -144,47 +144,36 @@
 			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
 			>{{ 'BUTTONS.DELETE' | translate }}
 		</button>
-		<button
-			*ngIf="proposalStatus && dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			nbButton
-			(click)="
-				proposalStatus == proposalStatusEnum.SENT
-					? switchToAccepted(selectedItem)
-					: switchToSent(selectedItem)
-			"
-			[size]="buttonSize || 'medium'"
-			status="warning"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-		>
-			<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-			<span *ngIf="proposalStatus == proposalStatusEnum.ACCEPTED">{{
-				'BUTTONS.MARK_AS_SENT' | translate
-			}}</span>
-			<span *ngIf="proposalStatus == proposalStatusEnum.SENT">{{
-				'BUTTONS.MARK_AS_ACCEPTED' | translate
-			}}</span>
-		</button>
-		<button
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
-			nbButton
-			(click)="
-				selectedItem.status == proposalStatusEnum.SENT
-					? switchToAccepted(selectedItem)
-					: switchToSent(selectedItem)
-			"
-			[size]="buttonSize || 'medium'"
-			status="warning"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-		>
-			<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-			<span *ngIf="selectedItem.status == proposalStatusEnum.ACCEPTED">{{
-				'BUTTONS.MARK_AS_SENT' | translate
-			}}</span>
-			<span *ngIf="selectedItem.status == proposalStatusEnum.SENT">{{
-				'BUTTONS.MARK_AS_ACCEPTED' | translate
-			}}</span>
-		</button>
+		<ng-container
+			[ngTemplateOutlet]="statusButtonTemplate"
+			[ngTemplateOutletContext]="{ item: selectedProposal || selectedItem, buttonSize: buttonSize }"
+		></ng-container>
 	</ng-template>
+</ng-template>
+
+<ng-template #statusButtonTemplate 
+	let-item="item"
+	let-buttonSize="buttonSize"
+>
+	<button
+		*ngIf="item?.status"
+		nbButton
+		(click)="
+			item?.status == proposalStatusEnum.SENT
+				? switchToAccepted(item)
+				: switchToSent(item)
+		"
+		[size]="buttonSize || 'medium'"
+		status="warning"
+		class="mr-2"
+		[disabled]="!item && disableButton"
+	>
+		<nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>
+		<span *ngIf="item?.status == proposalStatusEnum.ACCEPTED">{{
+			'BUTTONS.MARK_AS_SENT' | translate
+		}}</span>
+		<span *ngIf="item?.status == proposalStatusEnum.SENT">{{
+			'BUTTONS.MARK_AS_ACCEPTED' | translate
+		}}</span>
+	</button>
 </ng-template>

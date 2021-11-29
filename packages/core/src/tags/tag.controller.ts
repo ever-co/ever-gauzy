@@ -8,6 +8,7 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
 import { CrudController } from './../core/crud';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
@@ -15,12 +16,16 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { IPagination, ITag, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe } from './../shared/pipes';
+import { TagListCommand } from './commands';
 
 @ApiTags('Tags')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class TagController extends CrudController<Tag> {
-	constructor(private readonly tagService: TagService) {
+	constructor(
+		private readonly tagService: TagService,
+		private readonly commandBus: CommandBus
+	) {
 		super(tagService);
 	}
 
@@ -29,27 +34,15 @@ export class TagController extends CrudController<Tag> {
 		return this.tagService.findOneByName(name);
 	}
 
-	@Get('getByOrgId')
-	async getAllTagsByOrgLevel(
+	@Get('level')
+	async findAllTags(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
+	): Promise<IPagination<ITag>> {
 		const { relations, findInput } = data;
-		return this.tagService.findTagsByOrgLevel(relations, findInput);
-	}
-	@Get('getByTenantId')
-	async getAllTagsByTenantLevel(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
-		const { relations, findInput } = data;
-		return this.tagService.findTagsByTenantLevel(relations, findInput);
-	}
-
-	@Get(`getTagsWithCount`)
-	async getTagUsageCount(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
-		const { organizationId } = data;
-		return this.tagService.getTagUsageCount(organizationId);
+		return await this.tagService.findAllTags(
+			findInput,
+			relations
+		);
 	}
 
 	@Get()
@@ -57,10 +50,9 @@ export class TagController extends CrudController<Tag> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITag>> {
 		const { relations, findInput } = data;
-		return this.tagService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.commandBus.execute(
+			new TagListCommand(findInput, relations)
+		);
 	}
 
 	@UseGuards(PermissionGuard)

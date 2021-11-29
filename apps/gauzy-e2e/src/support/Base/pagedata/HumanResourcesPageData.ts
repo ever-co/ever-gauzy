@@ -8,7 +8,7 @@ export const HumanResourcesPageData = {
 	stackedBarChartText: 'Stacked Bar',
 	incomeHeaderText: 'INCOME',
 	incomeTableHeaderDateText: 'Date',
-	incomeTableHeaderClientNameText: 'Client Name',
+	incomeTableHeaderClientNameText: 'Contact',
 	incomeTableHeaderValueText: 'Value',
 	incomeTableHeaderNotesText: 'Notes',
 	expensesHeaderText: 'EXPENSES',

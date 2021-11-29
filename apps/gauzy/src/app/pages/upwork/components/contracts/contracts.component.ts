@@ -2,8 +2,8 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
 import { IEngagement } from '@gauzy/contracts';
-import { Observable, of, EMPTY } from 'rxjs';
-import { catchError, tap, first } from 'rxjs/operators';
+import { Observable, of, EMPTY, firstValueFrom } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -142,7 +142,7 @@ export class ContractsComponent
 			}
 		});
 
-		await dialog.onClose.pipe(first()).toPromise();
+		await firstValueFrom(dialog.onClose);
 	}
 
 	syncContracts() {

@@ -7,7 +7,8 @@ import {
 	IPayment,
 	IInvoiceItem,
 	IOrganizationContact,
-	IOrganization
+	IOrganization,
+	ITag
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -27,7 +28,8 @@ import {
 	Unique,
 	ManyToMany,
 	RelationId,
-	Index
+	Index,
+	JoinTable
 } from 'typeorm';
 import {
 	InvoiceEstimateHistory,
@@ -250,6 +252,12 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.invoice)
-	tags?: Tag[];
+	@ManyToMany(() => Tag, (tag) => tag.invoices, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_invoice'
+	})
+	tags?: ITag[];
 }

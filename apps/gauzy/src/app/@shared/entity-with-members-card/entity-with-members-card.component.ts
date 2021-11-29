@@ -15,8 +15,8 @@ export class EntityWithMembersCardComponent {
 	@Input() public: IBaseEntityWithMembers;
 
 	@Output() remove = new EventEmitter();
-
 	@Output() edit = new EventEmitter();
+	@Output() view = new EventEmitter();
 
 	@Input()
 	layout?: ComponentLayoutStyleEnum | undefined;
@@ -27,5 +27,9 @@ export class EntityWithMembersCardComponent {
 
 	editEntity(id: string): void {
 		this.edit.emit(id);
+	}
+
+	navigateContact(item: any): void {
+		this.view.emit(item);
 	}
 }

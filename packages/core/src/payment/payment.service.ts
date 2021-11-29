@@ -1,23 +1,24 @@
-import { getDateRangeFormat,  } from '../core';
-import { TenantAwareCrudService } from './../core/crud';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Between, ILike, In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { Payment } from './payment.entity';
-import { RequestContext } from '../core/context';
-import { IGetPaymentInput } from '@gauzy/contracts';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Between, Like, In, Repository } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
+import { ConfigService } from '@gauzy/config';
+import { IGetPaymentInput } from '@gauzy/contracts';
+import { Payment } from './payment.entity';
+import { getDateRangeFormat,  } from '../core/utils';
+import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from '../core/context';
 import { EmailService } from '../email';
-import { getConfig } from '@gauzy/config';
-const config = getConfig();
 
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
 	constructor(
 		@InjectRepository(Payment)
 		private readonly paymentRepository: Repository<Payment>,
-		private readonly emailService: EmailService
+
+		private readonly emailService: EmailService,
+		private readonly configService: ConfigService
 	) {
 		super(paymentRepository);
 	}
@@ -123,7 +124,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				let startDate: any = moment.utc(request.startDate);
 				let endDate: any = moment.utc(request.endDate);
 
-				if (config.dbConnectionOptions.type === 'sqlite') {
+				if (this.configService.dbConnectionOptions.type === 'sqlite') {
 					startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
 					endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
 				} else {
@@ -187,7 +188,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 			const { filters } = filter;
 			if ('note' in filters) {
 				const { search } = filters.note;
-				filter.where.note = ILike(`%${search}%`);
+				filter.where.note = Like(`%${search}%`);
 			}
 			delete filter['filters'];
 		}

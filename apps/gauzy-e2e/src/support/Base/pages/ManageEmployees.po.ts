@@ -194,39 +194,39 @@ export const clickEditButton = () => {
 };
 
 export const usernameEditInputVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.usernameEditInputCss);
+	verifyElementIsVisible(ManageEmployeesPage.usernameEditSecondInputCss);
 };
 
 export const enterUsernameEditInputData = (data) => {
-	clearField(ManageEmployeesPage.usernameEditInputCss);
-	enterInput(ManageEmployeesPage.usernameEditInputCss, data);
+	clearField(ManageEmployeesPage.usernameEditSecondInputCss);
+	enterInput(ManageEmployeesPage.usernameEditSecondInputCss, data);
 };
 
 export const emailEditInputVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.emailEditInputCss);
+	verifyElementIsVisible(ManageEmployeesPage.emailEditSecondInputCss);
 };
 
 export const enterEmailEditInputData = (data) => {
-	clearField(ManageEmployeesPage.emailEditInputCss);
-	enterInput(ManageEmployeesPage.emailEditInputCss, data);
+	clearField(ManageEmployeesPage.emailEditSecondInputCss);
+	enterInput(ManageEmployeesPage.emailEditSecondInputCss, data);
 };
 
 export const firstNameEditInputVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.firstNameEditInputCss);
+	verifyElementIsVisible(ManageEmployeesPage.firstNameSecondEditInputCss);
 };
 
 export const enterFirstNameEditInputData = (data) => {
-	clearField(ManageEmployeesPage.firstNameEditInputCss);
-	enterInput(ManageEmployeesPage.firstNameEditInputCss, data);
+	clearField(ManageEmployeesPage.firstNameSecondEditInputCss);
+	enterInput(ManageEmployeesPage.firstNameSecondEditInputCss, data);
 };
 
 export const lastNameEditInputVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.lastNameEditInputCss);
+	verifyElementIsVisible(ManageEmployeesPage.lastNameSecondEditInputCss);
 };
 
 export const enterLastNameEditInputData = (data) => {
-	clearField(ManageEmployeesPage.lastNameEditInputCss);
-	enterInput(ManageEmployeesPage.lastNameEditInputCss, data);
+	clearField(ManageEmployeesPage.lastNameSecondEditInputCss);
+	enterInput(ManageEmployeesPage.lastNameSecondEditInputCss, data);
 };
 
 export const preferredLanguageDropdownVisible = () => {

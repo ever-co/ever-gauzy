@@ -1,5 +1,5 @@
 import { sample } from 'underscore';
-import { IUser } from '@gauzy/contracts';
+import { IDateRange, IUser } from '@gauzy/contracts';
 import * as moment from 'moment';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -192,8 +192,54 @@ export function getDateRangeFormat(
 export function generateSlug(string: string) {
 	return slugify(string, {
 		replacement: '-', // replace spaces with replacement character, defaults to `-`
-		remove: /[*+~()'"!:@]/g, // remove characters that match regex, defaults to `undefined`
+		remove: /[*+~()'"!:@,.]/g, // remove characters that match regex, defaults to `undefined`
 		lower: true, // convert to lower case, defaults to `false`
 		trim: true // trim leading and trailing replacement chars, defaults to `true`
 	});
+}
+
+export const getOrganizationDummyImage = (name: string) => {
+	const firstNameLetter = name ? name.charAt(0).toUpperCase() : '';
+	return getDummyImage(330, 300, firstNameLetter);
+};
+
+/**
+ * Merge Overlapping Date & Time
+ * 
+ * @param ranges 
+ * @returns 
+ */
+export function mergeOverlappingDateRanges(
+	ranges: IDateRange[],
+): IDateRange[] {
+	const sorted = ranges.sort(
+		// By start, ascending
+		(a, b) => a.start.getTime() - b.start.getTime(),
+	);
+  
+	const dates = sorted.reduce((acc, curr) => {
+		// Skip the first range
+		if (acc.length === 0) {
+			return [curr];
+		}
+	
+		const prev = acc.pop();
+	
+		if (curr.end <= prev.end) {
+			// Current range is completely inside previous
+			return [...acc, prev];
+		}
+	
+		// Merges overlapping (<) and contiguous (==) ranges
+		if (curr.start <= prev.end) {
+			// Current range overlaps previous
+			return [...acc, { start: prev.start, end: curr.end }];
+		}
+	
+		// Ranges do not overlap
+		return [...acc, prev, curr];
+
+	}, [] as IDateRange[]);
+  
+	return dates;
 }

@@ -38,7 +38,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboard();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -74,7 +74,9 @@ And('User can visit Contacts customers page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.intercept('GET', ' /api/organization-projects*').as('waitToLoad');
 	cy.visit('/#/pages/contacts/customers', { timeout: pageLoadTimeout });
+	cy.wait('@waitToLoad');
 });
 
 Then('User can see grid button', () => {
@@ -90,7 +92,7 @@ And('User can see Add button', () => {
 });
 
 When('User click Add button', () => {
-	customersPage.clickAddButton();
+	customersPage.clickAddButton(CustomersPageData.addBtn);
 });
 
 Then('User can see name input field', () => {
@@ -310,7 +312,7 @@ Then('Edit button will become active', () => {
 });
 
 When('User click on edit button', () => {
-	customersPage.clickEditButton();
+	customersPage.clickEditButton(CustomersPageData.editBtn);
 });
 
 Then('User can see name input field', () => {
@@ -350,6 +352,9 @@ And('User can see save button', () => {
 });
 
 When('User click on save button', () => {
+	cy.on('uncaught:exception', (err, runnable) => {
+		return false;
+	});
 	customersPage.clickSaveButton();
 });
 

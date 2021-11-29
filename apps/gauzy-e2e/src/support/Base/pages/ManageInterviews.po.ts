@@ -20,8 +20,9 @@ import { ManageInterviewsPage } from '../pageobjects/ManageInterviewsPageObject'
 
 export const addInterviewButtonVisible = () => {
 	cy.intercept('GET', '/api/employee/working*').as('waitScheduleLoad');
+	cy.intercept('GET', '/api/employee*').as('waitEmployee');
+	cy.wait(['@waitScheduleLoad','@waitEmployee']);
 	verifyElementIsVisible(ManageInterviewsPage.addInterviewButtonCss);
-	cy.wait('@waitScheduleLoad');
 };
 
 export const addInterviewButtonVisibleSecond = () => {
@@ -174,6 +175,7 @@ export const nameFilterInputVisible = () => {
 };
 
 export const enterNameFilterInputData = (text: string) => {
+	clearField(ManageInterviewsPage.nameFilterInputCss);
 	enterInput(ManageInterviewsPage.nameFilterInputCss, text);
 	waitUntil(2000);
 };
@@ -338,3 +340,7 @@ export const verifyDeleteButtonVisible = () => {
 export const clickDeleteButton = () => {
 	clickButton(ManageInterviewsPage.deleteButtonCss);
 };
+
+export const clearFieldForSearch = () => {
+	clearField(ManageInterviewsPage.titleFilterInputCss);
+}

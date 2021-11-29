@@ -9,7 +9,6 @@ export class EmployeeGetHandler implements ICommandHandler<EmployeeGetCommand> {
 
 	public async execute(command: EmployeeGetCommand): Promise<IEmployee> {
 		const { input } = command;
-
-		return await this.employeeService.findOne(input);
+		return await this.employeeService.findOneByOptions(input);
 	}
 }

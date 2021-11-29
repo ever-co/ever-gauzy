@@ -11,7 +11,8 @@ import {
 	IGeneralSettingResponse
 } from '@gauzy/contracts';
 import { throwError } from 'rxjs';
-import { catchError, first } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -30,71 +31,71 @@ export class GoalSettingsService {
 
 	// Goal Time Frame
 	createTimeFrame(timeFrame): Promise<IGoalTimeFrame> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.post<IGoalTimeFrame>(`${this.TIME_FRAME_URL}`, timeFrame)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAllTimeFrames(
 		findInput: IGoalTimeFrameFindInput
 	): Promise<IGoalTimeFrameResponse> {
 		const data = JSON.stringify({ findInput });
-		return this._http
-			.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}`, {
+		return firstValueFrom(
+			this._http.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		);
 	}
 
 	deleteTimeFrame(id: string): Promise<any> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.delete(`${this.TIME_FRAME_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	updateTimeFrame(
 		id: string,
 		goalTimeFrame: IGoalTimeFrame
 	): Promise<IGoalTimeFrame> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.put<IGoalTimeFrame>(`${this.TIME_FRAME_URL}/${id}`, goalTimeFrame)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	// KPI
 	createKPI(kpi): Promise<IKPI> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.post<IKPI>(`${this.KPI_URL}`, kpi)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAllKPI(findInput?: ISettingFindInput): Promise<IKpiResponse> {
 		const data = JSON.stringify({ findInput });
-		return this._http
-			.get<IKpiResponse>(`${this.KPI_URL}`, {
+		return firstValueFrom(
+			this._http.get<IKpiResponse>(`${this.KPI_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		);
 	}
 
 	deleteKPI(id: string): Promise<any> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.delete(`${this.KPI_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	updateKPI(id: string, kpiData: IKPI): Promise<IKPI> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.put<IKPI>(`${this.KPI_URL}/${id}`, kpiData)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	// General Goal Settings
@@ -102,24 +103,25 @@ export class GoalSettingsService {
 		findInput?: ISettingFindInput
 	): Promise<IGeneralSettingResponse> {
 		const data = JSON.stringify({ findInput });
-		return this._http
-			.get<IGeneralSettingResponse>(`${this.GENERAL_SETTINGS_URL}`, {
+		return firstValueFrom(
+			this._http.get<IGeneralSettingResponse>(`${this.GENERAL_SETTINGS_URL}`, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		);
 	}
 
 	updateGeneralSettings(
 		id: string,
 		generalSettingData: IGoalGeneralSetting
 	): Promise<IGoalGeneralSetting> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.put<IGoalGeneralSetting>(
 				`${this.GENERAL_SETTINGS_URL}/${id}`,
 				generalSettingData
 			)
-			.toPromise();
+		);
 	}
 
 	errorHandler(error: HttpErrorResponse) {

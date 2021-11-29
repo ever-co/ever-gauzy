@@ -37,7 +37,7 @@ Given('Login with default credentials', () => {
 
 // Add tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboard();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -152,7 +152,7 @@ Then('Edit button will become active', () => {
 });
 
 When('User click on edit button', () => {
-	contactsLeadsPage.clickEditButton();
+	contactsLeadsPage.clickEditButton(ContactsLeadsPageData.editBtn);
 });
 
 Then('User can see name input field', () => {

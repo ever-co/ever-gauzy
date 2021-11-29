@@ -14,7 +14,8 @@ import {
 	NbTooltipModule,
 	NbBadgeModule,
 	NbToggleModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbTagModule
 } from '@nebular/theme';
 import { PublicPageEmployeeMutationComponent } from './public-page-employee-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -53,6 +54,7 @@ import { SharedModule } from '../../shared.module';
 		CurrencyModule,
 		LanguageSelectorModule,
 		SharedModule
+		NbTagModule
 	],
 	declarations: [PublicPageEmployeeMutationComponent],
 	providers: []

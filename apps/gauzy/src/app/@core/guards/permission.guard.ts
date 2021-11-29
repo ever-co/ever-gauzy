@@ -5,7 +5,7 @@ import {
 	Router,
 	RouterStateSnapshot
 } from '@angular/router';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 @Injectable()
@@ -20,17 +20,15 @@ export class PermissionGuard implements CanActivate {
 		state: RouterStateSnapshot
 	) {
 		const expectedPermission = route.data.expectedPermission;
-		const hasPermission = await this.authService
-			.hasPermission(expectedPermission)
-			.pipe(first())
-			.toPromise();
+		const hasPermission = await firstValueFrom(
+			this.authService.hasPermission(expectedPermission)
+		);
 
 		if (hasPermission) {
 			return true;
 		}
 
 		this.router.navigate(['/']);
-
 		return false;
 	}
 }

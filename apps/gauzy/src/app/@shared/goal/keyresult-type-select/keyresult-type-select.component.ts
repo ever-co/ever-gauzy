@@ -3,7 +3,7 @@ import { FormGroup, Validators } from '@angular/forms';
 import { KeyResultTypeEnum, IGoalGeneralSetting, IKPI } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { EditKpiComponent } from '../../../pages/goal-settings/edit-kpi/edit-kpi.component';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 
 @Component({
@@ -62,7 +62,7 @@ export class KeyresultTypeSelectComponent {
 				type: 'add'
 			}
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			await this.getKPI();
 		}

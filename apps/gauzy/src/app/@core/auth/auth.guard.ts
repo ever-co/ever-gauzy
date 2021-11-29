@@ -5,6 +5,7 @@ import {
     Router,
     RouterStateSnapshot
 } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { AuthStrategy } from './auth-strategy.service';
 import { ElectronService } from 'ngx-electron';
@@ -45,7 +46,7 @@ export class AuthGuard implements CanActivate {
 		}
 
         // logout and clear local store before redirect to login page
-        await this.authStrategy.logout().toPromise();
+        await firstValueFrom(this.authStrategy.logout());
 
         this.router.navigate(['/auth/login'], {
             queryParams: { returnUrl: state.url }

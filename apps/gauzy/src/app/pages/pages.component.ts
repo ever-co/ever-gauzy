@@ -1053,6 +1053,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 
 		this.user = await this.usersService.getMe([
 			'employee',
+			'employee.contact',
 			'role',
 			'role.rolePermissions',
 			'tenant',

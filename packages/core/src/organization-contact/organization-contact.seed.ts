@@ -1,9 +1,19 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { ContactOrganizationInviteStatus, ContactType, IContact, IEmployee, IOrganization, IOrganizationContact, ITag, ITenant, OrganizationContactBudgetTypeEnum } from '@gauzy/contracts';
+import {
+	ContactOrganizationInviteStatus,
+	ContactType,
+	IEmployee,
+	IOrganization,
+	IOrganizationContact,
+	ITag,
+	ITenant,
+	OrganizationContactBudgetTypeEnum
+} from '@gauzy/contracts';
 import * as _ from 'underscore';
 import { getDummyImage } from '../core';
-import { Contact, Organization, OrganizationContact, Tag } from './../core/entities/internal';
+import { Organization, OrganizationContact, Tag } from './../core/entities/internal';
+import { getRandomContact } from 'contact/contact.seed';
 
 export const createDefaultOrganizationContact = async (
 	connection: Connection,
@@ -46,18 +56,13 @@ const createOrganizationContact = async (
 	for await (const organization of organizations) {
 		const { employees } = organization;
 		const organizationContacts: IOrganizationContact[] = [];
-		const contacts = await connection.manager.find(Contact, {
-			where: { tenant, organization }
-		});
 		const tags = await connection.manager.find(Tag, { 
 			where: { tenant, organization }
 		});
 		for (let i = 0; i < noOfContactsPerOrganization; i++) {
-			const contact = faker.random.arrayElement(contacts);
 			const orgContact = await generateOrganizationContact(
 				tenant,
 				organization,
-				contact,
 				tags
 			)
 			organizationContacts.push(orgContact);
@@ -77,9 +82,10 @@ const createOrganizationContact = async (
 const generateOrganizationContact = async (
 	tenant: ITenant,
 	organization: IOrganization,
-	contact: IContact,
 	tags: ITag[]
 ): Promise<IOrganizationContact> => {
+	const contact = getRandomContact(tenant, organization);
+
 	const orgContact = new OrganizationContact();
 	orgContact.name = contact.name;
 	orgContact.organization = organization;
@@ -99,7 +105,6 @@ const generateOrganizationContact = async (
 	orgContact.inviteStatus = faker.random.arrayElement(Object.values(ContactOrganizationInviteStatus));
 
 	const phone = faker.phone.phoneNumber();
-	orgContact.phones = [phone];
 	orgContact.primaryEmail = email;
 	orgContact.primaryPhone = phone;
 	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.name.firstName()).charAt(0).toUpperCase());

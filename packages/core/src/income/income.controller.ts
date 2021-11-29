@@ -63,7 +63,7 @@ export class IncomeController extends CrudController<Income> {
 	): Promise<IPagination<IIncome>> {
 		const { relations, findInput, filterDate } = data;
 		//If user is not an employee, then this will return 404
-		const employee = await this.employeeService.findOne({
+		const employee = await this.employeeService.findOneByConditions({
 			user: { id: RequestContext.currentUserId() }
 		});
 		return this.incomeService.findAllIncomes(

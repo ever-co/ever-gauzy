@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, WhereExpression } from 'typeorm';
+import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
 import { RequestContext } from '../core/context';
@@ -57,7 +57,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					'approvalPolicy'
 				)
 				.where(
-					new Brackets((qb: WhereExpression) => { 
+					new Brackets((qb: WhereExpressionBuilder) => { 
 						const tenantId = RequestContext.currentTenantId();
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });

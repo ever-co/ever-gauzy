@@ -137,7 +137,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<IAccountingTemplate> {
-		return this.accountingTemplateService.findOne(id, {
+		return this.accountingTemplateService.findOneByIdString(id, {
 			where: {
 				tenantId: RequestContext.currentTenantId(),
 			}

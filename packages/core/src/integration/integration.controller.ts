@@ -71,7 +71,7 @@ export class IntegrationController {
 		@Param('integration') integration: IntegrationEnum,
 		@Param('organizationId', UUIDValidationPipe) organizationId: string
 	): Promise<any> {
-		return await this._integrationService.checkIntegrationRemeberState(
+		return await this._integrationService.checkIntegrationRememberState(
 			integration,
 			organizationId
 		);

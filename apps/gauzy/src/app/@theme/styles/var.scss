@@ -1,3 +1,4 @@
+@use "sass:math";
 // @nebular out of the box themes
 @import 'themes';
 
@@ -11,7 +12,7 @@ $break-xxl: 1280px;
 $break-dsk: 1532px;
 
 @function px2rem($px, $default: 14px) {
-  $em: $px/$default;
+  $em: math.div($px, $default);
   @return #{$em}rem;
 }
 

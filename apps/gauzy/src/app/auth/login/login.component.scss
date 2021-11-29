@@ -3,3 +3,15 @@
   top: 150px;
   right: 75px;
 }
+::ng-deep nb-auth-block {
+  max-width: 35rem;
+}
+.demo-credentials-btn {
+  position: absolute;
+  top: 75px;
+  right: 75px;
+}
+.close-demo-credentials-card {
+  position: absolute;
+  right: 0px;
+}

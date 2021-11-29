@@ -139,7 +139,7 @@ export class EmployeeStatisticsService {
 
 		const {
 			organization: { bonusType, bonusPercentage }
-		} = await this.employeeService.findOne(employeeId, {
+		} = await this.employeeService.findOneByIdString(employeeId, {
 			relations: ['organization']
 		});
 
@@ -230,11 +230,12 @@ export class EmployeeStatisticsService {
 	/**
 	 * helper function to create a date range to use in SQL between condition
 	 */
-	private _beforeDateFilter = (date: Date, lastNMonths: number) =>
-		Between(
-			subMonths(startOfMonth(date), lastNMonths - 1),
-			endOfMonth(date)
+	private _beforeDateFilter = (date: Date, lastNMonths: number) => {
+		return Between(
+			subMonths(startOfMonth(date), lastNMonths - 1).toISOString(),
+			endOfMonth(date).toISOString()
 		);
+	}
 
 	/**
 	 * Gets all income records of one or more employees(using employeeId)
@@ -252,12 +253,17 @@ export class EmployeeStatisticsService {
 			select: [
 				'employeeId',
 				'valueDate',
-				'clientName',
 				'amount',
 				'currency',
 				'notes',
 				'isBonus'
 			],
+			join : {
+				alias: 'income',
+				leftJoinAndSelect: {
+					client: 'income.client'
+				}
+			},
 			where: {
 				organizationId,
 				employee: {
@@ -345,7 +351,7 @@ export class EmployeeStatisticsService {
 		organizationId: string
 	): Promise<Map<string, IMonthAggregatedSplitExpense>> => {
 		// 1 Get Employee's Organization
-		const employee = await this.employeeService.findOne({
+		const employee = await this.employeeService.findOneByOptions({
 			where: {
 				id: employeeId,
 				organizationId
@@ -417,7 +423,7 @@ export class EmployeeStatisticsService {
 		organizationId: string
 	) => {
 		// 1 Get Employee's Organization
-		const employee = await this.employeeService.findOne({
+		const employee = await this.employeeService.findOneByOptions({
 			where: {
 				id: employeeId,
 				organizationId

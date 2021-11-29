@@ -20,7 +20,10 @@ import {
 	ITimeOffPolicy,
 	ITimeOff as ITimeOffRequest,
 	IExpense,
-	ITimesheet
+	ITimesheet,
+	ITask,
+	ITimeSlot,
+	IGoal
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -47,6 +50,7 @@ import {
 	Contact,
 	EmployeeSetting,
 	Expense,
+	Goal,
 	InvoiceItem,
 	JobPreset,
 	OrganizationContact,
@@ -59,11 +63,13 @@ import {
 	RequestApprovalEmployee,
 	Skill,
 	Tag,
+	Task,
 	TenantOrganizationBaseEntity,
 	TimeLog,
 	TimeOffPolicy,
 	TimeOffRequest,
 	Timesheet,
+	TimeSlot,
 	User
 } from '../core/entities/internal';
 
@@ -296,8 +302,7 @@ export class Employee
     |--------------------------------------------------------------------------
     */
 	@ApiProperty({ type: () => User })
-	@OneToOne(() => User, {
-		nullable: false,
+	@OneToOne(() => User, (user) => user.employee, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -311,27 +316,30 @@ export class Employee
 	@Column()
 	readonly userId: string;
 
+	/**
+	 * Contact
+	 */
+	@ApiProperty({ type: () => Contact })
+	@OneToOne(() => Contact, (contact) => contact.employee, {
+		cascade: true,
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	contact?: IContact;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Employee) => it.contact)
+	@IsOptional()
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	readonly contactId?: string;
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 
     |--------------------------------------------------------------------------
     */
-
-	// Employee Contact
-	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.employees, {
-		nullable: true,
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	contact: IContact;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: Employee) => it.contact)
-	@IsString()
-	@Index()
-	@Column({ nullable: true })
-	readonly contactId?: string;
 
 	// Employee Organization Position
 	@ApiProperty({ type: () => OrganizationPosition })
@@ -357,10 +365,19 @@ export class Employee
 	@OneToMany(() => OrganizationTeamEmployee, (it) => it.employee)
 	teams?: IOrganizationTeam[];
 
-	// Employee Time Logs
+	/**
+	 * Employee Time Logs
+	 */
 	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
 	@OneToMany(() => TimeLog, (it) => it.employee)
 	timeLogs?: ITimeLog[];
+
+	/**
+	 * Employee Time Slots
+	 */
+	@ApiPropertyOptional({ type: () => TimeSlot, isArray: true })
+	@OneToMany(() => TimeSlot, (it) => it.employee)
+	timeSlots?: ITimeSlot[];
 
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (it) => it.employee, {
@@ -395,6 +412,24 @@ export class Employee
 	})
 	timesheets?: ITimesheet[];
 
+	/**
+	 * Goal
+	 */
+	@ApiPropertyOptional({ type: () => Goal, isArray: true })
+	@OneToMany(() => Goal, (it) => it.ownerEmployee, {
+		onDelete: 'SET NULL'
+	})
+	goals?: IGoal[];
+	
+	/**
+	 * Lead
+	 */
+	@ApiPropertyOptional({ type: () => Goal, isArray: true })
+	@OneToMany(() => Goal, (it) => it.lead, {
+		onDelete: 'SET NULL'
+	})
+	leads?: IGoal[];
+	
 	/*
     |--------------------------------------------------------------------------
     | @ManyToMany 
@@ -412,7 +447,10 @@ export class Employee
     projects?: IOrganizationProject[];
 
 	// Employee Tags
-	@ManyToMany(() => Tag, (tag) => tag.employee)
+	@ManyToMany(() => Tag, (tag) => tag.employees, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_employee'
 	})
@@ -477,4 +515,14 @@ export class Employee
 		name: 'time_off_request_employee'
 	})
 	timeOffRequests?: ITimeOffRequest[];
+
+	/**
+	 * Task
+	 */
+	@ManyToMany(() => Task, (task) => task.members, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable()
+	tasks?: ITask[];
 }

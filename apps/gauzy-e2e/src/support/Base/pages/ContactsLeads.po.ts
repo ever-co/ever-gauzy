@@ -13,7 +13,9 @@ import {
 import { ContactsLeadsPage } from '../pageobjects/ContactsLeadsPageObject';
 
 export const gridBtnExists = () => {
+	cy.intercept('GET', '/api/organization-projects*').as('waitToLoad');
 	verifyElementIsVisible(ContactsLeadsPage.gridButtonCss);
+	cy.wait('@waitToLoad');
 };
 
 export const gridBtnClick = (index) => {
@@ -25,7 +27,7 @@ export const addButtonVisible = () => {
 };
 
 export const clickAddButton = () => {
-	clickButton(ContactsLeadsPage.addButtonCss);
+	clickButtonByIndex(ContactsLeadsPage.addButtonCss,0);
 };
 
 export const nameInputVisible = () => {
@@ -179,8 +181,8 @@ export const editButtonVisible = () => {
 	verifyElementIsVisible(ContactsLeadsPage.editButtonCss);
 };
 
-export const clickEditButton = () => {
-	clickButton(ContactsLeadsPage.editButtonCss);
+export const clickEditButton = (index) => {
+	clickButtonByIndex(ContactsLeadsPage.editButtonCss, index);
 };
 
 export const deleteButtonVisible = () => {

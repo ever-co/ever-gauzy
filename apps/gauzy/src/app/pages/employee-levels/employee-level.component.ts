@@ -8,7 +8,8 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { filter, first } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
@@ -171,14 +172,13 @@ export class EmployeeLevelComponent
 		}
 	}
 	async removeEmployeeLevel(id: string, name: string) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Employee level'
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 		if (result) {
 			await this.employeeLevelService.delete(id);
 			this.toastrService.success(

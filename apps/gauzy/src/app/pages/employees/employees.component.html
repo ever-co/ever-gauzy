@@ -116,7 +116,7 @@
 								>{{ 'SM_TABLE.WORK_STATUS' | translate }}s</span
 							>
 							<div class="text-center d-block" *ngIf="x.workStatus">
-								<div class="badge-danger">
+								<div class="badge badge-danger">
 									{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
 								</div>
 								{{ x.workStatus }}
@@ -128,7 +128,7 @@
 									'EMPLOYEES_PAGE.NOT_STARTED_HELP' | translate
 								}}"
 							>
-								<div class="badge-disabled">
+								<div class="badge badge-disabled">
 									{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
 								</div>
 							</div>
@@ -136,7 +136,7 @@
 								class="text-center d-block"
 								*ngIf="x.startedWorkOn && x.isActive && !x.workStatus"
 							>
-								<div class="badge-success">
+								<div class="badge badge-success">
 									{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
 								</div>
 							</div>
@@ -144,7 +144,7 @@
 								class="text-center d-block"
 								*ngIf="x.startedWorkOn && !x.isActive"
 							>
-								<div class="badge-danger">
+								<div class="badge badge-danger">
 									{{ 'EMPLOYEES_PAGE.DELETED' | translate }}
 								</div>
 							</div>

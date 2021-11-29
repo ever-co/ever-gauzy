@@ -1,0 +1,133 @@
+<nb-card class="main">
+	<nb-card-header>
+		<h5>
+			{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
+		</h5>
+		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form">
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">
+							{{ 'TIME_OFF_PAGE.HOLIDAY_NAME' | translate }}
+						</label>
+						<nb-select
+							(selectedChange)="onHolidaySelected($event)"
+							fullWidth
+							[placeholder]="'TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate"
+						>
+							<nb-option
+								*ngFor="let holiday of holidays"
+								[value]="holiday"
+							>
+								{{ holiday.name }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">{{
+							'TIME_OFF_PAGE.SELECT_EMPLOYEES' | translate
+						}}</label>
+						<nb-select
+							multiple
+							[selected]="employeesArr"
+							(selectedChange)="onEmployeesSelected($event)"
+							fullWidth
+							required
+							[placeholder]="'TIME_OFF_PAGE.ADD_OR_REMOVE_EMPLOYEES' | translate"
+						>
+							<nb-option
+								*ngFor="let employee of orgEmployees"
+								[value]="employee.id"
+							>
+								<img
+									[src]="employee.user.imageUrl"
+									alt="Smiley face"
+									height="40"
+									width="40"
+									style="margin-right: 10px"
+								/>
+								{{ employee.fullName }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-12">
+					<ga-time-off-policy-select
+						[id]="'policy'"
+						[ctrl]="form.controls.policy"
+						[placeholder]="'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate"
+						(selectedChange)="onPolicySelected($event)"
+					></ga-time-off-policy-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="start">{{
+							'FORM.LABELS.FROM' | translate
+						}}</label>
+						<input
+							formControlName="start"
+							nbInput
+							fullWidth
+							required
+							[placeholder]="'POP_UPS.PICK_DATE' | translate"
+							[nbDatepicker]="startDatePicker"
+							[status]="
+								FormHelpers.isInvalidControl(form, 'start')
+									? 'danger'
+									: 'basic'
+							"
+						/>
+						<nb-datepicker [min]="minDate" #startDatePicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="end">{{
+							'FORM.LABELS.TO' | translate
+						}}</label>
+						<input
+							formControlName="end"
+							nbInput
+							fullWidth
+							[placeholder]="'POP_UPS.PICK_DATE' | translate"
+							[nbDatepicker]="endDatePicker"
+							[status]="
+								FormHelpers.isInvalidControl(form, 'end')
+									? 'danger'
+									: 'basic'
+							"
+						/>
+						<nb-datepicker [min]="minDate" #endDatePicker></nb-datepicker>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button 
+			(click)="close()"
+			status="danger"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			(click)="saveHoliday()"
+			status="success"
+			nbButton
+			[disabled]="form.invalid"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

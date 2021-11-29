@@ -17,7 +17,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest, Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
-import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, EmployeeLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -55,7 +55,6 @@ export class ProposalsComponent
 	viewComponentName: ComponentEnum = ComponentEnum.PROPOSALS;
 	selectedProposal: IProposalViewModel;
 	proposalStatusEnum = ProposalStatusEnum;
-	proposalStatus: string;
 	successRate: string;
 	totalProposals: number;
 	countAccepted: number = 0;
@@ -104,7 +103,7 @@ export class ProposalsComponent
 						this.selectedDate = date;
 						this.employeeId = employee ? employee.id : null;
 						this.refreshPagination();
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -128,7 +127,7 @@ export class ProposalsComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -176,7 +175,7 @@ export class ProposalsComponent
 						await this.proposalsService.delete(
 							this.selectedProposal.id
 						);
-						this.subject$.next();
+						this.subject$.next(true);
 						this.toastrService.success('NOTES.PROPOSALS.DELETE_PROPOSAL');
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -207,7 +206,7 @@ export class ProposalsComponent
 							this.selectedProposal.id,
 							{ status: ProposalStatusEnum.ACCEPTED, tenantId }
 						);
-						this.subject$.next();
+						this.subject$.next(true);
 						// TODO translate
 						this.toastrService.success(
 							'NOTES.PROPOSALS.PROPOSAL_ACCEPTED'
@@ -241,7 +240,7 @@ export class ProposalsComponent
 							this.selectedProposal.id,
 							{ status: ProposalStatusEnum.SENT, tenantId }
 						);
-						this.subject$.next();
+						this.subject$.next(true);
 						this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_SENT');
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -298,7 +297,7 @@ export class ProposalsComponent
 					width: '25%',
 					filter: false
 				},
-				status: {
+				statusBadge: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '10%',
@@ -306,9 +305,10 @@ export class ProposalsComponent
 					filter: false,
 					renderComponent: StatusBadgeComponent
 				},
-				organizationContactName: {
+				organizationContact: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
-					type: 'text',
+					type: 'custom',
+					renderComponent: ContactLinksComponent,
 					width: '20%',
 					filter: {
 						type: 'custom',
@@ -320,9 +320,10 @@ export class ProposalsComponent
 				},
 				author: {
 					title: this.getTranslation('SM_TABLE.AUTHOR'),
-					type: 'string',
+					type: 'custom',
 					width: '20%',
-					filter: false
+					filter: false,
+					renderComponent: EmployeeLinksComponent,
 				}
 			}
 		};
@@ -331,10 +332,6 @@ export class ProposalsComponent
 	selectProposal({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedProposal = isSelected ? data : null;
-
-		if (this.selectedProposal) {
-			this.proposalStatus = this.selectedProposal.status;
-		}
 	}
 
 	/*
@@ -381,7 +378,7 @@ export class ProposalsComponent
 
 	private calculateStatistics() {
 		this.countAccepted = 0
-		const proposals = this.smartTableSource.getData();
+		const proposals = this.smartTableSource.getData();		
 		for (const proposal of proposals) {
 			if (proposal.status === ProposalStatusEnum.ACCEPTED) {
 				this.countAccepted++;
@@ -400,14 +397,8 @@ export class ProposalsComponent
 		return {
 			id: i.id,
 			valueDate: i.valueDate,
-			jobPostLink:
-				'<a href="' +
-				i.jobPostUrl +
-				`" target="_blank">${i.jobPostUrl.substr(
-					8,
-					14
-				)}</nb-icon></a>`,
-			jobPostUrl: i.jobPostUrl,
+			jobPostUrl: i.jobPostUrl ? 
+				'<a href="' + i.jobPostUrl +`" target="_blank">${i.jobPostUrl}</a>`: '',
 			jobTitle: i.jobPostContent
 				.toString()
 				.replace(/<[^>]*(>|$)|&nbsp;/g, '')
@@ -417,10 +408,10 @@ export class ProposalsComponent
 			jobPostContent: i.jobPostContent,
 			proposalContent: i.proposalContent,
 			tags: i.tags,
-			status: this.statusMapper(i.status),
-			author: i.employee ? i.employee.user ? i.employee.user.name : '' : '',
+			status: i.status,
+			statusBadge: this.statusMapper(i.status),
+			author: i.employee ? i.employee.user ? i.employee.user : '' : '',
 			organizationContact: i.organizationContact ? i.organizationContact : null,
-			organizationContactName: i.organizationContact ? i.organizationContact.name : null
 		};
 	}
 
@@ -439,7 +430,7 @@ export class ProposalsComponent
 
 				await this.smartTableSource.getElements();
 				this.proposals = this.smartTableSource.getData();
-
+				
 				const count = this.smartTableSource.count();
 				this.pagination['totalItems'] =  count;
 			}

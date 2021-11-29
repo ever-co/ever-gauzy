@@ -1,0 +1,23 @@
+<div class="{{ layout === 'CARDS_GRID' ? 'contacts-img' : '' }}">
+	<div *ngIf="rowData.imageUrl">
+		<img
+			height="30"
+			width="50"
+			[src]="rowData.imageUrl"
+			alt="Avatar"
+			class="avatar"
+		/>
+	</div>
+	<div *ngIf="rowData.name">{{ rowData.name }}</div>
+</div>
+<div *ngIf="rowData.level">{{ rowData.level }}</div>
+<div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2">
+	<nb-badge
+		*ngFor="let tag of rowData?.tags"
+		class="color"
+		position="centered"
+		[style.background]="tag.color"
+		text="{{ tag.name }}"
+	>
+	</nb-badge>
+</div>

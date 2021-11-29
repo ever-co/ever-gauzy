@@ -1,11 +1,12 @@
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
+import * as remoteMain from '@electron/remote/main';
 
 export function createSettingsWindow(settingsWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	settingsWindow = new BrowserWindow(mainWindowSettings);
-
+	remoteMain.enable(settingsWindow.webContents)
 	const launchPath = url.format({
 		pathname: filePath,
 		protocol: 'file:',
@@ -36,8 +37,7 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			devTools: true,
-			enableRemoteModule: true,
+			devTools: true,			
 			contextIsolation: false
 		},
 		width: 1000,

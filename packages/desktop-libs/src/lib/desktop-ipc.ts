@@ -337,4 +337,24 @@ export function ipcTimer(
 		LocalStore.updateAuthSetting({ isLogout: true })
 		settingWindow.webContents.send('logout_success');
 	})
+
+	ipcMain.on('expand', (event, arg) => {
+		const display = screen.getPrimaryDisplay();
+		const { width, height } = display.workArea;
+		if (arg) {
+			timeTrackerWindow.setBounds({
+				width: 1024,
+				height: 940,
+				x: (width - 1024) * (0.5),
+				y: (height - 940) * (0.5)
+			}, true)
+		} else {
+			timeTrackerWindow.setBounds({
+				width: 400,
+				height: 940,
+				x: (width - 400) * (0.5),
+				y: (height - 940) * (0.5)
+			}, true)
+		}
+	})
 }

@@ -106,7 +106,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
-						this.updateLogs$.next();
+						this.updateLogs$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -150,7 +150,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		}
 
 		this.timesheetFilterService.filter = $event;
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	ngAfterViewInit() {
@@ -307,7 +307,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
 			.onClose.subscribe(() => {
-				this.updateLogs$.next();
+				this.updateLogs$.next(true);
 			});
 	}
 

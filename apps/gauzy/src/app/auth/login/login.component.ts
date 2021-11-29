@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
+import { ElectronService } from 'ngx-electron';
 import { environment } from './../../../environments/environment';
 
 @Component({
@@ -11,8 +12,10 @@ import { environment } from './../../../environments/environment';
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	
 	environment = environment;
+	isShown: boolean = false ;
 
 	constructor(
+		public readonly electronService: ElectronService,
 		public readonly nbAuthService: NbAuthService,
 		public readonly cdr: ChangeDetectorRef, 
 		public readonly router: Router,
@@ -26,5 +29,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 			this.user.email = 'admin@ever.co';
 			this.user.password = 'admin';
 		}
+	}
+
+	collapseDemo() {
+		this.isShown = !this.isShown;
 	}
 }

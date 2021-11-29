@@ -12,8 +12,8 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-import { Subject } from 'rxjs/internal/Subject';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -85,7 +85,7 @@ export class InvoicePaymentsComponent
 			.pipe(
 				filter((params) => !!params && !!params.get('id')),
 				tap((params) => this.invoiceId = params.get('id')),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			).subscribe();
 	}
@@ -165,19 +165,18 @@ export class InvoicePaymentsComponent
 	}
 
 	async recordPayment() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.paymentService.add(result);
 			this.totalPaid = 0;
-			this.subject$.next();
+			this.subject$.next(true);
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -196,19 +195,18 @@ export class InvoicePaymentsComponent
 	}
 
 	async editPayment() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice,
 					payment: this.selectedPayment
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.paymentService.update(result.id, result);
-			this.subject$.next();
+			this.subject$.next(true);
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -226,14 +224,13 @@ export class InvoicePaymentsComponent
 	}
 
 	async deletePayment() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
-			this.subject$.next();
+			this.subject$.next(true);
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -406,7 +403,7 @@ export class InvoicePaymentsComponent
 		}
 
 		await this.paymentService.add(payment);
-		this.subject$.next();
+		this.subject$.next(true);
 
 		const { amount, currency, invoice } = payment;
 		if (payment.invoice) {
@@ -465,15 +462,14 @@ export class InvoicePaymentsComponent
 	}
 
 	async sendReceipt() {
-		await this.dialogService
+		await firstValueFrom(this.dialogService
 			.open(InvoicePaymentReceiptMutationComponent, {
 				context: {
 					invoice: this.invoice,
 					payment: this.selectedPayment
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 	}
 
 	private _applyTranslationOnSmartTable() {

@@ -11,7 +11,7 @@ import {
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -30,15 +30,15 @@ export class EmployeeStatisticsService {
 	): Promise<IAggregatedEmployeeStatistic> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IAggregatedEmployeeStatistic>(
 				`${API_PREFIX}/employee-statistics/aggregate`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	/**
@@ -54,15 +54,15 @@ export class EmployeeStatisticsService {
 	): Promise<IEmployeeStatistics> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IEmployeeStatistics>(
 				`${API_PREFIX}/employee-statistics/months/${employeeId}`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	/**
@@ -75,15 +75,15 @@ export class EmployeeStatisticsService {
 	): Promise<IMonthAggregatedEmployeeStatistics[]> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IMonthAggregatedEmployeeStatistics[]>(
 				`${API_PREFIX}/employee-statistics/months`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	/**
@@ -96,14 +96,14 @@ export class EmployeeStatisticsService {
 	): Promise<IEmployeeStatisticsHistory[]> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IEmployeeStatisticsHistory[]>(
 				`${API_PREFIX}/employee-statistics/history`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

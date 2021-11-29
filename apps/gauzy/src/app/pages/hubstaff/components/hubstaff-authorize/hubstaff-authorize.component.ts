@@ -1,97 +1,96 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Validators, FormGroup, FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, tap, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { HubstaffService } from 'apps/gauzy/src/app/@core/services/hubstaff.service';
-import {
-	PersistQuery,
-	PersistStore,
-	Store
-} from 'apps/gauzy/src/app/@core/services/store.service';
+import { filter, tap } from 'rxjs/operators';
 import { IOrganization } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	HubstaffService,
+	Store
+} from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-hubstaff-authorize',
 	templateUrl: './hubstaff-authorize.component.html',
 	styleUrls: ['./hubstaff-authorize.component.scss']
 })
 export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
-	private _ngDestroy$: Subject<void> = new Subject();
-	authorizeForm: FormGroup;
-	clientSecretForm: FormGroup;
-	hubStaffAppCode: string;
-	rememberState: boolean;
-	organization: IOrganization;
+
+	hubStaffAuthorizeCode: string;
+	public organization: IOrganization;
+
+	public clientIdForm: FormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
+	static buildClientIdForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			client_id: ['', Validators.required]
+		});
+	}
+	
+	public clientSecretForm: FormGroup = HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
+	static buildClientSecretForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			client_secret: ['', Validators.required],
+			authorization_code: ['', Validators.required]
+		});
+	}
 
 	constructor(
-		private _activatedRoute: ActivatedRoute,
-		private _hubstaffService: HubstaffService,
-		private fb: FormBuilder,
-		private _router: Router,
-		private _storeService: Store,
-		private _persistStore: PersistStore,
-		private _persistQuery: PersistQuery
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _hubstaffService: HubstaffService,
+		private readonly _fb: FormBuilder,
+		private readonly _router: Router,
+		private readonly _store: Store
 	) {}
 
 	ngOnInit() {
-		this._storeService.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				tap((organization: IOrganization) => this.organization = organization),
+				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				this._persistStore.update({
-					organizationId: this.organization.id
-				});
-			});
-		this._initializeForms();
+			.subscribe();
 		this._getHubstaffCode();
-	}
-
-	private _initializeForms() {
-		this.authorizeForm = this.fb.group({
-			client_id: ['', Validators.required]
-		});
-		this.clientSecretForm = this.fb.group({
-			client_secret: ['', Validators.required]
-		});
 	}
 
 	private _getHubstaffCode() {
 		this._activatedRoute.queryParams
 			.pipe(
 				filter(({ code }) => code),
-				tap(({ code }) => (this.hubStaffAppCode = code)),
-				takeUntil(this._ngDestroy$)
+				tap(({ code }) => (this.hubStaffAuthorizeCode = code)),
+				tap(({ code, state }) => {
+					this.clientIdForm.patchValue({ client_id: state });
+					this.clientSecretForm.patchValue({ authorization_code: code });
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 
-		if (!this.hubStaffAppCode) {
+		if (!this.hubStaffAuthorizeCode) {
 			this.subscribeRouteData();
 		}
 	}
 
 	private subscribeRouteData() {
 		this._activatedRoute.data
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data: any) => {
-				if (data.hasOwnProperty('state')) {
-					this.rememberState = data['state'];
-					// if remember state is true
-					if (this.rememberState) {
-						this._checkRemeberState();
-					}
-				}
-			});
+			.pipe(
+				// if remember state is true
+				filter(({ state }) => !!state && state === true),
+				tap(() => this._checkRemeberState()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
 	 * Hubstaff integration remember state API call
 	 */
 	private _checkRemeberState() {
-		const { organizationId } = this._persistQuery.getValue();
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
 		this._hubstaffService
 			.checkRemeberState(organizationId)
 			.pipe(
@@ -101,7 +100,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 						this._redirectToHubstaffIntegration(record.id);
 					}
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -114,39 +113,34 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	}
 
 	authorizeHubstaff() {
-		const { client_id } = this.authorizeForm.value;
-		this._persistStore.update({
-			clientId: client_id
-		});
+		const { client_id } = this.clientIdForm.value;
 		this._hubstaffService.authorizeClient(client_id);
 	}
 
 	addIntegration() {
+		if (!this.organization) {
+			return;
+		}
+
 		const { client_secret } = this.clientSecretForm.value;
-		const { clientId, organizationId } = this._persistQuery.getValue();
+		const { client_id } = this.clientIdForm.value;
+		const { id: organizationId } = this.organization;
 
 		this._hubstaffService
 			.addIntegration({
-				code: this.hubStaffAppCode,
+				code: this.hubStaffAuthorizeCode,
 				client_secret,
-				clientId,
+				client_id,
 				organizationId
 			})
 			.pipe(
 				tap(({ id }) => {
 					this._redirectToHubstaffIntegration(id);
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy() {
-		this._persistStore.update({
-			organizationId: null,
-			clientId: null
-		});
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() { }
 }

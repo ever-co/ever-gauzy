@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -42,7 +46,7 @@
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="sourceSmartTable"
-					(userRowSelect)="selectEmployeeTmp($event)"
+					(userRowSelect)="selectInvite($event)"
 					#invitesTable
 				>
 				</ng2-smart-table>
@@ -52,7 +56,7 @@
 			<div class="grid-scroll-container">
 				<ga-card-grid
 					[settings]="settingsSmartTable"
-					[source]="manageInvites"
+					[source]="invites"
 					[buttonTemplate]="actionButtons"
 				></ga-card-grid>
 			</div>		

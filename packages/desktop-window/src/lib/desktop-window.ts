@@ -1,5 +1,6 @@
 import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
+import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
 
 export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
@@ -7,12 +8,13 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 
-  mainWindowSettings = windowSetting();
+  	mainWindowSettings = windowSetting();
 
-  gauzyWindow = new BrowserWindow(mainWindowSettings);
+  	gauzyWindow = new BrowserWindow(mainWindowSettings);
+  
+	remoteMain.enable(gauzyWindow.webContents);
 
-  let launchPath;
-
+	let launchPath;
 
 	if (!config.gauzyWindow) {
 	 	gauzyWindow.hide();
@@ -63,8 +65,7 @@ const windowSetting = () => {
 		fullscreenable: true,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false,
-			enableRemoteModule: true,
+			webSecurity: false,			
 			contextIsolation: false
 		},
 		width: sizes.width,

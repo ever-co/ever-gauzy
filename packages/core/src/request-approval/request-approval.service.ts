@@ -27,6 +27,7 @@ import {
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
 import { getConfig } from '@gauzy/config';
+
 const config = getConfig();
 
 @Injectable()
@@ -37,7 +38,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
-		
+
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<OrganizationTeam>
 	) {
@@ -48,7 +49,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		filter: FindManyOptions<RequestApproval>,
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
-
 		const tenantId = RequestContext.currentTenantId();
 		const query = this.requestApprovalRepository.createQueryBuilder(
 			'request_approval'
@@ -84,7 +84,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 		if (filter.relations && filter.relations.length > 0) {
 			filter.relations.forEach((item) => {
-				query.leftJoinAndSelect(`request_approval.${item}`, item);
+				let relationArr = item.split(".");
+				if (relationArr.length === 2) {
+					query.leftJoinAndSelect(`${relationArr[0]}.${relationArr[1]}`, relationArr[1]);
+				} else {
+					query.leftJoinAndSelect(`request_approval.${item}`, item);
+				}
 			});
 		}
 
@@ -275,7 +280,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			const tenantId = RequestContext.currentTenantId();
 			let employees: IEmployee[];
 			let teams: IOrganizationTeam[];
-			
+
 			const requestApproval = await this.requestApprovalRepository.findOne(
 				id
 			);
@@ -363,14 +368,14 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				throw new NotFoundException('Request Approval not found');
 			}
 
-			if (
-				requestApproval.status ===
-					RequestApprovalStatusTypesEnum.APPROVED ||
-				requestApproval.status ===
-					RequestApprovalStatusTypesEnum.REFUSED
-			) {
-				throw new ConflictException('Request Approval is Conflict');
-			}
+			// if (
+			// 	requestApproval.status ===
+			// 		RequestApprovalStatusTypesEnum.APPROVED ||
+			// 	requestApproval.status ===
+			// 		RequestApprovalStatusTypesEnum.REFUSED
+			// ) {
+			// 	throw new ConflictException('Request Approval is Conflict');
+			// }
 
 			requestApproval.status = status;
 
@@ -400,9 +405,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 			if (
 				requestApproval.status ===
-					RequestApprovalStatusTypesEnum.APPROVED ||
+				RequestApprovalStatusTypesEnum.APPROVED ||
 				requestApproval.status ===
-					RequestApprovalStatusTypesEnum.REFUSED
+				RequestApprovalStatusTypesEnum.REFUSED
 			) {
 				throw new ConflictException('Request Approval is Conflict');
 			}

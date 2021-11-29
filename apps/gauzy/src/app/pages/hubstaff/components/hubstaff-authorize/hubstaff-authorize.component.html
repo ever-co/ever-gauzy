@@ -5,9 +5,9 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form
-			[formGroup]="authorizeForm"
+			[formGroup]="clientIdForm"
 			(ngSubmit)="authorizeHubstaff()"
-			*ngIf="!hubStaffAppCode; else clientFormVar"
+      *ngIf="!clientSecretForm.get('authorization_code').value; else clientSecretTemplate"
 			autocomplete-off
 		>
 			<div class="form-group">
@@ -20,19 +20,24 @@
 					formControlName="client_id"
 					type="text"
 					nbInput
-					placeholder="Hubstaff Client ID"
+					[placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate"
 				/>
 			</div>
 			<div class="hint">
 				<nb-icon icon="info-outline"></nb-icon>
 				{{ 'INTEGRATIONS.HUBSTAFF_PAGE.GRANT_PERMISSION' | translate }}
 			</div>
-			<button nbButton status="primary" [disabled]="!authorizeForm.valid">
+			<button
+				nbButton
+				type="submit"
+				status="primary"
+				[disabled]="clientIdForm.invalid"
+			>
 				{{ 'BUTTONS.NEXT' | translate }}
 			</button>
 		</form>
 
-		<ng-template #clientFormVar>
+		<ng-template #clientSecretTemplate>
 			<form [formGroup]="clientSecretForm" (ngSubmit)="addIntegration()">
 				<div class="form-group">
 					<label for="client_secret" class="label">{{
@@ -44,20 +49,18 @@
 						formControlName="client_secret"
 						type="text"
 						nbInput
-						placeholder="Hubstaff Client Secret"
+						[placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_SECRET' | translate"
 					/>
 				</div>
 				<div class="hint">
 					<nb-icon icon="info-outline"></nb-icon>
-					{{
-						'INTEGRATIONS.HUBSTAFF_PAGE.ENTER_CLIENT_SECRET'
-							| translate
-					}}
+					{{ 'INTEGRATIONS.HUBSTAFF_PAGE.ENTER_CLIENT_SECRET' | translate }}
 				</div>
 				<button
 					nbButton
+					type="submit"
 					status="primary"
-					[disabled]="!clientSecretForm.valid"
+					[disabled]="clientSecretForm.invalid"
 				>
 					{{ 'BUTTONS.NEXT' | translate }}
 				</button>

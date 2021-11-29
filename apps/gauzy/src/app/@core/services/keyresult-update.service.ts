@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { IKeyResultUpdate } from '@gauzy/contracts';
-import { throwError } from 'rxjs';
-import { catchError, first } from 'rxjs/operators';
+import { firstValueFrom, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -18,20 +18,24 @@ export class KeyResultUpdateService {
 	) {}
 
 	createUpdate(keyResultUpdate): Promise<IKeyResultUpdate> {
-		return this._http
-			.post<IKeyResultUpdate>(`${this.API_URL}/create`, keyResultUpdate)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		return firstValueFrom(
+			this._http.post<IKeyResultUpdate>(`${this.API_URL}/create`, keyResultUpdate)
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	deleteBulkByKeyResultId(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
-		return this._http
+		return firstValueFrom(
+			this._http
 			.delete(`${this.API_URL}/deleteBulkByKeyResultId`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	errorHandler(error: HttpErrorResponse) {

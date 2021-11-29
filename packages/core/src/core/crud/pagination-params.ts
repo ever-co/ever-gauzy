@@ -3,7 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, TransformFnParams } from 'class-transformer';
 import { IsOptional, Max, Min } from 'class-validator';
 
 export enum OrderTypeEnum {
@@ -22,7 +22,7 @@ export abstract class PaginationParams<T> {
 	@IsOptional()
 	@Min(0)
 	@Max(50)
-	@Transform((val: string) => parseInt(val, 10))
+	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
 	readonly take = 10;
 
 	/**
@@ -31,7 +31,7 @@ export abstract class PaginationParams<T> {
 	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
 	@IsOptional()
 	@Min(0)
-	@Transform((val: string) => parseInt(val, 10))
+	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
 	readonly skip = 0;
 
 	/**

@@ -23,6 +23,9 @@ import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { uniq } from 'underscore';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
+import { CompareDateValidator } from '../../../@core/validators';
+import { FormHelpers } from '../../../@shared/forms/helpers';
+import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 
 @Component({
 	selector: 'ga-projects-mutation',
@@ -60,11 +63,10 @@ export class ProjectsMutationComponent
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	showSprintManage = false;
 	openSource: boolean;
-	public ckConfig: any = {
-		width: '100%',
-		height: '320'
-	};
-
+	ckConfig: any = ckEditorConfig;
+		
+	FormHelpers: typeof FormHelpers = FormHelpers;
+	
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly organizationContactService: OrganizationContactService,
@@ -73,7 +75,7 @@ export class ProjectsMutationComponent
 		private errorHandler: ErrorHandlingService,
 		private readonly router: Router
 	) {
-		super(translateService);
+		super(translateService);		
 	}
 
 	ngOnInit() {
@@ -98,7 +100,7 @@ export class ProjectsMutationComponent
 
 	changeProjectOwner(owner: ProjectOwnerEnum) {
 		const clientControl = this.form.get('client');
-		if (owner === ProjectOwnerEnum.INTERNAL) {
+		if (owner === ProjectOwnerEnum.INTERNAL && clientControl) {
 			clientControl.setValue('');
 		}
 	}
@@ -132,8 +134,8 @@ export class ProjectsMutationComponent
 				this.project ? this.project.currency : this.defaultCurrency
 			],
 			startDate: [
-				this.project && this.project.startDate ? 
-					new Date(this.project.startDate) : 
+				this.project && this.project.startDate ?
+					new Date(this.project.startDate) :
 					null
 			],
 			endDate: [this.project ? this.project.endDate : null],
@@ -161,7 +163,13 @@ export class ProjectsMutationComponent
 					Validators.pattern(new RegExp(patterns.websiteUrl))
 				])
 			]
-		});
+		},
+		{ 
+			validators: [
+				CompareDateValidator.validateDate('startDate', 'endDate')
+			] 
+		}
+		);
 	}
 
 	togglePublic(state: boolean) {

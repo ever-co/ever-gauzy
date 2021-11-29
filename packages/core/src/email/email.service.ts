@@ -5,9 +5,13 @@ import {
 	IOrganization,
 	IOrganizationContact,
 	LanguagesEnum,
-	IJoinEmployeeModel
+	IJoinEmployeeModel,
+	ITimesheet,
+	IEmail,
+	IUser,
+	IInvite
 } from '@gauzy/contracts';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as Email from 'email-templates';
 import * as Handlebars from 'handlebars';
@@ -16,34 +20,76 @@ import { Repository, IsNull } from 'typeorm';
 import { environment as env } from '@gauzy/config';
 import { ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
-import { Email as IEmail } from './email.entity';
 import { RequestContext } from '../core/context';
-import { EmailTemplate, Invite, Organization, Timesheet, User } from './../core/entities/internal';
+import { EmailTemplate, Organization } from './../core/entities/internal';
+import { Email as EmailEntity } from './email.entity';
+import { CustomSmtpService } from './../custom-smtp/custom-smtp.service';
 
 @Injectable()
-export class EmailService extends TenantAwareCrudService<IEmail> {
-
-	private readonly email: Email;
+export class EmailService extends TenantAwareCrudService<EmailEntity> {
 
 	constructor(
-		@InjectRepository(IEmail)
-		private readonly emailRepository: Repository<IEmail>,
+		@InjectRepository(EmailEntity)
+		private readonly emailRepository: Repository<EmailEntity>,
 
 		@InjectRepository(EmailTemplate)
 		private readonly emailTemplateRepository: Repository<EmailTemplate>,
 
 		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>
+		private readonly organizationRepository: Repository<Organization>,
+
+		@Inject(forwardRef(() => CustomSmtpService))
+		private readonly customSmtpService: CustomSmtpService
 	) {
-		super(emailRepository);
+		super(emailRepository);	
+	}
+
+	/**
+	 * GET email instance for tenant/organization
+	 * 
+	 * @param organizationId 
+	 * @param tenantId 
+	 * @returns 
+	 */
+	private async getEmailInstance(
+		organizationId?: string,
+		tenantId?: string
+	): Promise<Email<any>> {
+		const currentTenantId = tenantId || RequestContext.currentTenantId();
+		let smtpConfig: ISMTPConfig;
+
+		try {
+			const smtpTransporter = await this.customSmtpService.findOneByOptions({
+				where: {
+					tenantId: currentTenantId,
+					organizationId
+				}
+			});
+			smtpConfig = smtpTransporter.getSmtpTransporter() as ISMTPConfig;
+		} catch (error) {
+			try {
+				if (error instanceof NotFoundException) {
+					const smtpTransporter = await this.customSmtpService.findOneByOptions({
+						where: {
+							tenantId: currentTenantId,
+							organizationId: IsNull()
+						}
+					});
+					smtpConfig = smtpTransporter.getSmtpTransporter() as ISMTPConfig;
+				}
+			} catch (error) {
+				smtpConfig = this.customSmtpService.defaultSMTPTransporter() as ISMTPConfig;
+			}
+		}
+
 		const config: Email.EmailConfig<any> = {
 			message: {
-				from: env.smtpConfig.from || 'gauzy@ever.co'
+				from: env.smtpConfig.from || 'ever@ever.co'
 			},
 
 			// if you want to send emails in development or test environments, set options.send to true.
 			send: true,
-			transport: this.createSMTPTransporter(),
+			transport: smtpConfig || this.customSmtpService.defaultSMTPTransporter() as ISMTPConfig,
 			i18n: {},
 			views: {
 				options: {
@@ -62,7 +108,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			};
 		}
 
-		this.email = new Email(config);
+		return new Email(config);
 	}
 
 	private render = (view, locals) => {
@@ -126,7 +172,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 				organizationName
 			}
 		}
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -140,7 +186,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	emailInvoice(
+	async emailInvoice(
 		languageCode: LanguagesEnum,
 		email: string,
 		base64: string,
@@ -176,7 +222,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			}
 		};
 		
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -190,11 +236,11 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	inviteOrganizationContact(
+	async inviteOrganizationContact(
 		organizationContact: IOrganizationContact,
-		inviterUser: User,
-		organization: Organization,
-		invite: Invite,
+		inviterUser: IUser,
+		organization: IOrganization,
+		invite: IInvite,
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	) {
@@ -219,7 +265,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			}
 		};
 
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -233,7 +279,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	inviteUser(inviteUserModel: IInviteUserModel) {
+	async inviteUser(inviteUserModel: IInviteUserModel) {
 		const {
 			email,
 			role,
@@ -260,7 +306,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 				host: originUrl || env.clientBaseUrl
 			}
 		};
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -275,7 +321,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
+	async inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
 		const { 
 			email,
 			registerUrl,
@@ -303,7 +349,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 				host: originUrl || env.clientBaseUrl
 			}
 		};
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -318,7 +364,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
+	async sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
 		const { 
 			email,
 			employee,
@@ -339,7 +385,8 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			}
 		};
 		
-		this.email
+		const { id: organizationId } = organization;
+		await (await this.getEmailInstance(organizationId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -354,7 +401,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 	}
 
 	async welcomeUser(
-		user: User,
+		user: IUser,
 		languageCode: LanguagesEnum,
 		organizationId?: string,
 		originUrl?: string
@@ -379,7 +426,8 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 				tenantId
 			}
 		};
-		this.email
+
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -394,7 +442,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 	}
 
 	async requestPassword(
-		user: User,
+		user: IUser,
 		url: string,
 		languageCode: LanguagesEnum,
 		organizationId: string,
@@ -421,7 +469,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 				tenantId
 			}
 		};
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -461,7 +509,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 				tenantId: tenantId || IsNull()
 			}
 		};
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -475,7 +523,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	async setTimesheetAction(email: string, timesheet: Timesheet) {
+	async setTimesheetAction(email: string, timesheet: ITimesheet) {
 		const languageCode = RequestContext.getLanguageCode();
 		const organizationId = timesheet.employee.organizationId;
 		const organization = await this.organizationRepository.findOne(
@@ -498,7 +546,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			}
 		};
 
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -513,7 +561,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	async timesheetSubmit(email: string, timesheet: Timesheet) {
+	async timesheetSubmit(email: string, timesheet: ITimesheet) {
 		const languageCode = RequestContext.getLanguageCode();
 		const organizationId = timesheet.employee.organizationId;
 		const organization = await this.organizationRepository.findOne(
@@ -535,7 +583,7 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 				tenantId
 			}
 		};
-		this.email
+		await (await this.getEmailInstance(organizationId, tenantId))
 			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
@@ -556,9 +604,9 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 		languageCode: LanguagesEnum;
 		message: any;
 		organization?: Organization;
-		user?: User;
+		user?: IUser;
 	}): Promise<IEmail> {
-		const emailEntity = new IEmail();
+		const emailEntity = new EmailEntity();
 		const {
 			templateName: template,
 			email,
@@ -584,24 +632,8 @@ export class EmailService extends TenantAwareCrudService<IEmail> {
 		return this.emailRepository.save(emailEntity);
 	}
 
-	/*
-	 * This example would connect to a SMTP server separately for every single message
-	 */
-	public createSMTPTransporter() {
-		const smtp: ISMTPConfig = env.smtpConfig;
-		return {
-			host: smtp.host,
-			port: smtp.port,
-			secure: smtp.secure, // true for 465, false for other ports
-			auth: {
-				user: smtp.auth.user,
-				pass: smtp.auth.pass
-			}
-		};
-	}
-
 	// tested e-mail send functionality
-	private async nodemailerSendEmail(user: User, url: string) {
+	private async nodemailerSendEmail(user: IUser, url: string) {
 		const testAccount = await nodemailer.createTestAccount();
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.ethereal.email',

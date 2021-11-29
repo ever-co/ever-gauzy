@@ -1,116 +1,125 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import * as Holidays from 'date-holidays';
 import {
 	IEmployee,
 	ITimeOffPolicy,
 	ITimeOff,
-	IOrganization
+	IOrganization,
+	StatusTypesEnum
 } from '@gauzy/contracts';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { Store } from '../../../@core/services/store.service';
-import { TimeOffService } from '../../../@core/services/time-off.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { first } from 'rxjs/operators';
-import { EmployeesService } from '../../../@core/services';
-import { OrganizationDocumentsService } from '../../../@core/services/organization-documents.service';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { environment as ENV } from 'apps/gauzy/src/environments/environment';
+import { isNotEmpty } from '@gauzy/common-angular';
+import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import {
+	OrganizationDocumentsService,
+	Store,
+} from '../../../@core/services';
+import { CompareDateValidator } from '../../../@core/validators';
+import { FormHelpers } from '../../forms/helpers';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-time-off-request-mutation',
 	templateUrl: './time-off-request-mutation.component.html',
 	styleUrls: ['../time-off-mutation.components.scss']
 })
 export class TimeOffRequestMutationComponent implements OnInit {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
+
 	constructor(
-		protected dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
-		private fb: FormBuilder,
-		private toastrService: ToastrService,
-		private timeOffService: TimeOffService,
-		private employeesService: EmployeesService,
-		private documentsService: OrganizationDocumentsService,
-		private store: Store,
-		private organizationService: OrganizationsService
+		protected readonly dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
+		private readonly fb: FormBuilder,
+		private readonly documentsService: OrganizationDocumentsService,
+		private readonly store: Store
 	) {}
 
-	@ViewChild('employeeSelector')
+	/**
+	 * Employee Selector
+	 */
 	employeeSelector: EmployeeSelectorComponent;
-
-	@Input() type: ITimeOff | string;
-
-	form: FormGroup;
-	policies: ITimeOffPolicy[] = [];
-	orgEmployees: IEmployee[];
-	employeesArr: IEmployee[] = [];
-	holidays = [];
-	selectedEmployee: any;
-	documentUrl: any;
-	description = '';
-	downloadDocUrl = '';
-	uploadDocUrl = '';
-	status: string;
-	holidayName: string;
-	organizationId: string;
-	tenantId: string;
-	policy: ITimeOffPolicy;
-	startDate: Date = null;
-	endDate: Date = null;
-	requestDate: Date;
-	invalidInterval: boolean;
-	isHoliday = false;
-	isEditMode = false;
-	minDate = new Date(moment().format('YYYY-MM-DD'));
-	organization: IOrganization;
-	organizationCountryCode: string;
-	currentUserCountryCode: string;
-	employeeIds: string[];
-
-	ngOnInit() {
-		this._initializeForm();
-	}
-
-	private async _getAllHolidays() {
-		const holidays = new Holidays();
-		const currentMoment = new Date();
-		const countryCode = this.currentUserCountryCode || this.organizationCountryCode || ENV.DEFAULT_COUNTRY;
-
-		if (countryCode) {
-			holidays.init(countryCode);
-			this.holidays = holidays
-				.getHolidays(currentMoment.getFullYear())
-				.filter((holiday) => holiday.type === 'public');
-		} else {
-			this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
+	@ViewChild('employeeSelector') set content(component: EmployeeSelectorComponent) {
+		if (component) {
+			this.employeeSelector = component;
 		}
 	}
 
-	private async _initializeForm() {
-		await this._getFormData();
+	@Input() type: string;
 
-		this.setForm();
+	/*
+	* Getter & Setter
+	*/
+	_timeOff: ITimeOff;
+	get timeOff(): ITimeOff {
+		return this._timeOff;
 	}
+	@Input() set timeOff(value: ITimeOff) {
+		this._timeOff = value;
+	};
 
-	setForm() {
-		this.form = this.fb.group({
-			description: [this.description],
-			start: [this.startDate, Validators.required],
-			end: [this.endDate, Validators.required],
-			policy: [this.policy, Validators.required],
-			requestDate: [new Date()],
-			documentUrl: [this.uploadDocUrl],
-			status: ['']
+	employeesArr: IEmployee[] = [];
+	selectedEmployee: any;
+	isEditMode = false;
+	minDate = new Date(moment().format('YYYY-MM-DD'));
+	public organization: IOrganization;
+
+	/*
+	* Time Off Request Mutation Form 
+	*/
+	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		const form = fb.group({
+			start: ['', Validators.required],
+			end: ['', Validators.required],
+			policy: ['', Validators.required],
+			documentUrl: [],
+			status: [],
+			description: []
+		}, { 
+			validators: [
+				CompareDateValidator.validateDate('start', 'end')
+			]
 		});
-
-		this.documentUrl = this.form.get('documentUrl');
+		return form;
 	}
 
-	addRequest() {
+	ngOnInit() {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				debounceTime(200),
+				tap((organization) => this.organization = organization),
+				tap(() => this.patchFormValue()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Patch form value on edit section 
+	 */
+	patchFormValue() {
+		// patch form value
+		if(this.timeOff) {
+			this.form.patchValue({
+				start: this.timeOff.start,
+				end: this.timeOff.end,
+				description: this.timeOff.description,
+				policy: this.timeOff.policy,
+				status: this.timeOff.status,
+				documentUrl: this.timeOff.documentUrl
+			});
+			
+			this.selectedEmployee = this.timeOff['employees'][0];
+			this.employeesArr = this.timeOff['employees'];
+		}		
+	}
+
+	saveRequest() {
 		this.selectedEmployee = this.employeeSelector.selectedEmployee;
-
-		this._checkFormData();
-
 		if (this.selectedEmployee.id) {
 			this.employeesArr.push(this.selectedEmployee);
 			this._createNewRecord();
@@ -118,150 +127,61 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	getRequestForm(reqType: string) {
-		this.documentsService
-			.getAll({ organizationId: this.organizationId })
-			.pipe(first())
-			.subscribe((docs) => {
-				if (reqType === 'paid') {
-					this.downloadDocUrl = docs.items[0].documentUrl;
-				} else {
-					this.downloadDocUrl = docs.items[1].documentUrl;
-				}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-				window.open(`${this.downloadDocUrl}`);
+		this.documentsService
+			.getAll({ tenantId, organizationId })
+			.pipe(first())
+			.subscribe(({ items }) => {
+				if (isNotEmpty(items)) {
+					let downloadDocUrl: string; 
+					if (reqType === 'paid') {
+						downloadDocUrl = items[0].documentUrl;
+					} else {
+						downloadDocUrl = items[1].documentUrl;
+					}
+					window.open(`${downloadDocUrl}`);
+				}
 			});
 	}
 
-	addHolidays() {
-		this._checkFormData();
-		this.employeeIds.forEach((element) => {
-			const employee = this.orgEmployees.find((e) => e.id === element);
-			this.employeesArr.push(employee);
-		});
-		this._createNewRecord();
-	}
-
 	private _createNewRecord() {
-		if (this.form.valid && !this.invalidInterval) {
-			this.dialogRef.close(
-				Object.assign(
-					{
-						employees: this.employeesArr,
-						organizationId: this.organizationId,
-						tenantId: this.tenantId,
-						isHoliday: this.isHoliday
-					},
-					this.form.value
-				)
-			);
-		}
-
-		this.invalidInterval = false;
-	}
-
-	private _checkFormData() {
-		const { start, end, requestDate } = this.form.value;
-
-		if (start > end || requestDate > start) {
-			this.invalidInterval = true;
-			this.toastrService.danger('TOASTR.MESSAGE.INTERVAL_ERROR');
-		}
-
-		if (this.policy.requiresApproval) {
-			this.form.value.status = 'Requested';
-		} else {
-			this.form.value.status = 'Approved';
-		}
-	}
-
-	private async _getFormData() {
-		this.organizationId = this.store.selectedOrganization.id;
-		this.tenantId = this.store.selectedOrganization.tenantId;
-
-		const { items } = await this.organizationService.getAll(['contact'], {
-			id: this.organizationId,
-			tenantId: this.tenantId
-		});
-		this.organization = items[0];
-
-		if (this.organization.contact) {
-			this.organizationCountryCode = this.organization.contact.country;
-		}
-
-		if (this.store.user.employeeId) {
-			this.employeesService
-				.getEmployeeById(this.store.user.employeeId, ['contact'])
-				.then((data) => {
-					if (data.contact) {
-						this.currentUserCountryCode = data.contact.country;
-					}
-				});
-		}
-
-		if (this.type === 'holiday') {
-			this.isHoliday = true;
-			this._getAllHolidays();
-		} else if (this.type.hasOwnProperty('id')) {
-			this.isEditMode = true;
-			this.selectedEmployee = this.type['employees'][0];
-			this.policy = this.type['policy'];
-			this.startDate = this.type['start'];
-			this.endDate = this.type['end'];
-			this.description = this.type['description'];
-			this.employeesArr = this.type['employees'];
-		}
-
-		this._getPolicies();
-		this._getOrganizationEmployees();
-	}
-
-	private _getPolicies() {
-		if (this.organizationId) {
-			const findObj: {} = {
-				organization: {
-					id: this.organizationId
-				},
-				tenantId: this.tenantId
-			};
-
-			this.timeOffService
-				.getAllPolicies(['employees'], findObj)
-				.pipe(first())
-				.subscribe((res) => {
-					this.policies = res.items;
-					this.policy = this.policies[0];
-				});
-		}
-	}
-
-	private _getOrganizationEmployees() {
-		if (!this.organizationId) {
+		if (this.form.invalid) {
 			return;
 		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-		this.employeesService
-			.getAll(['user', 'tags'], {
-				organization: { id: this.organizationId },
-				tenantId: this.tenantId
-			})
-			.pipe(first())
-			.subscribe((res) => (this.orgEmployees = res.items));
+		this.dialogRef.close(
+			Object.assign(
+				{
+					employees: this.employeesArr,
+					organizationId,
+					tenantId,
+					isHoliday: false,
+					requestDate: new Date()
+				},
+				this.form.getRawValue()
+			)
+		);
 	}
 
+	/**
+	 * On Policy Selection
+	 * 
+	 * @param policy 
+	 */
 	onPolicySelected(policy: ITimeOffPolicy) {
-		this.policy = policy;
-	}
-
-	onEmployeesSelected(employees: string[]) {
-		this.employeeIds = employees;
-	}
-
-	onHolidaySelected(holiday) {
-		this.startDate = holiday.start;
-		this.endDate = holiday.end || null;
-		this.description = holiday.name;
-
-		this.setForm();
+		if (policy.requiresApproval) {
+			this.form.patchValue({
+				status: StatusTypesEnum.REQUESTED
+			});
+		} else {
+			this.form.patchValue({
+				status: StatusTypesEnum.APPROVED
+			});
+		}
 	}
 
 	close() {

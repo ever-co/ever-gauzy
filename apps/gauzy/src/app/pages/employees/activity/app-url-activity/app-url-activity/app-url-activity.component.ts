@@ -50,7 +50,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			.subscribe((params) => {
 				if (params.type) {
 					this.type = params.type;
-					this.updateLogs$.next();
+					this.updateLogs$.next(true);
 				}
 			});
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -64,7 +64,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
-						this.updateLogs$.next();
+						this.updateLogs$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -79,22 +79,10 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	progressStatus(value) {
-		if (value <= 25) {
-			return 'danger';
-		} else if (value <= 50) {
-			return 'warning';
-		} else if (value <= 75) {
-			return 'info';
-		} else {
-			return 'success';
-		}
-	}
-
 	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
 		this.timesheetFilterService.filter = $event;
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	loadChild(item: IDailyActivity) {

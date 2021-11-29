@@ -87,7 +87,7 @@ export class EmailTemplatesComponent
 					this.organization = organization;
 					this.form.patchValue({ languageCode: language });
 				}),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

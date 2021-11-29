@@ -1,8 +1,8 @@
-<nb-card>
+<nb-card class="card-scroll">
 	<nb-card-header class="d-flex justify-content-between">
 		<h4 class="email-history-header">
 			<ngx-header-title>
-				{{ 'SETTINGS.EMAIL_HISTORY.HEADER' | translate }}
+				{{ 'MENU.SETTINGS' | translate }} - {{ 'SETTINGS.EMAIL_HISTORY.HEADER' | translate }}
 			</ngx-header-title>
 		</h4>
 		<div class="filter">
@@ -116,7 +116,7 @@
 					{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
 				</button>
 				<div
-					[innerHTML]="selectedEmailHTML"
+					[innerHtml]="selectedEmail.content | safeHtml"
 					*ngIf="selectedEmail; else emailNotSelected"
 					class="email-content"
 				></div>

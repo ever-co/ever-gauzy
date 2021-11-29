@@ -14,8 +14,7 @@ import { ManageUserInvitesPage } from '../pageobjects/ManageUserInvitesPageObjec
 
 export const manageInvitesButtonVisible = () => {
 	cy.intercept('GET', '/api/user-organization*').as('waitUserOrganization');
-	cy.intercept('GET', '/api/employee/user/*').as('waitUsers');
-	cy.wait(['@waitUserOrganization','@waitUsers']);
+	cy.wait('@waitUserOrganization');
 	verifyElementIsVisible(ManageUserInvitesPage.manageInvitesButtonCss);
 };
 
@@ -24,7 +23,9 @@ export const clickManageInvitesButton = () => {
 };
 
 export const gridButtonVisible = () => {
+	cy.intercept('GET', '/api/invite*').as('waitInvites');
 	verifyElementIsVisible(ManageUserInvitesPage.gridButtonCss);
+	cy.wait('@waitInvites')
 };
 
 export const clickGridButton = (index) => {

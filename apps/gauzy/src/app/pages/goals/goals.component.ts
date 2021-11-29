@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
-import { first, filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
+import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
@@ -209,7 +210,7 @@ export class GoalsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			this.goals[index].progress = this.calculateGoalProgress(
 				this.goals[index].keyResults
@@ -264,7 +265,7 @@ export class GoalsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (response) {
 			if (!!keyResult) {
 				this.goals[index].progress = this.calculateGoalProgress(
@@ -291,6 +292,8 @@ export class GoalsComponent
 			} else {
 				const data = {
 					...response,
+					ownerId:response.ownerId,
+					leadId:response.leadId,
 					goalId: this.goals[index].id
 				};
 				await this.keyResultService
@@ -371,7 +374,7 @@ export class GoalsComponent
 				orgName: this.organizationName
 			}
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (response) {
 			this.loadPage();
 		}
@@ -401,7 +404,7 @@ export class GoalsComponent
 			closeOnBackdropClick: false
 		});
 
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (response) {
 			if (!!goal) {
 				// Update Goal
@@ -446,7 +449,7 @@ export class GoalsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'deleted') {
 				this.toastrService.danger(
@@ -481,7 +484,7 @@ export class GoalsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'deleted') {
 				this.toastrService.danger(
@@ -518,9 +521,7 @@ export class GoalsComponent
 				closeOnBackdropClick: false
 			}
 		);
-		const response = await keyResultDialog.onClose
-			.pipe(first())
-			.toPromise();
+		const response = await firstValueFrom(keyResultDialog.onClose);
 		if (!!response) {
 			const keyResultData = response;
 			delete keyResultData.goal;

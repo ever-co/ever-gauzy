@@ -16,7 +16,7 @@ import {
 	IsOptional,
 	IsBoolean
 } from 'class-validator';
-import { IEventType } from '@gauzy/contracts';
+import { IEmployee, IEventType, ITag } from '@gauzy/contracts';
 import {
 	Employee,
 	Tag,
@@ -27,20 +27,6 @@ import {
 export class EventType
 	extends TenantOrganizationBaseEntity
 	implements IEventType {
-	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.eventType)
-	@JoinTable({ name: 'tag_event_type' })
-	tags?: Tag[];
-
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	employee?: Employee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((eventType: EventType) => eventType.employee)
-	@Column({ nullable: true })
-	readonly employeeId?: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
@@ -70,4 +56,45 @@ export class EventType
 	@IsBoolean()
 	@Column({ nullable: true })
 	isActive: boolean;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToOne 
+    |--------------------------------------------------------------------------
+    */
+	
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@ManyToOne(() => Employee, { onDelete: 'CASCADE' })
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: EventType) => it.employee)
+	@IsOptional()
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	readonly employeeId?: string;
+
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
+	
+	/**
+	 * Tag
+	 */
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.eventTypes, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_event_type'
+	})
+	tags?: ITag[];
 }

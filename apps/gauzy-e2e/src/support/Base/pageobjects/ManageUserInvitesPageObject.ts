@@ -12,7 +12,7 @@ export const ManageUserInvitesPage = {
 	confirmDeleteInviteButtonCss: 'nb-card-footer > button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	inviteButtonCss: 'div.mb-3 > button[status="primary"]',
-	emailInputCss: '#emailsSelect',
+	emailInputCss: '#emails',
 	dateInputCss: 'input[formcontrolname="startedWorkOn"]',
 	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	verifyEmailCss: 'table-cell-view-mode > div > div.ng-star-inserted',

@@ -17,6 +17,8 @@ import {
 import { EstimatesPage } from '../pageobjects/EstimatesPageObject';
 
 export const gridBtnExists = () => {
+	cy.intercept('GET', '/api/invoices/*').as('waitUserOrganization');
+	cy.wait('@waitUserOrganization');
 	verifyElementIsVisible(EstimatesPage.gridButtonCss);
 };
 
@@ -175,7 +177,9 @@ export const backButtonVisible = () => {
 };
 
 export const clickBackButton = () => {
+	cy.intercept('GET', '/api/invoices/pagination*').as('waitTable');
 	clickButton(EstimatesPage.backButtonCss);
+	cy.wait('@waitTable');
 };
 
 export const confirmButtonVisible = () => {

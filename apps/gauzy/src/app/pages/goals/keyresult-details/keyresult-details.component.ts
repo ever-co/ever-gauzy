@@ -14,9 +14,9 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
@@ -94,21 +94,25 @@ export class KeyResultDetailsComponent
 			.getAllTimeFrames(findInput)
 			.then(async (res) => {
 				const timeFrame = res.items[0];
-				this.startDate = new Date(timeFrame.startDate);
-				if (
-					this.keyResult.deadline ===
-					this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
-				) {
-					this.endDate = new Date(timeFrame.endDate);
-					this.isUpdatable =
-						(isFuture(this.endDate) || isToday(this.endDate)) &&
-						isPast(this.startDate);
-				} else {
-					this.endDate = new Date(this.keyResult.hardDeadline);
-					this.isUpdatable =
-						(isFuture(this.endDate) || isToday(this.endDate)) &&
-						isPast(this.startDate);
+				
+				if (timeFrame) {
+					this.startDate = new Date(timeFrame.startDate);
+					if (
+						this.keyResult.deadline ===
+						this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+					) {
+						this.endDate = new Date(timeFrame.endDate);
+						this.isUpdatable =
+							(isFuture(this.endDate) || isToday(this.endDate)) &&
+							isPast(this.startDate);
+					} else {
+						this.endDate = new Date(this.keyResult.hardDeadline);
+						this.isUpdatable =
+							(isFuture(this.endDate) || isToday(this.endDate)) &&
+							isPast(this.startDate);
+					}
 				}
+								
 				this.store.user$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((user) => {
@@ -192,9 +196,7 @@ export class KeyResultDetailsComponent
 				},
 				closeOnBackdropClick: false
 			});
-			const taskResponse = await taskDialog.onClose
-				.pipe(first())
-				.toPromise();
+			const taskResponse = await firstValueFrom(taskDialog.onClose);
 			if (!!taskResponse) {
 				const {
 					estimateDays,
@@ -253,7 +255,7 @@ export class KeyResultDetailsComponent
 				},
 				closeOnBackdropClick: false
 			});
-			const response = await dialog.onClose.pipe(first()).toPromise();
+			const response = await firstValueFrom(dialog.onClose);
 			if (!!response) {
 				try {
 					await this.keyResultService
@@ -281,7 +283,7 @@ export class KeyResultDetailsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
 				await this.keyResultService

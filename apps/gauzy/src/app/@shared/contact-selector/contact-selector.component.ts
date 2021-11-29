@@ -40,7 +40,7 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 	}
 	public set employeeId(value) {
 		this._employeeId = value;
-		this.loadContacts$.next();
+		this.loadContacts$.next(true);
 	}
 
 	set contactId(val: string | string[]) {
@@ -99,7 +99,7 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 				}
 			});
 
-		this.loadContacts$.next();
+		this.loadContacts$.next(true);
 	}
 
 	writeValue(value: string | string[]) {

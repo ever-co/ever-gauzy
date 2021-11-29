@@ -1,15 +1,17 @@
 <div class="setting-block">
 	<div class="setting-row">
-		<div class="block-content">
+		<div class="block-content" [ngStyle]="{
+			float: showMenu ? 'none' : 'left',
+			width: showMenu ? '88%' : '100%'
+		}">
 			<div class="block-info">
 				<div class="expense">
-					<ga-picture-name-tags
-						*ngIf="currentEmployee?.user"
-						class="block-item-big"
-						[isTags]="false"
-						[rowData]="currentEmployee?.user"
-					></ga-picture-name-tags>
-
+					<ngx-avatar
+						*ngIf="currentEmployee"
+						[src]="currentEmployee?.user?.imageUrl"
+						[name]="currentEmployee?.user?.name"
+						[id]="currentEmployee?.id"
+					></ngx-avatar>
 					<div class="block-item">
 						{{ getCategoryName(recurringExpense?.categoryName) }}
 					</div>

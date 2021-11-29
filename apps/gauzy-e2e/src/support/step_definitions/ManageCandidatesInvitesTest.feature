@@ -3,8 +3,9 @@ Feature: Candidates invites test
     Given Login with default credentials
   Scenario: Create new invite
     Then User can visit Candidates invites page
-    And User can see invite button
-    When User click on invite button
+    Then User can see header of the page
+    When User see invite button
+    Then User click on invite button
     And User can see email input field
     And User can enter value for email
     And User can see date input field
@@ -13,6 +14,10 @@ Feature: Candidates invites test
     When User click on save button
     Then Notification message will appear
     And User can verify invite was created
+  Scenario: Search by Email
+    When User see email input field
+    Then User can enter email in email field
+    And User can see only selected user
   Scenario: Resend invite
     And User can see invites table
     When User click on table row
@@ -29,3 +34,5 @@ Feature: Candidates invites test
     Then User will see confirm delete button
     When User click on confirm delete button
     Then Notification message will appear
+    Then User clear field
+    And User verify invite is deleted

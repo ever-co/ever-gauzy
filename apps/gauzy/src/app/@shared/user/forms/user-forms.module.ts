@@ -16,7 +16,9 @@ import { FileUploaderModule } from '../../file-uploader-input/file-uploader-inpu
 import { TranslateModule } from '../../translate/translate.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { AuthService, IncomeService, RoleService, TagsService } from '../../../@core/services';
+import { SharedModule } from '../../shared.module';
 import { COMPONENTS } from './index';
+import { PasswordFormFieldModule } from './fields/password';
 
 @NgModule({
 	imports: [
@@ -34,7 +36,9 @@ import { COMPONENTS } from './index';
 		NbCheckboxModule,
 		TagsColorInputModule,
 		TranslateModule,
-		CountdownModule
+		CountdownModule,
+		SharedModule,
+		PasswordFormFieldModule
 	],
 	exports: [
 		...COMPONENTS

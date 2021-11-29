@@ -89,7 +89,7 @@ export class InviteAcceptOrganizationContactHandler
 		});
 
 		// 7. Find SUPER_ADMIN role to relative tenant.
-		const role = await this.roleService.findOne({
+		const role = await this.roleService.findOneByConditions({
 			tenant,
 			name: RolesEnum.SUPER_ADMIN
 		});
@@ -103,7 +103,7 @@ export class InviteAcceptOrganizationContactHandler
 		}, languageCode );
 
 		// 8. Link newly created contact organization to organization contact invite
-		const { organizationContact } = await this.inviteService.findOne(inviteId, {
+		const { organizationContact } = await this.inviteService.findOneByIdString(inviteId, {
 			relations: ['organizationContact']
 		});
 

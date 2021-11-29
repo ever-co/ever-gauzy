@@ -54,6 +54,7 @@
 				status="success"
 				(click)="recordPayment()"
 				nbButton
+				nbTooltip="Add"
 			>
 				<nb-icon icon="plus-outline"></nb-icon>
 			</button>
@@ -63,6 +64,7 @@
 				(click)="editPayment()"
 				[disabled]="disableButton"
 				nbButton
+				nbTooltip="Edit"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
 			</button>
@@ -72,6 +74,7 @@
 				(click)="download()"
 				class="mr-2"
 				[disabled]="!payments?.length"
+				nbTooltip="Download"
 			>
 				<nb-icon icon="download-outline"></nb-icon>
 			</button>
@@ -81,6 +84,7 @@
 				(click)="deletePayment()"
 				[disabled]="disableButton"
 				nbButton
+				nbTooltip="Delete"
 			>
 				<nb-icon icon="trash-2-outline"></nb-icon>
 			</button>

@@ -117,7 +117,7 @@ export class EventTypeController extends CrudController<EventType> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEventType> {
 		const { relations = [] } = data;
-		return this.eventTypeService.findOne(id, {
+		return this.eventTypeService.findOneByIdString(id, {
 			relations
 		});
 	}

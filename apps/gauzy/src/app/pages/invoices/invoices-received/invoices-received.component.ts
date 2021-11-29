@@ -17,7 +17,7 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../../@core/constants';
 import { HttpClient } from '@angular/common/http';
@@ -115,7 +115,7 @@ export class InvoicesReceivedComponent
 				distinctUntilChange(),
 				tap((organization) => (this.organization = organization)),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -123,7 +123,7 @@ export class InvoicesReceivedComponent
 
 	onPageChange(selectedPage: number) {
 		this.pagination['activePage'] = selectedPage;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	/*
@@ -147,7 +147,7 @@ export class InvoicesReceivedComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -221,7 +221,7 @@ export class InvoicesReceivedComponent
 			await this.invoicesService.update(this.selectedInvoice.id, {
 				isAccepted: true
 			}).then(() => {
-				this.subject$.next();
+				this.subject$.next(true);
 				this.toastrService.success('INVOICES_PAGE.INVOICE_ACCEPTED');
 			});
 		} catch (error) {
@@ -240,7 +240,7 @@ export class InvoicesReceivedComponent
 			await this.invoicesService.update(this.selectedInvoice.id, {
 				isAccepted: false
 			}).then(() => {
-				this.subject$.next();
+				this.subject$.next(true);
 				this.toastrService.success('INVOICES_PAGE.INVOICE_REJECTED');
 			});
 		} catch (error) {
@@ -280,7 +280,7 @@ export class InvoicesReceivedComponent
 						} else {
 							delete this.filters.where.invoiceNumber;
 						}
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				},
 				totalValue: {
@@ -302,7 +302,7 @@ export class InvoicesReceivedComponent
 						} else {
 							delete this.filters.where.totalValue;
 						}
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}
 			}

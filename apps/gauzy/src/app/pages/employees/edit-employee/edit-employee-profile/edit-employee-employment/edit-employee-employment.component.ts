@@ -23,6 +23,7 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
+import { ckEditorConfig } from "../../../../../@shared/ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,7 +39,11 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	employeeLevels: IEmployeeLevel[] = [];
 	departments: IOrganizationDepartment[] = [];
 	positions: IOrganizationPosition[] = [];
-
+	ckConfig: any = {
+		...ckEditorConfig,
+		height: "200"
+	};
+	
 	static buildForm(formBuilder: FormBuilder): FormGroup {
 		const form = formBuilder.group({
 			organizationEmploymentTypes: [],

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import {
 	ICandidateInterviewFindInput,
 	ICandidateInterviewCreateInput,
@@ -12,18 +12,18 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class CandidateInterviewService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	create(
 		createInput: ICandidateInterviewCreateInput
 	): Promise<ICandidateInterview> {
-		return this.http
-			.post<ICandidateInterview>(
-				`${API_PREFIX}/candidate-interview`,
-				createInput
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.post<ICandidateInterview>(
+					`${API_PREFIX}/candidate-interview`,
+					createInput
+				)
+		);
 	}
 
 	getAll(
@@ -31,60 +31,56 @@ export class CandidateInterviewService {
 		findInput?: ICandidateInterviewFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http
+		return firstValueFrom(this.http
 			.get<{ items: ICandidateInterview[]; total: number }>(
 				`${API_PREFIX}/candidate-interview`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	findById(id: string, relations?: string[]): Promise<ICandidateInterview> {
 		const data = JSON.stringify({ relations });
-		return this.http
+		return firstValueFrom(this.http
 			.get<ICandidateInterview>(
 				`${API_PREFIX}/candidate-interview/${id}`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	findByCandidateId(candidateId: string): Promise<ICandidateInterview[]> {
-		return this.http
+		return firstValueFrom(this.http
 			.get<ICandidateInterview[]>(
 				`${API_PREFIX}/candidate-interview/candidate/${candidateId}`
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 	update(id: string, updateInput: any): Promise<any> {
-		return this.http
-			.put(`${API_PREFIX}/candidate-interview/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put(`${API_PREFIX}/candidate-interview/${id}`, updateInput)
+		);
 	}
 
 	setInterviewAsArchived(id: string): Promise<ICandidateInterview> {
-		return this.http
-			.put<ICandidateInterview>(
-				`${API_PREFIX}/candidate-interview/${id}`,
-				{
-					isArchived: true
-				}
-			)
-			.pipe(first())
-			.toPromise();
+		return firstValueFrom(
+			this.http
+				.put<ICandidateInterview>(
+					`${API_PREFIX}/candidate-interview/${id}`,
+					{
+						isArchived: true
+					}
+				)
+		);
 	}
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(this.http
 			.delete(`${API_PREFIX}/candidate-interview/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

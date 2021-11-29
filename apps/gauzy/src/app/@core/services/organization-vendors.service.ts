@@ -5,7 +5,7 @@ import {
 	IOrganizationVendor,
 	IOrganizationVendorFindInput
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -17,13 +17,13 @@ export class OrganizationVendorsService {
 	create(
 		createInput: IOrganizationVendorCreateInput
 	): Promise<IOrganizationVendor> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IOrganizationVendor>(
 				`${API_PREFIX}/organization-vendors`,
 				createInput
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -32,29 +32,28 @@ export class OrganizationVendorsService {
 		order?:{}
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, order });
-
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationVendor[]; total: number }>(
 				`${API_PREFIX}/organization-vendors`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id: string, updateInput: IOrganizationVendorCreateInput): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${API_PREFIX}/organization-vendors/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${API_PREFIX}/organization-vendors/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

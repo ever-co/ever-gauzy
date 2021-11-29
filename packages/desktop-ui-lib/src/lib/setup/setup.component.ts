@@ -6,10 +6,10 @@ import {
 	ViewChild,
 	ElementRef
 } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
 import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
+import { ElectronServices } from '../electron/services';
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -25,10 +25,10 @@ Object.assign(console, log.functions);
 export class SetupComponent implements OnInit {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	constructor(
-		private electronService: ElectronService,
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private electronService: ElectronServices
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -123,8 +123,8 @@ export class SetupComponent implements OnInit {
 			portUi: '8084'
 		},
 		localNetwork: {
-			apiHost: '',
-			port: ''
+			apiHost: '127.0.0.1',
+			port: '5620'
 		},
 		live: {
 			url: 'https://api.gauzy.co'

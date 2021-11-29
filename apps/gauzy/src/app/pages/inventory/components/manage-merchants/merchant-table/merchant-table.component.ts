@@ -3,9 +3,8 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest } from 'rxjs';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom, combineLatest } from 'rxjs';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -57,7 +56,7 @@ export class MerchantTableComponent
 	/*
 	* Actions Buttons directive 
 	*/
-	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -95,7 +94,7 @@ export class MerchantTableComponent
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(() => this.merchants$.next()),
+				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -110,7 +109,7 @@ export class MerchantTableComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.merchants$.next()),
+				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -193,7 +192,7 @@ export class MerchantTableComponent
 		}
 
 		this.router.navigate([
-			`/pages/organization/inventory/merchants/edit`, 
+			`/pages/organization/inventory/merchants/edit`,
 			this.selectedMerchant.id
 		]);
 	}
@@ -221,10 +220,11 @@ export class MerchantTableComponent
 			return;
 		}
 
-		const dialog = await this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+		const dialog = await firstValueFrom(
+			this.dialogService
+				.open(DeleteConfirmationComponent)
+				.onClose
+		);
 
 		if (dialog) {
 			await this.merchantService
@@ -238,7 +238,7 @@ export class MerchantTableComponent
 					}
 				})
 				.finally(() => {
-					this.merchants$.next();
+					this.merchants$.next(true);
 				});
 		}
 	}
@@ -252,7 +252,7 @@ export class MerchantTableComponent
 
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/merchants/pagination`,
-			relations: [ 'logo', 'contact', 'tags', 'warehouses' ],
+			relations: ['logo', 'contact', 'tags', 'warehouses'],
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where
@@ -269,8 +269,8 @@ export class MerchantTableComponent
 	/**
 	 * GET merchants smart table source
 	 */
-	 private async getMerchants() {
-		try { 
+	private async getMerchants() {
+		try {
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 
@@ -281,7 +281,7 @@ export class MerchantTableComponent
 				await this.smartTableSource.getElements();
 				this.merchants = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

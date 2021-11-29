@@ -37,7 +37,7 @@ export class UserOrganizationDeleteHandler
 				role: { name: roleName }
 			},
 			userId
-		} = await this.userOrganizationService.findOne(
+		} = await this.userOrganizationService.findOneByIdString(
 			input.userOrganizationId,
 			{ relations: ['user', 'user.role'] }
 		);
@@ -76,7 +76,7 @@ export class UserOrganizationDeleteHandler
 		language: LanguagesEnum
 	): Promise<UserOrganization | DeleteResult> {
 		// 1. Check if the requesting user has permission to delete Super Admin
-		const { name: requestingUserRoleName } = await this.roleService.findOne(
+		const { name: requestingUserRoleName } = await this.roleService.findOneByIdString(
 			requestingUser.roleId
 		);
 

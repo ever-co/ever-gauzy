@@ -9,7 +9,7 @@ import {
 	IRecurringExpenseDeleteInput,
 	IRecurringExpenseOrderFields
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -21,10 +21,10 @@ export class OrganizationRecurringExpenseService {
 	constructor(private http: HttpClient) {}
 
 	create(createInput: IOrganizationRecurringExpense): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IOrganizationRecurringExpense>(this.API_URL, createInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -37,15 +37,15 @@ export class OrganizationRecurringExpenseService {
 	}> {
 		const data = JSON.stringify({ relations, findInput, order });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{
 				items: IOrganizationRecurringExpense[];
 				total: number;
 			}>(this.API_URL, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAllByMonth(
@@ -56,15 +56,15 @@ export class OrganizationRecurringExpenseService {
 	}> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{
 				items: IOrganizationRecurringExpense[];
 				total: number;
 			}>(`${this.API_URL}/month`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(
@@ -73,22 +73,22 @@ export class OrganizationRecurringExpenseService {
 	): Promise<any> {
 		const data = JSON.stringify({ deleteInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${this.API_URL}/${id}`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(
 		id: string,
 		updateInput: IOrganizationRecurringExpense
 	): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${this.API_URL}/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getSplitExpensesForEmployee(
@@ -100,15 +100,15 @@ export class OrganizationRecurringExpenseService {
 	}> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{
 				items: IOrganizationRecurringExpenseForEmployeeOutput[];
 				total: number;
 			}>(`${this.API_URL}/employee/${orgId}`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getStartDateUpdateType(
@@ -116,11 +116,11 @@ export class OrganizationRecurringExpenseService {
 	): Promise<IStartUpdateTypeInfo> {
 		const data = JSON.stringify({ findInput });
 
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IStartUpdateTypeInfo>(`${this.API_URL}/date-update-type`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

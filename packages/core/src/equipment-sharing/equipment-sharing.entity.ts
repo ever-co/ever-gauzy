@@ -75,7 +75,9 @@ export class EquipmentSharing
 	 * Equipment
 	 */
 	@ApiProperty({ type: () => Equipment })
-	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings)
+	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	equipment: IEquipment;
 
@@ -91,7 +93,6 @@ export class EquipmentSharing
 	*/
 	@ApiProperty({ type: () => EquipmentSharingPolicy })
 	@ManyToOne(() => EquipmentSharingPolicy, (it) => it.equipmentSharings, {
-		nullable: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()

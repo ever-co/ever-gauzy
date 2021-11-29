@@ -16,12 +16,15 @@ import { CrudController } from './../core/crud';
 import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
+import { IKeyResult } from '@gauzy/contracts';
 
 @ApiTags('KeyResults')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class KeyResultController extends CrudController<KeyResult> {
-	constructor(private readonly keyResultService: KeyResultService) {
+	constructor(
+		private readonly keyResultService: KeyResultService
+	) {
 		super(keyResultService);
 	}
 
@@ -35,8 +38,10 @@ export class KeyResultController extends CrudController<KeyResult> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Key Result not found'
 	})
-	@Post('/create')
-	async createKeyResult(@Body() entity: KeyResult): Promise<any> {
+	@Post()
+	async create(
+		@Body() entity: KeyResult
+	): Promise<KeyResult> {
 		return this.keyResultService.create(entity);
 	}
 
@@ -50,8 +55,10 @@ export class KeyResultController extends CrudController<KeyResult> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Key Result not found'
 	})
-	@Post('/createBulk')
-	async createBulkKeyResults(@Body() entity: KeyResult[]): Promise<any> {
+	@Post('/bulk')
+	async createBulkKeyResults(
+		@Body() entity: KeyResult[]
+	): Promise<KeyResult[]> {
 		return this.keyResultService.createBulk(entity);
 	}
 
@@ -92,7 +99,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: KeyResult
-	): Promise<KeyResult> {
+	): Promise<IKeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
@@ -108,7 +115,9 @@ export class KeyResultController extends CrudController<KeyResult> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async deleteKeyResult(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
 		return this.keyResultService.delete(id);
 	}
 }

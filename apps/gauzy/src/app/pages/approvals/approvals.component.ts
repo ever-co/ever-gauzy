@@ -22,6 +22,8 @@ import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
+import { pluck } from 'underscore'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -136,7 +138,7 @@ export class ApprovalsComponent
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		let items = [];
+		let items: any = [];
 		if (this.selectedEmployeeId) {
 			items = (
 				await this.approvalRequestService.getByEmployeeId(
@@ -148,10 +150,18 @@ export class ApprovalsComponent
 		} else {
 			items = (
 				await this.approvalRequestService.getAll(
-					['employeeApprovals', 'teamApprovals', 'tags'],
+					['employeeApprovals', 'employeeApprovals.employee', 'employee.user', 'teamApprovals', 'teamApprovals.team', 'tags'],
 					{ organizationId, tenantId }
 				)
 			).items;
+
+			if (items.length > 0) {
+				items.filter((item) => {
+					item.employees = pluck(item.employeeApprovals, 'employee');
+					item.teams = pluck(item.teamApprovals, 'team');
+					return item;
+				});
+			}
 		}
 
 		this.loading = false;
@@ -192,6 +202,18 @@ export class ApprovalsComponent
 					type: 'string',
 					filter: false
 				},
+				employees: {
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.EMPLOYEES'),
+					type: 'custom',
+					filter: false,
+					renderComponent: EmployeeWithLinksComponent
+				},
+				teams: {
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.TEAMS'),
+					type: 'custom',
+					filter: false,
+					renderComponent: TaskTeamsComponent,
+				},
 				status: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
@@ -221,8 +243,8 @@ export class ApprovalsComponent
 						)
 							? 'success'
 							: ['requested'].includes(cell.toLowerCase())
-							? 'warning'
-							: 'danger';
+								? 'warning'
+								: 'danger';
 						return {
 							text: cell,
 							class: badgeClass
@@ -377,5 +399,5 @@ export class ApprovalsComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

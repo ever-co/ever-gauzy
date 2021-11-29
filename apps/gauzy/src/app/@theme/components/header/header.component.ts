@@ -12,8 +12,8 @@ import {
 	NbThemeService,
 	NbMenuItem
 } from '@nebular/theme';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { combineLatest, lastValueFrom, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -137,7 +137,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				tap((selectors) => {
 					this.selectorsVisibility = Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors);
 				}),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -206,7 +206,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			.subscribe(([organization, date]) => {
 				this.organization = organization;
 				this.selectedDate = date;
-				this.subject$.next();
+				this.subject$.next(true);
 			});
 		this.themeService
 			.onThemeChange()
@@ -299,11 +299,17 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		} else {
 			if (userOrg.length > 0) {
 				const [firstUserOrg] = userOrg;
-				const org = await this.organizationsService
-					.getById(firstUserOrg.organizationId)
-					.pipe(first())
-					.toPromise();
-				this.store.selectedOrganization = org;
+				/**
+				 * GET organization for employee
+				 */
+				const organization$ = this.organizationsService.getById(
+					firstUserOrg.organizationId,
+					null,
+					['contact']
+				);
+				const organization = await lastValueFrom(organization$);
+
+				this.store.selectedOrganization = organization;
 				this.showOrganizationsSelector = false;
 			}
 		}

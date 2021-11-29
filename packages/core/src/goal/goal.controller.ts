@@ -12,6 +12,8 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { DeleteResult } from 'typeorm';
+import { IGoal, IPagination } from '@gauzy/contracts';
 import { GoalService } from './goal.service';
 import { Goal } from './goal.entity';
 import { CrudController } from './../core/crud';
@@ -32,8 +34,10 @@ export class GoalController extends CrudController<Goal> {
 		description: 'Goal Created successfully',
 		type: Goal
 	})
-	@Post('/create')
-	async createGoal(@Body() entity: Goal): Promise<any> {
+	@Post()
+	async create(
+		@Body() entity: Goal
+	): Promise<IGoal> {
 		return this.goalService.create(entity);
 	}
 
@@ -41,10 +45,10 @@ export class GoalController extends CrudController<Goal> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('all')
-	async getAll(
+	@Get()
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
-	) {
+	): Promise<IPagination<IGoal>> {
 		const { relations, findInput } = data;
 		return this.goalService.findAll({
 			where: { ...findInput },
@@ -72,10 +76,10 @@ export class GoalController extends CrudController<Goal> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string, 
 		@Body() entity: Goal
-	): Promise<Goal> {
-		//We are using create here because create calls the method save()
-		//We need save() to save ManyToMany relations
+	): Promise<IGoal> {
 		try {
+			//We are using create here because create calls the method save()
+			//We need save() to save ManyToMany relations
 			return await this.goalService.create({
 				id,
 				...entity
@@ -88,9 +92,9 @@ export class GoalController extends CrudController<Goal> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async deleteGoal(
+	async delete(
 		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	): Promise<DeleteResult> {
 		return this.goalService.delete(id);
 	}
 }

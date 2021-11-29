@@ -164,6 +164,7 @@
 		"EXPIRE_DATE": "crwdns2357:0crwdne2357:0",
 		"CLIENTS": "crwdns2445:0crwdne2445:0",
 		"CONTACTS": "crwdns7180:0crwdne7180:0",
+		"CONTACT": "crwdns10589:0crwdne10589:0",
 		"DEPARTMENTS": "crwdns2447:0crwdne2447:0",
 		"DESCRIPTION": "crwdns2919:0crwdne2919:0",
 		"POLICY": "crwdns7288:0crwdne7288:0",
@@ -187,7 +188,8 @@
 		"LAST_UPDATED": "crwdns8772:0crwdne8772:0",
 		"CREATED_BY": "crwdns9192:0crwdne9192:0",
 		"NO_DATA_MESSAGE": "crwdns9194:0crwdne9194:0",
-		"TAGS": "crwdns10402:0crwdne10402:0"
+		"TAGS": "crwdns10402:0crwdne10402:0",
+		"CREATED": "crwdns10559:0crwdne10559:0"
 	},
 	"FORM": {
 		"USERNAME": "crwdns68:0crwdne68:0",
@@ -335,7 +337,8 @@
 			"DEFAULT_INVOICE_TEMPLATE": "crwdns10376:0crwdne10376:0",
 			"DEFAULT_ESTIMATE_TEMPLATE": "crwdns10378:0crwdne10378:0",
 			"DEFAULT_RECEIPT_TEMPLATE": "crwdns10380:0crwdne10380:0",
-			"DEFAULT": "crwdns10382:0crwdne10382:0"
+			"DEFAULT": "crwdns10382:0crwdne10382:0",
+			"INVITATION_EXPIRATION": "crwdns10561:0crwdne10561:0"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "crwdns90:0crwdne90:0",
@@ -505,7 +508,8 @@
 			"TEMPLATES": "crwdns10234:0crwdne10234:0",
 			"INVOICE_TEMPLATE": "crwdns10244:0crwdne10244:0",
 			"ESTIMATE_TEMPLATE": "crwdns10246:0crwdne10246:0",
-			"RECEIPT_TEMPLATE": "crwdns10248:0crwdne10248:0"
+			"RECEIPT_TEMPLATE": "crwdns10248:0crwdne10248:0",
+			"INVITATION_EXPIRATION": "crwdns10563:0crwdne10563:0"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "crwdns2407:0crwdne2407:0",
@@ -636,7 +640,8 @@
 		"DISPLAY_BONUS_ANONYMOUSLY": "crwdns7990:0crwdne7990:0",
 		"SOURCE": "crwdns8112:0crwdne8112:0",
 		"DESCRIPTION": "crwdns10551:0crwdne10551:0",
-		"MAIN": "crwdns10553:0crwdne10553:0"
+		"MAIN": "crwdns10553:0crwdne10553:0",
+		"CATEGORIES": "crwdns10583:0crwdne10583:0"
 	},
 	"MENU": {
 		"PIPELINES": "crwdns4734:0crwdne4734:0",
@@ -1240,9 +1245,11 @@
 		},
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "crwdns4992:0crwdne4992:0",
+			"EDIT_TIME_FRAME_TITLE": "crwdns10585:0crwdne10585:0",
 			"TIME_FRAME_PAGE_TITLE": "crwdns4994:0crwdne4994:0",
 			"PREDEFINED_TIME_FRAMES": "crwdns4996:0crwdne4996:0",
 			"ADD_KPI": "crwdns7346:0crwdne7346:0",
+			"EDIT_KPI": "crwdns10587:0crwdne10587:0",
 			"MAX_ENTITIES": "crwdns8406:0crwdne8406:0",
 			"EMPLOYEE_OBJECTIVES": "crwdns7508:0crwdne7508:0",
 			"WHO_CAN_OWN_OBJECTIVES": "crwdns7510:0crwdne7510:0",
@@ -1863,7 +1870,7 @@
 			"STATUS": "crwdns2421:0crwdne2421:0",
 			"JOB_POST_CONTENT": "crwdns2423:0crwdne2423:0",
 			"PROPOSAL_CONTENT": "crwdns2425:0crwdne2425:0",
-			"VIEW_JOB_POST": "crwdns8684:0crwdne8684:0"
+			"VIEW_JOB_POST": "crwdns10811:0crwdne10811:0"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "crwdns2427:0crwdne2427:0",
@@ -2027,9 +2034,9 @@
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "crwdns3124:0crwdne3124:0",
-		"ADD_EQUIPMENT_REQUEST": "crwdns3126:0crwdne3126:0",
-		"EDIT_EQUIPMENT_REQUEST": "crwdns3128:0crwdne3128:0",
-		"DELETE_EQUIPMENT_REQUEST": "crwdns3130:0crwdne3130:0",
+		"ADD_EQUIPMENT_REQUEST": "crwdns10577:0crwdne10577:0",
+		"EDIT_EQUIPMENT_REQUEST": "crwdns10579:0crwdne10579:0",
+		"DELETE_EQUIPMENT_REQUEST": "crwdns10581:0crwdne10581:0",
 		"REQUEST": "crwdns3132:0crwdne3132:0",
 		"EQUIPMENT_NAME": "crwdns3134:0crwdne3134:0",
 		"EQUIPMENT_SHARING_POLICY": "crwdns7752:0crwdne7752:0",
@@ -2404,6 +2411,13 @@
 			"INVITED": "crwdns2383:0crwdne2383:0",
 			"EXPIRED": "crwdns2385:0crwdne2385:0",
 			"ACCEPTED": "crwdns2387:0crwdne2387:0"
+		},
+		"INVITATION_EXPIRATION_OPTIONS": {
+			"DAY": "crwdns10565:0crwdne10565:0",
+			"WEEK": "crwdns10567:0crwdne10567:0",
+			"TWO_WEEK": "crwdns10569:0crwdne10569:0",
+			"MONTH": "crwdns10571:0crwdne10571:0",
+			"NEVER": "crwdns10573:0crwdne10573:0"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -2712,6 +2726,252 @@
 		"CATEGORY_EDIT_ADDED": "crwdns8838:0crwdne8838:0",
 		"CATEGORY_EDIT_UPDATED": "crwdns8840:0crwdne8840:0",
 		"CATEGORY_EDIT_DELETED": "crwdns8842:0crwdne8842:0"
+	},
+	"PROJECT_MANAGEMENT_PAGE": {
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "crwdns10591:0crwdne10591:0"
+	},
+	"SETTINGS_FEATURES": {
+		"INVOICE": "crwdns10593:0crwdne10593:0",
+		"INCOME": "crwdns10595:0crwdne10595:0",
+		"EXPENSE": "crwdns10597:0crwdne10597:0",
+		"PAYMENT": "crwdns10599:0crwdne10599:0",
+		"PROPOSAL": "crwdns10601:0crwdne10601:0",
+		"SALES_PIPELINE": "crwdns10603:0crwdne10603:0",
+		"TASK_DASHBOARD": "crwdns10605:0crwdne10605:0",
+		"JOBS": "crwdns10607:0crwdne10607:0",
+		"EMPLOYEES": "crwdns10609:0crwdne10609:0",
+		"TIME_ACTIVITY": "crwdns10611:0crwdne10611:0",
+		"TIMESHEET": "crwdns10613:0crwdne10613:0",
+		"APPOINTMENT_SCHEDULE": "crwdns10615:0crwdne10615:0",
+		"CANDIDATE": "crwdns10617:0crwdne10617:0",
+		"MANAGE_ORGANIZATION": "crwdns10619:0crwdne10619:0",
+		"PRODUCT_INVENTORY": "crwdns10621:0crwdne10621:0",
+		"PROJECT": "crwdns10623:0crwdne10623:0",
+		"ORGANIZATION_TEAM": "crwdns10625:0crwdne10625:0",
+		"ORGANIZATION_DOCUMENT": "crwdns10627:0crwdne10627:0",
+		"LEAD_CUSTOMER_CLIENT": "crwdns10629:0crwdne10629:0",
+		"GOAL_AND_OBJECTIVE": "crwdns10631:0crwdne10631:0",
+		"ALL_REPORT": "crwdns10633:0crwdne10633:0",
+		"USERS": "crwdns10635:0crwdne10635:0",
+		"ORGANIZATIONS": "crwdns10637:0crwdne10637:0",
+		"APPS_INTEGRATIONS": "crwdns10639:0crwdne10639:0",
+		"EMAIL_HISTORY": "crwdns10641:0crwdne10641:0",
+		"SETTING": "crwdns10643:0crwdne10643:0",
+		"ENTITY_IMPORT_EXPORT": "crwdns10645:0crwdne10645:0",
+		"CUSTOM_SMTP": "crwdns10647:0crwdne10647:0",
+		"ROLES_PERMISSIONS": "crwdns10649:0crwdne10649:0",
+		"TIME_TRACKING": "crwdns10651:0crwdne10651:0",
+		"ESTIMATE": "crwdns10653:0crwdne10653:0",
+		"DASHBOARD": "crwdns10655:0crwdne10655:0"
+	},
+	"SETTINGS_FEATURES_DESCRIPTION": {
+		"INVOICE": {
+			"MANAGE_INVOICE_CREATE_FIRST_INVOICE": "crwdns10657:0crwdne10657:0"
+		},
+		"INCOME": {
+			"CREATE_FIRST_INCOME": "crwdns10659:0crwdne10659:0"
+		},
+		"EXPENSE": {
+			"CREATE_FIRST_EXPENSE": "crwdns10661:0crwdne10661:0"
+		},
+		"PAYMENT": {
+			"MANAGE_PAYMENT_CREATE_FIRST_PAYMENT": "crwdns10663:0crwdne10663:0"
+		},
+		"PROPOSAL": {
+			"MANAGE_PROPOSAL_REGISTER_FIRST_PROPOSAL": "crwdns10665:0crwdne10665:0"
+		},
+		"SALES_PIPELINE": {
+			"CREATE_SALES_PIPELINE": "crwdns10667:0crwdne10667:0"
+		},
+		"TASK_DASHBOARD": {
+			"TASK_DASHBOARD": "crwdns10669:0crwdne10669:0"
+		},
+		"JOBS": {
+			"JOB_SEARCH_JOBS_MATCHING": "crwdns10671:0crwdne10671:0"
+		},
+		"EMPLOYEES": {
+			"MANAGE_EMPLOYEES_ADD_OR_INVITE_EMPLOYEES": "crwdns10673:0crwdne10673:0"
+		},
+		"TIME_ACTIVITY": {
+			"MANAGE_TIME_ACTIVITY_SCREENSHOTS_APP_VISITED_SITES_ACTIVITIES": "crwdns10675:0crwdne10675:0"
+		},
+		"TIMESHEET": {
+			"MANAGE_EMPLOYEE_TIMESHEET_DAILY_WEEKLY_CALENDAR_CREATE_FIRST_TIMESHEET": "crwdns10677:0crwdne10677:0"
+		},
+		"APPOINTMENT_SCHEDULE": {
+			"EMPLOYEE_APPOINTMENT_SCHEDULES_BOOK_PUBLIC_APPOINTMENT": "crwdns10679:0crwdne10679:0"
+		},
+		"CANDIDATE": {
+			"MANAGE_CANDIDATES_INTERVIEWS_INVITES": "crwdns10681:0crwdne10681:0"
+		},
+		"MANAGE_ORGANIZATION": {
+			"MANAGE_ORGANIZATION_DETAILS_LOCATION_AND_SETTINGS": "crwdns10683:0crwdne10683:0"
+		},
+		"PRODUCT_INVENTORY": {
+			"MANAGE_PRODUCT_INVENTORY_CREATE_FIRST_PRODUCT": "crwdns10685:0crwdne10685:0"
+		},
+		"PROJECT": {
+			"MANAGE_PROJECT_CREATE_FIRST_PROJECT": "crwdns10687:0crwdne10687:0"
+		},
+		"ORGANIZATION_TEAM": {
+			"MANAGE_ORGANIZATION_TEAM_CREATE_FIRST_TEAM": "crwdns10689:0crwdne10689:0"
+		},
+		"ORGANIZATION_DOCUMENT": {
+			"MANAGE_ORGANIZATION_DOCUMENT_CREATE_FIRST_DOCUMENT": "crwdns10691:0crwdne10691:0"
+		},
+		"LEAD_CUSTOMER_CLIENT": {
+			"MANAGE_LEADS_CUSTOMERS_AND_CLIENTS_CREATE_FIRST_CUSTOMER/CLIENTS": "crwdns10693:0crwdne10693:0"
+		},
+		"GOAL_AND_OBJECTIVE": {
+			"MANAGE_GOALS_AND_OBJECTIVES": "crwdns10695:0crwdne10695:0"
+		},
+		"ALL_REPORT": {
+			"MANAGE_EXPENSE_WEEKLY_TIME_ACTIVITY_AND_ETC_REPORTS": "crwdns10697:0crwdne10697:0"
+		},
+		"USERS": {
+			"MANAGE_TENANT_USERS": "crwdns10699:0crwdne10699:0"
+		},
+		"ORGANIZATIONS": {
+			"MANAGE_TENANT_ORGANIZATIONS": "crwdns10701:0crwdne10701:0"
+		},
+		"APPS_INTEGRATIONS": {
+			"MANAGE_AVAILABLE_APPS_INTEGRATIONS_LIKE_UPWORK_HUBSTAFF": "crwdns10703:0crwdne10703:0"
+		},
+		"EMAIL_HISTORY": {
+			"MANAGE_EMAIL_HISTORY": "crwdns10705:0crwdne10705:0"
+		},
+		"SETTING": {
+			"MANAGE_SETTING": "crwdns10707:0crwdne10707:0"
+		},
+		"ENTITY_IMPORT_EXPORT": {
+			"MANAGE_ENTITY_IMPORT_AND_EXPORT": "crwdns10709:0crwdne10709:0"
+		},
+		"CUSTOM_SMTP": {
+			"MANAGE_TENANT_ORGANIZATION_CUSTOM_SMTP": "crwdns10711:0crwdne10711:0"
+		},
+		"ROLES_PERMISSIONS": {
+			"MANAGE_ROLES_PERMISSIONS": "crwdns10713:0crwdne10713:0"
+		},
+		"TIME_TRACKING": {
+			"DOWNLOAD_DESKTOP_APP_CREATE_FIRST_TIMESHEET": "crwdns10715:0crwdne10715:0"
+		},
+		"ESTIMATE": {
+			"MANAGE_ESTIMATE_CREATE_FIRST_ESTIMATE": "crwdns10717:0crwdne10717:0"
+		},
+		"DASHBOARD": {
+			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "crwdns10719:0crwdne10719:0"
+		}
+	},
+	"SETTINGS_FEATURES_TEXT": {
+		"INVOICE": {
+			"INVOICE_RECEIVED": "crwdns10721:0crwdne10721:0"
+		},
+		"INCOME": {
+			"": "crwdns10723:0crwdne10723:0"
+		},
+		"EXPENSE": {
+			"EMPLOYEE_RECURRING_EXPENSE": "crwdns10725:0crwdne10725:0",
+			"ORGANIZATION_RECURRING_EXPENSES": "crwdns10727:0crwdne10727:0"
+		},
+		"PAYMENT": {
+			"": "crwdns10729:0crwdne10729:0"
+		},
+		"PROPOSAL": {
+			"PROPOSAL_TEMPLATE": "crwdns10731:0crwdne10731:0"
+		},
+		"SALES_PIPELINE": {
+			"SALES_PIPELINE_DEAL": "crwdns10733:0crwdne10733:0"
+		},
+		"TASK_DASHBOARD": {
+			"TEAM_TASK_DASHBOARD": "crwdns10735:0crwdne10735:0",
+			"MY_TASK_DASHBOARD": "crwdns10737:0crwdne10737:0"
+		},
+		"JOBS": {
+			"": "crwdns10739:0crwdne10739:0"
+		},
+		"EMPLOYEES": {
+			"EMPLOYEE_LEVEL": "crwdns10741:0crwdne10741:0",
+			"EMPLOYEE_POSITION": "crwdns10743:0crwdne10743:0",
+			"EMPLOYEE_TIME_OFF": "crwdns10745:0crwdne10745:0",
+			"EMPLOYEE_APPROVAL": "crwdns10747:0crwdne10747:0",
+			"EMPLOYEE_APPROVAL_POLICY": "crwdns10749:0crwdne10749:0"
+		},
+		"TIME_ACTIVITY": {
+			"": "crwdns10751:0crwdne10751:0"
+		},
+		"TIMESHEET": {
+			"": "crwdns10753:0crwdne10753:0"
+		},
+		"APPOINTMENT_SCHEDULE": {
+			"": "crwdns10755:0crwdne10755:0"
+		},
+		"CANDIDATE": {
+			"MANAGE_INTERVIEW": "crwdns10757:0crwdne10757:0",
+			"MANAGE_INVITE": "crwdns10759:0crwdne10759:0"
+		},
+		"MANAGE_ORGANIZATION": {
+			"HELP_CENTER": "crwdns10761:0crwdne10761:0",
+			"ORGANIZATION_TAG": "crwdns10763:0crwdne10763:0",
+			"ORGANIZATION_EQUIPMENT": "crwdns10765:0crwdne10765:0",
+			"ORGANIZATION_VENDOR": "crwdns10767:0crwdne10767:0",
+			"ORGANIZATION_DEPARTMENT": "crwdns10769:0crwdne10769:0",
+			"ORGANIZATION_EMPLOYMENT_TYPE": "crwdns10771:0crwdne10771:0"
+		},
+		"PRODUCT_INVENTORY": {
+			"": "crwdns10773:0crwdne10773:0"
+		},
+		"PROJECT": {
+			"": "crwdns10775:0crwdne10775:0"
+		},
+		"ORGANIZATION_TEAM": {
+			"": "crwdns10777:0crwdne10777:0"
+		},
+		"ORGANIZATION_DOCUMENT": {
+			"": "crwdns10779:0crwdne10779:0"
+		},
+		"LEAD_CUSTOMER_CLIENT": {
+			"": "crwdns10781:0crwdne10781:0"
+		},
+		"GOAL_AND_OBJECTIVE": {
+			"GOAL_TIME_FRAME_KPI": "crwdns10783:0crwdne10783:0"
+		},
+		"ALL_REPORT": {
+			"": "crwdns10785:0crwdne10785:0"
+		},
+		"USERS": {
+			"": "crwdns10787:0crwdne10787:0"
+		},
+		"ORGANIZATIONS": {
+			"": "crwdns10789:0crwdne10789:0"
+		},
+		"APPS_INTEGRATIONS": {
+			"": "crwdns10791:0crwdne10791:0"
+		},
+		"EMAIL_HISTORY": {
+			"CUSTOM_EMAIL_TEMPLATE": "crwdns10793:0crwdne10793:0"
+		},
+		"SETTING": {
+			"FILE_STORAGE": "crwdns10795:0crwdne10795:0",
+			"SMS_GATEWAY": "crwdns10797:0crwdne10797:0"
+		},
+		"ENTITY_IMPORT_EXPORT": {
+			"": "crwdns10799:0crwdne10799:0"
+		},
+		"CUSTOM_SMTP": {
+			"": "crwdns10801:0crwdne10801:0"
+		},
+		"ROLES_PERMISSIONS": {
+			"": "crwdns10803:0crwdne10803:0"
+		},
+		"TIME_TRACKING": {
+			"": "crwdns10805:0crwdne10805:0"
+		},
+		"ESTIMATE": {
+			"ESTIMATE_RECEIVED": "crwdns10807:0crwdne10807:0"
+		},
+		"DASHBOARD": {
+			"": "crwdns10809:0crwdne10809:0"
+		}
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "crwdns2257:0crwdne2257:0"
@@ -3156,6 +3416,7 @@
 		"TIME_TRACKING": "crwdns8048:0crwdne8048:0",
 		"MEMBERS_WORKED": "crwdns8050:0crwdne8050:0",
 		"PROJECTS_WORKED": "crwdns8052:0crwdne8052:0",
+		"ACTIVITY": "crwdns10575:0crwdne10575:0",
 		"WEEKLY_ACTIVITY": "crwdns8054:0crwdne8054:0",
 		"WORKED_THIS_WEEK": "crwdns8056:0crwdne8056:0",
 		"TODAY_ACTIVITY": "crwdns8058:0crwdne8058:0",

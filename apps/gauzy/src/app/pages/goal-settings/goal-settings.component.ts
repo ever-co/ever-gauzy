@@ -5,7 +5,8 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
-import { first, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { GoalSettingsService } from '../../@core/services/goal-settings.service';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 import { Store } from '../../@core/services/store.service';
@@ -287,9 +288,9 @@ export class GoalSettingsComponent
 			closeOnBackdropClick: false
 		});
 
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
+		this.clearItem();
 		if (!!response) {
-			this.clearItem();
 			this._loadTableSettings('timeframe');
 			await this._loadTableData('timeframe');
 		}
@@ -312,9 +313,9 @@ export class GoalSettingsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await kpiDialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(kpiDialog.onClose);
+		this.clearItem();
 		if (!!response) {
-			this.clearItem();
 			this._loadTableSettings('kpi');
 			await this._loadTableData('kpi');
 		}
@@ -341,7 +342,7 @@ export class GoalSettingsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
 				await this.goalSettingService
@@ -382,7 +383,7 @@ export class GoalSettingsComponent
 			},
 			closeOnBackdropClick: false
 		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
 				await this.goalSettingService
@@ -415,7 +416,7 @@ export class GoalSettingsComponent
 		const goalTemplateDialog = this.dialogService.open(
 			GoalTemplatesComponent
 		);
-		await goalTemplateDialog.onClose.pipe(first()).toPromise();
+		await firstValueFrom(goalTemplateDialog.onClose);
 	}
 
 	/*

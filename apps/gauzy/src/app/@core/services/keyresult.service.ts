@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { IKeyResult } from '@gauzy/contracts';
 import { Observable, throwError } from 'rxjs';
-import { catchError, first } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -23,31 +24,45 @@ export class KeyResultService {
 	) {}
 
 	createKeyResult(keyResult): Promise<IKeyResult> {
-		return this._http
-			.post<IKeyResult>(`${this.API_URL}/create`, keyResult)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		return firstValueFrom(
+			this._http
+			.post<IKeyResult>(`${this.API_URL}`, keyResult)
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	createBulkKeyResult(keyResults): Promise<IKeyResult[]> {
-		return this._http
-			.post<IKeyResult[]>(`${this.API_URL}/createBulk`, keyResults)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		return firstValueFrom(
+			this._http
+			.post<IKeyResult[]>(`${this.API_URL}/bulk`, keyResults)
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	async update(id: string, keyResult: IKeyResult): Promise<IKeyResult> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.put<IKeyResult>(`${this.API_URL}/${id}`, keyResult)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	findKeyResult(id: string): Promise<IKeyResultResponse> {
-		return this._http
-			.get<IKeyResultResponse>(`${this.API_URL}/${id}`)
-			.pipe(catchError((error) => this.errorHandler(error)))
-			.toPromise();
+		return firstValueFrom(
+			this._http.get<IKeyResultResponse>(`${this.API_URL}/${id}`)
+			.pipe(
+				catchError(
+					(error) => this.errorHandler(error)
+				)
+			)
+		);
 	}
 
 	getAllKeyResults(keyResult): Observable<IKeyResultResponse> {
@@ -57,10 +72,10 @@ export class KeyResultService {
 	}
 
 	delete(id: string): Promise<any> {
-		return this._http
+		return firstValueFrom(
+			this._http
 			.delete(`${this.API_URL}/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	errorHandler(error: HttpErrorResponse) {

@@ -24,8 +24,8 @@ export const addButtonVisible = () => {
 	verifyElementIsVisible(CustomersPage.addButtonCss);
 };
 
-export const clickAddButton = () => {
-	clickButton(CustomersPage.addButtonCss);
+export const clickAddButton = (index) => {
+	clickButtonByIndex(CustomersPage.addButtonCss, index);
 };
 
 export const nameInputVisible = () => {
@@ -179,8 +179,8 @@ export const editButtonVisible = () => {
 	verifyElementIsVisible(CustomersPage.editButtonCss);
 };
 
-export const clickEditButton = () => {
-	clickButton(CustomersPage.editButtonCss);
+export const clickEditButton = (index) => {
+	clickButtonByIndex(CustomersPage.editButtonCss, index);
 };
 
 export const deleteButtonVisible = () => {

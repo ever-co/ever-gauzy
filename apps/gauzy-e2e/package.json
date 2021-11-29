@@ -6,10 +6,10 @@
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ever-co/gauzy.git"
+		"url": "https://github.com/ever-co/ever-gauzy.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/gauzy/issues"
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"private": true,
 	"author": {
@@ -49,20 +49,20 @@
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn npx ngcc --properties es2016 browser module main --first-only --create-ivy-entry-points && yarn node tools/web/postinstall"
 	},
 	"resolutions": {
-		"@angular-devkit/build-angular": "~0.1101.2"
+		"@angular-devkit/build-angular": "~12.2.7"
 	},
 	"devDependencies": {
-		"@4tw/cypress-drag-drop": "^1.8.0",
-		"@angular-devkit/build-angular": "^0.1101.2",
-		"@angular/cli": "^11.1.1",
-		"@cypress/browserify-preprocessor": "^3.0.1",
-		"@nrwl/angular": "^11.2.7",
-		"@nrwl/cypress": "11.2.7",
-		"@nrwl/jest": "^11.2.7",
+		"@4tw/cypress-drag-drop": "^2.0.0",
+		"@angular-devkit/build-angular": "~12.2.7",
+		"@angular/cli": "^12.2.7",		
+		"@nrwl/angular": "^12.9.0",
+		"@nrwl/cypress": "^12.9.0",
+		"@nrwl/jest": "^12.9.0",
 		"@types/jest": "^26.0.8",
 		"cypress": "8.3.1",
+		"@cypress/browserify-preprocessor": "^3.0.1",
 		"cypress-cucumber-preprocessor": "^4.2.0",
-		"cypress-file-upload": "^5.0.8",
+		"cypress-file-upload": "^5.0.8",		
 		"dayjs": "^1.10.6",
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",

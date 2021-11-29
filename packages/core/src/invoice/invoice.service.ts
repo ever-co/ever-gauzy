@@ -64,7 +64,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		);
 		const base64 = buffer.toString('base64');
 
-		const organization: IOrganization = await this.organizationService.findOne(organizationId);
+		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
 		this.emailService.emailInvoice(
 			languageCode,
 			email,
@@ -103,7 +103,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	async generateInvoicePdf(invoiceId: string, langulage: string) {
-		const invoice: IInvoice = await this.findOne(invoiceId, {
+		const invoice: IInvoice = await this.findOneByIdString(invoiceId, {
 			relations: [
 				'fromOrganization',
 				'invoiceItems.employee.user',
@@ -223,7 +223,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	async generateInvoicePaymentPdf(invoiceId: string, langulage: string) {
-		const invoice: IInvoice = await this.findOne(invoiceId, {
+		const invoice: IInvoice = await this.findOneByIdString(invoiceId, {
 			relations: [
 				'invoiceItems',
 				'fromOrganization',

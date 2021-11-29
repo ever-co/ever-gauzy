@@ -7,7 +7,7 @@ import { UsersService } from '../../@core/services';
 import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })

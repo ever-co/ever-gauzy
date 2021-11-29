@@ -12,7 +12,7 @@ export const EditUserPage = {
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	passwordInputCss: '#password',
-	repeatPasswordInputCss: '#repeatPassword',
+	repeatPasswordInputCss: '[placeholder="Repeat Password"]',
 	emailInputCss: '#email',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',

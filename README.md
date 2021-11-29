@@ -73,7 +73,13 @@ Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 ### Download
 
-You can download Gauzy Platform, Gauzy Server or Desktop Apps (Windows/Mac/Linux) directly from our Github releases page <https://github.com/ever-co/ever-gauzy/releases> or check https://web.gauzy.co/downloads if you want more simple way to download different Gauzy installations.
+You can download Gauzy Platform, Gauzy Server or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
+
+In addition, all downloads are also available from the following pages:
+- [Gauzy Releases](https://github.com/ever-co/ever-gauzy/releases)
+- [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
+- [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
+- [Desktop Timer App Releases](https://github.com/ever-co/ever-gauzy-desktop-timer/releases)
 
 ### Production (SaaS, WIP)
 
@@ -95,7 +101,7 @@ We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux):
 
 More information about our Server & Desktop Apps:
 
--   Download for your OS directly from our Github releases page <https://github.com/ever-co/ever-gauzy/releases> or check https://web.gauzy.co/downloads if you want more simple way to download different Gauzy installations.
+-   Download for your OS from the official [Downloads](https://web.gauzy.co/downloads) page or see section "Download" above for other links to our releases pages.
 -   Setup Gauzy Server with default choices in Setup Wizard and run it.
 -   You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such Admin user is not an employee, so you will not be able to track time.
@@ -152,10 +158,11 @@ Together with Gauzy, Docker Compose will run following:
 ### Manually
 
 -   Install [NodeJs](https://nodejs.org/en/download) LTS version, e.g. 14.x (note: at the moment Gauzy may not work with Node 15.x/16.x).
--   Optionally install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (version 13 might not be supported yet). Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite for demo purposes.
+-   Optionally install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (version 13 might not be supported yet). Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
 -   Install NPM packages and bootstrap solution using command `yarn bootstrap`.
--   Copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and optionally change default settings, e.g. database type, name, user, password, etc.
+-   Adjust settings in the [`.env.local`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.local) which used in local runs.  
+-   Alternatively, you can copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and change default settings there, e.g. database type, name, user, password, etc.
 -   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`.
 -   Run both API and UI with single command: `yarn start`.
 -   Open Gauzy UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>).
@@ -172,8 +179,8 @@ Notes:
 ### Production
 
 -   See [Setup Gauzy for Client Server](https://github.com/ever-co/ever-gauzy/wiki/Setup-Gauzy-for-Client-Server) for more information about production setup on your servers.
--   For simple deployments scenarious (e.g. for yourself or your own small organization), check our [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy demo into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
--   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project, it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
+-   For simple deployments scenarios (e.g. for yourself or your own small organization), check our [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy demo into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
+-   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
 
 ## Contribute
 
@@ -202,7 +209,7 @@ View full list of our [contributors](https://github.com/ever-co/ever-gauzy/graph
 
 Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!  
 Gauzy™ is provided AS IS without any warranty. Use at your own risk!  
-See more details in the [LICENSE](LICENSE).
+See more details in the [LICENSE](LICENSE.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
@@ -220,7 +227,7 @@ This software is available under following licenses:
 
 #### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License.
 
-#### Please see [LICENSE.md](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare).
+#### Please see [LICENSE](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare).
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_large)
 

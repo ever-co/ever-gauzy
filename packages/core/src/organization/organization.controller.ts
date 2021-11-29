@@ -80,7 +80,7 @@ export class OrganizationController extends CrudController<Organization> {
 		if (isNotEmpty(relations)) {
 			request['relations'] = relations;
 		}
-		return await this.organizationService.findOne(id, request);
+		return await this.organizationService.findOneByIdString(id, request);
 	}
 
 	@ApiOperation({ summary: 'Find Organization by profile link.' })

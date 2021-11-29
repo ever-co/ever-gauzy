@@ -143,3 +143,35 @@
     font-weight: bold;
   }
 }
+
+.timer-max {
+  max-width: 385px;
+}
+
+::ng-deep .nb-theme-default nb-layout .layout .layout-container .content .columns nb-layout-column {
+  padding: 2.25rem 1.25rem 0.75rem;
+}
+
+.max-width-search {
+  width: 108%;
+}
+
+.expand-icon {
+  position: absolute !important;
+  z-index: 999;
+  right: -14px;
+  top: 50%;
+  cursor: pointer
+}
+
+.top-space-1 {
+  margin-top: 10px;
+}
+
+::ng-deep .nb-theme-default tr {
+  cursor: pointer;
+}
+
+.icon-process {
+  color: #3366ff;
+}

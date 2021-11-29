@@ -6,10 +6,10 @@ import {
 	ICandidateInterview
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { NbDialogService } from '@nebular/theme';
@@ -57,10 +57,9 @@ export class EditCandidateComponent
 			.subscribe(async (params) => {
 				const id = params.id;
 
-				const { items } = await this.candidatesService
+				const { items } = await firstValueFrom(this.candidatesService
 					.getAll(['user'], { id })
-					.pipe(first())
-					.toPromise();
+				);
 
 				this.selectedCandidate = items[0];
 				this.loadInterview();

@@ -11,7 +11,7 @@ export const OrganizationTeamsPage = {
 	managerMultiSelectCss:
 		'[ng-reflect-placeholder="Add or Remove Team Managers"]',
 	selectDropdownOptionCss: '.option-list nb-option',
-	saveButtonCss: 'div.form-group > button[status="success"]',
+	saveButtonCss: 'nb-card-footer > button[status="success"]',
 	editButtonCss: 'nb-card-body > div > button[status="info"]',
 	deleteButtonCss: 'nb-card-body > div > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',

@@ -108,7 +108,9 @@ export class Equipment
 	 * EquipmentSharing
 	 */
 	@ApiProperty({ type: () => EquipmentSharing, isArray: true })
-	@OneToMany(() => EquipmentSharing, (equipmentSharing) => equipmentSharing.equipment)
+	@OneToMany(() => EquipmentSharing, (equipmentSharing) => equipmentSharing.equipment, {
+		onDelete: 'CASCADE'
+	})
 	equipmentSharings: IEquipmentSharing[];
 
 	/*
@@ -118,7 +120,10 @@ export class Equipment
     */
 
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.equipment)
+	@ManyToMany(() => Tag, (tag) => tag.equipments, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({ name: 'tag_equipment' })
 	tags: ITag[];
 }

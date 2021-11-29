@@ -89,7 +89,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true })
+	@ManyToOne(() => Employee, (employee) => employee.timeLogs)
 	@JoinColumn()
 	employee: IEmployee;
 

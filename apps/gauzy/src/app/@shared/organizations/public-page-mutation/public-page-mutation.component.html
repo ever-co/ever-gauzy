@@ -54,6 +54,7 @@
 									id="companySize"
 									nbInput
 									type="number"
+									[min]="0"
 									fullWidth
 									placeholder="{{
 										'POP_UPS.SIZE' | translate
@@ -263,10 +264,7 @@
 									<ckeditor
 										formControlName="overview"
 										class="overview"
-										[config]="{
-											width: '100%',
-											height: '200'
-										}"
+										[config]="ckConfig"
 										[ngClass]="{
 											'status-danger':
 												overview?.invalid &&
@@ -334,6 +332,7 @@
 										nbInput
 										class="input_year"
 										type="number"
+										[min]="0"
 										placeholder="{{
 											'POP_UPS.YEAR' | translate
 										}}"

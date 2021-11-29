@@ -9,7 +9,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import { IExpenseCategory } from '@gauzy/contracts';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -56,23 +56,23 @@ export class RecurringExpenseMutationComponent
 		category: string;
 		types: COMPONENT_TYPE[];
 	}[] = [
-		{
-			category: RecurringExpenseDefaultCategoriesEnum.SALARY,
-			types: [COMPONENT_TYPE.EMPLOYEE]
-		},
-		{
-			category: RecurringExpenseDefaultCategoriesEnum.SALARY_TAXES,
-			types: [COMPONENT_TYPE.EMPLOYEE]
-		},
-		{
-			category: RecurringExpenseDefaultCategoriesEnum.RENT,
-			types: [COMPONENT_TYPE.ORGANIZATION]
-		},
-		{
-			category: RecurringExpenseDefaultCategoriesEnum.EXTRA_BONUS,
-			types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
-		}
-	];
+			{
+				category: RecurringExpenseDefaultCategoriesEnum.SALARY,
+				types: [COMPONENT_TYPE.EMPLOYEE]
+			},
+			{
+				category: RecurringExpenseDefaultCategoriesEnum.SALARY_TAXES,
+				types: [COMPONENT_TYPE.EMPLOYEE]
+			},
+			{
+				category: RecurringExpenseDefaultCategoriesEnum.RENT,
+				types: [COMPONENT_TYPE.ORGANIZATION]
+			},
+			{
+				category: RecurringExpenseDefaultCategoriesEnum.EXTRA_BONUS,
+				types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
+			}
+		];
 	@Input() isAdd: boolean;
 	recurringExpense?: IRecurringExpenseModel;
 	componentType: COMPONENT_TYPE;
@@ -115,9 +115,9 @@ export class RecurringExpenseMutationComponent
 	formatToOrganizationDate(date: string) {
 		return date
 			? moment(date).format(
-					this.store.selectedOrganization.dateFormat ||
-						defaultDateFormat
-			  )
+				this.store.selectedOrganization.dateFormat ||
+				defaultDateFormat
+			)
 			: 'end';
 	}
 
@@ -187,7 +187,7 @@ export class RecurringExpenseMutationComponent
 		return { value: term, label: term };
 	}
 
-	addNewCustomCategoryName = (name: string): Promise<IExpenseCategory> => {
+	addNewCustomCategoryName = async (name: string): Promise<IExpenseCategory> => {
 		try {
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
@@ -195,7 +195,18 @@ export class RecurringExpenseMutationComponent
 					name
 				}
 			);
-			return this.expenseCategoriesStore.create(name).toPromise();
+
+      const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
+
+      this.defaultFilteredCategories = [
+        ...this.defaultFilteredCategories,
+        {
+          value: createdCategory.name,
+          label: createdCategory.name
+        }
+      ];
+
+			return createdCategory;
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -227,10 +238,10 @@ export class RecurringExpenseMutationComponent
 				recurringExpense && recurringExpense.startDate
 					? new Date(recurringExpense.startDate)
 					: new Date(
-							this.selectedDate.getFullYear(),
-							this.selectedDate.getMonth(),
-							1
-					  )
+						this.selectedDate.getFullYear(),
+						this.selectedDate.getMonth(),
+						1
+					)
 			]
 		});
 
@@ -263,17 +274,17 @@ export class RecurringExpenseMutationComponent
 			const { value, conflicts } =
 				this.componentType === COMPONENT_TYPE.ORGANIZATION
 					? await this.organizationRecurringExpenseService.getStartDateUpdateType(
-							{
-								newStartDate,
-								recurringExpenseId: this.recurringExpense.id
-							}
-					  )
+						{
+							newStartDate,
+							recurringExpenseId: this.recurringExpense.id
+						}
+					)
 					: await this.employeeRecurringExpenseService.getStartDateUpdateType(
-							{
-								newStartDate,
-								recurringExpenseId: this.recurringExpense.id
-							}
-					  );
+						{
+							newStartDate,
+							recurringExpenseId: this.recurringExpense.id
+						}
+					);
 			this.startDateUpdateType = value;
 			this.conflicts = conflicts;
 		}
@@ -281,12 +292,11 @@ export class RecurringExpenseMutationComponent
 	}
 
 	private async _loadDefaultCurrency() {
-		const orgData = await this.organizationsService
+		const orgData = await firstValueFrom(this.organizationsService
 			.getById(this.store.selectedOrganization.id, [
 				OrganizationSelectInput.currency
 			])
-			.pipe(first())
-			.toPromise();
+		);
 
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);

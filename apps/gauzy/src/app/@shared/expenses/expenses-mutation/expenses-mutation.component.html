@@ -64,6 +64,9 @@
 					[ngClass]="{ 'col-sm-12': expense && !duplicate }"
 				>
 					<div class="form-group">
+						<label class="label">{{
+							'POP_UPS.CATEGORIES' | translate
+						}}</label>
 						<ga-expense-category-select
 							formControlName="category"
 							[addTag]="true"
@@ -75,6 +78,9 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-6">
+					<label class="label">{{
+						'POP_UPS.DATE' | translate
+					}}</label>
 					<input
 						formControlName="valueDate"
 						nbInput
@@ -91,6 +97,9 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
+						<label class="label">{{
+							'POP_UPS.ALL_VENDORS' | translate
+						}}</label>
 						<ga-vendor-select
 							formControlName="vendor"
 							[searchable]="true"
@@ -117,6 +126,7 @@
 						}}</label>
 						<input
 							nbInput
+							[min]="0"
 							type="number"
 							step="1"
 							fullWidth
@@ -134,12 +144,16 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-12">
+					<label class="label">{{
+						'POP_UPS.PURPOSE' | translate
+					}}</label>
 					<div class="form-group">
 						<textarea
 							nbInput
 							class="textarea"
 							type="text"
 							formControlName="purpose"
+							fullWidth
 							[placeholder]="'POP_UPS.PURPOSE' | translate"
 						></textarea>
 					</div>
@@ -168,6 +182,9 @@
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
+							<label class="label">{{
+								'CONTEXT_MENU.CONTACT' | translate
+							}}</label>
 							<ng-select
 								[isOpen]="showWarning ? true : null"
 								[addTag]="addNewOrganizationContact"
@@ -197,6 +214,9 @@
 					</div>
 					<div class="col-sm-6" *ngIf="projects.length">
 						<div class="form-group">
+							<label class="label">{{
+								'CONTEXT_MENU.PROJECT' | translate
+							}}</label>
 							<ng-select
 								[items]="projects"
 								[addTag]="addNewProject"
@@ -317,6 +337,7 @@
 						<div class="form-group">
 							<input
 								nbInput
+								[min]="0"
 								type="number"
 								step="1"
 								fullWidth

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Brackets, SelectQueryBuilder } from 'typeorm';
-import * as _ from 'underscore';
+import { Repository, In, Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import {
 	PermissionsEnum,
 	IGetActivitiesStatistics,
@@ -56,28 +56,29 @@ export class StatisticService {
 		private readonly configService: ConfigService
 	) {}
 
+	/**
+	 * GET Time Tracking Dashboard Counts Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
 		const {
 			employeeId,
 			organizationId,
 			startDate,
 			endDate,
-			date = new Date(),
 			projectId,
 			logType = [],
-			source = []
+			source = [],
+			date = new Date(),
 		} = request;
 
-		let { start, end } = getDateRange(date, 'week');
-		if (startDate && endDate) {
-			const range = getDateRange(startDate, endDate);
-			start = range['start'];
-			end = range['end'];
-		}
-
 		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
-
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -109,114 +110,102 @@ export class StatisticService {
 		 *  Get employees count who worked in this week.
 		 */
 		const employeesCountQuery = this.employeeRepository.createQueryBuilder();
-		employeesCountQuery
-			.innerJoin(`${employeesCountQuery.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
-
-		if (isNotEmpty(employeeIds)) {
-			employeesCountQuery
-				.where({
-					id: In(employeeIds)
-				})
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				});
-		}
-
-		// project filter query
-		if (isNotEmpty(projectIds)) {
-			employeesCountQuery.andWhere(
-				`"timeLogs"."projectId" IN (:...projectIds)`,
-				{
-					projectIds
-				}
-			);
-		}
-
-		if (isNotEmpty(logType)) {
-			employeesCountQuery.andWhere(
-				`"timeLogs"."logType" IN (:...logType)`,
-				{
-					logType
-				}
-			);
-		}
-
-		if (isNotEmpty(source)) {
-			employeesCountQuery.andWhere(
-				`"timeLogs"."source" IN (:...source)`,
-				{
-					source
-				}
-			);
-		}
-
 		const employeesCount = await employeesCountQuery
-			.andWhere(`"${employeesCountQuery.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
+			.innerJoin(`${employeesCountQuery.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
+			.andWhere(`"${employeesCountQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${employeesCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
-				`"${employeesCountQuery.alias}"."organizationId" = :organizationId`,
-				{
-					organizationId
-				}
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+					/**
+					 * If Employee Selected
+					 */
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					/**
+					 * If Project Selected
+					 */
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+					/**
+					 * If LogType Selected
+					 */
+					if (isNotEmpty(logType)) {
+						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+							logType
+						});
+					}
+					/**
+					 * If Source Selected
+					 */
+					if (isNotEmpty(source)) {
+						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
+							source
+						});
+					}
+				})
 			)
+			
 			.getCount();
 
 		/*
 		 *  Get projects count who worked in this week.
 		 */
 		const projectsCountQuery = this.organizationProjectsRepository.createQueryBuilder();
-		projectsCountQuery
-			.innerJoin(`${projectsCountQuery.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
-
-		if (isNotEmpty(employeeIds)) {
-			projectsCountQuery
-				.where(`"timeLogs"."employeeId" IN (:...employeeId)`, {
-					employeeId: employeeIds
-				})
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				});
-		}
-
-		// project filter query
-		if (isNotEmpty(projectIds)) {
-			projectsCountQuery.andWhere(
-				`"timeLogs"."projectId" IN (:...projectIds)`,
-				{
-					projectIds
-				}
-			);
-		}
-
-		if (isNotEmpty(logType)) {
-			projectsCountQuery.andWhere(
-				`"timeLogs"."logType" IN (:...logType)`,
-				{
-					logType
-				}
-			);
-		}
-
-		if (isNotEmpty(source)) {
-			projectsCountQuery.andWhere(`"timeLogs"."source" IN (:...source)`, {
-				source
-			});
-		}
-
 		const projectsCount = await projectsCountQuery
-			.andWhere(`"${projectsCountQuery.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
+			.innerJoin(`${projectsCountQuery.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
+			.andWhere(`"${projectsCountQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${projectsCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
-				`"${projectsCountQuery.alias}"."organizationId" = :organizationId`,
-				{
-					organizationId
-				}
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+					/**
+					 * If Employee Selected
+					 */
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+					}
+					/**
+					 * If Project Selected
+					 */
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
+					/**
+					 * If LogType Selected
+					 */
+					if (isNotEmpty(logType)) {
+						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+							logType
+						});
+					}
+					/**
+					 * If Source Selected
+					 */
+					if (isNotEmpty(source)) {
+						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
+							source
+						});
+					}
+				})
 			)
 			.getCount();
 
@@ -227,12 +216,9 @@ export class StatisticService {
 			overall: 0,
 			duration: 0
 		};
-		if (employeeIds.length > 0) {
-			const query = this.timeSlotRepository.createQueryBuilder(
-				'time_slot'
-			);
-			query
-				.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
+		if (isNotEmpty(employeeIds)) {
+			const query = this.timeSlotRepository.createQueryBuilder();
+			const weekTimeStatistics = await query
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
@@ -243,47 +229,51 @@ export class StatisticService {
 				)
 				.addSelect(`AVG("${query.alias}"."overall")`, `overall`)
 				.addSelect(`COUNT("${query.alias}"."id")`, `count`)
-				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				})
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
+				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
+				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+						/**
+						 * If Employee Selected
+						 */
+						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+						/**
+						 * If Project Selected
+						 */
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+								projectIds
+							});
+						}
+						/**
+						 * If LogType Selected
+						 */
+						if (isNotEmpty(logType)) {
+							qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+								logType
+							});
+						}
+						/**
+						 * If Source Selected
+						 */
+						if (isNotEmpty(source)) {
+							qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
+								source
+							});
+						}
+					})
 				)
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
-				.groupBy(`"timeLogs"."id"`);
+				.groupBy(`"timeLogs"."id"`)
+				.getRawMany();
 
-			// project filter query
-			if (isNotEmpty(projectIds)) {
-				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-					projectIds
-				});
-			}
-
-			if (isNotEmpty(logType)) {
-				query.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
-					logType
-				});
-			}
-
-			if (isNotEmpty(source)) {
-				query.andWhere(`"timeLogs"."source" IN (:...source)`, {
-					source
-				});
-			}
-
-			const weekTimeStatistics = await query.getRawMany();
-			const duration = _.reduce(
-				_.pluck(weekTimeStatistics, 'duration'),
-				ArraySum,
-				0
-			);
+			const duration = reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0);
 			const overall = average(weekTimeStatistics, 'overall');
 
 			weekActivities['duration'] = duration;
@@ -298,13 +288,10 @@ export class StatisticService {
 			duration: 0
 		};
 
-		if (employeeIds.length > 0) {
+		if (isNotEmpty(employeeIds)) {
 			let { start, end } = getDateRange();
-			const query = this.timeSlotRepository.createQueryBuilder(
-				'time_slot'
-			);
-			query
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+			const query = this.timeSlotRepository.createQueryBuilder();
+			const todayTimeStatistics = await query
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
@@ -315,53 +302,56 @@ export class StatisticService {
 				)
 				.addSelect(`AVG("${query.alias}"."overall")`, `overall`)
 				.addSelect(`COUNT("${query.alias}"."id")`, `count`)
-				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				})
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
+				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
+				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+						/**
+						 * If Employee Selected
+						 */
+						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+						/**
+						 * If Project Selected
+						 */
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+								projectIds
+							});
+						}
+						/**
+						 * If LogType Selected
+						 */
+						if (isNotEmpty(logType)) {
+							qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+								logType
+							});
+						}
+						/**
+						 * If Source Selected
+						 */
+						if (isNotEmpty(source)) {
+							qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
+								source
+							});
+						}
+					})
 				)
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
-				.groupBy(`"timeLogs"."id"`);
-
-			// project filter query
-			if (isNotEmpty(projectIds)) {
-				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-					projectIds
-				});
-			}
-
-			if (isNotEmpty(logType)) {
-				query.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
-					logType
-				});
-			}
-
-			if (isNotEmpty(source)) {
-				query.andWhere(`"timeLogs"."source" IN (:...source)`, {
-					source
-				});
-			}
-
-			const todayTimeStatistics = await query.getRawMany();
-			const duration = _.reduce(
-				_.pluck(todayTimeStatistics, 'duration'),
-				ArraySum,
-				0
-			);
+				.groupBy(`"timeLogs"."id"`)
+				.getRawMany();
+	
+			const duration = reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0);
 			const overall = average(todayTimeStatistics, 'overall');
 
 			todayActivities['duration'] = duration;
 			todayActivities['overall'] = overall;
 		}
-
 		return {
 			employeesCount,
 			projectsCount,
@@ -376,17 +366,27 @@ export class StatisticService {
 		};
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Worked Members Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
 		const {
 			employeeId,
 			organizationId,
-			date = new Date(),
-			projectId
+			projectId,
+			startDate,
+			endDate,
+			date = new Date()
 		} = request;
-		const tenantId = RequestContext.currentTenantId();
-		const user = RequestContext.currentUser();
-		const { start, end } = getDateRange(date, 'week');
 
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -415,12 +415,9 @@ export class StatisticService {
 		}
 
 		const query = this.employeeRepository.createQueryBuilder();
-		query
+		let employees: IMembersStatistics[] = await query
 			.select(`"${query.alias}".id`)
-			.addSelect(
-				`("user"."firstName" || ' ' ||  "user"."lastName")`,
-				'user_name'
-			)
+			.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name')
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
 				`${
@@ -433,33 +430,34 @@ export class StatisticService {
 			.innerJoin(`${query.alias}.user`, 'user')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			})
 			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
-			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			});
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+					/**
+					 * If Employee Selected
+					 */
+					qb.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
+						employeeIds
+					})
+					.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+						employeeIds
+					});
 
-		if (isNotEmpty(employeeIds)) {
-			query
-				.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
-					employeeIds
+					/**
+					 * If Project Selected
+					 */
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
+					}
 				})
-				.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				});
-		}
-
-		// project filter query
-		if (isNotEmpty(projectIds)) {
-			query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
-		let employees: IMembersStatistics[] = await query
+			)
 			.addGroupBy(`"${query.alias}"."id"`)
 			.addGroupBy(`"user"."id"`)
 			.orderBy('duration', 'DESC')
@@ -467,13 +465,15 @@ export class StatisticService {
 			.getRawMany();
 
 		if (employees.length > 0) {
-			const employeeIds = _.pluck(employees, 'id');
+			const employeeIds = pluck(employees, 'id');
 
-			let weekTimeQuery = this.timeSlotRepository.createQueryBuilder(
+			/**
+			 * Weekly Member Activity
+			 */
+			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder(
 				'time_slot'
 			);
 			weekTimeQuery
-				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
@@ -485,42 +485,42 @@ export class StatisticService {
 				.addSelect(`AVG("${weekTimeQuery.alias}"."overall")`, `overall`)
 				.addSelect(`COUNT("${weekTimeQuery.alias}"."id")`, `count`)
 				.addSelect(`${weekTimeQuery.alias}.employeeId`, 'employeeId')
+				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
+				.andWhere(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+				.andWhere(`"${weekTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
-					`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`,
-					{
-						employeeIds
-					}
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+						/**
+						 * If Employee Selected
+						 */
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`, {
+								employeeIds
+							});
+						}
+						/**
+						 * If Project Selected
+						 */
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(`"timeLogs"."projectId" IN(:...projectIds)`, {
+								projectIds
+							});
+						}
+					})
 				)
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
-				.andWhere(
-					`"${weekTimeQuery.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				)
-				.andWhere(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
 				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
 
-			// project filter query
-			if (isNotEmpty(projectIds)) {
-				weekTimeQuery.andWhere(
-					`"timeLogs"."projectId" IN (:...projectIds)`,
-					{
-						projectIds
-					}
-				);
-			}
-
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
-			weekTimeSlots = _.mapObject(
-				_.groupBy(weekTimeSlots, 'employeeId'),
+			weekTimeSlots = mapObject(
+				groupBy(weekTimeSlots, 'employeeId'),
 				function (values, employeeId) {
-					const duration = _.reduce(
-						_.pluck(values, 'duration'),
+					const duration = reduce(
+						pluck(values, 'duration'),
 						ArraySum,
 						0
 					);
@@ -532,7 +532,7 @@ export class StatisticService {
 					};
 				}
 			);
-			weekTimeSlots = _.chain(weekTimeSlots)
+			weekTimeSlots = chain(weekTimeSlots)
 				.map((weekTimeSlot: any) => {
 					if (weekTimeSlot && weekTimeSlot.overall) {
 						weekTimeSlot.overall = parseFloat(
@@ -544,11 +544,13 @@ export class StatisticService {
 				.indexBy('employeeId')
 				.value();
 
+			/**
+			 * Daily Member Activity
+			 */
 			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder(
 				'time_slot'
 			);
 			dayTimeQuery
-				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
@@ -560,50 +562,43 @@ export class StatisticService {
 				.addSelect(`AVG("${dayTimeQuery.alias}"."overall")`, `overall`)
 				.addSelect(`COUNT("${dayTimeQuery.alias}"."id")`, `count`)
 				.addSelect(`${dayTimeQuery.alias}.employeeId`, 'employeeId')
+				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
+				.andWhere(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
-					`"${dayTimeQuery.alias}"."employeeId" IN(:...employeeIds)`,
-					{
-						employeeIds
-					}
-				)
-				.andWhere(
-					new Brackets((qb) => {
+					new Brackets((qb: WhereExpressionBuilder) => {
 						const { start, end } = getDateRange();
-						qb.where(
-							`"timeLogs"."startedAt" BETWEEN :start AND :end`,
-							{
-								start,
-								end
-							}
-						);
+						qb.where(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+							start,
+							end
+						});
+						/**
+						 * If Employee Selected
+						 */
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(`"${dayTimeQuery.alias}"."employeeId" IN(:...employeeIds)`, {
+								employeeIds
+							});
+						}
+						/**
+						 * If Project Selected
+						 */
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(`"timeLogs"."projectId" IN(:...projectIds)`, {
+								projectIds
+							});
+						}
 					})
 				)
-				.andWhere(
-					`"${dayTimeQuery.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				)
-				.andWhere(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
 				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${dayTimeQuery.alias}.employeeId`);
 
-			// project filter query
-			if (isNotEmpty(projectIds)) {
-				dayTimeQuery.andWhere(
-					`"timeLogs"."projectId" IN (:...projectIds)`,
-					{
-						projectIds
-					}
-				);
-			}
-
-			let dayTimeSlots: any = await weekTimeQuery.getRawMany();
-			dayTimeSlots = _.mapObject(
-				_.groupBy(dayTimeSlots, 'employeeId'),
+			let dayTimeSlots: any = await dayTimeQuery.getRawMany();
+			dayTimeSlots = mapObject(
+				groupBy(dayTimeSlots, 'employeeId'),
 				function (values, employeeId) {
-					const duration = _.reduce(
-						_.pluck(values, 'duration'),
+					const duration = reduce(
+						pluck(values, 'duration'),
 						ArraySum,
 						0
 					);
@@ -615,7 +610,7 @@ export class StatisticService {
 					};
 				}
 			);
-			dayTimeSlots = _.chain(dayTimeSlots)
+			dayTimeSlots = chain(dayTimeSlots)
 				.map((dayTimeSlot: any) => {
 					if (dayTimeSlot && dayTimeSlot.overall) {
 						dayTimeSlot.overall = parseFloat(
@@ -695,20 +690,30 @@ export class StatisticService {
 					.getRawMany();
 			}
 		}
-
 		return employees;
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Projects Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getProjects(request: IGetProjectsStatistics): Promise<IProjectsStatistics[]> {
-		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
 		const {
 			employeeId,
 			organizationId,
+			projectId,
 			date = new Date(),
-			projectId
+			startDate,
+			endDate
 		} = request;
-		const { start, end } = getDateRange(date, 'week');
+		
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 
 		const query = this.organizationProjectsRepository.createQueryBuilder();
 		query
@@ -835,17 +840,27 @@ export class StatisticService {
 		return [];
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Tasks Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getTasks(request: IGetTasksStatistics) {
-		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
 		const {
 			employeeId,
 			organizationId,
+			projectId,
 			date = new Date(),
-			projectId
+			startDate,
+			endDate
 		} = request;
-		const { start, end } = getDateRange(date, 'week');
 
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -876,7 +891,6 @@ export class StatisticService {
 		if (employeeIds.length > 0) {
 			const query = this.taskRepository.createQueryBuilder();
 			query
-				.innerJoin(`${query.alias}.project`, 'project')
 				.select(`"${query.alias}".*`)
 				.addSelect(
 					`${
@@ -886,6 +900,7 @@ export class StatisticService {
 					}`,
 					`duration`
 				)
+				.innerJoin(`${query.alias}.project`, 'project')
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
@@ -966,13 +981,27 @@ export class StatisticService {
 		}
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Manual Time Logs Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async manualTimes(request: IGetManualTimesStatistics) {
-		const date = request.date || new Date();
-		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
-		const { employeeId, organizationId, projectId } = request;
-		const { start, end } = getDateRange(date, 'week');
+		const {
+			employeeId,
+			organizationId,
+			projectId,
+			date = new Date(),
+			startDate,
+			endDate
+		} = request;
 
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -1053,11 +1082,9 @@ export class StatisticService {
 						id: timeLog.id,
 						startedAt: timeLog.startedAt,
 						duration: timeLog.duration,
-						user: _.pick(timeLog.employee.user, [
-							'name',
-							'imageUrl'
-						]),
-						project: _.pick(timeLog.employee.user, ['name'])
+						user: pick(timeLog.employee.user, ['name', 'imageUrl']),
+						project: pick(timeLog.employee.user, ['name']),
+						employeeId: timeLog.employee.id
 					} as IManualTimesStatistics;
 				}
 			);
@@ -1067,11 +1094,27 @@ export class StatisticService {
 		}
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Activities Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getActivites(request: IGetActivitiesStatistics) {
-		const date = request.date || new Date();
+		const {
+			employeeId,
+			organizationId,
+			projectId,
+			date = new Date(),
+			startDate,
+			endDate
+		} = request;
+
 		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
-		const { employeeId, organizationId, projectId } = request;
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -1109,7 +1152,6 @@ export class StatisticService {
 				.addGroupBy(`"${query.alias}"."title"`)
 				.andWhere(
 					new Brackets((qb) => {
-						const { start, end } = getDateRange(date, 'week');
 						if (
 							this.configService.dbConnectionOptions.type ===
 							'sqlite'
@@ -1169,7 +1211,6 @@ export class StatisticService {
 				)
 				.andWhere(
 					new Brackets((qb) => {
-						const { start, end } = getDateRange(date, 'week');
 						if (
 							this.configService.dbConnectionOptions.type ===
 							'sqlite'
@@ -1220,13 +1261,27 @@ export class StatisticService {
 		}
 	}
 
+	/**
+	 * GET Time Tracking Dashboard Time Slots Statistics
+	 * 
+	 * @param request 
+	 * @returns 
+	 */
 	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics) {
-		let employees: ITimeSlotStatistics[] = [];
-		const date = request.date || new Date();
+		const {
+			employeeId,
+			organizationId,
+			projectId,
+			date = new Date(),
+			startDate,
+			endDate
+		} = request;
+
 		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
-		const { employeeId, organizationId, projectId } = request;
-		const { start, end } = getDateRange(date, 'week');
+		const tenantId = RequestContext.currentTenantId();
+		const { start, end } = (startDate && endDate) ? 
+								getDateRange(startDate, endDate) : 
+								getDateRange(date, 'week');
 
 		const query = this.employeeRepository.createQueryBuilder();
 		query
@@ -1279,6 +1334,7 @@ export class StatisticService {
 			});
 		}
 
+		let employees: ITimeSlotStatistics[] = [];
 		employees = await query
 			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
 				organizationId
@@ -1286,8 +1342,7 @@ export class StatisticService {
 			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
 			.getRawMany();
 
-		for (let index = 0; index < employees.length; index++) {
-			const employee = employees[index];
+		for await (const employee of employees) {
 			employee.user = {
 				imageUrl: employee.user_image_url,
 				name: employee.user_name
@@ -1298,33 +1353,27 @@ export class StatisticService {
 			employee.timeSlots = await this.timeSlotRepository.find({
 				join: {
 					alias: 'time_slot',
-					innerJoin: {
+					innerJoinAndSelect: {
 						timeLogs: 'time_slot.timeLogs'
 					}
 				},
-				relations: ['screenshots', 'timeLogs'],
+				relations: ['screenshots'],
 				where: (qb: SelectQueryBuilder<TimeSlot>) => {
 					const employeeId = employee.id;
 					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 						employeeId
 					});
-					qb.andWhere(
-						`"${qb.alias}"."organizationId" = :organizationId`,
-						{
-							organizationId
-						}
-					);
+					qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
 					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 						tenantId
 					});
 					// project filter query
 					if (isNotEmpty(projectIds)) {
-						qb.andWhere(
-							`"timeLogs"."projectId" IN (:...projectIds)`,
-							{
-								projectIds
-							}
-						);
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+							projectIds
+						});
 					}
 				},
 				take: 3,
@@ -1355,6 +1404,6 @@ export class StatisticService {
 		}
 
 		const employees = await query.getRawMany();
-		return _.pluck(employees, 'id');
+		return pluck(employees, 'id');
 	}
 }

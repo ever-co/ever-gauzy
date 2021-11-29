@@ -1,25 +1,44 @@
-<ng-container *ngIf="!environment.DEMO">
-	<ng-template ngxPermissionsOnly="ACCESS_DELETE_ACCOUNT">
-		<button type="button" class="btn btn-danger" (click)="deleteAccount()">
-			<nb-icon class="mr-1" icon="trash-2-outline"> </nb-icon>
-			{{ 'BUTTONS.DELETE_ACCOUNT' | translate }}
-		</button>
-	</ng-template>
-
-	<ng-template ngxPermissionsOnly="ACCESS_DELETE_ALL_DATA">
-		<button type="button" class="btn btn-danger ml-3" [disabled]="loading" (click)="deleteAllData()">
-			<nb-icon class="mr-1" icon="trash-2-outline"> </nb-icon>
-			{{ 'BUTTONS.DELETE_ALL_DATA' | translate }}
-		</button>
-	</ng-template>
-
-	<div class="mt-4" *ngIf="process != 0">
-		<span style="display: block;">{{
-			'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate
-			}}</span><br />
-
-		<div class="progress">
-			<div class="progress-bar" role="progressbar" [ngStyle]="{width: process + '%'}"></div>
-		</div>
-	</div>
-</ng-container>
+<nb-card class="card-scroll">
+	<nb-card-header>
+		<h4>{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.DANGER_ZONE' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<ng-container *ngIf="!environment.DEMO">
+			<ng-template ngxPermissionsOnly="ACCESS_DELETE_ACCOUNT">
+				<button
+					type="button"
+					class="btn btn-danger"
+					(click)="deleteAccount()"
+				>
+					<nb-icon class="mr-1" icon="trash-2-outline"> </nb-icon>
+					{{ 'BUTTONS.DELETE_ACCOUNT' | translate }}
+				</button>
+			</ng-template>
+			<ng-template ngxPermissionsOnly="ACCESS_DELETE_ALL_DATA">
+				<button 
+					type="button"
+					class="btn btn-danger ml-3 mr-3"
+					[disabled]="loading"
+					(click)="deleteAllData()"
+				>
+					<nb-icon class="mr-1" icon="trash-2-outline"> </nb-icon>
+					{{ 'BUTTONS.DELETE_ALL_DATA' | translate }}
+				</button>
+			</ng-template>
+	
+			<div class="mt-4" *ngIf="process != 0">
+				<span style="display: block;">
+					{{ 'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate }}
+				</span>
+				<br/>
+				<div class="progress">
+					<div
+						class="progress-bar"
+						role="progressbar"
+						[ngStyle]="{ width: process + '%'}"
+					></div>
+				</div>
+			</div>
+		</ng-container>
+	</nb-card-body>
+</nb-card>

@@ -26,6 +26,7 @@ Given('Login with default credentials', () => {
 
 // Add employee
 And('User can add new employee', () => {
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
@@ -128,7 +129,7 @@ And('User can select employee from dropdown options', () => {
 });
 
 And('User can see time off policy select', () => {
-	timeOffPage.selectTiemOffPolicyVisible();
+	timeOffPage.selectTimeOffPolicyVisible();
 });
 
 When('User click on time off policy select', () => {
@@ -202,6 +203,8 @@ Then('Notification message will appear', () => {
 
 // Approve time off request
 And('User can see approve time off request button', () => {
+	timeOffPage.selectTimeOffTableRow(0);
+
 	timeOffPage.approveTimeOffButtonVisible();
 });
 
@@ -234,7 +237,7 @@ And('User can select employee from dropdown options', () => {
 });
 
 And('User can see time off policy select', () => {
-	timeOffPage.selectTiemOffPolicyVisible();
+	timeOffPage.selectTimeOffPolicyVisible();
 });
 
 When('User click on time off policy select', () => {
@@ -336,11 +339,11 @@ Then('User can select holiday from dropdown options', () => {
 });
 
 And('User can see select employee dropdown', () => {
-	timeOffPage.selectEmployeeDropdownVisible();
+	timeOffPage.verifyEmployeeSelectorVisible();
 });
 
 When('User click on select employee dropdown', () => {
-	timeOffPage.clickSelectEmployeeDropdown();
+	timeOffPage.clickEmployeeSelectorDropdown();
 });
 
 Then('User can select employee from select dropdown options', () => {
@@ -349,11 +352,11 @@ Then('User can select employee from select dropdown options', () => {
 });
 
 And('User can see again time off policy dropdown', () => {
-	timeOffPage.selectTiemOffPolicyVisible();
+	timeOffPage.verifyTimeOffPolicyVisible();
 });
 
 When('User click on time off policy dropdown', () => {
-	timeOffPage.clickTimeOffPolicyDropdown();
+	timeOffPage.clickTimeOffPolicySelector();
 });
 
 Then('User can see again time off policy dropdown', () => {

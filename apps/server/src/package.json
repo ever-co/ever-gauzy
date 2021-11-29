@@ -7,7 +7,7 @@
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ever-co/ever-gauzy.git"
+		"url": "https://github.com/ever-co/ever-gauzy.git"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
@@ -39,6 +39,7 @@
 	},
 	"build": {
 		"appId": "com.company.gauzyserver",
+		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
@@ -49,6 +50,7 @@
 		},
 		"publish": {
 			"provider": "github",
+			"repo": "ever-gauzy-server",
 			"releaseType": "release"
 		},
 		"mac": {
@@ -58,7 +60,7 @@
 				"zip",
 				"dmg"
 			],
-			"artifactName": "gauzy-server-${version}.${ext}"
+			"artifactName": "${name}-${version}.${ext}"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -81,8 +83,8 @@
 				"deb",
 				"tar.gz"
 			],
-			"executableName": "gauzy",
-			"artifactName": "gauzy-server-${version}.${ext}",
+			"executableName": "gauzy-server",
+			"artifactName": "${name}-${version}.${ext}",
 			"synopsis": "Server",
 			"category": "Development"
 		},
@@ -94,7 +96,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "gauzy-server-${version}.${ext}",
+			"artifactName": "${name}-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
@@ -103,11 +105,11 @@
 		]
 	},
 	"dependencies": {
-    "@gauzy/core": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
 		"@gauzy/auth": "^0.1.0",
-    "@gauzy/knowledge-base": "^0.1.0",
+		"@gauzy/knowledge-base": "^0.1.0",
 		"@gauzy/changelog": "^0.1.0",
-    "@gauzy/desktop-window": "^0.1.0",
+		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/desktop-libs": "^0.1.0",
 		"sqlite3": "^5.0.2",
 		"electron-store": "^8.0.0",
@@ -121,16 +123,17 @@
 		"electron-updater": "~4.3.8",
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
-		"@nestjs/platform-express": "^7.6.5",		
+		"@nestjs/platform-express": "^8.0.0",
 		"sound-play": "1.1.0",
 		"@sentry/electron": "2.4.0",
 		"underscore": "^1.13.0",		
-		"tslib": "2.1.0",		
-		"@sentry/node": "^5.30.0",
-		"@sentry/tracing": "^5.30.0",		
+		"tslib": "^2.3.1",	
+		"@sentry/node": "^6.8.0",
+		"@sentry/tracing": "^6.8.0",	
 		"node-static": "^0.7.11",
-		"pdfmake": "^0.1.70",
-		"htmlparser2": "^3.10.1"
+		"pdfmake": "^0.2.0",
+		"htmlparser2": "^3.10.1",
+		"@electron/remote": "^2.0.1"
 	},
   "optionalDependencies": {
     "node-windows": "^1.0.0-beta.5",

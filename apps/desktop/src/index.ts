@@ -7,6 +7,7 @@ Object.assign(console, log.functions);
 
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
+
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
@@ -21,7 +22,7 @@ log.catchErrors({
 			})
 			.then((result) => {
 				if (result.response === 1) {
-					submitIssue('https://github.com/ever-co/gauzy/issues/new', {
+					submitIssue('https://github.com/ever-co/ever-gauzy-desktop/issues/new', {
 						title: `Automatic error report for Desktop App ${versions.app}`,
 						body:
 							'Error:\n```' +
@@ -40,9 +41,18 @@ log.catchErrors({
 });
 
 import * as path from 'path';
+
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
+
+app.setName('gauzy-desktop');
+
+console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+
 const Store = require('electron-store');
+import * as remoteMain from '@electron/remote/main';
+remoteMain.initialize();
+
 import {
 	ipcMainHandler,
 	ipcTimer,
@@ -102,6 +112,11 @@ let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 
+console.log(
+	'App UI Render Path:',
+	path.join(__dirname, './index.html')
+);
+
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
 	timeTrackerUi: path.join(__dirname, './ui/index.html'),
@@ -136,8 +151,8 @@ function startServer(value, restart = false) {
 		process.env.DB_PASS = value.dbPassword;
 	}
 	if (value.isLocalServer) {
-		process.env.PORT = value.port || environment.API_DEFAULT_PORT;
-		process.env.HOST = '0.0.0.0';
+		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
+		process.env.API_HOST = '0.0.0.0';
 		process.env.API_BASE_URL = `http://localhost:${
 			value.port || environment.API_DEFAULT_PORT
 		}`;
@@ -477,10 +492,38 @@ ipcMain.on('open_browser', (event, arg) => {
 	shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', (event, arg) => {
-	autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-		cancellationToken = downloadPromise.cancellationToken;
-	});
+ipcMain.on('check_for_update', async (event, arg) => {
+	const updaterConfig = {
+		repo: 'ever-gauzy-desktop',
+		owner: 'ever-co',
+		typeRelease: 'releases'
+	};
+	let latestReleaseTag = null;
+	try {
+		latestReleaseTag = await fetch(
+			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
+			{
+				method: 'GET',
+				headers: {
+					Accept: 'application/json'
+				}
+			}
+		).then((res) => res.json());
+	} catch (error) {}
+
+	if (latestReleaseTag) {
+		autoUpdater.setFeedURL({
+			channel: 'latest',
+			provider: 'generic',
+			url: `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
+		});
+		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
+			if (cancellationToken)
+				cancellationToken = downloadPromise.cancellationToken;
+		});
+	} else {
+		settingsWindow.webContents.send('error_update');
+	}
 });
 
 autoUpdater.on('update-available', () => {
@@ -502,7 +545,7 @@ autoUpdater.on('download-progress', (event) => {
 });
 
 autoUpdater.on('error', (e) => {
-	settingsWindow.webContents.send('error_update');
+	settingsWindow.webContents.send('error_update', e);
 });
 
 ipcMain.on('restart_and_update', () => {
@@ -555,8 +598,9 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 });
 
 autoUpdater.on('error', () => {
-	console.log('eroro');
+	console.log('error');
 });
+
 app.on('activate', () => {
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {

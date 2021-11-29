@@ -7,7 +7,7 @@ import {
 	OneToMany,
 	JoinTable,
 	RelationId,
-	ManyToOne
+	OneToOne
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -29,12 +29,14 @@ import {
 	IPayment,
 	OrganizationContactBudgetTypeEnum,
 	IExpense,
-	ITimeLog
+	ITimeLog,
+	IIncome
 } from '@gauzy/contracts';
 import {
 	Contact,
 	Employee,
 	Expense,
+	Income,
 	Invoice,
 	OrganizationProject,
 	Payment,
@@ -70,9 +72,6 @@ export class OrganizationContact
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	primaryPhone: string;
-
-	@ApiPropertyOptional({ type: () => String, isArray: true })
-	phones?: string[];
 
 	@ApiProperty({ type: () => String, enum: ContactOrganizationInviteStatus })
 	@IsEnum(ContactOrganizationInviteStatus)
@@ -123,17 +122,21 @@ export class OrganizationContact
     | @ManyToOne 
     |--------------------------------------------------------------------------
     */
-	// Client Contact 
+
+	/**
+	 * Contact
+	 */
 	@ApiProperty({ type: () => Contact })
-	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
-		nullable: true,
+	@OneToOne(() => Contact, (contact) => contact.organizationContact, {
+		cascade: true,
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	contact: IContact;
+	contact?: IContact;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: OrganizationContact) => it.contact)
+	@IsOptional()
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
@@ -157,7 +160,7 @@ export class OrganizationContact
 
 	// Organization Payments
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (it) => it.contact, {
+	@OneToMany(() => Payment, (it) => it.organizationContact, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -178,6 +181,14 @@ export class OrganizationContact
 	})
 	expenses?: IExpense[];
 
+	/**
+	 * Income
+	 */
+	@ApiPropertyOptional({ type: () => Income, isArray: true })
+	@OneToMany(() => Income, (it) => it.client, {
+		onDelete: 'SET NULL'
+	})
+	incomes?: IIncome[];
 
 	/**
 	 * TimeLog
@@ -193,7 +204,10 @@ export class OrganizationContact
     */
 	// Organization Contact Tags
 	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.organizationContact)
+	@ManyToMany(() => Tag, (tag) => tag.organizationContacts, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_organization_contact'
 	})

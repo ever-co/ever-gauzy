@@ -170,7 +170,7 @@ export class CandidateController extends CrudController<Candidate> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<ICandidate> {
 		const { relations = [] } = data;
-		return this.candidateService.findOne(id, {
+		return this.candidateService.findOneByIdString(id, {
 			relations
 		});
 	}

@@ -45,7 +45,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	bonusType: BonusTypeEnum;
 	bonusPercentage: number;
 	salary: number;
-	avarageBonus: number;
+	averageBonus: number;
 
 	constructor(
 		private store: Store,
@@ -203,6 +203,17 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		this.router.navigate([
 			'/pages/employees/edit/' + this.selectedEmployee.id
 		]);
+	}
+
+	/**
+	 * GET Employee Position Accessor 
+	 */
+	get employeePosition() {
+		if (!this.selectedEmployee) {
+			return;
+		}
+		const { shortDescription, employeeLevel } = this.selectedEmployee;
+		return [shortDescription, employeeLevel].filter(Boolean).join(' | '); 
 	}
 
 	ngOnDestroy() {}

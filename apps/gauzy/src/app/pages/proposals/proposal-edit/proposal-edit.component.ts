@@ -21,6 +21,8 @@ import { filter, tap } from 'rxjs/operators';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { ckEditorConfig } from "../../../@shared/ckeditor.config";
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-proposal-edit',
@@ -51,10 +53,7 @@ export class ProposalEditComponent
 	form: FormGroup;
 	organizationContact: IOrganizationContact;
 	organizationContacts: Object[] = [];
-	public ckConfig: any = {
-		width: '100%',
-		height: '320'
-	};
+	ckConfig: any = ckEditorConfig;
 
 	ngOnInit() {
 		this.route.params
@@ -83,13 +82,7 @@ export class ProposalEditComponent
 			['employee', 'employee.user', 'tags', 'organizationContact']
 		);
 		this.proposal = Object.assign({}, proposal, {
-			jobPostLink:
-				'<a href="' +
-				proposal.jobPostUrl +
-				`" target="_blank">${proposal.jobPostUrl.substr(
-					8,
-					14
-				)}</nb-icon></a>`,
+			jobPostLink: proposal.jobPostUrl ? proposal.jobPostUrl : '',
 			jobTitle: proposal.jobPostContent
 				.toString()
 				.replace(/<[^>]*(>|$)|&nbsp;/g, '')

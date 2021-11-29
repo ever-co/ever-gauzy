@@ -40,7 +40,7 @@ import {
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject, firstValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -48,7 +48,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
-import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -80,6 +80,7 @@ export class InvoicesComponent
 	selectedInvoice: IInvoice;
 	loading: boolean;
 	disableButton = true;
+	canBeSend = true;
 	invoices: IInvoice[] = [];
 	organization: IOrganization;
 	viewComponentName: ComponentEnum;
@@ -179,8 +180,8 @@ export class InvoicesComponent
 	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
 				debounceTime(300),
+				tap(() => this.loading = true),
 				tap(() => this.cdr.detectChanges()),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
@@ -194,7 +195,7 @@ export class InvoicesComponent
 				distinctUntilChange(),
 				tap((organization) => (this.organization = organization)),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -221,7 +222,7 @@ export class InvoicesComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -468,7 +469,7 @@ export class InvoicesComponent
 				})
 				.onClose
 				.pipe(
-					tap(() => this.subject$.next()),
+					tap(() => this.subject$.next(true)),
 					untilDestroyed(this)
 				)
 				.subscribe();
@@ -495,7 +496,7 @@ export class InvoicesComponent
 		await this.createInvoiceHistory(action);
 
 		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	async delete(selectedItem?: IInvoice) {
@@ -505,10 +506,9 @@ export class InvoicesComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			const { id } = this.selectedInvoice;
@@ -519,7 +519,7 @@ export class InvoicesComponent
 			} else {
 				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
 			}
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -548,7 +548,7 @@ export class InvoicesComponent
 			})
 			.onClose
 			.pipe(
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -568,7 +568,7 @@ export class InvoicesComponent
 			})
 			.onClose
 			.pipe(
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -771,12 +771,18 @@ export class InvoicesComponent
 		await this.invoicesService.update(this.selectedInvoice.id, {
 			isArchived: true
 		});
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	async selectInvoice({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedInvoice = isSelected ? data : null;
+		
+		if(isSelected){
+			this.canBeSend = data.toContact ? isSelected : !isSelected;
+		}else{
+			this.canBeSend = isSelected;
+		}
 
 		if (isSelected) {
 			const { historyRecords = [] } = data;
@@ -912,12 +918,13 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
-			this.settingsSmartTable['columns']['organizationContactName'] = {
+			this.settingsSmartTable['columns']['toContact'] = {
 				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
-				type: 'text',
+				type: 'custom',
 				width: '12%',
 				filter: false,
-				sort: false
+				sort: false,
+				renderComponent: ContactLinksComponent,
 			};
 		}
 		if (!this.isEstimate) {
@@ -946,7 +953,7 @@ export class InvoicesComponent
 			});
 			
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				this.subject$.next();
+				this.subject$.next(true);
 			} else {
 				this.smartTableSource.setPaging(page, this.perPage, false);
 				this._loadSmartTableSettings();
@@ -996,19 +1003,19 @@ export class InvoicesComponent
 		}
 		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();
-			this.subject$.next();		
+			this.subject$.next(true);		
 		}
 	}
 
 	toggleIncludeArchived(event) {
 		this.includeArchived = event;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	reset() {
 		this.searchForm.reset();
 		this._filters = {};
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	selectedTagsEvent(currentTagSelection: ITag[]) {
@@ -1021,7 +1028,7 @@ export class InvoicesComponent
 		await this.invoicesService.update(this.selectedInvoice.id, {
 			status: $event
 		});
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	selectColumn($event: string[]) {
@@ -1057,7 +1064,9 @@ export class InvoicesComponent
 			.subscribe();
 	}
 
- 	onChangeTab(event) {}
+ 	onChangeTab(event) {
+		this.closeActionsPopover();
+	}
 
 	clearItem() {
 		this.selectInvoice({

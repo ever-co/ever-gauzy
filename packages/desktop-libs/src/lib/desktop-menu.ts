@@ -8,7 +8,8 @@ export class AppMenu {
 		settingsWindow,
 		updaterWindow,
 		knex,
-		windowPath
+		windowPath,
+		serverWindow?
 	) {
 		const menu = Menu.buildFromTemplate([
 			{
@@ -126,7 +127,7 @@ export class AppMenu {
 					},
 					{
 						id: 'devtools-setting',
-						label: 'Setting Inpect',
+						label: 'Setting Developer Mode',
 						enabled: true,
 						click() {
 							if (!settingsWindow) {
@@ -140,13 +141,22 @@ export class AppMenu {
 					},
 					{
 						id: 'devtools-time-tracker',
-						label: 'Time Tracker Inpect',
+						label: 'Time Tracker Developer Mode',
 						enabled: true,
 						visible: timeTrackerWindow ? true : false,
 						click() {
 							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
 						}
-					} 
+					},
+					{
+						id: 'devtools-server',
+						label: 'Server Dashboard Developer Mode',
+						enabled: true,
+						visible: serverWindow ? true : false,
+						click() {
+							if (serverWindow) serverWindow.webContents.toggleDevTools();
+						}
+					}
 				]
 			}
 		]);

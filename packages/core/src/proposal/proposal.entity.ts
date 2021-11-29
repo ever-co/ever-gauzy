@@ -5,15 +5,17 @@ import {
 	JoinColumn,
 	RelationId,
 	ManyToOne,
-	ManyToMany
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsDate } from 'class-validator';
+import { IsString, IsOptional, IsDate, IsEnum } from 'class-validator';
 import {
 	IProposal,
 	IEmployee,
 	ITag,
-	IOrganizationContact
+	IOrganizationContact,
+	ProposalStatusEnum
 } from '@gauzy/contracts';
 import {
 	Employee,
@@ -51,11 +53,11 @@ export class Proposal
 	@Column()
 	proposalContent?: string;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
+	@ApiProperty({ type: () => String, enum: ProposalStatusEnum })
+	@IsEnum(ProposalStatusEnum)
 	@IsOptional()
 	@Column()
-	status?: string;
+	status?: ProposalStatusEnum;
 
 	/*
     |--------------------------------------------------------------------------
@@ -95,6 +97,12 @@ export class Proposal
     */
 	// Tags
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.proposal)
+	@ManyToMany(() => Tag, (tag) => tag.proposals, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_proposal'
+	})
 	tags?: ITag[];
 }

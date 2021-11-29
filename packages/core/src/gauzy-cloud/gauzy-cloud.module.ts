@@ -1,5 +1,6 @@
-import { forwardRef, HttpModule, Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { HttpModule } from '@nestjs/axios';
 import { RouterModule } from 'nest-router';
 import { ConfigModule, ConfigService } from '@gauzy/config';
 import { GauzyCloudController } from './gauzy-cloud.controller';
@@ -8,6 +9,7 @@ import { TenantModule } from './../tenant';
 import { CommandHandlers } from './commands/handlers';
 import { RoleModule } from './../role/role.module';
 import { UserModule } from './../user';
+
 @Module({
 	imports: [
 		RouterModule.forRoutes([

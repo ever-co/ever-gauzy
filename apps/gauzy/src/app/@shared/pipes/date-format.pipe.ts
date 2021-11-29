@@ -12,8 +12,8 @@ import { isEmpty } from '@gauzy/common-angular';
 	pure: false
 })
 export class DateFormatPipe implements PipeTransform {
-	dateFormat: string;
-	regionCode: string;
+	dateFormat: string = 'd MMMM, y';;
+	regionCode: string = RegionsEnum.EN;
 
 	constructor(private store: Store) {
 		this.store.selectedOrganization$
@@ -22,9 +22,8 @@ export class DateFormatPipe implements PipeTransform {
 				untilDestroyed(this)
 			)
 			.subscribe((organization: IOrganization) => {
-				let [regionCode] = Object.keys(RegionsEnum);
-				this.regionCode = organization.regionCode || regionCode;
-				this.dateFormat = organization.dateFormat || 'd MMMM, y';
+				this.regionCode = organization.regionCode;
+				this.dateFormat = organization.dateFormat;
 			});
 	}
 
@@ -35,15 +34,18 @@ export class DateFormatPipe implements PipeTransform {
 		if (!value) {
 			return;
 		}
+
 		let date = moment(new Date(value));
 		if (!date.isValid()) {
 			date = moment.utc(value);
 		}
-
+		
 		if (isEmpty(locale)) {
 			locale = this.regionCode;
 		}
-
-		return date.locale(locale).format(this.dateFormat);
+		if (date && this.dateFormat) {
+			return date.locale(locale).format(this.dateFormat);
+		}
+		return;
 	}
 }

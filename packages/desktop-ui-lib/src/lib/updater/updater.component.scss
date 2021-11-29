@@ -60,6 +60,24 @@
   font-size: 12px;
 }
 
+.log-box {
+  background-color: black;
+  color: white;
+  font-size: 11px;
+  text-align: left;
+}
+
+.log-content {
+  min-height: 300px;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.content-text {
+  color: white;
+  font-size: 11px;
+}
+
 @keyframes rotate {
   from {
     transform: rotate(0deg);

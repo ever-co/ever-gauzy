@@ -18,32 +18,48 @@ import {
 export class OrganizationDepartment
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationDepartment {
+		
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
+	/*
+    |--------------------------------------------------------------------------
+    | @ManyToMany 
+    |--------------------------------------------------------------------------
+    */
 
-	@ApiProperty()
-	@ManyToMany(() => Tag, (tag) => tag.organizationDepartment)
+	/**
+	 * Tag
+	 */
+	@ApiProperty({ type: () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.organizationDepartments, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'tag_organization_department'
 	})
 	tags: ITag[];
 
-	@ManyToMany(
-		() => Employee,
-		(employee) => employee.organizationDepartments,
-		{
-			cascade: ['update']
-		}
-	)
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee, isArray: true })
+	@ManyToMany(() => Employee, (employee) => employee.organizationDepartments, {
+		cascade: ['update']
+	})
 	@JoinTable({
 		name: 'organization_department_employee'
 	})
 	members?: IEmployee[];
 
+	/**
+	 * Candidate
+	 */
+	@ApiProperty({ type: () => Candidate, isArray: true })
 	@ManyToMany(() => Candidate, (candidate) => candidate.organizationDepartments, {
         onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'

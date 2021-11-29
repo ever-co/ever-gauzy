@@ -12,6 +12,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Store, ToastrService } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
 import { ProposalTemplateService } from '../proposal-template.service';
+import { ckEditorConfig } from "../../../../@shared/ckeditor.config";
 
 @UntilDestroy()
 @Component({
@@ -26,13 +27,9 @@ export class AddEditProposalTemplateComponent
 
 	@Input() selectedEmployee: ISelectedEmployee;
 	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
-	
-	organization: IOrganization;
-	public ckConfig: any = {
-		width: '100%',
-		height: '320'
-	};
 
+	organization: IOrganization;
+	public ckConfig: any = ckEditorConfig;
 	public form: FormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({

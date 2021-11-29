@@ -6,7 +6,7 @@ import {
 	IOrganizationDepartmentCreateInput,
 	IOrganizationDepartmentFindInput
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -18,22 +18,22 @@ export class OrganizationDepartmentsService {
 	create(
 		createInput: IOrganizationDepartmentCreateInput
 	): Promise<IOrganizationDepartment> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post<IOrganizationDepartment>(
 				`${API_PREFIX}/organization-department`,
 				createInput
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAllByEmployee(id: string): Promise<IOrganizationDepartment[]> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IOrganizationDepartment[]>(
 				`${API_PREFIX}/organization-department/employee/${id}`
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	getAll(
@@ -42,39 +42,38 @@ export class OrganizationDepartmentsService {
 		order?: {}
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, order });
-
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<{ items: IOrganizationDepartment[]; total: number }>(
 				`${API_PREFIX}/organization-department`,
 				{
 					params: { data }
 				}
 			)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(
 		id: string,
 		updateInput: IOrganizationDepartmentCreateInput
 	): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${API_PREFIX}/organization-department/${id}`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${API_PREFIX}/organization-department/employee`, updateInput)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${API_PREFIX}/organization-department/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

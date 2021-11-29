@@ -35,13 +35,7 @@
 							(click)="edit()"
 						></nb-icon
 					></span>
-
-					<div class="employee-position">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }}
-						<span *ngIf="selectedEmployee['employeeLevel']">
-							| </span
-						>{{ selectedEmployee['employeeLevel'] }}
-					</div>
+					<div class="employee-position" [innerText]="employeePosition"></div>
 				</div>
 			</div>
 
@@ -56,11 +50,11 @@
 				</div>
 
 				<div
-					*ngIf="selectedOrganization?.bonusType && avarageBonus"
+					*ngIf="selectedOrganization?.bonusType && averageBonus"
 					class="employee-details"
 				>
 					{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
-					{{ avarageBonus | currency: defaultCurrency }}
+					{{ averageBonus | currency: defaultCurrency }}
 				</div>
 			</div>
 		</div>

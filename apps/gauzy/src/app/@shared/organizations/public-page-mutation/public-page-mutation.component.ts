@@ -18,6 +18,8 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import * as moment from 'moment';
 import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { ckEditorConfig } from "../../ckeditor.config";
+
 @Component({
 	selector: 'ngx-public-page-mutation',
 	templateUrl: './public-page-mutation.component.html',
@@ -44,6 +46,10 @@ export class PublicPageMutationComponent
 	skills: ISkill[] = [];
 	languages: ILanguage[] = [];
 	moment = moment;
+	ckConfig: any = {
+		...ckEditorConfig,
+		height: "200"
+	};
 
 	get totalEmployees() {
 		return this.form.get('totalEmployees').value;

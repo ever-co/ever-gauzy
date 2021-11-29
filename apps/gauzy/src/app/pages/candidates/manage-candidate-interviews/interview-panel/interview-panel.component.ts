@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
@@ -393,7 +393,7 @@ export class InterviewPanelComponent
 						}
 					}
 				);
-				const data = await dialog.onClose.pipe(first()).toPromise();
+				const data = await firstValueFrom(dialog.onClose);
 				if (data) {
 					this.loadInterviews();
 					this.toastrService.success(
@@ -449,14 +449,12 @@ export class InterviewPanelComponent
 			this.toastrService.warning('TOASTR.MESSAGE.EDIT_PAST_INTERVIEW');
 		} else {
 			const { id: organizationId, tenantId } = this.organization;
-			const candidate = await this.candidatesService
+			const candidate = await firstValueFrom(this.candidatesService
 				.getAll(['user'], {
 					id: currentInterview.candidate.id,
 					organizationId,
 					tenantId
-				})
-				.pipe(first())
-				.toPromise();
+				}));
 			const dialog = this.dialogService.open(
 				CandidateInterviewMutationComponent,
 				{
@@ -471,7 +469,7 @@ export class InterviewPanelComponent
 					}
 				}
 			);
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
 				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_UPDATED', {
 					name: data.title
@@ -492,7 +490,7 @@ export class InterviewPanelComponent
 					interview: currentInterview
 				}
 			});
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
 				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_DELETED', {
 					name: data.title

@@ -6,7 +6,7 @@ const PUBLIC_KEY = process.env.KEYMETRICS_PUBLIC_KEY || '';
 const appName = process.env.PM2_APP_NAME || 'Gauzy';
 const instances = process.env.WEB_CONCURRENCY || 1;
 const maxMemory = process.env.WEB_MEMORY || 4096;
-const port = process.env.PORT || 4250;
+const port = process.env.WEB_PORT || 4250;
 
 pm2.connect(function () {
 	pm2.start(
@@ -19,7 +19,7 @@ pm2.connect(function () {
 			env: {
 				// If needed declare some environment variables
 				NODE_ENV: 'production',
-				PORT: port,
+				WEB_PORT: port,
 				KEYMETRICS_PUBLIC: PUBLIC_KEY,
 				KEYMETRICS_SECRET: PRIVATE_KEY
 			},

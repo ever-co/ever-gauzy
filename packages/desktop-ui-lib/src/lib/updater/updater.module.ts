@@ -6,7 +6,8 @@ import {
 	NbCardModule,
 	NbIconModule,
 	NbButtonModule,
-	NbAlertModule
+	NbAlertModule,
+	NbAccordionModule
 } from '@nebular/theme';
 
 @NgModule({
@@ -17,7 +18,8 @@ import {
 		NbCardModule,
 		NbIconModule,
 		NbButtonModule,
-		NbAlertModule
+		NbAlertModule,
+		NbAccordionModule
 	]
 })
 export class UpdaterModule {}

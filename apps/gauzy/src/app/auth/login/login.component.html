@@ -43,6 +43,7 @@
 			"
 			[required]="getConfigValue('forms.validation.email.required')"
 			[attr.aria-invalid]="email.invalid && email.touched ? true : null"
+			autocomplete="off"
 		/>
 		<ng-container *ngIf="email.invalid && email.touched">
 			<p class="caption status-danger" *ngIf="email.errors?.required">
@@ -86,6 +87,7 @@
 			[attr.aria-invalid]="
 				password.invalid && password.touched ? true : null
 			"
+			autocomplete="off"
 		/>
 		<ng-container *ngIf="password.invalid && password.touched">
 			<p class="caption status-danger" *ngIf="password.errors?.required">
@@ -124,8 +126,26 @@
 	</button>
 </form>
 
-<div *ngIf="environment.DEMO" class="demo-credentials-card">
+<ng-container *ngIf="!electronService.isElectronApp">
+	<div class="demo-credentials-btn">
+		<button *ngIf="!isShown" (click)="collapseDemo()">
+			<span>Demo Credentials</span>
+			<nb-icon
+				class="info-btn ml-2"
+				status="info"
+				icon="info-outline"
+			></nb-icon>
+		</button>
+	</div>
+</ng-container>
+
+<div *ngIf="environment.DEMO && isShown" class="demo-credentials-card">
 	<nb-card>
+		<nb-icon
+			class="ml-auto mt-1 close close-demo-credentials-card"
+			icon="close-outline"
+			(click)="collapseDemo()"
+		></nb-icon>
 		<nb-card-body>
 			<div>Demo Credentials</div>
 			<br />

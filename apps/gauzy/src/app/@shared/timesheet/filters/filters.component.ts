@@ -93,6 +93,7 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
+	@Input() hasTodaybtnWithCustom = false;
 
 	activityLevel = ActivityLevel;
 	sliderOptions: Partial<Options> = {
@@ -225,6 +226,13 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 		return moment(this.selectedDate).isSame(moment(), 'day');
 	}
 
+	customRangeToday() {
+		this.selectedDateRange = {
+			start: this.today,
+			end: this.today
+		};
+	}
+
 	nextDay() {
 		const range = this.dateRange as 'day' | 'week' | 'month';
 		const date = moment(this.selectedDate).add(1, range);
@@ -251,7 +259,7 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	triggerFilterChange(): void {
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	clearFilters(): void {
@@ -263,7 +271,7 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 			this._employeeIds = '';
 		}
 		this.setDefaultEmployee();
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	private async loadEmployees(): Promise<void> {

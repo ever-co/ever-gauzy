@@ -42,12 +42,6 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@Column({ type: 'numeric' })
 	amount: number;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@Index()
-	@Column({ nullable: true })
-	clientName?: string;
-
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
@@ -83,7 +77,9 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
     | @ManyToOne 
     |--------------------------------------------------------------------------
     */
-	// Income Employee
+	/**
+	 * Employee
+	 */
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -97,10 +93,11 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@Column({ nullable: true })
 	readonly employeeId?: string;
 
-	// Client
+	/**
+	 * Client
+	 */
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, {
-		nullable: true,
+	@ManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.incomes, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -119,8 +116,17 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
     | @ManyToMany 
     |--------------------------------------------------------------------------
     */
-	// Tags
-	@ManyToMany(() => Tag, (tag) => tag.income)
-	@JoinTable({ name: 'tag_income' })
+    
+	/**
+	* Tag
+    */
+	@ApiProperty({ type: () => () => Tag, isArray: true })
+	@ManyToMany(() => Tag, (tag) => tag.incomes, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'tag_income'
+	})
 	tags: ITag[];
 }

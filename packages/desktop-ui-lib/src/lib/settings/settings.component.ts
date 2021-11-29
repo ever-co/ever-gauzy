@@ -7,9 +7,9 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbToastrService } from '@nebular/theme';
+import { ElectronServices } from '../electron/services';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -23,6 +23,11 @@ import { NbToastrService } from '@nebular/theme';
 })
 export class SettingsComponent implements OnInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
+	@ViewChild('logbox') logbox: ElementRef;
+	@ViewChild('logUpdate') logAccordion;
+	logContents:any = [];
+	logIsOpen:boolean = false;
+
 	appName: string = this.electronService.remote.app.getName();
 	menus = this.appName === 'gauzy-server' ? ['Update', 'Advanced Setting'] : ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
 	gauzyIcon =
@@ -309,7 +314,7 @@ export class SettingsComponent implements OnInit {
 	loading = false;
 	version = '0.0.0';
 	notAvailable = false;
-	message = 'Application Uptodate';
+	message = 'Application Update';
 	downloadFinish = false;
 	progressDownload = 0;
 	showProgressBar = false;
@@ -337,11 +342,11 @@ export class SettingsComponent implements OnInit {
 	driverOptions = ['sqlite', 'postgres'];
 
 	constructor(
-		private electronService: ElectronService,
+		private electronService: ElectronServices,
 		private _cdr: ChangeDetectorRef,
 		private readonly router: Router,
 		private readonly timeTrackerService: TimeTrackerService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
 	) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
 			const { setting, config, auth, additionalSetting } = arg;
@@ -379,7 +384,9 @@ export class SettingsComponent implements OnInit {
 
 		electronService.ipcRenderer.on('update_not_available', () => {
 			this.notAvailable = true;
-			this.message = 'Application Uptodate';
+			this.message = 'Update Not Available';
+			this.logContents.push(this.message);
+			this.scrollToBottom();
 			this.loading = false;
 			this._cdr.detectChanges();
 		});
@@ -387,18 +394,25 @@ export class SettingsComponent implements OnInit {
 		electronService.ipcRenderer.on('error_update', (event, arg) => {
 			this.notAvailable = true;
 			this.message = 'Update Error';
+			this.logContents.push(this.message);
+			this.logContents.push(`error message: ${arg}`)
+			this.scrollToBottom();
 			this._cdr.detectChanges();
 		});
 
 		electronService.ipcRenderer.on('update_available', () => {
 			this.notAvailable = true;
 			this.message = 'Update Available';
+			this.logContents.push(this.message);
+			this.scrollToBottom();
 			this._cdr.detectChanges();
 		});
 
 		electronService.ipcRenderer.on('update_downloaded', () => {
 			this.notAvailable = true;
 			this.message = 'Update Download Completed';
+			this.logContents.push(this.message);
+			this.scrollToBottom();
 			this.showProgressBar = false;
 			this.downloadFinish = true;
 			this.loading = false;
@@ -410,6 +424,8 @@ export class SettingsComponent implements OnInit {
 			this.showProgressBar = true;
 			this.message = `Update Downloading`;
 			this.progressDownload = Math.floor(Number(arg.percent));
+			this.logContents.push(`Downloading update ${Math.floor(arg.transferred/1000000)} MB of ${Math.floor(arg.total/1000000)} MB  ->> ${Math.floor(arg.bytesPerSecond/1000)} KB/s`);
+			this.scrollToBottom();
 			this._cdr.detectChanges();
 		});
 
@@ -559,6 +575,7 @@ export class SettingsComponent implements OnInit {
 
 	checkForUpdate() {
 		this.loading = true;
+		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('check_for_update');
 		this._cdr.detectChanges();
 	}
@@ -663,4 +680,15 @@ export class SettingsComponent implements OnInit {
 			{ status: arg.status }
 		);
 	}
+	logBoxChange(e) {
+		if (e) {
+			this.logIsOpen = false;
+		} else {
+			this.logIsOpen = true;
+		}
+	}
+
+	private scrollToBottom() {
+        this.logbox.nativeElement.scrollTop = this.logbox.nativeElement.scrollHeight;
+    }
 }

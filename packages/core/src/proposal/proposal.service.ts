@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, ILike } from 'typeorm';
+import { Repository, FindManyOptions, Between, Like } from 'typeorm';
 import * as moment from 'moment';
 import { Proposal } from './proposal.entity';
 import { getDateRangeFormat } from './../core/utils';
@@ -68,7 +68,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 			}
 			if ('jobPostContent' in where) {
 				const { jobPostContent } = where;
-				filter.where.jobPostContent = ILike(`%${jobPostContent}%`);
+				filter.where.jobPostContent = Like(`%${jobPostContent}%`);
 			}
 		}
 		return super.paginate(filter);

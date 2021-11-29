@@ -14,7 +14,7 @@ import { TimesheetService } from '../../timesheet/timesheet.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -38,7 +38,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	timeLogType = TimeLogType;
 	allowFutureDate: boolean;
-
 	@ViewChild(NgForm) form: NgForm;
 
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
@@ -50,7 +49,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly store: Store,
 		private readonly _errorHandlingService: ErrorHandlingService
-	) {}
+	) { }
 
 	public get isBillable(): boolean {
 		return this.timeTrackerService.timerConfig.isBillable;
@@ -116,6 +115,16 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			...this.timeTrackerService.timerConfig,
 			description: value
 		};
+	}
+
+	/**
+	 * Remember timer position
+	 */
+	public get position() {
+		return this.timeTrackerService.position;
+	}
+	public set position(offSet: any) {
+		this.timeTrackerService.position = offSet;
 	}
 
 	ngOnInit() {
@@ -226,7 +235,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			},
 			this.timeTrackerService.timerConfig
 		);
-		
+
 		this.timesheetService
 			.addTime(payload)
 			.then((timeLog) => {
@@ -256,5 +265,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		this.timeTrackerService.setTimeLogType(type);
 	}
 
-	ngOnDestroy() {}
+	onMoveEnd(event) {
+		this.position = event;
+	}
+
+	ngOnDestroy() { }
 }

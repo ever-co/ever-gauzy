@@ -24,6 +24,8 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
+import { ckEditorConfig } from "../../../@shared/ckeditor.config";
+import { UrlPatternValidator } from '../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,35 +45,26 @@ export class ProposalRegisterComponent
 	organization: IOrganization;
 	organizationContact: IOrganizationContact;
 	tags: ITag[] = [];
-
-	public ckConfig: any = {
-		width: '100%',
-		height: '320'
-	};
+	ckConfig: any = ckEditorConfig;
 	minDate = new Date(moment().subtract(1, 'days').format('YYYY-MM-DD'));
 	selectedEmployee: IEmployee;
 
 	/*
-	* Payment Mutation Form 
+	* Payment Mutation Form
 	*/
 	public form: FormGroup = ProposalRegisterComponent.buildForm(this.fb);
 	static buildForm( fb: FormBuilder): FormGroup {
 		return fb.group({
-			jobPostUrl: [
-				'',
-				Validators.compose([
-					Validators.pattern(
-						new RegExp(
-							/^((?:https?:\/\/)[^./]+(?:\.[^./]+)+(?:\/.*)?)$/
-						)
-					)
-				])
-			],
+			jobPostUrl: [],
 			valueDate: [new Date(), Validators.required],
-			jobPostContent: [],
-			proposalContent: [],
+			jobPostContent: ['', Validators.required],
+			proposalContent: ['', Validators.required],
 			tags: [],
 			organizationContact: []
+		}, {
+			validators: [
+				UrlPatternValidator.websiteUrlValidator('jobPostUrl'),
+			]
 		});
 	}
 

@@ -41,6 +41,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 		
 		const { items = [] } = await this.userOrganizationService.getAll([
 			'organization',
+			'organization.contact',
 			'organization.featureOrganizations',
 			'organization.featureOrganizations.feature'
 		], { userId, tenantId });

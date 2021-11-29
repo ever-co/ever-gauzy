@@ -15,8 +15,8 @@ import { TenantModule } from '../tenant/tenant.module';
 			{ path: '/email-template', module: EmailTemplateModule }
 		]),
 		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
-		CqrsModule,
-		forwardRef(() => TenantModule)
+		forwardRef(() => TenantModule),
+		CqrsModule
 	],
 	controllers: [EmailTemplateController],
 	providers: [
@@ -24,6 +24,9 @@ import { TenantModule } from '../tenant/tenant.module';
 		...QueryHandlers,
 		...CommandHandlers
 	],
-	exports: [EmailTemplateService]
+	exports: [
+		TypeOrmModule,
+		EmailTemplateService
+	]
 })
 export class EmailTemplateModule {}

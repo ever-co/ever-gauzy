@@ -15,19 +15,30 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { TranslationBaseComponent } from '../../@shared/language-base';
+import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeesService, EmployeeStore, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
-import { EmployeeAverageIncomeComponent, EmployeeAverageExpensesComponent, EmployeeAverageBonusComponent, EmployeeWorkStatusComponent } from './table-components';
+import {
+	EmployeesService,
+	EmployeeStore,
+	ErrorHandlingService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	EmployeeAverageIncomeComponent,
+	EmployeeAverageExpensesComponent,
+	EmployeeAverageBonusComponent,
+	EmployeeWorkStatusComponent
+} from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -112,7 +123,7 @@ export class EmployeesComponent
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
 				tap(({ invitesAllowed }) => this.organizationInvitesAllowed = invitesAllowed),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -167,7 +178,7 @@ export class EmployeesComponent
 	async add() {
 		try {
 			const dialog = this.dialogService.open(EmployeeMutationComponent);
-			const response = await dialog.onClose.pipe(first()).toPromise();
+			const response = await firstValueFrom(dialog.onClose);
 			if (response) {
 				response.map((data: any) => {
 					if (data.user.firstName || data.user.lastName) {
@@ -177,12 +188,12 @@ export class EmployeesComponent
 						name: this.employeeName.trim(),
 						organization: data.organization.name
 					});
-				});	
+				});
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -193,7 +204,7 @@ export class EmployeesComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate([ '/pages/employees/edit/', this.selectedEmployee.id ]);
+		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
 	}
 
 	manageInvites() {
@@ -201,15 +212,12 @@ export class EmployeesComponent
 	}
 
 	async invite() {
-		const { id: selectedOrganizationId } = this.organization;
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
-				invitationType: InvitationTypeEnum.EMPLOYEE,
-				selectedOrganizationId,
-				selectedOrganization: this.organization
+				invitationType: InvitationTypeEnum.EMPLOYEE
 			}
 		});
-		await dialog.onClose.pipe(first()).toPromise();
+		await firstValueFrom(dialog.onClose);
 	}
 
 	async delete(selectedItem?: EmployeeViewModel) {
@@ -240,13 +248,13 @@ export class EmployeesComponent
 							action: CrudActionEnum.DELETED,
 							employee: this.selectedEmployee as any
 						};
-						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', { 
-							name: this.employeeName.trim() 
+						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
+							name: this.employeeName.trim()
 						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
-						this.subject$.next();
+						this.subject$.next(true);
 					}
 				}
 			});
@@ -266,7 +274,7 @@ export class EmployeesComponent
 					employeeFullName: this.selectedEmployee.fullName
 				}
 			});
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
 				await this.employeesService.setEmployeeEndWork(
 					this.selectedEmployee.id,
@@ -279,7 +287,7 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -297,7 +305,7 @@ export class EmployeesComponent
 					employeeFullName: this.selectedEmployee.fullName
 				}
 			});
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
 				await this.employeesService.setEmployeeEndWork(
 					this.selectedEmployee.id,
@@ -310,7 +318,7 @@ export class EmployeesComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.subject$.next();
+			this.subject$.next(true);
 		}
 	}
 
@@ -321,10 +329,9 @@ export class EmployeesComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user', 'tags'], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
+		);
 
 		let employeesVm = [];
 		const result = [];
@@ -424,7 +431,7 @@ export class EmployeesComponent
 
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	private _applyTranslationOnSmartTable() {
@@ -457,5 +464,5 @@ export class EmployeesComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

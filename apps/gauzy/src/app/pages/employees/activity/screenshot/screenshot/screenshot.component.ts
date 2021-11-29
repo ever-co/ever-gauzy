@@ -60,7 +60,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
-						this.updateLogs$.next();
+						this.updateLogs$.next(true);
 					}
 				}),
 				untilDestroyed(this)
@@ -79,7 +79,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
 		this.timesheetFilterService.filter = $event;
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	async getLogs() {
@@ -149,7 +149,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	}
 
 	deleteSlot() {
-		this.updateLogs$.next();
+		this.updateLogs$.next(true);
 	}
 
 	deleteSlots() {
@@ -165,7 +165,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						.value();
 					this.timesheetService.deleteTimeSlots(ids).then(() => {
 						this._deleteScreenshotGallery(ids);
-						this.updateLogs$.next();
+						this.updateLogs$.next(true);
 					});
 				}
 			});

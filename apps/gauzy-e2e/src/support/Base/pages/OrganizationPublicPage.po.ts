@@ -63,6 +63,7 @@ export const profileLinkInputVisible = () => {
 };
 
 export const enterProfileLinkInputData = (data: string) => {
+	clearField(OrganizationPublicPage.profileLinkInputCss);
 	enterInput(OrganizationPublicPage.profileLinkInputCss, data);
 };
 

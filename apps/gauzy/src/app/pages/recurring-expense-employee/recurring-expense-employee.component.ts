@@ -10,7 +10,8 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { first, debounceTime, filter, withLatestFrom } from 'rxjs/operators';
+import { debounceTime, filter, withLatestFrom } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { monthNames } from '../../@core/utils/date';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
 import {
@@ -98,13 +99,13 @@ export class RecurringExpensesEmployeeComponent
 			.subscribe(async (params) => {
 				if (params.hasOwnProperty('id')) {
 					const id = params.id;
-					const { items } = await this.employeeService
-						.getAll(
-							['user', 'organizationPosition', 'tags', 'skills'],
-							{ id }
-						)
-						.pipe(first())
-						.toPromise();
+					const { items } = await firstValueFrom(
+						this.employeeService
+							.getAll(
+								['user', 'organizationPosition', 'tags', 'skills'],
+								{ id }
+							)
+					);
 					this.selectedEmployee = items[0];
 					this.store.selectedEmployee = {
 						id: items[0].id,
@@ -129,8 +130,8 @@ export class RecurringExpensesEmployeeComponent
 	getCategoryName(categoryName: string) {
 		return categoryName in RecurringExpenseDefaultCategoriesEnum
 			? this.getTranslation(
-					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			  )
+				`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			)
 			: categoryName;
 	}
 
@@ -140,7 +141,8 @@ export class RecurringExpensesEmployeeComponent
 
 	async addEmployeeRecurringExpense() {
 		// TODO get currency from the page dropdown
-		const result = await this.dialogService
+		const result = await firstValueFrom(
+			this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {
 					componentType: COMPONENT_TYPE.EMPLOYEE,
@@ -148,8 +150,7 @@ export class RecurringExpensesEmployeeComponent
 					isAdd: true
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 		if (result) {
 			try {
 				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(
@@ -176,7 +177,7 @@ export class RecurringExpensesEmployeeComponent
 	}
 
 	async editEmployeeRecurringExpense(index: number) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				// TODO
 				context: {
@@ -186,8 +187,7 @@ export class RecurringExpensesEmployeeComponent
 					componentType: COMPONENT_TYPE.EMPLOYEE
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			try {
@@ -218,7 +218,7 @@ export class RecurringExpensesEmployeeComponent
 
 	async deleteEmployeeRecurringExpense(index: number) {
 		const selectedExpense = this.selectedEmployeeRecurringExpense[index];
-		const result: RecurringExpenseDeletionEnum = await this.dialogService
+		const result: RecurringExpenseDeletionEnum = await firstValueFrom(this.dialogService
 			.open(RecurringExpenseDeleteConfirmationComponent, {
 				context: {
 					recordType: this.getTranslation(
@@ -231,14 +231,12 @@ export class RecurringExpensesEmployeeComponent
 						this.selectedDate.getMonth()
 					)}, ${this.selectedDate.getFullYear()}`,
 					end: selectedExpense.endMonth
-						? `${this.getMonthString(selectedExpense.endMonth)}, ${
-								selectedExpense.endYear
-						  }`
+						? `${this.getMonthString(selectedExpense.endMonth)}, ${selectedExpense.endYear
+						}`
 						: 'end'
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 		if (result) {
 			try {
 				const id = selectedExpense.id;

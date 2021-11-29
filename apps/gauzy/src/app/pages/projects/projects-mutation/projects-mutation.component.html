@@ -133,6 +133,11 @@
 										| translate
 								}}"
 								id="start-date-project"
+								[status]="
+									FormHelpers.isInvalidControl(form, 'startDate')
+										? 'danger'
+										: 'basic'
+								"
 							/>
 							<nb-datepicker #startDate></nb-datepicker>
 						</div>
@@ -150,6 +155,11 @@
 										| translate
 								}}"
 								id="end-date-project"
+								[status]="
+									FormHelpers.isInvalidControl(form, 'endDate')
+										? 'danger'
+										: 'basic'
+								"
 							/>
 							<nb-datepicker #endDate></nb-datepicker>
 						</div>
@@ -243,6 +253,7 @@
 							<input
 								nbInput
 								type="number"
+								[min]="0"
 								fullWidth
 								formControlName="budget"
 								[placeholder]="
@@ -263,6 +274,7 @@
 							<input
 								nbInput
 								type="number"
+								[min]="0"
 								fullWidth
 								formControlName="budget"
 								[placeholder]="
@@ -310,7 +322,7 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate">
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate" [style.minHeight]="'330px'">
 					<div class="row">
 						<div class="form-group col-3">
 							<label for="color" class="label">{{
@@ -328,6 +340,8 @@
 								id="color"
 								[colorPicker]="form.get('color').value"
 								[style.background]="form.get('color').value"
+								[style.color]="'#fff'"
+								autocomplete-off
 								[value]="form.get('color').value"
 								(colorPickerChange)="
 									form.get('color').setValue($event)
@@ -409,7 +423,7 @@
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 			<button
-				*ngIf="form.controls['taskViewMode'].value === 'SPRINT'"
+				*ngIf="form.controls['taskViewMode'].value === 'SPRINT' && project"
 				nbButton
 				class="float-right"
 				status="success"
@@ -421,7 +435,7 @@
 	</nb-card-body>
 </nb-card>
 
-<div *ngIf="form?.controls?.taskViewMode?.value == TaskListTypeEnum.SPRINT">
+<div *ngIf="form?.controls?.taskViewMode?.value == TaskListTypeEnum.SPRINT && project">
 	<ngx-tasks-sprint-settings-view
 		[project]="project"
 	></ngx-tasks-sprint-settings-view>

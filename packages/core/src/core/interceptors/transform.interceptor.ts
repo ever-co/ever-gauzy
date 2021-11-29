@@ -1,4 +1,11 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, HttpException } from '@nestjs/common';
+import {
+	Injectable,
+	NestInterceptor,
+	ExecutionContext,
+	CallHandler,
+	HttpException,
+	BadRequestException
+} from '@nestjs/common';
 import { Observable, of as observableOf } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { classToPlain } from 'class-transformer';
@@ -14,11 +21,18 @@ export class TransformInterceptor implements NestInterceptor {
 			.handle()
 			.pipe(
 				map((data) => classToPlain(data)),
-				catchError(
-					(error) => observableOf(
+				catchError((error: any) => {
+					if (error instanceof BadRequestException) {
+						return observableOf(
+							new BadRequestException(
+								error.getResponse()
+							)
+						);
+					}
+					return observableOf(
 						new HttpException(error.message, 404)
-					)
-				)
+					);
+				})
 			);
 	}
 }

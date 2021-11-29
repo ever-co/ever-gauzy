@@ -16,7 +16,7 @@ import { Store as AppStore } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
+import { firstValueFrom, Observable } from 'rxjs';
 import { API_PREFIX } from '../../@core/constants/app.constants';
 
 export function createInitialTimerState(): TimerState {
@@ -45,6 +45,7 @@ export function createInitialTimerState(): TimerState {
 		duration: 0,
 		currentSessionDuration: 0,
 		running: false,
+		position: { x: 0, y: 0 },
 		timerConfig
 	} as TimerState;
 }
@@ -172,7 +173,6 @@ export class TimeTrackerService implements OnDestroy {
 		return timerConfig;
 	}
 	public set timerConfig(value: ITimerToggleInput) {
-		// localStorage.setItem('timerConfig', JSON.stringify(value));
 		this.timerStore.update({
 			timerConfig: value
 		});
@@ -188,15 +188,25 @@ export class TimeTrackerService implements OnDestroy {
 		});
 	}
 
+	public get position() {
+		const { position } = this.timerQuery.getValue();
+		return position;
+	}
+	public set position(offSet: any) {
+		this.timerStore.update({
+			position: offSet
+		});
+	}
+
 	getTimerStatus(tenantId: string): Promise<ITimerStatus> {
-		return this.http
-			.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, {
+		return firstValueFrom(
+			this.http.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, {
 				params: {
 					source: TimeLogSourceEnum.BROWSER,
 					tenantId
 				}
 			})
-			.toPromise();
+		);
 	}
 
 	// toggleTimer(request: ITimerToggleInput): Promise<ITimeLog> {
@@ -218,21 +228,21 @@ export class TimeTrackerService implements OnDestroy {
 	toggle() {
 		if (this.interval) {
 			this.turnOffTimer();
-			return this.http
-				.post<ITimeLog>(
+			return firstValueFrom(
+				this.http.post<ITimeLog>(
 					`${API_PREFIX}/timesheet/timer/stop`,
 					this.timerConfig
 				)
-				.toPromise();
+			);
 		} else {
 			this.currentSessionDuration = 0;
 			this.turnOnTimer();
-			return this.http
-				.post<ITimeLog>(
+			return firstValueFrom(
+				this.http.post<ITimeLog>(
 					`${API_PREFIX}/timesheet/timer/start`,
 					this.timerConfig
 				)
-				.toPromise();
+			);
 		}
 	}
 

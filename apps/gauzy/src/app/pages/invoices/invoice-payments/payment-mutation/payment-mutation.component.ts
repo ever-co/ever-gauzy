@@ -64,7 +64,7 @@ export class PaymentMutationComponent
 			note: [],
 			paymentMethod: ['', Validators.required],
 			invoice: [],
-			contact: [],
+			organizationContact: [],
 			project: [],
 			tags: []
 		});
@@ -126,7 +126,7 @@ export class PaymentMutationComponent
 
 	initializeForm() {
 		if (this.payment) {
-			const { amount, currency, paymentDate, note, paymentMethod, invoice, contact, project, tags } = this.payment;
+			const { amount, currency, paymentDate, note, paymentMethod, invoice, organizationContact, project, tags } = this.payment;
 			this.form.patchValue({
 				amount,
 				currency,
@@ -134,7 +134,7 @@ export class PaymentMutationComponent
 				note,
 				paymentMethod,
 				invoice,
-				contact: contact || null,
+				organizationContact: organizationContact || null,
 				project: project || null,
 				tags
 			});
@@ -153,7 +153,7 @@ export class PaymentMutationComponent
 	async addEditPayment() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { amount, paymentDate, note, paymentMethod, contact, project, tags, invoice } = this.form.value;
+		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } = this.form.value;
 		const payment = {
 			amount,
 			paymentDate,
@@ -166,8 +166,8 @@ export class PaymentMutationComponent
 			recordedBy: this.store.user,
 			userId: this.store.userId,
 			paymentMethod,
-			contact,
-			contactId: contact ? contact.id : null,
+			organizationContact,
+			contactId: organizationContact ? organizationContact.id : null,
 			project,
 			projectId: project ? project.id : null,
 			tags

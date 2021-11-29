@@ -6,7 +6,7 @@ import {
 	IEmployeeLevelFindInput,
 	IPagination
 } from '@gauzy/contracts';
-import { first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -20,32 +20,32 @@ export class EmployeeLevelService {
 		findInput?: IEmployeeLevelFindInput
 	): Promise<IPagination<IEmployeeLevel>> {
 		const data = JSON.stringify({ relations: relations || [], findInput });
-		return this.http
+		return firstValueFrom(
+			this.http
 			.get<IPagination<IEmployeeLevel>>(`${API_PREFIX}/employee-level`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	create(employeeLevel: IEmployeeLevelInput) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.post(`${API_PREFIX}/employee-level`, employeeLevel)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	delete(id: string) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.delete(`${API_PREFIX}/employee-level/${id}`)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 
 	update(id: string, employeeLevel: IEmployeeLevelInput) {
-		return this.http
+		return firstValueFrom(
+			this.http
 			.put(`${API_PREFIX}/employee-level/${id}`, employeeLevel)
-			.pipe(first())
-			.toPromise();
+		);
 	}
 }

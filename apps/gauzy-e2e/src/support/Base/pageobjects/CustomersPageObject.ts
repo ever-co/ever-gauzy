@@ -1,7 +1,7 @@
 export const CustomersPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addButtonCss: 'div.mb-3 > button[status="success"]',
-	editButtonCss: 'div.mb-3 > button[status="info"]',
+	editButtonCss: 'div.mb-3 > button[status="success"]',
 	inviteButtonCss: 'div.mb-3 > button[status="primary"]',
 	deleteButtonCss: 'div.mb-3 > button[status="danger"]',
 	nameInputCss: '#name',

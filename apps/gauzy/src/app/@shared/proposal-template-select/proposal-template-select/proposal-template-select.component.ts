@@ -51,7 +51,7 @@ export class ProposalTemplateSelectComponent implements OnInit {
 	}
 	@Input() public set employeeId(value: string) {
 		this._employeeId = value;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	private _proposalTemplateId: string | string[];
@@ -82,7 +82,7 @@ export class ProposalTemplateSelectComponent implements OnInit {
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.subject$.next()),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

@@ -18,14 +18,15 @@ import {
 	ITimeOffCreateInput,
 	ITimeOffUpdateInput,
 	PermissionsEnum,
+	RolesEnum,
 	StatusTypesEnum
 } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffStatusCommand } from './commands';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
+import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions, Roles } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffRequest')
@@ -33,10 +34,10 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 @Controller()
 export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	constructor(
-		private readonly requestService: TimeOffRequestService,
+		private readonly timeOffRequestService: TimeOffRequestService,
 		private readonly commandBus: CommandBus
 	) {
-		super(requestService);
+		super(timeOffRequestService);
 	}
 
 	/**
@@ -56,7 +57,8 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(RoleGuard, PermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put('approval/:id')
 	async timeOffRequestApproved(
@@ -84,7 +86,8 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(RoleGuard, PermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put('denied/:id')
 	async timeOffRequestDenied(
@@ -118,7 +121,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITimeOffRequest>> {
 		const { relations, findInput, filterDate } = data;
-		return this.requestService.getAllTimeOffRequests(
+		return this.timeOffRequestService.getAllTimeOffRequests(
 			relations,
 			findInput,
 			filterDate
@@ -144,7 +147,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	async create(
 		@Body() entity: ITimeOffCreateInput
 	): Promise<ITimeOffRequest> {
-		return this.requestService.create(entity);
+		return this.timeOffRequestService.create(entity);
 	}
 
 	/**
@@ -172,6 +175,6 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ITimeOffUpdateInput
 	): Promise<ITimeOffRequest> {
-		return this.requestService.updateTimeOffByAdmin(id, entity);
+		return this.timeOffRequestService.updateTimeOffByAdmin(id, entity);
 	}
 }

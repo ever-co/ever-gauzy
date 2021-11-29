@@ -7,9 +7,9 @@ import {
 	ITimeOffPolicyVM
 } from '@gauzy/contracts';
 import { EmployeesService } from '../../../@core/services';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 
 @Component({
 	selector: 'ngx-time-off-settings-mutation',
@@ -21,7 +21,7 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 		protected dialogRef: NbDialogRef<TimeOffSettingsMutationComponent>,
 		private employeesService: EmployeesService,
 		private store: Store
-	) {}
+	) { }
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -54,13 +54,12 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 		if (!this.organizationId) {
 			return;
 		}
-		const { items } = await this.employeesService
+		const { items } = await firstValueFrom(this.employeesService
 			.getAll(['user'], {
 				organization: { id: this.organizationId },
 				tenantId: this.organization.tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
 
 		this.employees = items;
 

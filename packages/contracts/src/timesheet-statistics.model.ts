@@ -5,14 +5,11 @@ import { ITimeSlot, ITimeLog, ITimeLogFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
 import { ITenant } from './tenant.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IGetTimeSlotStatistics {
+export interface IGetTimeSlotStatistics 
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
-	organizationId: string;
-	tenantId: string;
-	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -24,12 +21,10 @@ export interface ITimeSlotStatistics extends IEmployee {
 	user: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetActivitiesStatistics {
+export interface IGetActivitiesStatistics 
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
-	organizationId: string;
-	tenantId: string;
-	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -40,12 +35,10 @@ export interface IActivitiesStatistics {
 	sessions?: number;
 }
 
-export interface IGetProjectsStatistics {
-	organizationId: string;
-	tenantId: string;
+export interface IGetProjectsStatistics 
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
-	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -60,10 +53,9 @@ export interface IProjectsStatistics extends IOrganizationProject {
 }
 
 export interface IGetTasksStatistics
-	extends IBasePerTenantAndOrganizationEntityModel {
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
-	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -73,10 +65,9 @@ export interface ITasksStatistics extends ITask {
 }
 
 export interface IGetManualTimesStatistics
-	extends IBasePerTenantAndOrganizationEntityModel {
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
-	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -87,8 +78,7 @@ export interface IManualTimesStatistics
 }
 
 export interface IGetMembersStatistics
-	extends IBasePerTenantAndOrganizationEntityModel {
-	date?: Date | string;
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 }
@@ -124,4 +114,10 @@ export interface ICountsStatistics {
 	weekDuration: number;
 	todayActivities: number;
 	todayDuration: number;
+}
+
+export interface ISelectedDateRange {
+	start: Date;
+	end: Date;
+	isCustomDate?: boolean;
 }

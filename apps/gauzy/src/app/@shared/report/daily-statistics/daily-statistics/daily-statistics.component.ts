@@ -35,7 +35,7 @@ export class DailyStatisticsComponent extends ReportBaseComponent implements OnI
 	@Input()
 	set filters(value: ITimeLogFilters) {
 		this.logRequest = value;
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	constructor(
@@ -65,7 +65,7 @@ export class DailyStatisticsComponent extends ReportBaseComponent implements OnI
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.subject$.next();
+		this.subject$.next(true);
 	}
 
 	getCounts() {
@@ -76,7 +76,9 @@ export class DailyStatisticsComponent extends ReportBaseComponent implements OnI
 			this.logRequest,
 			'source',
 			'activityLevel',
-			'logType'
+			'logType',
+			'startDate',
+			'endDate'
 		);
 		const {
 			employeeIds = [],

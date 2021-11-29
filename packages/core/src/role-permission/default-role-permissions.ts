@@ -95,7 +95,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
 			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
-			PermissionsEnum.ACCESS_DELETE_ALL_DATA
+			PermissionsEnum.ACCESS_DELETE_ALL_DATA,
+			PermissionsEnum.PROFILE_EDIT
 		]
 	},
 	{
@@ -188,7 +189,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
 			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
-			PermissionsEnum.ACCESS_DELETE_ALL_DATA
+			PermissionsEnum.ACCESS_DELETE_ALL_DATA,
+			PermissionsEnum.PROFILE_EDIT
 		]
 	},
 	{
@@ -209,7 +211,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT,
 			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
-			PermissionsEnum.ORG_HELP_CENTER_EDIT
+			PermissionsEnum.ORG_HELP_CENTER_EDIT,
+			PermissionsEnum.PROFILE_EDIT
 		]
 	},
 	{
@@ -221,6 +224,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
 			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			PermissionsEnum.POLICY_VIEW,
 			PermissionsEnum.APPROVAL_POLICY_EDIT,
 			PermissionsEnum.APPROVAL_POLICY_VIEW,
 			PermissionsEnum.REQUEST_APPROVAL_EDIT,
@@ -242,7 +246,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
 			PermissionsEnum.EQUIPMENT_MAKE_REQUEST,
 			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
-			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW
+			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
+			PermissionsEnum.PROFILE_EDIT
 		]
 	},
 	{

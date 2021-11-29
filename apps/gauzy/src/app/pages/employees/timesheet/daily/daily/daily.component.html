@@ -114,6 +114,7 @@
 					<ngx-avatar
 						[name]="log?.employee?.user?.name"
 						[src]="log?.employee?.user?.imageUrl"
+						[id]="log?.employee?.id"
 					></ngx-avatar>
 				</div>
 			</div>
@@ -171,9 +172,9 @@
 		status="primary"
 		[size]="buttonSize"
 		(click)="openView(timeLog)"
+		[nbTooltip]="'TIMESHEET.VIEW' | translate"
 	>
 		<nb-icon icon="eye-outline"></nb-icon>
-		{{ 'TIMESHEET.VIEW' | translate }}
 	</button>
 	<button
 		*ngxPermissionsOnly="[
@@ -185,9 +186,9 @@
 		status="success"
 		[size]="buttonSize"
 		(click)="openEdit(timeLog)"
+		[nbTooltip]="'TIMESHEET.EDIT' | translate"
 	>
 		<nb-icon icon="edit"></nb-icon>
-		{{ 'TIMESHEET.EDIT' | translate }}
 	</button>
 	<button
 		*ngxPermissionsOnly="[
@@ -201,8 +202,8 @@
 		ngxConfirmDialog
 		[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 		(confirm)="onDeleteConfirm(timeLog)"
+		[nbTooltip]="'TIMESHEET.DELETE' | translate"
 	>
 		<nb-icon icon="trash-2-outline"></nb-icon>
-		{{ 'TIMESHEET.DELETE' | translate }}
 	</button>
 </ng-template>

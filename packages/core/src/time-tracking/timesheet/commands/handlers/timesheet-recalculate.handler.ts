@@ -22,7 +22,7 @@ export class TimesheetRecalculateHandler
 	): Promise<ITimesheet> {
 		const { id } = command;
 		const tenantId = RequestContext.currentTenantId();
-		const timesheet = await this.timesheetService.findOne(id);
+		const timesheet = await this.timesheetService.findOneByIdString(id);
 		
 		const timeslot = await this.timeSlotRepository
 			.createQueryBuilder()

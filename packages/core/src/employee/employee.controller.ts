@@ -197,7 +197,7 @@ export class EmployeeController extends CrudController<Employee> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IEmployee> {
 		const { relations = [] } = data;
-		return this.employeeService.findOne(id, {
+		return this.employeeService.findOneByIdString(id, {
 			relations
 		});
 	}
@@ -226,7 +226,7 @@ export class EmployeeController extends CrudController<Employee> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<ITryRequest> {
 		const { relations = [] } = data;
-		return this.employeeService.findOneOrFail({
+		return this.employeeService.findOneOrFailByOptions({
 			where: {
 				userId
 			},
@@ -352,7 +352,7 @@ export class EmployeeController extends CrudController<Employee> {
 	): Promise<Employee> {
 		const { relations = [], useTenant } = data;
 		if (useTenant) {
-			return this.employeeService.findOne(id, {
+			return this.employeeService.findOneByIdString(id, {
 				relations
 			});
 		} else {
@@ -418,7 +418,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT)
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Employee

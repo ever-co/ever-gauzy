@@ -9,11 +9,10 @@ import {
 	tap,
 	catchError,
 	finalize,
-	first,
 	map
 } from 'rxjs/operators';
 import { IHubstaffOrganization, IHubstaffProject } from '@gauzy/contracts';
-import { Observable, of } from 'rxjs';
+import { Observable, of, firstValueFrom } from 'rxjs';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
@@ -182,17 +181,22 @@ export class HubstaffComponent
 				this.integrationId,
 				this.organizationId
 			)
-			.subscribe(
-				(res) => {
+			.pipe(
+				tap(() => {
 					this.toastrService.success(
 						this.getTranslation(
 							'INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_PROJECTS'
 						),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
-				},
-				(err) => this._errorHandlingService.handleError(err)
-			);
+				}),
+				catchError((error) => {
+					this._errorHandlingService.handleError(error);
+					return of(null);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	autoSync() {
@@ -227,7 +231,7 @@ export class HubstaffComponent
 			context: {}
 		});
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (!data) {
 			this._hubstaffService.resetSettings();
 			return;

@@ -7,7 +7,7 @@ import {
 	ChangeDetectorRef,
 	TemplateRef
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
@@ -15,15 +15,15 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IContact,
-	ICountry
+	ICountry,
+	ContactType
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import {
 	debounceTime,
 	filter,
-	first,
 	tap
 } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -76,7 +76,7 @@ export class ContactComponent
 	/*
 	* Getter & Setter for contact type
 	*/
-	_contactType: string;
+	_contactType: string = ContactType.CUSTOMER;
 	get contactType(): string {
 		return this._contactType;
 	}
@@ -95,7 +95,7 @@ export class ContactComponent
 	/*
 	* Actions Buttons directive 
 	*/
-	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
@@ -106,7 +106,8 @@ export class ContactComponent
 		private readonly dialogService: NbDialogService,
 		private readonly route: ActivatedRoute,
 		private readonly countryService: CountryService,
-		private readonly cd: ChangeDetectorRef
+		private readonly cd: ChangeDetectorRef,
+		private readonly _router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -135,7 +136,7 @@ export class ContactComponent
 				tap(([organization, employee]) => {
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
-					this.subject$.next();
+					this.subject$.next(true);
 				}),
 				untilDestroyed(this)
 			)
@@ -148,6 +149,13 @@ export class ContactComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.route.queryParamMap
+			.pipe(untilDestroyed(this))
+			.subscribe((params) => {
+				if (params.get('id')) {
+					this._initEditMethod(params.get('id'));
+				}
+			});
 		this.countryService.countries$
 			.pipe(
 				tap((countries: ICountry[]) => (this.countries = countries)),
@@ -157,6 +165,29 @@ export class ContactComponent
 			.subscribe();
 	}
 
+	private _initEditMethod(id: string) {
+		if (id) {
+			const { tenantId } = this.store.user;
+			this.organizationContactService
+				.getById(id, 
+					tenantId, 
+					['projects', 'members', 'members.user', 'tags', 'contact'])
+				.then((items) => {
+					if (items) {
+						this.editOrganizationContact(items);
+					}
+				})
+				.catch(() => {
+					this.toastrService.danger(
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+				})
+				.finally(() => {
+					this.loading = false;
+					this.cd.detectChanges();
+				});
+		}
+	}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -233,14 +264,13 @@ export class ContactComponent
 	}
 
 	async removeOrganizationContact(id?: string, name?: string) {
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Contact'
 				}
 			})
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			await this.organizationContactService.delete(
@@ -424,6 +454,25 @@ export class ContactComponent
 		this.showAddCard = true;
 	}
 
+	/**
+	 * Redirect contact/client/customer to view page
+	 * 
+	 * @returns 
+	 */
+	navigateToContact(selectedItem?: IContact) {
+		if (selectedItem) {
+			this.selectContact({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		if (!this.selectedContact) {
+			return;
+		}
+		const { id } = this.selectedContact;
+		this._router.navigate([`/pages/contacts/view`, id]);
+	}
+
 	async invite(selectedOrganizationContact?: IOrganizationContact) {
 		try {
 			const { id: organizationId } = this.organization;
@@ -436,7 +485,7 @@ export class ContactComponent
 				}
 			});
 
-			const result = await dialog.onClose.pipe(first()).toPromise();
+			const result = await firstValueFrom(dialog.onClose);
 
 			if (result) {
 				await this.loadOrganizationContacts();
@@ -502,5 +551,5 @@ export class ContactComponent
 		return find ? find.country : row.country;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

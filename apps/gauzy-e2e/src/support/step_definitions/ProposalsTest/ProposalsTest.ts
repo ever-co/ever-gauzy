@@ -124,6 +124,10 @@ Then('User can select tag from dropdown options', () => {
 });
 
 And('User can enter job proposal content', () => {
+	proposalsPage.enterJobPostContentInputData(proposalContent, 0);
+});
+
+And('User can enter job proposal content again', () => {
 	proposalsPage.enterJobPostContentInputData(proposalContent, 1);
 });
 
@@ -135,15 +139,8 @@ When('User click on save button', () => {
 	proposalsPage.clickSaveProposalButton();
 });
 
-Then('Notification message will appear', () => {
-	cy.on('uncaught:exception', (err, runnable) => {
-		return false;
-	});
-	proposalsPage.waitMessageToHide();
-});
-
 // Edit proposal
-And('User can see proposals table', () => {
+Then('User can see proposals table', () => {
 	proposalsPage.tableRowVisible();
 });
 

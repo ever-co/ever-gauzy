@@ -32,7 +32,7 @@ nb-radio-group {
 .flex-container {
   display: flex;
   flex-flow: row wrap;
-  justify-content: space-around;
+  justify-content: flex-start;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -41,8 +41,8 @@ nb-radio-group {
 .flex-item {
   border: 0.0625rem solid #e4e9f2;
   border-radius: 0.25rem;
-  width: 386px;
-  margin-top: 10px;
+  width: 330px;
+  margin: 10px;
 }
 
 .fullName {

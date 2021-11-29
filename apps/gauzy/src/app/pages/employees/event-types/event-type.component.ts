@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -101,7 +101,7 @@ export class EventTypeComponent
 				tap(([organization, employee]) => {
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
-					this.eventTypes$.next();
+					this.eventTypes$.next(true);
 				}),
 				untilDestroyed(this)
 			)
@@ -131,7 +131,7 @@ export class EventTypeComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				tap(() => this.eventTypes$.next()),
+				tap(() => this.eventTypes$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -165,7 +165,7 @@ export class EventTypeComponent
 			this.toastrService.success('NOTES.EVENT_TYPES.ADD_EVENT_TYPE', {
 				name: title
 			});
-			this.eventTypes$.next();
+			this.eventTypes$.next(true);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -213,7 +213,7 @@ export class EventTypeComponent
 				} catch (error) {
 					this.errorHandler.handleError(error);
 				} finally {
-					this.eventTypes$.next();
+					this.eventTypes$.next(true);
 				}
 			});
 	}
@@ -256,12 +256,12 @@ export class EventTypeComponent
 							});
 						})
 						.finally(() => {
-							this.eventTypes$.next();
+							this.eventTypes$.next(true);
 						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
-						this.eventTypes$.next();
+						this.eventTypes$.next(true);
 					}
 				}
 			});

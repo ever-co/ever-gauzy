@@ -30,6 +30,7 @@ import {
 	ToastrService
 } from '../../../@core/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ckEditorConfig } from "../../ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,6 +52,10 @@ export class PublicPageEmployeeMutationComponent
 	privacySettings: any[];
 	employeeAwards: IEmployeeAward[];
 	showAddAward: boolean;
+	ckConfig: any = {
+		...ckEditorConfig,
+		height: "200"
+	};
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -206,14 +211,14 @@ export class PublicPageEmployeeMutationComponent
 		}
 	}
 
-	removeAward(awardId: string) {
+	async removeAward(award) {
 		this.employeeAwardService
-			.delete(awardId)
+			.delete(award.id)
 			.pipe(
 				tap(
 					() =>
 						(this.employeeAwards = this.employeeAwards.filter(
-							(a) => a.id !== awardId
+							(a) => a.id !== award.id
 						))
 				),
 				tap(() => {

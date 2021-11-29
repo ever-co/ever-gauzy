@@ -28,41 +28,47 @@
 						<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 					</button>
 				</div>
-				<div *ngIf="categoryName" class="search-bar">
-					<div class="column-first">
-						<p class="label">
-							{{ 'HELP_PAGE.SEARCH_BY_NAME' | translate }}
-						</p>
-						<input
-							class="search-input"
-							[formControl]="search"
-							placeholder="Search"
-							value="inputValue"
-							type="text"
-							nbInput
-						/>
+				<div *ngIf="categoryName" class="row row-search ml-1 align-items-end">
+					<div class="col-lg-5">
+						<div class="form-group">
+							<label for="employee" class="label">{{
+								'HELP_PAGE.SEARCH_BY_NAME' | translate
+							}}</label>
+							<input
+								fullWidth
+								[formControl]="search"
+								placeholder="Search"
+								value="inputValue"
+								type="text"
+								nbInput
+							/>
+						</div>
 					</div>
-					<div class="column-second">
-						<p class="label">
-							{{ 'HELP_PAGE.FILTER_BY_AUTHOR' | translate }}
-						</p>
-						<ga-employee-multi-select
-							[multiple]="false"
-							[label]="false"
-							[allEmployees]="employees"
-							(selectedChange)="onEmployeeSelected($event)"
-							[reset]="isResetSelect"
+					<div class="col-lg-5">
+						<div class="form-group">
+								<label for="employee" class="label">{{
+									'HELP_PAGE.FILTER_BY_AUTHOR' | translate
+								}}</label>
+								<ga-employee-multi-select
+									[multiple]="false"
+									[label]="false"
+									[allEmployees]="employees"
+									(selectedChange)="onEmployeeSelected($event)"
+									[reset]="isResetSelect"
+								>
+								</ga-employee-multi-select>
+						</div>
+					</div>
+					<div class="col-lg-2">
+						<button
+							status="danger"
+							class="clear-button"
+							(click)="clearFilters()"
+							nbButton
 						>
-						</ga-employee-multi-select>
-					</div>
-					<button
-						status="danger"
-						class="clear-button"
-						(click)="clearFilters()"
-						nbButton
-					>
-						{{ 'HELP_PAGE.CLEAR' | translate }}
-					</button>
+							{{ 'HELP_PAGE.CLEAR' | translate }}
+						</button>
+					</div>					
 				</div>
 			</nb-card>
 			<div

@@ -26,7 +26,7 @@ export class InviteAcceptUserHandler
 	): Promise<UpdateResult | IInvite> {
 		const { input, languageCode } = command;
 
-		const organization = await this.organizationService.findOne(
+		const organization = await this.organizationService.findOneByIdString(
 			input.organization.id,
 			{ relations: ['tenant'] }
 		);

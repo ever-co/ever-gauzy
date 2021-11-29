@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IProductCategoryTranslated,
@@ -94,9 +94,9 @@ export class ProductCategoriesComponent
 			.pipe(
 				debounceTime(300),
 				filter(([organization, language]) => !!organization && !!language),
-				tap(([ organization ]) => this.organization = organization),
+				tap(([organization]) => this.organization = organization),
 				distinctUntilChange(),
-				tap(() => this.categories$.next()),
+				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -123,7 +123,7 @@ export class ProductCategoriesComponent
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
-				tap(() => this.categories$.next()),
+				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -186,14 +186,14 @@ export class ProductCategoriesComponent
 			}
 		});
 
-		const productCategory = await dialog.onClose.pipe(first()).toPromise();
+		const productCategory = await firstValueFrom(dialog.onClose);
 		if (productCategory) {
 			let productCatTranslaction = productCategory.translations[0];
 			this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
 				name: productCatTranslaction?.name
 			});
 		}
-		this.categories$.next();
+		this.categories$.next(true);
 	}
 
 	async delete(selectedItem?: IProductCategoryTranslated) {
@@ -203,10 +203,9 @@ export class ProductCategoriesComponent
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
+		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
+			.onClose);
 
 		if (result) {
 			if (this.selectedProductCategory) {
@@ -218,7 +217,7 @@ export class ProductCategoriesComponent
 						});
 					})
 					.finally(() => {
-						this.categories$.next();
+						this.categories$.next(true);
 					});
 			}
 		}
@@ -232,7 +231,7 @@ export class ProductCategoriesComponent
 	/**
 	 * Register Smart Table Source Config
 	 */
-	 setSmartTableSource() {
+	setSmartTableSource() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -254,8 +253,8 @@ export class ProductCategoriesComponent
 	/**
 	 * GET product categories smart table source
 	 */
-	 private async getTranslatedProductCategories() {
-		try { 
+	private async getTranslatedProductCategories() {
+		try {
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 
@@ -266,7 +265,7 @@ export class ProductCategoriesComponent
 				await this.smartTableSource.getElements();
 				this.productCategories = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -295,5 +294,5 @@ export class ProductCategoriesComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

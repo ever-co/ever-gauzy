@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from './../../@shared/language-base/translat
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
@@ -22,6 +22,7 @@ import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { KnowledgeBaseComponent } from './knowledeg-base/knowledeg-base.component';
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -193,7 +194,7 @@ export class SidebarComponent
 				category: node
 			}
 		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.deletedNode.emit();
 			this.toastrService.success('TOASTR.MESSAGE.DELETED_CATEGORY', {
@@ -211,7 +212,7 @@ export class SidebarComponent
 				base: someNode
 			}
 		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
 			this.toastrService.success('TOASTR.MESSAGE.DELETED_BASE', {
 				name: data.data.name
@@ -262,7 +263,7 @@ export class SidebarComponent
 
 	async addIcon() {
 		const dialog = this.dialogService.open(AddIconComponent);
-		const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
+		const chosenIcon = await firstValueFrom(dialog.onClose);
 		if (chosenIcon) {
 			const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 			someNode.data.icon = chosenIcon;
