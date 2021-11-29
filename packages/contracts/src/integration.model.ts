@@ -1,6 +1,6 @@
 import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
 import { IOrganizationUpdateInput, ITaskUpdateInput } from './index';
-import { IActivity } from './timesheet.model';
+import { IActivity, ITimeLog } from './timesheet.model';
 import {
 	IBaseEntityModel,
 	IBasePerTenantAndOrganizationEntityModel
@@ -36,7 +36,7 @@ export interface IIntegrationEntitySettingTied
 export interface IIntegrationMap
 	extends IBasePerTenantAndOrganizationEntityModel {
 	integration: IIntegrationTenant;
-	sourceId: string;
+	sourceId: number;
 	gauzyId: string;
 }
 
@@ -83,55 +83,55 @@ export interface IIntegrationMapSyncActivity
 	extends IBasePerTenantAndOrganizationEntityModel {
 	activity: IActivity;
 	integrationId: string;
-	sourceId: string;
+	sourceId: number;
 }
 
 export interface IIntegrationMapSyncScreenshot 
 	extends IBasePerTenantAndOrganizationEntityModel {
 	screenshot: IHubstaffScreenshotActivity;
 	integrationId: string;
-	sourceId: string;
+	sourceId: number;
 }
 
 export interface IIntegrationMapSyncTimeLog
 	extends IBasePerTenantAndOrganizationEntityModel {
-	timeLog: any;
+    timeLog: Partial<ITimeLog>;
 	integrationId: string;
-	sourceId: string;
+	sourceId: number;
 }
 
 export interface IIntegrationMapSyncTimeSlot 
 	extends IBasePerTenantAndOrganizationEntityModel {
 	timeSlot: IHubstaffTimeSlotActivity;
 	integrationId: string;
-	sourceId: string;
+	sourceId: number;
 }
 
 export interface IIntegrationMapSyncTask 
 	extends IBasePerTenantAndOrganizationEntityModel {
 	taskInput: ITaskUpdateInput;
 	integrationId: string;
-	sourceId: string;
+	sourceId: number;
 }
 
 export interface IIntegrationMapSyncProject 
 	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationProjectInput: IOrganizationProjectsUpdateInput;
 	integrationId: string;
-	sourceId: string;
+	sourceId: number;
 }
 
 export interface IIntegrationMapSyncOrganization 
 	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationInput: IOrganizationUpdateInput;
 	integrationId: string;
-	sourceId: string;
+	sourceId: number;
 }
 
 export interface IIntegrationMapSyncEntityInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	integrationId: string;
-	sourceId: string;
+	sourceId: number;
 	gauzyId: string;
 	entity: string;
 }

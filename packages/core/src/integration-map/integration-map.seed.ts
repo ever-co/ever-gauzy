@@ -38,8 +38,8 @@ export const createRandomIntegrationMap = async (
 			integrationMap.entity = faker.random.arrayElement(
 				Object.values(IntegrationEntity)
 			);
-			integrationMap.sourceId = 'sourceId-' + faker.datatype.number(40);
-			integrationMap.gauzyId = 'gauzyId-' + faker.datatype.number(40);
+			integrationMap.sourceId = faker.datatype.number({ min: 10000000, max: 99999999999 });
+			integrationMap.gauzyId = faker.datatype.uuid();
 			integrationMaps.push(integrationMap);
 		}
 	}

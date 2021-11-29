@@ -1,4 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
+import { TimeLogType } from "./timesheet.model";
+
 export interface IHubstaffAccessTokens {
 	access_token: string;
 	refresh_token: string;
@@ -52,6 +54,7 @@ export interface IHubstaffTimeSlotActivity {
 	starts_at: Date;
 	user_id: number;
 	project_id: number;
+	task_id?: number;
 	keyboard: number;
 	mouse: number;
 	overall: number;
@@ -83,4 +86,13 @@ export interface IHubstaffScreenshotActivity {
 	height: number;
 	screen: number;
 	employeeId?: string;
+}
+
+export interface IHubstaffLogFromTimeSlots {
+	id: string,
+	date: Date,
+	user_id: number,
+	project_id: number,
+	task_id: number,
+	logType: TimeLogType
 }

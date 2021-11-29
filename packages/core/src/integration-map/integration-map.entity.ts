@@ -17,8 +17,8 @@ export class IntegrationMap
 	entity: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
-	sourceId: string;
+	@Column({ type: "int", width: 200, nullable: false })
+	sourceId: number;
 
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })

@@ -4,6 +4,7 @@ import { IntegrationMapSyncOrganizationHandler } from './integration-map.sync-or
 import { IntegrationMapSyncProjectHandler } from './integration-map.sync-project.handler';
 import { IntegrationMapSyncScreenshotHandler } from './integration-map.sync-screenshot.handler';
 import { IntegrationMapSyncTaskHandler } from './integration-map.sync-task.handler';
+import { IntegrationMapSyncTimeLogHandler } from './integration-map.sync-time-log.handler';
 import { IntegrationMapSyncTimeSlotHandler } from './integration-map.sync-time-slot.handler';
 
 export const CommandHandlers = [
@@ -13,5 +14,6 @@ export const CommandHandlers = [
 	IntegrationMapSyncProjectHandler,
 	IntegrationMapSyncScreenshotHandler,
 	IntegrationMapSyncTaskHandler,
+	IntegrationMapSyncTimeLogHandler,
 	IntegrationMapSyncTimeSlotHandler
 ];
