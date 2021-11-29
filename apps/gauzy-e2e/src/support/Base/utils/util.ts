@@ -288,3 +288,8 @@ export const enterInputByIndex = (loc, data,index) => {
 	cy.get(loc, { timeout: taskTimeout })
 		.eq(index).type(data);
 };
+export const clearFieldByIndex = (loc, index) => {
+	cy.get(loc)
+		.eq(index)
+		.clear();
+};

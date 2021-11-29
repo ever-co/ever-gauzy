@@ -10,6 +10,10 @@ Feature: Pipelines test
     And User can enter pipeline name
     And User can see description input field
     And User can enter pipeline description
+    When User see stage add button
+    Then User click on stage button
+    When User see name input field
+    Then User enter stage name
     And User can see create pipeline button
     When User click on create pipeline button
     Then Notification message will appear

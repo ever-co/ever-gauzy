@@ -50,6 +50,22 @@ And('User can enter pipeline description', () => {
 	);
 });
 
+When('User see stage add button', () =>{
+	pipelinesPage.verifyStageButton();
+});
+
+Then('User click on stage button', () => {
+	pipelinesPage.clickOnStageButton();
+});
+
+When('User see name input field', () => {
+	pipelinesPage.verifyStageNameInput(PipelinesPageData.stageNameInputIndex);
+});
+
+Then('User enter stage name', () => {
+	pipelinesPage.enterNameInputDataByIndex(PipelinesPageData.stageName, PipelinesPageData.stageNameInputIndex);
+});
+
 And('User can see create pipeline button', () => {
 	pipelinesPage.createPipelineButtonVisible();
 });
@@ -92,9 +108,7 @@ And('User can see description input field again', () => {
 });
 
 And('User can enter new pipeline description', () => {
-	pipelinesPage.enterDescriptionInputData(
-		PipelinesPageData.pipelineDescription
-	);
+	pipelinesPage.enterDescriptionInputDataByIndex(PipelinesPageData.pipelineDescription, PipelinesPageData.pipelineDescriptionIndex);
 });
 
 And('User can see update button', () => {
@@ -102,7 +116,7 @@ And('User can see update button', () => {
 });
 
 When('User click on update button', () => {
-	pipelinesPage.clickUpdateButon();
+	pipelinesPage.clickUpdateButton();
 });
 
 Then('Notification message will appear', () => {

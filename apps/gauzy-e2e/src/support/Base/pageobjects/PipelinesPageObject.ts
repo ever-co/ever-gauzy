@@ -10,5 +10,6 @@ export const PipelinesPage = {
 	deletePipelineButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyPipelineCss: 'div.ng-star-inserted'
+	verifyPipelineCss: 'div.ng-star-inserted',
+	stageButtonCss: 'nb-card-header > button'
 };

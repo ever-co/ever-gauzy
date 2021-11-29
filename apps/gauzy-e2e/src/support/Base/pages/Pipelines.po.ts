@@ -7,7 +7,9 @@ import {
 	waitElementToHide,
 	verifyTextNotExisting,
 	verifyText,
-	enterInputByIndex
+	enterInputByIndex,
+	verifyElementIsVisibleByIndex,
+	clearFieldByIndex
 } from '../utils/util';
 import { PipelinesPage } from '../pageobjects/PipelinesPageObject';
 
@@ -73,7 +75,7 @@ export const updateButtonVisible = () => {
 	verifyElementIsVisible(PipelinesPage.updateButtonCss);
 };
 
-export const clickUpdateButon = () => {
+export const clickUpdateButton = () => {
 	clickButton(PipelinesPage.updateButtonCss);
 };
 
@@ -106,6 +108,23 @@ export const verifyPipelineExists = (text) => {
 };
 
 export const enterNameInputDataByIndex = (data:string, index: number) => {
-	clearField(PipelinesPage.pipelineNameInputCss);
+	clearFieldByIndex(PipelinesPage.pipelineNameInputCss, index);
+	enterInputByIndex(PipelinesPage.pipelineNameInputCss, data ,index);
+};
+
+export const verifyStageButton = () => {
+	verifyElementIsVisible(PipelinesPage.stageButtonCss);
+};
+
+export const clickOnStageButton = () => {
+	clickButton(PipelinesPage.stageButtonCss); 
+};
+
+export const verifyStageNameInput = (index: number) => {
+	verifyElementIsVisibleByIndex(PipelinesPage.pipelineNameInputCss, index)
+}
+
+export const enterDescriptionInputDataByIndex = (data:string, index: number) => {
+	clearFieldByIndex(PipelinesPage.pipelineNameInputCss, index);
 	enterInputByIndex(PipelinesPage.pipelineNameInputCss, data ,index);
 };
