@@ -189,6 +189,7 @@ export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	overall?: number;
 	startedAt: Date;
 	stoppedAt?: Date;
+	percentage?: number;
 	tags?: ITag[];
 	isAllowDelete?: boolean;
 }
@@ -268,6 +269,11 @@ export interface IURLMetaData {
 	title?: string;
 	description?: string;
 	image?: string;
+}
+
+export interface IUpdateScreenshotInput
+	extends ICreateScreenshotInput {
+	id: string
 }
 
 export interface ICreateScreenshotInput

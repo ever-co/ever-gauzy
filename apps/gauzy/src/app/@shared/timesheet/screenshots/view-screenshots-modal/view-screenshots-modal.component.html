@@ -19,14 +19,14 @@
 		<div class="activity mb-3">
 			<nb-progress-bar
 				class="mb-1"
-				[value]="timeSlot.overall"
-				[status]="progressStatus(timeSlot.overall)"
+				[value]="timeSlot.percentage"
+				[status]="progressStatus(timeSlot.percentage)"
 				[displayValue]="true"
 				size="tiny"
 			></nb-progress-bar>
 
 			<div class="activity-count">
-				{{ timeSlot.overall || 0 }}%
+				{{ timeSlot.percentage || 0 }}%
 				{{ 'TIMESHEET.SCREENSHOTS.OF' | translate }}
 				{{
 					timeSlot.duration

@@ -6,13 +6,15 @@ import { IntegrationMap } from '../../integration-map.entity';
 @CommandHandler(IntegrationMapSyncEntityCommand)
 export class IntegrationMapSyncEntityHandler
 	implements ICommandHandler<IntegrationMapSyncEntityCommand> {
-	constructor(private _ims: IntegrationMapService) {}
+	
+	constructor(
+		private readonly _integrationMapService: IntegrationMapService
+	) {}
 
 	public async execute(
 		command: IntegrationMapSyncEntityCommand
 	): Promise<IntegrationMap> {
 		const { input } = command;
-
-		return await this._ims.create(input);
+		return await this._integrationMapService.create(input);
 	}
 }
