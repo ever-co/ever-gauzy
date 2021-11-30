@@ -489,10 +489,12 @@ export class StatisticService {
 							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 					}`,
-					`duration`
+					`week_duration`
 				)
-				.addSelect(`AVG("${weekTimeQuery.alias}"."overall")`, `overall`)
-				.addSelect(`COUNT("${weekTimeQuery.alias}"."id")`, `count`)
+				.addSelect(`COALESCE(((SUM("${weekTimeQuery.alias}"."overall") * 100) / (SUM("${weekTimeQuery.alias}"."duration"))), 0)`, `percentage`)
+				.addSelect(`COALESCE(SUM("${weekTimeQuery.alias}"."overall"), 0)`, `overall`)
+				.addSelect(`COALESCE(SUM("${weekTimeQuery.alias}"."duration"), 0)`, `duration`)
+				.addSelect(`COUNT("${weekTimeQuery.alias}"."id")`, `timeslot_count`)
 				.addSelect(`${weekTimeQuery.alias}.employeeId`, 'employeeId')
 				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`, { tenantId })
@@ -528,16 +530,15 @@ export class StatisticService {
 			weekTimeSlots = mapObject(
 				groupBy(weekTimeSlots, 'employeeId'),
 				function (values, employeeId) {
-					const duration = reduce(
-						pluck(values, 'duration'),
-						ArraySum,
-						0
+					const weekDuration = reduce(pluck(values, 'week_duration'), ArraySum, 0);
+					const weekPercentage = (
+						(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) / 
+						(reduce(pluck(values, 'duration'), ArraySum, 0))
 					);
-					const overall = average(values, 'overall');
 					return {
 						employeeId,
-						duration,
-						overall
+						duration: weekDuration,
+						overall: weekPercentage
 					};
 				}
 			);
@@ -566,10 +567,12 @@ export class StatisticService {
 							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 					}`,
-					`duration`
+					`today_duration`
 				)
-				.addSelect(`AVG("${dayTimeQuery.alias}"."overall")`, `overall`)
-				.addSelect(`COUNT("${dayTimeQuery.alias}"."id")`, `count`)
+				.addSelect(`COALESCE(((SUM("${dayTimeQuery.alias}"."overall") * 100) / (SUM("${dayTimeQuery.alias}"."duration"))), 0)`, `percentage`)
+				.addSelect(`COALESCE(SUM("${dayTimeQuery.alias}"."overall"), 0)`, `overall`)
+				.addSelect(`COALESCE(SUM("${dayTimeQuery.alias}"."duration"), 0)`, `duration`)
+				.addSelect(`COUNT("${dayTimeQuery.alias}"."id")`, `timeslot_count`)
 				.addSelect(`${dayTimeQuery.alias}.employeeId`, 'employeeId')
 				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`, { tenantId })
@@ -606,16 +609,15 @@ export class StatisticService {
 			dayTimeSlots = mapObject(
 				groupBy(dayTimeSlots, 'employeeId'),
 				function (values, employeeId) {
-					const duration = reduce(
-						pluck(values, 'duration'),
-						ArraySum,
-						0
+					const todayDuration = reduce(pluck(values, 'today_duration'), ArraySum, 0);
+					const todayPercentage = (
+						(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) / 
+						(reduce(pluck(values, 'duration'), ArraySum, 0))
 					);
-					const overall = average(values, 'overall');
 					return {
 						employeeId,
-						duration,
-						overall
+						duration: todayDuration,
+						overall: todayPercentage
 					};
 				}
 			);

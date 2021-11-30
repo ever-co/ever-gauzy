@@ -78,10 +78,24 @@ export class CreateTimeSlotHandler
 			}
 		});
 
+		console.log(
+			`Attempt to get timeSlot from DB with Parameters`,
+			{
+				organizationId,
+				tenantId,
+				employeeId,
+				startedAt: input.startedAt
+			},
+			{
+				timeSlot
+			}
+		);
+
 		if (!timeSlot) {
 			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
 			timeSlot.tenantId = tenantId;
 			timeSlot.organizationId = organizationId;
+			console.log('Omit New Timeslot:', timeSlot);
 		}
 
 		if (input.timeLogId) {
@@ -135,6 +149,7 @@ export class CreateTimeSlotHandler
 			);
 		}
 
+		console.log('Timeslot Before Create:', timeSlot);
 		await this.timeSlotRepository.save(timeSlot);
 
 		const minDate = input.startedAt;
@@ -156,6 +171,7 @@ export class CreateTimeSlotHandler
 			createdTimeSlot = timeSlot;
 		}
 
+		console.log('Created Time Slot:', { timeSlot: createdTimeSlot });
 		return await this.timeSlotRepository.findOne(createdTimeSlot.id, {
 			relations: ['timeLogs', 'screenshots']
 		});
