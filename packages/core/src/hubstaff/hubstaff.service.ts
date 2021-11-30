@@ -448,32 +448,32 @@ export class HubstaffService {
 		organizationId
 	}): Promise<IIntegrationMap[]> {
 		try {
-			return await Promise.all(
-				await screenshots.map(
-					async (screenshot: IHubstaffScreenshotActivity) => {
-						const { id, user_id } = screenshot;
-						const employee = await this._getEmployeeByHubstaffUserId(
-							user_id,
-							token,
-							integrationId,
-							organizationId
-						);
-						return await this._commandBus.execute(
-							new IntegrationMapSyncScreenshotCommand(
-								Object.assign({
-									screenshot: {
-										employeeId: employee ? employee.gauzyId : null,
-										...screenshot
-									},
-									sourceId: id,
-									integrationId,
-									organizationId
-								})
-							)
-						);
-					}
-				)
-			);	
+			let integratedScreenshots: IIntegrationMap[] = [];
+			for await (const screenshot of screenshots) {
+				const { id, user_id } = screenshot;
+				const employee = await this._getEmployeeByHubstaffUserId(
+					user_id,
+					token,
+					integrationId,
+					organizationId
+				);
+				integratedScreenshots.push(
+					await this._commandBus.execute(
+						new IntegrationMapSyncScreenshotCommand(
+							Object.assign({
+								screenshot: {
+									employeeId: employee ? employee.gauzyId : null,
+									...screenshot
+								},
+								sourceId: id,
+								integrationId,
+								organizationId
+							})
+						)
+					)
+				);
+			}
+			return integratedScreenshots;
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.SCREENSHOT}`);
 		}		
@@ -600,54 +600,56 @@ export class HubstaffService {
 		projectId: string
 	): Promise<IIntegrationMap[]> {
 		try {
+			let integratedTimeLogs: IIntegrationMap[] = [];
 			const tenantId = RequestContext.currentTenantId();
-			return await Promise.all(
-				await timeLogs.map(
-					async ({ id, user_id, task_id, logType, startedAt, stoppedAt, timeSlots }) => {
-						const employee = await this._getEmployeeByHubstaffUserId(
-							user_id,
-							token,
-							integrationId,
-							organizationId
-						);
-						const { record } = await this._integrationMapService.findOneOrFailByOptions({
-							where: {
-								sourceId: task_id,
-								entity: IntegrationEntity.TASK,
-								organizationId,
-								tenantId
-							}
-						});
-						const syncTimeSlots = await this.syncTimeSlots(
-							integrationId,
-							organizationId,
-							employee,
-							timeSlots
-						);
-						return await this._commandBus.execute(
-							new IntegrationMapSyncTimeLogCommand(
-								Object.assign({}, {
-									timeLog: {
-										projectId,
-										employeeId: employee.gauzyId,
-										taskId: record ? record.gauzyId : null,
-										logType,
-										startedAt,
-										stoppedAt,
-										source: TimeLogSourceEnum.HUBSTAFF,
-										organizationId,
-										tenantId,
-										timeSlots: syncTimeSlots
-									},
-									sourceId: id,
-									integrationId,
-									organizationId
-								})
-							)
-						);	
+
+			for await (const timeLog of timeLogs) {
+				const { id, user_id, task_id, logType, startedAt, stoppedAt, timeSlots } = timeLog;
+				const employee = await this._getEmployeeByHubstaffUserId(
+					user_id,
+					token,
+					integrationId,
+					organizationId
+				);
+				const { record } = await this._integrationMapService.findOneOrFailByOptions({
+					where: {
+						sourceId: task_id,
+						entity: IntegrationEntity.TASK,
+						organizationId,
+						tenantId
 					}
-				)
-			);
+				});
+				const syncTimeSlots = await this.syncTimeSlots(
+					integrationId,
+					organizationId,
+					employee,
+					timeSlots
+				);
+				integratedTimeLogs.push(
+					await this._commandBus.execute(
+						new IntegrationMapSyncTimeLogCommand(
+							Object.assign({}, {
+								timeLog: {
+									projectId,
+									employeeId: employee.gauzyId,
+									taskId: record ? record.gauzyId : null,
+									logType,
+									startedAt,
+									stoppedAt,
+									source: TimeLogSourceEnum.HUBSTAFF,
+									organizationId,
+									tenantId,
+									timeSlots: syncTimeSlots
+								},
+								sourceId: id,
+								integrationId,
+								organizationId
+							})
+						)
+					)
+				);
+			}
+			return integratedTimeLogs;
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TIME_LOG}`);
 		}
