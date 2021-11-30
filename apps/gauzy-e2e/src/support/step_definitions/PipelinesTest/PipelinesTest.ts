@@ -4,6 +4,8 @@ import * as pipelinesPage from '../../Base/pages/Pipelines.po';
 import { PipelinesPageData } from '../../Base/pagedata/PipelinesPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
+import * as logoutPage from '../../Base/pages/Logout.po';
+
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -79,6 +81,17 @@ Then('Notification message will appear', () => {
 });
 
 // Edit pipeline
+When ('User see name input field search by first name', () => {
+	pipelinesPage.verifyNamePlaceholder();
+});
+Then('User can enter name first name', () => {
+	pipelinesPage.enterNamePlaceholder(PipelinesPageData.pipelineName);
+});
+
+And('User can see only the result', () => {
+	pipelinesPage.verifySearchResult(PipelinesPageData.tableResult);
+});
+
 And('User can see pipelines table', () => {
 	pipelinesPage.tableRowVisible();
 });
@@ -151,21 +164,47 @@ When('User click on add pipeline button again', () => {
 	pipelinesPage.clickAddDealButton();
 });
 
-Then ('User can see title input field',() => {
+Then('User can see title input field',() => {
 	pipelinesPage.verifyTitleInput();
 });
 
-And ('User enter title', () => {
+And('User enter title', () => {
 	pipelinesPage.enterTitleInput(PipelinesPageData.titleInputData);
 });
 
-Then ('User can see create button',() => {
+Then('User can see probability input', () => {
+	pipelinesPage.verifyProbabilityInput()
+});
+
+And('User click on probability input', () => {
+	pipelinesPage.clickOnProbabilityInput();
+});
+
+And('User click on option from dropdown', () => {
+	pipelinesPage.clickDropdownOption(PipelinesPageData.dropdownOption);
+});
+
+Then('User can see create button',() => {
 	pipelinesPage.verifyCreateButton();
 });
 
 And ('User click on create button', () => {
 	pipelinesPage.clickOnCreateDealButton();
 });
+
+Then('Notification message will appear', () => {
+	pipelinesPage.waitMessageToHide();
+});
+
+Then('User redirect to pipelines page', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+	CustomCommands.clearCookies();
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
+	cy.visit('/#/pages/sales/pipelines', { timeout: pageLoadTimeout });
+});
+
+
 
 // Delete pipeline
 And('User can see pipelines table again', () => {

@@ -17,5 +17,8 @@ export const PipelinesPage = {
 	titleInputCss: 'input[placeholder="Title"]',
 	createDealButtonCss: 'nb-card-footer > button[ng-reflect-status="primary"]',
 	addDealPipelineButtonCss: 'div.mb-3 > div > button[status="success"]',
+	probabilityInputCss: 'nb-select[formcontrolname="probability"]',
+	dropdownOptionCss: 'ul.option-list > nb-option',
+	backButtonCss: 'ngx-back-navigation > div.main > button'
 
 };

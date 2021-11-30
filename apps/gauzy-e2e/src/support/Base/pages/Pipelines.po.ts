@@ -140,7 +140,10 @@ export const verifyNamePlaceholder = () => {
 };
 
 export const enterNamePlaceholder = (name: string) => {
+	clearField(PipelinesPage.namePlaceholderCss);
+	cy.intercept('GET', '/api/pipelines/pagination*').as('waitResult');
 	enterInput(PipelinesPage.namePlaceholderCss, name);
+	cy.wait('@waitResult');
 };
 
 export const verifyDetailsButton = () => {
@@ -175,4 +178,24 @@ export const verifyAddDealButton = () => {
 
 export const clickAddDealButton = () => {
 	clickButton(PipelinesPage.addDealPipelineButtonCss);
+};
+
+export const verifyProbabilityInput = () => {
+	verifyElementIsVisible(PipelinesPage.probabilityInputCss);
+};
+
+export const clickOnProbabilityInput = () => {
+	clickButton(PipelinesPage.probabilityInputCss);
+};
+
+export const clickDropdownOption = (index: number) => {
+	clickButtonByIndex(PipelinesPage.dropdownOptionCss, index)
+};
+
+export const verifyBackButton = () => {
+	verifyElementIsVisible(PipelinesPage.backButtonCss);
+};
+
+export const clickOnBackButton = () => {
+	clickButton(PipelinesPage.backButtonCss);
 };

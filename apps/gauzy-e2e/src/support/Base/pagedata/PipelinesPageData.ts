@@ -7,5 +7,6 @@ export const PipelinesPageData = {
 	stageName: 'The main stage',
 	pipelineDescriptionIndex: 0,
 	tableResult: 1,
-	titleInputData: 'Big deal'
+	titleInputData: 'Big deal',
+	dropdownOption: 0
 };
