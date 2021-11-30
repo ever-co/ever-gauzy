@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Integration } from './integration.entity';
 import { RequestContext } from '../core/context';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { TenantService } from '../tenant/tenant.service';
 import { IntegrationEnum } from '@gauzy/contracts';
 
 @Injectable()

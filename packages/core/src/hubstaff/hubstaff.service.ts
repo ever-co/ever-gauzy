@@ -37,7 +37,6 @@ import {
 	IHubstaffOrganizationsResponse,
 	IHubstaffProjectResponse,
 	IHubstaffTimeSlotActivity,
-	IHubstaffScreenshotActivity,
 	IActivity,
 	IHubstaffLogFromTimeSlots
 } from '@gauzy/contracts';
@@ -55,7 +54,6 @@ import { EmployeeCreateCommand, EmployeeGetCommand } from '../employee/commands'
 import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
 import { UserService } from '../user/user.service';
-import { TimeLogCreateCommand } from '../time-tracking/time-log/commands';
 import {
 	IntegrationMapSyncActivityCommand,
 	IntegrationMapSyncEntityCommand,

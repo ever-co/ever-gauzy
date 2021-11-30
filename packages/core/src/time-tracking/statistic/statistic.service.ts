@@ -20,7 +20,7 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
-import { average, ArraySum, isNotEmpty } from '@gauzy/common';
+import { ArraySum, isNotEmpty } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import {
 	Activity,
