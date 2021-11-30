@@ -107,7 +107,7 @@ export class PipelineDealFormComponent
 			stageId: [null, Validators.required],
 			title: [null, Validators.required],
 			clientId: [null],
-			probability: [null]
+			probability: [null, Validators.required]
 		});
 		this.form.patchValue({
 			createdByUserId: this.appStore.getValue().user?.id
