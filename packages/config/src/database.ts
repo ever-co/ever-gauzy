@@ -24,7 +24,7 @@ if (dbType === 'sqlite') {
 		database: dbPath,
 		logging: true,
 		logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
-		synchronize: true
+		synchronize: process.env.DB_SYNCHRINIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 	};
 
 	connectionConfig = sqliteConfig;
@@ -43,7 +43,7 @@ if (dbType === 'sqlite') {
 		ssl: ssl,
 		logging: true,
 		logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
-		synchronize: true,
+		synchronize: process.env.DB_SYNCHRINIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 		uuidExtension: 'pgcrypto'
 	};
 
