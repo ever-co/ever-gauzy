@@ -11,7 +11,8 @@ import {
 	verifyElementNotExist,
 	clickButtonMultipleTimes,
 	verifyElementIsVisibleByIndex,
-	enterTextInIFrame
+	enterTextInIFrame,
+	clickElementIfVisible
 } from '../utils/util';
 import { OrganizationHelpCenterPage } from '../pageobjects/OrganizationHelpCenterPageObject';
 
@@ -172,8 +173,8 @@ export const arrowButtonVisible = () => {
 	verifyElementIsVisible(OrganizationHelpCenterPage.arrowButtonCss);
 };
 
-export const clickArrowButton = () => {
-	clickButton(OrganizationHelpCenterPage.arrowButtonCss);
+export const clickArrowButton = (index: number) => {
+	clickElementIfVisible(OrganizationHelpCenterPage.arrowButtonCss,index);
 };
 
 export const clickOnCategory = (index) => {
