@@ -213,7 +213,7 @@ And('User can see save edited project button', () => {
 });
 
 When('User click on save edited project button', () => {
-	organizationProjectsPage.clickSaveProjectButton();
+	organizationProjectsPage.clickSaveProjectButtonWithIndex(OrganizationProjectsPageData.saveBtnIndex);
 });
 
 Then('Notification message will appear', () => {

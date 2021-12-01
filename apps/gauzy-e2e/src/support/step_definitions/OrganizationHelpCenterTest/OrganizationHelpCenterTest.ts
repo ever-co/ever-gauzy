@@ -207,7 +207,7 @@ And('User can see arrow button',() => {
 });
 
 Then('User click on arrow button', () => {
-	organizationHelpCenterPage.clickArrowButton();
+	organizationHelpCenterPage.clickArrowButton(OrganizationHelpCenterPageData.arrowIndex);
 });
 
 And('User can verify category was created', () => {
