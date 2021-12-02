@@ -1,4 +1,3 @@
-import * as path from 'path';
 import {
     DEFAULT_API_BASE_URL,
     DEFAULT_API_HOST,
@@ -23,9 +22,6 @@ export const devConfig: IPluginConfig = {
 	},
 	dbConnectionOptions: {
 		migrationsRun: !environment.production, // Run migrations automatically, you can disable this if you prefer running migration manually.
-		migrations: [
-			path.join(__dirname, 'database/migrations/*{.ts,.js}')
-		],
 		...dbConnectionConfig
 	},
 	plugins: []

@@ -55,12 +55,6 @@ export const pluginConfig: IPluginConfig = {
 	},
 	dbConnectionOptions: {
 		migrationsRun: !environment.production, // Run migrations automatically, you can disable this if you prefer running migration manually.
-		migrations: [
-			path.join(
-				process.cwd(),
-				'packages/core/dist/database/migrations/*{.ts,.js}'
-			)
-		],
 		...getDbConfig(),
 	},
 	assetOptions: {

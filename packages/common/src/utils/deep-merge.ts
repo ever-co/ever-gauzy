@@ -1,5 +1,5 @@
 import { deepClone } from './deep-clone';
-import { isClassInstance, isObjectOrFunction } from './shared-utils';
+import { isClassInstance, isObject } from './shared-utils';
 
 /**
  * Deep merge.
@@ -9,15 +9,14 @@ import { isClassInstance, isObjectOrFunction } from './shared-utils';
  */
 export function deepMerge(target: any, source: any, depth = 0) {
 	if (!source) {
-		return Object.assign({}, target);
+		return target;
 	}
 	if (depth === 0) {
 		target = deepClone(target);
 	}
-
-	if (isObjectOrFunction(target) && isObjectOrFunction(source)) {
+	if (isObject(target) && isObject(source)) {
 		for (const key in source) {
-			if (isObjectOrFunction(source[key])) {
+			if (isObject(source[key])) {
 				if (!target[key]) {
 					Object.assign(target, { [key]: {} });
 				}

@@ -6,6 +6,7 @@ import { SentryService } from '@ntegral/nestjs-sentry';
 import * as expressSession from 'express-session';
 import * as helmet from 'helmet';
 import * as chalk from 'chalk';
+import { join } from 'path';
 import { urlencoded, json } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EntitySubscriberInterface } from 'typeorm';
@@ -86,8 +87,10 @@ export async function bootstrap(
 
 	await app.listen(port, host, () => {
 		console.log(chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`));
-		//Seed Demo Server
-		service.excuteDemoSeed();
+		//Excute Seed For Demo Server
+		if (env.demo) {
+			service.excuteDemoSeed();
+		}
 	});
 
 	return app;
@@ -103,12 +106,24 @@ export async function registerPluginConfig(
 		setConfig(pluginConfig);
 	}
 
+	/**
+	 * Configure migration settings
+	 */
+	setConfig({
+		dbConnectionOptions: {
+			...getMigrationsSetting()
+		}
+	});
+
 	console.log(
 		chalk.green(
 			`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`
 		)
 	);
 
+	/**
+	 * Registered core & plugins entities 
+	 */
 	const entities = await registerAllEntities(pluginConfig);
 	setConfig({
 		dbConnectionOptions: {
@@ -140,4 +155,20 @@ export async function registerAllEntities(
 		}
 	}
 	return allEntities;
+}
+
+/**
+ * GET migrations directory & CLI paths
+ * 
+ * @returns 
+ */
+ export function getMigrationsSetting() {
+	return {
+		migrations: [
+			join(__dirname, '../database/migrations/*{.ts,.js}')
+		],
+		cli: {
+			migrationsDir: join(__dirname, '../database/migrations'),
+		},
+	}
 }
