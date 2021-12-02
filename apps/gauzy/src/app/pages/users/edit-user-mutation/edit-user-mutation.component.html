@@ -21,6 +21,7 @@
 						nbButton
 						(click)="submitForm()"
 						status="success"
+						[disabled]="disableButton"
 					>
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
