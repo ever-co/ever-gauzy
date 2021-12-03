@@ -26,7 +26,7 @@
 		"test": "jest",
 		"test:e2e": "jest --config ./__test__/jest.config.json",
 		"typeorm": "ts-node -r tsconfig-paths/register ./../../node_modules/typeorm/cli.js",
-		"migration:create": "yarn run typeorm migration:create -n",
+		"migration:generate": "yarn run typeorm migration:generate -n",
 		"build": "nest build",
 		"postbuild": "yarn run copy-files",
 		"copy-files": "copyfiles -u 1 src/**/**/*.gql src/**/**/*.hbs src/**/**/*.mjml src/**/*.csv src/**/*.json dist/",
