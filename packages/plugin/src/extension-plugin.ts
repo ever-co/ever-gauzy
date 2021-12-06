@@ -27,7 +27,7 @@ export function ExtensionPlugin(
 			if (property in pluginMetadata && property !== null) {
 				Reflect.defineMetadata(
 					property,
-					pluginMetadata[property],
+					pluginMetadata[property] || [],
 					target
 				);
 			}

@@ -1,3 +1,4 @@
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import {
 	Entity,
 	Column,
@@ -5,7 +6,9 @@ import {
 	ManyToOne,
 	JoinColumn,
 	CreateDateColumn,
-	Index
+	Index,
+	getConnection,
+	ConnectionOptions
 } from 'typeorm';
 import {
 	IActivity,
@@ -25,6 +28,7 @@ import {
 	IsNumber,
 	IsDateString
 } from 'class-validator';
+import { getConfig } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationProject,
@@ -32,8 +36,13 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
-import { getConfig } from '@gauzy/config';
-const config = getConfig();
+
+let options: ConnectionOptions | TypeOrmModuleOptions;
+try {
+	options = getConnection().options;
+} catch (error) {
+	options = getConfig().dbConnectionOptions
+}
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
@@ -48,11 +57,11 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: () => 'json' })
+	@ApiProperty({ type: () => options.type === 'sqlite' ? 'text' : 'json' })
 	@IsDateString()
 	@Column({
 		nullable: true,
-		type: config.dbConnectionOptions.type === 'sqlite' ? 'text' : 'json'
+		type: options.type === 'sqlite' ? 'text' : 'json'
 	})
 	metaData?: string | IURLMetaData;
 

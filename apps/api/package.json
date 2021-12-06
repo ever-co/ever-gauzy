@@ -24,6 +24,9 @@
 		"typeorm:flush": "yarn typeorm migration:revert",
 		"typeorm:create": "yarn typeorm migration:create",
 		"typeorm:preserve": "yarn typeorm:sync -- -f=ormconfig && yarn typeorm:seeds -- -f=ormconfig",
+		"migration:run": "yarn ts-node -r tsconfig-paths/register src/migration.ts migration:run",
+		"migration:revert": "yarn ts-node -r tsconfig-paths/register src/migration.ts migration:revert",
+		"migration:generate": "yarn ts-node -r tsconfig-paths/register src/migration.ts migration:generate",
 		"start": "yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/main.ts",
 		"start:debug": "nodemon --config nodemon-debug.json",
 		"build": "yarn ng build api",
@@ -39,7 +42,8 @@
 	"dependencies": {
 		"@gauzy/changelog": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
-		"@gauzy/knowledge-base": "^0.1.0"
+		"@gauzy/knowledge-base": "^0.1.0",
+		"yargs": "^17.3.0"
 	},
 	"devDependencies": {
 		"@nestjs/schematics": "^8.0.3",

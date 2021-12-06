@@ -3,10 +3,19 @@ import { defaultConfiguration } from './default-configuration';
 
 let defaultConfig: IPluginConfig = defaultConfiguration;
 
-export function setConfig(config: any): void {
-	defaultConfig = deepMerge(defaultConfig, config);
+/**
+ * Override the default config by merging in the provided values.
+ * 
+ */
+export function setConfig(providedConfig: Partial<IPluginConfig>): void {
+	defaultConfig = deepMerge(defaultConfig, providedConfig);
 }
 
+
+/**
+ * Returns the app bootstrap config object.
+ * 
+ */
 export function getConfig(): Readonly<IPluginConfig> {
 	return defaultConfig;
 }

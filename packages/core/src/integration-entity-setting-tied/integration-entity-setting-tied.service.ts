@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IIntegrationEntitySettingTied } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
-import { IntegrationEntitySettingTied } from './integration-entity-setting-tied';
+import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.entity';
 
 @Injectable()
 export class IntegrationEntitySettingTiedService extends TenantAwareCrudService<IntegrationEntitySettingTied> {

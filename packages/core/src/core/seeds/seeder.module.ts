@@ -1,8 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { getDynamicPluginsModules } from '@gauzy/plugin';
 import { SeedDataService } from './seed-data.service';
-import { DatabaseProviderModule } from './../../core/database-provider.module';
-
+import { DatabaseConnectionProviderModule } from './../../database/connection-provider.module';
 /**
  * Import and provide seeder classes.
  *
@@ -18,7 +17,7 @@ export class SeederModule {
 		return {
 			module: SeederModule,
 			providers: [],
-			imports: [...getDynamicPluginsModules(), DatabaseProviderModule],
+			imports: [...getDynamicPluginsModules(), DatabaseConnectionProviderModule],
 			exports: []
 		} as DynamicModule;
 	}
