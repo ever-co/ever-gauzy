@@ -4,7 +4,9 @@ tmp
 .cache
 .github
 .circle
+.circleci
 .npmrc
+.husky
 .travis.yml
 greenkeeper.json
 docker-compose*.yml
@@ -16,9 +18,11 @@ Jenkinsfile
 node_modules
 apps/api/node_modules
 apps/desktop/node_modules
+apps/desktop-timer/node_modules
 apps/gauzy/node_modules
 apps/gauzy-e2e/node_modules
 packages/**/node_modules
+packages/plugins/**/node_modules
 
 # IDEs and editors
 .idea
