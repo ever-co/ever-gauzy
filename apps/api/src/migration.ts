@@ -1,5 +1,5 @@
 import * as yargs from "yargs";
-import { revertLastDatabaseMigration, runDatabaseMigrations } from '@gauzy/core';
+import { generateMigration, revertLastDatabaseMigration, runDatabaseMigrations } from '@gauzy/core';
 import { pluginConfig } from "./plugin-config";
 
 yargs
@@ -19,4 +19,25 @@ yargs
             revertLastDatabaseMigration(pluginConfig);
         }
     })
-    .parse(); // To set above changes
+    .command({
+        command: 'migration:generate',
+        describe: 'Generates a new migration file with sql needs to be executed to update schema.',
+        builder: {
+            n: {
+                alias: 'name',
+                describe: 'Name of the migration class.',
+                type: 'string',
+                require: true
+            },
+            d: {
+                alias: 'dir',
+                describe: 'Directory where migration should be created.'
+            }
+        },
+        // function for your command
+        handler(argv) {
+            const name = argv['name'] as string;
+            generateMigration(pluginConfig, { name });
+        }
+    })
+    .argv; // To set above changes

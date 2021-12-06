@@ -1,7 +1,37 @@
 import { Connection, ConnectionOptions, createConnection, getConnection } from 'typeorm';
 import * as chalk from 'chalk';
+import * as path from 'path';
 import { DEFAULT_DB_CONNECTION, IPluginConfig } from "@gauzy/common";
+import { MysqlDriver } from 'typeorm/driver/mysql/MysqlDriver';
+import { camelCase } from 'typeorm/util/StringUtils';
 import { registerPluginConfig } from './../bootstrap';
+import { MigrationUtils } from './utils';
+
+/**
+ * @description
+ * Configuration migration options for generating a new migration
+ *
+ */
+ export interface IMigrationOptions {
+    /**
+     * @description
+     * Name of the migration class.
+     * `{TIMESTAMP}-{name}.ts`.
+     */
+    name: string;
+
+    /**
+     * @description
+     * Directory where migration should be created.
+     */
+    dir?: string;
+
+    /**
+     * @description
+     * Name of the file with connection configuration..
+     */
+    config?: string;
+}
 
 /**
  * @description
@@ -53,6 +83,87 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
     }
 }
 
+/**
+ * @description
+ * Generates a new migration file with sql needs to be executed to update schema.
+ * 
+ * @param pluginConfig 
+ */
+export async function generateMigration(pluginConfig: Partial<IPluginConfig>, options: IMigrationOptions) {
+    if (!options.name) {
+        console.log(chalk.yellow("Migration name must be requried.Please specify migration name!"));
+        return;
+    }
+    const config = await registerPluginConfig(pluginConfig);
+    console.log(config);
+
+    let directory = options.dir;
+    // if directory is not set then try to open plugin config and find default path there
+    if (!directory) {
+        try {
+            directory = config.dbConnectionOptions.cli ? config.dbConnectionOptions.cli.migrationsDir : undefined;
+        } catch (err) {
+            console.log('Error while finding migration directory', err);
+        }
+    }
+
+    const connection = await establishDatabaseConnection(config);
+    try {
+        const sqlInMemory = await connection.driver.createSchemaBuilder().log();
+        const upSqls: string[] = [];
+        const downSqls: string[] = [];
+    
+        // mysql is exceptional here because it uses ` character in to escape names in queries, that's why for mysql
+        // we are using simple quoted string instead of template string syntax
+        if (connection.driver instanceof MysqlDriver) {
+            sqlInMemory.upQueries.forEach(upQuery => {
+                upSqls.push("await queryRunner.query(\"" + upQuery.query.replace(new RegExp(`"`, "g"), `\\"`) + "\", " + JSON.stringify(upQuery.parameters) + ");");
+            });
+            sqlInMemory.downQueries.forEach(downQuery => {
+                downSqls.push("await queryRunner.query(\"" + downQuery.query.replace(new RegExp(`"`, "g"), `\\"`) + "\", " + JSON.stringify(downQuery.parameters) + ");");
+            });
+        } else {
+            sqlInMemory.upQueries.forEach(upQuery => {
+                upSqls.push("await queryRunner.query(`" + upQuery.query.replace(new RegExp("`", "g"), "\\`") + "`, " + JSON.stringify(upQuery.parameters) + ");");
+            });
+            sqlInMemory.downQueries.forEach(downQuery => {
+                downSqls.push("await queryRunner.query(`" + downQuery.query.replace(new RegExp("`", "g"), "\\`") + "`, " + JSON.stringify(downQuery.parameters) + ");");
+            });
+        }
+
+        if (upSqls.length) {
+            const timestamp = new Date().getTime();
+            /**
+             *  Gets contents of the migration file.
+             */
+            const fileContent = getTemplate(
+                options.name as any,
+                timestamp,
+                upSqls,
+                downSqls.reverse()
+            );
+
+            const filename = timestamp + "-" + options.name + ".ts";
+            const outputPath = directory ? path.join(directory, filename) : path.join(process.cwd(), filename);
+
+            try {
+                await MigrationUtils.createFile(outputPath, fileContent);
+                console.log(chalk.green(`Migration ${chalk.blue(outputPath)} has been generated successfully.`));
+            } catch (error) {
+                console.log(chalk.black.bgRed("Error during migration generating files:"));
+                console.error(error);
+            }
+        } else {
+            console.log(chalk.yellow(`No changes in database schema were found - cannot generate a migration. To create a new empty migration use "yarn run migration:create" command`));
+        }
+    } catch (error) {
+        if (connection) (await closeConnection(connection));
+
+        console.log(chalk.black.bgRed("Error during migration generation:"));
+        console.error(error);
+        process.exit(1);
+    }
+}
 
 /**
  * @description
@@ -97,7 +208,7 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
  * 
  * @param connection 
  */
-async function  closeConnection(connection: Connection) {
+async function closeConnection(connection: Connection) {
     try {
         if (connection && connection.isConnected) {
             await connection.close();
@@ -106,4 +217,21 @@ async function  closeConnection(connection: Connection) {
     } catch (error) {
         console.log('Error while disconnecting to the database', error);
     }
+}
+
+/**
+ * Gets contents of the migration file.
+ */
+function getTemplate(name: string, timestamp: number, upSqls: string[], downSqls: string[]): string {
+    return `import { MigrationInterface, QueryRunner } from "typeorm";
+        export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
+        public async up(queryRunner: QueryRunner): Promise<any> {
+            ${upSqls.join(`
+            `)}
+        }
+        public async down(queryRunner: QueryRunner): Promise<any> {
+            ${downSqls.join(`
+            `)}
+        }
+    }`;
 }
