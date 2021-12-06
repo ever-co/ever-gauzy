@@ -164,3 +164,7 @@ export const verifyProjectIsDeleted = (text) => {
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationProjectsPage.toastrMessageCss);
 };
+
+export const clickSaveProjectButtonWithIndex = (index: number) => {
+	clickButtonByIndex(OrganizationProjectsPage.saveProjectButtonCss, index);
+};

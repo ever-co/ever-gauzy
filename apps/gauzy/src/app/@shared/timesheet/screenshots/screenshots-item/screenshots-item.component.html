@@ -67,13 +67,13 @@
 			</div>
 			<nb-progress-bar
 				class="mb-1"
-				[value]="timeSlot.overall"
-				[status]="progressStatus(timeSlot.overall)"
+				[value]="timeSlot.percentage"
+				[status]="progressStatus(timeSlot.percentage)"
 				[displayValue]="true"
 				size="tiny"
 			></nb-progress-bar>
 			<div class="activity-count">
-				{{ timeSlot.overall || 0 }}% of
+				{{ timeSlot.percentage || 0 }}% of
 				{{
 					timeSlot.duration
 						| amFromUnix

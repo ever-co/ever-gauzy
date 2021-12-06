@@ -4,5 +4,6 @@ export const OrganizationProjectsPageData = {
 	editName: 'Ever',
 	description:
 		'Open-Source Business Management Platform focused on Fairness and Transparency.',
-	color: '#195e83'
+	color: '#195e83',
+	saveBtnIndex: 0
 };

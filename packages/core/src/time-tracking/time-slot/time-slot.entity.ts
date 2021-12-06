@@ -58,6 +58,7 @@ export class TimeSlot
 	startedAt: Date;
 
 	stoppedAt?: Date;
+	percentage?: number;
 
 	/*
     |--------------------------------------------------------------------------

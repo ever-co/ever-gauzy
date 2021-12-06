@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Integration } from './integration.entity';
 import { RequestContext } from '../core/context';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { TenantService } from '../tenant/tenant.service';
 import { IntegrationEnum } from '@gauzy/contracts';
 
 @Injectable()
@@ -14,8 +13,7 @@ export class IntegrationService extends CrudService<Integration> {
 		@InjectRepository(Integration)
 		readonly repository: Repository<Integration>,
 
-		private readonly _integrationTenantService: IntegrationTenantService,
-		private readonly _tenantService: TenantService
+		private readonly _integrationTenantService: IntegrationTenantService
 	) {
 		super(repository);
 	}
@@ -29,13 +27,9 @@ export class IntegrationService extends CrudService<Integration> {
 	) {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { record: tenant } = await this._tenantService.findOneOrFailByIdString(
-				tenantId
-			);
-
 			return await this._integrationTenantService.findOneOrFailByOptions({
 				where: {
-					tenant,
+					tenantId,
 					organizationId,
 					name: integration
 				},

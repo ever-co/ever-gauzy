@@ -12,7 +12,7 @@ export const ReportsPage = {
 	timeAndActivityProjectCss:
 		'div[class="col-sm-2 project-name"] > span.ng-star-inserted',
 	amountOwedEmployeeCss:
-		'div[class="col-sm-3 employee-name"] > ngx-avatar > div[class="row align-items-center"] > div.col > div.ng-star-inserted',
+		'div[class="col-sm-3 employee-name"] > ngx-avatar > div[class="row align-items-center"] > div.col > a',
 	projectsBudgetsProjectCss:
 		'div[class="col-3 project-name"] > span.ng-star-inserted',
 	clientsBudgetsClientCss:

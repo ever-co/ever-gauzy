@@ -4,22 +4,17 @@
  * @returns {boolean}
  */
 export function isFunction(item: any): boolean {
-	if (isEmpty(item)) {
-		return false;
-	}
-	return typeof item === 'function';
+	return (item && typeof item === 'function' && !Array.isArray(item));
 }
 
 /**
- * Check is object.
+ * Simple object check.
  * @param item
  * @returns {boolean}
+ * From https://stackoverflow.com/a/34749873/772859
  */
-export function isObject(item: any): boolean {
-	if (isEmpty(item)) {
-		return false;
-	}
-	return typeof item === 'object';
+export function isObject(item: any) {
+	return (item && typeof item === 'object' && !Array.isArray(item));
 }
 
 /**
@@ -28,9 +23,6 @@ export function isObject(item: any): boolean {
  * @returns {boolean}
  */
 export function isObjectOrFunction(item: any): boolean {
-	if (isEmpty(item)) {
-		return false;
-	}
 	return isFunction(item) || isObject(item);
 }
 

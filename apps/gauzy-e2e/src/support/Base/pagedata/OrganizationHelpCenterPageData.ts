@@ -11,5 +11,6 @@ export const OrganizationHelpCenterPageData = {
 	addArticleButton: 2,
 	categoryOption: 0,
 	employeePlaceholder: 1,
-	employeeOption: 0
+	employeeOption: 0,
+	arrowIndex: 0
 };

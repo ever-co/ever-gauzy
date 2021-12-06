@@ -7,7 +7,11 @@ import {
 	waitElementToHide,
 	verifyTextNotExisting,
 	verifyText,
-	enterInputByIndex
+	enterInputByIndex,
+	verifyElementIsVisibleByIndex,
+	clearFieldByIndex,
+	vefiryByLength
+
 } from '../utils/util';
 import { PipelinesPage } from '../pageobjects/PipelinesPageObject';
 
@@ -73,7 +77,7 @@ export const updateButtonVisible = () => {
 	verifyElementIsVisible(PipelinesPage.updateButtonCss);
 };
 
-export const clickUpdateButon = () => {
+export const clickUpdateButton = () => {
 	clickButton(PipelinesPage.updateButtonCss);
 };
 
@@ -106,6 +110,92 @@ export const verifyPipelineExists = (text) => {
 };
 
 export const enterNameInputDataByIndex = (data:string, index: number) => {
-	clearField(PipelinesPage.pipelineNameInputCss);
+	clearFieldByIndex(PipelinesPage.pipelineNameInputCss, index);
 	enterInputByIndex(PipelinesPage.pipelineNameInputCss, data ,index);
+};
+
+export const verifyStageButton = () => {
+	verifyElementIsVisible(PipelinesPage.stageButtonCss);
+};
+
+export const clickOnStageButton = () => {
+	clickButton(PipelinesPage.stageButtonCss); 
+};
+
+export const verifyStageNameInput = (index: number) => {
+	verifyElementIsVisibleByIndex(PipelinesPage.pipelineNameInputCss, index);
+};
+
+export const enterDescriptionInputDataByIndex = (data:string, index: number) => {
+	clearFieldByIndex(PipelinesPage.descriptioninputCss, index);
+	enterInputByIndex(PipelinesPage.descriptioninputCss, data ,index);
+};
+
+export const verifySearchResult = (length: number) =>{
+	vefiryByLength(PipelinesPage.selectTableRowCss, length);
+};
+
+export const verifyNamePlaceholder = () => {
+	verifyElementIsVisible(PipelinesPage.namePlaceholderCss);
+};
+
+export const enterNamePlaceholder = (name: string) => {
+	clearField(PipelinesPage.namePlaceholderCss);
+	cy.intercept('GET', '/api/pipelines/pagination*').as('waitResult');
+	enterInput(PipelinesPage.namePlaceholderCss, name);
+	cy.wait('@waitResult');
+};
+
+export const verifyDetailsButton = () => {
+	verifyElementIsVisible(PipelinesPage.detailsButtonCss);
+};
+
+export const clickViewDetailsButton = () => {
+	cy.intercept('GET', '/api/pipelines*').as('waitPipelines');
+	clickButton(PipelinesPage.detailsButtonCss);
+	cy.wait('@waitPipelines');
+};
+
+export const verifyTitleInput = () => {
+	verifyElementIsVisible(PipelinesPage.titleInputCss);
+};
+
+export const enterTitleInput = (data: string) => {
+	enterInput(PipelinesPage.titleInputCss, data);
+};
+
+export const verifyCreateButton = () => {
+	verifyElementIsVisible(PipelinesPage.createDealButtonCss);
+};
+
+export const clickOnCreateDealButton = () => {
+	clickButton(PipelinesPage.createDealButtonCss);
+};
+
+export const verifyAddDealButton = () => {
+	verifyElementIsVisible(PipelinesPage.addDealPipelineButtonCss);
+};
+
+export const clickAddDealButton = () => {
+	clickButton(PipelinesPage.addDealPipelineButtonCss);
+};
+
+export const verifyProbabilityInput = () => {
+	verifyElementIsVisible(PipelinesPage.probabilityInputCss);
+};
+
+export const clickOnProbabilityInput = () => {
+	clickButton(PipelinesPage.probabilityInputCss);
+};
+
+export const clickDropdownOption = (index: number) => {
+	clickButtonByIndex(PipelinesPage.dropdownOptionCss, index)
+};
+
+export const verifyBackButton = () => {
+	verifyElementIsVisible(PipelinesPage.backButtonCss);
+};
+
+export const clickOnBackButton = () => {
+	clickButton(PipelinesPage.backButtonCss);
 };

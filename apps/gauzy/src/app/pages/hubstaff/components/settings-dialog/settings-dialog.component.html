@@ -23,7 +23,7 @@
 						<div class="tied-entity">
 							<div
 								*ngIf="
-									tiedEntity.entity === 'Activity';
+									tiedEntity.entity === IntegrationEntity.ACTIVITY;
 									else notActivityTemp
 								"
 								class="entity-more-options"
@@ -42,10 +42,10 @@
 								</label>
 								<nb-icon
 									icon="info-outline"
-									nbTooltip="{{
+									[nbTooltip]="
 										'INTEGRATIONS.HUBSTAFF_PAGE.TOOLTIP_ACTIVITY_INFO'
 											| translate
-									}}"
+									"
 									nbTooltipTrigger="hover"
 								>
 								</nb-icon>
@@ -67,7 +67,7 @@
 						<div
 							[ngClass]="
 								expandOptions &&
-								tiedEntity.entity === 'Activity'
+								tiedEntity.entity === IntegrationEntity.ACTIVITY
 									? 'visible'
 									: 'not-visible'
 							"

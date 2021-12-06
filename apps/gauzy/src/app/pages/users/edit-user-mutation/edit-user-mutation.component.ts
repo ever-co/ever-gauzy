@@ -37,6 +37,7 @@ export class EditUserMutationComponent
 	users: string[];
 	selectedUsersIds: string[];
 	selectedOrganizationId: string;
+	disableButton = true;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -102,6 +103,12 @@ export class EditUserMutationComponent
 
 	onUsersSelected(users: string[]) {
 		this.selectedUsersIds = users;
+		
+		if(this.selectedUsersIds.length > 0){
+			this.disableButton =  false;
+		}else{
+			this.disableButton = true;
+		}
 	}
 
 	cancel() {

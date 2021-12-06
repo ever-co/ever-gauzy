@@ -19,6 +19,9 @@ public
 # Typeorm Logs
 ormlogs.log
 
+# Typeorm Config
+ormconfig.ts
+
 .env
 /export
 /import

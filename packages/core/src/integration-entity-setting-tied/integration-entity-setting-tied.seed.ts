@@ -3,7 +3,7 @@ import * as faker from 'faker';
 import { IIntegrationEntitySettingTied, IntegrationEntity, ITenant } from '@gauzy/contracts';
 import { PROJECT_TIED_ENTITIES } from '@gauzy/integration-hubstaff';
 import { IntegrationEntitySetting, IntegrationTenant, Organization } from './../core/entities/internal';
-import { IntegrationEntitySettingTied } from './integration-entity-setting-tied';
+import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.entity';
 
 export const createRandomIntegrationEntitySettingTied = async (
 	connection: Connection,

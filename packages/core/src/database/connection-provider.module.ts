@@ -24,6 +24,6 @@ import { DEFAULT_DB_CONNECTION } from '@gauzy/common';
 		} as TypeOrmModuleAsyncOptions)
 	],
 	providers: [],
-	exports: []
+	exports: [TypeOrmModule]
 })
-export class DatabaseProviderModule {}
+export class DatabaseConnectionProviderModule {}

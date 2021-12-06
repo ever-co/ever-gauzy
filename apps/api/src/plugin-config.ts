@@ -5,6 +5,7 @@ import {
 	DEFAULT_API_HOST,
 	DEFAULT_API_BASE_URL
 } from '@gauzy/common';
+import { environment } from '@gauzy/config';
 import { ConnectionOptions } from 'typeorm';
 import * as path from 'path';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
@@ -53,8 +54,8 @@ export const pluginConfig: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
-		synchronize: true,
-		...getDbConfig()
+		migrationsRun: !environment.production, // Run migrations automatically, you can disable this if you prefer running migration manually.
+		...getDbConfig(),
 	},
 	assetOptions: {
 		assetPath: assetPath,
@@ -82,11 +83,10 @@ function getDbConfig(): ConnectionOptions {
 				database: process.env.DB_NAME || 'postgres',
 				username: process.env.DB_USER || 'postgres',
 				password: process.env.DB_PASS || 'root',
-				logging: true,
 				ssl: ssl,
-				// Removes console logging, instead logs all queries in a file ormlogs.log
-				logger: 'file',
-				synchronize: true,
+				logging: true,
+				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
+				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 				uuidExtension: 'pgcrypto'
 			};
 
@@ -102,9 +102,8 @@ function getDbConfig(): ConnectionOptions {
 				type: dbType,
 				database: sqlitePath,
 				logging: true,
-				// Removes console logging, instead logs all queries in a file ormlogs.log
-				logger: 'file',
-				synchronize: true
+				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
+				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 			};
 	}
 }
