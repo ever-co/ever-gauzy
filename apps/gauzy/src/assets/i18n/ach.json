@@ -2331,6 +2331,7 @@
 		"ADD_USER": "crwdns2315:0crwdne2315:0",
 		"ADD_EXISTING_USER": "crwdns3158:0crwdne3158:0",
 		"ADD_EXISTING_ORGANIZATION": "crwdns8336:0crwdne8336:0",
+		"ADD_EXISTING_USER_TOOLTIP": "crwdns10813:0crwdne10813:0",
 		"ROLE": {
 			"SUPER_ADMIN": "crwdns3448:0crwdne3448:0",
 			"ADMIN": "crwdns2317:0crwdne2317:0",
