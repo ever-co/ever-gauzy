@@ -1,10 +1,11 @@
+import { Connection, ConnectionOptions, createConnection, getConnection } from 'typeorm';
 import * as chalk from 'chalk';
 import { DEFAULT_DB_CONNECTION, IPluginConfig } from "@gauzy/common";
 import { registerPluginConfig } from './../bootstrap';
-import { Connection, ConnectionOptions, createConnection, getConnection } from 'typeorm';
 
 /**
- * Run pending database migrations command
+ * @description
+ * Run pending database migrations. See [TypeORM migration docs](https://typeorm.io/#/migrations)
  * 
  * @param pluginConfig 
  */
@@ -29,7 +30,8 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
 }
 
 /**
- * Reverts last database migration command.
+ * @description
+ * Reverts last applied database migration. See [TypeORM migration docs](https://typeorm.io/#/migrations)
  * 
  * @param pluginConfig 
  */
@@ -38,9 +40,8 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
     const connection = await establishDatabaseConnection(config);
     
     try {
-        const migration = await connection.undoLastMigration({ transaction: 'each' });
-        console.log(migration, 'migration');
-        // console.log(chalk.green(`Migration ${migration.name} has been run successfully!`));
+        await connection.undoLastMigration({ transaction: 'each' });
+        console.log(chalk.green(`Migration has been reverted successfully!`));
     } catch (error) {
         if (connection) (await closeConnection(connection));
 
@@ -54,7 +55,8 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
 
 
 /**
- * Establish Database Connection
+ * @description
+ * Establish new database connection, if not found any connection. See [TypeORM migration docs](https://typeorm.io/#/connection)
  * 
  * @param config 
  */
@@ -84,13 +86,14 @@ export async function establishDatabaseConnection(config: Partial<IPluginConfig>
             console.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
         }
     } catch (error) {
-        console.error(error, 'Unable to connect to database');
+        console.log('Error while connecting to the database', error);
     }
     return connection;
 }
 
 /**
- * Close Database Connection
+ * @description
+ * Close database connection, after complete or failed process
  * 
  * @param connection 
  */
@@ -101,6 +104,6 @@ async function  closeConnection(connection: Connection) {
             console.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
         }
     } catch (error) {
-        console.log('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CANT CLOSE CONNECTION!');
+        console.log('Error while disconnecting to the database', error);
     }
 }
