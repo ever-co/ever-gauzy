@@ -95,7 +95,6 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
         return;
     }
     const config = await registerPluginConfig(pluginConfig);
-    console.log(config);
 
     let directory = options.dir;
     // if directory is not set then try to open plugin config and find default path there
@@ -113,23 +112,12 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
         const upSqls: string[] = [];
         const downSqls: string[] = [];
     
-        // mysql is exceptional here because it uses ` character in to escape names in queries, that's why for mysql
-        // we are using simple quoted string instead of template string syntax
-        if (connection.driver instanceof MysqlDriver) {
-            sqlInMemory.upQueries.forEach(upQuery => {
-                upSqls.push("await queryRunner.query(\"" + upQuery.query.replace(new RegExp(`"`, "g"), `\\"`) + "\", " + JSON.stringify(upQuery.parameters) + ");");
-            });
-            sqlInMemory.downQueries.forEach(downQuery => {
-                downSqls.push("await queryRunner.query(\"" + downQuery.query.replace(new RegExp(`"`, "g"), `\\"`) + "\", " + JSON.stringify(downQuery.parameters) + ");");
-            });
-        } else {
-            sqlInMemory.upQueries.forEach(upQuery => {
-                upSqls.push("await queryRunner.query(`" + upQuery.query.replace(new RegExp("`", "g"), "\\`") + "`, " + JSON.stringify(upQuery.parameters) + ");");
-            });
-            sqlInMemory.downQueries.forEach(downQuery => {
-                downSqls.push("await queryRunner.query(`" + downQuery.query.replace(new RegExp("`", "g"), "\\`") + "`, " + JSON.stringify(downQuery.parameters) + ");");
-            });
-        }
+        sqlInMemory.upQueries.forEach(upQuery => {
+            upSqls.push("await queryRunner.query(`" + upQuery.query.replace(new RegExp("`", "g"), "\\`") + "`" + queryParams(upQuery.parameters) + ");");
+        });
+        sqlInMemory.downQueries.forEach(downQuery => {
+            downSqls.push("await queryRunner.query(`" + downQuery.query.replace(new RegExp("`", "g"), "\\`") + "`" + queryParams(downQuery.parameters) + ");");
+        });
 
         if (upSqls.length) {
             const timestamp = new Date().getTime();
@@ -220,15 +208,31 @@ async function closeConnection(connection: Connection) {
 }
 
 /**
+ * Formats query parameters for migration queries if parameters actually exist
+ */
+function queryParams(parameters: any[] | undefined): string {
+    if (!parameters || !parameters.length) {
+      return "";
+    }
+
+    return `, ${JSON.stringify(parameters)}`;
+}
+
+/**
  * Gets contents of the migration file.
  */
 function getTemplate(name: string, timestamp: number, upSqls: string[], downSqls: string[]): string {
     return `import { MigrationInterface, QueryRunner } from "typeorm";
-        export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
+    
+    export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
+
+        name = '${camelCase(name, true)}${timestamp}';
+        
         public async up(queryRunner: QueryRunner): Promise<any> {
             ${upSqls.join(`
             `)}
         }
+        
         public async down(queryRunner: QueryRunner): Promise<any> {
             ${downSqls.join(`
             `)}
