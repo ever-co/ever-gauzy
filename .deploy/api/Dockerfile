@@ -20,7 +20,7 @@ LABEL maintainer="ever@ever.co"
 ENV CI=true
 
 RUN apk --update add bash && \
-    apk add --no-cache --virtual build-dependencies dos2unix gcc g++ git make python2 py2-setuptools vips-dev && \
+    apk add --no-cache --virtual build-base build-dependencies libheif dos2unix gcc g++ git make python2 py2-setuptools vips-dev vips && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
@@ -55,7 +55,7 @@ RUN yarn install --frozen-lockfile && yarn cache clean
 FROM node:16-alpine3.14 AS prodDependencies
 
 RUN apk --update add bash && \
-    apk add --no-cache --virtual build-dependencies dos2unix gcc g++ git make python2 py2-setuptools vips-dev && \
+    apk add --no-cache --virtual build-base build-dependencies libheif dos2unix gcc g++ git make python2 py2-setuptools vips-dev vips && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
