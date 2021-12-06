@@ -86,7 +86,7 @@ function getDbConfig(): ConnectionOptions {
 				ssl: ssl,
 				logging: true,
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
-				synchronize: process.env.DB_SYNCHRINIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
+				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 				uuidExtension: 'pgcrypto'
 			};
 
@@ -103,7 +103,7 @@ function getDbConfig(): ConnectionOptions {
 				database: sqlitePath,
 				logging: true,
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
-				synchronize: process.env.DB_SYNCHRINIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
+				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 			};
 	}
 }
