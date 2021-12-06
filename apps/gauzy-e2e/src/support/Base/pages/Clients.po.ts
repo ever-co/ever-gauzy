@@ -292,8 +292,8 @@ export const searchClientName = (name: string) => {
 };
 
 export const verifyClientNameInTable = (name: string) => {
-	verifyByText(ClientsPage.clientsTableData, name)
 	vefiryByLength(ClientsPage.clientsTableRow, 1)
+	verifyByText(ClientsPage.clientsTableData, name)
 };
 
 export const clearSearchInput = () => {

@@ -330,7 +330,11 @@ export const CustomCommands = {
 		clientsPage.nextButtonVisible();
 		clientsPage.clickNextButton();
 		clientsPage.waitMessageToHide();
+		clientsPage.verifyNameInput();
+		clientsPage.searchClientName(fullName);
+		clientsPage.verifySearchResult(1);
 		clientsPage.verifyClientExists(fullName);
+		clientsPage.clearSearchInput();
 	},
 	addOrganization: (
 		addOrganizationPage: any,
