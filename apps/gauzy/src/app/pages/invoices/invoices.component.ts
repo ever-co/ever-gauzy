@@ -1050,6 +1050,11 @@ export class InvoicesComponent
 
 	closeActionsPopover() {
 		const actionsPopup = this.popups.first;
+		const settingsPopup = this.popups.last;
+		if(settingsPopup.isShown){
+			settingsPopup.hide();
+		}
+		
 		if (actionsPopup.isShown) {
 			actionsPopup.hide();
 		}
