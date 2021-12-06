@@ -4,7 +4,7 @@ import { registerPluginConfig } from './../bootstrap';
 import { Connection, ConnectionOptions, createConnection, getConnection } from 'typeorm';
 
 /**
- * Run Pending Database Migrations
+ * Run pending database migrations command
  * 
  * @param pluginConfig 
  */
@@ -21,6 +21,30 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
         if (connection) (await closeConnection(connection));
 
         console.log(chalk.black.bgRed("Error during migration run:"));
+        console.error(error);
+        process.exit(1);
+    } finally {
+        await closeConnection(connection);
+    }
+}
+
+/**
+ * Reverts last database migration command.
+ * 
+ * @param pluginConfig 
+ */
+ export async function revertLastDatabaseMigration(pluginConfig: Partial<IPluginConfig>) {
+    const config = await registerPluginConfig(pluginConfig);
+    const connection = await establishDatabaseConnection(config);
+    
+    try {
+        const migration = await connection.undoLastMigration({ transaction: 'each' });
+        console.log(migration, 'migration');
+        // console.log(chalk.green(`Migration ${migration.name} has been run successfully!`));
+    } catch (error) {
+        if (connection) (await closeConnection(connection));
+
+        console.log(chalk.black.bgRed("Error during migration revert:"));
         console.error(error);
         process.exit(1);
     } finally {
