@@ -2,7 +2,6 @@ import { Connection, ConnectionOptions, createConnection, getConnection } from '
 import * as chalk from 'chalk';
 import * as path from 'path';
 import { DEFAULT_DB_CONNECTION, IPluginConfig } from "@gauzy/common";
-import { MysqlDriver } from 'typeorm/driver/mysql/MysqlDriver';
 import { camelCase } from 'typeorm/util/StringUtils';
 import { registerPluginConfig } from './../bootstrap';
 import { MigrationUtils } from './utils';
@@ -45,8 +44,12 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
     
     try {
         const migrations = await connection.runMigrations({ transaction: 'each' });
-        for (const migration of migrations) {
-            console.log(chalk.green(`Migration ${migration.name} has been run successfully!`));
+        if (migrations) {
+            for (const migration of migrations) {
+                console.log(chalk.green(`Migration ${migration.name} has been run successfully!`));
+            }
+        } else {
+            console.log(chalk.yellow(`There are no pending migrations to run.`));
         }
     } catch (error) {
         if (connection) (await closeConnection(connection));
