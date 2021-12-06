@@ -2331,6 +2331,7 @@
 		"ADD_USER": "Add User",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_EXISTING_ORGANIZATION": "Add Existing Organization",
+		"ADD_EXISTING_USER_TOOLTIP": "Add user from other organization",
 		"ROLE": {
 			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "מנהל",
