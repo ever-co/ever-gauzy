@@ -1,7 +1,7 @@
 import { Connection, ConnectionOptions, createConnection, getConnection } from 'typeorm';
 import * as chalk from 'chalk';
 import * as path from 'path';
-import { DEFAULT_DB_CONNECTION, IPluginConfig } from "@gauzy/common";
+import { DEFAULT_DB_CONNECTION, IPluginConfig, isNotEmpty } from "@gauzy/common";
 import { camelCase } from 'typeorm/util/StringUtils';
 import { registerPluginConfig } from './../bootstrap';
 import { MigrationUtils } from './utils';
@@ -44,7 +44,7 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
     
     try {
         const migrations = await connection.runMigrations({ transaction: 'each' });
-        if (migrations) {
+        if (isNotEmpty(migrations)) {
             for (const migration of migrations) {
                 console.log(chalk.green(`Migration ${migration.name} has been run successfully!`));
             }
@@ -153,6 +153,8 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
         console.log(chalk.black.bgRed("Error during migration generation:"));
         console.error(error);
         process.exit(1);
+    } finally {
+        await closeConnection(connection);
     }
 }
 
