@@ -1,3 +1,5 @@
+# Ever Gauzy Platform UI
+
 ARG NODE_OPTIONS
 ARG NODE_ENV
 ARG API_BASE_URL
@@ -20,6 +22,7 @@ ARG WEB_PORT
 FROM node:16-alpine3.14 AS dependencies
 
 LABEL maintainer="ever@ever.co"
+LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 
 ENV CI=true
 

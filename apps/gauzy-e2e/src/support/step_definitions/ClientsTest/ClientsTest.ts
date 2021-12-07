@@ -106,8 +106,20 @@ Then('Notification message will appear', () => {
 	clientsPage.waitMessageToHide();
 });
 
+When('User see name input field', () => {
+	clientsPage.verifyNameInput();
+});
+
+Then('User enter invited client name', () => {
+	clientsPage.searchClientName(inviteName);
+});
+
 And('User can verify client was created', () => {
 	clientsPage.verifyClientExists(inviteName);
+});
+
+And('User clear the search field', () => {
+	clientsPage.clearSearchInput()
 });
 
 // Edit client
