@@ -163,13 +163,17 @@ export async function registerAllEntities(
  * @returns 
  */
 export function getMigrationsSetting() {
+
+	console.log(`Reporting __dirname: ${__dirname}`);
+
 	//TODO: We need to define some dynamic path here
 	return {
 		migrations: [
+			// join(__dirname, '../../src/database/migrations/*{.ts,.js}'),
 			join(__dirname, '../database/migrations/*{.ts,.js}')
 		],
 		cli: {
-			migrationsDir: join(__dirname, '../../src/database/migrations'),
+			migrationsDir: join(__dirname, '../../src/database/migrations')
 		},
 	}
 }

@@ -1,3 +1,5 @@
+import fs from 'fs';
+import { TlsOptions } from 'tls';
 import {
 	IPluginConfig,
 	DEFAULT_API_PORT,
@@ -6,6 +8,7 @@ import {
 	DEFAULT_API_BASE_URL
 } from '@gauzy/common';
 import { environment } from '@gauzy/config';
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { ConnectionOptions } from 'typeorm';
 import * as path from 'path';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
@@ -65,16 +68,35 @@ export const pluginConfig: IPluginConfig = {
 };
 
 function getDbConfig(): ConnectionOptions {
-	const dbType =
-		process.env.DB_TYPE && process.env.DB_TYPE === 'postgres'
-			? 'postgres'
-			: 'sqlite';
+	let dbType:string;
+
+	if (process.env.DB_TYPE)
+	  	dbType = process.env.DB_TYPE;
+	else 
+		dbType = 'sqlite';	
 
 	switch (dbType) {
+
+		case 'mongodb':
+			throw "MongoDB not supported yet";
+
 		case 'postgres':
 			const ssl = process.env.DB_SSL_MODE === 'true' ? true : undefined;
 
-			return {
+			let sslParams: TlsOptions;
+
+			if (ssl) {				
+				const base64data = process.env.DB_CA_CERT;
+				const buff = Buffer.from(base64data, 'base64');
+				const sslCert = buff.toString('ascii');
+				
+				sslParams = {					
+					rejectUnauthorized: true,
+					ca: sslCert
+				}
+			}
+
+			const postgresConnectionOptions: PostgresConnectionOptions = {
 				type: dbType,
 				host: process.env.DB_HOST || 'localhost',
 				port: process.env.DB_PORT
@@ -83,12 +105,14 @@ function getDbConfig(): ConnectionOptions {
 				database: process.env.DB_NAME || 'postgres',
 				username: process.env.DB_USER || 'postgres',
 				password: process.env.DB_PASS || 'root',
-				ssl: ssl,
+				ssl: ssl ? sslParams : undefined,
 				logging: true,
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 				uuidExtension: 'pgcrypto'
-			};
+			}
+
+			return postgresConnectionOptions;
 
 		case 'sqlite':
 			const sqlitePath =
