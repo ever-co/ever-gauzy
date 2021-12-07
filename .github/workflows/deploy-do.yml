@@ -33,6 +33,7 @@ jobs:
                   envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.demo.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
               env:
                 DB_NAME: 'gauzy_demo'
+                SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
 
             # we need this step because for now we just use :latest tag
             # note: for production we will use different strategy later
@@ -71,13 +72,16 @@ jobs:
               run: |
                   envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.prod.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
               env:
+                DB_TYPE: '${{ secrets.DB_TYPE }}'
                 DB_URI: '${{ secrets.DB_URI }}'
                 DB_HOST: '${{ secrets.DB_HOST }}'
                 DB_USER: '${{ secrets.DB_USER }}'
                 DB_PASS: '${{ secrets.DB_PASS }}'
-                DB_NAME: 'gauzy'
+                DB_NAME: '${{ secrets.DB_NAME }}'
+                DB_PORT: '${{ secrets.DB_PORT }}'                
                 DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
-                DB_SSL_MODE: 'true'
+                DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
+                SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
                 AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
                 AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
 
