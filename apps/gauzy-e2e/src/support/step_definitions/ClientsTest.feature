@@ -19,7 +19,11 @@ Feature: Clients test
     And User can see save invite button
     When User click on save invite button
     Then Notification message will appear
+    When User see name input field
+    Then User enter invited client name
+    And User can see only selected user
     And User can verify client was created
+    And User clear the search field
   Scenario: Edit client
     When User see name input field
     Then User enter client name
