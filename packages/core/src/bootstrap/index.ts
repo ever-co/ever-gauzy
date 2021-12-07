@@ -166,7 +166,7 @@ export function getMigrationsSetting() {
 	//TODO: We need to define some dynamic path here
 	return {
 		migrations: [
-			join(__dirname, '../../src/database/migrations/*{.ts,.js}')
+			join(__dirname, '../database/migrations/*{.ts,.js}')
 		],
 		cli: {
 			migrationsDir: join(__dirname, '../../src/database/migrations'),
