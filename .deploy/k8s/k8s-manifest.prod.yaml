@@ -72,7 +72,7 @@ spec:
                       - name: LOG_LEVEL
                         value: 'info'
                       - name: SENTRY_DSN
-                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+                        value: '$SENTRY_DSN'
                       - name: API_BASE_URL
                         value: 'https://api.gauzy.co'
                       - name: DB_URI
@@ -88,11 +88,11 @@ spec:
                       - name: DB_PASS
                         value: '$DB_PASS'
                       - name: DB_TYPE
-                        value: 'postgres'
+                        value: '$DB_TYPE'
                       - name: DB_NAME
-                        value: 'gauzy'
+                        value: '$DB_NAME'
                       - name: DB_PORT
-                        value: '5432'
+                        value: '$DB_PORT'
                       - name: AWS_ACCESS_KEY_ID
                         value: '$AWS_ACCESS_KEY_ID'
                       - name: AWS_SECRET_ACCESS_KEY
