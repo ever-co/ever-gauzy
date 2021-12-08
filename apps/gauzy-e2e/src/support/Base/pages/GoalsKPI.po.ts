@@ -5,7 +5,8 @@ import {
 	clearField,
 	clickButtonByIndex,
 	waitElementToHide,
-	verifyText
+	verifyText,
+	vefiryByLength
 } from '../utils/util';
 import { GoalsKPIPage } from '../pageobjects/GoalsKPIPageObject';
 
@@ -126,4 +127,17 @@ export const verifyElementDeleted = (text) => {
 
 export const verifyKPIExists = (text) => {
 	verifyText(GoalsKPIPage.verifyKPICss, text);
+};
+
+export const verifyNameInput = () => {
+	verifyElementIsVisible(GoalsKPIPage.searchNameInputCss);
+};
+
+export const searchClientName = (name: string) => {
+	clearField(GoalsKPIPage.searchNameInputCss);
+	enterInput(GoalsKPIPage.searchNameInputCss, name);
+};
+
+export const verifySearchResult = (length: number) =>{
+	vefiryByLength(GoalsKPIPage.selectTableRowCss, length);
 };
