@@ -35,10 +35,12 @@ export class ImageUploaderComponent implements OnInit {
     uploadImageError = new EventEmitter<any>();
 
     uploader: FileUploader;
+    cloudinaryName: string;
 
     constructor(private cloudinary: Cloudinary) { }
 
     ngOnInit() {
+        this.cloudinaryName = this.cloudinary.config().cloud_name;
         this._loadUploaderSettings();
     }
 
@@ -50,7 +52,7 @@ export class ImageUploaderComponent implements OnInit {
 
     private _loadUploaderSettings() {
         const uploaderOptions: FileUploaderOptions = {
-            url: `https://api.cloudinary.com/v1_1/${this.cloudinary.config().cloud_name}/upload`,
+            url: `https://api.cloudinary.com/v1_1/${this.cloudinaryName}/upload`,
             // Upload files automatically upon addition to upload queue
             autoUpload: true,
             // Use xhrTransport in favor of iframeTransport
@@ -62,7 +64,7 @@ export class ImageUploaderComponent implements OnInit {
                 {
                     name: 'X-Requested-With',
                     value: 'XMLHttpRequest'
-                }
+                } 
             ]
         };
 
@@ -88,6 +90,7 @@ export class ImageUploaderComponent implements OnInit {
         };
 
         this.uploader.onErrorItem = (item: any, response: string, status: number) => {
+            console.log('here')
             const error = JSON.parse(response);
             this.uploadImageError.emit(error);
         };
