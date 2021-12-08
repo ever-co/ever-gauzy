@@ -67,6 +67,9 @@ Feature: Goals Time frame and KPI test
     When User click on save edited KPI button
     Then Notification message will appear
   Scenario: Delete KPI
+    When User see name input field
+    Then User enter invited client name
+    And User can see only selected user
     And User can see KPI table again
     When User click on KPI table row again
     Then Delete KPI button will become active

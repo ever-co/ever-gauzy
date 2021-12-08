@@ -11,7 +11,6 @@ import * as goalstimeFramePage from '../../Base/pages/GoalsTimeFrame.po';
 import { GoalsTimeFramePageData } from '../../Base/pagedata/GoalsTimeFramePageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
-import { waitUntil } from '../../Base/utils/util';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
@@ -55,7 +54,9 @@ And('User can see second tab button', () => {
 });
 
 When('User click on second tab button', () => {
+	cy.intercept('GET', '/api/goal-time-frame*').as('waitTable');
 	goalstimeFramePage.clickTabButton(1);
+	cy.wait('@waitTable')
 });
 
 Then('User can see add time frame button', () => {
@@ -285,6 +286,18 @@ Then('Notification message will appear', () => {
 });
 
 // Delete KPI
+When('User see name input field', () => {
+	goalsKPIPage.verifyNameInput();
+});
+
+Then('User enter invited client name', () => {
+	goalsKPIPage.searchClientName(GoalsKPIPageData.name);
+});
+
+And('User can see only selected user', () => {
+	goalsKPIPage.verifySearchResult(GoalsKPIPageData.tableResult);
+});
+
 And('User can see KPI table again', () => {
 	goalsKPIPage.tableRowVisible();
 });
