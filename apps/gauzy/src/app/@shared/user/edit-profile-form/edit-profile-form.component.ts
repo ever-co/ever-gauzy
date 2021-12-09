@@ -174,8 +174,18 @@ export class EditProfileFormComponent
 				this.selectedUser ? this.selectedUser.id : this.store.userId,
 				request
 			)
-			.then(() => {
-				this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
+			.then((res: IUser) => {
+				try {
+					if (res) {
+						this.store.user = {
+							...this.store.user,
+							imageUrl: res.imageUrl
+						} as IUser
+					}
+					this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
+				} catch (error) { 
+					console.log('Error while uploading profile avatar', error);
+				}
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
