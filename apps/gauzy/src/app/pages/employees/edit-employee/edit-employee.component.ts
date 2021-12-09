@@ -93,6 +93,20 @@ export class EditEmployeeComponent
 			});
 	}
 
+	updateImage(imageUrl: string) {
+		try {
+			if (imageUrl) {
+				this.selectedEmployee.user.imageUrl = imageUrl;
+				this.store.selectedEmployee = {
+					...this.store.selectedEmployee,
+					imageUrl: imageUrl
+				}
+			}
+		} catch (error) {
+			console.log('Error while uploading profile avatar', error);
+		}
+	}
+
 	ngOnDestroy() {
 		this.store.user$
 			.pipe(

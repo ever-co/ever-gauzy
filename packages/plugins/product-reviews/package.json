@@ -29,7 +29,7 @@
 	"keywords": [],
 	"dependencies": {
 		"@gauzy/plugin": "^0.1.0",
-		"apollo-server-core": "^3.3.0",
+		"apollo-server-core": "^3.5.0",
 		"typeorm": "^0.2.38"
 	},
 	"devDependencies": {

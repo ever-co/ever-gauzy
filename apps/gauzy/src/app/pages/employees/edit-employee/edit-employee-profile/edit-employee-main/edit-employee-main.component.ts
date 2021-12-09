@@ -59,6 +59,17 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		this.toastrService.danger(error);
 	}
 
+	async updateImage(imageUrl: string) {
+		this.form.get('imageUrl').setValue(imageUrl);
+		try  {
+			this.employeeStore.userForm = {
+				imageUrl
+			};
+		}catch (error) {
+			this.handleImageUploadError(error)
+		}
+	}
+
 	async submitForm() {
 		if (this.form.valid) {
 			this.employeeStore.userForm = {

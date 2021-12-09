@@ -34,9 +34,9 @@ export class AppService {
 	/*
 	* Seed DB for Demo server 
 	*/
-	async excuteDemoSeed() {
+	async executeDemoSeed() {
 		if (this.count === 0 && this.configService.get('demo') === true) {
-			this.seedDataService.excuteDemoSeed();
+			this.seedDataService.executeDemoSeed();
 		}
 	}
 }

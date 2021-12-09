@@ -28,7 +28,7 @@
 		"compile": "tsc -p tsconfig.build.json"
 	},
 	"dependencies": {
-		"apollo-server-core": "^3.3.0"
+		"apollo-server-core": "^3.5.0"
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.22",

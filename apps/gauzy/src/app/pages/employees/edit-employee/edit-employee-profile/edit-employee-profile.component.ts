@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import {
 	IEmployee,
@@ -30,6 +30,9 @@ export class EditEmployeeProfileComponent
 	employeeName: string;
 	tabs: any[] = [];
 	subject$: Subject<any> = new Subject();
+
+	@Output()
+	updatedImage = new EventEmitter<any>();
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -182,10 +185,14 @@ export class EditEmployeeProfileComponent
 					this.selectedEmployee.user.id,
 					value
 				);
-				this.toastrService.success(
-					'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
-					{ name: this.employeeName }
-				);
+				this.updatedImage.emit(value.imageUrl)
+				if (!value.email) {
+					this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
+				} else {
+					this.toastrService.success(
+						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
+						{ name: this.employeeName });
+				}
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			} finally {
@@ -209,7 +216,7 @@ export class EditEmployeeProfileComponent
 		this.employeeName = employee?.user?.name || employee?.user?.username || 'Employee';
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
