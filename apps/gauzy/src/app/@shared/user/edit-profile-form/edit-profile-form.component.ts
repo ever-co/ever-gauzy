@@ -149,6 +149,10 @@ export class EditProfileFormComponent
 
 	async updateImage(imageUrl: string){
 		this.form.get('imageUrl').setValue(imageUrl);
+		this.store.user = {
+			...this.store.user,
+			imageUrl: imageUrl
+		}
 
 		let request: IUserUpdateInput = {
 			imageUrl
