@@ -62,7 +62,7 @@ export const defaultConfiguration: IPluginConfig = {
 	},
 	plugins: [],
 	authOptions: {
-		expressSessionSecret: process.env.SESSION_SECRET || 'gauzy',
+		expressSessionSecret: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
 		userPasswordBcryptSaltRounds: 12,
 		jwtSecret: process.env.JWT_SECRET || 'secretKey'
 	},
