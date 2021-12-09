@@ -97,6 +97,10 @@ spec:
                         value: '$AWS_ACCESS_KEY_ID'
                       - name: AWS_SECRET_ACCESS_KEY
                         value: '$AWS_SECRET_ACCESS_KEY'
+                      - name: EXPRESS_SESSION_SECRET
+                        value: '$EXPRESS_SESSION_SECRET'
+                      - name: JWT_SECRET
+                        value: '$JWT_SECRET'
                   ports:
                       - containerPort: 3000
                         protocol: TCP

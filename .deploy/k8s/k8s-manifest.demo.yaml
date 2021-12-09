@@ -75,6 +75,10 @@ spec:
                         value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'  
                       - name: API_BASE_URL
                         value: 'https://apidemo.gauzy.co'
+                      - name: EXPRESS_SESSION_SECRET
+                        value: 'gauzy'
+                      - name: JWT_SECRET
+                        value: 'secretKey'
                   ports:
                       - containerPort: 3000
                         protocol: TCP
