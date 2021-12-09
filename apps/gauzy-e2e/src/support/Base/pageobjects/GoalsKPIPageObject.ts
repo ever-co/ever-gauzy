@@ -14,5 +14,7 @@ export const GoalsKPIPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="success"]',
 	verifyKPICss: 'div.ng-star-inserted',
 	verifyEmpytTableCss: 'tr.ng-star-inserted > td',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	searchNameInputCss: 'input-filter > input[placeholder="Name"]',
+
 };
