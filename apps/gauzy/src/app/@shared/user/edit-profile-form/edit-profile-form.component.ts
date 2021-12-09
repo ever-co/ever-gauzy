@@ -147,6 +147,55 @@ export class EditProfileFormComponent
 		this.toastrService.danger(error);
 	}
 
+	async updateImage(imageUrl: string){
+		this.form.get('imageUrl').setValue(imageUrl);
+		this.store.user = {
+			...this.store.user,
+			imageUrl: imageUrl
+		}
+
+		let request: IUserUpdateInput = {
+			imageUrl
+		};
+
+		if (this.allowRoleChange) {
+			const { tenantId } = this.store.user;
+			const role = await firstValueFrom(this.roleService
+				.getRoleByName({
+					name: this.form.value['roleName'],
+					tenantId
+				})
+			);
+
+			request = {
+				...request,
+				role
+			};
+		}
+
+		try {
+			await this.userService.update(
+				this.selectedUser ? this.selectedUser.id : this.store.userId,
+				request
+			)
+			.then((res: IUser) => {
+				try {
+					if (res) {
+						this.store.user = {
+							...this.store.user,
+							imageUrl: res.imageUrl
+						} as IUser
+					}
+					this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
+				} catch (error) { 
+					console.log('Error while uploading profile avatar', error);
+				}
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
 	async submitForm() {
 		const { email, firstName, lastName, tags, preferredLanguage, password } = this.form.getRawValue();
 		let request: IUserUpdateInput = {
