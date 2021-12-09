@@ -93,6 +93,10 @@ export class EditEmployeeComponent
 			});
 	}
 
+	updateImage(imageUrl: string){
+		this.selectedEmployee.user.imageUrl = imageUrl
+	}
+
 	ngOnDestroy() {
 		this.store.user$
 			.pipe(
