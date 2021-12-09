@@ -483,7 +483,7 @@ export class SeedDataService {
 	/**
 	* Seed Default & Random Data
 	*/
-	public async excuteDemoSeed() {
+	public async executeDemoSeed() {
 		try {
 			console.log('Database Demo Seed Started');
 
