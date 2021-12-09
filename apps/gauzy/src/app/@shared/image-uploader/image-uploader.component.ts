@@ -85,14 +85,17 @@ export class ImageUploaderComponent implements OnInit {
         };
 
         this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
-            const data = JSON.parse(response);
-            this.uploadedImageUrl.emit(data.url);
+            if (response) {
+                const data = JSON.parse(response);
+                this.uploadedImageUrl.emit(data.url);
+            }
         };
 
         this.uploader.onErrorItem = (item: any, response: string, status: number) => {
-            console.log('here')
-            const error = JSON.parse(response);
-            this.uploadImageError.emit(error);
+            if (response) {
+                const error = JSON.parse(response);
+                this.uploadImageError.emit(error);
+            }
         };
     }
 }
