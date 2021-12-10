@@ -8,7 +8,8 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	verifyText
+	verifyByText,
+	vefiryByLength,
 } from '../utils/util';
 import { ManageUserInvitesPage } from '../pageobjects/ManageUserInvitesPageObject';
 
@@ -138,8 +139,9 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
 };
 
-export const verifyInviteExist = (text) => {
-	verifyText(ManageUserInvitesPage.verifyEmailCss, text);
+export const verifyInviteExist = (name: string) => {
+	vefiryByLength(ManageUserInvitesPage.clientsTableRow, 1)
+	verifyByText(ManageUserInvitesPage.clientsTableData, name)
 };
 
 export const verifyRoleSelect = () => {
@@ -157,3 +159,12 @@ export const verifyRolesDropdown = () =>{
 export const clickRolesDropdown = (index) =>{
 	clickButtonByIndex(ManageUserInvitesPage.rolesDropdownCss, index);
 }
+
+export const verifyEmailInput = () => {
+	verifyElementIsVisible(ManageUserInvitesPage.searchEmailInputCss);
+};
+
+export const searchByEmail = (name: string) => {
+	clearField(ManageUserInvitesPage.searchEmailInputCss);
+	enterInput(ManageUserInvitesPage.searchEmailInputCss, name);
+};
