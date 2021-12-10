@@ -22,8 +22,15 @@ Feature: Contacts test
     And User can see save invite button
     When User click on save invite button
     Then Notification message will appear
+    When User see name input field
+    Then User enter invited client name
+    And User can see only selected user
     And User can verify contact was created
+    And User clear the search field
   Scenario: Edit lead
+    When User see name input field
+    Then User enter client name
+    And User can verify client name
     And User can see contacts table
     When User select first table row
     Then Edit button will become active
@@ -56,7 +63,10 @@ Feature: Contacts test
     Then User can see finish button
     When User click on finish button
     Then Notification message will appear
-    And User can verify contact was edited
+    And User clear the search field
+    When User see name input field again
+    Then User enter client name again
+    Then User can verify client name again
   Scenario: Delete lead
     Then User can see contacts table
     When User select first table row
@@ -65,4 +75,5 @@ Feature: Contacts test
     Then User can see confirm delete button
     When User click on confirm delete button
     Then Notification message will appear
+    And User clear the search field
     And User can verify contact was deleted

@@ -11,13 +11,13 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-import { waitUntil } from '../../Base/utils/util';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 let email = faker.internet.email();
 let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
 let deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
+let inviteName = faker.name.firstName() + ' ' + faker.name.lastName();
 let city = faker.address.city();
 let postcode = faker.address.zipCode();
 let street = faker.address.streetAddress();
@@ -103,7 +103,7 @@ Then('User can see contact name input field', () => {
 });
 
 And('User can enter value for contact name', () => {
-	contactsLeadsPage.enterContactNameData(fullName);
+	contactsLeadsPage.enterContactNameData(inviteName);
 });
 
 And('User can see contact phone input field', () => {
@@ -134,11 +134,39 @@ Then('Notification message will appear', () => {
 	contactsLeadsPage.waitMessageToHide();
 });
 
+When('User see name input field', () => {
+	contactsLeadsPage.verifyNameInput();
+});
+
+Then('User enter invited client name', () => {
+	contactsLeadsPage.searchClientName(inviteName);
+});
+
+And('User can see only selected user', () => {
+	contactsLeadsPage.verifySearchResult(ContactsLeadsPageData.tableResult);
+});
+
 And('User can verify contact was created', () => {
-	contactsLeadsPage.verifyLeadExists(fullName);
+	contactsLeadsPage.verifyLeadExists(inviteName);
+});
+
+And('User clear the search field', () => {
+	contactsLeadsPage.clearSearchInput()
 });
 
 // Edit lead
+When('User see name input field', () => {
+	contactsLeadsPage.verifyNameInput();
+});
+
+Then('User enter client name', () => {
+	contactsLeadsPage.searchClientName(fullName);
+});
+
+And('User can verify client name', () => {
+	contactsLeadsPage.verifyClientNameInTable(fullName);
+})
+
 And('User can see contacts table', () => {
 	contactsLeadsPage.tableRowVisible();
 });
@@ -267,9 +295,17 @@ Then('Notification message will appear', () => {
 	contactsLeadsPage.waitMessageToHide();
 });
 
-And('User can verify contact was edited', () => {
-	contactsLeadsPage.verifyLeadExists(deleteName);
+When('User see name input field again', () => {
+	contactsLeadsPage.verifyNameInput();
 });
+
+Then('User enter client name again', () => {
+	contactsLeadsPage.searchClientName(deleteName);
+});
+
+Then('User can verify client name again', () => {
+	contactsLeadsPage.verifyClientNameInTable(deleteName);
+})
 
 // Delete lead
 Then('User can see contacts table', () => {
