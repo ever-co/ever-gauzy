@@ -97,10 +97,65 @@ spec:
                         value: '$AWS_ACCESS_KEY_ID'
                       - name: AWS_SECRET_ACCESS_KEY
                         value: '$AWS_SECRET_ACCESS_KEY'
+                      - name: AWS_REGION
+                        value: '$AWS_REGION'
+                      - name: AWS_S3_BUCKET
+                        value: '$AWS_S3_BUCKET'
                       - name: EXPRESS_SESSION_SECRET
                         value: '$EXPRESS_SESSION_SECRET'
                       - name: JWT_SECRET
                         value: '$JWT_SECRET'
+                      - name: CLOUDINARY_API_KEY
+                        value: '$CLOUDINARY_API_KEY'
+                      - name: CLOUDINARY_CLOUD_NAME
+                        value: '$CLOUDINARY_CLOUD_NAME'
+                      - name: DEFAULT_CURRENCY
+                        value: 'USD'
+                      - name: MAIL_FROM_ADDRESS
+                        value: '$MAIL_FROM_ADDRESS'
+                      - name: MAIL_HOST
+                        value: '$MAIL_HOST'
+                      - name: MAIL_PORT
+                        value: '$MAIL_PORT'
+                      - name: MAIL_USERNAME
+                        value: '$MAIL_USERNAME'
+                      - name: MAIL_PASSWORD
+                        value: '$MAIL_PASSWORD'
+                      - name: ALLOW_SUPER_ADMIN_ROLE
+                        value: '$ALLOW_SUPER_ADMIN_ROLE'
+                      - name: GOOGLE_CLIENT_ID
+                        value: '$GOOGLE_CLIENT_ID'
+                      - name: GOOGLE_CLIENT_SECRET
+                        value: '$GOOGLE_CLIENT_SECRET'
+                      - name: GOOGLE_CALLBACK_URL
+                        value: '$GOOGLE_CALLBACK_URL'
+                      - name: FACEBOOK_CLIENT_ID
+                        value: '$FACEBOOK_CLIENT_ID'
+                      - name: FACEBOOK_CLIENT_SECRET
+                        value: '$FACEBOOK_CLIENT_SECRET'
+                      - name: FACEBOOK_GRAPH_VERSION
+                        value: '$FACEBOOK_GRAPH_VERSION'
+                      - name: FACEBOOK_CALLBACK_URL
+                        value: '$FACEBOOK_CALLBACK_URL'
+                      - name: INTEGRATED_USER_DEFAULT_PASS
+                        value: '$INTEGRATED_USER_DEFAULT_PASS'
+                      - name: UPWORK_CALLBACK_URL
+                        value: '$UPWORK_CALLBACK_URL'
+                      - name: FILE_PROVIDER
+                        value: '$FILE_PROVIDER'
+                      - name: GAUZY_AI_GRAPHQL_ENDPOINT
+                        value: '$GAUZY_AI_GRAPHQL_ENDPOINT'
+                      - name: UNLEASH_APP_NAME
+                        value: '$UNLEASH_APP_NAME'
+                      - name: UNLEASH_API_URL
+                        value: '$UNLEASH_API_URL'
+                      - name: UNLEASH_INSTANCE_ID
+                        value: '$UNLEASH_INSTANCE_ID'
+                      - name: UNLEASH_REFRESH_INTERVAL
+                        value: '$UNLEASH_REFRESH_INTERVAL'
+                      - name: UNLEASH_METRICS_INTERVAL
+                        value: '$UNLEASH_METRICS_INTERVAL'
+
                   ports:
                       - containerPort: 3000
                         protocol: TCP
