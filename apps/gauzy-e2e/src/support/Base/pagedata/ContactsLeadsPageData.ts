@@ -3,5 +3,6 @@ export const ContactsLeadsPageData = {
 	defaultPhone: '00359878561239',
 	country: 'Bulgaria',
 	hours: 12,
-	editBtn: 1
+	editBtn: 1,
+	tableResult: 1
 };

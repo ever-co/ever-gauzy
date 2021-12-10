@@ -20,7 +20,9 @@ Feature: Manage user invites test
     And User can see save button
     When User click on save button
     Then Notification message will appear
-    And User can verify invite was created
+    When User see email input field
+    Then User type email
+    And User can verify client name
   Scenario: Copy invite
     And User can see invites table
     When User click on invites first table row

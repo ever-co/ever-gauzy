@@ -31,5 +31,9 @@ export const ContactsLeadsPage = {
 	contactEmailCss: '#emailInput',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	saveInviteButtonCss: 'nb-card-footer > button[status="success"]',
-	verifyLeadCss: 'div.d-block'
+	verifyLeadCss: 'div.d-block',
+	searchNameInputCss: 'input-filter > input[placeholder="Name"]',
+	clientsTableData: 'td.ng-star-inserted',
+	clientsTableRow: 'tr[class="ng2-smart-row ng-star-inserted"]',
+
 };

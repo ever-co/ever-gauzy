@@ -68,9 +68,6 @@ Then('Notification message will appear', () => {
 	manageCandidatesInvitesPage.waitMessageToHide();
 });
 
-And('User can verify invite was created', () => {
-	manageCandidatesInvitesPage.verifyInviteExist(email);
-});
 //Search by Email
 When ('User see email input field', () => {
 	manageCandidatesInvitesPage.verifyEmailPlaceholder();
@@ -81,6 +78,10 @@ Then('User can enter email in email field', () => {
 
 And('User can see only selected user', () => {
 	manageCandidatesInvitesPage.verifySearchResult(ManageCandidatesInvitesPageData.tableResult);
+});
+
+And('User can verify invite was created', () => {
+	manageCandidatesInvitesPage.verifyInviteExist(email);
 });
 
 
