@@ -113,7 +113,9 @@ jobs:
                 UNLEASH_INSTANCE_ID: '${{ secrets.UNLEASH_INSTANCE_ID }}'
                 UNLEASH_REFRESH_INTERVAL: '${{ secrets.UNLEASH_REFRESH_INTERVAL }}'
                 UNLEASH_METRICS_INTERVAL: '${{ secrets.UNLEASH_METRICS_INTERVAL }}'                
-
+                KEYMETRICS_MACHINE_NAME: '${{ secrets.KEYMETRICS_MACHINE_NAME }}'
+                KEYMETRICS_SECRET_KEY: '${{ secrets.KEYMETRICS_SECRET_KEY }}'
+                KEYMETRICS_PUBLIC_KEY: '${{ secrets.KEYMETRICS_PUBLIC_KEY }}'
 
             # we need this step because for now we just use :latest tag
             # note: for production we will use different strategy later
