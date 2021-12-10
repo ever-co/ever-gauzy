@@ -120,18 +120,6 @@
             "browserTarget": "gauzy:build"
           }
         },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "apps/gauzy/tsconfig.app.json",
-              "apps/gauzy/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
-        },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
@@ -214,18 +202,6 @@
             "buildTarget": "api:build",
             "inspect": true,
             "port": 9229
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "apps/api/tsconfig.app.json",
-              "apps/api/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
           }
         },
         "test": {
@@ -544,19 +520,6 @@
             "browserTarget": "desktop-ui:build"
           }
         },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "apps/desktop/tsconfig.app.json",
-              "apps/desktop/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/desktop/**"
-            ]
-          }
-        },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
@@ -608,19 +571,6 @@
             "buildTarget": "api-desktop:build"
           }
         },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "packages/desktop-api/tsconfig.app.json",
-              "packages/desktop-api/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!packages/desktop-api/**"
-            ]
-          }
-        },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
@@ -642,19 +592,6 @@
           "options": {
             "tsConfig": "packages/desktop-ui-lib/tsconfig.lib.json",
             "project": "packages/desktop-ui-lib/ng-package.json"
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "libs/desktop-ui-lib/tsconfig.lib.json",
-              "libs/desktop-ui-lib/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!libs/desktop-ui-lib/**/*"
-            ]
           }
         },
         "test": {
