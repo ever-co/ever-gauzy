@@ -8,7 +8,8 @@ describe('IntegrationsComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [IntegrationsComponent]
+			declarations: [IntegrationsComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

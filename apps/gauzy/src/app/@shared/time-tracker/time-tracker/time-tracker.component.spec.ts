@@ -8,7 +8,8 @@ describe('TimeTrackerComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [TimeTrackerComponent]
+			declarations: [TimeTrackerComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

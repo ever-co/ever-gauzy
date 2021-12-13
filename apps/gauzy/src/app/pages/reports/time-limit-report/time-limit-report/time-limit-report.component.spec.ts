@@ -8,7 +8,8 @@ describe('TimeLimitReportComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [TimeLimitReportComponent]
+			declarations: [TimeLimitReportComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

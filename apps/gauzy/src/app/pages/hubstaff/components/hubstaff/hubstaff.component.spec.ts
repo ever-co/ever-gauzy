@@ -8,7 +8,8 @@ describe('HubstaffComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [HubstaffComponent]
+			declarations: [HubstaffComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

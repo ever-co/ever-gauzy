@@ -8,7 +8,8 @@ describe('JobLayoutComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [JobLayoutComponent]
+			declarations: [JobLayoutComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

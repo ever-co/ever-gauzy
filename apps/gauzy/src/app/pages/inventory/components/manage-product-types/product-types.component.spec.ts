@@ -7,7 +7,8 @@ describe('ProductTypeComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [ProductTypesComponent]
+			declarations: [ProductTypesComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

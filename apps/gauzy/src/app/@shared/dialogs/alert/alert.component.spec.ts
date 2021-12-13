@@ -8,7 +8,8 @@ describe('AlertComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [AlertComponent]
+			declarations: [AlertComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

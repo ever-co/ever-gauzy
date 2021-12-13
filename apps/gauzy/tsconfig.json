@@ -10,5 +10,5 @@
 		"strictTemplates": false,
 		"strictInjectionParameters": false
 	},
-	"include": ["**/*.ts"]	
+	"include": ["**/*.ts"]
 }

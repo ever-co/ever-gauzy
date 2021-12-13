@@ -1,9 +1,14 @@
 {
 	"npmScope": "gauzy",
-	"affected": { "defaultBase": "master" },
+	"affected": {
+		"defaultBase": "master"
+	},
 	"implicitDependencies": {
 		"angular.json": "*",
-		"package.json": { "dependencies": "*", "devDependencies": "*" },
+		"package.json": {
+			"dependencies": "*",
+			"devDependencies": "*"
+		},
 		"tsconfig.json": "*",
 		"tslint.json": "*",
 		".eslintrc.json": "*",
@@ -13,47 +18,50 @@
 		"default": {
 			"runner": "@nrwl/workspace/tasks-runners/default",
 			"options": {
-				"cacheableOperations": ["build", "lint", "test", "e2e"]
+				"cacheableOperations": ["build", "lint", "test", "e2e"],
+				"parallel": 1
 			}
 		}
 	},
-	"projects": {
-		"gauzy-e2e": {
-			"tags": [],
-			"implicitDependencies": ["gauzy"]
+	"cli": {
+		"warnings": {
+			"typescriptMismatch": false,
+			"versionMismatch": false
 		},
-		"gauzy": {
-			"tags": []
+		"defaultCollection": "@nstudio/xplat",
+		"packageManager": "yarn",
+		"analytics": false
+	},
+	"generators": {
+		"@nrwl/angular": {
+			"application": {
+				"linter": "eslint"
+			},
+			"library": {
+				"linter": "eslint"
+			},
+			"storybook-configuration": {
+				"linter": "eslint"
+			}
 		},
-		"api": {
-			"tags": []
+		"@nrwl/angular:application": {
+			"style": "scss",
+			"linter": "eslint",
+			"unitTestRunner": "jest",
+			"e2eTestRunner": "cypress"
 		},
-		"desktop": {
-			"tags": []
+		"@nrwl/angular:component": {
+			"prefix": "ngx",
+			"style": "scss"
 		},
-		"desktop-api": {
-			"tags": []
+		"@nrwl/angular:directive": {
+			"prefix": "ngx"
 		},
-		"desktop-ui": {
-			"tags": []
-		},
-		"api-desktop": {
-			"tags": []
-		},
-		"desktop-ui-lib": {
-			"tags": []
-		},
-		"desktop-timer": {
-			"tags": []
-		},
-		"gauzy-server": {
-			"tags": []
-		},
-		"gauzy-server-ui": {
-			"tags": []
-		},
-		"gauzy-server-api": {
-			"tags": []
+		"@nrwl/angular:library": {
+			"style": "scss",
+			"linter": "eslint",
+			"unitTestRunner": "jest"
 		}
-	}
+	},
+	"defaultProject": "gauzy"
 }

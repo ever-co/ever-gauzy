@@ -8,7 +8,8 @@ describe('DailyStatisticsComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [DailyStatisticsComponent]
+			declarations: [DailyStatisticsComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

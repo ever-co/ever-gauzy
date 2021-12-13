@@ -8,7 +8,8 @@ describe('GalleryComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [GalleryComponent]
+			declarations: [GalleryComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

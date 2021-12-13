@@ -8,7 +8,8 @@ describe('ApprovalsComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [ApprovalsComponent]
+			declarations: [ApprovalsComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

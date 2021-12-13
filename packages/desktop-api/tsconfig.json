@@ -6,6 +6,5 @@
 		"target": "es2016",
 		"experimentalDecorators": true
 	},
-
 	"include": ["**/*.ts"]
 }

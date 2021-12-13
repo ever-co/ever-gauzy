@@ -8,7 +8,8 @@ describe('AddEditProposalTemplateComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [AddEditProposalTemplateComponent]
+			declarations: [AddEditProposalTemplateComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

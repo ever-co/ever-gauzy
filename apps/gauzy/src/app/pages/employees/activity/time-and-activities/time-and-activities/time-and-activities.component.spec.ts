@@ -8,7 +8,8 @@ describe('TimeAndActivitiesComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [TimeAndActivitiesComponent]
+			declarations: [TimeAndActivitiesComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 
