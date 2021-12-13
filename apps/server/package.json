@@ -42,7 +42,7 @@
 		"@nebular/security": "^9.0.0",
 		"@nebular/theme": "^9.0.0",
 		"@nestjs/typeorm": "^8.0.2",
-		"@ng-select/ng-select": "5.1.0",
+		"@ng-select/ng-select": "^8.1.1",
 		"@sentry/electron": "2.4.0",
 		"app-root-path": "^3.0.0",
 		"auto-launch": "5.0.5",
