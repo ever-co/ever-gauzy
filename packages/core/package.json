@@ -148,7 +148,7 @@
 		"@types/fs-extra": "5.0.2",
 		"@types/graphql": "^14.5.0",
 		"@types/i18n": "^0.12.0",
-		"@types/jest": "^26.0.19",
+		"@types/jest": "^27.0.3",
 		"@types/multer": "^1.4.4",
 		"@types/multer-s3": "^2.7.7",
 		"@types/node": "^14.14.22",

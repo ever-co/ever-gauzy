@@ -49,31 +49,31 @@
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn npx ngcc --properties es2016 browser module main --first-only --create-ivy-entry-points && yarn node tools/web/postinstall"
 	},
 	"resolutions": {
-		"@angular-devkit/build-angular": "~12.2.7"
+		"@angular-devkit/build-angular": "^13.1.1"
 	},
 	"devDependencies": {
-		"@4tw/cypress-drag-drop": "^2.0.0",
-		"@angular-devkit/build-angular": "~12.2.7",
-		"@angular/cli": "^12.2.7",		
-		"@nrwl/angular": "^12.9.0",
-		"@nrwl/cypress": "^12.9.0",
-		"@nrwl/jest": "^12.9.0",
-		"@types/jest": "^26.0.8",
-		"cypress": "8.3.1",
+		"@4tw/cypress-drag-drop": "^2.1.0",
+		"@angular-devkit/build-angular": "^13.1.1",
+		"@angular/cli": "^13.1.1",
 		"@cypress/browserify-preprocessor": "^3.0.1",
+		"@nrwl/angular": "13.3.1",
+		"@nrwl/cypress": "13.3.1",
+		"@nrwl/jest": "13.3.1",
+		"@types/jest": "^27.0.3",
+		"cypress": "8.3.1",
 		"cypress-cucumber-preprocessor": "^4.2.0",
-		"cypress-file-upload": "^5.0.8",		
+		"cypress-file-upload": "^5.0.8",
 		"dayjs": "^1.10.6",
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",
 		"jest": "^26.4.2",
-		"jest-preset-angular": "^8.3.2",
+		"jest-preset-angular": "^11.0.1",
 		"karma": "^5.2.3",
 		"karma-chrome-launcher": "^3.1.0",
 		"karma-cli": "^2.0.0",
 		"karma-coverage-istanbul-reporter": "^3.0.3",
 		"karma-jasmine": "^4.0.1",
-		"karma-jasmine-html-reporter": "^1.5.4"
+		"karma-jasmine-html-reporter": "^1.7.0"
 	},
 	"cypress-cucumber-preprocessor": {
 		"nonGlobalStepDefinitions": true,
