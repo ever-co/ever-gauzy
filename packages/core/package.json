@@ -87,7 +87,6 @@
 		"currency.js": "^2.0.3",
 		"date-fns": "^2.22.1",
 		"email-templates": "^8.0.8",
-		"express-session": "^1.17.1",
 		"faker": "^5.5.3",
 		"fast-json-stringify": "^2.4.1",
 		"fastify-swagger": "^4.12.4",
@@ -101,7 +100,7 @@
 		"mjml": "^4.7.0",
 		"moment": "^2.29.1",
 		"moment-range": "^4.0.2",
-		"moment-timezone": "^0.5.31",
+		"moment-timezone": "^0.5.34",
 		"mqtt": "^4.2.1",
 		"multer-s3": "^2.9.0",
 		"mysql": "^2.18.1",
@@ -173,7 +172,7 @@
 		"ts-node": "^10.2.1",
 		"tslint": "^6.1.3",
 		"tslint-config-prettier": "^1.18.0",
-		"typescript": "~4.2.4"
+		"typescript": "~4.5.3"
 	},
 	"jest": {
 		"moduleFileExtensions": [

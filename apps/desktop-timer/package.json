@@ -27,7 +27,7 @@
 		"electron-reload": "~1.5.0"
 	},
 	"dependencies": {
-		"moment": "^2.29.0",
+		"moment": "^2.29.1",
 		"sound-play": "1.1.0",
 		"auto-launch": "5.0.5",
 		"@sentry/electron": "2.4.0",

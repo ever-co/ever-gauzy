@@ -31,14 +31,15 @@
 		"@electron/remote": "^2.0.1"
     },
     "peerDependencies": {
-        "@angular/core": "^12.2.7",
-        "@nebular/theme": "^8.0.0",
+		"@angular/core": "13.1.0",
+		"@nebular/theme": "^9.0.0",
         "ngx-electron": "^2.2.0",
-        "@angular/animations": "^12.2.7",
-        "@angular/common": "^12.2.7",
-        "@angular/router": "^12.2.7",
-        "@angular/forms": "^12.2.7",
-        "moment": "^2.29.0",
+		"@angular/animations": "13.1.0",
+		"@angular/common": "13.1.0",
+		"@angular/router": "13.1.0",
+		"@angular/forms": "13.1.0",
+        "moment": "^2.29.1",
         "underscore": "^1.13.0",
-		"ng2-smart-table": "^1.7.2"    }
+		"ng2-smart-table": "^1.7.2"
+	}
 }
