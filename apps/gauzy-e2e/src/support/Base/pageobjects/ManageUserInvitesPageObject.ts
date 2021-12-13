@@ -17,6 +17,9 @@ export const ManageUserInvitesPage = {
 	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	verifyEmailCss: 'table-cell-view-mode > div > div.ng-star-inserted',
 	rolesInputCss: 'nb-select[ng-reflect-placeholder="Select Role"]',
-	rolesDropdownCss: 'nb-option'
+	rolesDropdownCss: 'nb-option',
+	searchEmailInputCss: 'input-filter > input[placeholder="Email"]',
+	clientsTableData: 'td.ng-star-inserted',
+	clientsTableRow: 'tr[class="ng2-smart-row ng-star-inserted"]'
 
 };

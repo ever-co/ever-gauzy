@@ -84,7 +84,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 
 		const config: Email.EmailConfig<any> = {
 			message: {
-				from: env.smtpConfig.from || 'ever@ever.co'
+				from: env.smtpConfig.from || 'gauzy@ever.co'
 			},
 
 			// if you want to send emails in development or test environments, set options.send to true.
@@ -99,6 +99,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			render: this.render
 		};
 
+		/* TODO: uncomment this after we figure out issues with dev / prod in the environment.*.ts 
 		if (!env.production && !env.demo) {
 			config.preview = {
 				open: {
@@ -107,6 +108,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				}
 			};
 		}
+		*/
 
 		return new Email(config);
 	}

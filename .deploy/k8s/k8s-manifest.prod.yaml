@@ -107,6 +107,8 @@ spec:
                         value: '$JWT_SECRET'
                       - name: CLOUDINARY_API_KEY
                         value: '$CLOUDINARY_API_KEY'
+                      - name: CLOUDINARY_API_SECRET
+                        value: '$CLOUDINARY_API_SECRET'  
                       - name: CLOUDINARY_CLOUD_NAME
                         value: '$CLOUDINARY_CLOUD_NAME'
                       - name: DEFAULT_CURRENCY

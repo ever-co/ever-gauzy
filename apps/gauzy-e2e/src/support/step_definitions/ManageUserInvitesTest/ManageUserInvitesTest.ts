@@ -91,9 +91,17 @@ Then('Notification message will appear', () => {
 	manageUserInvitesPage.waitMessageToHide();
 });
 
-And('User can verify invite was created', () => {
-	manageUserInvitesPage.verifyInviteExist(email);
+When('User see email input field', () => {
+	manageUserInvitesPage.verifyEmailInput();
 });
+
+Then('User type email', () => {
+	manageUserInvitesPage.searchByEmail(email);
+});
+
+And('User can verify client name', () => {
+	manageUserInvitesPage.verifyInviteExist(email);
+})
 
 // Copy invite
 And('User can see invites table', () => {
