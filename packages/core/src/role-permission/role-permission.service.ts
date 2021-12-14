@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, FindConditions, UpdateResult, getManager, FindManyOptions, Not, In } from 'typeorm';
+import { Repository, FindConditions, UpdateResult, getManager, FindManyOptions, Not, In, DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	RolesEnum,
@@ -92,22 +92,110 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		return await this.findAll(filter);
 	}
 
+	/**
+	 * Create permissions for lower roles users
+	 * 
+	 * @param partialEntity 
+	 * @returns 
+	 */
+	public async createPermission(
+		partialEntity: DeepPartial<IRolePermission>
+	): Promise<IRolePermission> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const roleId = RequestContext.currentRoleId();
+
+			const { role } = await this.repository.findOne({
+				where: {
+					roleId,
+					tenantId
+				},
+				relations: ['role']
+			});
+			
+			const wantToCreateRole = await this.roleService.findOneByIdString(partialEntity['roleId']);
+			if (role.name === RolesEnum.SUPER_ADMIN) {
+				/**
+				 * Reject request, if SUPER ADMIN try to update itself permissions
+				 */
+				 if (wantToCreateRole.name === RolesEnum.SUPER_ADMIN) {
+					throw new NotAcceptableException(
+						'Cannot modify Permissions for Super Admin'
+					);
+				}
+				return await this.create(partialEntity);
+			} else if (role.name === RolesEnum.ADMIN) {
+				/**
+				 * Reject request, if ADMIN try to create SUPER ADMIN permissions
+				 */
+				if (wantToCreateRole.name === RolesEnum.SUPER_ADMIN) {
+					throw new NotAcceptableException(
+						'Cannot modify Permissions for Super Admin, please contact to Super Admin'
+					);
+				}
+
+				/**
+				 * Reject request, if ADMIN try to create themself permissions
+				 */
+				if (wantToCreateRole.name === RolesEnum.ADMIN) {
+					throw new NotAcceptableException(
+						'Can not modify permissions for itself, please contact to Super Admin'
+					);
+				}
+				return await this.create(partialEntity);
+			}
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
 	public async updatePermission(
 		id: string | number | FindConditions<IRolePermission>,
-		partialEntity: QueryDeepPartialEntity<IRolePermission>
+		partialEntity: DeepPartial<IRolePermission>
 	): Promise<UpdateResult | IRolePermission> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+			const roleId = RequestContext.currentRoleId();
+
 			const { role } = await this.repository.findOne({
-				where: { id },
+				where: {
+					roleId,
+					tenantId
+				},
 				relations: ['role']
 			});
 
+			const wantToUpdateRole = await this.roleService.findOneByIdString(partialEntity['roleId']);
 			if (role.name === RolesEnum.SUPER_ADMIN) {
-				throw new NotAcceptableException(
-					'Cannot modify Permissions for Super Admin'
-				);
+				/**
+				 * Reject request, if SUPER ADMIN try to update itself permissions
+				 */
+				 if (wantToUpdateRole.name === RolesEnum.SUPER_ADMIN) {
+					throw new NotAcceptableException(
+						'Cannot modify Permissions for Super Admin'
+					);
+				}
+				return await this.update(id, partialEntity);
+			} else if (role.name === RolesEnum.ADMIN) {
+				/**
+				 * Reject request, if ADMIN try to update SUPER ADMIN permissions
+				 */
+				 if (wantToUpdateRole.name === RolesEnum.SUPER_ADMIN) {
+					throw new NotAcceptableException(
+						'Cannot modify Permissions for Super Admin, please contact to Super Admin'
+					);
+				}
+
+				/**
+				 * Reject request, if ADMIN try to update themself permissions
+				 */
+				if (wantToUpdateRole.name === RolesEnum.ADMIN) {
+					throw new NotAcceptableException(
+						'Can not modify permissions for itself, please contact to Super Admin'
+					);
+				}
+				return await this.update(id, partialEntity);
 			}
-			return await this.update(id, partialEntity);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err.message);
 		}

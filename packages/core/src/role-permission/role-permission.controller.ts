@@ -92,7 +92,7 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	async create(
 		@Body() entity: IRolePermissionCreateInput
 	): Promise<IRolePermission> {
-		return this.rolePermissionService.create(entity);
+		return this.rolePermissionService.createPermission(entity);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
