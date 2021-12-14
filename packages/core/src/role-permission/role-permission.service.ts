@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, FindConditions, UpdateResult, getManager, FindManyOptions, Not, In, DeepPartial } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	RolesEnum,
 	ITenant,
@@ -112,7 +111,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				},
 				relations: ['role']
 			});
-			
+
 			const wantToCreateRole = await this.roleService.findOneByIdString(partialEntity['roleId']);
 			if (role.name === RolesEnum.SUPER_ADMIN) {
 				/**
