@@ -190,7 +190,7 @@ export const PermissionGroups = {
 		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
 	],
 
-	//Readonly permissions, are only enabled for admin role
+	//Readonly permissions, are only enabled for Super Admin/Admin role
 	ADMINISTRATION: [
 		PermissionsEnum.ORG_EMPLOYEES_VIEW,
 		PermissionsEnum.ORG_EMPLOYEES_EDIT,

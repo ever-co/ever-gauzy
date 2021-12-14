@@ -47,8 +47,7 @@ import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 				</button>
 			</nb-card-footer>
 		</nb-card>
-	`,
-	styles: [``]
+	`
 })
 export class RecurringExpenseDeleteConfirmationComponent {
 	recordType: string;

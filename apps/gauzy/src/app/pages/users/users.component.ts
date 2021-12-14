@@ -24,16 +24,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { Store } from '../../@core/services/store.service';
-import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { ComponentEnum } from '../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -61,7 +59,7 @@ export class UsersComponent
 	showAddCard: boolean;
 	userToEdit: IUserOrganization;
 	users: IUser[] = [];
-	tags: ITag[];
+	tags: ITag[] = [];
 	selectedTags: any;
 	viewComponentName: ComponentEnum;
 	disableButton = true;
@@ -78,13 +76,13 @@ export class UsersComponent
 	}
 
 	constructor(
-		private dialogService: NbDialogService,
-		private store: Store,
-		private router: Router,
-		private toastrService: ToastrService,
-		private route: ActivatedRoute,
-		private translate: TranslateService,
-		private userOrganizationsService: UsersOrganizationsService
+		private readonly dialogService: NbDialogService,
+		private readonly store: Store,
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
+		private readonly route: ActivatedRoute,
+		private readonly translate: TranslateService,
+		private readonly userOrganizationsService: UsersOrganizationsService
 	) {
 		super(translate);
 		this.setView();
@@ -146,7 +144,7 @@ export class UsersComponent
 			});
 	}
 
-	selectUserTmp({ isSelected, data }) {
+	selectUser({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedUser = isSelected ? data : null;
 
@@ -217,7 +215,7 @@ export class UsersComponent
 
 	edit(selectedItem?: IUser) {
 		if (selectedItem) {
-			this.selectUserTmp({
+			this.selectUser({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -231,7 +229,7 @@ export class UsersComponent
 
 	async delete(selectedItem?: IUser) {
 		if (selectedItem) {
-			this.selectUserTmp({
+			this.selectUser({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -319,7 +317,10 @@ export class UsersComponent
 
 	private async loadPage() {
 		this.selectedUser = null;
-		const { id: organizationId, tenantId } = this.organization;
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.role', 'user.tags'],
 			{ organizationId, tenantId }
@@ -341,7 +342,7 @@ export class UsersComponent
 						}`,
 					email: orgUser.user.email,
 					tags: orgUser.user.tags,
-					id: orgUser.id,
+					id: orgUser.userId,
 					isActive: orgUser.isActive,
 					imageUrl: orgUser.user.imageUrl,
 					role: orgUser.user.role.name,
@@ -385,9 +386,12 @@ export class UsersComponent
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this._loadSmartTableSettings();
-		});
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -406,12 +410,13 @@ export class UsersComponent
 	 * Clear selected item
 	 */
 	clearItem() {
-		this.selectUserTmp({
+		this.selectUser({
 			isSelected: false,
 			data: null
 		});
 		this.deselectAll();
 	}
+	
 	/*
 	 * Deselect all table rows
 	 */

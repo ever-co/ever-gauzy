@@ -6,8 +6,7 @@ import { Component, Input, OnInit } from '@angular/core';
 		<div *ngIf="rowData?.updatedAt">
 			{{ rowData.updatedAt }}
 		</div>
-	`,
-	styles: [``]
+	`
 })
 export class DocumentDateTableComponent implements OnInit {
 	@Input()

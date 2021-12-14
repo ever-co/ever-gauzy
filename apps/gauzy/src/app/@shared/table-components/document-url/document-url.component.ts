@@ -6,8 +6,7 @@ import { Component, Input, OnInit } from '@angular/core';
 		<div *ngIf="rowData?.documentUrl">
 			{{ url }}
 		</div>
-	`,
-	styles: [``]
+	`
 })
 export class DocumentUrlTableComponent implements OnInit {
 	@Input()
