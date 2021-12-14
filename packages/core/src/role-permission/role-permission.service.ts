@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, FindConditions, UpdateResult, getManager } from 'typeorm';
+import { Repository, FindConditions, UpdateResult, getManager, FindManyOptions, Not, In } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	RolesEnum,
@@ -9,13 +9,17 @@ import {
 	IRole,
 	IRolePermission,
 	IImportRecord,
-	IRolePermissionMigrateInput
+	IRolePermissionMigrateInput,
+	IPagination,
+	PermissionsEnum
 } from '@gauzy/contracts';
+import { pluck } from 'underscore';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { RolePermission } from './role-permission.entity';
 import { Role } from '../role/role.entity';
+import { RoleService } from './../role/role.service';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 
 @Injectable()
@@ -23,10 +27,69 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	constructor(
 		@InjectRepository(RolePermission)
 		private readonly rolePermissionRepository: Repository<RolePermission>,
-
+		private readonly roleService: RoleService,
 		private readonly _commandBus: CommandBus
 	) {
 		super(rolePermissionRepository);
+	}
+
+	public async findAllRolePermissions(
+		filter?: FindManyOptions<RolePermission>,
+	): Promise<IPagination<RolePermission>> {
+
+		const tenantId = RequestContext.currentTenantId();
+		const roleId = RequestContext.currentRoleId();
+
+		const { role } = await this.repository.findOne({
+			where: { roleId },
+			relations: ['role']
+		});
+
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)) {
+			/**
+			 * GET Roles Permissions for all roles for "SUPER ADMIN" users
+			 */
+			if (role.name === RolesEnum.SUPER_ADMIN) {
+				return await this.findAll(filter);
+			}
+			const roles = (await this.roleService.findAll({
+				select: ['id'],
+				where: {
+					name: Not(RolesEnum.SUPER_ADMIN),
+					tenantId
+				}
+			})).items;
+			if (!filter.where) {
+				/**
+				 * GET Roles Permissions for all roles except "SUPER ADMIN" role for "ADMIN" user, if not found any filter
+				 */
+				filter['where'] = {
+					roleId: In(pluck(roles, 'id')),
+					tenantId
+				}
+			} else if(filter.where && filter.where['roleId']) {
+				/**
+				 * GET Roles Permissions for "ADMIN" role only
+				 */
+				if (!pluck(roles, 'id').includes(filter.where['roleId'])) {
+					filter['where'] = {
+						roleId,
+						tenantId
+					}
+				}
+			}
+			return await this.findAll(filter);
+		}
+
+		/**
+		 * Use user default role, if not found
+		 */
+		if (!filter.where) {
+			filter['where'] = {
+				roleId
+			}
+		}
+		return await this.findAll(filter);
 	}
 
 	public async updatePermission(

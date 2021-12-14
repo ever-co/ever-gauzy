@@ -64,12 +64,15 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+	@HttpCode(HttpStatus.OK)
 	@Get()
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IRolePermission>> {
 		const { findInput } = data;
-		return this.rolePermissionService.findAll({ where: findInput });
+		return this.rolePermissionService.findAllRolePermissions({ where: findInput });
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

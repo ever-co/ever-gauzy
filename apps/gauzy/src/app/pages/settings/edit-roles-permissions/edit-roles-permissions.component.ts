@@ -76,7 +76,9 @@ export class EditRolesPermissionsComponent
 		this.rolesService.getAll()
 			.then(({ items }) => {
 				if (this.user.role.name === RolesEnum.ADMIN) {
-					items = items.filter((role) => role.name !== RolesEnum.SUPER_ADMIN);
+					items = items.filter(
+						(role) =>  ![RolesEnum.SUPER_ADMIN].includes(role.name as RolesEnum)
+					);
 				}
 				this.roles = items;
 				this.onSelectedRole();
