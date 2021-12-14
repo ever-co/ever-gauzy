@@ -204,7 +204,6 @@ export const PermissionGroups = {
 		PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 		PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 		PermissionsEnum.CHANGE_ROLES_PERMISSIONS,
-		PermissionsEnum.SUPER_ADMIN_EDIT,
 		PermissionsEnum.PUBLIC_PAGE_EDIT,
 		PermissionsEnum.ORG_INVENTORY_VIEW,
 		PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
@@ -228,7 +227,6 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
 		PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
-		PermissionsEnum.MIGRATE_GAUZY_CLOUD,
 		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA
 	]

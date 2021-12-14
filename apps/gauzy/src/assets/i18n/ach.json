@@ -1730,7 +1730,6 @@
 			"CHANGE_ROLES_PERMISSIONS": "crwdns2743:0crwdne2743:0",
 			"ACCESS_PRIVATE_PROJECTS": "crwdns2959:0crwdne2959:0",
 			"TIMESHEET_EDIT_TIME": "crwdns3450:0crwdne3450:0",
-			"SUPER_ADMIN_EDIT": "crwdns3470:0crwdne3470:0",
 			"INVOICES_VIEW": "crwdns3898:0crwdne3898:0",
 			"INVOICES_EDIT": "crwdns7166:0crwdne7166:0",
 			"ESTIMATES_VIEW": "crwdns8728:0crwdne8728:0",
@@ -1786,7 +1785,6 @@
 			"IMPORT_EXPORT_VIEW": "crwdns8746:0crwdne8746:0",
 			"ORG_JOB_EMPLOYEE_VIEW": "crwdns8748:0crwdne8748:0",
 			"ORG_JOB_MATCHING_VIEW": "crwdns8750:0crwdne8750:0",
-			"MIGRATE_GAUZY_CLOUD": "crwdns10480:0crwdne10480:0",
 			"ACCESS_DELETE_ACCOUNT": "crwdns10543:0crwdne10543:0",
 			"ACCESS_DELETE_ALL_DATA": "crwdns10545:0crwdne10545:0"
 		},

@@ -1730,7 +1730,6 @@
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
 			"TIMESHEET_EDIT_TIME": "Изменить время в расписании",
-			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"INVOICES_VIEW": "Просмотр счетов",
 			"INVOICES_EDIT": "Редактировать Счета Добавить",
 			"ESTIMATES_VIEW": "Просмотр оценок",
@@ -1786,7 +1785,6 @@
 			"IMPORT_EXPORT_VIEW": "Просмотр импорта/экспорта",
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
-			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy",
 			"ACCESS_DELETE_ACCOUNT": "Доступ к удалению аккаунта",
 			"ACCESS_DELETE_ALL_DATA": "Доступ к удалению всех данных"
 		},
