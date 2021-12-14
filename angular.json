@@ -136,7 +136,8 @@
 					"browserTarget": "gauzy:build:local",
 					"proxyConfig": "apps/gauzy/proxy.conf.json"
 				}
-			}
+			},
+			"defaultConfiguration": "local"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
