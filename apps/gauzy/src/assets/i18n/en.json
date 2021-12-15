@@ -5,6 +5,7 @@
 		"ADD": "Add",
 		"CREATE": "Create",
 		"REGISTER": "Register",
+		"LOGIN": "Log In",
 		"ADD_NOTE": "Add note",
 		"EDIT": "Edit",
 		"MANAGE": "Manage",
@@ -3683,6 +3684,27 @@
 			"invoice": "Invoice",
 			"estimate": "Estimate",
 			"receipt": "Receipt"
+		}
+	},
+	"LOGIN_PAGE": {
+		"TITLE": "Login",
+		"SUB_TITLE": "Hello! Log in with your email.",
+		"REMEMBER_ME_TITLE": "Remember me",
+		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
+		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
+		"LABELS": {
+			"EMAIL": "Email address",
+			"PASSWORD": "Password"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "Email address",
+			"PASSWORD": "Password"
+		},
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "Email is required!",
+			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
+			"PASSWORD_REQUIRED": "Password is required!",
+			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!"
 		}
 	}
 }
