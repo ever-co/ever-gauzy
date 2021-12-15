@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { IUser } from '@gauzy/contracts';
+import { IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { UserIdService, UsersOrganizationsService } from '../../../../@core/services';
+import { Store, UserIdService, UsersService } from '../../../../@core/services';
 import { TranslationBaseComponent } from '../../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
@@ -21,10 +21,11 @@ export class EditUserDataComponent
 
 	constructor(
 		private readonly route: ActivatedRoute,
-		private readonly usersOrganizationsService: UsersOrganizationsService,
 		public readonly translateService: TranslateService,
 		private readonly router: Router,
-		private readonly userIdService: UserIdService
+		private readonly userIdService: UserIdService,
+		private readonly usersService: UsersService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -46,13 +47,20 @@ export class EditUserDataComponent
 	}
 
 	private async getUserProfile() {
-		const { id } = this.params;
-		const { items } = await this.usersOrganizationsService.getAll(
-			['user', 'user.role', 'user.tags'],
-			{ id }
-		);
 
-		this.user = items[0].user;
+		const { id } = this.params;
+		const user = await this.usersService.getUserById(id, ['role', 'tags']);
+
+		if (user.role.name === RolesEnum.SUPER_ADMIN) {
+			/**
+			 * Redirect If Edit Super Admin Without Permission
+			 */
+			if (!this.store.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+				this.router.navigate(['/pages/users']);
+				return;
+			}
+		}
+		this.user = user;
 	}
 
 	ngOnDestroy() { }

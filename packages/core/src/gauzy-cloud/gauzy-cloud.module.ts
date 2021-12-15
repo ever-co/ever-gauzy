@@ -3,12 +3,12 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { HttpModule } from '@nestjs/axios';
 import { RouterModule } from 'nest-router';
 import { ConfigModule, ConfigService } from '@gauzy/config';
+import { TenantModule } from './../tenant/tenant.module';
+import { RoleModule } from './../role/role.module';
+import { UserModule } from './../user/user.module';
 import { GauzyCloudController } from './gauzy-cloud.controller';
 import { GauzyCloudService } from './gauzy-cloud.service';
-import { TenantModule } from './../tenant';
 import { CommandHandlers } from './commands/handlers';
-import { RoleModule } from './../role/role.module';
-import { UserModule } from './../user';
 
 @Module({
 	imports: [

@@ -98,21 +98,46 @@
                   "maximumError": "1mb"
                 }
               ]
+            },
+            "local": {
+				"optimization": false,
+				"buildOptimizer": false,
+				"vendorChunk": true,
+				"extractLicenses": false,
+				"sourceMap": true,
+				"namedChunks": true,
+				"budgets": [
+					{
+						"type": "initial",
+						"maximumWarning": "10mb",
+						"maximumError": "40mb"
+					},
+					{
+						"type": "anyComponentStyle",
+						"maximumWarning": "1000kb",
+						"maximumError": "10mb"
+					}
+				]
             }
           }
         },
         "serve": {
-          "builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:dev-server",
-          "options": {
-            "browserTarget": "gauzy:build",
-            "proxyConfig": "apps/gauzy/proxy.conf.json"
-          },
-          "configurations": {
-            "production": {
-              "browserTarget": "gauzy:build:production",
-              "proxyConfig": "apps/gauzy/proxy.prod.conf.json"
-            }
-          }
+			"builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:dev-server",
+			"options": {
+				"browserTarget": "gauzy:build",
+				"proxyConfig": "apps/gauzy/proxy.conf.json"
+			},
+			"configurations": {
+				"production": {
+					"browserTarget": "gauzy:build:production",
+					"proxyConfig": "apps/gauzy/proxy.prod.conf.json"
+				},
+				"local": {
+					"browserTarget": "gauzy:build:local",
+					"proxyConfig": "apps/gauzy/proxy.conf.json"
+				}
+			},
+			"defaultConfiguration": "local"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",

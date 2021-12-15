@@ -1,13 +1,13 @@
 import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { ActivatedRoute, Params } from '@angular/router';
-import { IUser, ITag } from '@gauzy/contracts';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { IUser, ITag, RolesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
-import { UsersOrganizationsService } from '../../../@core/services';
+import { Store, UsersService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,9 +30,11 @@ export class EditUserProfileComponent
 
 	constructor(
 		private readonly route: ActivatedRoute,
+		private readonly router: Router,
 		private readonly location: Location,
 		public readonly translateService: TranslateService,
-		private readonly usersOrganizationsService: UsersOrganizationsService
+		private readonly usersService: UsersService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -80,16 +82,24 @@ export class EditUserProfileComponent
 		];
 	}
 
+	/**
+	 * GET user profile
+	 */
 	private async getUserProfile() {
 		const { id } = this.params;
-		const { items } = await this.usersOrganizationsService.getAll(
-			['user', 'user.role', 'user.tags'],
-			{ id }
-		);
-		this.user = items[0].user;
+		const user = await this.usersService.getUserById(id, ['role', 'tags']);
+		
+		if (user.role.name === RolesEnum.SUPER_ADMIN) {
+			/**
+			 * Redirect If Edit Super Admin Without Permission
+			 */
+			if (!this.store.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+				this.router.navigate(['/pages/users']);
+				return;
+			}
+		}
+		this.user = user;
 	}
-
-	ngOnDestroy() {}
 
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
@@ -99,4 +109,6 @@ export class EditUserProfileComponent
 			)
 			.subscribe();
 	}
+
+	ngOnDestroy() {}
 }

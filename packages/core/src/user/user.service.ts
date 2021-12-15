@@ -100,31 +100,37 @@ export class UserService extends TenantAwareCrudService<User> {
 				throw new ForbiddenException();
 			}
 		}
-		try {
-			let user: IUser;
+		let user: IUser;
 
-			if (typeof(id) == 'string') {
-				user = await this.findOneByIdString(id);
-			}
-			if (typeof(id) == 'number') {
-				user = await this.findOneByIdNumber(id);
-			}
-
-			if (!user) {
-				throw new NotFoundException(`The user was not found`);
-			}
-
-			if (partialEntity['hash']) {
-				const hashPassword = await this.getPasswordHash(
-					partialEntity['hash']
-				);
-				partialEntity['hash'] = hashPassword;
-			}
-
-			return await this.repository.save(partialEntity);
-		} catch (err) {
-			throw new NotFoundException(`The record was not found`, err);
+		if (typeof(id) == 'string') {
+			user = await this.findOneByIdString(id, {
+				relations: ['role']
+			});
 		}
+		if (typeof(id) == 'number') {
+			user = await this.findOneByIdNumber(id, {
+				relations: ['role']
+			});
+		}
+
+		if (!user) {
+			throw new NotFoundException(`The user was not found`);
+		}
+
+		/**
+		 * If user try to update Super Admin without permission
+		 */
+		if (user.role.name === RolesEnum.SUPER_ADMIN) {
+			if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+				throw new ForbiddenException();
+			}
+		}
+
+		if (partialEntity['hash']) {
+			partialEntity['hash'] = await this.getPasswordHash(partialEntity['hash']);
+		}
+
+		return await this.repository.save(partialEntity);
 	}
 
 	async getAdminUsers(tenantId: string): Promise<User[]> {
