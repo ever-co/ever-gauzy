@@ -33,7 +33,18 @@ export type Env = Readonly<{
 
 	DEMO: boolean;
 
+	// Default Super Admin Credentials
+	DEMO_SUPER_ADMIN_EMAIL?: string;
+	DEMO_SUPER_ADMIN_PASSWORD?: string;
+	// Default Admin Credentials
+	DEMO_ADMIN_EMAIL?: string;
+	DEMO_ADMIN_PASSWORD?: string;
+	// Default Employee Credentials
+	DEMO_EMPLOYEE_EMAIL?: string;
+	DEMO_EMPLOYEE_PASSWORD?: string;
+
 	CHATWOOT_SDK_TOKEN: string;
+
 	//nebular chat map API key
 	CHAT_MESSAGE_GOOGLE_MAP: string;
 
@@ -67,6 +78,15 @@ export const env: Env = cleanEnv(
 		DEFAULT_COUNTRY: str({ default: 'US' }),
 
 		DEMO: bool({ default: false }),
+
+		DEMO_SUPER_ADMIN_EMAIL: str({ default: '' }),
+		DEMO_SUPER_ADMIN_PASSWORD: str({ default: '' }),
+
+		DEMO_ADMIN_EMAIL: str({ default: '' }),
+		DEMO_ADMIN_PASSWORD: str({ default: '' }),
+
+		DEMO_EMPLOYEE_EMAIL: str({ default: '' }),
+		DEMO_EMPLOYEE_PASSWORD: str({ default: '' }),
 
 		CHATWOOT_SDK_TOKEN: str({ default: '' }),
 		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' }),

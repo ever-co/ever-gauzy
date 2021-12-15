@@ -32,6 +32,8 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	}
 
 	collapseDemo() {
-		this.isShown = !this.isShown;
+		if (this.environment.DEMO) {
+			this.isShown = !this.isShown;
+		}
 	}
 }

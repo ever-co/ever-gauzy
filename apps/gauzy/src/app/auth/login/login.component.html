@@ -115,6 +115,7 @@
 	</div>
 
 	<button
+		type="submit"
 		nbButton
 		fullWidth
 		status="primary"
@@ -126,7 +127,7 @@
 	</button>
 </form>
 
-<ng-container *ngIf="!electronService.isElectronApp">
+<ng-container *ngIf="!electronService.isElectronApp && environment.DEMO">
 	<div class="demo-credentials-btn">
 		<button *ngIf="!isShown" (click)="collapseDemo()">
 			<span>Demo Credentials</span>
@@ -202,5 +203,5 @@
 
 <section class="another-action" aria-label="Register">
 	Don't have an account?
-	<a class="text-link" routerLink="../register">Register</a>
+	<a class="text-link" routerLink="/auth/register">Register</a>
 </section>
