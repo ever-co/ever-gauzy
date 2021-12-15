@@ -104,7 +104,11 @@
 		"GENERATE": "Generate",
 		"SEND_RECEIPT": "Send Receipt",
 		"ADD_COMMENT": "Add Comment",
-		"CONTINUE" : "Continue"
+		"CONTINUE" : "Continue",
+		"SUPER_ADMIN_DEMO": "Super Admin Demo",
+		"ADMIN_DEMO": "Admin Demo",
+		"EMPLOYEE_DEMO": "Employee Demo",
+		"DEMO_CREDENTIALS": "Demo Credentials"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -3693,8 +3697,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"LABELS": {
-			"EMAIL": "Email address",
-			"PASSWORD": "Password"
+			"EMAIL": "Email address:",
+			"PASSWORD": "Password:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Email address",
@@ -3705,6 +3709,10 @@
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!"
+		},
+		"DEMO": {
+			"TITLE": "Login Automatically into Demo accounts",
+			"SUB_TITLE": "Please select account type below."
 		}
 	}
 }

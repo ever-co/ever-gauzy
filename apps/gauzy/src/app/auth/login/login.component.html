@@ -130,10 +130,10 @@
 	</button>
 </form>
 
-<ng-container *ngIf="!electronService.isElectronApp && environment.DEMO">
+<ng-container *ngIf="!electronService.isElectronApp && environment.DEMO && !isShown">
 	<div class="demo-credentials-btn">
-		<button *ngIf="!isShown" (click)="collapseDemo()">
-			<span>Demo Credentials</span>
+		<button (click)="collapseDemo()">
+			<span>{{ 'BUTTONS.DEMO_CREDENTIALS' | translate }}</span>
 			<nb-icon
 				class="info-btn ml-2"
 				status="info"
@@ -143,28 +143,30 @@
 	</div>
 </ng-container>
 
-<div *ngIf="environment.DEMO && isShown" class="demo-credentials-card">
-	<nb-card>
-		<nb-icon
-			class="ml-auto mt-1 close close-demo-credentials-card"
-			icon="close-outline"
-			(click)="collapseDemo()"
-		></nb-icon>
-		<nb-card-body>
-			<div>Demo Credentials</div>
-			<br />
-			<div>- User with "Super Admin" Role</div>
-			<br />
-			<div>Email: admin@ever.co</div>
-			<div>Password: admin</div>
-			<br />
-			<div>- "Employee" user</div>
-			<br />
-			<div>Email: employee@ever.co</div>
-			<div>Password: 123456</div>
-		</nb-card-body>
-	</nb-card>
-</div>
+<ng-container *ngIf="!electronService.isElectronApp && environment.DEMO && isShown">
+	<div class="demo-credentials-card">
+		<nb-card>
+			<nb-card-body>
+				<nb-icon
+					class="ml-auto mt-1 close close-demo-credentials-card"
+					icon="close-outline"
+					(click)="collapseDemo()"
+				></nb-icon>
+				<h5 class="subtitle text-center">{{ 'LOGIN_PAGE.DEMO.TITLE' | translate }}</h5>
+				<p class="paragraph text-center">{{ 'LOGIN_PAGE.DEMO.SUB_TITLE' | translate }}</p>
+				<button nbButton fullWidth size="large" class="mt-3" (click)="autoLogin(RolesEnum.SUPER_ADMIN)">
+					{{ 'BUTTONS.SUPER_ADMIN_DEMO' | translate }}
+				</button><br/>
+				<button nbButton fullWidth size="large" class="mt-3" (click)="autoLogin(RolesEnum.ADMIN)">
+					{{ 'BUTTONS.ADMIN_DEMO' | translate }}
+				</button><br/>
+				<button nbButton fullWidth size="large" class="mt-3" (click)="autoLogin(RolesEnum.EMPLOYEE)">
+					{{ 'BUTTONS.EMPLOYEE_DEMO' | translate }}
+				</button>
+			</nb-card-body>
+		</nb-card>
+	</div>
+</ng-container>
 
 <section
 	*ngIf="socialLinks && socialLinks.length > 0"
