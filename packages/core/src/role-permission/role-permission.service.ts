@@ -32,6 +32,12 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		super(rolePermissionRepository);
 	}
 
+	/**
+	 * GET all roler-permissions using API filter
+	 * 
+	 * @param filter 
+	 * @returns 
+	 */
 	public async findAllRolePermissions(
 		filter?: FindManyOptions<RolePermission>,
 	): Promise<IPagination<RolePermission>> {
@@ -39,18 +45,29 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		const tenantId = RequestContext.currentTenantId();
 		const roleId = RequestContext.currentRoleId();
 
+		/**
+		 * Find current user role
+		 */
 		const { role } = await this.repository.findOne({
 			where: { roleId },
 			relations: ['role']
 		});
 
+		/**
+		 * Only SUPER_ADMIN/ADMIN can have `PermissionsEnum.CHANGE_ROLES_PERMISSIONS` permission
+		 * SUPER_ADMIN can retrieve all role-permissions for assign TENANT.
+		 * ADMIN can retrieve role-permissions for lower roles (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) & themself (ADMIN)
+		 */
 		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)) {
 			/**
-			 * GET Roles Permissions for all roles for "SUPER ADMIN" users
+			 * If, SUPER_ADMIN users try to retrieve all role-permissions allow them.
 			 */
 			if (role.name === RolesEnum.SUPER_ADMIN) {
 				return await this.findAll(filter);
 			}
+			/**
+			 * Retrieve all role-permissions except "SUPER_ADMIN" role
+			 */
 			const roles = (await this.roleService.findAll({
 				select: ['id'],
 				where: {
@@ -60,7 +77,8 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			})).items;
 			if (!filter.where) {
 				/**
-				 * GET Roles Permissions for all roles except "SUPER ADMIN" role for "ADMIN" user, if not found any filter
+				 * GET all role-permissions for (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) roles themself (ADMIN), if specific role filter not used in API.
+				 * 
 				 */
 				filter['where'] = {
 					roleId: In(pluck(roles, 'id')),
@@ -68,7 +86,8 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				}
 			} else if(filter.where && filter.where['roleId']) {
 				/**
-				 * GET Roles Permissions for "ADMIN" role only
+				 * If, ADMIN try to retrieve "SUPER_ADMIN" role-permissions via API filter, not allow them.
+				 * Retrieve current user role (ADMIN) all role-permissons.
 				 */
 				if (!pluck(roles, 'id').includes(filter.where['roleId'])) {
 					filter['where'] = {
@@ -81,12 +100,12 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		}
 
 		/**
-		 * Use user default role, if not found
+		 * If (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) roles users try to retrieve role-permissions.
+		 * Allow only to retrieve current users role-permissions. 
 		 */
-		if (!filter.where) {
-			filter['where'] = {
-				roleId
-			}
+		filter['where'] = {
+			roleId,
+			tenantId
 		}
 		return await this.findAll(filter);
 	}
@@ -104,6 +123,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			const tenantId = RequestContext.currentTenantId();
 			const roleId = RequestContext.currentRoleId();
 
+			/**
+			 * Find current user role
+			 */
 			const { role } = await this.repository.findOne({
 				where: {
 					roleId,
@@ -112,20 +134,27 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				relations: ['role']
 			});
 
+			/**
+			 * User try to create permission for below role
+			 */
 			const wantToCreateRole = await this.roleService.findOneByIdString(partialEntity['roleId']);
+
+			/**
+			 * If current user has SUPER_ADMIN
+			 */
 			if (role.name === RolesEnum.SUPER_ADMIN) {
 				/**
-				 * Reject request, if SUPER ADMIN try to update itself permissions
+				 * Reject request, if SUPER ADMIN try to create permissions for SUPER ADMIN role.
 				 */
 				 if (wantToCreateRole.name === RolesEnum.SUPER_ADMIN) {
 					throw new NotAcceptableException(
-						'Cannot modify Permissions for Super Admin'
+						'Cannot modify Permissions for himself'
 					);
 				}
 				return await this.create(partialEntity);
 			} else if (role.name === RolesEnum.ADMIN) {
 				/**
-				 * Reject request, if ADMIN try to create SUPER ADMIN permissions
+				 * Reject request, if ADMIN try to create permissions for SUPER ADMIN role.
 				 */
 				if (wantToCreateRole.name === RolesEnum.SUPER_ADMIN) {
 					throw new NotAcceptableException(
@@ -134,7 +163,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				}
 
 				/**
-				 * Reject request, if ADMIN try to create themself permissions
+				 * Reject request, if ADMIN try to create permissions for ADMIN role.
 				 */
 				if (wantToCreateRole.name === RolesEnum.ADMIN) {
 					throw new NotAcceptableException(
@@ -167,7 +196,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			const wantToUpdateRole = await this.roleService.findOneByIdString(partialEntity['roleId']);
 			if (role.name === RolesEnum.SUPER_ADMIN) {
 				/**
-				 * Reject request, if SUPER ADMIN try to update itself permissions
+				 * Reject request, if SUPER ADMIN try to update permissions for SUPER ADMIN role.
 				 */
 				 if (wantToUpdateRole.name === RolesEnum.SUPER_ADMIN) {
 					throw new NotAcceptableException(
@@ -177,7 +206,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				return await this.update(id, partialEntity);
 			} else if (role.name === RolesEnum.ADMIN) {
 				/**
-				 * Reject request, if ADMIN try to update SUPER ADMIN permissions
+				 * Reject request, if ADMIN try to update permissions for SUPER ADMIN role.
 				 */
 				 if (wantToUpdateRole.name === RolesEnum.SUPER_ADMIN) {
 					throw new NotAcceptableException(
@@ -186,7 +215,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				}
 
 				/**
-				 * Reject request, if ADMIN try to update themself permissions
+				 * Reject request, if ADMIN try to create permissions for ADMIN role.
 				 */
 				if (wantToUpdateRole.name === RolesEnum.ADMIN) {
 					throw new NotAcceptableException(
