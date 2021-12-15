@@ -1,0 +1,124 @@
+{
+	"migrations": [
+		{
+			"version": "13.0.0-beta.1",
+			"description": "Add default base to nx.json if its not currently set",
+			"factory": "./src/migrations/update-13-0-0/set-default-base-if-not-set",
+			"cli": "nx",
+			"package": "@nrwl/workspace",
+			"name": "set-default-base-if-not-set"
+		},
+		{
+			"version": "13.0.0-beta.4",
+			"description": "Move global settings into nx.json, and project specific settings into workspace.json",
+			"cli": "nx",
+			"implementation": "./src/migrations/update-13-0-0/config-locations/config-locations",
+			"package": "@nrwl/workspace",
+			"name": "13-0-0-config-locations"
+		},
+		{
+			"version": "13.2.0",
+			"description": "Set --parallel=1 for existing repos to preserve the existing behavior",
+			"cli": "nx",
+			"implementation": "./src/migrations/update-13-2-0/set-parallel-default",
+			"package": "@nrwl/workspace",
+			"name": "set-parallel-default"
+		},
+		{
+			"version": "13.3.0-beta.0",
+			"description": "@nrwl/workspace:tsc is now @nrwl/js:tsc",
+			"cli": "nx",
+			"implementation": "./src/migrations/update-13-3-0/update-tsc-executor-location",
+			"package": "@nrwl/workspace",
+			"name": "13-3-0-tsc-location"
+		},
+		{
+			"cli": "nx",
+			"version": "13.0.0-beta.10",
+			"description": "Adds postcss packages needed for Tailwind support if ng-packagr is already installed.",
+			"factory": "./src/migrations/update-13-0-0/add-postcss-packages",
+			"package": "@nrwl/angular",
+			"name": "add-postcss-packages"
+		},
+		{
+			"cli": "nx",
+			"version": "13.2.0-beta.1",
+			"description": "Remove deprecated options from webpack-server and webpack-browser.",
+			"factory": "./src/migrations/update-13-2-0/update-angular-config",
+			"package": "@nrwl/angular",
+			"name": "update-angular-config"
+		},
+		{
+			"cli": "nx",
+			"version": "13.2.0-beta.1",
+			"description": "Remove enableIvy and add compilationMode to library tsconfig and remove deprecated ng-packagr options.",
+			"factory": "./src/migrations/update-13-2-0/update-libraries",
+			"package": "@nrwl/angular",
+			"name": "update-libraries"
+		},
+		{
+			"cli": "nx",
+			"version": "13.2.0-beta.1",
+			"description": "Update jest config to support jest-preset-angular",
+			"factory": "./src/migrations/update-13-2-0/update-angular-jest-config",
+			"package": "@nrwl/angular",
+			"name": "update-angular-jest-config"
+		},
+		{
+			"cli": "nx",
+			"version": "13.2.0-beta.1",
+			"description": "Move some imports from @nrwl/angular/testing to jasmine-marbles",
+			"factory": "./src/migrations/update-13-2-0/update-testing-imports",
+			"package": "@nrwl/angular",
+			"name": "update-testing-imports"
+		},
+		{
+			"cli": "nx",
+			"version": "13.2.0",
+			"description": "In Angular version 13, the `teardown` flag in `TestBed` will be enabled by default. This migration automatically opts out existing apps from the new teardown behavior.",
+			"factory": "./src/migrations/update-13-2-0/opt-out-testbed-teardown",
+			"package": "@nrwl/angular",
+			"name": "opt-out-testbed-teardown"
+		},
+		{
+			"cli": "nx",
+			"version": "13.3.0-beta.0",
+			"description": "In Angular version 13, the ESM became a first class citizen. This means the webpack config generated must be modified to support modules.",
+			"factory": "./src/migrations/update-13-3-0/update-mfe-webpack-config",
+			"package": "@nrwl/angular",
+			"name": "update-mfe-config-to-module-syntax"
+		},
+		{
+			"version": "13.1.2-beta.0",
+			"cli": "nx",
+			"description": "Support .test. file names in tsconfigs",
+			"factory": "./src/migrations/update-13-1-2/update-tsconfigs-for-tests",
+			"package": "@nrwl/jest",
+			"name": "update-ts-config-for-test-filenames"
+		},
+		{
+			"cli": "nx",
+			"version": "13.3.0-beta.0",
+			"description": "Update eslint-rules jest.config.js in order to support ESLint v8 exports mapping, remove category field",
+			"factory": "./src/migrations/update-13-3-0/eslint-8-updates",
+			"package": "@nrwl/linter",
+			"name": "eslint-8-updates"
+		},
+		{
+			"cli": "nx",
+			"version": "13.2.0-beta.0",
+			"description": "Update Nest.js libraries",
+			"factory": "./src/migrations/update-13-2-0/update-to-nest-8",
+			"package": "@nrwl/nest",
+			"name": "update-to-nest-8"
+		},
+		{
+			"cli": "nx",
+			"version": "13.0.0-beta.1",
+			"description": "Remove packages installed by Nx 12's `@nrwl/node:webpack5` generator.",
+			"factory": "./src/migrations/update-13-0-0/remove-webpack-5-packages-13-0-0",
+			"package": "@nrwl/node",
+			"name": "remove-webpack-5-packages"
+		}
+	]
+}

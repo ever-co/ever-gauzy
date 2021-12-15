@@ -8,7 +8,8 @@ describe('DailyGridComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [DailyGridComponent]
+			declarations: [DailyGridComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

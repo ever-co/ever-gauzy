@@ -8,7 +8,8 @@ describe('SyncDataSelectionComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [SyncDataSelectionComponent]
+			declarations: [SyncDataSelectionComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

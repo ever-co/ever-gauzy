@@ -8,7 +8,8 @@ describe('AmountsOwedGridComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [AmountsOwedGridComponent]
+			declarations: [AmountsOwedGridComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

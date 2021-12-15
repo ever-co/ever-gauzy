@@ -8,7 +8,8 @@ describe('IntegrationsListComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [IntegrationsListComponent]
+			declarations: [IntegrationsListComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

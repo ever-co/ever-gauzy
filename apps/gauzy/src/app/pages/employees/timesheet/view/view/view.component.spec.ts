@@ -8,7 +8,8 @@ describe('ViewComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [ViewComponent]
+			declarations: [ViewComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

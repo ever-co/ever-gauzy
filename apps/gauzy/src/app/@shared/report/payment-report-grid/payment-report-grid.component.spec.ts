@@ -8,7 +8,8 @@ describe('PaymentReportGridComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [PaymentReportGridComponent]
+			declarations: [PaymentReportGridComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

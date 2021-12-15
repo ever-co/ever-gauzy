@@ -8,7 +8,8 @@ describe('FiltersComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [FiltersComponent]
+			declarations: [FiltersComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

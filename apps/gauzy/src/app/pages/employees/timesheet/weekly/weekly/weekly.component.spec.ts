@@ -8,7 +8,8 @@ describe('WeeklyComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [WeeklyComponent]
+			declarations: [WeeklyComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

@@ -8,7 +8,8 @@ describe('ManualTimeComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ManualTimeComponent]
+			declarations: [ManualTimeComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

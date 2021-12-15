@@ -7,7 +7,8 @@ describe('ContactSelectorComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [ContactSelectorComponent]
+			declarations: [ContactSelectorComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

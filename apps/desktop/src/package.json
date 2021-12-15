@@ -107,7 +107,7 @@
 		"electron-store": "^8.0.0",
 		"electron-log": "^4.3.5",
 		"node-notifier": "^8.0.0",
-		"moment": "^2.29.0",
+		"moment": "^2.29.1",
 		"knex": "^0.21.6",
 		"consolidate": "^0.16.0",
 		"squirrelly": "^8.0.8",

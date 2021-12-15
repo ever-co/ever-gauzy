@@ -8,7 +8,8 @@ describe('ActivitiesReportGridComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ActivitiesReportGridComponent]
+			declarations: [ActivitiesReportGridComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

@@ -8,7 +8,8 @@ describe('ViewScreenshotsModalComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [ViewScreenshotsModalComponent]
+			declarations: [ViewScreenshotsModalComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

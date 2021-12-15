@@ -7,7 +7,8 @@ describe('AppUrlActivityComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [AppUrlActivityComponent]
+			declarations: [AppUrlActivityComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

@@ -8,7 +8,8 @@ describe('AvatarComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [AvatarComponent]
+			declarations: [AvatarComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

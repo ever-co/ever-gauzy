@@ -6,7 +6,8 @@ describe('AppComponent', () => {
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
 			declarations: [AppComponent],
-			imports: [HttpClientModule]
+			imports: [HttpClientModule],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 
