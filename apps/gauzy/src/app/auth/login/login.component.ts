@@ -1,10 +1,10 @@
 import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import { FormGroupDirective } from '@angular/forms';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { ElectronService } from 'ngx-electron';
 import { RolesEnum } from '@gauzy/contracts/';
 import { environment } from './../../../environments/environment';
-import { FormGroupDirective } from '@angular/forms';
 
 @Component({
 	selector: 'ngx-login',
@@ -15,9 +15,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	@ViewChild('form') private readonly form: FormGroupDirective;
 	
-	environment = environment;
 	isShown: boolean = false;
 	RolesEnum = RolesEnum;
+	isDemo: boolean = environment.DEMO;
 
 	constructor(
 		public readonly electronService: ElectronService,
@@ -34,7 +34,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	}
 
 	collapseDemo() {
-		if (this.environment.DEMO) {
+		if (this.isDemo) {
 			this.isShown = !this.isShown;
 		}
 	}
@@ -43,9 +43,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	 * Autofill Super Admin Credential By Default
 	 */
 	autoFillCredential() {
-		if (this.environment.DEMO) {
-			this.user.email = this.environment.DEMO_SUPER_ADMIN_EMAIL;
-			this.user.password = this.environment.DEMO_SUPER_ADMIN_PASSWORD;
+		if (this.isDemo) {
+			this.user.email = environment.DEMO_SUPER_ADMIN_EMAIL;
+			this.user.password = environment.DEMO_SUPER_ADMIN_PASSWORD;
 		}
 	}
 
@@ -55,18 +55,18 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	 * @param role 
 	 */
 	autoLogin(role: RolesEnum) {
-		if (this.environment.DEMO) {
+		if (this.isDemo) {
 			switch (role) {
 				case RolesEnum.SUPER_ADMIN:
 					this.autoFillCredential();
 					break;
 				case RolesEnum.ADMIN:
-					this.user.email = this.environment.DEMO_ADMIN_EMAIL;
-					this.user.password = this.environment.DEMO_ADMIN_PASSWORD;
+					this.user.email = environment.DEMO_ADMIN_EMAIL;
+					this.user.password = environment.DEMO_ADMIN_PASSWORD;
 					break;
 				case RolesEnum.EMPLOYEE:
-					this.user.email = this.environment.DEMO_EMPLOYEE_EMAIL;
-					this.user.password = this.environment.DEMO_EMPLOYEE_PASSWORD;
+					this.user.email = environment.DEMO_EMPLOYEE_EMAIL;
+					this.user.password = environment.DEMO_EMPLOYEE_PASSWORD;
 					break;
 				default:
 					break;

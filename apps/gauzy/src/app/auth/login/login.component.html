@@ -130,7 +130,7 @@
 	</button>
 </form>
 
-<ng-container *ngIf="!electronService.isElectronApp && environment.DEMO && !isShown">
+<ng-container *ngIf="!electronService.isElectronApp && isDemo && !isShown">
 	<div class="demo-credentials-btn">
 		<button (click)="collapseDemo()">
 			<span>{{ 'BUTTONS.DEMO_CREDENTIALS' | translate }}</span>
@@ -143,7 +143,7 @@
 	</div>
 </ng-container>
 
-<ng-container *ngIf="!electronService.isElectronApp && environment.DEMO && isShown">
+<ng-container *ngIf="!electronService.isElectronApp && isDemo && isShown">
 	<div class="demo-credentials-card">
 		<nb-card>
 			<nb-card-body>
