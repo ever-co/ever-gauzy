@@ -1,17 +1,20 @@
-.demo-credentials-card {
-  position: absolute;
-  top: 150px;
-  right: 75px;
-}
 ::ng-deep nb-auth-block {
-  max-width: 35rem;
+	max-width: 35rem;
 }
-.demo-credentials-btn {
-  position: absolute;
-  top: 75px;
-  right: 75px;
-}
-.close-demo-credentials-card {
-  position: absolute;
-  right: 0px;
+.login-container {
+	position: relative;
+	.demo-credentials-btn {
+		position: absolute;
+		top: 10px;
+		right: 0px;
+	}
+	.demo-credentials-card {
+		position: absolute;
+		top: 135px;
+		left: -80%;
+	}
+	.demo-credentials-close-icon {
+		position: absolute;
+		right: 0px;
+	}
 }
