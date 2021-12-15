@@ -36,9 +36,11 @@ export type Env = Readonly<{
 	// Default Super Admin Credentials
 	DEMO_SUPER_ADMIN_EMAIL?: string;
 	DEMO_SUPER_ADMIN_PASSWORD?: string;
+
 	// Default Admin Credentials
 	DEMO_ADMIN_EMAIL?: string;
 	DEMO_ADMIN_PASSWORD?: string;
+
 	// Default Employee Credentials
 	DEMO_EMPLOYEE_EMAIL?: string;
 	DEMO_EMPLOYEE_PASSWORD?: string;
@@ -79,14 +81,14 @@ export const env: Env = cleanEnv(
 
 		DEMO: bool({ default: false }),
 
-		DEMO_SUPER_ADMIN_EMAIL: str({ default: '' }),
-		DEMO_SUPER_ADMIN_PASSWORD: str({ default: '' }),
+		DEMO_SUPER_ADMIN_EMAIL: str({ default: 'admin@ever.co' }),
+		DEMO_SUPER_ADMIN_PASSWORD: str({ default: 'admin' }),
 
-		DEMO_ADMIN_EMAIL: str({ default: '' }),
-		DEMO_ADMIN_PASSWORD: str({ default: '' }),
+		DEMO_ADMIN_EMAIL: str({ default: 'local.admin@ever.co' }),
+		DEMO_ADMIN_PASSWORD: str({ default: 'admin' }),
 
-		DEMO_EMPLOYEE_EMAIL: str({ default: '' }),
-		DEMO_EMPLOYEE_PASSWORD: str({ default: '' }),
+		DEMO_EMPLOYEE_EMAIL: str({ default: 'employee@ever.co' }),
+		DEMO_EMPLOYEE_PASSWORD: str({ default: '123456' }),
 
 		CHATWOOT_SDK_TOKEN: str({ default: '' }),
 		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' }),
