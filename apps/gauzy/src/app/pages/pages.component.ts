@@ -47,7 +47,7 @@ interface GaMenuItem extends NbMenuItem {
 	`
 })
 export class PagesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	
+
 	isEmployee: boolean;
 	organization: IOrganization;
 	user: IUser;
@@ -1098,8 +1098,8 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		if (item.data.permissionKeys || item.data.hide) {
 			const anyPermission = item.data.permissionKeys
 				? item.data.permissionKeys.reduce((permission, key) => {
-						return this.store.hasPermission(key) || permission;
-				  }, false)
+					return this.store.hasPermission(key) || permission;
+				}, false)
 				: true;
 
 			item.hidden = !anyPermission || (item.data.hide && item.data.hide());
@@ -1147,5 +1147,5 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
