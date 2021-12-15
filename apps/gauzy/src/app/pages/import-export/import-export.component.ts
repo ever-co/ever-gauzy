@@ -147,7 +147,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 									}, this.token)
 								);
 							}
-							await firstValueFrom(observableOf(tenant));
+							return await firstValueFrom(observableOf(tenant));
 						}
 						return await firstValueFrom(observableOf(EMPTY));
 					}),
@@ -188,10 +188,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 
 	async getOrganizations() {
 		const { id: userId, tenantId } = this.user;
-		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], {
-			userId,
-			tenantId
-		});
+		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], { userId, tenantId });
 		this.userOrganizations = items;
 	}
 
