@@ -25,7 +25,9 @@
 		"electron-installer-dmg": "~3.0.0",
 		"electron-packager": "~15.2.0",
 		"electron-rebuild": "~2.3.5 ",
-		"electron-reload": "~1.5.0"
+		"electron-reload": "~1.5.0",
+		"node-polyfill-webpack-plugin": "^1.1.4",
+		"terser-webpack-plugin": "^5.2.5"
 	},
 	"dependencies": {
 		"@angular/cdk": "^12.2.8",
@@ -54,6 +56,7 @@
 		"ngx-electron": "^2.2.0",
 		"node-fetch": "^2.6.1",
 		"node-notifier": "^8.0.0",
+		"rxjs": "^7.4.0",
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
 		"screenshot-desktop": "^1.12.2",

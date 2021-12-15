@@ -25,7 +25,9 @@
 		"electron-installer-dmg": "~3.0.0",
 		"electron-packager": "~15.2.0",
 		"electron-rebuild": "~2.3.5 ",
-		"electron-reload": "~1.5.0"
+		"electron-reload": "~1.5.0",
+		"node-polyfill-webpack-plugin": "^1.1.4",
+		"terser-webpack-plugin": "^5.2.5"
 	},
 	"optionalDependencies": {
 		"node-mac": "^1.0.1",
@@ -55,6 +57,7 @@
 		"moment": "^2.29.1",
 		"ngx-electron": "^2.2.0",
 		"node-static": "^0.7.11",
+		"rxjs": "^7.4.0",
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
 		"squirrelly": "^8.0.8",

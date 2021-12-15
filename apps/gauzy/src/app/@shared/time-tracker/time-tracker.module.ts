@@ -15,7 +15,7 @@ import { SharedModule } from '../shared.module';
 import { RouterModule } from '@angular/router';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';
 import { ProjectSelectModule } from '../project-select/project-select.module';
-import { AngularDraggableModule } from 'angular2-draggable';
+import { NgxDraggableDomModule } from 'ngx-draggable-dom';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ContactSelectorModule } from '../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../tasks/task-select/task-select.module';
@@ -36,7 +36,7 @@ import { TaskSelectModule } from '../tasks/task-select/task-select.module';
 		TimerPickerModule,
 		TaskSelectModule,
 		ProjectSelectModule,
-		AngularDraggableModule,
+		NgxDraggableDomModule,
 		NgxPermissionsModule,
 		ContactSelectorModule
 	],
