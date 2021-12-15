@@ -15,6 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxLoginComponent } from './login/login.component';
+import { TranslateModule } from '../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +29,8 @@ import { NgxLoginComponent } from './login/login.component';
 		NgxAuthRoutingModule,
 		NbAuthModule,
 		NbIconModule,
-		NbCardModule
+		NbCardModule,
+		TranslateModule
 	],
 	declarations: [NgxRegisterComponent, NgxLoginComponent]
 })

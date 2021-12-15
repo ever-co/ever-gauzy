@@ -8,7 +8,8 @@ describe('SmartTableToggleComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [SmartTableToggleComponent]
+			declarations: [SmartTableToggleComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

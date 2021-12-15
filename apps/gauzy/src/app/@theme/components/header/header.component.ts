@@ -75,6 +75,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	hasPermissionTimeTracker = false;
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
+	isDemo: boolean = environment.DEMO;
 
 	@Input() position = 'normal';
 	user: IUser;

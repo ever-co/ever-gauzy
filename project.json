@@ -1,0 +1,41 @@
+{
+	"projects": {
+		"gauzy-e2e": {
+			"tags": [],
+			"implicitDependencies": ["gauzy"]
+		},
+		"gauzy": {
+			"tags": []
+		},
+		"api": {
+			"tags": []
+		},
+		"desktop": {
+			"tags": []
+		},
+		"desktop-api": {
+			"tags": []
+		},
+		"desktop-ui": {
+			"tags": []
+		},
+		"api-desktop": {
+			"tags": []
+		},
+		"desktop-ui-lib": {
+			"tags": []
+		},
+		"desktop-timer": {
+			"tags": []
+		},
+		"gauzy-server": {
+			"tags": []
+		},
+		"gauzy-server-ui": {
+			"tags": []
+		},
+		"gauzy-server-api": {
+			"tags": []
+		}
+	}
+}

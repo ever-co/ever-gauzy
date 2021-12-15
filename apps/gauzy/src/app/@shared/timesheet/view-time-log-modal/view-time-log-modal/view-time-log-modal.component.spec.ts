@@ -8,7 +8,8 @@ describe('ViewTimeLogModalComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [ViewTimeLogModalComponent]
+			declarations: [ViewTimeLogModalComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

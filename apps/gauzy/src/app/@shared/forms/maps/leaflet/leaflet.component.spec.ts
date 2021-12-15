@@ -8,7 +8,8 @@ describe('LeafletMapComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [LeafletMapComponent]
+			declarations: [LeafletMapComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

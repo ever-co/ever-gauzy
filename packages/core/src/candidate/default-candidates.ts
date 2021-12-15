@@ -16,7 +16,7 @@ export const DEFAULT_CANDIDATES = [
 		password: '123456',
 		firstName: 'Jaye',
 		lastName: 'Jeffreys',
-		imageUrl: 'assets/images/avatars/alexander.jpg',
+		imageUrl: 'assets/images/avatars/avatar-default.jpg',
 		candidateLevel: 'B',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
@@ -26,7 +26,7 @@ export const DEFAULT_CANDIDATES = [
 		password: '123456',
 		firstName: 'Kasey',
 		lastName: 'Kraker',
-		imageUrl: 'assets/images/avatars/rachit.png',
+		imageUrl: 'assets/images/avatars/avatar-default.jpg',
 		candidateLevel: null,
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
@@ -36,7 +36,7 @@ export const DEFAULT_CANDIDATES = [
 		password: '123456',
 		firstName: 'Norris ',
 		lastName: 'Nesbit',
-		imageUrl: 'assets/images/avatars/blagovest.jpg',
+		imageUrl: 'assets/images/avatars/avatar-default.jpg',
 		candidateLevel: 'A',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
@@ -46,7 +46,7 @@ export const DEFAULT_CANDIDATES = [
 		password: '123456',
 		firstName: 'Estella',
 		lastName: 'Ennis',
-		imageUrl: 'assets/images/avatars/dimana.jpeg',
+		imageUrl: 'assets/images/avatars/avatar-default.jpg',
 		candidateLevel: null,
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
@@ -56,7 +56,7 @@ export const DEFAULT_CANDIDATES = [
 		password: '123456',
 		firstName: 'Greg ',
 		lastName: 'Grise',
-		imageUrl: 'assets/images/avatars/hristo.jpg',
+		imageUrl: 'assets/images/avatars/avatar-default.jpg',
 		candidateLevel: 'A',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE

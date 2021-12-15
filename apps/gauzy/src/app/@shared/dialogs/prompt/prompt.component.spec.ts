@@ -8,7 +8,8 @@ describe('PromptComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [PromptComponent]
+			declarations: [PromptComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

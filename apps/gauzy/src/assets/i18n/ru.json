@@ -5,6 +5,7 @@
 		"ADD": "Добавить",
 		"CREATE": "Создать",
 		"REGISTER": "Регистрация",
+		"LOGIN": "Войти",
 		"ADD_NOTE": "Добавить заметку",
 		"EDIT": "Редактировать",
 		"MANAGE": "Управление",
@@ -103,7 +104,11 @@
 		"GENERATE": "Сгенерировать",
 		"SEND_RECEIPT": "Отправить квитанцию",
 		"ADD_COMMENT": "Добавить комментарий",
-		"CONTINUE": "Продолжить"
+		"CONTINUE": "Продолжить",
+		"SUPER_ADMIN_DEMO": "Демонстрация Супер Администратора",
+		"ADMIN_DEMO": "Демонстрация администратора",
+		"EMPLOYEE_DEMO": "Демонстрация сотрудника",
+		"DEMO_CREDENTIALS": "Демо-учетные данные"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -1730,7 +1735,6 @@
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
 			"TIMESHEET_EDIT_TIME": "Изменить время в расписании",
-			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"INVOICES_VIEW": "Просмотр счетов",
 			"INVOICES_EDIT": "Редактировать Счета Добавить",
 			"ESTIMATES_VIEW": "Просмотр оценок",
@@ -1786,7 +1790,6 @@
 			"IMPORT_EXPORT_VIEW": "Просмотр импорта/экспорта",
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
-			"MIGRATE_GAUZY_CLOUD": "Миграция в облако Gauzy",
 			"ACCESS_DELETE_ACCOUNT": "Доступ к удалению аккаунта",
 			"ACCESS_DELETE_ALL_DATA": "Доступ к удалению всех данных"
 		},
@@ -3682,6 +3685,31 @@
 			"invoice": "Счет",
 			"estimate": "Оценить",
 			"receipt": "Квитанция"
+		}
+	},
+	"LOGIN_PAGE": {
+		"TITLE": "Логин",
+		"SUB_TITLE": "Привет! Войдите с помощью электронной почты.",
+		"REMEMBER_ME_TITLE": "Запомнить меня",
+		"DO_NOT_HAVE_ACCOUNT_TITLE": "У вас нет учетной записи?",
+		"FORGOT_PASSWORD_TITLE": "Забыли пароль?",
+		"LABELS": {
+			"EMAIL": "Email адрес:",
+			"PASSWORD": "Пароль:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "Email адрес",
+			"PASSWORD": "Пароль"
+		},
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!",
+			"PASSWORD_REQUIRED": "Требуется пароль!",
+			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов!"
+		},
+		"DEMO": {
+			"TITLE": "Автоматически входить в демо-аккаунты",
+			"SUB_TITLE": "Пожалуйста, выберите тип счета ниже."
 		}
 	}
 }

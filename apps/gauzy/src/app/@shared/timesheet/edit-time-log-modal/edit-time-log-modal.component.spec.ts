@@ -8,7 +8,8 @@ describe('EditTimeLogModalComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [EditTimeLogModalComponent]
+			declarations: [EditTimeLogModalComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

@@ -7,7 +7,6 @@
 
 Ever® Gauzy™ - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
 
-Ever® Gauzy™ Platform is an: 
 - **Enterprise Resource Planning** (ERP) software
 - **Customer Relationship Management** (CRM) software
 - **Human Resource Management** (HRM) software with employee **Time and Activity Tracking** functionality

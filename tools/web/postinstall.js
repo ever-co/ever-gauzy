@@ -1,6 +1,7 @@
 // from https://github.com/maximegris Maxime GRIS
 // allow angular using electron module (native node modules)
 
+/*
 const fs = require('fs');
 const f_angular =
 	'apps/gauzy/node_modules/@angular-devkit/build-angular/src/webpack/configs/browser.js';
@@ -18,3 +19,4 @@ fs.readFile(f_angular, 'utf8', function (err, data) {
 		if (error) return console.log(error);
 	});
 });
+*/

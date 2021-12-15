@@ -263,11 +263,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	setTimeType(type: string) {
 		this.timeTrackerService.setTimeLogType(type);
-	}
-
-	onMoveEnd(event) {
-		this.position = event;
-	}
+	}	
 
 	ngOnDestroy() { }
 }

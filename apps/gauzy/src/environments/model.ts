@@ -44,6 +44,15 @@ export interface Environment {
 	IS_INTEGRATED_DESKTOP: boolean;
 
 	DEMO: boolean;
+	
+	DEMO_SUPER_ADMIN_EMAIL?: string;
+	DEMO_SUPER_ADMIN_PASSWORD?: string;
+
+	DEMO_ADMIN_EMAIL?: string;
+	DEMO_ADMIN_PASSWORD?: string;
+
+	DEMO_EMPLOYEE_EMAIL?: string;
+	DEMO_EMPLOYEE_PASSWORD?: string;
 
 	CHATWOOT_SDK_TOKEN: string;
 	CHAT_MESSAGE_GOOGLE_MAP: string;

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { Router, UrlSerializer } from '@angular/router';
 import { catchError, concatMap, delay, filter, finalize, switchMap, tap } from 'rxjs/operators';
-import { EMPTY, of as observableOf } from 'rxjs';
+import { EMPTY, firstValueFrom, of as observableOf } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { 
@@ -19,10 +19,9 @@ import {
 	ImportTypeEnum, 
 	IUserOrganization
 } from '@gauzy/contracts';
-import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
 import { Environment } from './../../../environments/model';
-import { ErrorHandlingService, GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
+import { ErrorHandlingService, ExportAllService, GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -138,17 +137,19 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 					concatMap(async (tenant: ITenant) => {
 						if (tenant) {
 							for await (const { id: userOrganizationSourceId, organization } of this.userOrganizations) {
-								await this.gauzyCloudService.migrateOrganization({ 
-									...this.mapOrganization(
-										organization, 
-										tenant,
-										userOrganizationSourceId
-									) 
-								}, this.token).toPromise();
+								await firstValueFrom(
+									this.gauzyCloudService.migrateOrganization({ 
+										...this.mapOrganization(
+											organization, 
+											tenant,
+											userOrganizationSourceId
+										) 
+									}, this.token)
+								);
 							}
-							return await observableOf(tenant).toPromise();
+							return await firstValueFrom(observableOf(tenant));
 						}
-						return await observableOf(EMPTY).toPromise();						
+						return await firstValueFrom(observableOf(EMPTY));
 					}),
 					tap({
 						next: (x) => {
@@ -187,7 +188,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 
 	async getOrganizations() {
 		const { id: userId, tenantId } = this.user;
-		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], {  userId,  tenantId  });
+		const { items = [] } = await this.userOrganizationService.getAll([ 'organization' ], { userId, tenantId });
 		this.userOrganizations = items;
 	}
 

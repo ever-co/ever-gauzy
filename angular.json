@@ -89,7 +89,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "10mb",
+                  "maximumWarning": "15mb",
                   "maximumError": "40mb"
                 },
                 {
@@ -98,6 +98,26 @@
                   "maximumError": "1mb"
                 }
               ]
+            },
+            "local": {
+				"optimization": false,
+				"buildOptimizer": false,
+				"vendorChunk": true,
+				"extractLicenses": false,
+				"sourceMap": true,
+				"namedChunks": true,
+				"budgets": [
+					{
+						"type": "initial",
+						"maximumWarning": "15mb",
+						"maximumError": "40mb"
+					},
+					{
+						"type": "anyComponentStyle",
+						"maximumWarning": "1000kb",
+						"maximumError": "15mb"
+					}
+				]
             }
           }
         },
@@ -111,25 +131,18 @@
             "production": {
               "browserTarget": "gauzy:build:production",
               "proxyConfig": "apps/gauzy/proxy.prod.conf.json"
+            },
+            "local": {
+              "browserTarget": "gauzy:build:local",
+              "proxyConfig": "apps/gauzy/proxy.conf.json"
             }
-          }
+          },
+          "defaultConfiguration": "local"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
             "browserTarget": "gauzy:build"
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "apps/gauzy/tsconfig.app.json",
-              "apps/gauzy/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
           }
         },
         "test": {
@@ -214,18 +227,6 @@
             "buildTarget": "api:build",
             "inspect": true,
             "port": 9229
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "apps/api/tsconfig.app.json",
-              "apps/api/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
           }
         },
         "test": {
@@ -322,31 +323,31 @@
           "style": "scss"
         }
       },
-      "root": "apps/gauzy",
-      "sourceRoot": "apps/gauzy/src",
+      "root": "apps/desktop",
+      "sourceRoot": "apps/desktop/src",
       "prefix": "gauzy",
       "architect": {
         "build": {
           "builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
           "options": {
             "customWebpackConfig": {
-              "path": "apps/gauzy/config/custom-webpack.config.js"
+              "path": "apps/desktop/config/custom-webpack.config.js"
             },
             "outputPath": "dist/apps/desktop",
-            "index": "apps/gauzy/src/index.html",
-            "main": "apps/gauzy/src/main.ts",
-            "polyfills": "apps/gauzy/src/polyfills.ts",
-            "tsConfig": "apps/gauzy/tsconfig.app.json",
+            "index": "apps/desktop/src/index.html",
+            "main": "apps/desktop/src/main.ts",
+            "polyfills": "apps/desktop/src/polyfills.ts",
+            "tsConfig": "apps/desktop/tsconfig.app.json",
             "stylePreprocessorOptions": {
               "includePaths": [
                 "apps/gauzy/src/app/@theme/styles"
               ]
             },
             "assets": [
-              "apps/gauzy/src/favicon.ico",
-              "apps/gauzy/src/assets",
-              "apps/gauzy/src/manifest.json",
-              "apps/gauzy/src/silent-refresh.html",
+              "apps/desktop/src/favicon.ico",
+              "apps/desktop/src/assets",
+              "apps/desktop/src/manifest.json",
+              "apps/desktop/src/silent-refresh.html",
               {
                 "glob": "**/*",
                 "input": "apps/desktop/src/",
@@ -378,6 +379,10 @@
             "production": {
               "fileReplacements": [
                 {
+                  "replace": "apps/desktop/src/environments/environment.ts",
+                  "with": "apps/desktop/src/environments/environment.prod.ts"
+                },
+                {
                   "replace": "apps/gauzy/src/environments/environment.ts",
                   "with": "apps/gauzy/src/environments/environment.prod.ts"
                 }
@@ -387,7 +392,7 @@
               "serviceWorker": true,
               "sourceMap": false,
               "namedChunks": false,
-              "ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
+              "ngswConfigPath": "apps/desktop/ngsw-config.prod.json",
               "aot": true,
               "extractLicenses": false,
               "vendorChunk": false,
@@ -395,7 +400,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "10mb",
+                  "maximumWarning": "15mb",
                   "maximumError": "40mb"
                 }
               ]
@@ -470,7 +475,7 @@
           "builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
           "options": {
             "customWebpackConfig": {
-              "path": "apps/gauzy/config/custom-webpack.config.js"
+              "path": "apps/desktop/config/custom-webpack.config.js"
             },
             "outputPath": "dist/apps/desktop/ui",
             "index": "apps/desktop/src/index.html",
@@ -515,7 +520,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "10mb",
+                  "maximumWarning": "15mb",
                   "maximumError": "40mb"
                 },
                 {
@@ -542,19 +547,6 @@
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
             "browserTarget": "desktop-ui:build"
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "apps/desktop/tsconfig.app.json",
-              "apps/desktop/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/desktop/**"
-            ]
           }
         },
         "test": {
@@ -608,19 +600,6 @@
             "buildTarget": "api-desktop:build"
           }
         },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "packages/desktop-api/tsconfig.app.json",
-              "packages/desktop-api/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!packages/desktop-api/**"
-            ]
-          }
-        },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
@@ -642,19 +621,6 @@
           "options": {
             "tsConfig": "packages/desktop-ui-lib/tsconfig.lib.json",
             "project": "packages/desktop-ui-lib/ng-package.json"
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "libs/desktop-ui-lib/tsconfig.lib.json",
-              "libs/desktop-ui-lib/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!libs/desktop-ui-lib/**/*"
-            ]
           }
         },
         "test": {
@@ -686,7 +652,7 @@
           "builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
           "options": {
             "customWebpackConfig": {
-              "path": "apps/gauzy/config/custom-webpack.config.js"
+              "path": "apps/desktop-timer/config/custom-webpack.config.js"
             },
             "outputPath": "dist/apps/desktop-timer",
             "index": "apps/desktop-timer/src/index.html",
@@ -743,7 +709,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "10mb",
+                  "maximumWarning": "15mb",
                   "maximumError": "40mb"
                 },
                 {
@@ -808,7 +774,7 @@
           "builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
           "options": {
             "customWebpackConfig": {
-              "path": "apps/gauzy/config/custom-webpack.config.js"
+              "path": "apps/server/config/custom-webpack.config.js"
             },
             "outputPath": "dist/apps/gauzy-server",
             "index": "apps/server/src/index.html",
@@ -865,7 +831,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "10mb",
+                  "maximumWarning": "15mb",
                   "maximumError": "40mb"
                 },
                 {
@@ -930,7 +896,7 @@
           "builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
           "options": {
             "customWebpackConfig": {
-              "path": "apps/gauzy/config/custom-webpack.config.js"
+              "path": "apps/server/config/custom-webpack.config.js"
             },
             "outputPath": "dist/apps/gauzy-server/data/ui",
             "index": "apps/gauzy/src/index.html",
@@ -987,7 +953,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "10mb",
+                  "maximumWarning": "15mb",
                   "maximumError": "40mb"
                 }
               ]

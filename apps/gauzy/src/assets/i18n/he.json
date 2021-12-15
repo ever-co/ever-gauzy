@@ -5,6 +5,7 @@
 		"ADD": "הוסף",
 		"CREATE": "צור",
 		"REGISTER": "Register",
+		"LOGIN": "Log In",
 		"ADD_NOTE": "Add note",
 		"EDIT": "ערוך",
 		"MANAGE": "Управление",
@@ -103,7 +104,11 @@
 		"GENERATE": "Generate",
 		"SEND_RECEIPT": "Send Receipt",
 		"ADD_COMMENT": "Add Comment",
-		"CONTINUE": "Continue"
+		"CONTINUE": "Continue",
+		"SUPER_ADMIN_DEMO": "Super Admin Demo",
+		"ADMIN_DEMO": "Admin Demo",
+		"EMPLOYEE_DEMO": "Employee Demo",
+		"DEMO_CREDENTIALS": "Demo Credentials"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -1730,7 +1735,6 @@
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
-			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
 			"INVOICES_EDIT": "Edit Invoices Add",
 			"ESTIMATES_VIEW": "View Estimates",
@@ -1786,7 +1790,6 @@
 			"IMPORT_EXPORT_VIEW": "View Import/Export",
 			"ORG_JOB_EMPLOYEE_VIEW": "View Job Employees",
 			"ORG_JOB_MATCHING_VIEW": "View Job Matching",
-			"MIGRATE_GAUZY_CLOUD": "Migrate Into Gauzy Cloud",
 			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
 			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
 		},
@@ -3682,6 +3685,31 @@
 			"invoice": "Invoice",
 			"estimate": "Estimate",
 			"receipt": "Receipt"
+		}
+	},
+	"LOGIN_PAGE": {
+		"TITLE": "Login",
+		"SUB_TITLE": "Hello! Log in with your email.",
+		"REMEMBER_ME_TITLE": "Remember me",
+		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
+		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
+		"LABELS": {
+			"EMAIL": "Email address:",
+			"PASSWORD": "Password:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "Email address",
+			"PASSWORD": "סיסמה"
+		},
+		"VALIDATION": {
+			"EMAIL_REQUIRED": "Email is required!",
+			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
+			"PASSWORD_REQUIRED": "Password is required!",
+			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!"
+		},
+		"DEMO": {
+			"TITLE": "Login Automatically into Demo accounts",
+			"SUB_TITLE": "Please select account type below."
 		}
 	}
 }

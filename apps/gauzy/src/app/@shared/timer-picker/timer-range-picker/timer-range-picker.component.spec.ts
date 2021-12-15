@@ -8,7 +8,8 @@ describe('TimerRangePickerComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [TimerRangePickerComponent]
+			declarations: [TimerRangePickerComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

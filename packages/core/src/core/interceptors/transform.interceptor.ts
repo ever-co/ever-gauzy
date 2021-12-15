@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { Observable, of as observableOf } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { classToPlain } from 'class-transformer';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
@@ -20,7 +20,7 @@ export class TransformInterceptor implements NestInterceptor {
 		return next
 			.handle()
 			.pipe(
-				map((data) => classToPlain(data)),
+				map((data) => instanceToPlain(data)),
 				catchError((error: any) => {
 					if (error instanceof BadRequestException) {
 						return observableOf(

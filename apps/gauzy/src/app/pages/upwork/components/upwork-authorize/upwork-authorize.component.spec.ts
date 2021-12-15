@@ -8,7 +8,8 @@ describe('UpworkAuthorizeComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [UpworkAuthorizeComponent]
+			declarations: [UpworkAuthorizeComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 

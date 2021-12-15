@@ -8,7 +8,8 @@ describe('ProposalTemplateComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ProposalTemplateComponent]
+			declarations: [ProposalTemplateComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 

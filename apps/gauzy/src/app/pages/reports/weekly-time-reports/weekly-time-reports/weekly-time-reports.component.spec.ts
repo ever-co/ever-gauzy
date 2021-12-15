@@ -8,7 +8,8 @@ describe('WeeklyTimeReportsComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [WeeklyTimeReportsComponent]
+			declarations: [WeeklyTimeReportsComponent],
+			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 
