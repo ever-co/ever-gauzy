@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-    node: circleci/node@4.7.0
+    node: circleci/node@4.9.0
     pulumi: pulumi/pulumi@2.0.0
 
 aliases:
@@ -10,8 +10,8 @@ aliases:
       command: |
           echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
           echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
-          nvm install v14
-          nvm alias default v14
+          nvm install v16
+          nvm alias default v16
           echo 'export NODE_OPTIONS=--max_old_space_size=7000' >> $BASH_ENV
           echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
           source $BASH_ENV
@@ -55,7 +55,7 @@ jobs:
     sonarqube:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202010-01
+            image: ubuntu-2004:202111-01
         working_directory: /tmp/workspace/sonarqube-root
         description: Check Code Quality with SonarQube
         steps:
@@ -97,7 +97,7 @@ jobs:
     build-monorepo-root:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202010-01
+            image: ubuntu-2004:202111-01
         working_directory: /tmp/workspace/monorepo-root
         steps:
             - checkout
@@ -124,7 +124,7 @@ jobs:
     build-desktop:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202010-01
+            image: ubuntu-2004:202111-01
         working_directory: /tmp/workspace/desktop
         steps:
             - checkout
@@ -155,7 +155,7 @@ jobs:
     build-api:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202010-01
+            image: ubuntu-2004:202111-01
         working_directory: /tmp/workspace/api
         steps:
             - checkout
@@ -190,7 +190,7 @@ jobs:
     build-web:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202010-01
+            image: ubuntu-2004:202111-01
         working_directory: /tmp/workspace/web
         steps:
             - checkout
@@ -226,7 +226,7 @@ jobs:
     test-e2e:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202010-01
+            image: ubuntu-2004:202111-01
         working_directory: /tmp/workspace/test-e2e
         steps:
             - checkout
@@ -272,7 +272,7 @@ jobs:
     pulumi_deploy:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202010-01
+            image: ubuntu-2004:202111-01
 
         working_directory: /tmp/workspace/pulumi
         steps:
