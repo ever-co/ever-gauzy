@@ -215,6 +215,7 @@
 	},
 	"dependencies": {
 		"@angular/animations": "^13.1.0",
+		"@angular/cdk": "^13.1.0",
 		"@angular/common": "^13.1.0",
 		"@angular/compiler": "^13.1.0",
 		"@angular/core": "^13.1.0",
@@ -225,7 +226,8 @@
 		"@angular/router": "^13.1.0",
 		"@angular/service-worker": "^13.1.0",
 		"rxjs": "^7.4.0",
-		"unleash": "^2.0.2"
+		"unleash": "^2.0.2",
+		"ng2-smart-table": "^1.7.2"
 	},
 	"devDependencies": {
 		"@angular-devkit/architect": "^0.1301.0",
