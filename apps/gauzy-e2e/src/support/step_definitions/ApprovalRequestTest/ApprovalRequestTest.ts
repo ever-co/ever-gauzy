@@ -219,6 +219,10 @@ Then('User can search approval by name', () => {
 	approvalRequestPage.searchApprovalRequest(dafaultName, ApprovalRequestPageData.searchResult);
 });
 
+And('Verify table load', () => {
+	approvalRequestPage.waitTableLoad(ApprovalRequestPageData.searchResult);
+});
+
 When('User can see approval button', () => {
 	approvalRequestPage.verifyApprovalRefuseButton(ApprovalRequestPageData.approvalBtn, ApprovalRequestPageData.approvalRefuseBtnIndex);
 });

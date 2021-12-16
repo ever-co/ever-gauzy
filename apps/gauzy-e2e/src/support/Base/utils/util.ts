@@ -174,7 +174,7 @@ export const verifyByText = (loc, text: string) => {
 };
 
 export const clickByText = (loc, text: string) => {
-	cy.get(loc, { timeout: taskTimeout }).contains(text).click();
+	cy.get(loc, { timeout: taskTimeout }).contains(text).click({force: true});
 };
 
 export const clickButtonMultipleTimes = (loc, n) => {

@@ -24,5 +24,6 @@ export const ApprovalRequestPage = {
 	approvalRefuseButtonCss: 'table > tbody > tr.ng2-smart-row > td.ng-star-inserted',
 	approvalStatusCss: 'table > tbody > tr.ng2-smart-row',
 	searchByNameInputCss: 'input[placeholder="Name"]',
-	rowCss: 'table > tbody > tr.ng2-smart-row'
+	rowCss: 'table > tbody > tr.ng2-smart-row',
+	tableBodyCss: 'table > tbody',
 };
