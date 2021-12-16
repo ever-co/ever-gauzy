@@ -6,7 +6,7 @@ export const DEFAULT_SUPER_ADMINS = [
 		password: 'admin',
 		firstName: 'Super',
 		lastName: 'Admin',
-		imageUrl: 'assets/images/avatar-default.svg',
+		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	}
@@ -18,7 +18,7 @@ export const DEFAULT_ADMINS = [
 		password: 'admin',
 		firstName: 'Local',
 		lastName: 'Admin',
-		imageUrl: 'assets/images/avatar-default.svg',
+		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	}

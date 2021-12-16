@@ -6,7 +6,6 @@ import * as rimraf from 'rimraf';
 import { ConfigService, environment as env } from '@gauzy/config';
 import {
 	IFeature,
-	IFeatureCreateInput,
 	IFeatureOrganization,
 	ITenant
 } from '@gauzy/contracts';
@@ -22,26 +21,27 @@ export const createDefaultFeatureToggle = async (
 ) => {
 	await cleanFeature(connection, config);
 
-	DEFAULT_FEATURES.forEach(async (item: IFeatureCreateInput) => {
-		const feature: IFeature = createFeature(item, tenant, config);
+	for await (const item of DEFAULT_FEATURES) {
+		const feature: IFeature = await createFeature(item, tenant, config);
 		const parent = await connection.manager.save(feature);
-
+		
 		const { children = [] } = item;
 		if (children.length > 0) {
 			const featureChildren: IFeature[] = [];
-			children.forEach((child: IFeature) => {
-				const childFeature: IFeature = createFeature(
+
+			for await (const child of children) {
+				const childFeature: IFeature = await createFeature(
 					child,
 					tenant,
 					config
 				);
 				childFeature.parent = parent;
 				featureChildren.push(childFeature);
-			});
+			}
 
 			await connection.manager.save(featureChildren);
 		}
-	});
+	}
 	return await connection.getRepository(Feature).find();
 };
 
@@ -50,10 +50,10 @@ export const createRandomFeatureToggle = async (
 	tenants: ITenant[]
 ) => {
 	const features: IFeature[] = await connection.getRepository(Feature).find();
-
 	const featureOrganizations: IFeatureOrganization[] = [];
-	features.forEach(async (feature: IFeature) => {
-		tenants.forEach((tenant: ITenant) => {
+
+	for await (const feature of features) {
+		for await (const tenant of tenants) {
 			const { isEnabled } = feature;
 			const featureOrganization: IFeatureOrganization = new FeatureOrganization(
 				{
@@ -63,14 +63,18 @@ export const createRandomFeatureToggle = async (
 				}
 			);
 			featureOrganizations.push(featureOrganization);
-		});
-	});
-
+		}
+	}
+	
 	await connection.manager.save(featureOrganizations);
 	return features;
 };
 
-function createFeature(item: IFeature, tenant: ITenant, config: IPluginConfig) {
+async function createFeature(
+	item: IFeature,
+	tenant: ITenant,
+	config: IPluginConfig
+) {
 	const {
 		name,
 		code,

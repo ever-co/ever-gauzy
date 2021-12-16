@@ -34,8 +34,8 @@ export const seedDefaultEmploymentTypes = async (
 		}
 		return employmentType;
 	});
-	for (const employmentType of employmentTypes) {
-		insertEmploymentType(connection, [employmentType]);
+	for await (const employmentType of employmentTypes) {
+		await insertEmploymentType(connection, [employmentType]);
 	}
 };
 

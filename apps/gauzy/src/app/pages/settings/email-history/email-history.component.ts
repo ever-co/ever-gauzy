@@ -241,7 +241,7 @@ export class EmailHistoryComponent
 		} else if (organizationContact) {
 			return organizationContact.imageUrl;
 		} else {
-			return '../../../../assets/images/avatar-default.svg';
+			return '../../../../assets/images/avatars/avatar-default.svg';
 		}
 	}
 
