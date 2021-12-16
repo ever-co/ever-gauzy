@@ -154,7 +154,7 @@ export const verifyRequestExists = (text) => {
 };
 
 export const verifyElementIsDeleted = (text: string) => {
-	verifyTextNotExisting(ApprovalRequestPage.rowCss, text);
+	verifyTextNotExisting(ApprovalRequestPage.tableBodyCss, text);
 };
 
 export const clickSaveButtonWithForce = () =>{
@@ -207,3 +207,7 @@ export const searchApprovalRequest = (text: string, length: number) => {
 export const clearNameSearchInput = () => {
 	clearField(ApprovalRequestPage.searchByNameInputCss);
 };
+
+export const waitTableLoad = (length: number) => {
+	vefiryByLength(ApprovalRequestPage.approvalStatusCss, length);
+}
