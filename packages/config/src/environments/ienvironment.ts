@@ -37,6 +37,15 @@ export interface IGauzyFeatures {
 	[key: string]: boolean;
 }
 
+export interface IDemoCredential {
+	readonly superAdminEmail?: string;
+	readonly superAdminPassword?: string;
+	readonly adminEmail?: string;
+	readonly adminPassword?: string;
+	readonly employeeEmail?: string;
+	readonly employeePassword?: string;
+}
+
 /**
  * Server Environment
  */
@@ -94,4 +103,5 @@ export interface IEnvironment {
 	unleashConfig?: IUnleashConfig;
 	
 	demo: boolean;
+	demoCredentialConfig?: IDemoCredential;
 }

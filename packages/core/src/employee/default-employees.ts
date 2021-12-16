@@ -1,9 +1,10 @@
 import { ComponentLayoutStyleEnum, LanguagesEnum } from '@gauzy/contracts';
+import { environment } from '@gauzy/config';
 
 export const DEFAULT_EMPLOYEES: any = [
 	{
-		email: 'employee@ever.co',
-		password: '123456',
+		email: `${environment.demoCredentialConfig.employeeEmail}`,
+		password: `${environment.demoCredentialConfig.employeePassword}`,
 		firstName: 'Default',
 		lastName: 'Employee',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',

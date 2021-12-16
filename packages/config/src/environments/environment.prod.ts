@@ -156,7 +156,15 @@ export const environment: IEnvironment = {
 		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 1000
 	},
 
-	demo: process.env.DEMO === 'true' ? true : false
+	demo: process.env.DEMO === 'true' ? true : false,
+	demoCredentialConfig: {
+		superAdminEmail: process.env.DEMO_SUPER_ADMIN_EMAIL || `admin@ever.co`,
+		superAdminPassword: process.env.DEMO_SUPER_ADMIN_PASSWORD || `admin`,
+		adminEmail: process.env.DEMO_ADMIN_EMAIL || `local.admin@ever.co`,
+		adminPassword: process.env.DEMO_ADMIN_PASSWORD || `admin`,
+		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@ever.co`,
+		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`
+	},
 };
 
 export const gauzyToggleFeatures: IGauzyFeatures = {
