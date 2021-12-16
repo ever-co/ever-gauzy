@@ -31,24 +31,26 @@ export const createRandomWarehouses = async (
 
                 for (let i = 0; i <= Math.floor(Math.random() * 2); i++) {
                     const warehouseProduct = new WarehouseProduct();
+                    warehouseProduct.variants = [];
+
                     const product = faker.random.arrayElement(products);
 
                     warehouseProduct.product = product;
                     warehouseProduct.warehouse = warehouse;
 
                     const warehouseProductDb = await connection.manager.save(warehouseProduct);
+                    
                     let productsQuantity = 0;
-
-
-                    await Promise.all(product.variants.map(async variant => {
+                    for await (const variant of product.variants) {
                         const warehouseVariant = new WarehouseProductVariant();
                         warehouseVariant.variant = variant;
                         warehouseVariant.quantity = faker.datatype.number(200);
                         warehouseVariant.warehouseProduct = warehouseProductDb;
                         productsQuantity += warehouseVariant.quantity;
 
-                        return await connection.manager.save(warehouseVariant);
-                    }));
+                        warehouseProduct.variants.push(warehouseVariant);
+                        await connection.manager.save(warehouseVariant);
+                    }
 
                     warehouseProduct.quantity = productsQuantity;
                     warehouse.products.push(warehouseProduct);
