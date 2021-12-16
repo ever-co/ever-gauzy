@@ -30,8 +30,7 @@
 		"terser-webpack-plugin": "^5.2.5"
 	},
 	"dependencies": {
-		"@angular/cdk": "^12.2.8",
-		"@electron/remote": "^2.0.1",
+		"@angular/cdk": "^13.1.0",
 		"@gauzy/desktop-ui-lib": "^0.1.0",
 		"@grpc/grpc-js": "^1.4.0",
 		"@nebular/auth": "^9.0.0",
