@@ -45,6 +45,7 @@ Feature: Approval request test
   Scenario: Approve approval request
     When User see name input field
     Then User can search approval by name
+    And Verify table load
     When User can see approval button
     Then User click on approval button
     Then Notification message will appear

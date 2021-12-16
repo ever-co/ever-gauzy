@@ -1,8 +1,10 @@
+import { environment } from '@gauzy/config';
+
 export const DEFAULT_ORGANIZATION_TEAMS = [
 	{
 		name: 'Employees',
 		defaultMembers: [
-			'admin@ever.co',
+			`${environment.demoCredentialConfig.superAdminEmail}`,
 			'ruslan@ever.co',
 			'alish@ever.co',
 			'julia@ever.co'

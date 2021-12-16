@@ -35,7 +35,6 @@
 	},
 	"dependencies": {
 		"@angular/cdk": "^13.1.0",
-		"@electron/remote": "^2.0.1",
 		"@gauzy/desktop-ui-lib": "^0.1.0",
 		"@grpc/grpc-js": "^1.4.0",
 		"@nebular/auth": "^9.0.0",

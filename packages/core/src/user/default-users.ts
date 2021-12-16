@@ -1,9 +1,10 @@
 import { ComponentLayoutStyleEnum, LanguagesEnum } from '@gauzy/contracts';
+import { environment } from '@gauzy/config';
 
 export const DEFAULT_SUPER_ADMINS = [
 	{
-		email: 'admin@ever.co',
-		password: 'admin',
+		email: `${environment.demoCredentialConfig.superAdminEmail}`,
+		password: `${environment.demoCredentialConfig.superAdminPassword}`,
 		firstName: 'Super',
 		lastName: 'Admin',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -14,8 +15,8 @@ export const DEFAULT_SUPER_ADMINS = [
 
 export const DEFAULT_ADMINS = [
 	{
-		email: 'local.admin@ever.co',
-		password: 'admin',
+		email: `${environment.demoCredentialConfig.adminEmail}`,
+		password: `${environment.demoCredentialConfig.adminPassword}`,
 		firstName: 'Local',
 		lastName: 'Admin',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
