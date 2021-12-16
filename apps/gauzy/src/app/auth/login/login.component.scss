@@ -1,20 +1,68 @@
 ::ng-deep nb-auth-block {
 	max-width: 35rem;
 }
+nb-accordion-item-header{
+	padding: 5px
+}
+
 .login-container {
 	position: relative;
-	.demo-credentials-btn {
-		position: absolute;
-		top: 10px;
+}
+
+.demo-credentials-card {
+	position: absolute;
+	top: 7.5%;
+	right: -17px;
+	width: 190px;
+}
+
+.demo-credentials-head-text{
+	display: flex;
+	.head-text{
+		margin-right: 5px;
+	}
+}
+
+.demo-credentials-buttons{
+	position: absolute;
+	right: 600px;
+	top:70px
+}
+
+
+@media screen and (max-width: 1250px) {
+	.demo-credentials-buttons{
+		position: relative;
+		right: 0px;
+		top: 0px
+	}
+
+	.demo-credentials-card{
+		top: 37.5%;
+		width: 190px;
 		right: 0px;
 	}
-	.demo-credentials-card {
-		position: absolute;
-		top: 135px;
-		left: -80%;
+}
+
+@media screen and (max-width: 970px) {
+	.head-text{
+		display: none;
 	}
-	.demo-credentials-close-icon {
-		position: absolute;
-		right: 0px;
+	.demo-credentials-card{
+	  width: 145px;
+	  right: 0px;
+	}
+}
+
+
+@media screen and (max-width: 490px) {
+	.demo-credentials-head-text {
+		display: block;
+	}
+	
+	.demo-credentials-card{
+	  width: 146px;
+	  right: 0px;
+	  top:45.5%
 	}
 }
