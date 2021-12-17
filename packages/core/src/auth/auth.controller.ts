@@ -7,7 +7,9 @@ import {
 	Get,
 	Req,
 	Query,
-	UseInterceptors
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -23,7 +25,7 @@ import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { getUserDummyImage } from '../core';
+import { ChangePasswordRequestDTO, getUserDummyImage, ResetPasswordRequestDTO } from '../core';
 import { AuthLoginCommand } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 import { Public } from './../shared/decorators';
@@ -93,19 +95,23 @@ export class AuthController {
 
 	@Post('/reset-password')
 	@Public()
-	async resetPassword(@Body() findObject) {
-		return await this.authService.resetPassword(findObject);
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async resetPassword(
+		@Body() request: ChangePasswordRequestDTO
+	) {
+		return await this.authService.resetPassword(request);
 	}
 
 	@Post('/request-password')
 	@Public()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async requestPassword(
-		@Body() findObj,
+		@Body() body: ResetPasswordRequestDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
-	): Promise<{ id: string; token: string } | null> {
+	): Promise<{ token: string } | null> {
 		return await this.authService.requestPassword(
-			findObj,
+			body,
 			languageCode,
 			request.get('Origin')
 		);

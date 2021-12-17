@@ -11,6 +11,7 @@ import { CommandHandlers } from './commands/handlers';
 import { JwtStrategy } from './jwt.strategy';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from './../user/user.module';
+import { PasswordResetModule } from './../password-reset/password-reset.module';
 
 const providers = [
 	AuthService,
@@ -30,6 +31,7 @@ const providers = [
 				AuthModule,
 				EmailModule,
 				UserModule,
+				PasswordResetModule,
 				CqrsModule
 			],
 			useClass: AuthService
@@ -37,6 +39,7 @@ const providers = [
 		TypeOrmModule.forFeature([UserOrganization, Organization]),
 		EmailModule,
 		UserModule,
+		PasswordResetModule,
 		CqrsModule
 	],
 	controllers: [AuthController],
