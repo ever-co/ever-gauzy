@@ -128,7 +128,7 @@ export * from '../../time-tracking/time-slot/time-slot-minute.entity';
 export * from '../../time-tracking/time-slot/time-slot.entity';
 export * from '../../time-tracking/timesheet/timesheet.entity';
 export * from '../../user-organization/user-organization.entity';
-export * from './../../auth/password-reset.entity';
+export * from './../../password-reset/password-reset.entity';
 export * from '../../user/user.entity';
 export * from '../../warehouse/warehouse.entity';
 export * from '../../warehouse/warehouse-product.entity';

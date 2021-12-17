@@ -1,6 +1,6 @@
 import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IUser, IAuthResponse } from '@gauzy/contracts';
@@ -63,13 +63,12 @@ export class AuthStrategy extends NbAuthStrategy {
 	};
 
 	constructor(
-		private route: ActivatedRoute,
-		private router: Router,
-		private authService: AuthService,
-		private store: Store,
-		private timeTrackerService: TimeTrackerService,
-		private timesheetFilterService: TimesheetFilterService,
-		private electronService: ElectronService
+		private readonly router: Router,
+		private readonly authService: AuthService,
+		private readonly store: Store,
+		private readonly timeTrackerService: TimeTrackerService,
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly electronService: ElectronService
 	) {
 		super();
 	}
@@ -171,11 +170,9 @@ export class AuthStrategy extends NbAuthStrategy {
 		return this.authService
 			.requestPassword(requestPasswordInput.findObj)
 			.pipe(
-				map((res: { id?: string; token?: string }) => {
-					let id, token;
-
+				map((res: { token: string }) => {
+					let token;
 					if (res) {
-						id = res.id;
 						token = res.token;
 					}
 
@@ -187,10 +184,6 @@ export class AuthStrategy extends NbAuthStrategy {
 							AuthStrategy.config.requestPass.defaultErrors
 						);
 					}
-
-					this.store.userId = id;
-					this.store.token = token;
-
 					return new NbAuthResult(
 						true,
 						res,
@@ -200,8 +193,6 @@ export class AuthStrategy extends NbAuthStrategy {
 					);
 				}),
 				catchError((err) => {
-					console.log(err);
-
 					return of(
 						new NbAuthResult(
 							false,

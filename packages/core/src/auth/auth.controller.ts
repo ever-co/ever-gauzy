@@ -100,12 +100,12 @@ export class AuthController {
 	@Post('/request-password')
 	@Public()
 	async requestPassword(
-		@Body() findObj,
+		@Body() body,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
-	): Promise<{ id: string; token: string } | null> {
+	): Promise<{ token: string } | null> {
 		return await this.authService.requestPassword(
-			findObj,
+			body,
 			languageCode,
 			request.get('Origin')
 		);

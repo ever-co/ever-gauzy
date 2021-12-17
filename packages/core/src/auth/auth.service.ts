@@ -1,28 +1,30 @@
-import { environment as env } from '@gauzy/config';
+import { environment } from '@gauzy/config';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
 	IRolePermission,
-	IAuthResponse
+	IAuthResponse,
+	IUser
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
+import { getManager } from 'typeorm';
 import { SocialAuthService } from '@gauzy/auth';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
-import { getManager } from 'typeorm';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
+import { PasswordResetCreateCommand } from './../password-reset/commands';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
 	constructor(
 		private readonly userService: UserService,
-		private emailService: EmailService,
-		private userOrganizationService: UserOrganizationService,
+		private readonly emailService: EmailService,
+		private readonly userOrganizationService: UserOrganizationService,
 		private readonly commandBus: CommandBus
 	) {
 		super();
@@ -45,42 +47,61 @@ export class AuthService extends SocialAuthService {
 		};
 	}
 
+	/**
+	 * Request Reset Password
+	 * 
+	 * @param request 
+	 * @param languageCode 
+	 * @param originUrl 
+	 * @returns 
+	 */
 	async requestPassword(
-		findObj: any,
+		request: any,
 		languageCode: LanguagesEnum,
 		originUrl?: string
-	): Promise<{ id: string; token: string } | null> {
-		const user = await this.userService.findOneByConditions(findObj, {
-			relations: ['role', 'employee']
-		});
+	): Promise<{ token: string } | null> {
+		try {
+			const user = await this.userService.findOneByConditions(request, {
+				relations: ['role', 'employee']
+			});
+			try {
+				/**
+				 * Create password reset request
+				 */
+				const { token } = await this.createToken(user);
+				if (token) {
+					await this.commandBus.execute(
+						new PasswordResetCreateCommand({
+							email: user.email,
+							token
+						})
+					);
 
-		if (user && user.id) {
-			const { token } = await this.createToken(user);
-			if (token) {
-				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
-
-				const {
-					organizationId
-				} = await this.userOrganizationService.findOneByOptions({
-					where: {
-						user
-					}
-				});
-				this.emailService.requestPassword(
-					user,
-					url,
-					languageCode,
-					organizationId,
-					originUrl
-				);
-
-				return {
-					id: user.id,
-					token
-				};
+					const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
+					const { organizationId } = await this.userOrganizationService.findOneByOptions({
+						where: {
+							user
+						}
+					});
+					
+					this.emailService.requestPassword(
+						user,
+						url,
+						languageCode,
+						organizationId,
+						originUrl
+					);
+					return {
+						token
+					};
+				}
+			} catch (error) {
+				console.log(error);
+				throw new InternalServerErrorException();
 			}
-		} else {
-			throw new Error('Email not found');
+		} catch (error) {
+			console.log(error);
+			throw new NotFoundException('Email is not correct, please try again.');
 		}
 	}
 
@@ -177,7 +198,7 @@ export class AuthService extends SocialAuthService {
 
 	async isAuthenticated(token: string): Promise<boolean> {
 		try {
-			const { id, thirdPartyId } = verify(token, env.JWT_SECRET) as {
+			const { id, thirdPartyId } = verify(token, environment.JWT_SECRET) as {
 				id: string;
 				thirdPartyId: string;
 			};
@@ -202,7 +223,7 @@ export class AuthService extends SocialAuthService {
 
 	async hasRole(token: string, roles: string[] = []): Promise<boolean> {
 		try {
-			const { role } = verify(token, env.JWT_SECRET) as {
+			const { role } = verify(token, environment.JWT_SECRET) as {
 				id: string;
 				role: string;
 			};
@@ -251,7 +272,13 @@ export class AuthService extends SocialAuthService {
 		}
 	}
 
-	async createToken(user: Partial<User>): Promise<{ token: string }> {
+	/**
+	 * Create random token
+	 * 
+	 * @param user 
+	 * @returns 
+	 */
+	async createToken(user: Partial<IUser>): Promise<{ token: string }> {
 		if (!user.role || !user.employee) {
 			user = await this.userService.findOneByIdString(user.id, {
 				relations: ['role', 'role.rolePermissions', 'employee']
@@ -282,7 +309,7 @@ export class AuthService extends SocialAuthService {
 		} else {
 			payload.role = null;
 		}
-		const token: string = sign(payload, env.JWT_SECRET, {});
+		const token: string = sign(payload, environment.JWT_SECRET, {});
 		return { token };
 	}
 }
