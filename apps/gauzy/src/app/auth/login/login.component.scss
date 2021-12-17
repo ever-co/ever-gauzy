@@ -12,8 +12,8 @@ nb-accordion-item-header{
 .demo-credentials-card {
 	position: absolute;
 	top: 0px;
-	right: 0px;
-	width: 190px;
+	right: -30px;
+	width: 231px;
 }
 
 .demo-credentials-head-text{
@@ -25,12 +25,12 @@ nb-accordion-item-header{
 
 .demo-credentials-buttons{
 	position: absolute;
-	right: 600px;
-	top:70px
+	right: 650px;
+	top:0px
 }
 
 
-@media screen and (max-width: 1250px) {
+@media screen and (max-width: 1425px) {
 	.demo-credentials-buttons{
 		position: relative;
 		right: 0px;
