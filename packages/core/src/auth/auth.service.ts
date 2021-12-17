@@ -4,12 +4,13 @@ import {
 	LanguagesEnum,
 	IRolePermission,
 	IAuthResponse,
-	IUser
+	IUser,
+	IChangePasswordRequest
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { getManager } from 'typeorm';
 import { SocialAuthService } from '@gauzy/auth';
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { EmailService } from '../email/email.service';
@@ -17,7 +18,8 @@ import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
-import { PasswordResetCreateCommand } from './../password-reset/commands';
+import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
+import { IPasswordReset } from '@gauzy/contracts';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -105,26 +107,49 @@ export class AuthService extends SocialAuthService {
 		}
 	}
 
-	async resetPassword(findObject) {
-		if (findObject.password.length < 6) {
-			throw new Error('Password should be at least 6 characters long');
+	/**
+	 * Change password
+	 * 
+	 * @param request 
+	 */
+	async resetPassword(request: IChangePasswordRequest) {
+		try {
+			const { password, token } = request;
+			const record: IPasswordReset = await this.commandBus.execute(
+				new PasswordResetGetCommand({
+					token
+				})
+			);
+			if (record.expired) {
+				throw new BadRequestException('Password Reset Failed.');
+			}
+			const { id, tenantId } = verify(token, environment.JWT_SECRET) as {
+				id: string;
+				tenantId: string;
+			};
+			try {
+				const user = await this.userService.findOneByIdString(
+					id,
+					{
+						where: {
+							tenantId
+						},
+						relations: ['tenant']
+					}
+				);
+				if (user) {
+					const hash = await this.getPasswordHash(password);
+					await this.userService.changePassword(user.id, hash);
+					return true;
+				}
+			} catch (error) {
+				throw new BadRequestException('Password Reset Failed.')
+			}
+		} catch (error) {
+			throw new BadRequestException('Password Reset Failed.')
 		}
-
-		if (findObject.password !== findObject.confirmPassword) {
-			throw new Error('Passwords must match.');
-		}
-
-		if (!findObject.user.id) {
-			throw new Error('User not found');
-		}
-
-		if (!findObject.user.token) {
-			throw new Error('Authorization token is invalid or missing');
-		}
-
-		const hash = await this.getPasswordHash(findObject.password);
-		return this.userService.changePassword(findObject.user.id, hash);
 	}
+
 	/**
 	 * Shared method involved in
 	 * 1. Sign up

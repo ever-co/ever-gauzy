@@ -1,6 +1,6 @@
 import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IUser, IAuthResponse } from '@gauzy/contracts';
@@ -57,13 +57,13 @@ export class AuthStrategy extends NbAuthStrategy {
 				failure: null
 			},
 			resetPasswordTokenKey: 'reset_password_token',
-			defaultErrors: ['Something went wrong, please try again.'],
+			defaultErrors: ['Password Reset Failed.'],
 			defaultMessages: ['Your password has been successfully changed.']
 		}
 	};
 
 	constructor(
-		private readonly router: Router,
+		private readonly route: ActivatedRoute,
 		private readonly authService: AuthService,
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
@@ -208,31 +208,25 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	resetPassword(data?: any): Observable<NbAuthResult> {
 		const { password, confirmPassword } = data;
-
-		const indexToken = this.router.url.indexOf('=');
-		const indexId = this.router.url.lastIndexOf('=');
-		const token = this.router.url.substring(indexToken + 1);
-		const id = this.router.url.substring(indexId + 1);
+		const token = this.route.snapshot.queryParamMap.get('token');
 
 		if (password !== confirmPassword) {
 			return of(
 				new NbAuthResult(false, null, null, [
-					"The passwords don't match."
+					"The password and confirmation password do not match."
 				])
 			);
 		}
 
-		const resetPassInput = {
-			user: {
-				id,
-				token
-			},
+		return this.authService.resetPassword({
+			token,
 			password,
 			confirmPassword
-		};
-
-		return this.authService.resetPassword(resetPassInput).pipe(
-			map((res) => {
+		}).pipe(
+			map((res: any) => {
+				if (res.status === 400) {
+					throw new Error(res.message)
+				}
 				return new NbAuthResult(
 					true,
 					res,
@@ -242,15 +236,13 @@ export class AuthStrategy extends NbAuthStrategy {
 				);
 			}),
 			catchError((err) => {
-				console.log(err);
-
 				return of(
 					new NbAuthResult(
 						false,
 						err,
 						false,
-						AuthStrategy.config.requestPass.defaultErrors,
-						[AuthStrategy.config.requestPass.defaultErrors]
+						AuthStrategy.config.resetPass.defaultErrors,
+						[AuthStrategy.config.resetPass.defaultErrors]
 					)
 				);
 			})
