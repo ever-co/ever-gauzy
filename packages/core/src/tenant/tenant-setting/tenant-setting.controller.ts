@@ -1,4 +1,4 @@
-import { ITenantSetting, RolesEnum } from '@gauzy/contracts';
+import { ITenantSetting, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -6,18 +6,23 @@ import {
 	HttpCode,
 	HttpStatus,
 	Post,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { CrudController } from '../../core/crud';
-import { Roles } from './../../shared/decorators/roles';
-import { RoleGuard, TenantPermissionGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 import { TenantSettingGetCommand, TenantSettingSaveCommand } from './commands';
+import { CreateTenantSettingDTO } from './dto/create-tenant-setting.dto';
 
 @ApiTags('TenantSetting')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.TENANT_SETTING)
 @Controller()
 export class TenantSettingController extends CrudController<TenantSetting> {
 	constructor(
@@ -31,7 +36,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		summary: 'Get tenant settings',
 		security: [
 			{
-				role: [RolesEnum.ADMIN]
+				permission: [PermissionsEnum.TENANT_SETTING]
 			}
 		]
 	})
@@ -40,21 +45,19 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		description: 'Tenant not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(TenantPermissionGuard, RoleGuard)
-	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get()
-	async get() {
+	async getSettings() {
 		return await this.commandBus.execute(
 			new TenantSettingGetCommand()
 		);
 	}
 
 	@ApiOperation({
-		summary: 'Tenant settings updated successfully'
+		summary: 'Tenant settings create/updated successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Tenant settings updated successfully.'
+		description: 'Tenant settings create/updated successfully.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -62,11 +65,11 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(TenantPermissionGuard, RoleGuard)
-	@Roles(RolesEnum.SUPER_ADMIN)
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@Permissions(PermissionsEnum.TENANT_SETTING)
 	@Post()
 	async saveSettings(
-		@Body() entity: ITenantSetting
+		@Body() entity: CreateTenantSettingDTO
 	): Promise<ITenantSetting> {
 		return await this.commandBus.execute(
 			new TenantSettingSaveCommand(entity)

@@ -4,7 +4,7 @@ import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class FileStorageMiddleware implements NestMiddleware {
-	constructor(private tenantSettingService: TenantSettingService) {}
+	constructor(private readonly tenantSettingService: TenantSettingService) {}
 
 	async use(req, res, next) {
 		const authHeader = req.headers.authorization;
