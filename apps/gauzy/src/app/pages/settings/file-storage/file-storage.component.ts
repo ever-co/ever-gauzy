@@ -68,7 +68,16 @@ export class FileStorageComponent
 	 * SAVE current tenant file storage setting
 	 */
 	submit() {
-		this.tenantService.saveSettings(this.settings).then(() => {
+		let settings: ITenantSetting;
+		if (this.settings.fileStorageProvider === FileStorageProviderEnum.LOCAL) {
+			settings = {
+				fileStorageProvider: FileStorageProviderEnum.LOCAL
+			}
+		} else {
+			settings = this.settings;
+		}
+
+		this.tenantService.saveSettings(settings).then(() => {
 			this.toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		});
 	}

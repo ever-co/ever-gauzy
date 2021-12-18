@@ -17,7 +17,7 @@ export class TenantSettingSaveHandler
 		command: TenantSettingSaveCommand
 	) {
 		const { input, tenantId } = command;
-		await this._tenantSettingService.saveSettngs(
+		return await this._tenantSettingService.saveSettngs(
 			input,
 			RequestContext.currentTenantId() || tenantId
 		);

@@ -9,7 +9,7 @@ export class TenantBaseGuard implements CanActivate {
 	constructor(protected readonly reflector: Reflector) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const { tenantId: currentTenantId } = RequestContext.currentUser();
+		const currentTenantId = RequestContext.currentTenantId();
 		const request: any = context.switchToHttp().getRequest();
 		const method: RequestMethodEnum = request.method;
 		const { query, headers, rawHeaders } = request;
