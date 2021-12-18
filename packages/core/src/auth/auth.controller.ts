@@ -25,10 +25,12 @@ import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { ChangePasswordRequestDTO, getUserDummyImage, ResetPasswordRequestDTO } from '../core';
+import { getUserDummyImage } from '../core/utils';
 import { AuthLoginCommand } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 import { Public } from './../shared/decorators';
+import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
+import { RegisterUserDTO } from 'user/dto';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
@@ -70,17 +72,17 @@ export class AuthController {
 	})
 	@Post('/register')
 	@Public()
-	async create(
-		@Body() entity: IUserRegistrationInput,
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async register(
+		@Body() entity: RegisterUserDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IUser> {
-		if (!entity.user.imageUrl) {
-			entity.user.imageUrl = getUserDummyImage(entity.user);
-		}
-		entity.originalUrl = request.get('Origin');
 		return await this.commandBus.execute(
-			new AuthRegisterCommand(entity, languageCode)
+			new AuthRegisterCommand({ 
+				originalUrl: request.get('Origin'), ...entity }, 
+				languageCode
+			)
 		);
 	}
 
