@@ -2,6 +2,7 @@ import { environment as env } from '@gauzy/config';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { verify } from 'jsonwebtoken';
+import { removeDuplicates } from '@gauzy/common';
 import { RequestContext } from './../../core/context';
 import { UserService } from './../../user/user.service';
 
@@ -13,13 +14,25 @@ export class PermissionGuard implements CanActivate {
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const permissions = this._reflector.get<string[]>(
+		/*
+		* Permissions decorator method level 
+		*/
+		const methodPermissions = this._reflector.get<string[]>(
 			'permissions',
 			context.getHandler()
-		);
+		) || [];
+
+		/*
+		* Permissions class method level 
+		*/
+		const classPermissions = this._reflector.get<string[]>(
+			'permissions', 
+			context.getClass()
+		) || [];
+
+		const permissions = removeDuplicates(methodPermissions.concat(classPermissions));
 
 		let isAuthorized = false;
-
 		if (!permissions) {
 			isAuthorized = true;
 		} else {

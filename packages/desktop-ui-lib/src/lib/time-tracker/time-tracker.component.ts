@@ -18,7 +18,7 @@ import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource } from 'ng2-smart-table';
 
 // Import logging for electron and override default console logging
-import log from 'electron-log';
+const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
 

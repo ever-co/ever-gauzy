@@ -115,3 +115,13 @@ export function ucFirst(str: string, force: boolean): string {
 		return firstLetter.toUpperCase();
 	});
 }
+
+/**
+ * Remove duplicates from an array
+ * 
+ * @param data 
+ * @returns 
+ */
+export function removeDuplicates(data: string[]) {
+	return [...new Set(data)];
+}

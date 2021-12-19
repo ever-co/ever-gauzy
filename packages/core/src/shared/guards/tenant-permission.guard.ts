@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
+import { removeDuplicates } from '@gauzy/common';
 import { RequestContext } from './../../core/context';
 import { TenantService } from './../../tenant/tenant.service';
 import { TenantBaseGuard } from './tenant-base.guard';
@@ -18,7 +19,7 @@ export class TenantPermissionGuard
 	}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const { tenantId: currentTenantId } = RequestContext.currentUser();
+		const currentTenantId = RequestContext.currentTenantId();
 		let isAuthorized = false;
 		if (!currentTenantId) {
 			return isAuthorized;
@@ -42,12 +43,24 @@ export class TenantPermissionGuard
 			}
 		}
 
-		//Check tenant permissions
-		const permissions = this.reflector.get<string[]>(
+		/*
+		* Permissions decorator method level 
+		*/
+		const methodPermissions = this.reflector.get<string[]>(
 			'permissions',
 			context.getHandler()
-		);
-		if (permissions) {
+		) || [];
+
+		/*
+		* Permissions class method level 
+		*/
+		const classPermissions = this.reflector.get<string[]>(
+			'permissions', 
+			context.getClass()
+		) || [];
+
+		const permissions = removeDuplicates(methodPermissions.concat(classPermissions));		
+		if (permissions.length > 0) {
 			const tenant = await this.tenantService.findOneByIdString(currentTenantId, {
 				relations: ['rolePermissions']
 			});
@@ -55,6 +68,7 @@ export class TenantPermissionGuard
 				(p) => permissions.indexOf(p.permission) > -1 && p.enabled
 			);
 		}
+
 		if (!isAuthorized) {
 			console.log(
 				'Unauthorized access blocked. TenantId:',

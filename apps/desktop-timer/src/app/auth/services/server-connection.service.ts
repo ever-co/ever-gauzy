@@ -18,9 +18,9 @@ export class ServerConnectionService {
 				},
 				(err) => {
 					this.store.serverConnection = err.status;
-					reject();
+					reject(err);
 				}
 			);
-		});
+		}).catch((e) => {});
 	}
 }

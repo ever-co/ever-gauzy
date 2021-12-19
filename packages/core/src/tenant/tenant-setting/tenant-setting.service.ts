@@ -10,7 +10,7 @@ import { TenantSetting } from './tenant-setting.entity';
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {
 	constructor(
 		@InjectRepository(TenantSetting)
-		private tenantSettingRepository: Repository<TenantSetting>
+		private readonly tenantSettingRepository: Repository<TenantSetting>
 	) {
 		super(tenantSettingRepository);
 	}
