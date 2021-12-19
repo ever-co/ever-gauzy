@@ -350,7 +350,7 @@
               "apps/gauzy/src/silent-refresh.html",
               {
                 "glob": "**/*",
-                "input": "apps/gauzy/src/",
+                "input": "apps/desktop/src/",
                 "ignore": [
                   "**/*.ts"
                 ],
