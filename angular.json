@@ -323,8 +323,8 @@
           "style": "scss"
         }
       },
-      "root": "apps/desktop",
-      "sourceRoot": "apps/desktop/src",
+      "root": "apps/gauzy",
+      "sourceRoot": "apps/gauzy/src",
       "prefix": "gauzy",
       "architect": {
         "build": {
@@ -334,23 +334,23 @@
               "path": "apps/desktop/config/custom-webpack.config.js"
             },
             "outputPath": "dist/apps/desktop",
-            "index": "apps/desktop/src/index.html",
-            "main": "apps/desktop/src/main.ts",
-            "polyfills": "apps/desktop/src/polyfills.ts",
-            "tsConfig": "apps/desktop/tsconfig.app.json",
+            "index": "apps/gauzy/src/index.html",
+            "main": "apps/gauzy/src/main.ts",
+            "polyfills": "apps/gauzy/src/polyfills.ts",
+            "tsConfig": "apps/gauzy/tsconfig.app.json",
             "stylePreprocessorOptions": {
               "includePaths": [
                 "apps/gauzy/src/app/@theme/styles"
               ]
             },
             "assets": [
-              "apps/desktop/src/favicon.ico",
-              "apps/desktop/src/assets",
-              "apps/desktop/src/manifest.json",
-              "apps/desktop/src/silent-refresh.html",
+              "apps/gauzy/src/favicon.ico",
+              "apps/gauzy/src/assets",
+              "apps/gauzy/src/manifest.json",
+              "apps/gauzy/src/silent-refresh.html",
               {
                 "glob": "**/*",
-                "input": "apps/desktop/src/",
+                "input": "apps/gauzy/src/",
                 "ignore": [
                   "**/*.ts"
                 ],
@@ -379,8 +379,8 @@
             "production": {
               "fileReplacements": [
                 {
-                  "replace": "apps/desktop/src/environments/environment.ts",
-                  "with": "apps/desktop/src/environments/environment.prod.ts"
+                  "replace": "apps/gauzy/src/environments/environment.ts",
+                  "with": "apps/gauzy/src/environments/environment.prod.ts"
                 },
                 {
                   "replace": "apps/gauzy/src/environments/environment.ts",
@@ -392,7 +392,7 @@
               "serviceWorker": true,
               "sourceMap": false,
               "namedChunks": false,
-              "ngswConfigPath": "apps/desktop/ngsw-config.prod.json",
+              "ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
               "aot": true,
               "extractLicenses": false,
               "vendorChunk": false,

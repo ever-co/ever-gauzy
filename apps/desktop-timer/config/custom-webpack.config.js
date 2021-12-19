@@ -33,12 +33,9 @@ module.exports = {
 			})
 		]
 	},
-	target: 'electron-renderer',
-	plugins: [        
-        new NodePolyfillPlugin({
-			excludeAliases: ["console"]
-		})
-    ]
+	externals: {
+		'electron-log': 'electron-log',
+	}
 };
 
 /* NOTE: below code can be used to fix some more things, see https://github.com/maximegris/angular-electron/blob/master/angular.webpack.js#L10
