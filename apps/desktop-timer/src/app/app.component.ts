@@ -2,6 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { AppService } from './app.service';
 import { AuthStrategy } from './auth/auth-strategy.service';
+import { TranslateService } from '@ngx-translate/core';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { Store } from './auth/services/store.service';
+import { untilDestroyed } from '@ngneat/until-destroy';
+import * as _ from 'underscore';
 import {
 	Router
 } from '@angular/router';
@@ -16,7 +21,9 @@ export class AppComponent implements OnInit {
 		private electronService: ElectronService,
 		private appService: AppService,
 		private authStrategy: AuthStrategy,
-		private router: Router
+		private router: Router,
+		public readonly translate: TranslateService,
+		private store: Store
 	) {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) => {
 			this.appService
@@ -255,5 +262,30 @@ export class AppComponent implements OnInit {
 	ngOnInit(): void {
 		console.log('On Init');
 		this.electronService.ipcRenderer.send('app_is_init');
+		this.store.systemLanguages$
+			.pipe(untilDestroyed(this))
+			.subscribe((languages) => {
+				//Returns the language code name from the browser, e.g. "en", "bg", "he", "ru"
+				const browserLang = this.translate.getBrowserLang();
+				
+				//Gets default enum laguages, e.g. "en", "bg", "he", "ru"
+				const defaultLanguages = Object.values(LanguagesEnum);
+
+				//Gets system laguages
+				const systemLanguages: string[] = _.pluck(languages, 'code');
+				systemLanguages.concat(defaultLanguages);
+
+				//Sets the default language to use as a fallback, e.g. "en"
+				this.translate.setDefaultLang(LanguagesEnum.ENGLISH);
+
+				//Use browser language as a primary language, if not found then use system default language, e.g. "en"
+				this.translate.use(
+					systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH
+				);
+				
+				// this.translate.onLangChange.subscribe(() => {
+				// 	this.loading = false;
+				// });
+			});
 	}
 }

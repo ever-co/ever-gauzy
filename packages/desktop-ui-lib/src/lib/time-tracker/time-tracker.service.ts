@@ -4,7 +4,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import * as moment from 'moment';
 
 // Import logging for electron and override default console logging
-import log from 'electron-log';
+const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
 

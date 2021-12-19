@@ -12,7 +12,7 @@ import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 import { ElectronServices } from '../electron/services';
 
 // Import logging for electron and override default console logging
-import log from 'electron-log';
+const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
 
