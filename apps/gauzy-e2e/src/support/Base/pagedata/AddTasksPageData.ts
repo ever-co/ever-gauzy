@@ -5,5 +5,6 @@ export const AddTasksPageData = {
 	defaultTaskEstimateDays: 1,
 	defaultTaskEstimateHours: 8,
 	defaultTaskEstimateMinutes: 59,
-	defaultTaskDescription: 'Very important task'
+	defaultTaskDescription: 'Very important task',
+	tableResult: 1
 };

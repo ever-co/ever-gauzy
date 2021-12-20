@@ -22,5 +22,7 @@ export const AddTaskPage = {
 	descriptionTextareaCss: '[formControlName="description"]',
 	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	verifyTextCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	searchTitleInputCss: 'ng-component > input[placeholder="Title"]',
+
 };
