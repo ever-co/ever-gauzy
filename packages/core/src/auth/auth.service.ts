@@ -32,8 +32,15 @@ export class AuthService extends SocialAuthService {
 		super();
 	}
 
-	async login(findObj: any, password: string): Promise<IAuthResponse | null> {
-		const user = await this.userService.findOneByConditions(findObj, {
+	/**
+	 * User Login Request
+	 * 
+	 * @param email 
+	 * @param password 
+	 * @returns 
+	 */
+	async login(email: string, password: string): Promise<IAuthResponse | null> {
+		const user = await this.userService.findOneByConditions({ email }, {
 			relations: ['role', 'role.rolePermissions', 'employee'],
 			order: {
 				createdAt: 'DESC'

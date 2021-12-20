@@ -1,4 +1,5 @@
 import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
+import { getUserDummyImage } from "./../core/utils";
 import { User } from "./user.entity";
 
 @EventSubscriber()
@@ -17,5 +18,9 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
     afterLoad(entity: User) {
         entity.name = `${entity.firstName} ${entity.lastName}`;
         entity.employeeId = entity.employee ? entity.employee.id : null;
+
+        if (!entity.imageUrl) {
+            entity.imageUrl = getUserDummyImage(entity);
+        }
     }
 }

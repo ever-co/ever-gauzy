@@ -16,19 +16,18 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import {
-	IAuthLoginInput,
 	IAuthResponse,
-	IUserRegistrationInput,
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { ChangePasswordRequestDTO, getUserDummyImage, ResetPasswordRequestDTO } from '../core';
 import { AuthLoginCommand } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 import { Public } from './../shared/decorators';
+import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
+import { LoginUserDTO, RegisterUserDTO } from './../user/dto';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
@@ -70,27 +69,30 @@ export class AuthController {
 	})
 	@Post('/register')
 	@Public()
-	async create(
-		@Body() entity: IUserRegistrationInput,
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async register(
+		@Body() entity: RegisterUserDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IUser> {
-		if (!entity.user.imageUrl) {
-			entity.user.imageUrl = getUserDummyImage(entity.user);
-		}
-		entity.originalUrl = request.get('Origin');
 		return await this.commandBus.execute(
-			new AuthRegisterCommand(entity, languageCode)
+			new AuthRegisterCommand({ 
+				originalUrl: request.get('Origin'), ...entity }, 
+				languageCode
+			)
 		);
 	}
 
 	@HttpCode(HttpStatus.OK)
 	@Post('/login')
 	@Public()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async login(
-		@Body() entity: IAuthLoginInput
+		@Body() entity: LoginUserDTO
 	): Promise<IAuthResponse | null> {
-		return await this.commandBus.execute(new AuthLoginCommand(entity));
+		return await this.commandBus.execute(
+			new AuthLoginCommand(entity)
+		);
 	}
 
 	@Post('/reset-password')

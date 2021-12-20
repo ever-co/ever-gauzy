@@ -57,10 +57,8 @@ export interface IUserRegistrationInput {
 	sourceId?: string;
 }
 
-export interface IAuthLoginInput {
-	findObj: {
-		email: string;
-	};
+export interface IUserLoginInput {
+	email: string;
 	password: string;
 }
 export interface IAuthResponse {
