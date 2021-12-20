@@ -35,6 +35,10 @@
 		"@sentry/electron": "2.4.0",
 		"@gauzy/desktop-ui-lib": "^0.1.0",
 		"@electron/remote": "^2.0.1",
-		"rxjs": "^7.4.0"
+		"rxjs": "^7.4.0",
+		"@ngx-translate/core": "^14.0.0",
+		"@ngx-translate/http-loader": "^7.0.0",
+		"@ngneat/until-destroy": "^9.0.0",
+		"underscore": "^1.13.1"
 	}
 }

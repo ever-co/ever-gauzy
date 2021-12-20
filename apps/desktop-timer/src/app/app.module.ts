@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import {
 	AlertComponent,
 	ImageViewerModule,
@@ -25,6 +25,7 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgxAuthModule } from '../../../gauzy/src/app/auth/auth.module';
+import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './auth/auth.guard';
@@ -39,6 +40,7 @@ import { ServerDownModule } from './server-down/server-down.module';
 import { ServerConnectionService } from './auth/services/server-connection.service';
 import { environment } from '../../../gauzy/src/environments/environment';
 import { Router } from '@angular/router';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -64,7 +66,14 @@ import { Router } from '@angular/router';
 		ImageViewerModule,
 		NgSelectModule,
 		SplashScreenModule,
-		ServerDownModule
+		ServerDownModule,
+		TranslateModule.forRoot({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
 	],
 	providers: [
 		AppService,
