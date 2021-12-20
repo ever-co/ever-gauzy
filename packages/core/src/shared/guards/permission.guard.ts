@@ -31,9 +31,9 @@ export class PermissionGuard implements CanActivate {
 		) || [];
 
 		const permissions = removeDuplicates(methodPermissions.concat(classPermissions));
-
+		
 		let isAuthorized = false;
-		if (!permissions) {
+		if (permissions.length === 0) {
 			isAuthorized = true;
 		} else {
 			const token = RequestContext.currentToken();
