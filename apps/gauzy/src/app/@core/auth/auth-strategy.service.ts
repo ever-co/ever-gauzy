@@ -183,6 +183,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					);
 				}),
 				catchError((err) => {
+					console.log(err);
 					return of(
 						new NbAuthResult(
 							false,
