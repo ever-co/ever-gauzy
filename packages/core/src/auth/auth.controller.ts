@@ -18,19 +18,17 @@ import { I18nLang } from 'nestjs-i18n';
 import {
 	IAuthLoginInput,
 	IAuthResponse,
-	IUserRegistrationInput,
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { getUserDummyImage } from '../core/utils';
 import { AuthLoginCommand } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 import { Public } from './../shared/decorators';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
-import { RegisterUserDTO } from 'user/dto';
+import { RegisterUserDTO } from './../user/dto';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
