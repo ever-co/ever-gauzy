@@ -12,12 +12,14 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
 });
 
 // Verify dropdown text
 Then('User can visit Integrations page', () => {
-	dashboardPage.verifyAccountingDashboardIfVisible();
+	cy.intercept('GET', '/api/integration*').as('waitIntegrations');
 	cy.visit('/#/pages/integrations/list', { timeout: pageLoadTimeout });
+	cy.wait('@waitIntegrations');
 	appsIntegrationsPage.verifyHeaderText(AppsIntegrationsPageData.header);
 });
 
