@@ -1,9 +1,12 @@
 import { IBasePerTenantEntityModel } from './base-entity.model';
 import { IRolePermission } from './role-permission.model';
 
-export interface IRole extends IBasePerTenantEntityModel {
-	name: string;
+export interface IRole extends IRoleCreateInput {
 	rolePermissions: IRolePermission[];
+}
+
+export interface IRoleCreateInput extends IBasePerTenantEntityModel {
+	name: string
 }
 
 export enum RolesEnum {
