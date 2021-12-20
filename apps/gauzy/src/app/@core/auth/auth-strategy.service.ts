@@ -80,18 +80,12 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	authenticate(data?: any): Observable<NbAuthResult> {
 		const { email, password } = data;
-
 		// TODO implement remember me feature
 		// const rememberMe = !!args.rememberMe;
-
-		const loginInput = {
-			findObj: {
-				email
-			},
+		return this.login({
+			email,
 			password
-		};
-
-		return this.login(loginInput);
+		});
 	}
 
 	register(data?: any): Observable<NbAuthResult> {
@@ -134,13 +128,10 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 				const user: IUser = res;
 				if (isNotEmpty(user)) {
-					const loginInput = {
-						findObj: {
-							email
-						},
+					return this.login({
+						email,
 						password
-					};
-					return this.login(loginInput);
+					});
 				}
 			}),
 			catchError((err) => {
@@ -164,15 +155,10 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	requestPassword(data?: any): Observable<NbAuthResult> {
 		const { email } = data;
-
-		const requestPasswordInput = {
-			findObj: {
-				email
-			}
-		};
-
 		return this.authService
-			.requestPassword(requestPasswordInput.findObj)
+			.requestPassword({
+				email
+			})
 			.pipe(
 				map((res: { token: string }) => {
 					let token;
