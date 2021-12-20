@@ -251,7 +251,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
 	async createBulkEmployee(
@@ -289,8 +289,8 @@ export class EmployeeController extends CrudController<Employee> {
 	 * @param filter 
 	 * @returns 
 	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
@@ -344,7 +344,7 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@UseGuards(TenantPermissionGuard)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
