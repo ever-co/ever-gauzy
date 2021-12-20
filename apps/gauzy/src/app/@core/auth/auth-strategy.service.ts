@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IUser, IAuthResponse } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common-angular';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
@@ -123,13 +124,16 @@ export class AuthStrategy extends NbAuthStrategy {
 				tenant,
 				tags
 			},
-			password
+			password,
+			confirmPassword
 		};
-
 		return this.authService.register(registerInput).pipe(
-			switchMap((res: IUser) => {
+			switchMap((res: IUser | any) => {
+				if (res.status === 400) {
+					throw new Error(res.message)
+				}
 				const user: IUser = res;
-				if (user) {
+				if (isNotEmpty(user)) {
 					const loginInput = {
 						findObj: {
 							email

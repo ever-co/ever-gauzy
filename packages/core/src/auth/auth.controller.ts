@@ -16,7 +16,6 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import {
-	IAuthLoginInput,
 	IAuthResponse,
 	LanguagesEnum
 } from '@gauzy/contracts';
@@ -28,7 +27,7 @@ import { AuthLoginCommand } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 import { Public } from './../shared/decorators';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
-import { RegisterUserDTO } from './../user/dto';
+import { LoginUserDTO, RegisterUserDTO } from './../user/dto';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
@@ -87,10 +86,13 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@Post('/login')
 	@Public()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async login(
-		@Body() entity: IAuthLoginInput
+		@Body() entity: LoginUserDTO
 	): Promise<IAuthResponse | null> {
-		return await this.commandBus.execute(new AuthLoginCommand(entity));
+		return await this.commandBus.execute(
+			new AuthLoginCommand(entity)
+		);
 	}
 
 	@Post('/reset-password')

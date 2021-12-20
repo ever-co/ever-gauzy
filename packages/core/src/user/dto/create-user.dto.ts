@@ -1,10 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { IsEmail, IsNotEmpty } from "class-validator";
+import { IUserCreateInput } from "@gauzy/contracts";
 
 /**
  * Create User DTO validation
  */
-export class CreateUserDTO {
+export class CreateUserDTO implements IUserCreateInput {
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
@@ -12,11 +13,11 @@ export class CreateUserDTO {
     readonly email: string;
 
     @ApiProperty({ type: () => String })
-    @IsString()
     readonly firstName: string;
 
     @ApiProperty({ type: () => String })
-    @IsString()
     readonly lastName: string;
+
+    @ApiProperty({ type: () => String })
     readonly imageUrl?: string;
 }

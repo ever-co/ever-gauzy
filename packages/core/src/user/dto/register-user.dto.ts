@@ -1,12 +1,14 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import { IsNotEmpty, MinLength, ValidateNested } from "class-validator";
+import { IUserRegistrationInput } from "@gauzy/contracts";
 import { Match } from "./../../shared/decorators/validations";
 import { CreateUserDTO } from "./create-user.dto";
 
 /**
  * Register User DTO validation
  */
-export class RegisterUserDTO {
+export class RegisterUserDTO implements IUserRegistrationInput {
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty({ message: "Password should not be empty" })
@@ -23,6 +25,8 @@ export class RegisterUserDTO {
     readonly confirmPassword: string;
 
     @ApiProperty({ type: () => CreateUserDTO })
-    @ValidateNested({ each: true })
+    @IsNotEmpty({ message: "User should not be empty" })
+    @ValidateNested()
+    @Type(() => CreateUserDTO)
     readonly user: CreateUserDTO;
 }

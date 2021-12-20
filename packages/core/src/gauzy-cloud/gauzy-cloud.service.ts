@@ -1,13 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { HttpService } from '@nestjs/axios'
 import {
-    IAuthLoginInput,
     IOrganizationCreateInput,
     ITenantCreateInput,
     IUserRegistrationInput,
     IRoleMigrateInput,
     ITenant,
-    IRolePermissionMigrateInput
+    IRolePermissionMigrateInput,
+    IUserLoginInput
 } from "@gauzy/contracts";
 import { AxiosResponse } from 'axios';
 import { Observable } from "rxjs";
@@ -24,7 +24,7 @@ export class GauzyCloudService {
         return this._http.post('/api/auth/register', params);
     }
 
-    extractToken(payload: IAuthLoginInput): Observable<AxiosResponse<any>> {
+    extractToken(payload: IUserLoginInput): Observable<AxiosResponse<any>> {
         const params = JSON.stringify(payload);
         return this._http.post('/api/auth/login', params);
     }
