@@ -13,6 +13,10 @@ export class Role extends TenantBaseEntity implements IRole {
 	@Column()
 	name: string;
 
+	@ApiProperty({ type: () => Boolean, default: false })
+	@Column({ default: false })
+	isSystem?: boolean;
+
 	@OneToMany(() => RolePermission, (rolePermission) => rolePermission.role, {
 		cascade: true
 	})

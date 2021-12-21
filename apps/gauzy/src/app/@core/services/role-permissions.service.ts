@@ -10,7 +10,7 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class RolePermissionsService {
-	constructor(private http: HttpClient) { }
+	constructor(private readonly http: HttpClient) { }
 
 	getRolePermissions(
 		findInput?: any

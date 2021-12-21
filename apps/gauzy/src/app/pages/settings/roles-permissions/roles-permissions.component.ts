@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import {
 	PermissionGroups,
 	IRolePermission,
@@ -8,8 +9,8 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { debounceTime, filter, tap, map } from 'rxjs/operators';
+import { Observable, Subject, of as observableOf, startWith } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import {
@@ -22,27 +23,32 @@ import { environment } from './../../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-org-roles-permissions',
-	templateUrl: './edit-roles-permissions.component.html',
-	styleUrls: ['./edit-roles-permissions.component.scss']
+	selector: 'ga-org-roles-permissions',
+	templateUrl: './roles-permissions.component.html',
+	styleUrls: ['./roles-permissions.component.scss']
 })
-export class EditRolesPermissionsComponent
+export class RolesPermissionsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	rolesEnum = RolesEnum;
 	permissionGroups = PermissionGroups;
+	isWantToCreate: boolean = false;
+	loading: boolean;
+	enabledPermissions: any = {};
 	
 	user: IUser;
 	role: IRole;
 	roles: IRole[] = [];
 	permissions: IRolePermission[] = [];
-	selectedRole: RolesEnum = RolesEnum.EMPLOYEE;
-	
-	loading: boolean;
-	enabledPermissions: any = {};
 
+	roles$: Observable<IRole[]> = observableOf([]);
 	permissions$: Subject<any> = new Subject();
+
+	roleSubject$: Subject<any> = new Subject();
+
+	formControl: FormControl = new FormControl();
+	@ViewChild('input') input: ElementRef;
 	
 	constructor(
 		public readonly translateService: TranslateService,
@@ -55,16 +61,30 @@ export class EditRolesPermissionsComponent
 	}
 
 	ngOnInit(): void {
+		this.roleSubject$
+			.pipe(
+				debounceTime(100),
+				tap(() => this.getRoles()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
+				tap(() => this.roleSubject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	ngAfterViewInit() {
+		this.roles$ = this.formControl.valueChanges
+			.pipe(
+				debounceTime(300),
+				startWith(''),
+				map((value: string) => this._filter(value)),
+			);
 		this.permissions$
 			.pipe(
 				debounceTime(300),
@@ -73,25 +93,67 @@ export class EditRolesPermissionsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.rolesService.getAll()
-			.then(({ items }) => {
-				if (this.user.role.name === RolesEnum.SUPER_ADMIN) {
-					items = items.filter(
-						(role) =>  ![RolesEnum.SUPER_ADMIN].includes(role.name as RolesEnum)
-					);
-				}
-				if (this.user.role.name === RolesEnum.ADMIN) {
-					items = items.filter(
-						(role) =>  ![RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN].includes(role.name as RolesEnum)
-					);
-				}
-				this.roles = items;
-				this.onSelectedRole();
-			});
+	}
+
+	/**
+	 * Roles filters using substring
+	 * 
+	 * @param value 
+	 * @returns 
+	 */
+	private _filter(value: string): IRole[] {
+		return this.roles.filter((role: IRole) => !!role);
+	}
+
+	/**
+	 * Filtered roles options
+	 * 
+	 * @param value 
+	 * @returns 
+	 */
+	private _getFilteredOptions(value: string): Observable<IRole[]> {
+		return observableOf(value).pipe(
+		  	map((value) => this._filter(value)),
+		);
+	}
+	
+	/**
+	 * On autocomplete selection
+	 * @param role 
+	 */
+	onSelectionChange(role: IRole['name']) {
+		if (role) {
+			this.roles$ = this._getFilteredOptions(role);
+			this.onSelectedRole();
+		}
+	}
+
+	/**
+	 * On input change
+	 */
+	onInputChange() {
+		const nativeElementValue = this.input.nativeElement.value;
+		if (nativeElementValue) {
+			const [role] = this.roles.filter(
+				(role: IRole) => role.name === nativeElementValue
+			);
+			this.role = role;
+	
+			/**
+			 * We want to create new role
+			 */
+			this.isWantToCreate = !this.roles.find(
+				(role: IRole) => role.name === nativeElementValue
+			);
+		}
 	}
 
 	async loadPermissions() {
 		this.enabledPermissions = {};
+
+		if (!this.role) {
+			return;
+		}
 
 		const { tenantId } = this.user;
 		const { id: roleId } = this.role;
@@ -134,7 +196,7 @@ export class EditRolesPermissionsComponent
 			this.toastrService.success(
 				this.getTranslation('TOASTR.MESSAGE.PERMISSION_UPDATED', {
 					permissionName: this.getTranslation('ORGANIZATIONS_PAGE.PERMISSIONS.' + permission),
-					roleName: this.getTranslation('USERS_PAGE.ROLE.' + this.selectedRole)
+					roleName: this.formControl.value
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
@@ -152,7 +214,7 @@ export class EditRolesPermissionsComponent
 	 * CHANGE current selected role
 	 */
 	onSelectedRole() {
-		this.role = this.getRoleByName(this.selectedRole);
+		this.role = this.getRoleByName(this.formControl.value);
 		this.permissions$.next(true);
 	}
 
@@ -180,6 +242,46 @@ export class EditRolesPermissionsComponent
 
 		return this.permissionGroups.ADMINISTRATION
 					.filter((permission) => environment.DEMO ? !deniedPermisisons.includes(permission) : true)
+	}
+
+	/**
+	 * GET all tenant roles
+	 */
+	async getRoles() {
+		this.roles$ = observableOf(
+			(await (this.rolesService.getAll())).items
+		).pipe(
+			map((roles: IRole[]) => {
+				if (this.user.role.name === RolesEnum.SUPER_ADMIN) {
+					roles = roles.filter(
+						(role) =>  ![RolesEnum.SUPER_ADMIN].includes(role.name as RolesEnum)
+					);
+				}
+				if (this.user.role.name === RolesEnum.ADMIN) {
+					roles = roles.filter(
+						(role) =>  ![RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN].includes(role.name as RolesEnum)
+					);
+				}
+				return roles;
+			}),
+			tap((roles: IRole[]) => this.roles = roles),
+			tap(() => this.formControl.setValue(this.formControl.value || RolesEnum.EMPLOYEE))
+		);
+	}
+
+	/**
+	 * Create New Role
+	 */
+	createRole() {
+		const value = this.input.nativeElement.value;
+		this.rolesService.create({ name: value })
+			.pipe(
+				debounceTime(100),
+				tap(() => this.roleSubject$.next(true)),
+				tap(() => this.isWantToCreate = false),
+				untilDestroyed(this)
+			)
+			.subscribe()
 	}
 
 	ngOnDestroy() {}
