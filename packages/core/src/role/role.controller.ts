@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IPagination, IRole, PermissionsEnum } from '@gauzy/contracts';
 import { RoleService } from './role.service';
@@ -8,7 +8,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CreateRoleDTO } from './dto';
-import { UpdateResult } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
 
 @ApiTags('Role')
 @UseGuards(TenantPermissionGuard)
@@ -87,6 +87,15 @@ export class RoleController extends CrudController<Role> {
 		@Body() entity: CreateRoleDTO
 	): Promise<UpdateResult | IRole> {
 		return await this.roleService.update(id, entity);
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<DeleteResult> {
+		return await this.roleService.deleteRole(id);
 	}
 
 	@ApiOperation({ summary: 'Import role from self hosted to gauzy cloud hosted in bulk' })

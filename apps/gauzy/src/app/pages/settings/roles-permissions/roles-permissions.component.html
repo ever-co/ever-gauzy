@@ -44,7 +44,7 @@
 					</button>
 				</ng-container>
 				<ng-container *ngIf="role && role.isSystem === false && !isWantToCreate">
-					<button nbButton status="danger">
+					<button nbButton status="danger" (click)="deleteRole()">
 						{{ 
 							'BUTTONS.DELETE_EXISTING_ROLE' | translate : {
 								name: role.name
