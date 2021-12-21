@@ -1793,7 +1793,8 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "View Job Employees",
 			"ORG_JOB_MATCHING_VIEW": "View Job Matching",
 			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
-			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data"
+			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data",
+			"TENANT_SETTING": "Create/Edit/Delete tenant settings"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
