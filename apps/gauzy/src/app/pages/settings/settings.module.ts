@@ -6,7 +6,6 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbToggleModule,
 	NbIconModule,
 	NbDialogModule,
 	NbListModule,
@@ -14,10 +13,7 @@ import {
 	NbTooltipModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { RolePermissionsService } from '../../@core/services/role-permissions.service';
-import { RoleService } from '../../@core/services/role.service';
 import { ThemeModule } from '../../@theme/theme.module';
-import { EditRolesPermissionsComponent } from './edit-roles-permissions/edit-roles-permissions.component';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
@@ -47,7 +43,6 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
-		NbToggleModule,
 		NbSpinnerModule,
 		NbIconModule,
 		NbDialogModule,
@@ -66,12 +61,11 @@ import { SharedModule } from '../../@shared/shared.module';
 	declarations: [
 		FileStorageComponent,
 		SettingsComponent,
-		EditRolesPermissionsComponent,
 		DangerZoneComponent,
 		EmailHistoryComponent,
 		EmailFiltersComponent,
 		SmsGatewayComponent,
 	],
-	providers: [RolePermissionsService, RoleService]
+	providers: []
 })
 export class SettingsModule {}

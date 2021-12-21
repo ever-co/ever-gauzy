@@ -12,11 +12,20 @@ export const createRoles = async (
 ): Promise<IRole[]> => {
 	try {
 		const roles: IRole[] = [];
+		const systemRoles = [
+			RolesEnum.SUPER_ADMIN,
+			RolesEnum.ADMIN,
+			RolesEnum.EMPLOYEE,
+			RolesEnum.CANDIDATE,
+			RolesEnum.VIEWER
+		];
+
 		for (const tenant of tenants) {
 			for (const name of Object.values(RolesEnum)) {
 				const role = new Role();
 				role.name = name;
 				role.tenant = tenant;
+				role.isSystem = systemRoles.includes(name);
 				roles.push(role);
 			}
 		}
