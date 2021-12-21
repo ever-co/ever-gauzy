@@ -46,6 +46,8 @@ export class RoleController extends CrudController<Role> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@Get()
 	async findAll(): Promise<IPagination<IRole>> {
 		return this.roleService.findAll();

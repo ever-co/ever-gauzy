@@ -215,6 +215,7 @@ export class RolesPermissionsComponent
 	 */
 	onSelectedRole() {
 		this.role = this.getRoleByName(this.formControl.value);
+		this.isWantToCreate = !this.role;
 		this.permissions$.next(true);
 	}
 

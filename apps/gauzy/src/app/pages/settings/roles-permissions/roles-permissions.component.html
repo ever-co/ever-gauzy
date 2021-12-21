@@ -33,9 +33,9 @@
 					</nb-autocomplete>
 				</div>
 			</div>
-			<div class="col-6">
+			<div class="col-6" *ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']">
 				<ng-container *ngIf="isWantToCreate">
-					<button nbButton status="success" class="ml-1 mr-1" (click)="createRole()">
+					<button nbButton status="success" (click)="createRole()">
 						{{ 
 							'BUTTONS.CREATE_NEW_ROLE' | translate : {
 								name: input.value
@@ -44,7 +44,7 @@
 					</button>
 				</ng-container>
 				<ng-container *ngIf="role && role.isSystem === false && !isWantToCreate">
-					<button nbButton status="danger" class="mr-1 ml-1">
+					<button nbButton status="danger">
 						{{ 
 							'BUTTONS.DELETE_EXISTING_ROLE' | translate : {
 								name: role.name
