@@ -108,7 +108,9 @@
 		"SUPER_ADMIN_DEMO": "Super Admin Demo",
 		"ADMIN_DEMO": "Admin Demo",
 		"EMPLOYEE_DEMO": "Employee Demo",
-		"DEMO_CREDENTIALS": "Demo Credentials"
+		"DEMO_CREDENTIALS": "Demo Credentials",
+		"CREATE_NEW_ROLE": "Create {{ name }} Role",
+		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
