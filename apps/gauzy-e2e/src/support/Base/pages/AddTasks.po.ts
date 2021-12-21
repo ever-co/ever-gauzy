@@ -9,7 +9,8 @@ import {
 	clickElementByText,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	vefiryByLength
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
 
@@ -197,4 +198,21 @@ export const verifyTaskExists = (text) => {
 
 export const verifyElementIsDeleted = (text) => {
 	verifyTextNotExisting(AddTaskPage.verifyTextCss, text);
+};
+
+export const verifyTitleInput = () => {
+	verifyElementIsVisible(AddTaskPage.searchTitleInputCss);
+};
+
+export const searchTitleName = (name: string) => {
+	clearField(AddTaskPage.searchTitleInputCss);
+	enterInput(AddTaskPage.searchTitleInputCss, name);
+};
+
+export const clearSearchInput = () => {
+	clearField(AddTaskPage.searchTitleInputCss);
+};
+
+export const verifySearchResult = (length: number) =>{
+	vefiryByLength(AddTaskPage.selectTableRowCss, length);
 };

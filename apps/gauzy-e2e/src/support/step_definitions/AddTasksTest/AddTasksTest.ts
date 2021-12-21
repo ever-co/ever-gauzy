@@ -184,10 +184,25 @@ Then('Notification message will appear', () => {
 	addTaskPage.waitMessageToHide();
 });
 
+When('User see title input field', () => {
+	addTaskPage.verifyTitleInput();
+});
+
+Then('User enter title name', () => {
+	addTaskPage.searchTitleName(AddTasksPageData.defaultTaskTitle);
+});
+
+And('User can see only the results', () => {
+	addTaskPage.verifySearchResult(AddTasksPageData.tableResult);
+});
+
 And('User can verify task was created', () => {
 	addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
 });
 
+And('User clear the search field', () => {
+	addTaskPage.clearSearchInput()
+});
 // Duplicate task
 Then('User can see table populated with tasks', () => {
 	addTaskPage.tasksTableVisible();
