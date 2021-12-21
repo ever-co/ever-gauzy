@@ -31,6 +31,10 @@ export class RoleService {
 		})
 	}
 
+	delete(role: IRole): Observable<IRole> {
+		return this.http.delete<IRole>(`${API_PREFIX}/roles/${role.id}`)
+	}
+
 	getRoleById(roleId: string): Promise<IRole> {
 		return firstValueFrom(
 			this.http

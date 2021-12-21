@@ -10,7 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, tap, map } from 'rxjs/operators';
-import { Observable, Subject, of as observableOf, startWith } from 'rxjs';
+import { Observable, Subject, of as observableOf, startWith, catchError } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import {
@@ -280,9 +280,59 @@ export class RolesPermissionsComponent
 				debounceTime(100),
 				tap(() => this.roleSubject$.next(true)),
 				tap(() => this.isWantToCreate = false),
+				tap((role: IRole) => {
+					this.toastrService.success(
+						this.getTranslation('TOASTR.MESSAGE.ROLE_CREATED', {
+							name: role.name
+						}),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+				}),
+				catchError((error) => {
+					this.toastrService.error(
+						this.getTranslation('TOASTR.MESSAGE.ROLE_CREATED_ERROR', {
+							name: value
+						}),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+					throw new Error(error)
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe()
+			.subscribe();
+	}
+	
+	/**
+	 * Delete existed role
+	 */
+	deleteRole() {
+		if (!this.role.isSystem) {
+			this.rolesService.delete(this.role)
+				.pipe(
+					debounceTime(100),
+					tap(() => this.formControl.setValue('')),
+					tap(() => this.roleSubject$.next(true)),
+					tap(() => {
+						this.toastrService.success(
+							this.getTranslation('TOASTR.MESSAGE.ROLE_DELETED', {
+								name: this.role.name
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+					}),
+					catchError((error) => {
+						this.toastrService.error(
+							this.getTranslation('TOASTR.MESSAGE.ROLE_DELETED_ERROR', {
+								name: this.role.name
+							}),
+							this.getTranslation('TOASTR.TITLE.ERROR')
+						);
+						throw new Error(error)
+					}),
+					untilDestroyed(this)
+				)
+				.subscribe();
+		}
 	}
 
 	ngOnDestroy() {}
