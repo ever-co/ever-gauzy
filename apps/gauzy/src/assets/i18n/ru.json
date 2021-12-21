@@ -1793,7 +1793,8 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
 			"ACCESS_DELETE_ACCOUNT": "Доступ к удалению аккаунта",
-			"ACCESS_DELETE_ALL_DATA": "Доступ к удалению всех данных"
+			"ACCESS_DELETE_ALL_DATA": "Доступ к удалению всех данных",
+			"TENANT_SETTING": "Создать/Изменить/Удалить настройки арендатора"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",

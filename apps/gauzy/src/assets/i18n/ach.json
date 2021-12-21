@@ -1793,7 +1793,8 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "crwdns8748:0crwdne8748:0",
 			"ORG_JOB_MATCHING_VIEW": "crwdns8750:0crwdne8750:0",
 			"ACCESS_DELETE_ACCOUNT": "crwdns10543:0crwdne10543:0",
-			"ACCESS_DELETE_ALL_DATA": "crwdns10545:0crwdne10545:0"
+			"ACCESS_DELETE_ALL_DATA": "crwdns10545:0crwdne10545:0",
+			"TENANT_SETTING": "crwdns10859:0crwdne10859:0"
 		},
 		"BILLING": "crwdns10521:0crwdne10521:0",
 		"BUDGET": "crwdns10523:0crwdne10523:0",
