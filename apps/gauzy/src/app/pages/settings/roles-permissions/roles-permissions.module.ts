@@ -11,6 +11,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { RolePermissionsService } from '../../../@core/services';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
@@ -32,6 +33,7 @@ import { RolesPermissionsComponent } from './roles-permissions.component';
 		NbSpinnerModule,
 		NbToggleModule,
 		NbTooltipModule,
+		NgxPermissionsModule.forChild(),
 		TranslateModule
 	],
 	declarations: [RolesPermissionsComponent],
