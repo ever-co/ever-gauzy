@@ -349,7 +349,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			});
 		this.employeeStore.employeeAction$
 			.pipe(
-				filter(({ action, employee }) => !!action && !!employee),
+				filter(({ action, employees }) => !!action && !!employees),
 				tap(() => this.employeeStore.destroy()),
 				untilDestroyed(this)
 			)

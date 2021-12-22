@@ -254,7 +254,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
-	async createBulkEmployee(
+	async createBulk(
 		@Body() entity: IEmployeeCreateInput[],
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee[]> {

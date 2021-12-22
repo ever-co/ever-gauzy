@@ -96,14 +96,14 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	async add() {
 		this.addEmployee();
 		try {
-			const employee =  await firstValueFrom(
+			const employees =  await firstValueFrom(
 				this.employeesService.createBulk(this.employees)
 			);
 			this._employeeStore.employeeAction = {
 				action: CrudActionEnum.CREATED,
-				employee
+				employees
 			};
-			this.closeDialog(employee);
+			this.closeDialog(employees);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
