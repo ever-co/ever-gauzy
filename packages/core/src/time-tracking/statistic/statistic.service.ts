@@ -227,7 +227,6 @@ export class StatisticService {
 					}`,
 					`week_duration`
 				)
-				.addSelect(`COALESCE(((SUM("${query.alias}"."overall") * 100) / (SUM("${query.alias}"."duration"))), 0)`, `percentage`)
 				.addSelect(`COALESCE(SUM("${query.alias}"."overall"), 0)`, `overall`)
 				.addSelect(`COALESCE(SUM("${query.alias}"."duration"), 0)`, `duration`)
 				.addSelect(`COUNT("${query.alias}"."id")`, `timeslot_count`)
@@ -305,7 +304,6 @@ export class StatisticService {
 					}`,
 					`today_duration`
 				)
-				.addSelect(`COALESCE(((SUM("${query.alias}"."overall") * 100) / (SUM("${query.alias}"."duration"))), 0)`, `percentage`)
 				.addSelect(`COALESCE(SUM("${query.alias}"."overall"), 0)`, `overall`)
 				.addSelect(`COALESCE(SUM("${query.alias}"."duration"), 0)`, `duration`)
 				.addSelect(`COUNT("${query.alias}"."id")`, `timeslot_count`)
@@ -491,7 +489,6 @@ export class StatisticService {
 					}`,
 					`week_duration`
 				)
-				.addSelect(`COALESCE(((SUM("${weekTimeQuery.alias}"."overall") * 100) / (SUM("${weekTimeQuery.alias}"."duration"))), 0)`, `percentage`)
 				.addSelect(`COALESCE(SUM("${weekTimeQuery.alias}"."overall"), 0)`, `overall`)
 				.addSelect(`COALESCE(SUM("${weekTimeQuery.alias}"."duration"), 0)`, `duration`)
 				.addSelect(`COUNT("${weekTimeQuery.alias}"."id")`, `timeslot_count`)
@@ -569,7 +566,6 @@ export class StatisticService {
 					}`,
 					`today_duration`
 				)
-				.addSelect(`COALESCE(((SUM("${dayTimeQuery.alias}"."overall") * 100) / (SUM("${dayTimeQuery.alias}"."duration"))), 0)`, `percentage`)
 				.addSelect(`COALESCE(SUM("${dayTimeQuery.alias}"."overall"), 0)`, `overall`)
 				.addSelect(`COALESCE(SUM("${dayTimeQuery.alias}"."duration"), 0)`, `duration`)
 				.addSelect(`COUNT("${dayTimeQuery.alias}"."id")`, `timeslot_count`)

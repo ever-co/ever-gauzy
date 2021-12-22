@@ -1,15 +1,15 @@
 import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
+import { DEFAULT_SVG } from './../../../../@core/constants';
 
 @Component({
 	template: `
 		<div class="img-container">
 			<img *ngIf="imageUrl" [src]="imageUrl" alt="feature img" />
-
 			<img
 				*ngIf="!imageUrl"
-				[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
-				alt="Product Item Photo"
+				[src]="fallbackSvg"
+				[alt]="'Product Item Photo'"
 				class="variant-table-img"
 			/>
 		</div>
@@ -36,6 +36,8 @@ export class ImageRowComponent implements ViewCell {
 	@Input()
 	value: any;
 	rowData: any;
+
+	fallbackSvg = DEFAULT_SVG;
 
 	get imageUrl() {
 		if (typeof this.value == 'string') return this.value;
