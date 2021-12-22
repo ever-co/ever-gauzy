@@ -246,7 +246,7 @@ export class EmployeesComponent
 						);
 						this._employeeStore.employeeAction = {
 							action: CrudActionEnum.DELETED,
-							employee: this.selectedEmployee as any
+							employees: [this.selectedEmployee as any]
 						};
 						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
 							name: this.employeeName.trim()

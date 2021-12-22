@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { EmployeesService } from './../../../../../@core/services/employees.service';
 import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
-import { Store } from './../../../../../@core/services/store.service';
+import { EmployeeStore, Store } from './../../../../../@core/services';
 import {
 	CrudActionEnum,
 	DEFAULT_TYPE,
@@ -21,7 +21,6 @@ import {
 } from '@gauzy/contracts';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeeStore } from './../../../../../@core/services/employee-store.service';
 import { combineLatest, Subject } from 'rxjs';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import { isNotEmpty } from '@gauzy/common-angular';
@@ -152,16 +151,17 @@ export class EmployeeSelectorComponent
 		this.cdRef.detectChanges();
 		this._employeeStore.employeeAction$
 			.pipe(
-				filter(({ action, employee }) => !!action && !!employee),
+				filter(({ action, employees }) => !!action && !!employees),
 				tap(() => this._employeeStore.destroy()),
 				untilDestroyed(this)
 			)
-			.subscribe(({ action, employee }) => {
+			.subscribe(({ action, employees }) => {
 				switch (action) {
 					case CrudActionEnum.CREATED:
-						this.createEmployee(employee);
+						this.createEmployee(employees);
 						break;
 					case CrudActionEnum.DELETED:
+						const [employee] = employees;
 						this.deleteEmployee(employee as IEmployee);
 						break;
 					default:
@@ -173,20 +173,20 @@ export class EmployeeSelectorComponent
 	/*
 	 * After create new employee pushed on header selector
 	 */
-	createEmployee(employees: IEmployee | IEmployee[]) {
+	createEmployee(employees: IEmployee[]) {
 		const people: ISelectedEmployee[] = this.people || [];
 		if (Array.isArray(people)) {
-			people.push(
-				...employees.map((e) => {
-					return {
-						id: e.id,
-						firstName: e.user.firstName,
-						lastName: e.user.lastName,
-						fullName: e.user.name,
-						imageUrl: e.user.imageUrl
-					};
-				})
-			);
+			employees.forEach((employee: IEmployee) => {
+				people.push(
+					{
+						id: employee.id,
+						firstName: employee.user.firstName,
+						lastName: employee.user.lastName,
+						fullName: employee.user.name,
+						imageUrl: employee.user.imageUrl
+					}
+				);
+			});
 			this.people = [...people].filter(isNotEmpty);
 		}
 	}

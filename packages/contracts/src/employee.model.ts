@@ -203,6 +203,6 @@ export interface EmployeeViewModel {
 }
 
 export interface IEmployeeStoreState {
-	employee: IEmployee | IEmployee[];
+	employees: IEmployee[];
 	action: CrudActionEnum;
 }

@@ -24,7 +24,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		const roleName: string = user.role.name;
 
 		if (roleName === RolesEnum.SUPER_ADMIN)
-			return this._addUserToAllOrganizations(user.id, user.tenant.id);
+			return await this._addUserToAllOrganizations(user.id, user.tenant.id);
 
 		const entity: IUserOrganization = new UserOrganization();
 		entity.organizationId = organizationId;
