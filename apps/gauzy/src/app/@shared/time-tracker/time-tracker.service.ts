@@ -210,9 +210,9 @@ export class TimeTrackerService implements OnDestroy {
 	}
 
 	// toggleTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-	// 	return this.http
-	// 		.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/toggle`, request)
-	// 		.toPromise();
+	// 	return firstValueFrom(
+	// 		this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/toggle`, request)
+	// 	);
 	// }
 
 	openAndStartTimer() {

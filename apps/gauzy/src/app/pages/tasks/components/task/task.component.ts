@@ -4,7 +4,7 @@ import {
 	ActivatedRoute
 } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { combineLatest, Observable, Subject } from 'rxjs';
+import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
 import { first, tap, filter, debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -410,7 +410,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			});
 		}
 		if (dialog) {
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data: any = await firstValueFrom(
+				dialog.onClose.pipe(first())
+			);
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
 				const estimate =
@@ -465,7 +467,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			});
 		}
 		if (dialog) {
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data: any = await firstValueFrom(
+				dialog.onClose.pipe(first())
+			);
 
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
@@ -525,7 +529,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			});
 		}
 		if (dialog) {
-			const data = await dialog.onClose.pipe(first()).toPromise();
+			const data: any = await firstValueFrom(
+				dialog.onClose.pipe(first())
+			);
 
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
@@ -560,11 +566,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				data: selectedItem
 			});
 		}
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
-
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose.pipe(first())
+		);
 		if (result) {
 			this.storeInstance.delete(this.selectedTask.id)
 				.pipe(

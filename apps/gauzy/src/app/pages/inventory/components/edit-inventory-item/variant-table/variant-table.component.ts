@@ -3,6 +3,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { IProductVariant } from '@gauzy/contracts';
+import { firstValueFrom } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
@@ -122,11 +123,12 @@ export class VariantTableComponent
 	}
 
 	async delete() {
-		const result = await this.dialogService
+		const result = await firstValueFrom(
+			this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(first())
-			.toPromise();
-
+			.onClose
+			.pipe(first())
+		);
 		if (!result) return;
 
 		try {
