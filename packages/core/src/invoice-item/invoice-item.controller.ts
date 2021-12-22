@@ -1,7 +1,3 @@
-import { CrudController } from './../core/crud';
-import { InvoiceItem } from './invoice-item.entity';
-import { InvoiceItemService } from './invoice-item.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	Controller,
 	UseGuards,
@@ -12,18 +8,23 @@ import {
 	Body,
 	Param
 } from '@nestjs/common';
-import { IInvoiceItem, IInvoiceItemCreateInput, IPagination } from '@gauzy/contracts';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
+import { IInvoiceItem, IInvoiceItemCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { CrudController } from './../core/crud';
+import { InvoiceItem } from './invoice-item.entity';
+import { InvoiceItemService } from './invoice-item.service';
+import { InvoiceItemBulkCreateCommand } from './commands';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { CommandBus } from '@nestjs/cqrs';
-import { InvoiceItemBulkCreateCommand } from './commands';
+import { Permissions } from './../shared/decorators';
 
 @ApiTags('InvoiceItem')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class InvoiceItemController extends CrudController<InvoiceItem> {
 	constructor(
-		private invoiceItemService: InvoiceItemService,
+		private readonly invoiceItemService: InvoiceItemService,
 		private readonly commandBus: CommandBus
 	) {
 		super(invoiceItemService);
@@ -51,7 +52,8 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
-	@Post('/createBulk/:invoiceId')
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Post('/bulk/:invoiceId')
 	async createBulk(
 		@Param('invoiceId', UUIDValidationPipe) invoiceId: string,
 		@Body() input: IInvoiceItemCreateInput[]

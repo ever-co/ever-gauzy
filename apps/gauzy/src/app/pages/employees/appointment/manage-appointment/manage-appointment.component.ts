@@ -197,14 +197,18 @@ export class ManageAppointmentComponent
 
 	private async _loadEmployees() {
 		const { tenantId } = this.store.user;
+		const organizationId = this._selectedOrganizationId;
+
 		this.employees = (
-			await this.employeeService
-				.getAll(['user'], {
+			await firstValueFrom(
+				this.employeeService.getAll(['user'], {
 					tenantId,
-					organizationId: this._selectedOrganizationId
+					organizationId
 				})
-				.pipe(untilDestroyed(this))
-				.toPromise()
+				.pipe(
+					untilDestroyed(this)
+				)
+			)
 		).items;
 	}
 
@@ -218,12 +222,9 @@ export class ManageAppointmentComponent
 					const appointment = await firstValueFrom(this.employeeAppointmentService
 						.getById(id)
 					);
-
-					const selectedEmployees = await this.appointmentEmployeesService
-						.getById(appointment.id)
-						.pipe(untilDestroyed(this))
-						.toPromise();
-
+					const selectedEmployees = await firstValueFrom(
+						this.appointmentEmployeesService.getById(appointment.id).pipe(untilDestroyed(this))
+					);
 					this.selectedEmployeeIds = selectedEmployees.map(
 						(o) => o.employeeId
 					);

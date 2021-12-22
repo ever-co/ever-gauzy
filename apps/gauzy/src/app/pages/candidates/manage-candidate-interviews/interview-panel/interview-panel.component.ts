@@ -134,7 +134,9 @@ export class InterviewPanelComponent
 		return this.interviewList;
 	}
 	async loadInterviews() {
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer'],
 			{ organizationId, tenantId }
@@ -143,11 +145,15 @@ export class InterviewPanelComponent
 			this.allFeedbacks = res.items;
 		}
 		this.loading = true;
-		const { items } = await this.employeesService
-			.getAll(['user'], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
+
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
+		);
 		this.employeeList = items;
+		
 		const interviews = await this.candidateInterviewService.getAll(
 			[
 				'feedbacks',

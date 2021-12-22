@@ -296,11 +296,9 @@ export class AppointmentComponent
 
 	// fetch appointments where the employee is an invitee
 	async fetchEmployeeAppointments(employeeId: string) {
-		const employeeAppointments = await this.appointmentEmployeesService
-			.findEmployeeAppointments(employeeId)
-			.pipe(untilDestroyed(this))
-			.toPromise();
-
+		const employeeAppointments = await firstValueFrom(
+			this.appointmentEmployeesService.findEmployeeAppointments(employeeId).pipe(untilDestroyed(this))
+		);
 		this.renderBookedAppointments(
 			employeeAppointments
 				.map((o) => o.employeeAppointment)

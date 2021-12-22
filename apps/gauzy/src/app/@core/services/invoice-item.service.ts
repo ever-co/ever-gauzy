@@ -53,7 +53,7 @@ export class InvoiceItemService {
 		return firstValueFrom(
 			this.http
 			.post<IInvoiceItem[]>(
-				`${API_PREFIX}/invoice-item/createBulk/${invoiceId}`,
+				`${API_PREFIX}/invoice-item/bulk/${invoiceId}`,
 				invoiceItem
 			)
 		);
