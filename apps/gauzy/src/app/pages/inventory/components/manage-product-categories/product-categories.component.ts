@@ -4,7 +4,7 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IProductCategoryTranslated,
@@ -19,7 +19,6 @@ import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import { ProductCategoryService, Store, ToastrService } from './../../../../@core/services';
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
-import { combineLatest } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
