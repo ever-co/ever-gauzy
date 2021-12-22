@@ -12,7 +12,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';

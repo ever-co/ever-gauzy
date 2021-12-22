@@ -11,7 +11,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 import {
 	ICandidateFeedback,
