@@ -39,7 +39,10 @@ export class FormHelpers {
 			return true;
 		}
 		return (
-			formGroup.get(control).touched && 
+			(
+				formGroup.get(control).touched ||
+				formGroup.get(control).dirty
+			) && 
 			formGroup.get(control).invalid
 		);
 	}
