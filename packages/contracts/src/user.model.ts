@@ -50,6 +50,7 @@ export interface IUserFindInput {
 export interface IUserRegistrationInput {
 	user: IUser;
 	password?: string;
+	confirmPassword?: string;
 	originalUrl?: string;
 	organizationId?: string;
 	createdById?: string;

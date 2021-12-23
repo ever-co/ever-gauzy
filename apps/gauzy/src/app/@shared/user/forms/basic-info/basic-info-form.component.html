@@ -110,24 +110,13 @@
 			</div>
 		</div>
 		<div class="col-sm-6" *ngIf="!(isEmployee || isCandidate)">
-			<div class="form-group">
-				<label for="role" class="label">{{
-					'FORM.LABELS.ROLE' | translate
-				}}</label>
-				<nb-select
-					id="role"
-					class="d-block"
-					[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
-					formControlName="role"
-					fullWidth
-				>
-					<nb-option
-						*ngFor="let role of allRoles"
-						[value]="role"
-						>{{ 'USERS_PAGE.ROLE.' + role | translate }}</nb-option
-					>
-				</nb-select>
-			</div>
+			<ga-role-select
+				id="role"
+				formControlName="role"
+				[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+				[label]="'FORM.LABELS.ROLE' | translate"
+				[excludes]="excludes"
+			></ga-role-select>
 		</div>
 		<div class="col-sm-6">
 			<ngx-password-form-field
