@@ -106,6 +106,17 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 		this._fieldSize = value;
 	}
 
+	/*
+	* Getter & Setter for dynamic classList
+	*/
+	_ngClass: string;
+	get ngClass(): string {
+		return this._ngClass;
+	}
+	@Input() set ngClass(value: string) {
+		this._ngClass = value;
+	}
+
 	@Output() onInputChanged = new EventEmitter<string>();
 
 	// get reference to the input element

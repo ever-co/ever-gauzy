@@ -46,4 +46,27 @@ export class FormHelpers {
 			formGroup.get(control).invalid
 		);
 	}
+
+	/**
+	 * Deep check valid control
+	 * 
+	 * @param {FormGroup} formGroup
+	 * @param control 
+	 * @returns 
+	 */
+	static isValidControl(
+		formGroup: FormGroup,
+		control: string
+	): boolean {
+		if (!formGroup.contains(control)) {
+			return false;
+		}
+		return (
+			(
+				formGroup.get(control).touched ||
+				formGroup.get(control).dirty
+			) && 
+			formGroup.get(control).valid
+		);
+	}
 }
