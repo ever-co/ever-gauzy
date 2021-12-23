@@ -1,4 +1,5 @@
 import { AbstractControl, ValidatorFn } from "@angular/forms";
+import { hasRequiredField } from "./has-required";
 
 export class CompareDateValidator {
     static validateDate(fromField: string, toField: string): ValidatorFn {
@@ -24,13 +25,3 @@ export class CompareDateValidator {
         };
     }
 }
-
-export const hasRequiredField = (control: AbstractControl): boolean => {
-    if (!control) {
-        return false;
-    }
-    if (!control.validator) {
-        return false;
-    }
-    return (control.errors && control.errors.required);
-};

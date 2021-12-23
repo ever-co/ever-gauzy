@@ -15,6 +15,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime } from 'rxjs/operators';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { NbComponentSize } from '@nebular/theme';
 import { TranslationBaseComponent } from '../../../../language-base';
 
 @UntilDestroy({ checkProperties: true })
@@ -43,7 +44,7 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	/**
 	 * Getter & Setter accessor including call the onchange callback
 	 */
-	 get value(): any {
+	get value(): any {
         return this.innerValue;
     };
 	set value(v: any) {
@@ -92,6 +93,28 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	}
 	@Input() set id(value: string) {
 		this._id = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic field size
+	*/
+	_fieldSize: NbComponentSize = 'medium';
+	get fieldSize(): NbComponentSize {
+		return this._fieldSize;
+	}
+	@Input() set fieldSize(value: NbComponentSize) {
+		this._fieldSize = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic classList
+	*/
+	_ngClass: string;
+	get ngClass(): string {
+		return this._ngClass;
+	}
+	@Input() set ngClass(value: string) {
+		this._ngClass = value;
 	}
 
 	@Output() onInputChanged = new EventEmitter<string>();

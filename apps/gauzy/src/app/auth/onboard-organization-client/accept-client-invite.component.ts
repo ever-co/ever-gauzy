@@ -22,10 +22,10 @@ export class AcceptClientInvitePage
 
 	constructor(
 		private readonly router: Router,
-		private route: ActivatedRoute,
-		private toastrService: ToastrService,
-		private translate: TranslateService,
-		private inviteService: InviteService
+		private readonly route: ActivatedRoute,
+		private readonly toastrService: ToastrService,
+		private readonly translate: TranslateService,
+		private readonly inviteService: InviteService
 	) {
 		super(translate);
 	}
