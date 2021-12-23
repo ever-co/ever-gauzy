@@ -19,7 +19,7 @@ import { AuthService, IncomeService, RoleService, TagsService } from '../../../@
 import { SharedModule } from '../../shared.module';
 import { COMPONENTS } from './index';
 import { PasswordFormFieldModule } from './fields/password';
-import { RoleSelectModule } from '../../role-select/role-select.module';
+import { RoleFormFieldModule } from './fields/role';
 
 @NgModule({
 	imports: [
@@ -40,7 +40,7 @@ import { RoleSelectModule } from '../../role-select/role-select.module';
 		CountdownModule,
 		SharedModule,
 		PasswordFormFieldModule,
-		RoleSelectModule
+		RoleFormFieldModule
 	],
 	exports: [
 		...COMPONENTS

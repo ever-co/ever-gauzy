@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { NbSelectModule } from '@nebular/theme';
-import { RoleSelectComponent } from './role-select.component';
+import { RoleFormFieldComponent } from './role.component';
 
 @NgModule({
 	declarations: [
-		RoleSelectComponent
+		RoleFormFieldComponent
 	],
 	exports: [
-		RoleSelectComponent
+		RoleFormFieldComponent
 	],
 	imports: [
 		CommonModule,
@@ -20,4 +20,4 @@ import { RoleSelectComponent } from './role-select.component';
 		TranslateModule
 	]
 })
-export class RoleSelectModule {}
+export class RoleFormFieldModule {}

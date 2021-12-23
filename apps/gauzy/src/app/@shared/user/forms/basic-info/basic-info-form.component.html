@@ -110,13 +110,13 @@
 			</div>
 		</div>
 		<div class="col-sm-6" *ngIf="!(isEmployee || isCandidate)">
-			<ga-role-select
+			<ngx-role-form-field
 				id="role"
 				formControlName="role"
 				[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
 				[label]="'FORM.LABELS.ROLE' | translate"
 				[excludes]="excludes"
-			></ga-role-select>
+			></ngx-role-form-field>
 		</div>
 		<div class="col-sm-6">
 			<ngx-password-form-field

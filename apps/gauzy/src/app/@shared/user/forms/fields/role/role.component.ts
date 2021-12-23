@@ -13,22 +13,22 @@ import { tap } from 'rxjs/operators';
 import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IRole, IUser, RolesEnum } from '@gauzy/contracts';
-import { RoleService, Store } from '../../@core/services';
+import { RoleService, Store } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-role-select',
-	templateUrl: './role-select.component.html',
-	styleUrls: ['./role-select.component.scss'],
+	selector: 'ngx-role-form-field',
+	templateUrl: './role.component.html',
+	styleUrls: [],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => RoleSelectComponent),
+			useExisting: forwardRef(() => RoleFormFieldComponent),
 			multi: true
 		}
 	]
 })
-export class RoleSelectComponent implements OnInit, OnDestroy {
+export class RoleFormFieldComponent implements OnInit, OnDestroy {
 
 	roles: IRole[] = [];
 	roles$: Observable<IRole[]> = observableOf([]);

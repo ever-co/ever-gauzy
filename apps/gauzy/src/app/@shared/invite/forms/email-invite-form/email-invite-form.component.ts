@@ -49,7 +49,6 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		return this._isSuperAdmin;
 	}
 	@Input() set isSuperAdmin(value: boolean) {
-		console.log(value);
 		this._isSuperAdmin = value;
 	}
 

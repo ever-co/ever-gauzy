@@ -19,7 +19,7 @@ import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.
 import { InviteService, RoleService } from '../../../@core/services';
 import { SharedModule } from '../../shared.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';
-import { RoleSelectModule } from '../../role-select/role-select.module';
+import { RoleFormFieldModule } from '../../user/forms/fields/role';
 
 @NgModule({
 	imports: [
@@ -40,7 +40,7 @@ import { RoleSelectModule } from '../../role-select/role-select.module';
 		TranslateModule,
 		SharedModule,
 		ContactSelectModule,
-		RoleSelectModule
+		RoleFormFieldModule
 	],
 	exports: [EmailInviteFormComponent],
 	declarations: [EmailInviteFormComponent],

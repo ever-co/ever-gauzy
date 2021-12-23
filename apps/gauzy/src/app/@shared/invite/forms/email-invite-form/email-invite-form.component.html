@@ -216,14 +216,14 @@
 	<ng-container *ngIf="invitationType === invitationTypeEnum.USER">
 		<div class="row">
 			<div class="col-12">
-				<ga-role-select
+				<ngx-role-form-field
 					id="role"
 					formControlName="role"
 					[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
 					[label]="'FORM.LABELS.ROLE' | translate"
 					[excludes]="excludes"
 					(selectedChange)="onSelectionChange($event)"
-				></ga-role-select>
+				></ngx-role-form-field>
 			</div>
 		</div>
 	</ng-container>
