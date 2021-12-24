@@ -32,7 +32,6 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	* Getter & Setter for dynamic placeholder
 	*/
 	_placeholder: string = this.getTranslation('MENU.LANGUAGE');
-
 	get placeholder(): string {
 		return this._placeholder;
 	}
@@ -94,7 +93,7 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	/*
-	* Getter & Setter for dynamic template
+	* Getter & Setter for dynamic template size
 	*/
 	_size: NbComponentSize = 'medium';
 	get size(): NbComponentSize {

@@ -32,6 +32,8 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 
 	roles: IRole[] = [];
 	roles$: Observable<IRole[]> = observableOf([]);
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	/**
 	 * Getter & Setter for dynamic remove role from options
@@ -97,17 +99,25 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 		this._ctrl = value;
 	}
 	
-	onChange: any = () => {};
-	onTouched: any = () => {};
-
 	private _role: IRole;
-	set role(val: IRole) {
-		this._role = val;
-		this.onChange(val);
-		this.onTouched(val);
+	set role(value: IRole) {
+		this._role = value;
+		this.onChange(value);
+		this.onTouched(value);
 	}
 	get role(): IRole {
 		return this._role;
+	}
+
+	/**
+	 * Getter & Setter for internal [(NgModel)]
+	 */
+	private _roleId: string;
+	get roleId(): string {
+		return this._roleId;
+	}
+	set roleId(value: string) {
+		this._roleId = value;
 	}
 
 	@Output()
@@ -141,9 +151,13 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 		);
 	}
 
+	/**
+	 * Write Value
+	 * @param value 
+	 */
 	writeValue(value: IRole) {
 		if (value) {
-			this.role = value;
+			this.roleId = value.id;
 		}
 	}
 
@@ -159,11 +173,25 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	 * On Selection Change
 	 * @param role 
 	 */
-	onSelectionChange(role: IRole) {
-		if (role) {
-			this.role = role;
-			this.selectedChange.emit(role);
+	onSelectionChange(roleId: IRole['id']) {
+		if (roleId) {
+			this.role = this.getRoleById(roleId);
+			if (this.role) {
+				this.selectedChange.emit(this.role);
+			}
 		}
+	}
+
+	/**
+	 * GET role by ID
+	 * 
+	 * @param value 
+	 * @returns 
+	 */
+	getRoleById(value: IRole['id']) {
+		return this.roles.find(
+			(role: IRole) => value === role.id
+		);
 	}
 
 	ngOnDestroy() {}
