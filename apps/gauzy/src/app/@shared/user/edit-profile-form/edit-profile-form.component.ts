@@ -13,7 +13,6 @@ import {
 } from '@angular/forms';
 import {
 	IUser,
-	RolesEnum,
 	ITag,
 	IRole,
 	IUserUpdateInput
@@ -76,10 +75,6 @@ export class EditProfileFormComponent
 	@Output()
 	userSubmitted = new EventEmitter<void>();
 
-	allRoles: string[] = Object.values(RolesEnum).filter(
-		(r) => r !== RolesEnum.EMPLOYEE
-	);
-
 	public form: FormGroup = EditProfileFormComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
@@ -89,7 +84,7 @@ export class EditProfileFormComponent
 			imageUrl: ['', Validators.required],
 			password: [],
 			repeatPassword: [],
-			roleName: [],
+			role: [],
 			tags: [],
 			preferredLanguage: []
 		}, {
@@ -160,9 +155,8 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await firstValueFrom(this.roleService
-				.getRoleByName({
-					name: this.form.value['roleName'],
+			const role = await firstValueFrom(this.roleService.getRoleByName({
+					name: (this.form.get('role').value).name,
 					tenantId
 				})
 			);
@@ -215,9 +209,8 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await firstValueFrom(this.roleService
-				.getRoleByName({
-					name: this.form.value['roleName'],
+			const role = await firstValueFrom(this.roleService.getRoleByName({
+					name: (this.form.get('role').value).name,
 					tenantId
 				})
 			);
@@ -256,7 +249,7 @@ export class EditProfileFormComponent
 			lastName: user.lastName,
 			email: user.email,
 			imageUrl: user.imageUrl,
-			roleName: user.role.name,
+			role: user.role,
 			tags: user.tags,
 			preferredLanguage: user.preferredLanguage
 		});

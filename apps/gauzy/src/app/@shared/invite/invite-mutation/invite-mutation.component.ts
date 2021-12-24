@@ -45,7 +45,7 @@ export class InviteMutationComponent
 	/*
 	* Getter & Setter for check Super Admin
 	*/
-	_isSuperAdmin: boolean;
+	_isSuperAdmin: boolean = false;
 	get isSuperAdmin(): boolean {
 		return this._isSuperAdmin;
 	}

@@ -1,5 +1,4 @@
 import {
-	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
 	IInviteAcceptInput,
 	IInviteResendInput,
@@ -23,7 +22,9 @@ import {
 	Param,
 	Put,
 	Req,
-	UseInterceptors
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -37,7 +38,7 @@ import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
-import { Permissions, Public } from './../shared/decorators';
+import { LanguageDecorator, Permissions, Public } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TransformInterceptor } from './../core/interceptors';
@@ -49,6 +50,7 @@ import {
 	InviteOrganizationContactCommand,
 	InviteResendCommand
 } from './commands';
+import { CreateInviteDTO } from './dto';
 
 @ApiTags('Invite')
 @UseInterceptors(TransformInterceptor)
@@ -73,13 +75,16 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async createManyWithEmailsId(
-		@Body() entity: ICreateEmailInvitesInput,
-		@Req() request: Request,
-		@I18nLang() languageCode: LanguagesEnum
+		@Body() entity: CreateInviteDTO,
+		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
 		return await this.commandBus.execute(
-			new InviteBulkCreateCommand(entity, request, languageCode)
+			new InviteBulkCreateCommand(
+				entity,
+				languageCode
+			)
 		);
 	}
 

@@ -23,6 +23,7 @@ import { TranslateModule } from '../../translate/translate.module';
 import { LanguageSelectorModule } from '../../language/language-selector';
 import { SharedModule } from '../../shared.module';
 import { PasswordFormFieldModule } from '../forms/fields/password';
+import { RoleFormFieldModule } from '../forms/fields/role';
 
 @NgModule({
 	imports: [
@@ -42,7 +43,8 @@ import { PasswordFormFieldModule } from '../forms/fields/password';
 		TranslateModule,
 		LanguageSelectorModule,
 		SharedModule,
-		PasswordFormFieldModule
+		PasswordFormFieldModule,
+		RoleFormFieldModule
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],

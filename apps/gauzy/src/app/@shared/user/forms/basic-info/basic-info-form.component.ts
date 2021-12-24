@@ -33,10 +33,6 @@ export class BasicInfoFormComponent
 	@Input() public createdById: string;
 	@Input() public selectedTags: ITag[];
 
-	allRoles: string[] = Object.values(RolesEnum).filter(
-		(e) => e !== RolesEnum.EMPLOYEE
-	);
-
 	//Fields for the form
 	form: any;
 	imageUrl: any;
@@ -59,6 +55,7 @@ export class BasicInfoFormComponent
 	createEmployee: any;
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
+	excludes: RolesEnum[] = [];
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -72,16 +69,19 @@ export class BasicInfoFormComponent
 	}
 
 	ngOnInit(): void {
-		this.allRoles = this.allRoles.filter((role) =>
-			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
-		);
+		this.excludes = [
+			RolesEnum.EMPLOYEE
+		];
+		if (!this.isSuperAdmin) {
+			this.excludes.push(RolesEnum.SUPER_ADMIN);
+		}
 		this.loadFormData();
 	}
 
 	public enableEmployee() {
 		return (
-			this.form.get('role').value === RolesEnum.SUPER_ADMIN ||
-			this.form.get('role').value === RolesEnum.ADMIN
+			(this.form.get('role').value).name === RolesEnum.SUPER_ADMIN ||
+			(this.form.get('role').value).name === RolesEnum.ADMIN
 		);
 	}
 
@@ -167,7 +167,7 @@ export class BasicInfoFormComponent
 			const { tenant } = this.store.user;
 			const role = await firstValueFrom(
 				this.roleService.getRoleByName({
-					name: this.role.value ? this.role.value : defaultRoleName,
+					name: (this.role.value).name || defaultRoleName,
 					tenantId: tenant.id
 				})
 			);
@@ -196,6 +196,7 @@ export class BasicInfoFormComponent
 					this.authService.register({
 						user,
 						password: this.password.value,
+						confirmPassword: this.password.value,
 						organizationId,
 						createdById
 					})
