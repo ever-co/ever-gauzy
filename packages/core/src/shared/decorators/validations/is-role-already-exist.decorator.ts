@@ -6,8 +6,8 @@ import {
 	ValidatorConstraint,
 	ValidatorConstraintInterface
 } from "class-validator";
-import { Role } from "./../../../core/entities/internal";
-import { RequestContext } from "./../../../core/context";
+import { Role } from "../../../core/entities/internal";
+import { RequestContext } from "../../../core/context";
 
 /**
  * Role already existed validation constraint

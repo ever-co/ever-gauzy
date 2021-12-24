@@ -1,7 +1,6 @@
 import {
 	IPagination,
 	IRolePermission,
-	IRolePermissionCreateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import {
@@ -15,7 +14,9 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
@@ -23,6 +24,7 @@ import { CrudController } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateRolePermissionDTO } from './dto';
 import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
 
@@ -89,8 +91,9 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async create(
-		@Body() entity: IRolePermissionCreateInput
+		@Body() entity: CreateRolePermissionDTO
 	): Promise<IRolePermission> {
 		return this.rolePermissionService.createPermission(entity);
 	}

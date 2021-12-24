@@ -1,0 +1,1 @@
+export { CreateRolePermissionDTO } from './create-role-permission.dto';
