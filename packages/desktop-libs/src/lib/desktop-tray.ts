@@ -34,9 +34,6 @@ export class TrayIcon {
 				id: '4',
 				label: 'Setting',
 				click() {
-					const appSetting = LocalStore.getStore('appSetting');
-					const config = LocalStore.getStore('configs');
-					const addSetting = LocalStore.getStore('additionalSetting');
 					if (!settingsWindow) {
 						settingsWindow = createSettingsWindow(
 							settingsWindow,
@@ -45,11 +42,7 @@ export class TrayIcon {
 					}
 					settingsWindow.show();
 					setTimeout(() => {
-						settingsWindow.webContents.send('app_setting', {
-							setting: appSetting,
-							config: config,
-							additionalSetting: addSetting
-						});
+						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 						settingsWindow.webContents.send('goto_top_menu');
 					}, 500);
 				}
@@ -58,9 +51,6 @@ export class TrayIcon {
 				id: '6',
 				label: 'Check For Update',
 				click() {
-					const appSetting = LocalStore.getStore('appSetting');
-					const config = LocalStore.getStore('configs');
-					const addSetting = LocalStore.getStore('additionalSetting');
 					if (!settingsWindow) {
 						settingsWindow = createSettingsWindow(
 							settingsWindow,
@@ -72,11 +62,7 @@ export class TrayIcon {
 						settingsWindow.webContents.send('goto_update');
 					}, 100);
 					setTimeout(() => {
-						settingsWindow.webContents.send('app_setting', {
-							setting: appSetting,
-							config: config,
-							additionalSetting: addSetting
-						});
+						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					}, 500);
 				}
 			},
@@ -93,9 +79,6 @@ export class TrayIcon {
 				id: '4',
 				label: 'Setting',
 				click() {
-					const appSetting = LocalStore.getStore('appSetting');
-					const config = LocalStore.getStore('configs');
-					const addSetting = LocalStore.getStore('additionalSetting');
 					if (!settingsWindow) {
 						settingsWindow = createSettingsWindow(
 							settingsWindow,
@@ -104,11 +87,7 @@ export class TrayIcon {
 					}
 					settingsWindow.show();
 					setTimeout(() => {
-						settingsWindow.webContents.send('app_setting', {
-							setting: appSetting,
-							config: config,
-							additionalSetting: addSetting
-						});
+						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 						settingsWindow.webContents.send('goto_top_menu');
 					}, 500);
 				}
@@ -117,9 +96,6 @@ export class TrayIcon {
 				id: '6',
 				label: 'Check For Update',
 				click() {
-					const appSetting = LocalStore.getStore('appSetting');
-					const config = LocalStore.getStore('configs');
-					const addSetting = LocalStore.getStore('additionalSetting');
 					if (!settingsWindow) {
 						settingsWindow = createSettingsWindow(
 							settingsWindow,
@@ -131,11 +107,7 @@ export class TrayIcon {
 						settingsWindow.webContents.send('goto_update');
 					}, 100);
 					setTimeout(() => {
-						settingsWindow.webContents.send('app_setting', {
-							setting: appSetting,
-							config: config,
-							additionalSetting: addSetting
-						});
+						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					}, 500);
 				}
 			},
@@ -231,9 +203,6 @@ export class TrayIcon {
 				id: '6',
 				label: 'Check For Update',
 				click() {
-					const appSetting = LocalStore.getStore('appSetting');
-					const config = LocalStore.getStore('configs');
-					const addSetting = LocalStore.getStore('additionalSetting');
 					if (!settingsWindow) {
 						settingsWindow = createSettingsWindow(
 							settingsWindow,
@@ -245,11 +214,7 @@ export class TrayIcon {
 						settingsWindow.webContents.send('goto_update');
 					}, 100);
 					setTimeout(() => {
-						settingsWindow.webContents.send('app_setting', {
-							setting: appSetting,
-							config: config,
-							additionalSetting: addSetting
-						});
+						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					}, 500);
 				}
 			},
@@ -257,9 +222,6 @@ export class TrayIcon {
 				id: '4',
 				label: 'Setting',
 				click() {
-					const appSetting = LocalStore.getStore('appSetting');
-					const config = LocalStore.getStore('configs');
-					const addSetting = LocalStore.getStore('additionalSetting');
 					if (!settingsWindow) {
 						settingsWindow = createSettingsWindow(
 							settingsWindow,
@@ -268,11 +230,7 @@ export class TrayIcon {
 					}
 					settingsWindow.show();
 					setTimeout(() => {
-						settingsWindow.webContents.send('app_setting', {
-							setting: appSetting,
-							config: config,
-							additionalSetting: addSetting
-						});
+						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 						settingsWindow.webContents.send('goto_top_menu');
 					}, 500);
 				}

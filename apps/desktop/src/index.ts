@@ -284,9 +284,6 @@ const dialogMessage = (msg) => {
 		else {
 			if (settingsWindow) settingsWindow.show();
 			else {
-				const appSetting = LocalStore.getStore('appSetting');
-				const config = LocalStore.getStore('configs');
-				const addSetting = LocalStore.getStore('additionalSetting');
 				if (!settingsWindow) {
 					settingsWindow = createSettingsWindow(
 						settingsWindow,
@@ -295,11 +292,7 @@ const dialogMessage = (msg) => {
 				}
 				settingsWindow.show();
 				setTimeout(() => {
-					settingsWindow.webContents.send('app_setting', {
-						setting: appSetting,
-						config: config,
-						additionalSetting: addSetting
-					});
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 				}, 500);
 			}
 		}

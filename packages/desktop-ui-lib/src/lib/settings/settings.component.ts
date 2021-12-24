@@ -611,12 +611,19 @@ export class SettingsComponent implements OnInit {
 			...this.config,
 			apiHost: this.config.serverUrl
 		};
-		this.timeTrackerService.getUserDetail(request).then((res) => {
-			if (!this.authSetting.isLogout) {
-				this.currentUser = res;
-			}
+		if (this.authSetting) {
+			this.timeTrackerService.getUserDetail(request).then((res) => {
+				if (!this.authSetting.isLogout) {
+					this.currentUser = res;
+				} else {
+					this.currentUser = null;
+				}
+				this._cdr.detectChanges();
+			});
+		} else {
+			this.currentUser = null;
 			this._cdr.detectChanges();
-		});
+		}
 	}
 
 	/*
