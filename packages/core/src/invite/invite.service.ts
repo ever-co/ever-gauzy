@@ -1,4 +1,4 @@
-import { environment as env } from '@gauzy/config';
+import { ConfigService, environment } from '@gauzy/config';
 import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
@@ -15,7 +15,8 @@ import {
 	IEmployee,
 	IRole,
 	InvitationExpirationEnum,
-	IInvite
+	IInvite,
+	InvitationTypeEnum
 } from '@gauzy/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -26,7 +27,7 @@ import { Invite } from './invite.entity';
 import { EmailService } from '../email/email.service';
 import { addDays } from 'date-fns';
 import { UserService } from '../user/user.service';
-import { RequestContext } from './../core';
+import { RequestContext } from './../core/context';
 import {
 	Organization,
 	OrganizationContact,
@@ -34,6 +35,7 @@ import {
 	OrganizationProject,
 	Role,
 } from './../core/entities/internal';
+
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
@@ -56,41 +58,11 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		private readonly roleRepository: Repository<Role>,
 
 		private readonly emailService: EmailService,
-		private readonly userService: UserService
+		private readonly userService: UserService,
+		private readonly configSerice: ConfigService
 	) {
 		super(inviteRepository);
 	}
-
-	// async sendInvitationMail(email: string, token: string): Promise<any> {
-	// 	const url = `${env.host}:4200/#/auth/accept-invite?email=${email}&token=${token}`;
-
-	// 	const testAccount = await nodemailer.createTestAccount();
-
-	// 	const transporter = nodemailer.createTransport({
-	// 		host: 'smtp.ethereal.email',
-	// 		port: 587,
-	// 		secure: false, // true for 465, false for other ports
-	// 		auth: {
-	// 			user: testAccount.user,
-	// 			pass: testAccount.pass
-	// 		}
-	// 	});
-
-	// 	const info = await transporter.sendMail({
-	// 		from: 'Gauzy',
-	// 		to: email,
-	// 		subject: 'Invitation',
-	// 		text: 'Invitation to Gauzy',
-	// 		html:
-	// 			'Hello! <br><br> You have been invited to Gauzy<br><br>To accept your invitation & create your account<br><br>' +
-	// 			'<a href=' +
-	// 			url +
-	// 			'>Click here</a>'
-	// 	});
-
-	// 	console.log('Message sent: %s', info.messageId);
-	// 	console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-	// }
 
 	/**
 	 * Creates all invites. If an email Id already exists, this function will first delete
@@ -99,7 +71,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 */
 	async createBulk(
 		emailInvites: ICreateEmailInvitesInput,
-		originUrl: string,
 		languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
 		const invites: Invite[] = [];
@@ -115,6 +86,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			appliedDate,
 			invitationExpirationPeriod
 		} = emailInvites;
+		const originUrl = this.configSerice.get('clientBaseUrl') as string;
 
 		const projects: IOrganizationProject[] = await this.organizationProjectsRepository.findByIds(
 			projectIds || []
@@ -191,11 +163,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		const items = await this.repository.save(invites);
 		items.forEach((item) => {
-			const registerUrl = `${
-				originUrl || env.host
-			}/#/auth/accept-invite?email=${item.email}&token=${item.token}`;
-
-			if (emailInvites.inviteType.indexOf('/pages/users') > -1) {
+			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${item.email}&token=${item.token}`;
+			if (emailInvites.inviteType === InvitationTypeEnum.USER) {
 				this.emailService.inviteUser({
 					email: item.email,
 					role: role.name,
@@ -205,9 +174,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					languageCode,
 					invitedBy: user
 				});
-			} else if (
-				emailInvites.inviteType.indexOf('/pages/employees') > -1
-			) {
+			} else if (emailInvites.inviteType === InvitationTypeEnum.EMPLOYEE) {
 				this.emailService.inviteEmployee({
 					email: item.email,
 					registerUrl,
@@ -300,7 +267,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return createdInvite;
 	}
 
-	async validate(relations, email, token): Promise<IInvite> {
+	async validate(relations, email: string, token: string): Promise<IInvite> {
 		return await this.repository.findOne({
 			where: (query: SelectQueryBuilder<Invite>) => {
 				query.andWhere(
@@ -330,7 +297,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	createToken(email): string {
-		const token: string = sign({ email }, env.JWT_SECRET, {});
+		const token: string = sign({ email }, environment.JWT_SECRET, {});
 		return token;
 	}
 }

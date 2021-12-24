@@ -18,13 +18,10 @@ export class GauzyCloudUserMigrateHandler implements ICommandHandler<GauzyCloudU
 				if (response && response.data) {
 					const { data } = response;
 					const { password } = input;
-					const request = {
-						findObj: {
-							email: data.email
-						},
+					return this.gauzyCloudService.extractToken({
+						email: data.email,
 						password
-					}
-					return this.gauzyCloudService.extractToken(request);
+					});
 				}
 			}),
 			catchError((error) => {

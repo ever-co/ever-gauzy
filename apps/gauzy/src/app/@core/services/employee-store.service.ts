@@ -58,14 +58,14 @@ export class EmployeeStore {
 		return this._selectedEmployee;
 	}
 
-	employeeAction$ = this.employeeAkitaQuery.select(({ action, employee }) => {
-		return { action, employee };
+	employeeAction$ = this.employeeAkitaQuery.select(({ action, employees }) => {
+		return { action, employees };
 	});
 
-	set employeeAction({ action, employee }: IEmployeeStoreState) {
+	set employeeAction({ action, employees }: IEmployeeStoreState) {
 		this.employeeAkitaStore.update({
 			action,
-			employee
+			employees
 		});
 	}
 

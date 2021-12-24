@@ -12,14 +12,13 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { InviteService } from '../../@core/services/invite.service';
-import { RoleService } from '../../@core/services/role.service';
+import { InviteService, OrganizationsService, RoleService } from '../../@core/services';
 import { ThemeModule } from '../../@theme/theme.module';
 import { AcceptClientInviteFormComponent } from './accept-client-invite-form/accept-client-invite-form.component';
 import { AcceptClientInvitePage } from './accept-client-invite.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { OrganizationsService } from '../../@core/services/organizations.service';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { PasswordFormFieldModule } from '../../@shared/user/forms/fields/password';
 
 @NgModule({
 	imports: [
@@ -37,7 +36,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbCardModule,
 		NbCheckboxModule,
 		TranslateModule,
-		OrganizationsMutationModule
+		OrganizationsMutationModule,
+		PasswordFormFieldModule
 	],
 	declarations: [AcceptClientInvitePage, AcceptClientInviteFormComponent],
 	providers: [InviteService, RoleService, OrganizationsService]

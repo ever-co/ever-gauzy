@@ -7,15 +7,10 @@
 			border-color: nb-theme(color-danger-default);
 		}
 	}
-
 	.item-valid {
 		::ng-deep .ng-select-container {
 			border: 1px solid;
 			border-color: nb-theme(color-success-default);
 		}
-	}
-
-	.form-input {
-		margin-bottom: 1rem;
 	}
 }

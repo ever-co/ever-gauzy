@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { firstValueFrom } from 'rxjs';
 import { filter, first, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
@@ -23,7 +24,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
-import { pluck } from 'underscore'
+import { pluck } from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -345,7 +346,7 @@ export class ApprovalsComponent
 		} else {
 			dialog = this.dialogService.open(RequestApprovalMutationComponent);
 		}
-		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
+		const requestApproval: any = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (requestApproval) {
 			this.toastrService.success(
 				isCreate

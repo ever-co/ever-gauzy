@@ -50,6 +50,7 @@ export interface IUserFindInput {
 export interface IUserRegistrationInput {
 	user: IUser;
 	password?: string;
+	confirmPassword?: string;
 	originalUrl?: string;
 	organizationId?: string;
 	createdById?: string;
@@ -57,10 +58,8 @@ export interface IUserRegistrationInput {
 	sourceId?: string;
 }
 
-export interface IAuthLoginInput {
-	findObj: {
-		email: string;
-	};
+export interface IUserLoginInput {
+	email: string;
 	password: string;
 }
 export interface IAuthResponse {

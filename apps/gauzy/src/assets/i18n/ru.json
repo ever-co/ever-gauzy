@@ -108,7 +108,9 @@
 		"SUPER_ADMIN_DEMO": "Демонстрация Супер Администратора",
 		"ADMIN_DEMO": "Демонстрация администратора",
 		"EMPLOYEE_DEMO": "Демонстрация сотрудника",
-		"DEMO_CREDENTIALS": "Демо-учетные данные"
+		"DEMO_CREDENTIALS": "Демо-учетные данные",
+		"CREATE_NEW_ROLE": "Создать роль {{ name }}",
+		"DELETE_EXISTING_ROLE": "Удалить роль {{ name }}"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -1791,7 +1793,8 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
 			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
 			"ACCESS_DELETE_ACCOUNT": "Доступ к удалению аккаунта",
-			"ACCESS_DELETE_ALL_DATA": "Доступ к удалению всех данных"
+			"ACCESS_DELETE_ALL_DATA": "Доступ к удалению всех данных",
+			"TENANT_SETTING": "Создать/Изменить/Удалить настройки арендатора"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
@@ -3020,6 +3023,10 @@
 			"CANCEL": "Отменить",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
 			"PERMISSION_UPDATED": "Права доступа {{ permissionName }} изменены для {{ roleName }}",
+			"ROLE_CREATED": "{{ name }} успешно создан",
+			"ROLE_DELETED": "{{ name }} успешно удален",
+			"ROLE_CREATED_ERROR": "Ошибка при создании роли {{ name }}",
+			"ROLE_DELETED_ERROR": "Ошибка при удалении роли {{ name }}",
 			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку",
 			"REGISTER_PROPOSAL_NO_EMPLOYEE_MSG": "Требуется сотрудник!",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",

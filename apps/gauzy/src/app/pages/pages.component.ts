@@ -914,7 +914,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					},
 					{
 						title: 'Roles & Permissions',
-						link: '/pages/settings/roles',
+						link: '/pages/settings/roles-permissions',
 						icon: 'award-outline',
 						data: {
 							translationKey: 'MENU.ROLES',

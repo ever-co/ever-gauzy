@@ -16,15 +16,21 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		super(employeeRepository);
 	}
 
+	/**
+	 * Create Bulk Employee User
+	 * 
+	 * @param input 
+	 * @returns 
+	 */
 	async createBulk(input: IEmployeeCreateInput[]): Promise<Employee[]> {
-		return Promise.all(
-			input.map((emp) => {
-				emp.user.tenant = {
-					id: emp.organization.tenantId
-				};
-				return this.create(emp);
-			})
-		);
+		const employees: IEmployee[] = [];
+		for await (let employee of input) {
+			employee.user.tenant = {
+				id: employee.organization.tenantId
+			};
+			employees.push(await this.create(employee));
+		}
+		return employees;
 	}
 
 	public async findAllActive(): Promise<Employee[]> {

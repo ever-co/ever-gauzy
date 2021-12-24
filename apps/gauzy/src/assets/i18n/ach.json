@@ -108,7 +108,9 @@
 		"SUPER_ADMIN_DEMO": "crwdns10817:0crwdne10817:0",
 		"ADMIN_DEMO": "crwdns10819:0crwdne10819:0",
 		"EMPLOYEE_DEMO": "crwdns10821:0crwdne10821:0",
-		"DEMO_CREDENTIALS": "crwdns10823:0crwdne10823:0"
+		"DEMO_CREDENTIALS": "crwdns10823:0crwdne10823:0",
+		"CREATE_NEW_ROLE": "crwdns10855:0{{ name }}crwdne10855:0",
+		"DELETE_EXISTING_ROLE": "crwdns10857:0{{ name }}crwdne10857:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
@@ -1791,7 +1793,8 @@
 			"ORG_JOB_EMPLOYEE_VIEW": "crwdns8748:0crwdne8748:0",
 			"ORG_JOB_MATCHING_VIEW": "crwdns8750:0crwdne8750:0",
 			"ACCESS_DELETE_ACCOUNT": "crwdns10543:0crwdne10543:0",
-			"ACCESS_DELETE_ALL_DATA": "crwdns10545:0crwdne10545:0"
+			"ACCESS_DELETE_ALL_DATA": "crwdns10545:0crwdne10545:0",
+			"TENANT_SETTING": "crwdns10859:0crwdne10859:0"
 		},
 		"BILLING": "crwdns10521:0crwdne10521:0",
 		"BUDGET": "crwdns10523:0crwdne10523:0",
@@ -3020,6 +3023,10 @@
 			"CANCEL": "crwdns2567:0crwdne2567:0",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "crwdns2569:0crwdne2569:0",
 			"PERMISSION_UPDATED": "crwdns2683:0{{ permissionName }}crwdnd2683:0{{ roleName }}crwdne2683:0",
+			"ROLE_CREATED": "crwdns10861:0{{ name }}crwdne10861:0",
+			"ROLE_DELETED": "crwdns10863:0{{ name }}crwdne10863:0",
+			"ROLE_CREATED_ERROR": "crwdns10865:0{{ name }}crwdne10865:0",
+			"ROLE_DELETED_ERROR": "crwdns10867:0{{ name }}crwdne10867:0",
 			"PERMISSION_UPDATE_ERROR": "crwdns2685:0crwdne2685:0",
 			"REGISTER_PROPOSAL_NO_EMPLOYEE_MSG": "crwdns8422:0crwdne8422:0",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "crwdns2771:0crwdne2771:0",

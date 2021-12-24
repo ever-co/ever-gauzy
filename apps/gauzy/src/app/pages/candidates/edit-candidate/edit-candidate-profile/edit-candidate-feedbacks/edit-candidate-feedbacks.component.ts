@@ -11,7 +11,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 import {
 	ICandidateFeedback,
@@ -113,14 +113,16 @@ export class EditCandidateFeedbacksComponent
 	}
 	async getEmployees() {
 		this.loading = true;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const { items } = await this.employeesService
-			.getAll(['user'], {
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
 				organizationId,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
 		this.employeeList = items;
 		this.loading = false;
 	}
@@ -304,18 +306,20 @@ export class EditCandidateFeedbacksComponent
 		return res;
 	}
 	async loadInterviews() {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+		
 		const result = await this.candidateInterviewService.getAll(
 			['feedbacks', 'interviewers', 'technologies', 'personalQualities'],
 			{ candidateId: this.candidateId, organizationId, tenantId }
 		);
-		const { items } = await this.candidatesService
-			.getAll(['user', 'interview', 'feedbacks'], {
+		const { items } = await firstValueFrom(
+			this.candidatesService.getAll(['user', 'interview', 'feedbacks'], {
 				organizationId,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		);
+
 		if (result) {
 			this.interviewList = result.items;
 			this.interviewList.forEach((interview) => {

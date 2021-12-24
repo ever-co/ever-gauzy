@@ -12,7 +12,7 @@ import { UserModule } from './../user';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/role', module: RoleModule }
+			{ path: '/roles', module: RoleModule }
 		]),
 		forwardRef(() => TypeOrmModule.forFeature([ Role ])),
 		forwardRef(() => TenantModule),

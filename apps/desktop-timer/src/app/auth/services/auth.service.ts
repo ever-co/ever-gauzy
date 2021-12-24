@@ -38,7 +38,7 @@ export class AuthService {
 
 	requestPassword(
 		requestPasswordInput
-	): Observable<{ id?: string; token?: string }> {
+	): Observable<{ token: string }> {
 		return this.http.post<IAuthResponse>(
 			`${API_PREFIX}/auth/request-password`,
 			requestPasswordInput

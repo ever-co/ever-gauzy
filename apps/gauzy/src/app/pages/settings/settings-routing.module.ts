@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { EditRolesPermissionsComponent } from './edit-roles-permissions/edit-roles-permissions.component';
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { SettingsComponent } from './settings.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
@@ -60,21 +59,10 @@ const routes: Routes = [
 					)
 			},
 			{
-				path: 'roles',
-				component: EditRolesPermissionsComponent,
-				canActivate: [NgxPermissionsGuard],
-				data: {
-					permissions: {
-						only: [PermissionsEnum.CHANGE_ROLES_PERMISSIONS],
-						redirectTo: '/pages/settings'
-					},
-					selectors: {
-						project: false,
-						employee: false,
-						date: false,
-						organization: false
-					}
-				}
+				path: 'roles-permissions',
+				loadChildren: () => import('./roles-permissions/roles-permissions.module').then(
+					(m) => m.RolesPermissionsModule
+				)
 			},
 			{
 				path: 'import-export',

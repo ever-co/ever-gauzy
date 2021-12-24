@@ -30,6 +30,8 @@ Feature: Employee add info test
     Then User click on edit icon button
     When User see Employment tab
     Then User click on Employment tab
+    When User see Employment tab
+    Then User click on Employment tab
     When User see Short Description input field
     Then User enter value for Short Description
     When User see level input field

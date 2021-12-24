@@ -1,0 +1,23 @@
+
+<div class="form-group">
+	<label class="label" [attr.for]="id">
+		{{ (label || 'FORM.LABELS.ROLE') | translate }}
+	</label>
+	<nb-select 
+		fullWidth
+		[placeholder]="(placeholder || 'FORM.PLACEHOLDERS.ROLE') | translate"
+		[size]="size"
+		[attr.id]="id"
+		(selectedChange)="onSelectionChange($event)"
+		[formControl]="ctrl"
+		[(ngModel)]="roleId"
+		[status]="
+				ctrl.invalid && (ctrl.touched || ctrl.dirty)
+					? 'danger' 
+					: 'basic'"
+	>
+		<nb-option *ngFor="let role of roles$ | async" [value]="role.id">
+			{{ role.name }}
+		</nb-option>
+	</nb-select>
+</div>

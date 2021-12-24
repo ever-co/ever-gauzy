@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IUserLoginInput, IAuthResponse } from '@gauzy/contracts';
 import { AuthLoginCommand } from '../auth.login.command';
 import { AuthService } from '../../auth.service';
-import { IAuthLoginInput, IAuthResponse } from '@gauzy/contracts';
 
 @CommandHandler(AuthLoginCommand)
 export class AuthLoginHandler implements ICommandHandler<AuthLoginCommand> {
@@ -9,8 +9,8 @@ export class AuthLoginHandler implements ICommandHandler<AuthLoginCommand> {
 
 	public async execute(command: AuthLoginCommand): Promise<IAuthResponse> {
 		const { input } = command;
-		const { findObj, password }: IAuthLoginInput = input;
+		const { email, password }: IUserLoginInput = input;
 
-		return await this.authService.login(findObj, password);
+		return await this.authService.login(email, password);
 	}
 }

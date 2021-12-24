@@ -119,26 +119,13 @@
 					</div>
 					<div class="row">
 						<div class="col-sm-6" *ngIf="allowRoleChange">
-							<div class="form-group">
-								<label
-									for="roleName"
-									class="label"
-									[innerText]="'FORM.LABELS.ROLE' | translate"
-								></label>
-								<nb-select
-									fullWidth
-									class="d-block"
-									[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
-									formControlName="roleName"
-									id="roleName"
-								>
-									<nb-option
-										*ngFor="let role of allRoles"
-										[value]="role"
-									>{{ 'USERS_PAGE.ROLE.' + role | translate }}
-									</nb-option>
-								</nb-select>
-							</div>
+							<ngx-role-form-field
+								[id]="'role'"
+								[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+								[label]="'FORM.LABELS.ROLE' | translate"
+								formControlName="role"
+								(selectedChange)="onSelectionChange($event)"
+							></ngx-role-form-field>
 						</div>
 						<div class="col-sm-6">
 							<div class="form-group">

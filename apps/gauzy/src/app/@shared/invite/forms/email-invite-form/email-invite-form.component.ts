@@ -1,6 +1,5 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
 import {
 	ICreateEmailInvitesOutput,
 	InvitationTypeEnum,
@@ -10,7 +9,8 @@ import {
 	IOrganizationDepartment,
 	IOrganization,
 	IUser,
-	InvitationExpirationEnum
+	InvitationExpirationEnum,
+	IRole
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -20,6 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { InviteService, RoleService, Store } from './../../../../@core/services';
 import { EmailValidator } from '../../../../@core/validators';
 import { TranslationBaseComponent } from '../../../language-base';
+import { FormHelpers } from '../../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,6 +30,8 @@ import { TranslationBaseComponent } from '../../../language-base';
 })
 export class EmailInviteFormComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	invitationTypeEnum = InvitationTypeEnum;
 	roles: any[] = [];
@@ -41,7 +44,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for check Super Admin
 	*/
-	_isSuperAdmin: boolean;
+	_isSuperAdmin: boolean = false;
 	get isSuperAdmin(): boolean {
 		return this._isSuperAdmin;
 	}
@@ -74,7 +77,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			appliedDate: [],
 			departments: [],
 			organizationContacts: [],
-			roleName: [],
+			role: [],
 			invitationExpirationPeriod: []
 		}, {
 			validators: [
@@ -90,12 +93,12 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	organization: IOrganization;
 
 	emails: Set<string> = new Set([]);
+	excludes: RolesEnum[] = [];
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly inviteService: InviteService,
-		private readonly roleService: RoleService,
-		private readonly router: Router,
+		private readonly rolesService: RoleService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService
 	) {
@@ -107,7 +110,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				tap(() => this.renderRoles()),
+				tap(() => this.excludeRoles()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -123,14 +126,21 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	renderRoles() {
-		this.roles = Object.values(RolesEnum).filter(
-			(role) => role !== RolesEnum.EMPLOYEE
-		).filter((role) =>
-			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
-		);
+	/**
+	 * Exclude roles
+	 */
+	async excludeRoles() {
+		this.excludes = [
+			RolesEnum.EMPLOYEE
+		];
+		if (!this.isSuperAdmin) {
+			this.excludes.push(RolesEnum.SUPER_ADMIN);
+		}
 	}
 
+	/**
+	 * Render Invitation Expiry Options
+	 */
 	renderInvitationExpiryOptions() {
 		this.invitationExpiryOptions = [
 			{
@@ -154,10 +164,6 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 				value: InvitationExpirationEnum.NEVER
 			}
 		]
-	}
-
-	ngOnDestroy() {
-		this.emails.clear();
 	}
 
 	isEmployeeInvitation() {
@@ -204,14 +210,14 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		this.form.get('organizationContacts').updateValueAndValidity();
 	}
 
-	getRoleNameFromForm = () => {
+	getRoleFromForm = () => {
 		if (this.isEmployeeInvitation()) {
 			return RolesEnum.EMPLOYEE;
 		}
 		if (this.isCandidateInvitation()) {
 			return RolesEnum.CANDIDATE;
 		}
-		return this.form.get('roleName').value || RolesEnum.VIEWER;
+		return (this.form.get('role').value).name || RolesEnum.VIEWER;
 	};
 
 	async saveInvites(): Promise<ICreateEmailInvitesOutput> {
@@ -219,14 +225,14 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const { tenantId } = this.store.user;
+		const { tenantId, id: invitedById } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const role = await firstValueFrom(this.roleService
-			.getRoleByName({
-				name: this.getRoleNameFromForm(),
+		const role = await firstValueFrom(this.rolesService.getRoleByName({
+				name: this.getRoleFromForm(),
 				tenantId
-			}));
+			})
+		);
 
 		const {
 			startedWorkOn,
@@ -246,8 +252,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 			roleId: role.id,
 			organizationId,
 			tenantId,
-			invitedById: this.user.id,
-			inviteType: this.router.url,
+			invitedById,
+			inviteType: this.invitationType,
 			startedWorkOn: startedWorkOn ? new Date(startedWorkOn) : null,
 			appliedDate: appliedDate ? new Date(appliedDate) : null,
 			invitationExpirationPeriod
@@ -316,28 +322,14 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * Form invalid control validate
-	 * 
-	 * @param control 
-	 * @returns 
-	 */
-	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
-			return true;
-		}
-		return this.form.get(control).touched &&
-			this.form.get(control).invalid;
-	}
-
-	/**
 	 * SET form validators
 	 * 
 	 */
 	setFormValidators() {
 		if (this.isEmployeeInvitation() || this.isCandidateInvitation()) {
-			this.form.get('roleName').clearValidators();
+			this.form.get('role').clearValidators();
 		} else {
-			this.form.get('roleName').setValidators([
+			this.form.get('role').setValidators([
 				Validators.required
 			]);
 		}
@@ -355,4 +347,15 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		);
 		this.form.get('invitationExpirationPeriod').updateValueAndValidity();
 	}
+
+	/**
+	 * On Selection Change
+	 * @param role 
+	 */
+	onSelectionChange(role: IRole) { }
+
+	ngOnDestroy() {
+		this.emails.clear();
+	}
 }
+

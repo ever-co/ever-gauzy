@@ -1,4 +1,5 @@
-import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import { getUserDummyImage } from "./../core/utils";
 import { User } from "./user.entity";
 
 @EventSubscriber()
@@ -9,6 +10,16 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
     */
     listenTo() {
         return User;
+    }
+
+    /**
+     * Called before user insertion.
+     */
+    beforeInsert(event: InsertEvent<User>) {
+        const entity = event.entity;
+        if (!entity.imageUrl) {
+            entity.imageUrl = getUserDummyImage(entity);
+        }
     }
 
     /**

@@ -1,0 +1,113 @@
+<nb-card class="card-scroll">
+	<nb-card-header>
+		<h4>{{ 'MENU.SETTINGS' | translate }} - {{ 'ORGANIZATIONS_PAGE.EDIT.ROLES_PERMISSIONS' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<nb-form-field>
+						<input
+							#input
+							[formControl]="formControl"
+							(input)="onInputChange()"
+							nbInput
+							fullWidth
+							[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+							[nbAutocomplete]="autocomplete"
+						/>
+						<button nbSuffix nbButton ghost>
+							<nb-icon
+								[icon]="'close'"
+								pack="eva"
+								(click)="formControl.reset(rolesEnum.EMPLOYEE)">
+							</nb-icon>
+						</button>
+					</nb-form-field>
+					<nb-autocomplete #autocomplete (selectedChange)="onSelectionChange($event)">
+						<nb-option 
+							*ngFor="let role of roles$ | async" 
+							[value]="role.name" 
+							[class]="(role.name === input.value) ? 'active' : ''"
+						>{{ role.name }}</nb-option>
+					</nb-autocomplete>
+				</div>
+			</div>
+			<div class="col-6" *ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']">
+				<ng-container *ngIf="isWantToCreate">
+					<button nbButton status="success" (click)="createRole()">
+						{{ 
+							'BUTTONS.CREATE_NEW_ROLE' | translate : {
+								name: input.value
+							} 
+						}}
+					</button>
+				</ng-container>
+				<ng-container *ngIf="role && role.isSystem === false && !isWantToCreate">
+					<button nbButton status="danger" (click)="deleteRole()">
+						{{ 
+							'BUTTONS.DELETE_EXISTING_ROLE' | translate : {
+								name: role.name
+							} 
+						}}
+					</button>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row" [nbSpinner]="loading" nbSpinnerSize="large">
+			<div class="col-6">
+				<nb-card>
+					<nb-card-header>
+						{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL' | translate }}
+					</nb-card-header>
+					<nb-card-body class="permission-items-col">
+						<nb-toggle
+							*ngFor="
+								let permission of permissionGroups.GENERAL
+							"
+							[(checked)]="enabledPermissions[permission]"
+							(checkedChange)="
+								permissionChanged(permission, $event)
+							"
+							labelPosition="start"
+							status="basic"
+							[disabled]="!role"
+						>
+							{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
+						</nb-toggle>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-6">
+				<nb-card>
+					<nb-card-header
+						>{{
+							'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.ADMINISTRATION'
+								| translate
+						}}
+						<nb-icon
+							[nbTooltip]="'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN' | translate"
+							class="mr-1"
+							icon="question-mark-circle-outline"
+						>
+						</nb-icon>
+					</nb-card-header>
+					<nb-card-body class="permission-items-col">
+						<nb-toggle
+							*ngFor="let permission of getAdministrationPermissions()"
+							[(checked)]="enabledPermissions[permission]"
+							(checkedChange)="
+								permissionChanged(permission, $event)
+							"
+							labelPosition="start"
+							status="basic"
+							[disabled]="input.value !== rolesEnum.ADMIN || !role"
+						>
+							{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
+						</nb-toggle>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

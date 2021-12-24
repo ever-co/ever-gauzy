@@ -1,6 +1,6 @@
 export const LoginPage = {
 	emailInputFieldCss: '#input-email',
 	passwordInputFieldCss: '#input-password',
-	loginButton: 'ngx-login > form > button',
+	loginButton: 'form > button[status="primary"]',
 	loginHeadingCss: 'h1#title'
 };

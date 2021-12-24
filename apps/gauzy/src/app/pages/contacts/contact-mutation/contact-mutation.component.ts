@@ -16,7 +16,8 @@ import {
 	OrganizationContactBudgetTypeEnum
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -202,13 +203,13 @@ export class ContactMutationComponent
 	private async _getEmployees() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items } = await this.employeesService
-			.getAll(['user'], {
+
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
 				organizationId,
 				tenantId
 			})
-			.pipe(first())
-			.toPromise();
+		)
 		this.employees = items;
 		if (organizationId) {
 			this.selectedMembers = this.filterArrayPipe.transform(

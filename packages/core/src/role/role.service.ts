@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { getManager, Repository } from 'typeorm';
+import { DeleteResult, getManager, Repository } from 'typeorm';
 import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
@@ -76,5 +76,20 @@ export class RoleService extends TenantAwareCrudService<Role> {
 			}
 		}
 		return records;
+	}
+
+	/**
+	 * Few Roles can't be removed/delete for tenant
+	 * RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN, RolesEnum.EMPLOYEE, RolesEnum.VIEWER, RolesEnum.CANDIDATE
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
+	async deleteRole(id: string): Promise<DeleteResult> {
+		return await this.delete(id, {
+			where: {
+				isSystem: false
+			}
+		})
 	}
 }
