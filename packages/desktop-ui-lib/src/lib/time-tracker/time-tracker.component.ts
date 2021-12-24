@@ -14,7 +14,7 @@ import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
-import { CustomRenderComponent } from './custom-render-cell.component';
+import { CustomRenderComponent, CustomDescriptionComponent } from './custom-render-cell.component';
 import { LocalDataSource } from 'ng2-smart-table';
 
 // Import logging for electron and override default console logging
@@ -113,7 +113,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 			},
 			description: {
 			  title: 'Description',
-			  type: 'text'
+			  type: 'custom',
+			  renderComponent: CustomDescriptionComponent
 			},
 			dueDate: {
 			  title: 'Due',

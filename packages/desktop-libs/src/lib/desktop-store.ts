@@ -122,5 +122,21 @@ export const LocalStore = {
 			})
 		}
 		return values;
+	},
+
+	getApplicationConfig: () => {
+		const configs = store.get('configs');
+		const auth = store.get('auth');
+		const projectInfo = store.get('project');
+		const settings = store.get('appSetting');
+		const addSetting = LocalStore.getStore('additionalSetting');
+
+		return {
+			setting: settings,
+			config: configs,
+			auth,
+			additionalSetting: addSetting,
+			activeProject: projectInfo
+		}
 	}
 };
