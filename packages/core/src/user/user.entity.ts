@@ -116,7 +116,7 @@ export class User extends TenantBaseEntity implements IUser {
     */
     // Role
 	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, { 
+	@ManyToOne(() => Role, (role) => role.users, { 
 		nullable: true, 
 		onDelete: 'CASCADE' 
 	})
@@ -174,20 +174,4 @@ export class User extends TenantBaseEntity implements IUser {
 	})
 	@JoinColumn()
 	organizations?: IOrganization[];
-}
-
-export class UserPreferredLanguageDTO {
-
-	@ApiProperty({ type: () => String, enum: LanguagesEnum })
-	@IsNotEmpty()
-    @IsEnum(LanguagesEnum)
-    readonly preferredLanguage: LanguagesEnum;
-}
-
-export class UserPreferredComponentLayoutDTO {
-
-	@ApiProperty({ type: () => String, enum: ComponentLayoutStyleEnum })
-	@IsNotEmpty()
-    @IsEnum(ComponentLayoutStyleEnum)
-    readonly preferredComponentLayout: ComponentLayoutStyleEnum;
 }

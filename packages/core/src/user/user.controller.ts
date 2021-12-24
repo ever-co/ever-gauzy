@@ -39,11 +39,12 @@ import { RequestContext } from '../core/context';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { User, UserPreferredComponentLayoutDTO, UserPreferredLanguageDTO } from './user.entity';
+import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserCreateCommand } from './commands';
 import { FactoryResetService } from './factory-reset/factory-reset.service';
 import { UserDeleteCommand } from './commands/user.delete.command';
+import { UpdatePreferredLanguageDTO, UpdatePreferredComponentLayoutDTO } from './dto';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -123,7 +124,7 @@ export class UserController extends CrudController<User> {
 	}))
 	async updatePreferredLanguage(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UserPreferredLanguageDTO
+		@Body() entity: UpdatePreferredLanguageDTO
 	) {
 		const userId = RequestContext.currentUserId();
 		if (userId !== id) {
@@ -154,7 +155,7 @@ export class UserController extends CrudController<User> {
 	}))
 	async updatePreferredComponentLayout(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UserPreferredComponentLayoutDTO
+		@Body() entity: UpdatePreferredComponentLayoutDTO
 	) {
 		const userId = RequestContext.currentUserId();
 		if (userId !== id) {
