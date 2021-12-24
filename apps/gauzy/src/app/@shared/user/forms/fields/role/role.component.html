@@ -10,12 +10,13 @@
 		[attr.id]="id"
 		(selectedChange)="onSelectionChange($event)"
 		[formControl]="ctrl"
+		[(ngModel)]="roleId"
 		[status]="
 				ctrl.invalid && (ctrl.touched || ctrl.dirty)
 					? 'danger' 
 					: 'basic'"
 	>
-		<nb-option *ngFor="let role of roles$ | async" [value]="role" >
+		<nb-option *ngFor="let role of roles$ | async" [value]="role.id">
 			{{ role.name }}
 		</nb-option>
 	</nb-select>

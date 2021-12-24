@@ -261,5 +261,14 @@ export class EditProfileFormComponent
 		this.form.updateValueAndValidity();
 	}
 
+	/**
+	 * On Selection Change
+	 * @param role 
+	 */
+	onSelectionChange(role: IRole) {
+		this.form.get('role').setValue(role);
+		this.form.get('role').updateValueAndValidity();
+	}
+
 	ngOnDestroy(): void { }
 }
