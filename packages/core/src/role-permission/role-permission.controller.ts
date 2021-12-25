@@ -24,7 +24,7 @@ import { CrudController } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateRolePermissionDTO } from './dto';
+import { CreateRolePermissionDTO, UpdateRolePermissionDTO } from './dto';
 import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
 
@@ -116,9 +116,10 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: RolePermission
+		@Body() entity: UpdateRolePermissionDTO
 	): Promise<UpdateResult | IRolePermission> {
 		return await this.rolePermissionService.updatePermission(id, entity);
 	}
