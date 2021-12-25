@@ -69,9 +69,6 @@ export class BasicInfoFormComponent
 	}
 
 	ngOnInit(): void {
-		this.excludes = [
-			RolesEnum.EMPLOYEE
-		];
 		if (!this.isSuperAdmin) {
 			this.excludes.push(RolesEnum.SUPER_ADMIN);
 		}

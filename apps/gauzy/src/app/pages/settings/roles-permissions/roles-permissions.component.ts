@@ -171,7 +171,21 @@ export class RolesPermissionsComponent
 		});
 	}
 
-	async permissionChanged(permission: string, enabled: boolean) {
+	async permissionChanged(
+		permission: string,
+		enabled: boolean,
+		allowChange: boolean
+	) {
+		/**
+		 * If anyone trying to update another users permissions without enough permisison 
+		 */
+		if (!allowChange) {
+			this.toastrService.danger(
+				this.getTranslation('TOASTR.MESSAGE.PERMISSION_UPDATE_ERROR'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+			return;
+		}
 		try {
 			const { id: roleId } = this.role;
 			const { tenantId } = this.user;
@@ -252,19 +266,7 @@ export class RolesPermissionsComponent
 		this.roles$ = observableOf(
 			(await (this.rolesService.getAll())).items
 		).pipe(
-			map((roles: IRole[]) => {
-				if (this.user.role.name === RolesEnum.SUPER_ADMIN) {
-					roles = roles.filter(
-						(role) =>  ![RolesEnum.SUPER_ADMIN].includes(role.name as RolesEnum)
-					);
-				}
-				if (this.user.role.name === RolesEnum.ADMIN) {
-					roles = roles.filter(
-						(role) =>  ![RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN].includes(role.name as RolesEnum)
-					);
-				}
-				return roles;
-			}),
+			map((roles: IRole[]) => roles),
 			tap((roles: IRole[]) => this.roles = roles),
 			tap(() => this.formControl.setValue(this.formControl.value || RolesEnum.EMPLOYEE))
 		);
@@ -333,6 +335,53 @@ export class RolesPermissionsComponent
 				)
 				.subscribe();
 		}
+	}
+
+	/**
+	 * Disabled General Group Permissions
+	 * 
+	 * @returns 
+	 */
+	isDisabledGeneralPermissions(): boolean {
+		if (!this.role) {
+			return true;
+		}
+
+		/**
+		 * Disabled all permissions for "SUPER_ADMIN" 
+		 */
+		const excludes = [ RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN ];
+		if (excludes.includes(this.user.role.name as RolesEnum)) {
+			if (this.role.name === RolesEnum.SUPER_ADMIN) {
+				return true;
+			}
+		}
+		if (this.user.role.name === RolesEnum.ADMIN) {
+			if (this.role.name === RolesEnum.ADMIN) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Disabled General Group Permissions
+	 * 
+	 * @returns 
+	 */
+	isDisabledAdministrationPermissions(): boolean {
+		if (!this.role) {
+			return true;
+		}
+		/**
+		 * Disabled all administration permissions except "SUPER_ADMIN"
+		 */
+		if (this.user.role.name === RolesEnum.SUPER_ADMIN) {
+			if (this.role.name === RolesEnum.ADMIN) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	ngOnDestroy() {}

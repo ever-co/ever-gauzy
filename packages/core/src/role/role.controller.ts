@@ -1,17 +1,34 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IPagination, IRole, PermissionsEnum } from '@gauzy/contracts';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import { RoleService } from './role.service';
-import { CrudController } from './../core/crud';
 import { Role } from './role.entity';
+import { CreateRoleDTO } from './dto';
+import { TransformInterceptor } from './../core/interceptors';
+import { CrudController } from './../core/crud';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { CreateRoleDTO } from './dto';
-import { DeleteResult, UpdateResult } from 'typeorm';
 
 @ApiTags('Role')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class RoleController extends CrudController<Role> {
 	constructor(private readonly roleService: RoleService) {
@@ -63,11 +80,11 @@ export class RoleController extends CrudController<Role> {
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async create(
 		@Body() entity: CreateRoleDTO
 	): Promise<IRole> {
-		return this.roleService.create(entity);
+		return await this.roleService.create(entity);
 	}
 
 	/**
@@ -81,7 +98,7 @@ export class RoleController extends CrudController<Role> {
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: CreateRoleDTO
