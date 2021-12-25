@@ -1,9 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsEnum, IsNotEmpty } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, ValidateIf } from "class-validator";
 import { IRolePermissionCreateInput, PermissionsEnum } from "@gauzy/contracts";
+import { IsRoleShouldExist } from "./../../shared/decorators/validations";
 
 /**
- * Create Role DTO validation
+ * Create Role Permission DTO validation
  */
 export class CreateRolePermissionDTO implements IRolePermissionCreateInput {
 
@@ -19,5 +20,8 @@ export class CreateRolePermissionDTO implements IRolePermissionCreateInput {
     readonly enabled: boolean;
 
     @ApiProperty({ type: () => String })
+    @ValidateIf((it) => Object.values(PermissionsEnum).includes(it.permission))
+    @IsNotEmpty()
+    @IsRoleShouldExist()
     readonly roleId: string;
 }
