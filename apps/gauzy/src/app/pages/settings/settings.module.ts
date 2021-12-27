@@ -11,7 +11,8 @@ import {
 	NbListModule,
 	NbTabsetModule,
 	NbTooltipModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../@theme/theme.module';
 import { SettingsRoutingModule } from './settings-routing.module';
@@ -51,6 +52,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		ReactiveFormsModule,
 		NbTooltipModule,
 		NbBadgeModule,
+		NbToggleModule,
 		TranslateModule,
 		NgSelectModule,
 		BackNavigationModule,
