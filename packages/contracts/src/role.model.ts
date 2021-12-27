@@ -19,7 +19,8 @@ export enum RolesEnum {
 	EMPLOYEE = 'EMPLOYEE',
 	CANDIDATE = 'CANDIDATE',
 	MANAGER = 'MANAGER',
-	VIEWER = 'VIEWER'
+	VIEWER = 'VIEWER',
+	INTERVIEWER = 'INTERVIEWER'
 }
 
 export interface IRoleMigrateInput extends IBasePerTenantEntityModel {

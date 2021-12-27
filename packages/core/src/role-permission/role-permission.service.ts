@@ -12,6 +12,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { pluck } from 'underscore';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -328,10 +329,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				const defaultPermissions = DEFAULT_ROLE_PERMISSIONS.find(
 					(defaultRole) => role.name === defaultRole.role
 				);
-				if (
-					defaultPermissions &&
-					defaultPermissions['defaultEnabledPermissions']
-				) {
+				if (defaultPermissions && isNotEmpty(defaultPermissions['defaultEnabledPermissions'])) {
 					const { defaultEnabledPermissions } = defaultPermissions;
 					for await (const permission of defaultEnabledPermissions) {
 						const rolePermission = new RolePermission();
@@ -344,7 +342,6 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				}
 			}
 		}
-		
 		await this.rolePermissionRepository.save(rolesPermissions);
 		return rolesPermissions;
 	}

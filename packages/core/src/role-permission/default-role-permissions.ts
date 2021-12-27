@@ -257,12 +257,22 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		]
 	},
 	{
-		role: RolesEnum.CANDIDATE,
+		role: RolesEnum.INTERVIEWER,
 		defaultEnabledPermissions: [
-			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
-			PermissionsEnum.ORG_PROPOSALS_VIEW,
-			PermissionsEnum.ORG_TIME_OFF_VIEW,
-			PermissionsEnum.ORG_TAGS_EDIT
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW
 		]
+	},
+	{
+		role: RolesEnum.CANDIDATE,
+		defaultEnabledPermissions: []
+	},
+	{
+		role: RolesEnum.MANAGER,
+		defaultEnabledPermissions: []
+	},
+	{
+		role: RolesEnum.VIEWER,
+		defaultEnabledPermissions: []
 	}
 ];
