@@ -110,4 +110,5 @@ export interface IUserViewModel extends IBasePerTenantEntityModel {
 	roleName?: string;
 	role?: string;
 	tags?: ITag[];
+	userOrganizationId?: string;
 }
