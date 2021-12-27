@@ -7,6 +7,7 @@ import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
+import { defaultRoles } from './default-role';
 
 @Injectable()
 export class RoleService extends TenantAwareCrudService<Role> {
@@ -28,6 +29,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				const role = new Role();
 				role.name = name;
 				role.tenant = tenant;
+				role.isSystem = defaultRoles.includes(name);
 				roles.push(role);
 			}
 		}
