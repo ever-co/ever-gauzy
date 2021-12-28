@@ -1,8 +1,7 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { RolesEnum, IUser, ITag } from '@gauzy/contracts';
+import { RolesEnum, IUser } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { Store, ToastrService } from '../../../@core/services';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
 
 @Component({
@@ -11,23 +10,28 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 	styleUrls: ['./user-mutation.component.scss']
 })
 export class UserMutationComponent implements OnInit {
+	
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
-	tags: ITag[];
-	selectedTags: any;
 
-	@Input() public isSuperAdmin: boolean;
+	/*
+	* Getter & Setter for check Super Admin
+	*/
+	_isSuperAdmin: boolean = false;
+	get isSuperAdmin(): boolean {
+		return this._isSuperAdmin;
+	}
+	@Input() set isSuperAdmin(value: boolean) {
+		this._isSuperAdmin = value;
+	}
 
 	constructor(
-		protected dialogRef: NbDialogRef<UserMutationComponent>,
-		protected store: Store,
-		private toastrService: ToastrService
+		protected readonly dialogRef: NbDialogRef<UserMutationComponent>,
+		protected readonly store: Store,
+		private readonly toastrService: ToastrService
 	) {}
 
 	ngOnInit(): void {}
-	selectedTagsEvent(ev) {
-		this.tags = ev;
-	}
 
 	closeDialog(user: IUser = null) {
 		this.dialogRef.close({ user });

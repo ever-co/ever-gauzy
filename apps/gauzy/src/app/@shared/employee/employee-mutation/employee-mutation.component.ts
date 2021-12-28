@@ -8,9 +8,10 @@ import {
 	IUser,
 	IRole,
 	IEmployeeCreateInput,
-	CrudActionEnum
+	CrudActionEnum,
+	IOrganization
 } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, tap } from 'rxjs';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -19,6 +20,8 @@ import {
 	RoleService,
 	Store
 } from '../../../@core/services';
+import { distinctUntilChange } from 'packages/common-angular/dist';
+import { untilDestroyed } from '@ngneat/until-destroy';
 
 @Component({
 	selector: 'ga-employee-mutation',
@@ -26,25 +29,38 @@ import {
 	styleUrls: ['employee-mutation.component.scss']
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
+	
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
+	
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
+
 	form: FormGroup;
 	role: IRole;
 	employees: IEmployeeCreateInput[] = [];
-
+	organization: IOrganization;
+	
 	constructor(
-		protected dialogRef: NbDialogRef<EmployeeMutationComponent>,
-		protected organizationsService: OrganizationsService,
-		protected employeesService: EmployeesService,
+		protected readonly dialogRef: NbDialogRef<EmployeeMutationComponent>,
+		protected readonly organizationsService: OrganizationsService,
+		protected readonly employeesService: EmployeesService,
 		private readonly roleService: RoleService,
-		protected store: Store,
-		private errorHandler: ErrorHandlingService,
+		protected readonly store: Store,
+		private readonly errorHandler: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore
 	) {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization) => !!organization),
+				tap((organization) => this.organization = organization),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	async ngAfterViewInit() {
 		const { tenantId } = this.store.user;
@@ -62,34 +78,32 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	addEmployee() {
+		this.form = this.userBasicInfo.form;
+		
+		const { firstName, lastName, email, username, password, tags, imageUrl } = this.form.getRawValue();
+		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.getRawValue();
 		const user: IUser = {
-			username: this.form.get('username').value,
-			firstName: this.form.get('firstName').value,
-			lastName: this.form.get('lastName').value,
-			email: this.form.get('email').value,
-			imageUrl: this.form.get('imageUrl').value,
+			firstName: firstName,
+			lastName: lastName,
+			username,
+			email: email,
+			imageUrl: imageUrl,
 			tenant: null,
 			role: this.role,
-			tags: this.form.get('tags').value
+			tags: tags
 		};
-
-		const offerDate = this.form.get('offerDate').value || null;
-		const acceptDate = this.form.get('acceptDate').value || null;
-		const rejectDate = this.form.get('rejectDate').value || null;
-
-		const newEmployee: IEmployeeCreateInput = {
+		const employee: IEmployeeCreateInput = {
 			user,
-			startedWorkOn: this.form.get('startedWorkOn').value || null,
-			password: this.form.get('password').value,
-			organization: this.store.selectedOrganization,
+			startedWorkOn: startedWorkOn,
+			password: password,
+			organization: this.organization,
 			offerDate,
 			acceptDate,
 			rejectDate,
-			tags: this.form.get('tags').value
+			tags: tags
 		};
-		this.employees.push(newEmployee);
-		this.userBasicInfo.loadFormData();
-		this.form = this.userBasicInfo.form;
+		this.employees.push(employee);
+		this.form.reset();
 		this.stepper.reset();
 	}
 

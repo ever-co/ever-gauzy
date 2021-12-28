@@ -13,8 +13,11 @@
 				<ng-template #step1>{{
 					'CANDIDATES_PAGE.ADD_CANDIDATES.STEP_1' | translate
 				}}</ng-template>
-				<ga-user-basic-info-form #userBasicInfo [isCandidate]="true">
-				</ga-user-basic-info-form>
+				<ga-user-basic-info-form 
+					#userBasicInfo
+					[isShowRole]="false"
+					[isCandidate]="true"
+				></ga-user-basic-info-form>
 				<div class="text-right">
 					<button
 						status="success"

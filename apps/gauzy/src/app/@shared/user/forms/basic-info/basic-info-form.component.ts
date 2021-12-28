@@ -6,13 +6,14 @@ import {
 	OnInit,
 	AfterViewInit
 } from '@angular/core';
-import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum, ITag, ITenant, IUser, IRole } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
+import { Validators, FormBuilder, FormGroup } from '@angular/forms';
+import { RolesEnum, ITag, IUser, IRole, IOrganization } from '@gauzy/contracts';
+import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
 import { AuthService, EmployeesService, RoleService, Store } from './../../../../@core/services';
-import { CompareDateValidator } from './../../../../@core/validators';
+import { CompareDateValidator, UrlPatternValidator } from './../../../../@core/validators';
 import { FormHelpers } from '../../../forms/helpers';
 
 @Component({
@@ -27,35 +28,94 @@ export class BasicInfoFormComponent
 	@ViewChild('imagePreview')
 	imagePreviewElement: ElementRef;
 
-	@Input() public isEmployee: boolean;
-	@Input() public isCandidate: boolean;
-	@Input() public isSuperAdmin: boolean;
-	@Input() public createdById: string;
 	@Input() public selectedTags: ITag[];
 
-	//Fields for the form
-	form: any;
-	imageUrl: any;
-	username: any;
-	firstName: any;
-	lastName: any;
-	email: any;
-	password: any;
-	off: any;
-	role: any;
-	tenant: ITenant;
-	offerDate: any;
-	acceptDate: any;
-	appliedDate: any;
-	hiredDate: any;
-	rejectDate: any;
-	source: any;
-	tags: ITag[] = [];
-	items: any;
-	createEmployee: any;
+	/*
+	* Getter & Setter for check is for candidate mutation
+	*/
+	private _isCandidate: boolean = false;
+	public get isCandidate(): boolean {
+		return this._isCandidate;
+	}
+	@Input() public set isCandidate(value: boolean) {
+		this._isCandidate = value;
+	}
+
+	/*
+	* Getter & Setter for check is for employee mutation
+	*/
+	private _isEmployee: boolean = false;
+	public get isEmployee(): boolean {
+		return this._isEmployee;
+	}
+	@Input() public set isEmployee(value: boolean) {
+		this._isEmployee = value;
+	}
+
+	/*
+	* Getter & Setter for check Super Admin
+	*/
+	private _isSuperAdmin: boolean = false;
+	public get isSuperAdmin(): boolean {
+		return this._isSuperAdmin;
+	}
+	@Input() public set isSuperAdmin(value: boolean) {
+		this._isSuperAdmin = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic hide/show roles dropdown
+	*/
+	private _isShowRole: boolean = false;
+	public get isShowRole(): boolean {
+		return this._isShowRole;
+	}
+	@Input() public set isShowRole(value: boolean) {
+		this._isShowRole = value;
+		this.setRoleValidations(value);
+	}
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	excludes: RolesEnum[] = [];
+	public organization: IOrganization;
+
+	public form: FormGroup = BasicInfoFormComponent.buildForm(this.fb, this);
+	static buildForm(fb: FormBuilder, self: BasicInfoFormComponent): FormGroup {
+		return fb.group({
+			firstName: [],
+			lastName: [],
+			username: [],
+			email: [
+				'',
+				Validators.compose([Validators.required, Validators.email])
+			],
+			imageUrl: [''],
+			password: [
+				'',
+				Validators.compose([
+					Validators.required,
+					Validators.minLength(4)
+				])
+			],
+			startedWorkOn: [],
+			role: [],
+			offerDate: [],
+			acceptDate: [],
+			appliedDate: [],
+			hiredDate: [],
+			rejectDate: [],
+			source: [],
+			tags: [self.selectedTags],
+			featureAsEmployee: [false]
+		},
+		{ 
+			validators: [
+				CompareDateValidator.validateDate('offerDate', 'acceptDate'),
+				CompareDateValidator.validateDate('offerDate', 'rejectDate'),
+				UrlPatternValidator.imageUrlValidator('imageUrl')
+			] 
+		});
+	}
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -72,87 +132,24 @@ export class BasicInfoFormComponent
 		if (!this.isSuperAdmin) {
 			this.excludes.push(RolesEnum.SUPER_ADMIN);
 		}
-		this.loadFormData();
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+			)
+			.subscribe();
 	}
 
 	public enableEmployee() {
-		return (
+		return this.form.get('role').value && (
 			(this.form.get('role').value).name === RolesEnum.SUPER_ADMIN ||
 			(this.form.get('role').value).name === RolesEnum.ADMIN
 		);
 	}
 
-	loadFormData = () => {
-		this.form = this.fb.group(
-			{
-				username: [''],
-				firstName: [''],
-				lastName: [''],
-				email: [
-					'',
-					Validators.compose([Validators.required, Validators.email])
-				],
-				imageUrl: [
-					'',
-					Validators.compose([
-						Validators.pattern(
-							new RegExp(
-								`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
-								'g'
-							)
-						)
-					])
-				],
-				password: [
-					'',
-					Validators.compose([
-						Validators.required,
-						Validators.minLength(4)
-					])
-				],
-				startedWorkOn: [''],
-				role: [
-					'',
-					this.isCandidate || this.isEmployee
-						? null
-						: Validators.required
-				],
-				offerDate: [],
-				acceptDate: [],
-				appliedDate: [],
-				hiredDate: [],
-				rejectDate: [],
-				source: [''],
-				tags: [this.selectedTags],
-				createEmployee: [false]
-			},
-			{ 
-				validators: [
-					CompareDateValidator.validateDate('offerDate', 'acceptDate'),
-					CompareDateValidator.validateDate('offerDate', 'rejectDate')
-				] 
-			}
-		);
-
-		this.imageUrl = this.form.get('imageUrl');
-		this.username = this.form.get('username');
-		this.firstName = this.form.get('firstName');
-		this.lastName = this.form.get('lastName');
-		this.email = this.form.get('email');
-		this.password = this.form.get('password');
-		this.role = this.form.get('role');
-		this.offerDate = this.form.get('offerDate');
-		this.acceptDate = this.form.get('acceptDate');
-		this.appliedDate = this.form.get('appliedDate');
-		this.hiredDate = this.form.get('hiredDate');
-		this.source = this.form.get('source');
-		this.rejectDate = this.form.get('rejectDate');
-		this.tags = this.form.get('tags').value || [];
-		this.createEmployee = this.form.get('createEmployee');
-	};
-
 	get showImageMeta() {
-		return this.imageUrl && this.imageUrl.value !== '';
+		return this.form.get('imageUrl') && this.form.get('imageUrl').value !== '';
 	}
 
 	async registerUser(
@@ -160,56 +157,66 @@ export class BasicInfoFormComponent
 		organizationId?: string,
 		createdById?: string
 	) {
-		if (this.form.valid) {
-			const { tenant } = this.store.user;
-			const role = await firstValueFrom(
-				this.roleService.getRoleByName({
-					name: (this.role.value).name || defaultRoleName,
-					tenantId: tenant.id
-				})
-			);
+		if (this.form.invalid) {
+			return;
+		}
+		const { firstName, lastName, email, username, password } = this.form.getRawValue();
+		const { tags, imageUrl, featureAsEmployee, role: { name } } = this.form.getRawValue();
 
-			const user: IUser = {
-				firstName: this.firstName.value,
-				lastName: this.lastName.value,
-				email: this.email.value,
-				username: this.username.value || null,
-				imageUrl: this.imageUrl.value,
-				role,
-				tenant,
-				tags: this.form.get('tags').value
-			};
-
-			if (this.createEmployee.value) {
-				return await firstValueFrom(
-					this.employeesService.create({
-						user,
-						organization: this.store.selectedOrganization,
-						password: this.password.value
-					})
-				);
-			} else {
-				return await firstValueFrom(
-					this.authService.register({
-						user,
-						password: this.password.value,
-						confirmPassword: this.password.value,
-						organizationId,
-						createdById
-					})
-				);
-			}
+		const { tenantId, tenant } = this.store.user;
+		/**
+		* Removed feature organizations from payload, 
+		* which is not necessary to send into the payload 
+		*/
+		if (tenant.hasOwnProperty('featureOrganizations')) {
+			delete tenant['featureOrganizations'];
 		}
 
-		return;
+		const role = await firstValueFrom(
+			this.roleService.getRoleByName({
+				name: name || defaultRoleName,
+				tenantId
+			})
+		);
+		const user: IUser = {
+			firstName: firstName,
+			lastName: lastName,
+			email: email,
+			username: username || null,
+			imageUrl: imageUrl,
+			role: role,
+			tenant: tenant,
+			tags: tags
+		};
+
+		if (featureAsEmployee === true) {
+			return await firstValueFrom(
+				this.employeesService.create({
+					user: user,
+					organization: this.organization,
+					password: password
+				})
+			);
+		} else {
+			return await firstValueFrom(
+				this.authService.register({
+					user: user,
+					password: password,
+					confirmPassword: password,
+					organizationId,
+					createdById
+				})
+			);
+		}
 	}
 
-	deleteImg() {
-		this.imageUrl.setValue('');
+	deleteImageUrl() {
+		this.form.get('imageUrl').setValue('');
+		this.form.get('imageUrl').updateValueAndValidity();
 	}
 
-	selectedTagsHandler(currentSelection: ITag[]) {
-		this.form.get('tags').setValue(currentSelection);
+	selectedTagsHandler(tags: ITag[]) {
+		this.form.get('tags').setValue(tags);
 		this.form.get('tags').updateValueAndValidity();
 	}
 
@@ -219,12 +226,12 @@ export class BasicInfoFormComponent
 
 	private _setupLogoUrlValidation() {
 		this.imagePreviewElement.nativeElement.onload = () => {
-			this.imageUrl.setErrors(null);
+			this.form.get('imageUrl').setErrors(null);
 		};
 
 		this.imagePreviewElement.nativeElement.onerror = () => {
 			if (this.showImageMeta) {
-				this.imageUrl.setErrors({ invalidUrl: true });
+				this.form.get('imageUrl').setErrors({ invalidUrl: true });
 			}
 		};
 	}
@@ -233,5 +240,24 @@ export class BasicInfoFormComponent
 	 * On Selection Change
 	 * @param role 
 	 */
-	onSelectionChange(role: IRole) { }
+	onSelectionChange(role: IRole) {
+		if (this.isShowRole) {
+			this.isCandidate = (role.name === RolesEnum.CANDIDATE);
+			this.isEmployee = (role.name === RolesEnum.EMPLOYEE);
+		}
+	}
+
+	/**
+	 * SET role field validations
+	 * 
+	 * @param value 
+	 */
+	setRoleValidations(value: boolean) {
+		if (value === true) {
+			this.form.get('role').setValidators([ Validators.required ]);
+		} else {
+			this.form.get('role').clearValidators();
+		}
+		this.form.get('role').updateValueAndValidity();
+	}
 }

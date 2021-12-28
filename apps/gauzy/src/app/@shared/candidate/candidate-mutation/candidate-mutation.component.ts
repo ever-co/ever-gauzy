@@ -88,15 +88,15 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	addCandidate() {
-		const {
-			username,
-			firstName,
-			lastName,
-			email,
-			imageUrl,
-			tags,
-			password
-		} = this.form.getRawValue();
+		this.form = this.userBasicInfo.form;
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const { firstName, lastName, email, username, password, tags, imageUrl } = this.form.getRawValue();
+		const { appliedDate = null, rejectDate = null, hiredDate = null } = this.form.getRawValue();
+		const sourceName = this.form.get('source').value || null;
+
 		const user: IUser = {
 			username,
 			firstName,
@@ -107,14 +107,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			role: this.role,
 			tags
 		};
-		const appliedDate = this.form.get('appliedDate').value || null;
-		const rejectDate = this.form.get('rejectDate').value || null;
-		const hiredDate = this.form.get('hiredDate').value || null;
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		const sourceName = this.form.get('source').value || null;
 		let source: ICandidateSource = null;
 		if (sourceName !== null) {
 			source = {
@@ -137,7 +130,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			];
 		}
 
-		const newCandidate: ICandidateCreateInput = {
+		const candidate: ICandidateCreateInput = {
 			user,
 			cvUrl,
 			documents,
@@ -152,11 +145,11 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			organizationId
 		};
 
-		this.candidates.push(newCandidate);
-		this.userBasicInfo.loadFormData();
+		this.candidates.push(candidate);
 		this.candidateCv.loadFormData();
-		this.form = this.userBasicInfo.form;
 		this.formCV = this.candidateCv.form;
+
+		this.form.reset();
 		this.stepper.reset();
 	}
 
