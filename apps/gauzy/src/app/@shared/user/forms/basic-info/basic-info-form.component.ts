@@ -160,7 +160,7 @@ export class BasicInfoFormComponent
 	}
 
 	get showImageMeta() {
-		return this.form.get('imageUrl') && this.form.get('imageUrl').value !== '';
+		return this.form.get('imageUrl') && this.form.get('imageUrl').value;
 	}
 
 	async registerUser(
