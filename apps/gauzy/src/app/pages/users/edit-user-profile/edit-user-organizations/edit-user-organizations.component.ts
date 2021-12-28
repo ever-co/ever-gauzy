@@ -199,7 +199,7 @@ export class EditUserOrganizationsComponent
 		);
 
 		const { items } = await this.userOrganizationsService.getAll(['user'], {
-			id: this.paramId,
+			userId: this.paramId,
 			tenantId
 		});
 
