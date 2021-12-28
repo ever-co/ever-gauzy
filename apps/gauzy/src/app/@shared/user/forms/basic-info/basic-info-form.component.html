@@ -109,15 +109,8 @@
 					formControlName="startedWorkOn"
 				/>
 				<nb-datepicker #startWorkOnDatepicker></nb-datepicker>
-				<div
-					class="notes"
-					*ngIf="
-						form.touched && form.get('startedWorkOn').value == null
-					"
-				>
-					<p>
-						{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
-					</p>
+				<div class="notes" *ngIf="form.get('startedWorkOn').touched && form.get('startedWorkOn').value == null">
+					<p> {{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }} </p>
 				</div>
 			</div>
 		</div>

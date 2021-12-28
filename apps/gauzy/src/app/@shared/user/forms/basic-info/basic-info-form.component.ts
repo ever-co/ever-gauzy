@@ -7,12 +7,22 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder, FormGroup } from '@angular/forms';
-import { RolesEnum, ITag, IUser, IRole, IOrganization } from '@gauzy/contracts';
+import {
+	RolesEnum,
+	ITag,
+	IUser,
+	IRole,
+	IOrganization,
+	IEmployeeCreateInput,
+	ICandidateSource,
+	ICandidateCreateInput,
+	ICandidate
+} from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
-import { AuthService, EmployeesService, RoleService, Store } from './../../../../@core/services';
+import { AuthService, CandidatesService, EmployeesService, RoleService, Store } from './../../../../@core/services';
 import { CompareDateValidator, UrlPatternValidator } from './../../../../@core/validators';
 import { FormHelpers } from '../../../forms/helpers';
 
@@ -122,6 +132,7 @@ export class BasicInfoFormComponent
 		private readonly authService: AuthService,
 		private readonly roleService: RoleService,
 		private readonly employeesService: EmployeesService,
+		private readonly candidatesService: CandidatesService,
 		public readonly translateService: TranslateService,
 		private readonly store: Store
 	) {
@@ -188,25 +199,30 @@ export class BasicInfoFormComponent
 			tenant: tenant,
 			tags: tags
 		};
-
-		if (featureAsEmployee === true) {
-			return await firstValueFrom(
-				this.employeesService.create({
-					user: user,
-					organization: this.organization,
-					password: password
-				})
-			);
+		if (role.name === RolesEnum.EMPLOYEE) {
+			return this.createEmployee(user);
+		} else if (role.name === RolesEnum.CANDIDATE) {
+			return this.createCandidate(user);
 		} else {
-			return await firstValueFrom(
-				this.authService.register({
-					user: user,
-					password: password,
-					confirmPassword: password,
-					organizationId,
-					createdById
-				})
-			);
+			if (featureAsEmployee === true) {
+				return await firstValueFrom(
+					this.employeesService.create({
+						user: user,
+						organization: this.organization,
+						password: password
+					})
+				);
+			} else {
+				return await firstValueFrom(
+					this.authService.register({
+						user: user,
+						password: password,
+						confirmPassword: password,
+						organizationId,
+						createdById
+					})
+				);
+			}
 		}
 	}
 
@@ -259,5 +275,72 @@ export class BasicInfoFormComponent
 			this.form.get('role').clearValidators();
 		}
 		this.form.get('role').updateValueAndValidity();
+	}
+
+	/**
+	 * Create employee from user page
+	 * 
+	 * @param user 
+	 * @returns 
+	 */
+	async createEmployee(user: IUser) {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const { password, tags } = this.form.getRawValue();
+		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.getRawValue();
+
+		const employee: IEmployeeCreateInput = {
+			tenantId,
+			user,
+			startedWorkOn: startedWorkOn,
+			password: password,
+			organizationId,
+			offerDate,
+			acceptDate,
+			rejectDate,
+			tags: tags
+		};
+		return await firstValueFrom(
+			this.employeesService.create(employee)
+		);
+	}
+
+	/**
+	 * Create candidate from user page
+	 * 
+	 * @param user 
+	 * @returns 
+	 */
+	async createCandidate(user: IUser): Promise<ICandidate> {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const { password, tags } = this.form.getRawValue();
+		const { appliedDate = null, rejectDate = null, hiredDate = null, source: sourceName = null } = this.form.getRawValue();
+			
+		let source: ICandidateSource = null;
+		if (sourceName !== null) {
+			source = {
+				name: sourceName,
+				tenantId,
+				organizationId
+			};
+		}
+		const candidate: ICandidateCreateInput = {
+			user,
+			password,
+			documents: [],
+			appliedDate,
+			hiredDate,
+			source,
+			rejectDate,
+			tags,
+			tenantId,
+			organizationId
+		};
+		return await firstValueFrom(
+			this.candidatesService.create(candidate)
+		);
 	}
 }
