@@ -15,7 +15,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { AuthService, IncomeService, RoleService, TagsService } from '../../../@core/services';
+import { AuthService, CandidatesService, IncomeService, RoleService, TagsService } from '../../../@core/services';
 import { SharedModule } from '../../shared.module';
 import { COMPONENTS } from './index';
 import { PasswordFormFieldModule } from './fields/password';
@@ -48,6 +48,6 @@ import { RoleFormFieldModule } from './fields/role';
 	declarations: [
 		...COMPONENTS
 	],
-	providers: [AuthService, RoleService, IncomeService, TagsService]
+	providers: [AuthService, RoleService, IncomeService, TagsService, CandidatesService]
 })
 export class UserFormsModule {}
