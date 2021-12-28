@@ -64,10 +64,13 @@ body {
     }
   }
 
-  //Override padding from 1.25rem to 0.5rem
-  nb-layout .layout .layout-container .content nb-layout-footer nav {
-    padding: 0.5rem;
-  }
+  	//Override header/footer padding from 1.25rem to 0.5rem
+	nb-layout .layout .layout-container .content nb-layout-footer nav {
+		padding: 0.5rem !important;
+	}
+	nb-layout .layout nb-layout-header nav {
+		padding: 0.5rem !important;
+	}
 
   nb-sidebar {
     nb-menu {
