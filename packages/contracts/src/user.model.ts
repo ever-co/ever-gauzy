@@ -33,7 +33,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	sourceId?: string;
 }
 
-export interface IUserFindInput {
+export interface IUserFindInput extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
 	firstName?: string;
 	lastName?: string;
