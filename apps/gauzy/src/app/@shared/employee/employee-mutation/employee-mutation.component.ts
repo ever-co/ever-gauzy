@@ -12,6 +12,8 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -20,9 +22,8 @@ import {
 	RoleService,
 	Store
 } from '../../../@core/services';
-import { distinctUntilChange } from 'packages/common-angular/dist';
-import { untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-mutation',
 	templateUrl: 'employee-mutation.component.html',
