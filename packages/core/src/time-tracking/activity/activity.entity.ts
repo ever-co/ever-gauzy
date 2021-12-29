@@ -49,7 +49,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	title: string;
 
 	@ApiProperty({ type: () => String })
