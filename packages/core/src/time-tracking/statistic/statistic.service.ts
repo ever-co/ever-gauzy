@@ -1090,7 +1090,7 @@ export class StatisticService {
 						startedAt: timeLog.startedAt,
 						duration: timeLog.duration,
 						user: pick(timeLog.employee.user, ['name', 'imageUrl']),
-						project: pick(timeLog.employee.user, ['name']),
+						project: pick(timeLog.project, ['name']),
 						employeeId: timeLog.employee.id
 					} as IManualTimesStatistics;
 				}
