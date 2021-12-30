@@ -103,7 +103,7 @@ export class TimerController {
 	@Post('/stop')
 	async stopTimer(
 		@Body() entity: ITimerToggleInput
-	): Promise<ITimeLog> {
+	): Promise<ITimeLog | null> {
 		return await this.timerService.stopTimer(entity);
 	}
 }
