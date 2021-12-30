@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header>
 		<div class="main-header">
 			<h4> <ngx-header-title> {{ contactType + 's'| titlecase }} </ngx-header-title> </h4>
@@ -92,7 +92,7 @@
 								<div>
 									<button
 										size="tiny"
-										class="ml-2"
+										class="ml-2 mb-2"
 										(click)="invite(c)"
 										*ngIf="
 											!c.inviteStatus ||
@@ -106,7 +106,7 @@
 									</button>
 									<button
 										size="tiny"
-										class="ml-2"
+										class="ml-2 mb-2"
 										(click)="invite(c)"
 										*ngIf="c.inviteStatus === 'INVITED'"
 										nbButton

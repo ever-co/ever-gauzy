@@ -1,25 +1,17 @@
 .tasks-component {
-  &__settings {
-    display: flex;
-    align-items: center;
-  }
-
-  .table-scroll-container,
-  .grid-scroll-container {
-    max-height: calc(70vh - 110px);
-  }
+	&__settings {
+		display: flex;
+		align-items: center;
+	}
 }
-
 .project-selector {
-  min-width: 15rem;
-
-  ng-select {
-    min-width: 10rem;
-
-    .selector-template {
-      display: flex;
-      align-items: center;
-      height: 100%;
-    }
-  }
+	min-width: 15rem;
+	ng-select {
+		min-width: 10rem;
+		.selector-template {
+			display: flex;
+			align-items: center;
+			height: 100%;
+		}
+	}
 }
