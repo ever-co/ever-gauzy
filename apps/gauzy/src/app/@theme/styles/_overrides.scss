@@ -73,6 +73,11 @@ body {
 		padding: 0.5rem !important;
 	}
 
+  // Override default min-width for nb-select
+  nb-layout .card-scroll nb-select .select-button {
+    min-width: unset !important;
+  }
+
   nb-sidebar {
     nb-menu {
       .menu-items {

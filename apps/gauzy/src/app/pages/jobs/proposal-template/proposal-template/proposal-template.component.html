@@ -1,5 +1,5 @@
 <nb-card
-	class="jobs-page"
+	class="card-scroll"
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -7,7 +7,11 @@
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
-			<h4> <ngx-header-title> {{ 'PROPOSAL_TEMPLATE.PROPOSAL_TEMPLATE' | translate }} </ngx-header-title> </h4>
+			<h4>
+				<ngx-header-title>
+					{{ 'PROPOSAL_TEMPLATE.PROPOSAL_TEMPLATE' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
 	</nb-card-header>
 	<nb-card-body>

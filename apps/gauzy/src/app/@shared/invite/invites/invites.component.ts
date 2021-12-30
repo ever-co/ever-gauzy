@@ -186,9 +186,7 @@ export class InvitesComponent
 				fullName: `${
 					(invite.invitedBy && invite.invitedBy.firstName) || ''
 				} ${(invite.invitedBy && invite.invitedBy.lastName) || ''}`,
-				roleName: invite.role
-					? this.getTranslation(`USERS_PAGE.ROLE.${invite.role.name}`)
-					: '',
+				roleName: invite.role ? invite.role.name : '',
 				status: moment(invite.expireDate).isAfter(moment())
 					? this.getTranslation(`INVITE_PAGE.STATUS.${invite.status}`)
 					: this.getTranslation(`INVITE_PAGE.STATUS.EXPIRED`),

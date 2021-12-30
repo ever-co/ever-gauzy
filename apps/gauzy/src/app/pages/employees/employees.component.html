@@ -1,4 +1,9 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'EMPLOYEES_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
@@ -20,7 +25,7 @@
 			</div>
 			<div>
 				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
+					[componentName]="viewComponentName"
 				></ga-layout-selector>
 			</div>
 		</div>
@@ -44,7 +49,7 @@
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
-				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
 					></ng-container>
@@ -124,9 +129,7 @@
 							<div
 								class="text-center d-block"
 								*ngIf="!x.startedWorkOn"
-								nbTooltip="{{
-									'EMPLOYEES_PAGE.NOT_STARTED_HELP' | translate
-								}}"
+								[nbTooltip]="'EMPLOYEES_PAGE.NOT_STARTED_HELP' | translate"
 							>
 								<div class="badge badge-disabled">
 									{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
@@ -200,7 +203,7 @@
 			nbButton
 			[disabled]="!selectedItem && disableButton"
 			[size]="buttonSize || 'medium'"
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			(click)="
 				selectedEmployee.endWork
 					? backToWork(selectedItem)
@@ -221,7 +224,7 @@
 			nbButton
 			[disabled]="!selectedItem && disableButton"
 			[size]="buttonSize || 'medium'"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 			(click)="
 				selectedItem.endWork
 					? backToWork(selectedItem)
@@ -230,7 +233,7 @@
 			status="warning"
 			class="mr-2"
 		>
-			<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
+			<nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>
 			{{
 				(selectedItem && selectedItem.endWork
 					? 'EMPLOYEES_PAGE.BACK_TO_WORK'
