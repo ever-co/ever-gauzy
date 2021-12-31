@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOneOptions } from 'typeorm';
-import { IGetTimeSlotInput, ITimeSlot, OrganizationPermissionsEnum, PermissionsEnum } from '@gauzy/contracts';
+import { IGetTimeSlotInput, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { TimeSlotService } from './time-slot.service';
 import { TimeSlot } from './time-slot.entity';
 import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
