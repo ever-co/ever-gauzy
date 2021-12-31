@@ -31,10 +31,10 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {}
 
 	openAddByDateProject($event: MouseEvent) {
-		const [ timelog ] = this.timeLogs;
+		const [ timeLog ] = this.timeLogs;
 		const minutes = moment().minutes();
 		const stoppedAt = new Date(
-			moment(timelog.startedAt).format('YYYY-MM-DD') +
+			moment(timeLog.startedAt).format('YYYY-MM-DD') +
 				' ' +
 				moment()
 					.set('minutes', minutes - (minutes % 10))
@@ -44,11 +44,15 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		this.openEdit($event, {
 			startedAt,
 			stoppedAt,
-			projectId: timelog.projectId
+			projectId: timeLog.projectId
 		});
 	}
 
-	openEdit($event: MouseEvent, timeLog) {
+	openEdit($event: MouseEvent, timeLog: {
+		startedAt: Date,
+		stoppedAt: Date,
+		projectId: string
+	}) {
 		$event.stopPropagation();
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog: timeLog } })
@@ -72,7 +76,10 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	onDeleteConfirm(timeLog) {
+	onDeleteConfirm(timeLog: ITimeLog) {
+		if (timeLog.isRunning) {
+			return;
+		}
 		this.timesheetService.deleteLogs(timeLog.id).then((res) => {
 			this.callback(res);
 			this.checkTimerStatus();

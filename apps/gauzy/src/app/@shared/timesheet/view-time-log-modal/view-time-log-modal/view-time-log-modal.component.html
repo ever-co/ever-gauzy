@@ -95,7 +95,7 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<button
-			[disabled]="!timeLog.stoppedAt"
+			[disabled]="timeLog.isRunning"
 			size="small"
 			class="mr-2"
 			nbButton
@@ -108,7 +108,7 @@
 			<nb-icon icon="edit"></nb-icon> {{ 'TIMESHEET.EDIT' | translate }}
 		</button>
 		<button
-			[disabled]="!timeLog.stoppedAt"
+			[disabled]="timeLog.isRunning"
 			size="small"
 			class="mr-2"
 			nbButton

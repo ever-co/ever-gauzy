@@ -38,6 +38,9 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {}
 
 	openDialog() {
+		if (this.timeLog.isRunning) {
+			return;
+		}
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, {
 				context: { timeLog: this.timeLog }
