@@ -26,7 +26,7 @@ import {
 } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
-import { OrganizationPermissionGuard, TenantBaseGuard } from './../../shared/guards';
+import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { RequestContext } from './../../core/context';
 
@@ -272,8 +272,8 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Delete('/')
-	@UseGuards(OrganizationPermissionGuard)
-	@Permissions(OrganizationPermissionsEnum.ALLOW_DELETE_TIME)
+	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	async deleteTimeLog(@Query() query): Promise<any> {
 		return await this.timeLogService.deleteTimeLog(query.logIds);
 	}
