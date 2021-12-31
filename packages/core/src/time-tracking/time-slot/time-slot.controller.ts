@@ -12,10 +12,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOneOptions } from 'typeorm';
-import { IGetTimeSlotInput, ITimeSlot, OrganizationPermissionsEnum } from '@gauzy/contracts';
+import { IGetTimeSlotInput, ITimeSlot, OrganizationPermissionsEnum, PermissionsEnum } from '@gauzy/contracts';
 import { TimeSlotService } from './time-slot.service';
 import { TimeSlot } from './time-slot.entity';
-import { OrganizationPermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { Permissions } from './../../shared/decorators';
 
@@ -82,8 +82,8 @@ export class TimeSlotController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(OrganizationPermissionGuard)
-	@Permissions(OrganizationPermissionsEnum.ALLOW_DELETE_TIME)
+	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete('/')
 	async deleteTimeSlot(@Query() { ids }) {
 		return this.timeSlotService.deleteTimeSlot(ids);

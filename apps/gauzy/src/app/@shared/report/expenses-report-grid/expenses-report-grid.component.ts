@@ -10,7 +10,6 @@ import {
 	IGetTimeLogReportInput,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
-	PermissionsEnum,
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
@@ -31,8 +30,6 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 export class ExpensesReportGridComponent
 	extends ReportBaseComponent
 	implements OnInit, AfterViewInit {
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	PermissionsEnum = PermissionsEnum;
 	logRequest: ITimeLogFilters = this.request;
 
 	dailyData: IExpenseReportData[] = [];

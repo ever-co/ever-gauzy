@@ -15,7 +15,7 @@ export const createRolePermissions = async (
 ): Promise<IRolePermission[]> => {
 	
 	// removed permissions for all users in DEMO mode
-	const deniedPermisisons = [
+	const deniedPermissions = [
 		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA
 	];
@@ -28,7 +28,7 @@ export const createRolePermissions = async (
 			);
 			if (role) {
 				defaultEnabledPermissions
-					.filter((permission) => isDemo ? !deniedPermisisons.includes(permission) : true)
+					.filter((permission) => isDemo ? !deniedPermissions.includes(permission) : true)
 					.forEach((permission) => {
 						const rolePermission = new RolePermission();
 						rolePermission.role = role;
