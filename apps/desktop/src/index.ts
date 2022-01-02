@@ -90,6 +90,15 @@ const knex = require('knex')({
 	connection: {
 		filename: sqlite3filename
 	},
+	pool: {
+		min: 2,
+		max: 15,
+		createTimeoutMillis: 3000,
+		acquireTimeoutMillis: 60 * 1000 * 2,
+		idleTimeoutMillis: 30000,
+		reapIntervalMillis: 1000,
+		createRetryIntervalMillis: 100
+	},
 	useNullAsDefault: true
 });
 
@@ -393,7 +402,7 @@ app.on('ready', async () => {
 		setupWindow.show();
 	}
 
-	ipcMainHandler(store, startServer, knex, { ...environment });
+	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
 
 app.on('window-all-closed', quit);
