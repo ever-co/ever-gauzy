@@ -98,9 +98,9 @@ export default class Timerhandler {
 	collectActivities(setupWindow, knex, timeTrackerWindow) {
 		const projectInfo = LocalStore.getStore('project');
 		const appSetting = LocalStore.getStore('appSetting');
-		this.intevalTimer = setInterval(() => {
+		this.intevalTimer = setInterval(async () => {
 			try {
-				TimerData.updateDurationOfTimer(knex, {
+				await TimerData.updateDurationOfTimer(knex, {
 					id: this.lastTimer.id,
 					durations: moment().diff(
 						moment(this.timeSlotStart),
@@ -260,10 +260,10 @@ export default class Timerhandler {
 		setupWindow.webContents.send('update_toggle_timer', params);
 	}
 
-	getSetTimeSlot(setupWindow, knex) {
+	async getSetTimeSlot(setupWindow, knex) {
 		const { id } = this.lastTimer;
-		TimerData.getTimer(knex, id).then((timerD) => {
-			TimerData.getAfk(knex, id).then((afk) => {});
+		await TimerData.getTimer(knex, id).then(async (timerD) => {
+			await TimerData.getAfk(knex, id).then((afk) => {});
 		});
 	}
 

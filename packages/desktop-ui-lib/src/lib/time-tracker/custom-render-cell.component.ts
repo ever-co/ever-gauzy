@@ -27,3 +27,24 @@ export class CustomRenderComponent implements ViewCell, OnInit {
   }
 
 }
+
+@Component({
+  template: `
+    <span class="hidden-long-text">
+        {{renderValue}}
+    </span>
+  `,
+  styleUrls: ['./time-tracker.component.scss'],
+})
+export class CustomDescriptionComponent implements ViewCell, OnInit {
+
+  renderValue: string;
+
+  @Input() value: string | number;
+  @Input() rowData: any;
+
+  ngOnInit() {
+    this.renderValue = this.value.toString();
+  }
+
+}

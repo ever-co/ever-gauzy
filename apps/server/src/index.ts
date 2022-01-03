@@ -210,19 +210,12 @@ const contextMenu = () => {
 			id: 'check_for_update',
 			label: 'Check For Update',
 			click() {
-				const appSetting = LocalStore.getStore('appSetting');
-				const config = LocalStore.getStore('configs');
-				const addSetting = LocalStore.getStore('additionalSetting');
 				settingsWindow.show();
 				setTimeout(() => {
 					settingsWindow.webContents.send('goto_update');
 				}, 100);
 				setTimeout(() => {
-					settingsWindow.webContents.send('app_setting', {
-						setting: appSetting,
-						config: config,
-						additionalSetting: addSetting
-					});
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 				}, 500);
 			}
 		},

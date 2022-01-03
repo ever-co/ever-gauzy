@@ -13,10 +13,10 @@ import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
 
 export enum OrganizationPermissionsEnum {
-	ALLOW_MANUAL_TIME = 'allowManualTime',
-	ALLOW_MODIFY_TIME = 'allowModifyTime',
-	ALLOW_DELETE_TIME = 'allowDeleteTime',
-	ALLOW_FUTURE_DATE = 'futureDateAllowed'
+	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
+	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
+	ALLOW_DELETE_TIME = 'ALLOW_DELETE_TIME',
+	ALLOW_FUTURE_DATE = "FUTURE_DATE_ALLOWED"
 }
 
 export enum ListsInputTypeEnum {

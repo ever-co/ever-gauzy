@@ -43,7 +43,9 @@ module.exports = (config) => {
 		fsevents: 'fsevents',
 		bcrypt: 'bcrypt',
 		sqlite3: 'commonjs sqlite3',
-		sharp: 'commonjs sharp'
+		sharp: 'commonjs sharp',
+		ioredis: 'ioredis',
+		debug: 'debug'
 	};
 
 	return config;

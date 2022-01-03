@@ -67,11 +67,11 @@
 							"
 							[(checked)]="enabledPermissions[permission]"
 							(checkedChange)="
-								permissionChanged(permission, $event)
+								permissionChanged(permission, $event, !isDisabledGeneralPermissions())
 							"
 							labelPosition="start"
 							status="basic"
-							[disabled]="!role"
+							[disabled]="isDisabledGeneralPermissions()"
 						>
 							{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
 						</nb-toggle>
@@ -97,11 +97,11 @@
 							*ngFor="let permission of getAdministrationPermissions()"
 							[(checked)]="enabledPermissions[permission]"
 							(checkedChange)="
-								permissionChanged(permission, $event)
+								permissionChanged(permission, $event, !isDisabledAdministrationPermissions())
 							"
 							labelPosition="start"
 							status="basic"
-							[disabled]="input.value !== rolesEnum.ADMIN || !role"
+							[disabled]="isDisabledAdministrationPermissions()"
 						>
 							{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
 						</nb-toggle>

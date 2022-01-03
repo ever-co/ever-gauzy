@@ -1,9 +1,11 @@
+import { IUser } from './user.model';
 import { IBasePerTenantEntityModel } from './base-entity.model';
 import { IRolePermission } from './role-permission.model';
 
 export interface IRole extends IRoleCreateInput {
 	isSystem?: boolean;
-	rolePermissions: IRolePermission[];
+	rolePermissions?: IRolePermission[];
+	users?: IUser[];
 }
 
 export interface IRoleCreateInput extends IBasePerTenantEntityModel {
@@ -17,7 +19,8 @@ export enum RolesEnum {
 	EMPLOYEE = 'EMPLOYEE',
 	CANDIDATE = 'CANDIDATE',
 	MANAGER = 'MANAGER',
-	VIEWER = 'VIEWER'
+	VIEWER = 'VIEWER',
+	INTERVIEWER = 'INTERVIEWER'
 }
 
 export interface IRoleMigrateInput extends IBasePerTenantEntityModel {

@@ -20,11 +20,6 @@ export class AppMenu {
 					{
 						label: 'Check For Update',
 						click() {
-							const appSetting = LocalStore.getStore(
-								'appSetting'
-							);
-							const config = LocalStore.getStore('configs');
-							const addSetting = LocalStore.getStore('additionalSetting');
 							if (!settingsWindow) {
 								settingsWindow = createSettingsWindow(
 									settingsWindow,
@@ -36,11 +31,7 @@ export class AppMenu {
 								settingsWindow.webContents.send('goto_update');
 							}, 100);
 							setTimeout(() => {
-								settingsWindow.webContents.send('app_setting', {
-									setting: appSetting,
-									config: config,
-									additionalSetting: addSetting
-								});
+								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 							}, 500);
 						}
 					},
@@ -81,11 +72,6 @@ export class AppMenu {
 						label: 'Setting',
 						enabled: false,
 						click() {
-							const appSetting = LocalStore.getStore(
-								'appSetting'
-							);
-							const config = LocalStore.getStore('configs');
-							const addSetting = LocalStore.getStore('additionalSetting');
 							if (!settingsWindow) {
 								settingsWindow = createSettingsWindow(
 									settingsWindow,
@@ -94,11 +80,7 @@ export class AppMenu {
 							}
 							settingsWindow.show();
 							setTimeout(() => {
-								settingsWindow.webContents.send('app_setting', {
-									setting: appSetting,
-									config: config,
-									additionalSetting: addSetting
-								});
+								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 								settingsWindow.webContents.send(
 									timeTrackerWindow ? 'goto_top_menu' : 'goto_update'
 								);

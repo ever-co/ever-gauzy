@@ -33,7 +33,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	sourceId?: string;
 }
 
-export interface IUserFindInput {
+export interface IUserFindInput extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
 	firstName?: string;
 	lastName?: string;
@@ -80,18 +80,8 @@ export interface IUserCreateInput {
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 }
 
-export interface IUserUpdateInput {
-	firstName?: string;
-	lastName?: string;
-	email?: string;
-	username?: string;
-	role?: IRole;
-	roleId?: string;
-	hash?: string;
-	imageUrl?: string;
-	tags?: ITag[];
-	preferredLanguage?: LanguagesEnum;
-	preferredComponentLayout?: ComponentLayoutStyleEnum;
+export interface IUserUpdateInput extends IUserCreateInput {
+	id?: string;
 }
 
 export enum LanguagesEnum {
@@ -120,4 +110,5 @@ export interface IUserViewModel extends IBasePerTenantEntityModel {
 	roleName?: string;
 	role?: string;
 	tags?: ITag[];
+	userOrganizationId?: string;
 }

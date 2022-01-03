@@ -23,6 +23,7 @@ export class EmployeeCreateHandler
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
 		const { input } = command;
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
+
 		const inputWithHash = await this._addHashAndLanguage(
 			input,
 			languageCode
@@ -31,15 +32,14 @@ export class EmployeeCreateHandler
 
 		await this.userOrganizationService.addUserToOrganization(
 			employee.user,
-			input.organization.id
+			employee.organizationId
 		);
-
-		this.emailService.welcomeUser(
+		await this.emailService.welcomeUser(
 			employee.user,
 			languageCode,
-			employee.organization.id
+			employee.organizationId
 		);
-
+		
 		return employee;
 	}
 

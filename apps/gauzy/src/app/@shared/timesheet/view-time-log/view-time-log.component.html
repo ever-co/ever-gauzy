@@ -8,16 +8,22 @@
 			(click)="viewLog(timeLog)"
 		>
 			<div class="time-log-content col">
-				<nb-user
-					[name]="timeLog.employee?.user?.name"
-					title="{{
-						timeLog.startedAt | utcToLocal | timeFormat: true
-					}} -  {{
-						timeLog.stoppedAt | utcToLocal | timeFormat: true
-					}} ({{ timeLog.duration | durationFormat }})"
-					[picture]="timeLog.employee?.user?.imageUrl"
-				>
-				</nb-user>
+				<ngx-avatar
+					[name]="timeLog?.employee?.user?.name"
+					[src]="timeLog?.employee?.user?.imageUrl"
+					[caption]="
+						(timeLog?.startedAt | utcToLocal | timeFormat: true) +
+						' - ' +
+						(timeLog?.stoppedAt
+							? (timeLog?.stoppedAt
+							  | utcToLocal
+							  | timeFormat: true)
+							: ('TIMESHEET.TILL_NOW' | translate)) +
+						' (' +
+						(timeLog?.duration | durationFormat) +
+						')'
+					"
+				></ngx-avatar>
 			</div>
 			<div class="time-log-action col-auto">
 				<button
@@ -28,6 +34,8 @@
 					ghost
 					status="primary"
 					(click)="openEdit($event, timeLog)"
+					[disabled]="timeLog.isRunning"
+					class="mr-1"
 				>
 					<nb-icon icon="edit"></nb-icon>
 				</button>
@@ -42,6 +50,8 @@
 					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 					(click)="$event.stopPropagation()"
 					(confirm)="onDeleteConfirm(timeLog)"
+					[disabled]="timeLog.isRunning"
+					class="ml-1"
 				>
 					<nb-icon icon="trash-2-outline"></nb-icon>
 				</button>

@@ -1,8 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header class="card-header-title">
 		<h4>{{ 'ORGANIZATIONS_PAGE.ORGANIZATIONS' | translate }}</h4>
 		<ga-layout-selector
-			componentName="{{ viewComponentName }}"
+			[componentName]="viewComponentName"
 		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>

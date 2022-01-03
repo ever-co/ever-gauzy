@@ -81,7 +81,10 @@ export class ViewComponent
 		});
 	}
 
-	openEditDialog(timeLog) {
+	openEditDialog(timeLog: ITimeLog) {
+		if (timeLog.isRunning) {
+			return;
+		}
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, {
 				context: { timeLog: timeLog }
@@ -95,8 +98,11 @@ export class ViewComponent
 			});
 	}
 
-	deleteTimeLog(log) {
-		this.timesheetService.deleteLogs([log.id])
+	deleteTimeLog(timeLog: ITimeLog) {
+		if (timeLog.isRunning) {
+			return;
+		}
+		this.timesheetService.deleteLogs([timeLog.id])
 			.then(() => {})
 			.finally(() => {
 				this.logs$.next(true);

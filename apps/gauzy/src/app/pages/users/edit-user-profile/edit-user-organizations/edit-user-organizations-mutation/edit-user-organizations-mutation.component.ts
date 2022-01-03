@@ -31,11 +31,11 @@ export class EditUserOrganizationsMutationComponent
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private organizationsService: OrganizationsService,
-		private usersOrganizationService: UsersOrganizationsService,
-		readonly translateService: TranslateService,
-		private userIdService: UserIdService,
-		private store: Store
+		private readonly organizationsService: OrganizationsService,
+		private readonly usersOrganizationService: UsersOrganizationsService,
+		public readonly translateService: TranslateService,
+		private readonly userIdService: UserIdService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -61,7 +61,7 @@ export class EditUserOrganizationsMutationComponent
 		);
 
 		const { items } = await this.usersOrganizationService.getAll([], {
-			id: this.userIdService.userId,
+			userId: this.userIdService.userId,
 			tenantId
 		});
 

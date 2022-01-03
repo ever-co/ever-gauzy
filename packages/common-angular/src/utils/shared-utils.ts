@@ -206,8 +206,8 @@ export function splitCamelCase(word: string): string {
 
 	output = [];
 
-	const spliter = word.split('_');
-	spliter.forEach((text: string) => {
+	const split = word.split('_');
+	split.forEach((text: string) => {
 		output.push(ucFirst(text, true));
 	});
 	return output.join(' ');	

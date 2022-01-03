@@ -1,30 +1,24 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
-	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
-} from '@angular/router';
-import {
-	IRole,
 	InvitationTypeEnum,
 	PermissionsEnum,
-	IUserOrganization,
 	IOrganization,
 	IUserOrganizationCreateInput,
 	RolesEnum,
 	IUser,
-	ITag,
 	ComponentLayoutStyleEnum,
 	IRolePermission,
-	IUserViewModel
+	IUserViewModel,
+	IUserOrganization
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import { debounceTime, firstValueFrom, Subject, of as observableOf, map, finalize } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
@@ -45,27 +39,22 @@ export class UsersComponent
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedUser: IUserViewModel;
-	selectedOrganizationId: string;
-	UserRole: IRole;
-	userToRemoveId: string;
-	userToRemove: IUserOrganization;
 
 	userName = 'User';
 
-	organization: IOrganization;
-	loading = true;
-	hasSuperAdminPermission = false;
-	organizationInvitesAllowed = false;
+	loading: boolean;
+	hasSuperAdminPermission: boolean = false;
+	organizationInvitesAllowed: boolean = false;
 	showAddCard: boolean;
-	userToEdit: IUserOrganization;
-	users: IUser[] = [];
-	tags: ITag[] = [];
-	selectedTags: any;
-	viewComponentName: ComponentEnum;
 	disableButton = true;
+
+	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	userData: IUser[];
+	
+	users: IUser[] = [];
+	subject$: Subject<any> = new Subject();
+	organization: IOrganization;
 
 	usersTable: Ng2SmartTableComponent;
 	@ViewChild('usersTable') set content(content: Ng2SmartTableComponent) {
@@ -81,31 +70,36 @@ export class UsersComponent
 		private readonly router: Router,
 		private readonly toastrService: ToastrService,
 		private readonly route: ActivatedRoute,
-		private readonly translate: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly userOrganizationsService: UsersOrganizationsService
 	) {
-		super(translate);
+		super(translateService);
 		this.setView();
 	}
 
 	async ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this.store.selectedOrganization$
+		this.subject$
 			.pipe(
-				filter((organization) => !!organization),
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.getUsers()),
+				tap(() => this.cancel()),
+				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.selectedOrganizationId = organization.id;
-					this.organizationInvitesAllowed =
-						organization.invitesAllowed;
-					this.cancel();
-					this.loadPage();
-				}
-			});
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(({ invitesAllowed }: IOrganization) => this.organizationInvitesAllowed = invitesAllowed),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.userRolePermissions$
 			.pipe(
 				filter(
@@ -119,29 +113,25 @@ export class UsersComponent
 				);
 			});
 		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
-			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
-					this.add();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.add()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.USERS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout: ComponentLayoutStyleEnum) => this.dataLayoutStyle = componentLayout),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	selectUser({ isSelected, data }) {
@@ -149,7 +139,6 @@ export class UsersComponent
 		this.selectedUser = isSelected ? data : null;
 
 		if (this.selectedUser) {
-			this.userToRemoveId = data.id;
 			const checkName = data.fullName.trim();
 			this.userName = checkName ? checkName : 'User';
 		}
@@ -174,14 +163,11 @@ export class UsersComponent
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
 			}
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
-				{
-					username: this.userName.trim(),
-					orgname: this.store.selectedOrganization.name
-				}
-			);
-			this.loadPage();
+			this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
+				username: this.userName.trim(),
+				orgname: this.store.selectedOrganization.name
+			});
+			this.subject$.next(true);
 		}
 	}
 
@@ -198,8 +184,7 @@ export class UsersComponent
 					orgname: this.store.selectedOrganization.name
 				}
 			);
-			this.showAddCard = false;
-			this.loadPage();
+			this.subject$.next(true);
 		}
 	}
 
@@ -250,14 +235,10 @@ export class UsersComponent
 						await this.userOrganizationsService.setUserAsInactive(
 							this.selectedUser.id
 						);
-
-						this.toastrService.success(
-							'NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION',
-							{
-								username: this.userName
-							}
-						);
-						this.loadPage();
+						this.toastrService.success('NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION', {
+							username: this.userName
+						});
+						this.subject$.next(true);
 					} catch (error) {
 						this.toastrService.danger(error);
 					}
@@ -266,14 +247,12 @@ export class UsersComponent
 	}
 
 	cancel() {
-		this.userToEdit = null;
 		this.showAddCard = false;
 	}
 
 	async remove(selectedOrganization: IUserViewModel) {
-		const { id: userOrganizationId } = selectedOrganization;
-		const fullName =
-			selectedOrganization.fullName.trim() || selectedOrganization.email;
+		const { userOrganizationId } = selectedOrganization;
+		const fullName = selectedOrganization.fullName.trim() || selectedOrganization.email;
 
 		/**
 		 *  User belongs to only 1 organization -> delete user
@@ -296,18 +275,18 @@ export class UsersComponent
 					)}`
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						await this.userOrganizationsService.removeUserFromOrg(
 							userOrganizationId
 						);
-
 						this.toastrService.success('USERS_PAGE.REMOVE_USER', {
 							name: fullName
 						});
-						this.loadPage();
+						this.subject$.next(true);
 					} catch (error) {
 						this.toastrService.danger(error);
 					}
@@ -315,48 +294,43 @@ export class UsersComponent
 			});
 	}
 
-	private async loadPage() {
-		this.selectedUser = null;
-
+	private async getUsers() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.userOrganizationsService.getAll(
-			['user', 'user.role', 'user.tags'],
-			{ organizationId, tenantId }
-		);
+		const organizations: IUserOrganization[] = [];
+		observableOf((
+			await this.userOrganizationsService.getAll(
+				['user', 'user.role', 'user.tags'],
+				{ organizationId, tenantId }
+			)).items
+		).pipe(
+			map((organizations: IUserOrganization[]) => organizations
+				.filter((organizaiton: IUserOrganization) => organizaiton.isActive)
+				.filter((organizaiton: IUserOrganization) => organizaiton.user.role)
+				.filter((organizaiton: IUserOrganization) => organizaiton.user.role.name !== RolesEnum.EMPLOYEE)
+			),
+			tap((users: IUserOrganization[]) => organizations.push(...users)),
+			untilDestroyed(this),
+			finalize(() => this.loading = false)
+		).subscribe();
 
-		this.users = items
-			.filter((orgUser) => orgUser.user.role.name !== RolesEnum.EMPLOYEE)
-			.map((user) => user.user);
-
-		const usersVm = [];
-		for (const orgUser of items) {
-			if (
-				orgUser.isActive &&
-				(!orgUser.user.role ||
-					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
-			) {
-				usersVm.push({
-					fullName: `${orgUser.user.firstName || ''} ${orgUser.user.lastName || ''
-						}`,
-					email: orgUser.user.email,
-					tags: orgUser.user.tags,
-					id: orgUser.userId,
-					isActive: orgUser.isActive,
-					imageUrl: orgUser.user.imageUrl,
-					role: orgUser.user.role.name,
-					roleName: orgUser.user.role
-						? this.getTranslation(
-							`USERS_PAGE.ROLE.${orgUser.user.role.name}`
-						)
-						: ''
-				});
-			}
+		const users = [];
+		for (const { id: userOrganizationId, user, isActive } of organizations) {
+			users.push({
+				id: user.id,
+				fullName: user.name,
+				email: user.email,
+				tags: user.tags,
+				imageUrl: user.imageUrl,
+				role: user.role.name,
+				isActive: isActive,
+				userOrganizationId: userOrganizationId
+			});
 		}
-		this.userData = usersVm;
-		this.sourceSmartTable.load(usersVm);
-		this.loading = false;
+
+		this.users = users;
+		this.sourceSmartTable.load(users);
 	}
 
 	private _loadSmartTableSettings() {
@@ -373,7 +347,7 @@ export class UsersComponent
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email'
 				},
-				roleName: {
+				role: {
 					title: this.getTranslation('SM_TABLE.ROLE'),
 					type: 'text'
 				}

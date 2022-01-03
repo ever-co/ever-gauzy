@@ -87,6 +87,7 @@
 					[checked]="log.checked"
 					(checkedChange)="toggleCheckbox($event, log)"
 					status="primary"
+					[disabled]="log.isRunning"
 				></nb-checkbox>
 			</div>
 			<div class="col project-name">

@@ -119,7 +119,8 @@ export enum PermissionsEnum {
 	VIEW_ALL_ACCOUNTING_TEMPLATES = 'VIEW_ALL_ACCOUNTING_TEMPLATES',
 	ACCESS_DELETE_ACCOUNT = "ACCESS_DELETE_ACCOUNT",
     ACCESS_DELETE_ALL_DATA = "ACCESS_DELETE_ALL_DATA",
-	TENANT_SETTING = "TENANT_SETTING" //allow user to access tenant setting
+	TENANT_SETTING = "TENANT_SETTING", //allow user to access tenant setting
+	ALLOW_DELETE_TIME = "ALLOW_DELETE_TIME"
 }
 
 export const PermissionGroups = {

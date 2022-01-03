@@ -91,6 +91,15 @@ const knex = require('knex')({
 	connection: {
 		filename: sqlite3filename
 	},
+	pool: {
+		min: 2,
+		max: 15,
+		createTimeoutMillis: 3000,
+		acquireTimeoutMillis: 60 * 1000 * 2,
+		idleTimeoutMillis: 30000,
+		reapIntervalMillis: 1000,
+		createRetryIntervalMillis: 100
+	},
 	useNullAsDefault: true
 });
 
@@ -223,9 +232,6 @@ const dialogMessage = (msg) => {
 		else {
 			if (settingsWindow) settingsWindow.show();
 			else {
-				const appSetting = LocalStore.getStore('appSetting');
-				const config = LocalStore.getStore('configs');
-				const addSetting = LocalStore.getStore('additionalSetting');
 				if (!settingsWindow) {
 					settingsWindow = createSettingsWindow(
 						settingsWindow,
@@ -234,11 +240,7 @@ const dialogMessage = (msg) => {
 				}
 				settingsWindow.show();
 				setTimeout(() => {
-					settingsWindow.webContents.send('app_setting', {
-						setting: appSetting,
-						config: config,
-						additionalSetting: addSetting
-					});
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 				}, 500);
 			}
 		}
@@ -318,7 +320,7 @@ app.on('ready', async () => {
 		setupWindow.show();
 	}
 
-	ipcMainHandler(store, startServer, knex, { ...environment });
+	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
 
 app.on('window-all-closed', quit);
