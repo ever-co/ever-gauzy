@@ -20,7 +20,7 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-export function ipcMainHandler(store, startServer, knex, config) {
+export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
@@ -33,9 +33,9 @@ export function ipcMainHandler(store, startServer, knex, config) {
 		startServer(arg);
 	});
 
-	ipcMain.on('data_push_activity', (event, arg) => {
-		arg.windowEvent.forEach((item) => {
-			const events = {
+	ipcMain.on('data_push_activity', async (event, arg) => {
+		const collections = arg.windowEvent.map((item) => {
+			return {
 				eventId: item.id,
 				timerId: arg.timerId,
 				durations: item.duration,
@@ -44,19 +44,26 @@ export function ipcMainHandler(store, startServer, knex, config) {
 				updated_at: new Date(),
 				activityId: null,
 				type: arg.type
-			};
-			TimerData.insertWindowEvent(knex, events);
+			}
 		});
+		if (collections.length > 0) {
+			try {
+				await TimerData.insertWindowEvent(knex, collections);
+			} catch (error) {
+				timeTrackerWindow.webContents.send('stop_from_tray');
+				throw Error(`Time tracking has been stopped`);
+			}
+		}
 	});
 
-	ipcMain.on('data_push_afk', (event, arg) => {
-		arg.afk.forEach((item) => {
+	ipcMain.on('data_push_afk', async (event, arg) => {
+		const collections = arg.afk.map((item) => {
 			const now = moment().utc();
 			const afkDuration = now.diff(moment(arg.start).utc(), 'seconds');
 			if (afkDuration < item.duration) {
 				item.duration = afkDuration;
 			}
-			const afk_new = {
+			return {
 				eventId: item.id,
 				durations: item.duration,
 				timerId: arg.timerId,
@@ -66,12 +73,19 @@ export function ipcMainHandler(store, startServer, knex, config) {
 				timeSlotId: null,
 				timeSheetId: null
 			};
-			TimerData.insertAfkEvent(knex, afk_new);
-		});
+		})
+		if (collections.length > 0) {
+			try {
+				await TimerData.insertAfkEvent(knex, collections);
+			} catch (error) {
+				timeTrackerWindow.webContents.send('stop_from_tray');
+				throw Error(`Time tracking has been stopped`);
+			}
+		}
 	});
 
-	ipcMain.on('remove_aw_local_data', (event, arg) => {
-		TimerData.deleteWindowEventAfterSended(knex, {
+	ipcMain.on('remove_aw_local_data', async (event, arg) => {
+		await TimerData.deleteWindowEventAfterSended(knex, {
 			activityIds: arg.idsAw
 		});
 	});
@@ -82,22 +96,22 @@ export function ipcMainHandler(store, startServer, knex, config) {
 		});
 	});
 
-	ipcMain.on('remove_afk_local_Data', (event, arg) => {
-		TimerData.deleteAfk(knex, {
+	ipcMain.on('remove_afk_local_Data', async (event, arg) => {
+		await TimerData.deleteAfk(knex, {
 			idAfk: arg.idAfk
 		});
 	});
 
-	ipcMain.on('return_time_sheet', (event, arg) => {
-		TimerData.updateTimerUpload(knex, {
+	ipcMain.on('return_time_sheet', async (event, arg) => {
+		await TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
 			timeSheetId: arg.timeSheetId,
 			timeLogId: arg.timeLogId
 		});
 	});
 
-	ipcMain.on('return_toggle_api', (event, arg) => {
-		TimerData.updateTimerUpload(knex, {
+	ipcMain.on('return_toggle_api', async (event, arg) => {
+		await TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
 			timeLogId: arg.result.id
 		});
@@ -209,7 +223,7 @@ export function ipcTimer(
 		console.log(
 			`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`
 		);
-		TimerData.updateTimerUpload(knex, {
+		await TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
 			timeSlotId: arg.timeSlotId
 		});
@@ -292,8 +306,8 @@ export function ipcTimer(
 		takeshot(timeTrackerWindow, arg, notificationWindow, true, windowPath, soundPath);
 	});
 
-	ipcMain.on('save_temp_img', (event, arg) => {
-		TimerData.saveFailedRequest(knex, arg);
+	ipcMain.on('save_temp_img', async (event, arg) => {
+		await TimerData.saveFailedRequest(knex, arg);
 	});
 
 	ipcMain.on('open_setting_window', (event, arg) => {

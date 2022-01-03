@@ -1,139 +1,132 @@
 import moment from 'moment';
 export const TimerData = {
-	createTimer: (knex, query) => {
-		return knex('timer')
-			.insert(query, ['id'])
-			.then((res) => res);
+	createTimer: async (knex, query) => {
+		return await knex('timer').insert(query, ['id']);
 	},
-	updateDurationOfTimer: (knex, query) => {
-		return knex('timer')
+	updateDurationOfTimer: async (knex, query) => {
+		return await knex('timer')
 			.where({
 				id: query.id
 			})
 			.update({
 				durations: query.durations
-			})
-			.then((res) => res);
+			});
 	},
-	insertWindowEvent: async (knex, query) => {
-		const eventExist = await knex('window-events').where({
-			eventId: query.eventId
-		});
-		if (eventExist.length === 0) {
-			knex('window-events').insert(query).then(true);
-		} else {
-			delete query.updated_at;
-			delete query.activityId;
-			// delete query.timerId;
-			knex('window-events')
-				.where({
-					eventId: query.eventId
-				})
-				.update(query)
-				.then(true);
+	insertWindowEvent: async (knex, query, retry = 0) => {
+		try {
+			const sql = `${knex('window-events')
+			.insert(query)
+			.toQuery()} 
+			ON CONFLICT (eventId) 
+			DO UPDATE SET
+			timerId=EXCLUDED.timerId,
+			durations=EXCLUDED.durations,
+			data=EXCLUDED.data,
+			updated_at=EXCLUDED.updated_at,
+			type=EXCLUDED.type
+			;`;
+			return await knex.raw(sql);
+		} catch (error) {
+			if (error.message.toLowerCase().indexOf('Knex: Timeout acquiring a connection'.toLowerCase()) > -1) {
+				if (retry < 3) {
+					await TimerData.wait(3000);
+					return await TimerData.insertWindowEvent(knex, query, retry + 1);
+				}
+			}
+			console.log('error on insert window-events');
+			throw error;
 		}
 	},
-	updateWindowEventUpload: (knex, data) => {
-		return knex('window-events')
+	updateWindowEventUpload: async (knex, data) => {
+		return await knex('window-events')
 			.where({
 				eventId: data.eventId
 			})
 			.update({
 				activityId: data.activityId
-			})
-			.then((res) => res);
-	},
-	deleteWindowEventAfterSended: (knex, data) => {
-		return knex('window-events')
-			.whereIn('id', data.activityIds)
-			.del()
-			.then((res) => {
-				return res;
 			});
 	},
-	updateTimerUpload: (knex, data) => {
-		return knex('timer')
+	deleteWindowEventAfterSended: async (knex, data) => {
+		return await knex('window-events')
+			.whereIn('id', data.activityIds)
+			.del();
+	},
+	updateTimerUpload: async (knex, data) => {
+		return await knex('timer')
 			.where({
 				id: data.id
 			})
-			.update(data)
-			.then((res) => res);
+			.update(data);
 	},
-
-	getTimer: (knex, id) => {
-		return knex('timer')
+	getTimer: async (knex, id) => {
+		return await knex('timer')
 			.where({
 				id: id
-			})
-			.then((res) => res);
+			});
 	},
-
-	getAfk: (knex, timerId) => {
-		return knex('afk-events')
+	getAfk: async (knex, timerId) => {
+		return await knex('afk-events')
 			.where({
 				timerId: timerId
-			})
-			.then((res) => res);
+			});
 	},
-
-	deleteAfk: (knex, data) => {
-		return knex('afk-events')
+	deleteAfk: async (knex, data) => {
+		return await knex('afk-events')
 			.where({
 				id: data.idAfk
 			})
-			.del()
-			.then((res) => res);
+			.del();
 	},
-
-	getWindowEvent: (knex, timerId) => {
-		return knex('window-events')
+	getWindowEvent: async (knex, timerId) => {
+		return await knex('window-events')
 			.where({
 				timerId: timerId
-			})
-			.then((res) => res);
+			});
 	},
-
-	insertAfkEvent: async (knex, query) => {
-		const eventExist = await knex('afk-events').where({
-			eventId: query.eventId
-		});
-		if (eventExist.length === 0) {
-			knex('afk-events').insert(query).then(true);
-		} else {
-			delete query.updated_at;
-			delete query.timeSlotId;
-			// delete query.timerId;
-			knex('afk-events')
-				.where({
-					eventId: query.eventId
-				})
-				.update(query)
-				.then(true);
+	insertAfkEvent: async (knex, query, retry = 0) => {
+		try {
+			const sql = `${knex('afk-events')
+			.insert(query)
+			.toQuery()} 
+			ON CONFLICT (eventId) 
+			DO UPDATE SET
+			durations=EXCLUDED.durations,
+			timerId=EXCLUDED.timerId,
+			data=EXCLUDED.data,
+			updated_at=EXCLUDED.updated_at,
+			timeSlotId=EXCLUDED.timeSlotId,
+			timeSheetId=EXCLUDED.timeSheetId
+			;`;
+			await knex.raw(sql);
+		} catch (error) {
+			if (error.message.toLowerCase().indexOf('Knex: Timeout acquiring a connection'.toLowerCase()) > -1) {
+				if (retry < 3) {
+					await TimerData.wait(3000);
+					return await TimerData.insertAfkEvent(knex, query, retry + 1);
+				}
+			}
+			console.log('error on insert afk-events');
+			throw error;
 		}
 	},
-
 	getLastTimer: async (knex, appInfo) => {
-		const result = await knex('timer')
+		return await knex('timer')
 			.where({
 				projectId: appInfo.projectId,
 				userId: appInfo.employeeId
 			})
 			.orderBy('created_at', 'desc')
 			.limit(1);
-		return result;
 	},
-
 	getLastCaptureTimeSlot: async (knex, info) => {
-		const result = await knex('timer')
+		return await knex('timer')
 			.where('userId', info.employeeId)
 			.where((qb) => qb.orWhereNotNull("timeSlotId"))
 			.orderBy('created_at', 'desc')
 			.limit(1);
-		return result;
 	},
-
 	saveFailedRequest: async (knex, value) => {
-		const result = await knex('failed-request')
+		return await knex('failed-request')
 			.insert(
 				{
 					type: value.type,
@@ -143,8 +136,9 @@ export const TimerData = {
 					updated_at: moment()
 				},
 				['id']
-			)
-			.then((res) => res);
-		return result;
+			);
+	},
+	wait(ms: number) {
+		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 };
