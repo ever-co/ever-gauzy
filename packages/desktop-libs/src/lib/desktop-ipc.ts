@@ -20,7 +20,7 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-export function ipcMainHandler(store, startServer, knex, config) {
+export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
@@ -34,8 +34,8 @@ export function ipcMainHandler(store, startServer, knex, config) {
 	});
 
 	ipcMain.on('data_push_activity', async (event, arg) => {
-		for await (const item of arg.windowEvent) {
-			const events = {
+		const collections = arg.windowEvent.map((item) => {
+			return {
 				eventId: item.id,
 				timerId: arg.timerId,
 				durations: item.duration,
@@ -44,19 +44,26 @@ export function ipcMainHandler(store, startServer, knex, config) {
 				updated_at: new Date(),
 				activityId: null,
 				type: arg.type
-			};
-			await TimerData.insertWindowEvent(knex, events);
+			}
+		});
+		if (collections.length > 0) {
+			try {
+				await TimerData.insertWindowEvent(knex, collections);
+			} catch (error) {
+				timeTrackerWindow.webContents.send('stop_from_tray');
+				throw Error(`Time tracking has been stopped`);
+			}
 		}
 	});
 
 	ipcMain.on('data_push_afk', async (event, arg) => {
-		for await (const item of arg.afk) {
+		const collections = arg.afk.map((item) => {
 			const now = moment().utc();
 			const afkDuration = now.diff(moment(arg.start).utc(), 'seconds');
 			if (afkDuration < item.duration) {
 				item.duration = afkDuration;
 			}
-			const afk_new = {
+			return {
 				eventId: item.id,
 				durations: item.duration,
 				timerId: arg.timerId,
@@ -66,7 +73,14 @@ export function ipcMainHandler(store, startServer, knex, config) {
 				timeSlotId: null,
 				timeSheetId: null
 			};
-			await TimerData.insertAfkEvent(knex, afk_new);
+		})
+		if (collections.length > 0) {
+			try {
+				await TimerData.insertAfkEvent(knex, collections);
+			} catch (error) {
+				timeTrackerWindow.webContents.send('stop_from_tray');
+				throw Error(`Time tracking has been stopped`);
+			}
 		}
 	});
 
