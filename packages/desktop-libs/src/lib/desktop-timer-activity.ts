@@ -44,57 +44,45 @@ export const TimerData = {
 			})
 			.update({
 				activityId: data.activityId
-			})
-			.then((res) => res);
+			});
 	},
 	deleteWindowEventAfterSended: async (knex, data) => {
 		return await knex('window-events')
 			.whereIn('id', data.activityIds)
-			.del()
-			.then((res) => res);
+			.del();
 	},
 	updateTimerUpload: async (knex, data) => {
 		return await knex('timer')
 			.where({
 				id: data.id
 			})
-			.update(data)
-			.then((res) => res);
+			.update(data);
 	},
-
 	getTimer: async (knex, id) => {
 		return await knex('timer')
 			.where({
 				id: id
-			})
-			.then((res) => res);
+			});
 	},
-
 	getAfk: async (knex, timerId) => {
 		return await knex('afk-events')
 			.where({
 				timerId: timerId
-			})
-			.then((res) => res);
+			});
 	},
-
 	deleteAfk: async (knex, data) => {
 		return await knex('afk-events')
 			.where({
 				id: data.idAfk
 			})
-			.del()
-			.then((res) => res);
+			.del();
 	},
-
 	getWindowEvent: async (knex, timerId) => {
 		return await knex('window-events')
 			.where({
 				timerId: timerId
-			})
-			.then((res) => res);
+			});
 	},
-
 	insertAfkEvent: async (knex, query, retry = 0) => {
 		try {
 			const sql = `${knex('afk-events')
@@ -114,36 +102,31 @@ export const TimerData = {
 			if (error.message.toLowerCase().indexOf('Knex: Timeout acquiring a connection'.toLowerCase()) > -1) {
 				if (retry < 3) {
 					await TimerData.wait(3000);
-					return await TimerData.insertWindowEvent(knex, query, retry + 1);
+					return await TimerData.insertAfkEvent(knex, query, retry + 1);
 				}
 			}
 			console.log('error on insert afk-events');
 			throw error;
 		}
 	},
-
 	getLastTimer: async (knex, appInfo) => {
-		const result = await knex('timer')
+		return await knex('timer')
 			.where({
 				projectId: appInfo.projectId,
 				userId: appInfo.employeeId
 			})
 			.orderBy('created_at', 'desc')
 			.limit(1);
-		return result;
 	},
-
 	getLastCaptureTimeSlot: async (knex, info) => {
-		const result = await knex('timer')
+		return await knex('timer')
 			.where('userId', info.employeeId)
 			.where((qb) => qb.orWhereNotNull("timeSlotId"))
 			.orderBy('created_at', 'desc')
 			.limit(1);
-		return result;
 	},
-
 	saveFailedRequest: async (knex, value) => {
-		const result = await knex('failed-request')
+		return await knex('failed-request')
 			.insert(
 				{
 					type: value.type,
@@ -153,11 +136,9 @@ export const TimerData = {
 					updated_at: moment()
 				},
 				['id']
-			)
-			.then((res) => res);
-		return result;
+			);
 	},
-	wait(ms) {
+	wait(ms: number) {
 		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 };
