@@ -10,6 +10,7 @@ import { TimeSlotService } from './time-slot.service';
 import { TimeLogModule } from './../time-log/time-log.module';
 import { EmployeeModule } from './../../employee/employee.module';
 import { ActivityModule } from './../activity/activity.module';
+import { UserModule } from './../../user/user.module';
 
 @Module({
 	controllers: [
@@ -22,6 +23,7 @@ import { ActivityModule } from './../activity/activity.module';
 		]),
 		TenantModule,
 		forwardRef(() => TimeLogModule),
+		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
 		forwardRef(() => ActivityModule),
 		CqrsModule

@@ -11,7 +11,6 @@ import {
 	IPaymentReportData,
 	ISelectedEmployee,
 	OrganizationPermissionsEnum,
-	PermissionsEnum,
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
@@ -32,8 +31,7 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 export class PaymentReportGridComponent
 	extends ReportBaseComponent
 	implements OnInit, AfterViewInit {
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	PermissionsEnum = PermissionsEnum;
+
 	logRequest: IGetPaymentInput = this.request;
 	dailyData: IPaymentReportData[] = [];
 	weekDayList: string[] = [];
@@ -50,11 +48,11 @@ export class PaymentReportGridComponent
 	}
 
 	constructor(
-		private paymentService: PaymentService,
-		private ngxPermissionsService: NgxPermissionsService,
-		protected store: Store,
-		readonly translateService: TranslateService,
-		private cd: ChangeDetectorRef
+		private readonly paymentService: PaymentService,
+		private readonly ngxPermissionsService: NgxPermissionsService,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly cd: ChangeDetectorRef
 	) {
 		super(store, translateService);
 	}

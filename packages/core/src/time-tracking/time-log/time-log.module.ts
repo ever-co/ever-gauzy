@@ -9,6 +9,7 @@ import { TimeLog } from './time-log.entity';
 import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
+import { UserModule } from './../../user/user.module';
 
 @Module({
 	controllers: [
@@ -19,6 +20,7 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 			TimeLog
 		]),
 		TenantModule,
+		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => TimeSlotModule),

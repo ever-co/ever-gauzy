@@ -8,9 +8,9 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-5" *ngFor="let daylogs of timeLogs | keyvalue">
+		<div class="mb-5" *ngFor="let dayLogs of timeLogs | keyvalue">
 			<h5 class="mb-3">
-				{{ daylogs.key | date }}
+				{{ dayLogs.key | date }}
 			</h5>
 			<div
 				class="row border-bottom border-top py-3 font-weight-bold align-items-center"
@@ -35,18 +35,18 @@
 				</div>
 			</div>
 			<ng-template
-				[ngIf]="daylogs.value?.length > 0"
+				[ngIf]="dayLogs.value?.length > 0"
 				[ngIfElse]="notFound"
 			>
 				<div
 					class="row border-bottom py-3 align-items-center"
-					*ngFor="let log of daylogs.value"
+					*ngFor="let log of dayLogs.value"
 				>
 					<div class="col project-name">
-						<span *ngIf="log?.task; else noProfject">
+						<span *ngIf="log?.task; else noProject">
 							{{ log?.project?.name }}
 						</span>
-						<ng-template #noProfject>
+						<ng-template #noProject>
 							<span>{{
 								'TIMESHEET.NO_PROJECT' | translate
 							}}</span>
@@ -87,7 +87,7 @@
 						-
 						<span
 							class="end-timer"
-							*ngIf="log.stoppedAt; else runningTimer"
+							*ngIf="!log.isRunning; else runningTimer"
 						>
 							{{ log.stoppedAt | utcToLocal | timeFormat: true }}
 						</span>
@@ -109,7 +109,7 @@
 								*ngxPermissionsOnly="[
 									OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
 								]"
-								[disabled]="!log.stoppedAt"
+								[disabled]="log.isRunning"
 								class="m-1"
 								nbButton
 								status="success"
@@ -123,7 +123,7 @@
 								*ngxPermissionsOnly="[
 									OrganizationPermissionsEnum.ALLOW_DELETE_TIME
 								]"
-								[disabled]="!log.stoppedAt"
+								[disabled]="log.isRunning"
 								class="m-1"
 								nbButton
 								status="danger"

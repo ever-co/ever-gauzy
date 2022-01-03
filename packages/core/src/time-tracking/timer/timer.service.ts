@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, IsNull, Between, Not } from 'typeorm';
@@ -126,6 +126,11 @@ export class TimerService {
 		const lastLog = await this.getLastRunningLog();
 
 		if (lastLog) {
+			/**
+			 * If you want to start timer, but employee timer is already started.
+			 * So, we have to first update stop timer entry in database, then create start timer entry.
+			 * It will manage to create proper entires in database
+			 */
 			await this.stopTimer(request);
 		}
 
@@ -156,7 +161,13 @@ export class TimerService {
 
 		let lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
-			throw new NotAcceptableException();
+			/**
+			 * If you want to stop timer, but employee timer is already stopped.
+			 * So, we have to first create start timer entry in database, then update stop timer entry.
+			 * It will manage to create proper entires in database
+			 */
+			await this.startTimer(request);
+			lastLog = await this.getLastRunningLog();
 		}
 
 		const stoppedAt = new Date();

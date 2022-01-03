@@ -114,6 +114,7 @@ export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContactId?: string;
 	taskId?: string;
 	tags?: string[];
+	isRunning?: boolean;
 }
 
 export interface ITimeLogCreateInput

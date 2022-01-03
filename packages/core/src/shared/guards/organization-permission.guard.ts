@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { verify } from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 import { RolesEnum } from '@gauzy/contracts';
+import * as camelCase from 'camelcase';
 import { RequestContext } from './../../core/context';
 import { Employee } from './../../core/entities/internal';
 
@@ -34,22 +35,30 @@ export class OrganizationPermissionGuard implements CanActivate {
 				employeeId: string;
 			};
 
-			if (
-				env.allowSuperAdminRole === true &&
-				role === RolesEnum.SUPER_ADMIN
-			) {
-				return true;
+			//Enabled AllowSuperAdminRole from .env file
+			if (env.allowSuperAdminRole === true) {
+				//Super admin and admin has allowed to access request
+				const isSuperAdmin = RequestContext.hasRoles([
+					RolesEnum.SUPER_ADMIN
+				]);
+				if (isSuperAdmin === true) {
+					isAuthorized = isSuperAdmin;
+					return isAuthorized;
+				}
 			}
 
-			const employee = await this.employeeRepository.findOne(employeeId, {
-				relations: ['organization']
-			});
 			let organizationId: string;
-			if (employeeId && employee.organization) {
-				organizationId = employee.organization.id;
-				isAuthorized =
-					permissions.filter((p) => employee.organization[p]).length >
-					0;
+			if  (role === RolesEnum.EMPLOYEE) {
+				const employee = await this.employeeRepository.findOne(employeeId, {
+					relations: ['organization']
+				});
+				if (employeeId && employee.organization) {
+					const { organization } = employee;
+					organizationId = organization.id;
+					isAuthorized = permissions.filter((permission) => organization[camelCase(permission)]).length > 0;
+				}
+			} else {
+				isAuthorized = true;
 			}
 
 			if (!isAuthorized) {

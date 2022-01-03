@@ -25,6 +25,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 import * as _ from 'underscore';
+import * as camelCase from 'camelcase';
 
 export interface AppState {
 	user: IUser;
@@ -450,18 +451,22 @@ export class Store {
 	loadPermissions() {
 		const { selectedOrganization } = this.appQuery.getValue();
 		let permissions = [];
-		const userPermissions = Object.keys(PermissionsEnum)
-			.map((key) => PermissionsEnum[key])
-			.filter((permission) => this.hasPermission(permission));
+
+		// User permissions load here
+		const userPermissions = Object.keys(
+			PermissionsEnum
+		)
+		.map((key) => PermissionsEnum[key])
+		.filter((permission) => this.hasPermission(permission));
 		permissions = permissions.concat(userPermissions);
 
+		// Organization time tracking permissions load here
 		if (selectedOrganization) {
 			const organizationPermissions = Object.keys(
 				OrganizationPermissionsEnum
 			)
-				.map((key) => OrganizationPermissionsEnum[key])
-				.filter((permission) => selectedOrganization[permission]);
-
+			.map((permission) => OrganizationPermissionsEnum[permission])
+			.filter((permission) => selectedOrganization[camelCase(permission)]);
 			permissions = permissions.concat(organizationPermissions);
 		}
 

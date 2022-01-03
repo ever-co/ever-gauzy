@@ -252,9 +252,9 @@ export class DailyComponent
 			.subscribe((type) => {
 				if (type === true) {
 					const logIds = this.timeLogs.filter(
-						(timelog: ITimeLog) => timelog['checked']
+						(timeLog: ITimeLog) => timeLog['checked'] && !timeLog['isRunning']
 					).map(
-						(timelog: ITimeLog) => timelog.id
+						(timeLog: ITimeLog) => timeLog.id
 					);
 					this.timesheetService.deleteLogs(logIds)
 						.then(() => {
@@ -281,7 +281,7 @@ export class DailyComponent
 	 */
 	 public checkedAll(checked: boolean) {
 		this.allChecked = checked;
-		this.timeLogs.forEach((timesheet: any) => timesheet.checked = checked);
+		this.timeLogs.filter((timeLog: ITimeLog) => !timeLog.isRunning).forEach((timesheet: any) => timesheet.checked = checked);
 	}
 
 	/**
@@ -300,8 +300,11 @@ export class DailyComponent
 	 * @param checked 
 	 * @param timesheet 
 	 */
-	public toggleCheckbox(checked: boolean, timelog: ITimeLog) {
-		timelog['checked'] = checked;
+	public toggleCheckbox(checked: boolean, timeLog: ITimeLog) {
+		if (timeLog.isRunning) {
+			return;
+		}
+		timeLog['checked'] = checked;
 		this.allChecked = this.timeLogs.every((t: any) => t.checked);
 	}
 
