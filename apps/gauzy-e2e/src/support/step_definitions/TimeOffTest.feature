@@ -50,7 +50,7 @@ Feature: Time off request test
     When User click on approve time off request button
     Then User can see request button
     When User click on request button
-    Then User can see employee select
+    Then User can see employee select again
     When User click employee select
     Then User can see employee dropdown
     And User can select employee from dropdown options
