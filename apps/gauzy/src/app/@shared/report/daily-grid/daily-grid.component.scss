@@ -1,3 +1,10 @@
+@import 'themes';
+
 :host {
   display: block;
+}
+
+.card{
+  background-color: nb-theme(card-background-color);
+  color: nb-theme(card-text-color);
 }
