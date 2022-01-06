@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
+import { Repository, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -29,6 +29,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import * as _ from 'underscore';
 import { chain } from 'underscore';
 import { ConfigService } from '@gauzy/config';
+import { isEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
 	Employee,
@@ -856,7 +857,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return await this.timeLogRepository.findOne(request.id);
 	}
 
-	async deleteTimeLog(ids: string | string[]): Promise<any> {
+	async deleteTimeLog(ids: string | string[]): Promise<DeleteResult | UpdateResult> {
+		if (isEmpty(ids)) {
+			throw new NotAcceptableException('You can not delete time logs');
+		}
 		const user = RequestContext.currentUser();
 		if (typeof ids === 'string') {
 			ids = [ids];

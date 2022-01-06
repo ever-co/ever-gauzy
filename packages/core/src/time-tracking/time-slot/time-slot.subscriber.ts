@@ -1,6 +1,7 @@
 import { EntitySubscriberInterface, EventSubscriber, RemoveEvent } from "typeorm";
 import * as moment from 'moment';
-import { IScreenshot, ITimeSlot } from "@gauzy/contracts";
+import { ITimeSlot } from "@gauzy/contracts";
+import { isNotEmpty } from "@gauzy/common";
 import { TimeSlot } from "./time-slot.entity";
 import { FileStorage } from "./../../core/file-storage";
 
@@ -24,22 +25,20 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
     /**
      * Called after entity removal.
      */
-    afterRemove(event: RemoveEvent<TimeSlot>) {
+    async afterRemove(event: RemoveEvent<TimeSlot>) {
         if (event.entityId && event.entity.screenshots) {
             console.log(`AFTER TIMESLOT WITH ID ${event.entityId} REMOVED: `, event.entity);
             const { screenshots } = event.entity;
-            if (screenshots instanceof Array && screenshots.length > 0) {
-                screenshots.forEach((screenshot: IScreenshot) => {
-                    (async () => {
-                        const instance = await new FileStorage().getProvider().getInstance();
-                        if (screenshot.file) {
-                            instance.deleteFile(screenshot.file);
-                        }
-                        if (screenshot.thumb) {
-                            instance.deleteFile(screenshot.thumb);
-                        }
-                    })();
-                });
+            if (screenshots instanceof Array && isNotEmpty(screenshots)) {
+                for await (const screenshot of screenshots) {
+                    const instance = await new FileStorage().getProvider().getInstance();
+                    if (screenshot.file) {
+                        instance.deleteFile(screenshot.file);
+                    }
+                    if (screenshot.thumb) {
+                        instance.deleteFile(screenshot.thumb);
+                    }
+                }
             }
         }
     }

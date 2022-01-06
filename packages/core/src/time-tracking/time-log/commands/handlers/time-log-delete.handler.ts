@@ -44,10 +44,9 @@ export class TimeLogDeleteHandler
 			let { stoppedAt } = timeLog;
 			if (stoppedAt === null || typeof stoppedAt === 'undefined') {
 				stoppedAt = new Date();
-				console.log(
-					`TimeLog startedAt=${startedAt} & stoppedAt=${stoppedAt}`
-				);
 			}
+
+			console.log(`TimeLog startedAt=${startedAt} & stoppedAt=${stoppedAt}`);
 
 			await this.timeSlotService.rangeDelete(
 				employeeId,
@@ -58,9 +57,9 @@ export class TimeLogDeleteHandler
 
 		let deleteResult: DeleteResult | UpdateResult;
 		if (forceDelete) {
-			deleteResult = await this.timeLogRepository.delete({
-				id: In(_.pluck(timeLogs, 'id'))
-			});
+			// deleteResult = await this.timeLogRepository.delete({
+			// 	id: In(_.pluck(timeLogs, 'id'))
+			// });
 		} else {
 			deleteResult = await this.timeLogRepository.update(
 				{ id: In(_.pluck(timeLogs, 'id')) },
