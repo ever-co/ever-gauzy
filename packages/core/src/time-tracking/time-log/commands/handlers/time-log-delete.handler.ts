@@ -57,9 +57,9 @@ export class TimeLogDeleteHandler
 
 		let deleteResult: DeleteResult | UpdateResult;
 		if (forceDelete) {
-			// deleteResult = await this.timeLogRepository.delete({
-			// 	id: In(_.pluck(timeLogs, 'id'))
-			// });
+			deleteResult = await this.timeLogRepository.delete({
+				id: In(_.pluck(timeLogs, 'id'))
+			});
 		} else {
 			deleteResult = await this.timeLogRepository.update(
 				{ id: In(_.pluck(timeLogs, 'id')) },
