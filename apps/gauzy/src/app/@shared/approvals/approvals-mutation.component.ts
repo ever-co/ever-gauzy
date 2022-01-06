@@ -245,6 +245,7 @@ export class RequestApprovalMutationComponent
 			organizationId: this.organizationId,
 			tenantId: this.tenantId
 		};
+		this.form.setErrors({ 'invalid' : true });
 		let result: IRequestApproval;
 		result = await this.requestApprovalService.save(requestApproval);
 		this.closeDialog(result);

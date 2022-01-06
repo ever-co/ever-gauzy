@@ -76,7 +76,7 @@ export class ApprovalPolicyMutationComponent
 			tenantId: this.tenantId,
 			id: this.form.value['id']
 		};
-
+		this.form.setErrors({'invalid': true});
 		let result: IApprovalPolicy;
 		result = await this.approvalPolicyService.save(approvalPolicy);
 
