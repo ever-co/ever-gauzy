@@ -220,8 +220,8 @@ When('User click on request button', () => {
 	timeOffPage.clickRequestButton();
 });
 
-Then('User can see employee select', () => {
-	timeOffPage.employeeSelectorVisible();
+Then('User can see employee select again', () => {
+	timeOffPage.employeeSelectorVisibleAgain();
 });
 
 When('User click employee select', () => {

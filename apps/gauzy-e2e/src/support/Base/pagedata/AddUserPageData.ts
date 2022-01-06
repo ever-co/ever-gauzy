@@ -1,3 +1,3 @@
 export const AddUserPageData = {
-	role: 'Manager'
+	role: 'MANAGER'
 };
