@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
+import { isEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import { TimeSlot } from './time-slot.entity';
 import { moment } from '../../core/moment-extend';
@@ -213,6 +214,9 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	}
 
 	async deleteTimeSlot(ids: string[]) {
+		if (isEmpty(ids)) {
+			throw new NotAcceptableException('You can not delete time slots');
+		}
 		return await this.commandBus.execute(
 			new DeleteTimeSlotCommand(ids)
 		);

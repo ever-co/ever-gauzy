@@ -8,7 +8,9 @@ import {
 	Param,
 	Post,
 	Body,
-	Put
+	Put,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOneOptions } from 'typeorm';
@@ -18,6 +20,7 @@ import { TimeSlot } from './time-slot.entity';
 import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { Permissions } from './../../shared/decorators';
+import { DeleteTimeSlotDTO } from './dto';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard)
@@ -84,8 +87,9 @@ export class TimeSlotController {
 	})
 	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
+	@UsePipes(new ValidationPipe({ transform: true }))
 	@Delete('/')
-	async deleteTimeSlot(@Query() { ids }) {
-		return this.timeSlotService.deleteTimeSlot(ids);
+	async deleteTimeSlot(@Query() query: DeleteTimeSlotDTO) {
+		return this.timeSlotService.deleteTimeSlot(query.ids);
 	}
 }

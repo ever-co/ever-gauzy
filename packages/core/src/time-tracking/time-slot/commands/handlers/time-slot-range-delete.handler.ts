@@ -58,7 +58,7 @@ export class TimeSlotRangeDeleteHandler
 			relations: ['screenshots']
 		});
 		console.log('Delete TimeSlot Range:', timeSlots);
-	await this.timeSlotRepository.remove(timeSlots);
+		await this.timeSlotRepository.remove(timeSlots);
 		return true;
 	}
 }
