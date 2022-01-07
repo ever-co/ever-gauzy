@@ -67,35 +67,25 @@ export class TimeLogDeleteHandler
 			);
 		}
 
-		const timesheetPromises = _.chain(timeLogs)
-			.pluck('timesheetId')
-			.uniq()
-			.map(
-				async (timesheetId) =>
-					await this.commandBus.execute(
-						new TimesheetRecalculateCommand(timesheetId)
-					)
-			)
-			.value();
-
-		const totalWorkedHoursPromises = _.chain(timeLogs)
-			.pluck('employeeId')
-			.uniq()
-			.map(
-				async (employeeId) =>
-					await this.commandBus.execute(
-						new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
-					)
-			)
-			.value();
-
 		try {
-			await Promise.all(timesheetPromises);
-			await Promise.all(totalWorkedHoursPromises);
+			/**
+			 * Timesheet Recalculate Command
+			 */
+			const timesheetIds = _.chain(timeLogs).pluck('timesheetId').uniq().value();
+			for await (const timesheetId of timesheetIds) {
+				await this.commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
+			}
+
+			/**
+			 * Employee Worked Hours Recalculate Command
+			 */
+			const employeeIds = _.chain(timeLogs).pluck('employeeId').uniq().value();
+			for await (const employeeId of employeeIds) {
+				await this.commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(employeeId));
+			}
 		} catch (error) {
 			console.log('TimeLogDeleteHandler', { error });
 		}
-
 		return deleteResult;
 	}
 }

@@ -861,17 +861,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		if (isEmpty(ids)) {
 			throw new NotAcceptableException('You can not delete time logs');
 		}
+		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
 		if (typeof ids === 'string') {
 			ids = [ids];
 		}
 
 		const timeLogs = await this.timeLogRepository.find({
-			...(RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-				? {}
-				: { employeeId: user.employeeId }),
+			...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ? {} : {
+				employeeId: user.employeeId
+			}),
+			tenantId,
 			id: In(ids)
 		});
 
