@@ -6,18 +6,18 @@ import {
 	IScreenshotMap,
 	IScreenshot
 } from '@gauzy/contracts';
-import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Store } from './../../../../../@core/services/store.service';
 import { combineLatest, Subject } from 'rxjs';
-import { toUTC, toLocal } from '@gauzy/common-angular';
-import * as _ from 'underscore';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { toUTC, toLocal, distinctUntilChange } from '@gauzy/common-angular';
+import { chain, indexBy, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
-import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { Store } from './../../../../../@core/services';
+import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
+import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
-import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
+import { GalleryService } from './../../../../../@shared/gallery/gallery.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,17 +26,18 @@ import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.servi
 	styleUrls: ['./screenshot.component.scss']
 })
 export class ScreenshotComponent implements OnInit, OnDestroy {
+
 	request: ITimeLogFilters;
 	loading: boolean;
 	timeSlots: IScreenshotMap[];
 	checkAllCheckbox: any;
 	selectedIds: any = {};
-	updateLogs$: Subject<any> = new Subject();
+	subject$: Subject<any> = new Subject();
 	organization: any;
 	screenshotsUrls: { thumbUrl: string; fullUrl: string }[] = [];
 	selectedIdsCount = 0;
 	allSelected = false;
-	orignalTimeSlots: ITimeSlot[];
+	originalTimeSlots: ITimeSlot[] = [];
 	selectedEmployeeId: string | null = null;
 	projectId: string | null = null;
 
@@ -54,21 +55,22 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		const storeProject$ = this.store.selectedProject$;
 		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
+				distinctUntilChange(),
 				filter(([organization]) => !!organization),
 				tap(([organization, employee, project]) => {
 					if (organization) {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
-						this.updateLogs$.next(true);
+						this.subject$.next(true);
 					}
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.updateLogs$
+		this.subject$
 			.pipe(
-				debounceTime(800),
+				debounceTime(100),
 				tap(() => this.galleryService.clearGallery()),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
@@ -79,7 +81,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
 		this.timesheetFilterService.filter = $event;
-		this.updateLogs$.next(true);
+		this.subject$.next(true);
 	}
 
 	async getLogs() {
@@ -117,7 +119,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		this.timesheetService
 			.getTimeSlots(request)
 			.then((timeSlots) => {
-				this.orignalTimeSlots = timeSlots;
+				this.originalTimeSlots = timeSlots;
 				this.timeSlots = this.groupTimeSlots(timeSlots);
 			})
 			.finally(() => (this.loading = false));
@@ -149,7 +151,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	}
 
 	deleteSlot() {
-		this.updateLogs$.next(true);
+		this.subject$.next(true);
 	}
 
 	deleteSlots() {
@@ -158,14 +160,14 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((type) => {
 				if (type === 'ok') {
-					const ids = _.chain(this.selectedIds)
+					const ids = chain(this.selectedIds)
 						.pick((value, key) => value)
 						.keys()
 						.values()
 						.value();
 					this.timesheetService.deleteTimeSlots(ids).then(() => {
 						this._deleteScreenshotGallery(ids);
-						this.updateLogs$.next(true);
+						this.subject$.next(true);
 					});
 				}
 			});
@@ -181,12 +183,11 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			this.checkAllCheckbox.checked = false;
 			this.checkAllCheckbox.indeterminate = false;
 		}
-		const groupTimeSlots = _.chain(timeSlots)
+		const groupTimeSlots = chain(timeSlots)
 			.map((timeSlot) => {
 				this.selectedIds[timeSlot.id] = false;
 				timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
 
-				// timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
 				this.screenshotsUrls = this.screenshotsUrls.concat(
 					timeSlot.screenshots.map((screenshot) => ({
 						thumbUrl: screenshot.thumbUrl,
@@ -198,17 +199,19 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))
 			.mapObject(
 				(hourTimeSlots: ITimeSlot[], hour): IScreenshotMap => {
-					const byMinutes = _.indexBy(hourTimeSlots, (timeSlot) =>
+					/**
+					 * First sort by screenshots then after index by of hoursTimeSlots
+					 * So, we can display screenshots in UI
+					 */
+					const byMinutes = indexBy(sortBy(hourTimeSlots, 'screenshots'), (timeSlot) =>
 						moment(timeSlot.localStartedAt).format('mm')
 					);
-					timeSlots = ['00', '10', '20', '30', '40', '50'].map(
-						(key) => byMinutes[key] || null
-					);
-					const time = moment()
-						.set('hour', parseInt(hour, 0))
-						.set('minute', 0);
+					timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => byMinutes[key] || null);
+					
+					const time = moment().set('hour', parseInt(hour, 0)).set('minute', 0);
 					const startTime = time.format('HH:mm');
 					const endTime = time.add(1, 'hour').format('HH:mm');
+					
 					return { startTime, endTime, timeSlots };
 				}
 			)
@@ -222,10 +225,10 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	}
 
 	private _deleteScreenshotGallery(timeSlotIds: string[]) {
-		if (this.orignalTimeSlots.length) {
-			this.orignalTimeSlots.forEach((timeSlot: ITimeSlot) => {
+		if (this.originalTimeSlots.length) {
+			this.originalTimeSlots.forEach((timeSlot: ITimeSlot) => {
 				if (timeSlotIds.includes(timeSlot.id)) {
-					const gallaryItems = timeSlot.screenshots.map(
+					const galleryItems = timeSlot.screenshots.map(
 						(screenshot: IScreenshot) => {
 							return {
 								thumbUrl: screenshot.thumbUrl,
@@ -234,7 +237,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 							};
 						}
 					);
-					this.galleryService.removeGalleryItems(gallaryItems);
+					this.galleryService.removeGalleryItems(galleryItems);
 				}
 			});
 		}

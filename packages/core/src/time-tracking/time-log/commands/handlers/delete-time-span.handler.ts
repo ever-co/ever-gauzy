@@ -36,10 +36,10 @@ export class DeleteTimeSpanHandler
 		console.log({ start, end });
 		console.log({ startedAt, stoppedAt });
 		/*
-		 * Check is overlaping time or not.
+		 * Check is overlapping time or not.
 		 */
 		if (!newTimeRange.overlaps(dbTimeRange, { adjacent: false })) {
-			console.log('Not Overlaping', newTimeRange, dbTimeRange);
+			console.log('Not Overlapping', newTimeRange, dbTimeRange);
 			return false;
 		}
 

@@ -10,7 +10,8 @@ import {
 	UseGuards,
 	Delete,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
@@ -32,9 +33,11 @@ import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from '.
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { RequestContext } from './../../core/context';
 import { DeleteTimeLogDTO } from './dto';
+import { TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TimeLogController {
 	constructor(

@@ -365,11 +365,11 @@ export class StatisticService {
 			weekActivities: parseFloat(
 				parseFloat(weekActivities.overall + '').toFixed(1)
 			),
-			weekDuration: weekActivities.duration,
+			weekDuration: Math.round(weekActivities.duration),
 			todayActivities: parseFloat(
 				parseFloat(todayActivities.overall + '').toFixed(1)
 			),
-			todayDuration: todayActivities.duration
+			todayDuration: Math.round(todayActivities.duration)
 		};
 	}
 
@@ -735,7 +735,7 @@ export class StatisticService {
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
 		/*
-		 *  Get employees id of the orginization or get current employe id
+		 *  Get employees id of the organization or get current employee id
 		 */
 		let employeeIds = [];
 		if (
@@ -869,7 +869,7 @@ export class StatisticService {
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
 		/*
-		 *  Get employees id of the orginization or get current employe id
+		 *  Get employees id of the organization or get current employee id
 		 */
 		let employeeIds = [];
 		if (
@@ -1010,7 +1010,7 @@ export class StatisticService {
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
 		/*
-		 *  Get employees id of the orginization or get current employe id
+		 *  Get employees id of the organization or get current employee id
 		 */
 		let employeeIds = [];
 		if (
@@ -1083,7 +1083,7 @@ export class StatisticService {
 				}
 			});
 
-			const mapedTimeLogs: IManualTimesStatistics[] = timeLogs.map(
+			const mappedTimeLogs: IManualTimesStatistics[] = timeLogs.map(
 				(timeLog) => {
 					return {
 						id: timeLog.id,
@@ -1095,7 +1095,7 @@ export class StatisticService {
 					} as IManualTimesStatistics;
 				}
 			);
-			return mapedTimeLogs;
+			return mappedTimeLogs;
 		} else {
 			return [];
 		}
@@ -1107,7 +1107,7 @@ export class StatisticService {
 	 * @param request 
 	 * @returns 
 	 */
-	async getActivites(request: IGetActivitiesStatistics) {
+	async getActivities(request: IGetActivitiesStatistics) {
 		const {
 			employeeId,
 			organizationId,
@@ -1123,7 +1123,7 @@ export class StatisticService {
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
 		/*
-		 *  Get employees id of the orginization or get current employe id
+		 *  Get employees id of the organization or get current employee id
 		 */
 		let employeeIds = [];
 		if (
