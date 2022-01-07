@@ -49,7 +49,7 @@ export class IncomeMutationComponent
 	}
 
 	/*
-	* Search Tab Form 
+	* Income Mutation Form
 	*/
 	public form: FormGroup = IncomeMutationComponent.buildForm(this.fb, this);
 	static buildForm(
