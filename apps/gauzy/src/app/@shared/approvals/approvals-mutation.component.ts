@@ -1,6 +1,6 @@
-import { OnInit, Component, OnDestroy } from '@angular/core';
+import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import {
 	IRequestApproval,
 	IEmployee,
@@ -12,12 +12,16 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../@core/services/store.service';
-import { EmployeesService } from '../../@core/services/employees.service';
-import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
-import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	ApprovalPolicyService,
+	EmployeesService,
+	OrganizationTeamsService,
+	RequestApprovalService,
+	Store
+} from '../../@core/services';
+import { FormHelpers } from '../forms/helpers';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approval-mutation',
@@ -27,6 +31,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class RequestApprovalMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
+	@ViewChild('formDirective') formDirective: FormGroupDirective;
+
 	form: FormGroup;
 	requestApproval: IRequestApproval;
 	organizationId: string;
@@ -42,14 +50,14 @@ export class RequestApprovalMutationComponent
 	tags: ITag[] = [];
 
 	constructor(
-		public dialogRef: NbDialogRef<RequestApprovalMutationComponent>,
-		private approvalPolicyService: ApprovalPolicyService,
-		private requestApprovalService: RequestApprovalService,
-		private employeesService: EmployeesService,
-		private organizationTeamsService: OrganizationTeamsService,
-		private fb: FormBuilder,
-		readonly translationService: TranslateService,
-		readonly store: Store
+		public readonly dialogRef: NbDialogRef<RequestApprovalMutationComponent>,
+		private readonly approvalPolicyService: ApprovalPolicyService,
+		private readonly requestApprovalService: RequestApprovalService,
+		private readonly employeesService: EmployeesService,
+		private readonly organizationTeamsService: OrganizationTeamsService,
+		private readonly fb: FormBuilder,
+		public readonly translationService: TranslateService,
+		public readonly store: Store
 	) {
 		super(translationService);
 	}
@@ -125,9 +133,7 @@ export class RequestApprovalMutationComponent
 		this.tenantId = tenantId;
 	}
 
-	onApprovalPolicySelected(approvalPolicySelection: string[]) {
-		console.log(approvalPolicySelection, "approvalPolicySelection");
-		
+	onApprovalPolicySelected(approvalPolicySelection: string[]) {		
 		this.selectedApprovalPolicy = approvalPolicySelection;
 	}
 
@@ -227,10 +233,15 @@ export class RequestApprovalMutationComponent
 			}
 			requestApproval.employees = listEmployees;
 		}
+		this.onReset();
 		this.dialogRef.close(requestApproval);
 	}
 
-	async saveRequestApproval() {
+	async onSubmit() {
+		if (this.form.invalid || !this.formDirective.submitted) {
+			return;
+		}
+
 		if (!this.form.get('id').value) {
 			delete this.form.value['id'];
 		}
@@ -245,7 +256,6 @@ export class RequestApprovalMutationComponent
 			organizationId: this.organizationId,
 			tenantId: this.tenantId
 		};
-		this.form.setErrors({ 'invalid' : true });
 		let result: IRequestApproval;
 		result = await this.requestApprovalService.save(requestApproval);
 		this.closeDialog(result);
@@ -253,6 +263,7 @@ export class RequestApprovalMutationComponent
 
 	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.form.get('tags').setValue(currentTagSelection);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	onMembersSelected(members: string[]) {
@@ -268,11 +279,19 @@ export class RequestApprovalMutationComponent
 	}
 
 	onParticipantsChange(participants: string) {
+		this.participants = participants;
 		if(participants === "employees") {
 			this.form.get('teams').setValue([]);
 		} else {
 			this.form.get('employees').setValue([]);
 		}
-		this.participants = participants;
+		this.form.updateValueAndValidity();
+	}
+
+	/**
+	 * Reset approval request mutation form after save
+	 */
+	onReset() {
+		this.formDirective.reset();
 	}
 }
