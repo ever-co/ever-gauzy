@@ -166,7 +166,7 @@ export class ApprovalPolicyComponent
 			.subscribe();
 	}
 
-	async editApprovalPolicy(selectedItem?: IApprovalPolicy) {
+	async edit(selectedItem?: IApprovalPolicy) {
 		try {
 			if (selectedItem) {
 				this.selectApprovalPolicy({
@@ -192,7 +192,7 @@ export class ApprovalPolicyComponent
 		}
 	}
 
-	async addApprovalPolicy() {
+	async add() {
 		try {
 			const dialog = this.dialogService.open(
 				ApprovalPolicyMutationComponent
