@@ -5,6 +5,7 @@ import { TimeSlot } from './../../time-slot.entity';
 import { TimeSlotRangeDeleteCommand } from '../time-slot-range-delete.command';
 import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
+import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(TimeSlotRangeDeleteCommand)
 export class TimeSlotRangeDeleteHandler
@@ -18,13 +19,12 @@ export class TimeSlotRangeDeleteHandler
 	public async execute(
 		command: TimeSlotRangeDeleteCommand
 	): Promise<boolean> {
+
+		const tenantId = RequestContext.currentTenantId();
 		const { employeeId, start, stop } = command;
 
 		let mStart: any = moment.utc(start);
-		mStart.set(
-			'minute',
-			mStart.get('minute') - (mStart.get('minute') % 10)
-		);
+		mStart.set('minute', mStart.get('minute') - (mStart.get('minute') % 10));
 		mStart.set('second', 0);
 		mStart.set('millisecond', 0);
 
@@ -41,21 +41,24 @@ export class TimeSlotRangeDeleteHandler
 			mEnd = mEnd.toDate();
 		}
 
-		console.log('TimeSlot Delete Range:', { mStart, mEnd });
-		const timeslots = await this.timeSlotRepository.find({
+		console.log('TimeSlot Delete Range:', { start, stop, mStart, mEnd });
+		const timeSlots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
-				qb.andWhere(
-					`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
-					{ startDate: mStart, endDate: mEnd }
-				);
+				qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
+					startDate: mStart,
+					endDate: mEnd
+				});
 				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 					employeeId
+				});
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+					tenantId
 				});
 			},
 			relations: ['screenshots']
 		});
-		console.log('Delete TimeSlot Range:', timeslots);
-		await this.timeSlotRepository.remove(timeslots);
+		console.log('Delete TimeSlot Range:', timeSlots);
+	await this.timeSlotRepository.remove(timeSlots);
 		return true;
 	}
 }
