@@ -121,15 +121,19 @@ export class ApprovalPolicyComponent
 	}
 
 	async getApprovalPolicies() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { items = [] } = await this.approvalPolicyService.getAll(['organization'], {
-			tenantId,
-			organizationId
-		} as IApprovalPolicyFindInput)
-		this.loading = false;
-		this.approvalPolicies = items;
-		this.smartTableSource.load(items);
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+			const { items = [] } = await this.approvalPolicyService.getAll(
+				['organization'], { tenantId, organizationId } as IApprovalPolicyFindInput
+			);
+			this.approvalPolicies = items;
+			this.smartTableSource.load(items);
+		} catch (error) {
+			console.log('Error while retrieving approval policies', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	private _loadSmartTableSettings() {
@@ -162,35 +166,48 @@ export class ApprovalPolicyComponent
 			.subscribe();
 	}
 
-	async save(selectedItem?: IApprovalPolicy) {
-		if (selectedItem) {
-			this.selectApprovalPolicy({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const dialog = this.dialogService.open(
-			ApprovalPolicyMutationComponent,
-			{
-				context: {
-					approvalPolicy: this.selectedApprovalPolicy,
-					organizationId,
-					tenantId
-				}
+	async edit(selectedItem?: IApprovalPolicy) {
+		try {
+			if (selectedItem) {
+				this.selectApprovalPolicy({
+					isSelected: true,
+					data: selectedItem
+				});
 			}
-		);
-		const requestApproval = await firstValueFrom(dialog.onClose);
-		if (requestApproval) {
-			this.toastrService.success(
-				this.selectedApprovalPolicy?.id
-					? 'TOASTR.MESSAGE.APPROVAL_POLICY_UPDATED'
-					: 'TOASTR.MESSAGE.APPROVAL_POLICY_CREATED',
-				{ name: requestApproval.name }
-			);
+			const dialog = this.dialogService.open(ApprovalPolicyMutationComponent, {
+				context: {
+					approvalPolicy: this.selectedApprovalPolicy
+				}
+			});
+			const result: IApprovalPolicy = await firstValueFrom(dialog.onClose);
+			if (result) {
+				this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_UPDATED', {
+					name: result.name
+				});
+			}
+		} catch (error) {
+			console.log('Error while updating approval policy', error);
+		} finally {
+			this.policies$.next(true);
 		}
-		this.policies$.next(true);
+	}
+
+	async add() {
+		try {
+			const dialog = this.dialogService.open(
+				ApprovalPolicyMutationComponent
+			);
+			const result: IApprovalPolicy = await firstValueFrom(dialog.onClose);
+			if (result) {
+				this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_CREATED', {
+					name: result.name
+				});
+			}
+		} catch (error) {
+			console.log('Error while creating approval policy', error);
+		} finally {
+			this.policies$.next(true);
+		}
 	}
 
 	async selectApprovalPolicy({ isSelected, data }) {
