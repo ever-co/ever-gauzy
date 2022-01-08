@@ -24,7 +24,7 @@ export class TimesheetRecalculateHandler
 		const tenantId = RequestContext.currentTenantId();
 		const timesheet = await this.timesheetService.findOneByIdString(id);
 		
-		const timeslot = await this.timeSlotRepository
+		const timeSlot = await this.timeSlotRepository
 			.createQueryBuilder()
 			.select('SUM(duration)', 'duration')
 			.addSelect('AVG(keyboard)', 'keyboard')
@@ -39,10 +39,10 @@ export class TimesheetRecalculateHandler
 			.getRawOne();
 
 		await this.timesheetService.update(id, {
-			duration: Math.round(timeslot.duration),
-			keyboard: Math.round(timeslot.keyboard),
-			mouse: Math.round(timeslot.mouse),
-			overall: Math.round(timeslot.overall)
+			duration: Math.round(timeSlot.duration),
+			keyboard: Math.round(timeSlot.keyboard),
+			mouse: Math.round(timeSlot.mouse),
+			overall: Math.round(timeSlot.overall)
 		});
 
 		return timesheet;

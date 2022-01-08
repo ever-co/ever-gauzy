@@ -18,7 +18,7 @@
 	<nb-card-body>
 		<div class="mb-3">
 			<ng-template ngxPermissionsOnly="APPROVALS_POLICY_EDIT">
-				<button (click)="save()" nbButton status="success" class="mr-2">
+				<button (click)="add()" nbButton status="success" class="mr-2">
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
@@ -52,7 +52,7 @@
 >
 	<ng-template ngxPermissionsOnly="APPROVALS_POLICY_EDIT">
 		<button
-			(click)="save(selectedItem)"
+			(click)="edit(selectedItem)"
 			nbButton
 			status="info"
 			class="mr-2"

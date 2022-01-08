@@ -8,10 +8,13 @@ import {
 	Get,
 	Query,
 	UseGuards,
-	Delete
+	Delete,
+	UsePipes,
+	ValidationPipe,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOneOptions } from 'typeorm';
+import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import {
 	IManualTimeInput,
 	ITimeLog,
@@ -29,9 +32,12 @@ import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { RequestContext } from './../../core/context';
+import { DeleteTimeLogDTO } from './dto';
+import { TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class TimeLogController {
 	constructor(
@@ -274,7 +280,8 @@ export class TimeLogController {
 	@Delete('/')
 	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
-	async deleteTimeLog(@Query() query): Promise<any> {
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async deleteTimeLog(@Query() query: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {
 		return await this.timeLogService.deleteTimeLog(query.logIds);
 	}
 }

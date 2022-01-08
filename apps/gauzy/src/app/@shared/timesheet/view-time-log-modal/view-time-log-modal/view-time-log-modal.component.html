@@ -1,9 +1,6 @@
 <nb-card>
-	<nb-card-header>
-		<div
-			class="row"
-			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
-		>
+	<nb-card-header *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
+		<div class="row">
 			<div class="col-10">
 				<ngx-avatar
 					[name]="timeLog?.employee?.user?.name"
@@ -44,19 +41,18 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body class="custom-scroll">
-		<div>
-			<strong
-				>{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
-			</strong>
-			<span>{{
-				timeLog?.organizationContact
+		<div class="mt-3">
+			<div class="description">
+				<strong> {{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} : </strong>
+				{{
+					timeLog?.organizationContact
 					? timeLog?.organizationContact.name
 					: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
-			}}</span>
+				}}
+			</div>
 		</div>
-
 		<div class="mt-3">
-			<div class="description mb-2">
+			<div class="description">
 				<strong>{{ 'TIMESHEET.PROJECT' | translate }} : </strong>
 				{{
 					timeLog?.project
@@ -65,7 +61,6 @@
 				}}
 			</div>
 		</div>
-
 		<div class="mt-3">
 			<div class="description">
 				<strong>{{ 'TIMESHEET.TODO' | translate }} : </strong>
@@ -76,19 +71,15 @@
 				}}
 			</div>
 		</div>
-
 		<div class="mt-3" *ngIf="timeLog?.description">
-			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.NOTES' | translate }} :
-			</div>
-			<div class="description">{{ timeLog?.description }}</div>
-		</div>
-
-		<div class="mt-3" *ngIf="timeLog?.reason">
-			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.REASON' | translate }} :
-			</div>
 			<div class="description">
+				<strong>{{ 'TIMESHEET.NOTES' | translate }} : </strong>
+				{{ timeLog?.description }}
+			</div>
+		</div>
+		<div class="mt-3" *ngIf="timeLog?.reason">
+			<div class="description">
+				<strong>{{ 'TIMESHEET.REASON' | translate }} : </strong>
 				{{ timeLog?.reason }}
 			</div>
 		</div>

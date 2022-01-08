@@ -15,31 +15,21 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" (ngSubmit)="onSubmit()" #formDirective="ngForm">
 			<div class="row">
 				<div class="col-12 mb-3">
 					<label for="name" class="label">
-						{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
-								| translate
-						}}
+						{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME' | translate }}
 					</label>
 					<input
 						nbInput
 						type="text"
 						formControlName="name"
 						fullWidth
-						placeholder="{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
-								| translate
-						}}"
+						[placeholder]="'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME' | translate"
 						[ngClass]="{
-							'status-danger':
-								form.controls['name'].invalid &&
-								form.controls['name'].dirty,
-							'status-success':
-								form.controls['name'].valid &&
-								form.controls['name'].dirty
+							'status-danger': FormHelpers.isInvalidControl(form, 'name'),
+							'status-success': FormHelpers.isValidControl(form, 'name')
 						}"
 					/>
 				</div>
@@ -47,7 +37,7 @@
 
 			<div class="row">
 				<div class="col-sm-6 mb-3">
-					<label for="Min Count" class="label">
+					<label for="min_count" class="label">
 						{{
 							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
 								| translate
@@ -59,10 +49,7 @@
 						[min]="0"
 						formControlName="min_count"
 						fullWidth
-						placeholder="{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
-								| translate
-						}}"
+						[placeholder]="'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT' | translate"
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
@@ -184,8 +171,8 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			[disabled]="form.invalid"
-			(click)="saveRequestApproval()"
+			[disabled]="form.invalid || formDirective.submitted"
+			(click)="formDirective.onSubmit()"
 			status="success"
 			nbButton
 		>

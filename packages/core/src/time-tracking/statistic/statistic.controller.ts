@@ -139,6 +139,6 @@ export class StatisticController {
 	async activities(
 		@Query() request: IGetActivitiesStatistics
 	) {
-		return await this.statisticService.getActivites(request);
+		return await this.statisticService.getActivities(request);
 	}
 }

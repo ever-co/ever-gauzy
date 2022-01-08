@@ -276,3 +276,7 @@ export const verifyTimeOffPolicyVisible = () => {
 export const clickTimeOffPolicySelector = () => {
 	clickButton(TimeOffPage.timeOffPolicySelectorCss);
 };
+
+export const employeeSelectorVisibleAgain = () => {
+	verifyElementIsVisible(TimeOffPage.employeeDropdownCss);
+};
