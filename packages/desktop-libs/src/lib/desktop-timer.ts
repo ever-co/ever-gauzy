@@ -375,7 +375,7 @@ export default class Timerhandler {
 		 * Create screenshots at end of timer
 		 */
 		(async () => {
-			await this.makeScreenshot(setupWindow, knex, true);
+			await this.makeScreenshot(setupWindow, knex, quitApp);
 
 			/*
 			 * Stop time interval after stop timer

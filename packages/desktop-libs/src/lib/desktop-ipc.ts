@@ -355,19 +355,23 @@ export function ipcTimer(
 	ipcMain.on('expand', (event, arg) => {
 		const display = screen.getPrimaryDisplay();
 		const { width, height } = display.workArea;
+		const maxHeight = height <= 768 ? height - 20 : 768;
+		const zoomF = height < 768 ? 0.8 : 1;
+		const maxWidth = height < 768 ? 360 - 50 : 360;
+		const widthLarge = height < 768 ? 1024 - 50 : 1024;
 		if (arg) {
 			timeTrackerWindow.setBounds({
-				width: 1024,
-				height: 940,
-				x: (width - 1024) * (0.5),
-				y: (height - 940) * (0.5)
+				width: widthLarge,
+				height: maxHeight,
+				x: (width - widthLarge) * (0.5),
+				y: (height - maxHeight) * (0.5)
 			}, true)
 		} else {
 			timeTrackerWindow.setBounds({
-				width: 400,
-				height: 940,
-				x: (width - 400) * (0.5),
-				y: (height - 940) * (0.5)
+				width: maxWidth,
+				height: maxHeight,
+				x: (width - maxWidth) * (0.5),
+				y: (height - maxHeight) * (0.5)
 			}, true)
 		}
 	})

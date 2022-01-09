@@ -45,7 +45,7 @@
 }
 
 .tp-padding {
-  padding-top: 10px;
+  padding-top: 8px;
 }
 
 ::ng-deep body {
@@ -90,7 +90,7 @@
 }
 
 .icon-img-size {
-  font-size: 9.25rem;
+  font-size: 8.25rem;
 }
 
 .org-name {
@@ -117,13 +117,13 @@
   position: absolute;
   background-color: rgba(0, 0, 0, 0.4);
   top: 15px;
-  height: 176px;
-  width: 280px;
+  height: 126px;
+  width: 230px;
   display: none;
 }
 
 .max-card {
-  height: 200px;
+  height: 160px;
 }
 
 .screen-capture-img:hover + .overlay-img,
@@ -181,4 +181,38 @@
   overflow: hidden;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+}
+
+::ng-deep .form-group {
+  margin-bottom: 5px;
+}
+
+::ng-deep .nb-theme-default nb-card {
+  margin-bottom: 0px;
+}
+
+::ng-deep .layout-container {
+  background-color: white;
+}
+
+::ng-deep .nb-theme-default nb-card {
+  border: none;
+}
+
+::ng-deep nb-card {
+  border: none;
+}
+
+
+.table-max-height {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.no-padding-fotter {
+  padding: 0px !important;
+}
+
+::ng-deep .nb-theme-default nb-layout .layout .layout-container .content nb-layout-footer nav {
+  padding: 0px;
 }

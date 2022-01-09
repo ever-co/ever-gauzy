@@ -23,3 +23,15 @@
 ::ng-deep body {
   overflow: hidden !important;
 }
+
+::ng-deep .layout-container {
+  background-color: white;
+}
+
+::ng-deep .nb-theme-default nb-card {
+  border: none;
+}
+
+::ng-deep nb-card {
+  border: none;
+}
