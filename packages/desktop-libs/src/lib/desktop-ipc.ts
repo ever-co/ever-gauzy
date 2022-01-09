@@ -356,7 +356,6 @@ export function ipcTimer(
 		const display = screen.getPrimaryDisplay();
 		const { width, height } = display.workArea;
 		const maxHeight = height <= 768 ? height - 20 : 768;
-		const zoomF = height < 768 ? 0.8 : 1;
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1024 - 50 : 1024;
 		if (arg) {
