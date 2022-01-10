@@ -1794,7 +1794,9 @@
 			"ORG_JOB_MATCHING_VIEW": "crwdns8750:0crwdne8750:0",
 			"ACCESS_DELETE_ACCOUNT": "crwdns10543:0crwdne10543:0",
 			"ACCESS_DELETE_ALL_DATA": "crwdns10545:0crwdne10545:0",
-			"TENANT_SETTING": "crwdns10859:0crwdne10859:0"
+			"TENANT_SETTING": "crwdns10859:0crwdne10859:0",
+			"ALLOW_DELETE_TIME": "crwdns10869:0crwdne10869:0",
+			"ALLOW_MODIFY_TIME": "crwdns10871:0crwdne10871:0"
 		},
 		"BILLING": "crwdns10521:0crwdne10521:0",
 		"BUDGET": "crwdns10523:0crwdne10523:0",
