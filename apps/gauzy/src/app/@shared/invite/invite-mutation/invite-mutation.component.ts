@@ -42,17 +42,6 @@ export class InviteMutationComponent
 		this._invitationType = value;
 	}
 
-	/*
-	* Getter & Setter for check Super Admin
-	*/
-	_isSuperAdmin: boolean = false;
-	get isSuperAdmin(): boolean {
-		return this._isSuperAdmin;
-	}
-	@Input() set isSuperAdmin(value: boolean) {
-		this._isSuperAdmin = value;
-	}
-
 	@ViewChild('emailInviteForm')
 	emailInviteForm: EmailInviteFormComponent;
 

@@ -17,7 +17,7 @@ import { filter, tap } from 'rxjs/operators';
 import { NbTagComponent, NbTagInputAddEvent, NbTagInputDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { InviteService, RoleService, Store } from './../../../../@core/services';
+import { AuthService, InviteService, RoleService, Store } from './../../../../@core/services';
 import { EmailValidator } from '../../../../@core/validators';
 import { TranslationBaseComponent } from '../../../language-base';
 import { FormHelpers } from '../../../forms/helpers';
@@ -40,17 +40,6 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	@Input() public organizationProjects: IOrganizationProject[];
 	@Input() public organizationContacts: IOrganizationContact[];
 	@Input() public organizationDepartments: IOrganizationDepartment[];
-
-	/*
-	* Getter & Setter for check Super Admin
-	*/
-	_isSuperAdmin: boolean = false;
-	get isSuperAdmin(): boolean {
-		return this._isSuperAdmin;
-	}
-	@Input() set isSuperAdmin(value: boolean) {
-		this._isSuperAdmin = value;
-	}
 
 	/*
 	* Getter & Setter for InvitationTypeEnum
@@ -100,7 +89,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		private readonly inviteService: InviteService,
 		private readonly rolesService: RoleService,
 		private readonly store: Store,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		private readonly authService: AuthService
 	) {
 		super(translateService)
 	}
@@ -130,10 +120,11 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	 * Exclude roles
 	 */
 	async excludeRoles() {
-		this.excludes = [
-			RolesEnum.EMPLOYEE
-		];
-		if (!this.isSuperAdmin) {
+		const hasSuperAdminRole = await firstValueFrom(
+			this.authService.hasRole([RolesEnum.SUPER_ADMIN])
+		);
+		this.excludes = [RolesEnum.EMPLOYEE];
+		if (!hasSuperAdminRole) {
 			this.excludes.push(RolesEnum.SUPER_ADMIN);
 		}
 	}

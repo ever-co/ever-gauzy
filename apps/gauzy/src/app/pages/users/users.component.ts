@@ -152,13 +152,9 @@ export class UsersComponent
 	}
 
 	async add() {
-		const dialog = this.dialogService.open(UserMutationComponent, {
-			context: {
-				isSuperAdmin: this.hasSuperAdminPermission
-			}
-		});
-
+		const dialog = this.dialogService.open(UserMutationComponent);
 		const data = await firstValueFrom(dialog.onClose);
+		
 		if (data && data.user) {
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
@@ -191,8 +187,7 @@ export class UsersComponent
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
-				invitationType: InvitationTypeEnum.USER,
-				isSuperAdmin: this.hasSuperAdminPermission
+				invitationType: InvitationTypeEnum.USER
 			}
 		});
 		await firstValueFrom(dialog.onClose);

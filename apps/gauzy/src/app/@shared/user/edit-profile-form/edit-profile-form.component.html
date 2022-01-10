@@ -125,6 +125,7 @@
 								[label]="'FORM.LABELS.ROLE' | translate"
 								formControlName="role"
 								(selectedChange)="onSelectionChange($event)"
+								[excludes]="excludes"
 							></ngx-role-form-field>
 						</div>
 						<div class="col-sm-6">
