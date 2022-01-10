@@ -4,7 +4,8 @@ import {
 	RolesEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IInviteViewModel
+	IInviteViewModel,
+	InvitationExpirationEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -125,13 +126,16 @@ export class InvitesComponent
 	}
 
 	async invite() {
-		const dialog = this.dialogService.open(InviteMutationComponent, {
-			context: {
-				invitationType: this.invitationType
-			}
-		});
-		await firstValueFrom(dialog.onClose);
-		this.loadInvites();
+		try {
+			const dialog = this.dialogService.open(InviteMutationComponent, {
+				context: {
+					invitationType: this.invitationType
+				}
+			});
+			await firstValueFrom(dialog.onClose);
+		} finally {
+			this.invites$.next(true);
+		}
 	}
 
 	copyToClipboard(selectedItem?: IInviteViewModel) {
@@ -180,14 +184,14 @@ export class InvitesComponent
 		for (const invite of invites) {
 			invitesVm.push({
 				email: invite.email,
-				expireDate: invite.expireDate ? moment(invite.expireDate).fromNow() : null,
+				expireDate: invite.expireDate ? moment(invite.expireDate).fromNow() : InvitationExpirationEnum.NEVER,
 				createdDate: invite.createdAt,
 				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
 				fullName: `${
 					(invite.invitedBy && invite.invitedBy.firstName) || ''
 				} ${(invite.invitedBy && invite.invitedBy.lastName) || ''}`,
 				roleName: invite.role ? invite.role.name : '',
-				status: moment(invite.expireDate).isAfter(moment())
+				status: (!invite.expireDate || moment(invite.expireDate).isAfter(moment()))
 					? this.getTranslation(`INVITE_PAGE.STATUS.${invite.status}`)
 					: this.getTranslation(`INVITE_PAGE.STATUS.EXPIRED`),
 				projectNames: (invite.projects || []).map(

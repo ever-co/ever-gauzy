@@ -9,6 +9,7 @@ import {
 	IAuthResponse
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -54,7 +55,7 @@ export class AuthService {
 
 	hasRole(roles: RolesEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`${API_PREFIX}/auth/role`, {
-			params: { roles }
+			params: toParams({ roles })
 		});
 	}
 

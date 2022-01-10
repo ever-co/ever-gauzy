@@ -20,6 +20,7 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { IPasswordReset } from '@gauzy/contracts';
+import { RequestContext } from 'core';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -253,13 +254,19 @@ export class AuthService extends SocialAuthService {
 		}
 	}
 
-	async hasRole(token: string, roles: string[] = []): Promise<boolean> {
+	/**
+	 * Check current user has role
+	 * 
+	 * @param token 
+	 * @param roles 
+	 * @returns 
+	 */
+	 async hasRole(roles: string[] = []): Promise<boolean> {
 		try {
-			const { role } = verify(token, environment.JWT_SECRET) as {
-				id: string;
-				role: string;
-			};
-			return role ? roles.includes(role) : false;
+			const { role } = await this.userService.findOneByIdString(RequestContext.currentUserId(), {
+				relations: ['role']
+			});
+			return role ? roles.includes(role.name) : false;
 		} catch (err) {
 			if (err instanceof JsonWebTokenError) {
 				return false;

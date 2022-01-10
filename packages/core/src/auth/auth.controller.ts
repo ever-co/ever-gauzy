@@ -53,8 +53,7 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/role')
 	async hasRole(@Query('roles') roles: string[]): Promise<boolean> {
-		const token = RequestContext.currentToken();
-		return await this.authService.hasRole(token, roles);
+		return await this.authService.hasRole(roles);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

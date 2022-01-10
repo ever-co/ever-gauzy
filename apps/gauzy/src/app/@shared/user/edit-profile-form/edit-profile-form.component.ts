@@ -15,12 +15,14 @@ import {
 	IUser,
 	ITag,
 	IRole,
-	IUserUpdateInput
+	IUserUpdateInput,
+	RolesEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
+	AuthService,
 	ErrorHandlingService,
 	RoleService,
 	Store,
@@ -71,7 +73,6 @@ export class EditProfileFormComponent
 		this._allowRoleChange = value;
 	}
 
-	
 	@Output()
 	userSubmitted = new EventEmitter<void>();
 
@@ -97,8 +98,11 @@ export class EditProfileFormComponent
 		});
 	}
 
+	public excludes: RolesEnum[] = [];
+
 	constructor(
 		private readonly fb: FormBuilder,
+		private readonly authService: AuthService,
 		private readonly userService: UsersService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
@@ -107,6 +111,7 @@ export class EditProfileFormComponent
 	) {}
 
 	async ngOnInit() {
+		this.excludeRoles();
 		this.user$
 			.pipe(
 				debounceTime(100),
@@ -122,6 +127,15 @@ export class EditProfileFormComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	async excludeRoles() {
+		const hasSuperAdminRole = await firstValueFrom(
+			this.authService.hasRole([RolesEnum.SUPER_ADMIN])
+		);
+		if (!hasSuperAdminRole) {
+			this.excludes.push(RolesEnum.SUPER_ADMIN);
+		}
 	}
 
 	async getUserProfile() {

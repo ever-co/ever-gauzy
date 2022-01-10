@@ -2,12 +2,13 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { IUser, ITag, RolesEnum, PermissionsEnum } from '@gauzy/contracts';
+import { IUser, ITag, RolesEnum } from '@gauzy/contracts';
+import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
-import { Store, UsersService } from '../../../@core/services';
+import { AuthService, UsersService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +35,7 @@ export class EditUserProfileComponent
 		private readonly location: Location,
 		public readonly translateService: TranslateService,
 		private readonly usersService: UsersService,
-		private readonly store: Store
+		private readonly authService: AuthService
 	) {
 		super(translateService);
 	}
@@ -93,7 +94,10 @@ export class EditUserProfileComponent
 			/**
 			 * Redirect If Edit Super Admin Without Permission
 			 */
-			if (!this.store.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+			const hasSuperAdminRole = await firstValueFrom(
+				this.authService.hasRole([RolesEnum.SUPER_ADMIN])
+			);
+			if (!hasSuperAdminRole) {
 				this.router.navigate(['/pages/users']);
 				return;
 			}

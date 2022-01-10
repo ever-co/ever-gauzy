@@ -63,17 +63,6 @@ export class BasicInfoFormComponent
 	}
 
 	/*
-	* Getter & Setter for check Super Admin
-	*/
-	private _isSuperAdmin: boolean = false;
-	public get isSuperAdmin(): boolean {
-		return this._isSuperAdmin;
-	}
-	@Input() public set isSuperAdmin(value: boolean) {
-		this._isSuperAdmin = value;
-	}
-
-	/*
 	* Getter & Setter for dynamic hide/show roles dropdown
 	*/
 	private _isShowRole: boolean = false;
@@ -86,7 +75,7 @@ export class BasicInfoFormComponent
 	}
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
-	excludes: RolesEnum[] = [];
+	public excludes: RolesEnum[] = [];
 	public organization: IOrganization;
 
 	public form: FormGroup = BasicInfoFormComponent.buildForm(this.fb, this);
@@ -140,9 +129,7 @@ export class BasicInfoFormComponent
 	}
 
 	ngOnInit(): void {
-		if (!this.isSuperAdmin) {
-			this.excludes.push(RolesEnum.SUPER_ADMIN);
-		}
+		this.excludeRoles();
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
@@ -150,6 +137,18 @@ export class BasicInfoFormComponent
 				tap((organization: IOrganization) => this.organization = organization),
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Exclude SUPER_ADMIN role, if don't have permissions
+	 */
+	async excludeRoles() {
+		const hasSuperAdminRole = await firstValueFrom(
+			this.authService.hasRole([RolesEnum.SUPER_ADMIN])
+		);
+		if (!hasSuperAdminRole) {
+			this.excludes.push(RolesEnum.SUPER_ADMIN);
+		}
 	}
 
 	public enableEmployee() {
