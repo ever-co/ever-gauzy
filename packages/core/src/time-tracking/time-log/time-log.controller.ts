@@ -32,7 +32,7 @@ import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { RequestContext } from './../../core/context';
-import { DeleteTimeLogDTO } from './dto';
+import { DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('TimeLog')
@@ -258,11 +258,12 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/:id')
-	@UseGuards(OrganizationPermissionGuard)
-	@Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
+	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async updateManualTime(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IManualTimeInput
+		@Body() entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this.timeLogService.updateTime(id, entity);
 	}

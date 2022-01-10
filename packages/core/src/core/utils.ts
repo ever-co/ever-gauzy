@@ -127,7 +127,7 @@ export function getDateRange(
 	}
 
 	if (end.isBefore(start)) {
-		throw 'End date must be greated than start date.';
+		throw 'End date must be greater than start date.';
 	}
 
 	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
@@ -166,7 +166,7 @@ export function getDateRangeFormat(
 	}
 
 	if (end.isBefore(start)) {
-		throw 'End date must be greated than start date.';
+		throw 'End date must be greater than start date.';
 	}
 
 	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';

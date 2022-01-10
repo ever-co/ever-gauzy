@@ -13,7 +13,9 @@ import {
 	PermissionsEnum,
 	OrganizationPermissionsEnum,
 	IGetTimeLogConflictInput,
-	ISelectedEmployee
+	ISelectedEmployee,
+	TimeLogType,
+	TimeLogSourceEnum
 } from '@gauzy/contracts';
 import { toUTC, toLocal } from '@gauzy/common-angular';
 import { TimesheetService } from '../timesheet.service';
@@ -71,8 +73,8 @@ export class EditTimeLogModalComponent
 		private readonly employeesService: EmployeesService,
 		private readonly dialogRef: NbDialogRef<EditTimeLogModalComponent>
 	) {
-		const munutes = moment().get('minutes');
-		const roundTime = moment().subtract(munutes - (munutes % 10));
+		const minutes = moment().get('minutes');
+		const roundTime = moment().subtract(minutes - (minutes % 10));
 
 		this.selectedRange = {
 			end: roundTime.toDate(),
@@ -267,7 +269,9 @@ export class EditTimeLogModalComponent
 			startedAt,
 			stoppedAt,
 			organizationId,
-			tenantId
+			tenantId,
+			logType: TimeLogType.MANUAL,
+			source: TimeLogSourceEnum.BROWSER
 		};
 		if (!payload.employeeId) {
 			payload.employeeId = this.store.user.employeeId;
