@@ -98,7 +98,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ACCESS_DELETE_ALL_DATA,
 			PermissionsEnum.PROFILE_EDIT,
 			PermissionsEnum.TENANT_SETTING,
-			PermissionsEnum.ALLOW_DELETE_TIME
+			PermissionsEnum.ALLOW_DELETE_TIME,
+			PermissionsEnum.ALLOW_MODIFY_TIME
 		]
 	},
 	{
@@ -198,7 +199,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PROFILE_EDIT,
 			PermissionsEnum.TIME_TRACKER,
 			PermissionsEnum.TENANT_SETTING,
-			PermissionsEnum.ALLOW_DELETE_TIME
+			PermissionsEnum.ALLOW_DELETE_TIME,
+			PermissionsEnum.ALLOW_MODIFY_TIME
 		]
 	},
 	{
@@ -256,7 +258,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 			PermissionsEnum.PROFILE_EDIT,
-			PermissionsEnum.ALLOW_DELETE_TIME
+			PermissionsEnum.ALLOW_DELETE_TIME,
+			PermissionsEnum.ALLOW_MODIFY_TIME
 		]
 	},
 	{

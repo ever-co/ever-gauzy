@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { IUser, RolesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { Store, UserIdService, UsersService } from '../../../../@core/services';
+import { AuthService, UserIdService, UsersService } from '../../../../@core/services';
 import { TranslationBaseComponent } from '../../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
@@ -25,7 +26,7 @@ export class EditUserDataComponent
 		private readonly router: Router,
 		private readonly userIdService: UserIdService,
 		private readonly usersService: UsersService,
-		private readonly store: Store
+		private readonly authService: AuthService
 	) {
 		super(translateService);
 	}
@@ -47,7 +48,6 @@ export class EditUserDataComponent
 	}
 
 	private async getUserProfile() {
-
 		const { id } = this.params;
 		const user = await this.usersService.getUserById(id, ['role', 'tags']);
 
@@ -55,7 +55,10 @@ export class EditUserDataComponent
 			/**
 			 * Redirect If Edit Super Admin Without Permission
 			 */
-			if (!this.store.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+			const hasSuperAdminRole = await firstValueFrom(
+				this.authService.hasRole([RolesEnum.SUPER_ADMIN])
+			);
+			if (!hasSuperAdminRole) {
 				this.router.navigate(['/pages/users']);
 				return;
 			}

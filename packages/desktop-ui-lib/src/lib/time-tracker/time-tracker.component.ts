@@ -83,7 +83,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 	loading = false;
 	appSetting = null;
 	isExpand = false;
-	timerWindow = 'col-12 full-height no-padding full-width';
+	timerWindow = 'col-12 no-padding full-width';
 	dialogType = {
 		deleteLog: {
 			name: 'deleteLog',
@@ -772,10 +772,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 	expand() {
 		this.isExpand = !this.isExpand;
 		if (this.isExpand) {
-			this.timerWindow = 'col-5 full-height no-padding full-width timer-max';
+			this.timerWindow = 'col-4 no-padding full-width timer-max';
 			this.expandIcon = 'arrow-left';
 		} else {
-			this.timerWindow = 'col-12 full-height no-padding full-width';
+			this.timerWindow = 'col-12 no-padding full-width';
 			this.expandIcon = 'arrow-right';
 		}
 		this.electronService.ipcRenderer.send('expand', this.isExpand);

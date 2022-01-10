@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, screen } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
 
@@ -27,6 +27,10 @@ export function createTimeTrackerWindow(timeTrackerWindow, filePath) {
 }
 
 const windowSetting = () => {
+	const sizes = screen.getPrimaryDisplay().workAreaSize;
+	const height = sizes.height < 768 ? sizes.height - 20 : 768;
+	const zoomF = sizes.height < 768 ? 0.8 : 1.0;
+	const width = sizes.height < 768 ? 310 : 360;
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: false,
@@ -35,13 +39,15 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,			
-			contextIsolation: false
+			contextIsolation: false,
+			zoomFactor: zoomF
 		},
-		width: 400,
-		height: 940,
+		width: width,
+		height: height,
 		title: 'Time Tracker',
 		maximizable: false,
-		show: false
+		show: false,
+		
 	};
 
 	return mainWindowSettings;

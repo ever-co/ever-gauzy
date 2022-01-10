@@ -29,7 +29,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import * as _ from 'underscore';
 import { chain } from 'underscore';
 import { ConfigService } from '@gauzy/config';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
 	Employee,
@@ -808,44 +808,48 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
-		if (!request.startedAt || !request.stoppedAt) {
-			throw new BadRequestException(
-				'Please select valid Date start and end time'
-			);
+		const { startedAt, stoppedAt, employeeId } = request;
+		if (!startedAt || !stoppedAt) {
+			throw new BadRequestException('Please select valid Date start and end time');
 		}
-		const employee = await this.employeeRepository.findOne(
-			request.employeeId,
-			{ relations: ['organization'] }
-		);
+
+		/**
+		 * Get Employee
+		 */
+		const employee = await this.employeeRepository.findOne(employeeId, {
+			relations: ['organization']
+		});
+
+		/**
+		 * Check future date allow
+		 */
 		const isDateAllow = this.allowDate(
-			request.startedAt,
-			request.stoppedAt,
+			startedAt,
+			stoppedAt,
 			employee.organization
 		);
-
 		if (!isDateAllow) {
-			throw new BadRequestException(
-				'Please select valid Date start and end time'
-			);
+			throw new BadRequestException('Please select valid Date start and end time');
 		}
 
-		const timeLog = await this.timeLogRepository.findOne(request.id);
-		if (request.startedAt || request.stoppedAt) {
-			const conflict = await this.checkConflictTime({
-				employeeId: timeLog.employeeId,
-				startDate: request.startedAt || timeLog.startedAt,
-				endDate: request.stoppedAt || timeLog.stoppedAt,
-				...(id ? { ignoreId: id } : {})
-			});
-
+		/**
+		 * Check Conflicts TimeLogs
+		 */
+		const timeLog = await this.timeLogRepository.findOne(id);
+		const conflicts = await this.checkConflictTime({
+			employeeId: timeLog.employeeId,
+			startDate: startedAt,
+			endDate: stoppedAt,
+			...(id ? { ignoreId: id } : {})
+		});
+		if (isNotEmpty(conflicts)) {
 			const times: IDateRange = {
-				start: new Date(request.startedAt),
-				end: new Date(request.stoppedAt)
+				start: new Date(startedAt),
+				end: new Date(stoppedAt)
 			};
-
-			for (let index = 0; index < conflict.length; index++) {
+			for await (const conflict of conflicts) {
 				await this.commandBus.execute(
-					new DeleteTimeSpanCommand(times, conflict[index])
+					new DeleteTimeSpanCommand(times, conflict)
 				);
 			}
 		}
@@ -853,7 +857,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		await this.commandBus.execute(
 			new TimeLogUpdateCommand(request, timeLog)
 		);
-
 		return await this.timeLogRepository.findOne(request.id);
 	}
 
