@@ -52,7 +52,7 @@
 						</div>
 						<div class="col-sm-6">
 							<ga-tags-color-input
-								[selectedTags]="tags"
+								[selectedTags]="form.get('tags').value"
 								(selectedTagsEvent)="selectedTagsEvent($event)"
 								[isOrgLevel]="true"
 							>
@@ -190,15 +190,18 @@
 								</nb-select>
 							</div>
 						</div>
-						<div class="col-sm-6" *ngIf="isEmployeeHourTable">
-							<div class="form-group">
-								<ga-employee-multi-select
-									[allEmployees]="employees"
-									(selectedChange)="onMembersSelected($event)"
-								>
-								</ga-employee-multi-select>
+
+						<ng-container *ngIf="isEmployeeHourTable">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<ga-employee-multi-select 
+										(selectedChange)="onMembersSelected($event)"
+										(onLoadEmployees)="onLoadEmployees($event)"
+									></ga-employee-multi-select>
+								</div>
 							</div>
-						</div>
+						</ng-container>
+
 						<div class="col-sm-6" *ngIf="isProjectHourTable">
 							<div class="form-group">
 								<label for="inputProject" class="label">
