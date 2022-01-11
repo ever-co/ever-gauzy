@@ -11,13 +11,11 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
-import { Store } from '../../@core/services/store.service';
-import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
-import { EquipmentService } from '../../@core/services/equipment.service';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 import { TranslateModule } from '../translate/translate.module';
+import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
+import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingService, Store } from '../../@core/services';
 
 @NgModule({
 	imports: [
@@ -34,7 +32,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NbDatepickerModule,
 		NgSelectModule,
 		NbRadioModule,
-		TranslateModule
+		TranslateModule,
+		EmployeeMultiSelectModule
 	],
 	declarations: [EquipmentSharingMutationComponent],
 	providers: [
