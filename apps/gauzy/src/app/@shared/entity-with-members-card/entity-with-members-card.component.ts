@@ -14,6 +14,8 @@ export class EntityWithMembersCardComponent {
 
 	@Input() public: IBaseEntityWithMembers;
 
+	@Input() visibleViewButton: boolean = false;
+
 	@Output() remove = new EventEmitter();
 	@Output() edit = new EventEmitter();
 	@Output() view = new EventEmitter();
