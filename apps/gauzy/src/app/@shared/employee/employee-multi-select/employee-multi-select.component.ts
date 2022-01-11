@@ -9,11 +9,10 @@ import {
 } from '@angular/core';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { filter, Subject, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs/operators';
-import { EmployeesService } from '../../../@core/services/employees.service';
-import { Store } from '../../../@core/services/store.service';
+import { EmployeesService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -62,9 +61,21 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		this.select.updateValueAndValidity();
 	}
 
+	/**
+	 * Getter & Setter for employees
+	 */
+	private _employees: IEmployee[] = [];
+	set employees(employees: IEmployee[]) {
+		this._employees = employees;
+		this.onLoadEmployees.emit(employees);
+	}
+	get employees(): IEmployee[] {
+		return this._employees;
+	}
+
 	constructor(
-		private employeesService: EmployeesService,
-		private store: Store
+		private readonly employeesService: EmployeesService,
+		private readonly store: Store
 	) {}
 
 	set employeeId(value: string[] | string) {
@@ -73,7 +84,9 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	get employeeId(): string[] | string {
 		return this.val;
 	}
+
 	@Output() selectedChange = new EventEmitter();
+	@Output() onLoadEmployees = new EventEmitter();
 
 	@Input() multiple = true;
 	@Input() label = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
@@ -81,7 +94,6 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	@Input() placeholder = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
 	select: FormControl = new FormControl();
 
-	employees: IEmployee[];
 	private _allEmployees: IEmployee[];
 	val: string[] | string = null;
 	changeValue$ = new Subject<string | string[]>();
@@ -96,24 +108,29 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		}, 500);
 
 		this.changeValue$
-			.pipe(untilDestroyed(this), debounceTime(100))
+			.pipe(
+				debounceTime(100),
+				untilDestroyed(this)
+			)
 			.subscribe((value) => {
 				this.checkForMultiSelectValue(value);
 				this.onChange(this.val);
 			});
 		this.select.valueChanges
-			.pipe(untilDestroyed(this))
-			.subscribe((value) => {
-				this.employeeId = value;
-			});
+			.pipe(
+				tap((value) => this.employeeId = value),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					if (!this.allEmployees || this.allEmployees.length === 0) {
-						this.loadEmployees();
-					}
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				if (!this.allEmployees || this.allEmployees.length === 0) {
+					this.getWorkingEmployees();
 				}
 			});
 	}
@@ -146,11 +163,18 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		this.disabled = isDisabled;
 	}
 
-	private async loadEmployees(): Promise<void> {
+	/**
+	 * Get working employees of the selected month
+	 */
+	private async getWorkingEmployees(): Promise<void> {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { selectedDate } = this.store;
+
 		const { items = [] } = await this.employeesService.getWorking(
-			this.organization.id,
-			this.organization.tenantId,
-			new Date(),
+			organizationId,
+			tenantId,
+			selectedDate,
 			true
 		);
 		this.employees = items;

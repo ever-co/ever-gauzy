@@ -16,7 +16,8 @@ import {
 	IOrganization,
 	IContact,
 	ICountry,
-	ContactType
+	ContactType,
+	ContactOrganizationInviteStatus
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -54,16 +55,14 @@ export class ContactComponent
 	implements OnInit, OnDestroy {
 
 	showAddCard: boolean;
-	organizationContact: IOrganizationContact[] = [];
-	projectsWithoutOrganizationContact: IOrganizationProject[];
-	selectProjects: string[] = [];
-	organizationContactToEdit: IOrganizationContact;
+	organizationContacts: IOrganizationContact[] = [];
+	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
+	selectedOrganizationContact: IOrganizationContact;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	contactOrganizationInviteStatus = ContactOrganizationInviteStatus;
 	settingsSmartTable: object;
-	selectedContact: any;
-	isGridEdit: boolean;
 	disableButton = true;
 	countries: ICountry[] = [];
 	loading: boolean;
@@ -193,7 +192,7 @@ export class ContactComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				contact_name: {
+				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'custom',
 					class: 'align-row',
@@ -260,7 +259,7 @@ export class ContactComponent
 
 	selectContact({ isSelected, data }) {
 		this.disableButton = !isSelected;
-		this.selectedContact = isSelected ? data : null;
+		this.selectedOrganizationContact = isSelected ? data : null;
 	}
 
 	async removeOrganizationContact(id?: string, name?: string) {
@@ -274,14 +273,14 @@ export class ContactComponent
 
 		if (result) {
 			await this.organizationContactService.delete(
-				this.selectedContact ? this.selectedContact.id : id
+				this.selectedOrganizationContact ? this.selectedOrganizationContact.id : id
 			);
 
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.REMOVE_CONTACT',
 				{
-					name: this.selectedContact
-						? this.selectedContact.name
+					name: this.selectedOrganizationContact
+						? this.selectedOrganizationContact.name
 						: name
 				}
 			);
@@ -297,10 +296,10 @@ export class ContactComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
-				this.selectedContact =
-					this.dataLayoutStyle === 'CARDS_GRID'
+				this.selectedOrganizationContact =
+					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
 						? null
-						: this.selectedContact;
+						: this.selectedOrganizationContact;
 			});
 	}
 
@@ -329,7 +328,6 @@ export class ContactComponent
 			);
 
 			this.showAddCard = !this.showAddCard;
-			this.selectProjects = [];
 
 			let toasterMessage: string =
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT';
@@ -376,24 +374,17 @@ export class ContactComponent
 				items.forEach((contact: IOrganizationContact) => {
 					result.push({
 						...contact,
-						contact_name: contact.name,
 						country: contact.contact ? contact.contact.country : '',
 						city: contact.contact ? contact.contact.city : '',
 						street: contact.contact ? contact.contact.address : '',
-						street2: contact.contact
-							? contact.contact.address2
-							: '',
-						postcode: contact.contact
-							? contact.contact.postcode
-							: null,
+						street2: contact.contact ? contact.contact.address2 : '',
+						postcode: contact.contact ? contact.contact.postcode : null,
 						fax: contact.contact ? contact.contact.fax : '',
 						website: contact.contact ? contact.contact.website : '',
-						fiscalInformation: contact.contact
-							? contact.contact.fiscalInformation
-							: ''
+						fiscalInformation: contact.contact ? contact.contact.fiscalInformation : ''
 					});
 				});
-				this.organizationContact = result;
+				this.organizationContacts = result;
 				this.smartTableSource.load(result);
 			})
 			.catch(() => {
@@ -422,7 +413,7 @@ export class ContactComponent
 				organizationContact: null
 			})
 			.then(({ items }) => {
-				this.projectsWithoutOrganizationContact = items;
+				this.projectsWithoutOrganizationContacts = items;
 			})
 			.catch(() => {
 				this.toastrService.danger(
@@ -436,21 +427,18 @@ export class ContactComponent
 	}
 
 	cancel() {
-		this.organizationContactToEdit = null;
+		this.selectedOrganizationContact = null;
 		this.showAddCard = !this.showAddCard;
 	}
 
 	async editOrganizationContact(organizationContact: IOrganizationContact) {
 		await this.loadProjectsWithoutOrganizationContacts();
-		this.organizationContactToEdit = organizationContact
-			? organizationContact
-			: this.selectedContact;
-		this.isGridEdit = organizationContact ? false : true;
+		this.selectedOrganizationContact = organizationContact;
 		this.showAddCard = true;
 	}
 
 	async add() {
-		this.organizationContactToEdit = null;
+		this.selectedOrganizationContact = null;
 		this.showAddCard = true;
 	}
 
@@ -466,10 +454,10 @@ export class ContactComponent
 				data: selectedItem
 			});
 		}
-		if (!this.selectedContact) {
+		if (!this.selectedOrganizationContact) {
 			return;
 		}
-		const { id } = this.selectedContact;
+		const { id } = this.selectedOrganizationContact;
 		this._router.navigate([`/pages/contacts/view`, id]);
 	}
 

@@ -17,7 +17,7 @@
 				</ng-template>
 				<form
 					[formGroup]="contMainForm"
-					(ngSubmit)="this.contMainForm.markAsDirty()"
+					(ngSubmit)="contMainForm.markAsDirty()"
 					class="contact-form"
 				>
 					<div class="contact-container">
@@ -315,7 +315,7 @@
 					class="step-container"
 					[formGroup]="locationForm"
 					*ngIf="locationForm"
-					(ngSubmit)="this.locationForm.markAsDirty()"
+					(ngSubmit)="locationForm.markAsDirty()"
 				>
 					<div class="fields">
 						<div class="row">
@@ -349,7 +349,7 @@
 								{{ 'BUTTONS.PREVIOUS' | translate }}
 							</button>
 							<button
-								[disabled]="this.locationForm.invalid"
+								[disabled]="locationForm.invalid"
 								nbButton
 								status="success"
 								class="mr-2"
@@ -371,7 +371,7 @@
 				*ngIf="budgetForm"
 				[stepControl]="budgetForm"
 				[label]="'CONTACTS_PAGE.BUDGET' | translate"
-				(ngSubmit)="this.budgetForm.markAsDirty()"
+				(ngSubmit)="budgetForm.markAsDirty()"
 			>
 				<form [formGroup]="budgetForm">
 					<div class="row">
@@ -428,7 +428,7 @@
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
-							[disabled]="this.budgetForm.invalid"
+							[disabled]="budgetForm.invalid"
 							nbButton
 							status="success"
 							class="mr-2"
@@ -455,7 +455,7 @@
 							<div class="form-group">
 								<ga-employee-multi-select
 									[selectedEmployeeIds]="selectedEmployeeIds"
-									[allEmployees]="employees"
+									(onLoadEmployees)="onLoadEmployees($event)"
 									(selectedChange)="onMembersSelected($event)"
 								>
 								</ga-employee-multi-select>

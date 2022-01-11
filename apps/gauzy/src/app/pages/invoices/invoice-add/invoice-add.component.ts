@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Store } from '../../../@core/services/store.service';
 import {
 	IInvoice,
 	IOrganizationContact,
@@ -27,10 +26,27 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeesService, ExpensesService, InvoiceEstimateHistoryService, InvoiceItemService, InvoicesService, OrganizationProjectsService, ProductService, TasksStoreService, ToastrService, TranslatableService } from '../../../@core/services';
+import {
+	ExpensesService,
+	InvoiceEstimateHistoryService,
+	InvoiceItemService,
+	InvoicesService,
+	OrganizationProjectsService,
+	ProductService,
+	Store,
+	TasksStoreService,
+	ToastrService,
+	TranslatableService
+} from '../../../@core/services';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
-import { InvoiceApplyTaxDiscountComponent, InvoiceEmployeesSelectorComponent, InvoiceProductsSelectorComponent, InvoiceProjectsSelectorComponent, InvoiceTasksSelectorComponent } from '../table-components';
+import {
+	InvoiceApplyTaxDiscountComponent,
+	InvoiceEmployeesSelectorComponent,
+	InvoiceProductsSelectorComponent,
+	InvoiceProjectsSelectorComponent,
+	InvoiceTasksSelectorComponent
+} from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -41,6 +57,7 @@ import { InvoiceApplyTaxDiscountComponent, InvoiceEmployeesSelectorComponent, In
 export class InvoiceAddComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+		
 	settingsSmartTable: object;
 	loading: boolean;
 	form: FormGroup;
@@ -77,7 +94,6 @@ export class InvoiceAddComponent
 	discountAfterTax: boolean;
 	subtotal = 0;
 	total = 0;
-	tags: ITag[] = [];
 	currencyString: string;
 	selectedLanguage: string;
 
@@ -103,7 +119,6 @@ export class InvoiceAddComponent
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly invoiceItemService: InvoiceItemService,
 		private readonly tasksStore: TasksStoreService,
-		private readonly employeeService: EmployeesService,
 		private readonly productService: ProductService,
 		private readonly dialogService: NbDialogService,
 		private readonly expensesService: ExpensesService,
@@ -175,15 +190,15 @@ export class InvoiceAddComponent
 					: ''
 			],
 			organizationContact: ['', Validators.required],
-			discountType: [''],
-			taxType: [''],
-			tax2Type: [''],
-			invoiceType: [''],
-			project: [''],
-			task: [''],
-			product: [''],
-			expense: [''],
-			tags: ['']
+			discountType: [],
+			taxType: [],
+			tax2Type: [],
+			invoiceType: [],
+			project: [],
+			task: [],
+			product: [],
+			expense: [],
+			tags: []
 		});
 	}
 
@@ -425,7 +440,8 @@ export class InvoiceAddComponent
 			taxType,
 			tax2Type,
 			terms,
-			organizationContact
+			organizationContact,
+			tags
 		} = this.form.value;
 
 		const createdInvoice = await this.invoicesService.add({
@@ -448,7 +464,7 @@ export class InvoiceAddComponent
 			organizationId,
 			tenantId,
 			invoiceType: this.selectedInvoiceType,
-			tags: this.tags,
+			tags,
 			isEstimate: this.isEstimate,
 			status: status,
 			sentTo: sendTo,
@@ -717,16 +733,13 @@ export class InvoiceAddComponent
 		this._getInvoiceNumber();
 	}
 
-	private getEmployess() {
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-
-		this.employeeService
-			.getAll(['user'], { organizationId, tenantId })
-			.pipe(untilDestroyed(this))
-			.subscribe(({ items }) => {
-				this.employees = items;
-			});
+	/**
+	 * Load employees from multiple selected employees
+	 * 
+	 * @param employees 
+	 */
+	public onLoadEmployees(employees: IEmployee[]) {
+		this.employees = employees;
 	}
 
 	private getAllProjects() {
@@ -782,7 +795,6 @@ export class InvoiceAddComponent
 		switch ($event) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.isEmployeeHourTable = true;
-				this.getEmployess();
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				this.isProjectHourTable = true;
@@ -1124,16 +1136,18 @@ export class InvoiceAddComponent
 		}
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this.loadSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	selectedTagsEvent(currentTagSelection: ITag[]) {
-		this.tags = currentTagSelection;
+	selectedTagsEvent(selectedTags: ITag[]) {
+		this.form.get('tags').setValue(selectedTags);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	getNextMonth() {
