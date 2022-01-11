@@ -71,7 +71,7 @@
 						</div>
 						<div class="col-sm-6">
 							<ga-tags-color-input
-								[selectedTags]="tags"
+								[selectedTags]="form.get('tags').value"
 								(selectedTagsEvent)="selectedTagsEvent($event)"
 								[isOrgLevel]="true"
 							>

@@ -13,19 +13,20 @@ import {
 	ITag,
 	ContactType,
 	IOrganization,
-	OrganizationContactBudgetTypeEnum
+	OrganizationContactBudgetTypeEnum,
+	IOrganizationContact
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
-import { firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { LocationFormComponent } from '../../../@shared/forms/location';
 import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
-import { EmployeesService, ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
+import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
@@ -41,34 +42,26 @@ export class ContactMutationComponent
 	/*
 	* Getter & Setter for organizationContact element
 	*/
-	private _organizationContact: any;
-	get organizationContact(): any {
+	private _organizationContact: IOrganizationContact;
+	get organizationContact(): IOrganizationContact {
 		return this._organizationContact;
 	}
-	@Input() set organizationContact(value: any) {
+	@Input() set organizationContact(value: IOrganizationContact) {
 		this._organizationContact = value;
+		if (value) {
+			this.syncOrganizationContactMembers();
+		}
 	}
 
 	/*
-	* Getter & Setter for projectsWithoutOrganizationContact element
+	* Getter & Setter for projectsWithoutOrganizationContacts element
 	*/
-	private _projectsWithoutOrganizationContact: IOrganizationProject[];
-	get projectsWithoutOrganizationContact(): IOrganizationProject[] {
-		return this._projectsWithoutOrganizationContact;
+	private _projectsWithoutOrganizationContacts: IOrganizationProject[];
+	get projectsWithoutOrganizationContacts(): IOrganizationProject[] {
+		return this._projectsWithoutOrganizationContacts;
 	}
-	@Input() set projectsWithoutOrganizationContact(value: IOrganizationProject[]) {
-		this._projectsWithoutOrganizationContact = value;
-	}
-
-	/*
-	* Getter & Setter for isGridEdit element
-	*/
-	private _isGridEdit: boolean;
-	get isGridEdit(): boolean {
-		return this._isGridEdit;
-	}
-	@Input() set isGridEdit(value: boolean) {
-		this._isGridEdit = value;
+	@Input() set projectsWithoutOrganizationContacts(value: IOrganizationProject[]) {
+		this._projectsWithoutOrganizationContacts = value;
 	}
 
 	/*
@@ -174,8 +167,7 @@ export class ContactMutationComponent
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly filterArrayPipe: FilterArrayPipe,
-		private readonly employeesService: EmployeesService
+		private readonly filterArrayPipe: FilterArrayPipe
 	) {
 		super(translateService);
 	}
@@ -185,38 +177,38 @@ export class ContactMutationComponent
 		storeOrganization$
 			.pipe(
 				debounceTime(200),
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this._patchForm()),
 				tap(() => this._getProjects()),
-				tap(() => this._getEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Sync organization contact members
+	 */
+	syncOrganizationContactMembers() {
 		if (this.organizationContact) {
 			this.selectedEmployeeIds = this.organizationContact.members.map(
-				(member) => member.id
+				(member: IEmployee) => member.id
 			);
 		}
 	}
 
-	private async _getEmployees() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		const { items } = await firstValueFrom(
-			this.employeesService.getAll(['user'], {
-				organizationId,
-				tenantId
-			})
-		)
-		this.employees = items;
-		if (organizationId) {
-			this.selectedMembers = this.filterArrayPipe.transform(
-				this.employees,
-				this.selectedEmployeeIds
-			);
-		}
+	/**
+	 * Load employees from multiple selected employees
+	 * 
+	 * @param employees 
+	 */
+	public onLoadEmployees(employees: IEmployee[]) {
+		this.employees = employees;
+		this.selectedMembers = this.filterArrayPipe.transform(
+			this.employees,
+			this.selectedEmployeeIds
+		);
 	}
 
 	private async _getProjects() {
@@ -240,10 +232,8 @@ export class ContactMutationComponent
 			tags: this.organizationContact
 					? (this.organizationContact.tags)
 					: [],
-			name: this.organizationContact
-						? this.isGridEdit
-							? this.organizationContact.contact_name
-							: this.organizationContact.name
+			name: this.organizationContact 
+						? this.organizationContact.name 
 						: '',
 			primaryEmail: this.organizationContact
 								? this.organizationContact.primaryEmail
