@@ -1,39 +1,41 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IInvoice,
 	IOrganizationContact,
 	IInvoiceItem,
 	IOrganization,
-	IEmployee,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
 	ITag,
-	ITask,
-	IOrganizationProject,
-	IExpense,
 	IInvoiceItemCreateInput,
-	IProductTranslatable
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { Observable, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { compareDate } from '@gauzy/common-angular';
+import { compareDate, distinctUntilChange } from '@gauzy/common-angular';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { 
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
+	Store,
 	ToastrService,
 	TranslatableService 
 } from '../../../@core/services';
-import { InvoiceApplyTaxDiscountComponent, InvoiceEmployeesSelectorComponent, InvoiceExpensesSelectorComponent, InvoiceProductsSelectorComponent, InvoiceProjectsSelectorComponent, InvoiceTasksSelectorComponent } from '../table-components';
+import {
+	InvoiceApplyTaxDiscountComponent,
+	InvoiceEmployeesSelectorComponent,
+	InvoiceExpensesSelectorComponent,
+	InvoiceProductsSelectorComponent,
+	InvoiceProjectsSelectorComponent,
+	InvoiceTasksSelectorComponent
+} from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,28 +46,17 @@ import { InvoiceApplyTaxDiscountComponent, InvoiceEmployeesSelectorComponent, In
 export class InvoiceEditComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	invoiceLoaded = false;
-	loadedNumber: boolean;
+
 	shouldLoadTable = false;
 	invoiceId: string;
 	settingsSmartTable: object;
-	formItemNumber: number;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	invoice: IInvoice;
 	organization: IOrganization;
 	itemsToDelete: string[] = [];
-	invoiceItems: IInvoiceItem[];
+	invoiceItems: IInvoiceItem[] = [];
 	selectedOrganizationContact: IOrganizationContact;
-	employees: IEmployee[];
-	projects: IOrganizationProject[];
-	products: IProductTranslatable[];
-	invoiceDate: Date;
-	dueDate: Date;
-	tags: ITag[] = [];
-	tasks: ITask[];
-	expenses: IExpense[] = [];
-	observableTasks: Observable<ITask[]>;
 	duplicate: boolean;
 	discountAfterTax: boolean;
 	subtotal = 0;
@@ -90,17 +81,17 @@ export class InvoiceEditComponent
 	}
 
 	constructor(
-		private store: Store,
-		private router: Router,
-		private fb: FormBuilder,
-		private invoiceItemService: InvoiceItemService,
-		private translate: TranslateService,
-		private invoicesService: InvoicesService,
-		private toastrService: ToastrService,
-		private route: ActivatedRoute,
-		private dialogService: NbDialogService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private translatableService: TranslatableService
+		private readonly store: Store,
+		private readonly router: Router,
+		private readonly fb: FormBuilder,
+		private readonly invoiceItemService: InvoiceItemService,
+		private readonly translate: TranslateService,
+		private readonly invoicesService: InvoicesService,
+		private readonly toastrService: ToastrService,
+		private readonly route: ActivatedRoute,
+		private readonly dialogService: NbDialogService,
+		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private readonly translatableService: TranslatableService
 	) {
 		super(translate);
 	}
@@ -108,9 +99,11 @@ export class InvoiceEditComponent
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
 		this.initializeForm();
-		this.route.paramMap.pipe(untilDestroyed(this)).subscribe((params) => {
-			this.invoiceId = params.get('id');
-		});
+		this.route.paramMap
+			.pipe(
+				tap((params) => this.invoiceId = params.get('id')),
+				untilDestroyed(this)
+			).subscribe();
 		this.route.queryParamMap
 			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
@@ -120,10 +113,11 @@ export class InvoiceEditComponent
 				}
 			});
 		this.invoicesService.currentData
-			.pipe(untilDestroyed(this))
-			.subscribe((response) => {
-				this.duplicate = response;
-			});
+			.pipe(
+				tap((response) => this.duplicate = response),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.selectedLanguage = this.translateService.currentLang;
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
@@ -133,6 +127,7 @@ export class InvoiceEditComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				distinctUntilChange(),
 				tap(() => (this.loading = true)),
 				tap((organization) => (this.organization = organization)),
 				tap(() => this.getInvoiceById()),
@@ -142,8 +137,9 @@ export class InvoiceEditComponent
 	}
 
 	getInvoiceById() {
-		this.loading = true;
 		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		this.invoicesService
 			.getById(
 				this.invoiceId,
@@ -159,14 +155,13 @@ export class InvoiceEditComponent
 					'toContact',
 					'fromOrganization'
 				],
-				{ tenantId }
+				{ tenantId, organizationId }
 			)
 			.then(async (invoice: IInvoice) => {
 				this.invoice = invoice;
 				this.invoiceItems = invoice.invoiceItems;
 				this.selectedOrganizationContact = invoice.toContact;
-				this.discountAfterTax =
-					invoice.fromOrganization.discountAfterTax;
+				this.discountAfterTax = invoice.fromOrganization.discountAfterTax;
 
 				await this._loadOrganizationData();
 				this.updateValueAndValidity(invoice);
@@ -197,12 +192,12 @@ export class InvoiceEditComponent
 				'',
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
-			terms: [''],
+			terms: [],
 			organizationContact: ['', Validators.required],
 			currency: ['', Validators.required],
-			discountType: [''],
-			taxType: [''],
-			tax2Type: [''],
+			discountType: [],
+			taxType: [],
+			tax2Type: [],
 			tags: []
 		});
 	}
@@ -225,9 +220,6 @@ export class InvoiceEditComponent
 			tags: invoice.tags
 		});
 		this.form.updateValueAndValidity();
-
-		this.invoiceLoaded = true;
-		this.tags = invoice.tags;
 	}
 
 	async loadSmartTable() {
@@ -467,6 +459,7 @@ export class InvoiceEditComponent
 		if (!this.organization) {
 			return;
 		}
+
 		this.loadSmartTable();
 		await this.loadInvoiceItemData();
 		await this.calculateTotal();
@@ -520,7 +513,7 @@ export class InvoiceEditComponent
 				toContact: invoiceData.organizationContact,
 				organizationId,
 				tenantId,
-				tags: this.tags,
+				tags: invoiceData.tags,
 				status: status,
 				sentTo: sendTo,
 				hasRemainingAmountInvoiced:
@@ -700,7 +693,7 @@ export class InvoiceEditComponent
 				organizationId,
 				tenantId,
 				invoiceType: this.invoice.invoiceType,
-				tags: this.tags,
+				tags: invoiceData.tags,
 				isEstimate: this.isEstimate,
 				alreadyPaid: this.invoice.alreadyPaid,
 				amountDue: this.invoice.amountDue,
@@ -980,13 +973,16 @@ export class InvoiceEditComponent
 	}
 
 	payments() {
-		this.router.navigate([
-			`/pages/accounting/invoices/payments/${this.invoice.id}`
-		]);
+		if (this.invoice) {
+			this.router.navigate([
+				`/pages/accounting/invoices/payments/${this.invoice.id}`
+			]);
+		}
 	}
 
-	selectedTagsEvent(currentTagSelection: ITag[]) {
-		this.tags = currentTagSelection;
+	selectedTagsEvent(selectedTags: ITag[]) {
+		this.form.get('tags').setValue(selectedTags);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	ngOnDestroy() {}

@@ -841,7 +841,6 @@ export class InvoiceAddComponent
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				if (this.selectedEmployeeIds.length) {
 					for (const employeeId of this.selectedEmployeeIds) {
-						console.log(this.employees);
 						const employee = this.employees.find(
 							(employee) => employee.id === employeeId
 						);
