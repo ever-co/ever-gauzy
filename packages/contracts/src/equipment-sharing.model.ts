@@ -45,3 +45,8 @@ export interface ISelectedEquipmentSharing {
 	data: IEquipmentSharing;
 	isSelected: boolean;
 }
+
+export enum EquipmentSharingParticipantEnum {
+	EMPLOYEE = 'EMPLOYEE',
+	TEAM = 'TEAM'
+}

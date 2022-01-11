@@ -14,9 +14,12 @@ import {
 	IOrganizationTeam,
 	IEquipmentSharingPolicy,
 	IOrganization,
-	IEquipmentSharingRequest
+	IEquipmentSharingRequest,
+	EquipmentSharingParticipantEnum
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import {
@@ -58,7 +61,7 @@ export class EquipmentSharingMutationComponent
 	disabled: boolean;
 	selectedOrganization: IOrganization;
 	requestStatus: number;
-	participants = 'employees';
+	participants = EquipmentSharingParticipantEnum.EMPLOYEE;
 
 	teams: IOrganizationTeam[];
 	equipmentItems: IEquipment[];
@@ -67,6 +70,7 @@ export class EquipmentSharingMutationComponent
 	equipmentSharingPolicies: IEquipmentSharingPolicy[] = [];
 	selectedEquipmentSharingPolicy: string;
 	requestStatuses = Object.values(RequestApprovalStatus);
+	equipmentSharingParticipantEnum = EquipmentSharingParticipantEnum;
 
 	date1 = new Date();
 	date2 = new Date();
@@ -81,6 +85,8 @@ export class EquipmentSharingMutationComponent
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
 				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
@@ -150,6 +156,16 @@ export class EquipmentSharingMutationComponent
 				Validators.required
 			]
 		});
+
+		/**
+		 * Auto select participants (TEAM/EMPLOYEE)
+		 */
+		const { teams } = this.form.getRawValue();
+		if (isNotEmpty(teams)) {
+			this.participants = EquipmentSharingParticipantEnum.TEAM;
+		} else {
+			this.participants = EquipmentSharingParticipantEnum.EMPLOYEE;
+		}
 	}
 
 	async loadEquipmentSharingPolicy() {
@@ -278,15 +294,18 @@ export class EquipmentSharingMutationComponent
 		}
 	}
 
-	onEmployeesSelected(employeeSelection: string[]) {
-		this.selectedEmployees = employeeSelection;
+	onEmployeesSelected(employees: string[]) {
+		this.selectedEmployees = employees;
+		
+		this.form.get('employees').setValue(employees);
+		this.form.get('employees').updateValueAndValidity();
 	}
 
 	onTeamsSelected(teamsSelection: string[]) {
 		this.selectedTeams = teamsSelection;
 	}
 
-	onParticipantsChange(participants: string) {
+	onParticipantsChange(participants: EquipmentSharingParticipantEnum) {
 		this.participants = participants;
 	}
 
