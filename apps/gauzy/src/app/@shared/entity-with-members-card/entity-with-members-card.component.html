@@ -48,16 +48,18 @@
 		</div>
 
 		<div class="button-container">
-			<button
-				nbButton
-				class="mr-2"
-				status="info"
-				size="tiny"
-				(click)="navigateContact(entityWithMembers)"
-			>
-				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
-				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
+			<ng-container *ngIf="visibleViewButton">
+				<button
+					nbButton
+					class="mr-2"
+					status="info"
+					size="tiny"
+					(click)="navigateContact(entityWithMembers)"
+				>
+					<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+					{{ 'BUTTONS.VIEW' | translate }}
+				</button>
+			</ng-container>
 			<button
 				nbButton
 				class="mr-2"

@@ -3,24 +3,22 @@ import {
 	IEmployee,
 	IOrganizationDepartment,
 	IOrganizationDepartmentCreateInput,
-	ITag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { Store } from '../../@core/services/store.service';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { TranslationBaseComponent } from './../../@shared/language-base';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { OrganizationDepartmentsService, Store, ToastrService } from '../../@core/services';
+import { distinctUntilChange } from 'packages/common-angular/dist';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-departments',
@@ -30,18 +28,15 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class DepartmentsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationId: string;
-	tenantId: string;
+
 	showAddCard: boolean;
 	departments: IOrganizationDepartment[];
 	employees: IEmployee[] = [];
-	departmentToEdit: IOrganizationDepartment;
-	tags: ITag[];
-	isGridEdit: boolean;
+	selectedDepartment: IOrganizationDepartment;
 	disableButton: boolean;
-	selectedDepartment: any;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	loading: boolean;
@@ -52,63 +47,67 @@ export class DepartmentsComponent
 	) {
 		if (content) {
 			this.departmentsTable = content;
-			this.onChangedSource();
+			this._onChangedSource();
 		}
 	}
+
+	public organization: IOrganization;
+	departments$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly toastrService: ToastrService,
-		private readonly employeesService: EmployeesService,
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private store: Store
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly store: Store
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.cancel();
 		this._applyTranslationOnSmartTable();
-		this.store.selectedOrganization$
+		this._loadSmartTableSettings();
+		this.departments$
 			.pipe(
-				filter((organization) => !!organization),
+				debounceTime(100),
+				tap(() => this.loading = true),
+				tap(() => this._loadDepartments()),
+				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization) {
-					const { tenantId } = this.store.user;
-					this.tenantId = tenantId;
-					this.organizationId = organization.id;
-					this.loadDepartments();
-					this.loadEmployees();
-					this.loadSmartTable();
-				}
-			});
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.departments$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
+
 	ngOnDestroy() { }
-	cancel() {
-		this.departmentToEdit = null;
-		this.showAddCard = false;
-		this.clearItem();
-	}
+	
 	selectDepartment({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedDepartment = isSelected ? data : null;
 	}
-	async loadSmartTable() {
+	
+	/**
+	 * Load smart table columns settings
+	 */
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				department_name: {
+				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'string'
 				},
 				members: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
-					),
+					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
 					type: 'custom',
 					renderComponent: EmployeeWithLinksComponent,
 					filter: false
@@ -121,23 +120,6 @@ export class DepartmentsComponent
 				}
 			}
 		};
-	}
-	private async loadEmployees() {
-		this.loading = true;
-		if (!this.organizationId) {
-			return;
-		}
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user'], {
-				organization: {
-					id: this.organizationId,
-					tenantId: this.tenantId
-				}
-			})
-		);
-
-		this.employees = items;
-		this.loading = false;
 	}
 
 	setView() {
@@ -153,6 +135,7 @@ export class DepartmentsComponent
 						: this.selectedDepartment;
 			});
 	}
+
 	async removeDepartment(id?: string, name?: string) {
 		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
@@ -170,43 +153,37 @@ export class DepartmentsComponent
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.REMOVE_DEPARTMENT',
 				{
 					name: this.selectedDepartment
-						? this.selectedDepartment.department_name
+						? this.selectedDepartment.name
 						: name
 				}
 			);
-			this.cancel();
-			this.loadDepartments();
+			this.departments$.next(true);
 		}
 	}
 
 	async editDepartment(department: IOrganizationDepartment) {
-		this.departmentToEdit = department
-			? department
-			: this.selectedDepartment;
-		this.isGridEdit = department ? false : true;
-		this.showAddCard = true;
+		if (department) {
+			this.selectDepartment({
+				isSelected: true,
+				data: department
+			});
+			this.showAddCard = true;
+		}
 	}
 
-	public async addOrEditDepartment(
-		input: IOrganizationDepartmentCreateInput
-	) {
+	public async addOrEditDepartment(input: IOrganizationDepartmentCreateInput) {
 		if (input.name) {
-			this.departmentToEdit
+			this.selectedDepartment
 				? await this.organizationDepartmentsService.update(
-					this.departmentToEdit.id,
+					this.selectedDepartment.id,
 					input
 				)
 				: await this.organizationDepartmentsService.create(input);
-
-			this.cancel();
-
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ADD_DEPARTMENT',
-				{
-					name: input.name
-				}
-			);
-			this.loadDepartments();
+			
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ADD_DEPARTMENT', {
+				name: input.name
+			});
+			this.departments$.next(true);
 		} else {
 			this.toastrService.danger(
 				this.getTranslation(
@@ -219,51 +196,40 @@ export class DepartmentsComponent
 		}
 	}
 
-	private async loadDepartments() {
-		this.loading = true;
-		if (!this.organizationId) {
+	private async _loadDepartments() {
+		if (!this.organization) {
 			return;
 		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-		const res = await this.organizationDepartmentsService.getAll(
+		const { items = [] } = await this.organizationDepartmentsService.getAll(
 			['members', 'members.user', 'tags'],
-			{
-				organizationId: this.organizationId,
-				tenantId: this.tenantId,
-
-			},
-			{
-				createdAt: 'DESC',
-			}
-		);
-		if (res) {
-			const result = [];
-			this.departments = res.items;
-
-			this.departments.forEach((dpt) =>
-				result.push({
-					id: dpt.id,
-					department_name: dpt.name,
-					members: dpt.members,
-					tags: dpt.tags
-				})
-			);
-			this.smartTableSource.load(result);
-		}
-		this.loading = false;
+			{ organizationId, tenantId },
+			{ createdAt: 'DESC' }
+		).finally(() => {
+			this.loading = false;
+		});
+		this.departments = items;
+		this.smartTableSource.load(items);
 	}
-	_applyTranslationOnSmartTable() {
+	
+	/**
+	 * On language change load smart table settings again
+	 */
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
 	 * Table on changed source event
 	 */
-	onChangedSource() {
+	private _onChangedSource() {
 		this.departmentsTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
@@ -275,17 +241,19 @@ export class DepartmentsComponent
 	/*
 	 * Clear selected item
 	 */
-	clearItem() {
+	public clearItem() {
+		this.showAddCard = false;
 		this.selectDepartment({
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
+		this._deselectAll();
 	}
+
 	/*
 	 * Deselect all table rows
 	 */
-	deselectAll() {
+	private _deselectAll() {
 		if (this.departmentsTable && this.departmentsTable.grid) {
 			this.departmentsTable.grid.dataSet['willSelect'] = 'false';
 			this.departmentsTable.grid.dataSet.deselectAll();

@@ -1,7 +1,11 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header>
 		<div class="main-header">
-			<h4><ngx-header-title>{{ 'ORGANIZATIONS_PAGE.DEPARTMENTS' | translate }}</ngx-header-title></h4>
+			<h4>
+				<ngx-header-title>
+					{{ 'ORGANIZATIONS_PAGE.DEPARTMENTS' | translate }}
+				</ngx-header-title>
+			</h4>
 			<div class="main-header">
 				<ga-layout-selector
 					[componentName]="viewComponentName"
@@ -21,26 +25,24 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE && !showAddCard">
+				<ng-container 
+					*ngTemplateOutlet="actionButtons; context: {
+						selectedItem: selectedDepartment
+					}">
+				</ng-container>
 			</ng-container>
 			<ga-departments-mutation
 				*ngIf="showAddCard"
-				[employees]="employees"
-				[organizationId]="organizationId"
-				[department]="departmentToEdit"
-				(canceled)="cancel()"
-				[isGridEdit]="isGridEdit"
+				[department]="selectedDepartment"
+				(canceled)="clearItem()"
 				(addOrEditDepartment)="addOrEditDepartment($event)"
-			>
-			</ga-departments-mutation>
+			></ga-departments-mutation>
 		</div>
-
 		<div
 			class="card-container"
 			*ngIf="
-				departments?.length &&
-				dataLayoutStyle === 'CARDS_GRID' &&
+				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
 				!showAddCard
 			"
 		>
@@ -56,18 +58,15 @@
 		<div class="mt-4">
 			<ng2-smart-table
 				*ngIf="
-					departments?.length &&
-					dataLayoutStyle === 'TABLE' &&
+					dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
 					!showAddCard
 				"
-				class="w-100"
 				(userRowSelect)="selectDepartment($event)"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
 				style="cursor: pointer"
 				#departmentsTable
-			>
-			</ng2-smart-table>
+			></ng2-smart-table>
 		</div>
 	</nb-card-body>
 </nb-card>
@@ -88,7 +87,6 @@
 		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 		>{{ 'BUTTONS.EDIT' | translate }}
 	</button>
-
 	<button
 		nbButton
 		status="danger"
