@@ -6,7 +6,7 @@
 		) | translate
 	}}</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" (ngSubmit)="onSubmit()">
 			<nb-tabset>
 				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate">
 					<div class="row">
@@ -20,13 +20,12 @@
 								nbInput
 								fullWidth
 								formControlName="name"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.NAME' | translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
 								id="name"
 								[status]="
-									isInvalidControl('name') ? 'danger' : 'basic'
-								"
+									FormHelpers.isInvalidControl(form, 'name') 
+										? 'danger' 
+										: 'basic'"
 							/>
 						</div>
 						<div class="form-group col-4">
@@ -39,9 +38,7 @@
 								nbInput
 								fullWidth
 								formControlName="code"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.CODE' | translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.CODE' | translate"
 								id="code"
 							/>
 						</div>
@@ -61,8 +58,9 @@
 								id="projectUrl"
 								formControlName="projectUrl"
 								[status]="
-									isInvalidControl('projectUrl') ? 'danger' : 'basic'
-								"
+									FormHelpers.isInvalidControl(form, 'projectUrl') 
+										? 'danger' 
+										: 'basic'"
 							/>
 						</div>
 					</div>
@@ -110,11 +108,9 @@
 						<div class="form-group col-4">
 							<ga-employee-multi-select
 								[selectedEmployeeIds]="selectedEmployeeIds"
-								[allEmployees]="employees"
 								(selectedChange)="onMembersSelected($event)"
-								id="add-remove-emploees"
-							>
-							</ga-employee-multi-select>
+								(onLoadEmployees)="onLoadEmployees($event)"
+							></ga-employee-multi-select>
 						</div>
 					</div>
 					<div class="row">
@@ -177,7 +173,7 @@
 						</div>
 						<div class="col-4">
 							<ga-tags-color-input
-								[selectedTags]="tags"
+								[selectedTags]="form.get('tags').value"
 								(selectedTagsEvent)="selectedTagsEvent($event)"
 								[isOrgLevel]="true"
 							>
@@ -291,7 +287,7 @@
 								class="project-toggle"
 								labelPosition="start"
 								status="basic"
-								[checked]="openSource"
+								[checked]="form.get('openSource').value"
 								(checkedChange)="toggleOpenSource($event)"
 								formControlName="openSource"
 							>
@@ -301,7 +297,7 @@
 								}}
 							</nb-toggle>
 						</div>
-						<div *ngIf="openSource" class="form-group col-4">
+						<div *ngIf="form.get('openSource').value" class="form-group col-4">
 							<label for="openSourceProjectUrl" class="label">
 								{{
 									'FORM.LABELS.OPEN_SOURCE_PROJECT_URL'
@@ -316,8 +312,9 @@
 								id="openSourceProjectUrl"
 								formControlName="openSourceProjectUrl"
 								[status]="
-									isInvalidControl('openSourceProjectUrl') ? 'danger' : 'basic'
-								"
+									FormHelpers.isInvalidControl(form, 'openSourceProjectUrl') 
+										? 'danger' 
+										: 'basic'"
 							/>
 						</div>
 					</div>
@@ -374,7 +371,7 @@
 								class="project-toggle"
 								labelPosition="start"
 								status="basic"
-								[checked]="public"
+								[checked]="form.get('public').value"
 								formControlName="public"
 								(checkedChange)="togglePublic($event)"
 								>{{
@@ -389,7 +386,7 @@
 								class="project-toggle"
 								labelPosition="start"
 								status="basic"
-								[checked]="billable"
+								[checked]="form.get('billable').value"
 								formControlName="billable"
 								(checkedChange)="toggleBillable($event)"
 								>{{
@@ -400,42 +397,39 @@
 					</div>
 				</nb-tab>
 			</nb-tabset>
+			<div class="form-group action-buttons">
+				<button 
+					class="mr-2"
+					(click)="cancel()"
+					nbButton
+					status="danger"
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					class="mr-2"
+					type="submit"
+					nbButton
+					status="success"
+					[disabled]="form.invalid"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+				<button
+					*ngIf="form.get('taskViewMode').value === TaskListTypeEnum.SPRINT && project"
+					nbButton
+					class="float-right"
+					status="success"
+					(click)="openTasksSettings()"
+				>
+					{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
+				</button>
+			</div>
 		</form>
-		<div
-			class="form-group"
-			style="display: flex; justify-content: flex-end"
-		>
-			<button class="mr-2" (click)="cancel()" nbButton status="danger">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				(click)="submitForm()"
-				nbButton
-				status="success"
-				[disabled]="!form.valid"
-				[attr.aria-invalid]="
-					form.controls.name.invalid && form.controls.name.touched
-						? true
-						: null
-				"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-			<button
-				*ngIf="form.controls['taskViewMode'].value === 'SPRINT' && project"
-				nbButton
-				class="float-right"
-				status="success"
-				(click)="openTasksSettings()"
-			>
-				{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
-			</button>
-		</div>
 	</nb-card-body>
 </nb-card>
 
-<div *ngIf="form?.controls?.taskViewMode?.value == TaskListTypeEnum.SPRINT && project">
+<div *ngIf="form.get('taskViewMode').value == TaskListTypeEnum.SPRINT && project">
 	<ngx-tasks-sprint-settings-view
 		[project]="project"
 	></ngx-tasks-sprint-settings-view>
