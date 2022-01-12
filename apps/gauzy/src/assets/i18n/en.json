@@ -110,7 +110,8 @@
 		"EMPLOYEE_DEMO": "Employee Demo",
 		"DEMO_CREDENTIALS": "Demo Credentials",
 		"CREATE_NEW_ROLE": "Create {{ name }} Role",
-		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role"
+		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role",
+		"RESTORE": "Restore"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
