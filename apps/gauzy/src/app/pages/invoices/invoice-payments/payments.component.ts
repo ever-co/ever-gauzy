@@ -16,7 +16,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
 import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
@@ -384,6 +384,7 @@ export class InvoicePaymentsComponent
 	}
 
 	async recordFullPayment() {
+		const { tenantId } = this.store.user;
 		const payment = {
 			amount: this.leftToPay,
 			paymentDate: new Date(),
@@ -392,6 +393,7 @@ export class InvoicePaymentsComponent
 			invoiceId: this.invoice.id,
 			organization: this.invoice.fromOrganization,
 			organizationId: this.invoice.fromOrganization.id,
+			tenantId,
 			recordedBy: this.store.user,
 			userId: this.store.userId
 		};
@@ -403,8 +405,6 @@ export class InvoicePaymentsComponent
 		}
 
 		await this.paymentService.add(payment);
-		this.subject$.next(true);
-
 		const { amount, currency, invoice } = payment;
 		if (payment.invoice) {
 			const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
@@ -414,6 +414,7 @@ export class InvoicePaymentsComponent
 			);
 		}
 
+		this.subject$.next(true);
 		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD', { amount, currency });
 	}
 
