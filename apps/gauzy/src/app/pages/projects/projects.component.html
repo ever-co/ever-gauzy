@@ -26,14 +26,11 @@
 				</button>
 				<ga-projects-mutation
 					*ngIf="showAddCard && organization"
-					[employees]="employees"
-					[organization]="organization"
 					[project]="projectToEdit"
 					[organizationContacts]="organizationContacts"
 					(canceled)="cancel()"
 					(addOrEditProject)="addOrEditProject($event)"
-				>
-				</ga-projects-mutation>
+				></ga-projects-mutation>
 				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
