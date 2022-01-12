@@ -206,3 +206,7 @@ export interface IEmployeeStoreState {
 	employees: IEmployee[];
 	action: CrudActionEnum;
 }
+
+export interface IEmployeeUpdateProfileStatus  {
+	readonly isActive: boolean;
+}

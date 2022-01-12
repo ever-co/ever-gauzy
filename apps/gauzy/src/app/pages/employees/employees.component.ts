@@ -212,9 +212,9 @@ export class EmployeesComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.employeesService.setEmployeeAsInactive(
-							this.selectedEmployee.id
-						);
+						await this.employeesService.setEmployeeProfileStatus(this.selectedEmployee.id, {
+							isActive: false
+						});
 						this._employeeStore.employeeAction = {
 							action: CrudActionEnum.DELETED,
 							employees: [this.selectedEmployee as any]
@@ -306,9 +306,9 @@ export class EmployeesComponent
 			});
 		}
 		try {
-			await this.employeesService.setEmployeeAsActive(
-				this.selectedEmployee.id
-			);
+			await this.employeesService.setEmployeeProfileStatus(this.selectedEmployee.id, {
+				isActive: true
+			});
 			this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
 				name: this.selectedEmployee.fullName.trim()
 			});
