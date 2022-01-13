@@ -433,6 +433,38 @@ export class EmployeeController extends CrudController<Employee> {
 	}
 
 	/**
+	 * Update employee own profile by themsleves
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Update Employee Profile Active/Inactive Status' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Records have been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PROFILE_EDIT)
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@Put('/:id/profile')
+	async updateProfile(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: UpdateProfileDTO
+	): Promise<IEmployee> {
+		return await this.commandBus.execute(
+			new EmployeeUpdateCommand({
+				id,
+				...entity
+			})
+		);
+	}
+
+	/**
 	 * UPDATE employee job search status by employee id
 	 * 
 	 * @param employeeId 
@@ -458,31 +490,6 @@ export class EmployeeController extends CrudController<Employee> {
 	): Promise<IEmployee[]> {
 		return await this.commandBus.execute(
 			new UpdateEmployeeJobSearchStatusCommand(employeeId, entity)
-		);
-	}
-
-	@ApiOperation({ summary: 'Update Employee Profile Active/Inactive Status' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Records have been successfully updated.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.PROFILE_EDIT)
-	@UsePipes(new ValidationPipe({ transform: true }))
-	@Put('/:id/profile')
-	async updateProfileStatus(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateProfileDTO
-	): Promise<IEmployee> {
-		return await this.commandBus.execute(
-			new EmployeeUpdateCommand({
-				id,
-				...entity
-			})
 		);
 	}
 }

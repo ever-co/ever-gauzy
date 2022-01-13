@@ -119,7 +119,7 @@ export class Employee
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ type: 'numeric', nullable: true })
+	@Column({ nullable: true })
 	billRateValue?: number;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })

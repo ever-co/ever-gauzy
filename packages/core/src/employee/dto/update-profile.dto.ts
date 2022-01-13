@@ -1,11 +1,11 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsString } from "class-validator";
+import { IEmployeeUpdateInput } from "@gauzy/contracts";
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsOptional } from "class-validator";
 import { SocialNetworksDTO } from "./network.dto";
 
-export class UpdateProfileDTO extends SocialNetworksDTO {
+export class UpdateProfileDTO extends SocialNetworksDTO implements IEmployeeUpdateInput {
     
-    @ApiProperty({ type: () => String })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @IsString()
     readonly profile_link?: string;
 }
