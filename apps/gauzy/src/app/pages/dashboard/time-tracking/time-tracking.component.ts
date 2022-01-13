@@ -87,7 +87,18 @@ export class TimeTrackingComponent
 			if (!range.hasOwnProperty('isCustomDate')) {
 				range.isCustomDate = true
 			}
-			this._selectedDateRange = range;
+			/**
+			 * Check, if start date is Greater Than end date
+			 */
+			if (moment(range.start).isAfter(range.end)) {
+				this._selectedDateRange = {
+					start: range.end,
+					end: range.start,
+					isCustomDate: range.isCustomDate
+				}
+			} else {
+				this._selectedDateRange = range;
+			}
 			if (range.start && range.end) {
 				this.logs$.next(true);
 			}
