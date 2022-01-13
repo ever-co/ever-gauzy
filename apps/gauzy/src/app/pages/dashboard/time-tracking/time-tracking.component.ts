@@ -68,7 +68,6 @@ export class TimeTrackingComponent
 	projectId: string = null;
 	tenantId: string = null;
 	organizationId: string = null;
-	isAllowedMembers: boolean;
 
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
@@ -79,16 +78,20 @@ export class TimeTrackingComponent
 		end: moment().endOf('week').toDate(),
 		isCustomDate: false
 	};
+	
 	get selectedDateRange(): ISelectedDateRange {
 		return this._selectedDateRange;
 	}
-
 	set selectedDateRange(range: ISelectedDateRange) {
-		range.isCustomDate = range.isCustomDate === undefined ? true : false
-		this._selectedDateRange = range;
-		if (range.start && range.end) {
-			this.logs$.next(true);
-		}
+		if (range) {
+			if (!range.hasOwnProperty('isCustomDate')) {
+				range.isCustomDate = true
+			}
+			this._selectedDateRange = range;
+			if (range.start && range.end) {
+				this.logs$.next(true);
+			}
+		}	
 	}
 
 	constructor(
@@ -147,7 +150,7 @@ export class TimeTrackingComponent
 		this.changeRef.detectChanges();
 	}
 
-	async getStatistics() {
+	getStatistics() {
 		if (!this.organization) {
 			return;
 		}
@@ -157,12 +160,7 @@ export class TimeTrackingComponent
 		this.getProjects();
 		this.getTasks();
 		this.getManualTimes();
-
-		if (await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-		) {
-			this.getMembers();
-		}
+		this.getMembers();
 	}
 
 	setAutoRefresh(value: boolean) {
@@ -332,7 +330,12 @@ export class TimeTrackingComponent
 			});
 	}
 
-	getMembers() {
+	async getMembers() {
+		if (!await this.ngxPermissionsService.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+		) {
+			return;
+		}
 		const { tenantId, organizationId, employeeId, projectId, selectedDateRange } = this;
 		const memberRequest: IGetMembersStatistics = {
 			tenantId,
