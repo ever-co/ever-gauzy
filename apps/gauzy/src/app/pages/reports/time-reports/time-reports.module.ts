@@ -16,6 +16,7 @@ import { DailyGridModule } from '../../../@shared/report/daily-grid/daily-grid.m
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [TimeReportsComponent],
@@ -33,7 +34,8 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		FiltersModule,
 		NbSelectModule,
 		FormsModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		DateRangeTitleModule
 	]
 })
 export class TimeReportsModule {}

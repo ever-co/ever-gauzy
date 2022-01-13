@@ -3,8 +3,10 @@
 		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
 			{{ 'MENU.TIMESHEETS' | translate }}
-			({{ timesheet?.startedAt | dateFormat }} -
-			{{ timesheet?.stoppedAt | dateFormat }})
+			<ngx-date-range-title 
+				[start]="timesheet.startedAt"
+				[end]="timesheet.stoppedAt"
+			></ngx-date-range-title>
 		</h4>
 	</nb-card-header>
 	<nb-card-body>

@@ -23,6 +23,7 @@ import { ActivityItemModule } from '../../../@shared/timesheet/activities/activi
 import { GalleryModule } from '../../../@shared/gallery/gallery.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	imports: [
@@ -43,6 +44,7 @@ import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module
 		TranslateModule,
 		GalleryModule,
 		HeaderTitleModule,
+		DateRangeTitleModule,
 		FiltersModule,
 		NbCalendarRangeModule,
 		NbInputModule,
