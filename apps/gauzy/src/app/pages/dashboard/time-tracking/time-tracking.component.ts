@@ -50,7 +50,7 @@ export class TimeTrackingComponent
 	manualTimes: IManualTimesStatistics[] = [];
 	counts: ICountsStatistics;
 
-	organization: IOrganization;
+	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
 
 	timeSlotLoading = true;
@@ -102,17 +102,11 @@ export class TimeTrackingComponent
 		super(translateService);
 	}
 
-	ngOnInit() {
-		this.ngxPermissionsService
-			.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-			.then((value: boolean) => {
-				this.isAllowedMembers = value;
-			});
+	async ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
+				distinctUntilChange(),
 				tap((user: IUser) => (this.tenantId = user.tenantId)),
 				untilDestroyed(this)
 			)
@@ -153,7 +147,7 @@ export class TimeTrackingComponent
 		this.changeRef.detectChanges();
 	}
 
-	getStatistics() {
+	async getStatistics() {
 		if (!this.organization) {
 			return;
 		}
@@ -164,7 +158,9 @@ export class TimeTrackingComponent
 		this.getTasks();
 		this.getManualTimes();
 
-		if (this.isAllowedMembers) {
+		if (await this.ngxPermissionsService.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+		) {
 			this.getMembers();
 		}
 	}
@@ -376,8 +372,6 @@ export class TimeTrackingComponent
 				this.memberLoading = false;
 			});
 	}
-
-	getMembChartData(member) { }
 
 	ngOnDestroy() {
 		this.galleryService.clearGallery();

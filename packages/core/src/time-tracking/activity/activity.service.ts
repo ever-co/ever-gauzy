@@ -92,8 +92,6 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.limit(200);
 		let activitiesData = await query.getRawMany();
 
-		console.log(query.getQuery());
-
 		const projectIds = pluck(activitiesData, 'projectId');
 		const employeeIds = pluck(activitiesData, 'employeeId');
 

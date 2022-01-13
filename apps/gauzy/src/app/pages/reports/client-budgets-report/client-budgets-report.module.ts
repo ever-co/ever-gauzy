@@ -15,6 +15,7 @@ import { SharedModule } from '../../../@shared/shared.module';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [ClientBudgetsReportComponent],
@@ -31,7 +32,8 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		DateRangeTitleModule
 	]
 })
 export class ClientBudgetsReportModule {}
