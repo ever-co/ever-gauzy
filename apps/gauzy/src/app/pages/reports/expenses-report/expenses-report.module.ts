@@ -15,6 +15,7 @@ import { ExpensesReportGridModule } from '../../../@shared/report/expenses-repor
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../../@shared/shared.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [ExpensesReportComponent],
@@ -31,7 +32,8 @@ import { SharedModule } from '../../../@shared/shared.module';
 		FormsModule,
 		ExpensesReportGridModule,
 		LineChartModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		DateRangeTitleModule
 	]
 })
 export class ExpensesReportModule {}

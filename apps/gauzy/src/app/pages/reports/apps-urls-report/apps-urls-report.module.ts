@@ -14,6 +14,7 @@ import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module
 import { ActivitiesReportGridModule } from '../../../@shared/report/activities-report-grid/activities-report-grid.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { SharedModule } from './../../../@shared/shared.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [AppsUrlsReportComponent],
@@ -29,7 +30,8 @@ import { SharedModule } from './../../../@shared/shared.module';
 		NbSelectModule,
 		FormsModule,
 		ActivitiesReportGridModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		DateRangeTitleModule
 	]
 })
 export class AppsUrlsReportModule {}

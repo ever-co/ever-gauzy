@@ -123,6 +123,14 @@ export class EmployeesService {
 		);
 	}
 
+	setEmployeeAsActive(id: string): Promise<IEmployee> {
+		return firstValueFrom(
+			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
+				isActive: true
+			})
+		);
+	}
+
 	setEmployeeEndWork(id: string, date: Date): Promise<IEmployee> {
 		return firstValueFrom(
 			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {

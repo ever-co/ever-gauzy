@@ -11,7 +11,6 @@ export class ActivityMapService {
 		const dailyLogs: any = this.groupByDate(activities).map(
 			(byDateActivity: IActivity[], date) => {
 				const sum = this.getDurationSum(byDateActivity);
-				console.log({ sum });
 				const byEmployee = this.groupByEmployee(byDateActivity).map(
 					(byEmployeeActivity: IActivity[]) => {
 						const byProject = this.groupByProject(

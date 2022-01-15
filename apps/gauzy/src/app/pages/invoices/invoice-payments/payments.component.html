@@ -54,9 +54,9 @@
 				status="success"
 				(click)="recordPayment()"
 				nbButton
-				nbTooltip="Add"
 			>
 				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
 			</button>
 			<button
 				class="mr-2"
@@ -64,9 +64,9 @@
 				(click)="editPayment()"
 				[disabled]="disableButton"
 				nbButton
-				nbTooltip="Edit"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
 				nbButton
@@ -74,9 +74,9 @@
 				(click)="download()"
 				class="mr-2"
 				[disabled]="!payments?.length"
-				nbTooltip="Download"
 			>
 				<nb-icon icon="download-outline"></nb-icon>
+				{{ 'BUTTONS.DOWNLOAD' | translate }}
 			</button>
 			<button
 				class="mr-2"
@@ -84,9 +84,9 @@
 				(click)="deletePayment()"
 				[disabled]="disableButton"
 				nbButton
-				nbTooltip="Delete"
 			>
 				<nb-icon icon="trash-2-outline"></nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
 			</button>
 			<button
 				class="mr-2"
@@ -111,7 +111,9 @@
 			<button
 				class="mr-2"
 				status="info"
-				(click)="recordFullPayment()"
+				debounceClick
+				(throttledClick)="recordFullPayment()"
+				[debounceTime]="500"
 				[disabled]="isDisabled"
 				nbButton
 			>

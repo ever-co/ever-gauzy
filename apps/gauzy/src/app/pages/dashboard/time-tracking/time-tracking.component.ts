@@ -50,7 +50,7 @@ export class TimeTrackingComponent
 	manualTimes: IManualTimesStatistics[] = [];
 	counts: ICountsStatistics;
 
-	organization: IOrganization;
+	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
 
 	timeSlotLoading = true;
@@ -68,7 +68,6 @@ export class TimeTrackingComponent
 	projectId: string = null;
 	tenantId: string = null;
 	organizationId: string = null;
-	isAllowedMembers: boolean;
 
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
@@ -79,16 +78,31 @@ export class TimeTrackingComponent
 		end: moment().endOf('week').toDate(),
 		isCustomDate: false
 	};
+	
 	get selectedDateRange(): ISelectedDateRange {
 		return this._selectedDateRange;
 	}
-
 	set selectedDateRange(range: ISelectedDateRange) {
-		range.isCustomDate = range.isCustomDate === undefined ? true : false
-		this._selectedDateRange = range;
-		if (range.start && range.end) {
-			this.logs$.next(true);
-		}
+		if (range) {
+			if (!range.hasOwnProperty('isCustomDate')) {
+				range.isCustomDate = true
+			}
+			/**
+			 * Check, if start date is Greater Than end date
+			 */
+			if (moment(range.start).isAfter(range.end)) {
+				this._selectedDateRange = {
+					start: range.end,
+					end: range.start,
+					isCustomDate: range.isCustomDate
+				}
+			} else {
+				this._selectedDateRange = range;
+			}
+			if (range.start && range.end) {
+				this.logs$.next(true);
+			}
+		}	
 	}
 
 	constructor(
@@ -102,17 +116,11 @@ export class TimeTrackingComponent
 		super(translateService);
 	}
 
-	ngOnInit() {
-		this.ngxPermissionsService
-			.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-			.then((value: boolean) => {
-				this.isAllowedMembers = value;
-			});
+	async ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
+				distinctUntilChange(),
 				tap((user: IUser) => (this.tenantId = user.tenantId)),
 				untilDestroyed(this)
 			)
@@ -163,10 +171,7 @@ export class TimeTrackingComponent
 		this.getProjects();
 		this.getTasks();
 		this.getManualTimes();
-
-		if (this.isAllowedMembers) {
-			this.getMembers();
-		}
+		this.getMembers();
 	}
 
 	setAutoRefresh(value: boolean) {
@@ -336,7 +341,12 @@ export class TimeTrackingComponent
 			});
 	}
 
-	getMembers() {
+	async getMembers() {
+		if (!await this.ngxPermissionsService.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+		) {
+			return;
+		}
 		const { tenantId, organizationId, employeeId, projectId, selectedDateRange } = this;
 		const memberRequest: IGetMembersStatistics = {
 			tenantId,
@@ -376,8 +386,6 @@ export class TimeTrackingComponent
 				this.memberLoading = false;
 			});
 	}
-
-	getMembChartData(member) { }
 
 	ngOnDestroy() {
 		this.galleryService.clearGallery();

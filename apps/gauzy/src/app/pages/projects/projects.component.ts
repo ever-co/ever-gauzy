@@ -13,7 +13,6 @@ import { firstValueFrom } from 'rxjs';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-	IEmployee,
 	IOrganization,
 	IOrganizationContact,
 	IOrganizationProject,
@@ -24,7 +23,6 @@ import {
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import {
-	EmployeesService,
 	OrganizationContactService,
 	OrganizationProjectsService,
 	OrganizationProjectStore,
@@ -53,7 +51,6 @@ export class ProjectsComponent
 	showAddCard: boolean;
 	projects: IOrganizationProject[] = [];
 	organizationContacts: IOrganizationContact[] = [];
-	employees: IEmployee[] = [];
 	projectToEdit: IOrganizationProject;
 	viewPrivateProjects: boolean;
 	disableButton = true;
@@ -73,7 +70,6 @@ export class ProjectsComponent
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private readonly employeesService: EmployeesService,
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
@@ -131,23 +127,9 @@ export class ProjectsComponent
 		}
 
 		this.loadProjects();
-		this.loadEmployees();
 		this.loadOrganizationContacts();
 	}
 
-	private async loadEmployees() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { items } = await firstValueFrom(
-			this.employeesService
-				.getAll(['user'], {
-					organization: { id: organizationId },
-					tenantId
-				})
-		);
-
-		this.employees = items;
-	}
 	setView() {
 		this.viewComponentName = ComponentEnum.PROJECTS;
 		this.store

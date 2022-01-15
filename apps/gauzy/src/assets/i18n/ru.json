@@ -110,7 +110,8 @@
 		"EMPLOYEE_DEMO": "Демонстрация сотрудника",
 		"DEMO_CREDENTIALS": "Демо-учетные данные",
 		"CREATE_NEW_ROLE": "Создать роль {{ name }}",
-		"DELETE_EXISTING_ROLE": "Удалить роль {{ name }}"
+		"DELETE_EXISTING_ROLE": "Удалить роль {{ name }}",
+		"RESTORE": "Восстановить"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",

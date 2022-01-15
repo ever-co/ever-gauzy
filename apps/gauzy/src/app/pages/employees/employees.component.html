@@ -6,7 +6,11 @@
 >
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
-			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'EMPLOYEES_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'EMPLOYEES_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
 		<div class="card-header-title">
 			<div class="mr-2">
@@ -45,23 +49,28 @@
 						>{{ 'BUTTONS.INVITE' | translate }}
 					</button>
 				</ng-template>
-				<button nbButton status="success" (click)="add()" class="mr-2">
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
+				<button
+					nbButton status="success"
+					(click)="add()"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'BUTTONS.ADD' | translate }}
 				</button>
 				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 					<ng-container
-						*ngTemplateOutlet="actionButtons"
+						*ngTemplateOutlet="actionButtons; context : {
+							selectedItem: selectedEmployee
+						}"
 					></ng-container>
 				</ng-container>
 				<nb-checkbox
 					(checkedChange)="changeIncludeDeleted($event)"
 					status="danger"
 					class="float-right py-auto"
-					>{{
-						'FORM.CHECKBOXES.INCLUDE_DELETED' | translate
-					}}</nb-checkbox
 				>
+					{{ 'FORM.CHECKBOXES.INCLUDE_DELETED' | translate }}
+				</nb-checkbox>
 			</div>
 		</ng-template>
 		<ng-template
@@ -83,7 +92,7 @@
 		<ng-template #gridLayout>
 			<div class="grid-scroll-container">
 				<ul class="flex-container">
-					<li class="flex-item" *ngFor="let x of employeeData">
+					<li class="flex-item" *ngFor="let x of employees">
 						<div class="fullName">
 							<ga-notes-with-tags [rowData]="x"></ga-notes-with-tags>
 							<span>{{ x.fullName }}</span>
@@ -190,7 +199,7 @@
 		</button>
 		<button
 			nbButton
-			[disabled]="!selectedItem && disableButton"
+			[disabled]="(!selectedItem && disableButton) || (!selectedItem?.isActive)"
 			[size]="buttonSize || 'medium'"
 			(click)="delete(selectedItem)"
 			status="danger"
@@ -201,30 +210,8 @@
 		</button>
 		<button
 			nbButton
-			[disabled]="!selectedItem && disableButton"
+			[disabled]="(!selectedItem && disableButton) || (!selectedItem?.isActive)"
 			[size]="buttonSize || 'medium'"
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			(click)="
-				selectedEmployee.endWork
-					? backToWork(selectedItem)
-					: endWork(selectedItem)
-			"
-			status="warning"
-			class="mr-2"
-		>
-			<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-			{{
-				(selectedEmployee && selectedEmployee.endWork
-					? 'EMPLOYEES_PAGE.BACK_TO_WORK'
-					: 'EMPLOYEES_PAGE.END_WORK'
-				) | translate
-			}}
-		</button>
-		<button
-			nbButton
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 			(click)="
 				selectedItem.endWork
 					? backToWork(selectedItem)
@@ -241,5 +228,18 @@
 				) | translate
 			}}
 		</button>
+		<ng-container *ngIf="selectedItem && !selectedItem?.isActive">
+			<button
+				nbButton
+				[size]="buttonSize || 'medium'"
+				debounceClick
+				(throttledClick)="restoreToWork(selectedItem)"
+				status="info"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.RESTORE' | translate }}
+			</button>
+		</ng-container>
 	</ng-template>
 </ng-template>

@@ -1,31 +1,27 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
-} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	EmployeeViewModel,
-	CrudActionEnum
+	CrudActionEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { monthNames } from '../../@core/utils/date';
-import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
-import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
+import { EmployeeEndWorkComponent, EmployeeMutationComponent } from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { PictureNameTagsComponent } from '../../@shared/table-components';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ComponentEnum } from '../../@core/constants';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -52,31 +48,17 @@ export class EmployeesComponent
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedEmployee: EmployeeViewModel;
-	employeeData: EmployeeViewModel[];
-	organization: IOrganization;
+	employees: EmployeeViewModel[];
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	incomeStatistics: number[];
-	expenseStatistics: number[];
-	profitStatistics: number[];
-	bonusStatistics: number[];
-	averageBonus: number;
-	averageExpense: number;
-	averageIncome: number;
-	statistics: any;
-	employeeName = 'Employee';
-	difference = 0;
-	bonus = 0;
-	totalIncome = 0;
-	totalExpense = 0;
 	bonusForSelectedMonth = 0;
 	includeDeleted = false;
 	loading: boolean;
 	organizationInvitesAllowed = false;
-	month;
-	year;
+	month: string;
+	year: number;
 
 	employeesTable: Ng2SmartTableComponent;
 	@ViewChild('employeesTable') set content(content: Ng2SmartTableComponent) {
@@ -86,6 +68,7 @@ export class EmployeesComponent
 		}
 	}
 
+	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
 	constructor(
@@ -120,6 +103,7 @@ export class EmployeesComponent
 		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(100),
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
 				tap(({ invitesAllowed }) => this.organizationInvitesAllowed = invitesAllowed),
@@ -135,13 +119,6 @@ export class EmployeesComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 	}
 
 	setView() {
@@ -170,9 +147,6 @@ export class EmployeesComponent
 	selectEmployee({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
-		if (this.selectedEmployee) {
-			this.employeeName = this.selectedEmployee.fullName.trim() || 'Employee';
-		}
 	}
 
 	async add() {
@@ -180,13 +154,10 @@ export class EmployeesComponent
 			const dialog = this.dialogService.open(EmployeeMutationComponent);
 			const response = await firstValueFrom(dialog.onClose);
 			if (response) {
-				response.map((data: any) => {
-					if (data.user.firstName || data.user.lastName) {
-						this.employeeName = data.user.firstName + ' ' + data.user.lastName;
-					}
+				response.map((employee: IEmployee) => {
 					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
-						name: this.employeeName.trim(),
-						organization: data.organization.name
+						name: employee.fullName.trim(),
+						organization: employee.organization.name
 					});
 				});
 			}
@@ -249,7 +220,7 @@ export class EmployeesComponent
 							employees: [this.selectedEmployee as any]
 						};
 						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
-							name: this.employeeName.trim()
+							name: this.selectedEmployee.fullName.trim()
 						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -281,7 +252,7 @@ export class EmployeesComponent
 					data
 				);
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
-					name: this.employeeName.trim()
+					name: this.selectedEmployee.fullName.trim()
 				});
 			}
 		} catch (error) {
@@ -312,9 +283,35 @@ export class EmployeesComponent
 					null
 				);
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
-					name: this.employeeName.trim()
+					name: this.selectedEmployee.fullName.trim()
 				});
 			}
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this.subject$.next(true);
+		}
+	}
+
+	/**
+	 * Restore deleted employee
+	 * 
+	 * @param selectedItem 
+	 */
+	async restoreToWork(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployee({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		try {
+			await this.employeesService.setEmployeeAsActive(
+				this.selectedEmployee.id
+			);
+			this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
+				name: this.selectedEmployee.fullName.trim()
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
@@ -364,7 +361,7 @@ export class EmployeesComponent
 		} else {
 			employeesVm = result;
 		}
-		this.employeeData = employeesVm;
+		this.employees = employeesVm;
 		this.sourceSmartTable.load(employeesVm);
 		this.loading = false;
 	}

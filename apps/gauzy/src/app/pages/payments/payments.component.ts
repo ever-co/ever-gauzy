@@ -203,7 +203,7 @@ export class PaymentsComponent
 						invoiceNumber: invoice ? invoice.invoiceNumber : null,
 						projectName: project ? project.name : null,
 						recordedByName: recordedBy ? recordedBy.name: null,
-						paymentMethodEnum: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
+						paymentMethodEnum: paymentMethod ? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`) : null,
 						organizationContactName: organizationContactName
 					});
 				} catch (error) {

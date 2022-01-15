@@ -15,6 +15,7 @@ import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../../@shared/shared.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [AmountsOwedReportComponent],
@@ -31,7 +32,8 @@ import { SharedModule } from '../../../@shared/shared.module';
 		FormsModule,
 		AmountsOwedGridModule,
 		LineChartModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		DateRangeTitleModule
 	]
 })
 export class AmountsOwedReportModule {}
