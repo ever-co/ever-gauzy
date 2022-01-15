@@ -50,7 +50,7 @@ export const LocalStore = {
 					timer: {
 						updatePeriod: 10 // [1, 5, 10]
 					},
-					SCREENSHOTS_ENGINE_METHOD: 'ScreenshotDesktopLib',
+					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
 					screenshotNotification: true,
 					autoLaunch: true,
 					visibleAwOption: true,
