@@ -50,7 +50,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			try {
 				await TimerData.insertWindowEvent(knex, collections);
 			} catch (error) {
-				timeTrackerWindow.webContents.send('stop_from_tray');
+				if (timeTrackerWindow && !timeTrackerWindow.webContents.isDestroyed()) {
+					timeTrackerWindow.webContents.send('stop_from_tray');
+				}
 				throw Error(`Time tracking has been stopped`);
 			}
 		}
@@ -78,7 +80,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			try {
 				await TimerData.insertAfkEvent(knex, collections);
 			} catch (error) {
-				timeTrackerWindow.webContents.send('stop_from_tray');
+				if (timeTrackerWindow && !timeTrackerWindow.webContents.isDestroyed()) {
+					timeTrackerWindow.webContents.send('stop_from_tray');
+				}
 				throw Error(`Time tracking has been stopped`);
 			}
 		}
@@ -373,5 +377,9 @@ export function ipcTimer(
 				y: (height - maxHeight) * (0.5)
 			}, true)
 		}
+	})
+
+	ipcMain.on('timer_stopped', (event, arg) => {
+		timeTrackerWindow.webContents.send('timer_already_stop');
 	})
 }
