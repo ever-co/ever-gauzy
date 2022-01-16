@@ -368,6 +368,10 @@ export default class Timerhandler {
 
 		LocalStore.updateApplicationSetting(appSetting);
 		this.notificationDesktop.timerActionNotification(false);
+		/*
+			* Stop time interval after stop timer
+		*/
+		this.stopTimerIntervalPeriod();
 
 		this.updateToggle(setupWindow, knex, true);
 
@@ -376,11 +380,6 @@ export default class Timerhandler {
 		 */
 		(async () => {
 			await this.makeScreenshot(setupWindow, knex, quitApp);
-
-			/*
-			 * Stop time interval after stop timer
-			 */
-			this.stopTimerIntervalPeriod();
 
 			timeTrackerWindow.webContents.send('timer_status', {
 				...LocalStore.beforeRequestParams()

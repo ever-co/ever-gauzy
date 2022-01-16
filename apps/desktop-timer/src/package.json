@@ -32,6 +32,9 @@
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
+		"asarUnpack": [
+			"node_modules/screenshot-desktop/lib/win32"
+		],
 		"directories": {
 			"buildResources": "icons",
 			"output": "../desktop-timer-packages"

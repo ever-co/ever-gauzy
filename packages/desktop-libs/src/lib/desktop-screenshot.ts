@@ -266,8 +266,8 @@ const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp, windowPat
 	const sizes = screen.getPrimaryDisplay().size;
 	// preparing window screenshot
 	const screenCaptureWindow = {
-		width: 350,
-		height: 200,
+		width: 310,
+		height: 170,
 		frame: false,
 		webPreferences: {
 			nodeIntegration: true,

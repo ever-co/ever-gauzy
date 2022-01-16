@@ -630,7 +630,7 @@ export class SettingsComponent implements OnInit {
 	 * Logout desktop timer
 	 */
 	logout() {
-		console.log('On Logout s');
+		console.log('On Logout');
 		this.electronService.ipcRenderer.send('logout_desktop');
 	}
 

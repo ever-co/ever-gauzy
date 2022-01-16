@@ -178,7 +178,11 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_toggle_timer',
 			(event, arg) => {
-				appService.toggleApi(arg);
+				appService.toggleApi(arg).then(() => {
+					event.sender.send('timer_stopped');
+				}).catch(() => {
+					event.sender.send('timer_stopped');
+				});
 			}
 		);
 
