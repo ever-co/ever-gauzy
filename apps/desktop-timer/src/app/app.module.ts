@@ -106,6 +106,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 	bootstrap: [AppComponent],
 	exports: [NgSelectModule]
 })
+
 export class AppModule {}
 
 export function serverConnectionFactory(
