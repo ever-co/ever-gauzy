@@ -14,8 +14,8 @@ if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 export const environment: IEnvironment = {
 	port: process.env.API_PORT || 3000,
 	host: process.env.API_HOST || 'http://localhost',
-	baseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
-	clientBaseUrl: process.env.CLIENT_BASE_URL || 'http://localhost:4200',
+	baseUrl: process.env.API_BASE_URL || 'https://api.gauzy.co',
+	clientBaseUrl: process.env.CLIENT_BASE_URL || 'https://app.gauzy.co',
 	production: false,
 	envName: 'dev',
 
