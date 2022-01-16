@@ -295,6 +295,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 				await this.getTimerStatus(arg);
 			})();
 		});
+
+		this.electronService.ipcRenderer.on('timer_already_stop', (event, arg) => {
+			this.loading = false;
+		})
 	}
 
 	ngAfterViewInit(): void {
@@ -302,6 +306,9 @@ export class TimeTrackerComponent implements AfterViewInit {
 	}
 
 	async toggleStart(val) {
+		if (this.loading) {
+			return;
+		}
 		this.loading = true;
 
 		if (this.validationField()) {
@@ -337,7 +344,6 @@ export class TimeTrackerComponent implements AfterViewInit {
 						);
 					});
 			} else {
-				this.loading = false;
 				this.start = val;
 				this.stopTimer();
 				this._cdr.detectChanges();

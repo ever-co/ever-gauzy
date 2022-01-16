@@ -35,7 +35,7 @@
 		"electron-util": "^0.17.2",
 		"form-data": "^3.0.0",
 		"node-fetch": "^2.6.1",
-		"screenshot-desktop": "^1.12.2",
+		"screenshot-desktop": "^1.12.7",
         "sound-play": "1.1.0",
         "underscore": "^1.13.0"
 	},

@@ -194,7 +194,11 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_toggle_timer',
 			(event, arg) => {
-				this.appService.toggleApi(arg);
+				this.appService.toggleApi(arg).then(() => {
+					event.sender.send('timer_stopped');
+				}).catch(() => {
+					event.sender.send('timer_stopped');
+				});
 			}
 		);
 
@@ -208,7 +212,7 @@ export class AppComponent implements OnInit {
 						clearInterval(pinghost);
 					})
 					.catch((e) => {
-						console.log('error', e.status);
+						console.log('ping status result', e.status);
 						if (e.status === 404) {
 							event.sender.send('server_is_ready');
 							clearInterval(pinghost);
@@ -238,7 +242,7 @@ export class AppComponent implements OnInit {
 							clearInterval(pinghost);
 						})
 						.catch((e) => {
-							console.log('error', e.status);
+							console.log('ping status result', e.status);
 							if (e.status === 404) {
 								event.sender.send('server_already_start');
 								clearInterval(pinghost);

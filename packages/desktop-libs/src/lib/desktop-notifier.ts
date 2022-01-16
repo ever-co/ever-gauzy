@@ -19,4 +19,22 @@ export default class NotificationDesktop {
 			notification.close();
 		}, 2000);
 	}
+
+	customNotification(message, title) {
+		const iconPath = path.join(__dirname, '..', 'icons', 'icon.png');
+		console.log(iconPath);
+		const iconNativePath = nativeImage.createFromPath(iconPath);
+		iconNativePath.resize({ width: 16, height: 16 });
+		const notification = new Notification({
+			title: title,
+			body: message,
+			icon: iconNativePath,
+			closeButtonText: 'Close'
+		});
+
+		notification.show();
+		setTimeout(() => {
+			notification.close();
+		}, 2000);
+	}
 }
