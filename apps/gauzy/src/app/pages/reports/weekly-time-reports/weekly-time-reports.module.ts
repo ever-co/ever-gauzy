@@ -9,6 +9,7 @@ import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [WeeklyTimeReportsComponent],
@@ -23,7 +24,8 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbSpinnerModule,
 		NbCardModule,
 		FiltersModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		DateRangeTitleModule
 	]
 })
 export class WeeklyTimeReportsModule {}

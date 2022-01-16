@@ -9,6 +9,7 @@ import { EditTimeLogModalModule } from './../../../../@shared/timesheet';
 import { DialogsModule } from './../../../../@shared/dialogs';
 import { SharedModule } from './../../../../@shared/shared.module';
 import { TranslateModule } from './../../../../@shared/translate/translate.module';
+import { DateRangeTitleModule } from './../../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [ViewComponent],
@@ -22,7 +23,8 @@ import { TranslateModule } from './../../../../@shared/translate/translate.modul
 		SharedModule,
 		MomentModule,
 		DialogsModule,
-		EditTimeLogModalModule
+		EditTimeLogModalModule,
+		DateRangeTitleModule
 	]
 })
 export class ViewModule {}

@@ -212,11 +212,13 @@ export class TimeTrackerComponent implements AfterViewInit {
 				.then((sources) => {
 					const screens = [];
 					sources.forEach(async (source, i) => {
+						log.info('screenshot_res', source);
 						screens.push({
 							img: source.thumbnail.toPNG(),
 							name: source.name,
 							id: source.display_id
 						});
+						log.info('screenshot data', screens);
 					});
 					if (!arg.isTemp) {
 						event.sender.send('save_screen_shoot', {

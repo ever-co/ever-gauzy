@@ -101,6 +101,7 @@ services:
             NODE_ENV: ${NODE_ENV:-development}
             DB_HOST: db
             API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+            CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}
             SENTRY_DSN: ${SENTRY_DSN:-}
         env_file:
             - .env

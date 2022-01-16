@@ -5,18 +5,23 @@
 				{{ !selectedDateRange.isCustomDate ? ('TIMESHEET.WEEKLY' | translate) : '' }} {{ 'TIMESHEET.TIME_TRACKING' | translate }}
 			</ngx-header-title>
 		</h4>
-		<div>{{ selectedDateRange.start | dateFormat }} - {{ selectedDateRange.end | dateFormat }}</div>
+		<ngx-date-range-title 
+			[start]="selectedDateRange.start"
+			[end]="selectedDateRange.end"
+		></ngx-date-range-title>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
 			<div class="col">
 				<div class="row">
 					<div class="bulk-actions col-auto">
-						<div
-							class="input-group"
-						>
-							<div class="input-group-append mr-1" id="button-addon4">
-								<button nbButton status="primary" (click)="previousDay()">
+						<div class="input-group">
+							<div class="input-group-append mr-1" id="button-previous-addon4">
+								<button 
+									nbButton
+									status="primary"
+									(click)="previousDay()"
+								>
 									<nb-icon icon="arrow-ios-back-outline"></nb-icon>
 								</button>
 							</div>
@@ -29,9 +34,9 @@
 									[(ngModel)]="selectedDateRange"
 									[nbDatepicker]="dateRangePicker"
 								/>
-								<nb-rangepicker #dateRangePicker></nb-rangepicker>
+								<nb-rangepicker #dateRangePicker [range]="selectedDateRange"></nb-rangepicker>
 							</div>							
-							<div class="input-group-append ml-1" id="button-addon4">
+							<div class="input-group-append ml-1" id="button-next-addon4">
 								<button
 									nbButton
 									status="primary"
@@ -40,7 +45,7 @@
 									<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 								</button>
 							</div>
-							<div class="input-group-append ml-1" id="button-addon4">
+							<div class="input-group-append ml-1" id="button-today-addon4">
 								<button									
 									nbButton
 									status="primary"
@@ -50,7 +55,6 @@
 								</button>
 							</div>
 						</div>
-						
 					</div>
 				</div>
 			</div>
@@ -75,48 +79,37 @@
 			</div>
 		</div>
 		<div class="row">
-			<div class="col-sm-12">
+			<div class="col-12">
 				<div class="row">
 					<ng-container *ngIf="!employeeId">
-						<div
-							class="col-sm-4 col-md-3 col-lg"
-							*ngxPermissionsOnly="
-								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-							"
-						>
-							<nb-card
-								[nbSpinner]="countsLoading"
-								nbSpinnerSize="giant"
-								nbSpinnerStatus="primary"
-							>
-								<nb-card-body>
-									<p>
-										{{
-											'TIMESHEET.MEMBERS_WORKED'
-												| translate
-										}}
-									</p>
-									<div class="h1">
-										{{ counts?.employeesCount || 0 }}
-									</div>
-								</nb-card-body>
-							</nb-card>
-						</div>
+						<ng-container *ngxPermissionsOnly=" PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+							<div class="col">
+								<nb-card
+									[nbSpinner]="countsLoading"
+									nbSpinnerSize="giant"
+									nbSpinnerStatus="primary"
+								>
+									<nb-card-body>
+										<p>
+											{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
+										</p>
+										<div class="h1">
+											{{ counts?.employeesCount || 0 }}
+										</div>
+									</nb-card-body>
+								</nb-card>
+							</div>
+						</ng-container>
 					</ng-container>
 					<ng-container *ngIf="!projectId">
-						<div class="col-sm-4 col-md-3 col-lg">
+						<div class="col">
 							<nb-card
 								[nbSpinner]="countsLoading"
 								nbSpinnerSize="giant"
 								nbSpinnerStatus="primary"
 							>
 								<nb-card-body>
-									<p>
-										{{
-											'TIMESHEET.PROJECTS_WORKED'
-												| translate
-										}}
-									</p>
+									<p> {{ 'TIMESHEET.PROJECTS_WORKED' | translate }} </p>
 									<div class="h1">
 										{{ counts?.projectsCount || 0 }}
 									</div>
@@ -124,7 +117,42 @@
 							</nb-card>
 						</div>
 					</ng-container>
-					<div class="col-sm-4 col-md-3 col-lg">
+					<div class="col">
+						<nb-card
+							[nbSpinner]="countsLoading"
+							nbSpinnerSize="giant"
+							nbSpinnerStatus="primary"
+						>
+							<nb-card-body>
+								<p>
+									{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
+								</p>
+								<div class="h1">
+									{{ counts?.todayActivities || 0 }}%
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+					<div class="col">
+						<nb-card
+							[nbSpinner]="countsLoading"
+							nbSpinnerSize="giant"
+							nbSpinnerStatus="primary"
+						>
+							<nb-card-body>
+								<p>
+									{{ 'TIMESHEET.WORKED_TODAY' | translate }}
+								</p>
+								<div class="h1">
+									{{
+										counts?.todayDuration || 0
+											| durationFormat
+									}}
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+					<div class="col">
 						<nb-card
 							[nbSpinner]="countsLoading"
 							nbSpinnerSize="giant"
@@ -143,7 +171,7 @@
 							</nb-card-body>
 						</nb-card>
 					</div>
-					<div class="col-sm-4 col-md-3 col-lg">
+					<div class="col">
 						<nb-card
 							[nbSpinner]="countsLoading"
 							nbSpinnerSize="giant"
@@ -157,45 +185,7 @@
 									}}
 								</p>
 								<div class="h1">
-									{{
-										counts?.weekDuration || 0
-											| durationFormat
-									}}
-								</div>
-							</nb-card-body>
-						</nb-card>
-					</div>
-					<div class="col-sm-4 col-md-3 col-lg">
-						<nb-card
-							[nbSpinner]="countsLoading"
-							nbSpinnerSize="giant"
-							nbSpinnerStatus="primary"
-						>
-							<nb-card-body>
-								<p>
-									{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
-								</p>
-								<div class="h1">
-									{{ counts?.todayActivities || 0 }}%
-								</div>
-							</nb-card-body>
-						</nb-card>
-					</div>
-					<div class="col-sm-4 col-md-3 col-lg">
-						<nb-card
-							[nbSpinner]="countsLoading"
-							nbSpinnerSize="giant"
-							nbSpinnerStatus="primary"
-						>
-							<nb-card-body>
-								<p>
-									{{ 'TIMESHEET.WORKED_TODAY' | translate }}
-								</p>
-								<div class="h1">
-									{{
-										counts?.todayDuration || 0
-											| durationFormat
-									}}
+									{{ counts?.weekDuration || 0 | durationFormat }}
 								</div>
 							</nb-card-body>
 						</nb-card>
@@ -395,7 +385,6 @@
 					</ng-template>
 				</nb-card>
 			</div>
-
 			<div class="col-sm-6">
 				<nb-card
 					[nbSpinner]="projectsLoading"
