@@ -75,6 +75,8 @@ spec:
                         value: '$SENTRY_DSN'
                       - name: API_BASE_URL
                         value: 'https://api.gauzy.co'
+                      - name: CLIENT_BASE_URL
+                        value: 'https://app.gauzy.co'
                       - name: DB_URI
                         value: '$DB_URI'
                       - name: DB_HOST
