@@ -16,6 +16,7 @@ import { IEmployeeSetting } from './employee-settings.model';
 import { IExpense } from './expense.model';
 import { ITimesheet, ITimeSlot } from './timesheet.model';
 import { ITask } from './task-entity.model';
+import { ICandidate } from './candidate.model';
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
@@ -51,6 +52,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	tasks?: ITask[];
 	timeSlots?: ITimeSlot[];
 	contact?: IContact;
+	candidate?: ICandidate;
 	averageIncome?: number;
 	totalWorkHours?: number;
 	averageExpenses?: number;

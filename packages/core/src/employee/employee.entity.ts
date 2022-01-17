@@ -23,7 +23,8 @@ import {
 	ITimesheet,
 	ITask,
 	ITimeSlot,
-	IGoal
+	IGoal,
+	ICandidate
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -47,6 +48,7 @@ import {
 	Index
 } from 'typeorm';
 import {
+	Candidate,
 	Contact,
 	EmployeeSetting,
 	Expense,
@@ -335,7 +337,13 @@ export class Employee
 	@Column({ nullable: true })
 	readonly contactId?: string;
 
-	/*
+	/**
+	 * Candidate
+	 */
+	@ApiProperty({ type: () => Candidate })
+	@OneToOne(() => Candidate, (candidate) => candidate.employee)
+	candidate?: ICandidate;
+	/*	
     |--------------------------------------------------------------------------
     | @ManyToOne 
     |--------------------------------------------------------------------------

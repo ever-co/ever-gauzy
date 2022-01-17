@@ -169,7 +169,9 @@ function startServer(value, restart = false) {
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
-		timeTrackerWindow.destroy();
+		if (timeTrackerWindow) {
+			timeTrackerWindow.destroy();
+		}
 		timeTrackerWindow = createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi
@@ -284,6 +286,11 @@ app.on('ready', async () => {
 	);
 
 	/* create window */
+	// default global
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl({}),
+		IS_INTEGRATED_DESKTOP: false
+	};
 	timeTrackerWindow = createTimeTrackerWindow(
 		timeTrackerWindow,
 		pathWindow.timeTrackerUi

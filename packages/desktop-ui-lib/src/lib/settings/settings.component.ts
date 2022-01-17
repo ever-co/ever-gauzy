@@ -307,7 +307,7 @@ export class SettingsComponent implements OnInit {
 	monitorOptionSelected = null;
 	appSetting = null;
 	periodOption = [1, 5, 10];
-	selectedPeriod = 10;
+	selectedPeriod = 5;
 	screenshotNotification = null;
 	config = null;
 	restartDisable = false;
@@ -630,7 +630,7 @@ export class SettingsComponent implements OnInit {
 	 * Logout desktop timer
 	 */
 	logout() {
-		console.log('On Logout s');
+		console.log('On Logout');
 		this.electronService.ipcRenderer.send('logout_desktop');
 	}
 
@@ -671,12 +671,12 @@ export class SettingsComponent implements OnInit {
 		let message = '';
 		switch (arg.type) {
 			case 'update_config':
-				message = 'Server configuration updated, please wait for server restart';
+				message = 'Server configuration updated, please wait till server restarts';
 				break;
 			case 'start_server':
 				this.restartDisable = false;
 				this._cdr.detectChanges();
-				message = 'Server Successfully restated'
+				message = 'Server Restated Successfully'
 				break;
 			default:
 				break;
@@ -687,6 +687,7 @@ export class SettingsComponent implements OnInit {
 			{ status: arg.status }
 		);
 	}
+
 	logBoxChange(e) {
 		if (e) {
 			this.logIsOpen = false;

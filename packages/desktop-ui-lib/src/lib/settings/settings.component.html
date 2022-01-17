@@ -23,7 +23,7 @@
 				<h4>Monitor</h4>
 			</div>
 			<div class="col-12">
-				<h6>Automatically capturing screen</h6>
+				<h6>Automatic Screen Capture</h6>
 			</div>
 			<div class="col-12">
 				<div class="row">
@@ -84,9 +84,8 @@
 							[(ngModel)]="screenshotNotification"
 							(ngModelChange)="toggleNotificationChange($event)"
 							status="basic"
-							>Show desktop notification on screen
-							capture</nb-toggle
-						>
+							>Show Desktop Notification on Screen Capture
+						</nb-toggle>
 					</nb-card-body>
 				</nb-card>
 			</div>
@@ -200,7 +199,7 @@
 										(collapsedChange)="logBoxChange($event)"
 									>
 									  <nb-accordion-item-header>
-										Logs Upadte
+										Update Logs
 									  </nb-accordion-item-header>
 									  <nb-accordion-item-body class="log-box">
 										  <div class="log-content" #logbox>
@@ -220,7 +219,7 @@
 		<div class="row" *ngIf="selectedMenu === 'Advanced Setting'">
 			<div class="col-12"><h4>Advanced Setting</h4></div>
 			<div class="col-12 warning-config" *ngIf="appSetting.timerStarted">
-				<span>Please stop timer if you want to change config</span>
+				<span>Please Stop Timer if you want to change config</span>
 			</div>
 			<div class="col-12">
 				<nb-tabset>

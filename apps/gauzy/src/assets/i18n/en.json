@@ -3467,7 +3467,8 @@
 			"SCREENSHOTS": "Screenshots",
 			"OF": "of",
 			"TIME_LOG": "TimeLog"
-		}
+		},
+		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

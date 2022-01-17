@@ -32,6 +32,9 @@
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
+		"asarUnpack": [
+			"node_modules/screenshot-desktop/lib/win32"
+		],
 		"directories": {
 			"buildResources": "icons",
 			"output": "../desktop-timer-packages"
@@ -105,7 +108,7 @@
 		"electron-util": "^0.17.2",
 		"form-data": "^3.0.0",
 		"node-fetch": "^2.6.1",
-		"screenshot-desktop": "^1.12.2",
+		"screenshot-desktop": "^1.12.7",
 		"electron-updater": "~4.3.8",
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
