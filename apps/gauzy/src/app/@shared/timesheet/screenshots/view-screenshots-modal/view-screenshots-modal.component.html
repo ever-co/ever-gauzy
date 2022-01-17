@@ -40,8 +40,8 @@
 
 		<ng-template [ngIf]="screenshots.length > 0">
 			<h6>{{ 'TIMESHEET.SCREENSHOTS.SCREENSHOTS' | translate }}</h6>
-			<div class="row mb-3 justify-content-center">
-				<div class="col-sm-4" *ngFor="let image of screenshots">
+			<div class="row mb-3 justify-content-left">
+				<div class="col-3 mb-2" *ngFor="let image of screenshots">
 					<img
 						nb-card-image
 						draggable="false"

@@ -1,15 +1,21 @@
 :host {
-  display: block;
-  position: relative;
-  width: 500px;
-  margin: auto;
-  .close-button {
-    position: absolute;
-    top: 3px;
-    right: 5px;
-    z-index: 9;
-  }
+    display: block;
+    position: relative;
+    width: 500px;
+    margin: auto;
+    .close-button {
+        position: absolute;
+        top: 3px;
+        right: 5px;
+        z-index: 9;
+    }
   	.description {
 		overflow-wrap: break-word;
 	}
+    nb-alert {
+        font-size: 14px !important;
+        padding: 8px !important;
+        height: 3.5rem !important;
+        line-height: unset !important;
+    }
 }
