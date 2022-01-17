@@ -7,7 +7,7 @@ import {
 	ICandidateExperience,
 	ICandidateFeedback,
 	ICandidateDocument,
-	CandidateStatus,
+	CandidateStatusEnum,
 	ICandidateSkill,
 	IOrganizationPosition,
 	IOrganizationEmploymentType,
@@ -77,10 +77,10 @@ export class Candidate
 	@Column({ nullable: true })
 	hiredDate?: Date;
 
-	@ApiProperty({ type: () => String, enum: CandidateStatus })
-	@IsEnum(CandidateStatus)
+	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })
+	@IsEnum(CandidateStatusEnum)
 	@IsOptional()
-	@Column({ nullable: true, default: CandidateStatus.APPLIED })
+	@Column({ nullable: true, default: CandidateStatusEnum.APPLIED })
 	status?: string;
 
 	@ApiPropertyOptional({ type: () => Date })

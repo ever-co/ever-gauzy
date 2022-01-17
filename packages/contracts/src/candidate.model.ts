@@ -48,7 +48,7 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	ratings?: number;
 }
 
-export enum CandidateStatus {
+export enum CandidateStatusEnum {
 	APPLIED = 'APPLIED',
 	REJECTED = 'REJECTED',
 	HIRED = 'HIRED'
@@ -59,6 +59,7 @@ export interface ICandidateFindInput
 	id?: string;
 	user?: IUserFindInput;
 	valueDate?: Date;
+	isArchived?: boolean;
 }
 
 export interface ICandidateUpdateInput 

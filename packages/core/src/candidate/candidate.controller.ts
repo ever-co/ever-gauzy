@@ -60,7 +60,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@ApiOperation({ summary: 'Create records in Bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Records have been successfully created.' /*, type: T*/
+		description: 'Records have been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -196,10 +196,11 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post()
 	async create(
-		@Body() body: ICandidateCreateInput,
-		...options: any[]
+		@Body() body: ICandidateCreateInput
 	): Promise<ICandidate> {
-		return await this.commandBus.execute(new CandidateCreateCommand(body));
+		return await this.commandBus.execute(
+			new CandidateCreateCommand(body)
+		);
 	}
 
 	/**
