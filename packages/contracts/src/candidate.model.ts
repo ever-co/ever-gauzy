@@ -13,6 +13,7 @@ import { IOrganizationDepartment } from './organization-department.model';
 import { IOrganizationPosition } from './organization-positions.model';
 import { IContact } from './contact.model';
 import { ITag } from './tag-entity.model';
+import { IEmployee } from './employee.model';
 
 export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	user: IUser;
@@ -42,6 +43,8 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	isArchived?: boolean;
 	interview?: ICandidateInterview[];
 	contact?: IContact;
+	employee?: IEmployee;
+	employeeId?: string;
 	ratings?: number;
 }
 
