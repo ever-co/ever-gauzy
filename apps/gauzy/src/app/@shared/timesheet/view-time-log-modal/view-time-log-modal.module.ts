@@ -7,7 +7,8 @@ import {
 	NbCardModule,
 	NbButtonModule,
 	NbDialogModule,
-	NbIconModule
+	NbIconModule,
+	NbAlertModule
 } from '@nebular/theme';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 import { DialogsModule } from '../../dialogs';
@@ -26,7 +27,8 @@ import { LabelModule } from '../../components/label/label.module';
 		EditTimeLogModalModule,
 		NbIconModule,
 		DialogsModule,
-		LabelModule
+		LabelModule,
+		NbAlertModule
 	]
 })
 export class ViewTimeLogModalModule {}
