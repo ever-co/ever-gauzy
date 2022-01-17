@@ -14,7 +14,8 @@ import {
 	IOrganizationDepartment,
 	IContact,
 	ITag,
-	IUser
+	IUser,
+	IEmployee
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum, IsString } from 'class-validator';
@@ -39,6 +40,7 @@ import {
 	CandidateSkill,
 	CandidateSource,
 	Contact,
+	Employee,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
 	OrganizationPosition,
@@ -205,6 +207,20 @@ export class Candidate
 	@Column()
 	readonly userId: string;
 
+	/**
+	 * Employee
+	 */
+	@ApiProperty({ type: () => Employee })
+	@OneToOne(() => Employee, (employee) => employee.candidate)
+	@JoinColumn()
+    employee?: IEmployee;
+
+	@ApiProperty({ type: () => String, readOnly: true })
+	@RelationId((it: Candidate) => it.employee)
+	@Index()
+	@Column({ nullable: true })
+	employeeId?: string;
+	
 	/*
     |--------------------------------------------------------------------------
     | @OneToMany 
