@@ -40,10 +40,11 @@
 				display: flex;
 				flex-direction: row;
 				justify-content: space-between;
+				align-items: center;
 				font-size: 0.8em;
 				color: darkgray;
 				line-height: 0px;
-				padding: 1rem 1.5rem;
+				padding: 0.7rem 1.5rem;
 				.info-meta {
 					margin-right: 10px;
 				}
@@ -58,6 +59,7 @@
 					text-align: center;
   					padding: 10px 30px;
 					border-radius: 0.25rem;
+					color: #fff;
 				}
 				/* Status */
 				.badge-danger {
@@ -71,7 +73,6 @@
 				}
 				.badge-warning {
 					background-color: #fa0;
-					color: #fff;
 				}
 			}
 			.card-footer {

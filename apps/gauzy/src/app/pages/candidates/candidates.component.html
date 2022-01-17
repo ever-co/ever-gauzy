@@ -122,7 +122,9 @@
 							<span>{{ x.fullName }}</span>
 						</div>
 						<div class="email">
-							<span class="info-value">{{ x.email }}</span>
+							<span class="info-value">
+								{{ x.email }}
+							</span>
 						</div>
 						<div class="info-line">
 							<span class="info-meta">{{
@@ -131,9 +133,9 @@
 							<span class="info-value">{{ x.source?.name }}</span>
 						</div>
 						<div class="info-line">
-							<span class="info-meta">{{
-								'CANDIDATES_PAGE.RATING' | translate
-							}}</span>
+							<span class="info-meta">
+								{{ 'CANDIDATES_PAGE.RATING' | translate }}
+							</span>
 							<ga-star-rating-output
 								[rate]="x.rating"
 								[isGridView]="true"
