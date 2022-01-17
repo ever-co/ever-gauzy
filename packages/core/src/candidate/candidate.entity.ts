@@ -126,6 +126,7 @@ export class Candidate
 	isArchived?: boolean;
 
 	ratings?: number;
+	alreadyHired?: boolean;
 
 	/*
     |--------------------------------------------------------------------------

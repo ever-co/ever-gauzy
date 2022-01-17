@@ -33,7 +33,8 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	CandidateCreateCommand,
 	CandidateBulkCreateCommand,
-	CandidateUpdateCommand
+	CandidateUpdateCommand,
+	CandidateHiredCommand
 } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 
@@ -212,7 +213,7 @@ export class CandidateController extends CrudController<Candidate> {
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
-		status: HttpStatus.CREATED,
+		status: HttpStatus.OK,
 		description: 'The record has been successfully edited.'
 	})
 	@ApiResponse({
@@ -225,6 +226,8 @@ export class CandidateController extends CrudController<Candidate> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -234,6 +237,39 @@ export class CandidateController extends CrudController<Candidate> {
 		//We need save() to save ManyToMany relations
 		return await this.commandBus.execute(
 			new CandidateUpdateCommand({ id, ...entity })
+		);
+	}
+
+	/**
+	 * Migrate candidate user to employee user
+	 * UPDATE Candidate By Id 
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Update an existing record and migrate candidate to employee user' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@Put(':id/hired')
+	async updateHiredStatus(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<ICandidate> {
+		return await this.commandBus.execute(
+			new CandidateHiredCommand(id)
 		);
 	}
 }

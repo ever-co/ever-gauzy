@@ -80,10 +80,7 @@ export class CandidatesService {
 
 	setCandidateAsHired(id: string): Promise<ICandidate> {
 		return firstValueFrom(
-			this.http
-				.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					status: CandidateStatusEnum.HIRED
-				})
+			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/hired`, {})
 		);
 	}
 
