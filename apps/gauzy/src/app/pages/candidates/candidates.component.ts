@@ -137,20 +137,25 @@ export class CandidatesComponent
 	}
 
 	async add() {
-		const { name } = this.organization;
-		const dialog = this.dialogService.open(CandidateMutationComponent);
-		const response = await firstValueFrom(dialog.onClose);
-
-		if (response) {
-			response.map((candidate: ICandidate) => {
-				if (candidate.user) {
-					const { fullName } = candidate.user;
-					this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_CREATED', {
-						name: fullName.trim(),
-						organization: name
-					});
+		try {
+			const { name } = this.organization;
+			const dialog = this.dialogService.open(CandidateMutationComponent);
+			const candidates: ICandidate[] = await firstValueFrom(dialog.onClose);
+	
+			if (candidates) {
+				for await (const candidate of candidates) {
+					if (candidate.user) {
+						const { firstName, lastName } = candidate.user;
+						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_CREATED', {
+							name: `${firstName.trim()} ${lastName.trim()}`,
+							organization: name
+						});
+					}
 				}
-			});
+			}	
+		} catch (error) {
+			console.log('Error, while creating bulk candidate', error);
+		} finally {
 			this.candidates$.next(true);
 		}
 	}
