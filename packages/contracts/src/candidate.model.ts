@@ -22,6 +22,7 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	teams?: IOrganizationTeam[];
 	organizationDepartments?: IOrganizationDepartment[];
 	organizationPosition?: IOrganizationPosition;
+	organizationPositionId?: string;
 	tags: ITag[];
 	appliedDate?: Date;
 	hiredDate?: Date;
@@ -43,12 +44,14 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	isArchived?: boolean;
 	interview?: ICandidateInterview[];
 	contact?: IContact;
+	contactId?: string;
 	employee?: IEmployee;
 	employeeId?: string;
 	ratings?: number;
+	alreadyHired?: boolean;
 }
 
-export enum CandidateStatus {
+export enum CandidateStatusEnum {
 	APPLIED = 'APPLIED',
 	REJECTED = 'REJECTED',
 	HIRED = 'HIRED'
@@ -59,6 +62,7 @@ export interface ICandidateFindInput
 	id?: string;
 	user?: IUserFindInput;
 	valueDate?: Date;
+	isArchived?: boolean;
 }
 
 export interface ICandidateUpdateInput 

@@ -1,5 +1,7 @@
 import { average } from "@gauzy/common";
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import * as moment from 'moment';
+import { CandidateStatusEnum } from "@gauzy/contracts";
 import { getUserDummyImage } from "./../core/utils";
 import { Candidate } from "./../core/entities/internal";
 
@@ -20,6 +22,13 @@ export class CandidateSubscriber implements EntitySubscriberInterface<Candidate>
         if (Array.isArray(entity.feedbacks)) {
 			entity.ratings = average(entity.feedbacks, 'rating');
 		}
+        /**
+         * If candidate already hired
+         */
+        entity.alreadyHired = (
+            (entity.status === CandidateStatusEnum.HIRED) && 
+            (moment(entity.hiredDate).isValid())
+        );
     }
 
     /**
@@ -33,6 +42,13 @@ export class CandidateSubscriber implements EntitySubscriberInterface<Candidate>
              */
             if (!entity.user.imageUrl) {
                 entity.user.imageUrl = getUserDummyImage(entity.user)
+            }
+
+            /**
+             * Automatically update candidate rejected status
+             */
+            if (moment(entity.rejectDate).isValid()) {
+                entity.status = CandidateStatusEnum.REJECTED;
             }
         }
     }

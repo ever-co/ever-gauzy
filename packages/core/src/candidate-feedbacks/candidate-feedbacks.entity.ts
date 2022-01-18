@@ -11,7 +11,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateFeedback,
-	CandidateStatus,
+	CandidateStatusEnum,
 	ICandidateInterviewers,
 	ICandidateCriterionsRating,
 	ICandidate,
@@ -38,8 +38,8 @@ export class CandidateFeedback
 	@Column({ nullable: true, type: 'numeric' })
 	rating: number;
 
-	@ApiProperty({ type: () => String, enum: CandidateStatus })
-	@IsEnum(CandidateStatus)
+	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })
+	@IsEnum(CandidateStatusEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	status?: string;

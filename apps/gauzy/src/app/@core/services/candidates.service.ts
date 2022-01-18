@@ -5,7 +5,7 @@ import {
 	ICandidateFindInput,
 	ICandidate,
 	ICandidateUpdateInput,
-	CandidateStatus
+	CandidateStatusEnum
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
@@ -80,19 +80,13 @@ export class CandidatesService {
 
 	setCandidateAsHired(id: string): Promise<ICandidate> {
 		return firstValueFrom(
-			this.http
-				.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					status: CandidateStatus.HIRED
-				})
+			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/hired`, {})
 		);
 	}
 
 	setCandidateAsRejected(id: string): Promise<ICandidate> {
 		return firstValueFrom(
-			this.http
-				.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					status: CandidateStatus.REJECTED
-				})
+			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/rejected`, {})
 		);
 	}
 
@@ -100,7 +94,7 @@ export class CandidatesService {
 		return firstValueFrom(
 			this.http
 				.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					status: CandidateStatus.APPLIED
+					status: CandidateStatusEnum.APPLIED
 				})
 		);
 	}

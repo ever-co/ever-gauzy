@@ -197,7 +197,9 @@
 		"CREATED_BY": "Создано",
 		"NO_DATA_MESSAGE": "Нет данных",
 		"TAGS": "Теги",
-		"CREATED": "Создано"
+		"CREATED": "Создано",
+		"HIRED_DATE": "Дата истечения",
+		"REJECTED_DATE": "Дата отклонения"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",

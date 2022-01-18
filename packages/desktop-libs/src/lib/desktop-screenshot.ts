@@ -145,7 +145,7 @@ const uploadScreenShot = async (
 
 		console.log(`Send Screenshot to API: ${moment().format()}`);
 
-		const screenshot = await response.json();
+		const screenshot: any = await response.json();
 
 		console.log(
 			`Get Screenshot Response From API: ${moment().format()}`,
