@@ -215,33 +215,29 @@
 			<nb-icon class="mr-1" icon="archive-outline"></nb-icon
 			>{{ 'BUTTONS.ARCHIVE' | translate }}
 		</button>
-		<button
-			nbButton
-			[disabled]="
-				(!selectedItem && disableButton) || 
-				(selectedItem?.status === candidateStatusEnum.HIRED)
-			"
-			(click)="hire(selectedItem)"
-			status="success"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="person-done-outline"></nb-icon
-			>{{ 'BUTTONS.HIRE' | translate }}
-		</button>
-		<button
-			nbButton
-			[disabled]="
-				(!selectedItem && disableButton) ||
-				(selectedItem?.status === candidateStatusEnum.REJECTED)
-			"
-			(click)="reject(selectedItem)"
-			status="danger"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="person-remove-outline"></nb-icon
-			>{{ 'BUTTONS.REJECT' | translate }}
-		</button>
+		<ng-container *ngIf="selectedItem?.status === candidateStatusEnum.APPLIED">
+			<button
+				nbButton
+				[disabled]="(!selectedItem && disableButton)"
+				(click)="hire(selectedItem)"
+				status="success"
+				class="mr-2"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="person-done-outline"></nb-icon
+				>{{ 'BUTTONS.HIRE' | translate }}
+			</button>
+			<button
+				nbButton
+				[disabled]="(!selectedItem && disableButton)"
+				(click)="reject(selectedItem)"
+				status="danger"
+				class="mr-2"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="person-remove-outline"></nb-icon
+				>{{ 'BUTTONS.REJECT' | translate }}
+			</button>
+		</ng-container>
 	</ng-template>
 </ng-template>

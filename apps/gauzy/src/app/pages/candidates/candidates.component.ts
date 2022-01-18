@@ -18,7 +18,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
 import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
 import { ComponentEnum } from '../../@core/constants';
 import { CandidatesService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
@@ -253,7 +253,9 @@ export class CandidatesComponent
 				status: candidate.status,
 				isArchived: candidate.isArchived,
 				imageUrl: candidate.user.imageUrl,
-				tags: candidate.tags
+				tags: candidate.tags,
+				hiredDate: candidate.hiredDate,
+				rejectDate: candidate.rejectDate
 			});
 		}
 
@@ -293,6 +295,18 @@ export class CandidatesComponent
 					class: 'text-center',
 					width: '200px',
 					renderComponent: CandidateSourceComponent,
+					filter: false
+				},
+				hiredDate: {
+					title: this.getTranslation('SM_TABLE.HIRED_DATE'),
+					type: 'custom',
+					renderComponent: DateViewComponent,
+					filter: false
+				},
+				rejectDate: {
+					title: this.getTranslation('SM_TABLE.REJECTED_DATE'),
+					type: 'custom',
+					renderComponent: DateViewComponent,
 					filter: false
 				},
 				status: {

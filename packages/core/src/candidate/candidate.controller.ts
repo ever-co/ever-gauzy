@@ -242,7 +242,7 @@ export class CandidateController extends CrudController<Candidate> {
 	}
 
 	/**
-	 * Migrate candidate user to employee user
+	 * Hired candidate user and migrate to employee user
 	 * UPDATE Candidate By Id 
 	 * 
 	 * @param id 
