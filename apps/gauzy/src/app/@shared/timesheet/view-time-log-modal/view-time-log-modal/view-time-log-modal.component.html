@@ -85,6 +85,11 @@
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
+		<ng-container *ngIf="timeLog?.isRunning">
+			<nb-alert status="warning" [size]="'tiny'"> 
+				{{ 'TIMESHEET.RUNNING_TIMER_WARNING' | translate }}
+			</nb-alert>
+		</ng-container>
 		<button
 			[disabled]="timeLog.isRunning"
 			size="small"
