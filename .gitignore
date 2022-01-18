@@ -65,6 +65,9 @@ ormlogs.log
 /apps/desktop/src/environments/environment.prod.ts
 /apps/desktop/src/environments/environment.ts
 
+/apps/server/src/environments/environment.prod.ts
+/apps/server/src/environments/environment.ts
+
 /export
 /import
 /apps/api/*.tsbuildinfo
