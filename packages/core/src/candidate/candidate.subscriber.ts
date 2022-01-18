@@ -43,6 +43,13 @@ export class CandidateSubscriber implements EntitySubscriberInterface<Candidate>
             if (!entity.user.imageUrl) {
                 entity.user.imageUrl = getUserDummyImage(entity.user)
             }
+
+            /**
+             * Automatically update candidate rejected status
+             */
+            if (moment(entity.rejectDate).isValid()) {
+                entity.status = CandidateStatusEnum.REJECTED;
+            }
         }
     }
 }

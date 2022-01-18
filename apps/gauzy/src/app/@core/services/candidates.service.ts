@@ -86,10 +86,7 @@ export class CandidatesService {
 
 	setCandidateAsRejected(id: string): Promise<ICandidate> {
 		return firstValueFrom(
-			this.http
-				.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					status: CandidateStatusEnum.REJECTED
-				})
+			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/rejected`, {})
 		);
 	}
 

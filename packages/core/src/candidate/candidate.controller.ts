@@ -34,7 +34,8 @@ import {
 	CandidateCreateCommand,
 	CandidateBulkCreateCommand,
 	CandidateUpdateCommand,
-	CandidateHiredCommand
+	CandidateHiredCommand,
+	CandidateRejectedCommand
 } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 
@@ -270,6 +271,39 @@ export class CandidateController extends CrudController<Candidate> {
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateHiredCommand(id)
+		);
+	}
+
+	/**
+	 * Rejected candidate user
+	 * UPDATE Candidate By Id 
+	 * 
+	 * @param id 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Update candidate status as Rejected' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@Put(':id/rejected')
+	async updateRejectedStatus(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<ICandidate> {
+		return await this.commandBus.execute(
+			new CandidateRejectedCommand(id)
 		);
 	}
 }

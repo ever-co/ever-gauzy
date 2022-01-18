@@ -101,7 +101,6 @@ export class BasicInfoFormComponent
 			offerDate: [],
 			acceptDate: [],
 			appliedDate: [],
-			hiredDate: [],
 			rejectDate: [],
 			source: [],
 			tags: [self.selectedTags],
@@ -316,7 +315,7 @@ export class BasicInfoFormComponent
 		const { id: organizationId } = this.organization;
 
 		const { password, tags } = this.form.getRawValue();
-		const { appliedDate = null, rejectDate = null, hiredDate = null, source: sourceName = null } = this.form.getRawValue();
+		const { appliedDate = null, rejectDate = null, source: sourceName = null } = this.form.getRawValue();
 			
 		let source: ICandidateSource = null;
 		if (sourceName !== null) {
@@ -331,7 +330,6 @@ export class BasicInfoFormComponent
 			password,
 			documents: [],
 			appliedDate,
-			hiredDate,
 			source,
 			rejectDate,
 			tags,
