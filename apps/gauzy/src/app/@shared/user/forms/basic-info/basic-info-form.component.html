@@ -214,27 +214,6 @@
 	<div class="row" *ngIf="isCandidate">
 		<div class="col">
 			<div class="form-group">
-				<label for="hiredDate" class="label">{{
-					'FORM.LABELS.HIRED_DATE' | translate
-				}}</label>
-				<input
-					fullWidth
-					id="hiredDate"
-					formControlName="hiredDate"
-					nbInput
-					[nbDatepicker]="hiredDatePicker"
-					[placeholder]="'POP_UPS.PICK_DATE' | translate"
-					[status]="
-						FormHelpers.isInvalidControl(form, 'hiredDate')
-							? 'danger'
-							: 'basic'
-					"
-				/>
-				<nb-datepicker #hiredDatePicker></nb-datepicker>
-			</div>
-		</div>
-		<div class="col">
-			<div class="form-group">
 				<label for="source" class="label">{{
 					'FORM.LABELS.SOURCE' | translate
 				}}</label>

@@ -94,7 +94,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		const { id: organizationId } = this.organization;
 
 		const { firstName, lastName, email, username, password, tags, imageUrl } = this.form.getRawValue();
-		const { appliedDate = null, rejectDate = null, hiredDate = null } = this.form.getRawValue();
+		const { appliedDate = null, rejectDate = null } = this.form.getRawValue();
 		const sourceName = this.form.get('source').value || null;
 
 		const user: IUser = {
@@ -137,7 +137,6 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			password,
 			organization: this.organization,
 			appliedDate,
-			hiredDate,
 			source,
 			rejectDate,
 			tags,

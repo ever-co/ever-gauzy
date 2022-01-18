@@ -1,4 +1,4 @@
-import { Controller, UseGuards, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query, ValidationPipe, UsePipes } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { StatisticService } from './statistic.service';
 import {
@@ -7,13 +7,13 @@ import {
 	IGetTasksStatistics,
 	IGetTimeSlotStatistics,
 	IGetActivitiesStatistics,
-	IGetCountsStatistics,
 	IGetManualTimesStatistics,
 	ICountsStatistics,
 	IMembersStatistics,
 	IProjectsStatistics
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
+import { StatisticCountsDTO } from './dto';
 
 @ApiTags('TimesheetStatistic')
 @UseGuards(TenantPermissionGuard)
@@ -34,8 +34,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/counts')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async counts(
-		@Query() request: IGetCountsStatistics
+		@Query() request: StatisticCountsDTO
 	): Promise<ICountsStatistics> {
 		return await this.statisticService.getCounts(request);
 	}
