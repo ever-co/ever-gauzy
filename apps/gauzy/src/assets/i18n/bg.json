@@ -197,7 +197,9 @@
 		"CREATED_BY": "Created By",
 		"NO_DATA_MESSAGE": "No Data",
 		"TAGS": "Тагове",
-		"CREATED": "Created"
+		"CREATED": "Created",
+		"HIRED_DATE": "Hired Date",
+		"REJECTED_DATE": "Rejected Date"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
