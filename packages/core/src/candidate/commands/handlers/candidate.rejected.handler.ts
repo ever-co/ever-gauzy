@@ -23,7 +23,7 @@ export class CandidateRejectedHandler
 		try {
 			await this.candidateService.update(id,  {
 				status: CandidateStatusEnum.REJECTED,
-				hiredDate: candidate.rejectDate || new Date()
+				rejectDate: candidate.rejectDate || new Date()
 			});
 
 			return await this.candidateService.findOneByIdString(id);
