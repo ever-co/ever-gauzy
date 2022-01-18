@@ -53,7 +53,7 @@
 		"mac-screen-capture-permissions": "^2.0.0",
 		"moment": "^2.29.1",
 		"ngx-electron": "^2.2.0",
-		"node-fetch": "^2.6.1",
+		"node-fetch": "^3.1.1",
 		"node-notifier": "^8.0.0",
 		"rxjs": "^7.4.0",
 		"pg": "^8.6.0",
