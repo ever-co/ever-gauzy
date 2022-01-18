@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import {
-	CandidateStatus,
+	CandidateStatusEnum,
 	ICandidateFeedback,
 	ICandidateInterviewers,
 	ICandidateTechnologies,
@@ -121,13 +121,13 @@ export class CandidateInterviewFeedbackComponent
 					feedback.interviewer
 				) {
 					this.disabledIds.push(feedback.interviewer.employeeId);
-					if (feedback.status === CandidateStatus.REJECTED) {
+					if (feedback.status === CandidateStatusEnum.REJECTED) {
 						this.isRejected = true;
 					} else {
 						this.isRejected = false;
 					}
 					this.statusHire =
-						feedback.status === CandidateStatus.HIRED
+						feedback.status === CandidateStatusEnum.HIRED
 							? this.statusHire + 1
 							: this.statusHire;
 				}
@@ -211,7 +211,7 @@ export class CandidateInterviewFeedbackComponent
 	}
 
 	private async setStatus(status: string) {
-		if (status === CandidateStatus.REJECTED) {
+		if (status === CandidateStatusEnum.REJECTED) {
 			await this.candidatesService.setCandidateAsRejected(
 				this.candidateId
 			);

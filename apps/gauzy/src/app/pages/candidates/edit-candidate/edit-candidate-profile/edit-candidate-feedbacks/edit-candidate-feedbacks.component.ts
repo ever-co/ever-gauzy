@@ -15,7 +15,7 @@ import { takeUntil } from 'rxjs/operators';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 import {
 	ICandidateFeedback,
-	CandidateStatus,
+	CandidateStatusEnum,
 	ICandidateInterviewers,
 	ICandidateInterview,
 	ICandidateTechnologies,
@@ -465,7 +465,7 @@ export class EditCandidateFeedbacksComponent
 		feedbacks.forEach((fb) => {
 			if (fb.interviewId === interviewId) {
 				this.statusHire =
-					fb.status === CandidateStatus.HIRED
+					fb.status === CandidateStatusEnum.HIRED
 						? this.statusHire + 1
 						: this.statusHire;
 			}
@@ -473,7 +473,7 @@ export class EditCandidateFeedbacksComponent
 	}
 	async setStatus(status: string) {
 		this.getStatusHire(this.feedbackInterviewId);
-		if (status === CandidateStatus.REJECTED) {
+		if (status === CandidateStatusEnum.REJECTED) {
 			await this.candidatesService.setCandidateAsRejected(
 				this.candidateId
 			);

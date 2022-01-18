@@ -1,4 +1,4 @@
-import { ICandidate, CandidateStatus, ICandidateFeedback, IOrganization, ITenant } from '@gauzy/contracts';
+import { ICandidate, CandidateStatusEnum, ICandidateFeedback, IOrganization, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { DEFAULT_CANDIDATE_FEEDBACKS } from './default-candidate-feedbacks';
@@ -95,7 +95,7 @@ const dataOperation = async (
 			interviewId: interview.id,
 			tenant: tenant,
 			organization: organization,
-			status: faker.random.arrayElement(Object.keys(CandidateStatus))
+			status: faker.random.arrayElement(Object.keys(CandidateStatusEnum))
 		}));
 		candidateFeedbacksMap.set(candidate, feedbacks);
 		candidateFeedbacks = [...candidateFeedbacks, ...feedbacks];

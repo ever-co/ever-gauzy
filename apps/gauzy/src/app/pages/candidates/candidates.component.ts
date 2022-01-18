@@ -3,33 +3,26 @@ import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	ICandidateViewModel
+	ICandidateViewModel,
+	ICandidate,
+	CandidateStatusEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { Store } from '../../@core/services/store.service';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
-import { CandidatesService } from '../../@core/services/candidates.service';
-import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
+import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
-import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import {
-	Router,
-	ActivatedRoute,
-	RouterEvent,
-	NavigationEnd
-} from '@angular/router';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
-import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
-import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation/candidate-action-confirmation.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { TranslationBaseComponent } from '../../@shared/language-base';
+import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
+import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
+import { DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
+import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
+import { ComponentEnum } from '../../@core/constants';
+import { CandidatesService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
+import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,20 +32,22 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class CandidatesComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationName: string;
+
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedCandidate: ICandidateViewModel;
-	selectedOrganizationId: string;
-	candidateName = 'Candidate';
-	includeArchived = false;
-	loading = true;
-	organizationInvitesAllowed = false;
+	includeArchived: boolean = false;
+	loading: boolean;
+	organizationInvitesAllowed: boolean = false;
 	viewComponentName: ComponentEnum;
-	disableButton = true;
+	disableButton: boolean = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	candidateData: ICandidateViewModel[];
-	selectedOrganization: IOrganization;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	candidateStatusEnum = CandidateStatusEnum;
+	candidates: ICandidateViewModel[] = [];
+
+	public organization: IOrganization;
+	candidates$: Subject<any> = new Subject();
 
 	candidatesTable: Ng2SmartTableComponent;
 	@ViewChild('candidatesTable') set content(content: Ng2SmartTableComponent) {
@@ -63,54 +58,49 @@ export class CandidatesComponent
 	}
 
 	constructor(
-		private candidatesService: CandidatesService,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private store: Store,
-		private router: Router,
-		private route: ActivatedRoute,
-		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private readonly candidatesService: CandidatesService,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store,
+		private readonly router: Router,
+		private readonly route: ActivatedRoute,
+		public readonly translateService: TranslateService,
+		private readonly errorHandler: ErrorHandlingService
 	) {
-		super(translate);
+		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.selectedOrganization = organization;
-					this.selectedOrganizationId = organization.id;
-					this.organizationInvitesAllowed =
-						organization.invitesAllowed;
-					this.loadPage();
-				}
-			});
-		this.route.queryParamMap
-			.pipe(
-				filter((params) => !!params),
-				debounceTime(1000),
-				untilDestroyed(this)
-			)
-			.subscribe((params) => {
-				if (params.get('openAddDialog') === 'true') {
-					this.add();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
+		this.candidates$
+			.pipe(
+				debounceTime(100),
+				tap(() => this.loading = true),
+				tap(() => this.getCandidates()),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(({ invitesAllowed }: IOrganization) => this.organizationInvitesAllowed = invitesAllowed),
+				tap(() => this.candidates$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				debounceTime(1000),
+				tap(() => this.add()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	goTo(page: string) {
@@ -121,10 +111,12 @@ export class CandidatesComponent
 		this.viewComponentName = ComponentEnum.CANDIDATES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -139,39 +131,44 @@ export class CandidatesComponent
 			.subscribe();
 	}
 
-	selectCandidateTmp({ isSelected, data }) {
+	selectCandidate({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedCandidate = isSelected ? data : null;
-		if (this.selectedCandidate) {
-			const checkName = this.selectedCandidate.fullName.trim();
-			this.candidateName = checkName ? checkName : 'Candidate';
-		}
 	}
+
 	async add() {
-		const dialog = this.dialogService.open(CandidateMutationComponent);
-		const response = await firstValueFrom(dialog.onClose);
-
-		if (response) {
-			response.map((data) => {
-				if (data.user.firstName || data.user.lastName) {
-					this.candidateName =
-						data.user.firstName + ' ' + data.user.lastName;
+		try {
+			const { name } = this.organization;
+			const dialog = this.dialogService.open(CandidateMutationComponent);
+			const candidates: ICandidate[] = await firstValueFrom(dialog.onClose);
+	
+			if (candidates) {
+				for await (const candidate of candidates) {
+					if (candidate.user) {
+						const { firstName, lastName } = candidate.user;
+						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_CREATED', {
+							name: `${firstName.trim()} ${lastName.trim()}`,
+							organization: name
+						});
+					}
 				}
-				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_CREATED', {
-					name: this.candidateName.trim(),
-					organization: data.organization.name
-				});
-			});
-
-			this.loadPage();
+			}	
+		} catch (error) {
+			console.log('Error, while creating bulk candidate', error);
+		} finally {
+			this.candidates$.next(true);
 		}
 	}
+
 	edit(selectedItem?: ICandidateViewModel) {
 		if (selectedItem) {
-			this.selectCandidateTmp({
+			this.selectCandidate({
 				isSelected: true,
 				data: selectedItem
 			});
+		}
+		if (!this.selectedCandidate) {
+			return;
 		}
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' +
@@ -179,9 +176,10 @@ export class CandidatesComponent
 			'/profile'
 		]);
 	}
+
 	async archive(selectedItem?: ICandidateViewModel) {
 		if (selectedItem) {
-			this.selectCandidateTmp({
+			this.selectCandidate({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -197,28 +195,26 @@ export class CandidatesComponent
 						)
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.candidatesService.setCandidateAsArchived(
-							this.selectedCandidate.id
-						);
+						const { id, fullName } = this.selectedCandidate;
+						await this.candidatesService.setCandidateAsArchived(id);
 
-						this.toastrService.success(
-							'TOASTR.MESSAGE.CANDIDATE_ARCHIVED',
-							{
-								name: this.candidateName
-							}
-						);
-
-						this.loadPage();
+						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_ARCHIVED', {
+							name: fullName
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this.candidates$.next(true);
 					}
 				}
 			});
 	}
+
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
@@ -227,26 +223,29 @@ export class CandidatesComponent
 		});
 		await firstValueFrom(dialog.onClose);
 	}
+
 	manageInvites() {
 		this.router.navigate(['/pages/employees/candidates/invites']);
 	}
+
 	manageInterviews() {
 		this.router.navigate(['/pages/employees/candidates/interviews']);
 	}
 
-	private async loadPage() {
+	private async getCandidates() {
 		const { tenantId } = this.store.user;
-		const { items } = await firstValueFrom(this.candidatesService
-			.getAll(['user', 'source', 'tags'], {
-				organizationId: this.selectedOrganizationId,
-				tenantId
-			}));
+		const { id: organizationId } = this.organization;
 
-		let candidatesVm = [];
+		const { items } = await firstValueFrom(this.candidatesService.getAll(['user', 'source', 'tags'], {
+			organizationId,
+			tenantId
+		}));
+
+		let candidates = [];
 		const result = [];
 		for (const candidate of items) {
 			result.push({
-				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
+				fullName: candidate.user.name,
 				email: candidate.user.email,
 				id: candidate.id,
 				source: candidate.source,
@@ -254,24 +253,24 @@ export class CandidatesComponent
 				status: candidate.status,
 				isArchived: candidate.isArchived,
 				imageUrl: candidate.user.imageUrl,
-				tags: candidate.tags
+				tags: candidate.tags,
+				hiredDate: candidate.hiredDate,
+				rejectDate: candidate.rejectDate
 			});
 		}
 
 		if (!this.includeArchived) {
 			result.forEach((candidate) => {
 				if (!candidate.isArchived) {
-					candidatesVm.push(candidate);
+					candidates.push(candidate);
 				}
 			});
 		} else {
-			candidatesVm = result;
+			candidates = result;
 		}
 
-		this.candidateData = candidatesVm;
-		this.sourceSmartTable.load(candidatesVm);
-		const { name } = this.store.selectedOrganization;
-		this.organizationName = name;
+		this.candidates = candidates;
+		this.sourceSmartTable.load(candidates);
 		this.loading = false;
 	}
 
@@ -298,7 +297,18 @@ export class CandidatesComponent
 					renderComponent: CandidateSourceComponent,
 					filter: false
 				},
-
+				hiredDate: {
+					title: this.getTranslation('SM_TABLE.HIRED_DATE'),
+					type: 'custom',
+					renderComponent: DateViewComponent,
+					filter: false
+				},
+				rejectDate: {
+					title: this.getTranslation('SM_TABLE.REJECTED_DATE'),
+					type: 'custom',
+					renderComponent: DateViewComponent,
+					filter: false
+				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
@@ -317,11 +327,12 @@ export class CandidatesComponent
 
 	changeIncludeArchived(checked: boolean) {
 		this.includeArchived = checked;
-		this.loadPage();
+		this.candidates$.next(true);
 	}
+
 	async reject(selectedItem?: ICandidateViewModel) {
 		if (selectedItem) {
-			this.selectCandidateTmp({
+			this.selectCandidate({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -333,31 +344,29 @@ export class CandidatesComponent
 					isReject: true
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.candidatesService.setCandidateAsRejected(
-							this.selectedCandidate.id
-						);
+						const { id, fullName } = this.selectedCandidate;
+						await this.candidatesService.setCandidateAsRejected(id);
 
-						this.toastrService.success(
-							'TOASTR.MESSAGE.CANDIDATE_REJECTED',
-							{
-								name: this.candidateName
-							}
-						);
-						this.loadPage();
-						this.clearItem();
+						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_REJECTED', {
+							name: fullName
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this.candidates$.next(true);
 					}
 				}
 			});
 	}
+
 	async hire(selectedItem?: ICandidateViewModel) {
 		if (selectedItem) {
-			this.selectCandidateTmp({
+			this.selectCandidate({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -369,43 +378,46 @@ export class CandidatesComponent
 					isReject: false
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.candidatesService.setCandidateAsHired(
-							this.selectedCandidate.id
-						);
+						const { id, fullName } = this.selectedCandidate;
+						await this.candidatesService.setCandidateAsHired(id);
 
-						this.toastrService.success(
-							'TOASTR.MESSAGE.CANDIDATE_HIRED',
-							{
-								name: this.candidateName
-							}
-						);
-						this.loadPage();
-						this.clearItem();
+						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_HIRED', {
+							name: fullName
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
+					} finally {
+						this.candidates$.next(true);
 					}
 				}
 			});
 	}
+
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this._loadSmartTableSettings();
-		});
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
+
 	/*
 	 * Clear selected item
 	 */
 	clearItem() {
-		this.selectCandidateTmp({
+		this.selectCandidate({
 			isSelected: false,
 			data: null
 		});
 		this.deselectAll();
 	}
+
 	/*
 	 * Deselect all table rows
 	 */
@@ -415,5 +427,6 @@ export class CandidatesComponent
 			this.candidatesTable.grid.dataSet.deselectAll();
 		}
 	}
+
 	ngOnDestroy() { }
 }
