@@ -6,11 +6,7 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
-import {
-	FormBuilder,
-	FormGroup,
-	Validators
-} from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IUser,
 	ITag,
@@ -38,9 +34,7 @@ import { FormHelpers } from '../../forms/helpers';
 	templateUrl: './edit-profile-form.component.html',
 	styleUrls: ['./edit-profile-form.component.scss']
 })
-export class EditProfileFormComponent 
-	implements OnInit, OnDestroy {
-
+export class EditProfileFormComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	hoverState: boolean;
@@ -52,8 +46,8 @@ export class EditProfileFormComponent
 	user$: Subject<any> = new Subject();
 
 	/*
-	* Getter & Setter for selected user
-	*/
+	 * Getter & Setter for selected user
+	 */
 	_selectedUser: IUser;
 	get selectedUser(): IUser {
 		return this._selectedUser;
@@ -63,8 +57,8 @@ export class EditProfileFormComponent
 	}
 
 	/*
-	* Getter & Setter for allow role change
-	*/
+	 * Getter & Setter for allow role change
+	 */
 	_allowRoleChange: boolean = false;
 	get allowRoleChange(): boolean {
 		return this._allowRoleChange;
@@ -78,24 +72,24 @@ export class EditProfileFormComponent
 
 	public form: FormGroup = EditProfileFormComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
-		return fb.group({
-			firstName: [],
-			lastName: [],
-			email: ['', Validators.required],
-			imageUrl: ['', Validators.required],
-			password: [],
-			repeatPassword: [],
-			role: [],
-			tags: [],
-			preferredLanguage: []
-		}, {
-			validators: [
-				MatchValidator.mustMatch(
-					'password',
-					'repeatPassword'
-				)
-			]
-		});
+		return fb.group(
+			{
+				firstName: [],
+				lastName: [],
+				email: ['', Validators.required],
+				imageUrl: ['', Validators.required],
+				password: [],
+				repeatPassword: [],
+				role: [],
+				tags: [],
+				preferredLanguage: []
+			},
+			{
+				validators: [
+					MatchValidator.mustMatch('password', 'repeatPassword')
+				]
+			}
+		);
 	}
 
 	public excludes: RolesEnum[] = [];
@@ -156,12 +150,12 @@ export class EditProfileFormComponent
 		this.toastrService.danger(error);
 	}
 
-	async updateImage(imageUrl: string){
+	async updateImage(imageUrl: string) {
 		this.form.get('imageUrl').setValue(imageUrl);
 		this.store.user = {
 			...this.store.user,
 			imageUrl: imageUrl
-		}
+		};
 
 		let request: IUserUpdateInput = {
 			imageUrl
@@ -169,8 +163,9 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await firstValueFrom(this.roleService.getRoleByName({
-					name: (this.form.get('role').value).name,
+			const role = await firstValueFrom(
+				this.roleService.getRoleByName({
+					name: this.form.get('role').value.name,
 					tenantId
 				})
 			);
@@ -182,30 +177,45 @@ export class EditProfileFormComponent
 		}
 
 		try {
-			await this.userService.update(
-				this.selectedUser ? this.selectedUser.id : this.store.userId,
-				request
-			)
-			.then((res: IUser) => {
-				try {
-					if (res) {
-						this.store.user = {
-							...this.store.user,
-							imageUrl: res.imageUrl
-						} as IUser
+			await this.userService
+				.update(
+					this.selectedUser
+						? this.selectedUser.id
+						: this.store.userId,
+					request
+				)
+				.then((res: IUser) => {
+					try {
+						if (res) {
+							this.store.user = {
+								...this.store.user,
+								imageUrl: res.imageUrl
+							} as IUser;
+						}
+						this.toastrService.success(
+							'TOASTR.MESSAGE.IMAGE_UPDATED'
+						);
+					} catch (error) {
+						console.log(
+							'Error while uploading profile avatar',
+							error
+						);
 					}
-					this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
-				} catch (error) { 
-					console.log('Error while uploading profile avatar', error);
-				}
-			});
+				});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
 	}
 
 	async submitForm() {
-		const { email, firstName, lastName, tags, preferredLanguage, password } = this.form.getRawValue();
+		const {
+			email,
+			firstName,
+			lastName,
+			tags,
+			preferredLanguage,
+			password
+		} = this.form.getRawValue();
 		let request: IUserUpdateInput = {
 			email,
 			firstName,
@@ -223,8 +233,9 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await firstValueFrom(this.roleService.getRoleByName({
-					name: (this.form.get('role').value).name,
+			const role = await firstValueFrom(
+				this.roleService.getRoleByName({
+					name: this.form.get('role').value.name,
 					tenantId
 				})
 			);
@@ -236,27 +247,40 @@ export class EditProfileFormComponent
 		}
 
 		try {
-			await this.userService.update(
-				this.selectedUser ? this.selectedUser.id : this.store.userId,
-				request
-			)
-			.then(() => {
-				this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
-				this.userSubmitted.emit();
-				/**
-				* selectedUser is null for edit profile and populated in User edit
-				* Update app language when current user's profile is modified.
-				*/
-				if (this.selectedUser && this.selectedUser.id !== this.store.userId) { return; }
-				this.store.preferredLanguage = preferredLanguage;
-			});
+			await this.userService
+				.update(
+					this.selectedUser
+						? this.selectedUser.id
+						: this.store.userId,
+					request
+				)
+				.then(() => {
+					this.store.user.email = request.email;
+					this.toastrService.success(
+						'TOASTR.MESSAGE.PROFILE_UPDATED'
+					);
+					this.userSubmitted.emit();
+					/**
+					 * selectedUser is null for edit profile and populated in User edit
+					 * Update app language when current user's profile is modified.
+					 */
+					if (
+						this.selectedUser &&
+						this.selectedUser.id !== this.store.userId
+					) {
+						return;
+					}
+					this.store.preferredLanguage = preferredLanguage;
+				});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
 	}
 
 	private _patchForm(user: IUser) {
-		if (!user) { return; }
+		if (!user) {
+			return;
+		}
 
 		this.form.patchValue({
 			firstName: user.firstName,
@@ -277,12 +301,12 @@ export class EditProfileFormComponent
 
 	/**
 	 * On Selection Change
-	 * @param role 
+	 * @param role
 	 */
 	onSelectionChange(role: IRole) {
 		this.form.get('role').setValue(role);
 		this.form.get('role').updateValueAndValidity();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
