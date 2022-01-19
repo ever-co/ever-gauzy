@@ -3,14 +3,23 @@ import { ActivatedRoute, Params } from '@angular/router';
 import {
 	IEmployee,
 	IEmployeeUpdateInput,
-	IUserUpdateInput
+	IUserUpdateInput,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { EmployeesService, EmployeeStore, ErrorHandlingService, ToastrService, UsersService } from './../../../../@core/services';
-import { Subject } from 'rxjs';
+import {
+	AuthService,
+	EmployeesService,
+	EmployeeStore,
+	ErrorHandlingService,
+	Store,
+	ToastrService,
+	UsersService
+} from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -41,7 +50,9 @@ export class EditEmployeeProfileComponent
 		private readonly toastrService: ToastrService,
 		private readonly employeeStore: EmployeeStore,
 		private readonly errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		private readonly authService: AuthService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -158,14 +169,27 @@ export class EditEmployeeProfileComponent
 	private async submitEmployeeForm(value: IEmployeeUpdateInput) {
 		if (value) {
 			try {
-				await this.employeeService.update(
-					this.selectedEmployee.id,
-					value
-				);
-				this.toastrService.success(
-					'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
-					{ name: this.employeeName }
-				);
+				/**
+				 * (ORG_EMPLOYEES_EDIT) permission can update employee whole profile only.
+				 * But employee can not update whole profile except some of the fields provided by UI
+				 * We will define later, which fields allow to employee to update from the form
+				 */
+				if (!!this.store.hasPermission(
+					PermissionsEnum.ORG_EMPLOYEES_EDIT
+				)) {
+					await this.employeeService.update(
+						this.selectedEmployee.id,
+						value
+					);
+				} else {
+					await this.employeeService.updateProfile(
+						this.selectedEmployee.id,
+						value
+					);
+				}
+				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE', {
+					name: this.employeeName
+				});
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			} finally {

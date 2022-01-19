@@ -6,7 +6,7 @@ export interface IBaseEntityWithMembers
 	extends IBasePerTenantAndOrganizationEntityModel {
 	members?: IEmployee[];
 	name?: string;
-	tags: ITag[];
+	tags?: ITag[];
 }
 
 export interface IEditEntityByMemberInput {

@@ -43,6 +43,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { UpdateProfileDTO } from './dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -161,7 +162,7 @@ export class EmployeeController extends CrudController<Employee> {
 	 * TODO: This is a public service, the response should only contain
 	 * those fields (columns) of an employee that can be shown to the public
 	 */
-	async findAllEmployeesPublicData(
+	async findAllEmployeesPublic(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEmployee>> {
 		const { relations = [], findInput = null } = data;
@@ -418,10 +419,42 @@ export class EmployeeController extends CrudController<Employee> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: Employee
+	): Promise<IEmployee> {
+		return await this.commandBus.execute(
+			new EmployeeUpdateCommand({
+				id,
+				...entity
+			})
+		);
+	}
+
+	/**
+	 * Update employee own profile by themsleves
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Update Employee Own Profile' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Records have been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PROFILE_EDIT)
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@Put('/:id/profile')
+	async updateProfile(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: UpdateProfileDTO
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
 			new EmployeeUpdateCommand({
