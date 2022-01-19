@@ -255,7 +255,13 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 					request
 				)
 				.then(() => {
-					this.store.user.email = request.email;
+					if((this.selectedUser ? this.selectedUser.id : this.store.userId) === this.store.user.id){
+					Object.keys(this.store.user).forEach((key) => {
+						if (request[key] !== this.store.user[key]) {
+							this.store.user[key] = request[key];
+						}
+					});
+				}
 					this.toastrService.success(
 						'TOASTR.MESSAGE.PROFILE_UPDATED'
 					);
