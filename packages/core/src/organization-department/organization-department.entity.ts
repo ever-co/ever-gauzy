@@ -42,7 +42,7 @@ export class OrganizationDepartment
 	@JoinTable({
 		name: 'tag_organization_department'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 
 	/**
 	 * Employee

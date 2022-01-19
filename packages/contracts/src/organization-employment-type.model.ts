@@ -14,17 +14,17 @@ export enum GenericEmploymentTypes {
 export interface IOrganizationEmploymentType
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	tags: ITag[];
+	tags?: ITag[];
 	candidates?: ICandidate[];
 }
 
 export interface IOrganizationEmploymentTypeFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
-	organizationId?: string;
+	name?: string;
 }
 
 export interface IOrganizationEmploymentTypeCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	tags: ITag[];
+	tags?: ITag[];
 }

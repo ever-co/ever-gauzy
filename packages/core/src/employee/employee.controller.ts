@@ -439,7 +439,7 @@ export class EmployeeController extends CrudController<Employee> {
 	 * @param entity 
 	 * @returns 
 	 */
-	@ApiOperation({ summary: 'Update Employee Profile Active/Inactive Status' })
+	@ApiOperation({ summary: 'Update Employee Own Profile' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Records have been successfully updated.'

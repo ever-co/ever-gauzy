@@ -6,7 +6,7 @@ import { ICandidate } from './candidate.model';
 
 export interface IOrganizationDepartment extends IBaseEntityWithMembers {
 	name: string;
-	tags: ITag[];
+	tags?: ITag[];
 	candidates?: ICandidate[];
 }
 
@@ -17,12 +17,12 @@ export interface IOrganizationDepartmentFindInput
 
 export interface IOrganizationDepartmentFindByMemberInput {
 	memberId: string;
-	tags: ITag[];
+	tags?: ITag[];
 }
 
 export interface IOrganizationDepartmentCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	members?: IEmployee[];
-	tags: ITag[];
+	tags?: ITag[];
 }
