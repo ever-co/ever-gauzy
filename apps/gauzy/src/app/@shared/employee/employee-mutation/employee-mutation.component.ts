@@ -124,4 +124,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			this.errorHandler.handleError(error);
 		}
 	}
+   delete(employe: IEmployeeCreateInput): void{
+     this.employees = this.employees.filter(x => x!== employe);
+   }
 }

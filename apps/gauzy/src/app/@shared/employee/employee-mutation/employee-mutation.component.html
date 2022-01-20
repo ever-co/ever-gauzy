@@ -9,7 +9,19 @@
         <ng-template #step1>{{
           'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_1' | translate
           }}</ng-template>
-
+          <div *ngFor="let employe of employees">
+            <button
+            nbButton
+            [size]="buttonSize || 'medium'"
+            (click)="delete(employe)"
+            status="danger"
+            class="mr-2 mb-2"
+          >
+            <nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+            >{{ 'BUTTONS.DELETE' | translate }}
+          </button>
+          {{employe.user.email}}
+          </div>
         <ga-user-basic-info-form #userBasicInfo [isShowRole]="false" [isEmployee]="true"></ga-user-basic-info-form>
         <div class="text-right">
           <button status="success" [disabled]="userBasicInfo.form.invalid" nbButton nbStepperNext>
