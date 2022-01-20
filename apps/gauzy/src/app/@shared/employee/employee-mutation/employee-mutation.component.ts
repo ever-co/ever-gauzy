@@ -75,13 +75,11 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	closeDialog(employee: IEmployee[] = null) {
-    this.stepper.reset();
 		this.dialogRef.close(employee);
 	}
 
 	addEmployee() {
 		this.form = this.userBasicInfo.form;
-
 		const { firstName, lastName, email, username, password, tags, imageUrl } = this.form.getRawValue();
 		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.getRawValue();
 		const user: IUser = {
@@ -104,7 +102,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			rejectDate,
 			tags: tags
 		};
-		this.employees.push(employee);
+		if(this.form.valid) this.employees.push(employee);
 		this.form.reset();
 		this.stepper.reset();
 	}

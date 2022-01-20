@@ -23,11 +23,14 @@
           {{employe.user.email}}
           </div>
         <ga-user-basic-info-form #userBasicInfo [isShowRole]="false" [isEmployee]="true"></ga-user-basic-info-form>
-        <div class="text-right">
-          <button status="success" [disabled]="userBasicInfo.form.invalid" nbButton nbStepperNext>
-            {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.NEXT' | translate }}
-          </button>
-        </div>
+          <div class="text-right">
+            <button class="mr-2" status="primary" n *ngIf="employees.length" nbButton nbStepperNext>
+              {{ 'BUTTONS.CANCEL' | translate }}
+            </button>
+            <button status="success" [disabled]="userBasicInfo.form.invalid" nbButton nbStepperNext>
+              {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.NEXT' | translate }}
+            </button>
+          </div>
       </nb-step>
       <nb-step [label]="step2">
         <ng-template #step2>{{
