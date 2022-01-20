@@ -75,6 +75,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	closeDialog(employee: IEmployee[] = null) {
+    this.stepper.reset();
 		this.dialogRef.close(employee);
 	}
 

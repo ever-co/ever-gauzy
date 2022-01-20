@@ -35,6 +35,7 @@ export class ErrorHandlingService {
 					this.errorContent = 'Please try again later';
 					break;
 				default:
+          console.log(message);
 					this.errorTitle = 'Error';
 					this.errorContent = message;
 			}
