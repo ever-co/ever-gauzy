@@ -125,4 +125,9 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
    delete(employe: IEmployeeCreateInput): void{
      this.employees = this.employees.filter(x => x!== employe);
    }
+
+   nextStep(){
+     this.form.reset();
+     this.stepper.next();
+   }
 }

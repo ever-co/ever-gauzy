@@ -24,7 +24,7 @@
           </div>
         <ga-user-basic-info-form #userBasicInfo [isShowRole]="false" [isEmployee]="true"></ga-user-basic-info-form>
           <div class="text-right">
-            <button class="mr-2" status="primary" n *ngIf="employees.length" nbButton nbStepperNext>
+            <button class="mr-2" status="primary" (click)="nextStep()" *ngIf="employees.length"  nbButton >
               {{ 'BUTTONS.CANCEL' | translate }}
             </button>
             <button status="success" [disabled]="userBasicInfo.form.invalid" nbButton nbStepperNext>
