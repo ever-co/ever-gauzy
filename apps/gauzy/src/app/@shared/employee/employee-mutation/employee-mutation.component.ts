@@ -30,13 +30,12 @@ import {
 	styleUrls: ['employee-mutation.component.scss']
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
-
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
-  linear = true;
+	linear = true;
 	form: FormGroup;
 	role: IRole;
 	employees: IEmployeeCreateInput[] = [];
@@ -57,7 +56,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			.pipe(
 				distinctUntilChange(),
 				filter((organization) => !!organization),
-				tap((organization) => this.organization = organization),
+				tap((organization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -80,8 +79,21 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 	addEmployee() {
 		this.form = this.userBasicInfo.form;
-		const { firstName, lastName, email, username, password, tags, imageUrl } = this.form.getRawValue();
-		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.getRawValue();
+		const {
+			firstName,
+			lastName,
+			email,
+			username,
+			password,
+			tags,
+			imageUrl
+		} = this.form.getRawValue();
+		const {
+			offerDate = null,
+			acceptDate = null,
+			rejectDate = null,
+			startedWorkOn = null
+		} = this.form.getRawValue();
 		const user: IUser = {
 			firstName: firstName,
 			lastName: lastName,
@@ -102,7 +114,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			rejectDate,
 			tags: tags
 		};
-		if(this.form.valid) this.employees.push(employee);
+		if (this.form.valid) this.employees.push(employee);
 		this.form.reset();
 		this.stepper.reset();
 	}
@@ -110,7 +122,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	async add() {
 		this.addEmployee();
 		try {
-			const employees =  await firstValueFrom(
+			const employees = await firstValueFrom(
 				this.employeesService.createBulk(this.employees)
 			);
 			this._employeeStore.employeeAction = {
@@ -122,12 +134,12 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			this.errorHandler.handleError(error);
 		}
 	}
-   delete(employe: IEmployeeCreateInput): void{
-     this.employees = this.employees.filter(x => x!== employe);
-   }
+	delete(employe: IEmployeeCreateInput): void {
+		this.employees = this.employees.filter((x) => x !== employe);
+	}
 
-   nextStep(){
-     this.form.reset();
-     this.stepper.next();
-   }
+	nextStep() {
+		this.form.reset();
+		this.stepper.next();
+	}
 }
