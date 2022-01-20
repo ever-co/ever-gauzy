@@ -30,18 +30,18 @@ import {
 	styleUrls: ['employee-mutation.component.scss']
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
-	
+
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
-	
+
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
-
+  linear = true;
 	form: FormGroup;
 	role: IRole;
 	employees: IEmployeeCreateInput[] = [];
 	organization: IOrganization;
-	
+
 	constructor(
 		protected readonly dialogRef: NbDialogRef<EmployeeMutationComponent>,
 		protected readonly organizationsService: OrganizationsService,
@@ -80,7 +80,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 	addEmployee() {
 		this.form = this.userBasicInfo.form;
-		
+
 		const { firstName, lastName, email, username, password, tags, imageUrl } = this.form.getRawValue();
 		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.getRawValue();
 		const user: IUser = {
