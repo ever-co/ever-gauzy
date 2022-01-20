@@ -18,6 +18,7 @@ import { coreSubscribers } from './../core/entities/subscribers';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 import { AuthGuard } from './../shared/guards';
+import * as logger from 'morgan';
 
 export async function bootstrap(
 	pluginConfig?: Partial<IPluginConfig>
@@ -36,6 +37,7 @@ export async function bootstrap(
 	app.useLogger(app.get(SentryService));
 	app.use(json({ limit: '50mb' }));
 	app.use(urlencoded({ extended: true, limit: '50mb' }));
+	app.use(logger(env.production ? 'combined' : 'dev'));
   
 	app.enableCors({
 		origin: '*',
