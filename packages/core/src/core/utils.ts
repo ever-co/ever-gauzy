@@ -243,3 +243,34 @@ export function mergeOverlappingDateRanges(
   
 	return dates;
 }
+
+/**
+ * GET Date Range Format
+ * 
+ * @param startDate 
+ * @param endDate 
+ * @returns 
+ */
+export function getDateFormat(
+	startDate: moment.Moment,
+	endDate: moment.Moment
+): {
+	start: string | Date,
+	end: string | Date
+} {
+	let start = moment(startDate);
+	let end = moment(endDate);
+
+	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
+	if (dbType === 'sqlite') {
+		return {
+			start: start.format('YYYY-MM-DD HH:mm:ss'),
+			end: end.format('YYYY-MM-DD HH:mm:ss')
+		}
+	} else {
+		return {
+			start: start.toDate(),
+			end: end.toDate()
+		}
+	}
+}
