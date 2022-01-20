@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/contracts';
+import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
 import { moment } from '../../core/moment-extend';
 import { RequestContext } from '../../core/context';
@@ -144,9 +144,17 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		);
 	}
 
-	async bulkCreate(slots) {
+	async bulkCreate(
+		slots: ITimeSlot[],
+		employeeId: string,
+		organizationId: string
+	) {
 		return await this.commandBus.execute(
-			new TimeSlotBulkCreateCommand(slots)
+			new TimeSlotBulkCreateCommand(
+				slots,
+				employeeId,
+				organizationId
+			)
 		);
 	}
 

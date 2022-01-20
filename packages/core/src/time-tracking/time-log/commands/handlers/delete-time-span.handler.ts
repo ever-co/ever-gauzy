@@ -10,6 +10,7 @@ import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { moment } from '../../../../core/moment-extend';
 import { ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { TimeSlot } from './../../../../core';
+import { TimeSlotRangeDeleteCommand } from 'time-tracking/time-slot/commands';
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler
@@ -33,14 +34,25 @@ export class DeleteTimeSpanHandler
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
 
-		console.log({ start, end });
-		console.log({ startedAt, stoppedAt });
+		console.log({ start, end, startedAt, stoppedAt });
 		/*
 		 * Check is overlapping time or not.
 		 */
 		if (!newTimeRange.overlaps(dbTimeRange, { adjacent: false })) {
 			console.log('Not Overlapping', newTimeRange, dbTimeRange);
-			return false;
+			/**
+			 * If TimeSlot Not Overlapping the TimeLog
+			 * Still we have to remove that TimeSlot with screenshots/activities
+			 */
+			if (employeeId && start && end) {
+				return await this.commandBus.execute(
+					new TimeSlotRangeDeleteCommand(
+						employeeId,
+						start,
+						end
+					)
+				);
+			}
 		}
 
 		if (
@@ -61,10 +73,6 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time				DB Stop Time
 				 *  		|--------------------------------------|
 				 */
-				console.log('Delete time log because overlap entire time:', {
-					start,
-					end
-				});
 				await this.commandBus.execute(
 					new TimeLogDeleteCommand(timeLog, true)
 				);
@@ -80,20 +88,22 @@ export class DeleteTimeSpanHandler
 					moment(end),
 					'seconds'
 				);
-				console.log('Update Time Log Start Time:', remainingDuration);
 				if (remainingDuration > 0) {
 					await this.commandBus.execute(
 						new TimeLogUpdateCommand(
 							{
 								startedAt: end
 							},
-							timeLog
+							timeLog,
+							true
 						)
 					);
-					await this.timeSlotService.rangeDelete(
-						employeeId,
-						start,
-						end
+					return await this.commandBus.execute(
+						new TimeSlotRangeDeleteCommand(
+							employeeId,
+							start,
+							end
+						)
 					);
 				} else {
 					/*
@@ -124,20 +134,22 @@ export class DeleteTimeSpanHandler
 					moment(startedAt),
 					'seconds'
 				);
-				console.log('Update Time Log Stop Time:', remainingDuration);
 				if (remainingDuration > 0) {
 					await this.commandBus.execute(
 						new TimeLogUpdateCommand(
 							{
 								stoppedAt: start
 							},
-							timeLog
+							timeLog,
+							true
 						)
 					);
-					await this.timeSlotService.rangeDelete(
-						employeeId,
-						start,
-						end
+					return await this.commandBus.execute(
+						new TimeSlotRangeDeleteCommand(
+							employeeId,
+							start,
+							end
+						)
 					);
 				} else {
 					/*
