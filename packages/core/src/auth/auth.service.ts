@@ -5,7 +5,8 @@ import {
 	IRolePermission,
 	IAuthResponse,
 	IUser,
-	IChangePasswordRequest
+	IChangePasswordRequest,
+	RolesEnum
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { getManager } from 'typeorm';
@@ -261,12 +262,12 @@ export class AuthService extends SocialAuthService {
 	 * @param roles 
 	 * @returns 
 	 */
-	 async hasRole(roles: string[] = []): Promise<boolean> {
+	 async hasRole(roles: RolesEnum[] = []): Promise<boolean> {
 		try {
 			const { role } = await this.userService.findOneByIdString(RequestContext.currentUserId(), {
 				relations: ['role']
 			});
-			return role ? roles.includes(role.name) : false;
+			return role ? roles.includes(role.name as RolesEnum) : false;
 		} catch (err) {
 			if (err instanceof JsonWebTokenError) {
 				return false;
