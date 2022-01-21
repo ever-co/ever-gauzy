@@ -32,6 +32,15 @@
 					[isCandidate]="true"
 				></ga-user-basic-info-form>
 				<div class="text-right">
+          <button
+ 						class="mr-2"
+ 						status="primary"
+ 						(click)="gotoStep(3)"
+ 						*ngIf="candidates.length"
+ 						nbButton
+ 					>
+ 						{{ 'BUTTONS.CANCEL' | translate }}
+ 					</button>
 					<button
 						status="success"
 						[disabled]="userBasicInfo.form.invalid"
