@@ -11,7 +11,7 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
@@ -38,9 +38,10 @@ export class AuthController {
 		private readonly commandBus: CommandBus
 	) {}
 
-	@ApiOperation({ summary: 'Is authenticated' })
-	@ApiResponse({ status: HttpStatus.OK })
-	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
+	@ApiOperation({ summary: 'Check if user is authenticated' })
+	
+	@ApiOkResponse({ status: HttpStatus.OK,description:'The success server response'})
+	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, })
 	@Get('/authenticated')
 	@Public()
 	async authenticated(): Promise<boolean> {
