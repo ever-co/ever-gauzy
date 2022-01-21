@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import {
 	NbDialogRef,
+	NbStepComponent,
 	NbStepperComponent,
   NbTagComponent
 } from '@nebular/theme';
@@ -145,7 +146,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			organizationId
 		};
 
-		this.candidates.push(candidate);
+		if(this.form.valid) this.candidates.push(candidate);
 		this.candidateCv.loadFormData();
 		this.formCV = this.candidateCv.form;
 
@@ -194,6 +195,15 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			await this.candidateSourceService.updateBulk(updateInput);
 		}
 	}
+
+  /**
+   *  Go to another the step without to saving data form
+  */
+   gotoStep(step: number){
+     for(let i = 1; i < step; i++){
+      this.stepper.next(); // change step
+     }
+   }
 
   /**
 	 * Removed one candidate in the array of candidates.
