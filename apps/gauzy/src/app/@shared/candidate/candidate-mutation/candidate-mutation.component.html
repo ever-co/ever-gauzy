@@ -13,6 +13,19 @@
 				<ng-template #step1>{{
 					'CANDIDATES_PAGE.ADD_CANDIDATES.STEP_1' | translate
 				}}</ng-template>
+        <ng-container *ngIf="candidates.length > 0">
+					<div class="row">
+						<div class="col">
+							<nb-tag-list (tagRemove)="onCandidateRemove($event)">
+								<nb-tag
+									removable
+									*ngFor="let candidate of candidates"
+									[text]="candidate?.user?.email">
+								</nb-tag>
+							</nb-tag-list>
+						</div>
+					</div>
+				</ng-container>
 				<ga-user-basic-info-form
 					#userBasicInfo
 					[isShowRole]="false"
