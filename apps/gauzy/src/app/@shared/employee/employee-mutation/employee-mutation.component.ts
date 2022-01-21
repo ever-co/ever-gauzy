@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
+import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
 	RolesEnum,
@@ -55,8 +55,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
-				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -114,9 +114,9 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			rejectDate,
 			tags: tags
 		};
-    // Check form validity before to add an employe to the array of employees.
+   		// Check form validity before to add an employe to the array of employees.
 		if (this.form.valid) this.employees.push(employee);
-    // Reset form and stepper.
+    	// Reset form and stepper.
 		this.form.reset();
 		this.stepper.reset();
 	}
@@ -136,11 +136,20 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			this.errorHandler.handleError(error);
 		}
 	}
-  // Removed one employe in the array of employees.
-	delete(employe: IEmployeeCreateInput): void {
-		this.employees = this.employees.filter((x) => x !== employe);
+
+	/**
+	 * Removed one employe in the array of employees.
+	 * @param tag 
+	 */
+	onEmployeeRemove(tag: NbTagComponent): void {
+		this.employees = this.employees.filter(
+			(t: IEmployeeCreateInput) => t.user.email !== tag.text
+		);
 	}
-  // Go to the next step without saving the data even if the form is valid.
+
+	/**
+	 * Go to the next step without saving the data even if the form is valid.
+	 */
 	nextStep() {
 		this.form.reset();
 		this.stepper.next();
