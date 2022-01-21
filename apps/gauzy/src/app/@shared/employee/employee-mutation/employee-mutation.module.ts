@@ -1,17 +1,16 @@
-import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
 	NbCardModule,
 	NbButtonModule,
 	NbIconModule,
-	NbStepperModule
+	NbStepperModule,
+	NbTagModule
 } from '@nebular/theme';
 import { EmployeeMutationComponent } from './employee-mutation.component';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
-import { RoleService } from '../../../@core/services/role.service';
+import { EmployeesService, OrganizationsService, RoleService } from '../../../@core/services';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
@@ -19,10 +18,11 @@ import { TranslateModule } from '../../translate/translate.module';
 		ThemeModule,
 		FormsModule,
 		NbCardModule,
-		UserFormsModule,
 		NbButtonModule,
 		NbIconModule,
 		NbStepperModule,
+		NbTagModule,
+		UserFormsModule,
 		TranslateModule
 	],
 	exports: [EmployeeMutationComponent],
