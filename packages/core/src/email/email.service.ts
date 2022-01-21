@@ -25,6 +25,8 @@ import { EmailTemplate, Organization } from './../core/entities/internal';
 import { Email as EmailEntity } from './email.entity';
 import { CustomSmtpService } from './../custom-smtp/custom-smtp.service';
 
+const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
+
 @Injectable()
 export class EmailService extends TenantAwareCrudService<EmailEntity> {
 
@@ -41,7 +43,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		@Inject(forwardRef(() => CustomSmtpService))
 		private readonly customSmtpService: CustomSmtpService
 	) {
-		super(emailRepository);	
+		super(emailRepository);
 	}
 
 	/**
@@ -174,18 +176,27 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				organizationName
 			}
 		}
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email,
-					languageCode,
-					organization,
-					message: res.originalMessage
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				organization,
+				message: ''
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async emailInvoice(
@@ -223,19 +234,27 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				rejectUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=reject&email=${email}`
 			}
 		};
-		
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email,
-					languageCode,
-					organization,
-					message: res.originalMessage
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				organization,
+				message: ''
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async inviteOrganizationContact(
@@ -266,19 +285,27 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				generatedUrl: `${baseUrl}#/auth/accept-client-invite?email=${organizationContact.primaryEmail}&token=${invite.token}`
 			}
 		};
-
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email: organizationContact.primaryEmail,
-					languageCode,
-					message: res.originalMessage,
-					organization
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				organization
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async inviteUser(inviteUserModel: IInviteUserModel) {
@@ -308,19 +335,28 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				host: originUrl || env.clientBaseUrl
 			}
 		};
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email,
-					languageCode,
-					message: res.originalMessage,
-					organization,
-					user: invitedBy
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				organization,
+				user: invitedBy
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
@@ -351,19 +387,28 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				host: originUrl || env.clientBaseUrl
 			}
 		};
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email,
-					languageCode,
-					message: res.originalMessage,
-					organization,
-					user: invitedBy
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				organization,
+				user: invitedBy
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
@@ -374,6 +419,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			languageCode,
 		} = joinEmployeeModel;
 
+		const { id: organizationId, tenantId } = organization;
 		const sendOptions = {
 			template: 'employee-join',
 			message: {
@@ -386,20 +432,27 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				employeeName: employee.user.firstName,
 			}
 		};
-		
-		const { id: organizationId } = organization;
-		await (await this.getEmailInstance(organizationId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email,
-					languageCode,
-					message: res.originalMessage,
-					organization,
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				organization,
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async welcomeUser(
@@ -428,19 +481,27 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				tenantId
 			}
 		};
-
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email: user.email,
-					languageCode,
-					organization,
-					message: res.originalMessage,
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				organization,
+				message: '',
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async requestPassword(
@@ -471,18 +532,27 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				tenantId
 			}
 		};
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email: user.email,
-					languageCode,
-					organization,
-					message: res.originalMessage
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				organization,
+				message: '',
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async sendAppointmentMail(
@@ -511,18 +581,27 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				tenantId: tenantId || IsNull()
 			}
 		};
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email: email,
-					languageCode,
-					organization,
-					message: res.originalMessage
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				organization,
+				message: '',
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async setTimesheetAction(email: string, timesheet: ITimesheet) {
@@ -547,20 +626,28 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				tenantId
 			}
 		};
-
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email: email,
-					languageCode,
-					message: res.originalMessage,
-					organization,
-					user: timesheet.employee.user
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: email,
+				languageCode,
+				message: '',
+				organization,
+				user: timesheet.employee.user
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	async timesheetSubmit(email: string, timesheet: ITimesheet) {
@@ -585,19 +672,28 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				tenantId
 			}
 		};
-		await (await this.getEmailInstance(organizationId, tenantId))
-			.send(sendOptions)
-			.then((res) => {
-				this.createEmailRecord({
-					templateName: sendOptions.template,
-					email: email,
-					languageCode,
-					message: res.originalMessage,
-					organization,
-					user: timesheet.employee.user
-				});
-			})
-			.catch(console.error);
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: email,
+				languageCode,
+				message: '',
+				organization,
+				user: timesheet.employee.user
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	private async createEmailRecord(createEmailOptions: {
@@ -605,7 +701,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		email: string;
 		languageCode: LanguagesEnum;
 		message: any;
-		organization?: Organization;
+		organization?: IOrganization;
 		user?: IUser;
 	}): Promise<IEmail> {
 		const emailEntity = new EmailEntity();
@@ -631,7 +727,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		if (user) {
 			emailEntity.user = user;
 		}
-		return this.emailRepository.save(emailEntity);
+		return await this.emailRepository.save(emailEntity);
 	}
 
 	// tested e-mail send functionality
