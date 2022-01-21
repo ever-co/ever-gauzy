@@ -1212,6 +1212,7 @@
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
 			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
 			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
