@@ -8,12 +8,12 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-stepper #stepper>
+		<nb-stepper [disableStepNavigation]="true" #stepper>
 			<nb-step [label]="step1">
 				<ng-template #step1>{{
 					'CANDIDATES_PAGE.ADD_CANDIDATES.STEP_1' | translate
 				}}</ng-template>
-				<ga-user-basic-info-form 
+				<ga-user-basic-info-form
 					#userBasicInfo
 					[isShowRole]="false"
 					[isCandidate]="true"
