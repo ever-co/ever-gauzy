@@ -28,7 +28,7 @@ import { TransformInterceptor } from './../core/interceptors';
 import { Public } from './../shared/decorators';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { LoginUserDTO, RegisterUserDTO } from './../user/dto';
-import { UserHasRoleQueryDto } from './dto/userHasRoleQuery.dto';
+import { HasRoleQueryDto } from './dto/has-role-query.dto';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
@@ -54,7 +54,7 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/role')
-	async hasRole(@Query(new ValidationPipe({transform:true})) query: UserHasRoleQueryDto): Promise<boolean> {
+	async hasRole(@Query(new ValidationPipe({transform:true})) query: HasRoleQueryDto): Promise<boolean> {
 		return await this.authService.hasRole(query.roles);
 	}
 
