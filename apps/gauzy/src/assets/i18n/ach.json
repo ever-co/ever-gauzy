@@ -1212,6 +1212,7 @@
 		"ADD_EMPLOYEES": {
 			"STEP_1": "crwdns3081:0crwdne3081:0",
 			"STEP_2": "crwdns3083:0crwdne3083:0",
+			"STEP_3": "crwdns10881:0crwdne10881:0",
 			"ADD_ANOTHER_EMPLOYEE": "crwdns3085:0crwdne3085:0",
 			"FINISHED_ADDING": "crwdns3087:0crwdne3087:0",
 			"NEXT": "crwdns3089:0crwdne3089:0",
