@@ -99,7 +99,11 @@ export class TimeLogCreateHandler
 			});
 		}
 
-		timeLog.timeSlots = await this.timeSlotService.bulkCreate(timeSlots);
+		timeLog.timeSlots = await this.timeSlotService.bulkCreate(
+			timeSlots,
+			employeeId,
+			organizationId
+		);
 
 		await this.timeLogRepository.save(timeLog);
 

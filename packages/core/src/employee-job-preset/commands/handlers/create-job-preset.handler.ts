@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RequestContext } from '../../../core/context/request-context';
+import { RequestContext } from '../../../core/context';
 import { Employee } from '../../../employee/employee.entity';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';

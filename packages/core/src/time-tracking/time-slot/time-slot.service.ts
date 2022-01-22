@@ -1,20 +1,18 @@
-import { Injectable, NotAcceptableException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/contracts';
-import { ConfigService } from '@gauzy/config';
-import { isEmpty } from '@gauzy/common';
+import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
-import { TimeSlot } from './time-slot.entity';
 import { moment } from '../../core/moment-extend';
-import { RequestContext } from '../../core/context/request-context';
-import { TimeSlotMinute } from './time-slot-minute.entity';
+import { RequestContext } from '../../core/context';
+import { getDateFormat } from './../../core/utils';
 import { generateTimeSlots } from './utils';
+import { TimeSlot } from './time-slot.entity';
+import { TimeSlotMinute } from './time-slot-minute.entity';
 import {
 	CreateTimeSlotCommand,
 	CreateTimeSlotMinutesCommand,
-	DeleteTimeSlotCommand,
 	TimeSlotBulkCreateCommand,
 	TimeSlotBulkCreateOrUpdateCommand,
 	TimeSlotRangeDeleteCommand,
@@ -27,9 +25,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
-		
-		private readonly commandBus: CommandBus,
-		private readonly configService: ConfigService
+		private readonly commandBus: CommandBus
 	) {
 		super(timeSlotRepository);
 	}
@@ -70,31 +66,13 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			],
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				if (request.startDate && request.endDate) {
-					console.log(
-						`Timeslot Date Range Before startDate=${request.startDate} and endDate=${request.endDate}`
+					const { start: startDate, end: endDate } = getDateFormat(
+						moment.utc(request.startDate),
+						moment.utc(request.endDate)
 					);
-
-					let startDate: any = moment.utc(request.startDate);
-					let endDate: any = moment.utc(request.endDate);
-
-					if (
-						this.configService.dbConnectionOptions.type === 'sqlite'
-					) {
-						startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
-						endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
-					} else {
-						startDate = startDate.toDate();
-						endDate = endDate.toDate();
-					}
-
-					console.log(
-						`Timeslot Date Range After startDate=${startDate} and endDate=${endDate}`
-					);
-
-					qb.andWhere(
-						`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
-						{ startDate, endDate }
-					);
+					qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
+						startDate, endDate
+					});
 				}
 				if (employeeIds) {
 					qb.andWhere(
@@ -166,9 +144,17 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		);
 	}
 
-	async bulkCreate(slots) {
+	async bulkCreate(
+		slots: ITimeSlot[],
+		employeeId: string,
+		organizationId: string
+	) {
 		return await this.commandBus.execute(
-			new TimeSlotBulkCreateCommand(slots)
+			new TimeSlotBulkCreateCommand(
+				slots,
+				employeeId,
+				organizationId
+			)
 		);
 	}
 
@@ -210,15 +196,6 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	async updateTimeSlotMinute(id: string, request: TimeSlotMinute) {
 		return await this.commandBus.execute(
 			new UpdateTimeSlotMinutesCommand(id, request)
-		);
-	}
-
-	async deleteTimeSlot(ids: string[]) {
-		if (isEmpty(ids)) {
-			throw new NotAcceptableException('You can not delete time slots');
-		}
-		return await this.commandBus.execute(
-			new DeleteTimeSlotCommand(ids)
 		);
 	}
 }

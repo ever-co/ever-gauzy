@@ -190,6 +190,9 @@ export class EditTimeLogModalComponent
 			const startDate = toUTC(start).toISOString();
 			const endDate = toUTC(end).toISOString();
 
+			if (!startDate || !endDate) {
+				return;
+			}
 			const request: IGetTimeLogConflictInput = {
 				...(this.timeLog.id ? { ignoreId: [this.timeLog.id] } : {}),
 				startDate,
@@ -199,8 +202,10 @@ export class EditTimeLogModalComponent
 				organizationId,
 				relations: ['project', 'task']
 			};
-
 			this.timesheetService.checkOverlaps(request).then((timeLogs) => {
+				if (!timeLogs) {
+					return;
+				}
 				this.overlaps = timeLogs.map((timeLog) => {
 					const timeLogStartedAt = toLocal(timeLog.startedAt);
 					const timeLogStoppedAt = toLocal(timeLog.stoppedAt);
