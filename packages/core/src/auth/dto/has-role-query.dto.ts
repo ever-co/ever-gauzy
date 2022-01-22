@@ -1,9 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty } from "class-validator";
+import { IsArray, IsNotEmpty } from "class-validator";
 
-export class HasRoleQueryDto {
+export class HasRoleQueryDTO {
 
-    @ApiProperty({ type:()=>String})
-    @IsNotEmpty({message:"roles should not be empty !"})
+    @ApiProperty({ type: () => Array })
+    @IsNotEmpty({
+        message: "roles should not be empty!"
+    })
+    @IsArray()
     roles : string[]
 }

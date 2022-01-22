@@ -8,7 +8,7 @@ import { Transform, TransformFnParams } from "class-transformer";
  */
 export class CreateUserDTO implements IUserCreateInput {
 
-    @ApiProperty({ type: () => String,required : true })
+    @ApiProperty({ type: () => String, required : true })
     @IsNotEmpty()
     @IsEmail()
     @Transform((params: TransformFnParams) => params.value.trim())
