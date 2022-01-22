@@ -44,6 +44,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { UpdateProfileDTO } from './dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -256,11 +257,11 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body() entity: IEmployeeCreateInput[],
+		@Body(new ValidationPipe({ transform: true })) entity: CreateEmployeeDto,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee[]> {
 		return await this.commandBus.execute(
-			new EmployeeBulkCreateCommand(entity, languageCode)
+			new EmployeeBulkCreateCommand(entity.list, languageCode)
 		);
 	}
 
