@@ -7,9 +7,7 @@ import {
 	Body,
 	Param,
 	Put,
-	HttpCode,
-	UsePipes,
-	ValidationPipe
+	HttpCode
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { IEmail, IEmailUpdateInput, IPagination } from '@gauzy/contracts';
@@ -18,7 +16,6 @@ import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
-import { GetEmailsQueryDto } from './dtos/get-emails-query.dto';
 
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard)
@@ -28,7 +25,7 @@ export class EmailController extends CrudController<Email> {
 		super(emailService);
 	}
 
-	@ApiOperation({ summary: 'Find all emails.' })
+	@ApiOperation({ summary: 'Find all emails under specific tenant.' })
 	@ApiOkResponse({
 		status: HttpStatus.OK,
 		description: 'Found emails',
@@ -40,13 +37,13 @@ export class EmailController extends CrudController<Email> {
 	})
 	@ApiInternalServerErrorResponse({
 		status : HttpStatus.INTERNAL_SERVER_ERROR,
-		description: "Invalid input, This happens when a data query structure is not valid"
+		description: "Invalid input, The response body may contain clues as to what went wrong"
 	})
 	@Get()
-	async findEmails(
-		@Query("data",ParseJsonPipe,new ValidationPipe({transform : true})) queryData: GetEmailsQueryDto
+	async findAll(
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEmail>> {
-		const { relations, findInput, take } = queryData;
+		const { relations, findInput, take } = data;
 		return await this.emailService.findAll({
 			where: findInput,
 			relations,
