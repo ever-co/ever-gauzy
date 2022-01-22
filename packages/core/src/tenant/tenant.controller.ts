@@ -12,13 +12,12 @@ import {
 	Param,
 	Post,
 	Put,
-	Query,
 	UseGuards
 } from '@nestjs/common';
-import { ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from '../core/context';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController } from './../core/crud';
 import { Roles } from './../shared/decorators';
 import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { Tenant } from './tenant.entity';
@@ -43,15 +42,9 @@ export class TenantController extends CrudController<Tenant> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@ApiForbiddenResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Invalid, This occurs due to tenant permissions'
-	})
-	@UseGuards(RoleGuard, TenantPermissionGuard)
-	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get('count')
 	async getCount() {
-		return this.tenantService.count();
+		throw new MethodNotAllowedException();
 	}
 
 	@ApiOperation({
@@ -66,17 +59,9 @@ export class TenantController extends CrudController<Tenant> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@ApiForbiddenResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Invalid, This occurs due to tenant permissions'
-	})
-	@UseGuards(RoleGuard, TenantPermissionGuard)
-	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get('pagination')
-	async pagination(
-			@Query() filter: PaginationParams<ITenant>
-		): Promise<IPagination<ITenant>>  {
-		return this.tenantService.paginate(filter);
+	async pagination() {
+		throw new MethodNotAllowedException();
 	}
 
 	@ApiOperation({
