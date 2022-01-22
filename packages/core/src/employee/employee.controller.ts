@@ -46,6 +46,7 @@ import { EmployeeService } from './employee.service';
 import { UpdateProfileDTO } from './dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeBodyPayLoadTransform } from './pipes/employee-transformer.pipe';
+import { EmployeeInputDto } from './dto/employee-input.dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -387,7 +388,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post()
 	async create(
-		@Body() entity: IEmployeeCreateInput,
+		@Body(new ValidationPipe({ transform:true })) entity: EmployeeInputDto,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
