@@ -46,11 +46,9 @@ export class TenantController extends CrudController<Tenant> {
 		status: HttpStatus.FORBIDDEN,
 		description: 'Invalid, This occurs when a tenant Id has not been provided'
 	})
-	@UseGuards(RoleGuard, TenantPermissionGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get('count')
 	async getCount() {
-		const tenantId = RequestContext.currentTenantId();
 		return this.tenantService.count();
 	}
 
