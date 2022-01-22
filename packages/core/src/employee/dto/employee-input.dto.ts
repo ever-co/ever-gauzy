@@ -1,15 +1,19 @@
 import { IEmployee, IEmployeeCreateInput, IOrganization, ISkill, ITag, ITenant, IUser } from "@gauzy/contracts";
-import { IsNotEmpty, IsNotEmptyObject, IsObject } from "class-validator";
+import { Type } from "class-transformer";
+import { IsNotEmpty, IsNotEmptyObject, IsObject, ValidateNested } from "class-validator";
+import { UserInputDto } from "./user-input-dto";
 
 export class EmployeeInputDto implements IEmployeeCreateInput {
 
     @IsObject()
     @IsNotEmptyObject()
-    user: IUser;
+    @ValidateNested()
+    @Type(() => UserInputDto)
+    user: UserInputDto;
 
     @IsNotEmpty()
     password: string;
-    
+
     offerDate?: Date;
     acceptDate?: Date;
     rejectDate?: Date;
@@ -22,7 +26,11 @@ export class EmployeeInputDto implements IEmployeeCreateInput {
     originalUrl?: string;
     isActive?: boolean;
     organizationId?: string;
+
+    @IsObject()
+    @IsNotEmptyObject()
     organization?: IOrganization;
+    
     tenantId?: string;
     tenant?: ITenant;
     id?: string;
