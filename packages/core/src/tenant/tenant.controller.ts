@@ -14,7 +14,7 @@ import {
 	Put,
 	UseGuards
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from '../core/context';
 import { CrudController } from './../core/crud';
@@ -30,9 +30,28 @@ export class TenantController extends CrudController<Tenant> {
 		super(tenantService);
 	}
 
+	@ApiOperation({
+		summary: 'Find tenants count' 
+	})
+	@ApiOkResponse({
+		status: HttpStatus.OK,
+		description: 'Found tenants count',
+		type: Tenant
+	})
+	@ApiNotFoundResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiForbiddenResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'Invalid, This occurs when a tenant Id has not been provided'
+	})
+	@UseGuards(RoleGuard, TenantPermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
 	@Get('count')
 	async getCount() {
-		throw new MethodNotAllowedException();
+		const tenantId = RequestContext.currentTenantId();
+		return this.tenantService.count();
 	}
 
 	@Get('pagination')
