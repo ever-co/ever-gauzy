@@ -47,6 +47,7 @@ import { UpdateProfileDTO } from './dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeBodyPayLoadTransform } from './pipes/employee-transformer.pipe';
 import { EmployeeInputDto } from './dto/employee-input.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -425,7 +426,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Employee
+		@Body(new ValidationPipe({ transform : true })) entity: UpdateEmployeeDto
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
 			new EmployeeUpdateCommand({
