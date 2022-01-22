@@ -20,7 +20,10 @@ export class EmployeeInputDto implements IEmployeeCreateInput {
     members?: IEmployee[];
     tags?: ITag[];
     skills?: ISkill[];
+
+    @IsNotEmpty()
     startedWorkOn?: any;
+    
     short_description?: string;
     description?: string;
     originalUrl?: string;
@@ -30,7 +33,7 @@ export class EmployeeInputDto implements IEmployeeCreateInput {
     @IsObject()
     @IsNotEmptyObject()
     organization?: IOrganization;
-    
+
     tenantId?: string;
     tenant?: ITenant;
     id?: string;
