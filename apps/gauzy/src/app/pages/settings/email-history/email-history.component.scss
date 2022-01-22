@@ -75,7 +75,6 @@
       border-left: 1px solid nb-theme(list-item-divider-color);
       width: 100%;
       display: flex;
-      justify-content: center;
       flex-direction: column;
       padding: 2rem;
 
@@ -86,7 +85,7 @@
       }
     }
   }
-  .filterCount {
+  .filter-count {
     margin-top: -1.5rem;
   }
 }

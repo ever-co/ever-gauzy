@@ -10,21 +10,21 @@ import { CreateUserDTO } from "./create-user.dto";
  */
 export class RegisterUserDTO implements IUserRegistrationInput {
 
-    @ApiProperty({ type: () => String })
+    @ApiProperty({ type: () => String, required : true })
     @IsNotEmpty({ message: "Password should not be empty" })
     @MinLength(4, {
         message: 'Password should be at least 4 characters long.'
     })
     readonly password: string;
 
-    @ApiProperty({ type: () => String })
+    @ApiProperty({ type: () => String, required : true })
     @IsNotEmpty({ message: "Confirm password should not be empty" })
     @Match(RegisterUserDTO, (it) => it.password, {
         message: 'The password and confirmation password must match.'
     })
     readonly confirmPassword: string;
 
-    @ApiProperty({ type: () => CreateUserDTO })
+    @ApiProperty({ type: () => CreateUserDTO, required : true })
     @IsNotEmpty({ message: "User should not be empty" })
     @ValidateNested()
     @Type(() => CreateUserDTO)
