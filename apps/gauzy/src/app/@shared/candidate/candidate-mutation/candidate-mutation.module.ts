@@ -5,7 +5,8 @@ import {
 	NbCardModule,
 	NbButtonModule,
 	NbIconModule,
-	NbStepperModule
+	NbStepperModule,
+  NbTagModule
 } from '@nebular/theme';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -25,7 +26,9 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbIconModule,
 		NbStepperModule,
 		FileUploaderModule,
-		TranslateModule
+		TranslateModule,
+    NbStepperModule,
+    NbTagModule
 	],
 	exports: [CandidateMutationComponent, CandidateCvComponent],
 	declarations: [CandidateMutationComponent, CandidateCvComponent],
