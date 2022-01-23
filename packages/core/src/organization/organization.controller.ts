@@ -9,7 +9,8 @@ import {
 	Post,
 	UseGuards,
 	Put,
-	Query
+	Query,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/common';
@@ -21,6 +22,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
+import { CreateOrganizationDto } from './dtos/create-organization.dto';
 
 
 @ApiTags('Organization')
@@ -122,7 +124,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	async create(
-		@Body() entity: IOrganizationCreateInput
+		@Body(new ValidationPipe({ transform : true })) entity: CreateOrganizationDto
 	): Promise<IOrganization> {
 		return await this.commandBus.execute(
 			new OrganizationCreateCommand(entity)
