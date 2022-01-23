@@ -147,7 +147,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IOrganizationCreateInput,
+		@Body(new ValidationPipe({ transform : true })) entity: CreateOrganizationDto,
 		...options: any[]
 	): Promise<IOrganization> {
 		return await this.commandBus.execute(
