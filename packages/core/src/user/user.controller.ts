@@ -44,7 +44,7 @@ import { UserService } from './user.service';
 import { UserCreateCommand } from './commands';
 import { FactoryResetService } from './factory-reset/factory-reset.service';
 import { UserDeleteCommand } from './commands/user.delete.command';
-import { UpdatePreferredLanguageDTO, UpdatePreferredComponentLayoutDTO } from './dto';
+import { UpdatePreferredLanguageDTO, UpdatePreferredComponentLayoutDTO, CreateUserDTO } from './dto';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -281,7 +281,7 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body() entity: IUserCreateInput
+		@Body() entity: CreateUserDTO
 	): Promise<IUser> {
 		return await this.commandBus.execute(
 			new UserCreateCommand(entity)
