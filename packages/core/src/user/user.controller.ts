@@ -30,8 +30,6 @@ import {
 	IPagination,
 	IUser,
 	PermissionsEnum,
-	IUserCreateInput,
-	IUserUpdateInput
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TransformInterceptor } from './../core/interceptors';
