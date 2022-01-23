@@ -1,5 +1,4 @@
 import {
-	IEmployeeCreateInput,
 	PermissionsEnum,
 	LanguagesEnum,
 	UpdateEmployeeJobsStatistics,

@@ -10,4 +10,5 @@ export class UserInputDto implements IUser{
     @IsObject()
     @IsNotEmptyObject()
     role: IRole;
+    
 }

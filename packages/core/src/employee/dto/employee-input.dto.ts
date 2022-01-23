@@ -1,4 +1,4 @@
-import { IEmployee, IEmployeeCreateInput, IOrganization, ISkill, ITag, ITenant, IUser } from "@gauzy/contracts";
+import { IEmployee, IEmployeeCreateInput, IOrganization, ISkill, ITag, ITenant } from "@gauzy/contracts";
 import { Type } from "class-transformer";
 import { IsNotEmpty, IsNotEmptyObject, IsObject, ValidateNested } from "class-validator";
 import { UserInputDto } from "./user-input-dto";
@@ -23,7 +23,7 @@ export class EmployeeInputDto implements IEmployeeCreateInput {
 
     @IsNotEmpty()
     startedWorkOn?: any;
-    
+
     short_description?: string;
     description?: string;
     originalUrl?: string;
