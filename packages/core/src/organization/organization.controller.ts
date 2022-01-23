@@ -1,4 +1,4 @@
-import { IOrganization, IOrganizationCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
