@@ -17,6 +17,7 @@ export class ScreenCaptureComponent implements OnInit {
 			'show_popup_screen_capture',
 			(event, arg) => {
 				this.screenCaptureUrl = arg.imgUrl;
+				console.log(arg);
 				this.note = arg.note;
 				this._cdr.detectChanges();
 			}

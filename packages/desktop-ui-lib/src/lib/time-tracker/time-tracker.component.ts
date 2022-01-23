@@ -299,6 +299,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.electronService.ipcRenderer.on('timer_already_stop', (event, arg) => {
 			this.loading = false;
 		})
+
+		this.electronService.ipcRenderer.on('prepare_activities_screenshot', (event, arg) => {
+			this.sendActivities(arg);
+		})
 	}
 
 	ngAfterViewInit(): void {
@@ -816,5 +820,168 @@ export class TimeTrackerComponent implements AfterViewInit {
 			this.sourceData.reset();
 			this.sourceData.refresh();
 		}
-  }
+  	}
+
+	async getScreenshot(arg) {
+		const thumbSize = this.determineScreenshot(arg.screensize);
+		return this.electronService.desktopCapturer
+			.getSources({
+				types: ['screen'],
+				thumbnailSize: thumbSize
+			})
+			.then((sources) => {
+				const screens = [];
+				sources.forEach(async (source, i) => {
+					log.info('screenshot_res', source);
+					screens.push({
+						img: source.thumbnail.toPNG(),
+						name: source.name,
+						id: source.display_id
+					});
+					log.info('screenshot data', screens);
+				});
+				return screens;
+			}).catch((err) => {
+				console.log('screenshot elecctron render error', err);
+				return [];
+			})
+	}
+
+	async getActivities(arg) {
+		let windowEvents:any = [];
+		let chromeEvent:any = [];
+		let firefoxEvent:any = [];
+		try {
+			// window event
+			windowEvents = await this.timeTrackerService.collectevents(
+				arg.tpURL,
+				arg.tp,
+				arg.start,
+				arg.end
+			);
+	
+			//  chrome event
+			chromeEvent = await this.timeTrackerService.collectChromeActivityFromAW(
+				arg.tpURL,
+				arg.start,
+				arg.end
+			)
+	
+			// firefox event
+			firefoxEvent = await this.timeTrackerService.collectFirefoxActivityFromAw(
+				arg.tpURL,
+				arg.start,
+				arg.end
+			)
+		} catch (error) {
+			log.info('failed collect from AW');
+		}
+
+		return this.mappingActivities(arg, [...windowEvents, ...chromeEvent, ...firefoxEvent]);
+
+	}
+
+	mappingActivities(arg, activities) {
+		return  activities.map((act) =>{
+			return {
+					title: act.data.title || act.data.app,
+					date: moment(act.timestamp).utc().format('YYYY-MM-DD'),
+					time: moment(act.timestamp).utc().format('HH:mm:ss'),
+					duration: Math.floor(act.duration),
+					type: act.data.title.url ? 'URL': 'APP',
+					taskId: arg.taskId,
+					projectId: arg.projectId,
+					organizationContactId: arg.organizationContactId,
+					organizationId: arg.organizationId,
+					employeeId: arg.employeeId,
+					source: 'DESKTOP'
+			}
+		});
+	}
+
+	async getAfk(arg) {
+		try {
+			const afkWatch:any = await this.timeTrackerService.collectAfkFromAW(
+				arg.tpURL,
+				arg.start,
+				arg.end
+			);
+			const afkOnly = afkWatch.filter((afk) => afk.data && afk.data.status === 'afk');
+			return this.afkCount(afkOnly);
+		} catch (error) {
+			return 0;
+		}
+	}
+
+	async afkCount(afkList) {
+		let afkTime = 0;
+		afkList.forEach((x) => {
+			afkTime += x.duration;
+		});
+		return afkTime;
+	}
+
+	async sendActivities(arg) {
+		// screenshot process
+		let screenshotImg = [];
+		if (!arg.displays) {
+			screenshotImg = await this.getScreenshot(arg);
+		} else {
+			screenshotImg = arg.displays;
+		}
+
+		// notify
+		this.screenshotNotify(arg, screenshotImg);
+
+		// updateActivities to api
+		const afktime:number = await this.getAfk(arg);
+		const duration = (arg.timeUpdatePeriode * 60) - afktime;
+		const activities = await this.getActivities(arg);
+		console.log('xxxddd', JSON.stringify(activities, null, 2));
+		console.log('duration', duration);
+		try {
+			const resActivities:any = await this.timeTrackerService.pushTotimeslot({
+				employeeId: arg.employeeId,
+				projectId: arg.projectId,
+				duration: Math.floor(duration),
+				keyboard: Math.floor(duration),
+				mouse: Math.floor(duration),
+				overall: Math.floor(duration),
+				startedAt: arg.startedAt,
+				activities: activities,
+				timeLogId: arg.timeLogId,
+				organizationId: arg.organizationId,
+				tenantId: arg.tenantId,
+				organizationContactId: arg.organizationContactId,
+				apiHost: arg.apiHost,
+				token: arg.token
+			})
+			console.log('res timeslot', resActivities);
+			const timeLogs = resActivities.timeLogs;
+			this.electronService.ipcRenderer.send('return_time_slot', {
+				timerId: arg.timerId,
+				timeSlotId: resActivities.id,
+				quitApp: arg.quitApp,
+				timeLogs: timeLogs
+			});
+
+			// upload screenshot to timeslot api
+
+			this.electronService.ipcRenderer.send('upload_screenshot_to_api', {
+				imgs: screenshotImg,
+				timeSlotId: resActivities.id
+			})
+		} catch (error) {
+			console.log('error send to api timeslot', error);
+			this.electronService.ipcRenderer.send('failed_save_time_slot', {
+				params: error.params,
+				message: error.message
+			});
+		}
+	}
+
+	screenshotNotify(arg, imgs) {
+		const img:any = imgs[0];
+		this.electronService.ipcRenderer.send('show_screenshot_notif_window', img);
+	}
 }

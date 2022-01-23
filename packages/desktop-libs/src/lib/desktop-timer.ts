@@ -7,7 +7,11 @@ import { TimerData } from './desktop-timer-activity';
 import { metaData } from './desktop-wakatime';
 import { LocalStore } from './desktop-store';
 import NotificationDesktop from './desktop-notifier';
-import { powerMonitor, ipcMain } from 'electron';
+import { powerMonitor, ipcMain, screen } from 'electron';
+import { getScreeshot } from './desktop-screenshot';
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
 
 export default class Timerhandler {
 	timeRecordMinute = 0;
@@ -75,7 +79,7 @@ export default class Timerhandler {
 			 * Start time interval for get set activities and screenshots
 			 */
 			if (!appSetting.randomScreenshotTime) {
-				this.startTimerIntervalPeriod(setupWindow, knex);
+				this.startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow);
 			}
 			
 
@@ -83,7 +87,7 @@ export default class Timerhandler {
 			 * Create screenshots at begining of timer
 			//  */
 			(async () => {
-				await this.makeScreenshot(setupWindow, knex, false);
+				await this.makeScreenshot(setupWindow, knex, timeTrackerWindow, false);
 			})();
 
 			timeTrackerWindow.webContents.send('timer_status', {
@@ -108,39 +112,6 @@ export default class Timerhandler {
 					)
 				});
 
-				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
-					setupWindow.webContents.send('collect_data', {
-						start: this.timeSlotStart.utc().format(),
-						end: moment().utc().format(),
-						tpURL: projectInfo.aw.host,
-						tp: 'aw',
-						timerId: this.lastTimer.id
-					});
-
-					setupWindow.webContents.send('collect_afk', {
-						start: this.timeSlotStart.utc().format(),
-						end: moment().utc().format(),
-						tpURL: projectInfo.aw.host,
-						tp: 'aw',
-						timerId: this.lastTimer.id
-					});
-
-					setupWindow.webContents.send('collect_chrome_activities', {
-						start: this.timeSlotStart.utc().format(),
-						end: moment().utc().format(),
-						tpURL: projectInfo.aw.host,
-						tp: 'aw',
-						timerId: this.lastTimer.id
-					});
-
-					setupWindow.webContents.send('collect_firefox_activities', {
-						start: this.timeSlotStart.utc().format(),
-						end: moment().utc().format(),
-						tpURL: projectInfo.aw.host,
-						tp: 'aw',
-						timerId: this.lastTimer.id
-					});
-				}
 
 				this.calculateTimeRecord();
 				timeTrackerWindow.webContents.send('timer_push', {
@@ -151,7 +122,7 @@ export default class Timerhandler {
 				
 				if (appSetting.randomScreenshotTime) {
 					if (this.nextScreenshot === this.timeRecordSecond) {
-						this.randomScreenshotUpdate(setupWindow, knex);
+						this.randomScreenshotUpdate(setupWindow, knex, timeTrackerWindow);
 					}
 				}
 			} catch (error) {
@@ -167,11 +138,12 @@ export default class Timerhandler {
 		this.timeRecordMinute = now.diff(moment(this.timeStart), 'minutes');
 	}
 
-	async randomScreenshotUpdate(setupWindow, knex) {
+	async randomScreenshotUpdate(setupWindow, knex, timeTrackerWindow) {
 		await this.getSetActivity(
 			knex,
 			setupWindow,
 			this.timeSlotStart,
+			timeTrackerWindow,
 			false
 		);
 		this.nextTickScreenshot();
@@ -179,7 +151,7 @@ export default class Timerhandler {
 		this.timeSlotStart = moment();
 	}
 
-	startTimerIntervalPeriod(setupWindow, knex) {
+	startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow) {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
 		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
@@ -194,7 +166,8 @@ export default class Timerhandler {
 				knex,
 				setupWindow,
 				this.timeSlotStart,
-				false
+				timeTrackerWindow,
+				false,
 			);
 			console.log('Timeslot Start Time', this.timeSlotStart);
 			this.timeSlotStart = moment();
@@ -267,100 +240,73 @@ export default class Timerhandler {
 		});
 	}
 
-	async getSetActivity(knex, setupWindow, lastTimeSlot, quitApp) {
-		const now = moment();
+	async getSetActivity(knex, setupWindow, lastTimeSlot, timeTrackerWindow, quitApp) {
+		this.takeScreenshotActivities(timeTrackerWindow, lastTimeSlot)
+		// get aw activity
+		
+	}
+
+	async takeScreenshotActivities(timeTrackerWindow, lastTimeSlot) {
 		const userInfo = LocalStore.beforeRequestParams();
+		const projectInfo = LocalStore.getStore('project');
 		const appSetting = LocalStore.getStore('appSetting');
+		const config = LocalStore.getStore('configs');
+		log.info(`App Setting: ${moment().format()}`, appSetting);
+		log.info(`Config: ${moment().format()}`, config);
 		const { id: lastTimerId, timeLogId } = this.lastTimer;
 
-		// get aw activity
-		let awActivities = await TimerData.getWindowEvent(knex, lastTimerId);
-
-		// get waktime heartbeats
-		let wakatimeHeartbeats = await metaData.getActivity(knex, {
-			start: lastTimeSlot.utc().format('YYYY-MM-DD HH:mm:ss'),
-			end: moment().utc().format('YYYY-MM-DD HH:mm:ss')
-		});
-
-		//get aw afk
-		const awAfk = await TimerData.getAfk(knex, lastTimerId);
-		let duration = awAfk.length > 0 ? awAfk[0].durations : 0;
-
-		//calculate mouse and keyboard activity as per selected period
-		duration = duration / appSetting.timer.updatePeriod;
-
-		const idsAw = [];
-		const idsWakatime = [];
-		const idAfk = awAfk.length > 0 ? awAfk[0].id : null;
-
-		// formating aw
-		awActivities = awActivities.map((item) => {
-			idsAw.push(item.id);
-			const dataParse = JSON.parse(item.data);
-			return {
-				title: dataParse.title || dataParse.app,
-				date: moment().utc().format('YYYY-MM-DD'),
-				time: moment().utc().format('HH:mm:ss'),
-				duration: Math.floor(item.durations),
-				type: item.type,
-				taskId: userInfo.taskId,
-				projectId: userInfo.projectId,
-				organizationContactId: userInfo.organizationContactId,
-				organizationId: userInfo.organizationId,
-				employeeId: userInfo.employeeId,
-				source: 'DESKTOP'
-			};
-		});
-
-		//formating wakatime
-		wakatimeHeartbeats = wakatimeHeartbeats.map((item) => {
-			idsWakatime.push(item.id);
-			const activityMetadata = {
-				type: item.type,
-				dependecies: item.dependencies,
-				language: item.languages,
-				project: item.projects,
-				branches: item.branches,
-				entity: item.entities,
-				line: item.lines
-			};
-			return {
-				title: item.editors,
-				date: moment.unix(item.time).format('YYYY-MM-DD'),
-				time: moment.unix(item.time).format('HH:mm:ss'),
-				duration: 0,
-				type: 'APP',
-				taskId: userInfo.taskId,
-				organizationId: userInfo.organizationId,
-				projectId: userInfo.projectId,
-				organizationContactId: userInfo.organizationContactId,
-				employeeId: userInfo.employeeId,
-				metaData:
-					this.configs && this.configs.db === 'sqlite'
-						? JSON.stringify(activityMetadata)
-						: activityMetadata
-			};
-		});
-
-		const allActivities = [...awActivities, ...wakatimeHeartbeats];
-
-		// send Activity to gauzy
-		setupWindow.webContents.send('set_time_slot', {
-			...userInfo,
-			duration: now.diff(moment(lastTimeSlot), 'seconds'),
-			keyboard: Math.round(duration),
-			mouse: Math.round(duration),
-			overall: Math.round(duration),
-			startedAt: lastTimeSlot.utc().toDate(),
-			activities: allActivities,
-			idsAw: idsAw,
-			idsWakatime: idsWakatime,
-			idAfk: idAfk,
-			timerId: lastTimerId,
-			timeLogId: timeLogId,
-			quitApp: quitApp
-		});
+		switch (
+			appSetting.SCREENSHOTS_ENGINE_METHOD ||
+			config.SCREENSHOTS_ENGINE_METHOD
+		) {
+			case 'ElectronDesktopCapturer':
+				timeTrackerWindow.webContents.send('prepare_activities_screenshot', {
+					screensize: screen.getPrimaryDisplay().workAreaSize,
+					type: 'ElectronDesktopCapturer',
+					displays: null,
+					start: lastTimeSlot.utc().format(),
+					end: moment().utc().format(),
+					tpURL: projectInfo.aw.host,
+					tp: 'aw',
+					taskId: userInfo.taskId,
+					organizationId: userInfo.organizationId,
+					projectId: userInfo.projectId,
+					organizationContactId: userInfo.organizationContactId,
+					timeUpdatePeriode: appSetting.timer.updatePeriod,
+					employeeId: userInfo.employeeId,
+					...userInfo,
+					timerId: lastTimerId,
+					timeLogId: timeLogId,
+					startedAt: lastTimeSlot.utc().toDate(),
+				});
+				break;
+			case 'ScreenshotDesktopLib':
+				const displays = await getScreeshot();
+				timeTrackerWindow.webContents.send('prepare_activities_screenshot', {
+					screensize: screen.getPrimaryDisplay().workAreaSize,
+					type: 'ScreenshotDesktopLib',
+					displays,
+					start: lastTimeSlot.utc().format(),
+					end: moment().utc().format(),
+					tpURL: projectInfo.aw.host,
+					tp: 'aw',
+					taskId: userInfo.taskId,
+					organizationId: userInfo.organizationId,
+					projectId: userInfo.projectId,
+					organizationContactId: userInfo.organizationContactId,
+					employeeId: userInfo.employeeId,
+					timeUpdatePeriode: appSetting.timer.updatePeriod,
+					...userInfo,
+					timerId: lastTimerId,
+					timeLogId: timeLogId,
+					startedAt: lastTimeSlot.utc().toDate(),
+				});
+				break;
+			default:
+				break;
+		}
 	}
+
 
 	stopTime(setupWindow, timeTrackerWindow, knex, quitApp) {
 		const appSetting = LocalStore.getStore('appSetting');
@@ -379,7 +325,7 @@ export default class Timerhandler {
 		 * Create screenshots at end of timer
 		 */
 		(async () => {
-			await this.makeScreenshot(setupWindow, knex, quitApp);
+			await this.makeScreenshot(setupWindow, knex, timeTrackerWindow, quitApp);
 
 			timeTrackerWindow.webContents.send('timer_status', {
 				...LocalStore.beforeRequestParams()
@@ -410,7 +356,7 @@ export default class Timerhandler {
 	/*
 	 * Make screenshots and activities after start and stop timer
 	 */
-	async makeScreenshot(setupWindow, knex, quitApp) {
+	async makeScreenshot(setupWindow, knex, timeTrackerWindow, quitApp) {
 		console.log(
 			`Time Slot Start/End At ${quitApp ? 'End' : 'Begining'}`,
 			this.timeSlotStart
@@ -420,6 +366,7 @@ export default class Timerhandler {
 				knex,
 				setupWindow,
 				this.timeSlotStart,
+				timeTrackerWindow,
 				quitApp
 			);
 		}

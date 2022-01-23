@@ -4,7 +4,7 @@ import { metaData } from './desktop-wakatime';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import { LocalStore } from './desktop-store';
-import { takeshot, captureScreen } from './desktop-screenshot';
+import { takeshot, captureScreen, notifyScreenshot, screenshotUp } from './desktop-screenshot';
 import {
 	hasPromptedForPermission,
 	hasScreenCapturePermission,
@@ -172,6 +172,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			console.log('error opening permission', error.message);
 		}
 	});
+
+	ipcMain.on('upload_screenshot_to_api', (event, arg) => {
+		screenshotUp(arg.imgs, arg.timeSlotId, timeTrackerWindow);
+	})
 }
 
 export function ipcTimer(
@@ -242,29 +246,6 @@ export function ipcTimer(
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
 
-		switch (
-			appSetting.SCREENSHOTS_ENGINE_METHOD ||
-			config.SCREENSHOTS_ENGINE_METHOD
-		) {
-			case 'ElectronDesktopCapturer':
-				timeTrackerWindow.webContents.send('take_screenshot', {
-					timeSlotId: arg.timeSlotId,
-					screensize: screen.getPrimaryDisplay().workAreaSize
-				});
-				break;
-			case 'ScreenshotDesktopLib':
-				captureScreen(
-					timeTrackerWindow,
-					notificationWindow,
-					arg.timeSlotId,
-					arg.quitApp,
-					windowPath,
-					soundPath
-				);
-				break;
-			default:
-				break;
-		}
 
 		if (!arg.quitApp) {
 			console.log('TimeLogs:', arg.timeLogs);
@@ -277,6 +258,10 @@ export function ipcTimer(
 			await timerHandler.createTimer(knex, timeLog);
 		}
 	});
+
+	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
+		notifyScreenshot(notificationWindow, arg, windowPath, soundPath, timeTrackerWindow);
+	})
 
 	ipcMain.on('save_screen_shoot', (event, arg) => {
 		takeshot(timeTrackerWindow, arg, notificationWindow, false, windowPath, soundPath);

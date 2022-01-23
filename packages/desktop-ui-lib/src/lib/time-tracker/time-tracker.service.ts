@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 // import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -16,6 +18,7 @@ export class TimeTrackerService {
 	token = '';
 	userId = '';
 	employeeId = '';
+	buckets: any = {};
 
 	constructor(private http: HttpClient) {}
 
@@ -286,6 +289,114 @@ export class TimeTrackerService {
 				headers: headers
 			})
 			.pipe()
+			.toPromise();
+	}
+
+	collectFromAW(tpURL, start, end) {
+		if (!this.buckets.windowBucket) return Promise.resolve([]);
+		return this.http
+			.get(
+				`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	getAwBuckets(tpURL): Promise<any> {
+		return this.http.get(`${tpURL}/api/0/buckets`).pipe().toPromise();
+	}
+
+	parseBuckets(buckets) {
+		Object.keys(buckets).forEach((key) => {
+			const keyParse = key.split('_')[0];
+			switch (keyParse) {
+				case 'aw-watcher-window':
+					this.buckets.windowBucket = buckets[key];
+					break;
+				case 'aw-watcher-afk':
+					this.buckets.afkBucket = buckets[key];
+					break;
+				case 'aw-watcher-web-chrome':
+					this.buckets.chromeBucket = buckets[key];
+					break;
+				case 'aw-watcher-web-firefox':
+					this.buckets.firefoxBucket = buckets[key];
+					break;
+				default:
+					break;
+			}
+		});
+	}
+
+	async collectevents(tpURL, tp, start, end): Promise<any> {
+		if (!this.buckets.windowBucket) {
+			const allBuckets = await this.getAwBuckets(tpURL);
+			this.parseBuckets(allBuckets);
+		}
+		return this.collectFromAW(tpURL, start, end);
+	}
+
+	collectChromeActivityFromAW(tpURL, start, end): Promise<any> {
+		if (!this.buckets.chromeBucket) return Promise.resolve([]);
+		return this.http
+			.get(
+				`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	collectFirefoxActivityFromAw(tpURL, start, end): Promise<any> {
+		if (!this.buckets.firefoxBucket) return Promise.resolve([]);
+		return this.http
+			.get(
+				`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	collectAfkFromAW(tpURL, start, end) {
+		if (!this.buckets.afkBucket) return Promise.resolve([]);
+		return this.http
+			.get(
+				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?events?start=${start}&end=${end}&limit=1`
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	pushTotimeslot(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		const params = {
+			employeeId: values.employeeId,
+			projectId: values.projectId,
+			duration: values.duration,
+			keyboard: values.keyboard,
+			mouse: values.mouse,
+			overall: values.overall,
+			startedAt: values.startedAt,
+			activities: values.activities,
+			timeLogId: values.timeLogId,
+			organizationId: values.organizationId,
+			tenantId: values.tenantId,
+			organizationContactId: values.organizationContactId
+		};
+		return this.http
+			.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
+				headers: headers
+			})
+			.pipe(
+				catchError((error) => {
+					error.error = {
+						...error.error,
+						params: JSON.stringify(params)
+					};
+					return throwError(error);
+				})
+			)
 			.toPromise();
 	}
 }

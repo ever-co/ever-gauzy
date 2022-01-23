@@ -111,21 +111,6 @@ export class AppComponent implements OnInit {
 				.pushToTimeslot(arg)
 				.then((res: any) => {
 					if (res.id) {
-						if (arg.idsAw) {
-							event.sender.send('remove_aw_local_data', {
-								idsAw: arg.idsAw
-							});
-						}
-						if (arg.idsWakatime) {
-							event.sender.send('remove_wakatime_local_data', {
-								idsWakatime: arg.idsWakatime
-							});
-						}
-						if (arg.idAfk) {
-							event.sender.send('remove_afk_local_Data', {
-								idAfk: arg.idAfk
-							});
-						}
 						const timeLogs = res.timeLogs;
 						event.sender.send('return_time_slot', {
 							timerId: arg.timerId,
