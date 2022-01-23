@@ -281,7 +281,7 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body() entity: CreateUserDTO
+		@Body(new ValidationPipe({ transform : true })) entity: CreateUserDTO
 	): Promise<IUser> {
 		return await this.commandBus.execute(
 			new UserCreateCommand(entity)
