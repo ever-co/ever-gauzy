@@ -45,6 +45,7 @@ import { UserCreateCommand } from './commands';
 import { FactoryResetService } from './factory-reset/factory-reset.service';
 import { UserDeleteCommand } from './commands/user.delete.command';
 import { UpdatePreferredLanguageDTO, UpdatePreferredComponentLayoutDTO, CreateUserDTO } from './dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -302,7 +303,7 @@ export class UserController extends CrudController<User> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IUserUpdateInput
+		@Body(new ValidationPipe({ transform : true })) entity: UpdateUserDto
 	): Promise<IUser> {
 		return await this.userService.updateProfile(id, {
 			id,
