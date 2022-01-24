@@ -37,8 +37,7 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 
 	//The internal data model for form control value access
     private innerValue: any = '';
-    // Property binding to autocomplete
-	@Input() autocomplete: string;
+    
 	onChange = (_: any) => { }
 	onTouched = (_: any) => { }
 
@@ -117,6 +116,9 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	@Input() set ngClass(value: string) {
 		this._ngClass = value;
 	}
+
+	// Property binding to autocomplete
+	@Input() autocomplete: string;
 
 	@Output() onInputChanged = new EventEmitter<string>();
 
