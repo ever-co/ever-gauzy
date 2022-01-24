@@ -156,7 +156,7 @@ export class EmployeesComponent
 			if (response) {
 				response.map((employee: IEmployee) => {
 					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
-						name: employee.fullName.trim(),
+						name: `${employee.user.firstName.trim()} ${employee.user.lastName.trim()}`,
 						organization: employee.organization.name
 					});
 				});
