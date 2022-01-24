@@ -353,10 +353,23 @@ export class InvitesComponent
 							return;
 						}
 
-						const { id, email } = this.selectedInvite;
+						/* email: item.email,
+						role: role.name,
+						organization: organization,
+						registerUrl,
+						originUrl,
+						languageCode,
+						invitedBy: user */
+
+						const { id, email, roleName, inviteUrl } = this.selectedInvite;
+						console.log(this.selectedInvite)
 						await this.inviteService.resendInvite({
 							id,
-							invitedById: this.store.userId
+							invitedById: this.store.userId,
+							email,
+							role: roleName,
+							organization: this.organization.name,
+							registerUrl: inviteUrl,
 						}).then(() => {
 							this.toastrService.success('TOASTR.MESSAGE.INVITES_RESEND', {
 								email

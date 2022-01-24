@@ -87,7 +87,7 @@ export class InviteService {
 		);
 	}
 
-	resendInvite(inviteResendInput: IInviteResendInput): Promise<any> {
+	resendInvite(inviteResendInput): Promise<any> {
 		return firstValueFrom(
 			this.http
 			.post(`${API_PREFIX}/invite/resend`, inviteResendInput)

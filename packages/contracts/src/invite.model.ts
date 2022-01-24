@@ -31,6 +31,10 @@ export interface IInviteAcceptInput extends IUserRegistrationInput {
 export interface IInviteResendInput {
 	id: string;
 	invitedById: string;
+	email: string;
+	role: string;
+	organization: string;
+	registerUrl: string;
 }
 
 export interface ICreateEmailInvitesInput

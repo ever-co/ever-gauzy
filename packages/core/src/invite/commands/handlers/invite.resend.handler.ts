@@ -12,16 +12,15 @@ export class InviteResendHandler
 	public async execute(
 		command: InviteResendCommand
 	): Promise<UpdateResult | IInvite> {
-		const { input } = command;
+		const { input , languageCode } = command;
 		const { invitedById } = input;
 
 		const expireDate = new Date();
 		expireDate.setDate(expireDate.getDate() + 7);
 
-		return await this.inviteService.update(input.id, {
-			status: InviteStatusEnum.INVITED,
-			expireDate,
-			invitedById
-		});
+		console.log(input)
+		console.log(languageCode)
+
+		return await this.inviteService.resendEmail(input, invitedById, languageCode);
 	}
 }

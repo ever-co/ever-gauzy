@@ -191,6 +191,59 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 
+	async resendEmail(data, invitedById, languageCode){
+		const {
+			id,
+			expireDate,
+			email,
+			role,
+			registerUrl,
+			organization,
+		} = data
+
+		const status = InviteStatusEnum.INVITED;
+		const originUrl = this.configSerice.get('clientBaseUrl') as string;
+		const user: IUser = await this.userService.findOneByIdString(invitedById, {
+			relations: ['role']
+		});
+
+
+		try{
+			await this.update(id, {
+			   status,
+			   expireDate,
+			   invitedById,
+			})
+
+			this.emailService.inviteUser({
+				email,
+				role,
+				organization,
+				registerUrl,
+				originUrl,
+				languageCode,
+				invitedBy: user
+			});
+
+			/* this.emailService.inviteEmployee({
+				email 
+				registerUrl,
+				organizationContacts,
+				departments,
+				originUrl,
+				organization: organization,
+				languageCode,
+				invitedBy: user
+			}); */
+
+		}catch(error){
+			return error
+		}
+
+
+		
+	}
+
 	async sendAcceptInvitationEmail(
 		organization: IOrganization,
 		employee: IEmployee,
