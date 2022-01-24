@@ -38,6 +38,9 @@ import {
 	CandidateRejectedCommand
 } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
+import { CreateCandidateDTO } from './dto';
+import { CandidateBodyPayloadTransform } from './pipes';
+import { CreateCandidateListDTO } from './dto/create-candidate-list.dto';
 
 @ApiTags('Candidate')
 @UseGuards(TenantPermissionGuard)
@@ -73,11 +76,11 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body() body: ICandidateCreateInput[],
+		@Body( CandidateBodyPayloadTransform, new ValidationPipe({ transform : true })) body: CreateCandidateListDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ICandidate[]> {
 		return await this.commandBus.execute(
-			new CandidateBulkCreateCommand(body, languageCode)
+			new CandidateBulkCreateCommand(body.list, languageCode)
 		);
 	}
 
