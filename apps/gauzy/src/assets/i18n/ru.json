@@ -3159,7 +3159,8 @@
 			"RECURRING_EXPENSE_UPDATED": "Повторяющиеся расходы были изменены для '{{ name }}'",
 			"RECURRING_EXPENSE_DELETED": "Повторяющиеся расходы были удалены для '{{ name }}'",
 			"IMAGE_UPDATED": "Изображение было обновлено",
-			"ORGANIZATION_PAGE_UPDATED": "Страница была изменена для '{{ name }}'"
+			"ORGANIZATION_PAGE_UPDATED": "Страница была изменена для '{{ name }}'",
+			"SCREENSHOT_DELETED": "Скриншот для '{{ name }}' ' удален из '{{ organization }}'"
 		}
 	},
 	"ACCEPT_INVITE": {
