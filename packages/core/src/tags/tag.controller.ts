@@ -5,7 +5,8 @@ import {
 	Post,
 	Body,
 	UseGuards,
-	Query
+	Query,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -17,6 +18,7 @@ import { IPagination, ITag, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe } from './../shared/pipes';
 import { TagListCommand } from './commands';
+import { CreateTagsDto } from './dtos/create-tags.dto';
 
 @ApiTags('Tags')
 @UseGuards(TenantPermissionGuard)
@@ -59,7 +61,7 @@ export class TagController extends CrudController<Tag> {
 	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
 	@Post()
 	async create(
-		@Body() entity: Tag
+		@Body(new ValidationPipe({ transform : true })) entity: CreateTagsDto
 	): Promise<ITag> {
 		return this.tagService.create(entity);
 	}
