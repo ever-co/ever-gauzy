@@ -2,7 +2,7 @@ import { IEmailTemplate, IEmailUpdateInput, IUser } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class UpdateEmailDto implements IEmailUpdateInput {
+export class UpdateEmailDTO implements IEmailUpdateInput {
 
     @ApiProperty({ type: () => String })
 	@IsOptional()
