@@ -20,8 +20,6 @@ import {
 	PermissionsEnum,
 	IGetTaskByEmployeeOptions,
 	ITask,
-	ITaskUpdateInput,
-	ITaskCreateInput,
 	IPagination
 } from '@gauzy/contracts';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
