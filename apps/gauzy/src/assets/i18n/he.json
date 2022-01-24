@@ -3159,7 +3159,8 @@
 			"RECURRING_EXPENSE_UPDATED": "Recurring expense was changed for '{{ name }}'",
 			"RECURRING_EXPENSE_DELETED": "Recurring expense was removed for '{{ name }}'",
 			"IMAGE_UPDATED": "The image has been updated",
-			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'"
+			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'",
+			"SCREENSHOT_DELETED": "Screenshot for '{{ name }}' removed from '{{ organization }}'"
 		}
 	},
 	"ACCEPT_INVITE": {
