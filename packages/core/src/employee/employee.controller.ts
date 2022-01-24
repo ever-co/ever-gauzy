@@ -3,8 +3,7 @@ import {
 	LanguagesEnum,
 	UpdateEmployeeJobsStatistics,
 	IPagination,
-	IEmployee,
-	IEmployeeUpdateInput
+	IEmployee
 } from '@gauzy/contracts';
 import {
 	Body,
