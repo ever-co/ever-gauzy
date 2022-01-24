@@ -30,14 +30,15 @@ import { TranslationBaseComponent } from '../../../../language-base';
 		}
 	]
 })
-export class PasswordFormFieldComponent extends TranslationBaseComponent 
+export class PasswordFormFieldComponent extends TranslationBaseComponent
 	implements ControlValueAccessor, AfterViewInit, OnChanges, OnDestroy {
 
 	showPassword: boolean = false;
 
 	//The internal data model for form control value access
     private innerValue: any = '';
-
+    // Property binding to autocomplete
+	@Input() autocomplete: string;
 	onChange = (_: any) => { }
 	onTouched = (_: any) => { }
 
@@ -56,7 +57,7 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter accessor for dynamic form control
 	*/
-	_ctrl: FormControl = new FormControl(); 
+	_ctrl: FormControl = new FormControl();
 	get ctrl(): FormControl {
 		return this._ctrl;
 	}
@@ -120,7 +121,7 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	@Output() onInputChanged = new EventEmitter<string>();
 
 	// get reference to the input element
-    @ViewChild('input')  inputRef: ElementRef; 
+    @ViewChild('input')  inputRef: ElementRef;
 
 	constructor(
 		public readonly translateService: TranslateService
@@ -140,14 +141,14 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 			.subscribe(() => {
 				// check condition if the form control is RESET
 				if (isEmpty(this.ctrl.value)) {
-                    this.innerValue = '';      
-                    this.inputRef.nativeElement.value = '';                 
+                    this.innerValue = '';
+                    this.inputRef.nativeElement.value = '';
                 }
 				this.onInputChanged.emit(this.ctrl.value);
 			});
 	}
 
-	
+
 	// event fired when input value is changed. later propagated up to the form control using the custom value accessor interface
     onInputChange(e:Event, value:any) {
         //set changed value
