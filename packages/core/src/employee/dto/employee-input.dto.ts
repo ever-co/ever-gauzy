@@ -1,43 +1,27 @@
-import { IEmployee, IEmployeeCreateInput, IOrganization, ISkill, ITag, ITenant } from "@gauzy/contracts";
+import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsNotEmpty, IsNotEmptyObject, IsObject, ValidateNested } from "class-validator";
-import { UserInputDto } from "./user-input-dto";
+import { IEmployee, IEmployeeCreateInput, IOrganization } from "@gauzy/contracts";
+import { EmploymentDTO } from "./employment.dto";
+import { UserInputDTO } from "./user-input-dto";
 
-export class EmployeeInputDto implements IEmployeeCreateInput {
+export class EmployeeInputDTO extends EmploymentDTO implements IEmployeeCreateInput {
 
+    @ApiProperty({ type: () => UserInputDTO, required : true })
     @IsObject()
     @IsNotEmptyObject()
     @ValidateNested()
-    @Type(() => UserInputDto)
-    user: UserInputDto;
+    @Type(() => UserInputDTO)
+    readonly user: UserInputDTO;
 
     @IsNotEmpty()
-    password: string;
+    readonly password: string;
 
-    offerDate?: Date;
-    acceptDate?: Date;
-    rejectDate?: Date;
-    members?: IEmployee[];
-    tags?: ITag[];
-    skills?: ISkill[];
-
-    @IsNotEmpty()
-    startedWorkOn?: any;
-
-    short_description?: string;
-    description?: string;
+    readonly members?: IEmployee[];
+    readonly organizationId?: string;
     originalUrl?: string;
-    isActive?: boolean;
-    organizationId?: string;
 
     @IsObject()
     @IsNotEmptyObject()
-    organization?: IOrganization;
-
-    tenantId?: string;
-    tenant?: ITenant;
-    id?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-
+    readonly organization?: IOrganization;
 }

@@ -1,6 +1,6 @@
 import { IContact, IEmployeeUpdateInput } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsOptional, IsString } from "class-validator";
+import { IsObject, IsOptional, IsString } from "class-validator";
 import { SocialNetworksDTO } from "./network.dto";
 
 export class UpdateProfileDTO extends SocialNetworksDTO implements IEmployeeUpdateInput {
@@ -11,6 +11,7 @@ export class UpdateProfileDTO extends SocialNetworksDTO implements IEmployeeUpda
     readonly profile_link?: string;
 
     @ApiPropertyOptional({ type: () => Object })
+    @IsObject()
     @IsOptional()
     readonly contact?: IContact;
 }
