@@ -12,7 +12,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { IEmail, IEmailUpdateInput, IPagination } from '@gauzy/contracts';
+import { IEmail, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
