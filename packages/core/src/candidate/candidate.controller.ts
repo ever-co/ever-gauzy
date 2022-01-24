@@ -20,7 +20,6 @@ import {
 	PermissionsEnum,
 	LanguagesEnum,
 	ICandidate,
-	ICandidateUpdateInput,
 	IPagination
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams} from './../core/crud';
@@ -39,7 +38,7 @@ import {
 import { TransformInterceptor } from './../core/interceptors';
 import { CandidateBodyPayloadTransform } from './pipes';
 import { CreateCandidateListDTO } from './dto/create-candidate-list.dto';
-import { CreateCandidateDTO } from './dto';
+import { CreateCandidateDTO, UpdateCandidateDTO } from './dto';
 
 @ApiTags('Candidate')
 @UseGuards(TenantPermissionGuard)
@@ -235,7 +234,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ICandidateUpdateInput
+		@Body() entity: UpdateCandidateDTO
 	): Promise<ICandidate> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
