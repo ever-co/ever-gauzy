@@ -32,7 +32,8 @@ import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand } from './commands';
-import { CreateTaskDto } from './dtos/create-new-tasl.dto';
+import { CreateTaskDto } from './dtos/create-new-task.dto';
+import { UpdateTaskDto } from './dtos/update-task.dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard)
@@ -173,7 +174,7 @@ export class TaskController extends CrudController<Task> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ITaskUpdateInput
+		@Body(new ValidationPipe({ transform : true })) entity: UpdateTaskDto
 	): Promise<ITask> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
