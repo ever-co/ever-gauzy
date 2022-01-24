@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty } from "class-validator";
-import { IUserCreateInput } from "@gauzy/contracts";
+import { IsEmail, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional } from "class-validator";
+import { IRole, IUserCreateInput } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
 
 /**
@@ -24,4 +24,10 @@ export class CreateUserDTO implements IUserCreateInput {
 
     @ApiProperty({ type: () => String })
     readonly imageUrl?: string;
+
+    @ApiProperty({ type: () => Object })
+    @IsOptional()
+    @IsObject()
+    @IsNotEmptyObject()
+    readonly role?: IRole;
 }
