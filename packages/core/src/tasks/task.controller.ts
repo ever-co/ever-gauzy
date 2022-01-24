@@ -32,6 +32,7 @@ import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand } from './commands';
+import { CreateTaskDto } from './dtos/create-new-tasl.dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard)
@@ -142,7 +143,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
 	async create(
-		@Body() entity: ITaskCreateInput
+		@Body(new ValidationPipe( { transform : true } )) entity: CreateTaskDto
 	): Promise<ITask> {
 		return await this.commandBus.execute(
 			new TaskCreateCommand({
