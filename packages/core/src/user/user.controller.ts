@@ -42,8 +42,12 @@ import { UserService } from './user.service';
 import { UserCreateCommand } from './commands';
 import { FactoryResetService } from './factory-reset/factory-reset.service';
 import { UserDeleteCommand } from './commands/user.delete.command';
-import { UpdatePreferredLanguageDTO, UpdatePreferredComponentLayoutDTO, CreateUserDTO } from './dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import {
+	UpdatePreferredLanguageDTO,
+	UpdatePreferredComponentLayoutDTO,
+	CreateUserDTO,
+	UpdateUserDTO
+} from './dto';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -279,8 +283,9 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
-		@Body(new ValidationPipe({ transform : true })) entity: CreateUserDTO
+		@Body() entity: CreateUserDTO
 	): Promise<IUser> {
 		return await this.commandBus.execute(
 			new UserCreateCommand(entity)
@@ -299,9 +304,10 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({ transform : true })) entity: UpdateUserDto
+		@Body() entity: UpdateUserDTO
 	): Promise<IUser> {
 		return await this.userService.updateProfile(id, {
 			id,
