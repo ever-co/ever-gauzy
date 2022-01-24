@@ -38,7 +38,6 @@ import {
 	CandidateRejectedCommand
 } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
-import { CreateCandidateDTO } from './dto';
 import { CandidateBodyPayloadTransform } from './pipes';
 import { CreateCandidateListDTO } from './dto/create-candidate-list.dto';
 
