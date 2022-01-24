@@ -42,11 +42,8 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
-import { UpdateProfileDTO } from './dto';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { CreateEmployeeDTO, EmployeeInputDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
 import { EmployeeBodyPayLoadTransform } from './pipes/employee-transformer.pipe';
-import { EmployeeInputDto } from './dto/employee-input.dto';
-import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -259,7 +256,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body(EmployeeBodyPayLoadTransform, new ValidationPipe({ transform: true })) entity: CreateEmployeeDto,
+		@Body(EmployeeBodyPayLoadTransform, new ValidationPipe({ transform: true })) entity: CreateEmployeeDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee[]> {
 		return await this.commandBus.execute(
@@ -388,7 +385,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post()
 	async create(
-		@Body(new ValidationPipe({ transform:true })) entity: EmployeeInputDto,
+		@Body(new ValidationPipe({ transform:true })) entity: EmployeeInputDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
@@ -423,9 +420,10 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put(':id')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({ transform : true })) entity: UpdateEmployeeDto
+		@Body() entity: UpdateEmployeeDTO
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
 			new EmployeeUpdateCommand({

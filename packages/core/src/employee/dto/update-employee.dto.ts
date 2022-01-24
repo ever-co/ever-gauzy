@@ -1,10 +1,26 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
-import { Employee } from '../employee.entity';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsBoolean, IsOptional } from "class-validator";
+import { UpdateProfileDTO } from "./update-profile.dto";
 
-export class UpdateEmployeeDto extends Employee{
+export class UpdateEmployeeDTO extends UpdateProfileDTO {
 
-    @IsEmail()
-    @IsNotEmpty()
-    email : string;
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    readonly isActive?: boolean;
 
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    readonly isJobSearchActive?: boolean;
+
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    readonly isVerified?: boolean;
+
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    readonly isVetted?: boolean;
 }

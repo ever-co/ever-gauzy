@@ -1,14 +1,10 @@
 import { IRole, IUser } from "@gauzy/contracts";
-import { IsEmail, IsNotEmpty, IsNotEmptyObject, IsObject } from "class-validator";
+import { IsNotEmptyObject, IsObject } from "class-validator";
+import { CreateUserDTO } from "./../../user/dto";
 
-export class UserInputDto implements IUser{
-
-    @IsEmail()
-    @IsNotEmpty()
-    email: string;
+export class UserInputDTO  extends CreateUserDTO implements IUser {
 
     @IsObject()
     @IsNotEmptyObject()
     role: IRole;
-    
 }

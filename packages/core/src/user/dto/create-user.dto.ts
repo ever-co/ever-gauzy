@@ -16,11 +16,11 @@ export class CreateUserDTO implements IUserCreateInput {
 
     @ApiProperty({ type: () => String })
     @Transform((params: TransformFnParams) => params.value.trim())
-    readonly firstName: string;
+    readonly firstName?: string;
 
     @ApiProperty({ type: () => String })
     @Transform((params: TransformFnParams) => params.value.trim())
-    readonly lastName: string;
+    readonly lastName?: string;
 
     @ApiProperty({ type: () => String })
     readonly imageUrl?: string;

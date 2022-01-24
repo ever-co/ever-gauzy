@@ -1,13 +1,11 @@
 import { Type } from "class-transformer";
 import { IsArray, ValidateNested } from "class-validator";
-import { EmployeeInputDto } from "./employee-input.dto";
+import { EmployeeInputDTO } from "./employee-input.dto";
 
-
-export class CreateEmployeeDto  {
+export class CreateEmployeeDTO  {
 
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(()=>EmployeeInputDto)
-    list : EmployeeInputDto[]
-    
+    @Type(() => EmployeeInputDTO)
+    list : EmployeeInputDTO[]
 }
