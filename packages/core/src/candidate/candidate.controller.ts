@@ -18,7 +18,6 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
 import {
 	PermissionsEnum,
-	ICandidateCreateInput,
 	LanguagesEnum,
 	ICandidate,
 	ICandidateUpdateInput,
@@ -40,6 +39,7 @@ import {
 import { TransformInterceptor } from './../core/interceptors';
 import { CandidateBodyPayloadTransform } from './pipes';
 import { CreateCandidateListDTO } from './dto/create-candidate-list.dto';
+import { CreateCandidateDTO } from './dto';
 
 @ApiTags('Candidate')
 @UseGuards(TenantPermissionGuard)
@@ -199,8 +199,9 @@ export class CandidateController extends CrudController<Candidate> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }) )
 	async create(
-		@Body() body: ICandidateCreateInput
+		@Body() body: CreateCandidateDTO
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateCreateCommand(body)
