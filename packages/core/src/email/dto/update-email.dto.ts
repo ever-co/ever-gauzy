@@ -7,7 +7,7 @@ export class UpdateEmailDto implements IEmailUpdateInput {
     @ApiProperty({ type: () => String })
 	@IsOptional()
 	@IsString()
-    name: string;
+    readonly name: string;
 
     @ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -17,28 +17,28 @@ export class UpdateEmailDto implements IEmailUpdateInput {
     @ApiProperty({ type: () => String })
 	@IsOptional()
 	@IsString()
-    content?: string;
+    readonly content?: string;
 
     @ApiProperty({ type: () => Object })
 	@IsOptional()
-    emailTemplate?: IEmailTemplate;
+    readonly emailTemplate?: IEmailTemplate;
 
     @ApiProperty({ type: () => String })
 	@IsOptional()
 	@IsString()
-    emailTemplateId?: string;
+    readonly emailTemplateId?: string;
 
     @ApiProperty({ type: () => Object })
 	@IsOptional()
-    user?: IUser;
+    readonly user?: IUser;
 
     @ApiProperty({ type: () => String })
 	@IsOptional()
 	@IsString()
-    userId?: string;
+    readonly userId?: string;
 
     @ApiProperty({ type: () => Boolean })
 	@IsOptional()
-    isArchived?: boolean;
+    readonly isArchived?: boolean;
 
 }
