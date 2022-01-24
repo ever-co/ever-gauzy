@@ -8,9 +8,10 @@ import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { moment } from '../../../../core/moment-extend';
-import { ITimeLog, ITimeSlot } from '@gauzy/contracts';
-import { TimeSlot } from './../../../../core';
-import { TimeSlotRangeDeleteCommand } from 'time-tracking/time-slot/commands';
+import { ITimeLog } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
+import { TimeSlot } from './../../../../core/entities/internal';
+import { TimeSlotRangeDeleteCommand } from './../../../time-slot/commands';
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler
@@ -34,7 +35,6 @@ export class DeleteTimeSpanHandler
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
 
-		console.log({ start, end, startedAt, stoppedAt });
 		/*
 		 * Check is overlapping time or not.
 		 */
@@ -167,7 +167,6 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time (startedAt)	DB Stop Time (stoppedAt)
 				 *  		|--------------------------------------------------|
 				 */
-				console.log('Split database time logs in two entries');
 				const remainingDuration = moment(start).diff(
 					moment(startedAt),
 					'seconds'
@@ -177,31 +176,28 @@ export class DeleteTimeSpanHandler
 					'updatedAt',
 					'id'
 				]);
-				console.log(
-					'Split Time Log Remaining Duration:',
-					remainingDuration
-				);
-
-				if (remainingDuration > 0) {
-					timeLog.stoppedAt = start;
-					await this.timeLogRepository.save(timeLog);
-					await this.syncTimeSlots(timeLog).then((timeSlots) => {
-						console.log(
-							'Existed Timelog Split Entry:',
-							timeLog,
-							timeSlots
+				try {
+					if (remainingDuration > 0) {
+						timeLog.stoppedAt = start;
+						await this.timeLogRepository.save(timeLog);
+					} else {
+						/*
+						 * Delete if remaining duration 0 seconds
+						 */
+						await this.commandBus.execute(
+							new TimeLogDeleteCommand(timeLog, true)
 						);
-					});
-				} else {
-					/*
-					 * Delete if remaining duration 0 seconds
-					 */
+					}
 					await this.commandBus.execute(
-						new TimeLogDeleteCommand(timeLog, true)
+						new TimeSlotRangeDeleteCommand(
+							employeeId,
+							start,
+							end
+						)
 					);
+				} catch (error) {
+					console.error(`Error while split time entires: ${remainingDuration}`);
 				}
-
-				await this.timeSlotService.rangeDelete(employeeId, start, end);
 
 				const newLog = timeLogClone;
 				newLog.startedAt = end;
@@ -210,30 +206,26 @@ export class DeleteTimeSpanHandler
 					moment(newLog.startedAt),
 					'seconds'
 				);
-
 				/*
 				 * Insert if remaining duration is more 0 seconds
 				 */
 				if (newLogRemainingDuration > 0) {
 					await this.timeLogRepository.save(newLog);
-					await this.syncTimeSlots(newLog).then((timeSlots) => {
-						console.log(
-							'New Timelog Split Entry:',
-							newLog,
-							timeSlots
-						);
-						(async () => {
-							if (timeSlots.length) {
-								let timeLogs: ITimeLog[] = [];
-								timeLogs = timeLogs.concat(newLog);
+					try {
+						const timeSlots = await this.syncTimeSlots(newLog);
+						if (isNotEmpty(timeSlots)) {
+							let timeLogs: ITimeLog[] = [];
+							timeLogs = timeLogs.concat(newLog);
 
-								timeSlots.forEach((timeSlot: ITimeSlot) => {
-									timeSlot.timeLogs = timeLogs;
-								});
-								await this.timeSlotRepository.save(timeSlots);
+							for await (const timeSlot of timeSlots) {
+								timeSlot.timeLogs = timeLogs;
 							}
-						})();
-					});
+
+							await this.timeSlotRepository.save(timeSlots);
+						}
+					} catch (error) {
+						console.log('Error while synce TimeSlot & TimeLog', error)
+					}
 				}
 			}
 		}
@@ -245,31 +237,25 @@ export class DeleteTimeSpanHandler
 			startedAt,
 			stoppedAt,
 			employeeId,
-			organizationId,
-			tenantId
+			organizationId
 		} = timeLog;
 
 		let startDate: any = moment(startedAt);
-		startDate.set(
-			'minute',
-			startDate.get('minute') - (startDate.get('minute') % 10)
-		);
-		startDate.set('second', 0);
-		startDate.set('millisecond', 0);
+		startDate
+			.set('minute', startDate.get('minute') - (startDate.get('minute') % 10))
+			.set('second', 0)
+			.set('millisecond', 0);
 
 		let endDate: any = moment(stoppedAt);
-		endDate.set(
-			'minute',
-			endDate.get('minute') + (endDate.get('minute') % 10) - 1
-		);
-		endDate.set('second', 59);
-		endDate.set('millisecond', 0);
-
+		endDate
+			.set('minute', endDate.get('minute') + (endDate.get('minute') % 10) - 1)
+			.set('second', 59)
+			.set('millisecond', 0);
+	
 		return await this.timeSlotService.getTimeSlots({
 			startDate: moment(startDate).toDate(),
 			endDate: moment(endDate).toDate(),
 			organizationId,
-			tenantId,
 			employeeIds: [employeeId]
 		});
 	}
