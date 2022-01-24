@@ -1,1 +1,1 @@
-export {UpdateEmailDto} from "./update-email.dto";
+export { UpdateEmailDTO } from "./update-email.dto";

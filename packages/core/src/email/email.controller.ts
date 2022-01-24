@@ -18,7 +18,7 @@ import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
-import { UpdateEmailDto } from './dto';
+import { UpdateEmailDTO } from './dto';
 
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard)
@@ -76,7 +76,7 @@ export class EmailController extends CrudController<Email> {
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string, 
-		@Body() entity: UpdateEmailDto
+		@Body() entity: UpdateEmailDTO
 	): Promise<any> {
 		return await this.emailService.update(id, entity);
 	}
