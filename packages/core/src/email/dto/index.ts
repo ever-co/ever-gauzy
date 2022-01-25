@@ -1,0 +1,1 @@
+export { UpdateEmailDTO } from "./update-email.dto";

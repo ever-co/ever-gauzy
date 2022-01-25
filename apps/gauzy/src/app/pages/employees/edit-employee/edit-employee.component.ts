@@ -7,6 +7,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { filter, tap } from 'rxjs/operators';
 import { EmployeesService, Store } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -34,7 +35,7 @@ export class EditEmployeeComponent
 		private readonly router: Router,
 		private readonly employeeService: EmployeesService,
 		private readonly store: Store,
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
@@ -51,6 +52,7 @@ export class EditEmployeeComponent
 		this.store.selectedEmployee$
 			.pipe(
 				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				distinctUntilChange(),
 				tap((employee) => this.selectedEmployeeFromHeader = employee),
 				untilDestroyed(this)
 			)

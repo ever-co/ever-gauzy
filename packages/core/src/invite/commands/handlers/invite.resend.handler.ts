@@ -1,4 +1,4 @@
-import { IInvite, InviteStatusEnum } from '@gauzy/contracts';
+import { IInvite } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { InviteService } from '../../invite.service';
@@ -12,16 +12,12 @@ export class InviteResendHandler
 	public async execute(
 		command: InviteResendCommand
 	): Promise<UpdateResult | IInvite> {
-		const { input } = command;
+		const { input , languageCode } = command;
 		const { invitedById } = input;
 
 		const expireDate = new Date();
 		expireDate.setDate(expireDate.getDate() + 7);
 
-		return await this.inviteService.update(input.id, {
-			status: InviteStatusEnum.INVITED,
-			expireDate,
-			invitedById
-		});
+		return await this.inviteService.resendEmail(input, invitedById, languageCode, expireDate);
 	}
 }

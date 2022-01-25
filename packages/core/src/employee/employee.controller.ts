@@ -1,5 +1,4 @@
 import {
-	IEmployeeCreateInput,
 	PermissionsEnum,
 	LanguagesEnum,
 	UpdateEmployeeJobsStatistics,
@@ -43,6 +42,8 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { CreateEmployeeDTO, EmployeeInputDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
+import { EmployeeBodyPayLoadTransform } from './pipes/employee-transformer.pipe';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -161,7 +162,7 @@ export class EmployeeController extends CrudController<Employee> {
 	 * TODO: This is a public service, the response should only contain
 	 * those fields (columns) of an employee that can be shown to the public
 	 */
-	async findAllEmployeesPublicData(
+	async findAllEmployeesPublic(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEmployee>> {
 		const { relations = [], findInput = null } = data;
@@ -255,11 +256,11 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body() entity: IEmployeeCreateInput[],
+		@Body(EmployeeBodyPayLoadTransform, new ValidationPipe({ transform: true })) entity: CreateEmployeeDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee[]> {
 		return await this.commandBus.execute(
-			new EmployeeBulkCreateCommand(entity, languageCode)
+			new EmployeeBulkCreateCommand(entity.list, languageCode)
 		);
 	}
 
@@ -384,7 +385,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post()
 	async create(
-		@Body() entity: IEmployeeCreateInput,
+		@Body(new ValidationPipe({ transform:true })) entity: EmployeeInputDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
@@ -418,10 +419,43 @@ export class EmployeeController extends CrudController<Employee> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Employee
+		@Body() entity: UpdateEmployeeDTO
+	): Promise<IEmployee> {
+		return await this.commandBus.execute(
+			new EmployeeUpdateCommand({
+				id,
+				...entity
+			})
+		);
+	}
+
+	/**
+	 * Update employee own profile by themsleves
+	 * 
+	 * @param id 
+	 * @param entity 
+	 * @returns 
+	 */
+	@ApiOperation({ summary: 'Update Employee Own Profile' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Records have been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PROFILE_EDIT)
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@Put('/:id/profile')
+	async updateProfile(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: UpdateProfileDTO
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
 			new EmployeeUpdateCommand({

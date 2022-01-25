@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty } from "class-validator";
-import { IUserCreateInput } from "@gauzy/contracts";
+import { IsEmail, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional } from "class-validator";
+import { IRole, IUserCreateInput } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
 
 /**
@@ -8,7 +8,7 @@ import { Transform, TransformFnParams } from "class-transformer";
  */
 export class CreateUserDTO implements IUserCreateInput {
 
-    @ApiProperty({ type: () => String })
+    @ApiProperty({ type: () => String, required : true })
     @IsNotEmpty()
     @IsEmail()
     @Transform((params: TransformFnParams) => params.value.trim())
@@ -16,12 +16,18 @@ export class CreateUserDTO implements IUserCreateInput {
 
     @ApiProperty({ type: () => String })
     @Transform((params: TransformFnParams) => params.value.trim())
-    readonly firstName: string;
+    readonly firstName?: string;
 
     @ApiProperty({ type: () => String })
     @Transform((params: TransformFnParams) => params.value.trim())
-    readonly lastName: string;
+    readonly lastName?: string;
 
     @ApiProperty({ type: () => String })
     readonly imageUrl?: string;
+
+    @ApiProperty({ type: () => Object })
+    @IsOptional()
+    @IsObject()
+    @IsNotEmptyObject()
+    readonly role?: IRole;
 }

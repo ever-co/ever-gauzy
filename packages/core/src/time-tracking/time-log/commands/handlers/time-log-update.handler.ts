@@ -107,7 +107,11 @@ export class TimeLogUpdateHandler
 					}))
 					.filter((slot) => slot.tenantId && slot.organizationId);
 
-				const timeSlots = await this.timeSlotService.bulkCreate(updateTimeSlots);
+				const timeSlots = await this.timeSlotService.bulkCreate(
+					updateTimeSlots,
+					employeeId,
+					organizationId
+				);
 				timeLog.timeSlots = timeSlots;
 			}
 

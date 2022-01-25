@@ -1,0 +1,9 @@
+export { UpdateProfileDTO } from './update-profile.dto';
+export { EmploymentDTO } from './employment.dto';
+export { HiringDTO } from './hiring.dto';
+export { SocialNetworksDTO } from './network.dto';
+export { RatesDTO } from './rates.dto';
+export { UpdateEmployeeDTO } from './update-employee.dto';
+export { CreateEmployeeDTO } from './create-employee.dto';
+export { EmployeeInputDTO } from './employee-input.dto';
+export { UserInputDTO } from './user-input-dto';

@@ -1,0 +1,1 @@
+export { HasRoleQueryDTO } from './has-role-query.dto';

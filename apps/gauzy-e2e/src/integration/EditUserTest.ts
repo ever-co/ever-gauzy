@@ -2,7 +2,7 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as editUserPage from '../support/Base/pages/EditUser.po';
 import * as addUserPage from '../support/Base/pages/AddUser.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { EditUserPageData } from '../support/Base/pagedata/EditUserPageData';
 import { AddUserPageData } from '../support/Base/pagedata/AddUserPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';

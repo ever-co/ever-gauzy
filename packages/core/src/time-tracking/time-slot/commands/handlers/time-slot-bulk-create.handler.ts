@@ -4,10 +4,7 @@ import { Repository, In } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { TimeSlot } from './../../time-slot.entity';
-import {
-	Employee,
-	TimeLog
-} from './../../../../core/entities/internal';
+import { TimeLog } from './../../../time-log/time-log.entity';
 import { TimeSlotBulkCreateCommand } from './../time-slot-bulk-create.command';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { RequestContext } from '../../../../core/context';
@@ -22,16 +19,13 @@ export class TimeSlotBulkCreateHandler
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
 
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
-
 		private readonly commandBus: CommandBus
 	) {}
 
 	public async execute(
 		command: TimeSlotBulkCreateCommand
 	): Promise<TimeSlot[]> {
-		let { slots } = command;
+		let { slots, employeeId, organizationId } = command;
 
 		if (slots.length === 0) {
 			return [];
@@ -42,12 +36,12 @@ export class TimeSlotBulkCreateHandler
 			return slot;
 		});
 
+		const tenantId = RequestContext.currentTenantId();
 		const insertedSlots = await this.timeSlotRepository.find({
 			where: {
 				startedAt: In(_.pluck(slots, 'startedAt')),
-				...(slots[0].employeeId
-					? { employeeId: slots[0].employeeId }
-					: {})
+				tenantId,
+				employeeId
 			}
 		});
 
@@ -68,19 +62,10 @@ export class TimeSlotBulkCreateHandler
 			return [];
 		}
 
-		let organizationId;
-		if (!slots[0].organizationId) {
-			const employee = await this.employeeRepository.findOne(
-				slots[0].employeeId
-			);
-			organizationId = employee.organizationId;
-		} else {
-			organizationId = slots[0].organizationId;
-		}
-
 		const timeLogs = await this.timeLogRepository.find({
 			where: {
-				id: In(_.chain(slots).pluck('timeLogId').flatten().value())
+				id: In(_.chain(slots).pluck('timeLogId').flatten().value()),
+				tenantId
 			}
 		});
 
@@ -96,7 +81,7 @@ export class TimeSlotBulkCreateHandler
 			if (!slot.organizationId) {
 				slot.organizationId = organizationId;
 			}
-			slot.tenantId = RequestContext.currentTenantId();
+			slot.tenantId = tenantId;
 			return slot;
 		});
 
@@ -113,7 +98,7 @@ export class TimeSlotBulkCreateHandler
 			return a > b ? a : b;
 		});
 		return await this.commandBus.execute(
-			new TimeSlotMergeCommand(slots[0].employeeId, mnDate, mxDate)
+			new TimeSlotMergeCommand(employeeId, mnDate, mxDate)
 		);
 	}
 }

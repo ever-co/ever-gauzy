@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
+import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
 	RolesEnum,
@@ -30,18 +30,17 @@ import {
 	styleUrls: ['employee-mutation.component.scss']
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
-	
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
-	
+
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
-
+	linear = true;
 	form: FormGroup;
 	role: IRole;
 	employees: IEmployeeCreateInput[] = [];
 	organization: IOrganization;
-	
+
 	constructor(
 		protected readonly dialogRef: NbDialogRef<EmployeeMutationComponent>,
 		protected readonly organizationsService: OrganizationsService,
@@ -56,8 +55,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
-				filter((organization) => !!organization),
-				tap((organization) => this.organization = organization),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -80,9 +79,21 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 	addEmployee() {
 		this.form = this.userBasicInfo.form;
-		
-		const { firstName, lastName, email, username, password, tags, imageUrl } = this.form.getRawValue();
-		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.getRawValue();
+		const {
+			firstName,
+			lastName,
+			email,
+			username,
+			password,
+			tags,
+			imageUrl
+		} = this.form.getRawValue();
+		const {
+			offerDate = null,
+			acceptDate = null,
+			rejectDate = null,
+			startedWorkOn = null
+		} = this.form.getRawValue();
 		const user: IUser = {
 			firstName: firstName,
 			lastName: lastName,
@@ -103,7 +114,9 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			rejectDate,
 			tags: tags
 		};
-		this.employees.push(employee);
+   		// Check form validity before to add an employe to the array of employees.
+		if (this.form.valid) this.employees.push(employee);
+    	// Reset form and stepper.
 		this.form.reset();
 		this.stepper.reset();
 	}
@@ -111,7 +124,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	async add() {
 		this.addEmployee();
 		try {
-			const employees =  await firstValueFrom(
+			const employees = await firstValueFrom(
 				this.employeesService.createBulk(this.employees)
 			);
 			this._employeeStore.employeeAction = {
@@ -122,5 +135,23 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
+	}
+
+	/**
+	 * Removed one employe in the array of employees.
+	 * @param tag 
+	 */
+	onEmployeeRemove(tag: NbTagComponent): void {
+		this.employees = this.employees.filter(
+			(t: IEmployeeCreateInput) => t.user.email !== tag.text
+		);
+	}
+
+	/**
+	 * Go to the next step without saving the data even if the form is valid.
+	 */
+	nextStep() {
+		this.form.reset();
+		this.stepper.next();
 	}
 }

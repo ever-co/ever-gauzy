@@ -2,7 +2,7 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 import * as goalsKPIPage from '../support/Base/pages/GoalsKPI.po';
 import { GoalsKPIPageData } from '../support/Base/pagedata/GoalsKPIPageData';

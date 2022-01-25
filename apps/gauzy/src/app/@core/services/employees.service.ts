@@ -4,7 +4,8 @@ import {
 	IEmployee,
 	IEmployeeFindInput,
 	IEmployeeCreateInput,
-	IEmployeeUpdateInput
+	IEmployeeUpdateInput,
+	IEmployeeUpdateProfileStatus
 } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -115,19 +116,9 @@ export class EmployeesService {
 		);
 	}
 
-	setEmployeeAsInactive(id: string): Promise<IEmployee> {
+	setEmployeeProfileStatus(id: string, status: IEmployeeUpdateProfileStatus): Promise<IEmployee> {
 		return firstValueFrom(
-			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
-				isActive: false
-			})
-		);
-	}
-
-	setEmployeeAsActive(id: string): Promise<IEmployee> {
-		return firstValueFrom(
-			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
-				isActive: true
-			})
+			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, status)
 		);
 	}
 
@@ -142,6 +133,12 @@ export class EmployeesService {
 	update(id: string, updateInput: IEmployeeUpdateInput): Promise<any> {
 		return firstValueFrom(
 			this.http.put(`${API_PREFIX}/employee/${id}`, updateInput)
+		);
+	}
+
+	updateProfile(id: string, payload: IEmployeeUpdateInput): Promise<IEmployee> {
+		return firstValueFrom(
+			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload)
 		);
 	}
 

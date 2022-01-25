@@ -53,10 +53,11 @@
 					<div class="row">
 						<div class="col">
 							<ngx-password-form-field
-								[id]="'password'"
+								id="'password'"
 								[placeholder]="'PROFILE_PAGE.PASSWORD' | translate"
 								[ctrl]="form.get('password')"
 								formControlName="password"
+                [autocomplete] = "'new-password'"
 							></ngx-password-form-field>
 						</div>
 						<div class="col">
@@ -65,8 +66,9 @@
 								[placeholder]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
 								[ctrl]="form.get('repeatPassword')"
 								formControlName="repeatPassword"
+                [autocomplete] = "'new-password'"
 							>
-								<div 
+								<div
 									*ngIf="FormHelpers.isInvalidControl(form, 'repeatPassword')"
 									class="invalid-feedback d-block"
 								>
@@ -97,7 +99,7 @@
 											: 'basic'
 									"
 								/>
-								<div 
+								<div
 									*ngIf="FormHelpers.isInvalidControl(form, 'email')"
 									class="invalid-feedback d-block"
 								>

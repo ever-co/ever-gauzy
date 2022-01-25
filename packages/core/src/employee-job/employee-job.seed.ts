@@ -1,6 +1,6 @@
 import { EmployeeJobPost } from './employee-job.entity';
 import { JobPost } from './jobPost.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import {
 	ICountry,
 	IEmployee,

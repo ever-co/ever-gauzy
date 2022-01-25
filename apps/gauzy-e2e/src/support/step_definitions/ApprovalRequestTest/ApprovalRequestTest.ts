@@ -4,7 +4,7 @@ import * as approvalRequestPage from '../../Base/pages/ApprovalRequest.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { ApprovalRequestPageData } from '../../Base/pagedata/ApprovalRequestPageData';
 import { CustomCommands } from '../../commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';

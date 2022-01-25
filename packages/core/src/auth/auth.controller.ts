@@ -11,7 +11,7 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
@@ -28,6 +28,7 @@ import { TransformInterceptor } from './../core/interceptors';
 import { Public } from './../shared/decorators';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { LoginUserDTO, RegisterUserDTO } from './../user/dto';
+import { HasRoleQueryDTO } from './dto';
 
 @ApiTags('Auth')
 @UseInterceptors(TransformInterceptor)
@@ -38,9 +39,10 @@ export class AuthController {
 		private readonly commandBus: CommandBus
 	) {}
 
-	@ApiOperation({ summary: 'Is authenticated' })
-	@ApiResponse({ status: HttpStatus.OK })
-	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
+	@ApiOperation({ summary: 'Check if user is authenticated' })
+	
+	@ApiOkResponse({ status: HttpStatus.OK, description:'The success server response' })
+	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, })
 	@Get('/authenticated')
 	@Public()
 	async authenticated(): Promise<boolean> {
@@ -52,8 +54,11 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/role')
-	async hasRole(@Query('roles') roles: string[]): Promise<boolean> {
-		return await this.authService.hasRole(roles);
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async hasRole(
+		@Query() query: HasRoleQueryDTO
+	): Promise<boolean> {
+		return await this.authService.hasRole(query.roles);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

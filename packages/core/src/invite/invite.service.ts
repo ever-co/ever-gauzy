@@ -191,6 +191,71 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 
+	async resendEmail(data, invitedById, languageCode, expireDate){
+		const {
+			id,
+			email,
+			roleName,
+			organization,
+			departmentNames,
+			clientNames
+		} = data
+
+		const status = InviteStatusEnum.INVITED;
+
+		const originUrl = this.configSerice.get('clientBaseUrl') as string;
+
+		const user: IUser = await this.userService.findOneByIdString(invitedById, {
+			relations: ['role']
+		});
+
+		const token = this.createToken(email);
+
+		const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
+
+		
+		try{
+			await this.update(id, {
+			   status,
+			   expireDate,
+			   invitedById,
+			   token
+			})
+			
+			if (data.inviteType === InvitationTypeEnum.USER) {
+				this.emailService.inviteUser({
+					email,
+					role: roleName,
+					organization: organization,
+					registerUrl,
+					originUrl,
+					languageCode,
+					invitedBy: user
+				});
+			} else if (data.inviteType === InvitationTypeEnum.EMPLOYEE || data.inviteType === InvitationTypeEnum.CANDIDATE) {
+				this.emailService.inviteEmployee({
+					email,
+					registerUrl,
+					organizationContacts: clientNames,
+					departments: departmentNames,
+					originUrl,
+					organization: organization,
+					languageCode,
+					invitedBy: user
+				});
+			}
+
+			
+			
+
+		}catch(error){
+			return error
+		}
+
+
+		
+	}
+
 	async sendAcceptInvitationEmail(
 		organization: IOrganization,
 		employee: IEmployee,

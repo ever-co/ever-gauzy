@@ -6,7 +6,7 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { TimeOffPolicy } from './time-off-policy.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { DEFAULT_TIMEOFF_POLICIES } from './default-time-off-policies';
 
 export const createDefaultTimeOffPolicy = async (

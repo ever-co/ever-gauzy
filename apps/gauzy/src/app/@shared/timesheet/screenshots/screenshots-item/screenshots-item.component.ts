@@ -10,17 +10,22 @@ import {
 	OrganizationPermissionsEnum,
 	ITimeSlot,
 	IScreenshot,
-	ITimeLog
+	ITimeLog,
+	IOrganization
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { isEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import * as _ from 'underscore';
 import { GalleryService } from '../../../gallery/gallery.service';
 import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
+import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-screenshots-item',
 	templateUrl: './screenshots-item.component.html',
@@ -28,11 +33,13 @@ import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	
+	public organization: IOrganization;
 	private _screenshots: IScreenshot[] = [];
 	private _timeSlot: ITimeSlot;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	progressStatus = progressStatus;
 
+	@Input() multiple: boolean = true;
 	@Input() selectionMode = false;
 	@Input() galleryItems: GalleryItem[] = [];
 	@Input() isSelected: boolean;
@@ -76,10 +83,22 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetService: TimesheetService,
-		private readonly galleryService: GalleryService
+		private readonly galleryService: GalleryService,
+		private readonly toastrService: ToastrService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly store: Store
 	) {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	toggleSelect(timeSlot: ITimeSlot): void {
 		if (timeSlot.isAllowDelete) {
@@ -88,20 +107,32 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	deleteSlot(timeSlot) {
-		this.timesheetService.deleteTimeSlots([timeSlot.id]).then(() => {
-			const screenshots = this._screenshots.map(
-				(screenshot: IScreenshot) => {
-					return {
-						thumbUrl: screenshot.thumbUrl,
-						fullUrl: screenshot.fullUrl,
-						...screenshot
-					};
+	deleteSlot(timeSlot: ITimeSlot) {
+		try {
+			this.timesheetService.deleteTimeSlots([timeSlot.id]).then(() => {
+				const screenshots = this._screenshots.map(
+					(screenshot: IScreenshot) => {
+						return {
+							thumbUrl: screenshot.thumbUrl,
+							fullUrl: screenshot.fullUrl,
+							...screenshot
+						};
+					}
+				);
+				this.galleryService.removeGalleryItems(screenshots);
+
+				const { employee } = timeSlot;
+				if (employee && employee.fullName) {
+					this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
+						name: `${employee.fullName.trim()}`,
+						organization: this.organization.name
+					});
 				}
-			);
-			this.galleryService.removeGalleryItems(screenshots);
-			this.delete.emit();
-		});
+				this.delete.emit();
+			});	
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 	}
 
 	viewInfo(timeSlot) {

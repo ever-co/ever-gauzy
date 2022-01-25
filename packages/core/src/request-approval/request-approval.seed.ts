@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';

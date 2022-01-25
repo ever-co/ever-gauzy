@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
 import {
@@ -12,25 +11,20 @@ import {
 export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	content: string;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
+	@Index()
 	@Column()
 	email: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
 	@Column({ nullable: true })
 	isArchived?: boolean;
 
@@ -50,8 +44,6 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Email) => it.user)
-	@IsString()
-	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	userId?: string;
@@ -65,8 +57,6 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Email) => it.emailTemplate)
-	@IsString()
-	@IsNotEmpty()
 	@Column({ nullable: false })
 	emailTemplateId: string;
 }

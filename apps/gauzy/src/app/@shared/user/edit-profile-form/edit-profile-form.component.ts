@@ -241,6 +241,10 @@ export class EditProfileFormComponent
 				request
 			)
 			.then(() => {
+				if((this.selectedUser ? this.selectedUser.id : this.store.userId) === this.store.user.id){
+					this.store.user.email = request.email;
+				}
+				  
 				this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 				this.userSubmitted.emit();
 				/**

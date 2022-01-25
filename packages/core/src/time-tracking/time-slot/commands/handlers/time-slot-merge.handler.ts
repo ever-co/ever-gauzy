@@ -4,10 +4,10 @@ import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
-import { ConfigService } from '@gauzy/config';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
+import { getDateFormat } from './../../../../core/utils';
 
 
 @CommandHandler(TimeSlotMergeCommand)
@@ -15,9 +15,7 @@ export class TimeSlotMergeHandler
 	implements ICommandHandler<TimeSlotMergeCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
-
-		private readonly configService: ConfigService
+		private readonly timeSlotRepository: Repository<TimeSlot>
 	) {}
 
 	public async execute(command: TimeSlotMergeCommand) {
@@ -42,24 +40,16 @@ export class TimeSlotMergeHandler
 			.set('second', 0)
 			.set('millisecond', 0);
 
-		console.log(
-			`Timeslot merge startDate=${startDate} and endDate=${endDate}`
+		const { start: startedAt, end: stoppedAt } = getDateFormat(
+			startDate,
+			endDate
 		);
-
-		if (this.configService.dbConnectionOptions.type === 'sqlite') {
-			startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
-			endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
-		} else {
-			startDate = startDate.toDate();
-			endDate = endDate.toDate();
-		}
-
 		const timerSlots = await this.timeSlotRepository.find({
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
-				query.andWhere(
-					`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`,
-					{ startDate, endDate }
-				);
+				query.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
+					startedAt,
+					stoppedAt
+				});
 				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
@@ -70,8 +60,6 @@ export class TimeSlotMergeHandler
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
-
-		console.log('Previous Inserted Timeslots:', timerSlots);
 
 		const createdTimeslots: any = [];
 		if (timerSlots.length > 0) {
@@ -112,7 +100,6 @@ export class TimeSlotMergeHandler
 					}
 
 					const timeSlotslength = oldTimeslots.filter((item) => item.keyboard !== 0).length;
-					console.log('Valid TimeSlots length:', timeSlotslength);
 					const activity = {
 						duration,
 						keyboard: Math.round(keyboard / timeSlotslength || 0),
@@ -136,7 +123,6 @@ export class TimeSlotMergeHandler
 
 
 					timeLogs = _.uniq(timeLogs, x => x.id);
-					console.log('Created Timelogs:',  timeLogs);
 
 					const newTimeSlot = new TimeSlot({
 						..._.omit(oldTimeslot),
@@ -164,7 +150,6 @@ export class TimeSlotMergeHandler
 				.value();
 			await Promise.all(savePromises);
 		}
-		console.log('Created Timeslots Merge Handler:',  createdTimeslots);
 		return createdTimeslots;
 	}
 }
