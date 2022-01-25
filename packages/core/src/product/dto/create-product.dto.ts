@@ -1,4 +1,4 @@
-import { IOrganization, IProductCategoryTranslatable, IProductCreateInput, IProductOptionGroupTranslatable, IProductOptionTranslatable, IProductTranslation, IProductTypeTranslatable, ITag, ITenant } from "@gauzy/contracts";
+import { IOrganization, IProductCategoryTranslatable, IProductCreateInput, IProductOptionGroupTranslatable, IProductOptionTranslatable, IProductTranslation, IProductTypeTranslatable, ITenant } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsArray, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString } from "class-validator";
 

@@ -18,7 +18,6 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import {
 	PermissionsEnum,
-	IProductCreateInput,
 	IProductTranslated,
 	IImageAsset,
 	IPagination,
@@ -392,9 +391,10 @@ export class ProductController extends CrudController<Product> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IProductCreateInput
+		@Body() entity: CreateProductDTO
 	): Promise<Product> {
 		return await this.commandBus.execute(
 			new ProductUpdateCommand(id, entity)
