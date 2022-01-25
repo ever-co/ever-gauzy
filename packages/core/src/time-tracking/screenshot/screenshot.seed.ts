@@ -1,6 +1,6 @@
 import { readdir, mkdirSync, copyFileSync } from 'fs';
 import * as path from 'path';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { Screenshot } from '../../core/entities/internal';

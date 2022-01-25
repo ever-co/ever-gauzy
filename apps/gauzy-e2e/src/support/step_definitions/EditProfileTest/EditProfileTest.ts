@@ -7,7 +7,7 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import { CustomCommands } from '../../commands';
 import * as addUserPage from '../../Base/pages/AddUser.po';
 import { AddUserPageData } from '../../Base/pagedata/AddUserPageData';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 

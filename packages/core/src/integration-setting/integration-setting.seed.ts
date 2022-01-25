@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { IntegrationSetting } from './integration-setting.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ITenant } from '@gauzy/contracts';
 import { IntegrationTenant, Organization } from './../core/entities/internal';
 

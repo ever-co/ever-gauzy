@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as addOrganizationPage from '../../Base/pages/AddOrganization.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { AddOrganizationPageData } from '../../Base/pagedata/AddOrganizationPageData';
 import * as deleteOrganizationPage from '../../Base/pages/DeleteOrganization.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';

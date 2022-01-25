@@ -123,7 +123,7 @@
 		"electron-updater": "~4.3.8",
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
-		"@nestjs/platform-express": "^8.0.0",
+		"@nestjs/platform-express": "^8.0.8",
 		"sound-play": "1.1.0",
 		"@sentry/electron": "2.4.0",
 		"underscore": "^1.13.0",		

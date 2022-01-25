@@ -4,7 +4,7 @@ import * as removeUserPage from '../support/Base/pages/RemoveUser.po';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import * as addUserPage from '../support/Base/pages/AddUser.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { AddUserPageData } from '../support/Base/pagedata/AddUserPageData';
 
 let firstName = ' ';

@@ -1,5 +1,4 @@
 import { Connection } from 'typeorm';
-import { date as fakerDate } from 'faker';
 import {
 	IEmployee,
 	IOrganization,
@@ -8,7 +7,7 @@ import {
 	IUser,
 	PayPeriodEnum
 } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
 import { Employee, Organization } from './../core/entities/internal';
@@ -75,7 +74,7 @@ export const createRandomEmployees = async (
 					employee.isActive = true;
 					employee.endWork = null;
 					employee.startedWorkOn = new Date(
-						moment(fakerDate.past(index % 5)).format(
+						moment(faker.date.past(index % 5)).format(
 							'YYYY-MM-DD hh:mm:ss'
 						)
 					);

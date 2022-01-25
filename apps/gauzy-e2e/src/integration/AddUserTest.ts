@@ -1,7 +1,7 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as addUserPage from '../support/Base/pages/AddUser.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { AddUserPageData } from '../support/Base/pagedata/AddUserPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';

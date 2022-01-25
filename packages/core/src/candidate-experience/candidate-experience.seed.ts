@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { ICandidate } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { CandidateExperience } from './candidate-experience.entity';
 import { Organization } from '../organization/organization.entity';
 
