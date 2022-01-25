@@ -37,8 +37,7 @@ import {
 } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
 import { CandidateBodyPayloadTransform } from './pipes';
-import { CreateCandidateListDTO } from './dto/create-candidate-list.dto';
-import { CreateCandidateDTO, UpdateCandidateDTO } from './dto';
+import { CreateCandidateDTO, UpdateCandidateDTO, CreateCandidateListDTO } from './dto';
 
 @ApiTags('Candidate')
 @UseGuards(TenantPermissionGuard)
