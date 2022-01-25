@@ -191,10 +191,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 
-	async resendEmail(data, invitedById, languageCode){
+	async resendEmail(data, invitedById, languageCode, expireDate){
 		const {
 			id,
-			expireDate,
 			email,
 			roleId,
 			organization,
@@ -204,8 +203,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		const status = InviteStatusEnum.INVITED;
 
-/* 		const organizationObj:IOrganization = await this.organizationRepository.findOne({name: organizationName})
- */
 		const originUrl = this.configSerice.get('clientBaseUrl') as string;
 
 		const user: IUser = await this.userService.findOneByIdString(invitedById, {

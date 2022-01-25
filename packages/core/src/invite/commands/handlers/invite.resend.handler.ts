@@ -18,9 +18,6 @@ export class InviteResendHandler
 		const expireDate = new Date();
 		expireDate.setDate(expireDate.getDate() + 7);
 
-		console.log(input)
-		console.log(languageCode)
-
-		return await this.inviteService.resendEmail(input, invitedById, languageCode);
+		return await this.inviteService.resendEmail(input, invitedById, languageCode, expireDate);
 	}
 }
