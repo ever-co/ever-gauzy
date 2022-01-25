@@ -20,7 +20,9 @@
   }
 
   .block-settings {
+    width: 150px;
     display: flex;
+    height: 84px;
     align-items: center;
     background-color: #333;
     justify-content: space-evenly;
@@ -50,12 +52,12 @@
 .block-content {
   display: flex;
   justify-content: space-between;
-
+  width: 100%;
   .block-info {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
-    width: 65rem;
+    width: fit-content;
     padding-left: 30px;
     .expense {
       display: flex;
@@ -63,13 +65,13 @@
       align-items: center;
       width: 100%;
       .block-item {
-        width: 12rem;
+        width: 11rem;
         display: flex;
         justify-content: flex-start;
         align-items: center;
       }
       .block-item-big {
-        width: 20.5rem;
+        width: 17.5rem;
         display: flex;
         justify-content: flex-start;
         align-items: center;
@@ -93,18 +95,26 @@
     }
   }
 
-  .block-value {
+  .block-panel{
     display: flex;
     justify-content: space-between;
-    width: 204px;
+    align-items: center;
+    width: 240px;
+    position: relative;
+  .block-value {
+    display: flex;
 
     align-items: center;
     padding-right: 30px;
 
-    .hide-menu,
+    .hide-menu {
+      cursor: pointer;
+    }
+
     .block-actions.open {
       cursor: pointer;
-      margin-left: auto;
+      position: absolute;
+      right: 35px;
     }
 
     small {
@@ -116,3 +126,12 @@
     }
   }
 }
+}
+
+@media screen and (max-width: 1438px) {
+  .setting-block{
+    width: fit-content;
+  }
+}
+
+
