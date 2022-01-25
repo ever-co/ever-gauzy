@@ -29,8 +29,11 @@ export class DeleteTimeSpanHandler
 
 	public async execute(command: DeleteTimeSpanCommand) {
 		const { newTime, timeLog } = command;
+		const { id } = timeLog;
 		const { start, end } = newTime;
-		const { startedAt, stoppedAt, employeeId } = timeLog;
+
+		const refreshTimeLog = await this.timeLogRepository.findOne(id);
+		const { startedAt, stoppedAt, employeeId } = refreshTimeLog;
 
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
