@@ -5,87 +5,87 @@ import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-valida
 export class CreateEquipmentDTO implements IEquipment {
 
     @ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsString()
+    @IsNotEmpty()
+    @IsString()
     readonly name: string;
 
     @ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsString()
+    @IsOptional()
+    @IsString()
     readonly type: string;
 
     @ApiProperty({ type: () => Object })
-	@IsOptional()
+    @IsOptional()
     readonly image: IImageAsset;
 
     @ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsString()
+    @IsOptional()
+    @IsString()
     readonly serialNumber?: string;
 
     @ApiProperty({ type: () => Number })
-	@IsOptional()
-	@IsNumber()
+    @IsOptional()
+    @IsNumber()
     readonly manufacturedYear: number;
 
     @ApiProperty({ type: () => Number })
-	@IsOptional()
-	@IsNumber()
+    @IsOptional()
+    @IsNumber()
     readonly initialCost: number;
 
     @ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsString()
+    @IsOptional()
+    @IsString()
     readonly currency: string;
 
     @ApiProperty({ type: () => Number })
-	@IsOptional()
-	@IsNumber()
+    @IsOptional()
+    @IsNumber()
     readonly maxSharePeriod: number;
 
     @ApiProperty({ type: () => Boolean })
-	@IsOptional()
+    @IsOptional()
     readonly autoApproveShare: boolean;
 
     @ApiProperty({ type: () => Object })
-	@IsOptional()
+    @IsOptional()
     readonly equipmentSharings: IEquipmentSharing[];
 
     @ApiProperty({ type: () => Object })
-	@IsOptional()
+    @IsOptional()
     readonly tags: ITag[];
 
     @ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsString()
+    @IsOptional()
+    @IsString()
     readonly organizationId?: string;
 
     @ApiProperty({ type: () => Object })
-	@IsOptional()
+    @IsOptional()
     readonly organization?: IOrganization;
 
     @ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsString()
+    @IsOptional()
+    @IsString()
     readonly tenantId?: string;
 
     @ApiProperty({ type: () => Object })
-	@IsOptional()
+    @IsOptional()
     readonly tenant?: ITenant;
 
     @ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsString()
+    @IsOptional()
+    @IsString()
     readonly id?: string;
 
     @ApiProperty({ type: () => Date })
-	@IsOptional()
-	@IsDate()
+    @IsOptional()
+    @IsDate()
     readonly createdAt?: Date;
 
     @ApiProperty({ type: () => Date })
-	@IsOptional()
-	@IsDate()
+    @IsOptional()
+    @IsDate()
     readonly updatedAt?: Date;
 
 }

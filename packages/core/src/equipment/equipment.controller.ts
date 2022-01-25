@@ -52,7 +52,7 @@ export class EquipmentController extends CrudController<Equipment> {
 			relations
 		});
 	}
-	
+
 	@ApiOperation({ summary: 'Update an existing equipment' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
