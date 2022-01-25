@@ -53,10 +53,25 @@ export class EquipmentController extends CrudController<Equipment> {
 		});
 	}
 	
+	@ApiOperation({ summary: 'Update an existing equipment' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IEquipment,
+		@Body() entity: CreateEquipmentDTO,
 		...options: any[]
 	): Promise<any> {
 		return this.equipmentService.save(entity);
