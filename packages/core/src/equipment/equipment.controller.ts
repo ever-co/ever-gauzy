@@ -10,12 +10,15 @@ import {
 	Param,
 	Body,
 	Query,
-	Post
+	Post,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { IEquipment, IPagination } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateEquipmentDTO } from './dto';
 
 @ApiTags('Equipment')
 @UseGuards(TenantPermissionGuard)
@@ -59,9 +62,20 @@ export class EquipmentController extends CrudController<Equipment> {
 		return this.equipmentService.save(entity);
 	}
 
+	@ApiOperation({ summary: 'New equipment record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }) )
 	async create(
-		@Body() entity: IEquipment,
+		@Body() entity: CreateEquipmentDTO,
 		...options: any[]
 	): Promise<any> {
 		return this.equipmentService.save(entity);

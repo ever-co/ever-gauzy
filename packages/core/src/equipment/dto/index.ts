@@ -1,0 +1,1 @@
+export { CreateEquipmentDTO } from "./create-equipment.dto"
