@@ -356,7 +356,7 @@ export class InvitesComponent
 						}
 						const { tenantId } = this.store.user;
 
-						const { id, email, departmentNames, clientNames } = this.selectedInvite;
+						const { id, email, departmentNames, roleName, clientNames } = this.selectedInvite;
 						console.log(this.selectedInvite)
 						
 						const role = await firstValueFrom(this.rolesService.getRoleByName({
@@ -369,10 +369,11 @@ export class InvitesComponent
 							id,
 							invitedById: this.store.userId,
 							email,
-							roleId: role.id,
+							roleName,
 							organization: this.organization,
 							departmentNames,
-							clientNames
+							clientNames,
+							inviteType: this.invitationType
 							
 						}).then(() => {
 							this.toastrService.success('TOASTR.MESSAGE.INVITES_RESEND', {

@@ -195,7 +195,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const {
 			id,
 			email,
-			roleId,
+			roleName,
 			organization,
 			departmentNames,
 			clientNames
@@ -209,13 +209,11 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			relations: ['role']
 		});
 
-		const role: IRole = await this.roleRepository.findOne(roleId);
-
 		const token = this.createToken(email);
 
 		const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
 
-
+		
 		try{
 			await this.update(id, {
 			   status,
@@ -223,18 +221,18 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			   invitedById,
 			   token
 			})
-
-			if (role.name === InvitationTypeEnum.USER) {
+			
+			if (data.inviteType === InvitationTypeEnum.USER) {
 				this.emailService.inviteUser({
 					email,
-					role: role.name,
+					role: roleName,
 					organization: organization,
 					registerUrl,
 					originUrl,
 					languageCode,
 					invitedBy: user
 				});
-			} else if (role.name === InvitationTypeEnum.EMPLOYEE || role.name === InvitationTypeEnum.CANDIDATE) {
+			} else if (data.inviteType === InvitationTypeEnum.EMPLOYEE || data.inviteType === InvitationTypeEnum.CANDIDATE) {
 				this.emailService.inviteEmployee({
 					email,
 					registerUrl,
