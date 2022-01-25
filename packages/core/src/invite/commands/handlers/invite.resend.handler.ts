@@ -1,4 +1,4 @@
-import { IInvite, InviteStatusEnum } from '@gauzy/contracts';
+import { IInvite } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { InviteService } from '../../invite.service';
