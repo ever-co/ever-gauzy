@@ -232,6 +232,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }) )
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateCandidateDTO
