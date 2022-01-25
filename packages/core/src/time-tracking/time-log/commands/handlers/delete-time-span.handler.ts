@@ -59,7 +59,12 @@ export class DeleteTimeSpanHandler
 		}
 
 		if (
-			moment(startedAt).isBetween(moment(start), moment(end), null, '[]')
+			moment(startedAt).isBetween(
+				moment(start),
+				moment(end),
+				null,
+				'[]'
+			)
 		) {
 			if (
 				moment(stoppedAt).isBetween(
@@ -76,9 +81,14 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time				DB Stop Time
 				 *  		|--------------------------------------|
 				 */
-				await this.commandBus.execute(
-					new TimeLogDeleteCommand(timeLog, true)
-				);
+				console.log('Delete time log because overlap entire time.')
+				try {
+					await this.commandBus.execute(
+						new TimeLogDeleteCommand(timeLog, true)
+					);
+				} catch (error) {
+					console.log('Error while, delete time log because overlap entire time.', error)
+				}
 			} else {
 				/*
 				 * Update start time
@@ -92,29 +102,39 @@ export class DeleteTimeSpanHandler
 					'seconds'
 				);
 				if (remainingDuration > 0) {
-					await this.commandBus.execute(
-						new TimeLogUpdateCommand(
-							{
-								startedAt: end
-							},
-							timeLog,
-							true
-						)
-					);
-					return await this.commandBus.execute(
-						new TimeSlotRangeDeleteCommand(
-							employeeId,
-							start,
-							end
-						)
-					);
+					try {
+						console.log('Update startedAt time.');
+						await this.commandBus.execute(
+							new TimeLogUpdateCommand(
+								{
+									startedAt: end
+								},
+								timeLog,
+								true
+							)
+						);
+						await this.commandBus.execute(
+							new TimeSlotRangeDeleteCommand(
+								employeeId,
+								start,
+								end
+							)
+						);
+					} catch (error) {
+						console.log('Error while, updating startedAt time', error);
+					}
 				} else {
-					/*
-					 * Delete if remaining duration 0 seconds
-					 */
-					await this.commandBus.execute(
-						new TimeLogDeleteCommand(timeLog, true)
-					);
+					console.log('Delete startedAt time log.');
+					try {
+						/*
+						* Delete if remaining duration 0 seconds
+						*/
+						await this.commandBus.execute(
+							new TimeLogDeleteCommand(timeLog, true)
+						);
+					} catch (error) {
+						console.log('Error while, deleting time log for startedAt time', error);
+					}
 				}
 			}
 		} else {
@@ -138,29 +158,39 @@ export class DeleteTimeSpanHandler
 					'seconds'
 				);
 				if (remainingDuration > 0) {
-					await this.commandBus.execute(
-						new TimeLogUpdateCommand(
-							{
-								stoppedAt: start
-							},
-							timeLog,
-							true
-						)
-					);
-					return await this.commandBus.execute(
-						new TimeSlotRangeDeleteCommand(
-							employeeId,
-							start,
-							end
-						)
-					);
+					console.log('Update stoppedAt time.');
+					try {
+						await this.commandBus.execute(
+							new TimeLogUpdateCommand(
+								{
+									stoppedAt: start
+								},
+								timeLog,
+								true
+							)
+						);
+						await this.commandBus.execute(
+							new TimeSlotRangeDeleteCommand(
+								employeeId,
+								start,
+								end
+							)
+						);
+					} catch (error) {
+						console.log('Error while, updating stoppedAt time', error);
+					}
 				} else {
-					/*
-					 * Delete if remaining duration 0 seconds
-					 */
-					await this.commandBus.execute(
-						new TimeLogDeleteCommand(timeLog, true)
-					);
+					console.log('Delete stoppedAt time log.');
+					try {
+						/*
+						* Delete if remaining duration 0 seconds
+						*/
+						await this.commandBus.execute(
+							new TimeLogDeleteCommand(timeLog, true)
+						);
+					} catch (error) {
+						console.log('Error while, deleting time log for stoppedAt time', error);
+					}
 				}
 			} else {
 				/*
@@ -170,6 +200,7 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time (startedAt)	DB Stop Time (stoppedAt)
 				 *  		|--------------------------------------------------|
 				 */
+				console.log('Split database time in two entries.');
 				const remainingDuration = moment(start).diff(
 					moment(startedAt),
 					'seconds'
@@ -181,15 +212,23 @@ export class DeleteTimeSpanHandler
 				]);
 				try {
 					if (remainingDuration > 0) {
-						timeLog.stoppedAt = start;
-						await this.timeLogRepository.save(timeLog);
+						try {
+							timeLog.stoppedAt = start;
+							await this.timeLogRepository.save(timeLog);
+						} catch (error) {
+							console.error(`Error while updating old timelog`, error);						
+						}
 					} else {
 						/*
-						 * Delete if remaining duration 0 seconds
-						 */
-						await this.commandBus.execute(
-							new TimeLogDeleteCommand(timeLog, true)
-						);
+						* Delete if remaining duration 0 seconds
+						*/
+						try {
+							await this.commandBus.execute(
+								new TimeLogDeleteCommand(timeLog, true)
+							);
+						} catch (error) {
+							console.error(`Error while deleting old timelog`, error);						
+						}
 					}
 					await this.commandBus.execute(
 						new TimeSlotRangeDeleteCommand(
@@ -213,7 +252,12 @@ export class DeleteTimeSpanHandler
 				 * Insert if remaining duration is more 0 seconds
 				 */
 				if (newLogRemainingDuration > 0) {
-					await this.timeLogRepository.save(newLog);
+					try {
+						await this.timeLogRepository.save(newLog);
+					} catch (error) {
+						console.log('Error while creating new log', error, newLog);
+					}
+
 					try {
 						const timeSlots = await this.syncTimeSlots(newLog);
 						if (isNotEmpty(timeSlots)) {
@@ -224,7 +268,11 @@ export class DeleteTimeSpanHandler
 								timeSlot.timeLogs = timeLogs;
 							}
 
-							await this.timeSlotRepository.save(timeSlots);
+							try {
+								await this.timeSlotRepository.save(timeSlots);
+							} catch (error) {
+								console.log('Error while creating new TimeSlot & TimeLog entires', error, timeSlots)
+							}
 						}
 					} catch (error) {
 						console.log('Error while synce TimeSlot & TimeLog', error)
