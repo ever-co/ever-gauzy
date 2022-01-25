@@ -27,7 +27,7 @@ import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	CandidateCreateCommand,
 	CandidateBulkCreateCommand,
@@ -36,7 +36,6 @@ import {
 	CandidateRejectedCommand
 } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
-import { CandidateBodyPayloadTransform } from './pipes';
 import { CreateCandidateDTO, UpdateCandidateDTO, CreateCandidateListDTO } from './dto';
 
 @ApiTags('Candidate')
@@ -73,7 +72,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body( CandidateBodyPayloadTransform, new ValidationPipe({ transform : true })) body: CreateCandidateListDTO,
+		@Body( BulkBodyLoadTransformPipe, new ValidationPipe({ transform : true })) body: CreateCandidateListDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ICandidate[]> {
 		return await this.commandBus.execute(

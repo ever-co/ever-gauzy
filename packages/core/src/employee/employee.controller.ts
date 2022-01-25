@@ -38,12 +38,11 @@ import { CrudController, ITryRequest, PaginationParams } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { TransformInterceptor } from './../core/interceptors';
 import { Permissions, Public } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { CreateEmployeeDTO, EmployeeInputDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
-import { EmployeeBodyPayLoadTransform } from './pipes/employee-transformer.pipe';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -256,7 +255,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body(EmployeeBodyPayLoadTransform, new ValidationPipe({ transform: true })) entity: CreateEmployeeDTO,
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity: CreateEmployeeDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee[]> {
 		return await this.commandBus.execute(
