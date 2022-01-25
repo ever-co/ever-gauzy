@@ -14,7 +14,7 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import * as moment from 'moment-timezone';
-import { InviteService, Store, ToastrService } from '../../../@core/services';
+import { InviteService, Store, ToastrService, RoleService } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
@@ -64,7 +64,9 @@ export class InvitesComponent
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly translate: TranslateService,
-		private readonly inviteService: InviteService
+		private readonly inviteService: InviteService,
+		private readonly rolesService: RoleService
+
 	) {
 		super(translate);
 		this.setView();
@@ -352,23 +354,26 @@ export class InvitesComponent
 							this.toastrService.danger('Invitation is not selected');
 							return;
 						}
+						const { tenantId } = this.store.user;
 
-						/* email: item.email,
-						role: role.name,
-						organization: organization,
-						registerUrl,
-						originUrl,
-						languageCode,
-						invitedBy: user */
-
-						const { id, email, roleName, inviteUrl } = this.selectedInvite;
+						const { id, email, departmentNames, clientNames } = this.selectedInvite;
 						console.log(this.selectedInvite)
+						
+						const role = await firstValueFrom(this.rolesService.getRoleByName({
+							name: this.getSelectedPersonRole(),
+							tenantId
+							})
+						);
+
 						await this.inviteService.resendInvite({
 							id,
 							invitedById: this.store.userId,
 							email,
-							role: roleName,
-							organization: this.organization.name
+							roleId: role.id,
+							organization: this.organization,
+							departmentNames,
+							clientNames
+							
 						}).then(() => {
 							this.toastrService.success('TOASTR.MESSAGE.INVITES_RESEND', {
 								email
@@ -382,6 +387,23 @@ export class InvitesComponent
 					}
 				}
 			});
+	}
+
+	getSelectedPersonRole = () => {
+		if (this.isEmployeeInvitation()) {
+			return RolesEnum.EMPLOYEE;
+		}
+		if (this.isCandidateInvitation()) {
+			return RolesEnum.CANDIDATE;
+		}
+	};
+
+	isEmployeeInvitation() {
+		return this.selectedInvite.roleName === InvitationTypeEnum.EMPLOYEE;
+	}
+
+	isCandidateInvitation() {
+		return this.selectedInvite.roleName === InvitationTypeEnum.CANDIDATE;
 	}
 
 	private _applyTranslationOnSmartTable() {

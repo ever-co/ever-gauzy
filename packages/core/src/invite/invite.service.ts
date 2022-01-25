@@ -196,16 +196,26 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			id,
 			expireDate,
 			email,
-			role,
+			roleId,
 			organization,
+			departmentNames,
+			clientNames
 		} = data
 
 		const status = InviteStatusEnum.INVITED;
+
+/* 		const organizationObj:IOrganization = await this.organizationRepository.findOne({name: organizationName})
+ */
 		const originUrl = this.configSerice.get('clientBaseUrl') as string;
+
 		const user: IUser = await this.userService.findOneByIdString(invitedById, {
 			relations: ['role']
 		});
+
+		const role: IRole = await this.roleRepository.findOne(roleId);
+
 		const token = this.createToken(email);
+
 		const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
 
 
@@ -217,26 +227,31 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			   token
 			})
 
-			this.emailService.inviteUser({
-				email,
-				role,
-				organization,
-				registerUrl,
-				originUrl,
-				languageCode,
-				invitedBy: user
-			});
+			if (role.name === InvitationTypeEnum.USER) {
+				this.emailService.inviteUser({
+					email,
+					role: role.name,
+					organization: organization,
+					registerUrl,
+					originUrl,
+					languageCode,
+					invitedBy: user
+				});
+			} else if (role.name === InvitationTypeEnum.EMPLOYEE || role.name === InvitationTypeEnum.CANDIDATE) {
+				this.emailService.inviteEmployee({
+					email,
+					registerUrl,
+					organizationContacts: clientNames,
+					departments: departmentNames,
+					originUrl,
+					organization: organization,
+					languageCode,
+					invitedBy: user
+				});
+			}
 
-			/* this.emailService.inviteEmployee({
-				email 
-				registerUrl,
-				organizationContacts,
-				departments,
-				originUrl,
-				organization: organization,
-				languageCode,
-				invitedBy: user
-			}); */
+			
+			
 
 		}catch(error){
 			return error

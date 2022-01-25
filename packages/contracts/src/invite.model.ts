@@ -32,8 +32,10 @@ export interface IInviteResendInput {
 	id: string;
 	invitedById: string;
 	email: string;
-	role: string;
-	organization: string;
+	roleId: string;
+	organization: IOrganization;
+	departmentNames?: string[];
+	clientNames?: string[];
 }
 
 export interface ICreateEmailInvitesInput
