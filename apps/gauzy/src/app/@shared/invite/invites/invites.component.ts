@@ -354,17 +354,9 @@ export class InvitesComponent
 							this.toastrService.danger('Invitation is not selected');
 							return;
 						}
-						const { tenantId } = this.store.user;
 
 						const { id, email, departmentNames, roleName, clientNames } = this.selectedInvite;
-						console.log(this.selectedInvite)
 						
-						const role = await firstValueFrom(this.rolesService.getRoleByName({
-							name: this.getSelectedPersonRole(),
-							tenantId
-							})
-						);
-
 						await this.inviteService.resendInvite({
 							id,
 							invitedById: this.store.userId,

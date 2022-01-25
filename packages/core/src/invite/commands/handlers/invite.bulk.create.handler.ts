@@ -12,7 +12,7 @@ export class InviteBulkCreateHandler
 
 	public async execute(command: InviteBulkCreateCommand) {
 		const { input, languageCode } = command;
-		console.log(input)
+		
 		return await this.inviteService.createBulk(
 			input,
 			languageCode
