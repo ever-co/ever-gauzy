@@ -368,8 +368,7 @@ export class InvitesComponent
 							invitedById: this.store.userId,
 							email,
 							role: roleName,
-							organization: this.organization.name,
-							registerUrl: inviteUrl,
+							organization: this.organization.name
 						}).then(() => {
 							this.toastrService.success('TOASTR.MESSAGE.INVITES_RESEND', {
 								email

@@ -197,7 +197,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			expireDate,
 			email,
 			role,
-			registerUrl,
 			organization,
 		} = data
 
@@ -206,6 +205,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const user: IUser = await this.userService.findOneByIdString(invitedById, {
 			relations: ['role']
 		});
+		const token = this.createToken(email);
+		const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
 
 
 		try{
@@ -213,6 +214,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			   status,
 			   expireDate,
 			   invitedById,
+			   token
 			})
 
 			this.emailService.inviteUser({

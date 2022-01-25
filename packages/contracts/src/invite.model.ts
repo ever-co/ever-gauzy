@@ -34,7 +34,6 @@ export interface IInviteResendInput {
 	email: string;
 	role: string;
 	organization: string;
-	registerUrl: string;
 }
 
 export interface ICreateEmailInvitesInput
