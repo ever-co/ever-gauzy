@@ -5,7 +5,6 @@ import { IsOptional, IsEnum } from "class-validator";
 export abstract class OrganizationSettingDTO {
 
     @ApiProperty({ type: () => String, enum: DefaultValueDateTypeEnum })
-	@IsOptional()
 	@IsEnum(DefaultValueDateTypeEnum)
 	readonly defaultValueDateType: DefaultValueDateTypeEnum;
 

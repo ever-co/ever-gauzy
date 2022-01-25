@@ -23,7 +23,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
-import { CreateOrganizationDTO } from './dto';
+import { CreateOrganizationDTO, UpdateOrganizationDTO } from './dto';
 
 
 @ApiTags('Organization')
@@ -150,7 +150,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: CreateOrganizationDTO
+		@Body() entity: UpdateOrganizationDTO
 	): Promise<IOrganization> {
 		return await this.commandBus.execute(
 			new OrganizationUpdateCommand({ id, ...entity })
