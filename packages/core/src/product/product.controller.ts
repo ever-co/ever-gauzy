@@ -36,6 +36,7 @@ import {
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateProductDTO } from './dto';
 
 
 @ApiTags('Product')
@@ -357,8 +358,9 @@ export class ProductController extends CrudController<Product> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }) )
 	async create(
-		@Body() entity: IProductCreateInput
+		@Body() entity: CreateProductDTO
 	): Promise<Product> {
 		return await this.commandBus.execute(
 			new ProductCreateCommand(entity)
