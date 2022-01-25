@@ -7,15 +7,18 @@ import {
 	Body,
 	Param,
 	Put,
-	HttpCode
+	HttpCode,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { IEmail, IEmailUpdateInput, IPagination } from '@gauzy/contracts';
+import { IEmail, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
+import { UpdateEmailDTO } from './dto';
 
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard)
@@ -70,9 +73,10 @@ export class EmailController extends CrudController<Email> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string, 
-		@Body() entity: IEmailUpdateInput
+		@Body() entity: UpdateEmailDTO
 	): Promise<any> {
 		return await this.emailService.update(id, entity);
 	}

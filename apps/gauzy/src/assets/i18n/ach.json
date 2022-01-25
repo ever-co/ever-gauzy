@@ -3159,7 +3159,8 @@
 			"RECURRING_EXPENSE_UPDATED": "crwdns9158:0{{ name }}crwdne9158:0",
 			"RECURRING_EXPENSE_DELETED": "crwdns9160:0{{ name }}crwdne9160:0",
 			"IMAGE_UPDATED": "crwdns9162:0crwdne9162:0",
-			"ORGANIZATION_PAGE_UPDATED": "crwdns9164:0{{ name }}crwdne9164:0"
+			"ORGANIZATION_PAGE_UPDATED": "crwdns9164:0{{ name }}crwdne9164:0",
+			"SCREENSHOT_DELETED": "crwdns10883:0{{ name }}crwdnd10883:0{{ organization }}crwdne10883:0"
 		}
 	},
 	"ACCEPT_INVITE": {
