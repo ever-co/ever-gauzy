@@ -35,7 +35,7 @@ export class DeleteTimeSlotHandler
 		}
 
 		const tenantId = RequestContext.currentTenantId();
-		for await (const id of ids) {
+		for await (const id of Object.values(ids)) {
 			const timeSlots = await this.timeSlotRepository.find({
 				where: (query: SelectQueryBuilder<TimeSlot>) => {
 					query.andWhere(
