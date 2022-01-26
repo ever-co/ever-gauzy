@@ -437,9 +437,19 @@
 						</nb-list>
 					</ng-template>
 					<ng-template #noProjects>
-						<div class="text-center p-3" *ngIf="!projectsLoading">
-							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY' | translate }}
-						</div>
+						<ng-container *ngIf="!projectsLoading" [ngSwitch]="selectedPeriod">
+							<div class="text-center p-3">
+								<ng-template [ngSwitchCase]="RangePeriod.DAY">
+									{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+									{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+									{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
+								</ng-template>
+							</div>
+						</ng-container>
 					</ng-template>
 				</nb-card>
 
@@ -467,9 +477,19 @@
 						</nb-list>
 					</ng-template>
 					<ng-template #noActivities>
-						<div class="text-center p-3" *ngIf="!activitiesLoading">
-							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY' | translate }}
-						</div>
+						<ng-container *ngIf="!activitiesLoading" [ngSwitch]="selectedPeriod">
+							<div class="text-center p-3">
+								<ng-template [ngSwitchCase]="RangePeriod.DAY">
+									{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+									{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+									{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
+								</ng-template>
+							</div>
+						</ng-container>
 					</ng-template>
 				</nb-card>
 
@@ -604,9 +624,19 @@
 						</nb-list>
 					</ng-template>
 					<ng-template #noMember>
-						<div class="text-center p-3" *ngIf="!memberLoading">
-							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY' | translate }}
-						</div>
+						<ng-container *ngIf="!memberLoading" [ngSwitch]="selectedPeriod">
+							<div class="text-center p-3">
+								<ng-template [ngSwitchCase]="RangePeriod.DAY">
+									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}				
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}
+								</ng-template>
+							</div>
+						</ng-container>
 					</ng-template>
 				</nb-card>
 			</div>

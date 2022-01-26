@@ -32,6 +32,12 @@ import { Store } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 
+export enum RangePeriod {
+	DAY = "DAY",
+	WEEK = "WEEK",
+	PERIOD = "PERIOD"
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-tracking',
@@ -63,6 +69,7 @@ export class TimeTrackingComponent
 
 	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
+	public readonly RangePeriod = RangePeriod;
 	
 	employeeId: string = null;
 	projectId: string = null;
@@ -417,6 +424,25 @@ export class TimeTrackingComponent
 		this.selectedDateRange = {
 			start: this.today,
 			end: this.today,
+		}
+	}
+
+	/**
+	 * Get selected date range period
+	 */
+	get selectedPeriod(): RangePeriod {
+		const { start, end, isCustomDate } = this.selectedDateRange;
+
+		const startDate = moment(start);
+		const endDate = moment(end);
+		const days = endDate.diff(startDate, 'days');
+		
+		if (days === 6 && isCustomDate === false) {
+			return RangePeriod.WEEK;
+		} else if (days === 0 && isCustomDate === true) {
+			return RangePeriod.DAY;
+		} else {
+			return RangePeriod.PERIOD
 		}
 	}
 }
