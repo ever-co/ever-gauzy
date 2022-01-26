@@ -159,12 +159,16 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>
-									{{ selectedDateRange.isCustomDate ? 
-										('TIMESHEET.ACTIVITY' | translate) : 
-										('TIMESHEET.WEEKLY_ACTIVITY' | translate)
-									}}
-								</p>
+								<ng-container [ngSwitch]="selectedPeriod">
+									<p>
+										<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+											{{ 'TIMESHEET.ACTIVITY' | translate }}
+										</ng-template>
+										<ng-template [ngSwitchDefault]>
+											{{ 'TIMESHEET.WEEKLY_ACTIVITY' | translate }}
+										</ng-template>
+									</p>
+								</ng-container>
 								<div class="h1">
 									{{ counts?.weekActivities || 0 }}%
 								</div>
@@ -178,12 +182,16 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>
-									{{ selectedDateRange.isCustomDate ? 
-										('TIMESHEET.THIS_WEEK' | translate) : 
-										('TIMESHEET.WORKED_THIS_WEEK' | translate)
-									}}
-								</p>
+								<ng-container [ngSwitch]="selectedPeriod">
+									<p>
+										<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+											{{ 'TIMESHEET.WORKED_OVER_PERIOD' | translate }}
+										</ng-template>
+										<ng-template [ngSwitchDefault]>
+											{{ 'TIMESHEET.WORKED_THIS_WEEK' | translate }}
+										</ng-template>
+									</p>
+								</ng-container>
 								<div class="h1">
 									{{ counts?.weekDuration || 0 | durationFormat }}
 								</div>
@@ -549,13 +557,16 @@
 													| translate
 											}}
 										</div>
-										<div class="col-sm-2 text-center">
+										<div class="col-2 text-center">
 											{{ 'TIMESHEET.TODAY' | translate }}
 										</div>
-										<div class="col-sm-3 text-center">
-											{{
-												'TIMESHEET.THIS_WEEK'
-													| translate
+										<div class="col-3 text-center">
+											{{ 
+												(
+													(selectedPeriod ===  RangePeriod.PERIOD) ? 
+													'TIMESHEET.OVER_PERIOD' : 
+													'TIMESHEET.THIS_WEEK'
+												) | translate
 											}}
 										</div>
 									</div>
@@ -571,7 +582,7 @@
 												[id]="member?.id"
 											></ngx-avatar>
 										</div>
-										<div class="col-sm-2 text-center">
+										<div class="col-2 text-center">
 											<div class="activity">
 												<div class="duration">
 													{{
@@ -600,8 +611,8 @@
 												</div>
 											</div>
 										</div>
-										<div class="col-sm-3 text-center">
-											<div class="d-flex">
+										<div class="col-3 text-center">
+											<div [ngClass]="!isMoreThanWeek() ? 'd-flex': ''">
 												<div
 													class="activity text-center"
 												>
@@ -632,20 +643,15 @@
 														></nb-badge>
 													</div>
 												</div>
-												<div
-													class="member-weekly-activity-graph"
-												>
-													<div
-														class="bar-graph-entry"
-														*ngFor="
-															let weekHour of member.weekHours
-														"
-														[style.height]="
-															weekHour.duration +
-															'%'
-														"
-													></div>
-												</div>
+												<ng-container *ngIf="!isMoreThanWeek()">
+													<div class="member-weekly-activity-graph">
+														<div
+															*ngFor="let weekHour of member.weekHours"
+															class="bar-graph-entry"
+															[style.height]="weekHour.duration + '%'"
+														></div>
+													</div>
+												</ng-container>
 											</div>
 										</div>
 									</div>

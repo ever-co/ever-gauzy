@@ -445,4 +445,15 @@ export class TimeTrackingComponent
 			return RangePeriod.PERIOD
 		}
 	}
+
+	/**
+	 * If, selected date range are more than a week
+	 */
+	isMoreThanWeek(): boolean {
+		const { start, end } = this.selectedDateRange;
+		if (start && end) {
+			return moment(end).diff(moment(start), 'weeks') > 0;
+		}
+		return false;
+	}
 }
