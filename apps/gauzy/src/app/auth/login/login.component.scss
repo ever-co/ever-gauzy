@@ -59,10 +59,22 @@ nb-accordion-item-header{
 	.demo-credentials-head-text {
 		display: block;
 	}
-	
+
 	.demo-credentials-card{
 	  width: 146px;
 	  right: 0px;
 	  top:45.5%
 	}
+}
+
+.password-field-custom{
+  position: relative;
+  display: flex;
+  align-items: center;
+  a{
+    position: absolute;
+    right: 0;
+    height: 100%;
+    width:50px;
+  }
 }

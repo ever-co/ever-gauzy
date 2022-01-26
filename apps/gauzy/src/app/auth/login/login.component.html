@@ -101,13 +101,14 @@
 					{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
 				</a>
 			</span>
+      <div class="password-field-custom">
 			<input
 				nbInput
 				fullWidth
 				[(ngModel)]="user.password"
 				#password="ngModel"
 				name="password"
-				type="password"
+				[type]="showPassword?'text': 'password'"
 				id="input-password"
 				[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
 				fieldSize="large"
@@ -132,6 +133,12 @@
 				"
 				autocomplete="off"
 			/>
+        <a nbSuffix nbButton ghost (click)="showPassword = !showPassword">
+          <nb-icon [icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'" pack="eva"
+            [attr.aria-label]="showPassword ? 'hide password' : 'show password'">
+          </nb-icon>
+        </a>
+      </div>
 			<ng-container *ngIf="password.invalid && password.touched">
 				<p
 					class="caption status-danger"

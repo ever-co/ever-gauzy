@@ -14,15 +14,15 @@ import { environment } from './../../../environments/environment';
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	@ViewChild('form') private readonly form: FormGroupDirective;
-	
 	isShown: boolean = false;
 	RolesEnum = RolesEnum;
 	isDemo: boolean = environment.DEMO;
+  showPassword: boolean = false;
 
 	constructor(
 		public readonly electronService: ElectronService,
 		public readonly nbAuthService: NbAuthService,
-		public readonly cdr: ChangeDetectorRef, 
+		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
 		@Inject(NB_AUTH_OPTIONS) options
 	) {
@@ -51,8 +51,8 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	/**
 	 * Automatic Login For Demo Server
-	 * 
-	 * @param role 
+	 *
+	 * @param role
 	 */
 	autoLogin(role: RolesEnum) {
 		if (this.isDemo) {
