@@ -30,8 +30,7 @@ import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand } from './commands';
-import { CreateTaskDto } from './dtos/create-new-task.dto';
-import { UpdateTaskDto } from './dtos/update-task.dto';
+import { CreateTaskDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard)
@@ -141,8 +140,9 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
+	@UsePipes(new ValidationPipe( { transform : true } ))
 	async create(
-		@Body(new ValidationPipe( { transform : true } )) entity: CreateTaskDto
+		@Body() entity: CreateTaskDTO
 	): Promise<ITask> {
 		return await this.commandBus.execute(
 			new TaskCreateCommand({
@@ -172,7 +172,7 @@ export class TaskController extends CrudController<Task> {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({ transform : true })) entity: UpdateTaskDto
+		@Body(new ValidationPipe({ transform : true })) entity: UpdateTaskDTO
 	): Promise<ITask> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
