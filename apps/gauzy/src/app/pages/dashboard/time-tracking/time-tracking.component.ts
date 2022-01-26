@@ -59,16 +59,16 @@ export class TimeTrackingComponent
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
 
-	timeSlotLoading = true;
-	activitiesLoading = true;
-	projectsLoading = true;
-	tasksLoading = true;
-	memberLoading = true;
-	countsLoading = true;
-	manualTimeLoading = true;
+	timeSlotLoading = false;
+	activitiesLoading = false;
+	projectsLoading = false;
+	tasksLoading = false;
+	memberLoading = false;
+	countsLoading = false;
+	manualTimeLoading = false;
 
-	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
+	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly RangePeriod = RangePeriod;
 	
 	employeeId: string = null;
