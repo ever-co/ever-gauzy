@@ -1,59 +1,64 @@
-import { IEmployee, IInvoiceItem, IOrganization, IOrganizationSprint, IOrganizationTeam, ITag } from "@gauzy/contracts";
+import {
+    IEmployee,
+    IOrganizationProject,
+    IOrganizationTeam,
+    ITag,
+    TaskStatusEnum
+} from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import {
+    IsArray,
+    IsEnum,
+    IsNotEmpty,
+    IsNumber,
+    IsObject,
+    IsOptional,
+    IsString
+} from "class-validator";
 
 export abstract class TaskDTO {
 
     @ApiProperty({ type : () => String})
     @IsNotEmpty()
+    @IsString()
     readonly title: string;
 
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    @IsString()
-    readonly description?: string;
+    @ApiProperty({ type: () => String, enum: TaskStatusEnum })
+    @IsEnum(TaskStatusEnum)
+    readonly status: TaskStatusEnum;
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsString()
-    readonly status?: string;
+    readonly description: string;
 
     @ApiPropertyOptional({ type: () => Date })
     @IsOptional()
     @IsString()
-    readonly dueDate?: Date;
+    readonly dueDate: Date;
 
     @ApiPropertyOptional({ type: () => Number })
     @IsOptional()
     @IsNumber()
-    readonly estimate?: number;
+    readonly estimate: number;
 
     @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
-    readonly tags?: ITag[];
+    readonly tags: ITag[];
 
     @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
-    readonly members?: IEmployee[];
+    readonly members: IEmployee[];
 
     @ApiPropertyOptional({ type: () => Array, isArray: true })
     @IsOptional()
     @IsArray()
-    readonly invoiceItems?: IInvoiceItem[];
+    readonly teams: IOrganizationTeam[];
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true })
+    @ApiProperty({ type : () => Object })
     @IsOptional()
-    @IsArray()
-    readonly teams?: IOrganizationTeam[];
-
-    @ApiPropertyOptional({ type: () => Object })
-    @IsOptional()
-    readonly organizationSprint?: IOrganizationSprint;
-
-    @ApiPropertyOptional({ type: () => Object })
-    @IsOptional()
-    readonly organization?: IOrganization;
-
+    @IsObject()
+    readonly project: IOrganizationProject;
 }

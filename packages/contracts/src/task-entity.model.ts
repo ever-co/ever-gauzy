@@ -10,7 +10,7 @@ import { IUser } from './user.model';
 export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	description?: string;
-	status?: string;
+	status?: TaskStatusEnum;
 	dueDate?: Date;
 	estimate?: number;
 	project?: IOrganizationProject;

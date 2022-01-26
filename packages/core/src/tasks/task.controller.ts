@@ -140,7 +140,7 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe( { transform : true } ))
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
 		@Body() entity: CreateTaskDTO
 	): Promise<ITask> {
@@ -170,13 +170,14 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({ transform : true })) entity: UpdateTaskDTO
+		@Body() entity: UpdateTaskDTO
 	): Promise<ITask> {
-		//We are using create here because create calls the method save()
-		//We need save() to save ManyToMany relations
 		try {
+			//We are using create here because create calls the method save()
+			//We need save() to save ManyToMany relations
 			return await this.taskService.create({
 				id,
 				...entity
