@@ -2,9 +2,9 @@ import { ICandidateCreateInput, ICandidateDocument } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, MinLength, ValidateNested } from "class-validator";
-import { UserInputDTO } from "employee/dto";
+import { EmploymentDTO, UserInputDTO } from "employee/dto";
 
-export class CreateCandidateDTO implements ICandidateCreateInput {
+export class CreateCandidateDTO extends EmploymentDTO implements ICandidateCreateInput {
 
     @ApiProperty({ type: () => UserInputDTO, required : true })
     @IsObject()
