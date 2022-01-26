@@ -18,7 +18,7 @@ import { EquipmentService } from './equipment.service';
 import { IEquipment, IPagination } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateEquipmentDTO } from './dto';
+import { CreateEquipmentDTO, UpdateEquipmentDTO } from './dto';
 
 @ApiTags('Equipment')
 @UseGuards(TenantPermissionGuard)
@@ -71,7 +71,7 @@ export class EquipmentController extends CrudController<Equipment> {
 	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: CreateEquipmentDTO,
+		@Body() entity: UpdateEquipmentDTO,
 		...options: any[]
 	): Promise<any> {
 		return this.equipmentService.save(entity);
