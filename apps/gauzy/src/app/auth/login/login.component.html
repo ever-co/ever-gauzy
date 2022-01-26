@@ -101,7 +101,7 @@
 					{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
 				</a>
 			</span>
-      <div class="password-field-custom">
+      <nb-form-field>
 			<input
 				nbInput
 				fullWidth
@@ -133,12 +133,12 @@
 				"
 				autocomplete="off"
 			/>
-        <a nbSuffix nbButton ghost (click)="showPassword = !showPassword">
+        <a nbSuffix nbButton size="large" ghost (click)="showPassword = !showPassword">
           <nb-icon [icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'" pack="eva"
             [attr.aria-label]="showPassword ? 'hide password' : 'show password'">
           </nb-icon>
         </a>
-      </div>
+      </nb-form-field>
 			<ng-container *ngIf="password.invalid && password.touched">
 				<p
 					class="caption status-danger"
