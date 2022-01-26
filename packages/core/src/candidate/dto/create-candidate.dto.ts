@@ -2,7 +2,7 @@ import { ICandidateCreateInput, ICandidateDocument } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, MinLength, ValidateNested } from "class-validator";
-import { UserInputDTO } from ".";
+import { UserInputDTO } from "employee/dto";
 
 export class CreateCandidateDTO implements ICandidateCreateInput {
 
