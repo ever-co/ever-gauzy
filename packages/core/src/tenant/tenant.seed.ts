@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from './tenant.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { DEFAULT_EVER_TENANT } from './default-tenants';
 import { ITenant } from '@gauzy/contracts';
 

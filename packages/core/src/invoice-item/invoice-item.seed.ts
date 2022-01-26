@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { InvoiceItem } from './invoice-item.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import {
 	IEmployee,
 	IExpense,

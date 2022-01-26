@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { addDays } from 'date-fns';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { EquipmentSharing } from './equipment-sharing.entity';

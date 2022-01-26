@@ -1,7 +1,7 @@
 import * as registerPage from '../../Base/pages/Register.po';
 import * as loginPage from '../../Base/pages/Login.po';
 import * as onboardingPage from '../../Base/pages/Onboarding.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { OnboardingPageData } from '../../Base/pagedata/OnboardingPageData';
 import * as dashboradPage from '../../Base/pages/Dashboard.po';
 import * as logoutPage from '../../Base/pages/Logout.po';

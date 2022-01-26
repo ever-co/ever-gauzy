@@ -6,7 +6,7 @@ import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTag
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ContactsLeadsPageData } from '../support/Base/pagedata/ContactsLeadsPageData';
 import * as contactsLeadsPage from '../support/Base/pages/ContactsLeads.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';

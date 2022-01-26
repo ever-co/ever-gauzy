@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Invoice } from './invoice.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import {
 	DiscountTaxTypeEnum,
 	IInvoice,

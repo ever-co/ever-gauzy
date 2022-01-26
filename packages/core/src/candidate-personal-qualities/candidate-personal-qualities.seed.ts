@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 

@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { Tag } from '../tags/tag.entity';
 import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-departments';
 import { IOrganization, ITenant } from '@gauzy/contracts';

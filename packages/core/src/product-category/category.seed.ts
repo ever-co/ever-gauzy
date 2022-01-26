@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { ProductCategory } from './product-category.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as seed from './product-category.seed.json';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 import { IOrganization, ITenant } from '@gauzy/contracts';

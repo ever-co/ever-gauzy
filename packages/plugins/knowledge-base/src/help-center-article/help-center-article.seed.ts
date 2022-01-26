@@ -1,5 +1,5 @@
 import { Connection, IsNull, Not } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { IHelpCenter, IHelpCenterArticle, IOrganization, ITenant } from '@gauzy/contracts';
 import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenter } from './../help-center';

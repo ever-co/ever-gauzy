@@ -10,7 +10,7 @@ import { AddTasksPageData } from '../support/Base/pagedata/AddTasksPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as clientsPage from '../support/Base/pages/Clients.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ClientsData } from '../support/Base/pagedata/ClientsPageData';
 import { CustomCommands } from '../support/commands';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';

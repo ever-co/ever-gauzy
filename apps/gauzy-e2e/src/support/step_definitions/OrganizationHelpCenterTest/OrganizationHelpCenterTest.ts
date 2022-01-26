@@ -4,7 +4,7 @@ import * as organizationHelpCenterPage from '../../Base/pages/OrganizationHelpCe
 import { OrganizationHelpCenterPageData } from '../../Base/pagedata/OrganizationHelpCenterPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 

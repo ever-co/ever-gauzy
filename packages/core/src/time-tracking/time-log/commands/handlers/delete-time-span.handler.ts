@@ -8,9 +8,10 @@ import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { moment } from '../../../../core/moment-extend';
-import { ITimeLog, ITimeSlot } from '@gauzy/contracts';
-import { TimeSlot } from './../../../../core';
-import { TimeSlotRangeDeleteCommand } from 'time-tracking/time-slot/commands';
+import { ITimeLog } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
+import { TimeSlot } from './../../../../core/entities/internal';
+import { TimeSlotRangeDeleteCommand } from './../../../time-slot/commands';
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler
@@ -28,13 +29,15 @@ export class DeleteTimeSpanHandler
 
 	public async execute(command: DeleteTimeSpanCommand) {
 		const { newTime, timeLog } = command;
+		const { id } = timeLog;
 		const { start, end } = newTime;
-		const { startedAt, stoppedAt, employeeId } = timeLog;
+
+		const refreshTimeLog = await this.timeLogRepository.findOne(id);
+		const { startedAt, stoppedAt, employeeId } = refreshTimeLog;
 
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
 
-		console.log({ start, end, startedAt, stoppedAt });
 		/*
 		 * Check is overlapping time or not.
 		 */
@@ -56,7 +59,12 @@ export class DeleteTimeSpanHandler
 		}
 
 		if (
-			moment(startedAt).isBetween(moment(start), moment(end), null, '[]')
+			moment(startedAt).isBetween(
+				moment(start),
+				moment(end),
+				null,
+				'[]'
+			)
 		) {
 			if (
 				moment(stoppedAt).isBetween(
@@ -73,9 +81,14 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time				DB Stop Time
 				 *  		|--------------------------------------|
 				 */
-				await this.commandBus.execute(
-					new TimeLogDeleteCommand(timeLog, true)
-				);
+				console.log('Delete time log because overlap entire time.')
+				try {
+					await this.commandBus.execute(
+						new TimeLogDeleteCommand(timeLog, true)
+					);
+				} catch (error) {
+					console.log('Error while, delete time log because overlap entire time.', error)
+				}
 			} else {
 				/*
 				 * Update start time
@@ -89,29 +102,39 @@ export class DeleteTimeSpanHandler
 					'seconds'
 				);
 				if (remainingDuration > 0) {
-					await this.commandBus.execute(
-						new TimeLogUpdateCommand(
-							{
-								startedAt: end
-							},
-							timeLog,
-							true
-						)
-					);
-					return await this.commandBus.execute(
-						new TimeSlotRangeDeleteCommand(
-							employeeId,
-							start,
-							end
-						)
-					);
+					try {
+						console.log('Update startedAt time.');
+						await this.commandBus.execute(
+							new TimeLogUpdateCommand(
+								{
+									startedAt: end
+								},
+								timeLog,
+								true
+							)
+						);
+						await this.commandBus.execute(
+							new TimeSlotRangeDeleteCommand(
+								employeeId,
+								start,
+								end
+							)
+						);
+					} catch (error) {
+						console.log('Error while, updating startedAt time', error);
+					}
 				} else {
-					/*
-					 * Delete if remaining duration 0 seconds
-					 */
-					await this.commandBus.execute(
-						new TimeLogDeleteCommand(timeLog, true)
-					);
+					console.log('Delete startedAt time log.');
+					try {
+						/*
+						* Delete if remaining duration 0 seconds
+						*/
+						await this.commandBus.execute(
+							new TimeLogDeleteCommand(timeLog, true)
+						);
+					} catch (error) {
+						console.log('Error while, deleting time log for startedAt time', error);
+					}
 				}
 			}
 		} else {
@@ -135,29 +158,39 @@ export class DeleteTimeSpanHandler
 					'seconds'
 				);
 				if (remainingDuration > 0) {
-					await this.commandBus.execute(
-						new TimeLogUpdateCommand(
-							{
-								stoppedAt: start
-							},
-							timeLog,
-							true
-						)
-					);
-					return await this.commandBus.execute(
-						new TimeSlotRangeDeleteCommand(
-							employeeId,
-							start,
-							end
-						)
-					);
+					console.log('Update stoppedAt time.');
+					try {
+						await this.commandBus.execute(
+							new TimeLogUpdateCommand(
+								{
+									stoppedAt: start
+								},
+								timeLog,
+								true
+							)
+						);
+						await this.commandBus.execute(
+							new TimeSlotRangeDeleteCommand(
+								employeeId,
+								start,
+								end
+							)
+						);
+					} catch (error) {
+						console.log('Error while, updating stoppedAt time', error);
+					}
 				} else {
-					/*
-					 * Delete if remaining duration 0 seconds
-					 */
-					await this.commandBus.execute(
-						new TimeLogDeleteCommand(timeLog, true)
-					);
+					console.log('Delete stoppedAt time log.');
+					try {
+						/*
+						* Delete if remaining duration 0 seconds
+						*/
+						await this.commandBus.execute(
+							new TimeLogDeleteCommand(timeLog, true)
+						);
+					} catch (error) {
+						console.log('Error while, deleting time log for stoppedAt time', error);
+					}
 				}
 			} else {
 				/*
@@ -167,7 +200,7 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time (startedAt)	DB Stop Time (stoppedAt)
 				 *  		|--------------------------------------------------|
 				 */
-				console.log('Split database time logs in two entries');
+				console.log('Split database time in two entries.');
 				const remainingDuration = moment(start).diff(
 					moment(startedAt),
 					'seconds'
@@ -177,31 +210,36 @@ export class DeleteTimeSpanHandler
 					'updatedAt',
 					'id'
 				]);
-				console.log(
-					'Split Time Log Remaining Duration:',
-					remainingDuration
-				);
-
-				if (remainingDuration > 0) {
-					timeLog.stoppedAt = start;
-					await this.timeLogRepository.save(timeLog);
-					await this.syncTimeSlots(timeLog).then((timeSlots) => {
-						console.log(
-							'Existed Timelog Split Entry:',
-							timeLog,
-							timeSlots
-						);
-					});
-				} else {
-					/*
-					 * Delete if remaining duration 0 seconds
-					 */
+				try {
+					if (remainingDuration > 0) {
+						try {
+							timeLog.stoppedAt = start;
+							await this.timeLogRepository.save(timeLog);
+						} catch (error) {
+							console.error(`Error while updating old timelog`, error);						
+						}
+					} else {
+						/*
+						* Delete if remaining duration 0 seconds
+						*/
+						try {
+							await this.commandBus.execute(
+								new TimeLogDeleteCommand(timeLog, true)
+							);
+						} catch (error) {
+							console.error(`Error while deleting old timelog`, error);						
+						}
+					}
 					await this.commandBus.execute(
-						new TimeLogDeleteCommand(timeLog, true)
+						new TimeSlotRangeDeleteCommand(
+							employeeId,
+							start,
+							end
+						)
 					);
+				} catch (error) {
+					console.error(`Error while split time entires: ${remainingDuration}`);
 				}
-
-				await this.timeSlotService.rangeDelete(employeeId, start, end);
 
 				const newLog = timeLogClone;
 				newLog.startedAt = end;
@@ -210,30 +248,35 @@ export class DeleteTimeSpanHandler
 					moment(newLog.startedAt),
 					'seconds'
 				);
-
 				/*
 				 * Insert if remaining duration is more 0 seconds
 				 */
 				if (newLogRemainingDuration > 0) {
-					await this.timeLogRepository.save(newLog);
-					await this.syncTimeSlots(newLog).then((timeSlots) => {
-						console.log(
-							'New Timelog Split Entry:',
-							newLog,
-							timeSlots
-						);
-						(async () => {
-							if (timeSlots.length) {
-								let timeLogs: ITimeLog[] = [];
-								timeLogs = timeLogs.concat(newLog);
+					try {
+						await this.timeLogRepository.save(newLog);
+					} catch (error) {
+						console.log('Error while creating new log', error, newLog);
+					}
 
-								timeSlots.forEach((timeSlot: ITimeSlot) => {
-									timeSlot.timeLogs = timeLogs;
-								});
-								await this.timeSlotRepository.save(timeSlots);
+					try {
+						const timeSlots = await this.syncTimeSlots(newLog);
+						if (isNotEmpty(timeSlots)) {
+							let timeLogs: ITimeLog[] = [];
+							timeLogs = timeLogs.concat(newLog);
+
+							for await (const timeSlot of timeSlots) {
+								timeSlot.timeLogs = timeLogs;
 							}
-						})();
-					});
+
+							try {
+								await this.timeSlotRepository.save(timeSlots);
+							} catch (error) {
+								console.log('Error while creating new TimeSlot & TimeLog entires', error, timeSlots)
+							}
+						}
+					} catch (error) {
+						console.log('Error while synce TimeSlot & TimeLog', error)
+					}
 				}
 			}
 		}
@@ -245,31 +288,25 @@ export class DeleteTimeSpanHandler
 			startedAt,
 			stoppedAt,
 			employeeId,
-			organizationId,
-			tenantId
+			organizationId
 		} = timeLog;
 
 		let startDate: any = moment(startedAt);
-		startDate.set(
-			'minute',
-			startDate.get('minute') - (startDate.get('minute') % 10)
-		);
-		startDate.set('second', 0);
-		startDate.set('millisecond', 0);
+		startDate
+			.set('minute', startDate.get('minute') - (startDate.get('minute') % 10))
+			.set('second', 0)
+			.set('millisecond', 0);
 
 		let endDate: any = moment(stoppedAt);
-		endDate.set(
-			'minute',
-			endDate.get('minute') + (endDate.get('minute') % 10) - 1
-		);
-		endDate.set('second', 59);
-		endDate.set('millisecond', 0);
-
+		endDate
+			.set('minute', endDate.get('minute') + (endDate.get('minute') % 10) - 1)
+			.set('second', 59)
+			.set('millisecond', 0);
+	
 		return await this.timeSlotService.getTimeSlots({
 			startDate: moment(startDate).toDate(),
 			endDate: moment(endDate).toDate(),
 			organizationId,
-			tenantId,
 			employeeIds: [employeeId]
 		});
 	}

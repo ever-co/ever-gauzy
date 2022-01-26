@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { RequestApprovalEmployee } from './request-approval-employee.entity';
 import { ApprovalPolicy, RequestApproval } from './../core/entities/internal';
 
