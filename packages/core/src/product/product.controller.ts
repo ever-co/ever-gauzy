@@ -35,7 +35,7 @@ import {
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateProductDTO } from './dto';
+import { CreateProductDTO, UpdateProductDTO } from './dto';
 
 
 @ApiTags('Product')
@@ -394,7 +394,7 @@ export class ProductController extends CrudController<Product> {
 	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: CreateProductDTO
+		@Body() entity: UpdateProductDTO
 	): Promise<Product> {
 		return await this.commandBus.execute(
 			new ProductUpdateCommand(id, entity)
