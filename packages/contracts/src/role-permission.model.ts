@@ -122,6 +122,7 @@ export enum PermissionsEnum {
 	TENANT_SETTING = "TENANT_SETTING", //allow user to access tenant setting
 	ALLOW_DELETE_TIME = "ALLOW_DELETE_TIME",
 	ALLOW_MODIFY_TIME = "ALLOW_MODIFY_TIME",
+	ALLOW_MANUAL_TIME = "ALLOW_MANUAL_TIME",
 }
 
 export const PermissionGroups = {
@@ -234,6 +235,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA,
 		PermissionsEnum.TENANT_SETTING,
 		PermissionsEnum.ALLOW_DELETE_TIME,
-		PermissionsEnum.ALLOW_MODIFY_TIME
+		PermissionsEnum.ALLOW_MODIFY_TIME,
+		PermissionsEnum.ALLOW_MANUAL_TIME
 	]
 };

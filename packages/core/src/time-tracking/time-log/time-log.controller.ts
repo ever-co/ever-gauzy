@@ -16,10 +16,8 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import {
-	IManualTimeInput,
 	ITimeLog,
 	IGetTimeLogInput,
-	OrganizationPermissionsEnum,
 	PermissionsEnum,
 	IGetTimeLogConflictInput,
 	IGetTimeLogReportInput,
@@ -32,8 +30,9 @@ import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { RequestContext } from './../../core/context';
-import { DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TransformInterceptor } from './../../core/interceptors';
+import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
+import { TimeLogBodyTransformPipe } from './pipes';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard)
@@ -226,24 +225,11 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/')
-	@UseGuards(OrganizationPermissionGuard)
-	@Permissions(OrganizationPermissionsEnum.ALLOW_MANUAL_TIME)
-	async addManualTime(@Body() entity: IManualTimeInput): Promise<ITimeLog> {
-		let employeeId: string;
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (entity.employeeId) {
-				employeeId = entity.employeeId;
-			}
-		}
-		if (!employeeId) {
-			const user = RequestContext.currentUser();
-			employeeId = user.employeeId;
-		}
-		entity.employeeId = employeeId;
+	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
+	async addManualTime(
+		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: CreateManualTimeLogDTO
+	): Promise<ITimeLog> {
 		return await this.timeLogService.addManualTime(entity);
 	}
 
@@ -263,7 +249,7 @@ export class TimeLogController {
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async updateManualTime(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateManualTimeLogDTO
+		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this.timeLogService.updateTime(id, entity);
 	}
