@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { IntegrationMap } from './integration-map.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { IIntegrationMap, IntegrationEntity, ITenant } from '@gauzy/contracts';

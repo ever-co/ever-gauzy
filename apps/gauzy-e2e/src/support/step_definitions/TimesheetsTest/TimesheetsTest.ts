@@ -6,7 +6,7 @@ import { TimesheetsPageData } from '../../Base/pagedata/TimesheetsPageData';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as clientsPage from '../../Base/pages/Clients.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';

@@ -7,7 +7,7 @@ import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';

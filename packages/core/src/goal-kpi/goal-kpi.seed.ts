@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { GoalKPI } from './goal-kpi.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { DEFAULT_GOAL_KPIS } from './default-goal-kpis';
 
 export const createDefaultGoalKpi = async (

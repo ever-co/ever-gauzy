@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipments';

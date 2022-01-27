@@ -1,4 +1,4 @@
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';

@@ -219,9 +219,10 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
 	async resendInvite(
-		@Body() entity: IInviteResendInput
+		@Body() entity: IInviteResendInput,
+		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
-		return this.commandBus.execute(new InviteResendCommand(entity));
+		return this.commandBus.execute(new InviteResendCommand(entity, languageCode));
 	}
 
 	@ApiOperation({ summary: 'Delete record' })

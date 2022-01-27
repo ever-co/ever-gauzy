@@ -1,6 +1,6 @@
 import { IOrganization, RolesEnum } from '@gauzy/contracts';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { getManager } from 'typeorm';
 import { RoleService } from '../../../role/role.service';
 import { UserService } from '../../../user/user.service';

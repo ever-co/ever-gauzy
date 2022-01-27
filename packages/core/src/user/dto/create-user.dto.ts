@@ -11,15 +11,17 @@ export class CreateUserDTO implements IUserCreateInput {
     @ApiProperty({ type: () => String, required : true })
     @IsNotEmpty()
     @IsEmail()
-    @Transform((params: TransformFnParams) => params.value.trim())
+    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly email: string;
 
     @ApiProperty({ type: () => String })
-    @Transform((params: TransformFnParams) => params.value.trim())
+    @IsOptional()
+    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly firstName?: string;
 
     @ApiProperty({ type: () => String })
-    @Transform((params: TransformFnParams) => params.value.trim())
+    @IsOptional()
+    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly lastName?: string;
 
     @ApiProperty({ type: () => String })

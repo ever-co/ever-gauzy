@@ -5,7 +5,7 @@
 import { Connection } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { environment as env } from '@gauzy/config';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import {
 	IDefaultUser,
 	RolesEnum,

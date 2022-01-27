@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { OrganizationTeam, Role } from './../core/entities/internal';

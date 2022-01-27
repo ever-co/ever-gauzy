@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { ProductOption } from './product-option.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { Product } from '../product/product.entity';
 import { ProductOptionGroup } from './product-option-group.entity';

@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
 import { addDays } from 'date-fns';

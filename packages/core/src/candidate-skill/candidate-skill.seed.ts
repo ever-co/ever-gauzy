@@ -1,6 +1,6 @@
 import { ISkill, ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { CandidateSkill } from './candidate-skill.entity';
 import { Organization } from '../organization/organization.entity';
 import { DEFAULT_CANDIDATE_SKILLS } from './default-candidate-skills';

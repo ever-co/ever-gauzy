@@ -1,4 +1,4 @@
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';

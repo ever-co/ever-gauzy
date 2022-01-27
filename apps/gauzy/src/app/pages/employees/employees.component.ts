@@ -155,8 +155,13 @@ export class EmployeesComponent
 			const response = await firstValueFrom(dialog.onClose);
 			if (response) {
 				response.map((employee: IEmployee) => {
+					const { firstName, lastName } = employee.user;
+					let fullName = 'Employee';
+					if (firstName || lastName) {
+						fullName = `${firstName} ${lastName}`;
+					}
 					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
-						name: `${employee.user.firstName.trim()} ${employee.user.lastName.trim()}`,
+						name: fullName,
 						organization: employee.organization.name
 					});
 				});

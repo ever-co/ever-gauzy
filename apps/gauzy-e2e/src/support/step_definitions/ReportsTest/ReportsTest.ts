@@ -4,7 +4,7 @@ import * as reportsPage from '../../Base/pages/Reports.po';
 import { ReportsPageData } from '../../Base/pagedata/ReportsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import * as logoutPage from '../../Base/pages/Logout.po';

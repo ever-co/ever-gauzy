@@ -1,4 +1,4 @@
-import { IOrganization, IOrganizationCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -9,7 +9,9 @@ import {
 	Post,
 	UseGuards,
 	Put,
-	Query
+	Query,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/common';
@@ -21,6 +23,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
+import { CreateOrganizationDTO, UpdateOrganizationDTO } from './dto';
 
 
 @ApiTags('Organization')
@@ -121,8 +124,9 @@ export class OrganizationController extends CrudController<Organization> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: IOrganizationCreateInput
+		@Body() entity: CreateOrganizationDTO
 	): Promise<IOrganization> {
 		return await this.commandBus.execute(
 			new OrganizationCreateCommand(entity)
@@ -143,10 +147,10 @@ export class OrganizationController extends CrudController<Organization> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IOrganizationCreateInput,
-		...options: any[]
+		@Body() entity: UpdateOrganizationDTO
 	): Promise<IOrganization> {
 		return await this.commandBus.execute(
 			new OrganizationUpdateCommand({ id, ...entity })

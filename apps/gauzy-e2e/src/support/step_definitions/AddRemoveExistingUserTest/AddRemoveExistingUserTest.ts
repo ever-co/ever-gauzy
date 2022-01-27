@@ -3,7 +3,7 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as addExistingUserPage from '../../Base/pages/AddExistingUser.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as addUserPage from '../../Base/pages/AddUser.po';
 import { AddUserPageData } from '../../Base/pagedata/AddUserPageData';
 import * as editUserPage from '../../Base/pages/EditUser.po';

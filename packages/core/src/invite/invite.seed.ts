@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { InviteStatusEnum, IOrganization, ITenant, IUser, RolesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';

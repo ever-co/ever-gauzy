@@ -1,5 +1,5 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { Organization } from "./organization.entity";
 import { generateSlug, getOrganizationDummyImage } from "core/utils";
 

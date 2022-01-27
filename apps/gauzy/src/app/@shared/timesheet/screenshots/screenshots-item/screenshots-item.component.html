@@ -8,11 +8,13 @@
 			<div class="hover">
 				<div class="actions d-flex align-items-center w-100">
 					<ng-container *ngIf="timeSlot?.isAllowDelete">
-						<nb-checkbox
-							[(ngModel)]="isSelected"
-							(click)="$event.stopPropagation()"
-							(ngModelChange)="toggleSelect(timeSlot)"
-						></nb-checkbox>
+						<ng-container *ngIf="multiple">
+							<nb-checkbox
+								[(ngModel)]="isSelected"
+								(click)="$event.stopPropagation()"
+								(ngModelChange)="toggleSelect(timeSlot)"
+							></nb-checkbox>
+						</ng-container>
 						<button
 							class="ml-auto select-hidden"
 							status="danger"
