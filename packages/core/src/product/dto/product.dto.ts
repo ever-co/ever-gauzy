@@ -1,6 +1,6 @@
 import { IImageAsset, IProduct, IProductCategoryTranslatable, IProductTypeTranslatable, IProductVariant, ITag } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export abstract class ProductDTO implements IProduct {
 
@@ -16,6 +16,7 @@ export abstract class ProductDTO implements IProduct {
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
+    @IsBoolean()
     readonly enabled: boolean;
 
     @ApiPropertyOptional({ type: () => String })
@@ -34,7 +35,6 @@ export abstract class ProductDTO implements IProduct {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @IsString()
     readonly variants: IProductVariant[];
 
     @ApiPropertyOptional({ type: () => String })
@@ -58,5 +58,4 @@ export abstract class ProductDTO implements IProduct {
     @ApiPropertyOptional({ type: () => Object, isArray: true })
     @IsOptional()
     readonly tags: ITag[];
-
 }

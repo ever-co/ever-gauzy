@@ -1,6 +1,19 @@
-import { IProductCategoryTranslatable, IProductCreateInput, IProductOptionGroupTranslatable, IProductOptionTranslatable, IProductTranslation, IProductTypeTranslatable } from "@gauzy/contracts";
+import {
+    IProductCategoryTranslatable,
+    IProductCreateInput,
+    IProductOptionGroupTranslatable,
+    IProductOptionTranslatable,
+    IProductTranslation,
+    IProductTypeTranslatable
+} from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsNotEmptyObject, IsObject, IsOptional, IsString } from "class-validator";
+import {
+    IsArray,
+    IsNotEmptyObject,
+    IsObject,
+    IsOptional,
+    IsString
+} from "class-validator";
 import { ProductDTO } from "./product.dto";
 
 export class CreateProductDTO extends ProductDTO implements IProductCreateInput {
@@ -44,5 +57,4 @@ export class CreateProductDTO extends ProductDTO implements IProductCreateInput 
     @IsOptional()
     @IsString()
     readonly language: string;
-
 }
