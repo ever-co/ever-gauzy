@@ -2,7 +2,7 @@ import { IEquipment, IOrganization } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsOptional, ValidateNested } from "class-validator";
-import { TenantDTO } from "tenant/dto";
+import { TenantDTO } from "./../../tenant/dto";
 import { EquipmentDTO } from "./equipment.dto";
 
 export class CreateEquipmentDTO extends EquipmentDTO implements IEquipment {
@@ -16,5 +16,4 @@ export class CreateEquipmentDTO extends EquipmentDTO implements IEquipment {
     @ValidateNested()
     @Type(() => TenantDTO)
     readonly tenant?: TenantDTO;
-
 }

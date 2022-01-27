@@ -1,6 +1,6 @@
-import { IEquipmentSharing, IImageAsset, ITag } from "@gauzy/contracts";
+import { CurrenciesEnum, IEquipmentSharing, IImageAsset, ITag } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export abstract class EquipmentDTO {
 
@@ -8,6 +8,10 @@ export abstract class EquipmentDTO {
     @IsNotEmpty()
     @IsString()
     readonly name: string;
+
+    @ApiProperty({ type: () => String, enum: CurrenciesEnum })
+	@IsEnum(CurrenciesEnum)
+	readonly currency: CurrenciesEnum;
 
     @ApiProperty({ type: () => String })
     @IsOptional()
@@ -33,11 +37,6 @@ export abstract class EquipmentDTO {
     @IsNumber()
     readonly initialCost: number;
 
-    @ApiProperty({ type: () => String })
-    @IsOptional()
-    @IsString()
-    readonly currency: string;
-
     @ApiProperty({ type: () => Number })
     @IsOptional()
     @IsNumber()
@@ -45,6 +44,7 @@ export abstract class EquipmentDTO {
 
     @ApiProperty({ type: () => Boolean })
     @IsOptional()
+    @IsBoolean()
     readonly autoApproveShare: boolean;
 
     @ApiProperty({ type: () => Object })
@@ -54,5 +54,4 @@ export abstract class EquipmentDTO {
     @ApiProperty({ type: () => Object })
     @IsOptional()
     readonly tags: ITag[];
-
 }

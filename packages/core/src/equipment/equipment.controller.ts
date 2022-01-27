@@ -24,7 +24,7 @@ import { CreateEquipmentDTO, UpdateEquipmentDTO } from './dto';
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentController extends CrudController<Equipment> {
-	constructor(private equipmentService: EquipmentService) {
+	constructor(private readonly equipmentService: EquipmentService) {
 		super(equipmentService);
 	}
 
@@ -53,10 +53,30 @@ export class EquipmentController extends CrudController<Equipment> {
 		});
 	}
 
+	@ApiOperation({ summary: 'New equipment record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }) )
+	async create(
+		@Body() entity: CreateEquipmentDTO,
+	): Promise<IEquipment> {
+		//We are using create here because create calls the method save()
+		//We need save() to save ManyToMany relations
+		return await this.equipmentService.create(entity);
+	}
+
 	@ApiOperation({ summary: 'Update an existing equipment' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		description: 'The record has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -72,27 +92,12 @@ export class EquipmentController extends CrudController<Equipment> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateEquipmentDTO,
-		...options: any[]
-	): Promise<any> {
-		return this.equipmentService.save(entity);
-	}
-
-	@ApiOperation({ summary: 'New equipment record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }) )
-	async create(
-		@Body() entity: CreateEquipmentDTO,
-		...options: any[]
-	): Promise<any> {
-		return this.equipmentService.save(entity);
+	): Promise<IEquipment> {
+		//We are using create here because create calls the method save()
+		//We need save() to save ManyToMany relations
+		return await this.equipmentService.create({ 
+			id, 
+			...entity
+		});
 	}
 }
