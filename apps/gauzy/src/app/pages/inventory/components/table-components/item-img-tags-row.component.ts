@@ -15,7 +15,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			<div *ngIf="!imageUrl" class="image-container">
 				<img
 					[src]="
-            'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg'
+            '/assets/images/others/no-image-placeholder.svg'
 					"
 					alt="Product Item Photo"
 					(mouseenter)="hoverState = true"
