@@ -146,8 +146,12 @@ export class CandidatesComponent
 				for await (const candidate of candidates) {
 					if (candidate.user) {
 						const { firstName, lastName } = candidate.user;
+						let fullName = 'Candidate';
+						if (firstName || lastName) {
+							fullName = `${firstName} ${lastName}`;
+						}
 						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_CREATED', {
-							name: `${firstName.trim()} ${lastName.trim()}`,
+							name: fullName,
 							organization: name
 						});
 					}
