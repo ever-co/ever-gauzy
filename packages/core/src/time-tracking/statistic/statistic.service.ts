@@ -1360,11 +1360,16 @@ export class StatisticService {
 			employee.timeSlots = await this.timeSlotRepository.find({
 				join: {
 					alias: 'time_slot',
+					leftJoin: {
+						employee: 'time_slot.employee'
+					},
 					innerJoinAndSelect: {
 						timeLogs: 'time_slot.timeLogs'
 					}
 				},
-				relations: ['screenshots'],
+				relations: [
+					'employee', 'employee.user', 'screenshots'
+				],
 				where: (qb: SelectQueryBuilder<TimeSlot>) => {
 					const employeeId = employee.id;
 					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {

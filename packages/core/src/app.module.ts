@@ -6,7 +6,6 @@ import {
 	ServeStaticModuleOptions
 } from '@nestjs/serve-static';
 import { HeaderResolver, I18nJsonParser, I18nModule } from 'nestjs-i18n';
-import { LogLevel } from '@sentry/types';
 import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
 import { initialize as initializeUnleash } from 'unleash-client';
@@ -193,7 +192,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		 					: 'development',
 		 				// TODO: we should use some internal function which returns version of Gauzy
 		 				release: 'gauzy@' + process.env.npm_package_version,
-		 				logLevel: LogLevel.Error,
+						logLevels: [ 'error' ],
 		 				integrations: sentryIntegrations,
 		 				tracesSampleRate: 1.0
 		 			})

@@ -5,7 +5,7 @@ import { EmployeeDashboardPageData } from '../../Base/pagedata/EmployeeDashboard
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';

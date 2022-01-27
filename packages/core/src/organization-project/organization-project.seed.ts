@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { chain } from 'underscore';
 import { OrganizationProject } from './organization-project.entity';
 import {

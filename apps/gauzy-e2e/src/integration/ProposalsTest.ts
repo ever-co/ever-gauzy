@@ -1,6 +1,6 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as proposalsPage from '../support/Base/pages/Proposals.po';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';

@@ -4,7 +4,7 @@ import * as humanResourcesPage from '../support/Base/pages/HumanResources.po';
 import { HumanResourcesPageData } from '../support/Base/pagedata/HumanResourcesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 
 let firstName = ' ';

@@ -1,7 +1,7 @@
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { Connection } from 'typeorm';
 import { KeyResult } from '../keyresult/keyresult.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import {
 	KeyResultUpdateStatusEnum,
 	KeyResultTypeEnum,

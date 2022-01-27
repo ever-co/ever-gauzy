@@ -3,7 +3,7 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as manageUserInvitesPage from '../../Base/pages/ManageUserInvites.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 

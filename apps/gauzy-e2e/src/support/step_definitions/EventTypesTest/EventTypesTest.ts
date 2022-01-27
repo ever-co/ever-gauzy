@@ -4,7 +4,7 @@ import * as eventTypesPage from '../../Base/pages/EventTypes.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { EventTypePageData } from '../../Base/pagedata/EventTypesPageData';
 import { CustomCommands } from '../../commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 

@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { Language } from './language.entity';
 import  allLanguages from './all-languages';
 

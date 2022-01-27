@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { AGENDAS } from './default-employee-appointment';

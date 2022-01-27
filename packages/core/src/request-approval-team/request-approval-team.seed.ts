@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { IEmployee, IOrganization, IRequestApprovalTeam, ITenant } from '@gauzy/contracts';
 import { RequestApprovalTeam } from './request-approval-team.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ApprovalPolicy, OrganizationTeam, RequestApproval } from './../core/entities/internal';
 
 export const createRandomRequestApprovalTeam = async (

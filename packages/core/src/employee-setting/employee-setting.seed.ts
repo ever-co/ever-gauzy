@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { IEmployee, ITenant } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { environment as env } from '@gauzy/config';
 import { Organization } from '../organization/organization.entity';
 import { EmployeeSetting } from './employee-setting.entity';
