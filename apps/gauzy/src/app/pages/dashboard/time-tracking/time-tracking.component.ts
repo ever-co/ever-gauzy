@@ -19,7 +19,8 @@ import {
 	IManualTimesStatistics,
 	IUser,
 	ISelectedDateRange,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IEmployee
 } from '@gauzy/contracts';
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -466,24 +467,34 @@ export class TimeTrackingComponent
 		return false;
 	}
 
-	async view(employee: ISelectedEmployee){
-
-		const people  = await this.employeesService.getEmployeeById(
-			employee.id,
-			['user']
-		);
-
-		this.store.selectedEmployee = (employee.id) ? {
-			id: people.id,
-			firstName: people.user.firstName,
-			lastName: people.user.lastName,
-			imageUrl: people.user.imageUrl,
-			employeeLevel: people.employeeLevel,
-			fullName: people.user.name,
-			shortDescription: people.short_description
-		} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
-		
-		this._router.navigate([`/pages/employees/activity/screenshots`]);
-		
+	/**
+	 * Redirect to screenshots page for specific employee
+	 * 
+	 * @param employee 
+	 */
+	async redirectToScreenshots(employee: IEmployee) {
+		if (!employee.id) {
+			return;
+		}
+		try {
+			const people  = await this.employeesService.getEmployeeById(
+				employee.id,
+				['user']
+			);
+			this.store.selectedEmployee = (employee.id) ? {
+				id: people.id,
+				firstName: people.user.firstName,
+				lastName: people.user.lastName,
+				imageUrl: people.user.imageUrl,
+				employeeLevel: people.employeeLevel,
+				fullName: people.user.name,
+				shortDescription: people.short_description
+			} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
+			if (this.store.selectedEmployee) {
+				this._router.navigate([`/pages/employees/activity/screenshots`]);
+			}
+		} catch (error) {
+			console.log('Error while redirecting screenshots page.', error);
+		}
 	}
 }
