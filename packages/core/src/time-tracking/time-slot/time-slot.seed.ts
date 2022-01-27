@@ -1,4 +1,4 @@
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { TimeSlot } from './time-slot.entity';
 import { generateTimeSlots } from './utils';
 

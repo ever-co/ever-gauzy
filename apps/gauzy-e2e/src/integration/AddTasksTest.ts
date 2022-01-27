@@ -8,7 +8,7 @@ import { OrganizationProjectsPageData } from '../support/Base/pagedata/Organizat
 import { CustomCommands } from '../support/commands';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 
 let firstName = ' ';

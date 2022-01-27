@@ -32,6 +32,12 @@ import { Store } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 
+export enum RangePeriod {
+	DAY = "DAY",
+	WEEK = "WEEK",
+	PERIOD = "PERIOD"
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-tracking',
@@ -53,16 +59,17 @@ export class TimeTrackingComponent
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
 
-	timeSlotLoading = true;
-	activitiesLoading = true;
-	projectsLoading = true;
-	tasksLoading = true;
-	memberLoading = true;
-	countsLoading = true;
-	manualTimeLoading = true;
+	timeSlotLoading = false;
+	activitiesLoading = false;
+	projectsLoading = false;
+	tasksLoading = false;
+	memberLoading = false;
+	countsLoading = false;
+	manualTimeLoading = false;
 
-	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
+	public readonly PermissionsEnum = PermissionsEnum;
+	public readonly RangePeriod = RangePeriod;
 	
 	employeeId: string = null;
 	projectId: string = null;
@@ -418,5 +425,35 @@ export class TimeTrackingComponent
 			start: this.today,
 			end: this.today,
 		}
+	}
+
+	/**
+	 * Get selected date range period
+	 */
+	get selectedPeriod(): RangePeriod {
+		const { start, end, isCustomDate } = this.selectedDateRange;
+
+		const startDate = moment(start);
+		const endDate = moment(end);
+		const days = endDate.diff(startDate, 'days');
+		
+		if (days === 6 && isCustomDate === false) {
+			return RangePeriod.WEEK;
+		} else if (days === 0 && isCustomDate === true) {
+			return RangePeriod.DAY;
+		} else {
+			return RangePeriod.PERIOD
+		}
+	}
+
+	/**
+	 * If, selected date range are more than a week
+	 */
+	isMoreThanWeek(): boolean {
+		const { start, end } = this.selectedDateRange;
+		if (start && end) {
+			return moment(end).diff(moment(start), 'weeks') > 0;
+		}
+		return false;
 	}
 }

@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { ICandidate, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { CandidateInterview, CandidateInterviewers } from './../core/entities/internal';
 
 export const createDefaultCandidateInterviewers = async (

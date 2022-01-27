@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as incomePage from '../../Base/pages/Income.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { IncomePageData } from '../../Base/pagedata/IncomePageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';

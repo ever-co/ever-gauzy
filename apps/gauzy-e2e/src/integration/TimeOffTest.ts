@@ -4,7 +4,7 @@ import * as timeOffPage from '../support/Base/pages/TimeOff.po';
 import { TimeOffPageData } from '../support/Base/pagedata/TimeOffPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 
 let firstName = ' ';

@@ -5,7 +5,7 @@ import * as manageInterviewsPage from '../support/Base/pages/ManageInterviews.po
 import { CustomCommands } from '../support/commands';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as inviteCandidatePage from '../support/Base/pages/Candidates.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 
 let email = ' ';
 let firstName = ' ';

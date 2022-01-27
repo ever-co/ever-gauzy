@@ -116,12 +116,12 @@ export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 
 export interface IOrganizationCreateInput extends IContact {
 	name: string;
-	isDefault: boolean;
-	profile_link: string;
+	isDefault?: boolean;
+	profile_link?: string;
 	valueDate?: Date;
-	imageUrl: string;
+	imageUrl?: string;
 	currency: CurrenciesEnum;
-	client_focus: string;
+	client_focus?: string;
 	show_income?: boolean;
 	show_profits?: boolean;
 	show_bonuses_paid?: boolean;
@@ -142,7 +142,7 @@ export interface IOrganizationCreateInput extends IContact {
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
 	tags?: ITag[];
-	tenant: ITenant;
+	tenant?: ITenant;
 	contact?: IContact;
 	skills?: ISkill[];
 	minimumProjectSize?: string;

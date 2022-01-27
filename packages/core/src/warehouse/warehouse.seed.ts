@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { ICountry, IOrganization, ITenant } from '@gauzy/contracts';
 import { Country, Warehouse, Contact, Product, WarehouseProduct, WarehouseProductVariant, ImageAsset } from './../core/entities/internal';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 
 
 export const createRandomWarehouses = async (

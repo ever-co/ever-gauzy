@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Merchant, Contact, ImageAsset, Country } from './../core/entities/internal';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ICountry, IMerchant, IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createRandomMerchants = async (

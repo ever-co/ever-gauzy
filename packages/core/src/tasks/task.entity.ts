@@ -49,8 +49,8 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	description?: string;
 
 	@ApiProperty({ type: () => String, enum: TaskStatusEnum })
-	@Column()
-	status?: string;
+	@Column({ default: TaskStatusEnum.TODO })
+	status?: TaskStatusEnum;
 
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })

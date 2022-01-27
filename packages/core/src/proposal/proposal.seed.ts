@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Proposal } from './proposal.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { Tag } from '../tags/tag.entity';
 import { IEmployee, IOrganization, ITenant, ProposalStatusEnum } from '@gauzy/contracts';
 import { OrganizationContact } from './../core/entities/internal';

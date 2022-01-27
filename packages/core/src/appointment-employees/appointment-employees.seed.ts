@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { IAppointmentEmployee, IEmployee, ITenant } from '@gauzy/contracts';
 import { AppointmentEmployee } from './appointment-employees.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 
 export const createRandomAppointmentEmployees = async (
 	connection: Connection,

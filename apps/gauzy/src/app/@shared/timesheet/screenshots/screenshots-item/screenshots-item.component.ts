@@ -39,6 +39,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	progressStatus = progressStatus;
 
+	@Input() multiple: boolean = true;
 	@Input() selectionMode = false;
 	@Input() galleryItems: GalleryItem[] = [];
 	@Input() isSelected: boolean;
@@ -93,7 +94,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.organization = organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -109,7 +110,6 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	deleteSlot(timeSlot: ITimeSlot) {
 		try {
 			this.timesheetService.deleteTimeSlots([timeSlot.id]).then(() => {
-				const { employee } = timeSlot;
 				const screenshots = this._screenshots.map(
 					(screenshot: IScreenshot) => {
 						return {
@@ -120,10 +120,14 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 					}
 				);
 				this.galleryService.removeGalleryItems(screenshots);
-				this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
-					name: `${employee.fullName.trim()}`,
-					organization: this.organization.name
-				});
+
+				const { employee } = timeSlot;
+				if (employee && employee.fullName) {
+					this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
+						name: `${employee.fullName.trim()}`,
+						organization: this.organization.name
+					});
+				}
 				this.delete.emit();
 			});	
 		} catch (error) {

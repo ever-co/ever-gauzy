@@ -4,7 +4,7 @@ import * as approvalRequestPage from '../support/Base/pages/ApprovalRequest.po';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { ApprovalRequestPageData } from '../support/Base/pagedata/ApprovalRequestPageData';
 import { CustomCommands } from '../support/commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';

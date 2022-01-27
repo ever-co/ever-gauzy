@@ -4,7 +4,7 @@ import * as goalsPage from '../../Base/pages/Goals.po';
 import { GoalsPageData } from '../../Base/pagedata/GoalsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { ContactsLeadsPageData } from '../../Base/pagedata/ContactsLeadsPageData';
 import * as contactsLeadsPage from '../../Base/pages/ContactsLeads.po';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
