@@ -36,7 +36,7 @@ import {
 	CandidateRejectedCommand
 } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
-import { CreateCandidateDTO, UpdateCandidateDTO, CreateCandidateListDTO } from './dto';
+import { CreateCandidateDTO, UpdateCandidateDTO, CandidateBulkInputDTO } from './dto';
 
 @ApiTags('Candidate')
 @UseGuards(TenantPermissionGuard)
@@ -72,7 +72,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body( BulkBodyLoadTransformPipe, new ValidationPipe({ transform : true })) body: CreateCandidateListDTO,
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform : true })) body: CandidateBulkInputDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ICandidate[]> {
 		return await this.commandBus.execute(
@@ -235,8 +235,6 @@ export class CandidateController extends CrudController<Candidate> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateCandidateDTO
 	): Promise<ICandidate> {
-		//We are using create here because create calls the method save()
-		//We need save() to save ManyToMany relations
 		return await this.commandBus.execute(
 			new CandidateUpdateCommand({ id, ...entity })
 		);

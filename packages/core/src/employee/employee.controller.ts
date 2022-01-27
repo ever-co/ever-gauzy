@@ -42,7 +42,7 @@ import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
-import { CreateEmployeeDTO, EmployeeInputDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
+import { EmployeeBulkInputDTO, CreateEmployeeDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -255,7 +255,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity: CreateEmployeeDTO,
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity: EmployeeBulkInputDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee[]> {
 		return await this.commandBus.execute(
@@ -384,7 +384,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post()
 	async create(
-		@Body(new ValidationPipe({ transform:true })) entity: EmployeeInputDTO,
+		@Body(new ValidationPipe({ transform:true })) entity: CreateEmployeeDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {

@@ -24,5 +24,4 @@ export class CreateCandidateDTO extends EmploymentDTO implements ICandidateCreat
     @IsOptional()
     @IsObject()
     readonly documents: ICandidateDocument[];
-
 }

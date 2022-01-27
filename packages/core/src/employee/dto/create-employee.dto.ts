@@ -1,11 +1,27 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsArray, ValidateNested } from "class-validator";
-import { EmployeeInputDTO } from "./employee-input.dto";
+import { IsNotEmpty, IsNotEmptyObject, IsObject, ValidateNested } from "class-validator";
+import { IEmployee, IEmployeeCreateInput, IOrganization } from "@gauzy/contracts";
+import { EmploymentDTO } from "./employment.dto";
+import { UserInputDTO } from "./user-input-dto";
 
-export class CreateEmployeeDTO  {
+export class CreateEmployeeDTO extends EmploymentDTO implements IEmployeeCreateInput {
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => EmployeeInputDTO)
-    list : EmployeeInputDTO[]
+    @ApiProperty({ type: () => UserInputDTO, required : true })
+    @IsObject()
+    @IsNotEmptyObject()
+    @ValidateNested()
+    @Type(() => UserInputDTO)
+    readonly user: UserInputDTO;
+
+    @IsNotEmpty()
+    readonly password: string;
+
+    readonly members?: IEmployee[];
+    readonly organizationId?: string;
+    originalUrl?: string;
+
+    @IsObject()
+    @IsNotEmptyObject()
+    readonly organization?: IOrganization;
 }
