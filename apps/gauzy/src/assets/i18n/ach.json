@@ -111,7 +111,8 @@
 		"DEMO_CREDENTIALS": "crwdns10823:0crwdne10823:0",
 		"CREATE_NEW_ROLE": "crwdns10855:0{{ name }}crwdne10855:0",
 		"DELETE_EXISTING_ROLE": "crwdns10857:0{{ name }}crwdne10857:0",
-		"RESTORE": "crwdns10873:0crwdne10873:0"
+		"RESTORE": "crwdns10873:0crwdne10873:0",
+		"VIEW_ALL": "crwdns10927:0crwdne10927:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
