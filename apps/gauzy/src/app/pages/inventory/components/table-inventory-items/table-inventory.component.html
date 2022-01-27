@@ -31,7 +31,7 @@
 					{{ 'BUTTONS.ADD' | translate }}
 				</button>
 			</ng-template>
-			<ng-container 
+			<ng-container
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			>
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
@@ -43,7 +43,7 @@
 			[ngIfElse]="gridLayout"
 		>
 			<ng2-smart-table
-				[settings]="settingsSmartTable" 
+				[settings]="settingsSmartTable"
 				(userRowSelect)="selectProduct($event)"
 				[source]="smartTableSource"
 				style="cursor: pointer"
@@ -54,11 +54,11 @@
 			<ng-container *ngTemplateOutlet="gridViewTemplate"></ng-container>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-					<ga-pagination 
+					<ga-pagination
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
-						[totalItems]="pagination?.totalItems" 
-						[itemsPerPage]="pagination?.itemsPerPage" 
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage">
 					</ga-pagination>
 				</ng-container>
@@ -73,11 +73,11 @@
 			<div class="info-line">
 				<span class="info-meta" [innerHtml]="'INVENTORY_PAGE.IMAGE' | translate"></span>
 				<div class="card-image">
-					<div 
+					<div
 						class="card-image"
-						*ngIf="!x.featuredImage || !x.featuredImage.url" 
-						[ngStyle]="{ 
-							backgroundImage: 'url(https://afostats.imagead.net/uploads/afo/no_img.png)' 
+						*ngIf="!x.featuredImage || !x.featuredImage.url"
+						[ngStyle]="{
+							backgroundImage: 'url(https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg)'
 						}"
 						alt="Product Item Photo">
 					</div>
@@ -86,7 +86,7 @@
 						*ngIf="x.featuredImage && x.featuredImage.url"
 						[ngStyle]="{
 							backgroundImage: 'url(' + x.featuredImage.url + ')'
-						}" 
+						}"
 						alt="Product Item Photo">
 					</div>
 				</div>
@@ -135,7 +135,7 @@
 	</ul>
 </ng-template>
 
-<ng-template 
+<ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
@@ -146,7 +146,7 @@
 			nbButton
 			status="info"
 			class="mr-2"
-			[disabled]="!selectedItem && disableButton" 
+			[disabled]="!selectedItem && disableButton"
 			[size]="buttonSize || 'medium'"
 		>
 			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
@@ -207,10 +207,10 @@
 		</button>
 	</ng-template>
 	<ng-template ngxPermissionsOnly="ORG_INVENTORY_PRODUCT_EDIT">
-		<button 
+		<button
 			(click)="manageWarehouses()"
 			nbButton
-			status="warning" 
+			status="warning"
 			class="float-right mr-2"
 			[size]="'medium'"
 		>
@@ -220,7 +220,7 @@
 		<button
 			(click)="manageStores()"
 			nbButton
-			status="warning" 
+			status="warning"
 			class="float-right mr-2"
 			[size]="'medium'"
 		>
