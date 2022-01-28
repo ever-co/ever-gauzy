@@ -6,6 +6,7 @@ import { NbRegisterComponent } from '@nebular/auth';
 	templateUrl: './register.component.html'
 })
 export class NgxRegisterComponent extends NbRegisterComponent {
-  showPassword: boolean = false;
-  confirmPassword: boolean = false;
+
+    showPassword: boolean = false;
+    showConfirmPassword: boolean = false;
 }

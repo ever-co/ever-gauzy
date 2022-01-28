@@ -99,39 +99,47 @@
 
 	<div class="form-control-group">
 		<label class="label" for="input-password">Password:</label>
-    <nb-form-field>
-		<input
-			nbInput
-			[(ngModel)]="user.password"
-      [type]="showPassword?'text': 'password'"
-			#password="ngModel"
-			type="password"
-			id="input-password"
-			name="password"
-			placeholder="Password"
-			fullWidth
-			fieldSize="large"
-			[status]="
-				password.dirty
-					? password.invalid
-						? 'danger'
-						: 'success'
-					: 'basic'
-			"
-			[required]="getConfigValue('forms.validation.password.required')"
-			[minlength]="getConfigValue('forms.validation.password.minLength')"
-			[maxlength]="getConfigValue('forms.validation.password.maxLength')"
-			[attr.aria-invalid]="
-				password.invalid && password.touched ? true : null
-			"
-			autocomplete="'new-password'"
-		/>
-    <a nbSuffix nbButton size="large" ghost (click)="showPassword = !showPassword">
-      <nb-icon [icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'" pack="eva"
-        [attr.aria-label]="showPassword ? 'hide password' : 'show password'">
-      </nb-icon>
-    </a>
-    </nb-form-field>
+		<nb-form-field>
+			<input
+				nbInput
+				[(ngModel)]="user.password"
+				[type]="showPassword ? 'text' : 'password'"
+				#password="ngModel"
+				type="password"
+				id="input-password"
+				name="password"
+				placeholder="Password"
+				fullWidth
+				fieldSize="large"
+				[status]="
+					password.dirty
+						? password.invalid
+							? 'danger'
+							: 'success'
+						: 'basic'
+				"
+				[required]="getConfigValue('forms.validation.password.required')"
+				[minlength]="getConfigValue('forms.validation.password.minLength')"
+				[maxlength]="getConfigValue('forms.validation.password.maxLength')"
+				[attr.aria-invalid]="
+					password.invalid && password.touched ? true : null
+				"
+				autocomplete="'new-password'"
+			/>
+			<a
+				nbSuffix
+				nbButton
+				size="large"
+				ghost
+				(click)="showPassword = !showPassword"
+			>
+				<nb-icon
+					[icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'"
+					pack="eva"
+					[attr.aria-label]="showPassword ? 'hide password' : 'show password'"
+				></nb-icon>
+			</a>
+    	</nb-form-field>
 		<ng-container *ngIf="password.invalid && password.touched">
 			<p class="caption status-danger" *ngIf="password.errors?.required">
 				Password is required!
@@ -150,35 +158,43 @@
 
 	<div class="form-control-group">
 		<label class="label" for="input-re-password">Repeat password:</label>
-    <nb-form-field>
-		<input
-			nbInput
-			[(ngModel)]="user.confirmPassword"
-      [type]="confirmPassword?'text': 'password'"
-			#rePass="ngModel"
-			type="password"
-			id="input-re-password"
-			name="rePass"
-			placeholder="Confirm Password"
-			fullWidth
-			fieldSize="large"
-			[status]="
-				rePass.dirty
-					? rePass.invalid || password.value != rePass.value
-						? 'danger'
-						: 'success'
-					: 'basic'
-			"
-			[required]="getConfigValue('forms.validation.password.required')"
-			[attr.aria-invalid]="rePass.invalid && rePass.touched ? true : null"
-			autocomplete="'new-password'"
-		/>
-    <a nbSuffix nbButton size="large" ghost (click)="confirmPassword = !confirmPassword">
-      <nb-icon [icon]="confirmPassword ? 'eye-outline' : 'eye-off-2-outline'" pack="eva"
-        [attr.aria-label]="confirmPassword ? 'hide password' : 'show password'">
-      </nb-icon>
-    </a>
-    </nb-form-field>
+		<nb-form-field>
+			<input
+				nbInput
+				[(ngModel)]="user.confirmPassword"
+				[type]="showConfirmPassword ? 'text' : 'password'"
+				#rePass="ngModel"
+				type="password"
+				id="input-re-password"
+				name="rePass"
+				placeholder="Confirm Password"
+				fullWidth
+				fieldSize="large"
+				[status]="
+					rePass.dirty
+						? rePass.invalid || password.value != rePass.value
+							? 'danger'
+							: 'success'
+						: 'basic'
+				"
+				[required]="getConfigValue('forms.validation.password.required')"
+				[attr.aria-invalid]="rePass.invalid && rePass.touched ? true : null"
+				autocomplete="'new-password'"
+			/>
+			<a
+				nbSuffix
+				nbButton
+				size="large"
+				ghost
+				(click)="showConfirmPassword = !showConfirmPassword"
+			>
+				<nb-icon
+					[icon]="showConfirmPassword ? 'eye-outline' : 'eye-off-2-outline'"
+					pack="eva"
+					[attr.aria-label]="showConfirmPassword ? 'hide password' : 'show password'"
+				></nb-icon>
+			</a>
+		</nb-form-field>
 		<ng-container *ngIf="rePass.touched">
 			<p class="caption status-danger" *ngIf="rePass.errors?.required">
 				Password confirmation is required!

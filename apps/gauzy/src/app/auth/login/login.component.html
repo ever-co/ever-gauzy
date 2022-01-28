@@ -108,7 +108,7 @@
 				[(ngModel)]="user.password"
 				#password="ngModel"
 				name="password"
-				[type]="showPassword?'text': 'password'"
+				[type]="showPassword ? 'text' : 'password'"
 				id="input-password"
 				[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
 				fieldSize="large"
@@ -133,11 +133,19 @@
 				"
 				autocomplete="off"
 			/>
-        <a nbSuffix nbButton size="large" ghost (click)="showPassword = !showPassword">
-          <nb-icon [icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'" pack="eva"
-            [attr.aria-label]="showPassword ? 'hide password' : 'show password'">
-          </nb-icon>
-        </a>
+			<a
+				nbSuffix
+				nbButton
+				size="large"
+				ghost
+				(click)="showPassword = !showPassword"
+			>
+				<nb-icon
+					[icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'"
+					pack="eva"
+					[attr.aria-label]="showPassword ? 'hide password' : 'show password'"
+				></nb-icon>
+			</a>
       </nb-form-field>
 			<ng-container *ngIf="password.invalid && password.touched">
 				<p
