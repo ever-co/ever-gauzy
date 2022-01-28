@@ -236,6 +236,13 @@
 												"
 												[id]="employee?.id"
 											></ngx-avatar>
+											<div class="view-all">
+												<ng-container>
+													<a class="link-text" (click)="redirectToScreenshots(employee)">
+														{{ 'BUTTONS.VIEW_ALL' | translate }}
+													</a>
+												</ng-container>
+											</div>
 										</div>
 										<div
 											class="row my-3 align-items-center justify-content-center"

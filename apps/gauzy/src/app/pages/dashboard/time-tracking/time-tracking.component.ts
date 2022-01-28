@@ -18,7 +18,9 @@ import {
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
 	IUser,
-	ISelectedDateRange
+	ISelectedDateRange,
+	ISelectedEmployee,
+	IEmployee
 } from '@gauzy/contracts';
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -31,6 +33,11 @@ import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet
 import { Store } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { Router } from '@angular/router';
+import { EmployeesService } from '../../../@core/services/employees.service';
+import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
+
+
 
 export enum RangePeriod {
 	DAY = "DAY",
@@ -58,6 +65,7 @@ export class TimeTrackingComponent
 
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
+	
 
 	timeSlotLoading = false;
 	activitiesLoading = false;
@@ -118,7 +126,9 @@ export class TimeTrackingComponent
 		private readonly galleryService: GalleryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		public readonly translateService: TranslateService,
-		private readonly changeRef: ChangeDetectorRef
+		private readonly changeRef: ChangeDetectorRef,
+		private readonly _router: Router,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -455,5 +465,36 @@ export class TimeTrackingComponent
 			return moment(end).diff(moment(start), 'weeks') > 0;
 		}
 		return false;
+	}
+
+	/**
+	 * Redirect to screenshots page for specific employee
+	 * 
+	 * @param employee 
+	 */
+	async redirectToScreenshots(employee: IEmployee) {
+		if (!employee.id) {
+			return;
+		}
+		try {
+			const people  = await this.employeesService.getEmployeeById(
+				employee.id,
+				['user']
+			);
+			this.store.selectedEmployee = (employee.id) ? {
+				id: people.id,
+				firstName: people.user.firstName,
+				lastName: people.user.lastName,
+				imageUrl: people.user.imageUrl,
+				employeeLevel: people.employeeLevel,
+				fullName: people.user.name,
+				shortDescription: people.short_description
+			} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
+			if (this.store.selectedEmployee) {
+				this._router.navigate([`/pages/employees/activity/screenshots`]);
+			}
+		} catch (error) {
+			console.log('Error while redirecting screenshots page.', error);
+		}
 	}
 }
