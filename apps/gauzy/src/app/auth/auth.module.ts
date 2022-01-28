@@ -12,7 +12,8 @@ import {
 	NbCheckboxModule,
 	NbIconModule,
 	NbInputModule,
-	NbAccordionModule
+	NbAccordionModule,
+  NbFormFieldModule
 } from '@nebular/theme';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxLoginComponent } from './login/login.component';
@@ -32,7 +33,8 @@ import { TranslateModule } from '../@shared/translate/translate.module';
 		NbIconModule,
 		NbCardModule,
 		TranslateModule,
-		NbAccordionModule
+		NbAccordionModule,
+    NbFormFieldModule
 	],
 	declarations: [NgxRegisterComponent, NgxLoginComponent]
 })

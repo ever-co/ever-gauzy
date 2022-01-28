@@ -18,7 +18,9 @@ import {
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
 	IUser,
-	ISelectedDateRange
+	ISelectedDateRange,
+	ISelectedEmployee,
+	IEmployee
 } from '@gauzy/contracts';
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -31,6 +33,17 @@ import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet
 import { Store } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { Router } from '@angular/router';
+import { EmployeesService } from '../../../@core/services/employees.service';
+import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
+
+
+
+export enum RangePeriod {
+	DAY = "DAY",
+	WEEK = "WEEK",
+	PERIOD = "PERIOD"
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -52,17 +65,19 @@ export class TimeTrackingComponent
 
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
+	
 
-	timeSlotLoading = true;
-	activitiesLoading = true;
-	projectsLoading = true;
-	tasksLoading = true;
-	memberLoading = true;
-	countsLoading = true;
-	manualTimeLoading = true;
+	timeSlotLoading = false;
+	activitiesLoading = false;
+	projectsLoading = false;
+	tasksLoading = false;
+	memberLoading = false;
+	countsLoading = false;
+	manualTimeLoading = false;
 
-	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
+	public readonly PermissionsEnum = PermissionsEnum;
+	public readonly RangePeriod = RangePeriod;
 	
 	employeeId: string = null;
 	projectId: string = null;
@@ -111,7 +126,9 @@ export class TimeTrackingComponent
 		private readonly galleryService: GalleryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		public readonly translateService: TranslateService,
-		private readonly changeRef: ChangeDetectorRef
+		private readonly changeRef: ChangeDetectorRef,
+		private readonly _router: Router,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -417,6 +434,67 @@ export class TimeTrackingComponent
 		this.selectedDateRange = {
 			start: this.today,
 			end: this.today,
+		}
+	}
+
+	/**
+	 * Get selected date range period
+	 */
+	get selectedPeriod(): RangePeriod {
+		const { start, end, isCustomDate } = this.selectedDateRange;
+
+		const startDate = moment(start);
+		const endDate = moment(end);
+		const days = endDate.diff(startDate, 'days');
+		
+		if (days === 6 && isCustomDate === false) {
+			return RangePeriod.WEEK;
+		} else if (days === 0 && isCustomDate === true) {
+			return RangePeriod.DAY;
+		} else {
+			return RangePeriod.PERIOD
+		}
+	}
+
+	/**
+	 * If, selected date range are more than a week
+	 */
+	isMoreThanWeek(): boolean {
+		const { start, end } = this.selectedDateRange;
+		if (start && end) {
+			return moment(end).diff(moment(start), 'weeks') > 0;
+		}
+		return false;
+	}
+
+	/**
+	 * Redirect to screenshots page for specific employee
+	 * 
+	 * @param employee 
+	 */
+	async redirectToScreenshots(employee: IEmployee) {
+		if (!employee.id) {
+			return;
+		}
+		try {
+			const people  = await this.employeesService.getEmployeeById(
+				employee.id,
+				['user']
+			);
+			this.store.selectedEmployee = (employee.id) ? {
+				id: people.id,
+				firstName: people.user.firstName,
+				lastName: people.user.lastName,
+				imageUrl: people.user.imageUrl,
+				employeeLevel: people.employeeLevel,
+				fullName: people.user.name,
+				shortDescription: people.short_description
+			} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
+			if (this.store.selectedEmployee) {
+				this._router.navigate([`/pages/employees/activity/screenshots`]);
+			}
+		} catch (error) {
+			console.log('Error while redirecting screenshots page.', error);
 		}
 	}
 }

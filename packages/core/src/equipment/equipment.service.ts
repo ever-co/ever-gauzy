@@ -1,7 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { IEquipment, IPagination } from '@gauzy/contracts';
+import { IPagination } from '@gauzy/contracts';
 import { Equipment } from './equipment.entity';
 import { TenantAwareCrudService } from './../core/crud';
 
@@ -18,9 +18,5 @@ export class EquipmentService extends TenantAwareCrudService<Equipment> {
 		return await this.findAll({
 			relations: ['image', 'equipmentSharings', 'tags']
 		});
-	}
-
-	async save(equipment: Equipment): Promise<IEquipment> {
-		return this.equipmentRepository.save(equipment);
 	}
 }
