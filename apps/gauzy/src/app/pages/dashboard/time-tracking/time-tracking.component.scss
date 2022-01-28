@@ -12,6 +12,21 @@
     }
   }
 
+  .view-all{
+    position:absolute;
+    right: 20px;
+  }
+
+  .hour-lable{
+    display: flex;
+  }
+
+  .link-text {
+    cursor: pointer;
+    text-decoration: none;
+    color: #1e6bb8;
+  }
+
   .member-weekly-activity-graph {
     display: flex;
     align-items: flex-end;

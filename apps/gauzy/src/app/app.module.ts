@@ -68,6 +68,7 @@ import { HttpLoaderFactory } from './@shared/translate/translate.module';
 import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { CookieService } from 'ngx-cookie-service';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -209,7 +210,8 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 			useClass: SentryErrorHandler
 		},
 		AppModuleGuard,
-		ColorPickerService
+		ColorPickerService,
+		CookieService
 	]
 })
 export class AppModule {

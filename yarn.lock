@@ -22855,6 +22855,13 @@ ngx-color-picker@^11.0.0:
   dependencies:
     tslib "^2.0.0"
 
+ngx-cookie-service@^13.1.2:
+  version "13.1.2"
+  resolved "https://registry.yarnpkg.com/ngx-cookie-service/-/ngx-cookie-service-13.1.2.tgz#31dbd523e16765649661e36cb436d8f19bd9ea4b"
+  integrity sha512-CInzm1xjI51QA1gCJEnqfDFLnN7w/SzqM5+kGdpI+UiCeHKgYEXpKG1s7lFz4jbLDrL/jHKtrf92t7RGsm66Cg==
+  dependencies:
+    tslib "^2.0.0"
+
 ngx-countdown@^12.0.1:
   version "12.0.1"
   resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-12.0.1.tgz#0bd6aef4ca83bafcbc3dd9366c84494d2b93ce27"

@@ -111,7 +111,8 @@
 		"DEMO_CREDENTIALS": "Demo Credentials",
 		"CREATE_NEW_ROLE": "Create {{ name }} Role",
 		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role",
-		"RESTORE": "Restore"
+		"RESTORE": "Restore",
+		"VIEW_ALL": "View All"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",

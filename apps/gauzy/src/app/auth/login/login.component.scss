@@ -14,6 +14,7 @@ nb-accordion-item-header{
 	top: 0px;
 	right: -30px;
 	width: 231px;
+  z-index: 1;
 }
 
 .demo-credentials-head-text{
@@ -59,7 +60,7 @@ nb-accordion-item-header{
 	.demo-credentials-head-text {
 		display: block;
 	}
-	
+
 	.demo-credentials-card{
 	  width: 146px;
 	  right: 0px;
