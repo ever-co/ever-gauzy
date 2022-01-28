@@ -5,6 +5,7 @@ import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth'
 import { ElectronService } from 'ngx-electron';
 import { RolesEnum } from '@gauzy/contracts';
 import { environment } from './../../../environments/environment';
+import { CookieService } from 'ngx-cookie-service';
 
 @Component({
 	selector: 'ngx-login',
@@ -14,12 +15,14 @@ import { environment } from './../../../environments/environment';
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	@ViewChild('form') private readonly form: FormGroupDirective;
+
 	isShown: boolean = false;
 	RolesEnum = RolesEnum;
 	isDemo: boolean = environment.DEMO;
-  showPassword: boolean = false;
+  	showPassword: boolean = false;
 
 	constructor(
+		private readonly cookieService: CookieService,
 		public readonly electronService: ElectronService,
 		public readonly nbAuthService: NbAuthService,
 		public readonly cdr: ChangeDetectorRef,
@@ -30,7 +33,20 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	}
 
 	ngOnInit() {
+		this.checkRememberdMe();
 		this.autoFillCredential();
+	}	
+
+	/**
+	 * Implemented Rememberd Me Feature
+	 */
+	checkRememberdMe() {
+		if (this.cookieService.check('rememberMe')) {
+			const { email, password, rememberMe } = this.cookieService.getAll();
+			this.user.email = email;
+			this.user.password = password;
+			this.user.rememberMe = rememberMe;
+		}
 	}
 
 	collapseDemo() {
