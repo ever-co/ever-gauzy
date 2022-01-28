@@ -302,7 +302,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				return new NbAuthResult(
 					true,
 					res,
-					AuthStrategy.config.login.redirect.success,
+					this.route.snapshot.queryParams['returnUrl'] || AuthStrategy.config.login.redirect.success,
 					[],
 					AuthStrategy.config.login.defaultMessages
 				);
