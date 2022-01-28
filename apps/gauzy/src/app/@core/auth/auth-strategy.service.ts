@@ -1,4 +1,4 @@
-import { Observable, from, of } from 'rxjs';
+import { Observable, from, of, tap } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -11,6 +11,7 @@ import { Store } from '../services/store.service';
 import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from '../../@shared/time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../../@shared/timesheet/timesheet-filter.service';
+import { CookieService } from 'ngx-cookie-service';
 // tslint:disable-next-line: nx-enforce-module-boundaries
 
 @Injectable()
@@ -69,7 +70,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		private readonly electronService: ElectronService
+		private readonly electronService: ElectronService,
+		private readonly cookieService: CookieService
 	) {
 		super();
 	}
@@ -80,12 +82,29 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	authenticate(data?: any): Observable<NbAuthResult> {
 		const { email, password } = data;
-		// TODO implement remember me feature
-		// const rememberMe = !!args.rememberMe;
 		return this.login({
 			email,
 			password
-		});
+		}).pipe(
+			tap(() => this.rememberMe(data))
+		);
+	}
+
+	/**
+	 * Integrate client side remember me feature
+	 */
+	rememberMe(data?: any) {
+		const { email, password } = data;
+		const rememberMe = !!data.rememberMe;
+		if (rememberMe) {
+			this.cookieService.set('email', email);  
+			this.cookieService.set('password', password);
+			this.cookieService.set('rememberMe', 'true');
+		} else {
+			this.cookieService.delete('rememberMe');
+			this.cookieService.delete('email');  
+			this.cookieService.delete('password');
+		}
 	}
 
 	register(data?: any): Observable<NbAuthResult> {
@@ -277,6 +296,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	public login(loginInput): Observable<NbAuthResult> {
+
 		return this.authService.login(loginInput).pipe(
 			map((res: IAuthResponse) => {
 				let user, token;
