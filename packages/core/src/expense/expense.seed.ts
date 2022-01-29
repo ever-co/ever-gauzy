@@ -74,7 +74,7 @@ export const createDefaultExpenses = async (
 					expense.currency = seedExpense.currency || env.defaultCurrency;
 					expense.valueDate = faker.date.between(
 						moment().subtract(3, 'months').calendar(),
-						moment().calendar()
+						moment().add(10, 'days').calendar()
 					);
 					expense.notes = seedExpense.notes;
 					return expense;
@@ -137,7 +137,7 @@ export const createRandomExpenses = async (
 				expense.currency = employee.organization.currency || env.defaultCurrency;
 				expense.valueDate = faker.date.between(
           moment().subtract(3, 'months').calendar(),
-          moment().calendar()
+          moment().add(10, 'days').calendar()
 				);
 				expense.notes = notesArray[currentIndex];
 				randomExpenses.push(expense);
