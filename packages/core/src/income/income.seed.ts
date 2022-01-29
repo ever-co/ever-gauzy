@@ -51,11 +51,11 @@ export const createDefaultIncomes = async (
 					income.amount = seedIncome.amount;
 					income.currency = seedIncome.currency || env.defaultCurrency;
 					income.valueDate = faker.date.between(
-						new Date(),
-						moment(new Date()).add(10, 'days').toDate()
+						moment().subtract(3, 'months').calendar(),
+						moment().calendar()
 					);
 					income.notes = seedIncome.notes;
-					
+
 					const payload = {
 						name: `Client ${seedIncome.clientName}`,
 						tenant: tenant,
@@ -63,10 +63,10 @@ export const createDefaultIncomes = async (
 						contactType: ContactType.CLIENT,
 						budgetType: OrganizationContactBudgetTypeEnum.HOURS
 					}
-					income.client = await connection.manager.findOne(OrganizationContact, { 
+					income.client = await connection.manager.findOne(OrganizationContact, {
 						where: {
 							...payload
-						} 
+						}
 					});
 					if (!income.client) {
 						/**
@@ -102,10 +102,10 @@ export const createRandomIncomes = async (
 	];
 	const randomIncomes: Income[] = []
 	for (const tenant of tenants || []) {
-		const organizationContacts = await connection.manager.find(OrganizationContact, { 
-			where: { 
-				tenant 
-			} 
+		const organizationContacts = await connection.manager.find(OrganizationContact, {
+			where: {
+				tenant
+			}
 		});
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const employee of employees || []) {
@@ -120,12 +120,12 @@ export const createRandomIncomes = async (
 				income.employee = employee;
 				income.amount = faker.datatype.number({ min: 10, max: 9999 });
 				if (organizationContacts.length) {
-					income.client = faker.random.arrayElement(organizationContacts); 
+					income.client = faker.random.arrayElement(organizationContacts);
 				}
 				income.currency = employee.organization.currency || env.defaultCurrency;
 				income.valueDate = faker.date.between(
-					new Date(),
-					moment(new Date()).add(10, 'days').toDate()
+					moment().subtract(3, 'months').calendar(),
+					moment().calendar()
 				);
 				income.notes = notes[currentIndex];
 				randomIncomes.push(income);
