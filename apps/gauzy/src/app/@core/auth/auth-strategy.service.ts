@@ -94,16 +94,13 @@ export class AuthStrategy extends NbAuthStrategy {
 	 * Integrate client side remember me feature
 	 */
 	rememberMe(data?: any) {
-		const { email, password } = data;
 		const rememberMe = !!data.rememberMe;
 		if (rememberMe) {
-			this.cookieService.set('email', email);  
-			this.cookieService.set('password', password);
+			this.cookieService.set('email', data.email);  
 			this.cookieService.set('rememberMe', 'true');
 		} else {
 			this.cookieService.delete('rememberMe');
 			this.cookieService.delete('email');  
-			this.cookieService.delete('password');
 		}
 	}
 
