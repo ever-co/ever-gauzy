@@ -42,9 +42,8 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	 */
 	checkRememberdMe() {
 		if (this.cookieService.check('rememberMe')) {
-			const { email, password, rememberMe } = this.cookieService.getAll();
+			const { email, rememberMe } = this.cookieService.getAll();
 			this.user.email = email;
-			this.user.password = password;
 			this.user.rememberMe = rememberMe;
 		}
 	}
