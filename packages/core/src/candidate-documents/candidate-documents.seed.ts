@@ -1,5 +1,5 @@
 import { ICandidate, ICandidateDocument, IOrganization, ITenant } from '@gauzy/contracts';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { Connection } from 'typeorm';
 import { CandidateDocument, Organization } from './../core/entities/internal';
 import { DEFAULT_CANDIDATE_DOCUMENTS } from './default-candidate-documents';

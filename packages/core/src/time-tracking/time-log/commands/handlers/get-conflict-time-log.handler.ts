@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
 import { TimeLog } from './../../time-log.entity';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
-import { RequestContext } from './../../../../core/context/request-context';
+import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler

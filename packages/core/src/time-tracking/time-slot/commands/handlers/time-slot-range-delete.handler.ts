@@ -1,19 +1,18 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
+import * as moment from 'moment';
 import { TimeSlot } from './../../time-slot.entity';
 import { TimeSlotRangeDeleteCommand } from '../time-slot-range-delete.command';
-import * as moment from 'moment';
-import { ConfigService } from '@gauzy/config';
 import { RequestContext } from './../../../../core/context';
+import { getDateFormat } from './../../../../core/utils';
 
 @CommandHandler(TimeSlotRangeDeleteCommand)
 export class TimeSlotRangeDeleteHandler
 	implements ICommandHandler<TimeSlotRangeDeleteCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
-		private readonly configService: ConfigService
+		private readonly timeSlotRepository: Repository<TimeSlot>
 	) {}
 
 	public async execute(
@@ -25,28 +24,21 @@ export class TimeSlotRangeDeleteHandler
 
 		let mStart: any = moment.utc(start);
 		mStart.set('minute', mStart.get('minute') - (mStart.get('minute') % 10));
-		mStart.set('second', 0);
-		mStart.set('millisecond', 0);
+		mStart.set('second', 0).set('millisecond', 0);
 
 		let mEnd: any = moment.utc(stop);
 		mEnd.set('minute', mEnd.get('minute') + (mEnd.get('minute') % 10) - 1);
-		mEnd.set('second', 59);
-		mEnd.set('millisecond', 0);
+		mEnd.set('second', 59).set('millisecond', 0);
 
-		if (this.configService.dbConnectionOptions.type === 'sqlite') {
-			mStart = mStart.format('YYYY-MM-DD HH:mm:ss');
-			mEnd = mEnd.format('YYYY-MM-DD HH:mm:ss');
-		} else {
-			mStart = mStart.toDate();
-			mEnd = mEnd.toDate();
-		}
-
-		console.log('TimeSlot Delete Range:', { start, stop, mStart, mEnd });
+		const { start: startDate, end: endDate } = getDateFormat(
+			mStart,
+			mEnd
+		);
 		const timeSlots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
-					startDate: mStart,
-					endDate: mEnd
+					startDate,
+					endDate
 				});
 				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 					employeeId
@@ -57,7 +49,6 @@ export class TimeSlotRangeDeleteHandler
 			},
 			relations: ['screenshots']
 		});
-		console.log('Delete TimeSlot Range:', timeSlots);
 		await this.timeSlotRepository.remove(timeSlots);
 		return true;
 	}

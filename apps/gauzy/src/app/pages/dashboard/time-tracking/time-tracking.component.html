@@ -159,12 +159,16 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>
-									{{ selectedDateRange.isCustomDate ? 
-										('TIMESHEET.ACTIVITY' | translate) : 
-										('TIMESHEET.WEEKLY_ACTIVITY' | translate)
-									}}
-								</p>
+								<ng-container [ngSwitch]="selectedPeriod">
+									<p>
+										<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+											{{ 'TIMESHEET.ACTIVITY' | translate }}
+										</ng-template>
+										<ng-template [ngSwitchDefault]>
+											{{ 'TIMESHEET.WEEKLY_ACTIVITY' | translate }}
+										</ng-template>
+									</p>
+								</ng-container>
 								<div class="h1">
 									{{ counts?.weekActivities || 0 }}%
 								</div>
@@ -178,12 +182,16 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>
-									{{ selectedDateRange.isCustomDate ? 
-										('TIMESHEET.THIS_WEEK' | translate) : 
-										('TIMESHEET.WORKED_THIS_WEEK' | translate)
-									}}
-								</p>
+								<ng-container [ngSwitch]="selectedPeriod">
+									<p>
+										<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+											{{ 'TIMESHEET.WORKED_OVER_PERIOD' | translate }}
+										</ng-template>
+										<ng-template [ngSwitchDefault]>
+											{{ 'TIMESHEET.WORKED_THIS_WEEK' | translate }}
+										</ng-template>
+									</p>
+								</ng-container>
 								<div class="h1">
 									{{ counts?.weekDuration || 0 | durationFormat }}
 								</div>
@@ -228,6 +236,13 @@
 												"
 												[id]="employee?.id"
 											></ngx-avatar>
+											<div class="view-all">
+												<ng-container>
+													<a class="link-text" (click)="redirectToScreenshots(employee)">
+														{{ 'BUTTONS.VIEW_ALL' | translate }}
+													</a>
+												</ng-container>
+											</div>
 										</div>
 										<div
 											class="row my-3 align-items-center justify-content-center"
@@ -241,6 +256,7 @@
 												<ngx-screenshots-item
 													[timeSlot]="timeSlot"
 													(delete)="onDelete()"
+													[multiple]="false"
 												>
 												</ngx-screenshots-item>
 											</div>
@@ -250,9 +266,19 @@
 							</div>
 						</ng-template>
 						<ng-template #noScreenshot>
-							<div class="text-center" *ngIf="!timeSlotLoading">
-								{{ 'TIMESHEET.NO_SCREENSHOT' | translate }}
-							</div>
+							<ng-container *ngIf="!timeSlotLoading" [ngSwitch]="selectedPeriod">
+								<div class="text-center p-3">
+									<ng-template [ngSwitchCase]="RangePeriod.DAY">
+										{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
+									</ng-template>
+									<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+										{{ 'TIMESHEET.NO_SCREENSHOT_WEEK' | translate }}
+									</ng-template>
+									<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+										{{ 'TIMESHEET.NO_SCREENSHOT_PERIOD' | translate }}
+									</ng-template>
+								</div>
+							</ng-container>
 						</ng-template>
 					</nb-card-body>
 				</nb-card>
@@ -305,9 +331,19 @@
 						</nb-list>
 					</ng-template>
 					<ng-template #noTasks>
-						<div class="text-center p-3" *ngIf="!tasksLoading">
-							{{ 'TIMESHEET.NO_TASK_ACTIVITY' | translate }}
-						</div>
+						<ng-container *ngIf="!tasksLoading" [ngSwitch]="selectedPeriod">
+							<div class="text-center p-3">
+								<ng-template [ngSwitchCase]="RangePeriod.DAY">
+									{{ 'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+									{{ 'TIMESHEET.NO_TASK_ACTIVITY_WEEK' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+									{{ 'TIMESHEET.NO_TASK_ACTIVITY_PERIOD' | translate }}
+								</ng-template>
+							</div>
+						</ng-container>
 					</ng-template>
 				</nb-card>
 
@@ -379,9 +415,19 @@
 						</nb-list>
 					</ng-template>
 					<ng-template #noManualTimes>
-						<div class="text-center p-3" *ngIf="!manualTimeLoading">
-							{{ 'TIMESHEET.NO_MANUAL_TIME' | translate }}
-						</div>
+						<ng-container *ngIf="!manualTimeLoading" [ngSwitch]="selectedPeriod">
+							<div class="text-center p-3">
+								<ng-template [ngSwitchCase]="RangePeriod.DAY">
+									{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+									{{ 'TIMESHEET.NO_MANUAL_TIME_WEEK' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+									{{ 'TIMESHEET.NO_MANUAL_TIME_PERIOD' | translate }}
+								</ng-template>
+							</div>
+						</ng-container>
 					</ng-template>
 				</nb-card>
 			</div>
@@ -436,9 +482,19 @@
 						</nb-list>
 					</ng-template>
 					<ng-template #noProjects>
-						<div class="text-center p-3" *ngIf="!projectsLoading">
-							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY' | translate }}
-						</div>
+						<ng-container *ngIf="!projectsLoading" [ngSwitch]="selectedPeriod">
+							<div class="text-center p-3">
+								<ng-template [ngSwitchCase]="RangePeriod.DAY">
+									{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+									{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+									{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
+								</ng-template>
+							</div>
+						</ng-container>
 					</ng-template>
 				</nb-card>
 
@@ -466,9 +522,19 @@
 						</nb-list>
 					</ng-template>
 					<ng-template #noActivities>
-						<div class="text-center p-3" *ngIf="!activitiesLoading">
-							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY' | translate }}
-						</div>
+						<ng-container *ngIf="!activitiesLoading" [ngSwitch]="selectedPeriod">
+							<div class="text-center p-3">
+								<ng-template [ngSwitchCase]="RangePeriod.DAY">
+									{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+									{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+									{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
+								</ng-template>
+							</div>
+						</ng-container>
 					</ng-template>
 				</nb-card>
 
@@ -498,13 +564,16 @@
 													| translate
 											}}
 										</div>
-										<div class="col-sm-2 text-center">
+										<div class="col-2 text-center">
 											{{ 'TIMESHEET.TODAY' | translate }}
 										</div>
-										<div class="col-sm-3 text-center">
-											{{
-												'TIMESHEET.THIS_WEEK'
-													| translate
+										<div class="col-3 text-center">
+											{{ 
+												(
+													(selectedPeriod ===  RangePeriod.PERIOD) ? 
+													'TIMESHEET.OVER_PERIOD' : 
+													'TIMESHEET.THIS_WEEK'
+												) | translate
 											}}
 										</div>
 									</div>
@@ -520,7 +589,7 @@
 												[id]="member?.id"
 											></ngx-avatar>
 										</div>
-										<div class="col-sm-2 text-center">
+										<div class="col-2 text-center">
 											<div class="activity">
 												<div class="duration">
 													{{
@@ -549,8 +618,8 @@
 												</div>
 											</div>
 										</div>
-										<div class="col-sm-3 text-center">
-											<div class="d-flex">
+										<div class="col-3 text-center">
+											<div [ngClass]="!isMoreThanWeek() ? 'd-flex': ''">
 												<div
 													class="activity text-center"
 												>
@@ -581,20 +650,15 @@
 														></nb-badge>
 													</div>
 												</div>
-												<div
-													class="member-weekly-activity-graph"
-												>
-													<div
-														class="bar-graph-entry"
-														*ngFor="
-															let weekHour of member.weekHours
-														"
-														[style.height]="
-															weekHour.duration +
-															'%'
-														"
-													></div>
-												</div>
+												<ng-container *ngIf="!isMoreThanWeek()">
+													<div class="member-weekly-activity-graph">
+														<div
+															*ngFor="let weekHour of member.weekHours"
+															class="bar-graph-entry"
+															[style.height]="weekHour.duration + '%'"
+														></div>
+													</div>
+												</ng-container>
 											</div>
 										</div>
 									</div>
@@ -603,9 +667,19 @@
 						</nb-list>
 					</ng-template>
 					<ng-template #noMember>
-						<div class="text-center p-3" *ngIf="!memberLoading">
-							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY' | translate }}
-						</div>
+						<ng-container *ngIf="!memberLoading" [ngSwitch]="selectedPeriod">
+							<div class="text-center p-3">
+								<ng-template [ngSwitchCase]="RangePeriod.DAY">
+									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
+									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}				
+								</ng-template>
+								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
+									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}
+								</ng-template>
+							</div>
+						</ng-container>
 					</ng-template>
 				</nb-card>
 			</div>

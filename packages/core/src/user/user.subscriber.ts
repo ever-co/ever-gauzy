@@ -26,7 +26,7 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
     * Called after entity is loaded.
     */
     afterLoad(entity: User) {
-        entity.name = `${entity.firstName} ${entity.lastName}`;
+        entity.name = [entity.firstName, entity.lastName].filter(Boolean).join(' ');
         entity.employeeId = entity.employee ? entity.employee.id : null;
     }
 }

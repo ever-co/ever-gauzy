@@ -18,10 +18,8 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
 import {
 	PermissionsEnum,
-	ICandidateCreateInput,
 	LanguagesEnum,
 	ICandidate,
-	ICandidateUpdateInput,
 	IPagination
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams} from './../core/crud';
@@ -29,7 +27,7 @@ import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	CandidateCreateCommand,
 	CandidateBulkCreateCommand,
@@ -38,6 +36,7 @@ import {
 	CandidateRejectedCommand
 } from './commands';
 import { TransformInterceptor } from './../core/interceptors';
+import { CreateCandidateDTO, UpdateCandidateDTO, CandidateBulkInputDTO } from './dto';
 
 @ApiTags('Candidate')
 @UseGuards(TenantPermissionGuard)
@@ -73,11 +72,11 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body() body: ICandidateCreateInput[],
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform : true })) body: CandidateBulkInputDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ICandidate[]> {
 		return await this.commandBus.execute(
-			new CandidateBulkCreateCommand(body, languageCode)
+			new CandidateBulkCreateCommand(body.list, languageCode)
 		);
 	}
 
@@ -197,8 +196,9 @@ export class CandidateController extends CrudController<Candidate> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }) )
 	async create(
-		@Body() body: ICandidateCreateInput
+		@Body() body: CreateCandidateDTO
 	): Promise<ICandidate> {
 		return await this.commandBus.execute(
 			new CandidateCreateCommand(body)
@@ -230,12 +230,11 @@ export class CandidateController extends CrudController<Candidate> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }) )
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: ICandidateUpdateInput
+		@Body() entity: UpdateCandidateDTO
 	): Promise<ICandidate> {
-		//We are using create here because create calls the method save()
-		//We need save() to save ManyToMany relations
 		return await this.commandBus.execute(
 			new CandidateUpdateCommand({ id, ...entity })
 		);

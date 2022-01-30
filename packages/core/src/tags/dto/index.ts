@@ -1,0 +1,1 @@
+export { CreateTagDTO } from './create-tag.dto';

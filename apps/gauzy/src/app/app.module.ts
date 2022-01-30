@@ -49,7 +49,7 @@ import {
 	routingInstrumentation as sentryRoutingInstrumentation,
 	TraceService as SentryTraceService
 } from '@sentry/angular';
-import { Integrations as TrackingIntegrations } from '@sentry/tracing';
+import { Integrations as TracingIntegrations } from '@sentry/tracing';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
@@ -68,6 +68,7 @@ import { HttpLoaderFactory } from './@shared/translate/translate.module';
 import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { CookieService } from 'ngx-cookie-service';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -87,7 +88,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		environment: environment.production ? 'production' : 'development',
 		// this enables automatic instrumentation
 		integrations: [
-			new TrackingIntegrations.BrowserTracing({
+			new TracingIntegrations.BrowserTracing({
 				routingInstrumentation: sentryRoutingInstrumentation
 			})
 		],
@@ -209,7 +210,8 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 			useClass: SentryErrorHandler
 		},
 		AppModuleGuard,
-		ColorPickerService
+		ColorPickerService,
+		CookieService
 	]
 })
 export class AppModule {

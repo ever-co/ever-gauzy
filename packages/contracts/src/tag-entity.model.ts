@@ -15,3 +15,9 @@ export interface ITagFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	isSystem?: boolean
 }
+
+export interface ICreateTag extends IBasePerTenantAndOrganizationEntityModel {
+	name: string;
+	color: string;
+	description?: string;
+}

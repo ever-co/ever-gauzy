@@ -1,5 +1,4 @@
 import {
-	IEmployeeCreateInput,
 	PermissionsEnum,
 	LanguagesEnum,
 	UpdateEmployeeJobsStatistics,
@@ -39,11 +38,11 @@ import { CrudController, ITryRequest, PaginationParams } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { TransformInterceptor } from './../core/interceptors';
 import { Permissions, Public } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
-import { UpdateProfileDTO } from './dto';
+import { EmployeeBulkInputDTO, CreateEmployeeDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
 
 @ApiTags('Employee')
 @UseInterceptors(TransformInterceptor)
@@ -256,11 +255,11 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/bulk')
 	async createBulk(
-		@Body() entity: IEmployeeCreateInput[],
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity: EmployeeBulkInputDTO,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee[]> {
 		return await this.commandBus.execute(
-			new EmployeeBulkCreateCommand(entity, languageCode)
+			new EmployeeBulkCreateCommand(entity.list, languageCode)
 		);
 	}
 
@@ -385,7 +384,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post()
 	async create(
-		@Body() entity: IEmployeeCreateInput,
+		@Body(new ValidationPipe({ transform:true })) entity: CreateEmployeeDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
@@ -420,9 +419,10 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put(':id')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Employee
+		@Body() entity: UpdateEmployeeDTO
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
 			new EmployeeUpdateCommand({

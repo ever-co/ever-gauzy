@@ -7,15 +7,18 @@ import {
 	Body,
 	Param,
 	Put,
-	HttpCode
+	HttpCode,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IEmail, IEmailUpdateInput, IPagination } from '@gauzy/contracts';
+import { ApiTags, ApiOperation, ApiResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
+import { IEmail, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
+import { UpdateEmailDTO } from './dto';
 
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard)
@@ -25,15 +28,19 @@ export class EmailController extends CrudController<Email> {
 		super(emailService);
 	}
 
-	@ApiOperation({ summary: 'Find all emails.' })
-	@ApiResponse({
+	@ApiOperation({ summary: 'Find all emails under specific tenant.' })
+	@ApiOkResponse({
 		status: HttpStatus.OK,
 		description: 'Found emails',
 		type: Email
 	})
-	@ApiResponse({
+	@ApiNotFoundResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found'
+	})
+	@ApiInternalServerErrorResponse({
+		status : HttpStatus.INTERNAL_SERVER_ERROR,
+		description: "Invalid input, The response body may contain clues as to what went wrong"
 	})
 	@Get()
 	async findAll(
@@ -66,9 +73,10 @@ export class EmailController extends CrudController<Email> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string, 
-		@Body() entity: IEmailUpdateInput
+		@Body() entity: UpdateEmailDTO
 	): Promise<any> {
 		return await this.emailService.update(id, entity);
 	}

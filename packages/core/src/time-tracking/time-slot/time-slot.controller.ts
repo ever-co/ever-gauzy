@@ -21,13 +21,16 @@ import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } f
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { Permissions } from './../../shared/decorators';
 import { DeleteTimeSlotDTO } from './dto';
+import { CommandBus } from '@nestjs/cqrs';
+import { DeleteTimeSlotCommand } from './commands';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class TimeSlotController {
 	constructor(
-		private readonly timeSlotService: TimeSlotService
+		private readonly timeSlotService: TimeSlotService,
+		private readonly commandBus: CommandBus
 	) {}
 
 	@ApiOperation({ summary: 'Get Time Slots' })
@@ -89,7 +92,9 @@ export class TimeSlotController {
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@UsePipes(new ValidationPipe({ transform: true }))
 	@Delete('/')
-	async deleteTimeSlot(@Query() query: DeleteTimeSlotDTO) {
-		return this.timeSlotService.deleteTimeSlot(query.ids);
+	async deleteTimeSlot(@Query() { ids }: DeleteTimeSlotDTO) {
+		return await this.commandBus.execute(
+			new DeleteTimeSlotCommand(ids)
+		);
 	}
 }

@@ -1,7 +1,7 @@
 import { CurrenciesEnum, PayPeriodEnum } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform, TransformFnParams } from "class-transformer";
-import { IsEnum, IsNumber, IsOptional, Min } from "class-validator";
+import { IsEnum, IsNumber, IsOptional } from "class-validator";
 
 export abstract class RatesDTO {
 
@@ -13,15 +13,13 @@ export abstract class RatesDTO {
     @ApiPropertyOptional({ type: () => Number })
     @IsOptional()
     @IsNumber()
-    @Min(1)
-    @Transform((params: TransformFnParams) => parseInt(params.value, 10))
+    @Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
     readonly billRateValue?: number;
 
     @ApiPropertyOptional({ type: () => Number })
     @IsOptional()
     @IsNumber()
-    @Min(1)
-    @Transform((params: TransformFnParams) => parseInt(params.value, 10))
+    @Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
     readonly reWeeklyLimit?: number;
 
     @ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })

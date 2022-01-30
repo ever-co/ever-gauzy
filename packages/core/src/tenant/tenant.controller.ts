@@ -14,7 +14,7 @@ import {
 	Put,
 	UseGuards
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { RequestContext } from '../core/context';
 import { CrudController } from './../core/crud';
@@ -30,11 +30,35 @@ export class TenantController extends CrudController<Tenant> {
 		super(tenantService);
 	}
 
+	@ApiOperation({
+		summary: 'Find tenants count' 
+	})
+	@ApiOkResponse({
+		status: HttpStatus.OK,
+		description: 'Found tenants count',
+		type: Tenant
+	})
+	@ApiNotFoundResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
 	@Get('count')
 	async getCount() {
 		throw new MethodNotAllowedException();
 	}
 
+	@ApiOperation({
+		summary: 'Find paginated tenants' 
+	})
+	@ApiOkResponse({
+		status: HttpStatus.OK,
+		description: 'Found paginatied tenants',
+		type: Tenant
+	})
+	@ApiNotFoundResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
 	@Get('pagination')
 	async pagination() {
 		throw new MethodNotAllowedException();

@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
 import {
 	TimeLogSourceEnum,

@@ -3,7 +3,7 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as manageCandidatesInvitesPage from '../support/Base/pages/ManageCandidatesInvites.po';
 import { CustomCommands } from '../support/commands';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 
 let email = ' ';
 

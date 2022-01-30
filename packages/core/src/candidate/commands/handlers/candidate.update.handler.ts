@@ -15,6 +15,8 @@ export class CandidateUpdateHandler
 		const { input } = command;
 		const { id } = input;
 		
+		//We are using create here because create calls the method save()
+		//We need save() to save ManyToMany relations
 		return await this.candidateService.create({ 
 			id, 
 			...input

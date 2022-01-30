@@ -139,7 +139,7 @@ import {
 	WarehouseProduct,
 	WarehouseProductVariant
 } from './../../core/entities/internal';
-import { RequestContext } from './../../core/context/request-context';
+import { RequestContext } from './../../core/context';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 
 export interface IColumnRelationMetadata {

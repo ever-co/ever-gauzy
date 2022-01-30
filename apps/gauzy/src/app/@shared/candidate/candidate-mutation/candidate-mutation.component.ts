@@ -2,7 +2,8 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import {
 	NbDialogRef,
-	NbStepperComponent
+	NbStepperComponent,
+  NbTagComponent
 } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
@@ -49,7 +50,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	role: IRole;
 	candidates: ICandidateCreateInput[] = [];
 	organization: IOrganization;
-	
+
 	constructor(
 		private readonly dialogRef: NbDialogRef<CandidateMutationComponent>,
 		private readonly roleService: RoleService,
@@ -63,8 +64,8 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
-				filter((organization) => !!organization),
-				tap((organization) => this.organization = organization),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -73,7 +74,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	async ngAfterViewInit() {
 		this.form = this.userBasicInfo.form;
 		this.formCV = this.candidateCv.form;
-		
+
 		const { tenantId } = this.store.user;
 		this.role = await firstValueFrom(
 			this.roleService.getRoleByName({
@@ -144,7 +145,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			organizationId
 		};
 
-		this.candidates.push(candidate);
+		if(this.form.valid) this.candidates.push(candidate);
 		this.candidateCv.loadFormData();
 		this.formCV = this.candidateCv.form;
 
@@ -168,7 +169,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	async updateSource(createdCandidates: ICandidate[]) {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		
+
 		const { items = [] } = await firstValueFrom(
 			this.candidatesService.getAll(['user', 'source'], {
 				tenantId,
@@ -192,5 +193,24 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		if (isNotEmpty(updateInput)) {
 			await this.candidateSourceService.updateBulk(updateInput);
 		}
+	}
+
+  /**
+   *  Go to another the step without to saving data form
+  */
+   gotoStep(step: number){
+     for(let i = 1; i < step; i++){
+      this.stepper.next(); // change step
+     }
+   }
+
+  /**
+	 * Removed one candidate in the array of candidates.
+	 * @param tag
+	 */
+   onCandidateRemove(tag: NbTagComponent): void {
+		this.candidates = this.candidates.filter(
+			(t: ICandidateCreateInput) => t.user.email !== tag.text
+		);
 	}
 }

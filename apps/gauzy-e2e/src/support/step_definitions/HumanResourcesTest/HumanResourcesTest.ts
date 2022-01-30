@@ -4,7 +4,7 @@ import * as humanResourcesPage from '../../Base/pages/HumanResources.po';
 import { HumanResourcesPageData } from '../../Base/pagedata/HumanResourcesPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 

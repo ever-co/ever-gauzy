@@ -15,7 +15,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			<div *ngIf="!imageUrl" class="image-container">
 				<img
 					[src]="
-						'https://afostats.imagead.net/uploads/afo/no_img.png'
+            '/assets/images/others/no-image-placeholder.svg'
 					"
 					alt="Product Item Photo"
 					(mouseenter)="hoverState = true"
@@ -49,6 +49,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				height: 63px;
 				display: flex;
 				justify-content: center;
+        object-fit:cover;
 			}
 
 			.color {
@@ -65,7 +66,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 			img {
 				height: 100%;
-				max-width: 70px;
+				width: 100%;
 				border-radius: 50%;
 			}
 

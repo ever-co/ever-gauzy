@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import {
 	IOrganization,
 	ITenant,

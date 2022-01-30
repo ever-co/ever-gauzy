@@ -4,7 +4,7 @@ import * as customSMTPPage from '../support/Base/pages/CustomSMTP.po';
 import { CustomSMTPPageData } from '../support/Base/pagedata/CustomSMTPPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 
 let username = ' ';
 let password = ' ';

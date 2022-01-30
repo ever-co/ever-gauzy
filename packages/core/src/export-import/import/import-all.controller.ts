@@ -12,7 +12,7 @@ import * as path from 'path';
 import { CommandBus } from '@nestjs/cqrs';
 import { IImportHistory, ImportHistoryStatusEnum, IPagination, UploadedFile } from '@gauzy/contracts';
 import { ImportAllService } from './import-all.service';
-import { RequestContext } from './../../core/context/request-context';
+import { RequestContext } from './../../core/context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { ImportHistoryCreateCommand, ImportHistoryService } from './../import-history';
 

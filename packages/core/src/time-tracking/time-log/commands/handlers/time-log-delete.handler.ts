@@ -3,10 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DeleteResult, UpdateResult } from 'typeorm';
 import * as _ from 'underscore';
 import { TimeLog } from './../../time-log.entity';
-import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
+import { TimeSlotRangeDeleteCommand } from './../../../time-slot/commands';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler
@@ -14,8 +14,7 @@ export class TimeLogDeleteHandler
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
-		private readonly commandBus: CommandBus,
-		private readonly timeSlotService: TimeSlotService
+		private readonly commandBus: CommandBus
 	) {}
 
 	public async execute(
@@ -35,23 +34,20 @@ export class TimeLogDeleteHandler
 		} else {
 			timeLogs = ids as TimeLog[];
 		}
-
 		console.log('TimeLog will be delete:', timeLogs);
 
-		for (let index = 0; index < timeLogs.length; index++) {
-			const timeLog = timeLogs[index];
+		for await (const timeLog of timeLogs) {
 			const { employeeId, startedAt } = timeLog;
 			let { stoppedAt } = timeLog;
 			if (stoppedAt === null || typeof stoppedAt === 'undefined') {
 				stoppedAt = new Date();
 			}
-
-			console.log(`TimeLog startedAt=${startedAt} & stoppedAt=${stoppedAt}`);
-
-			await this.timeSlotService.rangeDelete(
-				employeeId,
-				startedAt,
-				stoppedAt
+			await this.commandBus.execute(
+				new TimeSlotRangeDeleteCommand(
+					employeeId,
+					startedAt,
+					stoppedAt
+				)
 			);
 		}
 

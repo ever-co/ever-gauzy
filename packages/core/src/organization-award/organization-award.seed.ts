@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { OrganizationAward } from './organization-award.entity';
-import * as faker from 'faker';
+import { faker } from '@ever-co/faker';
 import { DEFAULT_ORGANIZATION_AWARDS } from './default-organization-awards';
 import { IOrganization, IOrganizationAward, ITenant } from '@gauzy/contracts';
 
