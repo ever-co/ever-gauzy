@@ -4,7 +4,7 @@ import { metaData } from './desktop-wakatime';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import { LocalStore } from './desktop-store';
-import { takeshot, captureScreen, notifyScreenshot, screenshotUp } from './desktop-screenshot';
+import { takeshot, captureScreen, notifyScreenshot } from './desktop-screenshot';
 import {
 	hasPromptedForPermission,
 	hasScreenCapturePermission,
@@ -33,60 +33,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		startServer(arg);
 	});
 
-	ipcMain.on('data_push_activity', async (event, arg) => {
-		const collections = arg.windowEvent.map((item) => {
-			return {
-				eventId: item.id,
-				timerId: arg.timerId,
-				durations: item.duration,
-				data: JSON.stringify(item.data),
-				created_at: new Date(),
-				updated_at: new Date(),
-				activityId: null,
-				type: arg.type
-			}
-		});
-		if (collections.length > 0) {
-			try {
-				await TimerData.insertWindowEvent(knex, collections);
-			} catch (error) {
-				if (timeTrackerWindow && !timeTrackerWindow.webContents.isDestroyed()) {
-					timeTrackerWindow.webContents.send('stop_from_tray');
-				}
-				throw Error(`Time tracking has been stopped`);
-			}
-		}
-	});
-
-	ipcMain.on('data_push_afk', async (event, arg) => {
-		const collections = arg.afk.map((item) => {
-			const now = moment().utc();
-			const afkDuration = now.diff(moment(arg.start).utc(), 'seconds');
-			if (afkDuration < item.duration) {
-				item.duration = afkDuration;
-			}
-			return {
-				eventId: item.id,
-				durations: item.duration,
-				timerId: arg.timerId,
-				data: JSON.stringify(item.data),
-				created_at: new Date(),
-				updated_at: new Date(),
-				timeSlotId: null,
-				timeSheetId: null
-			};
-		})
-		if (collections.length > 0) {
-			try {
-				await TimerData.insertAfkEvent(knex, collections);
-			} catch (error) {
-				if (timeTrackerWindow && !timeTrackerWindow.webContents.isDestroyed()) {
-					timeTrackerWindow.webContents.send('stop_from_tray');
-				}
-				throw Error(`Time tracking has been stopped`);
-			}
-		}
-	});
 
 	ipcMain.on('remove_aw_local_data', async (event, arg) => {
 		await TimerData.deleteWindowEventAfterSended(knex, {
@@ -172,10 +118,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			console.log('error opening permission', error.message);
 		}
 	});
-
-	ipcMain.on('upload_screenshot_to_api', (event, arg) => {
-		screenshotUp(arg.imgs, arg.timeSlotId, timeTrackerWindow);
-	})
 }
 
 export function ipcTimer(
@@ -212,6 +154,48 @@ export function ipcTimer(
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
+	});
+
+	ipcMain.on('data_push_activity', async (event, arg) => {
+		
+		const collections = arg.windowEvent.map((item) => {
+			return {
+				eventId: item.id,
+				timerId: arg.timerId,
+				durations: item.duration,
+				data: JSON.stringify(item.data),
+				created_at: new Date(),
+				updated_at: new Date(),
+				activityId: null,
+				type: arg.type
+			}
+		});
+		if (collections.length > 0) {
+			await timerHandler.createQueue('window-events', collections, knex);
+		}
+	});
+
+	ipcMain.on('data_push_afk', async (event, arg) => {
+		const collections = arg.afk.map((item) => {
+			const now = moment().utc();
+			const afkDuration = now.diff(moment(arg.start).utc(), 'seconds');
+			if (afkDuration < item.duration) {
+				item.duration = afkDuration;
+			}
+			return {
+				eventId: item.id,
+				durations: item.duration,
+				timerId: arg.timerId,
+				data: JSON.stringify(item.data),
+				created_at: new Date(),
+				updated_at: new Date(),
+				timeSlotId: null,
+				timeSheetId: null
+			};
+		})
+		if (collections.length > 0) {
+			await timerHandler.createQueue('afk-events', collections, knex);
+		}
 	});
 
 	ipcMain.on('stop_timer', (event, arg) => {
@@ -282,12 +266,6 @@ export function ipcTimer(
 			type: 'timeslot',
 			params: arg.params,
 			message: arg.message
-		});
-		/* create temp screenshot */
-		timeTrackerWindow.webContents.send('take_screenshot', {
-			timeSlotId: id,
-			screensize: screen.getPrimaryDisplay().workAreaSize,
-			isTemp: true
 		});
 	});
 

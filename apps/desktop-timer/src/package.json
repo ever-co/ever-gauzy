@@ -121,6 +121,7 @@
 		"underscore": "^1.13.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/desktop-libs": "^0.1.0",
-		"@electron/remote": "^2.0.1"
+		"@electron/remote": "^2.0.1",
+		"embedded-queue": "^0.0.11"
 	}
 }

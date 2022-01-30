@@ -135,6 +135,7 @@
 		"@sentry/node": "^6.17.2",
 		"@sentry/tracing": "^6.17.2",
 		"htmlparser2": "^3.10.1",
-		"@electron/remote": "^2.0.1"
+		"@electron/remote": "^2.0.1",
+		"embedded-queue": "^0.0.11"
 	}
 }

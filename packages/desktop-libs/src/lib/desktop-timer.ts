@@ -2,7 +2,7 @@
 // 	return 'desktop-timer';
 // }
 import moment from 'moment';
-import { Tray } from 'electron';
+import { Tray, app } from 'electron';
 import { TimerData } from './desktop-timer-activity';
 import { metaData } from './desktop-wakatime';
 import { LocalStore } from './desktop-store';
@@ -12,6 +12,7 @@ import { getScreeshot } from './desktop-screenshot';
 import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
+const EmbeddedQueue = require('embedded-queue');
 
 export default class Timerhandler {
 	timeRecordMinute = 0;
@@ -28,7 +29,9 @@ export default class Timerhandler {
 	isPaused = false;
 	listener = false;
 	nextScreenshot = 0;
-
+	queue:any = null;
+	queueType:any = {};
+	appName = app.getName();
 	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		// store timer is start to electron-store
 		if (!this.listener) {
@@ -111,6 +114,39 @@ export default class Timerhandler {
 						'milliseconds'
 					)
 				});
+				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
+					setupWindow.webContents.send('collect_data', {
+						start: this.timeSlotStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer.id
+					});
+
+					setupWindow.webContents.send('collect_afk', {
+						start: this.timeSlotStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer.id
+					});
+
+					setupWindow.webContents.send('collect_chrome_activities', {
+						start: this.timeSlotStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer.id
+					});
+
+					setupWindow.webContents.send('collect_firefox_activities', {
+						start: this.timeSlotStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer.id
+					});
+				}
 
 
 				this.calculateTimeRecord();
@@ -241,12 +277,107 @@ export default class Timerhandler {
 	}
 
 	async getSetActivity(knex, setupWindow, lastTimeSlot, timeTrackerWindow, quitApp) {
-		this.takeScreenshotActivities(timeTrackerWindow, lastTimeSlot)
+		const dataCollection = await this.activitiesCollection(knex, lastTimeSlot); 
+		this.takeScreenshotActivities(timeTrackerWindow, lastTimeSlot, dataCollection);
 		// get aw activity
 		
 	}
 
-	async takeScreenshotActivities(timeTrackerWindow, lastTimeSlot) {
+	async activitiesCollection(knex, lastTimeSlot) {
+		const userInfo = LocalStore.beforeRequestParams();
+		const appSetting = LocalStore.getStore('appSetting');
+		const config = LocalStore.getStore('configs');
+		log.info(`App Setting: ${moment().format()}`, appSetting);
+		log.info(`Config: ${moment().format()}`, config);
+		const { id: lastTimerId } = this.lastTimer;
+		let awActivities = await TimerData.getWindowEvent(knex, lastTimerId);
+
+		// get waktime heartbeats
+		let wakatimeHeartbeats = await metaData.getActivity(knex, {
+			start: lastTimeSlot.utc().format('YYYY-MM-DD HH:mm:ss'),
+			end: moment().utc().format('YYYY-MM-DD HH:mm:ss')
+		});
+
+		//get aw afk
+		const awAfk = await TimerData.getAfk(knex, lastTimerId);
+		const durationAfk:number = this.afkCount(awAfk);
+
+		//calculate mouse and keyboard activity as per selected period
+
+		const idsAw = [];
+		const idsWakatime = [];
+
+		// formating aw
+		awActivities = awActivities.map((item) => {
+			idsAw.push(item.id);
+			const dataParse = JSON.parse(item.data);
+			return {
+				title: dataParse.title || dataParse.app,
+				date: moment().utc().format('YYYY-MM-DD'),
+				time: moment().utc().format('HH:mm:ss'),
+				duration: Math.floor(item.durations),
+				type: item.type,
+				taskId: userInfo.taskId,
+				projectId: userInfo.projectId,
+				organizationContactId: userInfo.organizationContactId,
+				organizationId: userInfo.organizationId,
+				employeeId: userInfo.employeeId,
+				source: 'DESKTOP'
+			};
+		});
+
+		//formating wakatime
+		wakatimeHeartbeats = wakatimeHeartbeats.map((item) => {
+			idsWakatime.push(item.id);
+			const activityMetadata = {
+				type: item.type,
+				dependecies: item.dependencies,
+				language: item.languages,
+				project: item.projects,
+				branches: item.branches,
+				entity: item.entities,
+				line: item.lines
+			};
+			return {
+				title: item.editors,
+				date: moment.unix(item.time).format('YYYY-MM-DD'),
+				time: moment.unix(item.time).format('HH:mm:ss'),
+				duration: 0,
+				type: 'APP',
+				taskId: userInfo.taskId,
+				organizationId: userInfo.organizationId,
+				projectId: userInfo.projectId,
+				organizationContactId: userInfo.organizationContactId,
+				employeeId: userInfo.employeeId,
+				metaData:
+					this.configs && this.configs.db === 'sqlite'
+						? JSON.stringify(activityMetadata)
+						: activityMetadata
+			};
+		});
+
+		const allActivities = [...awActivities, ...wakatimeHeartbeats];
+		return { allActivities, idsAw, idsWakatime, durationAfk };
+	}
+
+	afkCount(afkList) {
+		let afkTime:number = 0;
+		
+		const afkOnly = afkList.filter((afk) => {
+			const jsonData = JSON.parse(afk.data);
+			if (jsonData.status === 'afk') {
+				return afk;
+			}
+		})
+		console.log('afk list', afkOnly);
+		afkOnly.forEach((x) => {
+			afkTime += x.durations;
+		});
+		return afkTime;
+	}
+
+	async takeScreenshotActivities(timeTrackerWindow, lastTimeSlot, dataCollection) {
+		const now = moment();
 		const userInfo = LocalStore.beforeRequestParams();
 		const projectInfo = LocalStore.getStore('project');
 		const appSetting = LocalStore.getStore('appSetting');
@@ -254,6 +385,8 @@ export default class Timerhandler {
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
 		const { id: lastTimerId, timeLogId } = this.lastTimer;
+		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
+
 
 		switch (
 			appSetting.SCREENSHOTS_ENGINE_METHOD ||
@@ -278,6 +411,11 @@ export default class Timerhandler {
 					timerId: lastTimerId,
 					timeLogId: timeLogId,
 					startedAt: lastTimeSlot.utc().toDate(),
+					activities: dataCollection.allActivities,
+					idsAw: dataCollection.idsAw,
+					idsWakatime: dataCollection.idsWakatime,
+					duration: durationNow,
+					durationNonAfk: durationNow - dataCollection.durationAfk
 				});
 				break;
 			case 'ScreenshotDesktopLib':
@@ -300,6 +438,11 @@ export default class Timerhandler {
 					timerId: lastTimerId,
 					timeLogId: timeLogId,
 					startedAt: lastTimeSlot.utc().toDate(),
+					activities: dataCollection.allActivities,
+					idsAw: dataCollection.idsAw,
+					idsWakatime: dataCollection.idsWakatime,
+					duration: durationNow,
+					durationNonAfk: durationNow - dataCollection.durationAfk
 				});
 				break;
 			default:
@@ -370,5 +513,51 @@ export default class Timerhandler {
 				quitApp
 			);
 		}
+	}
+
+	async createQueue(type, data, knex) {
+		const queName = `${type}-${this.appName}`;
+		if (!this.queue) {
+			this.queue = await EmbeddedQueue.Queue.createQueue({ inMemoryOnly: true  });
+		}
+
+		if(!this.queueType[queName]) {
+			this.queueType[queName] = this.queue;
+			this.queue.process(
+				queName,
+				async (job) => {
+					await new Promise(async (resolve) => {
+						try {
+							if (queName === `window-events-${this.appName}`) {
+								await TimerData.insertWindowEvent(knex, job.data);
+							} else {
+								await TimerData.insertAfkEvent(knex, job.data);
+							}
+							resolve(true);
+						} catch (error) {
+							console.log('failed insert window activity');
+							resolve(false);
+						}	
+					})
+				},
+				1
+			)
+
+			// handle job complete event
+			this.queue.on(
+				EmbeddedQueue.Event.Complete,
+				(job, result) => {
+					job.remove();
+				}
+			);
+		}
+	
+		// create "adder" type job
+		await this.queue.createJob({
+			type: queName,
+			data: data,
+		});
+		
+	
 	}
 }

@@ -58,16 +58,17 @@ export const TimerData = {
 			})
 			.update(data);
 	},
-	getTimer: async (knex, id) => {
-		return await knex('timer')
+	getTimer: async (knex, timerId) => {
+		return await knex('window-events')
 			.where({
-				id: id
+				timerId: timerId
 			});
 	},
 	getAfk: async (knex, timerId) => {
-		return await knex('afk-events')
+		return await knex('window-events')
 			.where({
-				timerId: timerId
+				timerId: timerId,
+				type: 'AFK'
 			});
 	},
 	deleteAfk: async (knex, data) => {
@@ -79,7 +80,10 @@ export const TimerData = {
 	},
 	getWindowEvent: async (knex, timerId) => {
 		return await knex('window-events')
-			.where({
+			.whereNot({
+				type: 'AFK'
+			})
+			.andWhere({
 				timerId: timerId
 			});
 	},

@@ -41,10 +41,10 @@ export class AppComponent implements OnInit {
 			this.appService
 				.collectAfk(arg.tpURL, arg.tp, arg.start, arg.end)
 				.then((res) => {
-					event.sender.send('data_push_afk', {
+					event.sender.send('data_push_activity', {
 						timerId: arg.timerId,
-						start: arg.start,
-						afk: res
+						windowEvent: res,
+						type: 'AFK'
 					});
 				});
 		});

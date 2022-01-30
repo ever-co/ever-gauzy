@@ -16,6 +16,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
 import { CustomRenderComponent, CustomDescriptionComponent } from './custom-render-cell.component';
 import { LocalDataSource } from 'ng2-smart-table';
+import { DomSanitizer } from '@angular/platform-browser';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -137,7 +138,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 		private _cdr: ChangeDetectorRef,
 		private timeTrackerService: TimeTrackerService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private sanitize: DomSanitizer
 	) {
 		this.electronService.ipcRenderer.on('timer_push', (event, arg) => {
 			this.setTime(arg);
@@ -255,7 +257,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 			(event, arg) => {
 				console.log('Last Capture Screenshot:', arg.fullUrl);
 				this.lastScreenCapture = {
-					fullUrl: arg.fullUrl,
+					fullUrl: this.sanitize.bypassSecurityTrustUrl(arg.fullUrl),
 					textTime: moment().fromNow(),
 					createdAt: Date.now()
 				};
@@ -936,27 +938,35 @@ export class TimeTrackerComponent implements AfterViewInit {
 		// updateActivities to api
 		const afktime:number = await this.getAfk(arg);
 		const duration = (arg.timeUpdatePeriode * 60) - afktime;
-		const activities = await this.getActivities(arg);
-		console.log('xxxddd', JSON.stringify(activities, null, 2));
-		console.log('duration', duration);
+		let activities = null;
+		if (!arg.activities) {
+			activities = await this.getActivities(arg);
+		} else {
+			activities = arg.activities
+		}
+
+		const ParamActivity = {
+			employeeId: arg.employeeId,
+			projectId: arg.projectId,
+			duration: arg.duration,
+			keyboard: Math.floor(arg.durationNonAfk),
+			mouse: Math.floor(arg.durationNonAfk),
+			overall: Math.floor(arg.durationNonAfk),
+			startedAt: arg.startedAt,
+			activities: activities,
+			timeLogId: arg.timeLogId,
+			organizationId: arg.organizationId,
+			tenantId: arg.tenantId,
+			organizationContactId: arg.organizationContactId,
+			apiHost: arg.apiHost,
+			token: arg.token
+		}
+
+		console.log('test', ParamActivity);
+
 		try {
-			const resActivities:any = await this.timeTrackerService.pushTotimeslot({
-				employeeId: arg.employeeId,
-				projectId: arg.projectId,
-				duration: Math.floor(duration),
-				keyboard: Math.floor(duration),
-				mouse: Math.floor(duration),
-				overall: Math.floor(duration),
-				startedAt: arg.startedAt,
-				activities: activities,
-				timeLogId: arg.timeLogId,
-				organizationId: arg.organizationId,
-				tenantId: arg.tenantId,
-				organizationContactId: arg.organizationContactId,
-				apiHost: arg.apiHost,
-				token: arg.token
-			})
-			console.log('res timeslot', resActivities);
+			const resActivities:any = await this.timeTrackerService.pushTotimeslot(ParamActivity)
+			console.log('result of timeslot', resActivities);
 			const timeLogs = resActivities.timeLogs;
 			this.electronService.ipcRenderer.send('return_time_slot', {
 				timerId: arg.timerId,
@@ -964,18 +974,37 @@ export class TimeTrackerComponent implements AfterViewInit {
 				quitApp: arg.quitApp,
 				timeLogs: timeLogs
 			});
+			this.electronService.ipcRenderer.send('remove_aw_local_data', {
+				idsAw: arg.idsAw
+			});
+			this.electronService.ipcRenderer.send('remove_wakatime_local_data', {
+				idsWakatime: arg.idsWakatime
+			});
+			
 
 			// upload screenshot to timeslot api
-
-			this.electronService.ipcRenderer.send('upload_screenshot_to_api', {
-				imgs: screenshotImg,
-				timeSlotId: resActivities.id
-			})
+			try {
+				await Promise.all(
+					screenshotImg.map(async (img) => {
+					  const imgResult = await this.uploadsScreenshot(arg, img, resActivities.id);
+					  return imgResult;
+					})
+			    )
+			} catch (error) {}
+			
 		} catch (error) {
 			console.log('error send to api timeslot', error);
 			this.electronService.ipcRenderer.send('failed_save_time_slot', {
-				params: error.params,
-				message: error.message
+				params: JSON.stringify({
+					...ParamActivity,
+					b64Imgs: screenshotImg.map((img) => {
+						return {
+							b64img: this.buffToB64(img),
+							fileName: this.fileNameFormat(img)
+						}
+					})
+				}),
+				message: error.message,
 			});
 		}
 	}
@@ -983,5 +1012,53 @@ export class TimeTrackerComponent implements AfterViewInit {
 	screenshotNotify(arg, imgs) {
 		const img:any = imgs[0];
 		this.electronService.ipcRenderer.send('show_screenshot_notif_window', img);
+	}
+
+	async uploadsScreenshot(arg, imgs, timeSlotId) {
+		const b64img = this.buffToB64(imgs);
+		let fileName = this.fileNameFormat(imgs);
+		try {
+			const resImg = await this.timeTrackerService.uploadImages({...arg, timeSlotId}, {
+				b64Img: b64img,
+				fileName: fileName
+			})
+			this.lastScreenCapture = resImg;
+			console.log('images result', resImg);
+			return resImg;
+		} catch (error) {
+			this.electronService.ipcRenderer.send('save_temp_img', {
+				params: JSON.stringify({
+					...arg,
+					b64img: b64img,
+					fileName: fileName,
+					timeSlotId
+				}),
+				message: error.message,
+				type: 'screenshot'
+			});
+		}
+	}
+
+	convertToSlug(text: string) {
+		return text
+			.toString()
+			.toLowerCase()
+			.replace(/\s+/g, '-') // Replace spaces with -
+			.replace(/\-\-+/g, '-') // Replace multiple - with single -
+			.replace(/^-+/, '') // Trim - from start of text
+			.replace(/-+$/, ''); // Trim - from end of text
+	}
+
+	buffToB64(imgs) {
+		const bufferImg:Buffer = Buffer.isBuffer(imgs.img) ? imgs.img : Buffer.from(imgs.img);
+		const b64img = bufferImg.toString('base64');
+		return b64img;
+	}
+
+	fileNameFormat(imgs) {
+		let fileName = `screenshot-${moment().format(
+			'YYYYMMDDHHmmss'
+		)}-${imgs.name}.png`; 
+		return this.convertToSlug(fileName)
 	}
 }

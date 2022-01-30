@@ -399,4 +399,65 @@ export class TimeTrackerService {
 			)
 			.toPromise();
 	}
+
+	uploadImages(values, img:any) {
+		console.log('hjdfhsjhfjd', values);
+		const  headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+		const formData = new FormData();
+		const contentType = 'image/png';
+	  	const b64Data = img.b64Img;
+		const blob = this.b64toBlob(b64Data, contentType);
+		formData.append('file', blob, img.fileName);
+		formData.append('timeSlotId', values.timeSlotId);
+		formData.append('tenantId', values.tenantId);
+		formData.append('organizationId', values.organizationId);
+		return this.http
+			.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {
+				headers: headers
+			})
+			.pipe(
+				catchError((error) => {
+					error.error = {
+						...error.error,
+						params: JSON.stringify(formData)
+					};
+					return throwError(error);
+				})
+			)
+			.toPromise();
+	}
+
+	b64toBlob = (b64Data, contentType='', sliceSize=512) => {
+		const byteCharacters = atob(b64Data);
+		const byteArrays = [];
+	  
+		for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+		  const slice = byteCharacters.slice(offset, offset + sliceSize);
+	  
+		  const byteNumbers = new Array(slice.length);
+		  for (let i = 0; i < slice.length; i++) {
+			byteNumbers[i] = slice.charCodeAt(i);
+		  }
+	  
+		  const byteArray = new Uint8Array(byteNumbers);
+		  byteArrays.push(byteArray);
+		}
+	  
+		const blob = new Blob(byteArrays, {type: contentType});
+		return blob;
+	}
+
+	convertToSlug(text: string) {
+		return text
+			.toString()
+			.toLowerCase()
+			.replace(/\s+/g, '-') // Replace spaces with -
+			.replace(/\-\-+/g, '-') // Replace multiple - with single -
+			.replace(/^-+/, '') // Trim - from start of text
+			.replace(/-+$/, ''); // Trim - from end of text
+	}
+	  
 }
