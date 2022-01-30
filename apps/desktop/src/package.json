@@ -115,7 +115,6 @@
 		"mac-screen-capture-permissions": "^2.0.0",
 		"electron-util": "^0.17.2",
 		"form-data": "^3.0.0",
-		"node-fetch": "^3.1.1",
 		"screenshot-desktop": "^1.12.7",
 		"electron-updater": "~4.3.8",
 		"pg": "^8.6.0",
