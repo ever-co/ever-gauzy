@@ -22,14 +22,24 @@
   position: relative;
   & .custom-button{
     position: absolute;
-    width: 100%;
-    bottom: 0;
+    width: 50%;
+    bottom: 25%;
+    left: 25%;
     opacity: 0;
   }
   &:hover{
+    & .image-container{
+      opacity: 80%;
+      background-color: black;
+    }
+    & .custom-view-report-content{
+      opacity: 80%;
+      background-color: black;
+    }
     & .custom-button{
       opacity: 100%;
-      transition: ease-out .5s
+      transition: ease-out .5s;
+      z-index : 10;
     }
   }
 }
