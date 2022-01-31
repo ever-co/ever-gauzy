@@ -498,39 +498,39 @@ export class TimeTrackingComponent
 		}
 	}
 
-  public redirectToTask(){
-    try{
+  public redirectToTask() {
+    try {
       this._router.navigate(['pages/tasks/dashboard']);
-    }catch(error){
-      throw('Error while redirecting to tasks page.'+ error);
+    } catch (error) {
+      throw ('Error while redirecting to tasks page.' + error);
     }
   }
 
-  public redirectToManuelTimeReport(){
-    try{
+  public redirectToManuelTimeReport() {
+    try {
       this._router.navigate(['/pages/reports/manual-time-edits'], {
         queryParams:
         {
-          start: this.selectedDateRange.start,
-          end: this.selectedDateRange.end
+          start: moment(this.selectedDateRange.start).format("MM-DD-YYYY"),
+          end: moment(this.selectedDateRange.end).format("MM-DD-YYYY")
         }
       });
-    }catch(error){
-      throw('Error while redirecting to manuel time report.'+ error);
+    } catch (error) {
+      throw ('Error while redirecting to manuel time report.' + error);
     }
   }
 
-  public redirectToAppUrl(){
-    try{
+  public redirectToAppUrl() {
+    try {
       this._router.navigate(['/pages/reports/apps-urls'], {
         queryParams:
         {
-          start: this.selectedDateRange.start,
-          end: this.selectedDateRange.end
+          start: moment(this.selectedDateRange.start).format("MM-DD-YYYY"),
+          end: moment(this.selectedDateRange.end).format("MM-DD-YYYY")
         }
       });
-    }catch(error){
-      throw('Error while redirecting to manuel time report.'+ error);
+    } catch (error) {
+      throw ('Error while redirecting to manuel time report.' + error);
     }
   }
 }
