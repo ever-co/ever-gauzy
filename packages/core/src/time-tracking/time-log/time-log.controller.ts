@@ -29,7 +29,6 @@ import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
-import { RequestContext } from './../../core/context';
 import { TransformInterceptor } from './../../core/interceptors';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogBodyTransformPipe } from './pipes';
@@ -41,7 +40,7 @@ import { TimeLogBodyTransformPipe } from './pipes';
 export class TimeLogController {
 	constructor(
 		private readonly timeLogService: TimeLogService
-	) { }
+	) {}
 
 	@ApiOperation({ summary: 'Get Timer Logs Conflict' })
 	@ApiResponse({
