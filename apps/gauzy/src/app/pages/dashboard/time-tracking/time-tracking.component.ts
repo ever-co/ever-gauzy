@@ -65,7 +65,7 @@ export class TimeTrackingComponent
 
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
-	
+
 
 	timeSlotLoading = false;
 	activitiesLoading = false;
@@ -78,7 +78,7 @@ export class TimeTrackingComponent
 	progressStatus = progressStatus;
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly RangePeriod = RangePeriod;
-	
+
 	employeeId: string = null;
 	projectId: string = null;
 	tenantId: string = null;
@@ -93,7 +93,7 @@ export class TimeTrackingComponent
 		end: moment().endOf('week').toDate(),
 		isCustomDate: false
 	};
-	
+
 	get selectedDateRange(): ISelectedDateRange {
 		return this._selectedDateRange;
 	}
@@ -117,7 +117,7 @@ export class TimeTrackingComponent
 			if (range.start && range.end) {
 				this.logs$.next(true);
 			}
-		}	
+		}
 	}
 
 	constructor(
@@ -446,7 +446,7 @@ export class TimeTrackingComponent
 		const startDate = moment(start);
 		const endDate = moment(end);
 		const days = endDate.diff(startDate, 'days');
-		
+
 		if (days === 6 && isCustomDate === false) {
 			return RangePeriod.WEEK;
 		} else if (days === 0 && isCustomDate === true) {
@@ -469,8 +469,8 @@ export class TimeTrackingComponent
 
 	/**
 	 * Redirect to screenshots page for specific employee
-	 * 
-	 * @param employee 
+	 *
+	 * @param employee
 	 */
 	async redirectToScreenshots(employee: IEmployee) {
 		if (!employee.id) {
@@ -497,4 +497,40 @@ export class TimeTrackingComponent
 			console.log('Error while redirecting screenshots page.', error);
 		}
 	}
+
+  public redirectToTask(){
+    try{
+      this._router.navigate(['pages/tasks/dashboard']);
+    }catch(error){
+      throw('Error while redirecting to tasks page.'+ error);
+    }
+  }
+
+  public redirectToManuelTimeReport(){
+    try{
+      this._router.navigate(['/pages/reports/manual-time-edits'], {
+        queryParams:
+        {
+          start: this.selectedDateRange.start,
+          end: this.selectedDateRange.end
+        }
+      });
+    }catch(error){
+      throw('Error while redirecting to manuel time report.'+ error);
+    }
+  }
+
+  public redirectToAppUrl(){
+    try{
+      this._router.navigate(['/pages/reports/apps-urls'], {
+        queryParams:
+        {
+          start: this.selectedDateRange.start,
+          end: this.selectedDateRange.end
+        }
+      });
+    }catch(error){
+      throw('Error while redirecting to manuel time report.'+ error);
+    }
+  }
 }
