@@ -21,7 +21,7 @@
 					class="mb-0 card custom-view-report"
 					*ngFor="let report of reportCategory.reports"
 				>
-					<nb-card class="border-0 m-0">
+					<nb-card class="border-0 m-0 card-nb">
 						<nb-card-header>
 							<div class="row align-items-center">
 								<h6 class="col">{{ report?.name }}</h6>
@@ -37,18 +37,18 @@
 							</div>
 						</nb-card-header>
 						<nb-card-body class="custom-view-report-content">
-							<div class="caption">{{ report?.description }}</div>
+							<div class="caption">{{ report?.description}}</div>
 							<div
 								class="image-container"
 								*ngIf="report.imageUrl"
 							>
 								<img [src]="report.imageUrl" />
 							</div>
+              <button nbButton [routerLink]="['/pages/reports', report.slug]" class="custom-button" status="primary">
+                {{'BUTTONS.VIEW_REPORT'| translate}}
+              </button>
 						</nb-card-body>
 					</nb-card>
-          <button nbButton [routerLink]="['/pages/reports', report.slug]" class="custom-button" status="primary">
-            {{'BUTTONS.VIEW_REPORT'| translate}}
-          </button>
 				</div>
 			</div>
 		</div>
