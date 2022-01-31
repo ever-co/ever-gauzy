@@ -8,6 +8,10 @@
     display: grid;
     gap: 16px;
     grid-template-columns: 1fr 1fr 1fr 1fr;
+    overflow-x: scroll;
+    .card{
+      width: 280px;
+    }
   }
   a {
     text-decoration: none;
@@ -17,3 +21,20 @@
     margin-top: 10px;
   }
 }
+.custom-view-report{
+  position: relative;
+  & .custom-button{
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    opacity: 0;
+  }
+  &:hover{
+    & .custom-button{
+      opacity: 100%;
+      transition: ease-out .5s
+    }
+  }
+}
+
+

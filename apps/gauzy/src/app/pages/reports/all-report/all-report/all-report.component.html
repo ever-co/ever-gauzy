@@ -17,9 +17,8 @@
 				</h5>
 			</div>
 			<div class="card-grid">
-				<a
-					[routerLink]="['/pages/reports', report.slug]"
-					class="mb-0 card"
+				<div
+					class="mb-0 card custom-view-report"
 					*ngFor="let report of reportCategory.reports"
 				>
 					<nb-card class="border-0 m-0">
@@ -47,7 +46,10 @@
 							</div>
 						</nb-card-body>
 					</nb-card>
-				</a>
+          <button nbButton [routerLink]="['/pages/reports', report.slug]" class="custom-button" status="primary">
+            {{'BUTTONS.VIEW_REPORT'| translate}}
+          </button>
+				</div>
 			</div>
 		</div>
 	</nb-card-body>

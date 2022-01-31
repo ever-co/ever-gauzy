@@ -10,7 +10,8 @@ import {
 	NbSpinnerModule,
 	NbCardModule,
 	NbSelectModule,
-	NbToggleModule
+	NbToggleModule,
+  NbButtonModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
@@ -28,7 +29,8 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbSelectModule,
 		FormsModule,
 		NbToggleModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+    NbButtonModule
 	]
 })
 export class AllReportModule {}
