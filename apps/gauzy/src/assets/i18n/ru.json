@@ -112,7 +112,8 @@
 		"CREATE_NEW_ROLE": "Создать роль {{ name }}",
 		"DELETE_EXISTING_ROLE": "Удалить роль {{ name }}",
 		"RESTORE": "Восстановить",
-		"VIEW_ALL": "Посмотреть все"
+		"VIEW_ALL": "Посмотреть все",
+		"VIEW_REPORT": "Просмотр отчета"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
