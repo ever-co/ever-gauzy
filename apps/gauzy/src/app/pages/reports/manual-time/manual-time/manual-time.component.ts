@@ -18,6 +18,7 @@ import { debounceTime, tap } from 'rxjs/operators';
 import { chain, pick } from 'underscore';
 import { ReportBaseComponent } from 'apps/gauzy/src/app/@shared/report/report-base/report-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy()
 @Component({
@@ -32,12 +33,14 @@ export class ManualTimeComponent
 	filters: ITimeLogFilters;
 	loading: boolean;
 	dailyData: any;
+  customFilterRange: ITimeLogFilters;
 
 	constructor(
 		private cd: ChangeDetectorRef,
 		private timesheetService: TimesheetService,
 		protected store: Store,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+    private route: ActivatedRoute
 	) {
 		super(store, translateService);
 	}
@@ -50,6 +53,13 @@ export class ManualTimeComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+      this.customFilterRange = {
+        startDate: moment(this.route.snapshot.queryParams.start).startOf('week').toDate(),
+        endDate: moment(this.route.snapshot.queryParams.end).endOf('week').toDate()
+      };
+      if(this.customFilterRange.startDate) {
+        this.filtersChange(this.customFilterRange);
+      };
 	}
 
 	ngAfterViewInit() {
