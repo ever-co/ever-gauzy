@@ -107,7 +107,7 @@
 		"mac-screen-capture-permissions": "^2.0.0",
 		"electron-util": "^0.17.2",
 		"form-data": "^3.0.0",
-		"node-fetch": "^3.1.1",
+		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.7",
 		"electron-updater": "~4.3.8",
 		"pg": "^8.6.0",
@@ -121,6 +121,7 @@
 		"underscore": "^1.13.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/desktop-libs": "^0.1.0",
-		"@electron/remote": "^2.0.1"
+		"@electron/remote": "^2.0.1",
+		"embedded-queue": "^0.0.11"
 	}
 }

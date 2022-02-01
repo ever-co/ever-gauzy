@@ -16,6 +16,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
 import { CustomRenderComponent, CustomDescriptionComponent } from './custom-render-cell.component';
 import { LocalDataSource } from 'ng2-smart-table';
+import { DomSanitizer } from '@angular/platform-browser';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -137,7 +138,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 		private _cdr: ChangeDetectorRef,
 		private timeTrackerService: TimeTrackerService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private sanitize: DomSanitizer
 	) {
 		this.electronService.ipcRenderer.on('timer_push', (event, arg) => {
 			this.setTime(arg);
@@ -255,7 +257,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 			(event, arg) => {
 				console.log('Last Capture Screenshot:', arg.fullUrl);
 				this.lastScreenCapture = {
-					fullUrl: arg.fullUrl,
+					fullUrl: this.sanitize.bypassSecurityTrustUrl(arg.fullUrl),
 					textTime: moment().fromNow(),
 					createdAt: Date.now()
 				};
@@ -298,6 +300,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 		this.electronService.ipcRenderer.on('timer_already_stop', (event, arg) => {
 			this.loading = false;
+		})
+
+		this.electronService.ipcRenderer.on('prepare_activities_screenshot', (event, arg) => {
+			this.sendActivities(arg);
 		})
 	}
 
@@ -816,5 +822,243 @@ export class TimeTrackerComponent implements AfterViewInit {
 			this.sourceData.reset();
 			this.sourceData.refresh();
 		}
-  }
+  	}
+
+	async getScreenshot(arg) {
+		const thumbSize = this.determineScreenshot(arg.screensize);
+		return this.electronService.desktopCapturer
+			.getSources({
+				types: ['screen'],
+				thumbnailSize: thumbSize
+			})
+			.then((sources) => {
+				const screens = [];
+				sources.forEach(async (source, i) => {
+					log.info('screenshot_res', source);
+					screens.push({
+						img: source.thumbnail.toPNG(),
+						name: source.name,
+						id: source.display_id
+					});
+					log.info('screenshot data', screens);
+				});
+				return screens;
+			}).catch((err) => {
+				console.log('screenshot elecctron render error', err);
+				return [];
+			})
+	}
+
+	async getActivities(arg) {
+		let windowEvents:any = [];
+		let chromeEvent:any = [];
+		let firefoxEvent:any = [];
+		try {
+			// window event
+			windowEvents = await this.timeTrackerService.collectevents(
+				arg.tpURL,
+				arg.tp,
+				arg.start,
+				arg.end
+			);
+	
+			//  chrome event
+			chromeEvent = await this.timeTrackerService.collectChromeActivityFromAW(
+				arg.tpURL,
+				arg.start,
+				arg.end
+			)
+	
+			// firefox event
+			firefoxEvent = await this.timeTrackerService.collectFirefoxActivityFromAw(
+				arg.tpURL,
+				arg.start,
+				arg.end
+			)
+		} catch (error) {
+			log.info('failed collect from AW');
+		}
+
+		return this.mappingActivities(arg, [...windowEvents, ...chromeEvent, ...firefoxEvent]);
+
+	}
+
+	mappingActivities(arg, activities) {
+		return  activities.map((act) =>{
+			return {
+					title: act.data.title || act.data.app,
+					date: moment(act.timestamp).utc().format('YYYY-MM-DD'),
+					time: moment(act.timestamp).utc().format('HH:mm:ss'),
+					duration: Math.floor(act.duration),
+					type: act.data.title.url ? 'URL': 'APP',
+					taskId: arg.taskId,
+					projectId: arg.projectId,
+					organizationContactId: arg.organizationContactId,
+					organizationId: arg.organizationId,
+					employeeId: arg.employeeId,
+					source: 'DESKTOP'
+			}
+		});
+	}
+
+	async getAfk(arg) {
+		try {
+			const afkWatch:any = await this.timeTrackerService.collectAfkFromAW(
+				arg.tpURL,
+				arg.start,
+				arg.end
+			);
+			const afkOnly = afkWatch.filter((afk) => afk.data && afk.data.status === 'afk');
+			return this.afkCount(afkOnly);
+		} catch (error) {
+			return 0;
+		}
+	}
+
+	async afkCount(afkList) {
+		let afkTime = 0;
+		afkList.forEach((x) => {
+			afkTime += x.duration;
+		});
+		return afkTime;
+	}
+
+	async sendActivities(arg) {
+		// screenshot process
+		let screenshotImg = [];
+		if (!arg.displays) {
+			screenshotImg = await this.getScreenshot(arg);
+		} else {
+			screenshotImg = arg.displays;
+		}
+
+		// notify
+		this.screenshotNotify(arg, screenshotImg);
+
+		// updateActivities to api
+		const afktime:number = await this.getAfk(arg);
+		const duration = (arg.timeUpdatePeriode * 60) - afktime;
+		let activities = null;
+		if (!arg.activities) {
+			activities = await this.getActivities(arg);
+		} else {
+			activities = arg.activities
+		}
+
+		const ParamActivity = {
+			employeeId: arg.employeeId,
+			projectId: arg.projectId,
+			duration: arg.duration,
+			keyboard: Math.floor(arg.durationNonAfk),
+			mouse: Math.floor(arg.durationNonAfk),
+			overall: Math.floor(arg.durationNonAfk),
+			startedAt: arg.startedAt,
+			activities: activities,
+			timeLogId: arg.timeLogId,
+			organizationId: arg.organizationId,
+			tenantId: arg.tenantId,
+			organizationContactId: arg.organizationContactId,
+			apiHost: arg.apiHost,
+			token: arg.token
+		}
+
+		console.log('test', ParamActivity);
+
+		try {
+			const resActivities:any = await this.timeTrackerService.pushTotimeslot(ParamActivity)
+			console.log('result of timeslot', resActivities);
+			const timeLogs = resActivities.timeLogs;
+			this.electronService.ipcRenderer.send('return_time_slot', {
+				timerId: arg.timerId,
+				timeSlotId: resActivities.id,
+				quitApp: arg.quitApp,
+				timeLogs: timeLogs
+			});
+			this.electronService.ipcRenderer.send('remove_aw_local_data', {
+				idsAw: arg.idsAw
+			});
+			this.electronService.ipcRenderer.send('remove_wakatime_local_data', {
+				idsWakatime: arg.idsWakatime
+			});
+			
+
+			// upload screenshot to timeslot api
+			try {
+				await Promise.all(
+					screenshotImg.map(async (img) => {
+					  const imgResult = await this.uploadsScreenshot(arg, img, resActivities.id);
+					  return imgResult;
+					})
+			    )
+			} catch (error) {}
+			
+		} catch (error) {
+			console.log('error send to api timeslot', error);
+			this.electronService.ipcRenderer.send('failed_save_time_slot', {
+				params: JSON.stringify({
+					...ParamActivity,
+					b64Imgs: screenshotImg.map((img) => {
+						return {
+							b64img: this.buffToB64(img),
+							fileName: this.fileNameFormat(img)
+						}
+					})
+				}),
+				message: error.message,
+			});
+		}
+	}
+
+	screenshotNotify(arg, imgs) {
+		const img:any = imgs[0];
+		this.electronService.ipcRenderer.send('show_screenshot_notif_window', img);
+	}
+
+	async uploadsScreenshot(arg, imgs, timeSlotId) {
+		const b64img = this.buffToB64(imgs);
+		let fileName = this.fileNameFormat(imgs);
+		try {
+			const resImg = await this.timeTrackerService.uploadImages({...arg, timeSlotId}, {
+				b64Img: b64img,
+				fileName: fileName
+			})
+			this.lastScreenCapture = resImg;
+			console.log('images result', resImg);
+			return resImg;
+		} catch (error) {
+			this.electronService.ipcRenderer.send('save_temp_img', {
+				params: JSON.stringify({
+					...arg,
+					b64img: b64img,
+					fileName: fileName,
+					timeSlotId
+				}),
+				message: error.message,
+				type: 'screenshot'
+			});
+		}
+	}
+
+	convertToSlug(text: string) {
+		return text
+			.toString()
+			.toLowerCase()
+			.replace(/\s+/g, '-') // Replace spaces with -
+			.replace(/\-\-+/g, '-') // Replace multiple - with single -
+			.replace(/^-+/, '') // Trim - from start of text
+			.replace(/-+$/, ''); // Trim - from end of text
+	}
+
+	buffToB64(imgs) {
+		const bufferImg:Buffer = Buffer.isBuffer(imgs.img) ? imgs.img : Buffer.from(imgs.img);
+		const b64img = bufferImg.toString('base64');
+		return b64img;
+	}
+
+	fileNameFormat(imgs) {
+		let fileName = `screenshot-${moment().format(
+			'YYYYMMDDHHmmss'
+		)}-${imgs.name}.png`; 
+		return this.convertToSlug(fileName)
+	}
 }
