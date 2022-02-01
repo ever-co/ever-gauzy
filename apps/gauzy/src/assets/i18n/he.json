@@ -112,7 +112,8 @@
 		"CREATE_NEW_ROLE": "Create {{ name }} Role",
 		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role",
 		"RESTORE": "Restore",
-		"VIEW_ALL": "View All"
+		"VIEW_ALL": "View All",
+		"VIEW_REPORT": "View Report"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -1801,7 +1802,8 @@
 			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data",
 			"TENANT_SETTING": "Create/Edit/Delete tenant settings",
 			"ALLOW_DELETE_TIME": "Allow Delete Time",
-			"ALLOW_MODIFY_TIME": "Allow Modify Time"
+			"ALLOW_MODIFY_TIME": "Allow Modify Time",
+			"ALLOW_MANUAL_TIME": "Allow Manual Time"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

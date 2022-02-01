@@ -5,7 +5,7 @@
 				{{ !selectedDateRange.isCustomDate ? ('TIMESHEET.WEEKLY' | translate) : '' }} {{ 'TIMESHEET.TIME_TRACKING' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title 
+		<ngx-date-range-title
 			[start]="selectedDateRange.start"
 			[end]="selectedDateRange.end"
 		></ngx-date-range-title>
@@ -17,7 +17,7 @@
 					<div class="bulk-actions col-auto">
 						<div class="input-group">
 							<div class="input-group-append mr-1" id="button-previous-addon4">
-								<button 
+								<button
 									nbButton
 									status="primary"
 									(click)="previousDay()"
@@ -35,7 +35,7 @@
 									[nbDatepicker]="dateRangePicker"
 								/>
 								<nb-rangepicker #dateRangePicker [range]="selectedDateRange"></nb-rangepicker>
-							</div>							
+							</div>
 							<div class="input-group-append ml-1" id="button-next-addon4">
 								<button
 									nbButton
@@ -46,7 +46,7 @@
 								</button>
 							</div>
 							<div class="input-group-append ml-1" id="button-today-addon4">
-								<button									
+								<button
 									nbButton
 									status="primary"
 									(click)="todayDate()"
@@ -289,9 +289,14 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header>{{
+					<nb-card-header class="nb-card-header">
+            {{
 						'TIMESHEET.TASKS' | translate
-					}}</nb-card-header>
+					   }}
+          <a class="link-text" (click)="redirectToTask()"  >
+            {{ 'BUTTONS.VIEW_ALL' | translate }}
+          </a>
+        </nb-card-header>
 					<ng-template
 						[ngIf]="tasks?.length > 0"
 						[ngIfElse]="noTasks"
@@ -353,9 +358,13 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header>{{
+					<nb-card-header class="nb-card-header">{{
 						'TIMESHEET.MANUAL_TIME' | translate
-					}}</nb-card-header>
+					}}
+          <a class="link-text" (click)="redirectToManuelTimeReport()">
+            {{ 'BUTTONS.VIEW_REPORT' | translate }}
+          </a>
+        </nb-card-header>
 					<ng-template
 						[ngIf]="manualTimes?.length > 0"
 						[ngIfElse]="noManualTimes"
@@ -504,9 +513,13 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header>{{
+					<nb-card-header class="nb-card-header">{{
 						'TIMESHEET.APPS_URLS' | translate
-					}}</nb-card-header>
+					}}
+          <a class="link-text" (click)="redirectToAppUrl()">
+            {{ 'BUTTONS.VIEW_REPORT' | translate }}
+          </a>
+        </nb-card-header>
 					<ng-template
 						[ngIf]="activities?.length > 0"
 						[ngIfElse]="noActivities"
@@ -568,10 +581,10 @@
 											{{ 'TIMESHEET.TODAY' | translate }}
 										</div>
 										<div class="col-3 text-center">
-											{{ 
+											{{
 												(
-													(selectedPeriod ===  RangePeriod.PERIOD) ? 
-													'TIMESHEET.OVER_PERIOD' : 
+													(selectedPeriod ===  RangePeriod.PERIOD) ?
+													'TIMESHEET.OVER_PERIOD' :
 													'TIMESHEET.THIS_WEEK'
 												) | translate
 											}}
@@ -673,7 +686,7 @@
 									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
 								</ng-template>
 								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
-									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}				
+									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}
 								</ng-template>
 								<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
 									{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}

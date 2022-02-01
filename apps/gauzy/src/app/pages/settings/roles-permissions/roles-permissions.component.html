@@ -25,9 +25,9 @@
 						</button>
 					</nb-form-field>
 					<nb-autocomplete #autocomplete (selectedChange)="onSelectionChange($event)">
-						<nb-option 
-							*ngFor="let role of roles$ | async" 
-							[value]="role.name" 
+						<nb-option
+							*ngFor="let role of roles$ | async"
+							[value]="role.name"
 							[class]="(role.name === input.value) ? 'active' : ''"
 						>{{ role.name }}</nb-option>
 					</nb-autocomplete>
@@ -36,19 +36,19 @@
 			<div class="col-6" *ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']">
 				<ng-container *ngIf="isWantToCreate">
 					<button nbButton status="success" (click)="createRole()">
-						{{ 
+						{{
 							'BUTTONS.CREATE_NEW_ROLE' | translate : {
 								name: input.value
-							} 
+							}
 						}}
 					</button>
 				</ng-container>
 				<ng-container *ngIf="role && role.isSystem === false && !isWantToCreate">
 					<button nbButton status="danger" (click)="deleteRole()">
-						{{ 
+						{{
 							'BUTTONS.DELETE_EXISTING_ROLE' | translate : {
 								name: role.name
-							} 
+							}
 						}}
 					</button>
 				</ng-container>
@@ -73,7 +73,10 @@
 							status="basic"
 							[disabled]="isDisabledGeneralPermissions()"
 						>
-							{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
+							<div class="custom-permission-view">
+                <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
+                <small>{{'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</small>
+              </div>
 						</nb-toggle>
 					</nb-card-body>
 				</nb-card>
@@ -103,7 +106,10 @@
 							status="basic"
 							[disabled]="isDisabledAdministrationPermissions()"
 						>
-							{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}
+              <div class="custom-permission-view">
+                <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
+                <small>{{'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</small>
+              </div>
 						</nb-toggle>
 					</nb-card-body>
 				</nb-card>

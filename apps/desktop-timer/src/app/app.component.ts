@@ -41,10 +41,10 @@ export class AppComponent implements OnInit {
 			this.appService
 				.collectAfk(arg.tpURL, arg.tp, arg.start, arg.end)
 				.then((res) => {
-					event.sender.send('data_push_afk', {
+					event.sender.send('data_push_activity', {
 						timerId: arg.timerId,
-						start: arg.start,
-						afk: res
+						windowEvent: res,
+						type: 'AFK'
 					});
 				});
 		});
@@ -111,21 +111,6 @@ export class AppComponent implements OnInit {
 				.pushToTimeslot(arg)
 				.then((res: any) => {
 					if (res.id) {
-						if (arg.idsAw) {
-							event.sender.send('remove_aw_local_data', {
-								idsAw: arg.idsAw
-							});
-						}
-						if (arg.idsWakatime) {
-							event.sender.send('remove_wakatime_local_data', {
-								idsWakatime: arg.idsWakatime
-							});
-						}
-						if (arg.idAfk) {
-							event.sender.send('remove_afk_local_Data', {
-								idAfk: arg.idAfk
-							});
-						}
 						const timeLogs = res.timeLogs;
 						event.sender.send('return_time_slot', {
 							timerId: arg.timerId,

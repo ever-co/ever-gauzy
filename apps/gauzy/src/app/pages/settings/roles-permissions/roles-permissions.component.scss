@@ -10,10 +10,16 @@
 .permission-items-col {
 	nb-toggle {
 		display: flex;
+    flex-direction: column;
 		::ng-deep .toggle-label {
 			display: flex;
 			justify-content: space-between;
 			flex-grow: 1;
 		}
 	}
+}
+
+.custom-permission-view{
+  display: flex;
+  flex-direction: column;
 }

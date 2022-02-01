@@ -5,11 +5,12 @@ import * as url from 'url';
 import * as path from 'path';
 import { LocalStore } from './desktop-store';
 import Form from 'form-data';
-import fetch from 'node-fetch';
 import { BrowserWindow, screen } from 'electron';
 import screenshot from 'screenshot-desktop';
 const sound = require('sound-play');
+import * as remoteMain from '@electron/remote/main';
 
+import os from 'os';
 // Import logging for electron and override default console logging
 import log from 'electron-log';
 console.log = log.log;
@@ -131,21 +132,21 @@ const uploadScreenShot = async (
 			timeSlotId: timeSlotId
 		});
 
-		const response = await fetch(
-			`${appInfo.apiHost}/api/timesheet/screenshot`,
-			{
-				method: 'POST',
-				body: form,
-				headers: {
-					Authorization: `Bearer ${appInfo.token}`,
-					'Tenant-Id': appInfo.tenantId
-				}
-			}
-		);
+		// const response = await fetch(
+		// 	`${appInfo.apiHost}/api/timesheet/screenshot`,
+		// 	{
+		// 		method: 'POST',
+		// 		body: form,
+		// 		headers: {
+		// 			Authorization: `Bearer ${appInfo.token}`,
+		// 			'Tenant-Id': appInfo.tenantId
+		// 		}
+		// 	}
+		// );
 
 		console.log(`Send Screenshot to API: ${moment().format()}`);
 
-		const screenshot: any = await response.json();
+		const screenshot: any = {}
 
 		console.log(
 			`Get Screenshot Response From API: ${moment().format()}`,
@@ -441,3 +442,102 @@ export function saveTempImage(img, name, timeSlotId, timeTrackerWindow) {
 		})
 	});
 }
+
+export async function getScreeshot() {
+	const allDisplays = [];
+	const displays = await screenshot.listDisplays();
+	const activeWindow = detectActiveWindow();
+	await Promise.all(
+		displays.map(async (display, i) => {
+			const img = await screenshot({ screen: display.id });
+			allDisplays.push({
+				img: img,
+				name: `Screen ${i}`,
+				id:
+					i === activeWindow.index
+						? activeWindow.id.toString()
+						: display.id
+			});
+		})
+	);
+	
+	const appSetting = LocalStore.getStore('appSetting');
+	switch (appSetting.monitor.captured) {
+		case 'all':
+			return allDisplays;
+		case 'active-only':
+			return [allDisplays.find((x) => x.id === activeWindow.id.toString())];
+		default:
+			break;
+	}
+}
+
+export function notifyScreenshot(notificationWindow, thumb, windowPath, soundPath, timeTrackerWindow) {
+	const soundCamera = soundPath;
+	const sizes = screen.getPrimaryDisplay().size;
+	const pathTempFile = os.tmpdir();
+	let fileName = `screenshot-${moment().format(
+		'YYYYMMDDHHmmss'
+	)}-${thumb.name}.png`;
+
+	fileName = convertToSlug(fileName);
+	const pathFile = path.join(pathTempFile, `/${fileName}`);
+	try {
+		writeFileSync(pathFile, thumb.img);
+	} catch (error) {
+	}
+	// preparing window screenshot
+	const screenCaptureWindow = {
+		width: 310,
+		height: 170,
+		frame: false,
+		webPreferences: {
+			nodeIntegration: true,
+			webSecurity: false,
+			contextIsolation: false			
+		}
+	};
+
+	notificationWindow = new BrowserWindow({
+		...screenCaptureWindow,
+		x: sizes.width - (screenCaptureWindow.width + 15),
+		y: 0 + 15
+	});
+
+	console.log('App Name:', app.getName());
+	global.variableGlobal.screenshotSrc = pathFile;
+	const urlpath = url.format({
+		pathname: app.getName() !== 'gauzy-desktop-timer'
+		? windowPath.screenshotWindow
+		: windowPath.timeTrackerUi,
+		protocol: 'file:',
+		slashes: true,
+		hash: '/screen-capture'
+	});
+	notificationWindow.loadURL(urlpath);
+	remoteMain.enable(notificationWindow.webContents);
+	// notificationWindow.webContents.toggleDevTools();
+	notificationWindow.setMenu(null);
+	// notificationWindow.hide();
+	notificationWindow.show();
+
+	setTimeout(() => {
+		notificationWindow.webContents.send('show_popup_screen_capture', {
+			note: LocalStore.beforeRequestParams().note
+		});
+	}, 1000);
+	setTimeout(() => {
+		timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: pathFile });
+		try {
+			if (existsSync(soundCamera)) {
+				sound.play(soundCamera, 0.4);
+			}
+		} catch (err) {
+			console.error('sound camera not found');
+		}
+	}, 1000)
+	setTimeout(() => {
+		notificationWindow.close();
+		unlinkSync(pathFile);
+	}, 4000);
+};

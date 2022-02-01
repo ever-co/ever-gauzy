@@ -5,6 +5,7 @@ import {
 	OnDestroy,
 	OnInit
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { IGetActivitiesInput } from '@gauzy/contracts';
 import * as moment from 'moment';
 
@@ -20,10 +21,21 @@ export class AppsUrlsReportComponent implements OnInit, AfterViewInit, OnDestroy
 		endDate: moment(this.today).endOf('week').toDate()
 	};
 	filters: IGetActivitiesInput;
+  customFilterRange: IGetActivitiesInput;
 
-	constructor(private readonly cd: ChangeDetectorRef) {}
+	constructor(private readonly cd: ChangeDetectorRef,
+    private readonly route: ActivatedRoute
+    ) {}
 
-	ngOnInit() {}
+	ngOnInit() {
+    this.customFilterRange = {
+      startDate: moment(this.route.snapshot.queryParams.start).startOf('week').toDate(),
+      endDate: moment(this.route.snapshot.queryParams.end).endOf('week').toDate()
+    };
+    if(this.customFilterRange.startDate) {
+      this.filtersChange(this.customFilterRange);
+    };
+  }
 
 	ngAfterViewInit() {
 		this.cd.detectChanges();

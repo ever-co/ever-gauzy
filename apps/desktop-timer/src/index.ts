@@ -72,8 +72,10 @@ import {
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { CancellationToken } from "builder-util-runtime";
-import fetch from 'node-fetch';
 import { initSentry } from './sentry';
+
+// Can be like this: import fetch from '@gauzy/desktop-libs' for v3 of node-fetch;
+import fetch from 'node-fetch';
 
 initSentry();
 

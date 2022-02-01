@@ -12,8 +12,47 @@
   a {
     text-decoration: none;
   }
-  .image-container img {
-    width: 350px;
+  .image-container {
     margin-top: 10px;
+    object-fit: cover;
+    & img{
+      width: 350px;
+    }
   }
 }
+
+.custom-view-report{
+  position: relative;
+
+  & .custom-button{
+    height: 40px;
+    width: 120px;
+    position: absolute;
+    left: 50%;
+    margin-left: -60px;
+    top: 50%;
+    margin-top: -20px;
+    visibility: hidden;
+  }
+
+  &:hover{
+    & .image-container{
+      opacity: 80%;
+    }
+    & .custom-view-report-content{
+      opacity: 80%;
+    }
+    & .custom-button{
+      opacity: 100%;
+      transition: ease-out .5s;
+      z-index : 10;
+      visibility: visible;
+    }
+  }
+}
+
+::-webkit-scrollbar{
+  display: none;
+}
+
+
