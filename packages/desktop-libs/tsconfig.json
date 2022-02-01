@@ -11,6 +11,6 @@
 		"esModuleInterop": true
 	},
 	"files": ["global.d.ts"],
-	"include": ["./src/**/*.ts"],
+	"include": ["./src/**/*.ts", "src/lib/fetch.js"],
 	"exclude": ["node_modules", "dist"]
 }
