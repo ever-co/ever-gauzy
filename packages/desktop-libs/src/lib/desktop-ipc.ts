@@ -230,6 +230,31 @@ export function ipcTimer(
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
 
+    /* TODO: was removed, why?
+    switch (
+			appSetting.SCREENSHOTS_ENGINE_METHOD ||
+			config.SCREENSHOTS_ENGINE_METHOD
+		) {
+			case 'ElectronDesktopCapturer':
+				timeTrackerWindow.webContents.send('take_screenshot', {
+					timeSlotId: arg.timeSlotId,
+					screensize: screen.getPrimaryDisplay().workAreaSize
+				});
+				break;
+			case 'ScreenshotDesktopLib':
+				captureScreen(
+					timeTrackerWindow,
+					notificationWindow,
+					arg.timeSlotId,
+					arg.quitApp,
+					windowPath,
+					soundPath
+				);
+				break;
+			default:
+				break;
+		}
+    */
 
 		if (!arg.quitApp) {
 			console.log('TimeLogs:', arg.timeLogs);
