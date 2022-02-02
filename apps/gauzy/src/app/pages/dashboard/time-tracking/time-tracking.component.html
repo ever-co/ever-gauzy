@@ -282,7 +282,6 @@
 						</ng-template>
 					</nb-card-body>
 				</nb-card>
-
 				<nb-card
 					class="mt-4"
 					[nbSpinner]="tasksLoading"
@@ -290,13 +289,11 @@
 					nbSpinnerStatus="primary"
 				>
 					<nb-card-header class="nb-card-header">
-            {{
-						'TIMESHEET.TASKS' | translate
-					   }}
-          <a class="link-text" (click)="redirectToTask()"  >
-            {{ 'BUTTONS.VIEW_ALL' | translate }}
-          </a>
-        </nb-card-header>
+            			{{ 'TIMESHEET.TASKS' | translate }}
+						<a class="link-text" (click)="redirectToTask()"  >
+							{{ 'BUTTONS.VIEW_ALL' | translate }}
+						</a>
+        			</nb-card-header>
 					<ng-template
 						[ngIf]="tasks?.length > 0"
 						[ngIfElse]="noTasks"
@@ -351,20 +348,18 @@
 						</ng-container>
 					</ng-template>
 				</nb-card>
-
 				<nb-card
 					class="mt-4"
 					[nbSpinner]="manualTimeLoading"
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header class="nb-card-header">{{
-						'TIMESHEET.MANUAL_TIME' | translate
-					}}
-          <a class="link-text" (click)="redirectToManuelTimeReport()">
-            {{ 'BUTTONS.VIEW_REPORT' | translate }}
-          </a>
-        </nb-card-header>
+					<nb-card-header class="nb-card-header">
+						{{ 'TIMESHEET.MANUAL_TIME' | translate }}
+						<a class="link-text" (click)="redirectToManualTimeReport()">
+							{{ 'BUTTONS.VIEW_REPORT' | translate }}
+						</a>
+					</nb-card-header>
 					<ng-template
 						[ngIf]="manualTimes?.length > 0"
 						[ngIfElse]="noManualTimes"
@@ -506,7 +501,6 @@
 						</ng-container>
 					</ng-template>
 				</nb-card>
-
 				<nb-card
 					class="mt-4"
 					[nbSpinner]="activitiesLoading"
@@ -516,10 +510,10 @@
 					<nb-card-header class="nb-card-header">{{
 						'TIMESHEET.APPS_URLS' | translate
 					}}
-          <a class="link-text" (click)="redirectToAppUrl()">
-            {{ 'BUTTONS.VIEW_REPORT' | translate }}
-          </a>
-        </nb-card-header>
+						<a class="link-text" (click)="redirectToAppUrlReport()">
+							{{ 'BUTTONS.VIEW_REPORT' | translate }}
+						</a>
+       				 </nb-card-header>
 					<ng-template
 						[ngIf]="activities?.length > 0"
 						[ngIfElse]="noActivities"
