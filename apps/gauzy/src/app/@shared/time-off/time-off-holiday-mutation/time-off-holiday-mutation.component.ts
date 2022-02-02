@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDateService, NbDialogRef } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
 import {
 	IEmployee,
@@ -35,19 +35,22 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		private readonly fb: FormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly employeesService: EmployeesService,
-		private readonly store: Store
-	) {}
+		private readonly store: Store,
+    private dateService: NbDateService<Date>
+	) {
+    this.minDate = this.dateService.addMonth(this.dateService.today(),0);
+  }
 
 	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
 	holidays = [];
-	minDate = new Date(moment().format('YYYY-MM-DD'));
+	minDate : Date;
 	public organization: IOrganization;
 	countryCode: string;
 	employeeIds: string[] = [];
 
 	/*
-	* Time Off Holiday Mutation Form 
+	* Time Off Holiday Mutation Form
 	*/
 	public form: FormGroup = TimeOffHolidayMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
@@ -57,7 +60,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 			policy: ['', Validators.required],
 			status: [],
 			description: []
-		}, { 
+		}, {
 			validators: [
 				CompareDateValidator.validateDate('start', 'end')
 			]
@@ -178,8 +181,8 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 
 	/**
 	 * Patch value on holiday selected
-	 * 
-	 * @param holiday 
+	 *
+	 * @param holiday
 	 */
 	onHolidaySelected(holiday: any) {
 		this.form.patchValue({
