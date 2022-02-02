@@ -19,13 +19,13 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
 import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 import { UrlPatternValidator } from '../../../@core/validators';
+import { NbDateService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,7 +46,7 @@ export class ProposalRegisterComponent
 	organizationContact: IOrganizationContact;
 	tags: ITag[] = [];
 	ckConfig: any = ckEditorConfig;
-	minDate = new Date(moment().subtract(1, 'days').format('YYYY-MM-DD'));
+	minDate : Date;
 	selectedEmployee: IEmployee;
 
 	/*
@@ -76,8 +76,10 @@ export class ProposalRegisterComponent
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly cdRef: ChangeDetectorRef,
+    private dateService: NbDateService<Date>
 	) {
 		super(translateService);
+    this.minDate =  this.dateService.addMonth(this.dateService.today(), 0);
 	}
 
 	ngOnInit() {
