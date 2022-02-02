@@ -355,9 +355,10 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		})
 		const payload: IRolePermissionMigrateInput[] = []; 
 		for await (const item of permissions) {
-			const { id: sourceId, permission, role: { name } } = item;
+			const { id: sourceId, permission, role: { name }, description } = item;
 			payload.push({
 				permission,
+				description,
 				isImporting: true,
 				sourceId,
 				role: name
