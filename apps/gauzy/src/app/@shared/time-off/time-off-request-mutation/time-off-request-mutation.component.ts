@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDateService, NbDialogRef } from '@nebular/theme';
 import {
 	IEmployee,
 	ITimeOffPolicy,
@@ -34,8 +34,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		protected readonly dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
 		private readonly fb: FormBuilder,
 		private readonly documentsService: OrganizationDocumentsService,
-		private readonly store: Store
-	) {}
+		private readonly store: Store,
+    private dateService: NbDateService<Date>
+	) {
+    this.minDate = this.dateService.addMonth(this.dateService.today(),0);
+  }
 
 	/**
 	 * Employee Selector
@@ -63,11 +66,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	employeesArr: IEmployee[] = [];
 	selectedEmployee: any;
 	isEditMode = false;
-	minDate = new Date(moment().format('YYYY-MM-DD'));
+	minDate : Date;
 	public organization: IOrganization;
 
 	/*
-	* Time Off Request Mutation Form 
+	* Time Off Request Mutation Form
 	*/
 	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
@@ -78,7 +81,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			documentUrl: [],
 			status: [],
 			description: []
-		}, { 
+		}, {
 			validators: [
 				CompareDateValidator.validateDate('start', 'end')
 			]
@@ -99,7 +102,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	/**
-	 * Patch form value on edit section 
+	 * Patch form value on edit section
 	 */
 	patchFormValue() {
 		// patch form value
@@ -112,10 +115,10 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				status: this.timeOff.status,
 				documentUrl: this.timeOff.documentUrl
 			});
-			
+
 			this.selectedEmployee = this.timeOff['employees'][0];
 			this.employeesArr = this.timeOff['employees'];
-		}		
+		}
 	}
 
 	saveRequest() {
@@ -135,7 +138,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			.pipe(first())
 			.subscribe(({ items }) => {
 				if (isNotEmpty(items)) {
-					let downloadDocUrl: string; 
+					let downloadDocUrl: string;
 					if (reqType === 'paid') {
 						downloadDocUrl = items[0].documentUrl;
 					} else {
@@ -169,8 +172,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	/**
 	 * On Policy Selection
-	 * 
-	 * @param policy 
+	 *
+	 * @param policy
 	 */
 	onPolicySelected(policy: ITimeOffPolicy) {
 		if (policy.requiresApproval) {
