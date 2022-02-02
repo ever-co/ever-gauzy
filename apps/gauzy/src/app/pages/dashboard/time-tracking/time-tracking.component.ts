@@ -498,39 +498,48 @@ export class TimeTrackingComponent
 		}
 	}
 
-  public redirectToTask() {
-    try {
-      this._router.navigate(['pages/tasks/dashboard']);
-    } catch (error) {
-      throw ('Error while redirecting to tasks page.' + error);
-    }
-  }
+	/**
+	 * Redirect to Task dashboard page
+	 */
+	public redirectToTask() {
+		try {
+			this._router.navigate(['pages/tasks/dashboard']);
+		} catch (error) {
+			console.log('Error while redirecting to tasks page.', error);
+		}
+	}
 
-  public redirectToManuelTimeReport() {
-    try {
-      this._router.navigate(['/pages/reports/manual-time-edits'], {
-        queryParams:
-        {
-          start: moment(this.selectedDateRange.start).format("MM-DD-YYYY"),
-          end: moment(this.selectedDateRange.end).format("MM-DD-YYYY")
-        }
-      });
-    } catch (error) {
-      throw ('Error while redirecting to manuel time report.' + error);
-    }
-  }
+	/**
+	 * Redirect to Manual Time Report
+	 */
+	public redirectToManualTimeReport() {
+		try {
+			const { start, end } = this.selectedDateRange;
+			this._router.navigate(['/pages/reports/manual-time-edits'], {
+				queryParams: {
+					start: moment(start).format("MM-DD-YYYY"),
+					end: moment(end).format("MM-DD-YYYY")
+				}
+			});
+		} catch (error) {
+			console.log('Error while redirecting to manual time report.', error);
+		}
+	}
 
-  public redirectToAppUrl() {
-    try {
-      this._router.navigate(['/pages/reports/apps-urls'], {
-        queryParams:
-        {
-          start: moment(this.selectedDateRange.start).format("MM-DD-YYYY"),
-          end: moment(this.selectedDateRange.end).format("MM-DD-YYYY")
-        }
-      });
-    } catch (error) {
-      throw ('Error while redirecting to manuel time report.' + error);
-    }
-  }
+	/**
+	 * Redirect to App & URL Activity Report
+	 */
+	public redirectToAppUrlReport() {
+		try {
+			const { start, end } = this.selectedDateRange;
+			this._router.navigate(['/pages/reports/apps-urls'], {
+				queryParams: {
+					start: moment(start).format("MM-DD-YYYY"),
+					end: moment(end).format("MM-DD-YYYY")
+				}
+			});
+		} catch (error) {
+			console.log('Error while redirecting to apps & urls report.', error);
+		}
+	}
 }
