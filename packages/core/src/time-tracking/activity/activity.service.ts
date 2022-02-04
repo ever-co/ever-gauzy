@@ -16,6 +16,7 @@ import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.comma
 import { indexBy, pluck } from 'underscore';
 import { getConfig } from '@gauzy/config';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
+import { getDateFormat } from './../../core/utils';
 const config = getConfig();
 
 @Injectable()
@@ -159,13 +160,15 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	}
 
 	private filterQuery(request: IGetActivitiesInput) {
-		let employeeIds: string[];
+		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.activityRepository.createQueryBuilder();
 		if (request.limit > 0) {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
 		}
+
+		let employeeIds: string[];
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -183,17 +186,10 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.innerJoin(`${query.alias}.timeSlot`, 'timeSlot');
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
-				let startDate: any = moment.utc(request.startDate);
-				let endDate: any = moment.utc(request.endDate);
-
-				if (config.dbConnectionOptions.type === 'sqlite') {
-					startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
-					endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
-				} else {
-					startDate = startDate.toDate();
-					endDate = endDate.toDate();
-				}
-
+				const { start: startDate, end: endDate } = getDateFormat(
+					moment.utc(request.startDate),
+					moment.utc(request.endDate)
+				);
 				if (config.dbConnectionOptions.type === 'sqlite') {
 					qb.andWhere(
 						`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`,
@@ -234,14 +230,21 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 			}
 
 			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId: RequestContext.currentTenantId()
+				tenantId
 			});
-
 			if (request.activityLevel) {
-				qb.andWhere(
-					`"${query.alias}"."duration" BETWEEN :start AND :end`,
-					request.activityLevel
-				);
+				/**
+				 * Activity Level should be 0-100%
+				 * So, we have convert it into 10 minutes timeslot by multiply by 6
+				 */
+				const { activityLevel } = request;
+				const start = (activityLevel.start * 6);
+				const end = (activityLevel.end * 6);
+
+				qb.andWhere(`"timeSlot"."overall" BETWEEN :start AND :end`, {
+					start,
+					end
+				});
 			}
 			if (request.source) {
 				if (request.source instanceof Array) {
