@@ -28,7 +28,6 @@ import * as moment from 'moment';
 import { CommandBus } from '@nestjs/cqrs';
 import * as _ from 'underscore';
 import { chain } from 'underscore';
-import { ConfigService } from '@gauzy/config';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
@@ -47,12 +46,12 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
-
+import { getDateFormat } from './../../core/utils';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	constructor(
-		private commandBus: CommandBus,
+		private readonly commandBus: CommandBus,
 
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
@@ -61,9 +60,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		private readonly employeeRepository: Repository<Employee>,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectRepository: Repository<OrganizationProject>,
-
-		private readonly configService: ConfigService
+		private readonly organizationProjectRepository: Repository<OrganizationProject>
 	) {
 		super(timeLogRepository);
 	}
@@ -102,7 +99,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
-					employee: 'timeLogs.employee'
+					employee: 'timeLogs.employee',
+					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
 			relations: [
@@ -169,7 +167,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				alias: 'timeLogs',
 				innerJoin: {
 					employee: 'timeLogs.employee',
-					timeSlot: 'timeLogs.timeSlots'
+					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
 			order: {
@@ -260,7 +258,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				alias: 'timeLogs',
 				innerJoin: {
 					employee: 'timeLogs.employee',
-					timeSlot: 'timeLogs.timeSlots'
+					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
 			relations: [
@@ -314,6 +312,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		request: IGetTimeLogReportInput
 	): Promise<IAmountOwedReport[]> {
 		const timeLogs = await this.timeLogRepository.find({
+			join: {
+				alias: 'timeLogs',
+				innerJoin: {
+					employee: 'timeLogs.employee',
+					timeSlots: 'timeLogs.timeSlots'
+				}
+			},
 			relations: ['employee', 'employee.user'],
 			order: {
 				startedAt: 'ASC'
@@ -361,6 +366,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	async getOwedAmountReportChartData(request: IGetTimeLogReportInput) {
 		const timeLogs = await this.timeLogRepository.find({
+			join: {
+				alias: 'timeLogs',
+				innerJoin: {
+					employee: 'timeLogs.employee',
+					timeSlots: 'timeLogs.timeSlots'
+				}
+			},
 			relations: ['employee', 'employee.user'],
 			order: {
 				startedAt: 'ASC'
@@ -438,6 +450,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			request.duration = 'day';
 		}
 		const timeLogs = await this.timeLogRepository.find({
+			join: {
+				alias: 'timeLogs',
+				innerJoin: {
+					employee: 'timeLogs.employee',
+					timeSlots: 'timeLogs.timeSlots'
+				}
+			},
 			relations: ['employee', 'employee.user'],
 			order: {
 				startedAt: 'ASC'
@@ -685,17 +704,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		if (request.startDate && request.endDate) {
-			let startDate: any = moment.utc(request.startDate);
-			let endDate: any = moment.utc(request.endDate);
-
-			if (this.configService.dbConnectionOptions.type === 'sqlite') {
-				startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
-				endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
-			} else {
-				startDate = startDate.toDate();
-				endDate = endDate.toDate();
-			}
-
+			const { start: startDate, end: endDate } = getDateFormat(
+				moment.utc(request.startDate),
+				moment.utc(request.endDate)
+			);
 			qb.andWhere(
 				`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
 				{ startDate, endDate }
@@ -711,6 +723,21 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		if (request.projectIds) {
 			qb.andWhere(`"${qb.alias}"."projectId" IN (:...projectIds)`, {
 				projectIds: request.projectIds
+			});
+		}
+
+		if (request.activityLevel) {
+			/**
+			 * Activity Level should be 0-100%
+			 * So, we have convert it into 10 minutes timeslot by multiply by 6
+			 */
+			const { activityLevel } = request;
+			const start = (activityLevel.start * 6);
+			const end = (activityLevel.end * 6);
+
+			qb.andWhere(`"timeSlots"."overall" BETWEEN :start AND :end`, {
+				start,
+				end
 			});
 		}
 
