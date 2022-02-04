@@ -10,7 +10,7 @@
     padding: 20px;
     width: 380px;
     font-size: 14px;
-    background-color: #fff;
+    background-color: nb-theme(background-basic-color-2);
     position: relative;
   }
   .btn-close {
@@ -93,6 +93,17 @@
       .ng-select-container {
         width: 100%;
       }
+    }
+  }
+}
+
+.custom{
+  textarea{
+    background-color: nb-theme(background-basic-color-1);
+    color: nb-theme(text-basic-color);
+    border-color: nb-theme(background-basic-color-3);
+    &:hover{
+      border-color: nb-theme(color-primary-hover);
     }
   }
 }

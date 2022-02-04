@@ -1,0 +1,17 @@
+@import 'var';
+
+input{
+  background-color: nb-theme(background-basic-color-1);
+    color: nb-theme(text-basic-color);
+    border-color: nb-theme(background-basic-color-3);
+    &:hover{
+      border-color: nb-theme(color-primary-hover);
+      color: nb-theme(text-basic-color);
+      &:focus{
+        background-color: nb-theme(background-basic-color-1);
+      }
+    }
+    &:active{
+      background-color: nb-theme(background-basic-color-1);
+    }
+}
