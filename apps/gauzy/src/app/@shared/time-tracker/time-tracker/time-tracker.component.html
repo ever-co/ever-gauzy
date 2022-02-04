@@ -1,6 +1,7 @@
 <ng-template [ngIf]="isOpen">
-	<div class="timer-card card" ngxDraggableDom="true" [position]="position">
-		<div class="header">
+	<nb-card class="timer-card card" ngxDraggableDom="true" [position]="position">
+    <nb-card-body>
+      <div class="header">
 			<button
 				class="btn-close"
 				size="small"
@@ -11,9 +12,9 @@
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</div>
-		<form #form="ngForm">
+    <form #form="ngForm">
 			<div class="timer-container form-group pr-4">
-				<ng-template 
+				<ng-template
 					[ngIf]="(trackType$ | async) == timeLogType.TRACKED"
 				>
 					<div class="time-tracker">
@@ -39,12 +40,10 @@
 						<div class="actions">
 							<div class="toggle">
 								<button
+                  nbButton
 									type="submit"
-									class="btn btn-rounded"
-									[ngClass]="{
-										'btn-danger': running,
-										'btn-success': !running
-									}"
+                  [status]="(running ? 'danger':'success')"
+                  shape="round"
 									[nbTooltip]="
 										(running
 											? 'TIMER_TRACKER.STOP_TIMER'
@@ -54,9 +53,9 @@
 									(click)="toggleTimer()"
 									[disabled]="isDisable"
 								>
-									<nb-icon 
-										[icon]="(!running 
-											? 'play-circle-outline' 
+									<nb-icon
+										[icon]="(!running
+											? 'play-circle-outline'
 											: 'pause-circle-outline')"
 									></nb-icon>
 								</button>
@@ -101,8 +100,8 @@
 						(click)="$event.stopPropagation(); setTimeType(timeLogType.TRACKED)"
 						size="tiny"
 						[status]="
-							(trackType$ | async) == timeLogType.TRACKED 
-								? 'primary' 
+							(trackType$ | async) == timeLogType.TRACKED
+								? 'primary'
 								: 'basic'
 						"
 						[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
@@ -137,7 +136,7 @@
 					</span>
 				</div>
 			</div>
-	
+
 			<div class="form-group">
 				<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
 				<ga-contact-selector
@@ -172,7 +171,7 @@
 					#projectInput="ngModel"
 					[required]="organization?.requireProject"
 				></ga-project-selector>
-	
+
 				<div
 					*ngIf="projectInput.invalid && form.submitted"
 					class="invalid-feedback d-block"
@@ -184,7 +183,7 @@
 					</div>
 				</div>
 			</div>
-	
+
 			<div class="form-group">
 				<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
 				<ga-task-selector
@@ -196,7 +195,7 @@
 					#taskInput="ngModel"
 					[required]="organization?.requireTask"
 				></ga-task-selector>
-	
+
 				<div
 					*ngIf="taskInput.invalid && form.submitted"
 					class="invalid-feedback d-block"
@@ -206,11 +205,12 @@
 					</div>
 				</div>
 			</div>
-			<div class="form-group">
+			<div class="form-group custom">
 				<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
 				<textarea
 					class="form-control"
 					rows="2"
+          fullWidth
 					[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
 					name="description"
 					[disabled]="running"
@@ -244,7 +244,9 @@
 				</a>
 			</div>
 		</form>
-	</div>
+    </nb-card-body>
+
+	</nb-card>
 </ng-template>
 
 

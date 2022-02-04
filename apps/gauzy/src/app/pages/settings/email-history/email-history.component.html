@@ -115,11 +115,14 @@
 					{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
 				</button>
 				<ng-container *ngIf="selectedEmail; else emailNotSelected">
-					<div 
+          <div class="custom-parent-email-content">
+           <div
 						*ngIf="selectedEmail?.content"
 						[innerHtml]="selectedEmail?.content | safeHtml"
 						class="email-content">
 					</div>
+          </div>
+
 				</ng-container>
 				<ng-template #emailNotSelected>
 					<h2> {{ 'SETTINGS.EMAIL_HISTORY.NO_EMAILS_SENT' | translate }} </h2>
