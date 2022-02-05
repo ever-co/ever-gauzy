@@ -1,6 +1,5 @@
 import { ipcMain, screen } from 'electron';
 import { TimerData } from './desktop-timer-activity';
-import { metaData } from './desktop-wakatime';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import { LocalStore } from './desktop-store';

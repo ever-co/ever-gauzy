@@ -10,7 +10,6 @@ import screenshot from 'screenshot-desktop';
 const sound = require('sound-play');
 import * as remoteMain from '@electron/remote/main';
 
-import os from 'os';
 // Import logging for electron and override default console logging
 import log from 'electron-log';
 console.log = log.log;
