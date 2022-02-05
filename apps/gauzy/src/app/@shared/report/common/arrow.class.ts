@@ -1,17 +1,21 @@
-import { IGetPaymentInput } from "packages/contracts/dist";
 import * as moment from 'moment';
 export class Arrow {
   // Define all variables
   private disabled: boolean;
-  private logRequest: IGetPaymentInput;
-  // Define constructor
-  constructor(logRequest: IGetPaymentInput){
+  private logRequest: any;
+  /**
+   *
+   * @param logRequest
+   */
+  constructor(logRequest: any){
     this.logRequest = logRequest;
   }
   /**
    * Next range date ahead the end date
+   * @param today
+   * @returns any
    */
-   next(today: Date): IGetPaymentInput {
+   next(today: Date): any {
     const start = moment(this.logRequest.endDate);
     const end = moment(this.logRequest.startDate);
     const range = start.diff(end, 'days');
@@ -23,13 +27,15 @@ export class Arrow {
     }
     return this.logRequest = {
       startDate: startDate,
-      endDate: moment(startDate).add(range, 'days').toDate()
+      endDate: moment(startDate).add(range, 'days').toDate(),
+      employeeIds: this.logRequest.employeeIds,
+      duration: this.logRequest.duration
     }
   }
   /**
    * Previous range date behind the end date
    */
-  previous(): IGetPaymentInput {
+  previous(): any {
     this.isDisable = false;
     const start = moment(this.logRequest.endDate);
     const end = moment(this.logRequest.startDate);
@@ -38,6 +44,8 @@ export class Arrow {
     return this.logRequest = {
       startDate: startDate,
       endDate: moment(startDate).add(range, 'days').toDate(),
+      employeeIds: this.logRequest.employeeIds,
+      duration: this.logRequest.duration
     }
   }
   /**
@@ -55,13 +63,13 @@ export class Arrow {
   /**
   * Getter of disable
   */
-  get getLogRequest(): IGetPaymentInput {
+  get getLogRequest(): any {
     return this.logRequest;
   }
   /**
    * Setter of disable
    */
-  set setLogRequest(logRequest: IGetPaymentInput) {
+  set setLogRequest(logRequest: any) {
     this.logRequest = logRequest;
   }
 }
