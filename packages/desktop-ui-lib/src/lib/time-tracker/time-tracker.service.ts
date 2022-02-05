@@ -401,7 +401,6 @@ export class TimeTrackerService {
 	}
 
 	uploadImages(values, img:any) {
-		console.log('hjdfhsjhfjd', values);
 		const  headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId

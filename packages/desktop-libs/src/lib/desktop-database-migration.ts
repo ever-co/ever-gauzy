@@ -13,9 +13,11 @@ export class DataModel {
 							table.timestamps('date');
 							table.string('activityId');
 						})
-						.then((res) => res);
+						.then((res) => {
+							return res;
+						});
 				}
-				return;
+				return exists;
 			});
 			await knex.schema.hasTable('afk-events').then((exists) => {
 				if (!exists) {
@@ -30,9 +32,11 @@ export class DataModel {
 							table.string('timeSlotId');
 							table.string('timeSheetId');
 						})
-						.then((res) => res);
+						.then((res) => {
+							return res;
+						});
 				}
-				return;
+				return exists;
 			});
 			await knex.schema.hasTable('timer').then(function (exists) {
 				if (!exists) {
@@ -48,9 +52,11 @@ export class DataModel {
 							table.string('timeSheetId');
 							table.string('timeLogId');
 						})
-						.then((res) => res);
+						.then((res) => {
+							return res;
+						});
 				}
-				return;
+				return exists;
 			});
 			await knex.schema.hasColumn('window-events', 'type').then((exists) => {
 				if (!exists) {
@@ -58,9 +64,11 @@ export class DataModel {
 						.table('window-events', (t) => {
 							t.string('type');
 						})
-						.then((res) => res);
+						.then((res) => {
+							return res;
+						});
 				}
-				return;
+				return exists;
 			});
 			await knex.schema.hasTable('failed-request').then((exists) => {
 				if (!exists) {
@@ -72,9 +80,11 @@ export class DataModel {
 							table.timestamps('createdDate');
 							table.text('errorMessage');
 						})
-						.then((res) => res);
+						.then((res) => {
+							return res;
+						});
 				}
-				return
+				return exists
 			});
 			await knex.schema.hasColumn('window-events', 'eventId').then(async (exists) => {
 				if (exists) {
@@ -83,12 +93,14 @@ export class DataModel {
 							.alterTable('window-events', (t) => {
 								t.unique('eventId');
 							})
-							.then((res) => res);
+							.then((res) => {
+								return res;
+							});
 					} catch (error) {
-						return;
+						return exists;
 					}
 				}
-				return;
+				return exists;
 			});
 			await knex.schema.hasColumn('afk-events', 'eventId').then(async (exists) => {
 				if (exists) {
@@ -97,16 +109,18 @@ export class DataModel {
 							.alterTable('afk-events', (t) => {
 								t.unique('eventId');
 							})
-							.then((res) => res);
+							.then((res) => {
+								return res
+							});
 					} catch (error) {
-						return;
+						return exists;
 					}
 				}
-				return;
+				return exists;
 			});
 		} catch (error) {
 			throw Error(`
-				Failed migrate local table windows-events
+				Failed migrate local table
 				${error.message}
 			`);
 		}

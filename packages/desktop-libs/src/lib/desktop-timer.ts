@@ -107,13 +107,19 @@ export default class Timerhandler {
 		const appSetting = LocalStore.getStore('appSetting');
 		this.intevalTimer = setInterval(async () => {
 			try {
-				await TimerData.updateDurationOfTimer(knex, {
-					id: this.lastTimer.id,
-					durations: moment().diff(
-						moment(this.timeSlotStart),
-						'milliseconds'
-					)
-				});
+				await this.createQueue(
+					'sqlite-queue-gauzy-desktop-timer',
+					{
+						type: 'update-duration-timer',
+						data: {
+							id: this.lastTimer.id,
+							durations: moment().diff(
+								moment(this.timeSlotStart),
+								'milliseconds')
+						}
+					},
+					knex
+				)
 				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
 					setupWindow.webContents.send('collect_data', {
 						start: this.timeSlotStart.utc().format(),
@@ -527,13 +533,35 @@ export default class Timerhandler {
 				queName,
 				async (job) => {
 					await new Promise(async (resolve) => {
+						const typeJob = job.data.type;
 						try {
-							if (queName === `window-events-${this.appName}`) {
-								await TimerData.insertWindowEvent(knex, job.data);
-							} else {
-								await TimerData.insertAfkEvent(knex, job.data);
+							switch (typeJob) {
+								case 'window-events':
+									await TimerData.insertWindowEvent(knex, job.data.data);
+									break;
+								case 'remove-window-events':
+									await TimerData.deleteWindowEventAfterSended(knex, {
+										activityIds: job.data.data
+									});
+									break;
+								case 'remove-wakatime-events':
+									await metaData.removeActivity(knex, {
+										idsWakatime: job.data.data
+									});
+									break;
+								case 'update-duration-timer':
+									await TimerData.updateDurationOfTimer(knex, {
+										id: job.data.data.id,
+										durations: job.data.data.durations
+									});
+									break;
+								case 'save-failed-request':
+									await TimerData.saveFailedRequest(knex, job.data.data);
+									break;
+								default:
+									break;
 							}
-							resolve(true);
+							resolve(true);					
 						} catch (error) {
 							console.log('failed insert window activity');
 							resolve(false);

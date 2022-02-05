@@ -255,7 +255,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.electronService.ipcRenderer.on(
 			'last_capture_local',
 			(event, arg) => {
-				console.log('Last Capture Screenshot:', arg.fullUrl);
+				console.log('Last Capture Screenshot:');
 				this.lastScreenCapture = {
 					fullUrl: this.sanitize.bypassSecurityTrustUrl(arg.fullUrl),
 					textTime: moment().fromNow(),
@@ -607,8 +607,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 		console.log(maxDimension);
 
 		return {
-			width: maxDimension * window.devicePixelRatio,
-			height: maxDimension * window.devicePixelRatio
+			width: Math.floor(maxDimension * window.devicePixelRatio),
+			height: Math.floor(maxDimension * window.devicePixelRatio)
 		};
 	}
 
@@ -751,7 +751,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 				);
 			})
 			.catch((e) => {
-				console.log('error on delte', e);
+				console.log('error on delete', e);
 				this.toastrService.show(`${e.statusText}`, `Warning`, {
 					status: 'danger'
 				});
@@ -824,8 +824,12 @@ export class TimeTrackerComponent implements AfterViewInit {
 		}
   	}
 
-	async getScreenshot(arg) {
-		const thumbSize = this.determineScreenshot(arg.screensize);
+	async getScreenshot(arg, isThumb:boolean | null = false) {
+		let thumbSize = this.determineScreenshot(arg.screensize);
+		if (isThumb) thumbSize = {
+			width: 800,
+			height: 600
+		}
 		return this.electronService.desktopCapturer
 			.getSources({
 				types: ['screen'],
@@ -926,14 +930,16 @@ export class TimeTrackerComponent implements AfterViewInit {
 	async sendActivities(arg) {
 		// screenshot process
 		let screenshotImg = [];
+		let thumbScreenshotImg = [];
 		if (!arg.displays) {
-			screenshotImg = await this.getScreenshot(arg);
+			screenshotImg = await this.getScreenshot(arg, false);
+			thumbScreenshotImg= await this.getScreenshot(arg, true);
 		} else {
 			screenshotImg = arg.displays;
 		}
 
 		// notify
-		this.screenshotNotify(arg, screenshotImg);
+		this.screenshotNotify(arg, thumbScreenshotImg);
 
 		// updateActivities to api
 		const afktime:number = await this.getAfk(arg);
@@ -962,7 +968,6 @@ export class TimeTrackerComponent implements AfterViewInit {
 			token: arg.token
 		}
 
-		console.log('test', ParamActivity);
 
 		try {
 			const resActivities:any = await this.timeTrackerService.pushTotimeslot(ParamActivity)
@@ -1010,8 +1015,11 @@ export class TimeTrackerComponent implements AfterViewInit {
 	}
 
 	screenshotNotify(arg, imgs) {
-		const img:any = imgs[0];
-		this.electronService.ipcRenderer.send('show_screenshot_notif_window', img);
+		if (imgs.length > 0) {
+			const img:any = imgs[0];
+			img.img = this.buffToB64(img);
+			this.electronService.ipcRenderer.send('show_screenshot_notif_window', img);
+		}
 	}
 
 	async uploadsScreenshot(arg, imgs, timeSlotId) {
@@ -1022,8 +1030,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 				b64Img: b64img,
 				fileName: fileName
 			})
-			this.lastScreenCapture = resImg;
-			console.log('images result', resImg);
+			this.getLastTimeSlotImage({...arg, timeSlotId});
 			return resImg;
 		} catch (error) {
 			this.electronService.ipcRenderer.send('save_temp_img', {

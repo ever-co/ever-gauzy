@@ -4,7 +4,7 @@ import { metaData } from './desktop-wakatime';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import { LocalStore } from './desktop-store';
-import { takeshot, captureScreen, notifyScreenshot } from './desktop-screenshot';
+import { takeshot, notifyScreenshot } from './desktop-screenshot';
 import {
 	hasPromptedForPermission,
 	hasScreenCapturePermission,
@@ -31,19 +31,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			IS_INTEGRATED_DESKTOP: arg.isLocalServer
 		};
 		startServer(arg);
-	});
-
-
-	ipcMain.on('remove_aw_local_data', async (event, arg) => {
-		await TimerData.deleteWindowEventAfterSended(knex, {
-			activityIds: arg.idsAw
-		});
-	});
-
-	ipcMain.on('remove_wakatime_local_data', (event, arg) => {
-		metaData.removeActivity(knex, {
-			idsWakatime: arg.idsWakatime
-		});
 	});
 
 	ipcMain.on('remove_afk_local_Data', async (event, arg) => {
@@ -171,30 +158,36 @@ export function ipcTimer(
 			}
 		});
 		if (collections.length > 0) {
-			await timerHandler.createQueue('window-events', collections, knex);
+			await timerHandler.createQueue(
+				'sqlite-queue', 
+				{
+					data: collections,
+					type: 'window-events'
+				}, knex);
 		}
 	});
 
-	ipcMain.on('data_push_afk', async (event, arg) => {
-		const collections = arg.afk.map((item) => {
-			const now = moment().utc();
-			const afkDuration = now.diff(moment(arg.start).utc(), 'seconds');
-			if (afkDuration < item.duration) {
-				item.duration = afkDuration;
-			}
-			return {
-				eventId: item.id,
-				durations: item.duration,
-				timerId: arg.timerId,
-				data: JSON.stringify(item.data),
-				created_at: new Date(),
-				updated_at: new Date(),
-				timeSlotId: null,
-				timeSheetId: null
-			};
-		})
-		if (collections.length > 0) {
-			await timerHandler.createQueue('afk-events', collections, knex);
+	ipcMain.on('remove_aw_local_data', async (event, arg) => {
+		if (arg.idsAw && arg.idsAw.length > 0) {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				 {
+					 type: 'remove-window-events',
+					 data: arg.idsAw
+				 }, knex);
+		}
+	});
+
+	ipcMain.on('remove_wakatime_local_data', async (event, arg) => {
+		if (arg.idsWakatime && arg.idsWakatime.length > 0) {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					type: 'remove-wakatime-events',
+					data: arg.idsWakatime
+				},
+				knex
+			)
 		}
 	});
 
@@ -230,7 +223,8 @@ export function ipcTimer(
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
 
-    /* TODO: was removed, why?
+    /* TODO: was removed, why? moved to func takeScreenshotActivities on desktop-timer
+		this fix notify popup screenshot on time  
     switch (
 			appSetting.SCREENSHOTS_ENGINE_METHOD ||
 			config.SCREENSHOTS_ENGINE_METHOD
@@ -287,11 +281,18 @@ export function ipcTimer(
 
 	ipcMain.on('failed_save_time_slot', async (event, arg) => {
 		/* save failed request time slot */
-		const [id] = await TimerData.saveFailedRequest(knex, {
-			type: 'timeslot',
-			params: arg.params,
-			message: arg.message
-		});
+		await timerHandler.createQueue(
+			'sqlite-queue',
+			{
+				type: 'save-failed-request',
+				data: {
+					type: 'timeslot',
+					params: arg.params,
+					message: arg.message
+				}
+			},
+			knex
+		)
 	});
 
 	ipcMain.on('save_temp_screenshot', async (event, arg) => {
@@ -299,7 +300,14 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('save_temp_img', async (event, arg) => {
-		await TimerData.saveFailedRequest(knex, arg);
+		await timerHandler.createQueue(
+			'sqlite-queue',
+			{
+				type: 'save-failed-request',
+				data: arg
+			},
+			knex
+		)
 	});
 
 	ipcMain.on('open_setting_window', (event, arg) => {
