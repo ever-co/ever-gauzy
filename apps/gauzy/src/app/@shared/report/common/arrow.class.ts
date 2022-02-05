@@ -61,13 +61,13 @@ export class Arrow {
     this.disabled = disabled;
   }
   /**
-  * Getter of disable
+  * Getter of logRequest
   */
   get getLogRequest(): any {
     return this.logRequest;
   }
   /**
-   * Setter of disable
+   * Setter of logRequest
    */
   set setLogRequest(logRequest: any) {
     this.logRequest = logRequest;
