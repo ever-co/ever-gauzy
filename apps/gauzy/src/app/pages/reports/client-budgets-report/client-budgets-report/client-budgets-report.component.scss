@@ -1,0 +1,11 @@
+.filters{
+  display: flex;
+  ngx-filters{
+    width: min-content;
+    ::ng-deep{
+      button{
+        display: none;
+      }
+    }
+  }
+}

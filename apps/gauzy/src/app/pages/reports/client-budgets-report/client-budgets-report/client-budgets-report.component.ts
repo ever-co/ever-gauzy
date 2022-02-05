@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from './../../../../@core/services/store.service';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { Arrow } from 'apps/gauzy/src/app/@shared/report/common/arrow.class';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,6 +33,8 @@ export class ClientBudgetsReportComponent
 	loading: boolean;
 	filters: IGetPaymentInput;
 	clients: IClientBudgetLimitReport[];
+  arrow: Arrow;
+  isDisable : boolean;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -40,6 +43,7 @@ export class ClientBudgetsReportComponent
 		private readonly cd: ChangeDetectorRef
 	) {
 		super(store, translateService);
+    this.arrow = new Arrow(this.logRequest);
 	}
 
 	ngOnInit() {
@@ -56,6 +60,20 @@ export class ClientBudgetsReportComponent
 	ngAfterViewInit() {
 		this.cd.detectChanges();
 	}
+
+  next(){
+    this.arrow.setLogRequest = this.logRequest;
+    this.logRequest = this.arrow.next(this.today);
+    this.isDisable = this.arrow.isDisable;
+    this.cd.detectChanges();
+  }
+
+  previous(){
+    this.arrow.setLogRequest = this.logRequest;
+    this.logRequest = this.arrow.previous();
+    this.isDisable = this.arrow.isDisable;
+    this.cd.detectChanges();
+  }
 
 	filtersChange($event) {
 		this.logRequest = $event;
