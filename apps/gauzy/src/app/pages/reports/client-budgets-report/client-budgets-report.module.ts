@@ -7,8 +7,7 @@ import {
 	NbIconModule,
 	NbSpinnerModule,
 	NbCardModule,
-	NbSelectModule,
-  NbButtonModule
+	NbSelectModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
@@ -34,8 +33,7 @@ import { DateRangeTitleModule } from '../../../@shared/components/date-range-tit
 		LineChartModule,
 		ProgressStatusModule,
 		HeaderTitleModule,
-		DateRangeTitleModule,
-    NbButtonModule
+		DateRangeTitleModule
 	]
 })
 export class ClientBudgetsReportModule {}
