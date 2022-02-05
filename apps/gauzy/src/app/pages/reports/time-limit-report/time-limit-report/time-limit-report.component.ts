@@ -74,7 +74,6 @@ export class TimeLimitReportComponent
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
 		this.subject$.next(true);
-    console.log($event);
 	}
 
   next(){
