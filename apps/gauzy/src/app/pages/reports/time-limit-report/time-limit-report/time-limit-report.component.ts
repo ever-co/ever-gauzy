@@ -16,6 +16,7 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 import { debounceTime, tap } from 'rxjs/operators';
 import { ReportBaseComponent } from 'apps/gauzy/src/app/@shared/report/report-base/report-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { Arrow } from 'apps/gauzy/src/app/@shared/report/common/arrow.class';
 
 @UntilDestroy()
 @Component({
@@ -34,6 +35,8 @@ export class TimeLimitReportComponent
 	loading: boolean;
 	dailyData: any;
 	title: string;
+  arrow: Arrow;
+  isDisable : boolean;
 
 	constructor(
 		private cd: ChangeDetectorRef,
@@ -43,6 +46,7 @@ export class TimeLimitReportComponent
 		readonly translateService: TranslateService
 	) {
 		super(store, translateService);
+    this.arrow = new Arrow(this.logRequest);
 	}
 
 	ngOnInit(): void {
@@ -70,7 +74,22 @@ export class TimeLimitReportComponent
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
 		this.subject$.next(true);
+    console.log($event);
 	}
+
+  next(){
+    this.arrow.setLogRequest = this.logRequest;
+    this.logRequest = this.arrow.next(this.today);
+    this.isDisable = this.arrow.isDisable;
+    this.cd.detectChanges();
+  }
+
+  previous(){
+    this.arrow.setLogRequest = this.logRequest;
+    this.logRequest = this.arrow.previous();
+    this.isDisable = this.arrow.isDisable;
+    this.cd.detectChanges();
+  }
 
 	getLogs() {
 		const { duration } = this.logRequest;
