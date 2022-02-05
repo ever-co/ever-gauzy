@@ -5,7 +5,7 @@
 				{{ 'REPORT_PAGE.CLIENT_BUDGET_REPORTS' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title 
+		<ngx-date-range-title
 			[start]="logRequest.startDate"
 			[end]="logRequest.endDate"
 		></ngx-date-range-title>
@@ -13,7 +13,7 @@
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
 			<ngx-filters
-				dateRange="custom_range"
+				dateRange="week"
 				[hasEmployeeFilter]="false"
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
@@ -24,7 +24,6 @@
 				(filtersChange)="filtersChange($event)"
 			></ngx-filters>
 		</div>
-
 		<div
 			class="weekly-logs row-table"
 			[nbSpinner]="loading"

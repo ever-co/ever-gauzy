@@ -13,11 +13,7 @@
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
 			<ngx-filters
-				[dateRange]="
-					logRequest.duration == 'day'
-						? 'custom_range'
-						: logRequest.duration
-				"
+        dateRange="week"
 				[hasEmployeeFilter]="false"
 				[hasProjectFilter]="false"
 				[saveFilters]="false"
