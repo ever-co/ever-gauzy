@@ -15,6 +15,7 @@ import {
 } from '@nebular/theme';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [ManualTimeComponent],
@@ -30,7 +31,8 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbSelectModule,
 		FormsModule,
 		NbBadgeModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		DateRangeTitleModule
 	]
 })
 export class ManualTimeModule {}

@@ -5,10 +5,10 @@
 				{{ title | translate }}
 			</ngx-header-title>
 		</h4>
-		<div>
-			{{ logRequest?.startDate | date }} -
-			{{ logRequest?.endDate | date }}
-		</div>
+		<ngx-date-range-title 
+			[start]="logRequest.startDate"
+			[end]="logRequest.endDate"
+		></ngx-date-range-title>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
