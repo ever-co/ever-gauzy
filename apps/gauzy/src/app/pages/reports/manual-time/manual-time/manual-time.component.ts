@@ -34,7 +34,6 @@ export class ManualTimeComponent
 	filters: ITimeLogFilters;
 	loading: boolean;
 	dailyData: any;
-  	customFilterRange: ITimeLogFilters;
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
@@ -57,13 +56,10 @@ export class ManualTimeComponent
 		this.activatedRoute.queryParams
 			.pipe(
 				filter((params) => !!params && params.start),
-				tap((params) => {
-					this.customFilterRange = {
-						startDate: moment(params.start).startOf('week').toDate(),
-						endDate: moment(params.end).endOf('week').toDate()
-					};
-				}),
-				tap(() => this.filtersChange(this.customFilterRange))
+				tap((params) => this.filtersChange({
+					startDate: moment(params.start).startOf('week').toDate(),
+					endDate: moment(params.end).endOf('week').toDate()
+				}))
 			)
 			.subscribe();
 	}
