@@ -8,8 +8,7 @@ import {
 	NbIconModule,
 	NbSpinnerModule,
 	NbCardModule,
-	NbSelectModule,
-  NbButtonModule
+	NbSelectModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
@@ -33,8 +32,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
-		HeaderTitleModule,
-    NbButtonModule
+		HeaderTitleModule
 	]
 })
 export class TimeLimitReportModule {}
