@@ -93,7 +93,7 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
-	@Input() hasTodaybtnWithCustom = false;
+	@Input() hasTodayBtnWithCustom = false;
 
 	activityLevel = ActivityLevel;
 	sliderOptions: Partial<Options> = {
