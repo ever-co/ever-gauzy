@@ -10,8 +10,13 @@
     padding: 20px;
     width: 380px;
     font-size: 14px;
-    background-color: nb-theme(background-basic-color-2);
     position: relative;
+  }
+  .background-basic-color-1 {
+    background-color: nb-theme(background-basic-color-1);
+  }
+  .background-basic-color-2 {
+    background-color: nb-theme(background-basic-color-2);
   }
   .btn-close {
     position: absolute;
