@@ -117,42 +117,41 @@ export class DataModel {
 			})
 
 			await new Promise((resolve) => {
-				knex.schema.hasColumn('window-events', 'eventId').then(async (exists) => {
+				knex.schema.hasColumn('window-events', 'eventId').then((exists) => {
 					if (exists) {
-						try {
-							return await knex.schema
+						return knex.schema
 								.alterTable('window-events', (t) => {
 									t.unique('eventId');
 								})
 								.then((res) => {
 									resolve(res);
+								})
+								.catch(() => {
+									resolve(false);
 								});
-						} catch (error) {
-							resolve(exists);
-						}
 					}
 					resolve(exists);
 				});
 			})
 
 			await new Promise((resolve) => {
-				knex.schema.hasColumn('afk-events', 'eventId').then(async (exists) => {
+				knex.schema.hasColumn('afk-events', 'eventId').then((exists) => {
 					if (exists) {
-						try {
-							return await knex.schema
+						return knex.schema
 								.alterTable('afk-events', (t) => {
 									t.unique('eventId');
 								})
 								.then((res) => {
 									resolve(res)
+								})
+								.catch(() => {
+									resolve(false);
 								});
-						} catch (error) {
-							resolve(exists);
-						}
 					}
 					resolve(exists);
 				});
 			})
+			return true;
 		} catch (error) {
 			throw Error(`
 				Failed migrate local table
