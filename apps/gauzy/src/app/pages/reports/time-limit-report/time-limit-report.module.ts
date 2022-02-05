@@ -16,6 +16,7 @@ import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-
 import { SharedModule } from '../../../@shared/shared.module';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [TimeLimitReportComponent],
@@ -32,7 +33,8 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		DateRangeTitleModule
 	]
 })
 export class TimeLimitReportModule {}

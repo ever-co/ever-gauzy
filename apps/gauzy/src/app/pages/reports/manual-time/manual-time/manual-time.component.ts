@@ -4,6 +4,7 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
 	IGetTimeLogReportInput,
 	ITimeLog,
@@ -11,36 +12,35 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
-import * as moment from 'moment';
-import { debounceTime, tap } from 'rxjs/operators';
-import { chain, pick } from 'underscore';
-import { ReportBaseComponent } from 'apps/gauzy/src/app/@shared/report/report-base/report-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import * as moment from 'moment';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { chain, pick } from 'underscore';
+import { Store } from './../../../../@core/services';
+import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-manual-time',
+	selector: 'ga-manual-time-report',
 	templateUrl: './manual-time.component.html',
 	styleUrls: ['./manual-time.component.scss']
 })
 export class ManualTimeComponent
 	extends ReportBaseComponent
 	implements OnInit, AfterViewInit {
+
 	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
 	loading: boolean;
 	dailyData: any;
-  customFilterRange: ITimeLogFilters;
 
 	constructor(
-		private cd: ChangeDetectorRef,
-		private timesheetService: TimesheetService,
-		protected store: Store,
-		readonly translateService: TranslateService,
-    private route: ActivatedRoute
+		private readonly cd: ChangeDetectorRef,
+		private readonly timesheetService: TimesheetService,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService,
+    	private readonly activatedRoute: ActivatedRoute
 	) {
 		super(store, translateService);
 	}
@@ -53,13 +53,15 @@ export class ManualTimeComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-      this.customFilterRange = {
-        startDate: moment(this.route.snapshot.queryParams.start).startOf('week').toDate(),
-        endDate: moment(this.route.snapshot.queryParams.end).endOf('week').toDate()
-      };
-      if(this.customFilterRange.startDate) {
-        this.filtersChange(this.customFilterRange);
-      };
+		this.activatedRoute.queryParams
+			.pipe(
+				filter((params) => !!params && params.start),
+				tap((params) => this.filtersChange({
+					startDate: moment(params.start).startOf('week').toDate(),
+					endDate: moment(params.end).endOf('week').toDate()
+				}))
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
