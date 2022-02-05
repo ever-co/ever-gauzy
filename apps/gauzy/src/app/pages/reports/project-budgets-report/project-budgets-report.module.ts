@@ -8,7 +8,8 @@ import {
 	NbIconModule,
 	NbSpinnerModule,
 	NbCardModule,
-	NbSelectModule
+	NbSelectModule,
+  NbButtonModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
@@ -32,7 +33,8 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+    NbButtonModule
 	]
 })
 export class ProjectBudgetsReportModule {}
