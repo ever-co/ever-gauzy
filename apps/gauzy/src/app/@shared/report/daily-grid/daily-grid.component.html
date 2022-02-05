@@ -1,4 +1,4 @@
-<div class="d-flex align-items-center" *ngIf="dailyData?.length > 0">
+<div class="d-flex align-items-center">
 	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
 	<div class="ml-3">
 		<nb-select 
@@ -25,23 +25,23 @@
 	</div>
 </div>
 <div
-	class="weekly-logs row-table"
+	class="row-table mt-4"
 	[nbSpinner]="loading"
 	nbSpinnerSize="giant"
 	nbSpinnerStatus="primary"
 >
-	<div class="px-4" *ngIf="dailyData?.length > 0">
+	<div class="px-4">
 		<div class="row py-3 font-weight-bold align-items-center">
-			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="col-sm-2">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="col-2">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="col-sm-2">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="col-2">
 				{{ 'REPORT_PAGE.PROJECT' | translate }}
 			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.employee" class="col-sm-2">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.employee" class="col-2">
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</div>
-			<div class="col-sm-3 text-center day-col">
+			<div class="col-3 text-center day-col">
 				{{ 'REPORT_PAGE.TO_DO' | translate }}
 			</div>
 			<div class="col text-center day-col">
