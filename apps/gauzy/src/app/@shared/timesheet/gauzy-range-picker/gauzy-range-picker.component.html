@@ -1,0 +1,12 @@
+<div class="filter-input">
+  <input
+        nbInput
+        type="text"
+        ngxDaterangepickerMd
+        [alwaysShowCalendars]="true"
+        [ranges]="ranges"
+        [locale]="localConfig"
+        [(ngModel)]="filters"
+        (datesUpdated)="onUpdate($event)"
+      />
+</div>
