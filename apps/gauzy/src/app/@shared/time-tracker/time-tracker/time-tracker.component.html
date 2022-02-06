@@ -6,8 +6,8 @@
 				? 'background-basic-color-1'
 				: 'background-basic-color-2'
 		"
+    [style.transform]="'matrix(1, 0, 0, 1,'+this.position.x+', '+this.position.y+')'"
 		ngxDraggableDom="true"
-		[position]="position"
 		(stopped)="draggablePosition($event)"
 	>
 		<nb-card-body>
