@@ -770,10 +770,17 @@ export class TimeTrackerComponent implements AfterViewInit {
 						const timeLogIds = this.invalidTimeLog.map(
 							(timeLog: any) => timeLog.id
 						);
-						await this.timeTrackerService.deleteInvalidTimeLog({
-							...arg,
-							timeLogIds: timeLogIds
-						});
+						try {
+							await this.timeTrackerService.deleteInvalidTimeLog({
+								...arg,
+								timeLogIds: timeLogIds
+							});
+						} catch (error) {
+							await this.timeTrackerService.toggleApiStop({
+								...arg,
+								manualTimeSlot: true
+							});
+						}
 					}
 				}
 				return res;
