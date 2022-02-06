@@ -312,7 +312,7 @@ export default class Timerhandler {
 
 		let idsAw = [];
 		const idsWakatime = [];
-		const idsAfk = awAfk && awAfk.length > 0
+		const idsAfk = awAfk.length > 0
 			? awAfk.map((afk) => afk.id) : [];
 		idsAw = [...idsAfk, ...idsAw]
 
