@@ -1,4 +1,4 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -10,22 +10,17 @@
 				{{ 'REPORT_PAGE.TIME_AND_ACTIVITY_REPORT' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title 
+		<ngx-date-range-title
 			[start]="logRequest.startDate"
 			[end]="logRequest.endDate"
 		></ngx-date-range-title>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-			<ngx-filters
-				dateRange="custom_range"
-				[hasEmployeeFilter]="false"
-				[hasProjectFilter]="false"
-				[saveFilters]="false"
-				[filters]="logRequest"
-				(filtersChange)="filtersChange($event)"
-				[hasTodayBtnWithCustom]="true"
-			></ngx-filters>
+			<ngx-gauzy-range-picker
+      [filters]="logRequest"
+      (onDateChange)="datesUpdated($event)"
+      ></ngx-gauzy-range-picker>
 		</div>
 		<ga-daily-statistics
 			class="mb-4"
