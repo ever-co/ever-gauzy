@@ -14,7 +14,7 @@ export class TimeAndActivitiesComponent implements OnInit {
 		private readonly timesheetFilterService: TimesheetFilterService
 	) {}
 
-	async filtersChange($event: ITimeLogFilters) {
+	filtersChange($event: ITimeLogFilters) {
 		this.timesheetFilterService.filter = $event;
 		this.filters = Object.assign({}, $event);
 	}

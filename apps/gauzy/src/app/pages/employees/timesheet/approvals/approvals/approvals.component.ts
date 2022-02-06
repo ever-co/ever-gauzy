@@ -20,7 +20,7 @@ import { Store, ToastrService } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-approvals',
+	selector: 'ngx-timesheet-approvals',
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })

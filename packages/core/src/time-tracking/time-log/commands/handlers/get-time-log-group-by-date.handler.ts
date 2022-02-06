@@ -38,20 +38,38 @@ export class GetTimeLogGroupByDateHandler
 								const timeSlots: ITimeSlot[] = chain(
 									byEmployeeLogs
 								)
-									.pluck('timeSlots')
-									.flatten(true)
-									.value();
+								.pluck('timeSlots')
+								.flatten(true)
+								.value();
 
-								const activitiesSum =
-									timeSlots.reduce(
-										(iteratee: any, timeSlot: any) => {
-											return iteratee + timeSlot.overall;
-										},
-										0
-									) || 0;
-
-								const activity =
-									activitiesSum / timeSlots.length;
+								/**
+								* Calculate Average activity of the employee
+								*/
+								const overallSum = timeSlots.reduce(
+									(
+										iteratee: any,
+										timeSlot: ITimeSlot
+									) => {
+										return (
+											iteratee +
+											timeSlot.overall
+										);
+									},
+									0
+								) || 0;
+								const durationSum = timeSlots.reduce(
+										(
+										iteratee: any,
+										timeSlot: ITimeSlot
+									) => {
+										return (
+											iteratee +
+											timeSlot.duration
+										);
+									},
+									0
+								) || 0;
+								const avgActivity = ((overallSum * 100) / (durationSum));
 
 								const employee =
 									byEmployeeLogs.length > 0
@@ -67,7 +85,7 @@ export class GetTimeLogGroupByDateHandler
 									employee,
 									sum: sum,
 									task,
-									activity: activity.toFixed(2)
+									activity: avgActivity.toFixed(2)
 								};
 							})
 							.value();

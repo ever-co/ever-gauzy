@@ -107,9 +107,6 @@ const knex = require('knex')({
 
 const exeName = path.basename(process.execPath);
 
-const dataModel = new DataModel();
-dataModel.createNewTable(knex);
-
 const store = new Store();
 
 const args = process.argv.slice(1);
@@ -145,7 +142,9 @@ const pathWindow = {
 	timeTrackerUi: path.join(__dirname, './index.html')
 };
 
-function startServer(value, restart = false) {
+async function startServer(value, restart = false) {
+	const dataModel = new DataModel();
+	await dataModel.createNewTable(knex);
 	try {
 		const config: any = {
 			...value,

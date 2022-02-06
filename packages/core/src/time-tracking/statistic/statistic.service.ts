@@ -117,15 +117,18 @@ export class StatisticService {
 			.andWhere(`"${employeesCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-						start,
-						end
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: start,
+						endDate: end
 					});
 					/**
 					 * If Employee Selected
 					 */
 					if (isNotEmpty(employeeIds)) {
 						qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+							employeeIds
+						});
+						qb.andWhere(`"timeSlots"."employeeId" IN (:...employeeIds)`, {
 							employeeIds
 						});
 					}
@@ -135,6 +138,20 @@ export class StatisticService {
 					if (isNotEmpty(projectIds)) {
 						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
 							projectIds
+						});
+					}
+					if (request.activityLevel) {
+						/**
+						 * Activity Level should be 0-100%
+						 * So, we have convert it into 10 minutes timeslot by multiply by 6
+						 */
+						const { activityLevel } = request;
+						const startLevel = (activityLevel.start * 6);
+						const endLevel = (activityLevel.end * 6);
+				
+						qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
+							startLevel,
+							endLevel
 						});
 					}
 					/**
@@ -168,9 +185,9 @@ export class StatisticService {
 			.andWhere(`"${projectsCountQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-						start,
-						end
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: start,
+						endDate: end
 					});
 					/**
 					 * If Employee Selected
@@ -186,6 +203,20 @@ export class StatisticService {
 					if (isNotEmpty(projectIds)) {
 						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
 							projectIds
+						});
+					}
+					if (request.activityLevel) {
+						/**
+						 * Activity Level should be 0-100%
+						 * So, we have convert it into 10 minutes timeslot by multiply by 6
+						 */
+						const { activityLevel } = request;
+						const startLevel = (activityLevel.start * 6);
+						const endLevel = (activityLevel.end * 6);
+				
+						qb.andWhere(`"timeSlots"."overall" BETWEEN :startLevel AND :endLevel`, {
+							startLevel,
+							endLevel
 						});
 					}
 					/**
@@ -234,9 +265,9 @@ export class StatisticService {
 				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-							start,
-							end
+						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
+							startDate: start,
+							endDate: end
 						});
 						/**
 						 * If Employee Selected
@@ -250,6 +281,20 @@ export class StatisticService {
 						if (isNotEmpty(projectIds)) {
 							qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
 								projectIds
+							});
+						}
+						if (request.activityLevel) {
+							/**
+							 * Activity Level should be 0-100%
+							 * So, we have convert it into 10 minutes timeslot by multiply by 6
+							 */
+							const { activityLevel } = request;
+							const startLevel = (activityLevel.start * 6);
+							const endLevel = (activityLevel.end * 6);
+					
+							qb.andWhere(`"${query.alias}"."overall" BETWEEN :startLevel AND :endLevel`, {
+								startLevel,
+								endLevel
 							});
 						}
 						/**
@@ -311,9 +356,9 @@ export class StatisticService {
 				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-							start,
-							end
+						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
+							startDate: start,
+							endDate: end
 						});
 						/**
 						 * If Employee Selected
@@ -327,6 +372,20 @@ export class StatisticService {
 						if (isNotEmpty(projectIds)) {
 							qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
 								projectIds
+							});
+						}
+						if (request.activityLevel) {
+							/**
+							 * Activity Level should be 0-100%
+							 * So, we have convert it into 10 minutes timeslot by multiply by 6
+							 */
+							const { activityLevel } = request;
+							const startLevel = (activityLevel.start * 6);
+							const endLevel = (activityLevel.end * 6);
+					
+							qb.andWhere(`"${query.alias}"."overall" BETWEEN :startLevel AND :endLevel`, {
+								startLevel,
+								endLevel
 							});
 						}
 						/**

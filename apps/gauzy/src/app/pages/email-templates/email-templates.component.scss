@@ -1,3 +1,5 @@
+@import 'var';
+
 .main-form {
   .template-save {
     display: flex;
@@ -9,4 +11,14 @@
       padding: 0;
     }
   }
+}
+
+.custom-parent-email-content{
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.email-content{
+  width: fit-content;
 }

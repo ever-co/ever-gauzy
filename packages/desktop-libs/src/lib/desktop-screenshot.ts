@@ -10,7 +10,6 @@ import screenshot from 'screenshot-desktop';
 const sound = require('sound-play');
 import * as remoteMain from '@electron/remote/main';
 
-import os from 'os';
 // Import logging for electron and override default console logging
 import log from 'electron-log';
 console.log = log.log;
@@ -472,21 +471,10 @@ export async function getScreeshot() {
 	}
 }
 
-export function notifyScreenshot(notificationWindow, thumb, windowPath, soundPath, timeTrackerWindow) {
+export function notifyScreenshot(notificationWindow: BrowserWindow, thumb, windowPath, soundPath, timeTrackerWindow) {
 	const soundCamera = soundPath;
 	const sizes = screen.getPrimaryDisplay().size;
-	const pathTempFile = os.tmpdir();
-	let fileName = `screenshot-${moment().format(
-		'YYYYMMDDHHmmss'
-	)}-${thumb.name}.png`;
-
-	fileName = convertToSlug(fileName);
-	const pathFile = path.join(pathTempFile, `/${fileName}`);
-	try {
-		writeFileSync(pathFile, thumb.img);
-	} catch (error) {
-	}
-	// preparing window screenshot
+	// preparing show screenshot
 	const screenCaptureWindow = {
 		width: 310,
 		height: 170,
@@ -505,7 +493,7 @@ export function notifyScreenshot(notificationWindow, thumb, windowPath, soundPat
 	});
 
 	console.log('App Name:', app.getName());
-	global.variableGlobal.screenshotSrc = pathFile;
+	global.variableGlobal.screenshotSrc = `data:image/png;base64, ${thumb.img}`;
 	const urlpath = url.format({
 		pathname: app.getName() !== 'gauzy-desktop-timer'
 		? windowPath.screenshotWindow
@@ -518,16 +506,21 @@ export function notifyScreenshot(notificationWindow, thumb, windowPath, soundPat
 	remoteMain.enable(notificationWindow.webContents);
 	// notificationWindow.webContents.toggleDevTools();
 	notificationWindow.setMenu(null);
-	// notificationWindow.hide();
-	notificationWindow.show();
+	notificationWindow.hide();
+	notificationWindow.on('show', () => {
+		setTimeout(() => {
+			notificationWindow.focus();
+		  }, 200);
+	})
 
 	setTimeout(() => {
+		notificationWindow.show();
 		notificationWindow.webContents.send('show_popup_screen_capture', {
 			note: LocalStore.beforeRequestParams().note
 		});
 	}, 1000);
 	setTimeout(() => {
-		timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: pathFile });
+		timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: `data:image/png;base64, ${thumb.img}` });
 		try {
 			if (existsSync(soundCamera)) {
 				sound.play(soundCamera, 0.4);
@@ -538,6 +531,5 @@ export function notifyScreenshot(notificationWindow, thumb, windowPath, soundPat
 	}, 1000)
 	setTimeout(() => {
 		notificationWindow.close();
-		unlinkSync(pathFile);
 	}, 4000);
 };

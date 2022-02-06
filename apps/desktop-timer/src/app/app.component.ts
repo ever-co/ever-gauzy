@@ -10,6 +10,9 @@ import * as _ from 'underscore';
 import {
 	Router
 } from '@angular/router';
+const log = window.require('electron-log');
+console.log = log.log;
+Object.assign(console, log.functions);
 
 @Component({
 	selector: 'gauzy-root',
@@ -179,9 +182,12 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_toggle_timer',
 			(event, arg) => {
-				this.appService.toggleApi(arg).then(() => {
+				console.log('event toggle stopped', arg);
+				this.appService.toggleApi(arg).then((res) => {
 					event.sender.send('timer_stopped');
-				}).catch(() => {
+					console.log('success stopped timer', res);
+				}).catch((e) => {
+					console.log('failed stoped timer', e);
 					event.sender.send('timer_stopped');
 				});
 			}

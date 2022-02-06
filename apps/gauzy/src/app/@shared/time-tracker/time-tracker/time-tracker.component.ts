@@ -7,6 +7,8 @@ import {
 	OrganizationPermissionsEnum,
 	TimeLogType
 } from '@gauzy/contracts';
+import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
+import { NbThemeService } from '@nebular/theme';
 import * as moment from 'moment';
 import { toUTC } from '@gauzy/common-angular';
 import { NgForm } from '@angular/forms';
@@ -41,6 +43,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	@ViewChild(NgForm) form: NgForm;
 
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
+	theme: string;
 
 	constructor(
 		private readonly timeTrackerService: TimeTrackerService,
@@ -48,7 +51,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		private readonly toastrService: ToastrService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly store: Store,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly themeService: NbThemeService
 	) { }
 
 	public get isBillable(): boolean {
@@ -178,6 +182,13 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 						this.allowFutureDate = hasPermission;
 					});
 			});
+		this.themeService
+			.onThemeChange()
+			.pipe(
+				tap((theme) => this.theme = theme.name),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	toggleWindow() {
@@ -263,7 +274,16 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	setTimeType(type: string) {
 		this.timeTrackerService.setTimeLogType(type);
-	}	
+	}
+
+	/**
+	 * Draggable Web Timer Position
+	 * 
+	 * @param event 
+	 */
+	draggablePosition(event: NgxDraggableDomMoveEvent) {
+		this.position = event.position as NgxDraggablePoint;
+	}
 
 	ngOnDestroy() { }
 }

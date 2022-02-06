@@ -23,6 +23,10 @@ export class RolePermission
 	@Column({ nullable: true, default: false })
 	enabled: boolean;
 
+	@ApiPropertyOptional({ type: () => String })
+	@Column({ nullable: true })
+	description: string;
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 

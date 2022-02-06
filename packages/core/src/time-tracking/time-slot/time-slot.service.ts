@@ -105,10 +105,18 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					});
 				}
 				if (request.activityLevel) {
-					qb.andWhere(
-						`"${qb.alias}"."overall" BETWEEN :start AND :end`,
-						request.activityLevel
-					);
+					/**
+					 * Activity Level should be 0-100%
+					 * So, we have convert it into 10 minutes timeslot by multiply by 6
+					 */
+					const { activityLevel } = request;
+					const start = (activityLevel.start * 6);
+					const end = (activityLevel.end * 6);
+
+					qb.andWhere(`"${qb.alias}"."overall" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
 				}
 				if (request.source) {
 					if (request.source instanceof Array) {
