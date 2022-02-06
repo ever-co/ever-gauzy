@@ -310,8 +310,11 @@ export default class Timerhandler {
 
 		//calculate mouse and keyboard activity as per selected period
 
-		const idsAw = [];
+		let idsAw = [];
 		const idsWakatime = [];
+		const idsAfk = awAfk && awAfk.length > 0
+			? awAfk.map((afk) => afk.id) : [];
+		idsAw = [...idsAfk, ...idsAw]
 
 		// formating aw
 		awActivities = awActivities.map((item) => {
@@ -392,7 +395,7 @@ export default class Timerhandler {
 		log.info(`Config: ${moment().format()}`, config);
 		const { id: lastTimerId, timeLogId } = this.lastTimer;
 		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
-
+		const durationNonAfk = durationNow - dataCollection.durationAfk;
 
 		switch (
 			appSetting.SCREENSHOTS_ENGINE_METHOD ||
@@ -421,7 +424,7 @@ export default class Timerhandler {
 					idsAw: dataCollection.idsAw,
 					idsWakatime: dataCollection.idsWakatime,
 					duration: durationNow,
-					durationNonAfk: durationNow - dataCollection.durationAfk
+					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk
 				});
 				break;
 			case 'ScreenshotDesktopLib':
@@ -448,7 +451,7 @@ export default class Timerhandler {
 					idsAw: dataCollection.idsAw,
 					idsWakatime: dataCollection.idsWakatime,
 					duration: durationNow,
-					durationNonAfk: durationNow - dataCollection.durationAfk
+					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk
 				});
 				break;
 			default:

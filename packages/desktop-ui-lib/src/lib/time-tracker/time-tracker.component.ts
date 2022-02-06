@@ -351,6 +351,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 					});
 			} else {
 				this.start = val;
+				console.log('stop tracking');
 				this.stopTimer();
 				this._cdr.detectChanges();
 			}
