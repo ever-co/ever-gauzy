@@ -43,3 +43,10 @@
 .right-custom {
   padding-right: 10px;
 }
+
+.hidden-long-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}

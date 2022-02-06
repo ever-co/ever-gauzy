@@ -180,6 +180,34 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
+	toggleApiStop(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+		return this.http
+			.post(
+				`${values.apiHost}/api/timesheet/timer/toggle`,
+				{
+					description: values.note,
+					isBillable: true,
+					logType: 'TRACKED',
+					projectId: values.projectId,
+					taskId: values.taskId,
+					source: 'DESKTOP',
+					manualTimeSlot: values.manualTimeSlot,
+					organizationId: values.organizationId,
+					tenantId: values.tenantId,
+					organizationContactId: values.organizationContactId
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
 	deleteTimeSlot(values) {
 		const params = this.toParams({
 			ids: [values.timeSlotId],
@@ -401,7 +429,6 @@ export class TimeTrackerService {
 	}
 
 	uploadImages(values, img:any) {
-		console.log('hjdfhsjhfjd', values);
 		const  headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
