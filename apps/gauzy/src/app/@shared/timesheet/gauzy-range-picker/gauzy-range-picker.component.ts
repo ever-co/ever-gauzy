@@ -14,7 +14,7 @@ export class GauzyRangePickerComponent {
   private arrow: Arrow;
   private next: Next;
   public isDisable: boolean;
-  // define ngx-datarangepicker-material range configuration
+  // define ngx-daterangepicker-material range configuration
   ranges: any = {
     'Today': [moment(), moment()],
     'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
@@ -23,7 +23,7 @@ export class GauzyRangePickerComponent {
     'This Month': [moment().startOf('month'), moment().endOf('month')],
     'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
   }
-  // ngx-datarangepicker-material local configuration
+  // ngx-daterangepicker-material local configuration
   localConfig: any = {
     displayFormat: 'MMM DD, YYYY',
   }
@@ -47,7 +47,7 @@ export class GauzyRangePickerComponent {
     this.next = new Next();
   }
   /**
-   * listen event on ngx-datarangepicker-material
+   * listen event on ngx-daterangepicker-material
    * @param event
    */
   onUpdate(event) {
@@ -88,7 +88,7 @@ export class GauzyRangePickerComponent {
     this.onDateChange.emit(this.arrow.execute(this.filters))
   }
   /**
-   * update state of disable or enable next button
+   * update state: disable next button
    */
   updateNextButton() {
     if (this.next.isDisable) {
