@@ -1,6 +1,6 @@
 import { IFeatureOrganizationUpdateInput } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString,IsNotEmpty, IsBoolean, IsOptional } from "class-validator";
+import { IsString,IsNotEmpty, IsBoolean } from "class-validator";
 import { TenantOrganizationBaseDTO } from "core/dto";
 
 export class CreateFeatureToggleDTO extends TenantOrganizationBaseDTO implements IFeatureOrganizationUpdateInput {
@@ -11,7 +11,7 @@ export class CreateFeatureToggleDTO extends TenantOrganizationBaseDTO implements
     readonly featureId: string;
 
     @ApiProperty({ type : () => Boolean })
-    @IsOptional()
+    @IsNotEmpty()
     @IsBoolean()
     readonly isEnabled: boolean;
 
