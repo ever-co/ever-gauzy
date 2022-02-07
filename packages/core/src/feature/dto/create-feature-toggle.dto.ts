@@ -1,10 +1,9 @@
-import { IFeatureOrganizationUpdateInput, IOrganization } from "@gauzy/contracts";
+import { IFeatureOrganizationUpdateInput } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsString,IsNotEmpty, IsBoolean, IsOptional, ValidateNested } from "class-validator";
-import { TenantDTO } from "tenant/dto";
+import { IsString,IsNotEmpty, IsBoolean, IsOptional } from "class-validator";
+import { TenantOrganizationBaseDTO } from "core/dto";
 
-export class CreateFeatureToggleDTO implements IFeatureOrganizationUpdateInput {
+export class CreateFeatureToggleDTO extends TenantOrganizationBaseDTO implements IFeatureOrganizationUpdateInput {
     
     @ApiProperty({ type : () => String })
     @IsNotEmpty()
@@ -15,20 +14,5 @@ export class CreateFeatureToggleDTO implements IFeatureOrganizationUpdateInput {
     @IsOptional()
     @IsBoolean()
     readonly isEnabled: boolean;
-
-    @ApiProperty({ type : () => String })
-    @IsOptional()
-    @IsString()
-    readonly organizationId: string;
-
-    @ApiProperty({ type : () => Object })
-    @IsOptional()
-    readonly organization: IOrganization;
-
-    @ApiProperty({ type : () => Object })
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => TenantDTO)
-    readonly tenant: TenantDTO;
 
 }
