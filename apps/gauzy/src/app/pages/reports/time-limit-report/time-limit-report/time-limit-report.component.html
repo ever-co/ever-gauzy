@@ -5,21 +5,21 @@
 				{{ title | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title 
+		<ngx-date-range-title
 			[start]="logRequest.startDate"
 			[end]="logRequest.endDate"
 		></ngx-date-range-title>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-			<ngx-filters
-        dateRange="week"
-				[hasEmployeeFilter]="false"
-				[hasProjectFilter]="false"
-				[saveFilters]="false"
-				[filters]="logRequest"
-				(filtersChange)="filtersChange($event)"
-			></ngx-filters>
+			<ngx-gauzy-range-picker
+        [filters]="logRequest"
+        [arrows]="true"
+        [hasEmployeeFilter]="false"
+        [hasProjectFilter]="false"
+        [saveFilters]="false"
+        (onDateChange)="filtersChange($event)"
+      ></ngx-gauzy-range-picker>
 		</div>
 
 		<div class="table">
