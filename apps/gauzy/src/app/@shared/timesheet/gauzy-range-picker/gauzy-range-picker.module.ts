@@ -4,7 +4,7 @@ import { GauzyRangePickerComponent } from './gauzy-range-picker.component';
 import { SharedModule } from '../../shared.module';
 import { FormsModule } from '@angular/forms';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
-import { NbButtonModule, NbIconModule, NbInputModule, NbPopoverModule, NbSelectModule } from '@nebular/theme';
+import { NbButtonModule, NbIconModule, NbInputModule, NbOptionModule, NbPopoverModule, NbSelectModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { Ng5SliderModule } from 'ng5-slider';
@@ -27,14 +27,11 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
     TranslateModule,
     NbIconModule,
     EmployeeMultiSelectModule,
-		NbButtonModule,
 		NbPopoverModule,
 		NbSelectModule,
-		NbIconModule,
-		NbInputModule,
 		Ng5SliderModule,
-		TranslateModule,
-		ProjectSelectModule
+		ProjectSelectModule,
+    NbOptionModule
   ]
 })
 export class GauzyRangePickerModule { }
