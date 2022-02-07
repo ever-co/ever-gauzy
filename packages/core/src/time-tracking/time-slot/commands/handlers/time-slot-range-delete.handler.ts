@@ -20,8 +20,8 @@ export class TimeSlotRangeDeleteHandler
 	): Promise<boolean> {
 
 		const tenantId = RequestContext.currentTenantId();
-		const { employeeId, start, stop } = command;
-
+		const { organizationId, employeeId, start, stop } = command;
+		
 		let mStart: any = moment.utc(start);
 		mStart.set('minute', mStart.get('minute') - (mStart.get('minute') % 10));
 		mStart.set('second', 0).set('millisecond', 0);
@@ -34,6 +34,7 @@ export class TimeSlotRangeDeleteHandler
 			mStart,
 			mEnd
 		);
+		console.log(startDate, endDate);
 		const timeSlots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
@@ -43,9 +44,13 @@ export class TimeSlotRangeDeleteHandler
 				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
+				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				});
 				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
+				console.log('TimeSlot Range Delete', qb.getQueryAndParameters());
 			},
 			relations: ['screenshots']
 		});

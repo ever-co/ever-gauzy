@@ -33,7 +33,7 @@ export class DeleteTimeSpanHandler
 		const { start, end } = newTime;
 
 		const refreshTimeLog = await this.timeLogRepository.findOne(id);
-		const { startedAt, stoppedAt, employeeId } = refreshTimeLog;
+		const { startedAt, stoppedAt, employeeId, organizationId } = refreshTimeLog;
 
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
@@ -50,6 +50,7 @@ export class DeleteTimeSpanHandler
 			if (employeeId && start && end) {
 				return await this.commandBus.execute(
 					new TimeSlotRangeDeleteCommand(
+						organizationId,
 						employeeId,
 						start,
 						end
@@ -115,6 +116,7 @@ export class DeleteTimeSpanHandler
 						);
 						await this.commandBus.execute(
 							new TimeSlotRangeDeleteCommand(
+								organizationId,
 								employeeId,
 								start,
 								end
@@ -171,6 +173,7 @@ export class DeleteTimeSpanHandler
 						);
 						await this.commandBus.execute(
 							new TimeSlotRangeDeleteCommand(
+								organizationId,
 								employeeId,
 								start,
 								end
@@ -232,6 +235,7 @@ export class DeleteTimeSpanHandler
 					}
 					await this.commandBus.execute(
 						new TimeSlotRangeDeleteCommand(
+							organizationId,
 							employeeId,
 							start,
 							end
