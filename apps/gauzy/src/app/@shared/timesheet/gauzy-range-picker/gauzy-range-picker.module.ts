@@ -4,7 +4,7 @@ import { GauzyRangePickerComponent } from './gauzy-range-picker.component';
 import { SharedModule } from '../../shared.module';
 import { FormsModule } from '@angular/forms';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
-import { NbButtonModule, NbInputModule } from '@nebular/theme';
+import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 
 
@@ -21,7 +21,8 @@ import { TranslateModule } from '@ngx-translate/core';
     NgxDaterangepickerMd,
     NbInputModule,
     NbButtonModule,
-    TranslateModule
+    TranslateModule,
+    NbIconModule
   ]
 })
 export class GauzyRangePickerModule { }
