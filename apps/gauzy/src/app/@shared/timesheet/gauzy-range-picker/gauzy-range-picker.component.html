@@ -1,9 +1,9 @@
 <div class="row">
   <div class="filter-input">
-    <button nbButton status="primary" (click)="previousRange()">
+    <button *ngIf="arrows" nbButton status="primary" (click)="previousRange()">
       <nb-icon icon="arrow-ios-back-outline"></nb-icon>
     </button>
-    <button nbButton [disabled]="isDisable" status="primary" (click)="nextRange()">
+    <button *ngIf="arrows" nbButton [disabled]="isDisable" status="primary" (click)="nextRange()">
       <nb-icon icon="arrow-ios-forward-outline"></nb-icon>
     </button>
     <input
