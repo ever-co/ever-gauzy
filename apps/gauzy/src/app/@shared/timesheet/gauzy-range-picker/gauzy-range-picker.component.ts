@@ -26,6 +26,9 @@ export class GauzyRangePickerComponent implements OnInit {
   @Input()
   filters: any;
 
+  @Input()
+  todayButton: boolean = true;
+
   constructor() { }
 
   ngOnInit(): void {
@@ -41,4 +44,11 @@ export class GauzyRangePickerComponent implements OnInit {
     this.onDateChange.emit(requestEvent);
   }
 
+  today(){
+    this.filters = {
+      startDate: moment(),
+      endDate: moment()
+    }
+    this.onDateChange.emit(this.filters);
+  }
 }

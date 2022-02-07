@@ -9,4 +9,9 @@
         [(ngModel)]="filters"
         (datesUpdated)="onUpdate($event)"
       />
+      <button nbButton status="primary" (click)="today()" *ngIf="todayButton">
+        {{
+        'TIMESHEET.TODAY' | translate
+        }}
+      </button>
 </div>
