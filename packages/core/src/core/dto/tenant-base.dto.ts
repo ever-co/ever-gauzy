@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsObject, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsObject } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
 
 export abstract class TenantBaseDTO 
@@ -11,7 +11,7 @@ export abstract class TenantBaseDTO
 	readonly tenant: ITenant;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@IsNotEmpty()
+	@IsOptional()
 	@IsString()
 	readonly tenantId: string;
 }
