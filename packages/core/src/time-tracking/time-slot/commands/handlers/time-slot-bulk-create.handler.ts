@@ -2,12 +2,13 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import * as moment from 'moment';
-import * as _ from 'underscore';
+import { chain, pluck, where } from 'underscore';
 import { TimeSlot } from './../../time-slot.entity';
 import { TimeLog } from './../../../time-log/time-log.entity';
 import { TimeSlotBulkCreateCommand } from './../time-slot-bulk-create.command';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { RequestContext } from '../../../../core/context';
+import { getDateFormat } from './../../../../core/utils';
 
 @CommandHandler(TimeSlotBulkCreateCommand)
 export class TimeSlotBulkCreateHandler
@@ -26,45 +27,45 @@ export class TimeSlotBulkCreateHandler
 		command: TimeSlotBulkCreateCommand
 	): Promise<TimeSlot[]> {
 		let { slots, employeeId, organizationId } = command;
-
 		if (slots.length === 0) {
 			return [];
 		}
 
 		slots = slots.map((slot) => {
-			slot.startedAt = moment.utc(slot.startedAt).toDate();
+			const { start } = getDateFormat(
+				moment.utc(slot.startedAt),
+				moment.utc(slot.startedAt)
+			);
+			slot.startedAt = start as Date;
 			return slot;
 		});
 
 		const tenantId = RequestContext.currentTenantId();
 		const insertedSlots = await this.timeSlotRepository.find({
 			where: {
-				startedAt: In(_.pluck(slots, 'startedAt')),
+				startedAt: In(pluck(slots, 'startedAt')),
 				tenantId,
+				organizationId,
 				employeeId
 			}
 		});
 
 		if (insertedSlots.length > 0) {
-			slots = slots.filter(
-				(slot) =>
-					!insertedSlots.find(
-						(insertedSlot) =>
-							moment(insertedSlot.startedAt).format(
-								'YYYY-MM-DD HH:mm'
-							) ===
-							moment(slot.startedAt).format('YYYY-MM-DD HH:mm')
-					)
-			);
+			slots = slots.filter((slot) => !insertedSlots.find(
+				(insertedSlot) => moment(insertedSlot.startedAt).isSame(
+					moment(slot.startedAt)
+				)
+			));
 		}
-
 		if (slots.length === 0) {
 			return [];
 		}
 
 		const timeLogs = await this.timeLogRepository.find({
 			where: {
-				id: In(_.chain(slots).pluck('timeLogId').flatten().value()),
+				id: In(chain(slots).pluck('timeLogId').flatten().value().filter(Boolean)),
+				organizationId,
+				employeeId,
 				tenantId
 			}
 		});
@@ -76,11 +77,11 @@ export class TimeSlotBulkCreateHandler
 			} else {
 				timeLogIds = [slot.timeLogId];
 			}
-			slot.timeLogs = _.where(timeLogs, { id: timeLogIds });
-
-			if (!slot.organizationId) {
-				slot.organizationId = organizationId;
+			slot.timeLogs = [];
+			for (const timeLogId of timeLogIds) {
+				slot.timeLogs.push(...where(timeLogs, { id: timeLogId }));
 			}
+			slot.organizationId = organizationId;
 			slot.tenantId = tenantId;
 			return slot;
 		});

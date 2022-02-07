@@ -166,9 +166,14 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		);
 	}
 
-	async rangeDelete(employeeId: string, start: Date, stop: Date) {
+	async rangeDelete(
+		organizationId: string,
+		employeeId: string,
+		start: Date,
+		stop: Date
+	) {
 		return await this.commandBus.execute(
-			new TimeSlotRangeDeleteCommand(employeeId, start, stop)
+			new TimeSlotRangeDeleteCommand(organizationId, employeeId, start, stop)
 		);
 	}
 
