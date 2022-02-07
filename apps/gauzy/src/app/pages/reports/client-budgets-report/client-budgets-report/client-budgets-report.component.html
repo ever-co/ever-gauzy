@@ -12,17 +12,18 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-			<ngx-filters
-				dateRange="week"
-				[hasEmployeeFilter]="false"
+      <ngx-gauzy-range-picker
+        [arrows]="false"
+        [hasEmployeeFilter]="false"
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
 				[hasLogTypeFilter]="false"
 				[hasProjectFilter]="false"
 				[saveFilters]="false"
 				[filters]="logRequest"
-				(filtersChange)="filtersChange($event)"
-			></ngx-filters>
+				(onDateChange)="filtersChange($event)"
+      >
+      </ngx-gauzy-range-picker>
 		</div>
 		<div
 			class="weekly-logs row-table"
