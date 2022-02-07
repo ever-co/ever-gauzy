@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { ChangeContext, Options } from 'ng5-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { isEmpty } from '@gauzy/common-angular';
-import { IEmployee, IOrganization, ITimeLogFilters, IUser, OrganizationPermissionsEnum, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITimeLogFilters, IUser, OrganizationPermissionsEnum, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, take, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
@@ -26,6 +26,8 @@ export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestro
   public isDisable: boolean;
 	private updateLogs$: Subject<any> = new Subject();
   public PermissionsEnum = PermissionsEnum;
+  public TimeLogType = TimeLogType;
+	public TimeLogSourceEnum = TimeLogSourceEnum;
   // define ngx-daterangepicker-material range configuration
   ranges: any = {
     'Today': [moment(), moment()],
