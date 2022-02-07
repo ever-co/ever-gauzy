@@ -19,7 +19,7 @@
 		<div class="filters mt-4 mb-4">
 			<ngx-gauzy-range-picker
       [filters]="logRequest"
-      (onDateChange)="datesUpdated($event)"
+      (onDateChange)="filtersChange($event)"
       ></ngx-gauzy-range-picker>
 		</div>
 		<ga-daily-statistics

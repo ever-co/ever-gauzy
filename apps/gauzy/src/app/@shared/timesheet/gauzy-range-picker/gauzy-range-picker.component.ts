@@ -31,8 +31,14 @@ export class GauzyRangePickerComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  onUpdate(event: Object){
-    this.onDateChange.emit(event);
+  onUpdate(event){
+    const requestEvent =
+      event.endDate || event.startDate ?
+        {
+          startDate: event.startDate.toDate(),
+          endDate: event.endDate.toDate()
+        } : this.filters;
+    this.onDateChange.emit(requestEvent);
   }
 
 }

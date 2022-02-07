@@ -66,16 +66,6 @@ export class TimeReportsComponent
 		this.subject$.next(true);
 	}
 
-  datesUpdated(event) {
-    const requestEvent =
-      event.endDate || event.startDate ?
-        {
-          startDate: event.startDate.toDate(),
-          endDate: event.endDate.toDate()
-        } : this.logRequest;
-    this.filtersChange(requestEvent);
-  }
-
 	updateChart() {
 		const appliedFilter = pick(
 			this.logRequest,
