@@ -21,9 +21,7 @@ export class Next implements IArrowStrategy {
     }
     return {
       startDate: startDate,
-      endDate: moment(startDate).add(range, 'days').toDate(),
-      employeeIds: request.employeeIds,
-      duration: request.duration
+      endDate: moment(startDate).add(range, 'days').toDate()
     }
   }
   /**

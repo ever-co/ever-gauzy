@@ -14,9 +14,7 @@ export class Previous implements IArrowStrategy{
     const startDate = range === 0 ? end.subtract(1, 'days').toDate() : start.subtract(range, 'days').toDate();
     return {
       startDate: startDate,
-      endDate: moment(startDate).add(range, 'days').toDate(),
-      employeeIds: request.employeeIds,
-      duration: request.duration
+      endDate: moment(startDate).add(range, 'days').toDate()
     }
   }
 }
