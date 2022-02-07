@@ -16,6 +16,7 @@ import { PaymentReportGridModule } from '../../../@shared/report/payment-report-
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
+import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-picker/gauzy-range-picker.module';
 
 @NgModule({
 	declarations: [PaymentReportComponent],
@@ -33,7 +34,8 @@ import { DateRangeTitleModule } from '../../../@shared/components/date-range-tit
 		LineChartModule,
 		PaymentReportGridModule,
 		HeaderTitleModule,
-		DateRangeTitleModule
+		DateRangeTitleModule,
+    GauzyRangePickerModule
 	]
 })
 export class PaymentReportModule {}
