@@ -1,4 +1,4 @@
-import { IExpenseCategory, IExpenseCreateInput, IOrganization, IOrganizationContact, IOrganizationProject, IOrganizationVendor, ITag, ITenant } from "@gauzy/contracts";
+import { IExpenseCategory, IExpenseCreateInput, IOrganizationVendor } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsObject, IsOptional, IsString } from "class-validator";
 import { ExpenseDTO } from "./expense.dto";

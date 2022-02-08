@@ -40,7 +40,7 @@ import { RequestContext } from '../core/context';
 import { FindSplitExpenseQuery } from './queries';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
-import { CreateExpenseDTO } from './dto';
+import { CreateExpenseDTO, UpdateExpenseDTO } from './dto';
 
 @ApiTags('Expense')
 @UseGuards(TenantPermissionGuard)
@@ -228,9 +228,10 @@ export class ExpenseController extends CrudController<Expense> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Expense
+		@Body() entity: UpdateExpenseDTO
 	): Promise<IExpense> {
 		return await this.commandBus.execute(
 			new ExpenseUpdateCommand(id, entity)

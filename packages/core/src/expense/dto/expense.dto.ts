@@ -1,21 +1,21 @@
 import { TenantOrganizationBaseDTO } from "core/dto";
 import { CurrenciesEnum, IOrganizationContact, IOrganizationProject, ITag } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
 
-    @ApiProperty({ type: () => Number })
+    @ApiProperty({ type: () => Number, readOnly: true  })
     @IsNumber()
     @IsNotEmpty()
     readonly amount: number;
 
-    @ApiProperty({ type: () => String, enum: CurrenciesEnum })
+    @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true  })
     @IsEnum(CurrenciesEnum)
     @IsNotEmpty()
     readonly currency: string;
 
-    @ApiPropertyOptional({ type: () => Date })
+    @ApiPropertyOptional({ type: () => Date, readOnly: true  })
     @IsOptional()
     readonly valueDate: Date;
 
@@ -29,12 +29,12 @@ export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
     @IsString()
     readonly reference: string;
 
-    @ApiPropertyOptional({ type: () => String })
+    @ApiPropertyOptional({ type: () => String, readOnly: true  })
     @IsOptional()
     @IsString()
     readonly typeOfExpense: string;
 
-    @ApiPropertyOptional({ type: () => String })
+    @ApiPropertyOptional({ type: () => String, readOnly: true  })
     @IsOptional()
     @IsString()
     readonly purpose: string;
@@ -49,7 +49,7 @@ export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
     @IsString()
     readonly taxLabel: string;
 
-    @ApiPropertyOptional({ type: () => Number })
+    @ApiPropertyOptional({ type: () => Number, readOnly: true  })
     @IsOptional()
     readonly rateValue: number;
 
@@ -58,7 +58,7 @@ export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
     @IsString()
     readonly receipt: string;
 
-    @ApiPropertyOptional({ type: () => Boolean })
+    @ApiPropertyOptional({ type: () => Boolean, readOnly: true  })
     @IsOptional()
     @IsBoolean()
     readonly splitExpense: boolean;
@@ -68,7 +68,7 @@ export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
     @IsString()
     readonly status: string;
 
-    @ApiPropertyOptional({ type: () => Object, isArray: true })
+    @ApiPropertyOptional({ type: () => Object, isArray: true, readOnly: true  })
     @IsOptional()
     readonly tags: ITag[];
 
