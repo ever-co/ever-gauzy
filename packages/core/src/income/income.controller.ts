@@ -17,7 +17,6 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IIncome,
-	IIncomeCreateInput,
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -34,6 +33,7 @@ import {
 } from './commands';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
+import { CreateIncomeDTO, UpdateIncomeDTO } from './dto';
 
 @ApiTags('Income')
 @UseGuards(TenantPermissionGuard)
@@ -118,8 +118,9 @@ export class IncomeController extends CrudController<Income> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: IIncomeCreateInput,
+		@Body() entity: CreateIncomeDTO,
 		...options: any[]
 	): Promise<IIncome> {
 		return await this.commandBus.execute(
@@ -145,9 +146,10 @@ export class IncomeController extends CrudController<Income> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: Income,
+		@Body() entity: UpdateIncomeDTO,
 		...options: any[]
 	): Promise<IIncome> {
 		return await this.commandBus.execute(
