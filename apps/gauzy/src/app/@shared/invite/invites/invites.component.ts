@@ -127,15 +127,15 @@ export class InvitesComponent
 		this.selectedInvite = isSelected ? data : null;
 	}
 
-	async invite() {
-		try {
-			const dialog = this.dialogService.open(InviteMutationComponent, {
-				context: {
-					invitationType: this.invitationType
-				}
-			});
-			await firstValueFrom(dialog.onClose);
-		} finally {
+	async invite(): Promise<void> {
+		const dialog = this.dialogService.open(InviteMutationComponent, {
+			context: {
+				invitationType: this.invitationType
+			}
+		});
+			
+		const data = await firstValueFrom(dialog.onClose);
+		if(data.length != 0){
 			this.invites$.next(true);
 		}
 	}

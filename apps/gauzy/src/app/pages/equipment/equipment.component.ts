@@ -205,9 +205,9 @@ export class EquipmentComponent
 			this.toastrService.success('EQUIPMENT_PAGE.EQUIPMENT_SAVED', {
 				name: equipment.name
 			});
+			this.loadSettings();
 		}
 
-		this.loadSettings();
 	}
 
 	async delete(selectedItem?: IEquipment) {

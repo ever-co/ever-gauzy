@@ -191,8 +191,8 @@ export class ProductCategoriesComponent
 			this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
 				name: productCatTranslaction?.name
 			});
+			this.categories$.next(true);
 		}
-		this.categories$.next(true);
 	}
 
 	async delete(selectedItem?: IProductCategoryTranslated) {
