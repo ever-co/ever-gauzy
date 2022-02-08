@@ -36,7 +36,7 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		ProgressStatusModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    GauzyRangePickerModule
+    	GauzyRangePickerModule
 	]
 })
 export class TimeLimitReportModule {}

@@ -35,7 +35,7 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		PaymentReportGridModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    GauzyRangePickerModule
+    	GauzyRangePickerModule
 	]
 })
 export class PaymentReportModule {}

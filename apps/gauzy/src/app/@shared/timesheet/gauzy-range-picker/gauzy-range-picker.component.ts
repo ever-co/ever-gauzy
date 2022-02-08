@@ -4,53 +4,65 @@ import * as moment from 'moment';
 import { ChangeContext, Options } from 'ng5-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { isEmpty } from '@gauzy/common-angular';
-import { IEmployee, IOrganization, ITimeLogFilters, IUser, OrganizationPermissionsEnum, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import {
+	IEmployee,
+	IOrganization,
+	ITimeLogFilters,
+	IUser,
+	OrganizationPermissionsEnum,
+	PermissionsEnum,
+	TimeLogSourceEnum,
+	TimeLogType
+} from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, take, tap } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
+import { EmployeesService, Store } from '../../../@core/services';
 import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';
-import { Next } from './arrow/strategies/concrete/next.strategy';
-import { Previous } from './arrow/strategies/concrete/previous.strategy';
+import { Next, Previous } from './arrow/strategies/concrete';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
-  selector: 'ngx-gauzy-range-picker',
-  templateUrl: './gauzy-range-picker.component.html',
-  styleUrls: ['./gauzy-range-picker.component.scss']
+	selector: 'ngx-gauzy-range-picker',
+	templateUrl: './gauzy-range-picker.component.html',
+	styleUrls: ['./gauzy-range-picker.component.scss']
 })
-export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestroy {
-  // declaration of variables
-  private arrow: Arrow;
-  private next: Next;
-  public isDisable: boolean;
+export class GauzyRangePickerComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
+	// declaration of variables
+	private arrow: Arrow;
+	private next: Next;
+	public isDisable: boolean;
 	private updateLogs$: Subject<any> = new Subject();
-  public PermissionsEnum = PermissionsEnum;
-  public TimeLogType = TimeLogType;
+	public PermissionsEnum = PermissionsEnum;
+	public TimeLogType = TimeLogType;
 	public TimeLogSourceEnum = TimeLogSourceEnum;
-  // define ngx-daterangepicker-material range configuration
-  ranges: any = {
-    'Today': [moment(), moment()],
-    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-    'This Month': [moment().startOf('month'), moment().endOf('month')],
-    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-  }
-  // ngx-daterangepicker-material local configuration
-  localConfig: any = {
-    displayFormat: 'MMM DD, YYYY',
-    format: 'YYYY-MM-DD'
-  }
-  // event emitter
-  @Output()
-  onDateChange: EventEmitter<Object> = new EventEmitter<Object>();
-  // logRequest
-  @Input()
+  
+	// define ngx-daterangepicker-material range configuration
+	ranges: any = {
+		'Today': [moment(), moment()],
+		'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+		'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+		'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+		'This Month': [moment().startOf('month'), moment().endOf('month')],
+		'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+	}
+	// ngx-daterangepicker-material local configuration
+	localConfig: any = {
+		displayFormat: 'MMM DD, YYYY',
+		format: 'YYYY-MM-DD'
+	}
+	// event emitter
+	@Output()
+	onDateChange: EventEmitter<Object> = new EventEmitter<Object>();
+
+	// logRequest
+  	@Input()
 	public get filters(): ITimeLogFilters {
 		return this._filters;
 	}
-  @Input() saveFilters = true;
+  	@Input() saveFilters = true;
 	@Input() hasProjectFilter = true;
 	@Input() hasDateRangeFilter = true;
 	@Input() hasEmployeeFilter = true;
@@ -59,20 +71,20 @@ export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestro
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
 
-  private _selectedDateRange: any;
+  	private _selectedDateRange: any;
 	get selectedDateRange(): any {
 		return this._selectedDateRange;
 	}
 
 	set selectedDateRange(range) {
-    this._selectedDateRange = range;
-    this.filters.startDate = moment(range.startDate).format('YYYY-MM-DD');
-    this.filters.endDate = moment(range.endDate).format('YYYY-MM-DD');
-    this.triggerFilterChange();
-    this.cd.detectChanges();
+		this._selectedDateRange = range;
+		this.filters.startDate = moment(range.startDate).format('YYYY-MM-DD');
+		this.filters.endDate = moment(range.endDate).format('YYYY-MM-DD');
+		this.triggerFilterChange();
+		this.cd.detectChanges();
 	}
 
-  private _filters: ITimeLogFilters = {
+  	private _filters: ITimeLogFilters = {
 		employeeIds: [],
 		source: [],
 		logType: [],
@@ -81,11 +93,11 @@ export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestro
 		date: new Date()
 	};
 
-  futureDateAllowed: boolean;
+  	futureDateAllowed: boolean;
 	hasFilterApplies: boolean;
 	isEmployee: boolean;
 
-  activityLevel = ActivityLevel;
+  	activityLevel = ActivityLevel;
 	sliderOptions: Partial<Options> = {
 		floor: 0,
 		ceil: 100,
@@ -95,18 +107,18 @@ export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestro
 	employees: IEmployee[];
 	user: IUser;
 
-  public get selectedDate(): Date {
+  	public get selectedDate(): Date {
 		return this.filters.date as Date;
 	}
 
-  public set selectedDate(value: Date) {
+  	public set selectedDate(value: Date) {
 		const date = value as Date;
 		this.filters.date = date;
-    this.filters = this.filters;
+   		this.filters = this.filters;
 		this.triggerFilterChange();
 	}
 
-  public set filters(value: ITimeLogFilters) {
+  	public set filters(value: ITimeLogFilters) {
 		this._filters = value;
 		this.activityLevel = {
 			start: value.activityLevel ? value.activityLevel.start : 0,
@@ -115,7 +127,7 @@ export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestro
 		this.cd.detectChanges();
 	}
 
-  private _employeeIds: string | string[];
+  	private _employeeIds: string | string[];
 	public get employeeIds(): string | string[] {
 		return this._employeeIds;
 	}
@@ -128,25 +140,30 @@ export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestro
 		}
 		this.triggerFilterChange();
 	}
-  // show or hide today button, show by default
-  @Input()
-  todayButton: boolean = true;
-  // show or hide arrows button, hide by default
-  @Input()
-  arrows: boolean = false;
-  /**
-   * define constructor
-   */
-  constructor(
-    private store: Store,
-    private timesheetFilterService: TimesheetFilterService,
-    private employeesService: EmployeesService,
-    private ngxPermissionsService: NgxPermissionsService,
-    private cd: ChangeDetectorRef) {
-    this.arrow = new Arrow();
-    this.next = new Next();
-  }
-  ngOnInit() {
+
+	// show or hide today button, show by default
+	@Input()
+	todayButton: boolean = true;
+
+	// show or hide arrows button, hide by default
+	@Input()
+	arrows: boolean = false;
+
+ 	/**
+   	* define constructor
+   	*/
+	constructor(
+		private readonly store: Store,
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly employeesService: EmployeesService,
+		private readonly ngxPermissionsService: NgxPermissionsService,
+		private readonly cd: ChangeDetectorRef
+	) {
+		this.arrow = new Arrow();
+		this.next = new Next();
+  	}
+
+  	ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
@@ -155,30 +172,28 @@ export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestro
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 		if (this.saveFilters) {
 			this.timesheetFilterService.filter$
 				.pipe(untilDestroyed(this), take(1))
 				.subscribe((filters: ITimeLogFilters) => {
 					this.filters = Object.assign({}, filters);
-          console.log('save',filters);
 					this.selectedDate = new Date(filters.date);
 					this.employeeIds = filters.employeeIds;
 				});
 		}
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loadEmployees()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.loadEmployees();
-				}
-			});
+			.subscribe();
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(400))
+			.pipe(
+				debounceTime(400),
+				untilDestroyed(this)
+			)
 			.subscribe(() => {
 				this.hasFilterApplies = this.hasFilter();
 				Object.keys(this.filters).forEach((key) =>
@@ -200,57 +215,61 @@ export class GauzyRangePickerComponent implements OnInit, AfterViewInit,OnDestro
 
 	ngAfterViewInit() {
 		this.cd.detectChanges();
-  }
+  	}
 
-  /**
-   * listen event on ngx-daterangepicker-material
-   * @param event
-   */
-  onUpdate(event) {
-    this.selectedDateRange =
-      event.endDate || event.startDate ?
-        {
-          startDate: event.startDate.toDate(),
-          endDate: event.endDate.toDate()
-        } : this.filters;
-    this.updateNextButton();
-  }
-  /**
-   * get today selected date
-   */
-  today() {
-    this.selectedDateRange = {
-      startDate: moment().toDate(),
-      endDate: moment().toDate()
-    }
-    this.updateNextButton();
-  }
-  /**
-   * get next selected range
-   */
-  nextRange() {
-    this.arrow.setStrategy = this.next;
-    this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
-    this.isDisable = this.next.isDisable;
-  }
-  /**
+	/**
+	 * listen event on ngx-daterangepicker-material
+	 * @param event
+	 */
+  	onUpdate(event) {
+		this.selectedDateRange =
+		event.endDate || event.startDate ?
+			{
+				startDate: event.startDate.toDate(),
+				endDate: event.endDate.toDate()
+			} : this.filters;
+		this.updateNextButton();
+  	}
+
+	/**
+	 * get today selected date
+	 */
+	today() {
+		this.selectedDateRange = {
+			startDate: moment().toDate(),
+			endDate: moment().toDate()
+		}
+		this.updateNextButton();
+	}
+	/**
+	 * get next selected range
+	 */
+	nextRange() {
+		this.arrow.setStrategy = this.next;
+		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+		this.isDisable = this.next.isDisable;
+	}
+
+   /**
    * get previous selected range
    */
-  previousRange() {
-    this.updateNextButton();
-    this.arrow.setStrategy = new Previous();
-    this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
-  }
-  /**
+	previousRange() {
+		this.updateNextButton();
+		this.arrow.setStrategy = new Previous();
+		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+	}
+
+  	/**
    * update state: disable next button
    */
-  updateNextButton() {
-    if (this.next.isDisable) {
-      this.next.isDisable = false;
-      this.isDisable = false
-    };
-  }
-  setActivityLevel($event: ChangeContext): void {
+	updateNextButton() {
+		if (this.next.isDisable) {
+			this.next.isDisable = false;
+			this.isDisable = false
+		};
+	}
+
+  	setActivityLevel($event: ChangeContext): void {
 		this.filters.activityLevel = {
 			start: $event.value,
 			end: $event.highValue

@@ -140,7 +140,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		NgxElectronModule,
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot(),
-    NgxDaterangepickerMd.forRoot()
+    	NgxDaterangepickerMd.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [
