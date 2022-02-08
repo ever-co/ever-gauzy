@@ -21,7 +21,7 @@ import { Goal } from './goal.entity';
 import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateGoalDTO } from './dto';
+import { CreateGoalDTO, UpdateGoalDTO } from './dto';
 
 @ApiTags('Goals')
 @UseGuards(TenantPermissionGuard)
@@ -77,9 +77,10 @@ export class GoalController extends CrudController<Goal> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string, 
-		@Body() entity: Goal
+		@Body() entity: UpdateGoalDTO
 	): Promise<IGoal> {
 		try {
 			//We are using create here because create calls the method save()
