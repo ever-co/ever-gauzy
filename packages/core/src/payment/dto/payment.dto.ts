@@ -6,7 +6,6 @@ export abstract class PaymentDTO {
 
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsNotEmpty()
-    @IsNumber()
     readonly amount: number;
 
     @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true  })
