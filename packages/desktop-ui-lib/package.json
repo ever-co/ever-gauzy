@@ -40,7 +40,7 @@
 		"moment": "^2.29.1",
 		"ng2-smart-table": "^1.7.2",
 		"ngx-electron": "^2.2.0",
-		"underscore": "^1.13.0"
+		"underscore": "^1.13.2"
 	},
 	"dependencies": {
 		"ng2-smart-table": "^1.7.2"

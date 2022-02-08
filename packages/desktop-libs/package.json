@@ -36,7 +36,7 @@
 		"form-data": "^3.0.0",
 		"screenshot-desktop": "^1.12.7",
         "sound-play": "1.1.0",
-        "underscore": "^1.13.0",
+        "underscore": "^1.13.2",
 		"embedded-queue": "^0.0.11"
 	},
     "devDependencies": {
