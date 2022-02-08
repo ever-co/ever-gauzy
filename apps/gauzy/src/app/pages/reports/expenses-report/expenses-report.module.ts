@@ -35,7 +35,7 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		LineChartModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    GauzyRangePickerModule
+    	GauzyRangePickerModule
 	]
 })
 export class ExpensesReportModule {}

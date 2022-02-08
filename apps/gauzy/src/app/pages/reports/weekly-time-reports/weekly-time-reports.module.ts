@@ -27,7 +27,7 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		FiltersModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    GauzyRangePickerModule
+    	GauzyRangePickerModule
 	]
 })
 export class WeeklyTimeReportsModule {}
