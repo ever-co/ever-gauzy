@@ -165,11 +165,10 @@ export class EmployeesComponent
 						organization: employee.organization.name
 					});
 				});
+				this.subject$.next(true);
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
-		} finally {
-			this.subject$.next(true);
 		}
 	}
 

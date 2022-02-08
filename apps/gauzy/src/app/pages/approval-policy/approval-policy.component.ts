@@ -184,11 +184,10 @@ export class ApprovalPolicyComponent
 				this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_UPDATED', {
 					name: result.name
 				});
+				this.policies$.next(true);
 			}
 		} catch (error) {
 			console.log('Error while updating approval policy', error);
-		} finally {
-			this.policies$.next(true);
 		}
 	}
 
@@ -202,11 +201,11 @@ export class ApprovalPolicyComponent
 				this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_CREATED', {
 					name: result.name
 				});
+				this.policies$.next(true);
+
 			}
 		} catch (error) {
 			console.log('Error while creating approval policy', error);
-		} finally {
-			this.policies$.next(true);
 		}
 	}
 

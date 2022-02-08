@@ -42,6 +42,6 @@
 		"@ngx-translate/core": "^14.0.0",
 		"@ngx-translate/http-loader": "^7.0.0",
 		"@ngneat/until-destroy": "^9.0.0",
-		"underscore": "^1.13.1"
+		"underscore": "^1.13.2"
 	}
 }

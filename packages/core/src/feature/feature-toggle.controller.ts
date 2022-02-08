@@ -5,12 +5,14 @@ import {
 	HttpStatus,
 	Post,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FeatureInterface } from 'unleash-client/lib/feature';
 import { getFeatureToggleDefinitions } from 'unleash-client';
-import { FeatureEnum, IFeatureOrganization, IFeatureOrganizationUpdateInput, IPagination } from '@gauzy/contracts';
+import { FeatureEnum, IFeatureOrganization, IPagination } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { Feature } from './feature.entity';
 import { FeatureService } from './feature.service';
@@ -18,6 +20,7 @@ import { TenantPermissionGuard } from './../shared/guards';
 import { Public } from './../shared/decorators';
 import { FeatureToggleUpdateCommand } from './commands';
 import { FeatureOrganizationService } from './feature-organization.service';
+import { CreateFeatureToggleDTO } from './dto';
 
 @ApiTags('Feature')
 @Controller()
@@ -109,8 +112,9 @@ export class FeatureToggleController {
 	})
 	@UseGuards(TenantPermissionGuard)
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async enabledDisabledFeature(
-		@Body() input: IFeatureOrganizationUpdateInput
+		@Body() input: CreateFeatureToggleDTO
 	) {
 		return await this.commandBus.execute(
 			new FeatureToggleUpdateCommand(input)

@@ -1,0 +1,102 @@
+@import 'var';
+@import '../filters/filters.component.scss';
+
+.filter-input{
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  button{
+    margin-right: 5px;
+  }
+  input{
+    margin-right: 5px;
+  }
+}
+
+:host{
+  ::ng-deep {
+    &.md-drppicker {
+       background-color: nb-theme(background-basic-color-1);
+       color: nb-theme(text-basic-color);
+       .calendar-table{
+          background-color: nb-theme(background-basic-color-1);
+          border-color: nb-theme(border-basic-color-3);
+          box-shadow: nb-theme(border-basic-color-1) 0px 1px 3px, nb-theme(border-basic-color-3) 0px 1px 2px;
+       }
+       .calendar-time select.disabled {
+        color: nb-theme(text-basic-color);
+      }
+      .label-input {
+        color: nb-theme(text-basic-color);
+      }
+
+      .show-ranges {
+        .drp-calendar.left {
+          border-left: 1px solid nb-theme(border-basic-color-1);
+        }
+      }
+
+      th {
+        color: nb-theme(text-basic-color);
+      }
+
+      td, th {
+        &.available {
+          &.prev {
+            filter: invert(0.65);
+          }
+          &.next {
+            filter: invert(0.65);;
+          }
+        }
+      }
+
+      td {
+        &.off {
+          &, &.in-range, &.start-date, &.end-date {
+            background-color: nb-theme(background-basic-color-3);
+            border-color: nb-theme(border-basic-color-1);
+            color: nb-theme(text-basic-color);
+          }
+        }
+
+        &.active {
+          &, &:hover {
+            background-color: nb-theme(color-primary-default);
+            border-color: nb-theme(border-basic-color-3);
+            color: nb-theme(text-control-color);
+          }
+        }
+      }
+
+      .ranges {
+        ul {
+          li {
+            button {
+              color: nb-theme(text-basic-color);
+              &.active {
+                background-color: nb-theme(color-primary-active);
+              }
+            }
+          }
+          li:hover {
+            background-color: nb-theme(color-primary-hover);
+          }
+        }
+      }
+      .btn {
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+        background-color: nb-theme(color-primary-default);
+        color: nb-theme(text-control-color);
+        &:hover, &:focus {
+          background-color: nb-theme(color-primary-focus);
+        }
+
+        &.btn-default {
+          color: nb-theme(text-control-color);
+          background-color: nb-theme(color-primary-default);
+        }
+      }
+     }
+   }
+}

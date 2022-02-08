@@ -26,7 +26,7 @@ interface WeeklyDayData {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-weekly',
+	selector: 'ngx-weekly-timesheet',
 	templateUrl: './weekly.component.html',
 	styleUrls: ['./weekly.component.scss']
 })

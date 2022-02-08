@@ -37,7 +37,7 @@ import * as _ from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-calendar',
+	selector: 'ngx-calendar-timesheet',
 	templateUrl: './calendar.component.html'
 })
 export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {

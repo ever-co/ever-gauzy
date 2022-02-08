@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { combineLatest, Subject } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
 import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
@@ -216,35 +216,32 @@ export class ProposalTemplateComponent
 		};
 	}
 
-	createProposal(): void {
-		this.dialogService
-			.open(AddEditProposalTemplateComponent, {
-				context: {
-					selectedEmployee: this.selectedEmployee
-				}
-			})
-			.onClose
-			.pipe(
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	async createProposal():Promise <void> {
+		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
+			context: {
+				selectedEmployee: this.selectedEmployee
+			}
+		})
+
+		const data = await firstValueFrom(dialog.onClose);
+		if (data) {	
+			this.subject$.next(true);
+		}
 	}
 
-	editProposal(): void {
-		this.dialogService
-			.open(AddEditProposalTemplateComponent, {
-				context: {
-					proposalTemplate: this.selectedItem,
-					selectedEmployee: this.selectedEmployee
-				}
-			})
-			.onClose
-			.pipe(
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	async editProposal(): Promise<void> {
+		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
+			context: {
+				proposalTemplate: this.selectedItem,
+				selectedEmployee: this.selectedEmployee
+			}
+		})
+
+		const data = await firstValueFrom(dialog.onClose);
+		if (data) {	
+			this.subject$.next(true);
+		}	
+			
 	}
 
 	deleteProposal(): void {

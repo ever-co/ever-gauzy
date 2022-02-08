@@ -354,9 +354,9 @@ export class ApprovalsComponent
 					: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_UPDATED',
 				{ name: requestApproval.name }
 			);
+			this.clearItem();
+			this.loadSettings();
 		}
-		this.clearItem();
-		this.loadSettings();
 	}
 
 	async delete(selectedItem?: IRequestApproval) {
