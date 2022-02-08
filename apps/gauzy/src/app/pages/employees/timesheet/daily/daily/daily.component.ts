@@ -30,7 +30,7 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-daily',
+	selector: 'ngx-daily-timesheet',
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
