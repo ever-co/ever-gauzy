@@ -1,6 +1,6 @@
 import { CurrenciesEnum, IEmployee, IInvoice, IOrganizationContact, IOrganizationProject, ITag, IUser } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
 
 export abstract class PaymentDTO {
 
