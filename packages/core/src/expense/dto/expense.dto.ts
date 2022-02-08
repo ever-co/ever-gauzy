@@ -16,7 +16,6 @@ export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
     readonly currency: string;
 
     @ApiPropertyOptional({ type: () => Date })
-    @IsDate()
     @IsOptional()
     readonly valueDate: Date;
 
