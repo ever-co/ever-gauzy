@@ -9,7 +9,9 @@ import {
 	Param,
 	UseGuards,
 	Delete,
-	Query
+	Query,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
@@ -19,6 +21,7 @@ import { Goal } from './goal.entity';
 import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateGoalDTO } from './dto';
 
 @ApiTags('Goals')
 @UseGuards(TenantPermissionGuard)
@@ -35,8 +38,9 @@ export class GoalController extends CrudController<Goal> {
 		type: Goal
 	})
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: Goal
+		@Body() entity: CreateGoalDTO
 	): Promise<IGoal> {
 		return this.goalService.create(entity);
 	}
