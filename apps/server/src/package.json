@@ -125,7 +125,7 @@
 		"pg-query-stream": "^4.1.0",
 		"@nestjs/platform-express": "^8.0.8",
 		"sound-play": "1.1.0",
-		"underscore": "^1.13.0",
+		"underscore": "^1.13.2",
 		"tslib": "^2.3.1",
 		"@sentry/electron": "2.5.4",
 		"@sentry/types": "^6.17.2",

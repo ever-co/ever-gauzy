@@ -118,7 +118,7 @@
 		"@sentry/electron": "2.5.4",
 		"@sentry/node": "^6.17.2",
 		"@sentry/tracing": "^6.17.2",
-		"underscore": "^1.13.0",
+		"underscore": "^1.13.2",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/desktop-libs": "^0.1.0",
 		"@electron/remote": "^2.0.1",
