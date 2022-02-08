@@ -160,6 +160,63 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
 
 /**
  * @description
+ * Create a new blank migration file to be executed to create/update schema.
+ * 
+ * @param pluginConfig 
+ */
+ export async function createMigration(pluginConfig: Partial<IPluginConfig>, options: IMigrationOptions) {
+    if (!options.name) {
+        console.log(chalk.yellow("Migration name must be requried.Please specify migration name!"));
+        return;
+    }
+    const config = await registerPluginConfig(pluginConfig);
+
+    let directory = options.dir;
+    // if directory is not set then try to open plugin config and find default path there
+    if (!directory) {
+        try {
+            directory = config.dbConnectionOptions.cli ? config.dbConnectionOptions.cli.migrationsDir : undefined;
+        } catch (err) {
+            console.log('Error while finding migration directory', err);
+        }
+    }
+
+    const connection = await establishDatabaseConnection(config);
+    try {        
+        const timestamp = new Date().getTime();
+        /**
+         *  Gets contents of the migration file.
+         */
+        const fileContent = getTemplate(
+            options.name as any,
+            timestamp,
+            [],
+            []
+        );
+
+        const filename = timestamp + "-" + options.name + ".ts";
+        const outputPath = directory ? path.join(directory, filename) : path.join(process.cwd(), filename);
+
+        try {
+            await MigrationUtils.createFile(outputPath, fileContent);
+            console.log(chalk.green(`Migration ${chalk.blue(outputPath)} has been created successfully.`));
+        } catch (error) {
+            console.log(chalk.black.bgRed("Error during migration creating files:"));
+            console.error(error);
+        }
+    } catch (error) {
+        if (connection) (await closeConnection(connection));
+
+        console.log(chalk.black.bgRed("Error during migration create:"));
+        console.error(error);
+        process.exit(1);
+    } finally {
+        await closeConnection(connection);
+    }
+}
+
+/**
+ * @description
  * Establish new database connection, if not found any connection. See [TypeORM migration docs](https://typeorm.io/#/connection)
  * 
  * @param config 

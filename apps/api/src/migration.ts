@@ -1,5 +1,5 @@
 import * as yargs from "yargs";
-import { generateMigration, revertLastDatabaseMigration, runDatabaseMigrations } from '@gauzy/core';
+import { createMigration, generateMigration, revertLastDatabaseMigration, runDatabaseMigrations } from '@gauzy/core';
 import { pluginConfig } from "./plugin-config";
 
 yargs
@@ -38,6 +38,27 @@ yargs
         handler(argv) {
             const name = argv['name'] as string;
             generateMigration(pluginConfig, { name });
+        }
+    })
+    .command({
+        command: 'migration:create',
+        describe: 'Create a new blank migration file to be executed to create/update schema.',
+        builder: {
+            n: {
+                alias: 'name',
+                describe: 'Name of the migration class.',
+                type: 'string',
+                require: true
+            },
+            d: {
+                alias: 'dir',
+                describe: 'Directory where migration should be created.'
+            }
+        },
+        // function for your command
+        handler(argv) {
+            const name = argv['name'] as string;
+            createMigration(pluginConfig, { name });
         }
     })
     .argv; // To set above changes

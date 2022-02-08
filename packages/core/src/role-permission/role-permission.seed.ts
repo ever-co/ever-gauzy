@@ -3,9 +3,10 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import { IRole, ITenant, IRolePermission, PermissionsEnum } from '@gauzy/contracts';
-import { Connection } from 'typeorm';
+import { Brackets, Connection, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 import { RolePermission } from './role-permission.entity';
+import { Role, Tenant } from './../core/entities/internal';
 
 export const createRolePermissions = async (
 	connection: Connection,
@@ -43,3 +44,57 @@ export const createRolePermissions = async (
 	}
 	return await connection.manager.save(rolePermissions);
 };
+
+
+export const reloadRolePermissions = async (
+	connection: Connection,
+	isDemo: boolean
+) => {
+	// removed permissions for all users in DEMO mode
+	const deniedPermissions = [
+		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+		PermissionsEnum.ACCESS_DELETE_ALL_DATA
+	];
+
+	const tenants = await connection.getRepository(Tenant).find();
+	for await (const tenant of tenants) {
+		const rolePermissions: IRolePermission[] = [];
+		const roles = await connection.getRepository(Role).find({
+			tenant
+		});
+
+		for await (const { role: roleEnum, defaultEnabledPermissions } of DEFAULT_ROLE_PERMISSIONS) {
+			for await (const permission of defaultEnabledPermissions.filter((permission) => isDemo ? !deniedPermissions.includes(permission) : true)) {
+				const existPermission = await connection.getRepository(RolePermission).findOne({
+					join: {
+						alias: 'role_permission',
+						innerJoin: {
+							role: 'role_permission.role'
+						}
+					},
+					where: (query: SelectQueryBuilder<RolePermission>) => {
+						query.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => { 
+								qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId: tenant.id });
+								qb.andWhere(`"${query.alias}"."permission" =:permission`, { permission });
+								qb.andWhere(`"role"."name" =:roleEnum`, { roleEnum });
+							})
+						);
+					}
+				});
+				if (!existPermission) {
+					console.log('Unauthorized access blocked permission', permission, roleEnum, tenant);
+					const role = roles.find((dbRole) => dbRole.name === roleEnum);
+					const rolePermission = new RolePermission({
+						permission,
+						enabled: true,
+						role,
+						tenant
+					});
+					rolePermissions.push(rolePermission);
+				}
+			} 
+		}
+		await connection.getRepository(RolePermission).save(rolePermissions);
+	}
+}
