@@ -156,11 +156,10 @@ export class CandidatesComponent
 						});
 					}
 				}
+				this.candidates$.next(true);
 			}	
 		} catch (error) {
 			console.log('Error, while creating bulk candidate', error);
-		} finally {
-			this.candidates$.next(true);
 		}
 	}
 
