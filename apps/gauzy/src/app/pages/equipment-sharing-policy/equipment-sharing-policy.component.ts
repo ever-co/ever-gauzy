@@ -156,9 +156,9 @@ export class EquipmentSharingPolicyComponent
 					name: equipmentSharingPolicy.name
 				}
 			);
+			this.loadSettings();
 		}
 
-		this.loadSettings();
 		this.clearItem();
 	}
 

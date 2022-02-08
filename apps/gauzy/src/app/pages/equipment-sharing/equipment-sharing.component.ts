@@ -268,8 +268,8 @@ export class EquipmentSharingComponent
 		const equipmentSharing = await firstValueFrom(dialog.onClose);
 		if (equipmentSharing) {
 			this.toastrService.success('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED');
+			this.loadSettings();
 		}
-		this.loadSettings();
 		this.clearItem();
 	}
 
