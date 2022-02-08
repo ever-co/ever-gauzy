@@ -133,8 +133,8 @@ export class TagsComponent
 			this.toastrService.success('TAGS_PAGE.TAGS_ADD_TAG', {
 				name: addData.name
 			});
+			this.tags$.next(true);
 		}
-		this.tags$.next(true);
 	}
 
 	async delete(selectedItem?: ITag) {
@@ -184,8 +184,8 @@ export class TagsComponent
 				this.toastrService.success('TAGS_PAGE.TAGS_EDIT_TAG', {
 					name: this.selectedTag.name
 				});
+				this.tags$.next(true);
 			}
-			this.tags$.next(true);
 		}
 	}
 
