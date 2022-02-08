@@ -1,6 +1,6 @@
 import { CurrenciesEnum } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional } from "class-validator";
 import { TenantOrganizationBaseDTO } from "core/dto";
 
 export abstract class IncomeDTO extends TenantOrganizationBaseDTO {
@@ -16,7 +16,6 @@ export abstract class IncomeDTO extends TenantOrganizationBaseDTO {
 	readonly currency: string;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@IsDate()
 	@IsOptional()
 	readonly valueDate: Date;
 
