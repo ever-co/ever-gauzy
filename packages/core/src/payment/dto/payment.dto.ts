@@ -41,7 +41,7 @@ export abstract class PaymentDTO {
 
     @ApiProperty({ type: () => String, readOnly: true })
     @IsOptional()
-    @IsString()
+    @IsObject()
     readonly invoice: IInvoice;
 
     @ApiProperty({ type: () => Object, readOnly: true })
