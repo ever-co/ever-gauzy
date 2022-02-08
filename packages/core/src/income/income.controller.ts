@@ -34,6 +34,7 @@ import {
 } from './commands';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
+import { CreateIncomeDTO } from './dto';
 
 @ApiTags('Income')
 @UseGuards(TenantPermissionGuard)
@@ -118,8 +119,9 @@ export class IncomeController extends CrudController<Income> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: IIncomeCreateInput,
+		@Body() entity: CreateIncomeDTO,
 		...options: any[]
 	): Promise<IIncome> {
 		return await this.commandBus.execute(

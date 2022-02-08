@@ -1,0 +1,1 @@
+export { CreateIncomeDTO } from "./create-income.dto";
