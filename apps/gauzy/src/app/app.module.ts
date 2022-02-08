@@ -69,6 +69,7 @@ import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
+import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -111,7 +112,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		DangerZoneMutationModule,
 		AppRoutingModule,
 		NbCalendarModule,
-		NbCalendarKitModule,		
+		NbCalendarKitModule,
 		NbSidebarModule.forRoot(),
 		NbMenuModule.forRoot(),
 		NbDatepickerModule.forRoot(),
@@ -138,7 +139,8 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		SharedModule.forRoot(),
 		NgxElectronModule,
 		FeatureToggleModule,
-		NgxPermissionsModule.forRoot()
+		NgxPermissionsModule.forRoot(),
+    NgxDaterangepickerMd.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [

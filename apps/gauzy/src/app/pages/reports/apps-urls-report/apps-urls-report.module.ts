@@ -15,6 +15,7 @@ import { ActivitiesReportGridModule } from '../../../@shared/report/activities-r
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { SharedModule } from './../../../@shared/shared.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
+import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-picker/gauzy-range-picker.module';
 
 @NgModule({
 	declarations: [AppsUrlsReportComponent],
@@ -31,7 +32,8 @@ import { DateRangeTitleModule } from '../../../@shared/components/date-range-tit
 		FormsModule,
 		ActivitiesReportGridModule,
 		HeaderTitleModule,
-		DateRangeTitleModule
+		DateRangeTitleModule,
+    GauzyRangePickerModule
 	]
 })
 export class AppsUrlsReportModule {}

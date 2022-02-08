@@ -5,21 +5,22 @@
 				{{ 'REPORT_PAGE.APPS_AND_URLS_REPORT' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title 
+		<ngx-date-range-title
 			[start]="logRequest.startDate"
 			[end]="logRequest.endDate"
 		></ngx-date-range-title>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-			<ngx-filters
-				dateRange="custom_range"
-				[hasEmployeeFilter]="false"
+      <ngx-gauzy-range-picker
+        [arrows]="true"
+        [hasEmployeeFilter]="false"
 				[hasProjectFilter]="false"
 				[saveFilters]="false"
 				[filters]="logRequest"
-				(filtersChange)="filtersChange($event)"
-			></ngx-filters>
+				(onDateChange)="filtersChange($event)"
+      >
+      </ngx-gauzy-range-picker>
 		</div>
 		<ga-activities-report-grid
 			[filters]="filters"
