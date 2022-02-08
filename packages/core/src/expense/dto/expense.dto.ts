@@ -12,7 +12,7 @@ export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
     @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true  })
     @IsEnum(CurrenciesEnum)
     @IsNotEmpty()
-    readonly currency: string;
+    readonly currency: CurrenciesEnum;
 
     @ApiPropertyOptional({ type: () => Date, readOnly: true  })
     @IsOptional()
