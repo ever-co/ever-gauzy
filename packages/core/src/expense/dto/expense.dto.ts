@@ -1,12 +1,11 @@
 import { TenantOrganizationBaseDTO } from "core/dto";
 import { CurrenciesEnum, IOrganizationContact, IOrganizationProject, ITag } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
 
 export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
 
     @ApiProperty({ type: () => Number, readOnly: true  })
-    @IsNumber()
     @IsNotEmpty()
     readonly amount: number;
 
