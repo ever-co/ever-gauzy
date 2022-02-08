@@ -1,5 +1,4 @@
 import {
-	IExpenseCreateInput,
 	PermissionsEnum,
 	ISplitExpenseOutput,
 	IGetExpenseInput,
@@ -41,6 +40,7 @@ import { RequestContext } from '../core/context';
 import { FindSplitExpenseQuery } from './queries';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
+import { CreateExpenseDTO } from './dto';
 
 @ApiTags('Expense')
 @UseGuards(TenantPermissionGuard)
@@ -204,8 +204,9 @@ export class ExpenseController extends CrudController<Expense> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: IExpenseCreateInput,
+		@Body() entity: CreateExpenseDTO,
 		...options: any[]
 	): Promise<IExpense> {
 		return await this.commandBus.execute(
