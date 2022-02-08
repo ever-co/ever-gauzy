@@ -32,7 +32,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { PaymentMapService } from './payment.map.service';
 import { I18nLang } from 'nestjs-i18n';
-import { CreatePaymentDTO } from './dto';
+import { CreatePaymentDTO, UpdatePaymentDTO } from './dto';
 
 @ApiTags('Payment')
 @UseGuards(TenantPermissionGuard)
@@ -141,9 +141,10 @@ export class PaymentController extends CrudController<Payment> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IPayment
+		@Body() entity: UpdatePaymentDTO
 	): Promise<IPayment> {
 		return this.paymentService.create({
 			id,
