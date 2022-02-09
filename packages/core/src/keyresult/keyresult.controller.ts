@@ -19,7 +19,7 @@ import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { BulkBodyLoadTransformPipe, UUIDValidationPipe } from './../shared/pipes';
 import { IKeyResult } from '@gauzy/contracts';
-import { CreateKeyresultDTO, KeyresultBultInputDTO } from './dto';
+import { CreateKeyresultDTO, KeyresultBultInputDTO, UpdateKeyresultDTO } from './dto';
 
 @ApiTags('KeyResults')
 @UseGuards(TenantPermissionGuard)
@@ -100,9 +100,10 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: KeyResult
+		@Body() entity: UpdateKeyresultDTO
 	): Promise<IKeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
