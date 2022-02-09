@@ -4,6 +4,7 @@
 
 import { IRole, ITenant, IRolePermission, PermissionsEnum } from '@gauzy/contracts';
 import { Brackets, Connection, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { isNotEmpty } from '@gauzy/common';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 import { RolePermission } from './role-permission.entity';
 import { Role, Tenant } from './../core/entities/internal';
@@ -62,45 +63,47 @@ export const reloadRolePermissions = async (
 		const roles = await connection.getRepository(Role).find({
 			tenant
 		});
-
 		for await (const { role: roleEnum, defaultEnabledPermissions } of DEFAULT_ROLE_PERMISSIONS) {
-			for await (const permission of defaultEnabledPermissions.filter((permission) => isDemo ? !deniedPermissions.includes(permission) : true)) {
-				const existPermission = await connection.getRepository(RolePermission).findOne({
-					join: {
-						alias: 'role_permission',
-						innerJoin: {
-							role: 'role_permission.role'
+			const permissions = defaultEnabledPermissions.filter(
+				(permission) => isDemo ? !deniedPermissions.includes(permission) : true
+			);
+			const role = roles.find((dbRole) => dbRole.name === roleEnum);
+			if (isNotEmpty(permissions)) {
+				for await (const permission of permissions) {
+					const existPermission = await connection.getRepository(RolePermission).findOne({
+						join: {
+							alias: 'role_permission',
+							innerJoin: {
+								role: 'role_permission.role'
+							}
+						},
+						where: (query: SelectQueryBuilder<RolePermission>) => {
+							query.andWhere(
+								new Brackets((qb: WhereExpressionBuilder) => { 
+									qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId: tenant.id });
+									qb.andWhere(`"${query.alias}"."permission" =:permission`, { permission });
+									qb.andWhere(`"role"."name" =:roleEnum`, { roleEnum });
+								})
+							);
 						}
-					},
-					where: (query: SelectQueryBuilder<RolePermission>) => {
-						query.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => { 
-								qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId: tenant.id });
-								qb.andWhere(`"${query.alias}"."permission" =:permission`, { permission });
-								qb.andWhere(`"role"."name" =:roleEnum`, { roleEnum });
-							})
-						);
-					}
-				});
-				if (!existPermission) {
-					const role = roles.find((dbRole) => dbRole.name === roleEnum);
-					console.log('Unauthorized access blocked permission', {
-						permission,
-						enabled: true,
-						role,
-						tenant
 					});
-					const rolePermission = new RolePermission({
-						permission,
-						enabled: true,
-						role,
-						tenant
-					});
-					if (role) {
+					if (!existPermission && role) {
+						console.log('Unauthorized access blocked permission', {
+							permission,
+							enabled: true,
+							role,
+							tenant
+						});
+						const rolePermission = new RolePermission({
+							permission,
+							enabled: true,
+							role,
+							tenant
+						});
 						rolePermissions.push(rolePermission);
 					}
 				}
-			} 
+			}
 		}
 		await connection.getRepository(RolePermission).save(rolePermissions);
 	}
