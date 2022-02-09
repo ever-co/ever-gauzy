@@ -11,7 +11,7 @@ export const EditUserPage = {
 	saveSelectedOrgButton: 'div.form-group > button[status="success"]',
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
-	passwordInputCss: '#password',
+	passwordInputCss: '[placeholder="Password"]',
 	repeatPasswordInputCss: '[placeholder="Repeat Password"]',
 	emailInputCss: '#email',
 	tagsSelectCss: '#addTags',
