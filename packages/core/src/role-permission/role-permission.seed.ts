@@ -83,15 +83,22 @@ export const reloadRolePermissions = async (
 					}
 				});
 				if (!existPermission) {
-					console.log('Unauthorized access blocked permission', permission, roleEnum, tenant);
 					const role = roles.find((dbRole) => dbRole.name === roleEnum);
+					console.log('Unauthorized access blocked permission', {
+						permission,
+						enabled: true,
+						role,
+						tenant
+					});
 					const rolePermission = new RolePermission({
 						permission,
 						enabled: true,
 						role,
 						tenant
 					});
-					rolePermissions.push(rolePermission);
+					if (role) {
+						rolePermissions.push(rolePermission);
+					}
 				}
 			} 
 		}
