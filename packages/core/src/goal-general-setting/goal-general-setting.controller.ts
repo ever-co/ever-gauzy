@@ -9,7 +9,9 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	BadRequestException
+	BadRequestException,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGoalGeneralSetting, IPagination } from '@gauzy/contracts';
@@ -18,7 +20,7 @@ import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateGoalGeneralSettingDTO } from './dto';
+import { CreateGoalGeneralSettingDTO, UpdateGoalGeneralSettingDTO } from './dto';
 
 @ApiTags('GoalGeneralSetting')
 @UseGuards(TenantPermissionGuard)
@@ -51,6 +53,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 		type: GoalGeneralSetting
 	})
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
 		@Body() entity: CreateGoalGeneralSettingDTO
 	): Promise<IGoalGeneralSetting> {
@@ -73,9 +76,10 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: GoalGeneralSetting
+		@Body() entity: UpdateGoalGeneralSettingDTO
 	): Promise<IGoalGeneralSetting> {
 		try {
 			//We are using create here because create calls the method save()
