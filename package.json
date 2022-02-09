@@ -212,7 +212,7 @@
 	"resolutions": {
 		"@angular-devkit/build-angular": "13.2.2",
 		"@angular-devkit/architect": "^0.1302.2",
-		"@angular-devkit/core": "^13.1.1",
+		"@angular-devkit/core": "^13.2.2",
 		"rxjs": "^7.4.0"
 	},
 	"dependencies": {
