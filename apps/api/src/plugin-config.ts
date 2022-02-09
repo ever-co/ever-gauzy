@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { TlsOptions } from 'tls';
 import {
 	IPluginConfig,
@@ -57,6 +56,7 @@ export const pluginConfig: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
+		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 		migrationsRun: !environment.production, // Run migrations automatically, you can disable this if you prefer running migration manually.
 		...getDbConfig(),
 	},

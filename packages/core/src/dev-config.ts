@@ -21,6 +21,7 @@ export const devConfig: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
+		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 		migrationsRun: !environment.production, // Run migrations automatically, you can disable this if you prefer running migration manually.
 		...dbConnectionConfig
 	},
