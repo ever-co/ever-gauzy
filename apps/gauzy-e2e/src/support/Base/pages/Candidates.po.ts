@@ -11,7 +11,8 @@ import {
 	getLastElement,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	vefiryByLength
 } from '../utils/util';
 import { CandidatesPage } from '../pageobjects/CandidatesPageObject';
 
@@ -388,4 +389,16 @@ export const verifyElementIsDeleted = () => {
 
 export const verifyBadgeClass = () => {
 	verifyElementIsVisible(CandidatesPage.badgeCss);
+};
+
+export const verifyNamePlaceholder = () => {
+	verifyElementIsVisible(CandidatesPage.namePlaceholderCss);
+};
+
+export const enterNamePlaceholder = (name: string) => {
+	enterInput(CandidatesPage.namePlaceholderCss, name);
+};
+
+export const verifySearchResult = (length: number) =>{
+	vefiryByLength(CandidatesPage.selectTableRowCss, length);
 };

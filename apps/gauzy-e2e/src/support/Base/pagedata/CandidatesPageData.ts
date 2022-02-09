@@ -6,5 +6,6 @@ export const CandidatesPageData = {
 	payPeriod: 'Weekly',
 	billRate: 99,
 	schoolName: 'Cambridge',
-	degreeDiploma: 'Bachelor'
+	degreeDiploma: 'Bachelor',
+	tableResult: 1
 };

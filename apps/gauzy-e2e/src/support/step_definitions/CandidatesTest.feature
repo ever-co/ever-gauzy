@@ -44,6 +44,10 @@ Feature: Employee candidates test
     Then Notification message will appear
     And User can verify candidate
   Scenario: Reject candidate
+    When User see name input field
+    Then User can enter name in name field
+    And User can see only selected user
+    And User can verify candidate
     When User select first table row
     Then Reject button will become active
     When User click on reject button

@@ -5,6 +5,7 @@ import { faker } from '@ever-co/faker';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
+import { CandidatesPageData } from '../../Base/pagedata/CandidatesPageData';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
 
@@ -196,6 +197,21 @@ And('User can verify candidate', () => {
 });
 
 // Reject candidate
+When ('User see name input field', () => {
+	inviteCandidatePage.verifyNamePlaceholder();
+});
+Then('User can enter name in name field', () => {
+	inviteCandidatePage.enterNamePlaceholder(`${firstName} ${lastName}`);
+});
+
+And('User can see only selected user', () => {
+	inviteCandidatePage.verifySearchResult(CandidatesPageData.tableResult);
+});
+
+And('And User can verify candidate', () => {
+	inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
+});
+
 When('User select first table row', () => {
 	cy.on('uncaught:exception', (err, runnable) => {
 		return false;

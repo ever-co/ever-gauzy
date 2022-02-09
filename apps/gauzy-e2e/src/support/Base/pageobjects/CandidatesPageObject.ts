@@ -45,5 +45,7 @@ export const CandidatesPage = {
 	saveExperisnceButtonCss: 'div.col-2 > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyCandidateCss: 'div.d-block',
-	badgeCss: 'div.badge-danger'
+	badgeCss: 'div.badge-danger',
+	namePlaceholderCss: 'input-filter > input[placeholder="Full Name"]'
+
 };
