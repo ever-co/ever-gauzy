@@ -25,7 +25,7 @@ export const ManageEmployeesPage = {
 	imgInputCss: '#inputImageUrl',
 	nextButtonCss: 'div.text-right > button[status="success"]',
 	nextStepButtonCss: 'div.button-container > button[status="success"]',
-	lastStepButtonCss: 'div.step-container > button[status="success"]',
+	lastStepButtonCss: 'div.button-container > button[status="success"]',
 	saveEditButtonCss: 'div.actions > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	usernameEditInputCss: '#username',
