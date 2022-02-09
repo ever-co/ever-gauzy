@@ -1,7 +1,7 @@
 export const AddEmployeePositionPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addNewPositionButtonCss: 'div.mb-3 > button[status="success"]',
-	newPositionInputCss: '[placeholder="Position name"]',
+	newPositionInputCss: 'input[placeholder="Position name"]',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',
 	saveNewPositionButtonCss: 'div.d-flex > button[status="success"]',

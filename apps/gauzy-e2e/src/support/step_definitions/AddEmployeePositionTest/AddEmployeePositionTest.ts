@@ -28,7 +28,10 @@ Then('User can go to Employee positions page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/employees/positions', { timeout: pageLoadTimeout });
+	cy.intercept('GET', '/api/organization-positions*').as('waitPage');
+	cy.wait('@waitPage');
 });
 
 And('User will see grid button', () => {

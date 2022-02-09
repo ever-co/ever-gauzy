@@ -8,7 +8,8 @@ import {
 	verifyTextNotExisting,
 	getLastElement,
 	waitElementToHide,
-	verifyValue
+	verifyValue,
+	clickButtonWithForce
 } from '../utils/util';
 import { AddEmployeePositionPage } from '../pageobjects/AddEmployeePositionPageObject';
 
@@ -25,7 +26,7 @@ export const addNewPositionButtonVisible = () => {
 };
 
 export const clickAddNewPositionButton = () => {
-	clickButton(AddEmployeePositionPage.addNewPositionButtonCss);
+	clickButtonWithForce(AddEmployeePositionPage.addNewPositionButtonCss);
 };
 
 export const cancelNewPositionButtonVisible = () => {
