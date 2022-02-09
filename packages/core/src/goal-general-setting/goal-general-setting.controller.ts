@@ -18,6 +18,7 @@ import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateGoalGeneralSettingDTO } from './dto';
 
 @ApiTags('GoalGeneralSetting')
 @UseGuards(TenantPermissionGuard)
@@ -51,7 +52,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 	})
 	@Post()
 	async create(
-		@Body() entity: GoalGeneralSetting
+		@Body() entity: CreateGoalGeneralSettingDTO
 	): Promise<IGoalGeneralSetting> {
 		return this.goalGeneralSettingService.create(entity);
 	}
