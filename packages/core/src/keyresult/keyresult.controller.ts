@@ -8,15 +8,17 @@ import {
 	Put,
 	Param,
 	UseGuards,
-	Delete
+	Delete,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KeyResult } from './keyresult.entity';
 import { CrudController } from './../core/crud';
 import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, UUIDValidationPipe } from './../shared/pipes';
 import { IKeyResult } from '@gauzy/contracts';
+import { KeyresultBultInputDTO } from './dto';
 
 @ApiTags('KeyResults')
 @UseGuards(TenantPermissionGuard)
@@ -57,9 +59,9 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@Post('/bulk')
 	async createBulkKeyResults(
-		@Body() entity: KeyResult[]
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity : KeyresultBultInputDTO
 	): Promise<KeyResult[]> {
-		return this.keyResultService.createBulk(entity);
+		return this.keyResultService.createBulk(entity.list);
 	}
 
 	@ApiOperation({ summary: 'Get key result by ID' })
