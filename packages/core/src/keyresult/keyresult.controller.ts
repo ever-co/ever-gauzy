@@ -8,15 +8,18 @@ import {
 	Put,
 	Param,
 	UseGuards,
-	Delete
+	Delete,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KeyResult } from './keyresult.entity';
 import { CrudController } from './../core/crud';
 import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, UUIDValidationPipe } from './../shared/pipes';
 import { IKeyResult } from '@gauzy/contracts';
+import { CreateKeyresultDTO, KeyresultBultInputDTO, UpdateKeyresultDTO } from './dto';
 
 @ApiTags('KeyResults')
 @UseGuards(TenantPermissionGuard)
@@ -39,8 +42,9 @@ export class KeyResultController extends CrudController<KeyResult> {
 		description: 'Key Result not found'
 	})
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: KeyResult
+		@Body() entity: CreateKeyresultDTO
 	): Promise<KeyResult> {
 		return this.keyResultService.create(entity);
 	}
@@ -57,9 +61,9 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@Post('/bulk')
 	async createBulkKeyResults(
-		@Body() entity: KeyResult[]
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity : KeyresultBultInputDTO
 	): Promise<KeyResult[]> {
-		return this.keyResultService.createBulk(entity);
+		return this.keyResultService.createBulk(entity.list);
 	}
 
 	@ApiOperation({ summary: 'Get key result by ID' })
@@ -96,9 +100,10 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: KeyResult
+		@Body() entity: UpdateKeyresultDTO
 	): Promise<IKeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
