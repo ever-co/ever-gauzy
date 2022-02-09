@@ -9,7 +9,8 @@ import {
 	Param,
 	UseGuards,
 	Delete,
-	ValidationPipe
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KeyResult } from './keyresult.entity';
@@ -18,7 +19,7 @@ import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { BulkBodyLoadTransformPipe, UUIDValidationPipe } from './../shared/pipes';
 import { IKeyResult } from '@gauzy/contracts';
-import { KeyresultBultInputDTO } from './dto';
+import { CreateKeyresultDTO, KeyresultBultInputDTO } from './dto';
 
 @ApiTags('KeyResults')
 @UseGuards(TenantPermissionGuard)
@@ -41,8 +42,9 @@ export class KeyResultController extends CrudController<KeyResult> {
 		description: 'Key Result not found'
 	})
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: KeyResult
+		@Body() entity: CreateKeyresultDTO
 	): Promise<KeyResult> {
 		return this.keyResultService.create(entity);
 	}
