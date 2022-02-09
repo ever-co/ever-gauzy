@@ -1,66 +1,71 @@
 {
-	"npmScope": "gauzy",
-	"affected": {
-		"defaultBase": "master"
-	},
-	"implicitDependencies": {
-		"angular.json": "*",
-		"package.json": {
-			"dependencies": "*",
-			"devDependencies": "*"
-		},
-		"tsconfig.json": "*",
-		"tslint.json": "*",
-		".eslintrc.json": "*",
-		"nx.json": "*"
-	},
-	"tasksRunnerOptions": {
-		"default": {
-			"runner": "@nrwl/workspace/tasks-runners/default",
-			"options": {
-				"cacheableOperations": ["build", "lint", "test", "e2e"],
-				"parallel": 1
-			}
-		}
-	},
-	"cli": {
-		"warnings": {
-			"typescriptMismatch": false,
-			"versionMismatch": false
-		},
-		"defaultCollection": "@nstudio/xplat",
-		"packageManager": "yarn",
-		"analytics": false
-	},
-	"generators": {
-		"@nrwl/angular": {
-			"application": {
-				"linter": "eslint"
-			},
-			"library": {
-				"linter": "eslint"
-			},
-			"storybook-configuration": {
-				"linter": "eslint"
-			}
-		},
-		"@nrwl/angular:application": {
-			"style": "scss",
-			"linter": "eslint",
-			"unitTestRunner": "jest",
-			"e2eTestRunner": "cypress"
-		},
-		"@nrwl/angular:component": {
-			"prefix": "ngx",
-			"style": "scss"
-		},
-		"@nrwl/angular:directive": {
-			"prefix": "ngx"
-		},
-		"@nrwl/angular:library": {
-			"linter": "eslint",
-			"unitTestRunner": "jest"
-		}
-	},
-	"defaultProject": "gauzy"
+  "npmScope": "gauzy",
+  "affected": {
+    "defaultBase": "master"
+  },
+  "implicitDependencies": {
+    "angular.json": "*",
+    "package.json": {
+      "dependencies": "*",
+      "devDependencies": "*"
+    },
+    "tsconfig.json": "*",
+    "tslint.json": "*",
+    ".eslintrc.json": "*",
+    "nx.json": "*"
+  },
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "@nrwl/workspace/tasks-runners/default",
+      "options": {
+        "cacheableOperations": [
+          "build",
+          "lint",
+          "test",
+          "e2e"
+        ],
+        "parallel": 1
+      }
+    }
+  },
+  "cli": {
+    "warnings": {
+      "typescriptMismatch": false,
+      "versionMismatch": false
+    },
+    "defaultCollection": "@nstudio/xplat",
+    "packageManager": "yarn",
+    "analytics": false
+  },
+  "generators": {
+    "@nrwl/angular": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      },
+      "storybook-configuration": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/angular:application": {
+      "style": "scss",
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "cypress"
+    },
+    "@nrwl/angular:component": {
+      "prefix": "ngx",
+      "style": "scss"
+    },
+    "@nrwl/angular:directive": {
+      "prefix": "ngx"
+    },
+    "@nrwl/angular:library": {
+      "linter": "eslint",
+      "unitTestRunner": "jest"
+    }
+  },
+  "defaultProject": "gauzy"
 }
