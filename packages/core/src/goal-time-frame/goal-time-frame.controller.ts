@@ -21,7 +21,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GoalTimeFrameService } from './goal-time-frame.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
-import { CreateGoalTimeFrameDTO } from './dto';
+import { CreateGoalTimeFrameDTO, UpdateGoalTimeFrameDTO } from './dto';
 
 @ApiTags('GoalTimeFrame')
 @UseGuards(TenantPermissionGuard)
@@ -98,9 +98,10 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true}))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: GoalTimeFrame
+		@Body() entity: UpdateGoalTimeFrameDTO
 	): Promise<IGoalTimeFrame> {
 		try {
 			return await this.goalTimeFrameService.create({
