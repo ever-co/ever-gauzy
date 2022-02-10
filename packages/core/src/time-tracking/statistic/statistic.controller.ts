@@ -10,7 +10,11 @@ import {
 	IGetManualTimesStatistics,
 	ICountsStatistics,
 	IMembersStatistics,
-	IProjectsStatistics
+	IProjectsStatistics,
+	ITask,
+	IActivitiesStatistics,
+	ITimeSlotStatistics,
+	IManualTimesStatistics
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
 import { StatisticCountsDTO } from './dto';
@@ -35,7 +39,7 @@ export class StatisticController {
 	})
 	@Get('/counts')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async counts(
+	async getCountsStatistics(
 		@Query() request: StatisticCountsDTO
 	): Promise<ICountsStatistics> {
 		return await this.statisticService.getCounts(request);
@@ -52,7 +56,7 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/members')
-	async members(
+	async getMembersStatistics(
 		@Query() request: IGetMembersStatistics
 	): Promise<IMembersStatistics[]> {
 		return await this.statisticService.getMembers(request);
@@ -69,7 +73,7 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/projects')
-	async projects(
+	async getProjectsStatistics(
 		@Query() request: IGetProjectsStatistics
 	): Promise<IProjectsStatistics[]> {
 		return await this.statisticService.getProjects(request);
@@ -86,9 +90,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/tasks')
-	async tasks(
+	async getTasksStatistics(
 		@Query() request: IGetTasksStatistics
-	) {
+	): Promise<ITask[]> {
 		return await this.statisticService.getTasks(request);
 	}
 
@@ -103,9 +107,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/manual-times')
-	async manualTimes(
+	async getManualTimesStatistics(
 		@Query() request: IGetManualTimesStatistics
-	) {
+	): Promise<IManualTimesStatistics[]> {
 		return await this.statisticService.manualTimes(request);
 	}
 
@@ -120,9 +124,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/time-slots')
-	async employeeTimeslots(
+	async getEmployeeTimeslotsStatistics(
 		@Query() request: IGetTimeSlotStatistics
-	) {
+	): Promise<ITimeSlotStatistics[]> {
 		return await this.statisticService.getEmployeeTimeSlots(request);
 	}
 
@@ -137,9 +141,9 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/activities')
-	async activities(
+	async getActivitiesStatistics(
 		@Query() request: IGetActivitiesStatistics
-	) {
+	): Promise<IActivitiesStatistics[]> {
 		return await this.statisticService.getActivities(request);
 	}
 }
