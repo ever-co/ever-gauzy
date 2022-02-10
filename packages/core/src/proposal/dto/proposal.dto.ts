@@ -1,6 +1,6 @@
 import { IEmployee, IOrganizationContact, ITag, ProposalStatusEnum } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsObject, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
 
 export abstract class ProposalDTO {
 
@@ -10,21 +10,21 @@ export abstract class ProposalDTO {
     readonly jobPostUrl: string;
 
     @ApiProperty({ type: () => Date })
-    @IsOptional()
+    @IsNotEmpty()
     readonly valueDate: Date;
 
     @ApiProperty({ type: () => String })
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
     readonly jobPostContent: string;
 
     @ApiProperty({ type: () => String })
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
     readonly proposalContent: string;
 
     @ApiProperty({ type: () => String, enum: ProposalStatusEnum })
-    @IsOptional()
+    @IsNotEmpty()
     @IsEnum(ProposalStatusEnum)
     readonly status: ProposalStatusEnum;
 
