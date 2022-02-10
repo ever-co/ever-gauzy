@@ -86,9 +86,7 @@ export class TimeSlotMergeHandler
 					let mouse = 0;
 					let overall = 0;
 
-					for (let index = 0; index < oldTimeslots.length; index++) {
-						const timeSlot = oldTimeslots[index];
-
+					for (const timeSlot of oldTimeslots) {
 						duration = duration + parseInt(timeSlot.duration + '', 10);
 						keyboard = (keyboard + parseInt(timeSlot.keyboard + '', 10));
 						mouse = mouse + parseInt(timeSlot.mouse + '', 10);
@@ -100,13 +98,16 @@ export class TimeSlotMergeHandler
 					}
 
 					const timeSlotslength = oldTimeslots.filter((item) => item.keyboard !== 0).length;
-					const activity = {
-						duration,
-						keyboard: Math.round(keyboard / timeSlotslength || 0),
-						mouse: Math.round(mouse / timeSlotslength || 0),
-						overall: Math.round(overall / timeSlotslength || 0),
-					}
+					overall = Math.round(overall / timeSlotslength || 0);
+					keyboard = Math.round(keyboard / timeSlotslength || 0);
+					mouse = Math.round(mouse / timeSlotslength || 0);
 
+					const activity = {
+						duration: (duration < 0) ? 0 : (duration > 600) ? 600 : duration,
+						overall: (overall < 0) ? 0 : (overall > 600) ? 600 : overall,
+						keyboard: (keyboard < 0) ? 0 : (keyboard > 600) ? 600 : keyboard,
+						mouse: (mouse < 0) ? 0 : (mouse > 600) ? 600 : mouse
+					}
 					/*
 					* Map old screenshots newely created timeslot 
 					*/
@@ -133,6 +134,8 @@ export class TimeSlotMergeHandler
 						startedAt: moment(slotStart).toDate(),
 						tenantId
 					});
+
+					console.log('New Merged TimeSlot', newTimeSlot);
 					await this.timeSlotRepository.save(newTimeSlot);
 					createdTimeslots.push(newTimeSlot);
 

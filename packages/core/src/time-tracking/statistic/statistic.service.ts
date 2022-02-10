@@ -17,7 +17,8 @@ import {
 	IProjectsStatistics,
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
-	TimeLogType
+	TimeLogType,
+	ITask
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
@@ -73,12 +74,14 @@ export class StatisticService {
 			source = [],
 			date = new Date(),
 		} = request;
+		console.log(request, 'Get Counts Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
+		console.log({ start, end }, 'Weekly Time Date Range For Counts Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -170,6 +173,7 @@ export class StatisticService {
 							source
 						});
 					}
+					console.log('Employee Worked Count Query', employeesCountQuery.getQueryAndParameters());
 				})
 			)
 			.getCount();
@@ -235,6 +239,7 @@ export class StatisticService {
 							source
 						});
 					}
+					console.log('Project Worked Count Query', projectsCountQuery.getQueryAndParameters());
 				})
 			)
 			.getCount();
@@ -313,11 +318,13 @@ export class StatisticService {
 								source
 							});
 						}
+						console.log('Weekly Worked Time Query', query.getQueryAndParameters());
 					})
 				)
 				.groupBy(`"timeLogs"."id"`)
 				.getRawMany();
 
+			console.log('Weekly Worked Time Statistics', weekTimeStatistics);
 			const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
 			const weekPercentage = (
 				(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
@@ -338,6 +345,7 @@ export class StatisticService {
 
 		if (isNotEmpty(employeeIds)) {
 			let { start, end } = getDateRange();
+			console.log({ start, end }, 'Today Time Date Range For Counts Statistics');
 			const query = this.timeSlotRepository.createQueryBuilder();
 			const todayTimeStatistics = await query
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -404,11 +412,13 @@ export class StatisticService {
 								source
 							});
 						}
+						console.log('Today Worked Time Query', query.getQueryAndParameters());
 					})
 				)
 				.groupBy(`"timeLogs"."id"`)
 				.getRawMany();
 
+			console.log('Today Worked Time Statistics', todayTimeStatistics);
 			const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
 			const todayPercentage = (
 				(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
@@ -447,12 +457,14 @@ export class StatisticService {
 			endDate,
 			date = new Date()
 		} = request;
+		console.log(request, 'Get Members Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start, end } = (startDate && endDate) ? 
+		const { start: weeklyStart, end: weeklyEnd } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
+		console.log({ weeklyStart, weeklyEnd }, 'Weekly Time Date Range For Members Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -500,9 +512,9 @@ export class StatisticService {
 			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-						start,
-						end
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`, {
+						weeklyStart,
+						weeklyEnd
 					});
 					/**
 					 * If Employee Selected
@@ -522,6 +534,7 @@ export class StatisticService {
 							projectIds
 						});
 					}
+					console.log('Employee Worked Members Query', query.getQueryAndParameters());
 				})
 			)
 			.addGroupBy(`"${query.alias}"."id"`)
@@ -536,9 +549,7 @@ export class StatisticService {
 			/**
 			 * Weekly Member Activity
 			 */
-			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder(
-				'time_slot'
-			);
+			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
 			weekTimeQuery
 				.select(
 					`${
@@ -557,9 +568,9 @@ export class StatisticService {
 				.andWhere(`"${weekTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-							start,
-							end
+						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`, {
+							weeklyStart,
+							weeklyEnd
 						});
 						/**
 						 * If Employee Selected
@@ -577,12 +588,14 @@ export class StatisticService {
 								projectIds
 							});
 						}
+						console.log('Weekly Worked Time Query For Members', weekTimeQuery.getQueryAndParameters());
 					})
 				)
 				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
+			console.log('Weekly Worked TimeSlots For Memebers Statistics', weekTimeSlots);
 			weekTimeSlots = mapObject(
 				groupBy(weekTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -591,6 +604,11 @@ export class StatisticService {
 						(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) / 
 						(reduce(pluck(values, 'duration'), ArraySum, 0))
 					);
+					console.log({
+						employeeId,
+						duration: weekDuration,
+						overall: weekPercentage
+					}, 'weekly worked member mapper by employee');
 					return {
 						employeeId,
 						duration: weekDuration,
@@ -601,9 +619,7 @@ export class StatisticService {
 			weekTimeSlots = chain(weekTimeSlots)
 				.map((weekTimeSlot: any) => {
 					if (weekTimeSlot && weekTimeSlot.overall) {
-						weekTimeSlot.overall = parseFloat(
-							weekTimeSlot.overall as string
-						).toFixed(1);
+						weekTimeSlot.overall = parseFloat(weekTimeSlot.overall as string).toFixed(1);
 					}
 					return weekTimeSlot;
 				})
@@ -613,9 +629,7 @@ export class StatisticService {
 			/**
 			 * Daily Member Activity
 			 */
-			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder(
-				'time_slot'
-			);
+			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
 			dayTimeQuery
 				.select(
 					`${
@@ -634,10 +648,11 @@ export class StatisticService {
 				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const { start, end } = getDateRange();
-						qb.where(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-							start,
-							end
+						const { start: startToday, end: endToday } = getDateRange();
+						console.log({ startToday, endToday }, 'Daily Time Date Range For Members Statistics');
+						qb.where(`"timeLogs"."startedAt" BETWEEN :startToday AND :endToday`, {
+							startToday,
+							endToday
 						});
 						/**
 						 * If Employee Selected
@@ -655,6 +670,7 @@ export class StatisticService {
 								projectIds
 							});
 						}
+						console.log('Daily Worked Time Query For Members', dayTimeQuery.getQueryAndParameters());
 					})
 				)
 				.groupBy(`timeLogs.id`)
@@ -669,6 +685,11 @@ export class StatisticService {
 						(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) / 
 						(reduce(pluck(values, 'duration'), ArraySum, 0))
 					);
+					console.log({
+						employeeId,
+						duration: todayDuration,
+						overall: todayPercentage
+					}, 'daily worked member mapper by employee');
 					return {
 						employeeId,
 						duration: todayDuration,
@@ -687,6 +708,12 @@ export class StatisticService {
 				})
 				.indexBy('employeeId')
 				.value();
+
+
+			for (const member of employees) {
+				console.log(member);
+			}
+			
 
 			for (let index = 0; index < employees.length; index++) {
 				const member = employees[index];
@@ -724,24 +751,19 @@ export class StatisticService {
 						}`,
 						'day'
 					)
-					.where({ id: member.id })
-					.andWhere(
-						`"timeLogs"."startedAt" BETWEEN :start AND :end`,
-						{ start, end }
-					)
-					.andWhere(
-						`"${weekHoursQuery.alias}"."tenantId" = :tenantId`,
-						{ tenantId }
-					);
+					.andWhere(`"${weekHoursQuery.alias}"."id" = :memberId`, { memberId: member.id })
+					.andWhere(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`, {
+						weeklyStart,
+						weeklyEnd
+					})
+					.andWhere(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`, { tenantId })
+					.andWhere(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 
 				// project filter query
 				if (isNotEmpty(projectIds)) {
-					weekHoursQuery.andWhere(
-						`"timeLogs"."projectId" IN (:...projectIds)`,
-						{
-							projectIds
-						}
-					);
+					weekHoursQuery.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
 				}
 
 				member.weekHours = await weekHoursQuery
@@ -754,6 +776,7 @@ export class StatisticService {
 						}`
 					)
 					.getRawMany();
+				console.log('Weekly Hours Difference Query For Members', weekHoursQuery.getQueryAndParameters());
 			}
 		}
 		return employees;
@@ -774,13 +797,14 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
+		console.log(request, 'Get Projects Statistic Request');
 		
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
-
+		console.log({ start, end }, 'Weekly Time Date Range For Projects Statistics');
 		const query = this.organizationProjectsRepository.createQueryBuilder();
 		query
 			.select(`"${query.alias}".*`)
@@ -921,12 +945,14 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
+		console.log(request, 'Get Tasks Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
+		console.log({ start, end }, 'Weekly Time Date Range For Tasks Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -995,7 +1021,7 @@ export class StatisticService {
 				});
 			}
 
-			let tasks = await query.getRawMany();
+			let tasks: ITask[] = await query.getRawMany();
 
 			const totalDurationQuery = this.taskRepository.createQueryBuilder();
 			totalDurationQuery
@@ -1033,7 +1059,7 @@ export class StatisticService {
 				);
 			}
 			const totalDuration = await totalDurationQuery.getRawOne();
-			tasks = tasks.map((task) => {
+			tasks = tasks.map((task: any) => {
 				task.durationPercentage = parseFloat(
 					parseFloat(
 						(task.duration * 100) / totalDuration.duration + ''
@@ -1053,7 +1079,7 @@ export class StatisticService {
 	 * @param request 
 	 * @returns 
 	 */
-	async manualTimes(request: IGetManualTimesStatistics) {
+	async manualTimes(request: IGetManualTimesStatistics): Promise<IManualTimesStatistics[]> {
 		const {
 			employeeId,
 			organizationId,
@@ -1062,12 +1088,14 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
+		console.log(request, 'Get Manual Times Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
+		console.log({ start, end }, 'Weekly Time Date Range For Manual Times Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -1166,7 +1194,7 @@ export class StatisticService {
 	 * @param request 
 	 * @returns 
 	 */
-	async getActivities(request: IGetActivitiesStatistics) {
+	async getActivities(request: IGetActivitiesStatistics): Promise<IActivitiesStatistics[]> {
 		const {
 			employeeId,
 			organizationId,
@@ -1181,6 +1209,7 @@ export class StatisticService {
 		const { start, end } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
+		console.log({ start, end }, 'Weekly Time Date Range For Activities Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -1240,12 +1269,9 @@ export class StatisticService {
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
-				.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{
-						organizationId
-					}
-				)
+				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				})
 				.orderBy(`"duration"`, 'DESC')
 				.limit(5);
 
@@ -1293,16 +1319,12 @@ export class StatisticService {
 						}
 					})
 				)
-				.andWhere(
-					`"${totalDurationQuery.alias}"."tenantId" = :tenantId`,
-					{
-						tenantId
-					}
-				)
-				.andWhere(
-					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				);
+				.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				})
+				.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				});
 
 			// project filter query
 			if (isNotEmpty(projectIds)) {
@@ -1333,7 +1355,7 @@ export class StatisticService {
 	 * @param request 
 	 * @returns 
 	 */
-	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics) {
+	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics): Promise<ITimeSlotStatistics[]> {
 		const {
 			employeeId,
 			organizationId,
@@ -1342,12 +1364,14 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
+		console.log(request, 'Get TimeSlot Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		const { start, end } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
+		console.log({ start, end }, 'Weekly Time Date Range For Employee TimeSlots Statistics');
 
 		const query = this.employeeRepository.createQueryBuilder();
 		query
@@ -1440,12 +1464,17 @@ export class StatisticService {
 					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 						tenantId
 					});
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
 					// project filter query
 					if (isNotEmpty(projectIds)) {
 						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
 							projectIds
 						});
 					}
+					console.log('Weekly Employee Worked TimeSlots Recent Activities Query', qb.getQueryAndParameters());
 				},
 				take: 3,
 				order: {
