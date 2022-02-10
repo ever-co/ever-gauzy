@@ -11,6 +11,10 @@
       }
     }
   }
+  nb-card.member-list {
+    max-height: 40%;
+    overflow-y: hidden;
+  }
 
   .nb-card-header{
     display: flex;
@@ -23,7 +27,7 @@
     right: 20px;
   }
 
-  .hour-lable{
+  .hour-label{
     display: flex;
   }
 
