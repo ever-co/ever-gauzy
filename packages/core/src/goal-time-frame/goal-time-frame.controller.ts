@@ -10,7 +10,9 @@ import {
 	Param,
 	Put,
 	Query,
-	BadRequestException
+	BadRequestException,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { IGoalTimeFrame, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -19,6 +21,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GoalTimeFrameService } from './goal-time-frame.service';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
+import { CreateGoalTimeFrameDTO, UpdateGoalTimeFrameDTO } from './dto';
 
 @ApiTags('GoalTimeFrame')
 @UseGuards(TenantPermissionGuard)
@@ -55,8 +58,9 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		type: GoalTimeFrame
 	})
 	@Post()
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: GoalTimeFrame
+		@Body() entity: CreateGoalTimeFrameDTO
 	): Promise<IGoalTimeFrame> {
 		return this.goalTimeFrameService.create(entity);
 	}
@@ -94,9 +98,10 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true}))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: GoalTimeFrame
+		@Body() entity: UpdateGoalTimeFrameDTO
 	): Promise<IGoalTimeFrame> {
 		try {
 			return await this.goalTimeFrameService.create({

@@ -85,6 +85,10 @@ export class EmailHistoryComponent
 
 	selectEmail(email: IEmail) {
 		this.selectedEmail = email;
+    this.selectedEmail.content =
+      email.content ?
+        email.content :
+        email.emailTemplate.hbs;
 	}
 
 	async openFiltersDialog() {

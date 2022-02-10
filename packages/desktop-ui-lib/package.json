@@ -31,11 +31,11 @@
 		"@types/node": "^14.14.22"
 	},
 	"peerDependencies": {
-		"@angular/animations": "13.1.0",
-		"@angular/common": "13.1.0",
-		"@angular/core": "13.1.0",
-		"@angular/forms": "13.1.0",
-		"@angular/router": "13.1.0",
+		"@angular/animations": "13.2.2",
+		"@angular/common": "13.2.2",
+		"@angular/core": "13.2.2",
+		"@angular/forms": "13.2.2",
+		"@angular/router": "13.2.2",
 		"@nebular/theme": "^9.0.0",
 		"moment": "^2.29.1",
 		"ng2-smart-table": "^1.7.2",

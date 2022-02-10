@@ -221,7 +221,7 @@
 								<ng-container *ngIf="employee?.timeSlots?.length > 0">
 									<div class="col">
 										<div
-											class="hour-lable mt-3"
+											class="hour-label mt-3"
 											*ngxPermissionsOnly="
 												PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 											"
@@ -546,7 +546,7 @@
 				</nb-card>
 
 				<nb-card
-					class="mt-4"
+					class="mt-4 member-list"
 					[nbSpinner]="memberLoading"
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
