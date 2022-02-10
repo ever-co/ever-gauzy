@@ -540,7 +540,6 @@ export class StatisticService {
 			.addGroupBy(`"${query.alias}"."id"`)
 			.addGroupBy(`"user"."id"`)
 			.orderBy('duration', 'DESC')
-			.limit(5)
 			.getRawMany();
 
 		if (employees.length > 0) {
