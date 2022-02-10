@@ -1,6 +1,6 @@
 import { CurrenciesEnum, DiscountTaxTypeEnum, IInvoiceEstimateHistory, IInvoiceItem, IOrganization, IOrganizationContact, IPayment, ITag } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsEnum, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export abstract class InvoiceDTO {
 
@@ -18,7 +18,7 @@ export abstract class InvoiceDTO {
     readonly dueDate: Date;
 
     @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true })
-    @IsOptional()
+    @IsNotEmpty()
     @IsEnum(CurrenciesEnum)
     readonly currency: CurrenciesEnum;
 
@@ -102,11 +102,6 @@ export abstract class InvoiceDTO {
     @IsString()
     readonly publicLink: string;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
-    @IsOptional()
-    @IsString()
-    readonly token: string;
-
     @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
     @IsOptional()
     @IsBoolean()
@@ -118,7 +113,7 @@ export abstract class InvoiceDTO {
     readonly fromOrganization: IOrganization;
 
     @ApiProperty({ type: () => String, readOnly: true })
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
     readonly fromOrganizationId: string;
 

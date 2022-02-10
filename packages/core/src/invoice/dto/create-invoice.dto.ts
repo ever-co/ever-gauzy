@@ -1,14 +1,14 @@
-import { IInvoiceCreateInput, InvoiceTypeEnum, ITag } from "@gauzy/contracts";
+import { IInvoiceCreateInput, InvoiceStatusTypesEnum, InvoiceTypeEnum, ITag } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 import { InvoiceDTO } from "./invoice.dto";
 
 export class CreateInvoiceDTO extends InvoiceDTO implements IInvoiceCreateInput {
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
-    @IsOptional()
-    @IsString()
-    readonly status: string;
+    @ApiProperty({ type: () => String, enum: InvoiceStatusTypesEnum, readOnly: true })
+    @IsNotEmpty()
+    @IsEnum(InvoiceStatusTypesEnum)
+    readonly status: InvoiceStatusTypesEnum;
 
     @ApiPropertyOptional({ type: () => Number, readOnly: true })
     @IsOptional()
