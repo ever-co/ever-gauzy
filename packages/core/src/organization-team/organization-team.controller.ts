@@ -16,14 +16,13 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
 import {
-	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
 	IPagination
 } from '@gauzy/contracts';
 import { OrganizationTeam } from './organization-team.entity';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateOrganizationTeamDTO } from './dto';
+import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard)
@@ -144,9 +143,10 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes( new ValidationPipe( { transform : true }))
 	async updateOrganizationTeam(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: IOrganizationTeamCreateInput,
+		@Body() body: UpdateOrganizationTeamDTO,
 		...options: any[]
 	): Promise<OrganizationTeam> {
 		return this.organizationTeamService.updateOrgTeam(id, body);
