@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { TlsOptions } from 'tls';
 import {
 	IPluginConfig,
