@@ -79,6 +79,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
+	@Column({ nullable: true })
 	isRunning?: boolean;
 
 	duration: number;
