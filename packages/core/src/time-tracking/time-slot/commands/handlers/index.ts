@@ -8,6 +8,7 @@ import { DeleteTimeSlotHandler } from './delete-time-slot.handler';
 import { TimeSlotRangeDeleteHandler } from './time-slot-range-delete.handler';
 import { TimeSlotMergeHandler } from './time-slot-merge.handler';
 import { TimeSlotCreateHandler } from './time-slot-create.handler';
+import { ScheduleTimeSlotEntriesHandler } from './schedule-time-slot-entries.handler';
 
 export const CommandHandlers = [
 	CreateTimeSlotHandler,
@@ -19,5 +20,6 @@ export const CommandHandlers = [
 	UpdateTimeSlotMinutesHandler,
 	TimeSlotRangeDeleteHandler,
 	TimeSlotMergeHandler,
-	TimeSlotCreateHandler
+	TimeSlotCreateHandler,
+	ScheduleTimeSlotEntriesHandler
 ];

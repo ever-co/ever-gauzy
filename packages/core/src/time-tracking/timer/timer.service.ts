@@ -97,7 +97,7 @@ export class TimerService {
 			}
 		}
 
-		// Calculate last timelog duration
+		// Calculate last TimeLog duration
 		if (lastLog) {
 			status.lastLog = lastLog;
 			if (lastLog.stoppedAt) {
