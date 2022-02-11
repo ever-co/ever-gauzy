@@ -44,10 +44,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 				//Returns the language code name from the browser, e.g. "en", "bg", "he", "ru"
 				const browserLang = this.translate.getBrowserLang();
 				
-				//Gets default enum laguages, e.g. "en", "bg", "he", "ru"
+				//Gets default enum languages, e.g. "en", "bg", "he", "ru"
 				const defaultLanguages = Object.values(LanguagesEnum);
 
-				//Gets system laguages
+				//Gets system languages
 				const systemLanguages: string[] = _.pluck(languages, 'code');
 				systemLanguages.concat(defaultLanguages);
 

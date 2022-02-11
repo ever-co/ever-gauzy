@@ -66,12 +66,7 @@ export class TimesheetService {
 	}
 
 	getTimeSheet(id: string) {
-		return firstValueFrom(
-			this.http
-			.get(`${API_PREFIX}/timesheet/` + id)
-		).then((data: ITimesheet) => {
-			return data;
-		});
+		return this.http.get(`${API_PREFIX}/timesheet/${id}`);
 	}
 
 	getTimeSheets(request?: IGetTimesheetInput) {

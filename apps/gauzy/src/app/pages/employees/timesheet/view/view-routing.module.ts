@@ -1,11 +1,13 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { ViewTimesheetResolver } from './view.resolver';
 import { ViewComponent } from './view/view.component';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: ViewComponent
+		component: ViewComponent,
+		resolve: { timesheet: ViewTimesheetResolver }
 	}
 ];
 
