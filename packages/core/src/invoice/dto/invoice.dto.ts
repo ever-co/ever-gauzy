@@ -3,7 +3,6 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { CreateInvoiceEstimateHistoryDTO } from "invoice-estimate-history/dto";
-import { InvoiceEstimeHistoryDTO } from "invoice-estimate-history/dto/invoice-estimate-history.dto";
 
 export abstract class InvoiceDTO {
 
