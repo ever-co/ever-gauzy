@@ -1,22 +1,23 @@
-import { CurrenciesEnum, DiscountTaxTypeEnum, IInvoiceEstimateHistory, IInvoiceItem, IOrganization, IOrganizationContact, IPayment, ITag } from "@gauzy/contracts";
+import { CurrenciesEnum, DiscountTaxTypeEnum, IInvoiceEstimateHistory, IOrganization, IOrganizationContact, IPayment, ITag } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { CreateInvoiceEstimateHistoryDTO } from "invoice-estimate-history/dto";
+import { CreateInvoiceItemDTO } from "invoice-item/dto";
 
 export abstract class InvoiceDTO {
 
     @ApiProperty({ type: () => Date, readOnly: true })
-    @IsOptional()
+    @IsNotEmpty()
     readonly invoiceDate: Date;
 
     @ApiProperty({ type: () => Number, readOnly: true })
-    @IsOptional()
+    @IsNotEmpty()
     @IsNumber()
     readonly invoiceNumber: number;
 
     @ApiProperty({ type: () => Date, readOnly: true })
-    @IsOptional()
+    @IsNotEmpty()
     readonly dueDate: Date;
 
     @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true })
@@ -126,7 +127,10 @@ export abstract class InvoiceDTO {
 
     @ApiPropertyOptional({ type: () => Object, isArray: true, readOnly: true })
     @IsOptional()
-    readonly invoiceItems: IInvoiceItem[];
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CreateInvoiceItemDTO)
+    readonly invoiceItems: CreateInvoiceItemDTO[];
 
     @ApiPropertyOptional({ type: () => Object, isArray: true, readOnly: true })
     @IsOptional()
