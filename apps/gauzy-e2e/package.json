@@ -68,7 +68,7 @@
 		"jasmine-spec-reporter": "^6.0.0",
 		"jest": "^26.4.2",
 		"jest-preset-angular": "^11.0.1",
-		"karma": "^5.2.3",
+		"karma": "^6.3.14",
 		"karma-chrome-launcher": "^3.1.0",
 		"karma-cli": "^2.0.0",
 		"karma-coverage-istanbul-reporter": "^3.0.3",
