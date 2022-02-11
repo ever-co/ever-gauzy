@@ -1,10 +1,11 @@
 @import 'themes';
+@import 'var';
 
 :host {
   display: block;
 }
 
-.card{
-  background-color: nb-theme(card-background-color);
-  color: nb-theme(card-text-color);
+nb-card, nb-card-body, nb-card-header{
+  background-color: nb-theme(background-basic-color-1);
+  border-color: nb-theme(border-basic-color-3);
 }
