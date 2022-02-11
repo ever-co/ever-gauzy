@@ -38,7 +38,8 @@ export class GauzyRangePickerComponent
 	public PermissionsEnum = PermissionsEnum;
 	public TimeLogType = TimeLogType;
 	public TimeLogSourceEnum = TimeLogSourceEnum;
-  
+  public maxDate: moment.Moment;
+
 	// define ngx-daterangepicker-material range configuration
 	ranges: any = {
 		'Today': [moment(), moment()],
@@ -79,7 +80,10 @@ export class GauzyRangePickerComponent
 	set selectedDateRange(range) {
 		this._selectedDateRange = range;
 		this.filters.startDate = moment(range.startDate).format('YYYY-MM-DD');
-		this.filters.endDate = moment(range.endDate).format('YYYY-MM-DD');
+		this.filters.endDate =
+      !this.futureDateAllowed && (this.next.isDisable || moment(range.endDate).isSameOrAfter(moment())) ?
+        moment().format('YYYY-MM-DD') :
+        moment(range.endDate).format('YYYY-MM-DD');
 		this.triggerFilterChange();
 		this.cd.detectChanges();
 	}
@@ -209,6 +213,7 @@ export class GauzyRangePickerComponent
 				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
 					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
 				);
+        this.maxDate = this.futureDateAllowed ? null : moment();
 			});
 		this.triggerFilterChange();
 	}
@@ -247,6 +252,10 @@ export class GauzyRangePickerComponent
 	nextRange() {
 		this.arrow.setStrategy = this.next;
 		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+    if (!this.futureDateAllowed && moment(this.selectedDateRange.endDate).isSameOrAfter(moment())) {
+      this.previousRange();
+      this.next.isDisable = true;
+    }
 		this.isDisable = this.next.isDisable;
 	}
 
