@@ -8,19 +8,21 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
 import {
-	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
 	IPagination
 } from '@gauzy/contracts';
 import { OrganizationTeam } from './organization-team.entity';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateOrganizationTeamDTO, UpdateOrganizationTeamDTO } from './dto';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard)
@@ -80,8 +82,9 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/create')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async createOrganizationTeam(
-		@Body() body: IOrganizationTeamCreateInput,
+		@Body() body: CreateOrganizationTeamDTO,
 		...options: any[]
 	): Promise<OrganizationTeam> {
 		return this.organizationTeamService.createOrgTeam(body);
@@ -140,9 +143,10 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes( new ValidationPipe( { transform : true }))
 	async updateOrganizationTeam(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: IOrganizationTeamCreateInput,
+		@Body() body: UpdateOrganizationTeamDTO,
 		...options: any[]
 	): Promise<OrganizationTeam> {
 		return this.organizationTeamService.updateOrgTeam(id, body);
