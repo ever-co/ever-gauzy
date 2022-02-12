@@ -2,9 +2,9 @@
 	<mj-body>
 		<mj-section>
 			<mj-column>
-				<mj-text font-size="20px" font-weight="bold"> RECEIPT </mj-text>
+				<mj-text font-size="20px" font-weight="bold"><span> RECEIPT </span></mj-text>
 				<mj-text font-size="16px" font-weight="bold">
-					{{from}}
+					<span>{{from}}</span>
 				</mj-text>
 			</mj-column>
 			<mj-column>
@@ -19,8 +19,8 @@
 		</mj-section>
 		<mj-section>
 			<mj-column>
-				<mj-text font-size="16px" font-weight="bold"> Bill to </mj-text>
-				<mj-text> {{to}} </mj-text>
+				<mj-text font-size="16px" font-weight="bold"><span> Bill to </span></mj-text>
+				<mj-text><span> {{to}} </span></mj-text>
 			</mj-column>
 			<mj-column>
 				<mj-text align="right">
