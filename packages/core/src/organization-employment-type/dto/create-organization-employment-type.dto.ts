@@ -2,7 +2,7 @@ import { IOrganizationEmploymentTypeCreateInput, ITag } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
-export class CreateOrganizationEmployementTypeDTO implements IOrganizationEmploymentTypeCreateInput {
+export class CreateOrganizationEmploymentTypeDTO implements IOrganizationEmploymentTypeCreateInput {
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()

@@ -1,1 +1,1 @@
-export { CreateOrganizationEmployementTypeDTO } from './create-organization-employement-type.dto';
+export { CreateOrganizationEmploymentTypeDTO } from './create-organization-employment-type.dto';
