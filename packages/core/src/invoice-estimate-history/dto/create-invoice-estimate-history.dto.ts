@@ -1,3 +1,3 @@
-import { InvoiceEstimeHistoryDTO } from "./invoice-estimate-history.dto";
+import { InvoiceEstimateHistoryDTO } from "./invoice-estimate-history.dto";
 
-export class CreateInvoiceEstimateHistoryDTO extends InvoiceEstimeHistoryDTO {}
+export class CreateInvoiceEstimateHistoryDTO extends InvoiceEstimateHistoryDTO {}

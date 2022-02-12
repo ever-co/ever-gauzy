@@ -3,7 +3,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
 import { TenantOrganizationBaseDTO } from "core/dto";
 
-export abstract class InvoiceEstimeHistoryDTO extends TenantOrganizationBaseDTO {
+export abstract class InvoiceEstimateHistoryDTO extends TenantOrganizationBaseDTO {
 
     @ApiProperty({ type: () => String, readOnly : true })
     @IsNotEmpty()
@@ -29,5 +29,4 @@ export abstract class InvoiceEstimeHistoryDTO extends TenantOrganizationBaseDTO 
     @IsNotEmpty()
     @IsString()
     readonly invoiceId: string;
-
 }
