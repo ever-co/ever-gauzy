@@ -7,7 +7,6 @@ import { IProductTranslatable } from './product.model';
 import { ITask } from './task-entity.model';
 
 export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
 	description: string;
 	price: number;
 	quantity: number;

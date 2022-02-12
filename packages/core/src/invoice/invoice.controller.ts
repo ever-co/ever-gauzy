@@ -24,8 +24,6 @@ import {
 	PermissionsEnum,
 	IInvoice,
 	LanguagesEnum,
-	IInvoiceCreateInput,
-	IInvoiceUpdateInput,
 	IPagination
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
@@ -43,6 +41,7 @@ import {
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
+import { CreateInvoiceDTO, UpdateInvoiceDTO } from './dto';
 
 @ApiTags('Invoice')
 @Controller()
@@ -136,7 +135,8 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post()
-	async create(@Body() entity: IInvoiceCreateInput): Promise<Invoice> {
+	@UsePipes( new ValidationPipe({ transform : true }))
+	async create(@Body() entity: CreateInvoiceDTO): Promise<Invoice> {
 		return this.commandBus.execute(new InvoiceCreateCommand(entity));
 	}
 
@@ -158,9 +158,10 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IInvoiceUpdateInput
+		@Body() entity: UpdateInvoiceDTO
 	): Promise<Invoice> {
 		return this.commandBus.execute(
 			new InvoiceUpdateCommand({ id, ...entity })

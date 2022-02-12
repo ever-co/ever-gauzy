@@ -8,11 +8,10 @@ import {
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from "class-validator";
 import { Type } from 'class-transformer';
-import { CreateOrganizationEmployementTypeDTO } from "./../../organization-employment-type/dto";
-import { HiringDTO } from "./hiring.dto";
+import { CreateOrganizationEmploymentTypeDTO } from "./../../organization-employment-type/dto";
 import { CreateOrganizationDepartmentDTO } from "./../../organization-department/dto";
 
-export abstract class EmploymentDTO extends HiringDTO {
+export class EmploymentDTO {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
@@ -40,7 +39,7 @@ export abstract class EmploymentDTO extends HiringDTO {
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(() => CreateOrganizationEmployementTypeDTO)
+    @Type(() => CreateOrganizationEmploymentTypeDTO)
     readonly organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
     @ApiPropertyOptional({ type: () => Array, isArray: true })

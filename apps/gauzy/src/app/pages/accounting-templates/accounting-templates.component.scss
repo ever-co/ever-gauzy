@@ -1,0 +1,7 @@
+@import 'var';
+
+:host .custom-preview-template ::ng-deep {
+  * {
+    color: nb-theme(text-basic-color);
+  }
+}

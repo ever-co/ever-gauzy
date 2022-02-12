@@ -111,7 +111,7 @@ services:
             CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}
             SENTRY_DSN: ${SENTRY_DSN:-}
         env_file:
-            - .env
+            - .env.docker
         entrypoint: './entrypoint.compose.sh'
         command: ['node', 'main.js']
         restart: on-failure
@@ -123,7 +123,7 @@ services:
         # - webapp_node_modules:/srv/gauzy/node_modules
         # - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
-            - '3000:3000:${API_PORT:-3000}'
+            - '3000:${API_PORT:-3000}'
         networks:
             - overlay
 
@@ -170,7 +170,7 @@ services:
         entrypoint: './entrypoint.compose.sh'
         command: ['nginx', '-g', 'daemon off;']
         env_file:
-            - .env
+            - .env.docker
         restart: on-failure
         links:
             - db:${DB_HOST:-db}
@@ -181,7 +181,7 @@ services:
         # volumes:
         # - webapp_node_modules:/srv/gauzy/node_modules
         ports:
-            - '4200:4200:${UI_PORT:-4200}'
+            - '4200:${UI_PORT:-4200}'
         networks:
             - overlay
 

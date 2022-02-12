@@ -10,9 +10,9 @@ import {
 	OrganizationPermissionsEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import * as _ from 'underscore';
+import { chain } from 'underscore';
 import * as moment from 'moment';
-import { Subject } from 'rxjs';
+import { filter, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,7 +35,6 @@ export class ViewComponent
 	timeLogs: any;
 	logs$: Subject<any> = new Subject();
 	timesheet: ITimesheet;
-	timesheetId: string;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -43,7 +42,7 @@ export class ViewComponent
 		private readonly nbDialogService: NbDialogService,
 		public readonly translateService: TranslateService
 	) {
-		super(translateService)
+		super(translateService);
 	}
 
 	ngOnInit() {
@@ -53,10 +52,10 @@ export class ViewComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.activatedRoute.params
+		this.activatedRoute.data
 			.pipe(
-				tap((params) => !!params),
-				tap(({ id }) => this.timesheetId = id),
+				tap((data) => !!data && !!data.timesheet),
+				tap(({ timesheet }) => this.timesheet = timesheet),
 				tap(() => this.logs$.next(true)),
 				untilDestroyed(this)
 			)
@@ -64,21 +63,17 @@ export class ViewComponent
 	}
 
 	async getLogs() {
-		const request: IGetTimeLogInput = {
-			timesheetId: this.timesheetId
-		};
-
-		this.timesheetService
-			.getTimeSheet(this.timesheetId)
-			.then((timesheet: ITimesheet) => {
-				this.timesheet = timesheet;
-			});
-
-		this.timesheetService.getTimeLogs(request).then((logs: ITimeLog[]) => {
-			this.timeLogs = _.chain(logs)
-				.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
-				.value();
-		});
+		try {
+			const request: IGetTimeLogInput = {
+				timesheetId: this.timesheet.id
+			};
+			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(request);
+			this.timeLogs = chain(logs).groupBy(
+				(log) => moment(log.startedAt).format('YYYY-MM-DD')
+			).value();
+		} catch (error) {
+			console.error('Error while retrieving logs', error);
+		}
 	}
 
 	openEditDialog(timeLog: ITimeLog) {
@@ -90,23 +85,24 @@ export class ViewComponent
 				context: { timeLog: timeLog }
 			})
 			.onClose
-			.pipe(untilDestroyed(this))
-			.subscribe((resp) => {
-				if (resp) {
-					this.logs$.next(true);
-				}
-			});
+			.pipe(
+				filter((data) => !!data),
+				tap(() => this.logs$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	deleteTimeLog(timeLog: ITimeLog) {
+	async deleteTimeLog(timeLog: ITimeLog) {
 		if (timeLog.isRunning) {
 			return;
 		}
-		this.timesheetService.deleteLogs([timeLog.id])
-			.then(() => {})
-			.finally(() => {
-				this.logs$.next(true);
-			});
+		try {
+			await this.timesheetService.deleteLogs([timeLog.id]);
+			this.logs$.next(true);
+		} catch (error) {
+			console.error('Error while deleting TimeLog', error);
+		}
 	}
 
 	ngOnDestroy() {}

@@ -1,9 +1,9 @@
 <mjml>
-	<mj-body background-color="#fff">
+	<mj-body>
 		<mj-section>
 			<mj-column padding-top="30px">
 				<mj-text font-weight="bold" font-size="28px">
-					ESTIMATE
+					<span>ESTIMATE</span>
 				</mj-text>
 			</mj-column>
 			<mj-column>
@@ -18,11 +18,11 @@
 		</mj-section>
 		<mj-section>
 			<mj-column>
-				<mj-text font-weight="bold">FROM:</mj-text>
-				<mj-text> {{from}} </mj-text>
+				<mj-text font-weight="bold"><span> FROM: </span></mj-text>
+				<mj-text><span> {{from}} </span></mj-text>
 				<mj-spacer height="10px"></mj-spacer>
-				<mj-text font-weight="bold"> TO: </mj-text>
-				<mj-text> {{to}} </mj-text>
+				<mj-text font-weight="bold"><span> TO: </span></mj-text>
+				<mj-text><span> {{to}} </span></mj-text>
 			</mj-column>
 			<mj-column>
 				<mj-text font-weight="bold">

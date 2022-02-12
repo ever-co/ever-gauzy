@@ -1,8 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
-import { RatesDTO } from "./rates.dto";
 
-export abstract class HiringDTO extends RatesDTO {
+export class HiringDTO {
 
     @ApiPropertyOptional({ type: () => Date })
     @IsOptional()

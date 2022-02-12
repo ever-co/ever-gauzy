@@ -3,7 +3,10 @@ import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform, TransformFnParams } from "class-transformer";
 import { IsEnum, IsNumber, IsOptional } from "class-validator";
 
-export abstract class RatesDTO {
+/**
+ * Update Employee/Candidate Rates DTO
+ */
+export class RatesDTO {
 
     @ApiPropertyOptional({ type: () => String, enum: PayPeriodEnum })
     @IsOptional()

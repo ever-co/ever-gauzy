@@ -37,7 +37,7 @@ import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-s
 export class EventTypeComponent
 	extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
-		
+
 	smartTableSource: ServerDataSource;
 	smartTableSettings: object;
 	localDataSource = new LocalDataSource();
@@ -53,7 +53,7 @@ export class EventTypeComponent
 	eventTypes$: Subject<any> = new Subject();
 
 	defaultEventTypes: IEventTypeViewModel[] = DEFAULT_EVENT_TYPE;
-	
+
 	eventTypesTable: Ng2SmartTableComponent;
 	@ViewChild('eventTypesTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -151,7 +151,7 @@ export class EventTypeComponent
 
 	async addEventType(data: any) {
 		try {
-			const { title, employeeId } = data;			
+			const { title, employeeId } = data;
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
@@ -357,7 +357,7 @@ export class EventTypeComponent
 			},
 			resultMap: (i: IEventType) => {
 				const durationFormat = `${i.duration} ${i.durationUnit}`;
-				const employeeName = i.employee.fullName;
+				const employeeName = i.employee? i.employee.fullName : 'default';
 
 				return Object.assign({}, i, {
 					active: i.isActive
@@ -378,7 +378,7 @@ export class EventTypeComponent
 	 * GET all event types
 	 */
 	private async getEventTypes() {
-		try { 
+		try {
 			this.setSmartTableSource();
 
 			// Initiate GRID view pagination
@@ -396,8 +396,8 @@ export class EventTypeComponent
 
 	/**
 	 * Map default types & organization event types
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	private mapEventTypes() {
 		const data = this.smartTableSource.getData() || [];
