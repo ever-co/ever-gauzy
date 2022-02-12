@@ -81,7 +81,6 @@ async function invoiceItemForInvoiceType(
 		let totalValue = 0;
 		for (let i = 0; i < faker.datatype.number({ min: 1, max: numberOfInvoiceItemPerInvoice }); i++) {
 			const invoiceItem = new InvoiceItem();
-			invoiceItem.name = faker.company.companyName();
 			invoiceItem.description = faker.random.words();
 			invoiceItem.price = faker.datatype.number({ min: 10, max: 50 });
 			invoiceItem.quantity = faker.datatype.number({ min: 10, max: 20 });
