@@ -24,11 +24,7 @@ import {
 export class InvoiceItem
 	extends TenantOrganizationBaseEntity
 	implements IInvoiceItem {
-	@ApiPropertyOptional({ type: () => String })
-	@IsString()
-	@IsOptional()
-	name?: string;
-
+		
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
