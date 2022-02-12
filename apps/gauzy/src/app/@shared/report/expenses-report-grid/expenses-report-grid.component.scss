@@ -1,11 +1,8 @@
-@import 'var';
+@import 'report';
+
 :host {
   display: block;
   .report-row {
     min-height: 56px;
   }
-}
-nb-card{
-  background-color: nb-theme(background-basic-color-1);
-  border-color: nb-theme(border-basic-color-3);
 }
