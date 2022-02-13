@@ -19,12 +19,6 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-let browserWindow: {
-	setupWindow?: BrowserWindow | null
-	timeTrackerWindow?: BrowserWindow
-	notificationWindow?: BrowserWindow
-	settingWindow?: BrowserWindow
-} = {};
 
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	ipcMain.removeAllListeners('start_server');
@@ -131,12 +125,6 @@ export function ipcTimer(
 	windowPath,
 	soundPath
 ) {
-	browserWindow = {
-		settingWindow,
-		timeTrackerWindow,
-		notificationWindow,
-		setupWindow
-	}
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
 		log.info(`Timer Start: ${moment().format()}`);
