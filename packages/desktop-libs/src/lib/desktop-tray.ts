@@ -22,6 +22,7 @@ export class TrayIcon {
 		windowPath,
 		iconPath
 	) {
+		this.removeTrayListner()
 		let loginPageAlreadyShow = false;
 		const appConfig = LocalStore.getStore('configs');
 		const store = new Store();
@@ -386,5 +387,24 @@ export class TrayIcon {
 				contextMenu[1].visible = true;
 			}
 		});
+	}
+
+	destroy() {
+		this.tray.destroy()
+	}
+
+	removeTrayListner() {
+		const trayListener = [
+			'update_tray_start',
+			'update_tray_stop',
+			'update_tray_time_update',
+			'auth_success',
+			'logout',
+			'user_detail'
+		]
+
+		trayListener.forEach((listener) => {
+			ipcMain.removeAllListeners(listener);
+		})
 	}
 }
