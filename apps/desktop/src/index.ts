@@ -423,7 +423,7 @@ ipcMain.on('server_is_ready', () => {
 			path.join(__dirname, './desktop-api/main.js')
 		);
 		gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
-		removeMainListener();
+		removeTimerListener();
 		ipcTimer(
 			store,
 			knex,
