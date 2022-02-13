@@ -167,6 +167,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		] = this.objectiveForm.value.owner;
 		delete objectiveData.owner;
 		delete objectiveData.organization;
+    if(this.objectiveForm.invalid) return;
 		this.closeDialog(objectiveData);
 	}
 
