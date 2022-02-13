@@ -60,7 +60,9 @@ import {
 	TrayIcon,
 	LocalStore,
 	DataModel,
-	AppMenu
+	AppMenu,
+	removeMainListener,
+	removeTimerListener
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -188,24 +190,25 @@ async function startServer(value, restart = false) {
 		knex,
 		pathWindow
 	);
-
-	if (!tray) {
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
-			pathWindow,
-			path.join(
-				__dirname,
-				'assets',
-				'icons',
-				'icon_16x16.png'
-			)
-		);
+	
+	if (tray) {
+		tray.destroy();
 	}
+	tray = new TrayIcon(
+		setupWindow,
+		knex,
+		timeTrackerWindow,
+		auth,
+		settingsWindow,
+		{ ...environment },
+		pathWindow,
+		path.join(
+			__dirname,
+			'assets',
+			'icons',
+			'icon_16x16.png'
+		)
+	);
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
@@ -318,7 +321,7 @@ app.on('ready', async () => {
 			true,
 			pathWindow.timeTrackerUi
 		);
-		startServer(configs);
+		await startServer(configs);
 	} else {
 		setupWindow = createSetupWindow(
 			setupWindow,
@@ -327,7 +330,8 @@ app.on('ready', async () => {
 		);
 		setupWindow.show();
 	}
-
+	
+	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
 
@@ -345,6 +349,7 @@ ipcMain.on('server_is_ready', () => {
 		serverDesktop = fork(
 			path.join(__dirname, './desktop-api/main.js')
 		);
+		removeTimerListener();
 		ipcTimer(
 			store,
 			knex,
@@ -383,14 +388,16 @@ ipcMain.on('restart_app', (event, arg) => {
 	if (gauzyWindow) gauzyWindow.destroy();
 	gauzyWindow = null;
 	isAlreadyRun = false;
-	setTimeout(() => {
+	setTimeout(async () => {
 		if (!gauzyWindow) {
 			const configs = LocalStore.getStore('configs');
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
 				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
-			startServer(configs, tray ? true : false);
+			await startServer(configs, tray ? true : false);
+			removeMainListener();
+			ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 			setupWindow.webContents.send('server_ping_restart', {
 				host: getApiBaseUrl(configs)
 			});

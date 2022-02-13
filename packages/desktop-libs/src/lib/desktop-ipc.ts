@@ -1,4 +1,4 @@
-import { ipcMain, screen } from 'electron';
+import { ipcMain, screen, BrowserWindow } from 'electron';
 import { TimerData } from './desktop-timer-activity';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
@@ -19,7 +19,19 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
+let browserWindow: {
+	setupWindow?: BrowserWindow | null
+	timeTrackerWindow?: BrowserWindow
+	notificationWindow?: BrowserWindow
+	settingWindow?: BrowserWindow
+} = {};
+
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
+	ipcMain.removeAllListeners('start_server');
+	ipcMain.removeAllListeners('remove_afk_local_Data');
+	ipcMain.removeAllListeners('return_time_sheet');
+	ipcMain.removeAllListeners('return_toggle_api');
+	ipcMain.removeAllListeners('set_project_task');
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
@@ -59,7 +71,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
-		if (auth) {
+		if (auth && auth.userId) {
 			const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
@@ -119,6 +131,12 @@ export function ipcTimer(
 	windowPath,
 	soundPath
 ) {
+	browserWindow = {
+		settingWindow,
+		timeTrackerWindow,
+		notificationWindow,
+		setupWindow
+	}
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
 		log.info(`Timer Start: ${moment().format()}`);
@@ -376,5 +394,52 @@ export function ipcTimer(
 
 	ipcMain.on('timer_stopped', (event, arg) => {
 		timeTrackerWindow.webContents.send('timer_already_stop');
+	})
+}
+
+export function removeMainListener() {
+	const mainListeners = [
+		'start_server',
+		'remove_afk_local_Data',
+		'return_time_sheet',
+		'return_toggle_api',
+		'set_project_task',
+		'time_tracker_ready',
+		'screen_shoot',
+		'get_last_screen_capture',
+		'update_app_setting',
+		'update_project_on',
+		'request_permission'
+	]
+
+	mainListeners.forEach((listener) => {
+		ipcMain.removeAllListeners(listener);
+	})
+}
+
+export function removeTimerListener() {
+	const timerListeners = [
+		'start_timer',
+		'data_push_activity',
+		'remove_aw_local_data',
+		'remove_wakatime_local_data',
+		'stop_timer',
+		'return_time_slot',
+		'show_screenshot_notif_window',
+		'save_screen_shoot',
+		'show_image',
+		'close_image_view',
+		'failed_save_time_slot',
+		'save_temp_screenshot',
+		'save_temp_img',
+		'open_setting_window',
+		'switch_aw_option',
+		'logout_desktop',
+		'navigate_to_login',
+		'expand',
+		'timer_stopped'
+	]
+	timerListeners.forEach((listener) => {
+		ipcMain.removeAllListeners(listener);
 	})
 }

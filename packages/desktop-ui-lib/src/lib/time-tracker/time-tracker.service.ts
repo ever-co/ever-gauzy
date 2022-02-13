@@ -98,7 +98,7 @@ export class TimeTrackerService {
 
 		const params = this.toParams({
 			data: JSON.stringify({
-				relations: ['employee', 'tenant', 'employee.organization']
+				relations: ['employee', 'tenant', 'employee.organization', 'role', 'role.rolePermissions']
 			})
 		});
 

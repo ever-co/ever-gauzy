@@ -59,7 +59,9 @@ import {
 	TrayIcon,
 	LocalStore,
 	DataModel,
-	AppMenu
+	AppMenu,
+	removeMainListener,
+	removeTimerListener
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -238,23 +240,24 @@ function startServer(value, restart = false) {
 	}
 	const auth = store.get('auth');
 
-	if (!tray) {
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
-			pathWindow,
-			path.join(
-				__dirname,
-				'assets',
-				'icons',
-				'icon_16x16.png'
-			)
-		);
+	if (tray) {
+		tray.destroy();
 	}
+	tray = new TrayIcon(
+		setupWindow,
+		knex,
+		timeTrackerWindow,
+		auth,
+		settingsWindow,
+		{ ...environment },
+		pathWindow,
+		path.join(
+			__dirname,
+			'assets',
+			'icons',
+			'icon_16x16.png'
+		)
+	);
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
@@ -401,7 +404,7 @@ app.on('ready', async () => {
 		);
 		setupWindow.show();
 	}
-
+	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
 
@@ -420,6 +423,7 @@ ipcMain.on('server_is_ready', () => {
 			path.join(__dirname, './desktop-api/main.js')
 		);
 		gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
+		removeMainListener();
 		ipcTimer(
 			store,
 			knex,
