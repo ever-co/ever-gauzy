@@ -71,6 +71,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 	};
 	userOrganization: any = {};
 	lastScreenCapture: any = {};
+	userPermission: any = [];
 	quitApp = false;
 	organizationContactId = null;
 	employeeId = null;
@@ -319,25 +320,32 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 		if (this.validationField()) {
 			if (val) {
-				await this.removeInvalidTimeLog({
-					token: this.token,
-					organizationId: this.userOrganization.id,
-					tenantId: this.userData.tenantId,
-					employeeId: this.userData.employeeId,
-					apiHost: this.apiHost
-				});
-				this.timeTrackerService
-					.toggleApiStart({
+				if (this.userPermission.includes('ALLOW_DELETE_TIME')) {
+					await this.removeInvalidTimeLog({
 						token: this.token,
-						note: this.note,
-						projectId: this.projectSelect,
-						taskId: this.taskSelect,
 						organizationId: this.userOrganization.id,
 						tenantId: this.userData.tenantId,
-						organizationContactId: this.organizationContactId,
+						employeeId: this.userData.employeeId,
 						apiHost: this.apiHost
-					})
-					.then((res) => {
+					});
+				}
+
+				const paramsTimeStart = {
+					token: this.token,
+					note: this.note,
+					projectId: this.projectSelect,
+					taskId: this.taskSelect,
+					organizationId: this.userOrganization.id,
+					tenantId: this.userData.tenantId,
+					organizationContactId: this.organizationContactId,
+					apiHost: this.apiHost
+				}
+				this.timeTrackerService
+					.toggleApiStart(paramsTimeStart)
+					.then(async (res:any) => {
+						if (res && res.stoppedAt) {
+							await this.timeTrackerService.toggleApiStart(paramsTimeStart)
+						}
 						this.start = val;
 						this.startTime(res);
 						this.loading = false;
@@ -699,6 +707,9 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.timeTrackerService.getUserDetail(arg).then((res: any) => {
 			if (res.employee && res.employee.organization) {
 				this.userData = res;
+				if (res.role && res.role.userPermission) {
+					this.userPermission = res.role.userPermission.map((permission) => permission.permission);
+				}
 				this.userOrganization = res.employee.organization;
 				if (start) {
 					this.toggleStart(true);
@@ -784,6 +795,9 @@ export class TimeTrackerComponent implements AfterViewInit {
 					}
 				}
 				return res;
+			}).catch((err) => {
+				console.log('error on request to api get timelog', err);
+				return false;
 			});
 	}
 
