@@ -1,5 +1,4 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { GoalTemplatesService } from '../../../@core/services/goal-templates.service';
 import {
 	IGoalTemplate,
 	IGoalTimeFrame,
@@ -11,8 +10,6 @@ import {
 	KeyResultTypeEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { Store } from '../../../@core/services/store.service';
 import { isFuture } from 'date-fns';
 import {
 	NbDialogRef,
@@ -20,13 +17,17 @@ import {
 	NbStepperComponent
 } from '@nebular/theme';
 import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
-import { firstValueFrom } from 'rxjs';
-import { GoalService } from '../../../@core/services/goal.service';
-import { EmployeesService } from '../../../@core/services';
+import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
+import {
+	GoalService,
+	GoalSettingsService,
+	GoalTemplatesService,
+	KeyResultService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -39,63 +40,75 @@ import { TranslateService } from '@ngx-translate/core';
 export class GoalTemplateSelectComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	goalTemplates: IGoalTemplate[];
 	selectedGoalTemplate: IGoalTemplate;
 	timeFrames: IGoalTimeFrame[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
-	employees: IEmployee[];
+	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	orgId: string;
 	orgName: string;
-	goalDetailsForm: FormGroup;
-	organization: IOrganization;
+
+	public organization: IOrganization;
 	@ViewChild('stepper') stepper: NbStepperComponent;
 
+	/*
+	* Goal Template Selection Mutation Form
+	*/
+	public form: FormGroup = GoalTemplateSelectComponent.buildForm(this.fb, this);
+	static buildForm(fb: FormBuilder, self: GoalTemplateSelectComponent): FormGroup {
+		return fb.group({
+			deadline: ['', Validators.required],
+			ownerId: ['', Validators.required],
+			level: [
+				!!self.selectedGoalTemplate
+					? self.selectedGoalTemplate.level
+					: GoalLevelEnum.ORGANIZATION,
+				Validators.required
+			],
+			leadId: [null]
+		});
+	}
+
 	constructor(
-		private goalTemplateService: GoalTemplatesService,
-		private goalSettingService: GoalSettingsService,
-		private store: Store,
-		private dialogRef: NbDialogRef<GoalTemplateSelectComponent>,
-		private dialogService: NbDialogService,
-		private goalService: GoalService,
-		private keyResultService: KeyResultService,
-		private employeeService: EmployeesService,
-		private fb: FormBuilder,
-		private goalSettingsService: GoalSettingsService,
-		private toastrService: ToastrService,
+		private readonly goalTemplateService: GoalTemplatesService,
+		private readonly goalSettingService: GoalSettingsService,
+		private readonly store: Store,
+		private readonly dialogRef: NbDialogRef<GoalTemplateSelectComponent>,
+		private readonly dialogService: NbDialogService,
+		private readonly goalService: GoalService,
+		private readonly keyResultService: KeyResultService,
+		private readonly fb: FormBuilder,
+		private readonly goalSettingsService: GoalSettingsService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	async ngOnInit() {
-		this.organization = this.store.selectedOrganization;
-		this.goalDetailsForm = this.fb.group({
-			deadline: ['', Validators.required],
-			owner: ['', Validators.required],
-			level: [
-				!!this.selectedGoalTemplate
-					? this.selectedGoalTemplate.level
-					: GoalLevelEnum.ORGANIZATION,
-				Validators.required
-			],
-			lead: [null]
-		});
-		await this.getTimeFrames();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				debounceTime(200),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.getGoalTemplates()),
+				tap(() => this.getTimeFrames()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
+	getGoalTemplates() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+
 		this.goalTemplateService
 			.getAllGoalTemplates({ organizationId, tenantId })
 			.then((res) => {
 				const { items } = res;
 				this.goalTemplates = items;
-			});
-		this.employeeService
-			.getAll(['user'], { organizationId, tenantId })
-			.pipe(untilDestroyed(this))
-			.subscribe(({ items }) => {
-				this.employees = items;
 			});
 	}
 
@@ -107,14 +120,11 @@ export class GoalTemplateSelectComponent
 			},
 			tenantId
 		};
-		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
-			if (res) {
-				this.timeFrames = res.items.filter(
-					(timeFrame) =>
-						timeFrame.status === this.timeFrameStatusEnum.ACTIVE &&
-						isFuture(new Date(timeFrame.endDate))
-				);
-			}
+		await this.goalSettingService.getAllTimeFrames(findObj).then(({ items = [] }) => {
+			this.timeFrames = items.filter((timeFrame) =>
+				timeFrame.status === TimeFrameStatusEnum.ACTIVE &&
+				isFuture(new Date(timeFrame.endDate))
+			);
 		});
 	}
 
@@ -137,26 +147,26 @@ export class GoalTemplateSelectComponent
 	}
 
 	async createGoal() {
-		if (!!this.selectedGoalTemplate && !!this.goalDetailsForm.valid) {
-			const goalDetailsFormValue = this.goalDetailsForm.value;
-			delete goalDetailsFormValue.level;
+		if (!!this.selectedGoalTemplate && !!this.form.valid) {
+			const formValue = this.form.value;
+			delete formValue.level;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const goal = {
 				...this.selectedGoalTemplate,
-				...goalDetailsFormValue,
+				...formValue,
 				description: ' ',
 				progress: 0,
 				organizationId,
 				tenantId
 			};
 			goal[
-				this.goalDetailsForm.value.level === GoalLevelEnum.EMPLOYEE
+				this.form.value.level === GoalLevelEnum.EMPLOYEE
 					? 'ownerEmployee'
-					: this.goalDetailsForm.value.level === GoalLevelEnum.TEAM
+					: this.form.value.level === GoalLevelEnum.TEAM
 					? 'ownerTeam'
 					: 'organization'
-			] = this.goalDetailsForm.value.owner;
+			] = this.form.value.owner;
 			delete goal.owner;
 			delete goal.keyResults;
 			const goalCreated = await this.goalService.createGoal(goal);
