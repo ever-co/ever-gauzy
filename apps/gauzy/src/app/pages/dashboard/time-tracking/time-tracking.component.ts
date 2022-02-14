@@ -170,7 +170,6 @@ export class TimeTrackingComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-      console.log(this.selectedDateRange);
 	}
 
 	ngAfterViewChecked(): void {
