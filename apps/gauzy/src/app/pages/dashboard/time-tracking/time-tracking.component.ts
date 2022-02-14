@@ -18,7 +18,6 @@ import {
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
 	IUser,
-	ISelectedDateRange,
 	ISelectedEmployee,
 	IEmployee
 } from '@gauzy/contracts';
@@ -87,16 +86,16 @@ export class TimeTrackingComponent
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
 
-	private _selectedDateRange: ISelectedDateRange = {
-		start: moment().startOf('week').toDate(),
-		end: moment().endOf('week').toDate(),
+	private _selectedDateRange: any = {
+		startDate: moment().startOf('week').toDate(),
+		endDate: moment().endOf('week').toDate(),
 		isCustomDate: false
 	};
 
-	get selectedDateRange(): ISelectedDateRange {
+	get selectedDateRange(): any {
 		return this._selectedDateRange;
 	}
-	set selectedDateRange(range: ISelectedDateRange) {
+	set selectedDateRange(range: any) {
 		if (range) {
 			if (!range.hasOwnProperty('isCustomDate')) {
 				range.isCustomDate = true
@@ -104,16 +103,16 @@ export class TimeTrackingComponent
 			/**
 			 * Check, if start date is Greater Than end date
 			 */
-			if (moment(range.start).isAfter(range.end)) {
+			if (moment(range.startDate).isAfter(range.endDate)) {
 				this._selectedDateRange = {
-					start: range.end,
-					end: range.start,
+					startDate: range.endDate,
+					endDate: range.startDate,
 					isCustomDate: range.isCustomDate
 				}
 			} else {
 				this._selectedDateRange = range;
 			}
-			if (range.start && range.end) {
+			if (range.startDate && range.endDate) {
 				this.logs$.next(true);
 			}
 		}
@@ -171,6 +170,7 @@ export class TimeTrackingComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+      console.log(this.selectedDateRange);
 	}
 
 	ngAfterViewChecked(): void {
@@ -217,8 +217,8 @@ export class TimeTrackingComponent
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(this.selectedDateRange.start).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(this.selectedDateRange.end).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(this.selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(this.selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
 		};
 
 		this.timeSlotLoading = true;
@@ -249,8 +249,8 @@ export class TimeTrackingComponent
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.start).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.end).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService
@@ -270,8 +270,8 @@ export class TimeTrackingComponent
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.start).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.end).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.activitiesLoading = true;
 		this.timesheetStatisticsService
@@ -301,8 +301,8 @@ export class TimeTrackingComponent
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.start).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.end).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.projectsLoading = true;
 		this.timesheetStatisticsService
@@ -322,8 +322,8 @@ export class TimeTrackingComponent
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.start).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.end).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.tasksLoading = true;
 		this.timesheetStatisticsService
@@ -343,8 +343,8 @@ export class TimeTrackingComponent
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.start).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.end).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.manualTimeLoading = true;
 		this.timesheetStatisticsService
@@ -369,8 +369,8 @@ export class TimeTrackingComponent
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.start).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.end).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.memberLoading = true;
 		this.timesheetStatisticsService
@@ -411,11 +411,11 @@ export class TimeTrackingComponent
 	 * Get selected date range period
 	 */
 	get selectedPeriod(): RangePeriod {
-		const { start, end, isCustomDate } = this.selectedDateRange;
+		const { startDate, endDate, isCustomDate } = this.selectedDateRange;
 
-		const startDate = moment(start);
-		const endDate = moment(end);
-		const days = endDate.diff(startDate, 'days');
+		const start = moment(startDate);
+		const end = moment(endDate);
+		const days = end.diff(start, 'days');
 
 		if (days === 6 && isCustomDate === false) {
 			return RangePeriod.WEEK;
@@ -430,9 +430,9 @@ export class TimeTrackingComponent
 	 * If, selected date range are more than a week
 	 */
 	isMoreThanWeek(): boolean {
-		const { start, end } = this.selectedDateRange;
-		if (start && end) {
-			return moment(end).diff(moment(start), 'weeks') > 0;
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			return moment(endDate).diff(moment(startDate), 'weeks') > 0;
 		}
 		return false;
 	}
@@ -484,11 +484,11 @@ export class TimeTrackingComponent
 	 */
 	public redirectToManualTimeReport() {
 		try {
-			const { start, end } = this.selectedDateRange;
+			const { startDate, endDate } = this.selectedDateRange;
 			this._router.navigate(['/pages/reports/manual-time-edits'], {
 				queryParams: {
-					start: moment(start).format("MM-DD-YYYY"),
-					end: moment(end).format("MM-DD-YYYY")
+					start: moment(startDate).format("MM-DD-YYYY"),
+					end: moment(endDate).format("MM-DD-YYYY")
 				}
 			});
 		} catch (error) {
@@ -501,11 +501,11 @@ export class TimeTrackingComponent
 	 */
 	public redirectToAppUrlReport() {
 		try {
-			const { start, end } = this.selectedDateRange;
+			const { startDate, endDate } = this.selectedDateRange;
 			this._router.navigate(['/pages/reports/apps-urls'], {
 				queryParams: {
-					start: moment(start).format("MM-DD-YYYY"),
-					end: moment(end).format("MM-DD-YYYY")
+					start: moment(startDate).format("MM-DD-YYYY"),
+					end: moment(endDate).format("MM-DD-YYYY")
 				}
 			});
 		} catch (error) {
@@ -518,8 +518,8 @@ export class TimeTrackingComponent
    */
   public onUpdateDate(event: any): void{
     this.selectedDateRange = {
-			start: event.startDate,
-			end: event.endDate,
+			startDate: event.startDate,
+			endDate: event.endDate,
 			isCustomDate: false
     }
   }
