@@ -95,6 +95,9 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                 let stoppedAt: any;
                 let slotDifference: any;
 
+                /**
+                 * Adjust stopped date as per database selection
+                 */
                 if (queryRunner.connection.options.type === 'sqlite') {
                     stoppedAt = moment.utc(lastTimeSlot.startedAt)
                         .add(lastTimeSlot.duration, 'seconds')
