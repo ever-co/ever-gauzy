@@ -9,7 +9,9 @@ import {
 	Param,
 	UseGuards,
 	Query,
-	Delete
+	Delete,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
@@ -20,6 +22,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import { KeyResultUpdateBulkDeleteCommand } from './commands';
 import { TenantPermissionGuard } from './../shared/guards';
+import { CreateKeyresultUpdateDTO } from './dto';
 
 
 @ApiTags('KeyResultsUpdate')
@@ -45,7 +48,8 @@ export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> 
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/create')
-	async createKeyResult(@Body() entity: IKeyResultUpdate): Promise<any> {
+	@UsePipes( new ValidationPipe({ transform : true }))
+	async createKeyResult(@Body() entity: CreateKeyresultUpdateDTO): Promise<any> {
 		return this.keyResultUpdateService.create(entity);
 	}
 
