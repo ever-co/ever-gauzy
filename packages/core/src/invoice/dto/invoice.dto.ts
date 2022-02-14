@@ -1,7 +1,7 @@
 import { CurrenciesEnum, DiscountTaxTypeEnum, IInvoiceEstimateHistory, IOrganization, IOrganizationContact, IPayment, ITag } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNotEmptyObject, IsNumber, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from "class-validator";
 import { CreateInvoiceEstimateHistoryDTO } from "invoice-estimate-history/dto";
 import { CreateInvoiceItemDTO } from "invoice-item/dto";
 
@@ -106,11 +106,13 @@ export abstract class InvoiceDTO {
     readonly isArchived: boolean;
 
     @ApiPropertyOptional({ type: () => Object, readOnly: true })
-    @IsOptional()
+    @ValidateIf(o => !o.fromOrganizationId || o.fromOrganization)
+    @IsNotEmptyObject()
     @IsObject()
     readonly fromOrganization: IOrganization;
 
     @ApiProperty({ type: () => String, readOnly: true })
+    @ValidateIf(o => !o.fromOrganization || o.fromOrganizationId)
     @IsNotEmpty()
     @IsString()
     readonly fromOrganizationId: string;
