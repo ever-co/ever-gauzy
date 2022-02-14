@@ -6,7 +6,8 @@ import {
 	HttpStatus,
 	Post,
 	Body,
-	Param
+	Param,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -15,9 +16,10 @@ import { CrudController } from './../core/crud';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
 import { InvoiceItemBulkCreateCommand } from './commands';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
+import { InvoiceItemBulkInputDTO } from './dto';
 
 @ApiTags('InvoiceItem')
 @UseGuards(TenantPermissionGuard)
@@ -56,10 +58,10 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Post('/bulk/:invoiceId')
 	async createBulk(
 		@Param('invoiceId', UUIDValidationPipe) invoiceId: string,
-		@Body() input: IInvoiceItemCreateInput[]
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform : true })) input: InvoiceItemBulkInputDTO
 	): Promise<any> {
 		return this.commandBus.execute(
-			new InvoiceItemBulkCreateCommand(invoiceId, input)
+			new InvoiceItemBulkCreateCommand(invoiceId, input.list)
 		);
 	}
 }
