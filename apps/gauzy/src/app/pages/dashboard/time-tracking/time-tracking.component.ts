@@ -86,7 +86,6 @@ export class TimeTrackingComponent
 
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
-	today: Date = new Date(moment().format('YYYY-MM-DD HH:mm:ss'));
 
 	private _selectedDateRange: ISelectedDateRange = {
 		start: moment().startOf('week').toDate(),
@@ -406,35 +405,6 @@ export class TimeTrackingComponent
 
 	ngOnDestroy() {
 		this.galleryService.clearGallery();
-	}
-
-	nextDay() {
-		const startDate = moment(this.selectedDateRange.end).add(1, "week").startOf("week").toDate();
-		const date = moment(startDate);
-		if (date.isAfter(this.today)) {
-			return;
-		}
-		this.selectedDateRange = {
-			start: startDate,
-			end: moment(startDate).endOf("week").toDate(),
-			isCustomDate: false
-		}
-	}
-
-	previousDay() {
-		const startDate = moment(this.selectedDateRange.end).subtract(1, "week").startOf("week").toDate();
-		this.selectedDateRange = {
-			start: startDate,
-			end: moment(startDate).endOf("week").toDate(),
-			isCustomDate: false
-		}
-	}
-
-	todayDate () {
-		this.selectedDateRange = {
-			start: this.today,
-			end: this.today,
-		}
 	}
 
 	/**
