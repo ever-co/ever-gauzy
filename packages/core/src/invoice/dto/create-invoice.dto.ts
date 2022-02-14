@@ -1,29 +1,41 @@
-import { IInvoiceCreateInput, InvoiceStatusTypesEnum, InvoiceTypeEnum, ITag } from "@gauzy/contracts";
+import { IInvoiceCreateInput, InvoiceTypeEnum, IOrganization, ITag } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsNotEmptyObject, IsNumber, IsObject, IsOptional, IsString, ValidateIf } from "class-validator";
 import { InvoiceDTO } from "./invoice.dto";
 
 export class CreateInvoiceDTO extends InvoiceDTO implements IInvoiceCreateInput {
 
-    @ApiProperty({ type: () => String, enum: InvoiceStatusTypesEnum, readOnly: true })
-    @IsNotEmpty()
-    @IsEnum(InvoiceStatusTypesEnum)
-    readonly status: InvoiceStatusTypesEnum;
-
-    @ApiPropertyOptional({ type: () => Number, readOnly: true })
+    @ApiProperty({ type: () => Number, readOnly: true })
     @IsOptional()
     @IsNumber()
-    readonly totalValue: number;
+    readonly discountValue: number;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
-    @IsOptional()
-    @IsString()
-    readonly organizationContactId: string;
+    @ApiProperty({ type: () => Number, readOnly: true })
+    @IsNotEmpty()
+    @IsNumber()
+    readonly invoiceNumber: number;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => Number, readOnly: true })
     @IsOptional()
+    @IsNumber()
+    readonly tax: number;
+
+    @ApiProperty({ type: () => Number, readOnly: true })
+    @IsOptional()
+    @IsNumber()
+    readonly tax2: number;
+
+    @ApiPropertyOptional({ type: () => Object, readOnly: true })
+    @ValidateIf(o => !o.fromOrganizationId || o.fromOrganization)
+    @IsNotEmptyObject()
+    @IsObject()
+    readonly fromOrganization: IOrganization;
+
+    @ApiProperty({ type: () => String, readOnly: true })
+    @ValidateIf(o => !o.fromOrganization || o.fromOrganizationId)
+    @IsNotEmpty()
     @IsString()
-    readonly organizationContactName: string;
+    readonly fromOrganizationId: string;
 
     @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
