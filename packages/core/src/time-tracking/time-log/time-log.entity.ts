@@ -77,9 +77,12 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
 
-	duration: number;
+	@ApiProperty({ type: () => Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
 	isRunning?: boolean;
 
+	duration: number;
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 

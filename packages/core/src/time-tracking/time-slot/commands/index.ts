@@ -8,3 +8,4 @@ export * from './time-slot-merge.command';
 export * from './time-slot-range-delete.command';
 export * from './update-time-slot-minutes.command';
 export * from './update-time-slot.command';
+export * from './schedule-time-slot-entries.command';
