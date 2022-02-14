@@ -103,7 +103,6 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	}
 
 	patchValueAndValidity() {
-		console.log(this.data);
 		if (!!this.data) {
 			this.form.patchValue(this.data);
 			this.form.patchValue({

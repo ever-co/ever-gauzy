@@ -147,7 +147,7 @@
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
-				[selectedEmployeeIds]="parentFormGroup.value.lead"
+				[selectedEmployeeIds]="parentFormGroup.value.leadId"
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'lead')"
 				id="objective-lead"
