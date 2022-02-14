@@ -13,48 +13,18 @@
 	<nb-card-body>
 		<div class="row">
 			<div class="col">
-				<div class="row">
-					<div class="bulk-actions col-auto">
-						<div class="input-group">
-							<div class="input-group-append mr-1" id="button-previous-addon4">
-								<button
-									nbButton
-									status="primary"
-									(click)="previousDay()"
-								>
-									<nb-icon icon="arrow-ios-back-outline"></nb-icon>
-								</button>
-							</div>
-							<div>
-								<input
-									class="date-range-input"
-									type="text"
-									nbInput
-									[placeholder]="'FORM.PLACEHOLDERS.SELECT_DATE' | translate"
-									[(ngModel)]="selectedDateRange"
-									[nbDatepicker]="dateRangePicker"
-								/>
-								<nb-rangepicker #dateRangePicker [range]="selectedDateRange"></nb-rangepicker>
-							</div>
-							<div class="input-group-append ml-1" id="button-next-addon4">
-								<button
-									nbButton
-									status="primary"
-									(click)="nextDay()"
-								>
-									<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
-								</button>
-							</div>
-							<div class="input-group-append ml-1" id="button-today-addon4">
-								<button
-									nbButton
-									status="primary"
-									(click)="todayDate()"
-								>
-									{{ 'TIMESHEET.TODAY' | translate }}
-								</button>
-							</div>
-						</div>
+				<div class="row col-auto">
+					<div class="filter">
+            <ngx-gauzy-range-picker
+            [hasActivityLevelFilter]="false"
+            [hasEmployeeFilter]="false"
+            [hasProjectFilter]="false"
+            [hasLogTypeFilter]="false"
+            [hasSourceFilter]="false"
+            [filters]="selectedDateRange"
+            [arrows]="true"
+            (onDateChange)="onUpdateDate($event)"
+            ></ngx-gauzy-range-picker>
 					</div>
 				</div>
 			</div>
