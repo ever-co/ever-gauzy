@@ -22,7 +22,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import { KeyResultUpdateBulkDeleteCommand } from './commands';
 import { TenantPermissionGuard } from './../shared/guards';
-import { CreateKeyresultUpdateDTO } from './dto';
+import { CreateKeyresultUpdateDTO, UpdateKeyresultUpdateDTO } from './dto';
 
 
 @ApiTags('KeyResultsUpdate')
@@ -87,9 +87,10 @@ export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> 
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IKeyResultUpdate
+		@Body() entity: UpdateKeyresultUpdateDTO
 	): Promise<IKeyResultUpdate> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
