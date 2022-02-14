@@ -542,4 +542,15 @@ export class TimeTrackingComponent
 			console.log('Error while redirecting to apps & urls report.', error);
 		}
 	}
+  /**
+   * Listen date event on update
+   * @param event
+   */
+  public onUpdateDate(event: any): void{
+    this.selectedDateRange = {
+			start: event.startDate,
+			end: event.endDate,
+			isCustomDate: false
+    }
+  }
 }
