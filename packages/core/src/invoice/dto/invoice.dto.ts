@@ -3,9 +3,9 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { CreateInvoiceEstimateHistoryDTO } from "invoice-estimate-history/dto";
-import { CreateInvoiceItemDTO } from "invoice-item/dto";
+import { CreateInvoiceItemDTO } from "./../../invoice-item/dto";
 
-export abstract class InvoiceDTO {
+export class InvoiceDTO {
 
     @ApiProperty({ type: () => Date, readOnly: true })
     @IsNotEmpty()
@@ -65,16 +65,6 @@ export abstract class InvoiceDTO {
     @IsEnum(DiscountTaxTypeEnum)
     readonly discountType: DiscountTaxTypeEnum;
 
-    @ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum , readOnly: true})
-    @IsOptional()
-    @IsEnum(DiscountTaxTypeEnum)
-    readonly taxType: DiscountTaxTypeEnum;
-
-    @ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum, readOnly: true })
-    @IsOptional()
-    @IsEnum(DiscountTaxTypeEnum)
-    readonly tax2Type: DiscountTaxTypeEnum;
-
     @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
     @IsString()
@@ -131,5 +121,4 @@ export abstract class InvoiceDTO {
     @ApiProperty({ type: () => Object, isArray: true, readOnly: true })
     @IsOptional()
     readonly tags: ITag[];
-
 }
