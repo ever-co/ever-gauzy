@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { IInvoiceItem, IInvoiceItemCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IInvoiceItem, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
