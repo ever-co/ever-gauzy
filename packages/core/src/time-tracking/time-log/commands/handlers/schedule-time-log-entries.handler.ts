@@ -39,17 +39,18 @@ export class ScheduleTimeLogEntriesHandler
 				let stoppedAt: any;
 				let slotDifference: any;
 
+				const duration = timeLog.timeSlots.reduce((sum: number, current: any) => sum + current.duration, 0);
 				/**
 				 * Adjust stopped date as per database selection
 				 */
 				if (getConfig().dbConnectionOptions.type === 'sqlite') {
 					stoppedAt = moment.utc(lastTimeSlot.startedAt)
-						.add(lastTimeSlot.duration, 'seconds')
+						.add(duration, 'seconds')
 						.format('YYYY-MM-DD HH:mm:ss.SSS');
 					slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
 				} else {
 					stoppedAt = moment(lastTimeSlot.startedAt)
-						.add(lastTimeSlot.duration, 'seconds')
+						.add(duration, 'seconds')
 						.toDate();
 					slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
 				}

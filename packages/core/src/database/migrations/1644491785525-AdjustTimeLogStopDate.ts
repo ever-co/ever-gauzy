@@ -84,7 +84,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                     ]
                 );
             } else if (isNotEmpty(timeSlotsIds)) {
-                const [lastTimeSlot] = await queryRunner.connection.manager.query(`
+                const timeSlots = await queryRunner.connection.manager.query(`
                     SELECT * FROM 
                         "time_slot" 
                     WHERE 
@@ -95,17 +95,19 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                 let stoppedAt: any;
                 let slotDifference: any;
 
+                const [lastTimeSlot] = timeSlots;
+                const duration = timeSlots.reduce((sum: number, current: any) => sum + current.duration, 0);
                 /**
                  * Adjust stopped date as per database selection
                  */
                 if (queryRunner.connection.options.type === 'sqlite') {
                     stoppedAt = moment.utc(lastTimeSlot.startedAt)
-                        .add(lastTimeSlot.duration, 'seconds')
+                        .add(duration, 'seconds')
                         .format('YYYY-MM-DD HH:mm:ss.SSS');
                     slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
                 } else {
                     stoppedAt = moment(lastTimeSlot.startedAt)
-                        .add(lastTimeSlot.duration, 'seconds')
+                        .add(duration, 'seconds')
                         .toDate();
                     slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
                 }
