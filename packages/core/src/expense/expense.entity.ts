@@ -48,7 +48,10 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({ type: 'numeric', transformer: new ColumnNumericTransformer() })
+	@Column({
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	amount: number;
 
 	@ApiPropertyOptional({ type: () => String })
