@@ -496,14 +496,14 @@ export class InvoiceEditComponent
 			}
 
 			await this.invoicesService.update(this.invoice.id, {
-				invoiceNumber: parseFloat(invoiceData.invoiceNumber),
+				invoiceNumber: invoiceData.invoiceNumber,
 				invoiceDate: invoiceData.invoiceDate,
 				dueDate: invoiceData.dueDate,
 				currency: this.currency.value,
-				discountValue: parseFloat(invoiceData.discountValue),
+				discountValue: invoiceData.discountValue,
 				discountType: invoiceData.discountType,
-				tax: parseFloat(invoiceData.tax),
-				tax2: parseFloat(invoiceData.tax2),
+				tax: invoiceData.tax,
+				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
 				tax2Type: invoiceData.tax2Type,
 				terms: invoiceData.terms,
@@ -526,8 +526,8 @@ export class InvoiceEditComponent
 			});
 
 			const invoiceItems: IInvoiceItemCreateInput[] = [];
-
 			for (const invoiceItem of tableData) {
+				const { id } = invoiceItem.selectedItem;
 				const itemToAdd = {
 					description: invoiceItem.description,
 					price: invoiceItem.price,
@@ -541,19 +541,19 @@ export class InvoiceEditComponent
 				};
 				switch (this.invoice.invoiceType) {
 					case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-						itemToAdd['employeeId'] = invoiceItem.selectedItem;
+						itemToAdd['employeeId'] = id;
 						break;
 					case InvoiceTypeEnum.BY_PROJECT_HOURS:
-						itemToAdd['projectId'] = invoiceItem.selectedItem;
+						itemToAdd['projectId'] = id;
 						break;
 					case InvoiceTypeEnum.BY_TASK_HOURS:
-						itemToAdd['taskId'] = invoiceItem.selectedItem;
+						itemToAdd['taskId'] = id;
 						break;
 					case InvoiceTypeEnum.BY_PRODUCTS:
-						itemToAdd['productId'] = invoiceItem.selectedItem;
+						itemToAdd['productId'] = id;
 						break;
 					case InvoiceTypeEnum.BY_EXPENSES:
-						itemToAdd['expenseId'] = invoiceItem.selectedItem;
+						itemToAdd['expenseId'] = id;
 						break;
 					default:
 						break;
