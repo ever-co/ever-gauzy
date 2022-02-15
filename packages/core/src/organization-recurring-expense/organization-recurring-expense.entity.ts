@@ -14,6 +14,7 @@ import {
 	Min,
 	IsBoolean
 } from 'class-validator';
+import { ColumnNumericTransformer } from './../shared/pipes';
 import { Column, Entity, Index } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
@@ -88,7 +89,10 @@ export class OrganizationRecurringExpense
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
-	@Column({ type: 'numeric' })
+	@Column({
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	value: number;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })

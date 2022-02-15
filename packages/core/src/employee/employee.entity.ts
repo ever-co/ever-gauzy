@@ -35,6 +35,7 @@ import {
 	IsBoolean,
 	IsString
 } from 'class-validator';
+import { ColumnNumericTransformer } from './../shared/pipes';
 import {
 	Column,
 	Entity,
@@ -166,25 +167,42 @@ export class Employee
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ type: 'numeric', nullable: true })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	averageIncome?: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ type: 'numeric', nullable: true })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	averageBonus?: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ type: 'numeric', default: 0 })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		default: 0,
+		transformer: new ColumnNumericTransformer()
+	})
 	totalWorkHours?: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ type: 'numeric', nullable: true })
+	@Column({
+		type: 'numeric',
+		nullable: true,
+		transformer: new ColumnNumericTransformer()
+	})
 	averageExpenses?: number;
 
 	@ApiProperty({ type: () => Boolean })
@@ -280,13 +298,21 @@ export class Employee
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ type: 'numeric', nullable: true })
+	@Column({
+		type: 'numeric',
+		nullable: true,
+		transformer: new ColumnNumericTransformer()
+	})
 	totalJobs?: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ type: 'numeric', nullable: true })
+	@Column({
+		type: 'numeric',
+		nullable: true,
+		transformer: new ColumnNumericTransformer()
+	})
 	jobSuccess?: number;
 
 	fullName?: string;

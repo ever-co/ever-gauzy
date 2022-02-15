@@ -4,6 +4,7 @@ import { IsString } from 'class-validator';
 import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
 import { TenantBaseEntity, ProductVariant } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('warehouse_product_variant')
 export class WarehouseProductVariant
@@ -11,7 +12,12 @@ export class WarehouseProductVariant
 	implements IWarehouseProductVariant {
 
 	@ApiProperty({ name: 'quantity' })
-	@Column({ nullable: true, type: 'numeric', default: 0 })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		default: 0,
+		transformer: new ColumnNumericTransformer()
+	})
 	quantity: number;
 
 	/*
