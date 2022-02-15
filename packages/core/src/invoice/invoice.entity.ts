@@ -31,6 +31,7 @@ import {
 	Index,
 	JoinTable
 } from 'typeorm';
+import { ColumnNumericTransformer } from './../shared/pipes';
 import {
 	InvoiceEstimateHistory,
 	InvoiceItem,
@@ -52,7 +53,11 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ name: 'invoiceNumber', nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	invoiceNumber: number;
 
 	@ApiProperty({ type: () => Date })
@@ -67,7 +72,10 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ type: 'numeric' })
+	@Column({
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	discountValue: number;
 
 	@ApiProperty({ type: () => Boolean })
@@ -77,12 +85,20 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	tax: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	tax2: number;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -94,7 +110,11 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	totalValue?: number;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -155,13 +175,21 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	alreadyPaid?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	amountDue?: number;
 
 	@ApiPropertyOptional({ type: () => Boolean })

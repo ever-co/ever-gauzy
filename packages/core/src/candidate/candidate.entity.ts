@@ -48,6 +48,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('candidate')
 export class Candidate
@@ -56,7 +57,11 @@ export class Candidate
 	
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	rating?: number;
 
 	@ApiPropertyOptional({ type: () => Date })

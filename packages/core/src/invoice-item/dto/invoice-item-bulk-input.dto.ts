@@ -8,5 +8,4 @@ export class InvoiceItemBulkInputDTO {
     @ValidateNested({ each: true })
     @Type(() => CreateInvoiceItemDTO)
     list : CreateInvoiceItemDTO[]
-    
 }

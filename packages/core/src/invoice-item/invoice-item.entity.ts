@@ -19,6 +19,7 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('invoice_item')
 export class InvoiceItem
@@ -32,17 +33,26 @@ export class InvoiceItem
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ type: 'numeric' })
+	@Column({
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	price: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ type: 'numeric' })
+	@Column({
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	quantity: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ type: 'numeric' })
+	@Column({
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	totalValue: number;
 
 	@ApiPropertyOptional({ type: () => Boolean })

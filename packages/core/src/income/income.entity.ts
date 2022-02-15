@@ -31,6 +31,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('income')
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
@@ -39,7 +40,10 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({ type: 'numeric' })
+	@Column({
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	amount: number;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })

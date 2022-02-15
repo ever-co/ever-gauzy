@@ -39,6 +39,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('expense')
 export class Expense extends TenantOrganizationBaseEntity implements IExpense {
@@ -47,7 +48,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({ type: 'numeric' })
+	@Column({ type: 'numeric', transformer: new ColumnNumericTransformer() })
 	amount: number;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -98,7 +99,11 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsNumber()
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	rateValue: number;
 
 	@ApiPropertyOptional({ type: () => String })

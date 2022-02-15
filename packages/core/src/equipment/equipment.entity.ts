@@ -29,6 +29,7 @@ import {
 	TenantOrganizationBaseEntity,
 	ImageAsset
 } from '../core/entities/internal';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('equipment')
 export class Equipment
@@ -55,13 +56,21 @@ export class Equipment
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	manufacturedYear: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	initialCost: number;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
@@ -73,7 +82,11 @@ export class Equipment
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	maxSharePeriod: number;
 
 	@ApiProperty({ type: () => Boolean })
