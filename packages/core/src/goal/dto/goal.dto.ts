@@ -1,6 +1,6 @@
 import { IEmployee, IOrganizationTeam } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export abstract class GoalDTO {
 
@@ -26,7 +26,7 @@ export abstract class GoalDTO {
 
     @ApiProperty({ type : () => Number, readOnly : true })
     @IsOptional()
-    @IsString()
+    @IsNumber()
     readonly progress: number;
 
     @ApiProperty({ type : () => Object, readOnly : true })
@@ -58,5 +58,4 @@ export abstract class GoalDTO {
     @IsOptional()
     @IsString()
     readonly leadId: string;
-
 }

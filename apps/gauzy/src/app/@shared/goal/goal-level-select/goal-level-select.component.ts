@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
-import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
+import { OrganizationTeamsService, Store } from '../../../@core';
 
 @Component({
 	selector: 'ga-goal-level-select',
@@ -9,6 +9,7 @@ import { OrganizationTeamsService } from '../../../@core/services/organization-t
 	styleUrls: ['./goal-level-select.component.scss']
 })
 export class GoalLevelSelectComponent {
+
 	@Input() parentFormGroup: FormGroup;
 	@Input() orgId: string;
 	@Input() teams: IOrganizationTeam[] = [];
@@ -23,15 +24,20 @@ export class GoalLevelSelectComponent {
 
 	goalLevelEnum = GoalLevelEnum;
 
-	constructor(private organizationTeamsService: OrganizationTeamsService) {}
+	constructor(
+		private readonly organizationTeamsService: OrganizationTeamsService,
+		private readonly store: Store
+	) {}
 
 	async getTeams() {
-		await this.organizationTeamsService
-			.getAll(['members'], { organizationId: this.orgId })
-			.then((res) => {
-				const { items } = res;
-				this.teams = items;
-			});
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+		this.teams = (
+			await this.organizationTeamsService.getAll(['members'], {
+				organizationId,
+				tenantId
+			})
+		).items;
 	}
 
 	selectEmployee(event, control) {
@@ -39,9 +45,9 @@ export class GoalLevelSelectComponent {
 			this.parentFormGroup.patchValue({ alignedGoalOwner: event });
 		} else {
 			if (control === 'lead' && event !== '') {
-				this.parentFormGroup.patchValue({ lead: event });
+				this.parentFormGroup.patchValue({ leadId: event });
 			} else {
-				this.parentFormGroup.patchValue({ owner: event });
+				this.parentFormGroup.patchValue({ ownerId: event });
 			}
 		}
 	}
