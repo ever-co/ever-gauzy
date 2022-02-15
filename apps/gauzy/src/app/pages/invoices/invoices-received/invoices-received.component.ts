@@ -218,7 +218,7 @@ export class InvoicesReceivedComponent
 					data: selectedItem
 				});
 			}
-			await this.invoicesService.update(this.selectedInvoice.id, {
+			await this.invoicesService.updateEstimate(this.selectedInvoice.id, {
 				isAccepted: true
 			}).then(() => {
 				this.subject$.next(true);
@@ -237,7 +237,7 @@ export class InvoicesReceivedComponent
 					data: selectedItem
 				});
 			}
-			await this.invoicesService.update(this.selectedInvoice.id, {
+			await this.invoicesService.updateEstimate(this.selectedInvoice.id, {
 				isAccepted: false
 			}).then(() => {
 				this.subject$.next(true);
