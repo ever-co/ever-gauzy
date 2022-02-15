@@ -135,9 +135,13 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
-	async create(@Body() entity: CreateInvoiceDTO): Promise<Invoice> {
-		return this.commandBus.execute(new InvoiceCreateCommand(entity));
+	@UsePipes(new ValidationPipe({ transform : true }))
+	async create(
+		@Body() entity: CreateInvoiceDTO
+	): Promise<Invoice> {
+		return this.commandBus.execute(
+			new InvoiceCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update record' })
