@@ -188,6 +188,7 @@ export class Employee
 	@IsNumber()
 	@IsOptional()
 	@Column({
+		nullable: true,
 		type: 'numeric',
 		default: 0,
 		transformer: new ColumnNumericTransformer()
