@@ -36,8 +36,6 @@ import { Router } from '@angular/router';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 
-
-
 export enum RangePeriod {
 	DAY = "DAY",
 	WEEK = "WEEK",
@@ -511,15 +509,15 @@ export class TimeTrackingComponent
 			console.log('Error while redirecting to apps & urls report.', error);
 		}
 	}
-  /**
-   * Listen date event on update
-   * @param event
-   */
-  public onUpdateDate(event: any): void{
-    this.selectedDateRange = {
+	/**
+	 * Listen date event on update
+	 * @param event
+	 */
+	public onUpdateDate(event: any): void{
+		this.selectedDateRange = {
 			startDate: event.startDate,
 			endDate: event.endDate,
 			isCustomDate: false
-    }
-  }
+		}
+	}
 }
