@@ -9,7 +9,9 @@ import {
 	Param,
 	UseGuards,
 	Query,
-	Delete
+	Delete,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
@@ -20,12 +22,13 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import { KeyResultUpdateBulkDeleteCommand } from './commands';
 import { TenantPermissionGuard } from './../shared/guards';
+import { CreateKeyresultUpdateDTO, UpdateKeyresultUpdateDTO } from './dto';
 
 
 @ApiTags('KeyResultsUpdate')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> {
+export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly keyResultUpdateService: KeyResultUpdateService
@@ -44,8 +47,11 @@ export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> 
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/create')
-	async createKeyResult(@Body() entity: IKeyResultUpdate): Promise<any> {
+	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
+	async create(
+		@Body() entity: CreateKeyresultUpdateDTO
+	): Promise<IKeyResultUpdate> {
 		return this.keyResultUpdateService.create(entity);
 	}
 
@@ -83,9 +89,10 @@ export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> 
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes( new ValidationPipe({ transform : true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IKeyResultUpdate
+		@Body() entity: UpdateKeyresultUpdateDTO
 	): Promise<IKeyResultUpdate> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations

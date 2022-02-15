@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
-import { IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/contracts';
+import { IKeyResult, IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import {
@@ -33,10 +33,10 @@ export class KeyResultUpdate
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'keyResultId' })
-	keyResult: KeyResult;
+	keyResult?: IKeyResult;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((keyResult: KeyResultUpdate) => keyResult.keyResult)
+	@RelationId((it: KeyResultUpdate) => it.keyResult)
 	@Column({ nullable: true })
 	keyResultId?: string;
 }
