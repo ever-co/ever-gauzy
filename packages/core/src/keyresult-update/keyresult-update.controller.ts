@@ -28,7 +28,7 @@ import { CreateKeyresultUpdateDTO, UpdateKeyresultUpdateDTO } from './dto';
 @ApiTags('KeyResultsUpdate')
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> {
+export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly keyResultUpdateService: KeyResultUpdateService
@@ -47,9 +47,11 @@ export class KeyResultUpdateController extends CrudController<IKeyResultUpdate> 
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/create')
-	@UsePipes( new ValidationPipe({ transform : true }))
-	async createKeyResult(@Body() entity: CreateKeyresultUpdateDTO): Promise<any> {
+	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
+	async create(
+		@Body() entity: CreateKeyresultUpdateDTO
+	): Promise<IKeyResultUpdate> {
 		return this.keyResultUpdateService.create(entity);
 	}
 

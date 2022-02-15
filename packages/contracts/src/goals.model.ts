@@ -49,11 +49,12 @@ export interface IKeyResult extends IBasePerTenantAndOrganizationEntityModel {
 export interface IKeyResultUpdate
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
-	keyResultId?: string;
 	owner: string;
 	progress: number;
 	update: number;
 	status: string;
+	keyResult?: IKeyResult;
+	keyResultId?: string;
 }
 
 export enum KeyResultNumberUnitsEnum {
