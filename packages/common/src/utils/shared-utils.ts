@@ -125,3 +125,14 @@ export function ucFirst(str: string, force: boolean): string {
 export function removeDuplicates(data: string[]) {
 	return [...new Set(data)];
 }
+
+/**
+ * Check string is null or undefined
+ * From https://github.com/typeorm/typeorm/issues/873#issuecomment-502294597 
+ * 
+ * @param obj 
+ * @returns 
+ */
+export function isNullOrUndefined<T>(string: T | null | undefined): string is null | undefined {
+	return typeof string === "undefined" || string === null
+}
