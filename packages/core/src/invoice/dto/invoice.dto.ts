@@ -1,15 +1,27 @@
-import { CurrenciesEnum, DiscountTaxTypeEnum, IInvoiceEstimateHistory, IOrganization, IOrganizationContact, IPayment, ITag } from "@gauzy/contracts";
+import {
+    CurrenciesEnum,
+    IInvoiceEstimateHistory,
+    InvoiceStatusTypesEnum,
+    IOrganizationContact,
+    IPayment
+} from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNotEmptyObject, IsNumber, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from "class-validator";
+import {
+    IsArray,
+    IsBoolean,
+    IsEnum,
+    IsNotEmpty,
+    IsNumber,
+    IsObject,
+    IsOptional,
+    IsString,
+    ValidateNested
+} from "class-validator";
 import { CreateInvoiceEstimateHistoryDTO } from "invoice-estimate-history/dto";
-import { CreateInvoiceItemDTO } from "invoice-item/dto";
+import { CreateInvoiceItemDTO } from "./../../invoice-item/dto";
 
-export abstract class InvoiceDTO {
-
-    @ApiProperty({ type: () => Date, readOnly: true })
-    @IsNotEmpty()
-    readonly invoiceDate: Date;
+export class InvoiceDTO {
 
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsNotEmpty()
@@ -18,32 +30,31 @@ export abstract class InvoiceDTO {
 
     @ApiProperty({ type: () => Date, readOnly: true })
     @IsNotEmpty()
+    readonly invoiceDate: Date;
+
+    @ApiProperty({ type: () => Date, readOnly: true })
+    @IsNotEmpty()
     readonly dueDate: Date;
+
+    @ApiProperty({ type: () => String, enum: InvoiceStatusTypesEnum, readOnly: true })
+    @IsNotEmpty()
+    @IsEnum(InvoiceStatusTypesEnum)
+    readonly status: InvoiceStatusTypesEnum;
+
+    @ApiPropertyOptional({ type: () => Number, readOnly: true })
+    @IsOptional()
+    @IsNumber()
+    readonly totalValue: number;
 
     @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true })
     @IsNotEmpty()
     @IsEnum(CurrenciesEnum)
     readonly currency: CurrenciesEnum;
 
-    @ApiProperty({ type: () => Number, readOnly: true })
-    @IsOptional()
-    @IsNumber()
-    readonly discountValue: number;
-
     @ApiProperty({ type: () => Boolean, readOnly: true })
     @IsOptional()
     @IsBoolean()
     readonly paid: boolean;
-
-    @ApiProperty({ type: () => Number, readOnly: true })
-    @IsOptional()
-    @IsNumber()
-    readonly tax: number;
-
-    @ApiProperty({ type: () => Number, readOnly: true })
-    @IsOptional()
-    @IsNumber()
-    readonly tax2: number;
 
     @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
@@ -53,7 +64,12 @@ export abstract class InvoiceDTO {
     @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
     @IsString()
-    readonly status: string;
+    readonly organizationContactId: string;
+
+    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @IsOptional()
+    @IsString()
+    readonly organizationContactName: string;
 
     @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
     @IsOptional()
@@ -64,21 +80,6 @@ export abstract class InvoiceDTO {
     @IsOptional()
     @IsBoolean()
     readonly isAccepted: boolean;
-
-    @ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum, readOnly: true })
-    @IsOptional()
-    @IsEnum(DiscountTaxTypeEnum)
-    readonly discountType: DiscountTaxTypeEnum;
-
-    @ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum , readOnly: true})
-    @IsOptional()
-    @IsEnum(DiscountTaxTypeEnum)
-    readonly taxType: DiscountTaxTypeEnum;
-
-    @ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum, readOnly: true })
-    @IsOptional()
-    @IsEnum(DiscountTaxTypeEnum)
-    readonly tax2Type: DiscountTaxTypeEnum;
 
     @ApiPropertyOptional({ type: () => String, readOnly: true })
     @IsOptional()
@@ -105,18 +106,6 @@ export abstract class InvoiceDTO {
     @IsBoolean()
     readonly isArchived: boolean;
 
-    @ApiPropertyOptional({ type: () => Object, readOnly: true })
-    @ValidateIf(o => !o.fromOrganizationId || o.fromOrganization)
-    @IsNotEmptyObject()
-    @IsObject()
-    readonly fromOrganization: IOrganization;
-
-    @ApiProperty({ type: () => String, readOnly: true })
-    @ValidateIf(o => !o.fromOrganization || o.fromOrganizationId)
-    @IsNotEmpty()
-    @IsString()
-    readonly fromOrganizationId: string;
-
     @ApiPropertyOptional({ type: () => Object })
     @IsOptional()
     @IsObject()
@@ -127,15 +116,16 @@ export abstract class InvoiceDTO {
     @IsString()
     readonly toContactId: string;
 
-    @ApiPropertyOptional({ type: () => Object, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => CreateInvoiceItemDTO)
     readonly invoiceItems: CreateInvoiceItemDTO[];
 
-    @ApiPropertyOptional({ type: () => Object, isArray: true, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
     @IsOptional()
+    @IsArray()
     readonly payments: IPayment[];
 
     @ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
@@ -144,9 +134,4 @@ export abstract class InvoiceDTO {
     @ValidateNested({ each: true })
     @Type(() => CreateInvoiceEstimateHistoryDTO)
     readonly historyRecords: IInvoiceEstimateHistory[];
-
-    @ApiProperty({ type: () => Object, isArray: true, readOnly: true })
-    @IsOptional()
-    readonly tags: ITag[];
-
 }

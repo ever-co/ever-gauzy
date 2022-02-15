@@ -496,14 +496,14 @@ export class InvoiceEditComponent
 			}
 
 			await this.invoicesService.update(this.invoice.id, {
-				invoiceNumber: invoiceData.invoiceNumber,
+				invoiceNumber: parseFloat(invoiceData.invoiceNumber),
 				invoiceDate: invoiceData.invoiceDate,
 				dueDate: invoiceData.dueDate,
 				currency: this.currency.value,
-				discountValue: invoiceData.discountValue,
+				discountValue: parseFloat(invoiceData.discountValue),
 				discountType: invoiceData.discountType,
-				tax: invoiceData.tax,
-				tax2: invoiceData.tax2,
+				tax: parseFloat(invoiceData.tax),
+				tax2: parseFloat(invoiceData.tax2),
 				taxType: invoiceData.taxType,
 				tax2Type: invoiceData.tax2Type,
 				terms: invoiceData.terms,
