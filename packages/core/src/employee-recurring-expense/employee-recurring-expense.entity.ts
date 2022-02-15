@@ -16,6 +16,7 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('employee_recurring_expense')
 export class EmployeeRecurringExpense
@@ -89,7 +90,10 @@ export class EmployeeRecurringExpense
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
-	@Column({ type: 'numeric' })
+	@Column({
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	value: number;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })

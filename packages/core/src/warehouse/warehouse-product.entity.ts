@@ -21,6 +21,7 @@ import {
 	Warehouse,
 	WarehouseProductVariant
 } from '../core/entities/internal';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('warehouse_product')
 export class WarehouseProduct
@@ -28,7 +29,12 @@ export class WarehouseProduct
 	implements IWarehouseProduct {
 
 	@ApiProperty({ name: 'quantity' })
-	@Column({ nullable: true, type: 'numeric', default: 0 })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		default: 0,
+		transformer: new ColumnNumericTransformer()
+	})
 	quantity: number;
 
 	/*

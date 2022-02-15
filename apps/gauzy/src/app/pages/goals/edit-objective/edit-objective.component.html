@@ -14,7 +14,7 @@
 	</nb-card-header>
 
 	<nb-card-body>
-		<form [formGroup]="objectiveForm">
+		<form [formGroup]="form">
 			<div class="row">
 				<div
 					class="col-md-7"
@@ -30,26 +30,19 @@
 						nbInput
 						fullWidth
 						formControlName="name"
-						placeholder="{{
-							'GOALS_PAGE.FORM.PLACEHOLDERS.NAME' | translate
-						}}"
+						[placeholder]="'GOALS_PAGE.FORM.PLACEHOLDERS.NAME' | translate"
 					/>
 				</div>
 				<div class="mt-3 col-md-5 position-relative helper-text">
 					<p
 						*ngIf="helperText == ''"
 						class="mt-3 position-absolute"
-						innerHtml="{{
-							'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_GENERAL'
-								| translate
-						}}"
+						[innerHtml]="'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_GENERAL' | translate"
 					></p>
 					<div
 						*ngIf="helperText == 'objective-title'"
 						class="mt-3 position-absolute"
-						innerHtml="{{
-							'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_TITLE' | translate
-						}}"
+						[innerHtml]="'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_TITLE' | translate"
 					></div>
 				</div>
 			</div>
@@ -68,10 +61,7 @@
 						nbInput
 						fullWidth
 						formControlName="description"
-						placeholder="{{
-							'GOALS_PAGE.FORM.PLACEHOLDERS.DESCRIPTION'
-								| translate
-						}}"
+						[placeholder]="'GOALS_PAGE.FORM.PLACEHOLDERS.DESCRIPTION' | translate"
 					></textarea>
 				</div>
 				<div class="col-md-5 mt-3 position-relative helper-text">
@@ -90,7 +80,7 @@
 			</div>
 
 			<ga-goal-level-select
-				[parentFormGroup]="objectiveForm"
+				[parentFormGroup]="form"
 				[orgId]="orgId"
 				[teams]="teams"
 				[hideOrg]="hideOrg"
@@ -164,12 +154,12 @@
 		<button
 			nbButton
 			[disabled]="
-				!objectiveForm.valid || !hideOrg
-					? false
-					: this.objectiveForm.value.level ===
-					  goalLevelEnum.ORGANIZATION
+				form.invalid || hideOrg
 					? true
-					: false
+					: this.form.value.level ===
+					  goalLevelEnum.ORGANIZATION
+					? false
+					: true
 			"
 			status="success"
 			(click)="saveObjective()"

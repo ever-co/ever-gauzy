@@ -16,12 +16,8 @@
 			<nb-select
 				id="objective-level"
 				formControlName="level"
-				placeholder="{{
-					'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL' | translate
-				}}"
-				(selectedChange)="
-					$event === goalLevelEnum.TEAM ? getTeams() : null
-				"
+				[placeholder]="'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL' | translate"
+				(selectedChange)="$event === goalLevelEnum.TEAM ? getTeams() : null"
 				fullWidth
 			>
 				<nb-option
@@ -101,7 +97,7 @@
 			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
 			<nb-select
-				formControlName="owner"
+				formControlName="ownerId"
 				fullWidth
 				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
 			>
@@ -124,7 +120,7 @@
 		>
 			<nb-select
 				fullWidth
-				formControlName="owner"
+				formControlName="ownerId"
 				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
 				[(selected)]="orgId"
 				(selectedChange)="selectEmployee($event, 'owner')"
@@ -151,7 +147,7 @@
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
-				[selectedEmployeeIds]="parentFormGroup.value.lead"
+				[selectedEmployeeIds]="parentFormGroup.value.leadId"
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'lead')"
 				id="objective-lead"

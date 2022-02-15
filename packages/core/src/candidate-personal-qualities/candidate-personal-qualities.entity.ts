@@ -11,6 +11,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IsOptional, IsString } from 'class-validator';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('candidate_personal_quality')
 export class CandidatePersonalQualities
@@ -21,7 +22,11 @@ export class CandidatePersonalQualities
 	name: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	rating?: number;
 
 	/*

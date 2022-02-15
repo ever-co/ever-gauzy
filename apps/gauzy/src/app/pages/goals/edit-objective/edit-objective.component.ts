@@ -11,25 +11,28 @@ import {
 	IOrganizationTeam,
 	IGoalGeneralSetting,
 	GoalOwnershipEnum,
-	IOrganization
+	IOrganization,
+	IUser
 } from '@gauzy/contracts';
-import { EmployeesService } from '../../../@core/services';
-import { takeUntil } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import {
+	GoalSettingsService,
+	OrganizationTeamsService,
+	Store
+} from '../../../@core/services';
+import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import { EditTimeFrameComponent } from '../../goal-settings/edit-time-frame/edit-time-frame.component';
-import { Store } from '../../../@core/services/store.service';
-import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
 import { isFuture } from 'date-fns';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-objective',
+	selector: 'ga-objective-mutation',
 	templateUrl: './edit-objective.component.html',
 	styleUrls: ['./edit-objective.component.scss']
 })
 export class EditObjectiveComponent implements OnInit, OnDestroy {
-	objectiveForm: FormGroup;
-	employees: IEmployee[];
+	
+	employees: IEmployee[] = [];
 	data: IGoal;
 	timeFrames: IGoalTimeFrame[] = [];
 	orgId: string;
@@ -42,94 +45,113 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	settings: IGoalGeneralSetting;
 	teams: IOrganizationTeam[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
-	private _ngDestroy$ = new Subject<void>();
-	organization: IOrganization;
-	constructor(
-		private dialogRef: NbDialogRef<EditObjectiveComponent>,
-		private fb: FormBuilder,
-		private employeeService: EmployeesService,
-		private goalSettingService: GoalSettingsService,
-		private dialogService: NbDialogService,
-		private store: Store,
-		private organizationTeamsService: OrganizationTeamsService
-	) {}
+	public organization: IOrganization;
 
-	async ngOnInit() {
-		this.organization = this.store.selectedOrganization;
-		this.objectiveForm = this.fb.group({
+	/*
+	* Objective Mutation Form
+	*/
+	public form: FormGroup = EditObjectiveComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			owner: [null, Validators.required],
-			lead: [null],
+			ownerId: [null, Validators.required],
+			leadId: [null],
 			level: [GoalLevelEnum.ORGANIZATION, Validators.required],
 			deadline: ['', Validators.required]
 		});
+	}
+
+	constructor(
+		private readonly dialogRef: NbDialogRef<EditObjectiveComponent>,
+		private readonly fb: FormBuilder,
+		private readonly goalSettingService: GoalSettingsService,
+		private readonly dialogService: NbDialogService,
+		private readonly store: Store,
+		private readonly organizationTeamsService: OrganizationTeamsService
+	) {}
+
+	ngOnInit() {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				debounceTime(200),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.getTimeFrames()),
+				tap(() => this.patchValueAndValidity()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => this.selectorsVisibility(user)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	selectorsVisibility(user: IUser) {
+		const roles = [
+			RolesEnum.SUPER_ADMIN,
+			RolesEnum.MANAGER,
+			RolesEnum.ADMIN
+		];
+		this.hideOrg = !roles.includes(user.role.name as RolesEnum);
+		this.hideEmployee = this.settings && this.settings.canOwnObjectives === GoalOwnershipEnum.TEAMS;
+		this.hideTeam = this.settings && this.settings.canOwnObjectives === GoalOwnershipEnum.EMPLOYEES;
+	}
+
+	patchValueAndValidity() {
 		if (!!this.data) {
-			this.objectiveForm.patchValue(this.data);
-			this.objectiveForm.patchValue({
-				lead: !!this.data.lead ? this.data.lead.id : null,
-				owner: !!this.data.ownerEmployee
+			this.form.patchValue(this.data);
+			this.form.patchValue({
+				leadId: !!this.data.lead ? this.data.lead.id : null,
+				ownerId: !!this.data.ownerEmployee
 					? this.data.ownerEmployee.id
 					: !!this.data.ownerTeam
-					? this.data.ownerTeam.id
-					: this.data.organization.id
+						? this.data.ownerTeam.id
+						: this.data.organization.id
 			});
 			if (this.data.level === GoalLevelEnum.TEAM) {
 				this.getTeams();
 			}
 		}
-		this.getTimeFrames();
-		const { id: organizationId, tenantId } = this.organization;
-		this.employeeService
-			.getAll(['user'], { organizationId, tenantId })
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
-
-		this.objectiveForm.controls['level'].updateValueAndValidity();
-		if (
-			this.store.user.role.name !== RolesEnum.SUPER_ADMIN &&
-			this.store.user.role.name !== RolesEnum.MANAGER &&
-			this.store.user.role.name !== RolesEnum.ADMIN
-		) {
-			this.hideOrg = true;
-		}
-		this.hideEmployee =
-			this.settings && this.settings.canOwnObjectives === GoalOwnershipEnum.TEAMS;
-		this.hideTeam =
-			this.settings && this.settings.canOwnObjectives === GoalOwnershipEnum.EMPLOYEES;
+		this.form.controls['level'].updateValueAndValidity();
 	}
 
 	async getTeams() {
-		const { id: organizationId, tenantId } = this.organization;
-		await this.organizationTeamsService
-			.getAll(['members'], { organizationId, tenantId })
-			.then((res) => {
-				const { items } = res;
-				this.teams = items;
-			});
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		this.teams = (
+			await this.organizationTeamsService.getAll(['members'], {
+				organizationId,
+				tenantId
+			})
+		).items;
 	}
 
 	async getTimeFrames() {
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const findObj = {
 			organization: {
 				id: organizationId
 			},
 			tenantId
 		};
-		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
-			if (res) {
+		await this.goalSettingService.getAllTimeFrames(findObj).then(({ items }) => {
+			if (items) {
 				let timeFrames = [];
-				timeFrames = res.items.filter(
-					(timeframe) =>
-						timeframe.status === this.timeFrameStatusEnum.ACTIVE &&
-						isFuture(new Date(timeframe.endDate))
+				timeFrames = items.filter(
+					(timeFrame) =>
+						timeFrame.status === TimeFrameStatusEnum.ACTIVE &&
+						isFuture(new Date(timeFrame.endDate))
 				);
 				if (!!this.data) {
 					timeFrames.push(
-						res.items.find(
+						items.find(
 							(timeFrame) => this.data.deadline === timeFrame.name
 						)
 					);
@@ -156,17 +178,18 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		const { id: organizationId, tenantId } = this.organization;
 		const objectiveData = {
 			...{ organizationId, tenantId },
-			...this.objectiveForm.value
+			...this.form.value
 		};
 		objectiveData[
-			this.objectiveForm.value.level === GoalLevelEnum.EMPLOYEE
+			this.form.value.level === GoalLevelEnum.EMPLOYEE
 				? 'ownerEmployee'
-				: this.objectiveForm.value.level === GoalLevelEnum.TEAM
+				: this.form.value.level === GoalLevelEnum.TEAM
 				? 'ownerTeam'
 				: 'organization'
-		] = this.objectiveForm.value.owner;
+		] = this.form.value.owner;
 		delete objectiveData.owner;
 		delete objectiveData.organization;
+   	 	if(this.form.invalid) return;
 		this.closeDialog(objectiveData);
 	}
 
@@ -174,8 +197,5 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		this.dialogRef.close(data);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() { }
 }

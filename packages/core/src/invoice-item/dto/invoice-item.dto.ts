@@ -35,7 +35,7 @@ export abstract class InvoiceItemDTO extends TenantOrganizationBaseDTO {
     readonly taskId: string;
 
     @ApiProperty({ type: () => String, readOnly: true })
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     readonly employeeId: string;
 
@@ -63,5 +63,4 @@ export abstract class InvoiceItemDTO extends TenantOrganizationBaseDTO {
     @IsOptional()
     @IsBoolean()
     readonly applyDiscount: boolean;
-
 } 

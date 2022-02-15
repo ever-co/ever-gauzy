@@ -25,6 +25,7 @@ import {
 	CandidateInterviewers,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { ColumnNumericTransformer } from './../shared/pipes';
 
 @Entity('candidate_feedback')
 export class CandidateFeedback
@@ -35,7 +36,11 @@ export class CandidateFeedback
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformer()
+	})
 	rating: number;
 
 	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })

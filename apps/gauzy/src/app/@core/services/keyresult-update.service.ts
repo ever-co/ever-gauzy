@@ -19,7 +19,7 @@ export class KeyResultUpdateService {
 
 	createUpdate(keyResultUpdate): Promise<IKeyResultUpdate> {
 		return firstValueFrom(
-			this._http.post<IKeyResultUpdate>(`${this.API_URL}/create`, keyResultUpdate)
+			this._http.post<IKeyResultUpdate>(`${this.API_URL}`, keyResultUpdate)
 			.pipe(
 				catchError(
 					(error) => this.errorHandler(error)

@@ -38,7 +38,7 @@
 				</nb-accordion>
 			</nb-step>
 			<nb-step label="Additional Details">
-				<form [formGroup]="goalDetailsForm">
+				<form [formGroup]="form">
 					<div style="padding: 0 3vw">
 						<label for="objective-deadline" class="label mt-3">
 							{{ 'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate }}
@@ -76,7 +76,7 @@
 						<ga-goal-level-select
 							[orgId]="orgId"
 							[orgName]="orgName"
-							[parentFormGroup]="goalDetailsForm"
+							[parentFormGroup]="form"
 							[enableHelperText]="false"
 							[employees]="employees"
 						>
