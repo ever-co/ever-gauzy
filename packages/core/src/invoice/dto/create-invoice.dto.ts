@@ -1,24 +1,10 @@
-import { IInvoiceCreateInput, InvoiceTypeEnum, IOrganization, ITag } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/mapped-types";
+import { IInvoiceCreateInput, IOrganization } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsNotEmpty, IsNotEmptyObject, IsNumber, IsObject, IsOptional, IsString, ValidateIf } from "class-validator";
+import { IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString, ValidateIf } from "class-validator";
 import { InvoiceDTO } from "./invoice.dto";
-import { TaxInvoiceDTO } from "./taxes.dto";
 
-export class CreateInvoiceDTO extends IntersectionType(
-    InvoiceDTO,
-    TaxInvoiceDTO
-) implements IInvoiceCreateInput {
-    @ApiProperty({ type: () => Number, readOnly: true })
-    @IsOptional()
-    @IsNumber()
-    readonly discountValue: number;
-
-    @ApiProperty({ type: () => Number, readOnly: true })
-    @IsNotEmpty()
-    @IsNumber()
-    readonly invoiceNumber: number;
-
+export class CreateInvoiceDTO extends InvoiceDTO implements IInvoiceCreateInput {
+    
     @ApiPropertyOptional({ type: () => Object, readOnly: true })
     @ValidateIf(o => !o.fromOrganizationId || o.fromOrganization)
     @IsNotEmptyObject()
@@ -36,12 +22,4 @@ export class CreateInvoiceDTO extends IntersectionType(
     @IsString()
     readonly sentTo: string;
 
-    @ApiPropertyOptional({ type: () => String, enum: InvoiceTypeEnum, readOnly: true })
-    @IsOptional()
-    @IsEnum(InvoiceTypeEnum)
-    readonly invoiceType: InvoiceTypeEnum;
-
-    @ApiProperty({ type: () => Object, isArray: true, readOnly: true })
-    @IsOptional()
-    readonly tags: ITag[];
 }

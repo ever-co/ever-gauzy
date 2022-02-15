@@ -1,11 +1,12 @@
-import { CurrenciesEnum, DiscountTaxTypeEnum, IInvoiceEstimateHistory, InvoiceStatusTypesEnum, IOrganizationContact, IPayment, ITag } from "@gauzy/contracts";
+import { CurrenciesEnum, DiscountTaxTypeEnum, IInvoiceEstimateHistory, InvoiceStatusTypesEnum, InvoiceTypeEnum, IOrganizationContact, IPayment, ITag } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { CreateInvoiceEstimateHistoryDTO } from "invoice-estimate-history/dto";
 import { CreateInvoiceItemDTO } from "./../../invoice-item/dto";
+import { TaxInvoiceDTO } from "./taxes.dto";
 
-export class InvoiceDTO {
+export class InvoiceDTO extends TaxInvoiceDTO {
 
     @ApiProperty({ type: () => Date, readOnly: true })
     @IsNotEmpty()
@@ -19,6 +20,16 @@ export class InvoiceDTO {
     @IsNotEmpty()
     @IsEnum(InvoiceStatusTypesEnum)
     readonly status: InvoiceStatusTypesEnum;
+
+    @ApiProperty({ type: () => Number, readOnly: true })
+    @IsOptional()
+    @IsNumber()
+    readonly discountValue: number;
+
+    @ApiProperty({ type: () => Number, readOnly: true })
+    @IsNotEmpty()
+    @IsNumber()
+    readonly invoiceNumber: number;
 
     @ApiPropertyOptional({ type: () => Number, readOnly: true })
     @IsOptional()
@@ -59,6 +70,11 @@ export class InvoiceDTO {
     @IsOptional()
     @IsBoolean()
     readonly isAccepted: boolean;
+
+    @ApiPropertyOptional({ type: () => String, enum: InvoiceTypeEnum, readOnly: true })
+    @IsOptional()
+    @IsEnum(InvoiceTypeEnum)
+    readonly invoiceType: InvoiceTypeEnum;
 
     @ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum, readOnly: true })
     @IsOptional()
