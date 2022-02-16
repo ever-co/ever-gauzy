@@ -19,7 +19,7 @@ import { debounceTime, filter, take, tap } from 'rxjs/operators';
 import { EmployeesService, Store } from '../../../@core/services';
 import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';
-import { Next, Previous } from './arrow/strategies/concrete';
+import { Future, Next, Previous } from './arrow/strategies/concrete';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -214,6 +214,10 @@ export class GauzyRangePickerComponent
 					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
 				);
         this.maxDate = this.futureDateAllowed ? null : moment();
+        if (this.futureDateAllowed) {
+          this.arrow.setStrategy = new Future();
+          this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+        }
 			});
 		this.triggerFilterChange();
 	}

@@ -8,10 +8,7 @@ import {
 	NbBadgeModule,
 	NbToggleModule,
 	NbIconModule,
-	NbButtonModule,
-	NbCalendarRangeModule,
-	NbInputModule,
-	NbDatepickerModule
+	NbButtonModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'angular2-chartjs';
@@ -24,6 +21,7 @@ import { GalleryModule } from '../../../@shared/gallery/gallery.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
+import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-picker/gauzy-range-picker.module';
 
 @NgModule({
 	imports: [
@@ -46,9 +44,7 @@ import { DateRangeTitleModule } from '../../../@shared/components/date-range-tit
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		FiltersModule,
-		NbCalendarRangeModule,
-		NbInputModule,
-		NbDatepickerModule
+    GauzyRangePickerModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],
