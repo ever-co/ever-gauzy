@@ -72,8 +72,12 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiPropertyOptional({ type: () => String, enum: PaymentMethodEnum })
 	@IsEnum(PaymentMethodEnum)
 	@IsOptional()
-	@Column({ nullable: true })
-	paymentMethod?: string;
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		enum: PaymentMethodEnum
+	})
+	paymentMethod?: PaymentMethodEnum;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()

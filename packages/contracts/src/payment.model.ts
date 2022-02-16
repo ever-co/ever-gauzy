@@ -20,7 +20,7 @@ export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
 	amount?: number;
 	currency?: string;
 	overdue?: boolean;
-	paymentMethod?: string;
+	paymentMethod?: PaymentMethodEnum;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: string;
 	project?: IOrganizationProject;
