@@ -5,7 +5,7 @@ import { RelationalTagDTO } from "tags/dto";
 export class CreateOrganizationPositionDTO extends RelationalTagDTO {
 
     @ApiProperty({ type: () => String, readOnly: true })
-	@IsString()
+    @IsString()
     @IsNotEmpty()
     readonly name: string;
 }

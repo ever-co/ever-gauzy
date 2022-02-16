@@ -7,7 +7,9 @@ import {
 	Put,
 	Param,
 	Body,
-	BadRequestException
+	BadRequestException,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationPosition, IPagination } from '@gauzy/contracts';
@@ -16,6 +18,7 @@ import { OrganizationPositionService } from './organization-position.service';
 import { OrganizationPosition } from './organization-position.entity';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateOrganizationPositionDTO } from './dto';
 
 @ApiTags('OrganizationPositions')
 @UseGuards(TenantPermissionGuard)
@@ -64,9 +67,10 @@ export class OrganizationPositionController extends CrudController<OrganizationP
 	 * @returns 
 	 */
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: OrganizationPosition
+		@Body() body: CreateOrganizationPositionDTO
 	): Promise<IOrganizationPosition> {
 		try {
 			return this.organizationPositionService.create({
