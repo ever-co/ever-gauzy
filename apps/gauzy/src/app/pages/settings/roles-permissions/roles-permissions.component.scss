@@ -10,7 +10,7 @@
 .permission-items-col {
 	nb-toggle {
 		display: flex;
-    flex-direction: column;
+    	flex-direction: column;
 		::ng-deep .toggle-label {
 			display: flex;
 			justify-content: space-between;
