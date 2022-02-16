@@ -433,7 +433,7 @@ export class EmployeeController extends CrudController<Employee> {
 	}
 
 	/**
-	 * Update employee own profile by themsleves
+	 * Update employee own profile by themselves
 	 * 
 	 * @param id 
 	 * @param entity 

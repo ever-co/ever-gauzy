@@ -149,8 +149,10 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 
 	async submitForm() {
 		if (this.form.valid) {
+			const { id: organizationId } = this.organization;
 			this.employeeStore.employeeForm = {
-				...this.form.value
+				...this.form.getRawValue(),
+				organizationId
 			};
 		}
 	}

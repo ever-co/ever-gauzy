@@ -250,13 +250,13 @@ export class RolesPermissionsComponent
 	 */
 	getAdministrationPermissions(): PermissionsEnum[] {
 		// removed permissions for all users in DEMO mode
-		const deniedPermisisons = [
+		const deniedPermissions = [
 			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 			PermissionsEnum.ACCESS_DELETE_ALL_DATA
 		];
 
 		return this.permissionGroups.ADMINISTRATION
-					.filter((permission) => environment.DEMO ? !deniedPermisisons.includes(permission) : true)
+			.filter((permission) => environment.DEMO ? !deniedPermissions.includes(permission) : true)
 	}
 
 	/**

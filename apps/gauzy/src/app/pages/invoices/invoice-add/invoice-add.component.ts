@@ -20,7 +20,7 @@ import {
 	IProductTranslatable
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, isEmpty } from '@gauzy/common-angular';
+import { compareDate, isEmpty, isNotEmpty } from '@gauzy/common-angular';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
@@ -57,7 +57,7 @@ import {
 export class InvoiceAddComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-		
+
 	settingsSmartTable: object;
 	loading: boolean;
 	form: FormGroup;
@@ -735,8 +735,8 @@ export class InvoiceAddComponent
 
 	/**
 	 * Load employees from multiple selected employees
-	 * 
-	 * @param employees 
+	 *
+	 * @param employees
 	 */
 	public onLoadEmployees(employees: IEmployee[]) {
 		this.employees = employees;
@@ -839,7 +839,7 @@ export class InvoiceAddComponent
 
 		switch (this.selectedInvoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-				if (this.selectedEmployeeIds.length) {
+				if (isNotEmpty(this.selectedEmployeeIds)) {
 					for (const employeeId of this.selectedEmployeeIds) {
 						const employee = this.employees.find(
 							(employee) => employee.id === employeeId
@@ -860,7 +860,7 @@ export class InvoiceAddComponent
 				}
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
-				if (this.selectedProjects.length) {
+				if (isNotEmpty(this.selectedProjects)) {
 					for (const project of this.selectedProjects) {
 						const data = {
 							description: 'Desc',
@@ -878,7 +878,7 @@ export class InvoiceAddComponent
 				}
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
-				if (this.selectedTasks.length) {
+				if (isNotEmpty(this.selectedTasks)) {
 					for (const task of this.selectedTasks) {
 						const data = {
 							description: 'Desc',
@@ -896,7 +896,7 @@ export class InvoiceAddComponent
 				}
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
-				if (this.selectedProducts.length) {
+				if (isNotEmpty(this.selectedProducts)) {
 					for (const product of this.selectedProducts) {
 						const data = {
 							description: 'Desc',
@@ -914,7 +914,7 @@ export class InvoiceAddComponent
 				}
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:
-				if (this.selectedExpenses.length) {
+				if (isNotEmpty(this.selectedExpenses)) {
 					for (const expense of this.selectedExpenses) {
 						const data = {
 							description: 'Desc',
@@ -935,7 +935,7 @@ export class InvoiceAddComponent
 				break;
 		}
 
-		if (fakeData.length) {
+		if (isNotEmpty(fakeData)) {
 			let subtotal = 0;
 			for (const data of fakeData) {
 				let itemTotal = 0;
