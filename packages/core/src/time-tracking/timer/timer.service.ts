@@ -120,7 +120,6 @@ export class TimerService {
 
 		const { organizationId, id: employeeId } = employee;
 		const lastLog = await this.getLastRunningLog();
-
 		if (lastLog) {
 			/**
 			 * If you want to start timer, but employee timer is already started.
