@@ -53,7 +53,9 @@ export const createDefaultPayment = async (
 			});
 			payment.note = faker.name.jobDescriptor();
 			payment.currency = organization.currency || env.defaultCurrency;
-			payment.paymentMethod = faker.random.arrayElement(Object.keys(PaymentMethodEnum));
+			payment.paymentMethod = faker.random.arrayElement(
+				Object.keys(PaymentMethodEnum)
+			) as PaymentMethodEnum;
 			payment.overdue = faker.datatype.boolean();
 			payment.organization = organization;
 			payment.tenant = tenant;
@@ -136,7 +138,7 @@ export const createRandomPayment = async (
 				payment.currency = organization.currency || env.defaultCurrency;
 				payment.paymentMethod = faker.random.arrayElement(
 					Object.keys(PaymentMethodEnum)
-				);
+				) as PaymentMethodEnum;
 				payment.overdue = faker.datatype.boolean();
 				payment.organization = organization;
 				payment.tenant = tenant;
