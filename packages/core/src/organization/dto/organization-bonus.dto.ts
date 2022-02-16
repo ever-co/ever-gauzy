@@ -1,18 +1,17 @@
 import { BonusTypeEnum } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsEnum, IsNumber, Min, Max } from "class-validator";
-import { OrganizationSettingDTO } from "./organization-setting.dto";
 
-export abstract class OrganizationBounsDTO extends OrganizationSettingDTO {
+export class OrganizationBounsDTO {
 
-    @ApiProperty({ type: () => Number })
+    @ApiProperty({ type: () => Number, readOnly: true })
     @IsOptional()
 	@IsNumber()
 	@Min(0)
 	@Max(100)
 	readonly bonusPercentage: number;
 
-    @ApiProperty({ type: () => String, enum: BonusTypeEnum })
+    @ApiProperty({ type: () => String, enum: BonusTypeEnum, readOnly: true })
 	@IsOptional()
 	@IsEnum(BonusTypeEnum)
 	readonly bonusType: BonusTypeEnum;

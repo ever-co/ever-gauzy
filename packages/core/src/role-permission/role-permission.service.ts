@@ -34,7 +34,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	}
 
 	/**
-	 * GET all roler-permissions using API filter
+	 * GET all role-permissions using API filter
 	 * 
 	 * @param filter 
 	 * @returns 
@@ -55,17 +55,17 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		});
 
 		/**
+		 * If, SUPER_ADMIN users try to retrieve all role-permissions allow them.
+		 */
+		if (role.name === RolesEnum.SUPER_ADMIN) {
+			return await this.findAll(filter);
+		}
+		/**
 		 * Only SUPER_ADMIN/ADMIN can have `PermissionsEnum.CHANGE_ROLES_PERMISSIONS` permission
 		 * SUPER_ADMIN can retrieve all role-permissions for assign TENANT.
-		 * ADMIN can retrieve role-permissions for lower roles (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) & themself (ADMIN)
+		 * ADMIN can retrieve role-permissions for lower roles (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) & them self (ADMIN)
 		 */
 		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)) {
-			/**
-			 * If, SUPER_ADMIN users try to retrieve all role-permissions allow them.
-			 */
-			if (role.name === RolesEnum.SUPER_ADMIN) {
-				return await this.findAll(filter);
-			}
 			/**
 			 * Retrieve all role-permissions except "SUPER_ADMIN" role
 			 */
@@ -78,7 +78,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			})).items;
 			if (!filter.where) {
 				/**
-				 * GET all role-permissions for (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) roles themself (ADMIN), if specific role filter not used in API.
+				 * GET all role-permissions for (DATA_ENTRY, EMPLOYEE, CANDIDATE, MANAGER, VIEWER) roles them self (ADMIN), if specific role filter not used in API.
 				 * 
 				 */
 				filter['where'] = {
@@ -88,7 +88,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			} else if(filter.where && filter.where['roleId']) {
 				/**
 				 * If, ADMIN try to retrieve "SUPER_ADMIN" role-permissions via API filter, not allow them.
-				 * Retrieve current user role (ADMIN) all role-permissons.
+				 * Retrieve current user role (ADMIN) all role-permissions.
 				 */
 				if (!pluck(roles, 'id').includes(filter.where['roleId'])) {
 					filter['where'] = {
@@ -282,7 +282,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				 */
 				 if (wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
 					throw new NotAcceptableException(
-						'You can not delete SUPER_ADMINpermisson, please ask your SUPER_ADMIN to give you more permissions'
+						'You can not delete SUPER_ADMIN permission, please ask your SUPER_ADMIN to give you more permissions'
 					);
 				}
 
@@ -379,18 +379,18 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			if (isImporting && sourceId) {
 				const { permission, role: name } = item;
 				const role = roles.find((role: IRole) => role.name === name);
-				const destinantion = await this.rolePermissionRepository.findOne({
+				const destination = await this.rolePermissionRepository.findOne({
 					tenantId: RequestContext.currentTenantId(), 
 					permission,
 					role
 				});
-				if (destinantion) {
+				if (destination) {
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
 								entityType: getManager().getRepository(RolePermission).metadata.tableName,
 								sourceId,
-								destinationId: destinantion.id,
+								destinationId: destination.id,
 								tenantId: RequestContext.currentTenantId()
 							})
 						)
