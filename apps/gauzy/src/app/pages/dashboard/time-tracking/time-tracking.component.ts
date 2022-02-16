@@ -30,11 +30,10 @@ import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
-import { Store } from '../../../@core/services';
+import { EmployeesService, Store } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { Router } from '@angular/router';
-import { EmployeesService } from '../../../@core/services/employees.service';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 
 export enum RangePeriod {
@@ -208,15 +207,16 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
 		const timeSlotRequest: IGetTimeSlotStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(this.selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(this.selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
 		};
 
 		this.timeSlotLoading = true;
@@ -514,11 +514,11 @@ export class TimeTrackingComponent
 	 * Listen date event on update
 	 * @param event
 	 */
-	public onUpdateDate(event: any): void{
+	public onUpdateDate(event: any): void {
 		this.selectedDateRange = {
 			startDate: event.startDate,
 			endDate: event.endDate,
 			isCustomDate: false
-		}
+		} as ISelectedDateRange
 	}
 }

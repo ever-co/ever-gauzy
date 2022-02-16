@@ -19,8 +19,7 @@ import { debounceTime, filter, take, tap } from 'rxjs/operators';
 import { EmployeesService, Store } from '../../../@core/services';
 import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';
-import { Next, Previous } from './arrow/strategies/concrete';
-import { Future } from './arrow/strategies/concrete/future.strategy';
+import { Future, Next, Previous } from './arrow/strategies/concrete';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
