@@ -23,8 +23,9 @@ export abstract class PaymentDTO {
     @IsString()
     readonly note: string;
 
-    @ApiProperty({ type: () => String, enum: PaymentMethodEnum })
+    @ApiProperty({ type: () => String, enum: PaymentMethodEnum, readOnly: true })
     @IsEnum(PaymentMethodEnum)
+    @IsNotEmpty()
     @IsString()
     readonly paymentMethod: PaymentMethodEnum;
 
