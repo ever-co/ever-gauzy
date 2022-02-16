@@ -29,6 +29,7 @@ export function createInitialTimerState(): TimerState {
 		organizationContactId: null,
 		description: '',
 		logType: TimeLogType.TRACKED,
+		source: TimeLogSourceEnum.BROWSER,
 		tags: []
 	};
 	try {
@@ -60,7 +61,7 @@ export class TimerStore extends Store<TimerState> {
 
 @Injectable({ providedIn: 'root' })
 export class TimerQuery extends Query<TimerState> {
-	constructor(protected store: TimerStore) {
+	constructor(protected readonly store: TimerStore) {
 		super(store);
 	}
 }
@@ -119,8 +120,7 @@ export class TimeTrackerService implements OnDestroy {
 		await this.getTimerStatus(tenantId)
 			.then((status: ITimerStatus) => {
 				this.duration = status.duration;
-				
-				if (status.lastLog && !status.lastLog.stoppedAt) {
+				if (status.lastLog && status.lastLog.isRunning) {
 					this.currentSessionDuration = moment().diff(
 						toLocal(status.lastLog.startedAt),
 						'seconds'
@@ -129,7 +129,7 @@ export class TimeTrackerService implements OnDestroy {
 					this.currentSessionDuration = 0;
 				}
 
-				// On refresh/delete timelog, we need to clear interval to prevent duplicate interval
+				// On refresh/delete TimeLog, we need to clear interval to prevent duplicate interval
 				this.turnOffTimer();
 				if (status.running) {
 					this.turnOnTimer();

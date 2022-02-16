@@ -169,11 +169,6 @@ export class TimerService {
 		}
 
 		const stoppedAt = moment.utc().toDate();
-		console.log(
-			stoppedAt,
-			moment.utc(lastLog.startedAt).toDate(),
-			moment.utc(lastLog.startedAt).isSame(stoppedAt)
-		)
 		if (moment.utc(lastLog.startedAt).isSame(stoppedAt)) {
 			await this.timeLogRepository.delete(lastLog.id);
 			return;

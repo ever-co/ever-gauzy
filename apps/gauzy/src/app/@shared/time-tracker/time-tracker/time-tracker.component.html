@@ -6,7 +6,7 @@
 				? 'background-basic-color-1'
 				: 'background-basic-color-2'
 		"
-    [style.transform]="'matrix(1, 0, 0, 1,'+this.position.x+', '+this.position.y+')'"
+    	[style.transform]="'matrix(1, 0, 0, 1,'+this.position.x+', '+this.position.y+')'"
 		ngxDraggableDom="true"
 		(stopped)="draggablePosition($event)"
 	>
@@ -47,9 +47,9 @@
 								</button>
 							</div>
 							<div class="time-count">
-								<span class="current-session">{{
-									currentSessionTime
-								}}</span>
+								<span class="current-session">
+									{{ currentSessionTime }}
+								</span>
 								<span class="today-time mt-2">
 									{{ 'TIMER_TRACKER.TODAY' | translate }}:
 									{{ todaySessionTime }}

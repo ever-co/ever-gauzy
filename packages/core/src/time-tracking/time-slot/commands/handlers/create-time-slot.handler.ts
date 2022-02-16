@@ -95,6 +95,7 @@ export class CreateTimeSlotHandler
 			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
 			timeSlot.tenantId = tenantId;
 			timeSlot.organizationId = organizationId;
+			console.log('Omit New TimeSlot:', timeSlot);
 		}
 
 		if (input.timeLogId) {
@@ -149,6 +150,7 @@ export class CreateTimeSlotHandler
 			);
 		}
 
+		console.log('TimeSlot Before Create:', timeSlot);
 		/**
 		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
 		 */
@@ -181,6 +183,7 @@ export class CreateTimeSlotHandler
 			createdTimeSlot = timeSlot;
 		}
 
+		console.log('Created Time Slot:', { timeSlot: createdTimeSlot });
 		return await this.timeSlotRepository.findOne(createdTimeSlot.id, {
 			relations: ['timeLogs', 'screenshots']
 		});
