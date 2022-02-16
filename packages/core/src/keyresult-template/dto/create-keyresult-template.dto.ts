@@ -1,6 +1,7 @@
 import { IntersectionType } from "@nestjs/mapped-types";
-import { GoalBaseDTO, KpiBaseDTO } from "core/dto";
+import { RelationalGoalKpiTemplateDTO } from "goal-kpi-template/dto";
+import { RelationalGoalTemplateDTO } from "goal-template/dto";
 import { KeyresultTemplateDTO } from "./keyresult-template.dto";
 
 export class CreateKeyresultTemplateDTO extends IntersectionType ( 
-    KeyresultTemplateDTO, GoalBaseDTO, KpiBaseDTO) {}
+    KeyresultTemplateDTO, RelationalGoalTemplateDTO, RelationalGoalKpiTemplateDTO) {}
