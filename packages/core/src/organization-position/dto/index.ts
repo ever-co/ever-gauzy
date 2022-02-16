@@ -1,0 +1,1 @@
+export { CreateOrganizationPositionDTO } from "./create-organization-position.dto";
