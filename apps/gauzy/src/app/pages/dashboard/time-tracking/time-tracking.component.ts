@@ -19,7 +19,8 @@ import {
 	IManualTimesStatistics,
 	IUser,
 	ISelectedEmployee,
-	IEmployee
+	IEmployee,
+	ISelectedDateRange
 } from '@gauzy/contracts';
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -84,16 +85,16 @@ export class TimeTrackingComponent
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
 
-	private _selectedDateRange: any = {
+	private _selectedDateRange: ISelectedDateRange = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate(),
 		isCustomDate: false
 	};
 
-	get selectedDateRange(): any {
+	get selectedDateRange(): ISelectedDateRange {
 		return this._selectedDateRange;
 	}
-	set selectedDateRange(range: any) {
+	set selectedDateRange(range: ISelectedDateRange) {
 		if (range) {
 			if (!range.hasOwnProperty('isCustomDate')) {
 				range.isCustomDate = true
@@ -427,7 +428,7 @@ export class TimeTrackingComponent
 	 * If, selected date range are more than a week
 	 */
 	isMoreThanWeek(): boolean {
-		const { startDate, endDate } = this.selectedDateRange;
+		const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
 		if (startDate && endDate) {
 			return moment(endDate).diff(moment(startDate), 'weeks') > 0;
 		}
@@ -481,7 +482,7 @@ export class TimeTrackingComponent
 	 */
 	public redirectToManualTimeReport() {
 		try {
-			const { startDate, endDate } = this.selectedDateRange;
+			const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
 			this._router.navigate(['/pages/reports/manual-time-edits'], {
 				queryParams: {
 					start: moment(startDate).format("MM-DD-YYYY"),
@@ -498,7 +499,7 @@ export class TimeTrackingComponent
 	 */
 	public redirectToAppUrlReport() {
 		try {
-			const { startDate, endDate } = this.selectedDateRange;
+			const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
 			this._router.navigate(['/pages/reports/apps-urls'], {
 				queryParams: {
 					start: moment(startDate).format("MM-DD-YYYY"),
