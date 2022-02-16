@@ -24,7 +24,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 @Component({
-	selector: 'ngx-time-tracker',
+	selector: 'ngx-desktop-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -993,7 +993,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 
 		try {
-			const resActivities:any = await this.timeTrackerService.pushTotimeslot(ParamActivity)
+			const resActivities:any = await this.timeTrackerService.pushToTimeSlot(ParamActivity)
 			console.log('result of timeslot', resActivities);
 			const timeLogs = resActivities.timeLogs;
 			this.electronService.ipcRenderer.send('return_time_slot', {
