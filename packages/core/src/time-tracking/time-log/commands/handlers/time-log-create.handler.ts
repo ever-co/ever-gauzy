@@ -54,7 +54,8 @@ export class TimeLogCreateHandler
 			description: input.description || null,
 			reason: input.reason || null,
 			isBillable: input.isBillable || false,
-			source: input.source || TimeLogSourceEnum.BROWSER
+			source: input.source || TimeLogSourceEnum.BROWSER,
+			isRunning: input.isRunning || (input.source === TimeLogSourceEnum.DESKTOP)
 		});
 
 		let timeSlots: ITimeSlot[] = [];
@@ -75,13 +76,12 @@ export class TimeLogCreateHandler
 
 		if (input.timeSlots) {
 			/*
-			 * Merge blank timeslot if missing in request.
+			 * Merge blank timeSlot if missing in request.
 			 * I.e
 			 * Time Logs is : 04:00:00 to  05:00:00 and pass time slots for 04:00:00, 04:20:00, 04:30:00, 04:40:00
-			 * then it will add  04:10:00,  04:50:00 as blank time slots in array to instert
+			 * then it will add  04:10:00,  04:50:00 as blank time slots in array to insert
 			 */
 			input.timeSlots = input.timeSlots.map((timeSlot: ITimeSlot) => ({
-				// startedAt: moment.utc(startedAt).toDate(),
 				...timeSlot,
 				employeeId,
 				organizationId,

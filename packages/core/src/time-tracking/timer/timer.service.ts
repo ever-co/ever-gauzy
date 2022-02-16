@@ -60,7 +60,8 @@ export class TimerService {
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
 				tenantId,
-				organizationId
+				organizationId,
+				isRunning: false
 			},
 			order: {
 				startedAt: 'DESC',
@@ -75,6 +76,7 @@ export class TimerService {
 				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
 				startedAt: Between(start, end),
+				stoppedAt: Not(IsNull()),
 				tenantId,
 				organizationId
 			},
@@ -91,20 +93,14 @@ export class TimerService {
 		};
 
 		// Calculate completed timelogs duration
-		if (logs.length > 0) {
-			for await (const log of logs) {
-				status.duration += log.duration;
-			}
-		}
+		status.duration += logs.filter(Boolean).reduce((sum, log) => sum + log.duration, 0);
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
 			status.lastLog = lastLog;
-			if (lastLog.stoppedAt) {
-				status.running = false;
-			} else {
-				status.running = true;
-				status.duration += Math.abs((lastLog.startedAt.getTime() - new Date().getTime()) / 1000);
+			status.running = lastLog.isRunning;
+			if (status.running) {
+				status.duration += Math.abs(moment().diff(moment(lastLog.startedAt), 'seconds'));
 			}
 		}
 		return status;
@@ -140,6 +136,7 @@ export class TimerService {
 			tenantId,
 			employeeId,
 			startedAt: moment.utc().toDate(),
+			stoppedAt: moment.utc().toDate(),
 			duration: 0,
 			source: source || TimeLogSourceEnum.BROWSER,
 			projectId: projectId || null,
@@ -147,7 +144,8 @@ export class TimerService {
 			organizationContactId: organizationContactId || null,
 			logType: logType || TimeLogType.TRACKED,
 			description: description || null,
-			isBillable: isBillable || false
+			isBillable: isBillable || false,
+			isRunning: true
 		};
 
 		return await this.commandBus.execute(
@@ -170,15 +168,20 @@ export class TimerService {
 			lastLog = await this.getLastRunningLog();
 		}
 
-		const stoppedAt = new Date();
-		if (lastLog.startedAt === stoppedAt) {
+		const stoppedAt = moment.utc().toDate();
+		console.log(
+			stoppedAt,
+			moment.utc(lastLog.startedAt).toDate(),
+			moment.utc(lastLog.startedAt).isSame(stoppedAt)
+		)
+		if (moment.utc(lastLog.startedAt).isSame(stoppedAt)) {
 			await this.timeLogRepository.delete(lastLog.id);
 			return;
 		}
 
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
-				{ stoppedAt },
+				{ stoppedAt, isRunning: false },
 				lastLog.id,
 				request.manualTimeSlot
 			)
@@ -238,10 +241,11 @@ export class TimerService {
 		return await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				stoppedAt: IsNull(),
+				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId
+				organizationId,
+				isRunning: true
 			},
 			order: {
 				startedAt: 'DESC',

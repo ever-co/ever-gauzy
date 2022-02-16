@@ -343,9 +343,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 				this.timeTrackerService
 					.toggleApiStart(paramsTimeStart)
 					.then(async (res:any) => {
-						if (res && res.stoppedAt) {
-							await this.timeTrackerService.toggleApiStart(paramsTimeStart)
-						}
+						// We are temporary comment below condition
+						// if (res && res.stoppedAt) {
+						// 	await this.timeTrackerService.toggleApiStart(paramsTimeStart)
+						// }
 						this.start = val;
 						this.startTime(res);
 						this.loading = false;

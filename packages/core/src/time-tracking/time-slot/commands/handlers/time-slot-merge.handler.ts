@@ -135,7 +135,6 @@ export class TimeSlotMergeHandler
 						tenantId
 					});
 
-					console.log('New Merged TimeSlot', newTimeSlot);
 					await this.timeSlotRepository.save(newTimeSlot);
 					createdTimeslots.push(newTimeSlot);
 
