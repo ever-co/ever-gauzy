@@ -1,4 +1,4 @@
-import { CurrenciesEnum, IEmployee, IInvoice, IOrganizationContact, IOrganizationProject, ITag, IUser } from "@gauzy/contracts";
+import { CurrenciesEnum, IEmployee, IInvoice, IOrganizationContact, IOrganizationProject, ITag, IUser, PaymentMethodEnum } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsBoolean, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
 
@@ -23,10 +23,11 @@ export abstract class PaymentDTO {
     @IsString()
     readonly note: string;
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String, enum: PaymentMethodEnum, readOnly: true })
+    @IsEnum(PaymentMethodEnum)
     @IsNotEmpty()
     @IsString()
-    readonly paymentMethod: string;
+    readonly paymentMethod: PaymentMethodEnum;
 
     @ApiProperty({ type: () => String, readOnly: true })
     @IsOptional()
