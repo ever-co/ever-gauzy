@@ -13,6 +13,7 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
+import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(CreateTimeSlotCommand)
@@ -151,18 +152,6 @@ export class CreateTimeSlotHandler
 			);
 		}
 
-		console.log('TimeSlot Before Create:', timeSlot);
-		/**
-		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
-		 */
-		for await (const timeLog of timeSlot.timeLogs) {
-			if (timeLog.isRunning) {
-				await this.timeLogRepository.update(timeLog.id, {
-					stoppedAt: moment.utc().toDate()
-				});
-			}
-		}
-
 		await this.timeSlotRepository.save(timeSlot);
 
 		const minDate = input.startedAt;
@@ -178,6 +167,21 @@ export class CreateTimeSlotHandler
 				maxDate
 			)
 		);
+
+		console.log('TimeSlot Before Create:', timeSlot);
+		/**
+		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
+		 */
+		for await (const timeLog of timeSlot.timeLogs) {
+			if (timeLog.isRunning) {
+				await this.timeLogRepository.update(timeLog.id, {
+					stoppedAt: moment.utc().toDate()
+				});
+				await this.commandBus.execute(
+					new TimesheetRecalculateCommand(timeLog.timesheetId)
+				);
+			}
+		}
 
 		// If merge timeSlots not found then pass created timeSlot
 		if (!createdTimeSlot) {
