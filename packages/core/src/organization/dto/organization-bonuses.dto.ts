@@ -2,7 +2,7 @@ import { BonusTypeEnum } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsEnum, IsNumber, Min, Max } from "class-validator";
 
-export class OrganizationBounsDTO {
+export class OrganizationBonusesDTO {
 
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsOptional()

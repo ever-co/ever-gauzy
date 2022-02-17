@@ -3,7 +3,7 @@ import { IntersectionType } from "@nestjs/mapped-types";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNotEmpty, IsString } from "class-validator";
 import { RelationalTagDTO } from "tags/dto";
-import { OrganizationBounsDTO } from "./organization-bonus.dto";
+import { OrganizationBonusesDTO } from "./organization-bonuses.dto";
 import { OrganizationSettingDTO } from "./organization-setting.dto";
 
 /**
@@ -11,7 +11,7 @@ import { OrganizationSettingDTO } from "./organization-setting.dto";
  * 
  */
 export class CreateOrganizationDTO extends IntersectionType(
-	OrganizationBounsDTO,
+	OrganizationBonusesDTO,
 	OrganizationSettingDTO,
 	RelationalTagDTO
 ) implements IOrganizationCreateInput {
