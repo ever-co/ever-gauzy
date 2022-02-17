@@ -200,7 +200,8 @@ export class EmailHistoryComponent
 			return;
 		}
 		await this.emailService.update(this.selectedEmail.id, {
-			isArchived: true
+			isArchived: true,
+      email: String(this.selectedEmail.email)
 		})
 			.then(() => {
 				this.toastrService.success(
