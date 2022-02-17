@@ -206,7 +206,7 @@ export class TimerService {
 	}
 
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
-		const lastLog = await this.getLastRunningLog();		
+		const lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {

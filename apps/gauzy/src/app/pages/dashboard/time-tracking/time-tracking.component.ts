@@ -95,7 +95,6 @@ export class TimeTrackingComponent
 	}
 	set selectedDateRange(range: ISelectedDateRange) {
 		if (range) {
-			console.log(range);
 			if (!range.hasOwnProperty('isCustomDate')) {
 				range.isCustomDate = true
 			}
