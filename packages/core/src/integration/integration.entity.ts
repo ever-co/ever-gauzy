@@ -3,7 +3,7 @@ import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
 import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { IsNumber } from 'class-validator';
 import { BaseEntity, IntegrationType, Tag } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('integration')
 export class Integration extends BaseEntity implements IIntegration {
@@ -40,7 +40,7 @@ export class Integration extends BaseEntity implements IIntegration {
 	@Column({
 		default: 0,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	freeTrialPeriod?: number;
 

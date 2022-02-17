@@ -29,7 +29,7 @@ import {
 	TenantOrganizationBaseEntity,
 	ImageAsset
 } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('equipment')
 export class Equipment
@@ -59,7 +59,7 @@ export class Equipment
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	manufacturedYear: number;
 
@@ -69,7 +69,7 @@ export class Equipment
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	initialCost: number;
 
@@ -85,7 +85,7 @@ export class Equipment
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	maxSharePeriod: number;
 

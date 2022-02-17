@@ -35,7 +35,7 @@ import {
 	IsBoolean,
 	IsString
 } from 'class-validator';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	Column,
 	Entity,
@@ -170,7 +170,7 @@ export class Employee
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	averageIncome?: number;
 
@@ -180,7 +180,7 @@ export class Employee
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	averageBonus?: number;
 
@@ -191,7 +191,7 @@ export class Employee
 		nullable: true,
 		type: 'numeric',
 		default: 0,
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	totalWorkHours?: number;
 
@@ -201,7 +201,7 @@ export class Employee
 	@Column({
 		type: 'numeric',
 		nullable: true,
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	averageExpenses?: number;
 
@@ -301,7 +301,7 @@ export class Employee
 	@Column({
 		type: 'numeric',
 		nullable: true,
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	totalJobs?: number;
 
@@ -311,7 +311,7 @@ export class Employee
 	@Column({
 		type: 'numeric',
 		nullable: true,
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	jobSuccess?: number;
 
