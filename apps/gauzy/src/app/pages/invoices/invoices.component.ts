@@ -1025,7 +1025,7 @@ export class InvoicesComponent
 	}
 
 	async selectStatus($event) {
-		await this.invoicesService.update(this.selectedInvoice.id, {
+		await this.invoicesService.updateStatus(this.selectedInvoice.id, {
 			status: $event
 		});
 		this.subject$.next(true);

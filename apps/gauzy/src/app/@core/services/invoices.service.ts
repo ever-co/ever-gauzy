@@ -82,6 +82,13 @@ export class InvoicesService {
 		);
 	}
 
+	updateStatus(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
+		return firstValueFrom(
+			this.http
+			.put<IInvoice>(`${API_PREFIX}/invoices/${id}/status`, updateInput)
+		);
+	}
+
 	updateWithoutAuth(
 		id: string,
 		updateInput: IInvoiceUpdateInput
