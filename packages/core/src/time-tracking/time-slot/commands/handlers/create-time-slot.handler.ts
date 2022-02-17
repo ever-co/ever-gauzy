@@ -130,9 +130,10 @@ export class CreateTimeSlotHandler
 							new Brackets((qb: WhereExpressionBuilder) => {
 								const { startedAt } = timeSlot;
 								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" > :startedAt`, { startedAt });
-								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."isRunning" = :isRunning`, { isRunning: true });
+								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."isRunning" = :isRunning`, { startedAt, isRunning: true });
 							})
 						);
+						console.log(query.getQueryAndParameters(), 'Find TimeLog for TimeSlot Range');
 					}
 				});
 			} catch (error) {

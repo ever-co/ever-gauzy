@@ -19,6 +19,7 @@ import { getDateRange } from './../../core/utils';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
+	ScheduleTimeLogEntriesCommand,
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand
 } from './../time-log/commands';
@@ -126,7 +127,9 @@ export class TimerService {
 			 * So, we have to first update stop timer entry in database, then create start timer entry.
 			 * It will manage to create proper entires in database
 			 */
-			await this.stopTimer(request);
+			await this.commandBus.execute(
+				new ScheduleTimeLogEntriesCommand(lastLog)
+			);
 		}
 
 		const { source, projectId, taskId, organizationContactId, logType, description, isBillable } = request;
@@ -168,11 +171,6 @@ export class TimerService {
 		}
 
 		const stoppedAt = moment.utc().toDate();
-		if (moment.utc(lastLog.startedAt).isSame(stoppedAt)) {
-			await this.timeLogRepository.delete(lastLog.id);
-			return;
-		}
-
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
 				{ stoppedAt, isRunning: false },
