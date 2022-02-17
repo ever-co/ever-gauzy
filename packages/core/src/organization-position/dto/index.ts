@@ -1,1 +1,1 @@
-export { CreateOrganizationPositionDTO } from "./update-organization-position.dto";
+export { UpdateOrganizationPositionDTO } from "./update-organization-position.dto";

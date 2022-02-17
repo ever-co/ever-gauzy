@@ -18,7 +18,7 @@ import { OrganizationPositionService } from './organization-position.service';
 import { OrganizationPosition } from './organization-position.entity';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateOrganizationPositionDTO } from './dto';
+import { UpdateOrganizationPositionDTO } from './dto';
 
 @ApiTags('OrganizationPositions')
 @UseGuards(TenantPermissionGuard)
@@ -70,7 +70,7 @@ export class OrganizationPositionController extends CrudController<OrganizationP
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: CreateOrganizationPositionDTO
+		@Body() body: UpdateOrganizationPositionDTO
 	): Promise<IOrganizationPosition> {
 		try {
 			return this.organizationPositionService.create({
