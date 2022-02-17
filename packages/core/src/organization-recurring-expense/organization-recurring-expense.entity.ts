@@ -14,7 +14,7 @@ import {
 	Min,
 	IsBoolean
 } from 'class-validator';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { Column, Entity, Index } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
@@ -91,7 +91,7 @@ export class OrganizationRecurringExpense
 	@IsNotEmpty()
 	@Column({
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	value: number;
 
