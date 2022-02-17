@@ -29,5 +29,5 @@ export class OrganizationPosition
 	@JoinTable({
 		name: 'tag_organization_position'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 }
