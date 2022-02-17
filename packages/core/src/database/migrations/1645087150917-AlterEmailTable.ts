@@ -27,6 +27,10 @@ export class AlterEmailTable1645087150917 implements MigrationInterface {
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "email_sent" ALTER COLUMN "isArchived" SET DEFAULT false`);
+        /**
+         * SET isArchived = false, if database has already NULL rows
+         */
+        await queryRunner.query(`UPDATE "email_sent" SET "isArchived" = $1 WHERE "isArchived" IS NULL`, [false]);
     }
 
     /**
@@ -58,6 +62,10 @@ export class AlterEmailTable1645087150917 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_525f4873c6edc3d94559f88900" ON "email_sent" ("organizationId") `);
         await queryRunner.query(`CREATE INDEX "IDX_953df0eb0df3035baf140399f6" ON "email_sent" ("name") `);
         await queryRunner.query(`CREATE INDEX "IDX_1261c457b3035b77719556995b" ON "email_sent" ("userId") `);
+        /**
+         * SET isArchived = 0, if database has already NULL rows
+         */
+        await queryRunner.query(`UPDATE "email_sent" SET "isArchived" = $1 WHERE "isArchived" IS NULL`, [0]);
     }
 
     /**
