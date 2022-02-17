@@ -52,7 +52,7 @@ export class TenantController extends CrudController<Tenant> {
 	})
 	@ApiOkResponse({
 		status: HttpStatus.OK,
-		description: 'Found paginatied tenants',
+		description: 'Found paginated tenants',
 		type: Tenant
 	})
 	@ApiNotFoundResponse({
@@ -135,7 +135,7 @@ export class TenantController extends CrudController<Tenant> {
 
 	@ApiOperation({
 		summary:
-			'Update existin tenant. The user who updates the tenant is given the super admin role.'
+			'Update existing tenant. The user who updates the tenant is given the super admin role.'
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,

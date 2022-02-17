@@ -1,18 +1,17 @@
-import { CurrenciesEnum, IOrganizationUpdateInput } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsOptional, IsString } from "class-validator";
+import { IOrganizationUpdateInput } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/mapped-types";
+import { RelationalTagDTO } from "./../../tags/dto";
 import { CreateOrganizationDTO } from "./create-organization.dto";
+import { OrganizationBonusesDTO } from "./organization-bonuses.dto";
+import { OrganizationSettingDTO } from "./organization-setting.dto";
 
-export class UpdateOrganizationDTO extends CreateOrganizationDTO 
-    implements IOrganizationUpdateInput {
-
-    @ApiProperty({ type: () => String, required: true })
-	@IsOptional()
-	@IsString()
-	readonly name: string;
-
-    @ApiProperty({ type: () => String, enum: CurrenciesEnum })
-    @IsOptional()
-	@IsEnum(CurrenciesEnum)
-	readonly currency: CurrenciesEnum;
-}
+/**
+ * Organization Update DTO
+ * 
+ */
+export class UpdateOrganizationDTO extends IntersectionType(
+	CreateOrganizationDTO,
+	OrganizationBonusesDTO,
+	OrganizationSettingDTO,
+	RelationalTagDTO
+) implements IOrganizationUpdateInput {}

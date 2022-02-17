@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom, filter, tap } from 'rxjs';
-import { CandidateStore, EmployeeStore, OrganizationsService } from '../../../@core/services';
+import { CandidateStore, EmployeeStore, OrganizationsService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,6 +44,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly fb: FormBuilder,
+		private readonly store: Store,
 		private readonly employeeStore: EmployeeStore,
 		private readonly candidateStore: CandidateStore,
 		private readonly organizationsService: OrganizationsService
@@ -72,14 +73,17 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		if (this.form.invalid) {
 			return;
 		}
+		const { id: organizationId } = this.store.selectedOrganization;
 		if (this.form.valid && this.isEmployee) {
 			this.employeeStore.employeeForm = {
-				...this.form.getRawValue()
+				...this.form.getRawValue(),
+				organizationId
 			};
 		}
 		if (this.form.valid && this.isCandidate) {
 			this.candidateStore.candidateForm = {
-				...this.form.getRawValue()
+				...this.form.getRawValue(),
+				organizationId
 			};
 		}
 	}
