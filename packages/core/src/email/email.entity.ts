@@ -6,6 +6,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
+import { IsBoolean } from 'class-validator';
 
 @Entity('email_sent')
 export class Email extends TenantOrganizationBaseEntity implements IEmail {
@@ -25,7 +26,8 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	email: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ nullable: true })
+	@IsBoolean()
+	@Column({ type: Boolean, nullable: true, default: false })
 	isArchived?: boolean;
 
 	/*
