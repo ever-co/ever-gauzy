@@ -98,7 +98,7 @@ export class InvoicesComponent
 	invoiceTabsEnum = InvoiceTabsEnum;
 
 	/*
-	* getter setter for check esitmate or invoice
+	* getter setter for check estimate or invoice
 	*/
 	private _isEstimate: boolean = false;
 	@Input() set isEstimate(val: boolean) {
