@@ -487,7 +487,7 @@ export class InvoicesComponent
 		}
 		const { id: invoiceId } = this.selectedInvoice;
 
-		await this.invoicesService.update(invoiceId, {
+		await this.invoicesService.convertInvoice(invoiceId, {
 			isEstimate: false,
 			status: InvoiceStatusTypesEnum.DRAFT
 		});

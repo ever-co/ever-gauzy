@@ -89,6 +89,13 @@ export class InvoicesService {
 		);
 	}
 
+	convertInvoice(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
+		return firstValueFrom(
+			this.http
+			.put<IInvoice>(`${API_PREFIX}/invoices/${id}/convert`, updateInput)
+		);
+	}
+
 	updateWithoutAuth(
 		id: string,
 		updateInput: IInvoiceUpdateInput
