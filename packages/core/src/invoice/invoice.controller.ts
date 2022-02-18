@@ -41,7 +41,7 @@ import {
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
-import { CreateInvoiceDTO, UpdateInvoiceActionDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO, UpdateInvoiceOptionsDTO } from './dto';
+import { CreateInvoiceDTO, UpdateInvoiceActionDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO } from './dto';
 
 @ApiTags('Invoice')
 @Controller()
@@ -222,34 +222,6 @@ export class InvoiceController extends CrudController<Invoice> {
 	async updateAction(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateInvoiceActionDTO
-	){
-		return this.commandBus.execute(
-			new InvoiceUpdateCommand({ id, ...entity })
-		);
-	}
-
-	@ApiOperation({ summary: "Update Invoice's extra options" })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
-	@Put('/:id/options')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async updateExtraOptions(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateInvoiceOptionsDTO
 	){
 		return this.commandBus.execute(
 			new InvoiceUpdateCommand({ id, ...entity })

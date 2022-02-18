@@ -768,7 +768,7 @@ export class InvoicesComponent
 	}
 
 	async archive() {
-		await this.invoicesService.updateOptions(this.selectedInvoice.id, {
+		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			isArchived: true
 		});
 		this.subject$.next(true);
