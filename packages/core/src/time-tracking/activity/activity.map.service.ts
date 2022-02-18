@@ -155,8 +155,7 @@ export class ActivityMapService {
 	}
 
 	private mapActivitiesPercentage(activity, sum = 0) {
-		activity.duration_percentage =
-			(parseInt(activity.duration, 10) * 100) / sum;
+		activity.duration_percentage = (((parseInt(activity.duration, 10) * 100) / sum).toFixed(2)) || 0;
 		return activity;
 	}
 
