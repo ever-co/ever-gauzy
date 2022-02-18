@@ -41,7 +41,11 @@ import {
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
+<<<<<<< HEAD
 import { CreateInvoiceDTO, UpdateEstimateInvoiceDTO, UpdateEstimateStatusDTO, UpdateInvoiceDTO, UpdateInvoiceOptionsDTO } from './dto';
+=======
+import { CreateInvoiceDTO, UpdateInvoiceActionDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO } from './dto';
+>>>>>>> develop
 
 @ApiTags('Invoice')
 @Controller()
@@ -217,11 +221,11 @@ export class InvoiceController extends CrudController<Invoice> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
-	@Put('/:id/status')
+	@Put('/:id/action')
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async updateStatus(
+	async updateAction(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateEstimateStatusDTO
+		@Body() entity: UpdateInvoiceActionDTO
 	){
 		return this.commandBus.execute(
 			new InvoiceUpdateCommand({ id, ...entity })

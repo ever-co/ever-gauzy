@@ -21,10 +21,16 @@ import {
 import { formatDate } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
-import { AccountingTemplateService, OrganizationEditStore, OrganizationsService, Store, ToastrService } from './../../../../../../app/@core/services';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base';
+import {
+	AccountingTemplateService,
+	OrganizationEditStore,
+	OrganizationsService,
+	Store,
+	ToastrService
+} from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,7 +42,7 @@ export class EditOrganizationOtherSettingsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
-	organization: IOrganization;
+	public organization: IOrganization;
 	form: FormGroup;
 	defaultOrganizationSelection: IKeyValuePair[] = [
 		{ key: 'Yes', value: true }, 
@@ -75,7 +81,7 @@ export class EditOrganizationOtherSettingsComponent
 		private readonly organizationEditStore: OrganizationEditStore,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
-		private readonly accountingTemlateService: AccountingTemplateService
+		private readonly accountingTemplateService: AccountingTemplateService
 	) {
 		super(translateService);
 	}
@@ -87,15 +93,16 @@ export class EditOrganizationOtherSettingsComponent
 		}
 
 		const offset = timezone.tz(zone).format('zZ');
-
 		return '(' + offset + ') ' + cutZone;
 	}
 
 	dateFormatPreview(format: string) {
-		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((val) => {
-			this.regionCode = val.regionCode;
-		});
-
+		this.form.valueChanges
+			.pipe(
+				tap(({ regionCode }) => this.regionCode = regionCode),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		moment.locale(this.regionCode);
 		return moment().format(format);
 	}
@@ -124,13 +131,12 @@ export class EditOrganizationOtherSettingsComponent
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this._loadOrganizationData(organization)),
+				tap(() => this.getTemplates()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				this._loadOrganizationData(organization);
-				this.getTemplates();
-			});
+			.subscribe();
 	}
 
 	async updateOrganizationSettings() {
@@ -189,6 +195,8 @@ export class EditOrganizationOtherSettingsComponent
 		}
 
 		this.form = this.fb.group({
+			name: [this.organization.name],
+			currency: [this.organization.currency],
 			defaultValueDateType: [
 				this.organization.defaultValueDateType,
 				Validators.required
@@ -292,7 +300,7 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	async getTemplates() {
-		const result = await this.accountingTemlateService.getAll(
+		const result = await this.accountingTemplateService.getAll(
 			['organization'],
 			{
 				languageCode: this.store.preferredLanguage
@@ -317,7 +325,7 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	async selectTemplate(event) {
-		const template = await this.accountingTemlateService.getById(event);
+		const template = await this.accountingTemplateService.getById(event);
 		template['organization'] = this.organization;
 		template['organizationId'] = this.organization.id;
 		switch (template.templateType) {
@@ -337,7 +345,7 @@ export class EditOrganizationOtherSettingsComponent
 
 	async saveTemplate(template: IAccountingTemplate) {
 		if (template) {
-			await this.accountingTemlateService.updateTemplate(
+			await this.accountingTemplateService.updateTemplate(
 				template.id,
 				template
 			);
