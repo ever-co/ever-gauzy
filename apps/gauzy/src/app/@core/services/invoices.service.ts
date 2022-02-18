@@ -82,17 +82,10 @@ export class InvoicesService {
 		);
 	}
 
-	updateStatus(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
+	updateAction(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
 		return firstValueFrom(
 			this.http
-			.put<IInvoice>(`${API_PREFIX}/invoices/${id}/status`, updateInput)
-		);
-	}
-
-	convertInvoice(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
-		return firstValueFrom(
-			this.http
-			.put<IInvoice>(`${API_PREFIX}/invoices/${id}/convert`, updateInput)
+			.put<IInvoice>(`${API_PREFIX}/invoices/${id}/action`, updateInput)
 		);
 	}
 

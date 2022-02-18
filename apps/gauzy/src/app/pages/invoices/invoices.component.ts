@@ -487,7 +487,7 @@ export class InvoicesComponent
 		}
 		const { id: invoiceId } = this.selectedInvoice;
 
-		await this.invoicesService.convertInvoice(invoiceId, {
+		await this.invoicesService.updateAction(invoiceId, {
 			isEstimate: false,
 			status: InvoiceStatusTypesEnum.DRAFT
 		});
@@ -1025,7 +1025,7 @@ export class InvoicesComponent
 	}
 
 	async selectStatus($event) {
-		await this.invoicesService.updateStatus(this.selectedInvoice.id, {
+		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			status: $event
 		});
 		this.subject$.next(true);
