@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class UpdateInvoiceActionDTO {
 
@@ -22,4 +22,19 @@ export class UpdateInvoiceActionDTO {
     @IsOptional()
     @IsBoolean()
     readonly isArchived: boolean;
+
+    @ApiProperty({ type: () => Boolean, readOnly: true })
+    @IsOptional()
+    @IsBoolean()
+    readonly paid: boolean;
+
+    @ApiProperty({ type: () => Number, readOnly: true })
+    @IsOptional()
+    @IsNumber()
+    readonly alreadyPaid: number;
+
+    @ApiProperty({ type: () => Number, readOnly: true })
+    @IsOptional()
+    @IsNumber()
+    readonly amountDue: number;
 }
