@@ -41,11 +41,7 @@ import {
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
-<<<<<<< HEAD
-import { CreateInvoiceDTO, UpdateEstimateInvoiceDTO, UpdateEstimateStatusDTO, UpdateInvoiceDTO, UpdateInvoiceOptionsDTO } from './dto';
-=======
-import { CreateInvoiceDTO, UpdateInvoiceActionDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO } from './dto';
->>>>>>> develop
+import { CreateInvoiceDTO, UpdateInvoiceActionDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO, UpdateInvoiceOptionsDTO } from './dto';
 
 @ApiTags('Invoice')
 @Controller()
