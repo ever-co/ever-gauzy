@@ -211,7 +211,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@Column({ type: Boolean, nullable: true, default: false })
 	isArchived?: boolean;
 
 	/*
