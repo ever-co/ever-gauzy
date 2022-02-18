@@ -1392,22 +1392,30 @@ export class StatisticService {
 			.orderBy('"startedAt"', 'DESC')
 			.limit(3);
 
+		/*
+		 *  Get employees id of the organization or get current employee id
+		 */
+		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			const employeeId = user.employeeId;
-			query.andWhere(`"${query.alias}".id = :employeeId`, { employeeId });
+			employeeIds = [user.employeeId];
 		} else {
-			if (isNotEmpty(employeeId)) {
-				query.andWhere(`"${query.alias}"."id" = :employeeId`, {
-					employeeId
-				});
-			}
+			employeeIds = await this.getEmployeesIds(
+				organizationId,
+				tenantId,
+				employeeId
+			);
 		}
-
+		if (isNotEmpty(employeeIds)) {
+			query.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
+				employeeIds
+			});
+		}
+		
 		// convert projectId String to Array
 		let projectIds: string[] = [];
 		if (typeof projectId === 'string') {
