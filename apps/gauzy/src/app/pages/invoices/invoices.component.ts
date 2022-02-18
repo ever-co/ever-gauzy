@@ -659,10 +659,10 @@ export class InvoicesComponent
 			resultMap: (invoice: IInvoice) => {
 				return Object.assign({}, invoice, {
 					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
-					status: this.statusMapper(invoice.status),
-					tax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
-					tax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax2}`,
-					discountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
+					displayStatus: this.statusMapper(invoice.status),
+					displayTax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
+					displayTax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax2}`,
+					displayDiscountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
 				});
 			},
 			finalize: () => {
@@ -874,7 +874,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
-			this.settingsSmartTable['columns']['status'] = {
+			this.settingsSmartTable['columns']['displayStatus'] = {
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
 				type: 'custom',
 				width: '5%',
@@ -892,7 +892,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
-			this.settingsSmartTable['columns']['tax'] = {
+			this.settingsSmartTable['columns']['displayTax'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX'),
 				type: 'text',
 				width: '5%',
@@ -900,7 +900,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX_2)) {
-			this.settingsSmartTable['columns']['tax2'] = {
+			this.settingsSmartTable['columns']['displayTax2'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
 				width: '5%',
@@ -908,7 +908,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
-			this.settingsSmartTable['columns']['discountValue'] = {
+			this.settingsSmartTable['columns']['displayDiscountValue'] = {
 				title: this.getTranslation(
 					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
 				),
