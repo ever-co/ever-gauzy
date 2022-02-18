@@ -1,7 +1,7 @@
 @import 'themes';
 @import 'var';
 
-nb-card, nb-card-body, nb-card-header{
+nb-card, nb-card-body, nb-card-header, .card{
   background-color: nb-theme(background-basic-color-1);
   border-color: nb-theme(border-basic-color-3);
 }
