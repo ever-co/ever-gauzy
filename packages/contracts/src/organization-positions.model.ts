@@ -4,7 +4,7 @@ import { ITag } from './tag-entity.model';
 export interface IOrganizationPosition
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	tags: ITag[];
+	tags?: ITag[];
 }
 
 export interface IOrganizationPositionFindInput
@@ -15,5 +15,5 @@ export interface IOrganizationPositionFindInput
 export interface IOrganizationPositionCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	tags: ITag[];
+	tags?: ITag[];
 }

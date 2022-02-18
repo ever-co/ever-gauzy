@@ -1,16 +1,27 @@
 import { CurrenciesEnum, IOrganizationCreateInput } from "@gauzy/contracts";
+import { IntersectionType } from "@nestjs/mapped-types";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNotEmpty, IsString } from "class-validator";
-import { OrganizationBounsDTO } from "./organization-bonus.dto";
+import { RelationalTagDTO } from "tags/dto";
+import { OrganizationBonusesDTO } from "./organization-bonuses.dto";
+import { OrganizationSettingDTO } from "./organization-setting.dto";
 
-export class CreateOrganizationDTO extends OrganizationBounsDTO implements IOrganizationCreateInput {
+/**
+ * Organization Create DTO
+ * 
+ */
+export class CreateOrganizationDTO extends IntersectionType(
+	OrganizationBonusesDTO,
+	OrganizationSettingDTO,
+	RelationalTagDTO
+) implements IOrganizationCreateInput {
 
-	@ApiProperty({ type: () => String, required: true })
+	@ApiProperty({ type: () => String, required: true, readOnly: true })
 	@IsNotEmpty()
 	@IsString()
 	readonly name: string;
 
-	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true })
 	@IsEnum(CurrenciesEnum)
 	readonly currency: CurrenciesEnum;
 }

@@ -98,9 +98,10 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 		if (this.form.invalid) {
 			return;
 		}
+		const { id: organizationId } = this.store.selectedOrganization;
 		this.employeeStore.employeeForm = {
-			...this.selectedEmployee,
-			...this.form.getRawValue()
+			...this.form.getRawValue(),
+			organizationId
 		};
 	}
 

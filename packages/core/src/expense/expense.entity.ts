@@ -39,7 +39,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('expense')
 export class Expense extends TenantOrganizationBaseEntity implements IExpense {
@@ -50,7 +50,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@Index()
 	@Column({
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	amount: number;
 
@@ -105,7 +105,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	rateValue: number;
 

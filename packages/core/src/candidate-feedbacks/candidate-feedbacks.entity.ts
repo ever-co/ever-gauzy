@@ -25,7 +25,7 @@ import {
 	CandidateInterviewers,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('candidate_feedback')
 export class CandidateFeedback
@@ -39,7 +39,7 @@ export class CandidateFeedback
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	rating: number;
 

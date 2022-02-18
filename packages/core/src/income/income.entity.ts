@@ -31,7 +31,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('income')
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
@@ -42,7 +42,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@Index()
 	@Column({
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	amount: number;
 

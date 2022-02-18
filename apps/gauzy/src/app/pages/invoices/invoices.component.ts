@@ -98,7 +98,7 @@ export class InvoicesComponent
 	invoiceTabsEnum = InvoiceTabsEnum;
 
 	/*
-	* getter setter for check esitmate or invoice
+	* getter setter for check estimate or invoice
 	*/
 	private _isEstimate: boolean = false;
 	@Input() set isEstimate(val: boolean) {
@@ -1025,7 +1025,7 @@ export class InvoicesComponent
 	}
 
 	async selectStatus($event) {
-		await this.invoicesService.update(this.selectedInvoice.id, {
+		await this.invoicesService.updateStatus(this.selectedInvoice.id, {
 			status: $event
 		});
 		this.subject$.next(true);

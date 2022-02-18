@@ -29,10 +29,10 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	leafletTemplate: LeafletMapComponent;
 
 	constructor(
-		private fb: FormBuilder,
-		private candidateStore: CandidateStore,
-		private employeeStore: EmployeeStore,
-		private store: Store
+		private readonly fb: FormBuilder,
+		private readonly candidateStore: CandidateStore,
+		private readonly employeeStore: EmployeeStore,
+		private readonly store: Store
 	) {}
 
 	ngOnInit() {
@@ -75,12 +75,14 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 		
 		if (this.form.valid && this.isCandidate) {
 			this.candidateStore.candidateForm = {
-				contact
+				contact,
+				organizationId
 			};
 		}
 		if (this.form.valid && this.isEmployee) {
 			this.employeeStore.employeeForm = {
-				contact
+				contact,
+				organizationId
 			};
 		}
 	}

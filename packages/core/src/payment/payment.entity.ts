@@ -37,7 +37,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('payment')
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
@@ -54,7 +54,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	amount?: number;
 
@@ -72,8 +72,12 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiPropertyOptional({ type: () => String, enum: PaymentMethodEnum })
 	@IsEnum(PaymentMethodEnum)
 	@IsOptional()
-	@Column({ nullable: true })
-	paymentMethod?: string;
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		enum: PaymentMethodEnum
+	})
+	paymentMethod?: PaymentMethodEnum;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()

@@ -21,7 +21,7 @@ import {
 	Warehouse,
 	WarehouseProductVariant
 } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('warehouse_product')
 export class WarehouseProduct
@@ -33,7 +33,7 @@ export class WarehouseProduct
 		nullable: true,
 		type: 'numeric',
 		default: 0,
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	quantity: number;
 

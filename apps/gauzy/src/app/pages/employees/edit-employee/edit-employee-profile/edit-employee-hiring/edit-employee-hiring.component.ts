@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { IEmployee } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeeStore } from './../../../../../@core/services';
+import { EmployeeStore, Store } from './../../../../../@core/services';
 import { CompareDateValidator } from './../../../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
@@ -33,7 +33,8 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private readonly employeeStore: EmployeeStore
+		private readonly employeeStore: EmployeeStore,
+		private readonly store: Store
 	) {}
 
 	ngOnInit() {
@@ -49,8 +50,10 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 
 	public submitForm() {
 		if (this.form.valid) {
+			const { id: organizationId } = this.store.selectedOrganization;
 			this.employeeStore.employeeForm = {
-				...this.form.value
+				...this.form.getRawValue(),
+				organizationId
 			};
 		}
 	}

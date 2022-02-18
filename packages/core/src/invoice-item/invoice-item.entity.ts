@@ -19,7 +19,7 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('invoice_item')
 export class InvoiceItem
@@ -35,7 +35,7 @@ export class InvoiceItem
 	@IsNumber()
 	@Column({
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	price: number;
 
@@ -43,7 +43,7 @@ export class InvoiceItem
 	@IsNumber()
 	@Column({
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	quantity: number;
 
@@ -51,7 +51,7 @@ export class InvoiceItem
 	@IsNumber()
 	@Column({
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	totalValue: number;
 
