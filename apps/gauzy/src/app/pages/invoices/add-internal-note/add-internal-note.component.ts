@@ -40,7 +40,7 @@ export class AddInternalNoteComponent
 	}
 
 	async addNote() {
-		await this.invoiceService.update(this.invoice.id, {
+		await this.invoiceService.updateOptions(this.invoice.id, {
 			internalNote: this.form.value.internalNote
 		});
 		this.toastrService.success('INVOICES_PAGE.INTERNAL_NOTE.NOTE_SAVED');
