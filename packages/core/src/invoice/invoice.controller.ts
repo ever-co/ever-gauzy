@@ -41,7 +41,7 @@ import {
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
-import { CreateInvoiceDTO, UpdateEstimateActionDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO } from './dto';
+import { CreateInvoiceDTO, UpdateInvoiceActionDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO } from './dto';
 
 @ApiTags('Invoice')
 @Controller()
@@ -219,9 +219,9 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Put('/:id/action')
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async updateStatus(
+	async updateAction(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateEstimateActionDTO
+		@Body() entity: UpdateInvoiceActionDTO
 	){
 		return this.commandBus.execute(
 			new InvoiceUpdateCommand({ id, ...entity })
