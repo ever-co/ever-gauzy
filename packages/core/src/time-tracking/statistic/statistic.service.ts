@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
+import * as moment from 'moment';
 import {
 	PermissionsEnum,
 	IGetActivitiesStatistics,
@@ -31,7 +32,7 @@ import {
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
-import { getDateRange } from './../../core/utils';
+import { getDateFormat, getDateRange } from './../../core/utils';
 
 @Injectable()
 export class StatisticService {
@@ -81,6 +82,7 @@ export class StatisticService {
 		const { start, end } = (startDate && endDate) ? 
 								getDateRange(startDate, endDate) : 
 								getDateRange(date, 'week');
+
 		console.log({ start, end }, 'Weekly Time Date Range For Counts Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -146,7 +148,7 @@ export class StatisticService {
 					if (request.activityLevel) {
 						/**
 						 * Activity Level should be 0-100%
-						 * So, we have convert it into 10 minutes timeslot by multiply by 6
+						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
 						const { activityLevel } = request;
 						const startLevel = (activityLevel.start * 6);
@@ -212,7 +214,7 @@ export class StatisticService {
 					if (request.activityLevel) {
 						/**
 						 * Activity Level should be 0-100%
-						 * So, we have convert it into 10 minutes timeslot by multiply by 6
+						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
 						const { activityLevel } = request;
 						const startLevel = (activityLevel.start * 6);
@@ -265,7 +267,7 @@ export class StatisticService {
 				)
 				.addSelect(`COALESCE(SUM("${query.alias}"."overall"), 0)`, `overall`)
 				.addSelect(`COALESCE(SUM("${query.alias}"."duration"), 0)`, `duration`)
-				.addSelect(`COUNT("${query.alias}"."id")`, `timeslot_count`)
+				.addSelect(`COUNT("${query.alias}"."id")`, `time_slot_count`)
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
 				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
@@ -291,7 +293,7 @@ export class StatisticService {
 						if (request.activityLevel) {
 							/**
 							 * Activity Level should be 0-100%
-							 * So, we have convert it into 10 minutes timeslot by multiply by 6
+							 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 							 */
 							const { activityLevel } = request;
 							const startLevel = (activityLevel.start * 6);
@@ -344,8 +346,12 @@ export class StatisticService {
 		};
 
 		if (isNotEmpty(employeeIds)) {
-			let { start, end } = getDateRange();
-			console.log({ start, end }, 'Today Time Date Range For Counts Statistics');
+			const { start, end } = getDateRange();
+			const { start: startToday, end: endToday } = getDateFormat(
+				moment.utc(moment(start)),
+				moment.utc(moment(end))
+			);
+			console.log({ startToday, endToday }, 'Today Time Date Range For Counts Statistics');
 			const query = this.timeSlotRepository.createQueryBuilder();
 			const todayTimeStatistics = await query
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -359,14 +365,14 @@ export class StatisticService {
 				)
 				.addSelect(`COALESCE(SUM("${query.alias}"."overall"), 0)`, `overall`)
 				.addSelect(`COALESCE(SUM("${query.alias}"."duration"), 0)`, `duration`)
-				.addSelect(`COUNT("${query.alias}"."id")`, `timeslot_count`)
+				.addSelect(`COUNT("${query.alias}"."id")`, `time_slot_count`)
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
 				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
-							startDate: start,
-							endDate: end
+							startDate: startToday,
+							endDate: endToday
 						});
 						/**
 						 * If Employee Selected
@@ -385,7 +391,7 @@ export class StatisticService {
 						if (request.activityLevel) {
 							/**
 							 * Activity Level should be 0-100%
-							 * So, we have convert it into 10 minutes timeslot by multiply by 6
+							 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 							 */
 							const { activityLevel } = request;
 							const startLevel = (activityLevel.start * 6);
@@ -560,7 +566,7 @@ export class StatisticService {
 				)
 				.addSelect(`COALESCE(SUM("${weekTimeQuery.alias}"."overall"), 0)`, `overall`)
 				.addSelect(`COALESCE(SUM("${weekTimeQuery.alias}"."duration"), 0)`, `duration`)
-				.addSelect(`COUNT("${weekTimeQuery.alias}"."id")`, `timeslot_count`)
+				.addSelect(`COUNT("${weekTimeQuery.alias}"."id")`, `time_slot_count`)
 				.addSelect(`${weekTimeQuery.alias}.employeeId`, 'employeeId')
 				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`, { tenantId })
@@ -640,14 +646,18 @@ export class StatisticService {
 				)
 				.addSelect(`COALESCE(SUM("${dayTimeQuery.alias}"."overall"), 0)`, `overall`)
 				.addSelect(`COALESCE(SUM("${dayTimeQuery.alias}"."duration"), 0)`, `duration`)
-				.addSelect(`COUNT("${dayTimeQuery.alias}"."id")`, `timeslot_count`)
+				.addSelect(`COUNT("${dayTimeQuery.alias}"."id")`, `time_slot_count`)
 				.addSelect(`${dayTimeQuery.alias}.employeeId`, 'employeeId')
 				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const { start: startToday, end: endToday } = getDateRange();
+						const { start, end } = getDateRange();
+						const { start: startToday, end: endToday } = getDateFormat(
+							moment.utc(moment(start)),
+							moment.utc(moment(end))
+						);
 						console.log({ startToday, endToday }, 'Daily Time Date Range For Members Statistics');
 						qb.where(`"timeLogs"."startedAt" BETWEEN :startToday AND :endToday`, {
 							startToday,
@@ -1392,30 +1402,22 @@ export class StatisticService {
 			.orderBy('"startedAt"', 'DESC')
 			.limit(3);
 
-		/*
-		 *  Get employees id of the organization or get current employee id
-		 */
-		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			employeeIds = [user.employeeId];
+			const employeeId = user.employeeId;
+			query.andWhere(`"${query.alias}".id = :employeeId`, { employeeId });
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				tenantId,
-				employeeId
-			);
+			if (isNotEmpty(employeeId)) {
+				query.andWhere(`"${query.alias}"."id" = :employeeId`, {
+					employeeId
+				});
+			}
 		}
-		if (isNotEmpty(employeeIds)) {
-			query.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
-				employeeIds
-			});
-		}
-		
+
 		// convert projectId String to Array
 		let projectIds: string[] = [];
 		if (typeof projectId === 'string') {
