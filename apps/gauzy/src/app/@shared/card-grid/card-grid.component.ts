@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { Output, EventEmitter } from '@angular/core';
 
 @Component({
 	selector: 'ga-card-grid',
@@ -19,6 +20,7 @@ export class CardGridComponent extends TranslationBaseComponent
 	@Input() settings: any = {};
 	@Input() buttonTemplate: TemplateRef<any>;
 	@Input() cardSize: undefined | 'big';
+  @Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
 
 	constructor(
 		readonly translationService: TranslateService
@@ -32,5 +34,8 @@ export class CardGridComponent extends TranslationBaseComponent
 		return Object.keys(this.settings.columns);
 	}
 
+  selectedItem(item){
+    this.onSelectedItem.emit({isSelected: true, data: item});
+  }
 	ngOnDestroy() {}
 }
