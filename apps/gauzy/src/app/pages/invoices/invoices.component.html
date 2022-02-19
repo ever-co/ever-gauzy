@@ -1,4 +1,4 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
@@ -6,7 +6,7 @@
 >
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
-			<h4> 
+			<h4>
 				<ngx-header-title [allowEmployee]="false">
 					{{ (!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER') | translate }}
 				</ngx-header-title>
@@ -121,7 +121,7 @@
 										'INVOICES_PAGE.CONTACT' | translate
 									}}</span>
 								</label>
-								<ga-contact-select 
+								<ga-contact-select
 									[clearable]="true"
 									formControlName="organizationContact"
 									[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
@@ -281,9 +281,9 @@
 				[tabId]="invoiceTabsEnum.HISTORY"
 			>
 				<ng-container *ngIf="selectedInvoice">
-					<form 
-						[formGroup]="historyForm" 
-						#historyFormDirective="ngForm" 
+					<form
+						[formGroup]="historyForm"
+						#historyFormDirective="ngForm"
 						(ngSubmit)="addComment(historyFormDirective)"
 					>
 						<div class="col-3 px-0">
@@ -307,7 +307,7 @@
 						</div>
 					</form>
 				</ng-container>
-				
+
 				<nb-list-item *ngIf="disableButton" class="history-list-select">
 					{{ ((!isEstimate) ? 'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY' : 'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY') | translate }}
 				</nb-list-item>
@@ -320,8 +320,8 @@
 						<div class="d-flex">
 							<div>
 								<div class="history-item">
-									<span class="history-action">{{ history.action }}</span> 
-									- {{ history.user.name }} 
+									<span class="history-action">{{ history.action }}</span>
+									- {{ history.user.name }}
 								</div>
 								<div class="history-date history-item">
 									{{ history.createdAt | dateTimeFormat }}
@@ -332,9 +332,9 @@
 				</nb-list>
 			</nb-tab>
 		</nb-tabset>
-		
-		<ng-template 
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
@@ -355,18 +355,19 @@
 					[source]="invoices"
 					[buttonTemplate]="actionButtons"
 					[cardSize]="'big'"
+          (onSelectedItem)="selectInvoice($event)"
 				></ga-card-grid>
-			</div>			
-			<div 
+			</div>
+			<div
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 				class="pagination-container"
 			>
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-					<ga-pagination 
+					<ga-pagination
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
-						[totalItems]="pagination?.totalItems" 
-						[itemsPerPage]="pagination?.itemsPerPage" 
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage">
 					</ga-pagination>
 				</ng-container>
