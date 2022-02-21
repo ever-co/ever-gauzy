@@ -315,14 +315,26 @@ export class Employee
 	})
 	jobSuccess?: number;
 
-	fullName?: string;
-	
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsString()
 	@Index({ unique: false })
 	@IsOptional()
 	@Column({ nullable: true })
 	profile_link?: string;
+
+	/**
+	 * Enabled/Disabled Time Tracking Feature
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ type: Boolean, nullable: true, default: true })
+	isTrackingEnabled: boolean;
+
+	/**
+	 * Additional Property
+	 */
+	fullName?: string;
 
 	/*
     |--------------------------------------------------------------------------

@@ -78,6 +78,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	totalJobs?: number;
 	fullName?: string;
 	profile_link?: string;
+	isTrackingEnabled: boolean;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &
