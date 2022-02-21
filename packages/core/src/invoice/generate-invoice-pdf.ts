@@ -65,10 +65,11 @@ export async function generateInvoicePdfDefinition(
 
 	const docDefinition = {
 		watermark: {
-			text: `${invoice.paid ? translatedText.paid : ''}`,
-			color: 'red',
-			opacity: 0.3,
+			text: `${invoice.paid ? translatedText.paid.toUpperCase() : ''}`,
+			color: '#B7D7E8',
+			opacity: 0.2,
 			bold: true,
+      fontSize: 108,
 			italics: false
 		},
 		content: [
