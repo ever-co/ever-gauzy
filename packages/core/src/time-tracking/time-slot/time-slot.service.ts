@@ -107,7 +107,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				if (request.activityLevel) {
 					/**
 					 * Activity Level should be 0-100%
-					 * So, we have convert it into 10 minutes timeslot by multiply by 6
+					 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 					 */
 					const { activityLevel } = request;
 					const start = (activityLevel.start * 6);
@@ -194,7 +194,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	}
 
 	/*
-	 *create time slot minute activity for specific timeslot
+	 *create time slot minute activity for specific TimeSlot
 	 */
 	async createTimeSlotMinute(request: TimeSlotMinute) {
 		// const { keyboard, mouse, datetime, timeSlot } = request;
@@ -204,7 +204,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	}
 
 	/*
-	 * Update timeslot minute activity for specific timeslot
+	 * Update TimeSlot minute activity for specific TimeSlot
 	 */
 	async updateTimeSlotMinute(id: string, request: TimeSlotMinute) {
 		return await this.commandBus.execute(

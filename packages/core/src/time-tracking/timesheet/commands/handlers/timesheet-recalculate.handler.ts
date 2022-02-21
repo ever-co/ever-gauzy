@@ -1,11 +1,14 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ITimesheet } from '@gauzy/contracts';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
+import * as moment from 'moment';
+import { ITimesheet } from '@gauzy/contracts';
 import { TimeSheetService } from '../../timesheet.service';
 import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';
 import { TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
+import { getDateFormat } from './../../../../core/utils';
 
 @CommandHandler(TimesheetRecalculateCommand)
 export class TimesheetRecalculateHandler
@@ -21,30 +24,50 @@ export class TimesheetRecalculateHandler
 		command: TimesheetRecalculateCommand
 	): Promise<ITimesheet> {
 		const { id } = command;
-		const tenantId = RequestContext.currentTenantId();
 		const timesheet = await this.timesheetService.findOneByIdString(id);
+
+		const tenantId = RequestContext.currentTenantId();
+		const { employeeId, organizationId } = timesheet;
+
+		const { start: startedAt, end: stoppedAt } = getDateFormat(
+			moment.utc(timesheet.startedAt),
+			moment.utc(timesheet.stoppedAt)
+		);
 		
-		const timeSlot = await this.timeSlotRepository
-			.createQueryBuilder()
+		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		const timeSlot = await query
 			.select('SUM(duration)', 'duration')
 			.addSelect('AVG(keyboard)', 'keyboard')
 			.addSelect('AVG(mouse)', 'mouse')
 			.addSelect('AVG(overall)', 'overall')
-			.where({
-				startedAt: Between(timesheet.startedAt, timesheet.stoppedAt),
-				employeeId: timesheet.employeeId,
-				organizationId: timesheet.organizationId,
-				tenantId
-			})
+			.where(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+						employeeId
+					});
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
+					qb.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
+						startedAt,
+						stoppedAt
+					});
+				})
+			)
 			.getRawOne();
-
-		await this.timesheetService.update(id, {
-			duration: Math.round(timeSlot.duration),
-			keyboard: Math.round(timeSlot.keyboard),
-			mouse: Math.round(timeSlot.mouse),
-			overall: Math.round(timeSlot.overall)
-		});
-
-		return timesheet;
+		try {
+			await this.timesheetService.update(id, {
+				duration: Math.round(timeSlot.duration),
+				keyboard: Math.round(timeSlot.keyboard),
+				mouse: Math.round(timeSlot.mouse),
+				overall: Math.round(timeSlot.overall)
+			});
+		} catch (error) {
+			throw new BadRequestException(`Can\'t update timesheet for employee-${employeeId} of organization-${organizationId}`);
+		}
+		return await this.timesheetService.findOneByIdString(id);
 	}
 }
