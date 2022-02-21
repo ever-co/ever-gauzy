@@ -41,7 +41,7 @@ import {
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
-import { CreateInvoiceDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO } from './dto';
+import { CreateInvoiceDTO, UpdateInvoiceActionDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceDTO } from './dto';
 
 @ApiTags('Invoice')
 @Controller()
@@ -194,6 +194,34 @@ export class InvoiceController extends CrudController<Invoice> {
 	async updateEstimate(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateEstimateInvoiceDTO
+	){
+		return this.commandBus.execute(
+			new InvoiceUpdateCommand({ id, ...entity })
+		);
+	}
+
+	@ApiOperation({ summary: "Update Invoice's Status" })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Put('/:id/action')
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	async updateAction(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: UpdateInvoiceActionDTO
 	){
 		return this.commandBus.execute(
 			new InvoiceUpdateCommand({ id, ...entity })

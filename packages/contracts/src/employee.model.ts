@@ -78,6 +78,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	totalJobs?: number;
 	fullName?: string;
 	profile_link?: string;
+	isTrackingEnabled: boolean;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &
@@ -209,6 +210,6 @@ export interface IEmployeeStoreState {
 	action: CrudActionEnum;
 }
 
-export interface IEmployeeUpdateProfileStatus  {
+export interface IEmployeeUpdateProfileStatus extends IBasePerTenantAndOrganizationEntityModel {
 	readonly isActive: boolean;
 }

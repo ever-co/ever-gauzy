@@ -37,10 +37,10 @@ export const getDefaultOrganizations = async (
 	tenant: ITenant
 ): Promise<IOrganization[]> => {
 	const repo = connection.getRepository(Organization);
-	const orgnaizations = await repo.find({
+	const organizations = await repo.find({
 		where: { tenantId: tenant.id }
 	});
-	return orgnaizations;
+	return organizations;
 };
 
 let defaultOrganizationsInserted = [];
@@ -109,7 +109,7 @@ export const createDefaultOrganizations = async (
 		)
 			.add(faker.datatype.number(10), 'days')
 			.toDate();
-		defaultOrganization.futureDateAllowed = faker.datatype.boolean();
+		defaultOrganization.futureDateAllowed = true;
 		defaultOrganization.inviteExpiryPeriod = faker.datatype.number(50);
 		defaultOrganization.numberFormat = faker.random.arrayElement([
 			'USD',
@@ -216,7 +216,7 @@ export const createRandomOrganizations = async (
 				)
 					.add(faker.datatype.number(10), 'days')
 					.toDate();
-				organization.futureDateAllowed = faker.datatype.boolean();
+				organization.futureDateAllowed = true;
 				organization.inviteExpiryPeriod = faker.datatype.number(50);
 				organization.numberFormat = faker.random.arrayElement([
 					'USD',

@@ -98,7 +98,7 @@ export class InvoicesComponent
 	invoiceTabsEnum = InvoiceTabsEnum;
 
 	/*
-	* getter setter for check esitmate or invoice
+	* getter setter for check estimate or invoice
 	*/
 	private _isEstimate: boolean = false;
 	@Input() set isEstimate(val: boolean) {
@@ -487,7 +487,7 @@ export class InvoicesComponent
 		}
 		const { id: invoiceId } = this.selectedInvoice;
 
-		await this.invoicesService.update(invoiceId, {
+		await this.invoicesService.updateAction(invoiceId, {
 			isEstimate: false,
 			status: InvoiceStatusTypesEnum.DRAFT
 		});
@@ -659,10 +659,10 @@ export class InvoicesComponent
 			resultMap: (invoice: IInvoice) => {
 				return Object.assign({}, invoice, {
 					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
-					status: this.statusMapper(invoice.status),
-					tax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
-					tax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax2}`,
-					discountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
+					displayStatus: this.statusMapper(invoice.status),
+					displayTax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
+					displayTax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax2}`,
+					displayDiscountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
 				});
 			},
 			finalize: () => {
@@ -768,7 +768,7 @@ export class InvoicesComponent
 	}
 
 	async archive() {
-		await this.invoicesService.update(this.selectedInvoice.id, {
+		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			isArchived: true
 		});
 		this.subject$.next(true);
@@ -874,7 +874,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
-			this.settingsSmartTable['columns']['status'] = {
+			this.settingsSmartTable['columns']['displayStatus'] = {
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
 				type: 'custom',
 				width: '5%',
@@ -892,7 +892,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
-			this.settingsSmartTable['columns']['tax'] = {
+			this.settingsSmartTable['columns']['displayTax'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX'),
 				type: 'text',
 				width: '5%',
@@ -900,7 +900,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX_2)) {
-			this.settingsSmartTable['columns']['tax2'] = {
+			this.settingsSmartTable['columns']['displayTax2'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
 				width: '5%',
@@ -908,7 +908,7 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
-			this.settingsSmartTable['columns']['discountValue'] = {
+			this.settingsSmartTable['columns']['displayDiscountValue'] = {
 				title: this.getTranslation(
 					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
 				),
@@ -1025,7 +1025,7 @@ export class InvoicesComponent
 	}
 
 	async selectStatus($event) {
-		await this.invoicesService.update(this.selectedInvoice.id, {
+		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			status: $event
 		});
 		this.subject$.next(true);

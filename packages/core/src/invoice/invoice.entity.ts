@@ -31,7 +31,7 @@ import {
 	Index,
 	JoinTable
 } from 'typeorm';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	InvoiceEstimateHistory,
 	InvoiceItem,
@@ -56,7 +56,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	invoiceNumber: number;
 
@@ -74,7 +74,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsNumber()
 	@Column({
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	discountValue: number;
 
@@ -88,7 +88,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	tax: number;
 
@@ -97,7 +97,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	tax2: number;
 
@@ -113,7 +113,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	totalValue?: number;
 
@@ -178,7 +178,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	alreadyPaid?: number;
 
@@ -188,7 +188,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	amountDue?: number;
 
@@ -211,7 +211,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@Column({ type: Boolean, nullable: true, default: false })
 	isArchived?: boolean;
 
 	/*

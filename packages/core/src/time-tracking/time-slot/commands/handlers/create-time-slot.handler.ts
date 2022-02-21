@@ -13,6 +13,7 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
+import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(CreateTimeSlotCommand)
@@ -95,7 +96,7 @@ export class CreateTimeSlotHandler
 			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
 			timeSlot.tenantId = tenantId;
 			timeSlot.organizationId = organizationId;
-			console.log('Omit New Timeslot:', timeSlot);
+			console.log('Omit New TimeSlot:', timeSlot);
 		}
 
 		if (input.timeLogId) {
@@ -109,7 +110,8 @@ export class CreateTimeSlotHandler
 				id: In(timeLogIds),
 				tenantId,
 				organizationId,
-				employeeId
+				employeeId,
+				isRunning: true
 			});
 		} else {
 			try {
@@ -129,13 +131,14 @@ export class CreateTimeSlotHandler
 							new Brackets((qb: WhereExpressionBuilder) => {
 								const { startedAt } = timeSlot;
 								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" > :startedAt`, { startedAt });
-								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" IS NULL`, { startedAt });
+								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."isRunning" = :isRunning`, { startedAt, isRunning: true });
 							})
 						);
+						console.log(query.getQueryAndParameters(), 'Find TimeLog for TimeSlot Range');
 					}
 				});
 			} catch (error) {
-				throw new BadRequestException('Can\'t find Timelog for timeslot');
+				throw new BadRequestException('Can\'t find TimeLog for TimeSlot');
 			}
 		}
 
@@ -149,14 +152,13 @@ export class CreateTimeSlotHandler
 			);
 		}
 
-		console.log('Timeslot Before Create:', timeSlot);
 		await this.timeSlotRepository.save(timeSlot);
 
 		const minDate = input.startedAt;
 		const maxDate = input.startedAt;
 
 		/*
-		* Merge timeslots into 10 minutes slots
+		* Merge timeSlots into 10 minutes slots
 		*/
 		let [createdTimeSlot] = await this.commandBus.execute(
 			new TimeSlotMergeCommand(
@@ -166,7 +168,22 @@ export class CreateTimeSlotHandler
 			)
 		);
 
-		// If merge timeslots not found then pass created timeslot
+		console.log('TimeSlot Before Create:', timeSlot);
+		/**
+		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
+		 */
+		for await (const timeLog of timeSlot.timeLogs) {
+			if (timeLog.isRunning) {
+				await this.timeLogRepository.update(timeLog.id, {
+					stoppedAt: moment.utc().toDate()
+				});
+				await this.commandBus.execute(
+					new TimesheetRecalculateCommand(timeLog.timesheetId)
+				);
+			}
+		}
+
+		// If merge timeSlots not found then pass created timeSlot
 		if (!createdTimeSlot) {
 			createdTimeSlot = timeSlot;
 		}

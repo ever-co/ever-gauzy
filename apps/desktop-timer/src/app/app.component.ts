@@ -111,7 +111,7 @@ export class AppComponent implements OnInit {
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
 			this.appService
-				.pushToTimeslot(arg)
+				.pushToTimeSlot(arg)
 				.then((res: any) => {
 					if (res.id) {
 						const timeLogs = res.timeLogs;

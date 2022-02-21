@@ -38,7 +38,7 @@ export class EmailHistoryComponent
 	organizationContacts: IOrganizationContact[] = [];
 	selectedEmail: IEmail;
 	filteredCount: Number;
-	threshholdHitCount = 1;
+	thresholdHitCount = 1;
 	pageSize = 10;
 	imageUrl: string;
 	filters = [];
@@ -85,10 +85,10 @@ export class EmailHistoryComponent
 
 	selectEmail(email: IEmail) {
 		this.selectedEmail = email;
-    this.selectedEmail.content =
-      email.content ?
-        email.content :
-        email.emailTemplate.hbs;
+		this.selectedEmail.content =
+			email.content ?
+				email.content :
+				email.emailTemplate.hbs;
 	}
 
 	async openFiltersDialog() {
@@ -140,17 +140,17 @@ export class EmailHistoryComponent
 				{
 					organizationId,
 					tenantId,
-					isArchived: false || null,
+					isArchived: false,
 					...filters
 				},
-				this.threshholdHitCount * this.pageSize
+				this.thresholdHitCount * this.pageSize
 			)
 				.then((data) => {
 					this.emails = data.items;
 					this.selectedEmail = this.emails ? this.emails[0] : null;
 					const totalNoPage = Math.ceil(data.total / this.pageSize)
 
-					if (this.threshholdHitCount >= totalNoPage) {
+					if (this.thresholdHitCount >= totalNoPage) {
 						this.disableLoadMore = true
 					} else {
 						this.disableLoadMore = false
@@ -199,17 +199,18 @@ export class EmailHistoryComponent
 		if (!this.selectedEmail) {
 			return;
 		}
-		await this.emailService.update(this.selectedEmail.id, {
-			isArchived: true
-		})
-			.then(() => {
-				this.toastrService.success(
-					this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
-				);
-			})
-			.finally(() => {
-				this.emails$.next(true);
+		try {
+			await this.emailService.update(this.selectedEmail.id, {
+				isArchived: true
 			});
+			this.toastrService.success(
+				this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
+			);
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this.emails$.next(true);
+		}
 	}
 
 	getEmailDate(createdAt: string): string {
@@ -223,7 +224,7 @@ export class EmailHistoryComponent
 			return
 		}
 		this.nextDataLoading = true;
-		this.threshholdHitCount++;
+		this.thresholdHitCount++;
 		this.emails$.next(true);
 	}
 

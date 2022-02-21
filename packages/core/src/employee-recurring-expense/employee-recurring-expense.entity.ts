@@ -16,7 +16,7 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('employee_recurring_expense')
 export class EmployeeRecurringExpense
@@ -92,7 +92,7 @@ export class EmployeeRecurringExpense
 	@IsNotEmpty()
 	@Column({
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	value: number;
 

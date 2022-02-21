@@ -201,7 +201,8 @@
 		"TAGS": "Тагове",
 		"CREATED": "Created",
 		"HIRED_DATE": "Hired Date",
-		"REJECTED_DATE": "Rejected Date"
+		"REJECTED_DATE": "Rejected Date",
+		"TIME_TRACKING": "Time Tracking"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -1176,6 +1177,8 @@
 		"END_WORK": "Край на работа",
 		"WORK_ENDED": "Завършена работа",
 		"DELETED": "Изтрит",
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled",
 		"RECURRING_EXPENSE": "Разходи, повтарящи се за служителя",
 		"RECURRING_EXPENSE_EDIT": "Редактирай текущите и всички бъдещи разходи. Няма да има промяна по ...",
 		"RECURRING_EXPENSE_ADD": "Това ще добави разход повтарящи се ежемесечно.",

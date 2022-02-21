@@ -17,7 +17,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IsOptional, IsString } from 'class-validator';
-import { ColumnNumericTransformer } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('candidate_interview')
 export class CandidateInterview
@@ -51,7 +51,7 @@ export class CandidateInterview
 	@Column({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformer()
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	rating?: number;
 

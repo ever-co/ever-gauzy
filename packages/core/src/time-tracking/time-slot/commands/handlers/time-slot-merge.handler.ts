@@ -61,7 +61,7 @@ export class TimeSlotMergeHandler
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
 
-		const createdTimeslots: any = [];
+		const createdTimeSlots: any = [];
 		if (timerSlots.length > 0) {
 			const savePromises = _.chain(timerSlots)
 				.groupBy((timeSlot) => {
@@ -74,8 +74,8 @@ export class TimeSlotMergeHandler
 					return date.format('YYYY-MM-DD HH:mm:ss');
 				})
 				.mapObject(async (timeSlots, slotStart) => {
-					const oldTimeslots = JSON.parse(JSON.stringify(timeSlots));
-					const [ oldTimeslot ] = oldTimeslots;
+					const oldTimeSlots = JSON.parse(JSON.stringify(timeSlots));
+					const [oldTimeSlot] = oldTimeSlots;
 
 					let timeLogs: ITimeLog[] = [];
 					let screenshots: IScreenshot[] = [];
@@ -86,7 +86,7 @@ export class TimeSlotMergeHandler
 					let mouse = 0;
 					let overall = 0;
 
-					for (const timeSlot of oldTimeslots) {
+					for (const timeSlot of oldTimeSlots) {
 						duration = duration + parseInt(timeSlot.duration + '', 10);
 						keyboard = (keyboard + parseInt(timeSlot.keyboard + '', 10));
 						mouse = mouse + parseInt(timeSlot.mouse + '', 10);
@@ -97,10 +97,10 @@ export class TimeSlotMergeHandler
 						activities = activities.concat(timeSlot.activities);
 					}
 
-					const timeSlotslength = oldTimeslots.filter((item) => item.keyboard !== 0).length;
-					overall = Math.round(overall / timeSlotslength || 0);
-					keyboard = Math.round(keyboard / timeSlotslength || 0);
-					mouse = Math.round(mouse / timeSlotslength || 0);
+					const timeSlotsLength = oldTimeSlots.filter((item) => item.keyboard !== 0).length;
+					overall = Math.round(overall / timeSlotsLength || 0);
+					keyboard = Math.round(keyboard / timeSlotsLength || 0);
+					mouse = Math.round(mouse / timeSlotsLength || 0);
 
 					const activity = {
 						duration: (duration < 0) ? 0 : (duration > 600) ? 600 : duration,
@@ -109,14 +109,14 @@ export class TimeSlotMergeHandler
 						mouse: (mouse < 0) ? 0 : (mouse > 600) ? 600 : mouse
 					}
 					/*
-					* Map old screenshots newely created timeslot 
+					* Map old screenshots newly created TimeSlot 
 					*/
 					screenshots = screenshots.map(
 						(item) => new Screenshot(_.omit(item, ['timeSlotId']))
 					);
 
 					/*
-					* Map old activities newely created timeslot 
+					* Map old activities newly created TimeSlot 
 					*/
 					activities = activities.map(
 						(item) => new Activity(_.omit(item, ['timeSlotId']))
@@ -126,7 +126,7 @@ export class TimeSlotMergeHandler
 					timeLogs = _.uniq(timeLogs, x => x.id);
 
 					const newTimeSlot = new TimeSlot({
-						..._.omit(oldTimeslot),
+						..._.omit(oldTimeSlot),
 						...activity,
 						screenshots,
 						activities,
@@ -135,13 +135,12 @@ export class TimeSlotMergeHandler
 						tenantId
 					});
 
-					console.log('New Merged TimeSlot', newTimeSlot);
 					await this.timeSlotRepository.save(newTimeSlot);
-					createdTimeslots.push(newTimeSlot);
+					createdTimeSlots.push(newTimeSlot);
 
-					const ids = _.pluck(oldTimeslots, 'id');
+					const ids = _.pluck(oldTimeSlots, 'id');
 					ids.splice(0, 1);
-					console.log('Timeslots Ids Will Be Deleted:', ids);
+					console.log('TimeSlots Ids Will Be Deleted:', ids);
 
 					if (ids.length > 0) {
 						await this.timeSlotRepository.delete({
@@ -153,6 +152,6 @@ export class TimeSlotMergeHandler
 				.value();
 			await Promise.all(savePromises);
 		}
-		return createdTimeslots;
+		return createdTimeSlots;
 	}
 }
