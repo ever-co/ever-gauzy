@@ -104,6 +104,7 @@ export enum DiscountTaxTypeEnum {
 }
 
 export enum InvoiceStatusTypesEnum {
+	ACCEPTED = 'ACCEPTED',
 	DRAFT = 'DRAFT',
 	SENT = 'SENT',
 	VIEWED = 'VIEWED',
