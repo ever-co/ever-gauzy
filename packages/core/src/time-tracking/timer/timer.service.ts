@@ -134,13 +134,14 @@ export class TimerService {
 			);
 		}
 
+		const now = moment.utc().toDate();
 		const { source, projectId, taskId, organizationContactId, logType, description, isBillable } = request;
 		const timeLog = {
 			organizationId,
 			tenantId,
 			employeeId,
-			startedAt: moment.utc().toDate(),
-			stoppedAt: moment.utc().toDate(),
+			startedAt: now,
+			stoppedAt: now,
 			duration: 0,
 			source: source || TimeLogSourceEnum.BROWSER,
 			projectId: projectId || null,
