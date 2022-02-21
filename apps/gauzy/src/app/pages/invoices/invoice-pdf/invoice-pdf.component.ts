@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 		type="application/pdf"
 		id="iframe"
 		class="pdfDoc"
-		[src]="fileURL | safe"
+		[src]="fileURL | safeUrl"
 		frameBorder="0"
 	></iframe>`,
 	styles: [
