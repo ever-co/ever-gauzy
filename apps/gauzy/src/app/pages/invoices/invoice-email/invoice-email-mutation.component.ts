@@ -64,7 +64,7 @@ export class InvoiceEmailMutationComponent
 		);
 
 		if (this.invoice.id) {
-			await this.invoiceService.update(this.invoice.id, {
+			await this.invoiceService.updateAction(this.invoice.id, {
 				status: InvoiceStatusTypesEnum.SENT
 			});
 		}

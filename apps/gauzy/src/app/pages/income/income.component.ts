@@ -315,6 +315,10 @@ export class IncomeComponent
 					try {
 						const { amount, organizationContact, valueDate, notes, currency, isBonus, tags } = result;
 						const { employee } = this.selectedIncome;
+
+						const { tenantId } = this.store.user;
+						const { id: organizationId } = this.organization;
+
 						await this.incomeService.update(this.selectedIncome.id, {
 							amount,
 							clientId: organizationContact.id,
@@ -323,7 +327,9 @@ export class IncomeComponent
 							currency,
 							isBonus,
 							tags,
-							employeeId: employee ? employee.id : null
+							employeeId: employee ? employee.id : null,
+							tenantId,
+							organizationId
 						}).then(() => {
 							this.toastrService.success('NOTES.INCOME.EDIT_INCOME', {
 								name: this.employeeName(employee)

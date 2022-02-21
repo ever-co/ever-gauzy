@@ -1,5 +1,6 @@
 import {
     CurrenciesEnum,
+    EstimateStatusTypesEnum,
     IInvoiceEstimateHistory,
     InvoiceStatusTypesEnum,
     IOrganizationContact,
@@ -38,8 +39,8 @@ export class InvoiceDTO {
 
     @ApiProperty({ type: () => String, enum: InvoiceStatusTypesEnum, readOnly: true })
     @IsNotEmpty()
-    @IsEnum(InvoiceStatusTypesEnum)
-    readonly status: InvoiceStatusTypesEnum;
+    @IsEnum(Object.assign({}, InvoiceStatusTypesEnum, EstimateStatusTypesEnum))
+    readonly status: InvoiceStatusTypesEnum | EstimateStatusTypesEnum;
 
     @ApiPropertyOptional({ type: () => Number, readOnly: true })
     @IsOptional()

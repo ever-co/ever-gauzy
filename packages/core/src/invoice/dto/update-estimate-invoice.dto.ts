@@ -7,5 +7,4 @@ export abstract class UpdateEstimateInvoiceDTO {
     @IsNotEmpty()
     @IsBoolean()
     readonly isAccepted: boolean;
-
 }
