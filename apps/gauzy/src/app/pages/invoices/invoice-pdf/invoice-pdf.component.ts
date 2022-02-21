@@ -13,24 +13,29 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 		type="application/pdf"
 		id="iframe"
 		class="pdfDoc"
+		[src]="fileURL | safe"
+		frameBorder="0"
 	></iframe>`,
 	styles: [
 		`
 			::ng-deep .pdf-preview-card {
 				height: 90vh;
+				resize: horizontal;
 			}
 
 			.pdfDoc {
 				height: 100%;
-				width: 100%;
+				width: 60vw;
 			}
 		`
 	]
 })
 export class InvoicePdfComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit
+{
 	@Input() invoice: IInvoice;
+	fileURL: string;
 
 	constructor(
 		private readonly invoicesService: InvoicesService,
@@ -55,7 +60,7 @@ export class InvoicePdfComponent
 	}
 
 	embeddedPdfToIframe(data) {
-		var file = window.URL.createObjectURL(data);
-		document.querySelector('iframe').src = file;
+		const url = window.URL || window.webkitURL;
+		this.fileURL = url.createObjectURL(data);
 	}
 }
