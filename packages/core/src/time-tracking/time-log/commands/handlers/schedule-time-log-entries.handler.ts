@@ -35,7 +35,6 @@ export class ScheduleTimeLogEntriesHandler
 				relations: ['timeSlots']
 			});
 		}
-
 		
 		for await (const timeLog of timeLogs) {
 			const logDifference = moment().diff(moment.utc(timeLog.startedAt), 'minutes');
@@ -75,6 +74,15 @@ export class ScheduleTimeLogEntriesHandler
 						isRunning: false
 					});
 				}
+			} else {
+				/**
+				 * Stop previous pending timer anyway.
+				 * If we have any pending TimeLog entry
+				 */
+				await this.timeLogRepository.save({
+					id: timeLog.id,
+					isRunning: false
+				});
 			}
 		}
 	}

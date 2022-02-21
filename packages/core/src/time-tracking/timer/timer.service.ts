@@ -108,6 +108,7 @@ export class TimerService {
 	}
 
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		console.log('Start Timer Request', request);
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -127,6 +128,7 @@ export class TimerService {
 			 * So, we have to first update stop timer entry in database, then create start timer entry.
 			 * It will manage to create proper entires in database
 			 */
+			console.log('Schedule Time Log Entries Command', lastLog);
 			await this.commandBus.execute(
 				new ScheduleTimeLogEntriesCommand(lastLog)
 			);
@@ -156,6 +158,7 @@ export class TimerService {
 	}
 
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		console.log('Stop Timer Request', request);
 		const { organizationId } = request;
 		const tenantId = RequestContext.currentTenantId();
 
