@@ -368,10 +368,14 @@ export class ExpensesComponent
 						if (!this.selectedExpense) {
 							return;
 						}
+						const { tenantId } = this.store.user;
+						const { id: organizationId } = this.organization;
 						const { id, employee } = this.selectedExpense;
 						await this.expenseService.update(id, {
 							...this.getFormData(data),
-							employeeId: employee ? employee.id : null
+							employeeId: employee ? employee.id : null,
+							tenantId,
+							organizationId
 						}).then(() => {
 							this.subject$.next(true);
 							this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', { 
