@@ -1,0 +1,16 @@
+<ng-template [ngIf]="rowData.isTrackingEnabled" [ngIfElse]="disableTimeTrackingStatus">
+	<div>
+		<div class="badge badge-success">
+			{{ 'EMPLOYEES_PAGE.ENABLED' | translate }}
+		</div>
+	</div>
+</ng-template>
+<ng-template #disableTimeTrackingStatus>
+	<div>
+		<div class="badge badge-danger">
+			{{ 'EMPLOYEES_PAGE.DISABLED' | translate }}
+		</div>
+	</div>
+</ng-template>
+
+

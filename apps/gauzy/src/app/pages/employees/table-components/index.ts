@@ -3,3 +3,4 @@ export * from './employee-average-expenses/employee-average-expenses.component';
 export * from './employee-average-income/employee-average-income.component';
 export * from './employee-bonus/employee-bonus.component';
 export * from './employee-work-status/employee-work-status.component';
+export * from './employee-time-tracking-status/employee-time-tracking-status.component';
