@@ -122,10 +122,11 @@ export class EmployeesService {
 		);
 	}
 
-	setEmployeeEndWork(id: string, date: Date): Promise<IEmployee> {
+	setEmployeeEndWork(id: string, date: Date, request: IEmployeeUpdateInput): Promise<IEmployee> {
 		return firstValueFrom(
 			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
-				endWork: date
+				endWork: date,
+				...request
 			})
 		);
 	}

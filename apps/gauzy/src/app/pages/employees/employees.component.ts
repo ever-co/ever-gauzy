@@ -217,8 +217,13 @@ export class EmployeesComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { id: organizationId } = this.organization;
+						const { tenantId } = this.store.user;
+
 						await this.employeesService.setEmployeeProfileStatus(this.selectedEmployee.id, {
-							isActive: false
+							isActive: false,
+							tenantId,
+							organizationId
 						});
 						this._employeeStore.employeeAction = {
 							action: CrudActionEnum.DELETED,
@@ -244,6 +249,9 @@ export class EmployeesComponent
 			});
 		}
 		try {
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+			
 			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 				context: {
 					endWorkValue: this.selectedEmployee.endWork,
@@ -254,7 +262,11 @@ export class EmployeesComponent
 			if (data) {
 				await this.employeesService.setEmployeeEndWork(
 					this.selectedEmployee.id,
-					data
+					data,
+					{
+						organizationId,
+						tenantId
+					}
 				);
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
 					name: this.selectedEmployee.fullName.trim()
@@ -275,6 +287,9 @@ export class EmployeesComponent
 			});
 		}
 		try {
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+
 			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 				context: {
 					backToWork: true,
@@ -285,7 +300,11 @@ export class EmployeesComponent
 			if (data) {
 				await this.employeesService.setEmployeeEndWork(
 					this.selectedEmployee.id,
-					null
+					null,
+					{
+						organizationId,
+						tenantId
+					}
 				);
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
 					name: this.selectedEmployee.fullName.trim()
@@ -311,8 +330,13 @@ export class EmployeesComponent
 			});
 		}
 		try {
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+
 			await this.employeesService.setEmployeeProfileStatus(this.selectedEmployee.id, {
-				isActive: true
+				isActive: true,
+				tenantId,
+				organizationId
 			});
 			this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
 				name: this.selectedEmployee.fullName.trim()

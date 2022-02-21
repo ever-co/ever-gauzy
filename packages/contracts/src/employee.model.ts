@@ -210,6 +210,6 @@ export interface IEmployeeStoreState {
 	action: CrudActionEnum;
 }
 
-export interface IEmployeeUpdateProfileStatus  {
+export interface IEmployeeUpdateProfileStatus extends IBasePerTenantAndOrganizationEntityModel {
 	readonly isActive: boolean;
 }
