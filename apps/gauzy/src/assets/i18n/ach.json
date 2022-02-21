@@ -201,7 +201,8 @@
 		"TAGS": "crwdns10402:0crwdne10402:0",
 		"CREATED": "crwdns10559:0crwdne10559:0",
 		"HIRED_DATE": "crwdns10877:0crwdne10877:0",
-		"REJECTED_DATE": "crwdns10879:0crwdne10879:0"
+		"REJECTED_DATE": "crwdns10879:0crwdne10879:0",
+		"TIME_TRACKING": "crwdns10934:0crwdne10934:0"
 	},
 	"FORM": {
 		"USERNAME": "crwdns68:0crwdne68:0",
@@ -1176,6 +1177,8 @@
 		"END_WORK": "crwdns224:0crwdne224:0",
 		"WORK_ENDED": "crwdns226:0crwdne226:0",
 		"DELETED": "crwdns2301:0crwdne2301:0",
+		"ENABLED": "crwdns10936:0crwdne10936:0",
+		"DISABLED": "crwdns10938:0crwdne10938:0",
 		"RECURRING_EXPENSE": "crwdns2477:0crwdne2477:0",
 		"RECURRING_EXPENSE_EDIT": "crwdns2479:0crwdne2479:0",
 		"RECURRING_EXPENSE_ADD": "crwdns2481:0crwdne2481:0",
