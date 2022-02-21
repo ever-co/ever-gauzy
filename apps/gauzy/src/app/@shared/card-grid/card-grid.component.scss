@@ -1,8 +1,8 @@
 @import 'report';
-
 .card-layout {
   display: flex;
   flex-wrap: wrap;
+  color: nb-theme(color-basic-default);
   .card-item {
     display: flex;
     flex-direction: column;
@@ -23,7 +23,6 @@
       flex-direction: row;
       justify-content: space-between;
       font-size: 0.7em;
-      color: darkgray;
       .info-meta {
         margin-right: 10px;
       }
@@ -31,7 +30,6 @@
         display: flex;
         justify-content: flex-end;
         text-align: end;
-        color: black;
         font-size: 1em;
       }
     }

@@ -1,5 +1,6 @@
+@import 'report';
 .popover-container {
-  border: solid 1px #919191;
+  border: solid 1px nb-theme(border-basic-color-3);
   padding: 20px 30px;
   border-radius: 10px;
 }
@@ -67,7 +68,7 @@
 }
 
 .history-date {
-  color: #919191;
+  color: nb-theme(color-basic-default);
   font-size: 12px;
 }
 
