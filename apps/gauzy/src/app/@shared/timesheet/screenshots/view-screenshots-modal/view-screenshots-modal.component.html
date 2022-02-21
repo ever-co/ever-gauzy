@@ -42,12 +42,13 @@
 			<h6>{{ 'TIMESHEET.SCREENSHOTS.SCREENSHOTS' | translate }}</h6>
 			<div class="row mb-3 justify-content-left">
 				<div class="col-3 mb-2" *ngFor="let image of screenshots">
-					<img
-						nb-card-image
-						draggable="false"
-						class="screenshots-image"
-						[src]="image?.thumbUrl"
-					/>
+          <div class="screenshot">
+            <img nb-card-image draggable="false" [src]="image?.thumbUrl" />
+            <button class="ml-auto select-hidden" status="danger" nbButton size="tiny" (click)="$event.stopPropagation()"
+              ngxConfirmDialog [message]="'ACTIVITY.DELETE_CONFIRM' | translate" (confirm)="deleteImage(image)">
+              <nb-icon icon="trash-2-outline"></nb-icon>
+            </button>
+          </div>
 				</div>
 			</div>
 		</ng-template>
