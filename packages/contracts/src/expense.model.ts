@@ -84,7 +84,7 @@ export interface IExpenseFindInput
 	status?: string;
 }
 
-export interface IExpenseUpdateInput {
+export interface IExpenseUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	organizationId?: string;
 	amount?: number;
