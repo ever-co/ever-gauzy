@@ -138,13 +138,13 @@ export class InvoicePaymentsComponent
 
 		if (this.totalPaid >= this.invoice.totalValue) {
 			if (!this.invoice.paid) {
-				await this.invoicesService.update(this.invoice.id, {
+				await this.invoicesService.updateAction(this.invoice.id, {
 					paid: true
 				});
 			}
 		} else {
 			if (this.invoice.paid) {
-				await this.invoicesService.update(this.invoice.id, {
+				await this.invoicesService.updateAction(this.invoice.id, {
 					paid: false
 				});
 			}
@@ -158,7 +158,7 @@ export class InvoicePaymentsComponent
 
 		this.isDisabled = (this.leftToPay === 0);
 
-		await this.invoicesService.update(this.invoice.id, {
+		await this.invoicesService.updateAction(this.invoice.id, {
 			alreadyPaid: this.totalPaid,
 			amountDue: this.leftToPay
 		});
