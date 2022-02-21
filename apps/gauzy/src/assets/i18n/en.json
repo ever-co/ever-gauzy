@@ -113,7 +113,7 @@
 		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role",
 		"RESTORE": "Restore",
 		"VIEW_ALL": "View All",
-    "VIEW_REPORT": "View Report"
+    	"VIEW_REPORT": "View Report"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -201,7 +201,8 @@
 		"TAGS": "Tags",
 		"CREATED": "Created",
 		"HIRED_DATE": "Hired Date",
-		"REJECTED_DATE": "Rejected Date"
+		"REJECTED_DATE": "Rejected Date",
+		"TIME_TRACKING": "Time Tracking"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -1176,6 +1177,8 @@
 		"END_WORK": "End Work",
 		"WORK_ENDED": "Work Ended",
 		"DELETED": "Deleted",
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled",
 		"RECURRING_EXPENSE": "Employee Recurring Expense",
 		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
 		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",

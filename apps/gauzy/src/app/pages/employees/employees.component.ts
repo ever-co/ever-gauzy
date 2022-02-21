@@ -30,9 +30,10 @@ import {
 	ToastrService
 } from '../../@core/services';
 import {
-	EmployeeAverageIncomeComponent,
-	EmployeeAverageExpensesComponent,
 	EmployeeAverageBonusComponent,
+	EmployeeAverageExpensesComponent,
+	EmployeeAverageIncomeComponent,
+	EmployeeTimeTrackingStatusComponent,
 	EmployeeWorkStatusComponent
 } from './table-components';
 
@@ -337,7 +338,7 @@ export class EmployeesComponent
 		let employeesVm = [];
 		const result = [];
 		for (const employee of items) {
-			const { id, user, isActive, endWork, tags, averageIncome, averageExpenses, averageBonus, startedWorkOn } = employee;
+			const { id, user, isActive, endWork, tags, averageIncome, averageExpenses, averageBonus, startedWorkOn, isTrackingEnabled } = employee;
 			result.push({
 				fullName: `${user.name}`,
 				email: user.email,
@@ -353,7 +354,8 @@ export class EmployeesComponent
 				averageExpenses: Math.floor(averageExpenses),
 				averageBonus: Math.floor(averageBonus),
 				bonusDate: Date.now(),
-				startedWorkOn
+				startedWorkOn,
+				isTrackingEnabled
 			});
 		}
 		if (!this.includeDeleted) {
@@ -385,19 +387,22 @@ export class EmployeesComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					class: 'align-row',
+					width: '20%',
+					renderComponent: PictureNameTagsComponent
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
-					class: 'email-column'
+					class: 'email-column',
+					width: '20%'
 				},
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
+					width: '10%',
 					renderComponent: EmployeeAverageIncomeComponent
 				},
 				averageExpenses: {
@@ -405,6 +410,7 @@ export class EmployeesComponent
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
+					width: '10%',
 					renderComponent: EmployeeAverageExpensesComponent
 				},
 				averageBonus: {
@@ -412,13 +418,22 @@ export class EmployeesComponent
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
+					width: '20%',
 					renderComponent: EmployeeAverageBonusComponent
+				},
+				isTrackingEnabled: {
+					title: this.getTranslation('SM_TABLE.TIME_TRACKING'),
+					type: 'custom',
+					class: 'text-center',
+					width: '20%',
+					renderComponent: EmployeeTimeTrackingStatusComponent,
+					filter: false
 				},
 				workStatus: {
 					title: this.getTranslation('SM_TABLE.WORK_STATUS'),
 					type: 'custom',
 					class: 'text-center',
-					width: '200px',
+					width: '20%',
 					renderComponent: EmployeeWorkStatusComponent,
 					filter: false
 				}

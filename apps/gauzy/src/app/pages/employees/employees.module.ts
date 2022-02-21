@@ -46,7 +46,8 @@ import {
 	EmployeeAverageExpensesComponent,
 	EmployeeAverageIncomeComponent,
 	EmployeeBonusComponent,
-	EmployeeWorkStatusComponent
+	EmployeeWorkStatusComponent,
+	EmployeeTimeTrackingStatusComponent
 } from './table-components';
 import { SharedModule } from '../../@shared/shared.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
@@ -69,6 +70,7 @@ const COMPONENTS = [
 	EmployeeAverageExpensesComponent,
 	EmployeeAverageBonusComponent,
 	EmployeeWorkStatusComponent,
+	EmployeeTimeTrackingStatusComponent,
 	EditEmployeeComponent,
 	EditEmployeeProfileComponent,
 	EditEmployeeMainComponent,
