@@ -3,7 +3,8 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 // import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 import { catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
+import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -154,30 +155,26 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-
-		const request = {
+		const body = {
 			description: values.note,
 			isBillable: true,
-			logType: 'TRACKED',
+			logType: TimeLogType.TRACKED,
 			projectId: values.projectId,
 			taskId: values.taskId,
-			source: 'DESKTOP',
+			source: TimeLogSourceEnum.DESKTOP,
 			manualTimeSlot: values.manualTimeSlot,
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId
 		};
-
-		log.info(`Toggle Timer Request: ${moment().format()}`, request);
-
-		return this.http
-			.post(
+		log.info(`Toggle Timer Request: ${moment().format()}`, body);
+		return firstValueFrom(
+			this.http.post(
 				`${values.apiHost}/api/timesheet/timer/toggle`,
-				{ ...request },
+				{ ...body },
 				{ headers: headers }
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	toggleApiStop(values) {
@@ -185,27 +182,25 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.post(
+		const body = {
+			description: values.note,
+			isBillable: true,
+			logType: TimeLogType.TRACKED,
+			projectId: values.projectId,
+			taskId: values.taskId,
+			source: TimeLogSourceEnum.DESKTOP,
+			manualTimeSlot: values.manualTimeSlot,
+			organizationId: values.organizationId,
+			tenantId: values.tenantId,
+			organizationContactId: values.organizationContactId
+		};
+		return firstValueFrom(
+			this.http.post(
 				`${values.apiHost}/api/timesheet/timer/toggle`,
-				{
-					description: values.note,
-					isBillable: true,
-					logType: 'TRACKED',
-					projectId: values.projectId,
-					taskId: values.taskId,
-					source: 'DESKTOP',
-					manualTimeSlot: values.manualTimeSlot,
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-					organizationContactId: values.organizationContactId
-				},
-				{
-					headers: headers
-				}
+				{ ...body },
+				{ headers: headers }
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	deleteTimeSlot(values) {
@@ -394,7 +389,7 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
-	pushTotimeslot(values) {
+	pushToTimeSlot(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`
 		});

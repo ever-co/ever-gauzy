@@ -138,7 +138,7 @@ export class AppService {
 			.toPromise();
 	}
 
-	pushTotimeslot(values) {
+	pushToTimeSlot(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`
 		});

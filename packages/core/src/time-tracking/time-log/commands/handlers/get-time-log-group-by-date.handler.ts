@@ -69,8 +69,7 @@ export class GetTimeLogGroupByDateHandler
 									},
 									0
 								) || 0;
-								const avgActivity = ((overallSum * 100) / (durationSum));
-
+								const avgActivity = ((overallSum * 100) / (durationSum)) || 0;
 								const employee =
 									byEmployeeLogs.length > 0
 										? byEmployeeLogs[0].employee

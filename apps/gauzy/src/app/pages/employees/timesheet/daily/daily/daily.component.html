@@ -129,7 +129,7 @@
 				-
 				<span
 					class="end-timer"
-					*ngIf="log.stoppedAt; else runningTimer"
+					*ngIf="!log.isRunning else runningTimer"
 				>
 					{{ log.stoppedAt | utcToLocal | timeFormat: true }}
 				</span>
@@ -181,7 +181,7 @@
 		*ngxPermissionsOnly="[
 			OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
 		]"
-		[disabled]="!timeLog.stoppedAt"
+		[disabled]="timeLog.isRunning"
 		class="m-1"
 		nbButton
 		status="success"
@@ -195,7 +195,7 @@
 		*ngxPermissionsOnly="[
 			OrganizationPermissionsEnum.ALLOW_DELETE_TIME
 		]"
-		[disabled]="!timeLog.stoppedAt"
+		[disabled]="timeLog.isRunning"
 		class="m-1"
 		nbButton
 		status="danger"

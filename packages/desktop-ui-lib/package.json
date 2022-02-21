@@ -43,6 +43,7 @@
 		"underscore": "^1.13.2"
 	},
 	"dependencies": {
+		"@gauzy/contracts": "^0.1.0",
 		"ng2-smart-table": "^1.7.2"
 	}
 }

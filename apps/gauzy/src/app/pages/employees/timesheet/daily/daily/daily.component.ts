@@ -202,6 +202,9 @@ export class DailyComponent
 			});
 	}
 	openEdit(timeLog: ITimeLog) {
+		if (timeLog.isRunning) {
+			return;
+		}
 		this.dialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
 			.onClose.pipe(untilDestroyed(this))
@@ -229,6 +232,9 @@ export class DailyComponent
 	}
 
 	onDeleteConfirm(timeLog: ITimeLog) {
+		if (timeLog.isRunning) {
+			return;
+		}
 		this.timesheetService.deleteLogs(timeLog.id)
 			.then(() => {
 				this.checkTimerStatus();
