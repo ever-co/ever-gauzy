@@ -1,4 +1,4 @@
-@import 'var';
+@import 'report';
 .card-layout {
   display: flex;
   flex-wrap: wrap;
@@ -8,6 +8,12 @@
     flex-direction: column;
     margin-right: 10px;
     width: 350px;
+    &:hover {
+      border-color: nb-theme(color-primary-hover-border);
+    }
+    &:focus {
+      border-color: nb-theme(color-primary-focus-border);
+    }
     &.big {
       width: 415px;
       margin-right: 65px;

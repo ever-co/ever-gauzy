@@ -4,7 +4,7 @@
 		class="card-item"
 		[ngClass]="{ 'big': cardSize === 'big' }"
 	>
-		<nb-card-body>
+		<nb-card-body (click)="selectedItem(item)">
 			<div class="info-line mt-1" *ngFor="let key of getKeys()">
 				<div class="info-meta">{{ settings.columns[key].title }}</div>
 				<div class="info-value" [ngSwitch]="settings.columns[key].type">
@@ -25,7 +25,7 @@
 				</div>
 			</div>
 		</nb-card-body>
-		<nb-card-footer class="card-footer">
+		<nb-card-footer (click)="selectedItem(item)" class="card-footer">
 			<ng-container
 				*ngTemplateOutlet="
 					buttonTemplate;
