@@ -32,7 +32,7 @@ export interface IIncomeCreateInput
 	tags: ITag[];
 }
 
-export interface IIncomeUpdateInput {
+export interface IIncomeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	amount?: number;
 	clientId?: string;
 	valueDate?: Date;
