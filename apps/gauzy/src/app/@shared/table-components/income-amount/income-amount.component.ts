@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { InvoiceEstimateTotalValueComponent } from '../../../pages/invoices/table-components/invoice-total-value.component';
 
 @Component({
