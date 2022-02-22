@@ -82,7 +82,7 @@
 										project.budgetType ===
 										OrganizationProjectBudgetTypeEnum.COST
 									"
-									>{{ project?.budget | currency }}</span
+									>{{ project?.budget | currency: organization?.currency | position: organization?.currencyPosition }}</span
 								>
 							</div>
 							<div class="col-4 text-center d-flex day-col">
@@ -90,7 +90,7 @@
 									[percentage]="project?.spentPercentage"
 								></ngx-progress-status>
 								<span class="ml-3">{{
-									project?.spent | currency
+									project?.spent | currency: organization?.currency | position: organization?.currencyPosition
 								}}</span>
 							</div>
 							<div class="col text-center day-col">
@@ -110,7 +110,7 @@
 										OrganizationProjectBudgetTypeEnum.COST
 									"
 									>{{
-										project.reamingBudget | currency
+										project.reamingBudget | currency: organization?.currency | position: organization?.currencyPosition
 									}}</span
 								>
 							</div>
