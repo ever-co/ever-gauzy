@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, IsNull, Between, Not } from 'typeorm';
@@ -46,7 +46,7 @@ export class TimerService {
 		});
 
 		if (!employee) {
-			throw new BadRequestException('Employee not found.');
+			throw new NotFoundException('Employee not found.');
 		}
 
 		const { organizationId, id: employeeId } = employee;
@@ -117,7 +117,7 @@ export class TimerService {
 			tenantId
 		});
 		if (!employee) {
-			throw new BadRequestException('Employee not found.');
+			throw new NotFoundException('Employee not found.');
 		}
 
 		const { organizationId, id: employeeId } = employee;
@@ -230,9 +230,11 @@ export class TimerService {
 			tenantId
 		});
 		if (!employee) {
-			throw new BadRequestException('Employee not found.');
+			throw new NotFoundException('Employee not found.');
 		}
-
+		if (!employee.isTrackingEnabled) {
+			throw new NotAcceptableException(`Time tracker has been disabled for ${employee.fullName}`);
+		}
 		const { organizationId, id: employeeId } = employee;
 		return await this.timeLogRepository.findOne({
 			where: {
