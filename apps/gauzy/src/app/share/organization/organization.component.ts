@@ -239,7 +239,7 @@ export class OrganizationComponent
 				if (!!result) {
 					await this.organizationsService.update(
 						this.organization.id,
-						result
+						{...result, currency: this.organization.currency, defaultValueDateType: this.organization.defaultValueDateType}
 					);
 					this.getPublicOrganization();
 					this.toastrService.success(
