@@ -8,23 +8,28 @@ import { UpdateProfileDTO } from "./update-profile.dto";
  */
 export class UpdateEmployeeDTO extends UpdateProfileDTO {
 
-    @ApiPropertyOptional({ type: () => Boolean })
+    @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
     @IsOptional()
     @IsBoolean()
     readonly isActive?: boolean;
 
-    @ApiPropertyOptional({ type: () => Boolean })
+    @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
     @IsOptional()
     @IsBoolean()
     readonly isJobSearchActive?: boolean;
 
-    @ApiPropertyOptional({ type: () => Boolean })
+    @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
     @IsOptional()
     @IsBoolean()
     readonly isVerified?: boolean;
 
-    @ApiPropertyOptional({ type: () => Boolean })
+    @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
     @IsOptional()
     @IsBoolean()
     readonly isVetted?: boolean;
+
+    @ApiPropertyOptional({ type: () => Boolean, readOnly: true })
+    @IsOptional()
+    @IsBoolean()
+    readonly isTrackingEnabled: boolean;
 }
