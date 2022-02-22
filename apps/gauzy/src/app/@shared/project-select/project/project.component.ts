@@ -66,9 +66,7 @@ export class ProjectSelectorComponent
 
 	public set organizationContactId(value: string) {
 		this._organizationContactId = value;
-		if (this._organizationContactId) {
-			this.subject$.next(true);
-		}
+		this.subject$.next(true);
 	}
 
 	/*
