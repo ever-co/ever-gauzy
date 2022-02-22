@@ -5,7 +5,8 @@ import {
 	IEmployeeFindInput,
 	IEmployeeCreateInput,
 	IEmployeeUpdateInput,
-	IEmployeeUpdateProfileStatus
+	IEmployeeUpdateProfileStatus,
+	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -122,10 +123,19 @@ export class EmployeesService {
 		);
 	}
 
-	setEmployeeEndWork(id: string, date: Date, request: IEmployeeUpdateInput): Promise<IEmployee> {
+	setEmployeeEndWork(id: string, date: Date, request: IBasePerTenantAndOrganizationEntityModel): Promise<IEmployee> {
 		return firstValueFrom(
 			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
 				endWork: date,
+				...request
+			})
+		);
+	}
+
+	setEmployeeTimeTrackingStatus(id: string, action: boolean, request: IBasePerTenantAndOrganizationEntityModel): Promise<IEmployee> {
+		return firstValueFrom(
+			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
+				isTrackingEnabled: action,
 				...request
 			})
 		);

@@ -323,6 +323,11 @@ export class EmployeesComponent
 	 * @param selectedItem 
 	 */
 	async restoreToWork(selectedItem?: EmployeeViewModel) {
+		if (!this.organization) {
+			return;
+		}
+
+
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
@@ -341,6 +346,44 @@ export class EmployeesComponent
 			this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
 				name: this.selectedEmployee.fullName.trim()
 			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this.subject$.next(true);
+		}
+	}
+
+	/**
+	 * Enabled/Disabled Time Tracking Status for each employee
+	 * 
+	 * @param selectedItem 
+	 */
+	async timeTrackingAction(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployee({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		try {
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+
+			const { isTrackingEnabled } = this.selectedEmployee;
+			await this.employeesService.setEmployeeTimeTrackingStatus(this.selectedEmployee.id, !isTrackingEnabled, {
+				organizationId,
+				tenantId
+			});
+ 
+			if (isTrackingEnabled) {
+				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED', {
+					name: this.selectedEmployee.fullName.trim()
+				});
+			} else {
+				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED', {
+					name: this.selectedEmployee.fullName.trim()
+				});
+			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {

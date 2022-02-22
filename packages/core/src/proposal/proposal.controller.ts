@@ -19,7 +19,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateProposalDTO, UpdateProposalDTO } from './dto';
+import { CreateProposalDTO, UpdateProposalActionDTO, UpdateProposalDTO } from './dto';
 
 @ApiTags('Proposal')
 @UseGuards(TenantPermissionGuard)
@@ -123,6 +123,30 @@ export class ProposalController extends CrudController<Proposal> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateProposalDTO
+	): Promise<IProposal> {
+		return this.proposalService.create({
+			id,
+			...entity
+		});
+	}
+
+	@ApiOperation({ summary: 'Update action of a single proposal by id.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Updates proposal',
+		type: Proposal
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
+	@Put(':id/action')
+	@UsePipes( new ValidationPipe({ transform : true, whitelist : true }))
+	async updateAction(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: UpdateProposalActionDTO
 	): Promise<IProposal> {
 		return this.proposalService.create({
 			id,

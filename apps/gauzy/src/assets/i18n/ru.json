@@ -113,7 +113,9 @@
 		"DELETE_EXISTING_ROLE": "Удалить роль {{ name }}",
 		"RESTORE": "Восстановить",
 		"VIEW_ALL": "Посмотреть все",
-		"VIEW_REPORT": "Просмотр отчета"
+		"VIEW_REPORT": "Просмотр отчета",
+		"TIME_TRACKING_ENABLE": "Включить отслеживание времени",
+		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -3029,6 +3031,8 @@
 			"EMPLOYEE_ADDED": "Сотрудник '{{name}}' ' ' добавлен в '{{organization}}'",
 			"EMPLOYEE_INACTIVE": "Сотрудник '{{name}}' ' ' установлен как неактивный.",
 			"EMPLOYEE_ACTIVE": "Сотрудник '{{name}}' ' ' установлен как активный.",
+			"EMPLOYEE_TIME_TRACKING_ENABLED": "Включено отслеживание времени для '{{name}}'.",
+			"EMPLOYEE_TIME_TRACKING_DISABLED": "Отключено отслеживание времени для '{{name}}'.",
 			"CONFIRM": "Подтвердить",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",

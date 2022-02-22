@@ -136,7 +136,9 @@ export class ProposalEditComponent
 					tenantId,
 					organizationContactId: result.organizationContact
 						? result.organizationContact.id
-						: null
+						: null,
+					status: this.proposal.status,
+					valueDate: this.proposal.valueDate
 				});
 
 				// TODO translate

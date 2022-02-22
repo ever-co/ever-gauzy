@@ -202,6 +202,7 @@ export interface EmployeeViewModel {
 	workStatus?: string;
 	startedWorkOn?: string;
 	isActive?: boolean;
+	isTrackingEnabled: boolean;
 	tags?: ITag[];
 }
 
