@@ -105,6 +105,7 @@ export class EditOrganizationMainComponent
 			this.organizationService
 				.update(this.organization.id, {
 					imageUrl: this.imageUrl,
+					defaultValueDateType: this.organization.defaultValueDateType,
 					...this.form.getRawValue()
 				})
 				.then((organization: IOrganization) => {

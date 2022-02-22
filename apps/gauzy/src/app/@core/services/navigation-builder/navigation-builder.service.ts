@@ -90,7 +90,7 @@ export class NavigationBuilderService {
 		this.sidebarMapper.clear();
 	}
 
-	clearActionbars() {
+	clearActionBars() {
 		this._addedActionBarItems = [];
 	}
 }

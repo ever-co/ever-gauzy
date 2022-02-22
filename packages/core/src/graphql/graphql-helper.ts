@@ -1,5 +1,6 @@
 import { IGraphQLApiOptions, isNotEmpty } from '@gauzy/common';
 import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
+import { ApolloDriver } from '@nestjs/apollo';
 import { buildSchema, extendSchema, printSchema } from 'graphql';
 import * as path from 'path';
 import { ConfigService } from '@gauzy/config';
@@ -11,6 +12,7 @@ export async function createGraphqlModuleOptions(
 	options: IGraphQLApiOptions
 ): Promise<GqlModuleOptions> {
 	return {
+		driver: ApolloDriver,
 		path: `/${options.path}`,
 		typeDefs: await createTypeDefs(configService, options, typesLoader),
 		playground: options.playground || false,

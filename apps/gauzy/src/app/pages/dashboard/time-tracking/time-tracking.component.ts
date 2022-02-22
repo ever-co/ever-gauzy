@@ -207,16 +207,16 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId,
-			selectedDateRange
+			projectId
 		} = this;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
 		const timeSlotRequest: IGetTimeSlotStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 
 		this.timeSlotLoading = true;
@@ -239,16 +239,16 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId,
-			selectedDateRange
+			projectId
 		} = this;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
 		const request: IGetCountsStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService
@@ -262,14 +262,20 @@ export class TimeTrackingComponent
 	}
 
 	getActivities() {
-		const { tenantId, organizationId, employeeId, projectId, selectedDateRange } = this;
+		const {
+			tenantId,
+			organizationId,
+			employeeId,
+			projectId
+		} = this;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
 		const activityRequest: IGetActivitiesStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.activitiesLoading = true;
 		this.timesheetStatisticsService
@@ -293,14 +299,20 @@ export class TimeTrackingComponent
 	}
 
 	getProjects() {
-		const { tenantId, organizationId, employeeId, projectId, selectedDateRange } = this;
+		const {
+			tenantId,
+			organizationId,
+			employeeId,
+			projectId
+		} = this;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
 		const projectRequest: IGetProjectsStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.projectsLoading = true;
 		this.timesheetStatisticsService
@@ -314,14 +326,20 @@ export class TimeTrackingComponent
 	}
 
 	getTasks() {
-		const { tenantId, organizationId, employeeId, projectId, selectedDateRange } = this;
+		const {
+			tenantId,
+			organizationId,
+			employeeId,
+			projectId
+		} = this;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
 		const taskRequest: IGetTasksStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.tasksLoading = true;
 		this.timesheetStatisticsService
@@ -335,14 +353,20 @@ export class TimeTrackingComponent
 	}
 
 	getManualTimes() {
-		const { tenantId, organizationId, employeeId, projectId, selectedDateRange } = this;
+		const {
+			tenantId,
+			organizationId,
+			employeeId,
+			projectId
+		} = this;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
 		const request: IGetManualTimesStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.manualTimeLoading = true;
 		this.timesheetStatisticsService
@@ -361,14 +385,20 @@ export class TimeTrackingComponent
 		) {
 			return;
 		}
-		const { tenantId, organizationId, employeeId, projectId, selectedDateRange } = this;
+		const {
+			tenantId,
+			organizationId,
+			employeeId,
+			projectId
+		} = this;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
 		const memberRequest: IGetMembersStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
 			projectId,
-			startDate: toUTC(selectedDateRange.startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(selectedDateRange.endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.memberLoading = true;
 		this.timesheetStatisticsService
@@ -520,5 +550,30 @@ export class TimeTrackingComponent
 			endDate: event.endDate,
 			isCustomDate: false
 		} as ISelectedDateRange
+	}
+
+	/**
+	 * We are having issue, when organization not allowed future date
+	 * When someone run timer for today, all statistic not displaying correctly
+	 * 
+	 * @returns 
+	 */
+	private getAdjustDateRangeFutureAllowed(): ISelectedDateRange {
+		const { selectedDateRange } = this;
+		const now = moment();
+
+		let { startDate, endDate } = selectedDateRange;
+		if (
+			moment(now.format('YYYY-MM-DD')).isSame(
+				moment(endDate).format('YYYY-MM-DD')
+			)
+		) {
+			endDate = moment.utc().toDate();
+		}
+
+		return {
+			startDate,
+			endDate
+		}
 	}
 }
