@@ -113,7 +113,9 @@
 		"DELETE_EXISTING_ROLE": "crwdns10857:0{{ name }}crwdne10857:0",
 		"RESTORE": "crwdns10873:0crwdne10873:0",
 		"VIEW_ALL": "crwdns10927:0crwdne10927:0",
-		"VIEW_REPORT": "crwdns10931:0crwdne10931:0"
+		"VIEW_REPORT": "crwdns10931:0crwdne10931:0",
+		"TIME_TRACKING_ENABLE": "crwdns10940:0crwdne10940:0",
+		"TIME_TRACKING_DISABLE": "crwdns10942:0crwdne10942:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
@@ -3029,6 +3031,8 @@
 			"EMPLOYEE_ADDED": "crwdns8850:0{{name}}crwdnd8850:0{{organization}}crwdne8850:0",
 			"EMPLOYEE_INACTIVE": "crwdns8852:0{{name}}crwdne8852:0",
 			"EMPLOYEE_ACTIVE": "crwdns8854:0{{name}}crwdne8854:0",
+			"EMPLOYEE_TIME_TRACKING_ENABLED": "crwdns10944:0{{name}}crwdne10944:0",
+			"EMPLOYEE_TIME_TRACKING_DISABLED": "crwdns10946:0{{name}}crwdne10946:0",
 			"CONFIRM": "crwdns2561:0crwdne2561:0",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "crwdns2563:0crwdne2563:0",
 			"OK": "crwdns2565:0crwdne2565:0",
