@@ -617,5 +617,20 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		}
 	}
 
+	/**
+	 * Enabled/Disabled Web Timer
+	 */
+	isEnabledTimeTracking() {
+		const isTrackingEnabled = this.user?.employee?.id && this.user?.employee?.isTrackingEnabled;
+		const hasPermission = this.store.hasPermission(
+			PermissionsEnum.TIME_TRACKER
+		);
+		return (
+			isTrackingEnabled &&
+			hasPermission &&
+			!this.isElectron
+		);
+	}
+
 	ngOnDestroy() {}
 }
