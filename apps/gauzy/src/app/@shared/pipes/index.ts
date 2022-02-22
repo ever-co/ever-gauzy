@@ -1,7 +1,7 @@
 import { DurationFormatPipe } from './duration-format.pipe';
 import { FilterArrayPipe } from './filter-array.pipe';
 import { Nl2BrPipe, TruncatePipe } from './text.pipe';
-import { ReplacePipe } from './replace.pipe';
+import { ReplacePipe, CurrencyPositionPipe } from './replace.pipe';
 import { TimeFormatPipe } from './time-format.pipe';
 import { UtcToLocalPipe } from './utc-to-local.pipe';
 import { DateTimeFormatPipe } from './datetime-format.pipe';
@@ -29,5 +29,6 @@ export const Pipes = [
 	DateFormatPipe,
 	TruncatePipe,
 	UtcToLocalPipe,
-  SafeUrlPipe
+  SafeUrlPipe,
+  CurrencyPositionPipe
 ];
