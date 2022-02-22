@@ -241,5 +241,18 @@
 				{{ 'BUTTONS.RESTORE' | translate }}
 			</button>
 		</ng-container>
+		<ng-container *ngIf="selectedItem">
+			<button
+				nbButton
+				[size]="buttonSize || 'medium'"
+				debounceClick
+				(throttledClick)="timeTrackingAction(selectedItem)"
+				[status]="selectedItem.isTrackingEnabled ? 'danger' : 'primary'"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ (selectedItem.isTrackingEnabled ? 'BUTTONS.TIME_TRACKING_DISABLE' : 'BUTTONS.TIME_TRACKING_ENABLE' ) | translate }}
+			</button>
+		</ng-container>
 	</ng-template>
 </ng-template>
