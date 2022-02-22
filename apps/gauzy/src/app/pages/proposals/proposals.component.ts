@@ -202,7 +202,7 @@ export class ProposalsComponent
 				if (result) {
 					try {
 						const { tenantId } = this.store.user;
-						await this.proposalsService.update(
+						await this.proposalsService.updateAction(
 							this.selectedProposal.id,
 							{ status: ProposalStatusEnum.ACCEPTED, tenantId }
 						);
@@ -236,7 +236,7 @@ export class ProposalsComponent
 				if (result) {
 					try {
 						const { tenantId } = this.store.user;
-						await this.proposalsService.update(
+						await this.proposalsService.updateAction(
 							this.selectedProposal.id,
 							{ status: ProposalStatusEnum.SENT, tenantId }
 						);

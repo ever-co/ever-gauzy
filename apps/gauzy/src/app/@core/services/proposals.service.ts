@@ -27,6 +27,13 @@ export class ProposalsService {
 		);
 	}
 
+	updateAction(id: string, updateInput: IProposalCreateInput): Promise<any> {
+		return firstValueFrom(
+			this.http
+			.put(`${API_PREFIX}/proposal/${id}/action`, updateInput)
+		);
+	}
+
 	delete(id: string): Promise<any> {
 		return firstValueFrom(
 			this.http
