@@ -96,7 +96,7 @@ export class AppComponent implements OnInit {
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
 			appService
-				.pushTotimeslot(arg)
+				.pushToTimeSlot(arg)
 				.then((res: any) => {
 					if (res.id) {
 						event.sender.send('remove_aw_local_data', {

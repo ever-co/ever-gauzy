@@ -44,15 +44,20 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		this.openEdit($event, {
 			startedAt,
 			stoppedAt,
-			projectId: timeLog.projectId
+			projectId: timeLog.projectId,
+			isRunning: timeLog.isRunning
 		});
 	}
 
 	openEdit($event: MouseEvent, timeLog: {
 		startedAt: Date,
 		stoppedAt: Date,
-		projectId: string
+		projectId: string,
+		isRunning: boolean
 	}) {
+		if (timeLog.isRunning) {
+			return;
+		}
 		$event.stopPropagation();
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog: timeLog } })

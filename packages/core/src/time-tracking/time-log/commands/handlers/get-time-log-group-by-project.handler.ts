@@ -73,8 +73,7 @@ export class GetTimeLogGroupByProjectHandler
 									},
 									0
 								) || 0;
-								const avgActivity = ((overallSum * 100) / (durationSum));
-
+								const avgActivity = ((overallSum * 100) / (durationSum)) || 0;
 								const task =
 									byEmployeeLogs.length > 0
 										? byEmployeeLogs[0].task

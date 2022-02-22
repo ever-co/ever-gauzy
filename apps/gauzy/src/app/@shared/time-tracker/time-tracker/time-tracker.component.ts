@@ -21,7 +21,7 @@ import { ErrorHandlingService, Store, ToastrService } from '../../../@core/servi
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-time-tracker',
+	selector: 'ngx-web-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss']
 })

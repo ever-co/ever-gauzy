@@ -211,6 +211,5 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
         const startedAt = moment(this.startedAt, 'YYYY-MM-DD HH:mm:ss');
         const stoppedAt = moment(this.stoppedAt || new Date(), 'YYYY-MM-DD HH:mm:ss');
         this.duration = stoppedAt.diff(startedAt, 'seconds');
-		this.isRunning = !(this.stoppedAt);
     }
 }

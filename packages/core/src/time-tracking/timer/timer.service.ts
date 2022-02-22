@@ -19,6 +19,7 @@ import { getDateRange } from './../../core/utils';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
+	ScheduleTimeLogEntriesCommand,
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand
 } from './../time-log/commands';
@@ -60,7 +61,8 @@ export class TimerService {
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
 				tenantId,
-				organizationId
+				organizationId,
+				isRunning: false
 			},
 			order: {
 				startedAt: 'DESC',
@@ -75,6 +77,7 @@ export class TimerService {
 				employeeId,
 				source: request.source || TimeLogSourceEnum.BROWSER,
 				startedAt: Between(start, end),
+				stoppedAt: Not(IsNull()),
 				tenantId,
 				organizationId
 			},
@@ -91,26 +94,21 @@ export class TimerService {
 		};
 
 		// Calculate completed timelogs duration
-		if (logs.length > 0) {
-			for await (const log of logs) {
-				status.duration += log.duration;
-			}
-		}
+		status.duration += logs.filter(Boolean).reduce((sum, log) => sum + log.duration, 0);
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
 			status.lastLog = lastLog;
-			if (lastLog.stoppedAt) {
-				status.running = false;
-			} else {
-				status.running = true;
-				status.duration += Math.abs((lastLog.startedAt.getTime() - new Date().getTime()) / 1000);
+			status.running = lastLog.isRunning;
+			if (status.running) {
+				status.duration += Math.abs(moment().diff(moment(lastLog.startedAt), 'seconds'));
 			}
 		}
 		return status;
 	}
 
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		console.log('Start Timer Request', request);
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -124,22 +122,26 @@ export class TimerService {
 
 		const { organizationId, id: employeeId } = employee;
 		const lastLog = await this.getLastRunningLog();
-
 		if (lastLog) {
 			/**
 			 * If you want to start timer, but employee timer is already started.
 			 * So, we have to first update stop timer entry in database, then create start timer entry.
 			 * It will manage to create proper entires in database
 			 */
-			await this.stopTimer(request);
+			console.log('Schedule Time Log Entries Command', lastLog);
+			await this.commandBus.execute(
+				new ScheduleTimeLogEntriesCommand(lastLog)
+			);
 		}
 
+		const now = moment.utc().toDate();
 		const { source, projectId, taskId, organizationContactId, logType, description, isBillable } = request;
 		const timeLog = {
 			organizationId,
 			tenantId,
 			employeeId,
-			startedAt: moment.utc().toDate(),
+			startedAt: now,
+			stoppedAt: now,
 			duration: 0,
 			source: source || TimeLogSourceEnum.BROWSER,
 			projectId: projectId || null,
@@ -147,7 +149,8 @@ export class TimerService {
 			organizationContactId: organizationContactId || null,
 			logType: logType || TimeLogType.TRACKED,
 			description: description || null,
-			isBillable: isBillable || false
+			isBillable: isBillable || false,
+			isRunning: true
 		};
 
 		return await this.commandBus.execute(
@@ -156,6 +159,7 @@ export class TimerService {
 	}
 
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		console.log('Stop Timer Request', request);
 		const { organizationId } = request;
 		const tenantId = RequestContext.currentTenantId();
 
@@ -170,15 +174,10 @@ export class TimerService {
 			lastLog = await this.getLastRunningLog();
 		}
 
-		const stoppedAt = new Date();
-		if (lastLog.startedAt === stoppedAt) {
-			await this.timeLogRepository.delete(lastLog.id);
-			return;
-		}
-
+		const stoppedAt = moment.utc().toDate();
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
-				{ stoppedAt },
+				{ stoppedAt, isRunning: false },
 				lastLog.id,
 				request.manualTimeSlot
 			)
@@ -211,7 +210,7 @@ export class TimerService {
 	}
 
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
-		const lastLog = await this.getLastRunningLog();		
+		const lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
@@ -238,10 +237,11 @@ export class TimerService {
 		return await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				stoppedAt: IsNull(),
+				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId
+				organizationId,
+				isRunning: true
 			},
 			order: {
 				startedAt: 'DESC',

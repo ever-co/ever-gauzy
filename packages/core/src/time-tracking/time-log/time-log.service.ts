@@ -519,7 +519,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						return {
 							employee,
 							duration: durationSum,
-							durationPercentage: durationPercentage.toFixed(2),
+							durationPercentage: Number.isFinite(durationPercentage) ? durationPercentage.toFixed(2) : 0,
 							limit
 						};
 					})

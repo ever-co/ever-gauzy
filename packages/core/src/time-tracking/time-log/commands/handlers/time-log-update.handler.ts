@@ -79,16 +79,16 @@ export class TimeLogUpdateHandler
 
 		if (needToUpdateTimeSlots) {
 			const startTimes = timeSlots
-				.filter((timeslot) => {
+				.filter((timeSlot) => {
 					return (
 						updateTimeSlots.filter(
 							(newSlot) => moment(newSlot.startedAt).isSame(
-								timeslot.startedAt
+								timeSlot.startedAt
 							)
 						).length === 0
 					);
 				})
-				.map((timeslot) => new Date(timeslot.startedAt));
+				.map((timeSlot) => new Date(timeSlot.startedAt));
 
 			if (startTimes.length > 0) {
 				/**
@@ -128,7 +128,7 @@ export class TimeLogUpdateHandler
 					}))
 					.filter((slot) => slot.tenantId && slot.organizationId);
 				/**
-				 * Assign regenerated TimeSlot enties for existed TimeLog
+				 * Assign regenerated TimeSlot entries for existed TimeLog
 				 */
 				await this.timeSlotService.bulkCreate(
 					updateTimeSlots,

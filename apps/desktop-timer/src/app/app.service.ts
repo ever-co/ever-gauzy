@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import { throwError } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -138,7 +139,7 @@ export class AppService {
 			.toPromise();
 	}
 
-	pushToTimeslot(values) {
+	pushToTimeSlot(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
@@ -157,9 +158,8 @@ export class AppService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId
 		};
-
-		return this.http
-			.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
+		return firstValueFrom(
+			this.http.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
 				headers: headers
 			})
 			.pipe(
@@ -171,7 +171,7 @@ export class AppService {
 					return throwError(error);
 				})
 			)
-			.toPromise();
+		);
 	}
 
 	pushToTimesheet(values) {
@@ -293,26 +293,24 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.post(
+		const body = {
+			employeeId: values.employeeId,
+			timesheetId: values.timesheetId,
+			projectId: values.projectId,
+			taskId: values.taskId,
+			startedAt: values.startedAt,
+			stoppedAt: values.stoppedAt,
+			isBillable: true,
+			logType: TimeLogType.TRACKED,
+			source: TimeLogSourceEnum.DESKTOP
+		}
+		return firstValueFrom(
+			this.http.post(
 				`${values.apiHost}/api/timesheet/time-log`,
-				{
-					employeeId: values.employeeId,
-					timesheetId: values.timesheetId,
-					projectId: values.projectId,
-					taskId: values.taskId,
-					startedAt: values.startedAt,
-					stoppedAt: values.stoppedAt,
-					isBillable: true,
-					logType: 'TRACKED',
-					source: 'DESKTOP'
-				},
-				{
-					headers: headers
-				}
+				{ ...body },
+				{ headers: headers }
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	updateTimeLog(values) {
@@ -340,27 +338,26 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		return this.http
-			.post(
+		const body = {
+			description: values.note,
+			isBillable: true,
+			logType: TimeLogType.TRACKED,
+			projectId: values.projectId,
+			taskId: values.taskId,
+			source: TimeLogSourceEnum.DESKTOP,
+			manualTimeSlot: values.manualTimeSlot,
+			organizationId: values.organizationId,
+			tenantId: values.tenantId,
+			organizationContactId: values.organizationContactId
+		}
+		console.log(body, 'body from toggle API from app.service.ts 353 line');
+		return firstValueFrom(
+			this.http.post(
 				`${values.apiHost}/api/timesheet/timer/toggle`,
-				{
-					description: values.note,
-					isBillable: true,
-					logType: 'TRACKED',
-					projectId: values.projectId,
-					taskId: values.taskId,
-					source: 'DESKTOP',
-					manualTimeSlot: values.manualTimeSlot,
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-					organizationContactId: values.organizationContactId
-				},
-				{
-					headers: headers
-				}
+				{ ...body },
+				{ headers: headers }
 			)
-			.pipe()
-			.toPromise();
+		);
 	}
 
 	uploadScreenCapture(values) {
