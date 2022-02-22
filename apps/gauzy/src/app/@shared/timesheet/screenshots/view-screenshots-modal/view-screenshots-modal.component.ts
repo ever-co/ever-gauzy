@@ -72,6 +72,6 @@ export class ViewScreenshotsModalComponent implements OnInit {
    * @param image
    */
   deleteImage(image){
-    // implement logic
+    //!!To do: implement logic
   }
 }

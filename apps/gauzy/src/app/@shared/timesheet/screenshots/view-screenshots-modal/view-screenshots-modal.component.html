@@ -44,8 +44,7 @@
 				<div class="col-3 mb-2" *ngFor="let image of screenshots">
           <div class="screenshot">
             <img nb-card-image draggable="false" [src]="image?.thumbUrl" />
-            <button class="ml-auto select-hidden" status="danger" nbButton size="tiny" (click)="$event.stopPropagation()"
-              ngxConfirmDialog [message]="'ACTIVITY.DELETE_CONFIRM' | translate" (confirm)="deleteImage(image)">
+            <button class="ml-auto select-hidden" status="danger" nbButton size="tiny" (click)="deleteImage(image)">
               <nb-icon icon="trash-2-outline"></nb-icon>
             </button>
           </div>
