@@ -74,6 +74,9 @@ export class EditOrganizationLocationComponent
 		};
 		const contactData = {
 			...this.form.value,
+			name: this.organization.name,
+			currency: this.organization.currency,
+			defaultValueDateType: this.organization.defaultValueDateType,
 			contact
 		};
 
