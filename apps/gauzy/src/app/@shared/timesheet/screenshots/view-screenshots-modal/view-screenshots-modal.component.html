@@ -131,6 +131,19 @@
 						<nb-icon icon="eye"></nb-icon>
 						{{ 'TIMESHEET.VIEW' | translate }}
 					</button>
+          <button
+						nbButton
+						status="danger"
+						size="small"
+            class="ml-2"
+            (click)="$event.stopPropagation()"
+            ngxConfirmDialog
+            [message]="'ACTIVITY.DELETE_CONFIRM' | translate"
+						(confirm)="deleteTimeSlot()"
+					>
+          <nb-icon icon="trash-2-outline"></nb-icon>
+          {{ 'TIMESHEET.DELETE' | translate }}
+					</button>
 				</div>
 			</div>
 		</div>
