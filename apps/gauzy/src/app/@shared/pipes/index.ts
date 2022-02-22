@@ -6,7 +6,7 @@ import { TimeFormatPipe } from './time-format.pipe';
 import { UtcToLocalPipe } from './utc-to-local.pipe';
 import { DateTimeFormatPipe } from './datetime-format.pipe';
 import { DateFormatPipe } from './date-format.pipe';
-import { SafeHtmlPipe, SafePipe } from './safe/safe.pipe';
+import { SafeHtmlPipe, SafeUrlPipe } from './safe/safe.pipe';
 
 export * from './duration-format.pipe';
 export * from './filter-array.pipe';
@@ -29,5 +29,5 @@ export const Pipes = [
 	DateFormatPipe,
 	TruncatePipe,
 	UtcToLocalPipe,
-  SafePipe
+  SafeUrlPipe
 ];
