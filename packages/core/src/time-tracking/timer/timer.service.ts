@@ -225,9 +225,8 @@ export class TimerService {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const employee = await this.employeeRepository.findOne({
-			userId,
-			tenantId
+		const employee = await this.employeeRepository.findOne({ userId, tenantId }, {
+			relations: ['user']
 		});
 		if (!employee) {
 			throw new NotFoundException('Employee not found.');
