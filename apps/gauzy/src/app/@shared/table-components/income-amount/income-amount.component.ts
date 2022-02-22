@@ -1,10 +1,15 @@
 import { Component, Input } from '@angular/core';
+import { InvoiceEstimateTotalValueComponent } from '../../../pages/invoices/table-components/invoice-total-value.component';
 
 @Component({
 	selector: 'ga-income-amount',
 	template: `
 		<span
-			>{{ rowData?.currency }} {{ value }}
+			>{{
+				value
+					| currency: rowData?.currency
+					| position: organization.currencyPosition
+			}}
 			<nb-icon
 				*ngIf="rowData?.isBonus"
 				nbTooltip="{{ 'INCOME_PAGE.BONUS_TOOLTIP' | translate }}"
@@ -43,9 +48,4 @@ import { Component, Input } from '@angular/core';
 	`,
 	styles: []
 })
-export class IncomeExpenseAmountComponent {
-	@Input() value: Date;
-
-	@Input()
-	rowData: any;
-}
+export class IncomeExpenseAmountComponent extends InvoiceEstimateTotalValueComponent {}
