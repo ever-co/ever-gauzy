@@ -113,7 +113,9 @@
 		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role",
 		"RESTORE": "Restore",
 		"VIEW_ALL": "View All",
-		"VIEW_REPORT": "View Report"
+		"VIEW_REPORT": "View Report",
+		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
+		"TIME_TRACKING_DISABLE": "Disable Time Tracking"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -3029,6 +3031,8 @@
 			"EMPLOYEE_ADDED": "Employee '{{name}}' added to '{{organization}}'",
 			"EMPLOYEE_INACTIVE": "Employee '{{name}}' set as inactive.",
 			"EMPLOYEE_ACTIVE": "Employee '{{name}}' set as active.",
+			"EMPLOYEE_TIME_TRACKING_ENABLED": "Enabled time tracking for '{{name}}'.",
+			"EMPLOYEE_TIME_TRACKING_DISABLED": "Disabled time tracking for '{{name}}'.",
 			"CONFIRM": "Потвърждение",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
