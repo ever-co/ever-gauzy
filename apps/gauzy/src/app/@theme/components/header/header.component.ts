@@ -605,16 +605,27 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			});
 	}
 
-	private _checkTimerStatus() {
-		const { employee, tenantId } = this.user;
-		this.hasPermissionTimeTracker = this.store.hasPermission(
+	private async _checkTimerStatus() {
+		if (this.isEnabledTimeTracking()) {
+			const { tenantId } = this.user;
+			await this.timeTrackerService.checkTimerStatus(tenantId);
+		}
+	}
+
+	/**
+	 * Enabled/Disabled Web Timer
+	 */
+	isEnabledTimeTracking() {
+		const { employee } = this.user;
+		const isTrackingEnabled = employee?.id && employee?.isTrackingEnabled;
+		const hasPermission = this.store.hasPermission(
 			PermissionsEnum.TIME_TRACKER
 		);
-		if (!!this.hasPermissionTimeTracker) {
-			if (employee && employee.id) {
-				this.timeTrackerService.checkTimerStatus(tenantId);
-			}
-		}
+		return (
+			isTrackingEnabled &&
+			hasPermission &&
+			!this.isElectron
+		);
 	}
 
 	ngOnDestroy() {}
