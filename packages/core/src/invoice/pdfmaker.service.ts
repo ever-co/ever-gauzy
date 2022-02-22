@@ -41,6 +41,7 @@ export class PdfmakerService {
 		try {
 			const printer = new PdfPrinter(this.fonts);
 			const pdfDefinition = {
+        watermark: docDefinition['watermark'],
 				content: docDefinition['content'],
 				defaultStyle: {
 					font: 'Helvetica'
@@ -87,7 +88,7 @@ export class PdfmakerService {
 								reject(err);
 							}
 						});
-						resolve(pdf);	
+						resolve(pdf);
 					} catch (err) {
 						reject(err);
 					}

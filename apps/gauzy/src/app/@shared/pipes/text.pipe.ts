@@ -17,15 +17,6 @@ export class TruncatePipe implements PipeTransform {
 		return value.length > limit ? value.substr(0, limit) + ellipsis : value;
 	}
 }
-
-@Pipe({ name: 'safeHtml' })
-export class SafeHtmlPipe implements PipeTransform {
-	constructor(private sanitized: DomSanitizer) {}
-	transform(value) {
-		return this.sanitized.bypassSecurityTrustHtml(value);
-	}
-}
-
 @Pipe({
 	name: 'nl2br'
 })
