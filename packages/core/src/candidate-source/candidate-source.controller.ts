@@ -7,14 +7,17 @@ import {
 	Query,
 	Body,
 	Controller,
-	Put
+	Put,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICandidateSource, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, ParseJsonPipe } from './../shared/pipes';
 import { CandidateSourceService } from './candidate-source.service';
+import { CandidateSourceBulkInputDTO } from './dto';
 
 @ApiTags('CandidateSource')
 @UseGuards(TenantPermissionGuard)
@@ -46,9 +49,9 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	})
 	@Put('bulk')
 	async updateBulk(
-		@Body() body: ICandidateSource[]
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) body: CandidateSourceBulkInputDTO
 	): Promise<ICandidateSource[]> {
-		return await this.candidateSourceService.updateBulk(body);
+		return await this.candidateSourceService.updateBulk(body.list);
 	}
 
 	/**
@@ -96,6 +99,7 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 		description: 'Record not found'
 	})
 	@Post()
+	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
 		@Body() entity: CandidateSource
 	): Promise<ICandidateSource> {
