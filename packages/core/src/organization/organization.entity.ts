@@ -364,7 +364,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ApiPropertyOptional({ type: () => String, enum: CurrencyPosition })
 	@IsEnum(CurrencyPosition)
 	@IsOptional()
-	@Column({ default: 'LEFT' })
+	@Column({ default: CurrencyPosition.LEFT })
 	currencyPosition?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
