@@ -44,15 +44,13 @@
 							</ng-container>
 						</div>
 						<div class="col text-center day-col">
-							{{ employeeRow?.employee?.billRateValue }}
-							{{ employeeRow?.employee?.billRateCurrency }}
+							{{ employeeRow?.employee?.billRateValue | currency: employeeRow?.employee?.billRateCurrency | position: organization?.currencyPosition }}
 						</div>
 						<div class="coltext-center day-col">
 							{{ employeeRow?.duration | durationFormat }}
 						</div>
 						<div class="col text-center day-col">
-							{{ employeeRow?.amount }}
-							{{ employeeRow?.employee?.billRateCurrency }}
+							{{ employeeRow?.amount| currency: employeeRow?.employee?.billRateCurrency | position: organization?.currencyPosition }}
 						</div>
 					</div>
 				</nb-card-body>

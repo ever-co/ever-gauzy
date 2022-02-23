@@ -83,7 +83,7 @@
 										client.budgetType ===
 										OrganizationContactBudgetTypeEnum.COST
 									"
-									>{{ client?.spent | currency }}</span
+									>{{ client?.spent | currency: client?.spent.currency | position: organization?.currencyPosition }}</span
 								>
 							</div>
 							<div class="col-4 text-center day-col">
@@ -91,7 +91,7 @@
 									[percentage]="client?.spentPercentage"
 								></ngx-progress-status>
 								<span class="ml-3">{{
-									client?.spent | currency
+									client?.spent | currency: client?.spent.currency | position: organization?.currencyPosition
 								}}</span>
 							</div>
 							<div class="col text-center day-col">
@@ -115,7 +115,7 @@
 											OrganizationContactBudgetTypeEnum.COST
 										"
 										>{{
-											client.reamingBudget | currency
+											client.reamingBudget| currency: client?.spent.currency | position: organization?.currencyPosition
 										}}</span
 									>
 								</div>

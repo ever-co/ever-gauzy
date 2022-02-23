@@ -24,3 +24,4 @@ export class ReplacePipe implements PipeTransform {
 		return string.split(search).join(replace);
 	}
 }
+
