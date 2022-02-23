@@ -8,10 +8,10 @@ export class CurrencyPositionPipe implements PipeTransform {
         const extracted = this.extract(data);
         switch (position) {
             case CurrencyPosition.LEFT:
-                val = extracted[0] + extracted[1];
+                val = extracted[0] +' '+ extracted[1];
                 break;
             case CurrencyPosition.RIGHT:
-                val = extracted[1] + extracted[0];
+                val = extracted[1] +' '+ extracted[0];
                 break;
             default:
                 break;
