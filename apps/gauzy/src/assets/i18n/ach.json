@@ -931,6 +931,8 @@
 		"DARK": "crwdns2110:0crwdne2110:0",
 		"COSMIC": "crwdns2112:0crwdne2112:0",
 		"CORPORATE": "crwdns2114:0crwdne2114:0",
+		"MATERIAL_LIGHT_THEME": "crwdns10948:0crwdne10948:0",
+		"MATERIAL_DARK_THEME": "crwdns10950:0crwdne10950:0",
 		"LANGUAGE": "crwdns2116:0crwdne2116:0",
 		"ENGLISH": "crwdns2118:0crwdne2118:0",
 		"BULGARIAN": "crwdns2120:0crwdne2120:0",
