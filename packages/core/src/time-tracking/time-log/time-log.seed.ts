@@ -58,18 +58,19 @@ export const createRandomTimeLogs = async (
 			for (let index = 0; index <= randomDays.length; index++) {
 				const day = randomDays[index];
 				const date = moment(timesheet.startedAt).add(day, 'day').toDate();
-				if (moment.utc().isAfter(moment.utc(date))) {
-					const range = dateRanges(
-						moment.utc(date).startOf('day').toDate(),
-						moment.utc(date).toDate()
-					);
-					console.log(range);
-					for (
-						let rangeIndex = 0;
-						rangeIndex < range.length;
-						rangeIndex++
-					) {
-						const { startedAt, stoppedAt } = range[rangeIndex];
+
+				const range = dateRanges(
+					moment.utc(date).startOf('day').toDate(),
+					moment.utc(date).toDate()
+				);
+
+				for (
+					let rangeIndex = 0;
+					rangeIndex < range.length;
+					rangeIndex++
+				) {
+					const { startedAt, stoppedAt } = range[rangeIndex];
+					if (moment.utc().isAfter(moment.utc(stoppedAt))) {
 						const project = faker.random.arrayElement(projects);
 						const task = faker.random.arrayElement(project.tasks);
 
