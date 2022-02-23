@@ -5,6 +5,7 @@ import {
 	SkipSelf
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MAT_RIPPLE_GLOBAL_OPTIONS } from '@angular/material/core';
 import { NbAuthModule } from '@nebular/auth';
 import { NbSecurityModule, NbRoleProvider } from '@nebular/security';
 import { Observable, of as observableOf } from 'rxjs';
@@ -12,6 +13,7 @@ import { Observable, of as observableOf } from 'rxjs';
 import { throwIfAlreadyLoaded } from './module-import-guard';
 import { AnalyticsService, LayoutService, SeoService } from './utils';
 import { AuthModule } from './auth/auth.module';
+import { RippleService } from './utils/ripple.service';
 
 const DATA_SERVICES = [];
 
@@ -43,6 +45,10 @@ export const NB_CORE_PROVIDERS = [
 		provide: NbRoleProvider,
 		useClass: NbSimpleRoleProvider
 	},
+  {
+    provide: MAT_RIPPLE_GLOBAL_OPTIONS,
+    useExisting: RippleService
+  },
 	AnalyticsService,
 	LayoutService,
 	SeoService

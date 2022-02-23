@@ -30,8 +30,8 @@
 				</div>
 				<div class="d-flex">
 					<div>
-						<div class="font-weight-bold"> 
-							{{ ((!isEstimate) ? 'INVOICES_PAGE.INVOICE_DATE' : 'INVOICES_PAGE.ESTIMATE_DATE') | translate }} 
+						<div class="font-weight-bold">
+							{{ ((!isEstimate) ? 'INVOICES_PAGE.INVOICE_DATE' : 'INVOICES_PAGE.ESTIMATE_DATE') | translate }}
 						</div>
 						<div class="font-weight-bold text-right">
 							{{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
@@ -104,13 +104,12 @@
 								invoice.taxType === discountTaxTypes.FLAT_VALUE
 							"
 						>
-							{{ invoice.currency }}
+            {{ invoice?.tax || 0 | currency: invoice?.currency | position: invoice?.fromOrganization.currencyPosition }}
 						</span>
-						{{ invoice?.tax }}
 						<span
 							*ngIf="invoice.taxType === discountTaxTypes.PERCENT"
 						>
-							%
+            {{ invoice?.tax || 0 }} %
 						</span>
 					</div>
 					<div class="mt-2">
@@ -119,12 +118,12 @@
 								invoice.taxType === discountTaxTypes.FLAT_VALUE
 							"
 						>
-							{{ invoice.currency }}
+            {{ invoice?.tax2 || 0 | currency: invoice?.currency | position: invoice?.fromOrganization.currencyPosition }}
 						</span>
-						{{ invoice?.tax2 }}
 						<span
 							*ngIf="invoice.taxType === discountTaxTypes.PERCENT"
 						>
+            {{ invoice?.tax2 || 0 }}
 							%
 						</span>
 					</div>
@@ -135,10 +134,7 @@
 								discountTaxTypes.FLAT_VALUE
 							"
 						>
-							{{ invoice.currency }}
-						</span>
-						<span>
-							{{ invoice?.discountValue }}
+							{{ invoice.discountValue || 0 | currency: invoice?.currency | position: invoice?.fromOrganization.currencyPosition }}
 						</span>
 						<span
 							*ngIf="
@@ -146,12 +142,13 @@
 								discountTaxTypes.PERCENT
 							"
 						>
+            {{ invoice?.discountValue || 0 }}
 							%
 						</span>
 					</div>
 					<div class="mt-2">
 						<span>
-							{{ invoice?.currency }} {{ invoice?.totalValue }}
+							{{ invoice?.totalValue || 0 | currency: invoice?.currency | position: invoice?.fromOrganization.currencyPosition }}
 						</span>
 					</div>
 					<div
@@ -159,7 +156,7 @@
 						class="mt-2"
 					>
 						<span>
-							{{ invoice?.currency }} {{ invoice?.alreadyPaid }}
+							{{ invoice?.alreadyPaid || 0 | currency: invoice?.currency | position: invoice?.fromOrganization.currencyPosition}}
 						</span>
 					</div>
 					<div
@@ -167,7 +164,7 @@
 						class="mt-2"
 					>
 						<span>
-							{{ invoice?.currency }} {{ invoice?.amountDue }}
+							{{ invoice?.amountDue || 0 | currency: invoice?.currency | position: invoice?.fromOrganization.currencyPosition }}
 						</span>
 					</div>
 				</div>

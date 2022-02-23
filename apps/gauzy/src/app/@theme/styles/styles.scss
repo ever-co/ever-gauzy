@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap');
 @import url('https://fonts.googleapis.com/css?family=Crimson+Text:600i&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,600,700,800&display=swap');
 
 // themes - our custom or/and out of the box themes
 @import 'themes';
@@ -13,11 +14,14 @@
 @import '~bootstrap/scss/mixins';
 @import '~bootstrap/scss/grid';
 
+@import './material/angular-material';
+
 // loading progress bar theme
 @import './pace.theme';
 
 @import './layout';
 @import './overrides';
+@import './material/material-overrides';
 
 @import './site-menu.scss';
 
@@ -32,14 +36,16 @@
 
 // install the framework and custom global styles
 @include nb-install() {
+  @include angular-material();
 
   // framework global styles
   @include nb-theme-global();
   @include nb-auth-global();
 
-  @include ngx-layout();  
+  @include ngx-layout();
   // loading progress bar
   @include ngx-pace-theme();
 
   @include nb-overrides();
+  @include material-overrides();
 }

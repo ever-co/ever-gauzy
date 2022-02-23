@@ -563,6 +563,21 @@ export class TimeTrackingComponent
 		const now = moment();
 
 		let { startDate, endDate } = selectedDateRange;
+		/**
+		 * If, user selected single day date range.
+		 */
+		if (
+			moment(moment(startDate).format('YYYY-MM-DD')).isSame(
+				moment(endDate).format('YYYY-MM-DD')
+			)
+		) {
+			startDate = moment(startDate).startOf('day').utc().toDate();
+			endDate = moment(endDate).endOf('day').utc().toDate();
+		}
+
+		/**
+		 * If, user selected TODAY date range.
+		 */
 		if (
 			moment(now.format('YYYY-MM-DD')).isSame(
 				moment(endDate).format('YYYY-MM-DD')
@@ -570,7 +585,10 @@ export class TimeTrackingComponent
 		) {
 			endDate = moment.utc().toDate();
 		}
-
+		console.log({
+			startDate,
+			endDate
+		});
 		return {
 			startDate,
 			endDate

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { CurrencyPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	DiscountTaxTypeEnum,
@@ -8,9 +8,10 @@ import {
 } from '@gauzy/contracts';
 import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
-import { TranslatableService } from 'apps/gauzy/src/app/@core/services/translatable.service';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { Store, TranslatableService, UsersOrganizationsService } from './../../../../@core/services';
+import { CurrencyPositionPipe } from './../../../../@shared/pipes';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-view-inner',
@@ -37,9 +38,11 @@ export class InvoiceViewInnerComponent
 
 	constructor(
 		readonly translateService: TranslateService,
-		private store: Store,
-		private userOrganizationService: UsersOrganizationsService,
-		private translatableService: TranslatableService
+		private readonly store: Store,
+		private readonly userOrganizationService: UsersOrganizationsService,
+		private readonly translatableService: TranslatableService,
+		private readonly currencyPipe: CurrencyPipe,
+		private readonly currencyPipePosition: CurrencyPositionPipe
 	) {
 		super(translateService);
 	}
@@ -87,7 +90,12 @@ export class InvoiceViewInnerComponent
 					type: 'text',
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
-						return `${row.currency} ${row.price}`;
+						const priceTransformed = this.getPipesTransform(
+							row.price * row.quantity,
+							row.currency,
+							this.invoice.fromOrganization.currencyPosition
+						);
+						return `${priceTransformed}`;
 					}
 				},
 				totalValue: {
@@ -97,7 +105,12 @@ export class InvoiceViewInnerComponent
 					type: 'text',
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
-						return `${row.currency} ${row.price * row.quantity}`;
+						const priceTransformed = this.getPipesTransform(
+							row.price * row.quantity,
+							row.currency,
+							this.invoice.fromOrganization.currencyPosition
+						);
+            			return `${priceTransformed}`;
 					}
 				}
 			}
@@ -179,11 +192,11 @@ export class InvoiceViewInnerComponent
 				userId: this.store.user.id,
 				organizationId: this.invoice.organizationId
 			});
-	
+
 			if (userOrg.items.length !== 0) {
 				this.showInternalNote = true;
 			}
-		}		
+		}
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -192,6 +205,17 @@ export class InvoiceViewInnerComponent
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+	/**
+	 * This function transform simple number to currency format.
+	 * @param value should be the number to transform
+	 * @param currencyCode should be the currency code of invoice
+	 * @param position should be the position of currency organization
+	 * @returns should be a string
+	 */
+	getPipesTransform(value: number, currencyCode: string, position: string): string {
+		const transform = this.currencyPipe.transform(value, currencyCode);
+		return this.currencyPipePosition.transform(transform, position);
 	}
 
 	ngOnDestroy() {}

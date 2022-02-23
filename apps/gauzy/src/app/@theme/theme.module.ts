@@ -38,6 +38,8 @@ import { DEFAULT_THEME } from './styles/theme.default';
 import { COSMIC_THEME } from './styles/theme.cosmic';
 import { CORPORATE_THEME } from './styles/theme.corporate';
 import { DARK_THEME } from './styles/theme.dark';
+import { MATERIAL_LIGHT_THEME } from './styles/material/theme.material-light';
+ import { MATERIAL_DARK_THEME } from './styles/material/theme.material-dark';
 
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { WindowModeBlockScrollService } from './services';
@@ -53,6 +55,7 @@ import { LanguagesService } from '../@core/services/languages.service';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { TranslateModule } from '../@shared/translate/translate.module';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
+import { MatRippleModule } from '@angular/material/core';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -93,7 +96,7 @@ const COMPONENTS = [
 
 const PIPES = [...Pipes];
 
-const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule];
+const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule];
 
 @NgModule({
 	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
@@ -117,7 +120,9 @@ export class ThemeModule {
 					DEFAULT_THEME,
 					COSMIC_THEME,
 					CORPORATE_THEME,
-					DARK_THEME
+					DARK_THEME,
+          MATERIAL_LIGHT_THEME,
+          MATERIAL_DARK_THEME
 				]).providers,
 				WindowModeBlockScrollService
 			]

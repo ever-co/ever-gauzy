@@ -20,9 +20,12 @@
 
 	::ng-deep {
 		ng2-smart-table {
+      nav{
+        width: 100%;
+      }
 			ng2-smart-table-title{
 				a{
-				 color: nb-theme(smart-table-fg);	
+				 color: nb-theme(smart-table-fg);
 				}
 			}
 		  .form-control {

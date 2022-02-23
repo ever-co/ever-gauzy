@@ -203,7 +203,7 @@
 												[src]="employee?.user?.imageUrl"
 												[caption]="
 													(employee?.timeSlots)[0]
-														?.startedAt | date
+														?.startedAt | utcToLocal | date
 												"
 												[id]="employee?.id"
 											></ngx-avatar>

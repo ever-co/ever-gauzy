@@ -93,7 +93,7 @@ export async function tempFile(prefix) {
 }
 
 /*
- * Get date range according for diffrent unitOfTimes
+ * Get date range according for different unitOfTimes
  */
 export function getDateRange(
 	startDate?: string | Date,
@@ -260,6 +260,13 @@ export function getDateFormat(
 } {
 	let start = moment(startDate);
 	let end = moment(endDate);
+
+	if (!start.isValid() || !end.isValid()) {
+		return;
+	}
+	if (end.isBefore(start)) {
+		throw 'End date must be greater than start date.';
+	}
 
 	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
 	if (dbType === 'sqlite') {

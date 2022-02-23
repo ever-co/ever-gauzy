@@ -35,6 +35,7 @@
 		"@angular/forms": "13.2.2",
 		"@angular/google-maps": "^13.1.0",
 		"@angular/language-service": "13.2.2",
+		"@angular/material": "13.2.2",
 		"@angular/platform-browser": "13.2.2",
 		"@angular/platform-browser-dynamic": "13.2.2",
 		"@angular/router": "13.2.2",
