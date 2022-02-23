@@ -32,7 +32,7 @@ import {
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
-import { getDateFormat, getDateRange } from './../../core/utils';
+import { getDateFormat } from './../../core/utils';
 
 @Injectable()
 export class StatisticService {
@@ -72,17 +72,22 @@ export class StatisticService {
 			endDate,
 			projectId,
 			logType = [],
-			source = [],
-			date = new Date(),
+			source = []
 		} = request;
 		console.log(request, 'Get Counts Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start, end } = (startDate && endDate) ? 
-								getDateRange(startDate, endDate) : 
-								getDateRange(date, 'week');
 
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) : 
+								getDateFormat(
+									moment().startOf('day').utc(),
+									moment().endOf('day').utc()
+								);
 		console.log({ start, end }, 'Weekly Time Date Range For Counts Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -346,10 +351,9 @@ export class StatisticService {
 		};
 
 		if (isNotEmpty(employeeIds)) {
-			const { start, end } = getDateRange();
 			const { start: startToday, end: endToday } = getDateFormat(
-				moment.utc(moment(start)),
-				moment.utc(moment(end))
+				moment().startOf('day').utc(),
+				moment().endOf('day').utc()
 			);
 			console.log({ startToday, endToday }, 'Today Time Date Range For Counts Statistics');
 			const query = this.timeSlotRepository.createQueryBuilder();
@@ -460,16 +464,22 @@ export class StatisticService {
 			organizationId,
 			projectId,
 			startDate,
-			endDate,
-			date = new Date()
+			endDate
 		} = request;
 		console.log(request, 'Get Members Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start: weeklyStart, end: weeklyEnd } = (startDate && endDate) ? 
-								getDateRange(startDate, endDate) : 
-								getDateRange(date, 'week');
+
+		const { start: weeklyStart, end: weeklyEnd } = (startDate && endDate) ?
+									getDateFormat(
+										moment.utc(startDate),
+										moment.utc(endDate)
+									) :
+									getDateFormat(
+										moment().startOf('day').utc(),
+										moment().endOf('day').utc()
+									);
 		console.log({ weeklyStart, weeklyEnd }, 'Weekly Time Date Range For Members Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -600,7 +610,7 @@ export class StatisticService {
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
-			console.log('Weekly Worked TimeSlots For Memebers Statistics', weekTimeSlots);
+			console.log('Weekly Worked TimeSlots For Members Statistics', weekTimeSlots);
 			weekTimeSlots = mapObject(
 				groupBy(weekTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -653,10 +663,9 @@ export class StatisticService {
 				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const { start, end } = getDateRange();
 						const { start: startToday, end: endToday } = getDateFormat(
-							moment.utc(moment(start)),
-							moment.utc(moment(end))
+							moment().startOf('day').utc(),
+							moment().endOf('day').utc()
 						);
 						console.log({ startToday, endToday }, 'Daily Time Date Range For Members Statistics');
 						qb.where(`"timeLogs"."startedAt" BETWEEN :startToday AND :endToday`, {
@@ -802,7 +811,6 @@ export class StatisticService {
 			employeeId,
 			organizationId,
 			projectId,
-			date = new Date(),
 			startDate,
 			endDate
 		} = request;
@@ -810,9 +818,15 @@ export class StatisticService {
 		
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start, end } = (startDate && endDate) ? 
-								getDateRange(startDate, endDate) : 
-								getDateRange(date, 'week');
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								getDateFormat(
+									moment().startOf('day').utc(),
+									moment().endOf('day').utc()
+								);
 		console.log({ start, end }, 'Weekly Time Date Range For Projects Statistics');
 		const query = this.organizationProjectsRepository.createQueryBuilder();
 		query
@@ -950,7 +964,6 @@ export class StatisticService {
 			employeeId,
 			organizationId,
 			projectId,
-			date = new Date(),
 			startDate,
 			endDate
 		} = request;
@@ -958,9 +971,15 @@ export class StatisticService {
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start, end } = (startDate && endDate) ? 
-								getDateRange(startDate, endDate) : 
-								getDateRange(date, 'week');
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								getDateFormat(
+									moment().startOf('day').utc(),
+									moment().endOf('day').utc()
+								);
 		console.log({ start, end }, 'Weekly Time Date Range For Tasks Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -1093,7 +1112,6 @@ export class StatisticService {
 			employeeId,
 			organizationId,
 			projectId,
-			date = new Date(),
 			startDate,
 			endDate
 		} = request;
@@ -1101,9 +1119,15 @@ export class StatisticService {
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start, end } = (startDate && endDate) ? 
-								getDateRange(startDate, endDate) : 
-								getDateRange(date, 'week');
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								getDateFormat(
+									moment().startOf('day').utc(),
+									moment().endOf('day').utc()
+								);
 		console.log({ start, end }, 'Weekly Time Date Range For Manual Times Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -1208,16 +1232,21 @@ export class StatisticService {
 			employeeId,
 			organizationId,
 			projectId,
-			date = new Date(),
 			startDate,
 			endDate
 		} = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start, end } = (startDate && endDate) ? 
-								getDateRange(startDate, endDate) : 
-								getDateRange(date, 'week');
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								getDateFormat(
+									moment().startOf('day').utc(),
+									moment().endOf('day').utc()
+								);
 		console.log({ start, end }, 'Weekly Time Date Range For Activities Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -1369,7 +1398,6 @@ export class StatisticService {
 			employeeId,
 			organizationId,
 			projectId,
-			date = new Date(),
 			startDate,
 			endDate
 		} = request;
@@ -1377,9 +1405,15 @@ export class StatisticService {
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
-		const { start, end } = (startDate && endDate) ? 
-								getDateRange(startDate, endDate) : 
-								getDateRange(date, 'week');
+		const { start, end } = (startDate && endDate) ?
+								getDateFormat(
+									moment.utc(startDate),
+									moment.utc(endDate)
+								) :
+								getDateFormat(
+									moment().startOf('day').utc(),
+									moment().endOf('day').utc()
+								);
 		console.log({ start, end }, 'Weekly Time Date Range For Employee TimeSlots Statistics');
 
 		const query = this.employeeRepository.createQueryBuilder();
