@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -47,7 +48,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
-import { 
+import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
 	InvoiceEstimateTotalValueComponent,
@@ -55,9 +56,9 @@ import {
 	InvoicePaidComponent,
 	InvoiceProductsSelectorComponent,
 	InvoiceProjectsSelectorComponent,
-	InvoiceTasksSelectorComponent 
+	InvoiceTasksSelectorComponent
 } from './table-components';
-import { 
+import {
 	EmployeesService,
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
@@ -71,7 +72,7 @@ import {
 	TasksStoreService,
 	TranslatableService
 } from '../../@core/services';
-import { 
+import {
 	EstimateAddComponent,
 	EstimateEditComponent,
 	EstimatesComponent,
@@ -82,6 +83,7 @@ import { InvoicePaymentReceiptMutationComponent, InvoicePaymentsComponent, Payme
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
 import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
+import { CurrencyPositionPipe } from '../../@shared/pipes';
 
 @NgModule({
 	imports: [
@@ -137,7 +139,9 @@ import { ContactSelectModule } from '../../@shared/contact-select/contact-select
 		PaymentService,
 		TasksStoreService,
 		InvoiceEstimateHistoryService,
-		TranslatableService
+		TranslatableService,
+    CurrencyPipe,
+    CurrencyPositionPipe
 	],
 	declarations: [
 		InvoicesComponent,
