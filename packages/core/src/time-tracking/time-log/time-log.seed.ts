@@ -93,8 +93,8 @@ export const createRandomTimeLogs = async (
 							timesheet,
 							project,
 							task,
-							startedAt,
-							stoppedAt,
+							startedAt: moment.utc(startedAt).toDate(),
+							stoppedAt: moment.utc(stoppedAt).toDate(),
 							logType,
 							source,
 							tenant
