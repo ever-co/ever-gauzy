@@ -124,7 +124,7 @@ export class StatisticController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/time-slots')
-	async getEmployeeTimeslotsStatistics(
+	async getEmployeeTimeSlotsStatistics(
 		@Query() request: IGetTimeSlotStatistics
 	): Promise<ITimeSlotStatistics[]> {
 		return await this.statisticService.getEmployeeTimeSlots(request);
