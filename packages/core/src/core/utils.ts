@@ -93,7 +93,7 @@ export async function tempFile(prefix) {
 }
 
 /*
- * Get date range according for diffrent unitOfTimes
+ * Get date range according for different unitOfTimes
  */
 export function getDateRange(
 	startDate?: string | Date,
