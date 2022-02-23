@@ -38,7 +38,7 @@
 		"@nebular/eva-icons": "^9.0.0",
 		"@nebular/security": "^9.0.0",
 		"@nebular/theme": "^9.0.0",
-		"@nestjs/typeorm": "^8.0.2",
+		"@nestjs/typeorm": "^8.0.3",
 		"@ng-select/ng-select": "^8.1.1",
 		"@sentry/types": "^6.17.2",
 		"@sentry/electron": "2.5.4",
