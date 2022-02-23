@@ -148,7 +148,7 @@
 						{{ paymentRow?.note }}
 					</div>
 					<div class="col text-center day-col">
-						{{ paymentRow?.amount | currency }}
+						{{ paymentRow?.amount | currency: paymentRow?.currency | position: organization?.currencyPosition }}
 					</div>
 				</div>
 			</div>
@@ -210,7 +210,7 @@
 						{{ paymentRow?.note }}
 					</div>
 					<div class="col text-center day-col">
-						{{ paymentRow?.amount | currency }}
+						{{ paymentRow?.amount | currency: paymentRow?.currency | position: organization?.currencyPosition }}
 					</div>
 				</div>
 			</div>
@@ -271,7 +271,7 @@
 						{{ paymentRow?.note }}
 					</div>
 					<div class="col text-center day-col">
-						{{ paymentRow?.amount | currency }}
+						{{ paymentRow?.amount | currency: paymentRow?.currency | position: organization?.currencyPosition }}
 					</div>
 				</div>
 			</div>

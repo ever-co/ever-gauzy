@@ -148,7 +148,7 @@
 						{{ expanseRow?.purpose }}
 					</div>
 					<div class="col text-center day-col">
-						{{ expanseRow?.amount | currency }}
+						{{ expanseRow?.amount | currency:  expanseRow?.currency | position: organization?.currencyPosition }}
 					</div>
 				</div>
 			</div>
@@ -210,7 +210,7 @@
 						{{ expanseRow?.description }}
 					</div>
 					<div class="col text-center day-col">
-						{{ expanseRow?.amount | currency }}
+						{{ expanseRow?.amount | currency:  expanseRow?.currency | position: organization?.currencyPosition }}
 					</div>
 				</div>
 			</div>
@@ -274,7 +274,7 @@
 						{{ expanseRow?.description }}
 					</div>
 					<div class="col text-center day-col">
-						{{ expanseRow?.amount | currency }}
+						{{ expanseRow?.amount | currency:  expanseRow?.currency | position: organization?.currencyPosition }}
 					</div>
 				</div>
 			</div>

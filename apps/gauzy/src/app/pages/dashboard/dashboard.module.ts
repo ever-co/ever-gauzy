@@ -32,6 +32,7 @@ import { EmployeeChartsModule } from './human-resources/employee-charts/employee
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -58,7 +59,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		InfoBlockModule,
 		NbRouteTabsetModule,
 		TimeTrackingModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+    SharedModule
 	],
 	declarations: [
 		DashboardComponent,

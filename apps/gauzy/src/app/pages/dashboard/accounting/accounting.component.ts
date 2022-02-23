@@ -1,7 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from '../../../@core/services/store.service';
-import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
+import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import {
@@ -10,7 +8,7 @@ import {
 	ISelectedEmployee
 } from '@gauzy/contracts';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import { Router } from '@angular/router';
+import { EmployeesService, EmployeeStatisticsService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,9 +28,9 @@ export class AccountingComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly employeesService: EmployeesService,
-		private store: Store,
+		private readonly store: Store,
 		private readonly router: Router,
-		private employeeStatisticsService: EmployeeStatisticsService
+		private readonly employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
 	ngOnInit() {
