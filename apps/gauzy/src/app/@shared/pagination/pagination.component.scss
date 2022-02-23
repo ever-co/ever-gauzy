@@ -8,24 +8,25 @@
     }
 
     a {
-        pointer-events: none;        
+        pointer-events: none;
+        text-decoration: none;
     }
 
     li {
-      cursor: pointer;  
+      cursor: pointer;
       overflow: hidden;
       line-height: 1.25rem;
 
       &.active span{
-        color: #ffffff;
-        background-color: nb-theme(color-primary-500);
+        color: nb-theme(color-basic-active);
+        background-color: nb-theme(background-primary-color-1);
       }
 
       span {
         font-size: 0.875rem;
         line-height: 1rem;
         background-color: transparent;
-        color: nb-theme(color-primary-500);
+        color: nb-theme(text-basic-color);
         padding: 0.75rem 1.25rem;
         border: none;
       }
@@ -35,11 +36,11 @@
     .pagination {
         font-size: 0.875rem;
         line-height: 1rem;
-        border: #edf1f7 solid 1px;
+        border: nb-theme(border-basic-color-3) solid 1px;
         border-radius: 0.25rem;
     }
 
     li:not(:last-child) {
-        border-right: 1px solid #edf1f7;
+        border-right: 1px solid nb-theme(border-basic-color-3);
     }
 }
