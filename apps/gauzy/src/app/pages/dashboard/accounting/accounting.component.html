@@ -7,7 +7,7 @@
 				<ga-single-statistic
 					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate"
 					[value]="
-						aggregatedEmployeeStatistics?.total?.income
+						aggregatedEmployeeStatistics?.total?.income || 0
 							| currency: selectedOrganization?.currency
 							| position: selectedOrganization?.currencyPosition
 					"
@@ -18,7 +18,7 @@
 				<ga-single-statistic
 					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate"
 					[value]="
-						aggregatedEmployeeStatistics?.total?.expense
+						aggregatedEmployeeStatistics?.total?.expense || 0
 							| currency: selectedOrganization?.currency
               | position: selectedOrganization?.currencyPosition
 					"
@@ -29,7 +29,7 @@
 				<ga-single-statistic
 					[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
 					[value]="
-						aggregatedEmployeeStatistics?.total?.profit
+						aggregatedEmployeeStatistics?.total?.profit || 0
 							| currency: selectedOrganization?.currency
               | position: selectedOrganization?.currencyPosition
 					"
@@ -40,7 +40,7 @@
 				<ga-single-statistic
 					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
 					[value]="
-						aggregatedEmployeeStatistics?.total?.bonus
+						aggregatedEmployeeStatistics?.total?.bonus || 0
 							| currency: selectedOrganization?.currency
               | position: selectedOrganization?.currencyPosition
 					"
