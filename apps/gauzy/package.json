@@ -38,6 +38,7 @@
 		"@angular/platform-browser": "13.2.2",
 		"@angular/platform-browser-dynamic": "13.2.2",
 		"@angular/router": "13.2.2",
+    "@angular/material": "^12.1.0",
 		"@angular/service-worker": "13.2.2",
 		"@asymmetrik/ngx-leaflet": "^8.1.0",
 		"@circlon/angular-tree-component": "^11.0.4",
