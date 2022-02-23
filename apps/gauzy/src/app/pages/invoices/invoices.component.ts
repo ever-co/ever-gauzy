@@ -11,7 +11,7 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -120,7 +120,7 @@ export class InvoicesComponent
 	public popups: QueryList<NbPopoverDirective>;
 
 	/*
-	* Search Tab Form 
+	* Search Tab Form
 	*/
 	public searchForm: FormGroup = InvoicesComponent.searchBuildForm(this.fb);
 	static searchBuildForm(fb: FormBuilder): FormGroup {
@@ -137,17 +137,18 @@ export class InvoicesComponent
 	}
 
 	/*
-	* History Tab Form 
+	* History Tab Form
 	*/
 	public historyForm: FormGroup = InvoicesComponent.historyBuildForm(this.fb);
+
 	static historyBuildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			comment: []
+			comment: ['', Validators.required]
 		});
 	}
 
 	/*
-	* Actions Buttons directive 
+	* Actions Buttons directive
 	*/
 	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
 
@@ -421,8 +422,8 @@ export class InvoicesComponent
 			invoiceItems
 		);
 
-		const action = this.isEstimate ? 
-						this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE') : 
+		const action = this.isEstimate ?
+						this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE') :
 						this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE');
 
 		await this.createInvoiceHistory(action);
@@ -603,7 +604,7 @@ export class InvoicesComponent
 		}];
 
 		const headers = [
-			isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER') : this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'), 
+			isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER') : this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 			isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE') : this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 			this.getTranslation('INVOICES_PAGE.DUE_DATE'),
 			this.getTranslation('INVOICES_PAGE.STATUS'),
@@ -618,7 +619,7 @@ export class InvoicesComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
@@ -702,7 +703,9 @@ export class InvoicesComponent
 	async addComment(historyFormDirective) {
 		const { comment } = this.historyForm.value;
 		const { id: invoiceId } = this.selectedInvoice;
-
+    if(this.historyForm.invalid) {
+      return;
+    };
 		if (comment) {
 			const action = comment;
 			await this.createInvoiceHistory(action);
@@ -777,7 +780,7 @@ export class InvoicesComponent
 	async selectInvoice({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedInvoice = isSelected ? data : null;
-		
+
 		if(isSelected){
 			this.canBeSend = data.toContact ? isSelected : !isSelected;
 		}else{
@@ -945,24 +948,24 @@ export class InvoicesComponent
 			this.perPage &&
 			Number.isInteger(this.perPage) &&
 			this.perPage > 0
-		) {			
+		) {
 			const { page } = this.smartTableSource.getPaging();
-			this.pagination = Object.assign({}, this.pagination, { 
+			this.pagination = Object.assign({}, this.pagination, {
 				activePage: page,
 				itemsPerPage: this.perPage
 			});
-			
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				this.subject$.next(true);
 			} else {
 				this.smartTableSource.setPaging(page, this.perPage, false);
 				this._loadSmartTableSettings();
-			}			
+			}
 		}
 	}
 
 	search() {
-		const { 
+		const {
 			dueDate,
 			invoiceNumber,
 			invoiceDate,
@@ -970,7 +973,7 @@ export class InvoicesComponent
 			currency,
 			status,
 			organizationContact,
-			tags = [] 
+			tags = []
 		} = this.searchForm.value;
 
 		if (invoiceNumber) {
@@ -1003,7 +1006,7 @@ export class InvoicesComponent
 		}
 		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();
-			this.subject$.next(true);		
+			this.subject$.next(true);
 		}
 	}
 
@@ -1054,7 +1057,7 @@ export class InvoicesComponent
 		if(settingsPopup.isShown){
 			settingsPopup.hide();
 		}
-		
+
 		if (actionsPopup.isShown) {
 			actionsPopup.hide();
 		}
@@ -1099,7 +1102,7 @@ export class InvoicesComponent
 	}
 
 	/*
-	* Create Invoice History Event 
+	* Create Invoice History Event
 	*/
 	async createInvoiceHistory(action: string) {
 		const { tenantId, id: userId } = this.store.user;
