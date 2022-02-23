@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -82,8 +83,7 @@ import { InvoicePaymentReceiptMutationComponent, InvoicePaymentsComponent, Payme
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
 import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
-import { CurrencyPipe } from '@angular/common';
-import { CurrencyPositionPipe } from '../../@shared/pipes/currency-position.pipe';
+import { CurrencyPositionPipe } from '../../@shared/pipes';
 
 @NgModule({
 	imports: [
