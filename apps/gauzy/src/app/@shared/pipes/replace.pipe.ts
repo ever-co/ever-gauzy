@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { CurrencyPosition } from '@gauzy/contracts';
 import { isRegExp, isString, isUndefined } from 'underscore';
 
 @Pipe({
@@ -25,5 +24,4 @@ export class ReplacePipe implements PipeTransform {
 		return string.split(search).join(replace);
 	}
 }
-
 
