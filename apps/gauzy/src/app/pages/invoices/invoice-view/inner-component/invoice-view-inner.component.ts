@@ -11,6 +11,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
 import { TranslatableService } from 'apps/gauzy/src/app/@core/services/translatable.service';
+import { CurrencyPipe } from '@angular/common';
+import { CurrencyPositionPipe } from 'apps/gauzy/src/app/@shared/pipes';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-view-inner',
@@ -39,7 +41,9 @@ export class InvoiceViewInnerComponent
 		readonly translateService: TranslateService,
 		private store: Store,
 		private userOrganizationService: UsersOrganizationsService,
-		private translatableService: TranslatableService
+		private translatableService: TranslatableService,
+    private currencyPipe: CurrencyPipe,
+    private currencyPipePosition: CurrencyPositionPipe
 	) {
 		super(translateService);
 	}
@@ -87,7 +91,12 @@ export class InvoiceViewInnerComponent
 					type: 'text',
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
-						return `${row.currency} ${row.price}`;
+						const priceTransformed = this.getPipesTransform(
+              row.price * row.quantity,
+              row.currency,
+              this.invoice.fromOrganization.currencyPosition
+            );
+            return `${priceTransformed}`;
 					}
 				},
 				totalValue: {
@@ -97,7 +106,12 @@ export class InvoiceViewInnerComponent
 					type: 'text',
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
-						return `${row.currency} ${row.price * row.quantity}`;
+            const priceTransformed = this.getPipesTransform(
+              row.price * row.quantity,
+              row.currency,
+              this.invoice.fromOrganization.currencyPosition
+            );
+            return `${priceTransformed}`;
 					}
 				}
 			}
@@ -179,11 +193,11 @@ export class InvoiceViewInnerComponent
 				userId: this.store.user.id,
 				organizationId: this.invoice.organizationId
 			});
-	
+
 			if (userOrg.items.length !== 0) {
 				this.showInternalNote = true;
 			}
-		}		
+		}
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -193,6 +207,17 @@ export class InvoiceViewInnerComponent
 				this.loadSmartTable();
 			});
 	}
+  /**
+   * This function transform simple number to currency format.
+   * @param value should be the number to transform
+   * @param currencyCode should be the currency code of invoice
+   * @param position should be the position of currency organization
+   * @returns should be a string
+   */
+   getPipesTransform(value: number, currencyCode: string, position: string): string {
+    const transform = this.currencyPipe.transform(value, currencyCode);
+    return this.currencyPipePosition.transform(transform, position);
+  }
 
 	ngOnDestroy() {}
 }
