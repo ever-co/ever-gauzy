@@ -33,6 +33,17 @@ body {
     }
   }
 
+  nb-card nb-list {
+    @include nb-scrollbars(
+      nb-theme(card-scrollbar-color),
+      nb-theme(card-scrollbar-background-color),
+      nb-theme(card-scrollbar-width));
+  }
+
+  .table {
+    color: nb-theme(text-basic-color) !important;
+  }
+
   nb-flip-card {
     .front-container {
       -webkit-backface-visibility: visible;

@@ -931,6 +931,8 @@
 		"DARK": "Тъмна",
 		"COSMIC": "Космическа",
 		"CORPORATE": "Корпоративна",
+		"MATERIAL_LIGHT_THEME": "Material Light",
+		"MATERIAL_DARK_THEME": "Material Dark",
 		"LANGUAGE": "Език (Language)",
 		"ENGLISH": "English",
 		"BULGARIAN": "Български",

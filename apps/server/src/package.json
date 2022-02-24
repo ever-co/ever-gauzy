@@ -123,7 +123,7 @@
 		"electron-updater": "~4.3.8",
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
-		"@nestjs/platform-express": "^8.0.8",
+		"@nestjs/platform-express": "^8.3.1",
 		"sound-play": "1.1.0",
 		"underscore": "^1.13.2",
 		"tslib": "^2.3.1",
