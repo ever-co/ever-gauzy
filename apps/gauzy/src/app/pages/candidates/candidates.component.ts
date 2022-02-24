@@ -203,8 +203,14 @@ export class CandidatesComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { id: organizationId } = this.organization;
+						const { tenantId } = this.store.user;
+
 						const { id, fullName } = this.selectedCandidate;
-						await this.candidatesService.setCandidateAsArchived(id);
+						await this.candidatesService.setCandidateAsArchived(id, {
+							organizationId,
+							tenantId
+						});
 
 						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_ARCHIVED', {
 							name: fullName
