@@ -219,7 +219,7 @@ export class EditCandidateProfileComponent
 			try {
 				await this.candidatesService.update(
 					this.selectedCandidate.id,
-					value
+					{...value, organizationId : this.selectedCandidate.organizationId}
 				);
 
 				this.toastrService.success(
