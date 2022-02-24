@@ -7,13 +7,14 @@ import {
 	Post,
 	Body,
 	Delete,
-	Param
+	Param,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	ICandidateSkill,
 	IPagination,
-	ISkillCreateInput,
 	RolesEnum
 } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -22,6 +23,7 @@ import { CandidateSkillService } from './candidate-skill.service';
 import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { Roles } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateCandidateSkillDTO } from './dto';
 
 @ApiTags('CandidateSkill')
 @UseGuards(TenantPermissionGuard)
@@ -66,7 +68,8 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post()
-	async create(@Body() body: ISkillCreateInput): Promise<any> {
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async create(@Body() body: CreateCandidateSkillDTO): Promise<any> {
 		return this.candidateSkillService.create(body);
 	}
 
