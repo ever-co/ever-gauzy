@@ -5,6 +5,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
 import { CandidateSkillController } from './candidate-skill.controller';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
@@ -12,7 +13,8 @@ import { CandidateSkillController } from './candidate-skill.controller';
 			{ path: '/candidate-skills', module: CandidateSkillModule }
 		]),
 		TypeOrmModule.forFeature([ CandidateSkill ]),
-		TenantModule
+		TenantModule,
+		UserModule
 	],
 	providers: [CandidateSkillService],
 	controllers: [CandidateSkillController],
