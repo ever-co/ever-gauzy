@@ -41,7 +41,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		);
 	}
 
-	async submitTimeheet(
+	async submitTimeSheet(
 		input: ISubmitTimesheetInput
 	): Promise<ITimesheet[]> {
 		return await this.commandBus.execute(
@@ -120,12 +120,12 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		// use current start of the month if startDate not found
 		const startDate: any = (request.startDate) ?
 							moment.utc(request.startDate) :
-							moment.utc().startOf('month');
+							moment.utc().startOf('month').utc();
 
 		// use current end of the month if endDate not found
 		const endDate: any = (request.endDate) ?
 							moment.utc(request.endDate) :
-							moment.utc().endOf('month');
+							moment.utc().endOf('month').utc();
 
 		const { start, end } = getDateRangeFormat(startDate, endDate);
 		const tenantId = RequestContext.currentTenantId();

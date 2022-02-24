@@ -96,10 +96,10 @@ export class TimeSheetController {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 	@Put('/submit')
-	async submitTimeheet(
+	async submitTimeSheet(
 		@Body() entity: ISubmitTimesheetInput
 	): Promise<ITimesheet[]> {
-		return await this.timeSheetService.submitTimeheet(entity);
+		return await this.timeSheetService.submitTimeSheet(entity);
 	}
 
 	/**
@@ -118,6 +118,8 @@ export class TimeSheetController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 	@Get('/')
 	async get(
 		@Query() entity: IGetTimesheetInput

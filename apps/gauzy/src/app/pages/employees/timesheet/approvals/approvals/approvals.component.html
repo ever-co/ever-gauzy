@@ -81,7 +81,7 @@
 			</div>
 			<div class="col">{{ timesheet.approvedAt | amDateFormat: 'LL' }}</div>
 			<div class="col">{{ timesheet.submittedAt | amDateFormat: 'LL' }}</div>
-			<div class="col">{{ timesheet.status | titlecase }}</div>
+			<div class="col"><ga-status-badge [value]="statusMapper(timesheet)"></ga-status-badge></div>
 			<div class="col">
 				<div>
 					<button

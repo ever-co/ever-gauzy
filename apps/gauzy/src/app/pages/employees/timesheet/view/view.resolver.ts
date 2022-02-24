@@ -16,8 +16,8 @@ export class ViewTimesheetResolver implements Resolve<Observable<ITimesheet>> {
     resolve(route: ActivatedRouteSnapshot): Observable<ITimesheet> {
         const timesheetId = route.params.id;
         return this.timesheetService.getTimeSheet(timesheetId).pipe(
-            catchError(() => {
-                return of('Timesheet not available at this time');
+            catchError((error) => {
+                return of(error);
             }),
             tap((timesheet: ITimesheet) => {})
         );

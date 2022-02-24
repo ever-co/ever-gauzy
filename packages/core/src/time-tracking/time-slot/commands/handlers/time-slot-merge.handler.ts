@@ -1,4 +1,4 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
@@ -8,14 +8,17 @@ import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { getDateFormat } from './../../../../core/utils';
-
+import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
+import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/commands';
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler
 	implements ICommandHandler<TimeSlotMergeCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>
+		private readonly timeSlotRepository: Repository<TimeSlot>,
+
+		private readonly commandBus: CommandBus
 	) {}
 
 	public async execute(command: TimeSlotMergeCommand) {
@@ -134,6 +137,25 @@ export class TimeSlotMergeHandler
 						startedAt: moment(slotStart).toDate(),
 						tenantId
 					});
+
+					/**
+					 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
+					 * RECALCULATE timesheet activity
+					 */
+					for await (const timeLog of newTimeSlot.timeLogs) {
+						await this.commandBus.execute(
+							new TimesheetRecalculateCommand(timeLog.timesheetId)
+						);
+					}
+
+					/**
+					 * UPDATE employee total worked hours
+					 */
+					if (employeeId) {
+						await this.commandBus.execute(
+							new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
+						);
+					}
 
 					await this.timeSlotRepository.save(newTimeSlot);
 					createdTimeSlots.push(newTimeSlot);

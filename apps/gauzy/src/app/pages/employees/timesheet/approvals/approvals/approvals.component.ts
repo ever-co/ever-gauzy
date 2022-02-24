@@ -125,12 +125,14 @@ export class ApprovalsComponent
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 
-		await this.timesheetService
-			.getTimeSheets(request)
-			.then((timesheets: ITimesheet[]) => {
-				this.timesheets = timesheets;
-			})
-			.finally(() => (this.loading = false));
+		try {
+			this.timesheets = await this.timesheetService.getTimeSheets(request);
+			console.log(this.timesheets);
+		} catch (error) {
+			console.log('Error while getting TimeSheets for selected date range')
+		} finally {
+			this.loading = false
+		}
 	}
 
 	updateStatus(timesheetIds: string | string[], status: TimesheetStatus) {
@@ -254,6 +256,34 @@ export class ApprovalsComponent
 				data: { status: TimesheetStatus.DENIED }
 			}
 		];
+	}
+
+	public statusMapper = (timesheet: ITimesheet) => {
+		let badgeClass: string;
+		const status = timesheet.status;
+		if (status) {
+			switch (status) {
+				case TimesheetStatus.APPROVED:
+					badgeClass = 'success';
+					break;
+				case TimesheetStatus.DENIED:
+					badgeClass = 'danger';
+					break;
+				case TimesheetStatus.PENDING:
+					badgeClass = 'primary';
+					break;
+				case TimesheetStatus.DRAFT:
+					badgeClass = 'warning';
+					break;
+				default:
+					badgeClass = 'primary';
+					break;
+			}
+			return {
+				text: status,
+				class: badgeClass
+			};
+		}	
 	}
 
 	ngOnDestroy(): void {}

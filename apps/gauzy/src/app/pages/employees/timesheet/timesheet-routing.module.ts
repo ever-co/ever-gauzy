@@ -43,17 +43,23 @@ const routes: Routes = [
 						project: false
 					}
 				},
-				loadChildren: () =>
-					import('./approvals/approvals.module').then(
-						(m) => m.ApprovalsModule
-					)
+				loadChildren: () => import('./approvals/approvals.module').then((m) => m.ApprovalsModule)
 			}
 		]
 	},
 	{
 		path: ':id',
-		loadChildren: () =>
-			import('./view/view.module').then((m) => m.ViewModule)
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.CAN_APPROVE_TIMESHEET],
+				redirectTo: '/pages/employees/timesheets/daily'
+			},
+			selectors: {
+				project: false
+			}
+		},
+		loadChildren: () => import('./view/view.module').then((m) => m.ViewModule)
 	}
 ];
 
