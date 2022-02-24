@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -13,8 +14,6 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
-import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
-import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -142,6 +141,17 @@ export class CreateTimeSlotHandler
 			}
 		}
 
+		/**
+		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
+		 */
+		for await (const timeLog of timeSlot.timeLogs) {
+			if (timeLog.isRunning) {
+				await this.timeLogRepository.update(timeLog.id, {
+					stoppedAt: moment.utc().toDate()
+				});
+			}
+		}
+
 		if (input.activities) {
 			timeSlot.activities = await this.commandBus.execute(
 				new BulkActivitiesSaveCommand({
@@ -169,20 +179,7 @@ export class CreateTimeSlotHandler
 		);
 
 		console.log('TimeSlot Before Create:', timeSlot);
-		/**
-		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
-		 */
-		for await (const timeLog of timeSlot.timeLogs) {
-			if (timeLog.isRunning) {
-				await this.timeLogRepository.update(timeLog.id, {
-					stoppedAt: moment.utc().toDate()
-				});
-				await this.commandBus.execute(
-					new TimesheetRecalculateCommand(timeLog.timesheetId)
-				);
-			}
-		}
-
+		
 		// If merge timeSlots not found then pass created timeSlot
 		if (!createdTimeSlot) {
 			createdTimeSlot = timeSlot;
