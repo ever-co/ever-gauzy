@@ -5,7 +5,8 @@ import {
 	ICandidateFindInput,
 	ICandidate,
 	ICandidateUpdateInput,
-	CandidateStatusEnum
+	CandidateStatusEnum,
+	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
@@ -69,11 +70,12 @@ export class CandidatesService {
 		);
 	}
 
-	setCandidateAsArchived(id: string): Promise<ICandidate> {
+	setCandidateAsArchived(id: string, baseEntity: IBasePerTenantAndOrganizationEntityModel): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http
 				.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
-					isArchived: true
+					isArchived: true,
+					...baseEntity
 				})
 		);
 	}

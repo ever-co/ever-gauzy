@@ -585,10 +585,6 @@ export class TimeTrackingComponent
 		) {
 			endDate = moment.utc().toDate();
 		}
-		console.log({
-			startDate,
-			endDate
-		});
 		return {
 			startDate,
 			endDate

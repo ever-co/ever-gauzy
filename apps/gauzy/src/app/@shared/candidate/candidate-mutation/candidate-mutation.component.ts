@@ -159,7 +159,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			const candidates = await firstValueFrom(
 				this.candidatesService.createBulk(this.candidates)
 			);
-			this.updateSource(candidates);
+			await this.updateSource(candidates);
 			this.closeDialog(candidates);
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -177,38 +177,40 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		const updateInput = [];
+		const sources = [];
 		items.forEach((item) => {
 			createdCandidates.forEach((cc) => {
 				if (cc.source) {
 					if (item.user.id === cc.userId) {
-						updateInput.push({
+						sources.push({
 							candidateId: item.id,
-							id: cc.source.id
+							id: cc.source.id,
+							organizationId,
+							tenantId
 						});
 					}
 				}
 			});
 		});
-		if (isNotEmpty(updateInput)) {
-			await this.candidateSourceService.updateBulk(updateInput);
+		if (isNotEmpty(sources)) {
+			await this.candidateSourceService.updateBulk(sources);
 		}
 	}
 
-  /**
-   *  Go to another the step without to saving data form
-  */
-   gotoStep(step: number){
-     for(let i = 1; i < step; i++){
-      this.stepper.next(); // change step
-     }
-   }
+	/**
+	 *  Go to another the step without to saving data form
+	 */
+   	gotoStep(step: number){
+		for(let i = 1; i < step; i++){
+			this.stepper.next(); // change step
+		}
+   	}
 
-  /**
+  	/**
 	 * Removed one candidate in the array of candidates.
 	 * @param tag
 	 */
-   onCandidateRemove(tag: NbTagComponent): void {
+   	onCandidateRemove(tag: NbTagComponent): void {
 		this.candidates = this.candidates.filter(
 			(t: ICandidateCreateInput) => t.user.email !== tag.text
 		);
