@@ -1,7 +1,7 @@
 import { ICandidate } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsObject, IsString, ValidateIf } from "class-validator";
-import { TenantOrganizationBaseDTO } from "core/dto";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class CandidateFeatureDTO extends TenantOrganizationBaseDTO {
 
@@ -14,5 +14,4 @@ export class CandidateFeatureDTO extends TenantOrganizationBaseDTO {
     @ValidateIf((ca) => !ca.candidateId)
     @IsObject()
     readonly candidate: ICandidate;
-
 }

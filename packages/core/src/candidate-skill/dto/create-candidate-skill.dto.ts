@@ -1,7 +1,7 @@
 import { ISkillCreateInput } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { CandidateFeatureDTO } from "candidate/dto";
 import { IsNotEmpty, IsString } from "class-validator";
+import { CandidateFeatureDTO } from "./../../candidate/dto";
 
 export class CreateCandidateSkillDTO extends CandidateFeatureDTO  implements ISkillCreateInput {
 
@@ -9,5 +9,4 @@ export class CreateCandidateSkillDTO extends CandidateFeatureDTO  implements ISk
     @IsNotEmpty()
     @IsString()
     readonly name: string;
-
 }
