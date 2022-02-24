@@ -38,6 +38,7 @@ export class Integration extends BaseEntity implements IIntegration {
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({
+		nullable: true,
 		default: 0,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
