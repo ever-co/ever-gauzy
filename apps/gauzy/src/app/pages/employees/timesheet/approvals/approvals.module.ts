@@ -20,6 +20,7 @@ import { FiltersModule } from './../../../../@shared/timesheet/filters/filters.m
 import { TranslateModule } from './../../../../@shared/translate/translate.module';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
+import { StatusBadgeModule } from './../../../../@shared/status-badge';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
@@ -40,7 +41,8 @@ import { ApprovalsComponent } from './approvals/approvals.component';
 		MomentModule,
 		SharedModule,
 		FiltersModule,
-		ApprovalsRoutingModule
+		ApprovalsRoutingModule,
+		StatusBadgeModule
 	]
 })
 export class ApprovalsModule {}
