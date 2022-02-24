@@ -17,7 +17,7 @@ import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe } from './../shared/pipes';
 import { CandidateSourceService } from './candidate-source.service';
-import { CandidateSourceBulkInputDTO } from './dto';
+import { CandidateSourceBulkInputDTO, CreateCandidateSourceDTO } from './dto';
 
 @ApiTags('CandidateSource')
 @UseGuards(TenantPermissionGuard)
@@ -101,7 +101,7 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	@Post()
 	@UsePipes(new ValidationPipe({ transform : true }))
 	async create(
-		@Body() entity: CandidateSource
+		@Body() entity: CreateCandidateSourceDTO
 	): Promise<ICandidateSource> {
 		return this.candidateSourceService.create(entity);
 	}
