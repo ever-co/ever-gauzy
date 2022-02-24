@@ -1,11 +1,11 @@
-import { ICandidateSource } from "@gauzy/contracts";
+import { ISkillCreateInput } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsString } from "class-validator";
 import { CandidateFeatureDTO } from "./../../candidate/dto";
 
-export class CreateCandidateSourceDTO extends CandidateFeatureDTO implements ICandidateSource {
+export class CreateCandidateSkillDTO extends CandidateFeatureDTO  implements ISkillCreateInput {
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String, required: true, readOnly: true })
     @IsNotEmpty()
     @IsString()
     readonly name: string;
