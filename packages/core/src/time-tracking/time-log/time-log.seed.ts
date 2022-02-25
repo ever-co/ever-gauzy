@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { Brackets, Connection, WhereExpressionBuilder } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
 import {
@@ -14,7 +14,9 @@ import * as moment from 'moment';
 import { IPluginConfig, isEmpty } from '@gauzy/common';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
-import { OrganizationProject, Screenshot, TimeLog, TimeSlot } from './../../core/entities/internal';
+import { OrganizationProject, Screenshot, TimeLog, Timesheet, TimeSlot } from './../../core/entities/internal';
+import { getDateFormat } from './../../core/utils';
+import { BadRequestException } from '@nestjs/common';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,
@@ -164,4 +166,51 @@ function dateRanges(start: Date, stop: Date) {
 	);
 	range.push({ startedAt, stoppedAt });
 	return range;
+}
+
+export const recalculateTimesheetActivity = async (
+	connection: Connection,
+	timesheets: ITimesheet[]
+) => {
+	for await (const timesheet of timesheets) {
+		const { id, startedAt, stoppedAt, employeeId, organizationId, tenantId } = timesheet;
+		const { start, end } = getDateFormat(
+			moment.utc(startedAt),
+			moment.utc(stoppedAt)
+		);
+		const query = connection.getRepository(TimeSlot).createQueryBuilder();
+		const timeSlot = await query
+			.select('SUM(duration)', 'duration')
+			.addSelect('AVG(keyboard)', 'keyboard')
+			.addSelect('AVG(mouse)', 'mouse')
+			.addSelect('AVG(overall)', 'overall')
+			.where(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+						employeeId
+					});
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
+					qb.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
+						startedAt: start,
+						stoppedAt: end
+					});
+				})
+			)
+			.getRawOne();
+		try {
+			await connection.getRepository(Timesheet).update(id, {
+				duration: Math.round(timeSlot.duration),
+				keyboard: Math.round(timeSlot.keyboard),
+				mouse: Math.round(timeSlot.mouse),
+				overall: Math.round(timeSlot.overall)
+			});
+		} catch (error) {
+			throw new BadRequestException(`Can\'t update timesheet for employee-${employeeId} of organization-${organizationId}`);
+		}
+	}
 }

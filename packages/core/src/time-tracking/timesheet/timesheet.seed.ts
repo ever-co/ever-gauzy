@@ -12,7 +12,7 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import * as chalk from 'chalk';
 import { IPluginConfig } from '@gauzy/common';
-import { createRandomTimeLogs } from './../time-log/time-log.seed';
+import { createRandomTimeLogs, recalculateTimesheetActivity } from './../time-log/time-log.seed';
 import { createRandomActivities } from './../activity/activities.seed';
 import { Employee, Timesheet } from './../../core/entities/internal';
 import { randomSeedConfig } from './../../core/seeds/random-seed-config';
@@ -88,6 +88,13 @@ export const createDefaultTimeSheet = async (
 			connection,
 			config,
 			tenant,
+			createdTimesheets
+		);
+		/**
+		 * Recalculate Timesheet Activities
+		 */
+		await recalculateTimesheetActivity(
+			connection,
 			createdTimesheets
 		);
 		await createRandomActivities(
@@ -185,6 +192,13 @@ export const createRandomTimesheet = async (
 				connection,
 				config,
 				tenant,
+				createdTimesheets
+			);
+			/**
+			 * Recalculate Timesheet Activities
+			 */
+			await recalculateTimesheetActivity(
+				connection,
 				createdTimesheets
 			);
 			await createRandomActivities(
