@@ -25,7 +25,7 @@ export class NotesWithTagsComponent implements ViewCell, OnInit {
 
 	ngOnInit(): void {
 		this.themeService.getJsTheme().subscribe((theme) => {
-			this.textColor = theme.variables.fgText[0];
+			this.textColor = theme.variables.fgText.toString();
 		});
 	}
 
