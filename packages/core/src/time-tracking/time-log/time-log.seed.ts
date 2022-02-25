@@ -105,6 +105,7 @@ export const createRandomTimeLogs = async (
 						timeLog.description = faker.lorem.sentence(faker.datatype.number(10));
 						timeLog.isBillable = faker.random.arrayElement([true, false]);
 						timeLog.deletedAt = null;
+						timeLog.isRunning = false;
 						timeLogs.push(timeLog);
 					}
 				}
