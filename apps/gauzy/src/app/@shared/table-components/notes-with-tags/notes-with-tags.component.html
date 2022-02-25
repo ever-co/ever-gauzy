@@ -27,6 +27,7 @@
 			position="centered"
 			[style.background]="tag.color"
 			text="{{ tag.name }}"
+      [style.color]="backgroundContrast(tag.color)"
 		>
 		</nb-badge>
 	</div>
