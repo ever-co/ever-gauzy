@@ -40,6 +40,8 @@ import { CORPORATE_THEME } from './styles/theme.corporate';
 import { DARK_THEME } from './styles/theme.dark';
 import { MATERIAL_LIGHT_THEME } from './styles/material/theme.material-light';
  import { MATERIAL_DARK_THEME } from './styles/material/theme.material-dark';
+import { GAUZY_LIGHT } from './styles/gauzy/theme.gauzy-light';
+import { GAUZY_DARK } from './styles/gauzy/theme.gauzy-dark';
 
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { WindowModeBlockScrollService } from './services';
@@ -122,7 +124,9 @@ export class ThemeModule {
 					CORPORATE_THEME,
 					DARK_THEME,
           MATERIAL_LIGHT_THEME,
-          MATERIAL_DARK_THEME
+          MATERIAL_DARK_THEME,
+          GAUZY_LIGHT,
+          GAUZY_DARK
 				]).providers,
 				WindowModeBlockScrollService
 			]
