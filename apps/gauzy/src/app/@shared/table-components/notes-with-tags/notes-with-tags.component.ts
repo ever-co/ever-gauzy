@@ -35,11 +35,11 @@ export class NotesWithTagsComponent implements ViewCell, OnInit {
 			? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114
 			: null;
 		if (threshold && threshold < 150) {
-			this.textColor = '#ffffff';
-		}
-		if (threshold && threshold > 220) {
-			this.textColor = '#000000';
-		}
-		return this.textColor;
+			return '#ffffff';
+		} else if (threshold && threshold > 200) {
+			return '#000000';
+		} else {
+      return this.textColor;
+    }
 	}
 }
