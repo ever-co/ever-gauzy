@@ -118,7 +118,7 @@ export class ThemeModule {
 		return {
 			ngModule: ThemeModule,
 			providers: [
-				...NbThemeModule.forRoot({ name: DEFAULT_THEME.name }, [
+				...NbThemeModule.forRoot({ name: GAUZY_LIGHT.name }, [
 					DEFAULT_THEME,
 					COSMIC_THEME,
 					CORPORATE_THEME,

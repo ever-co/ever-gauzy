@@ -26,18 +26,18 @@ import { GAUZY_DARK } from '../../../styles/gauzy/theme.gauzy-dark';
 })
 export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	themes = [
+    { value: GAUZY_LIGHT.name, name: 'Gauzy Light'},
+    { value: GAUZY_DARK.name, name: 'Gauzy Dark'},
 		{ value: DEFAULT_THEME.name, name: 'SETTINGS_MENU.LIGHT' },
 		{ value: DARK_THEME.name, name: 'SETTINGS_MENU.DARK' },
 		{ value: COSMIC_THEME.name, name: 'SETTINGS_MENU.COSMIC' },
 		{ value: CORPORATE_THEME.name, name: 'SETTINGS_MENU.CORPORATE' },
     { value: MATERIAL_LIGHT_THEME.name, name: 'SETTINGS_MENU.MATERIAL_LIGHT_THEME' },
-		{ value: MATERIAL_DARK_THEME.name, name: 'SETTINGS_MENU.MATERIAL_DARK_THEME' },
-    { value: GAUZY_LIGHT.name, name: 'Gauzy Light'},
-    { value: GAUZY_DARK.name, name: 'Gauzy Dark'}
+		{ value: MATERIAL_DARK_THEME.name, name: 'SETTINGS_MENU.MATERIAL_DARK_THEME' }
 	];
 	componentLayouts = Object.keys(ComponentLayoutStyleEnum);
 
-	currentTheme = DEFAULT_THEME.name;
+	currentTheme = GAUZY_LIGHT.name;
 	currentLayout: string = ComponentLayoutStyleEnum.TABLE;
 
 	user: IUser;
