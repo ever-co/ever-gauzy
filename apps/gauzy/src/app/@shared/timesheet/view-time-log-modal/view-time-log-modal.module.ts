@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ViewTimeLogModalComponent } from './view-time-log-modal/view-time-log-modal.component';
+import { ViewTimeLogModalComponent } from './view-time-log-modal.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import {

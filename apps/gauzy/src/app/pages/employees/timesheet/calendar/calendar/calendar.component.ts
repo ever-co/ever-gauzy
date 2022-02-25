@@ -28,11 +28,10 @@ import { combineLatest, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
-import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
-import { ViewTimeLogModalComponent } from './../../../../../@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import { TimesheetFilterService, TimesheetService } from './../../../../../@shared/timesheet';
+import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal';
+import { ViewTimeLogModalComponent } from './../../../../../@shared/timesheet/view-time-log-modal';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import * as _ from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
@@ -41,9 +40,12 @@ import * as _ from 'underscore';
 	templateUrl: './calendar.component.html'
 })
 export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
+
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	@ViewChild('viewLogTemplate', { static: true })
+
 	viewLogTemplate: TemplateRef<any>;
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
 	calendarOptions: CalendarOptions;
