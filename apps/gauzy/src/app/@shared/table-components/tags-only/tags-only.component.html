@@ -13,7 +13,7 @@
 <div *ngIf="rowData.level">{{ rowData.level }}</div>
 <div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2">
 	<nb-badge
-		*ngFor="let tag of rowData?.tags"
+		*ngFor="let tag of (data | async)?.tags"
 		class="color"
 		position="centered"
 		[style.background]="tag.color"

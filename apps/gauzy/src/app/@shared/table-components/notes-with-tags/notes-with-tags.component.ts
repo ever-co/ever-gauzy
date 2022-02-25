@@ -3,6 +3,7 @@ import { ViewCell } from 'ng2-smart-table';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { Color } from '@kurkle/color';
 import { NbThemeService } from '@nebular/theme';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Component({
 	selector: 'ga-notes-with-tags',
@@ -20,12 +21,16 @@ export class NotesWithTagsComponent implements ViewCell, OnInit {
 	layout?: ComponentLayoutStyleEnum | undefined;
 
 	private textColor!: string;
+  data$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  data: Observable<any> = new Observable<any>(null);
 
 	constructor(private themeService: NbThemeService) {}
 
 	ngOnInit(): void {
 		this.themeService.getJsTheme().subscribe((theme) => {
 			this.textColor = theme.variables.fgText.toString();
+      this.data$.next(this.rowData);
+      this.data = this.data$.asObservable();
 		});
 	}
 
