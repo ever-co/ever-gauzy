@@ -36,12 +36,14 @@ export class NotesWithTagsComponent implements ViewCell, OnInit {
 
 	backgroundContrast(bgColor: string) {
 		const color = new Color(bgColor);
-		const threshold = color.rgb
+    const MIN_THRESHOLD = 150;
+    const MAX_THRESHOLD = 186;
+		const contrast = color.rgb
 			? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114
 			: null;
-		if (threshold && threshold < 150) {
+		if (contrast && contrast < MIN_THRESHOLD) {
 			return '#ffffff';
-		} else if (threshold && threshold > 200) {
+		} else if (contrast && contrast > MAX_THRESHOLD) {
 			return '#000000';
 		} else {
       return this.textColor;
