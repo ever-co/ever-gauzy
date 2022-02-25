@@ -8,7 +8,7 @@
 					[caption]="
 						(timeLog?.startedAt | utcToLocal | timeFormat: true) +
 						' - ' +
-						(timeLog?.stoppedAt
+						(!timeLog?.isRunning
 							? (timeLog?.stoppedAt
 							  | utcToLocal
 							  | timeFormat: true)

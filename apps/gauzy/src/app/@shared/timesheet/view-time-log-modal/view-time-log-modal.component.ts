@@ -6,11 +6,11 @@ import {
 	PermissionsEnum,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { EditTimeLogModalComponent } from './../../edit-time-log-modal';
-import { TimesheetService } from '../../timesheet.service';
-import { TimeTrackerService } from './../../../time-tracker/time-tracker.service';
-import { TimeLogsLabel } from './../../../../@core/constants';
-import { Store } from './../../../../@core/services';
+import { EditTimeLogModalComponent } from './../edit-time-log-modal';
+import { TimesheetService } from '../timesheet.service';
+import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
+import { TimeLogsLabel } from './../../../@core/constants';
+import { Store } from './../../../@core/services';
 import { tap } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })

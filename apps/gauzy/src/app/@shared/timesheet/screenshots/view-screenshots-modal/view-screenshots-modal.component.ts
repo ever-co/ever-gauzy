@@ -1,11 +1,12 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { IScreenshot, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { progressStatus } from '@gauzy/common-angular';
-import { TimeLogsLabel } from './../../../../@core/constants/timesheet.constants';
-import { TimesheetService } from '../../timesheet.service';
-import { ViewTimeLogModalComponent } from '../../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import { IScreenshot, ITimeLog, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
+import { progressStatus, toLocal } from '@gauzy/common-angular';
 import * as _ from 'underscore';
+import { TimeLogsLabel } from './../../../../@core/constants';
+import { TimesheetService } from '../../timesheet.service';
+import { ViewTimeLogModalComponent } from '../../view-time-log-modal';
+import { ToastrService } from './../../../../@core/services';
 
 @Component({
 	selector: 'ngx-view-screenshots-modal',
@@ -16,8 +17,25 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	progressStatus = progressStatus;
 	TimeLogsLabel = TimeLogsLabel;
 	PermissionsEnum = PermissionsEnum;
-	@Input() timeSlot: ITimeSlot;
 
+	/*
+	* Getter & Setter for TimeSlot element
+	*/
+	private _timeSlot: ITimeSlot;
+	get timeSlot(): ITimeSlot {
+		return this._timeSlot;
+	}
+	@Input() set timeSlot(timeSlot: ITimeSlot) {
+		timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
+		timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
+		this._timeSlot = timeSlot;
+
+		this.screenshots = _.sortBy(JSON.parse(JSON.stringify(timeSlot.screenshots)), 'createdAt').reverse();
+	}
+
+	/*
+	* Getter & Setter for Screenshots element
+	*/
 	private _screenshots: IScreenshot[] = [];
 	public get screenshots(): IScreenshot[] {
 		return this._screenshots;
@@ -27,18 +45,19 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	}
 
 	constructor(
-		private dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,
-		private timesheetService: TimesheetService,
-		private nbDialogService: NbDialogService
+		private readonly dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,
+		private readonly timesheetService: TimesheetService,
+		private readonly nbDialogService: NbDialogService,
+		private readonly toastrService: ToastrService
 	) {}
 
 	ngOnInit(): void {
 		this.getTimeSlot();
 	}
 
-	getTimeSlot() {
-		this.timesheetService
-			.getTimeSlot(this.timeSlot.id, {
+	async getTimeSlot() {
+		try {
+			this.timeSlot = await this.timesheetService.getTimeSlot(this.timeSlot.id, {
 				relations: [
 					'timeLogs',
 					'screenshots',
@@ -48,21 +67,18 @@ export class ViewScreenshotsModalComponent implements OnInit {
 					'timeLogs.task',
 					'timeLogs.organizationContact'
 				]
-			})
-			.then((timeSlot) => {
-				this.timeSlot = timeSlot;
-				const screenshots = JSON.parse(
-					JSON.stringify(timeSlot.screenshots)
-				);
-				this.screenshots = _.sortBy(screenshots, 'createdAt').reverse();
 			});
+		} catch (error) {
+			console.log('Error while retrieve TimeSlot:', error);
+			this.toastrService.danger(error);
+		}
 	}
 
 	close() {
 		this.dialogRef.close();
 	}
 
-	viewTimeLog(timeLog) {
+	viewTimeLog(timeLog: ITimeLog) {
 		this.nbDialogService.open(ViewTimeLogModalComponent, {
 			context: { timeLog }
 		});
