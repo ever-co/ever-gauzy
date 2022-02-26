@@ -83,4 +83,17 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			context: { timeLog }
 		});
 	}
+  /**
+   *
+   * @param image
+   */
+  deleteImage(image){
+    //!!To do: implement logic
+  }
+  /**
+   * delete time slot
+   */
+  async deleteTimeSlot(){
+     //!!To do: implement logic
+  }
 }

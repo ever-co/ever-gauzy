@@ -3497,7 +3497,8 @@
 			"OF": "crwdns9994:0crwdne9994:0",
 			"TIME_LOG": "crwdns9996:0crwdne9996:0"
 		},
-		"RUNNING_TIMER_WARNING": "crwdns10875:0crwdne10875:0"
+		"RUNNING_TIMER_WARNING": "crwdns10875:0crwdne10875:0",
+		"DELETE_CONFIRM": "crwdns10952:0crwdne10952:0"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "crwdns4944:0crwdne4944:0",
