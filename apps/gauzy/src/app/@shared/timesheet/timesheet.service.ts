@@ -245,4 +245,10 @@ export class TimesheetService {
 			.delete(`${API_PREFIX}/timesheet/time-log`, { params: payload })
 		);
 	}
+
+	deleteScreenshot(screenshotId: string) {
+		return firstValueFrom(
+			this.http.delete(`${API_PREFIX}/timesheet/screenshot/${screenshotId}`)
+		);
+	}
 }
