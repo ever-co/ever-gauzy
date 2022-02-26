@@ -6,7 +6,8 @@ import {
 	NbButtonModule,
 	NbDialogModule,
 	NbIconModule,
-	NbUserModule
+	NbUserModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { SharedModule } from '../../shared.module';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
@@ -22,6 +23,7 @@ import { TranslateModule } from '@ngx-translate/core';
 		NbListModule,
 		SharedModule,
 		NbButtonModule,
+		NbTooltipModule,
 		NbDialogModule.forChild(),
 		EditTimeLogModalModule,
 		ViewTimeLogModalModule,

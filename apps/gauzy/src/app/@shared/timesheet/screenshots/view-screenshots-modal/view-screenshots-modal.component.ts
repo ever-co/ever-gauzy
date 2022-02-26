@@ -97,7 +97,8 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	}
 
 	/**
-	 * Delete specific screenshot
+	 * DELETE specific Screenshot
+	 * 
 	 * @param screenshot
 	 */
 	async deleteImage(
@@ -125,9 +126,19 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	}
 
 	/**
-	 * delete time slot
+	 * DELETE specific TimeLog
+	 * 
+	 * @param timeLog 
 	 */
-	async deleteTimeSlot() {
-		//!!To do: implement logic
+	async deleteTimeLog(timeLog: ITimeLog) {
+		if (timeLog.isRunning) {
+			return;
+		}
+		try {
+			await this.timesheetService.deleteLogs(timeLog.id);
+		} catch (error) {
+			console.log('Error while delete TimeLog: ', error);
+			this.toastrService.danger(error);
+		}
 	}
 }

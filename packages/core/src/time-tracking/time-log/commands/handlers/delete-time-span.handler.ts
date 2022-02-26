@@ -1,17 +1,18 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { TimeLog } from './../../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import * as _ from 'underscore';
+import { ITimeLog } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
+import { TimeLog } from './../../time-log.entity';
+import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { moment } from '../../../../core/moment-extend';
-import { ITimeLog } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../../../core/entities/internal';
 import { TimeSlotRangeDeleteCommand } from './../../../time-slot/commands';
+import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler
@@ -33,7 +34,7 @@ export class DeleteTimeSpanHandler
 		const { start, end } = newTime;
 
 		const refreshTimeLog = await this.timeLogRepository.findOne(id);
-		const { startedAt, stoppedAt, employeeId, organizationId } = refreshTimeLog;
+		const { startedAt, stoppedAt, employeeId, organizationId, timesheetId } = refreshTimeLog;
 
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
@@ -48,13 +49,16 @@ export class DeleteTimeSpanHandler
 			 * Still we have to remove that TimeSlot with screenshots/activities
 			 */
 			if (employeeId && start && end) {
-				return await this.commandBus.execute(
+				await this.commandBus.execute(
 					new TimeSlotRangeDeleteCommand(
 						organizationId,
 						employeeId,
 						start,
 						end
 					)
+				);
+				await this.commandBus.execute(
+					new TimesheetRecalculateCommand(timesheetId)
 				);
 			}
 		}

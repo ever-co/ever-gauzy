@@ -59,7 +59,7 @@ export class DeleteTimeSlotHandler
 			for await (const timeSlot of timeSlots) {
 				if (timeSlot && isNotEmpty(timeSlot.timeLogs)) {
 					const timeLogs = timeSlot.timeLogs.filter(
-						(timeLog) => timeLog.stoppedAt
+						(timeLog) => timeLog.isRunning === false
 					);
 					if (isNotEmpty(timeLogs)) {
 						for await (const timeLog of timeLogs) {
