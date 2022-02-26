@@ -65,6 +65,7 @@
 			>
 				<div class="col">
 					<ngx-avatar
+						[id]="timeLog?.employee?.id"
 						[name]="timeLog?.employee?.user?.name"
 						[src]="timeLog?.employee?.user?.imageUrl"
 						[caption]="
@@ -143,7 +144,8 @@
 						(click)="$event.stopPropagation()"
 						ngxConfirmDialog
 						[message]="'TIMESHEET.DELETE_CONFIRM' | translate"
-						(confirm)="deleteTimeSlot()"
+						(confirm)="deleteTimeLog(timeLog)"
+						[disabled]="timeLog.isRunning"
 					>
 						<nb-icon icon="trash-2-outline"></nb-icon>
 						{{ 'TIMESHEET.DELETE' | translate }}

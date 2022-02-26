@@ -148,9 +148,11 @@
                                     <nb-card class="card-scroll" *ngIf="selectedMembers?.length > 0">
                                         <nb-list>
                                             <nb-list-item *ngFor="let member of selectedMembers">
-                                                <ngx-avatar [name]="member?.user?.name" [src]="member.user?.imageUrl"
-                                                    [id]="member?.id">
-                                                </ngx-avatar>
+                                                <ngx-avatar
+                                                    [name]="member?.user?.name"
+                                                    [src]="member.user?.imageUrl"
+                                                    [id]="member?.id"
+                                                ></ngx-avatar>
                                             </nb-list-item>
                                         </nb-list>
                                     </nb-card>

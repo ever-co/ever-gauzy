@@ -4,13 +4,13 @@
 			<div class="block-info">
 				<div class="expense">
 					<div class="block-item-big">
-            <ngx-avatar
-						*ngIf="currentEmployee"
-						[src]="currentEmployee?.user?.imageUrl"
-						[name]="currentEmployee?.user?.name"
-						[id]="currentEmployee?.id"
-					></ngx-avatar>
-          </div>
+						<ngx-avatar
+							*ngIf="currentEmployee"
+							[src]="currentEmployee?.user?.imageUrl"
+							[name]="currentEmployee?.user?.name"
+							[id]="currentEmployee?.id"
+						></ngx-avatar>
+          			</div>
 					<div class="block-item">
 						{{ getCategoryName(recurringExpense?.categoryName) }}
 					</div>
