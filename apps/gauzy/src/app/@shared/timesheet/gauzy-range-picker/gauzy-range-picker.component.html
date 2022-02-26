@@ -1,10 +1,10 @@
 <div class="row col-auto">
   <div class="filter-input">
     <div class="custom-input">
-      <button *ngIf="arrows" nbButton status="primary" (click)="previousRange()">
+      <button *ngIf="arrows" size="small" nbButton status="primary" (click)="previousRange()">
         <nb-icon icon="arrow-ios-back-outline"></nb-icon>
       </button>
-      <button *ngIf="arrows" nbButton [disabled]="isDisable" status="primary" (click)="nextRange()">
+      <button *ngIf="arrows" size="small" nbButton [disabled]="isDisable" status="primary" (click)="nextRange()">
         <nb-icon icon="arrow-ios-forward-outline"></nb-icon>
       </button>
       <input
@@ -20,7 +20,7 @@
             (datesUpdated)="onUpdate($event)"
           />
     </div>
-        <button outline nbButton size="large" status="basic" (click)="today()" *ngIf="todayButton">
+        <button outline nbButton status="basic" (click)="today()" *ngIf="todayButton">
           {{
           'TIMESHEET.TODAY' | translate
           }}
