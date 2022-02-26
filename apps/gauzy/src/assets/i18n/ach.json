@@ -931,6 +931,8 @@
 		"DARK": "crwdns2110:0crwdne2110:0",
 		"COSMIC": "crwdns2112:0crwdne2112:0",
 		"CORPORATE": "crwdns2114:0crwdne2114:0",
+		"MATERIAL_LIGHT_THEME": "crwdns10948:0crwdne10948:0",
+		"MATERIAL_DARK_THEME": "crwdns10950:0crwdne10950:0",
 		"LANGUAGE": "crwdns2116:0crwdne2116:0",
 		"ENGLISH": "crwdns2118:0crwdne2118:0",
 		"BULGARIAN": "crwdns2120:0crwdne2120:0",
@@ -1808,7 +1810,8 @@
 			"TENANT_SETTING": "crwdns10859:0crwdne10859:0",
 			"ALLOW_DELETE_TIME": "crwdns10869:0crwdne10869:0",
 			"ALLOW_MODIFY_TIME": "crwdns10871:0crwdne10871:0",
-			"ALLOW_MANUAL_TIME": "crwdns10929:0crwdne10929:0"
+			"ALLOW_MANUAL_TIME": "crwdns10929:0crwdne10929:0",
+			"DELETE_SCREENSHOTS": "crwdns10954:0crwdne10954:0"
 		},
 		"BILLING": "crwdns10521:0crwdne10521:0",
 		"BUDGET": "crwdns10523:0crwdne10523:0",
@@ -3495,7 +3498,8 @@
 			"OF": "crwdns9994:0crwdne9994:0",
 			"TIME_LOG": "crwdns9996:0crwdne9996:0"
 		},
-		"RUNNING_TIMER_WARNING": "crwdns10875:0crwdne10875:0"
+		"RUNNING_TIMER_WARNING": "crwdns10875:0crwdne10875:0",
+		"DELETE_CONFIRM": "crwdns10952:0crwdne10952:0"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "crwdns4944:0crwdne4944:0",

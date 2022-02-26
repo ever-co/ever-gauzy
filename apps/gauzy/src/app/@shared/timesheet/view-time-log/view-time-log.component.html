@@ -5,16 +5,16 @@
 		<nb-list-item
 			*ngFor="let timeLog of timeLogs"
 			class="row align-items-center"
-			(click)="viewLog(timeLog)"
 		>
 			<div class="time-log-content col">
 				<ngx-avatar
+					[id]="timeLog?.employee?.id"
 					[name]="timeLog?.employee?.user?.name"
 					[src]="timeLog?.employee?.user?.imageUrl"
 					[caption]="
 						(timeLog?.startedAt | utcToLocal | timeFormat: true) +
 						' - ' +
-						(timeLog?.stoppedAt
+						(!timeLog?.isRunning
 							? (timeLog?.stoppedAt
 							  | utcToLocal
 							  | timeFormat: true)
@@ -27,15 +27,25 @@
 			</div>
 			<div class="time-log-action col-auto">
 				<button
+					nbButton
+					status="primary"
+					(click)="viewLog(timeLog)"
+					class="mr-1"
+					size="small"
+					[nbTooltip]="'TIMESHEET.VIEW' | translate"
+				>
+					<nb-icon icon="eye-outline"></nb-icon>
+				</button>
+				<button
 					*ngxPermissionsOnly="[
 						OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
 					]"
 					nbButton
-					ghost
-					status="primary"
+					status="success"
 					(click)="openEdit($event, timeLog)"
 					[disabled]="timeLog.isRunning"
 					class="mr-1"
+					size="small"
 				>
 					<nb-icon icon="edit"></nb-icon>
 				</button>
@@ -44,14 +54,14 @@
 						OrganizationPermissionsEnum.ALLOW_DELETE_TIME
 					]"
 					nbButton
-					ghost
 					status="danger"
 					ngxConfirmDialog
 					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 					(click)="$event.stopPropagation()"
 					(confirm)="onDeleteConfirm(timeLog)"
 					[disabled]="timeLog.isRunning"
-					class="ml-1"
+					class="mr-1"
+					size="small"
 				>
 					<nb-icon icon="trash-2-outline"></nb-icon>
 				</button>

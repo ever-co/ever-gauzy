@@ -18,7 +18,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { distinctUntilChange, isEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
+import { distinctUntilChange, progressStatus, toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import * as _ from 'underscore';
 import { GalleryService } from '../../../gallery/gallery.service';
@@ -108,6 +108,9 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	deleteSlot(timeSlot: ITimeSlot) {
+		if (!timeSlot.isAllowDelete) {
+			return;
+		}
 		try {
 			this.timesheetService.deleteTimeSlots([timeSlot.id]).then(() => {
 				const screenshots = this._screenshots.map(
@@ -144,9 +147,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	isEnableDelete(timeSlot: ITimeSlot): boolean {
 		let isAllow: boolean = true;
 		if (timeSlot.timeLogs.length > 0) {
-			isAllow = !timeSlot.timeLogs.find((log: ITimeLog) =>
-				isEmpty(log.stoppedAt)
-			);
+			isAllow = !timeSlot.timeLogs.find((log: ITimeLog) => log.isRunning);
 		}
 		return isAllow;
 	}

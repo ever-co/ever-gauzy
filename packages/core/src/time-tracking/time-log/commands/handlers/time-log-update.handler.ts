@@ -147,7 +147,7 @@ export class TimeLogUpdateHandler
 			}
 
 			/**
-			 * RECALCULATE timesheet activity  
+			 * RECALCULATE timesheet activity
 			 */
 			await this.commandBus.execute(
 				new TimesheetRecalculateCommand(timesheetId)

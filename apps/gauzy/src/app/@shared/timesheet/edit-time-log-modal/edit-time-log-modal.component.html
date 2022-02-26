@@ -31,6 +31,7 @@
 					*ngIf="mode == 'update'; else employeeSelect"
 				>
 					<ngx-avatar
+						[id]="timeLog?.employee?.id"
 						[name]="timeLog?.employee?.user?.name"
 						[src]="timeLog?.employee?.user?.imageUrl"
 					></ngx-avatar>

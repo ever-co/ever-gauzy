@@ -140,8 +140,8 @@ import { CurrencyPositionPipe } from '../../@shared/pipes';
 		TasksStoreService,
 		InvoiceEstimateHistoryService,
 		TranslatableService,
-    CurrencyPipe,
-    CurrencyPositionPipe
+    	CurrencyPipe,
+    	CurrencyPositionPipe
 	],
 	declarations: [
 		InvoicesComponent,

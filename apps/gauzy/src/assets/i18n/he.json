@@ -931,6 +931,8 @@
 		"DARK": "Dark",
 		"COSMIC": "Cosmic",
 		"CORPORATE": "Corporate",
+		"MATERIAL_LIGHT_THEME": "Material Light",
+		"MATERIAL_DARK_THEME": "Material Dark",
 		"LANGUAGE": "Language",
 		"ENGLISH": "English",
 		"BULGARIAN": "Bulgarian",
@@ -1808,7 +1810,8 @@
 			"TENANT_SETTING": "Create/Edit/Delete tenant settings",
 			"ALLOW_DELETE_TIME": "Allow Delete Time",
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
-			"ALLOW_MANUAL_TIME": "Allow Manual Time"
+			"ALLOW_MANUAL_TIME": "Allow Manual Time",
+			"DELETE_SCREENSHOTS": "Allow Delete Screenshot"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3495,7 +3498,8 @@
 			"OF": "of",
 			"TIME_LOG": "TimeLog"
 		},
-		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app"
+		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app",
+		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

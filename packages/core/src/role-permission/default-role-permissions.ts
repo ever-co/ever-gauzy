@@ -100,7 +100,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.TENANT_SETTING,
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
-			PermissionsEnum.ALLOW_MANUAL_TIME
+			PermissionsEnum.ALLOW_MANUAL_TIME,
+			PermissionsEnum.DELETE_SCREENSHOTS,
 		]
 	},
 	{
@@ -202,7 +203,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.TENANT_SETTING,
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
-			PermissionsEnum.ALLOW_MANUAL_TIME
+			PermissionsEnum.ALLOW_MANUAL_TIME,
+			PermissionsEnum.DELETE_SCREENSHOTS,
 		]
 	},
 	{
@@ -262,7 +264,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PROFILE_EDIT,
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
-			PermissionsEnum.ALLOW_MANUAL_TIME
+			PermissionsEnum.ALLOW_MANUAL_TIME,
+			PermissionsEnum.DELETE_SCREENSHOTS,
 		]
 	},
 	{

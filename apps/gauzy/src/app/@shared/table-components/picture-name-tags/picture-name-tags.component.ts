@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { getContrastColor } from '@gauzy/common-angular';
 import { ViewCell } from 'ng2-smart-table';
-import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
+import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.component';
 
 @Component({
 	selector: 'ga-picture-name-tags',
@@ -12,7 +11,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 		>
 			<div *ngIf="rowData?.imageUrl" class="image-container">
 				<img [src]="rowData?.imageUrl" />
-			</div>				
+			</div>
 			<div
 				*ngIf="rowData?.fullName"
 				class="d-block"
@@ -43,7 +42,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2"
 		>
 			<nb-badge
-				*ngFor="let tag of rowData?.tags"
+				*ngFor="let tag of (data | async)?.tags"
 				class="color"
 				position="centered"
 				[style.background]="tag?.color"
@@ -86,20 +85,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 		`
 	]
 })
-export class PictureNameTagsComponent implements ViewCell {
-	@Input()
-	rowData: any;
-
+export class PictureNameTagsComponent extends NotesWithTagsComponent implements ViewCell {
 	@Input()
 	isTags = true;
-
-	@Input()
-	value: string | number;
-
-	@Input()
-	layout?: ComponentLayoutStyleEnum | undefined;
-
-	backgroundContrast(bgColor: string) {
-		return getContrastColor(bgColor);
-	}
 }

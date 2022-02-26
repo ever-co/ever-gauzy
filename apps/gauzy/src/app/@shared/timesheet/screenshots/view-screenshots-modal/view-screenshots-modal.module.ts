@@ -13,6 +13,7 @@ import { MomentModule } from 'ngx-moment';
 import { TranslateModule } from '@ngx-translate/core';
 import { LabelModule } from '../../../components/label/label.module';
 import { GalleryModule } from '../../../gallery/gallery.module';
+import { DialogsModule } from '../../../dialogs/dialogs.module';
 
 @NgModule({
 	declarations: [ViewScreenshotsModalComponent],
@@ -28,7 +29,8 @@ import { GalleryModule } from '../../../gallery/gallery.module';
 		MomentModule,
 		TranslateModule,
 		LabelModule,
-		GalleryModule
+		GalleryModule,
+    DialogsModule
 	]
 })
 export class ViewScreenshotsModalModule {}

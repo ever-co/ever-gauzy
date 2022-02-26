@@ -125,6 +125,7 @@ export enum PermissionsEnum {
 	ALLOW_DELETE_TIME = "ALLOW_DELETE_TIME",
 	ALLOW_MODIFY_TIME = "ALLOW_MODIFY_TIME",
 	ALLOW_MANUAL_TIME = "ALLOW_MANUAL_TIME",
+	DELETE_SCREENSHOTS = "DELETE_SCREENSHOTS",
 }
 
 export const PermissionGroups = {
@@ -193,7 +194,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
-		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
+		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
+		PermissionsEnum.DELETE_SCREENSHOTS,
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
@@ -238,6 +240,7 @@ export const PermissionGroups = {
 		PermissionsEnum.TENANT_SETTING,
 		PermissionsEnum.ALLOW_DELETE_TIME,
 		PermissionsEnum.ALLOW_MODIFY_TIME,
-		PermissionsEnum.ALLOW_MANUAL_TIME
+		PermissionsEnum.ALLOW_MANUAL_TIME,
+		PermissionsEnum.DELETE_SCREENSHOTS,
 	]
 };

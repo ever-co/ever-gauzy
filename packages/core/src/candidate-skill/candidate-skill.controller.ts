@@ -7,21 +7,23 @@ import {
 	Post,
 	Body,
 	Delete,
-	Param
+	Param,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	ICandidateSkill,
 	IPagination,
-	ISkillCreateInput,
-	RolesEnum
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
-import { RoleGuard, TenantPermissionGuard } from './../shared/guards';
-import { Roles } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateCandidateSkillDTO } from './dto';
 
 @ApiTags('CandidateSkill')
 @UseGuards(TenantPermissionGuard)
@@ -63,10 +65,11 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	 * @param body 
 	 * @returns 
 	 */
-	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post()
-	async create(@Body() body: ISkillCreateInput): Promise<any> {
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async create(@Body() body: CreateCandidateSkillDTO): Promise<ICandidateSkill> {
 		return this.candidateSkillService.create(body);
 	}
 
@@ -76,8 +79,8 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	 * @param id 
 	 * @returns 
 	 */
-	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Delete(':id')
 	delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.candidateSkillService.delete(id);
