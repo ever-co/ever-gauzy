@@ -4,7 +4,9 @@ import {
 	HttpStatus,
 	Post,
 	Body,
-	UseInterceptors
+	UseInterceptors,
+	Delete,
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -12,12 +14,14 @@ import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
 import * as fs from 'fs';
-import { IScreenshot } from '@gauzy/contracts';
+import { IScreenshot, PermissionsEnum } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
-import { TenantPermissionGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { UUIDValidationPipe } from './../../shared/pipes';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard)
@@ -97,5 +101,25 @@ export class ScreenshotController {
 		console.log(`Screenshot Created API:`, screenshot);
 
 		return this.screenshotService.findOneByIdString(screenshot.id);
+	}
+
+	@ApiOperation({
+		summary: 'Delete record'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.DELETE_SCREENSHOTS)
+	@Delete(':id')
+	async delete(
+		@Param('id', UUIDValidationPipe) screenshotId: string,
+	): Promise<IScreenshot> {
+		return await this.screenshotService.deleteScreenshot(screenshotId);
 	}
 }
