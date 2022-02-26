@@ -1810,7 +1810,8 @@
 			"TENANT_SETTING": "crwdns10859:0crwdne10859:0",
 			"ALLOW_DELETE_TIME": "crwdns10869:0crwdne10869:0",
 			"ALLOW_MODIFY_TIME": "crwdns10871:0crwdne10871:0",
-			"ALLOW_MANUAL_TIME": "crwdns10929:0crwdne10929:0"
+			"ALLOW_MANUAL_TIME": "crwdns10929:0crwdne10929:0",
+			"DELETE_SCREENSHOTS": "crwdns10954:0crwdne10954:0"
 		},
 		"BILLING": "crwdns10521:0crwdne10521:0",
 		"BUDGET": "crwdns10523:0crwdne10523:0",

@@ -1810,7 +1810,8 @@
 			"TENANT_SETTING": "Create/Edit/Delete tenant settings",
 			"ALLOW_DELETE_TIME": "Allow Delete Time",
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
-			"ALLOW_MANUAL_TIME": "Allow Manual Time"
+			"ALLOW_MANUAL_TIME": "Allow Manual Time",
+			"DELETE_SCREENSHOTS": "Allow Delete Screenshot"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
