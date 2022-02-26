@@ -1,8 +1,8 @@
 import { NbJSThemeOptions } from '@nebular/theme';
 
 const palette = {
-	primary: '#3366ff',
-	success: '#00d68f',
+	primary: '#6E49E8',
+	success: '#25B869',
 	info: '#0095ff',
 	warning: '#ffaa00',
 	danger: '#ff3d71'
