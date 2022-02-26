@@ -125,6 +125,7 @@ export enum PermissionsEnum {
 	ALLOW_DELETE_TIME = "ALLOW_DELETE_TIME",
 	ALLOW_MODIFY_TIME = "ALLOW_MODIFY_TIME",
 	ALLOW_MANUAL_TIME = "ALLOW_MANUAL_TIME",
+	DELETE_SCREENSHOTS = "DELETE_SCREENSHOTS",
 }
 
 export const PermissionGroups = {
@@ -238,6 +239,7 @@ export const PermissionGroups = {
 		PermissionsEnum.TENANT_SETTING,
 		PermissionsEnum.ALLOW_DELETE_TIME,
 		PermissionsEnum.ALLOW_MODIFY_TIME,
-		PermissionsEnum.ALLOW_MANUAL_TIME
+		PermissionsEnum.ALLOW_MANUAL_TIME,
+		PermissionsEnum.DELETE_SCREENSHOTS,
 	]
 };
