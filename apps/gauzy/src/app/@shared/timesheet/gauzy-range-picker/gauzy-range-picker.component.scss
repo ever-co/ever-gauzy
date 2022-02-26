@@ -31,6 +31,10 @@
     /* removing the input focus blue box. Put this on the form if you like. */
     outline: none;
   }
+  &:hover, &:focus{
+    background: nb-theme(background-basic-color-3);
+    transition: ease-in-out .3s;
+  }
 }
 
 :host{
