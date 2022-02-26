@@ -1,6 +1,6 @@
 @import 'var';
 @import '../filters/filters.component.scss';
-
+$button-radius : 16px;
 .filter-input{
   width: fit-content;
   display: flex;
@@ -42,10 +42,12 @@
     &.md-drppicker {
        background-color: nb-theme(background-basic-color-1);
        color: nb-theme(text-basic-color);
+       border-radius: 8px;
        .calendar-table{
           background-color: nb-theme(background-basic-color-1);
           border-color: nb-theme(border-basic-color-3);
           box-shadow: nb-theme(border-basic-color-1) 0px 1px 3px, nb-theme(border-basic-color-3) 0px 1px 2px;
+          border-radius: 8px;
        }
        .calendar-time select.disabled {
         color: nb-theme(text-basic-color);
@@ -97,6 +99,7 @@
         ul {
           li {
             button {
+              border-radius: $button-radius;
               color: nb-theme(text-basic-color);
               &.active {
                 background-color: nb-theme(color-primary-active);
@@ -105,10 +108,12 @@
           }
           li:hover {
             background-color: nb-theme(color-primary-hover);
+            border-radius: $button-radius;
           }
         }
       }
       .btn {
+        border-radius: $button-radius;
         box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
         background-color: nb-theme(color-primary-default);
         color: nb-theme(text-control-color);
@@ -117,6 +122,7 @@
         }
 
         &.btn-default {
+          border-radius: 16px;
           color: nb-theme(text-control-color);
           background-color: nb-theme(color-primary-default);
         }
