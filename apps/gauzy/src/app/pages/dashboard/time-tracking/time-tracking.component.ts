@@ -146,6 +146,7 @@ export class TimeTrackingComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+      this.ngAfterViewInit();
 	}
 
 	ngAfterViewInit() {
@@ -556,8 +557,8 @@ export class TimeTrackingComponent
 	/**
 	 * We are having issue, when organization not allowed future date
 	 * When someone run timer for today, all statistic not displaying correctly
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	private getAdjustDateRangeFutureAllowed(): ISelectedDateRange {
 		const { selectedDateRange } = this;
