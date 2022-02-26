@@ -9,8 +9,27 @@
     margin-right: 5px;
     border-radius: 30px;
   }
+}
+
+.custom-input{
+  display: flex;
+  align-items: center;
+  background: nb-theme(background-basic-color-2);
+  box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.1);
+  border-radius: 32px;
+  /* I've used padding so you can see the edges of the elements. */
+  padding: 4px 10px 4px 4px;
+  margin-right: 16px;
   input{
     margin-right: 5px;
+    /* Tell the input to use all the available space */
+  flex-grow:2;
+  /* And hide the input's outline, so the form looks like the outline */
+  border:none
+  }
+  input:focus {
+    /* removing the input focus blue box. Put this on the form if you like. */
+    outline: none;
   }
 }
 
