@@ -194,7 +194,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
-		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
+		PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
+		PermissionsEnum.DELETE_SCREENSHOTS,
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
