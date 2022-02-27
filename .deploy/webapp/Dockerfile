@@ -31,7 +31,7 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 ENV CI=true
 
 RUN apk --update add bash && \
-    apk add --no-cache --virtual build-dependencies dos2unix gcc g++ git make python2 py2-setuptools vips-dev && \    
+    apk add --no-cache --virtual build-dependencies dos2unix gcc g++ git make python2 py2-setuptools vips-dev && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh /
@@ -60,7 +60,7 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --frozen-lockfile && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 FROM node:16-alpine3.14 AS development
