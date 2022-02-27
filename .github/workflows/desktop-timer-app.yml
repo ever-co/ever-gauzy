@@ -30,6 +30,9 @@ jobs:
             - name: Install system dependencies
               run: 'sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
 
+            - name: Install latest version of NPM
+              run: 'sudo npm install -g npm'
+
             - name: Install latest node-gyp package
               run: 'sudo npm install --quiet -g node-gyp@latest'
 
@@ -70,6 +73,9 @@ jobs:
               with:
                   node-version: 16.14.0
 
+            - name: Install latest version of NPM
+              run: 'sudo npm install -g npm'
+
             - name: Install latest node-gyp package
               run: 'sudo npm install --quiet -g node-gyp@latest'
 
@@ -99,7 +105,7 @@ jobs:
 
         strategy:
             matrix:
-                os: [windows-latest]
+                os: [windows-2022]
 
         steps:
             - name: Check out Git repository
@@ -110,8 +116,8 @@ jobs:
               with:
                   node-version: 16.14.0
 
-            - name: Install Windows Build Tools
-              run: 'npm install -g windows-build-tools'
+            - name: Install latest version of NPM
+              run: 'npm install -g npm'
 
             - name: Set to use VS 2022
               run: 'npm config set msvs_version 2022 --global'
