@@ -141,6 +141,7 @@ export class TimeTrackingComponent
 		this.logs$
 			.pipe(
 				debounceTime(500),
+				tap(() => this.galleryService.clearGallery()),
 				tap(() => this.getStatistics()),
 				untilDestroyed(this)
 			)
