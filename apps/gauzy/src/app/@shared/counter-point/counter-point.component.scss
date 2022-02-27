@@ -11,3 +11,11 @@
   width: 100%;
   justify-content: space-between;
 }
+
+::ng-deep {
+  nb-progress-bar{
+    .progress-container {
+    height: 10px !important;
+    }
+  }
+}

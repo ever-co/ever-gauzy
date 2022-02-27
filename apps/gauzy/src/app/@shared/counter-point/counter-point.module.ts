@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CounterPointComponent } from './counter-point.component';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { NbProgressBarModule } from '@nebular/theme';
 
 
 
@@ -11,7 +12,8 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
   ],
   imports: [
     CommonModule,
-    SharedModule
+    SharedModule,
+    NbProgressBarModule
   ],
   exports: [
     CounterPointComponent

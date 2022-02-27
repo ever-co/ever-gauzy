@@ -1,5 +1,8 @@
-<div class="counter">
+<div *ngIf="!progress" class="counter">
   <div class="counter" *ngFor="let point of points">
     <div class="point" [style.background]="point.color"></div>
   </div>
+</div>
+<div *ngIf="progress">
+  <nb-progress-bar [value]="value" [status] = "progressStatus(value)"></nb-progress-bar>
 </div>
