@@ -110,6 +110,12 @@ jobs:
               with:
                   node-version: 16.14.0
 
+            - name: Install Windows Build Tools
+              run: 'npm install -g windows-build-tools'
+
+            - name: Set to use VS 2022
+              run: 'npm config set msvs_version 2022 --global'
+
             - name: Install latest node-gyp package
               run: 'npm install --quiet -g node-gyp@latest'
 
