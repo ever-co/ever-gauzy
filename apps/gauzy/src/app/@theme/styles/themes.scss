@@ -250,11 +250,16 @@ $nb-themes: nb-register-theme((
       outline-color: color-basic-transparent-200,
       scrollbar-color: background-basic-color-4,
       scrollbar-background-color: background-basic-color-2,
+      button-rectangle-border-radius: 2rem,
       scrollbar-width: 0.3125rem,
       shadow: 0px 1px 1px rgba(0, 0, 0, 0.15),
       divider-color: border-basic-color-3,
+      checkbox-border-radius: 1rem,
       divider-style: solid,
-      divider-width: 1px
+      divider-width: 1px,
+      tabset-tab-active-underline-color: background-basic-color-1,
+      tabset-tab-active-background-color: background-basic-color-1,
+      tabset-border-radius: 0.5rem,
   ),
   gauzy-light,
   default
@@ -371,8 +376,16 @@ $nb-themes: nb-register-theme(
      scrollbar-width: 0.3125rem,
      shadow: 0px 1px 1px rgba(0, 0, 0, 0.15),
      divider-color: border-basic-color-3,
+     button-rectangle-border-radius: 2rem,
+     checkbox-border-radius: 1rem,
      divider-style: solid,
-     divider-width: 1px
+     divider-width: 1px,
+     tabset-tab-active-underline-color: background-basic-color-1,
+     tabset-tab-active-background-color: background-basic-color-1,
+     tabset-border-radius: 0.5rem,
+     select-rectangle-border-radius: 2rem,
+     option-list-border-radius: 2rem,
+     input-rectangle-border-radius: 2rem
   ),
   gauzy-dark,
   dark
