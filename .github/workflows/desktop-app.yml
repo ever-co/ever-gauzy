@@ -105,7 +105,7 @@ jobs:
 
         strategy:
             matrix:
-                os: [windows-2022]
+                os: [windows-2019]
 
         steps:
             - name: Check out Git repository
