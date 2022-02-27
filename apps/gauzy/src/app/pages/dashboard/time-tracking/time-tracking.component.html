@@ -36,7 +36,7 @@
         <div class="row">
           <ng-container *ngIf="!employeeId">
             <ng-container *ngxPermissionsOnly=" PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-              <div class="col">
+              <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
                 <nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
                   <nb-card-body>
                     <p>
@@ -45,7 +45,10 @@
                     <div class="h1">
                       {{ counts?.employeesCount || 0 }}
                     </div>
-                    <gauzy-counter-point [total]="17" [value]="17" [color]="'#0088FE'"></gauzy-counter-point>
+                    <gauzy-counter-point
+                    [total]="employeesCount"
+                    [value]="counts?.employeesCount || 0"
+                    [color]="'#0088FE'"></gauzy-counter-point>
                   </nb-card-body>
                 </nb-card>
               </div>
@@ -59,12 +62,15 @@
                   <div class="h1">
                     {{ counts?.projectsCount || 0 }}
                   </div>
-                  <gauzy-counter-point [total]="4" [value]="2" [color]="'#0088FE'"></gauzy-counter-point>
+                  <gauzy-counter-point
+                  [total]="projectCount"
+                  [value]="counts?.projectsCount || 0"
+                  [color]="'#00D68F'"></gauzy-counter-point>
                 </nb-card-body>
               </nb-card>
             </div>
           </ng-container>
-          <div class="col">
+          <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
             <nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
               <nb-card-body>
                 <p>
@@ -73,12 +79,14 @@
                 <div class="h1">
                   {{ counts?.todayActivities || 0 }}%
                 </div>
-                <gauzy-counter-point [total]="100" [value]="49" [color]="'#0088FE'">
+                <gauzy-counter-point
+                [progress]="true"
+                [value]="counts?.todayActivities || 0">
                 </gauzy-counter-point>
               </nb-card-body>
             </nb-card>
           </div>
-          <div class="col">
+          <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
             <nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
               <nb-card-body>
                 <p>
@@ -91,14 +99,14 @@
                   }}
                 </div>
                 <gauzy-counter-point
-                [total]="17"
-                [value]="17"
-                [color]="'#0088FE'"
+                [total]="period"
+                [value]="counts?.todayDuration || 0"
+                [color]="'#00D68F'"
                 ></gauzy-counter-point>
               </nb-card-body>
             </nb-card>
           </div>
-          <div class="col">
+          <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
             <nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
               <nb-card-body>
                 <ng-container [ngSwitch]="selectedPeriod">
@@ -115,14 +123,13 @@
                   {{ counts?.weekActivities || 0 }}%
                 </div>
                 <gauzy-counter-point
-                [total]="4"
-                [value]="2"
-                [color]="'#00D68F'"
+                  [progress]="true"
+                  [value]="counts?.weekActivities || 0"
                 ></gauzy-counter-point>
               </nb-card-body>
             </nb-card>
           </div>
-          <div class="col">
+          <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
             <nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
               <nb-card-body>
                 <ng-container [ngSwitch]="selectedPeriod">
@@ -139,8 +146,8 @@
                   {{ counts?.weekDuration || 0 | durationFormat }}
                 </div>
                 <gauzy-counter-point
-                [total]="20"
-                [value]="8"
+                [total]="period"
+                [value]="counts?.weekDuration || 0"
                 [color]="'#00D68E'"
                 ></gauzy-counter-point>
               </nb-card-body>
@@ -148,7 +155,7 @@
           </div>
         </div>
       </div>
-      <div class="col-sm-6">
+      <div class="col-xl-8 col-12">
         <nb-card [nbSpinner]="timeSlotLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
           <nb-card-header>{{
             'TIMESHEET.RECENT_ACTIVITIES' | translate
@@ -167,9 +174,9 @@
 												" [id]="employee?.id"></ngx-avatar>
                       <div class="view-all">
                         <ng-container>
-                          <a class="link-text" (click)="redirectToScreenshots(employee)">
+                          <button nbButton status="primary" outline (click)="redirectToScreenshots(employee)">
                             {{ 'BUTTONS.VIEW_ALL' | translate }}
-                          </a>
+                          </button>
                         </ng-container>
                       </div>
                     </div>
@@ -205,9 +212,9 @@
         <nb-card class="mt-4" [nbSpinner]="tasksLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
           <nb-card-header class="nb-card-header">
             {{ 'TIMESHEET.TASKS' | translate }}
-            <a class="link-text" (click)="redirectToTask()">
+            <button nbButton status="primary" outline (click)="redirectToTask()">
               {{ 'BUTTONS.VIEW_ALL' | translate }}
-            </a>
+            </button>
           </nb-card-header>
           <ng-template [ngIf]="tasks?.length > 0" [ngIfElse]="noTasks">
             <nb-list>
@@ -221,7 +228,7 @@
                       {{ task.durationPercentage }}%
                     </div>
                     <div class="col text-center">
-                      <nb-progress-bar class="mb-1" [value]="
+                      <nb-progress-bar class="mb-1 custom-progress" [value]="
 													task.durationPercentage
 												" [status]="
 													progressStatus(
@@ -257,9 +264,9 @@
         <nb-card class="mt-4" [nbSpinner]="manualTimeLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
           <nb-card-header class="nb-card-header">
             {{ 'TIMESHEET.MANUAL_TIME' | translate }}
-            <a class="link-text" (click)="redirectToManualTimeReport()">
+            <button nbButton status="primary" outline (click)="redirectToManualTimeReport()">
               {{ 'BUTTONS.VIEW_REPORT' | translate }}
-            </a>
+            </button>
           </nb-card-header>
           <ng-template [ngIf]="manualTimes?.length > 0" [ngIfElse]="noManualTimes">
             <nb-list>
@@ -327,7 +334,7 @@
           </ng-template>
         </nb-card>
       </div>
-      <div class="col-sm-6">
+      <div class="col">
         <nb-card [nbSpinner]="projectsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
           <nb-card-header>{{
             'TIMESHEET.PROJECTS' | translate
@@ -344,7 +351,7 @@
                       {{ project.durationPercentage }}%
                     </div>
                     <div class="col text-center">
-                      <nb-progress-bar class="mb-1" [value]="
+                      <nb-progress-bar class="mb-1 custom-progress" [value]="
 													project.durationPercentage
 												" [status]="
 													progressStatus(
@@ -384,9 +391,9 @@
           <nb-card-header class="nb-card-header">{{
             'TIMESHEET.APPS_URLS' | translate
             }}
-            <a class="link-text" (click)="redirectToAppUrlReport()">
+            <button nbButton status="primary" outline (click)="redirectToAppUrlReport()">
               {{ 'BUTTONS.VIEW_REPORT' | translate }}
-            </a>
+            </button>
           </nb-card-header>
           <ng-template [ngIf]="activities?.length > 0" [ngIfElse]="noActivities">
             <nb-list>

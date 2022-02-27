@@ -22,7 +22,7 @@ import {
 	IEmployee,
 	ISelectedDateRange
 } from '@gauzy/contracts';
-import { combineLatest, Subject, Subscription, timer } from 'rxjs';
+import { combineLatest, Subject, Subscription, timer, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
 import { distinctUntilChange, progressStatus, toUTC } from '@gauzy/common-angular';
@@ -35,6 +35,7 @@ import { GalleryService } from '../../../@shared/gallery';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { Router } from '@angular/router';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 
 export enum RangePeriod {
 	DAY = "DAY",
@@ -59,9 +60,12 @@ export class TimeTrackingComponent
 	members: IMembersStatistics[] = [];
 	manualTimes: IManualTimesStatistics[] = [];
 	counts: ICountsStatistics;
+  employeesCount: number;
+  projectCount: number;
 
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
+
 
 
 	timeSlotLoading = false;
@@ -124,7 +128,8 @@ export class TimeTrackingComponent
 		public readonly translateService: TranslateService,
 		private readonly changeRef: ChangeDetectorRef,
 		private readonly _router: Router,
-		private readonly employeesService: EmployeesService
+		private readonly employeesService: EmployeesService,
+    private readonly projectService: OrganizationProjectsService
 	) {
 		super(translateService);
 	}
@@ -146,7 +151,6 @@ export class TimeTrackingComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-      this.ngAfterViewInit();
 	}
 
 	ngAfterViewInit() {
@@ -163,7 +167,8 @@ export class TimeTrackingComponent
 					this.organizationId = organization.id;
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
-
+          this.loadEmployeesCount();
+          this.loadProjectsCount();
 					this.logs$.next(true);
 				}),
 				tap(() => this.setAutoRefresh(true)),
@@ -424,7 +429,6 @@ export class TimeTrackingComponent
 							return { day, duration: 0 };
 						}
 					});
-
 					return member;
 				});
 			})
@@ -436,6 +440,13 @@ export class TimeTrackingComponent
 	ngOnDestroy() {
 		this.galleryService.clearGallery();
 	}
+
+  get period() {
+    const { startDate, endDate } = this.selectedDateRange;
+    const start = moment(startDate);
+		const end = moment(endDate);
+    return end.diff(start, 'days') * 86400;
+  }
 
 	/**
 	 * Get selected date range period
@@ -591,5 +602,20 @@ export class TimeTrackingComponent
 			startDate,
 			endDate
 		}
+	}
+  private async loadEmployeesCount() {
+		const { tenantId } = this.store.user;
+		const { total } = await firstValueFrom(
+			this.employeesService.getAll([], {
+				organizationId: this.organization.id,
+				tenantId
+			})
+		);
+		this.employeesCount = total;
+	}
+  private async loadProjectsCount() {
+    const { tenantId } = this.store.user;
+		const { total } = await this.projectService.getAll([],{	organizationId: this.organization.id,tenantId});
+    this.projectCount = total;
 	}
 }
