@@ -100,8 +100,8 @@ FROM node:16-alpine3.14 AS prodDependencies
 RUN apk --update add bash \
     && apk add libexecinfo libexecinfo-dev \
 	&& npm i -g npm \
-    && apk add --no-cache --virtual build-dependencies build-base \ 
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips \ 
+    && apk add --no-cache --virtual build-dependencies build-base \
+    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips \
     && npm install --quiet node-gyp -g \
 	&& npm config set python /usr/bin/python \
 	&& npm install yarn -g --force \
@@ -128,7 +128,7 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install --frozen-lockfile --production && yarn cache clean 
+RUN yarn install --frozen-lockfile --production && yarn cache clean
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 RUN rm -r node_modules/@angular
@@ -168,11 +168,16 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
 
-# copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
+# Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets
 
-# copy folder to which we later move static assets (e.g. images for features, reports, screenshots)
+# Copy folder to which we later move static assets (e.g. images for features, reports, screenshots)
 COPY --chown=node:node apps/api/public apps/api/public
+
+# Copy static assets used in seeds (e.g. reports screenshots images, see report.seed.ts) to public folder.
+# We are doing it in the seed code too, however if DB seed already was done one time and
+# docker container rebuilds, we will not have images unless we copy them during docker build manually here.
+COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
@@ -180,7 +185,7 @@ RUN npm install pm2 -g && \
     mkdir /import && chown node:node /import && \
     touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
-    
+
 USER node:node
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
