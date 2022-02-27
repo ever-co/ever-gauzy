@@ -22,7 +22,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v2
               with:
-                  node-version: 16.13.1
+                  node-version: 16.14.0
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
@@ -30,8 +30,11 @@ jobs:
             - name: Install system dependencies
               run: 'sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
 
+            - name: Install latest node-gyp package
+              run: 'sudo npm install node-gyp@latest'
+
             - name: Install Yarn dependencies
-              run: 'yarn install --network-timeout 1000000'
+              run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
 
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
@@ -65,10 +68,13 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v2
               with:
-                  node-version: 16.13.1
+                  node-version: 16.14.0
+
+            - name: Install latest node-gyp package
+              run: 'sudo npm install node-gyp@latest'
 
             - name: Install Yarn dependencies
-              run: 'yarn install --network-timeout 1000000'
+              run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
 
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
@@ -102,10 +108,13 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v2
               with:
-                  node-version: 16.13.1
+                  node-version: 16.14.0
+
+            - name: Install latest node-gyp package
+              run: 'sudo npm install node-gyp@latest'
 
             - name: Install Yarn dependencies
-              run: 'yarn install --network-timeout 1000000'
+              run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
 
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'

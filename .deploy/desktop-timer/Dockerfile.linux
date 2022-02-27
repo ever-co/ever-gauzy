@@ -1,7 +1,7 @@
 FROM node:buster-slim as linux
 
 RUN mkdir -p /opt/src && chown -R node:node /opt/src && \
-    apt update && apt install -y --no-install-recommends \ 
+    apt update && apt install -y --no-install-recommends \
     curl gnupg git libappindicator3-1 ca-certificates binutils \
     icnsutils graphicsmagick
 
@@ -13,7 +13,7 @@ COPY --chown=node:node package.json yarn.lock ./
 
 USER node:node
 
-RUN yarn install --frozen-lockfile
+RUN yarn install --network-timeout 1000000 --frozen-lockfile
 
 COPY --chown=node:node . .
 
