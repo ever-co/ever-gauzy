@@ -60,7 +60,7 @@ More detailed list of the features available in the platform:
 -   Roles / Permissions
 -   Multi-currency
 -   Multi-language
--   Dark / Light / Corporate and other Themes
+-   Dark / Light / Corporate / Material and other Themes
 
 Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
 
