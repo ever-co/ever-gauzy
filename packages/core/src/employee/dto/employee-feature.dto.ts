@@ -1,20 +1,17 @@
 import { IEmployee } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsObject, IsString, ValidateIf } from "class-validator";
-import { Employee } from "core";
-import { TenantOrganizationBaseDTO } from "core/dto";
+import { IsObject, IsOptional, IsString } from "class-validator";
+import { Employee } from "./../../core/entities/internal";
 
-export class EmployeeFeatureDTO extends TenantOrganizationBaseDTO {
+export class EmployeeFeatureDTO {
 
     @ApiProperty({ type: () => Employee, readOnly: true })
-    @ValidateIf((emp) => !emp.employeeId)
-    @IsNotEmpty()
+    @IsOptional()
     @IsObject()
     readonly employee: IEmployee;
 
     @ApiProperty({ type: () => String, readOnly: true })
-    @ValidateIf((emp) => !emp.employee)
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     readonly employeeId: string;
 }

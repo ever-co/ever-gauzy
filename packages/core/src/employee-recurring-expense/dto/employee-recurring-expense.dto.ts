@@ -1,14 +1,8 @@
-import { CurrenciesEnum } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
-import { EmployeeFeatureDTO } from "employee/dto";
+import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
-export abstract class EmployeeRecurringExpenseDTO extends EmployeeFeatureDTO {
-
-    @ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true })
-    @IsEnum(CurrenciesEnum)
-    @IsNotEmpty()
-    readonly currency: CurrenciesEnum;
+export class EmployeeRecurringExpenseDTO extends TenantOrganizationBaseDTO {
 
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsNotEmpty()
