@@ -123,9 +123,7 @@ export class EmployeeRecurringExpense
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeeRecurringExpense) => it.employee)
-	@IsString()
-	@IsNotEmpty()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	employeeId: string;
 }

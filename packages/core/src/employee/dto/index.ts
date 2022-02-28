@@ -7,3 +7,4 @@ export { UpdateEmployeeDTO } from './update-employee.dto';
 export { EmployeeBulkInputDTO } from './employee-bulk-input.dto';
 export { CreateEmployeeDTO } from './create-employee.dto';
 export { UserInputDTO } from './user-input-dto';
+export { EmployeeFeatureDTO } from "./employee-feature.dto";
