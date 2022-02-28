@@ -17,7 +17,7 @@
 		</a>
 
 		<div
-			*ngIf="theme === 'default' || theme === 'corporate'; else whiteLogo"
+			*ngIf="theme === 'default' || theme === 'corporate' || theme === 'gauzy-light'; else whiteLogo"
 			class="logo"
 			(click)="navigateHome()"
 		>
@@ -38,7 +38,7 @@
 		<nb-action class="show-large-up">
 			<button
 				nbButton
-				status="success"
+				status="warning"
 				[nbContextMenu]="createContextMenu"
 				nbContextMenuTag="create-context-menu"
 			>

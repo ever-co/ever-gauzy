@@ -1,4 +1,4 @@
-name: Build and Publish Docker Images
+name: Build and Publish Docker Images Prod
 
 on:
     push:
@@ -14,12 +14,12 @@ jobs:
             - name: Free disk space
               run: |
                 df -h /
-                sudo swapoff -a                
-                sudo apt clean                
+                sudo swapoff -a
+                sudo apt clean
                 docker image ls -aq
-                docker rmi $(docker image ls -aq)                
-                find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;                
-                sudo rm -rf "/usr/local/share/boost"                
+                docker rmi $(docker image ls -aq)
+                find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;
+                sudo rm -rf "/usr/local/share/boost"
                 sudo rm -rf "$AGENT_TOOLSDIRECTORY"
                 df -h /
 
@@ -27,7 +27,7 @@ jobs:
               uses: docker/setup-qemu-action@v1
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v1              
+              uses: docker/setup-buildx-action@v1
 
             - name: Login to DockerHub
               uses: docker/login-action@v1
@@ -65,7 +65,7 @@ jobs:
                   cache-to: type=inline
 
             - name: Docker images list
-              run: | 
+              run: |
                  sudo docker image list
 
             - name: Push to Docker Hub Registry
@@ -89,12 +89,12 @@ jobs:
             - name: Free disk space
               run: |
                 df -h /
-                sudo swapoff -a                
-                sudo apt clean                
+                sudo swapoff -a
+                sudo apt clean
                 docker image ls -aq
-                docker rmi $(docker image ls -aq)                
-                find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;                
-                sudo rm -rf "/usr/local/share/boost"                
+                docker rmi $(docker image ls -aq)
+                find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;
+                sudo rm -rf "/usr/local/share/boost"
                 sudo rm -rf "$AGENT_TOOLSDIRECTORY"
                 df -h /
 

@@ -68,6 +68,7 @@
 							'POP_UPS.CATEGORIES' | translate
 						}}</label>
 						<ga-expense-category-select
+							[clearable]="true"
 							formControlName="category"
 							[addTag]="true"
 							[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
@@ -105,6 +106,7 @@
 							[searchable]="true"
 							[addTag]="true"
 							[placeholder]="'POP_UPS.ALL_VENDORS' | translate"
+							[clearable]="true"
 						>
 						</ga-vendor-select>
 					</div>
