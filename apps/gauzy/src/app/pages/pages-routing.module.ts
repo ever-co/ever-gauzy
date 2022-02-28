@@ -49,6 +49,19 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'expense-recurring',
+						loadChildren: () =>
+							import(
+								'./expense-recurring/expense-recurring.module'
+							).then((m) => m.ExpenseRecurringModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
+					},
+					{
 						path: 'invoices',
 						loadChildren: () =>
 							import('./invoices/invoices.module').then(
