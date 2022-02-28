@@ -16,7 +16,8 @@ import {
 	ISMTPConfig,
 	ITwitterConfig,
 	IUnleashConfig,
-	IUpworkConfig
+	IUpworkConfig,
+	IWasabiConfig
 } from '@gauzy/common';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -66,6 +67,7 @@ export interface IEnvironment {
 
 	fileSystem: FileSystem;
 	awsConfig?: IAWSConfig;
+	wasabiConfig?: IWasabiConfig;
 
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
