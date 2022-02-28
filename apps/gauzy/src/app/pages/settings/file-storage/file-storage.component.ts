@@ -67,18 +67,21 @@ export class FileStorageComponent
 	/**
 	 * SAVE current tenant file storage setting
 	 */
-	submit() {
-		let settings: ITenantSetting;
-		if (this.settings.fileStorageProvider === FileStorageProviderEnum.LOCAL) {
-			settings = {
-				fileStorageProvider: FileStorageProviderEnum.LOCAL
+	async submit() {
+		try {
+			let settings: ITenantSetting;
+			if (this.settings.fileStorageProvider === FileStorageProviderEnum.LOCAL) {
+				settings = {
+					fileStorageProvider: FileStorageProviderEnum.LOCAL
+				}
+			} else {
+				settings = this.settings;
 			}
-		} else {
-			settings = this.settings;
-		}
 
-		this.tenantService.saveSettings(settings).then(() => {
+			await this.tenantService.saveSettings(settings);
 			this.toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
-		});
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 }
