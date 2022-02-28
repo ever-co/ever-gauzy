@@ -1,13 +1,13 @@
 import { FileStorageOption, UploadedFile } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
 import { environment } from '@gauzy/config';
-import * as AWS from 'aws-sdk';
+import * as S3 from 'aws-sdk/clients/s3';
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
-import * as _ from 'underscore';
 import { v4 as uuid } from 'uuid';
 
 export interface S3Config {
@@ -64,9 +64,9 @@ export class S3Provider extends Provider<S3Provider> {
 			if (
 				settings &&
 				settings.aws_access_key_id &&
-				!_.isEmpty(settings.aws_access_key_id.trim()) &&
+				isNotEmpty(settings.aws_access_key_id.trim()) &&
 				settings.aws_secret_access_key &&
-				!_.isEmpty(settings.aws_secret_access_key.trim())
+				isNotEmpty(settings.aws_secret_access_key.trim())
 			) {
 				this.config = {
 					...this.defaultConfig,
@@ -192,7 +192,7 @@ export class S3Provider extends Provider<S3Provider> {
 
 	private getS3Instance() {
 		this.setAwsDetails();
-		return new AWS.S3({
+		return new S3({
 			accessKeyId: this.config.aws_access_key_id,
 			secretAccessKey: this.config.aws_secret_access_key,
 			region: this.config.aws_default_region

@@ -57,8 +57,7 @@ export class ScreenshotController {
 	)
 	async create(
 		@Body() entity: Screenshot,
-		@UploadedFileStorage()
-		file
+		@UploadedFileStorage() file
 	): Promise<IScreenshot> {
 		let thumb;
 		try {
