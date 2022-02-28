@@ -1,24 +1,26 @@
 <div class="row col-auto">
   <div class="filter-input">
-    <button *ngIf="arrows" nbButton status="primary" (click)="previousRange()">
-      <nb-icon icon="arrow-ios-back-outline"></nb-icon>
-    </button>
-    <button *ngIf="arrows" nbButton [disabled]="isDisable" status="primary" (click)="nextRange()">
-      <nb-icon icon="arrow-ios-forward-outline"></nb-icon>
-    </button>
-    <input
-          nbInput
-          type="text"
-          ngxDaterangepickerMd
-          showCustomRangeLabel="true"
-          [alwaysShowCalendars]="true"
-          [maxDate]="maxDate"
-          [ranges]="ranges"
-          [locale]="localConfig"
-          [(ngModel)]="selectedDateRange"
-          (datesUpdated)="onUpdate($event)"
-        />
-        <button nbButton status="primary" (click)="today()" *ngIf="todayButton">
+    <div class="custom-input">
+      <button *ngIf="arrows" size="small" nbButton status="primary" (click)="previousRange()">
+        <nb-icon icon="arrow-ios-back-outline"></nb-icon>
+      </button>
+      <button *ngIf="arrows" size="small" nbButton [disabled]="isDisable" status="primary" (click)="nextRange()">
+        <nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+      </button>
+      <input
+            nbInput
+            type="text"
+            ngxDaterangepickerMd
+            showCustomRangeLabel="true"
+            [alwaysShowCalendars]="true"
+            [maxDate]="maxDate"
+            [ranges]="ranges"
+            [locale]="localConfig"
+            [(ngModel)]="selectedDateRange"
+            (datesUpdated)="onUpdate($event)"
+          />
+    </div>
+        <button outline nbButton status="basic" (click)="today()" *ngIf="todayButton">
           {{
           'TIMESHEET.TODAY' | translate
           }}

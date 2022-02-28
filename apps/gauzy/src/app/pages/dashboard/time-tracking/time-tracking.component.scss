@@ -1,9 +1,6 @@
 :host {
   ::ng-deep {
     nb-progress-bar {
-      .progress-container {
-        height: 5px !important;
-      }
       .progress-value {
         span {
           display: none;
@@ -60,4 +57,10 @@
 
 .filter {
   width: 100%;
+}
+
+::ng-deep .custom-progress{
+    .progress-container {
+      height: 5px !important;
+    }
 }

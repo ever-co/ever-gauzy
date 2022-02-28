@@ -141,3 +141,69 @@ $nb-themes: nb-register-theme((
    slide-out-shadow-color: 0 4px 14px 0 #292929,
    slide-out-shadow-color-rtl: 0 4px 14px 0 #292929,
  ), material-dark, material-dark);
+
+ $nb-themes: nb-register-theme(
+  (
+      // Status colors: primary, success, info, warning, danger - for colored elements (buttons, etc)
+      color-primary-100: #f2f6ff,
+      color-primary-200: #dbd3f7,
+      color-primary-300: #ab92fd,
+      color-primary-400: #7d56fd,
+      color-primary-500: #6E49E8,
+      color-primary-600: #5037a3,
+      color-primary-700: #3d2a7a,
+      color-primary-800: #291d52,
+      color-primary-900: #1a1038,
+      // Supporting variables - border radius, outline, shadow, divider
+      border-radius: 0.5rem,
+      outline-width: 0.375rem,
+      outline-color: color-basic-transparent-200,
+      scrollbar-color: background-basic-color-4,
+      scrollbar-background-color: background-basic-color-2,
+      button-rectangle-border-radius: 2rem,
+      scrollbar-width: 0.3125rem,
+      shadow: 0px 1px 1px rgba(0, 0, 0, 0.15),
+      divider-color: border-basic-color-3,
+      checkbox-border-radius: 1rem,
+      divider-style: solid,
+      divider-width: 1px,
+      tabset-tab-active-underline-color: background-basic-color-1,
+      tabset-tab-active-background-color: background-basic-color-1,
+      tabset-border-radius: 0.5rem,
+  ),
+  gauzy-light,
+  default
+);
+
+$nb-themes: nb-register-theme(
+  (
+     // Status colors: primary, success, info, warning, danger - for colored elements (buttons, etc)
+     color-primary-100: #f2f6ff,
+     color-primary-200: #dbd3f7,
+     color-primary-300: #ab92fd,
+     color-primary-400: #7d56fd,
+     color-primary-500: #6E49E8,
+     color-primary-600: #5037a3,
+     color-primary-700: #3d2a7a,
+     color-primary-800: #291d52,
+     color-primary-900: #1a1038,
+     // Supporting variables - border radius, outline, shadow, divider
+     border-radius: 0.5rem,
+     outline-width: 0.375rem,
+     outline-color: color-basic-transparent-200,
+     scrollbar-color: background-basic-color-4,
+     scrollbar-background-color: background-basic-color-2,
+     scrollbar-width: 0.3125rem,
+     shadow: 0px 1px 1px rgba(0, 0, 0, 0.15),
+     divider-color: border-basic-color-3,
+     button-rectangle-border-radius: 2rem,
+     checkbox-border-radius: 1rem,
+     divider-style: solid,
+     divider-width: 1px,
+     tabset-tab-active-underline-color: background-basic-color-1,
+     tabset-tab-active-background-color: background-basic-color-1,
+     tabset-border-radius: 0.5rem
+  ),
+  gauzy-dark,
+  dark
+);
