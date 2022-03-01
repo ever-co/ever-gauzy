@@ -2,6 +2,7 @@ import { FileStorageOption, FileStorageProviderEnum } from '@gauzy/contracts';
 import * as Providers from './providers';
 import { environment } from '@gauzy/config';
 import { Provider } from './providers/provider';
+import { RequestContext } from './../../core/context';
 
 export class FileStorage {
 	providers: { [key: string]: Provider<any> } = {};
@@ -18,14 +19,16 @@ export class FileStorage {
 		this.config = {
 			...this.config,
 			...config,
-			provider: (config.provider ||
-				environment.fileSystem.name) as FileStorageProviderEnum
+			provider: (config.provider || environment.fileSystem.name) as FileStorageProviderEnum
 		};
 		return this;
 	}
 
 	setProvider(providerName: FileStorageProviderEnum) {
-		if (providerName) {
+		if (!providerName) {
+			const request = RequestContext.currentRequest();
+			this.config.provider = (request['tenantSettings']['fileStorageProvider'] || environment.fileSystem.name) as FileStorageProviderEnum;
+		} else if (providerName) {
 			this.config.provider = providerName;
 		}
 		return this;
@@ -37,17 +40,13 @@ export class FileStorage {
 	}
 
 	storage(option?: FileStorageOption) {
-		let resp: any;
 		this.setConfig(option);
 		if (this.config.provider && this.providers[this.config.provider]) {
-			resp = this.providers[this.config.provider].handler(this.config);
+			return this.providers[this.config.provider].handler(this.config);
 		} else {
 			const provides = Object.values(FileStorageProviderEnum).join(', ');
-			throw new Error(
-				`Provider "${this.config.provider}" is not valid. Provider must be ${provides}`
-			);
+			throw new Error(`Provider "${this.config.provider}" is not valid. Provider must be ${provides}`);
 		}
-		return resp;
 	}
 
 	getProviderInstance(): Provider<any> {
@@ -64,8 +63,7 @@ export class FileStorage {
 
 					className.instance = provider;
 				} else {
-					this.providers[className.instance.name] =
-						className.instance;
+					this.providers[className.instance.name] = className.instance;
 				}
 			}
 		}

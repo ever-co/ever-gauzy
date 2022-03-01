@@ -89,7 +89,7 @@ export class ScreenshotController {
 				.getProvider()
 				.putFile(data, path.join(thumbDir, thumbName));
 		} catch (error) {
-			console.log(error);
+			console.log('Error while creating screenshot inside file storage provider:', error);
 		}
 
 		entity.file = file.key;

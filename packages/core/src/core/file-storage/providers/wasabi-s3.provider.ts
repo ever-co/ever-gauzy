@@ -4,12 +4,11 @@ import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
 import { environment } from '@gauzy/config';
-// import entire SDK
 import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
+import { v4 as uuid } from 'uuid';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
-import { v4 as uuid } from 'uuid';
 
 export interface IWasabiConfig {
 	rootPath: string;
@@ -50,12 +49,16 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	}
 
 	url(key: string) {
-		const url = this.getWasabiInstance().getSignedUrl('getObject', {
-			Bucket: this.getWasabiBucket(),
-			Key: key,
-			Expires: 3600
-		});
-		return url;
+		try {
+			const url = this.getWasabiInstance().getSignedUrl('getObject', {
+				Bucket: this.getWasabiBucket(),
+				Key: key,
+				Expires: 3600
+			});
+			return url;
+		} catch (error) {
+			console.log('Error while retriving singed URL:', error);
+		}
 	}
 
 	setWasabiDetails() {
@@ -155,7 +158,6 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				Key: key,
 				ContentDisposition: `inline; ${fileName}`
 			};
-
 			s3.putObject(params, async (err) => {
 				if (err) {
 					reject(err);
@@ -194,14 +196,17 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 	private getWasabiInstance() {
 		this.setWasabiDetails();
-
-		const endpoint = new AWS.Endpoint('s3.wasabisys.com');
-		return new AWS.S3({
-			accessKeyId: this.config.wasabi_aws_access_key_id,
-			secretAccessKey: this.config.wasabi_aws_secret_access_key,
-			region: this.config.wasabi_aws_default_region,
-			endpoint: endpoint
-		});
+		try {
+			const endpoint = new AWS.Endpoint(this.config.wasabi_aws_service_url || 's3.wasabisys.com');
+			return new AWS.S3({
+				accessKeyId: this.config.wasabi_aws_access_key_id,
+				secretAccessKey: this.config.wasabi_aws_secret_access_key,
+				region: this.config.wasabi_aws_default_region,
+				endpoint: endpoint
+			});
+		} catch (error) {
+			console.log(`Error while retriving ${FileStorageProviderEnum.WASABI} instance:`, error);
+		}
 	}
 
 	getWasabiBucket() {
