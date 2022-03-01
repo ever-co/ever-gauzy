@@ -1,11 +1,11 @@
 <nav class=" mt-5">
     <ul class="pagination">
         <li (click)="onChangePage(1)">
-            <a href="#" aria-label="First"><span aria-hidden="true">«</span><span
+            <a href="#" aria-label="First"><span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrowhead-left-outline"></nb-icon></span><span
                     class="sr-only">First</span></a>
         </li>
         <li (click)="onPrevPageClick()" [ngClass]="{disabled: activePage == 1}">
-            <a href="#" aria-label="Prev"><span aria-hidden="true">&lt;</span><span class="sr-only">Prev</span></a>
+            <a href="#" aria-label="Prev"><span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrow-ios-back-outline"></nb-icon></span><span class="sr-only">Prev</span></a>
         </li>
 
         <li *ngFor="let page of getPages()" (click)="onChangePage(page)" [ngClass]="{active: activePage == page}">
@@ -14,10 +14,10 @@
 
         <li (click)="onNextPageClick()" [ngClass]="{disabled: activePage == getPages().length}">
             <a href="#" aria-label="Next">
-                <span aria-hidden="true">&gt;</span><span class="sr-only">Next</span></a></li>
-        <li (click)="onChangePage(getPages().length)">
+                <span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrow-ios-forward-outline"></nb-icon></span><span class="sr-only">Next</span></a></li>
+        <li  (click)="onChangePage(getPages().length)">
             <a href="#" aria-label="Last">
-                <span aria-hidden="true">»</span>
+                <span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrowhead-right-outline"></nb-icon></span>
                 <span class="sr-only">Last</span></a>
         </li>
     </ul>
