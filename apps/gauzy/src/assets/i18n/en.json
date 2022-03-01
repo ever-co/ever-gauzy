@@ -933,6 +933,8 @@
 		"CORPORATE": "Corporate",
     "MATERIAL_LIGHT_THEME": "Material Light",
     "MATERIAL_DARK_THEME":"Material Dark",
+    "GAUZY_LIGHT":"Gauzy Light",
+    "GAUZY_DARK":"Gauzy Dark",
 		"LANGUAGE": "Language",
 		"ENGLISH": "English",
 		"BULGARIAN": "Bulgarian",
