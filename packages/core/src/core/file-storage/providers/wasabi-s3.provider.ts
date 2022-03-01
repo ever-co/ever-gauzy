@@ -69,21 +69,25 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		const request = RequestContext.currentRequest();
 		if (request) {
 			const settings = request['tenantSettings'];
-			if (
-				settings &&
-				settings.wasabi_aws_access_key_id &&
-				isNotEmpty(settings.wasabi_aws_access_key_id.trim()) &&
-				settings.wasabi_aws_secret_access_key &&
-				isNotEmpty(settings.wasabi_aws_secret_access_key.trim())
-			) {
+			if (isNotEmpty(settings)) {
 				this.config = {
-					...this.defaultConfig,
-					wasabi_aws_access_key_id: settings.wasabi_aws_access_key_id,
-					wasabi_aws_secret_access_key: settings.wasabi_aws_secret_access_key,
-					wasabi_aws_default_region: settings.wasabi_aws_default_region,
-					wasabi_aws_service_url: settings.wasabi_aws_service_url,
-					wasabi_aws_bucket: settings.wasabi_aws_bucket
+					...this.defaultConfig
 				};
+				if (isNotEmpty(settings.wasabi_aws_access_key_id)) {
+					this.config['wasabi_aws_access_key_id'] = settings.wasabi_aws_access_key_id.trim();
+				}
+				if (isNotEmpty(settings.wasabi_aws_secret_access_key)) {
+					this.config['wasabi_aws_secret_access_key'] = settings.wasabi_aws_secret_access_key.trim();
+				}
+				if (isNotEmpty(settings.wasabi_aws_service_url)) {
+					this.config['wasabi_aws_service_url'] = settings.wasabi_aws_service_url.trim();
+				}
+				if (isNotEmpty(settings.wasabi_aws_default_region)) {
+					this.config['wasabi_aws_default_region'] = settings.wasabi_aws_default_region.trim();
+				}
+				if (isNotEmpty(settings.wasabi_aws_bucket)) {
+					this.config['wasabi_aws_bucket'] = settings.wasabi_aws_bucket.trim();
+				}
 			}
 		} else {
 			this.config = {
