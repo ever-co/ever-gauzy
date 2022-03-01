@@ -24,7 +24,7 @@
       color: rgb(226, 226, 226);
     }
   }
-  
+
   .main-header{
     display: flex;
     justify-content: space-between;
@@ -32,33 +32,33 @@
     .show-large-down {
       display: none;
     }
-  
+
     .logo-container {
       display: flex;
       align-items: center;
       width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
     }
-  
+
     nb-action {
       height: auto;
       display: flex;
       align-content: center;
-  
+
       .header-selector {
         width: 360px;
       }
     }
-  
+
     ::ng-deep nb-search button {
       padding: 0 !important;
     }
-  
+
     .header-container {
       display: flex;
       align-items: center;
       width: auto;
       z-index: 5;
-  
+
       .sidebar-toggle {
         @include nb-ltr(padding-right, 1.25rem);
         @include nb-rtl(padding-left, 1.25rem);
@@ -68,7 +68,7 @@
           font-size: 1.75rem;
         }
       }
-  
+
       .logo {
         font-family: 'Crimson Text', serif;
         cursor: pointer;
@@ -79,7 +79,7 @@
         @include nb-rtl(border-right, 1px solid nb-theme(divider-color));
         white-space: nowrap;
         text-decoration: none;
-  
+
         .gauzy-simbol {
           font-size: 0.6rem !important;
           margin-left: 76px;
@@ -89,7 +89,7 @@
         }
       }
     }
-  
+
     @include media-breakpoint-down(sm) {
       .control-item {
         display: none;
@@ -99,13 +99,13 @@
         padding: 0;
       }
     }
-  
+
     @include media-breakpoint-down(is) {
       nb-select {
         display: none;
       }
     }
-  
+
     @include media-breakpoint-down(lg) {
       .show-large-up {
         display: none;
@@ -117,7 +117,7 @@
 
   }
 
-  
+
 }
 
 .organization-selector {
@@ -186,4 +186,7 @@
   width: 280px;
 }
 
+.white-svg{
+  filter: brightness(0) invert(1);
+}
 

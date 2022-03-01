@@ -17,15 +17,12 @@
 		</a>
 
 		<div
-			*ngIf="theme === 'default' || theme === 'corporate' || theme === 'gauzy-light'; else whiteLogo"
+      [ngClass]="theme === 'default' || theme === 'corporate' || theme === 'gauzy-light'? '': 'white-svg'"
 			class="logo"
 			(click)="navigateHome()"
 		>
 			<img src="assets/images/logos/logo_Gauzy.svg" />
 		</div>
-		<ng-template #whiteLogo>
-			<img src="assets/images/logos/logo_Gauzy_white.svg" />
-		</ng-template>
 	</div>
 </div>
 
