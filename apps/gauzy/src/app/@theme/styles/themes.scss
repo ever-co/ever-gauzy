@@ -170,6 +170,7 @@ $nb-themes: nb-register-theme((
       tabset-tab-active-underline-color: background-basic-color-1,
       tabset-tab-active-background-color: background-basic-color-1,
       tabset-border-radius: 0.5rem,
+      select-rectangle-border-radius: 2rem
   ),
   gauzy-light,
   default
@@ -202,7 +203,8 @@ $nb-themes: nb-register-theme(
      divider-width: 1px,
      tabset-tab-active-underline-color: background-basic-color-1,
      tabset-tab-active-background-color: background-basic-color-1,
-     tabset-border-radius: 0.5rem
+     tabset-border-radius: 0.5rem,
+     select-rectangle-border-radius: 2rem
   ),
   gauzy-dark,
   dark
