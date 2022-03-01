@@ -85,18 +85,21 @@ export class ScreenshotController {
 
 			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
 		} catch (error) {
-			console.log('Error while creating screenshot inside file storage provider:', error);
+			console.log('Error while uploading screenshot into file storage provider:', error);
 		}
 
-		entity.file = file.key;
-		entity.thumb = thumb.key;
-		entity.storageProvider = provider.name as FileStorageProviderEnum;
-		entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
+		try {
+			entity.file = file.key;
+			entity.thumb = thumb.key;
+			entity.storageProvider = provider.name as FileStorageProviderEnum;
+			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
-		const screenshot = await this.screenshotService.create(entity);
-		console.log(`Screenshot Created API:`, screenshot);
-
-		return this.screenshotService.findOneByIdString(screenshot.id);
+			const screenshot = await this.screenshotService.create(entity);
+			console.log(`Screenshot Created API:`, screenshot);
+			return this.screenshotService.findOneByIdString(screenshot.id);
+		} catch (error) {
+			console.log('Error while creating screenshot for TimeSlot:', error);
+		}
 	}
 
 	@ApiOperation({
