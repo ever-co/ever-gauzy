@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, ValidateIf } from "class-validator";
+import { IsNotEmpty, IsOptional, ValidateIf } from "class-validator";
 import { FileStorageProviderEnum } from "@gauzy/contracts";
 
 /**
@@ -19,11 +19,11 @@ export class AwsS3ProviderConfigDTO {
 	
 	@ApiProperty({ type: () => String })
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.S3)
-	@IsNotEmpty()
+	@IsOptional()
 	readonly aws_default_region: string;
 
 	@ApiProperty({ type: () => String })
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.S3)
-	@IsNotEmpty()
+	@IsOptional()
 	readonly aws_bucket: string;
 }

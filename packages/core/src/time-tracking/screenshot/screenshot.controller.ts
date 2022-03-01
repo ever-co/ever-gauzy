@@ -14,7 +14,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
 import * as fs from 'fs';
-import { IScreenshot, PermissionsEnum } from '@gauzy/contracts';
+import { FileStorageProviderEnum, IScreenshot, PermissionsEnum } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
@@ -59,12 +59,10 @@ export class ScreenshotController {
 		@Body() entity: Screenshot,
 		@UploadedFileStorage() file
 	): Promise<IScreenshot> {
+		const provider = new FileStorage().getProvider();
 		let thumb;
 		try {
-			const fileContent = await new FileStorage()
-				.getProvider()
-				.getFile(file.key);
-
+			const fileContent = await provider.getFile(file.key);
 			const inputFile = await tempFile('screenshot-thumb');
 			const outputFile = await tempFile('screenshot-thumb');
 			await fs.promises.writeFile(inputFile, fileContent);
@@ -85,15 +83,14 @@ export class ScreenshotController {
 			await fs.promises.unlink(inputFile);
 			await fs.promises.unlink(outputFile);
 
-			thumb = await new FileStorage()
-				.getProvider()
-				.putFile(data, path.join(thumbDir, thumbName));
+			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
 		} catch (error) {
 			console.log('Error while creating screenshot inside file storage provider:', error);
 		}
 
 		entity.file = file.key;
 		entity.thumb = thumb.key;
+		entity.storageProvider = provider.name as FileStorageProviderEnum;
 		entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
 		const screenshot = await this.screenshotService.create(entity);

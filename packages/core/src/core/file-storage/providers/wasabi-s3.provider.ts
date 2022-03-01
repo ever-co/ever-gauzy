@@ -19,6 +19,11 @@ export interface IWasabiConfig {
 	wasabi_aws_bucket: string;
 }
 
+interface IWasabiRegionServiceURL {
+	region: string;
+	serviceUrl: string;
+}
+
 export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	static instance: WasabiS3Provider;
 
@@ -34,9 +39,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			rootPath: '',
 			wasabi_aws_access_key_id: environment.wasabiConfig.accessKeyId,
 			wasabi_aws_secret_access_key: environment.wasabiConfig.secretAccessKey,
-			wasabi_aws_default_region: environment.wasabiConfig.region,
-			wasabi_aws_service_url: environment.wasabiConfig.serviceUrl,
-			wasabi_aws_bucket: environment.wasabiConfig.s3.bucket
+			wasabi_aws_bucket: environment.wasabiConfig.s3.bucket,
+			...this._mapDefaultWasabiServiceUrl()
 		};
 	}
 
@@ -197,7 +201,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	private getWasabiInstance() {
 		this.setWasabiDetails();
 		try {
-			const endpoint = new AWS.Endpoint(this.config.wasabi_aws_service_url || 's3.wasabisys.com');
+			const endpoint = new AWS.Endpoint(this.config.wasabi_aws_service_url);
 			return new AWS.S3({
 				accessKeyId: this.config.wasabi_aws_access_key_id,
 				secretAccessKey: this.config.wasabi_aws_secret_access_key,
@@ -218,5 +222,68 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		file.filename = file.originalname;
 		file.url = this.url(file.key); // file.location;
 		return file;
+	}
+
+	/**
+	 * Mapped default wasabi service URLs
+	 * 
+	 * @returns 
+	 */
+	private _mapDefaultWasabiServiceUrl(): {
+		wasabi_aws_default_region: string,
+		wasabi_aws_service_url: string
+	} {
+		const regionServiceUrls: IWasabiRegionServiceURL[] = [
+			{
+				region: 'us-east-1',
+				serviceUrl: 's3.wasabisys.com'
+			},
+			{
+				region: 'us-east-2',
+				serviceUrl: 's3.us-east-2.wasabisys.com'
+			},
+			{
+				region: 'us-central-1',
+				serviceUrl: 's3.us-central-1.wasabisys.com'
+			},
+			{
+				region: 'us-west-1',
+				serviceUrl: 's3.us-west-1.wasabisys.com'
+			},
+			{
+				region: 'eu-central-1',
+				serviceUrl: 's3.eu-central-1.wasabisys.com'
+			},
+			{
+				region: 'eu-west-1',
+				serviceUrl: 's3.eu-west-1.wasabisys.com'
+			},
+			{
+				region: 'eu-west-2',
+				serviceUrl: 's3.eu-west-2.wasabisys.com'
+			},
+			{
+				region: 'ap-northeast-1',
+				serviceUrl: 's3.ap-northeast-1.wasabisys.com'
+			},
+			{
+				region: 'ap-northeast-2',
+				serviceUrl: 's3.ap-northeast-2.wasabisys.com'
+			}
+		];
+
+		const region = environment.wasabiConfig.region;
+		const serviceUrl = environment.wasabiConfig.serviceUrl;
+
+		let item = regionServiceUrls.find((item: IWasabiRegionServiceURL) => item.region === 'us-east-1');
+		if (region) {
+			item = regionServiceUrls.find((item: IWasabiRegionServiceURL) => item.region === region);
+		} else if (!region && serviceUrl) {
+			item = regionServiceUrls.find((item: IWasabiRegionServiceURL) => item.serviceUrl === serviceUrl);
+		}
+		return {
+			wasabi_aws_default_region: item.region,
+			wasabi_aws_service_url: item.serviceUrl
+		}
 	}
 }

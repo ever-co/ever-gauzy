@@ -14,6 +14,16 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
     }
 
     /**
+    * Called after entity is loaded.
+    */
+    afterLoad(entity: Screenshot) {
+        const { storageProvider } = entity;
+        const store = new FileStorage().setProvider(storageProvider);
+        entity.fullUrl = store.getProviderInstance().url(entity.file);
+		entity.thumbUrl = store.getProviderInstance().url(entity.thumb);
+	}
+
+    /**
     * Called before entity removal.
     */
      afterRemove(event: RemoveEvent<Screenshot>) {

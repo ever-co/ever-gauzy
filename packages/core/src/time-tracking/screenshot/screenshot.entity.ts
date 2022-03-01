@@ -3,13 +3,11 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	AfterLoad,
 	Index
 } from 'typeorm';
-import { IScreenshot, ITimeSlot } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { FileStorageProviderEnum, IScreenshot, ITimeSlot } from '@gauzy/contracts';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
-import { FileStorage } from './../../core/file-storage';
 import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
@@ -42,15 +40,16 @@ export class Screenshot
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
 
+	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		enum: FileStorageProviderEnum
+	})
+	storageProvider?: FileStorageProviderEnum;
+
 	fullUrl?: string;
 	thumbUrl?: string;
-
-	@AfterLoad()
-	afterLoad?() {
-		this.fullUrl = new FileStorage().getProvider().url(this.file);
-		this.thumbUrl = new FileStorage().getProvider().url(this.thumb);
-	}
-
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne 

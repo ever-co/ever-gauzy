@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsUrl, ValidateIf } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, IsUrl, ValidateIf } from "class-validator";
 import { FileStorageProviderEnum } from "@gauzy/contracts";
 
 /**
@@ -16,20 +16,22 @@ export class WasabiS3ProviderConfigDTO {
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
 	@IsNotEmpty()
 	readonly wasabi_aws_secret_access_key: string;
-	
-	@ApiProperty({ type: () => String })
-	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
-	@IsNotEmpty()
-	readonly wasabi_aws_default_region: string;
-
-	@ApiProperty({ type: () => String })
-	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
-	@IsNotEmpty()
-	@IsUrl()
-	readonly wasabi_aws_service_url: string;
 
 	@ApiProperty({ type: () => String })
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
 	@IsNotEmpty()
 	readonly wasabi_aws_bucket: string;
+	
+	@ApiProperty({ type: () => String })
+	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
+	@IsOptional()
+	@IsString()
+	readonly wasabi_aws_default_region: string;
+
+	@ApiProperty({ type: () => String })
+	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
+	@IsOptional()
+	@IsString()
+	@IsUrl()
+	readonly wasabi_aws_service_url: string;
 }
