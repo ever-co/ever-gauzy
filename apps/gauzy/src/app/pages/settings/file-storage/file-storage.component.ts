@@ -62,7 +62,7 @@ export class FileStorageComponent
 	async getSetting() {
 		const settings = await this.tenantService.getSettings();
 		if (isNotEmpty(settings)) {
-			this.settings = settings;
+			this.settings = Object.assign({}, this.defaultWasabiConfiguration(), settings);
 		} else {
 			this.settings = {
 				fileStorageProvider: environment.FILE_PROVIDER as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,

@@ -1,4 +1,5 @@
 import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
+import { FileStorageProviderEnum } from "@gauzy/contracts";
 import { Report } from "./report.entity";
 import { FileStorage } from "./../core/file-storage";
 
@@ -17,7 +18,9 @@ export class ReportSubscriber implements EntitySubscriberInterface<Report> {
     */
     afterLoad(entity: Report) {
         if (entity.image) {
-			entity.imageUrl = new FileStorage().getProvider().url(entity.image);
+            const store = new FileStorage()
+            store.setProvider(FileStorageProviderEnum.LOCAL);
+			entity.imageUrl = store.getProviderInstance().url(entity.image);
 		}
     }
 }

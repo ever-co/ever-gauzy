@@ -58,7 +58,9 @@ export class FileStorage {
 	}
 
 	getProviderInstance(): Provider<any> {
-		return this.providers[this.config.provider].getInstance();
+		if (this.config.provider) {
+			return this.providers[this.config.provider].getInstance();
+		}
 	}
 
 	initProvider() {
