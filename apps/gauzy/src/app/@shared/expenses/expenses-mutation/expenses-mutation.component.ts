@@ -101,9 +101,9 @@ export class ExpensesMutationComponent
 	): FormGroup {
 		return fb.group({
 			amount: ['', Validators.required],
-			vendor: [null, Validators.required],
+			vendor: [null],
 			typeOfExpense: [self.expenseTypes[0]],
-			category: [null, Validators.required],
+			category: [null],
 			notes: [''],
 			currency: [''],
 			valueDate: [ self.store.getDateFromOrganizationSettings(), Validators.required ],
