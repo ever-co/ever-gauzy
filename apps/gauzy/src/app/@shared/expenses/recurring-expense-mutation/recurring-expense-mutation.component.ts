@@ -11,7 +11,6 @@ import {
 import { NbDialogRef } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import * as moment from 'moment';
-import { IExpenseCategory } from '@gauzy/contracts';
 import {
 	EmployeeRecurringExpenseService,
 	EmployeesService,
@@ -138,7 +137,25 @@ export class RecurringExpenseMutationComponent
 				value: i.category,
 				label: this.getTranslatedExpenseCategory(i.category)
 			}));
-
+		this.expenseCategoriesStore.expenseCategories$.subscribe(
+			(categories) => {
+				const storedCategories: {
+					label: string;
+					value: string;
+				}[] = [];
+				for (let category of categories) {
+					storedCategories.push({
+						value: category.name,
+						label: category.name
+					});
+				}
+				this.defaultFilteredCategories = [
+					...this.defaultFilteredCategories,
+					...storedCategories
+				];
+			}
+		);
+    this.expenseCategoriesStore.loadAll();
 		this._initializeForm(this.recurringExpense);
 	}
 
@@ -189,7 +206,7 @@ export class RecurringExpenseMutationComponent
 		return { value: term, label: term };
 	}
 
-	addNewCustomCategoryName = async (name: string): Promise<IExpenseCategory> => {
+	addNewCustomCategoryName = async (name: string): Promise<any> => {
 		try {
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
@@ -197,18 +214,11 @@ export class RecurringExpenseMutationComponent
 					name
 				}
 			);
-
       const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
-
-      this.defaultFilteredCategories = [
-        ...this.defaultFilteredCategories,
-        {
-          value: createdCategory.name,
-          label: createdCategory.name
-        }
-      ];
-
-			return createdCategory;
+			return {
+				value: createdCategory.name,
+				label: createdCategory.name
+			};
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
