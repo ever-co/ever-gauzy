@@ -27,63 +27,70 @@
 					<ng-template
 						[ngIf]="(trackType$ | async) == timeLogType.TRACKED"
 					>
-						<div class="time-tracker">
-							<div class="is_billable">
-								<button
-									nbButton
-									type="button"
-									(click)="
-										$event.stopPropagation();
-										isBillable = !isBillable
-									"
-									size="small"
-									[status]="isBillable ? 'primary' : 'basic'"
-									[nbTooltip]="
-										'TIMER_TRACKER.IS_BILLABLE' | translate
-									"
-									[disabled]="running"
-								>
-									$
-								</button>
-							</div>
-							<div class="time-count">
-								<span class="current-session">
-									{{ currentSessionTime }}
-								</span>
-								<span class="today-time mt-2">
-									{{ 'TIMER_TRACKER.TODAY' | translate }}:
-									{{ todaySessionTime }}
-								</span>
-							</div>
-							<div class="actions">
-								<div class="toggle">
-									<button
-										nbButton
-										type="submit"
-										[status]="
-											running ? 'danger' : 'success'
-										"
-										shape="round"
-										[nbTooltip]="
-											(running
-												? 'TIMER_TRACKER.STOP_TIMER'
-												: 'TIMER_TRACKER.START_TIMER'
-											) | translate
-										"
-										(click)="toggleTimer()"
-										[disabled]="isDisable"
-									>
-										<nb-icon
-											[icon]="
-												!running
-													? 'play-circle-outline'
-													: 'pause-circle-outline'
-											"
-										></nb-icon>
-									</button>
-								</div>
-							</div>
-						</div>
+            <div class="timer">
+              <h6>{{ 'TIMER_TRACKER.TIMER' | translate }}</h6>
+						<div class="row">
+              <div class="col">
+                <div class="time-tracker">
+                  <div class="is_billable">
+                    <button
+                      nbButton
+                      type="button"
+                      (click)="
+                        $event.stopPropagation();
+                        isBillable = !isBillable
+                      "
+                      size="small"
+                      [status]="isBillable ? 'primary' : 'basic'"
+                      [nbTooltip]="
+                        'TIMER_TRACKER.IS_BILLABLE' | translate
+                      "
+                      [disabled]="running"
+                    >
+                      $
+                    </button>
+                  </div>
+                  <div class="time-count">
+                    <span class="current-session">
+                      {{ currentSessionTime }}
+                    </span>
+                    <span class="today-time mt-2">
+                      {{ 'TIMER_TRACKER.TODAY' | translate }}
+                      {{ todaySessionTime }}
+                    </span>
+                  </div>
+                  <div class="actions">
+                    <div class="toggle">
+                      <button
+                        nbButton
+                        type="submit"
+                        [status]="
+                          running ? 'danger' : 'success'
+                        "
+                        shape="round"
+                        [nbTooltip]="
+                          (running
+                            ? 'TIMER_TRACKER.STOP_TIMER'
+                            : 'TIMER_TRACKER.START_TIMER'
+                          ) | translate
+                        "
+                        (click)="toggleTimer()"
+                        [disabled]="isDisable"
+                      >
+                        <nb-icon
+                          [icon]="
+                            !running
+                              ? 'play-circle-outline'
+                              : 'pause-circle-outline'
+                          "
+                        ></nb-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
 					</ng-template>
 					<ng-template
 						[ngIf]="(trackType$ | async) == timeLogType.MANUAL"
@@ -106,10 +113,13 @@
 										name="isBillable"
 										status="primary"
 									>
-										{{
+                  <span [ngClass]="isBillable? 'primary':''">
+                    {{
 											'TIMER_TRACKER.IS_BILLABLE'
 												| translate
 										}}
+                  </span>
+
 									</nb-checkbox>
 								</div>
 							</div>

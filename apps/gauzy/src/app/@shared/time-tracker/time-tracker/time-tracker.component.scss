@@ -8,7 +8,7 @@
   .timer-card {
     display: block;
     padding: 20px;
-    width: 380px;
+    width: 328px;
     font-size: 14px;
     position: relative;
   }
@@ -31,12 +31,12 @@
     .time-tracker {
       width: 100%;
       display: flex;
-      align-items: center;
+      align-items: flex-start
     }
     .is_billable {
-      padding: 8px;
       button {
-        font-size: 18px;
+        font-size: 12px;
+        padding: 4px 9px;
       }
     }
     .actions {
@@ -48,12 +48,15 @@
       font-size: 22px;
       width: 100%;
       padding: 0 10px;
-      text-align: center;
+      text-align: left;
       display: flex;
       flex-direction: column;
       .today-time {
         font-size: 0.6em;
         line-height: 1;
+      }
+      .current-session{
+        font-weight: 400;
       }
     }
     .toggle {
@@ -71,9 +74,9 @@
       flex-direction: column;
       justify-content: center;
       padding-left: 10px;
+      margin-top: 3.4rem;
       button {
         margin: 2px;
-        padding: 3px;
         &.status-primary {
           nb-icon {
             color: #fff;
@@ -91,6 +94,15 @@
       border-color: nb-theme(text-primary-active-color);
       color: #ffffff;
       opacity: 0.4;
+    }
+    .timer{
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+    h6{
+      color:nb-theme(text-primary-color);
+      margin-bottom: 2rem;
     }
   }
   ::ng-deep {
@@ -111,4 +123,8 @@
       border-color: nb-theme(color-primary-hover);
     }
   }
+}
+
+.primary{
+  color: nb-theme(text-primary-color);
 }
