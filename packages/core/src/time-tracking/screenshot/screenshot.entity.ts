@@ -42,6 +42,7 @@ export class Screenshot
 
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
 	@Column({
+		select: false,
 		type: 'simple-enum',
 		nullable: true,
 		enum: FileStorageProviderEnum
