@@ -138,7 +138,25 @@ export class RecurringExpenseMutationComponent
 				value: i.category,
 				label: this.getTranslatedExpenseCategory(i.category)
 			}));
-
+      this.expenseCategoriesStore.loadAll();
+		this.expenseCategoriesStore.expenseCategories$.subscribe(
+			(categories) => {
+				const storedCategories: {
+					label: string;
+					value: string;
+				}[] = [];
+				for (let category of categories) {
+					storedCategories.push({
+						value: category.name,
+						label: category.name
+					});
+				}
+				this.defaultFilteredCategories = [
+					...this.defaultFilteredCategories,
+					...storedCategories
+				];
+			}
+		);
 		this._initializeForm(this.recurringExpense);
 	}
 
@@ -199,14 +217,6 @@ export class RecurringExpenseMutationComponent
 			);
 
       const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
-
-      this.defaultFilteredCategories = [
-        ...this.defaultFilteredCategories,
-        {
-          value: createdCategory.name,
-          label: createdCategory.name
-        }
-      ];
 
 			return createdCategory;
 		} catch (error) {
