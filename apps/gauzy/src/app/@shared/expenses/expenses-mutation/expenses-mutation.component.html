@@ -54,7 +54,7 @@
 						[skipGlobalChange]="true"
 						class="employees"
 						[placeholder]="'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE' | translate"
-						[defaultSelected]="false"
+						[defaultSelected]="true"
 						(selectionChanged)="onEmployeeChange($event)"
 						[selectedDate]="valueDate.value"
 					></ga-employee-selector>
@@ -152,8 +152,6 @@
 					<div class="form-group">
 						<textarea
 							nbInput
-							class="textarea"
-							type="text"
 							formControlName="purpose"
 							fullWidth
 							[placeholder]="'POP_UPS.PURPOSE' | translate"
@@ -293,7 +291,6 @@
 							fullWidth
 							[placeholder]="'POP_UPS.NOTES' | translate"
 							formControlName="notes"
-							class="notes"
 							[status]="
 							isInvalidControl('notes')
 									? 'danger'

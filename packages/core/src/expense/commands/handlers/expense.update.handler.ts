@@ -18,23 +18,22 @@ export class ExpenseUpdateHandler
 		let { id } = command;
 		const { entity } = command;
 		const expense = await this.updateExpense(id, entity);
+
 		let averageExpense = 0;
 		if (expense && expense.employeeId) {
 			id = expense.employeeId;
-
-			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+			const statistic = await this.employeeStatisticsService.getStatisticsByEmployeeId(
 				id
 			);
-
 			averageExpense = this.expenseService.countStatistic(
-				stat.expenseStatistics
+				statistic.expenseStatistics
 			);
-
-			return await this.employeeService.create({
+			await this.employeeService.create({
 				id,
 				averageExpenses: averageExpense
 			});
 		}
+		return expense;
 	}
 
 	public async updateExpense(
@@ -42,7 +41,7 @@ export class ExpenseUpdateHandler
 		entity: IExpense
 	): Promise<IExpense> {
 		const id = expenseId;
-		return this.expenseService.create({
+		return await this.expenseService.create({
 			id,
 			...entity
 		});
