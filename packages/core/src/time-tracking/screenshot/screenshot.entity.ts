@@ -8,6 +8,7 @@ import {
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
+import { Exclude } from 'class-transformer';
 import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
@@ -41,8 +42,8 @@ export class Screenshot
 	deletedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
+	@Exclude()
 	@Column({
-		select: false,
 		type: 'simple-enum',
 		nullable: true,
 		enum: FileStorageProviderEnum

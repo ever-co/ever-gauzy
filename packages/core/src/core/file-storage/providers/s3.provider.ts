@@ -4,7 +4,7 @@ import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
 import { environment } from '@gauzy/config';
-import * as S3 from 'aws-sdk/clients/s3';
+import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
@@ -192,7 +192,7 @@ export class S3Provider extends Provider<S3Provider> {
 
 	private getS3Instance() {
 		this.setAwsDetails();
-		return new S3({
+		return new AWS.S3({
 			accessKeyId: this.config.aws_access_key_id,
 			secretAccessKey: this.config.aws_secret_access_key,
 			region: this.config.aws_default_region
