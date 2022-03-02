@@ -11,6 +11,8 @@
     width: 328px;
     font-size: 14px;
     position: relative;
+    box-shadow: 0px 6px 30px nb-theme(background-basic-color-4);
+    border-radius: .75rem;
   }
   .background-basic-color-1 {
     background-color: nb-theme(background-basic-color-1);
@@ -18,15 +20,16 @@
   .background-basic-color-2 {
     background-color: nb-theme(background-basic-color-2);
   }
-  .btn-close {
+  .header{
     position: absolute;
-    right: 2px;
-    top: 2px;
+    display: flex;
+    justify-content: flex-end;
+    width: 300px;
+    top: 0px;
   }
   .timer-container {
     display: flex;
     align-items: flex-start;
-    justify-content: flex-end;
 
     .time-tracker {
       width: 100%;
@@ -76,7 +79,13 @@
       padding-left: 10px;
       margin-top: 3.4rem;
       button {
-        margin: 2px;
+        margin: 4px;
+        padding: 4px 2px 4px 2px;
+        svg{
+          border-radius: 2rem;
+          width: 12px;
+          margin: 0;
+        }
         &.status-primary {
           nb-icon {
             color: #fff;
@@ -95,11 +104,12 @@
       color: #ffffff;
       opacity: 0.4;
     }
-    .timer{
+    .timer, .time-manual{
       display: flex;
       flex-direction: column;
       width: 100%;
     }
+
     h6{
       color:nb-theme(text-primary-color);
       margin-bottom: 2rem;
@@ -127,4 +137,14 @@
 
 .primary{
   color: nb-theme(text-primary-color);
+}
+
+.custom-range-picker::ng-deep .range{
+  width: 128.5%;
+}
+
+.view-log-button{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }

@@ -29,6 +29,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	isDisable: boolean = false;
 	isOpen: boolean = false;
+  isExpanded: boolean = true;
 	employeeId: string;
 	todaySessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
 	currentSessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
@@ -278,8 +279,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Draggable Web Timer Position
-	 * 
-	 * @param event 
+	 *
+	 * @param event
 	 */
 	draggablePosition(event: NgxDraggableDomMoveEvent) {
 		this.position = event.position as NgxDraggablePoint;
