@@ -11,7 +11,6 @@ import {
 import { NbDialogRef } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import * as moment from 'moment';
-import { IExpenseCategory } from '@gauzy/contracts';
 import {
 	EmployeeRecurringExpenseService,
 	EmployeesService,
@@ -207,7 +206,7 @@ export class RecurringExpenseMutationComponent
 		return { value: term, label: term };
 	}
 
-	addNewCustomCategoryName = async (name: string): Promise<IExpenseCategory> => {
+	addNewCustomCategoryName = async (name: string): Promise<any> => {
 		try {
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
@@ -215,10 +214,11 @@ export class RecurringExpenseMutationComponent
 					name
 				}
 			);
-
       const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
-
-			return createdCategory;
+			return {
+				value: createdCategory.name,
+				label: createdCategory.name
+			};
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
