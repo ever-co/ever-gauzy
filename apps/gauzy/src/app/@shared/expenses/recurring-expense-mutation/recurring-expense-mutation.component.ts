@@ -137,7 +137,6 @@ export class RecurringExpenseMutationComponent
 				value: i.category,
 				label: this.getTranslatedExpenseCategory(i.category)
 			}));
-      this.expenseCategoriesStore.loadAll();
 		this.expenseCategoriesStore.expenseCategories$.subscribe(
 			(categories) => {
 				const storedCategories: {
@@ -156,6 +155,7 @@ export class RecurringExpenseMutationComponent
 				];
 			}
 		);
+    this.expenseCategoriesStore.loadAll();
 		this._initializeForm(this.recurringExpense);
 	}
 
