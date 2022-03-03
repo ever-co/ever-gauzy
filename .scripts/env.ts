@@ -96,7 +96,7 @@ export const env: Env = cleanEnv(
 		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' }),
 		GAUZY_CLOUD_APP: str({ default: 'https://app.gauzy.co/#' }),
 
-		FILE_PROVIDER: str({ default: 'WASABI' }),
+		FILE_PROVIDER: str({ default: 'LOCAL' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
