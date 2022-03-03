@@ -9,12 +9,14 @@ import { Transform, TransformFnParams } from "class-transformer";
 export class WasabiS3ProviderConfigDTO {
 	
 	@ApiProperty({ type: () => String })
+	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
 	@IsOptional()
 	@IsString()
 	readonly wasabi_aws_access_key_id: string;
 
 	@ApiProperty({ type: () => String })
+	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
 	@IsOptional()
 	@IsString()
