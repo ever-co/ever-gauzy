@@ -3668,11 +3668,38 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "crwdns8136:0crwdne8136:0",
-		"S3_DETAILS": "crwdns8138:0crwdne8138:0",
-		"ACCESS_KEY_ID": "crwdns8140:0crwdne8140:0",
-		"SECRET_ACCESS_KEY": "crwdns8142:0crwdne8142:0",
-		"REGION": "crwdns8144:0crwdne8144:0",
-		"BUCKET": "crwdns8146:0crwdne8146:0"
+		"S3": {
+			"HEADER": "crwdns10956:0crwdne10956:0",
+			"LABELS": {
+				"ACCESS_KEY_ID": "crwdns10958:0crwdne10958:0",
+				"SECRET_ACCESS_KEY": "crwdns10960:0crwdne10960:0",
+				"REGION": "crwdns10962:0crwdne10962:0",
+				"BUCKET": "crwdns10964:0crwdne10964:0"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "crwdns10966:0crwdne10966:0",
+				"SECRET_ACCESS_KEY": "crwdns10968:0crwdne10968:0",
+				"REGION": "crwdns10970:0crwdne10970:0",
+				"BUCKET": "crwdns10972:0crwdne10972:0"
+			}
+		},
+		"WASABI": {
+			"HEADER": "crwdns10974:0crwdne10974:0",
+			"LABELS": {
+				"ACCESS_KEY_ID": "crwdns10976:0crwdne10976:0",
+				"SECRET_ACCESS_KEY": "crwdns10978:0crwdne10978:0",
+				"REGION": "crwdns10980:0crwdne10980:0",
+				"BUCKET": "crwdns10982:0crwdne10982:0",
+				"SERVICE_URL": "crwdns10984:0crwdne10984:0"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "crwdns10986:0crwdne10986:0",
+				"SECRET_ACCESS_KEY": "crwdns10988:0crwdne10988:0",
+				"REGION": "crwdns10990:0crwdne10990:0",
+				"BUCKET": "crwdns10992:0crwdne10992:0",
+				"SERVICE_URL": "crwdns10994:0crwdne10994:0"
+			}
+		}
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "crwdns9914:0{{ name }}crwdne9914:0",
