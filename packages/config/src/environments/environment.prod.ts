@@ -44,7 +44,7 @@ export const environment: IEnvironment = {
 		region: process.env.WASABI_REGION,
 		serviceUrl: process.env.WASABI_SERVICE_URL,
 		s3: {
-			bucket: process.env.WASABI_S3_BUCKET || 'gauzy-screenshots'
+			bucket: process.env.WASABI_S3_BUCKET || 'gauzy'
 		}
 	},
 

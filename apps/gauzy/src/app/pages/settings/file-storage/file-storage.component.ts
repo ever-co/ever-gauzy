@@ -117,13 +117,13 @@ export class FileStorageComponent
 
 	/**
 	 * Default Wasabi Provider Configuration
-	 * 
+	 *
 	 */
 	defaultWasabiConfiguration(): IWasabiFileStorageProviderConfig {
 		return {
 			wasabi_aws_default_region: 'us-east-1',
 			wasabi_aws_service_url: 's3.wasabisys.com',
-			wasabi_aws_bucket: 'gauzy-screenshots'
+			wasabi_aws_bucket: 'gauzy'
 		}
 	}
 }
