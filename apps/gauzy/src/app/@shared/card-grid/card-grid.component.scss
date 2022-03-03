@@ -2,12 +2,23 @@
 .card-layout {
   display: flex;
   flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   color: nb-theme(color-basic-default);
+  padding: 0;
+  margin: 0;
   .card-item {
     display: flex;
     flex-direction: column;
-    margin-right: 10px;
-    width: 350px;
+    width: 336px;
+    border-radius: 0.5rem;
+    background-color: nb-theme(background-basic-color-3);
+    .card-body {
+      background-color: nb-theme(background-basic-color-3);
+      border-radius: 0.5rem;
+      padding: 12px 10px;
+    }
     &:hover {
       border-color: nb-theme(color-primary-hover-border);
     }
@@ -23,14 +34,52 @@
       flex-direction: row;
       justify-content: space-between;
       font-size: 0.7em;
+      width: 100%;
       .info-meta {
-        margin-right: 10px;
+        background-color: nb-theme(background-basic-color-1);
+        padding: 6px 10px;
+        border-radius: 4px;
+        width: 88%;
+        margin: 0px 2px 4px 0px;
       }
       .info-value {
         display: flex;
         justify-content: flex-end;
         text-align: end;
         font-size: 1em;
+        background-color: nb-theme(background-basic-color-1);
+        padding: 6px 10px;
+        border-radius: 4px;
+        width: 100%;
+        margin: 0px 0px 4px 2px;
+        position: relative;
+        .custom::ng-deep {
+          ga-status-badge {
+            width: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            margin: 0;
+            .badge {
+              height: 2rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: nb-theme(text-button-tiny-font-size);
+            }
+          }
+          .progress-bar-container {
+            width: 100%;
+            position: absolute;
+            left: 0;
+            margin: 0;
+            .paid-percent {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
+        }
       }
     }
   }
