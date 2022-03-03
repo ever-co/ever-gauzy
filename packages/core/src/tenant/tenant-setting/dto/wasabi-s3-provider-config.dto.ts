@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString, IsUrl, ValidateIf } from "class-validator";
+import { IsOptional, IsString, IsUrl, ValidateIf } from "class-validator";
 import { FileStorageProviderEnum } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
 
@@ -10,12 +10,14 @@ export class WasabiS3ProviderConfigDTO {
 	
 	@ApiProperty({ type: () => String })
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
-	@IsNotEmpty()
+	@IsOptional()
+	@IsString()
 	readonly wasabi_aws_access_key_id: string;
 
 	@ApiProperty({ type: () => String })
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
-	@IsNotEmpty()
+	@IsOptional()
+	@IsString()
 	readonly wasabi_aws_secret_access_key: string;
 
 	@ApiProperty({ type: () => String })

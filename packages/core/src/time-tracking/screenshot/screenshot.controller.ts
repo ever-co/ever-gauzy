@@ -9,7 +9,6 @@ import {
 	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
@@ -22,9 +21,11 @@ import { tempFile } from '../../core/utils';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
+import { LazyFileInterceptor, TransformInterceptor } from './../../core/interceptors';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class ScreenshotController {
 	constructor(
@@ -43,22 +44,24 @@ export class ScreenshotController {
 	})
 	@Post('/')
 	@UseInterceptors(
-		FileInterceptor('file', {
-			storage: new FileStorage().storage({
-				dest: () => {
-					return path.join(
-						'screenshots',
-						moment().format('YYYY/MM/DD')
-					);
-				},
-				prefix: 'screenshots'
-			})
-		})
-	)
+        LazyFileInterceptor('file', {
+			storage: (request) => {
+                return new FileStorage().storage({
+					dest: () => {
+						return path.join(
+							'screenshots',
+							moment().format('YYYY/MM/DD')
+						);
+					},
+                  	prefix: 'screenshots'
+              	})
+            }
+        })
+    )
 	async create(
 		@Body() entity: Screenshot,
 		@UploadedFileStorage() file
-	): Promise<IScreenshot> {
+	) {
 		const provider = new FileStorage().getProvider();
 		let thumb;
 		try {
@@ -84,6 +87,7 @@ export class ScreenshotController {
 			await fs.promises.unlink(outputFile);
 
 			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
+			console.log(`Screenshot Created THumb:`, thumb);
 		} catch (error) {
 			console.log('Error while uploading screenshot into file storage provider:', error);
 		}

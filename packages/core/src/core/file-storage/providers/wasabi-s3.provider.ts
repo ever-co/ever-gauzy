@@ -103,9 +103,11 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	handler({ dest, filename, prefix }: FileStorageOption): StorageEngine {
 		return multerS3({
 			s3: this.getWasabiInstance(),
-			bucket: this.getWasabiBucket(),
-			metadata: function (_req, file, cb) {
-				cb(null, { fieldName: file.fieldname });
+			bucket: (_req, file, callback) => {
+				callback(null, this.getWasabiBucket())
+			},
+			metadata: function (_req, file, callback) {
+				callback(null, { fieldName: file.fieldname });
 			},
 			key: (_req, file, callback) => {
 				let fileNameString = '';
