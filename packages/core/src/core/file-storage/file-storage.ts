@@ -22,6 +22,7 @@ export class FileStorage {
 			...config,
 			provider: (config.provider || environment.fileSystem.name) as FileStorageProviderEnum
 		};
+		this.getProvider();
 		return this;
 	}
 

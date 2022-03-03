@@ -6,7 +6,8 @@ import {
 	Body,
 	UseInterceptors,
 	Delete,
-	Param
+	Param,
+	ExecutionContext
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import * as path from 'path';
@@ -45,7 +46,7 @@ export class ScreenshotController {
 	@Post('/')
 	@UseInterceptors(
         LazyFileInterceptor('file', {
-			storage: (request) => {
+			storage: (request: ExecutionContext) => {
                 return new FileStorage().storage({
 					dest: () => {
 						return path.join(
