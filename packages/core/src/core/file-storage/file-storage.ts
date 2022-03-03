@@ -19,10 +19,11 @@ export class FileStorage {
 	setConfig(config: Partial<FileStorageOption> = {}) {
 		this.config = {
 			...this.config,
-			...config,
-			provider: (config.provider || environment.fileSystem.name) as FileStorageProviderEnum
+			...config
 		};
-		this.getProvider();
+		if (isEmpty(config.provider)) {
+			this.getProvider();
+		}
 		return this;
 	}
 
