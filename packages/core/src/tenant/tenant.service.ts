@@ -11,6 +11,7 @@ import {
 	IUser,
 	FileStorageProviderEnum
 } from '@gauzy/contracts';
+import { ConfigService, IEnvironment } from '@gauzy/config';
 import { UserService } from '../user/user.service';
 import { RoleService } from 'role/role.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
@@ -28,6 +29,7 @@ export class TenantService extends CrudService<Tenant> {
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
 		private readonly commandBus: CommandBus,
+		private readonly configService: ConfigService
 	) {
 		super(tenantRepository);
 	}
@@ -53,9 +55,10 @@ export class TenantService extends CrudService<Tenant> {
 
 		//4. Create tenant default file stoage setting (LOCAL)
 		const tenantId = tenant.id;
+		const fileSystem = this.configService.get('fileSystem') as IEnvironment['fileSystem'];
 		await this.commandBus.execute(
 			new TenantSettingSaveCommand({
-					fileStorageProvider: FileStorageProviderEnum.LOCAL,
+					fileStorageProvider: fileSystem.name || FileStorageProviderEnum.LOCAL,
 				},
 				tenantId
 			)

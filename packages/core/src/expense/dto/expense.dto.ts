@@ -3,7 +3,7 @@ import { CurrenciesEnum, IOrganizationContact, IOrganizationProject, ITag } from
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsBoolean, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
 
-export abstract class ExpenseDTO extends TenantOrganizationBaseDTO {
+export class ExpenseDTO extends TenantOrganizationBaseDTO {
 
     @ApiProperty({ type: () => Number, readOnly: true  })
     @IsNotEmpty()

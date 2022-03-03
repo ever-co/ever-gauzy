@@ -31,7 +31,7 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
             console.log(`AFTER TIME_SLOT WITH ID ${event.entityId} REMOVED`);
             if (screenshots instanceof Array && isNotEmpty(screenshots)) {
                 for await (const screenshot of screenshots) {
-                    const instance = await new FileStorage().getProvider().getInstance();
+                    const instance = await new FileStorage().getProvider(screenshot.storageProvider).getInstance();
                     if (screenshot.file) {
                         instance.deleteFile(screenshot.file);
                     }

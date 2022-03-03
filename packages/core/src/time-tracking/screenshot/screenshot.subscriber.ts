@@ -14,14 +14,24 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
     }
 
     /**
+    * Called after entity is loaded.
+    */
+    afterLoad(entity: Screenshot) {
+        const { storageProvider } = entity;
+        const store = new FileStorage().setProvider(storageProvider);
+        entity.fullUrl = store.getProviderInstance().url(entity.file);
+		entity.thumbUrl = store.getProviderInstance().url(entity.thumb);
+	}
+
+    /**
     * Called before entity removal.
     */
-     afterRemove(event: RemoveEvent<Screenshot>) {
+    afterRemove(event: RemoveEvent<Screenshot>) {
         if (event.entityId) {
             console.log(`BEFORE SCREENSHOT ENTITY WITH ID ${event.entityId} REMOVED`);
             (async () => {
                 const screenshot: IScreenshot = event.entity;
-                const instance = await new FileStorage().getProvider().getInstance();
+                const instance = await new FileStorage().getProvider(screenshot.storageProvider).getInstance();
                 if (screenshot.file) {
                     instance.deleteFile(screenshot.file);
                 }

@@ -1,4 +1,5 @@
-import { FileStorageOption, UploadedFile } from '@gauzy/contracts';
+import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
@@ -7,10 +8,9 @@ import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
-import * as _ from 'underscore';
 import { v4 as uuid } from 'uuid';
 
-export interface S3Config {
+export interface IS3Config {
 	rootPath: string;
 	aws_access_key_id: string;
 	aws_secret_access_key: string;
@@ -21,11 +21,11 @@ export interface S3Config {
 export class S3Provider extends Provider<S3Provider> {
 	static instance: S3Provider;
 
-	name = 's3';
+	name = FileStorageProviderEnum.S3;
 	tenantId: string;
 
-	config: S3Config;
-	defaultConfig: S3Config;
+	config: IS3Config;
+	defaultConfig: IS3Config;
 
 	fetchSetting = false;
 
@@ -64,9 +64,9 @@ export class S3Provider extends Provider<S3Provider> {
 			if (
 				settings &&
 				settings.aws_access_key_id &&
-				!_.isEmpty(settings.aws_access_key_id.trim()) &&
+				isNotEmpty(settings.aws_access_key_id.trim()) &&
 				settings.aws_secret_access_key &&
-				!_.isEmpty(settings.aws_secret_access_key.trim())
+				isNotEmpty(settings.aws_secret_access_key.trim())
 			) {
 				this.config = {
 					...this.defaultConfig,

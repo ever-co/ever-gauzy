@@ -5,12 +5,12 @@ pipeline {
 
     environment {
         DOCKER_BUILDKIT = 1 // Experimental faster build system
-        REPO_NAME = "gauzy"
+        REPO_NAME = "ever-gauzy"
         IMAGE_API = "gauzy-api"
         IMAGE_WEBAPP = "gauzy-webapp"
         GITHUB_DOCKER_USERNAME = credentials('github-docker-username')
         GITHUB_DOCKER_PASSWORD = credentials('github-docker-password')
-        GITHUB_DOCKER_REPO = "docker.pkg.github.com/ever-co/gauzy"
+        GITHUB_DOCKER_REPO = "docker.pkg.github.com/ever-co/ever-gauzy"
         GITHUB_DISPATCH_TOKEN = credentials('github-dispatch-token')
         GITHUB_TOKEN = credentials('github-token')
         CI_URL = "ci.ever.co"
@@ -35,8 +35,8 @@ pipeline {
         stage("Clone") {
             steps{
                 git branch: 'develop',
-                    url: 'https://github.com/ever-co/gauzy.git'
-                
+                    url: 'https://github.com/ever-co/ever-gauzy.git'
+
                 sh """
                     curl 'https://api.github.com/repos/ever-co/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d '{"state": "pending", "context": "Jenkins", "description": "Jenkins pipeline is running", "target_url": "https://$CI_URL/job/${JOB_NAME}/$BUILD_NUMBER/console"}'
                 """

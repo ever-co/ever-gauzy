@@ -3668,11 +3668,38 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "File provider",
-		"S3_DETAILS": "S3 details",
-		"ACCESS_KEY_ID": "Access key id",
-		"SECRET_ACCESS_KEY": "Secret access key",
-		"REGION": "Region",
-		"BUCKET": "Bucket"
+		"S3": {
+			"HEADER": "S3 Configuration",
+			"LABELS": {
+				"ACCESS_KEY_ID": "Access key id",
+				"SECRET_ACCESS_KEY": "Secret access key",
+				"REGION": "Region",
+				"BUCKET": "Bucket"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Access key id",
+				"SECRET_ACCESS_KEY": "Secret access key",
+				"REGION": "Region",
+				"BUCKET": "Bucket"
+			}
+		},
+		"WASABI": {
+			"HEADER": "Wasabi Configuration",
+			"LABELS": {
+				"ACCESS_KEY_ID": "Access key id",
+				"SECRET_ACCESS_KEY": "Secret access key",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service URL"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Access key id",
+				"SECRET_ACCESS_KEY": "Secret access key",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service URL"
+			}
+		}
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Manage SMTP for '{{ name }}'",

@@ -54,7 +54,7 @@
 						[skipGlobalChange]="true"
 						class="employees"
 						[placeholder]="'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE' | translate"
-						[defaultSelected]="false"
+						[defaultSelected]="true"
 						(selectionChanged)="onEmployeeChange($event)"
 						[selectedDate]="valueDate.value"
 					></ga-employee-selector>
@@ -68,6 +68,7 @@
 							'POP_UPS.CATEGORIES' | translate
 						}}</label>
 						<ga-expense-category-select
+							[clearable]="true"
 							formControlName="category"
 							[addTag]="true"
 							[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
@@ -105,6 +106,7 @@
 							[searchable]="true"
 							[addTag]="true"
 							[placeholder]="'POP_UPS.ALL_VENDORS' | translate"
+							[clearable]="true"
 						>
 						</ga-vendor-select>
 					</div>
@@ -150,8 +152,6 @@
 					<div class="form-group">
 						<textarea
 							nbInput
-							class="textarea"
-							type="text"
 							formControlName="purpose"
 							fullWidth
 							[placeholder]="'POP_UPS.PURPOSE' | translate"
@@ -291,7 +291,6 @@
 							fullWidth
 							[placeholder]="'POP_UPS.NOTES' | translate"
 							formControlName="notes"
-							class="notes"
 							[status]="
 							isInvalidControl('notes')
 									? 'danger'

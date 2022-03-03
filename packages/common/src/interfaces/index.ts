@@ -6,6 +6,7 @@ export * from './IPlugin';
 export * from './IConfig';
 
 export * from './IAWSConfig';
+export * from './IWasabiConfig';
 export * from './IAuth0Config';
 export * from './IFacebookConfig';
 export * from './IFiverrConfig';

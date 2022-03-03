@@ -202,6 +202,18 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 						}
 					},
 					{
+						title: 'Expense Recurring',
+						icon: 'flip-outline',
+						link: '/pages/accounting/expense-recurring',
+						data: {
+							translationKey:
+								'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
+							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE
+						}
+					},
+					{
 						title: 'Payments',
 						icon: 'clipboard-outline',
 						link: '/pages/accounting/payments',

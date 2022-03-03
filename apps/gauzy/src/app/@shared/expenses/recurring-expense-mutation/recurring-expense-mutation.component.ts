@@ -11,19 +11,20 @@ import {
 import { NbDialogRef } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import * as moment from 'moment';
-import { IExpenseCategory } from '@gauzy/contracts';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { Store } from '../../../@core/services/store.service';
+import {
+	EmployeeRecurringExpenseService,
+	EmployeesService,
+	ErrorHandlingService,
+	ExpenseCategoriesStoreService,
+	OrganizationRecurringExpenseService,
+	OrganizationsService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationRecurringExpenseService } from '../../../@core/services/organization-recurring-expense.service';
 import { defaultDateFormat } from '../../../@core/utils/date';
-import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { EmployeesService } from '../../../@core/services';
-import { ToastrService } from '../../../@core/services/toastr.service';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -56,23 +57,23 @@ export class RecurringExpenseMutationComponent
 		category: string;
 		types: COMPONENT_TYPE[];
 	}[] = [
-			{
-				category: RecurringExpenseDefaultCategoriesEnum.SALARY,
-				types: [COMPONENT_TYPE.EMPLOYEE]
-			},
-			{
-				category: RecurringExpenseDefaultCategoriesEnum.SALARY_TAXES,
-				types: [COMPONENT_TYPE.EMPLOYEE]
-			},
-			{
-				category: RecurringExpenseDefaultCategoriesEnum.RENT,
-				types: [COMPONENT_TYPE.ORGANIZATION]
-			},
-			{
-				category: RecurringExpenseDefaultCategoriesEnum.EXTRA_BONUS,
-				types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
-			}
-		];
+		{
+			category: RecurringExpenseDefaultCategoriesEnum.SALARY,
+			types: [COMPONENT_TYPE.EMPLOYEE]
+		},
+		{
+			category: RecurringExpenseDefaultCategoriesEnum.SALARY_TAXES,
+			types: [COMPONENT_TYPE.EMPLOYEE]
+		},
+		{
+			category: RecurringExpenseDefaultCategoriesEnum.RENT,
+			types: [COMPONENT_TYPE.ORGANIZATION]
+		},
+		{
+			category: RecurringExpenseDefaultCategoriesEnum.EXTRA_BONUS,
+			types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
+		}
+	];
 	@Input() isAdd: boolean;
 	recurringExpense?: IRecurringExpenseModel;
 	componentType: COMPONENT_TYPE;
@@ -81,17 +82,17 @@ export class RecurringExpenseMutationComponent
 	selectedOrganization: IOrganization;
 
 	constructor(
-		private fb: FormBuilder,
-		protected dialogRef: NbDialogRef<RecurringExpenseMutationComponent>,
-		private organizationsService: OrganizationsService,
-		private store: Store,
-		private employeesService: EmployeesService,
+		private readonly fb: FormBuilder,
+		protected readonly dialogRef: NbDialogRef<RecurringExpenseMutationComponent>,
+		private readonly organizationsService: OrganizationsService,
+		private readonly store: Store,
+		private readonly employeesService: EmployeesService,
 		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
-		private translate: TranslateService,
+		private readonly translate: TranslateService,
 		private readonly toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService,
-		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
-		private employeeRecurringExpenseService: EmployeeRecurringExpenseService
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService,
+		private readonly employeeRecurringExpenseService: EmployeeRecurringExpenseService
 	) {
 		super(translate);
 	}
@@ -136,7 +137,25 @@ export class RecurringExpenseMutationComponent
 				value: i.category,
 				label: this.getTranslatedExpenseCategory(i.category)
 			}));
-
+		this.expenseCategoriesStore.expenseCategories$.subscribe(
+			(categories) => {
+				const storedCategories: {
+					label: string;
+					value: string;
+				}[] = [];
+				for (let category of categories) {
+					storedCategories.push({
+						value: category.name,
+						label: category.name
+					});
+				}
+				this.defaultFilteredCategories = [
+					...this.defaultFilteredCategories,
+					...storedCategories
+				];
+			}
+		);
+    this.expenseCategoriesStore.loadAll();
 		this._initializeForm(this.recurringExpense);
 	}
 
@@ -187,7 +206,7 @@ export class RecurringExpenseMutationComponent
 		return { value: term, label: term };
 	}
 
-	addNewCustomCategoryName = async (name: string): Promise<IExpenseCategory> => {
+	addNewCustomCategoryName = async (name: string): Promise<any> => {
 		try {
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
@@ -195,18 +214,11 @@ export class RecurringExpenseMutationComponent
 					name
 				}
 			);
-
       const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
-
-      this.defaultFilteredCategories = [
-        ...this.defaultFilteredCategories,
-        {
-          value: createdCategory.name,
-          label: createdCategory.name
-        }
-      ];
-
-			return createdCategory;
+			return {
+				value: createdCategory.name,
+				label: createdCategory.name
+			};
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}

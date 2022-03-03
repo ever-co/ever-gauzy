@@ -22,6 +22,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-picker/gauzy-range-picker.module';
+import { CounterPointModule } from '../../../@shared/counter-point/counter-point.module';
 
 @NgModule({
 	imports: [
@@ -44,7 +45,8 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		FiltersModule,
-    GauzyRangePickerModule
+    GauzyRangePickerModule,
+    CounterPointModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

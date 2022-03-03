@@ -15,6 +15,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, UsersService } from './../../../../@core/services';
 import { MATERIAL_LIGHT_THEME } from '../../../styles/material/theme.material-light';
 import { MATERIAL_DARK_THEME } from '../../../styles/material/theme.material-dark';
+import { GAUZY_LIGHT } from '../../../styles/gauzy/theme.gauzy-light';
+import { GAUZY_DARK } from '../../../styles/gauzy/theme.gauzy-dark';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,6 +26,8 @@ import { MATERIAL_DARK_THEME } from '../../../styles/material/theme.material-dar
 })
 export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	themes = [
+    { value: GAUZY_LIGHT.name, name: 'Gauzy Light'},
+    { value: GAUZY_DARK.name, name: 'Gauzy Dark'},
 		{ value: DEFAULT_THEME.name, name: 'SETTINGS_MENU.LIGHT' },
 		{ value: DARK_THEME.name, name: 'SETTINGS_MENU.DARK' },
 		{ value: COSMIC_THEME.name, name: 'SETTINGS_MENU.COSMIC' },
@@ -33,7 +37,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	];
 	componentLayouts = Object.keys(ComponentLayoutStyleEnum);
 
-	currentTheme = DEFAULT_THEME.name;
+	currentTheme = GAUZY_LIGHT.name;
 	currentLayout: string = ComponentLayoutStyleEnum.TABLE;
 
 	user: IUser;

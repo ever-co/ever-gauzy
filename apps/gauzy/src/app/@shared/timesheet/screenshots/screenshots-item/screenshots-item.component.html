@@ -17,7 +17,7 @@
 						</ng-container>
 						<button
 							class="ml-auto select-hidden"
-							status="danger"
+							status="basic"
 							nbButton
 							size="tiny"
 							(click)="$event.stopPropagation()"
@@ -25,7 +25,7 @@
 							[message]="'ACTIVITY.DELETE_CONFIRM' | translate"
 							(confirm)="deleteSlot(timeSlot)"
 						>
-							<nb-icon icon="trash-2-outline"></nb-icon>
+							<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 						</button>
 					</ng-container>
 				</div>
@@ -62,7 +62,7 @@
 				</span>
 			</ng-template>
 		</div>
-		<div class="slot-info text-center p-2">
+		<div class="slot-info text-left p-2">
 			<div class="time-span mb-3 mt-1">
 				{{ timeSlot.localStartedAt | timeFormat }} -
 				{{ timeSlot.localStoppedAt | timeFormat }}

@@ -51,6 +51,8 @@ export type Env = Readonly<{
 	CHAT_MESSAGE_GOOGLE_MAP: string;
 
 	GAUZY_CLOUD_APP: string;
+
+	FILE_PROVIDER: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -92,7 +94,9 @@ export const env: Env = cleanEnv(
 
 		CHATWOOT_SDK_TOKEN: str({ default: '' }),
 		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' }),
-		GAUZY_CLOUD_APP: str({ default: 'https://app.gauzy.co/#' })
+		GAUZY_CLOUD_APP: str({ default: 'https://app.gauzy.co/#' }),
+
+		FILE_PROVIDER: str({ default: 'WASABI' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

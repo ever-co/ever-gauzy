@@ -16,7 +16,9 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -29,6 +31,7 @@ import {
 	EmployeeRecurringExpenseDeleteCommand,
 	EmployeeRecurringExpenseEditCommand
 } from './commands';
+import { CreateEmployeeRecurringExpenseDTO, UpdateEmployeeRecurringExpenseDTO } from './dto';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import {
@@ -125,8 +128,9 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
-		@Body() entity: EmployeeRecurringExpense
+		@Body() entity: CreateEmployeeRecurringExpenseDTO
 	): Promise<IEmployeeRecurringExpense> {
 		return this.commandBus.execute(
 			new EmployeeRecurringExpenseCreateCommand(entity)
@@ -149,10 +153,11 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IRecurringExpenseEditInput
-	): Promise<IEmployeeRecurringExpense> {
+		@Body() entity: UpdateEmployeeRecurringExpenseDTO
+	): Promise<IRecurringExpenseEditInput> {
 		return await this.commandBus.execute(
 			new EmployeeRecurringExpenseEditCommand(id, entity)
 		);

@@ -1,120 +1,236 @@
 <form (ngSubmit)="submit()" #form="ngForm" aria-labelledby="title">
-<nb-card class="card-scroll">
-	<nb-card-header class="d-flex justify-content-between">
-		<h4>{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.FILE_STORAGE' | translate }}</h4>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="form-group">
-			<ng-template [ngIf]="fileStorageProviders.length > 0">
-				<label 
-					class="label cols-sm-3"
-					[innerText]="'SETTINGS_FILE_STORAGE.FILE_PROVIDER' | translate"
-				></label>
-				<nb-select
-					class="d-block"
-					size="medium"
-					[(selected)]="settings.fileStorageProvider"
-				>
-					<nb-option
-						*ngFor="let providerName of fileStorageProviders"
-						[value]="providerName.value"
+	<nb-card class="card-scroll">
+		<nb-card-header class="d-flex justify-content-between">
+			<h4>{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.FILE_STORAGE' | translate }}</h4>
+		</nb-card-header>
+		<nb-card-body>
+			<div class="form-group">
+				<ng-template [ngIf]="fileStorageProviders.length > 0">
+					<label 
+						class="label cols-sm-3"
+						[innerText]="'SETTINGS_FILE_STORAGE.FILE_PROVIDER' | translate"
+					></label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						[(selected)]="settings.fileStorageProvider"
 					>
-						{{ providerName?.label | titlecase }}
-					</nb-option>
-				</nb-select>
-			</ng-template>
-		</div>
-		<ng-template
-			[ngIf]="settings.fileStorageProvider == fileStorageProviderEnum.S3"
-		>
-			<nb-card>
-				<nb-card-header>
-					<h6>
-						{{ 'SETTINGS_FILE_STORAGE.S3_DETAILS' | translate }}
-					</h6>
-				</nb-card-header>
-				<nb-card-body>
-					<div class="form-group row">
-						<label class="label col-sm-3">{{
-							'SETTINGS_FILE_STORAGE.ACCESS_KEY_ID' | translate
-						}}</label>
-						<div class="col-sm-9">
-							<input
-								name="aws_access_key_id"
-								[(ngModel)]="settings.aws_access_key_id"
-								nbInput
-								fullWidth
-								class="w-100"
-								[placeholder]="
-									'SETTINGS_FILE_STORAGE.ACCESS_KEY_ID'
-										| translate
-								"
-								required
-							/>
-						</div>
-					</div>
-					<div class="form-group row">
-						<label class="label col-sm-3">{{
-							'SETTINGS_FILE_STORAGE.SECRET_ACCESS_KEY'
-								| translate
-						}}</label>
-						<div class="col-sm-9">
-							<input
-								name="aws_secret_access_key"
-								[(ngModel)]="settings.aws_secret_access_key"
-								nbInput
-								fullWidth
-								class="w-100"
-								[placeholder]="
-									'SETTINGS_FILE_STORAGE.SECRET_ACCESS_KEY'
-										| translate
-								"
-								required
-							/>
-						</div>
-					</div>
-					<div class="form-group row">
-						<label class="label col-sm-3">{{
-							'SETTINGS_FILE_STORAGE.REGION' | translate
-						}}</label>
-						<div class="col-sm-9">
-							<input
-								name="aws_default_region"
-								[(ngModel)]="settings.aws_default_region"
-								nbInput
-								fullWidth
-								class="w-100"
-								[placeholder]="
-									'SETTINGS_FILE_STORAGE.REGION' | translate
-								"
-							/>
-						</div>
-					</div>
-					<div class="form-group row">
-						<label class="label col-sm-3">{{
-							'SETTINGS_FILE_STORAGE.BUCKET' | translate
-						}}</label>
-						<div class="col-sm-9">
-							<input
-								name="aws_bucket"
-								[(ngModel)]="settings.aws_bucket"
-								nbInput
-								fullWidth
-								class="w-100"
-								[placeholder]="
-									'SETTINGS_FILE_STORAGE.BUCKET' | translate
-								"
-							/>
-						</div>
-					</div>
-				</nb-card-body>
-			</nb-card>
-		</ng-template>
-	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button class="mr-3" nbButton status="success" [disabled]="!form.valid">
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</nb-card-footer>
-</nb-card>
+						<nb-option
+							*ngFor="let providerName of fileStorageProviders"
+							[value]="providerName.value"
+						>
+							{{ providerName?.label | titlecase }}
+						</nb-option>
+					</nb-select>
+				</ng-template>
+			</div>
+			<ng-container [ngSwitch]="settings.fileStorageProvider">
+				<ng-container *ngSwitchCase="fileStorageProviderEnum.S3" [ngTemplateOutlet]="s3StorageFormTemplate"></ng-container>
+				<ng-container *ngSwitchCase="fileStorageProviderEnum.WASABI" [ngTemplateOutlet]="wasabiStorageFormTemplate"></ng-container>
+			</ng-container>
+		</nb-card-body>
+		<nb-card-footer class="text-right">
+			<button class="mr-3" nbButton status="success" [disabled]="!form.valid">
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
 </form>
+
+<ng-template #s3StorageFormTemplate>
+	<nb-card>
+		<nb-card-header>
+			<h6>
+				{{ 'SETTINGS_FILE_STORAGE.S3.HEADER' | translate }}
+			</h6>
+		</nb-card-header>
+		<nb-card-body>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="aws_access_key_id">{{
+					'SETTINGS_FILE_STORAGE.S3.LABELS.ACCESS_KEY_ID' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input
+						id="aws_access_key_id"
+						name="aws_access_key_id"
+						[(ngModel)]="settings.aws_access_key_id"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID' 
+								| translate
+						"
+						required
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="aws_secret_access_key">{{
+					'SETTINGS_FILE_STORAGE.S3.LABELS.SECRET_ACCESS_KEY' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input
+						id="aws_secret_access_key"
+						name="aws_secret_access_key"
+						[(ngModel)]="settings.aws_secret_access_key"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY' 
+								| translate
+						"
+						required
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="aws_default_region">{{
+					'SETTINGS_FILE_STORAGE.S3.LABELS.REGION' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input
+						id="aws_default_region"
+						name="aws_default_region"
+						[(ngModel)]="settings.aws_default_region"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION' 
+								| translate
+						"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="aws_bucket">{{
+					'SETTINGS_FILE_STORAGE.S3.LABELS.BUCKET' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input
+						id="aws_bucket"
+						name="aws_bucket"
+						[(ngModel)]="settings.aws_bucket"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET' 
+								| translate
+						"
+					/>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</ng-template>
+
+<ng-template #wasabiStorageFormTemplate>
+	<nb-card>
+		<nb-card-header>
+			<h6>
+				{{ 'SETTINGS_FILE_STORAGE.WASABI.HEADER' | translate }}
+			</h6>
+		</nb-card-header>
+		<nb-card-body>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="wasabi_aws_access_key_id">{{
+					'SETTINGS_FILE_STORAGE.WASABI.LABELS.ACCESS_KEY_ID' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input
+						name="wasabi_aws_access_key_id"
+						[(ngModel)]="settings.wasabi_aws_access_key_id"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.ACCESS_KEY_ID' 
+								| translate
+						"
+						required
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="wasabi_aws_secret_access_key">{{
+					'SETTINGS_FILE_STORAGE.WASABI.LABELS.SECRET_ACCESS_KEY' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input
+						id="wasabi_aws_secret_access_key"
+						name="wasabi_aws_secret_access_key"
+						[(ngModel)]="settings.wasabi_aws_secret_access_key"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SECRET_ACCESS_KEY' 
+								| translate
+						"
+						required
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="wasabi_aws_default_region">{{
+					'SETTINGS_FILE_STORAGE.WASABI.LABELS.REGION' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input
+						id="wasabi_aws_default_region"
+						name="wasabi_aws_default_region"
+						[(ngModel)]="settings.wasabi_aws_default_region"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.REGION' 
+								| translate
+						"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="wasabi_aws_service_url">{{
+					'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input	
+						id="wasabi_aws_service_url"
+						name="wasabi_aws_service_url"
+						[(ngModel)]="settings.wasabi_aws_service_url"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SERVICE_URL' 
+								| translate
+						"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3" for="wasabi_aws_bucket">{{
+					'SETTINGS_FILE_STORAGE.WASABI.LABELS.BUCKET' | translate
+				}}</label>
+				<div class="col-sm-9">
+					<input
+						id="wasabi_aws_bucket"
+						name="wasabi_aws_bucket"
+						[(ngModel)]="settings.wasabi_aws_bucket"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.BUCKET' 
+								| translate
+						"
+					/>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</ng-template>

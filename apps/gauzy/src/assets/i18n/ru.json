@@ -3668,11 +3668,38 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Поставщик файлов",
-		"S3_DETAILS": "Детали S3",
-		"ACCESS_KEY_ID": "ID ключа доступа",
-		"SECRET_ACCESS_KEY": "Секретный ключ доступа",
-		"REGION": "Регион",
-		"BUCKET": "Ведро"
+		"S3": {
+			"HEADER": "Конфигурация S3",
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID ключа доступа",
+				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
+				"REGION": "Регион",
+				"BUCKET": "Ведро"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID ключа доступа",
+				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
+				"REGION": "Регион",
+				"BUCKET": "Ведро"
+			}
+		},
+		"WASABI": {
+			"HEADER": "Wasabi Configuration",
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID ключа доступа",
+				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
+				"REGION": "Регион",
+				"BUCKET": "Ведро",
+				"SERVICE_URL": "URL-адрес сервиса"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID ключа доступа",
+				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
+				"REGION": "Регион",
+				"BUCKET": "Ведро",
+				"SERVICE_URL": "URL-адрес сервиса"
+			}
+		}
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Управление SMTP для '{{ name }}'",

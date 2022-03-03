@@ -2,9 +2,10 @@ import { readdir, mkdirSync, copyFileSync } from 'fs';
 import * as path from 'path';
 import { faker } from '@ever-co/faker';
 import * as moment from 'moment';
-import { environment as env } from '@gauzy/config';
-import { Screenshot } from '../../core/entities/internal';
 import { IPluginConfig } from '@gauzy/common';
+import { environment as env } from '@gauzy/config';
+import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { Screenshot } from '../../core/entities/internal';
 import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 
 let fileList: string[] = [];
@@ -87,6 +88,7 @@ export const createRandomScreenshot = async (
 		screenshot.thumbUrl = file;
 		screenshot.recordedAt = faker.date.between(startedAt, stoppedAt);
 		screenshot.deletedAt = null;
+		screenshot.storageProvider = FileStorageProviderEnum.LOCAL;
 		screenshots.push(screenshot);
 	}
 	return screenshots;

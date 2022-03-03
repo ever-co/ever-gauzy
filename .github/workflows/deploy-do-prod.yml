@@ -2,46 +2,12 @@ name: Deploy to DigitalOcean
 
 on:
     workflow_run:
-        workflows: ['Build and Publish Docker Images']
+        workflows: ['Build and Publish Docker Images Prod']
         branches: [master]
         types:
             - completed
 
 jobs:
-    deploy-demo:
-        runs-on: ubuntu-latest
-
-        environment: demo
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v2
-
-            - name: Install doctl
-              uses: digitalocean/action-doctl@v2
-              with:
-                  token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-            - name: Log in to DigitalOcean Container Registry with short-lived credentials
-              run: doctl registry login --expiry-seconds 600
-
-            - name: Save DigitalOcean kubeconfig with short-lived credentials
-              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-ever
-
-            - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
-              run: |
-                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.demo.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
-              env:
-                DB_NAME: 'gauzy_demo'
-                SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
-
-            # we need this step because for now we just use :latest tag
-            # note: for production we will use different strategy later
-            - name: Restart Pods to pick up :latest tag version
-              run: |
-                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-demo-api
-                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-demo-webapp
-
     deploy-prod:
         runs-on: ubuntu-latest
 
@@ -78,7 +44,7 @@ jobs:
                 DB_USER: '${{ secrets.DB_USER }}'
                 DB_PASS: '${{ secrets.DB_PASS }}'
                 DB_NAME: '${{ secrets.DB_NAME }}'
-                DB_PORT: '${{ secrets.DB_PORT }}'                
+                DB_PORT: '${{ secrets.DB_PORT }}'
                 DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
                 DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
                 SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
@@ -86,6 +52,11 @@ jobs:
                 AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
                 AWS_REGION: '${{ secrets.AWS_REGION }}'
                 AWS_S3_BUCKET: '${{ secrets.AWS_S3_BUCKET }}'
+                WASABI_ACCESS_KEY_ID: ${{ secrets.WASABI_ACCESS_KEY_ID }}'
+                WASABI_SECRET_ACCESS_KEY: ${{ secrets.WASABI_SECRET_ACCESS_KEY }}'
+                WASABI_REGION: ${{ secrets.WASABI_REGION }}'
+                WASABI_SERVICE_URL: ${{ secrets.WASABI_SERVICE_URL }}'
+                WASABI_S3_BUCKET: ${{ secrets.WASABI_S3_BUCKET }}'
                 EXPRESS_SESSION_SECRET: '${{ secrets.EXPRESS_SESSION_SECRET }}'
                 JWT_SECRET: '${{ secrets.JWT_SECRET }}'
                 CLOUDINARY_API_KEY: '${{ secrets.CLOUDINARY_API_KEY }}'
@@ -112,7 +83,7 @@ jobs:
                 UNLEASH_API_URL: '${{ secrets.UNLEASH_API_URL }}'
                 UNLEASH_INSTANCE_ID: '${{ secrets.UNLEASH_INSTANCE_ID }}'
                 UNLEASH_REFRESH_INTERVAL: '${{ secrets.UNLEASH_REFRESH_INTERVAL }}'
-                UNLEASH_METRICS_INTERVAL: '${{ secrets.UNLEASH_METRICS_INTERVAL }}'                
+                UNLEASH_METRICS_INTERVAL: '${{ secrets.UNLEASH_METRICS_INTERVAL }}'
                 KEYMETRICS_MACHINE_NAME: '${{ secrets.KEYMETRICS_MACHINE_NAME }}'
                 KEYMETRICS_SECRET_KEY: '${{ secrets.KEYMETRICS_SECRET_KEY }}'
                 KEYMETRICS_PUBLIC_KEY: '${{ secrets.KEYMETRICS_PUBLIC_KEY }}'
