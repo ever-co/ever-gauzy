@@ -58,4 +58,6 @@ export interface Environment {
 	CHAT_MESSAGE_GOOGLE_MAP: string;
 
 	GAUZY_CLOUD_APP: string;
+
+	FILE_PROVIDER: string;
 }

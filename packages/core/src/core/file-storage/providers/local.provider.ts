@@ -1,4 +1,4 @@
-import { FileStorageOption, UploadedFile } from '@gauzy/contracts';
+import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import * as multer from 'multer';
 import * as fs from 'fs';
 import * as moment from 'moment';
@@ -12,7 +12,7 @@ const config = getConfig();
 
 export class LocalProvider extends Provider<LocalProvider> {
 	static instance: LocalProvider;
-	name = 'local';
+	name = FileStorageProviderEnum.LOCAL;
 	tenantId = '';
 	config = {
 		rootPath: environment.isElectron
@@ -54,11 +54,11 @@ export class LocalProvider extends Provider<LocalProvider> {
 					dir = dest;
 				}
 
-				const user = RequestContext.currentUser();
+				const tenantId = RequestContext.currentTenantId();
 				const fullPath = join(
 					this.config.rootPath,
 					dir,
-					user ? user.tenantId : uuid()
+					tenantId || uuid()
 				);
 
 				fs.mkdirSync(fullPath, {

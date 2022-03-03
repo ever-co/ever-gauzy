@@ -18,7 +18,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 import { TenantSettingGetCommand, TenantSettingSaveCommand } from './commands';
-import { CreateTenantSettingDTO } from './dto/create-tenant-setting.dto';
+import { CreateTenantSettingDTO } from './dto';
 
 @ApiTags('TenantSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)

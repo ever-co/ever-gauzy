@@ -42,6 +42,16 @@ export const environment: IEnvironment = {
 		}
 	},
 
+	wasabiConfig: {
+		accessKeyId: process.env.WASABI_ACCESS_KEY_ID,
+		secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY,
+		region: process.env.WASABI_REGION,
+		serviceUrl: process.env.WASABI_SERVICE_URL,
+		s3: {
+			bucket: process.env.WASABI_S3_BUCKET || 'gauzy-screenshots'
+		}
+	},
+
 	facebookConfig: {
 		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
 		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',

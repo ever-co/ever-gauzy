@@ -1,6 +1,5 @@
-import { Controller, UseGuards, HttpStatus, Get, Query, ValidationPipe, UsePipes } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query, ValidationPipe, UsePipes, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { StatisticService } from './statistic.service';
 import {
 	IGetMembersStatistics,
 	IGetProjectsStatistics,
@@ -18,9 +17,12 @@ import {
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
 import { StatisticCountsDTO } from './dto';
+import { TransformInterceptor } from './../../core/interceptors';
+import { StatisticService } from './statistic.service';
 
 @ApiTags('TimesheetStatistic')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class StatisticController {
 	constructor(

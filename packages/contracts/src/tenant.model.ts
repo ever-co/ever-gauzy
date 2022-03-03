@@ -2,7 +2,8 @@ import { IImportRecord } from 'import-export.model';
 import { IFeatureOrganization } from './feature.model';
 import {
 	FileStorageProviderEnum,
-	S3FileStorageProviderConfig
+	IS3FileStorageProviderConfig,
+	IWasabiFileStorageProviderConfig
 } from './file-provider';
 import { IOrganization } from './organization.model';
 import { IRolePermission } from './role-permission.model';
@@ -28,6 +29,7 @@ export interface ITenantCreateInput {
 	userSourceId?: string;
 }
 
-export interface ITenantSetting extends S3FileStorageProviderConfig {
+export interface ITenantSetting 
+	extends IS3FileStorageProviderConfig, IWasabiFileStorageProviderConfig {
 	fileStorageProvider?: FileStorageProviderEnum;
 }

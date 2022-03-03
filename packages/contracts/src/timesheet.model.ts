@@ -12,6 +12,7 @@ import { ITask } from './task-entity.model';
 import { ITag } from './tag-entity.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
+import { FileStorageProviderEnum } from './file-provider';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
@@ -295,6 +296,7 @@ export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel {
 	fileUrl?: string;
 	thumbUrl?: string;
 	recordedAt?: Date;
+	storageProvider?: FileStorageProviderEnum
 }
 
 export interface IScreenshotMap {

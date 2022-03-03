@@ -1,7 +1,9 @@
 import { FileStorageOption, FileStorageProviderEnum } from '@gauzy/contracts';
-import * as Providers from './providers';
 import { environment } from '@gauzy/config';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
+import * as Providers from './providers';
 import { Provider } from './providers/provider';
+import { RequestContext } from './../../core/context';
 
 export class FileStorage {
 	providers: { [key: string]: Provider<any> } = {};
@@ -17,16 +19,28 @@ export class FileStorage {
 	setConfig(config: Partial<FileStorageOption> = {}) {
 		this.config = {
 			...this.config,
-			...config,
-			provider: (config.provider ||
-				environment.fileSystem.name) as FileStorageProviderEnum
+			...config
 		};
+		if (isEmpty(config.provider)) {
+			this.getProvider();
+		}
 		return this;
 	}
 
 	setProvider(providerName: FileStorageProviderEnum) {
-		if (providerName) {
-			this.config.provider = providerName;
+		if (isEmpty(providerName)) {
+			const request = RequestContext.currentRequest();
+			if (request && isNotEmpty(request['tenantSettings'])) {
+				this.config.provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
+			} else {
+				this.config.provider = (environment.fileSystem.name as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL);
+			}
+		} else {
+			if (Object.values(FileStorageProviderEnum).includes(providerName)) {
+				this.config.provider = providerName;
+			} else {
+				this.config.provider = FileStorageProviderEnum.LOCAL;
+			}
 		}
 		return this;
 	}
@@ -37,21 +51,19 @@ export class FileStorage {
 	}
 
 	storage(option?: FileStorageOption) {
-		let resp: any;
 		this.setConfig(option);
 		if (this.config.provider && this.providers[this.config.provider]) {
-			resp = this.providers[this.config.provider].handler(this.config);
+			return this.providers[this.config.provider].handler(this.config);
 		} else {
 			const provides = Object.values(FileStorageProviderEnum).join(', ');
-			throw new Error(
-				`Provider "${this.config.provider}" is not valid. Provider must be ${provides}`
-			);
+			throw new Error(`Provider "${this.config.provider}" is not valid. Provider must be ${provides}`);
 		}
-		return resp;
 	}
 
 	getProviderInstance(): Provider<any> {
-		return this.providers[this.config.provider].getInstance();
+		if (this.config.provider) {
+			return this.providers[this.config.provider].getInstance();
+		}
 	}
 
 	initProvider() {
@@ -64,8 +76,7 @@ export class FileStorage {
 
 					className.instance = provider;
 				} else {
-					this.providers[className.instance.name] =
-						className.instance;
+					this.providers[className.instance.name] = className.instance;
 				}
 			}
 		}

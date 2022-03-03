@@ -1,5 +1,5 @@
 import { gauzyToggleFeatures } from "@gauzy/config";
-import { FeatureStatusEnum } from "@gauzy/contracts";
+import { FeatureStatusEnum, FileStorageProviderEnum } from "@gauzy/contracts";
 import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
 import { shuffle } from 'underscore';
 import { FileStorage } from "./../core/file-storage";
@@ -31,7 +31,9 @@ export class FeatureSubscriber implements EntitySubscriberInterface<Feature> {
 		}
 
         if (entity.image) {
-			entity.imageUrl = new FileStorage().getProvider().url(entity.image);
+            const store = new FileStorage()
+            store.setProvider(FileStorageProviderEnum.LOCAL);
+			entity.imageUrl = store.getProviderInstance().url(entity.image);
 		}
     }
 }
