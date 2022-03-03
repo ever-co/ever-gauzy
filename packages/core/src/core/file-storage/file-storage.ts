@@ -1,6 +1,7 @@
 import { FileStorageOption, FileStorageProviderEnum } from '@gauzy/contracts';
-import * as Providers from './providers';
 import { environment } from '@gauzy/config';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
+import * as Providers from './providers';
 import { Provider } from './providers/provider';
 import { RequestContext } from './../../core/context';
 
@@ -25,9 +26,9 @@ export class FileStorage {
 	}
 
 	setProvider(providerName: FileStorageProviderEnum) {
-		if (!providerName) {
+		if (isEmpty(providerName)) {
 			const request = RequestContext.currentRequest();
-			if (request && request['tenantSettings']) {
+			if (request && isNotEmpty(request['tenantSettings'])) {
 				this.config.provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
 			} else {
 				this.config.provider = (environment.fileSystem.name as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL);

@@ -54,11 +54,11 @@ export class LocalProvider extends Provider<LocalProvider> {
 					dir = dest;
 				}
 
-				const user = RequestContext.currentUser();
+				const tenantId = RequestContext.currentTenantId();
 				const fullPath = join(
 					this.config.rootPath,
 					dir,
-					user ? user.tenantId : uuid()
+					tenantId || uuid()
 				);
 
 				fs.mkdirSync(fullPath, {
