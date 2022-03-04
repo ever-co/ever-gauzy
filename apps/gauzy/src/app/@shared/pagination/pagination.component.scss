@@ -20,7 +20,7 @@
       &.active span{
         color: nb-theme(text-primary-color);
         background-color: nb-theme(background-basic-color-3);
-        border-radius: 2rem;
+        border-radius: nb-theme(button-rectangle-border-radius);
       }
 
       span {
@@ -30,7 +30,7 @@
         padding: .75rem 1.1rem;
         border: none;
         &.icon{
-          box-shadow: 0px 1px 1px nb-theme(background-basic-color-4);
+          box-shadow: 1px 2px 2px nb-theme(background-basic-color-4);
           border-radius: 20px;
           padding: 0.5rem;
           display: flex;
@@ -46,4 +46,8 @@
         display: flex;
         align-items: center;
     }
+}
+nav{
+  display: flex;
+  justify-content: space-between;
 }

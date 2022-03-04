@@ -1,5 +1,5 @@
-<nav class=" mt-5">
-    <ul class="pagination">
+<nav class="d-flex justify-between align-items-center w-100 mt-5">
+    <ul class="pagination p-1">
         <li (click)="onChangePage(1)">
             <a href="#" aria-label="First"><span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrowhead-left-outline"></nb-icon></span><span
                     class="sr-only">First</span></a>
@@ -21,4 +21,14 @@
                 <span class="sr-only">Last</span></a>
         </li>
     </ul>
+    <div class="d-flex justify-between align-items-center pb-3">
+      <nb-select  [(selected)]="itemsPerPage">
+        <nb-option [value]="5">5</nb-option>
+        <nb-option [value]="10">10</nb-option>
+        <nb-option [value]="25">25</nb-option>
+        <nb-option [value]="50">50</nb-option>
+        <nb-option [value]="100">100</nb-option>
+      </nb-select>
+      <span>{{activePage}} - {{getPages().length}} of {{totalItems}} items</span>
+    </div>
 </nav>
