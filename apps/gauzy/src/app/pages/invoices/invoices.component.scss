@@ -102,10 +102,31 @@ button {
 }
 .remove-scroll {
   overflow: unset;
+  width: 100%;
+  padding: 1rem 0 1rem 0;
 }
 .actions{
   background-color: nb-theme(background-basic-color-4);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 0px 1px 0px 1px;
+}
+
+nb-accordion-item-header ::ng-deep nb-icon{
+  border: 1px solid nb-theme(border-basic-color-4);
+  border-radius: nb-theme(input-rectangle-border-radius);
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+ga-currency::ng-deep nb-select{
+  .select-button{
+    border-radius: nb-theme(input-rectangle-border-radius);
+  }
+}
+
+#inputStatus::ng-deep{
+  .select-button{
+    border-radius: nb-theme(input-rectangle-border-radius);
+  }
 }
 

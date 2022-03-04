@@ -61,8 +61,12 @@
 				tabId="search"
 				[tabId]="invoiceTabsEnum.SEARCH"
 			>
-				<form [formGroup]="searchForm" (ngSubmit)="search()">
-					<div class="row">
+        <nb-accordion>
+          <nb-accordion-item collapsed="false">
+            <nb-accordion-item-header>{{ (!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER') | translate }} {{ 'INVOICES_PAGE.SEARCH' | translate }}</nb-accordion-item-header>
+            <nb-accordion-item-body>
+          <form [formGroup]="searchForm" (ngSubmit)="search()">
+					<div class="row w-100">
 						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputInvoiceNumber" class="label">
@@ -80,23 +84,7 @@
 								/>
 							</div>
 						</div>
-						<div class="col-sm-4">
-							<div class="form-group">
-								<label for="inputOrganizationContact" class="label">
-									<span>{{
-										'INVOICES_PAGE.CONTACT' | translate
-									}}</span>
-								</label>
-								<ga-contact-select
-									[clearable]="true"
-									formControlName="organizationContact"
-									[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
-								></ga-contact-select>
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-sm-4">
+            <div class="col-sm-3">
 							<div class="form-group">
 								<label for="inputInvoiceDate" class="label">
 									<span> {{ ((!isEstimate) ? 'INVOICES_PAGE.INVOICE_DATE' : 'INVOICES_PAGE.ESTIMATE_DATE') | translate }} </span>
@@ -116,7 +104,7 @@
 								></nb-datepicker>
 							</div>
 						</div>
-						<div class="col-sm-4">
+						<div class="col-sm-3">
 							<div class="form-group">
 								<label for="inputDueDate" class="label">{{
 									'INVOICES_PAGE.DUE_DATE' | translate
@@ -134,7 +122,21 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-sm-4">
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="inputOrganizationContact" class="label">
+									<span>{{
+										'INVOICES_PAGE.CONTACT' | translate
+									}}</span>
+								</label>
+								<ga-contact-select
+									[clearable]="true"
+									formControlName="organizationContact"
+									[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+								></ga-contact-select>
+							</div>
+						</div>
+            <div class="col-sm-2">
 							<div class="form-group">
 								<label for="inputTotalValue" class="label">
 									{{
@@ -151,7 +153,7 @@
 								/>
 							</div>
 						</div>
-						<div class="col-sm-4">
+            <div class="col-sm-2">
 							<div class="form-group">
 								<ga-currency
 									formControlName="currency"
@@ -161,9 +163,15 @@
 								</ga-currency>
 							</div>
 						</div>
-					</div>
-					<div class="row">
-						<div class="col-sm-4">
+            <div class="col-sm-2">
+							<ga-tags-color-input
+								[selectedTags]="searchForm.get('tags').value"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
+            <div class="col-sm-2">
 							<div class="form-group">
 								<label for="inputStatus" class="label">
 									{{ 'INVOICES_PAGE.STATUS' | translate }}
@@ -208,31 +216,25 @@
 								</nb-select>
 							</div>
 						</div>
-						<div class="col-sm-4">
-							<ga-tags-color-input
-								[selectedTags]="searchForm.get('tags').value"
-								(selectedTagsEvent)="selectedTagsEvent($event)"
-								[isOrgLevel]="true"
-							>
-							</ga-tags-color-input>
-						</div>
 					</div>
 					<div class="row">
-						<div class="col-sm-4">
+						<div>
 							<button
 								type="submit"
-								class="mr-3"
 								status="success"
+                class="ml-3"
+                size="small"
 								nbButton
 							>
 								{{ 'BUTTONS.SEARCH' | translate }}
 							</button>
 						</div>
-						<div class="col-sm-4">
+						<div>
 							<button
 								type="reset"
-								class="mr-3"
-								status="info"
+								status="basic"
+                outline
+                size="small"
 								nbButton
 								(click)="reset()"
 							>
@@ -241,6 +243,9 @@
 						</div>
 					</div>
 				</form>
+            </nb-accordion-item-body>
+           </nb-accordion-item>
+        </nb-accordion>
 			</nb-tab>
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate"
