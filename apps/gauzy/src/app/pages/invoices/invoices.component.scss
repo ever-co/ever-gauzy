@@ -139,6 +139,12 @@ ga-currency::ng-deep nb-select{
   }
 }
 
+ga-pagination{
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
 .comments{
   overflow-y: scroll;
   height: 15rem;
