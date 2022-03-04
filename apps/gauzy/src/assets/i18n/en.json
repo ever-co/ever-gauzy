@@ -3788,5 +3788,8 @@
 			"TITLE": "Login Automatically into Demo accounts",
 			"SUB_TITLE": "Please select account type below."
 		}
-	}
+	},
+  "PAGINATION":{
+    "ITEMS":"Items"
+  }
 }
