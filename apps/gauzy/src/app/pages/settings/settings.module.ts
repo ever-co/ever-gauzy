@@ -24,7 +24,6 @@ import { EmailFiltersComponent } from './email-history/email-filters/email-filte
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmailTemplatesModule } from '../email-templates/email-templates.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { FileStorageComponent } from './file-storage/file-storage.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
@@ -61,7 +60,6 @@ import { SharedModule } from '../../@shared/shared.module';
 		SharedModule,
 	],
 	declarations: [
-		FileStorageComponent,
 		SettingsComponent,
 		DangerZoneComponent,
 		EmailHistoryComponent,

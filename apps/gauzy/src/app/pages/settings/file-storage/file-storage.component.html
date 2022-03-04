@@ -30,7 +30,12 @@
 			</ng-container>
 		</nb-card-body>
 		<nb-card-footer class="text-right">
-			<button class="mr-3" nbButton status="success" [disabled]="!form.valid">
+			<button
+				type="submit"
+				class="mr-2"
+				nbButton
+				status="success"
+			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</nb-card-footer>
