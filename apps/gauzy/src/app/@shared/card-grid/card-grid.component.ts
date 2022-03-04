@@ -31,7 +31,6 @@ export class CardGridComponent extends TranslationBaseComponent
 	ngOnInit(): void {}
 
 	getKeys() {
-    console.log(Object.keys(this.settings.columns));
 		return Object.keys(this.settings.columns);
 	}
 
