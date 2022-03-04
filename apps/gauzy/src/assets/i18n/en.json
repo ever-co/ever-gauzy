@@ -3174,7 +3174,8 @@
 			"RECURRING_EXPENSE_DELETED": "Recurring expense was removed for '{{ name }}'",
 			"IMAGE_UPDATED": "The image has been updated",
 			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'",
-			"SCREENSHOT_DELETED": "Screenshot for '{{ name }}' removed from '{{ organization }}'"
+			"SCREENSHOT_DELETED": "Screenshot for '{{ name }}' removed from '{{ organization }}'",
+			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully"
 		}
 	},
 	"ACCEPT_INVITE": {

@@ -122,3 +122,4 @@ export * from './users-organizations.service';
 export * from './users.service';
 export * from './warehouse.service';
 export * from './gauzy-cloud.service';
+export * from './file-storage.service';
