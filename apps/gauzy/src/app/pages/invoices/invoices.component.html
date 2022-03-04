@@ -250,14 +250,35 @@
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate"
 				[tabId]="invoiceTabsEnum.HISTORY"
+        class="remove-scroll"
 			>
-				<ng-container *ngIf="selectedInvoice">
+        <nb-accordion>
+        <nb-accordion-item collapsed="false">
+          <nb-accordion-item-header>
+            {{ (!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER') | translate }} {{ 'INVOICES_PAGE.COMMENTS' | translate }}
+          </nb-accordion-item-header>
+          <nb-accordion-item-body>
+				<nb-list-item *ngIf="disableButton" class="history-list-select">
+					{{ ((!isEstimate) ? 'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY' : 'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY') | translate }}
+				</nb-list-item>
+          <div class="row">
+            <div class="col-6">
+              <ng-container *ngIf="selectedInvoice">
+                {{ 'INVOICES_PAGE.COMMENT' | translate }}
 					<form
 						[formGroup]="historyForm"
 						#historyFormDirective="ngForm"
 						(ngSubmit)="addComment(historyFormDirective)"
 					>
-						<div class="col-3 px-0">
+            <div class="col-8 mt-3 px-0">
+              <input
+                nbInput
+                type="text"
+                placeholder="Title"
+                fullWidth
+                >
+            </div>
+						<div class="col px-0 mt-3">
 							<textarea
 								nbInput
 								placeholder="Comment"
@@ -278,11 +299,11 @@
 						</div>
 					</form>
 				</ng-container>
-
-				<nb-list-item *ngIf="disableButton" class="history-list-select">
-					{{ ((!isEstimate) ? 'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY' : 'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY') | translate }}
-				</nb-list-item>
-				<nb-list *ngIf="!disableButton" class="history-list">
+            </div>
+            <div *ngIf="!disableButton" class="col-6">
+              {{ 'INVOICES_PAGE.COMMENTS' | translate }}
+              <div class="comments w-100">
+               <nb-list class="history-list">
 					<nb-list-item
 						*ngFor="let history of histories"
 						class="history-list-item"
@@ -290,17 +311,30 @@
 					>
 						<div class="d-flex">
 							<div>
-								<div class="history-item">
-									<span class="history-action">{{ history.action }}</span>
-									- {{ history.user.name }}
-								</div>
-								<div class="history-date history-item">
+                <ngx-avatar
+                  size="sm"
+                  [src]="history.user.imageUrl"
+                  [name]="history.user.name"
+                  [value]="history.user"
+                  ></ngx-avatar>
+                <div class="history-date history-item">
 									{{ history.createdAt | dateTimeFormat }}
 								</div>
+								<div class="history-item">
+									<span class="history-action">{{ history.action }}</span>
+								</div>
+
 							</div>
 						</div>
 					</nb-list-item>
 				</nb-list>
+              </div>
+
+            </div>
+          </div>
+          </nb-accordion-item-body>
+        </nb-accordion-item>
+        </nb-accordion>
 			</nb-tab>
 		</nb-tabset>
 		<ng-template

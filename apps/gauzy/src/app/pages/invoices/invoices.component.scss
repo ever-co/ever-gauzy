@@ -52,7 +52,6 @@
 }
 
 .history-list {
-  width: 50%;
   margin: 20px 0;
 }
 
@@ -128,5 +127,20 @@ ga-currency::ng-deep nb-select{
   .select-button{
     border-radius: nb-theme(input-rectangle-border-radius);
   }
+}
+
+:host ngx-avatar::ng-deep{
+  background-color: nb-theme(color-primary-transparent-100);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  padding: 3px 9px 3px 3px;
+  &.link-text{
+    color: nb-theme(text-primary-color);
+    font-weight: normal;
+  }
+}
+
+.comments{
+  overflow-y: scroll;
+  height: 15rem;
 }
 
