@@ -2449,6 +2449,8 @@
 		}
 	},
 	"INVOICES_PAGE": {
+    "COMMENT":"Comment",
+    "COMMENTS":"Comments",
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
