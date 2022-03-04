@@ -30,7 +30,27 @@
 			</ng-container>
 		</nb-card-body>
 		<nb-card-footer class="text-right">
-			<button class="mr-3" nbButton status="success" [disabled]="!form.valid">
+			<ng-container *ngIf="settings.fileStorageProvider === fileStorageProviderEnum.WASABI">
+				<button
+					type="button"
+					class="mr-2"
+					nbButton
+					status="primary"
+					[disabled]="
+						!settings?.wasabi_aws_access_key_id || 
+						!settings.wasabi_aws_secret_access_key
+					"
+					(click)="validateWasabi()"
+				>
+					{{ 'BUTTONS.VALIDATE' | translate }}
+				</button>
+			</ng-container>
+			<button
+				type="submit"
+				class="mr-2"
+				nbButton
+				status="success"
+			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</nb-card-footer>

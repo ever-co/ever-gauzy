@@ -18,7 +18,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 import { TenantSettingGetCommand, TenantSettingSaveCommand } from './commands';
-import { CreateTenantSettingDTO } from './dto';
+import { CreateTenantSettingDTO, WasabiS3ProviderConfigDTO } from './dto';
 
 @ApiTags('TenantSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -74,5 +74,26 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		return await this.commandBus.execute(
 			new TenantSettingSaveCommand(entity)
 		);
+	}
+
+	@ApiOperation({
+		summary: 'Wasabi file storage configuration validator.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Wasabi file storage configuration validated successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@Permissions(PermissionsEnum.TENANT_SETTING)
+	@Post('wasabi/validate')
+	async validateWasabiConfiguration(
+		@Body() entity: WasabiS3ProviderConfigDTO
+	) {
+		console.log(entity);	
 	}
 }

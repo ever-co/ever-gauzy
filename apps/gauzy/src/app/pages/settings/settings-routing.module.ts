@@ -97,20 +97,10 @@ const routes: Routes = [
 			},
 			{
 				path: 'file-storage',
-				component: FileStorageComponent,
-				canActivate: [NgxPermissionsGuard],
-				data: {
-					permissions: {
-						only: [PermissionsEnum.FILE_STORAGE_VIEW],
-						redirectTo: '/pages/settings'
-					},
-					selectors: {
-						project: false,
-						employee: false,
-						organization: false,
-						date: false
-					}
-				}
+				loadChildren: () => 
+					import('./file-storage/file-storage.module').then(
+						(m) => m.FileStorageModule
+					)
 			},
 			{
 				path: 'danger-zone',

@@ -4,7 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { filter, tap } from 'rxjs/operators';
-import { Store, TenantService, ToastrService } from '../../../@core/services';
+import { FileStorageService, Store, TenantService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { environment } from './../../../../environments/environment';
 
@@ -12,7 +12,7 @@ import { environment } from './../../../../environments/environment';
 @Component({
 	selector: 'ga-file-storage',
 	templateUrl: './file-storage.component.html',
-	providers: [TenantService]
+	providers: [FileStorageService, TenantService]
 })
 export class FileStorageComponent
 	extends TranslationBaseComponent
@@ -26,6 +26,7 @@ export class FileStorageComponent
 	constructor(
 		public readonly translate: TranslateService,
 		private readonly tenantService: TenantService,
+		private readonly fileStorageService: FileStorageService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store
 	) {
@@ -124,6 +125,15 @@ export class FileStorageComponent
 			wasabi_aws_default_region: 'us-east-1',
 			wasabi_aws_service_url: 's3.wasabisys.com',
 			wasabi_aws_bucket: 'gauzy'
+		}
+	}
+
+	async validateWasabi() {
+		try {
+			await this.fileStorageService.validateWasabiCredentials(this.settings);
+			console.log(this.fileStorageService, this.settings);
+		} catch (error) {
+			this.toastrService.danger(error);
 		}
 	}
 }
