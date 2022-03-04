@@ -13,18 +13,16 @@
 			</h4>
 		</div>
 		<div>
-			<ga-layout-selector
-				[componentName]="viewComponentName"
-			></ga-layout-selector>
+      <div>
+        <button nbButton nbPopoverPlacement="bottom" [nbPopover]="settingsPopover" nbPopoverTrigger="noop"
+          (click)="toggleTableSettingsPopover()" size="small">
+          <nb-icon icon="settings-2-outline"></nb-icon>
+        </button>
+      </div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-tabset (changeTab)="onChangeTab($event)">
-			<nb-tab
-				[tabTitle]="'INVOICES_PAGE.ACTIONS' | translate"
-				[tabId]="invoiceTabsEnum.ACTIONS"
-			>
-				<ng-template
+    <ng-template
 					[ngxPermissionsOnly]="['INVOICES_EDIT', 'INVOICES_VIEW']"
 				>
 					<div class="mb-3">
@@ -34,60 +32,28 @@
 									nbButton
 									status="success"
 									(click)="add()"
-									class="mr-2"
+                  size = "small"
 								>
 									<nb-icon icon="plus-outline"> </nb-icon>
 									{{ 'BUTTONS.ADD' | translate }}
 								</button>
 								<ng-container
-									*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+
 								>
 									<ng-container
 										*ngTemplateOutlet="actionButtons"
 									></ng-container>
 								</ng-container>
 							</ng-template>
-							<ng-template ngxPermissionsOnly="INVOICES_VIEW">
-								<button
-									nbButton
-									status="info"
-									(click)="view()"
-									class="mr-2"
-									[disabled]="disableButton"
-								>
-									<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-									{{ 'BUTTONS.VIEW' | translate }}
-								</button>
-							</ng-template>
-							<div *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-									<button
-									nbButton
-									nbPopoverPlacement="bottom"
-									[nbPopover]="actionsPopover"
-									nbPopoverTrigger="noop"
-									(click)="toggleActionsPopover()"
-								>
-									<nb-icon
-										icon="more-vertical-outline"
-									></nb-icon>
-								</button>
-							</div>
-							<div>
-								<button
-									nbButton
-									nbPopoverPlacement="bottom"
-									[nbPopover]="settingsPopover"
-									nbPopoverTrigger="noop"
-									(click)="toggleTableSettingsPopover()"
-								>
-									<nb-icon
-										icon="settings-2-outline"
-									></nb-icon>
-								</button>
-							</div>
+              <ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
 						</div>
 					</div>
-				</ng-template>
+		</ng-template>
+		<nb-tabset (changeTab)="onChangeTab($event)">
+			<nb-tab
+				[tabTitle]="'INVOICES_PAGE.ACTIONS' | translate"
+				[tabId]="invoiceTabsEnum.ACTIONS"
+			>
 			</nb-tab>
 			<nb-tab
 				class="remove-scroll"
@@ -332,7 +298,6 @@
 				</nb-list>
 			</nb-tab>
 		</nb-tabset>
-
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
@@ -381,40 +346,23 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="btn-group">
+	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
-			<button
-				nbButton
-				status="info"
-				(click)="edit(selectedItem)"
-				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="info"
-				(click)="download(selectedItem)"
-				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon icon="download-outline"></nb-icon>
-				{{ 'BUTTONS.DOWNLOAD' | translate }}
-			</button>
-			<nb-select
+      <button *ngIf="isEstimate" nbButton status="info" (click)="convert(selectedItem)" class="mr-2"
+        [disabled]="!selectedItem && disableButton" size="small">
+        <nb-icon icon="swap"> </nb-icon>
+        {{ 'BUTTONS.TO_INVOICE' | translate }}
+      </button>
+      <nb-select
 				filled
-				status="info"
-				class="mr-2"
+				status="basic"
+				class="mr-2 ml-1"
 				*ngIf="!isEstimate"
 				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
-				[size]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID ? 'tiny' : 'medium'"
+				[size]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID ? 'small' : 'small'"
 			>
 				<nb-option
 					*ngFor="let status of invoiceStatusTypes"
@@ -425,14 +373,14 @@
 			</nb-select>
 			<nb-select
 				filled
-				status="info"
+				status="basic"
 				class="mr-2"
 				*ngIf="isEstimate"
 				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
-				[size]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID ? 'tiny' : 'medium'"
+				[size]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID ? 'small' : 'small'"
 			>
 				<nb-option
 					*ngFor="let status of estimateStatusTypes"
@@ -441,46 +389,47 @@
 					{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
 				</nb-option>
 			</nb-select>
-		</ng-template>
-		<button
-			nbButton
-			[nbContextMenu]="settingsContextMenu"
-			nbContextMenuPlacement="top"
-			(click)="selectMenu(selectedItem)"
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
-			[ngStyle]="{ transform: 'scale(0.65)' }"
-		>
-			<nb-icon class="icons" icon="settings-2-outline"></nb-icon>
-		</button>
-	</div>
-
-	<button
-		*ngIf="!isEstimate && dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+      <ng-template ngxPermissionsOnly="INVOICES_VIEW">
+        <button nbButton status="basic" (click)="view()" class="mr-2" [disabled]="disableButton" size="small">
+          <nb-icon icon="eye-outline" pack="eva"></nb-icon>
+          {{ 'BUTTONS.VIEW' | translate }}
+        </button>
+      </ng-template>
+      <button nbButton status="info" (click)="edit(selectedItem)" class="mr-2" [disabled]="!selectedItem && disableButton"
+        size="small">
+        <nb-icon icon="edit-outline"></nb-icon>
+        {{ 'BUTTONS.EDIT' | translate }}
+      </button>
+      <button nbButton status="basic" (click)="download(selectedItem)" class="mr-2"
+        [disabled]="!selectedItem && disableButton" size="small">
+        <nb-icon icon="download-outline"></nb-icon>
+        {{ 'BUTTONS.DOWNLOAD' | translate }}
+      </button>
+      </ng-template>
+    <button *ngIf="!isEstimate"
 		nbButton
-		status="info"
+		status="basic"
 		(click)="payments()"
 		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
+		size = "small"
 	>
 		<nb-icon icon="clipboard-outline"></nb-icon>
 		{{ 'BUTTONS.PAYMENTS' | translate }}
 	</button>
-	<button
-		*ngIf="isEstimate && dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-		nbButton
-		status="info"
-		(click)="convert(selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon icon="swap"> </nb-icon>
-		{{ 'BUTTONS.CONVERT_TO_INVOICE' | translate }}
-	</button>
+  <div>
+    <button nbButton nbPopoverPlacement="bottom" [nbPopover]="actionsPopover" nbPopoverTrigger="noop"
+      (click)="toggleActionsPopover()" size="small">
+      <nb-icon icon="more-vertical-outline"></nb-icon>
+    </button>
+    <button nbButton status="basic" (click)="delete()" [disabled]="disableButton" size="small">
+      <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+    </button>
+  </div>
+  </div>
 </ng-template>
 
-<ng-template #settingsPopover>
+<ng-template #actionsPopover>
 	<div class="popover-container">
 		<div class="show-columns" *ngIf="columns">
 			<label class="show-columns-label label">
@@ -538,9 +487,9 @@
 	</div>
 </ng-template>
 
-<ng-template #actionsPopover>
+<ng-template #settingsPopover>
 	<div class="popover-container d-flex flex-column">
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+		<ng-container>
 			<button
 				nbButton
 				status="info"

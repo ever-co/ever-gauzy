@@ -41,6 +41,10 @@
 .actions-container {
   display: flex;
   flex-wrap: wrap;
+  position: absolute;
+  align-items: center;
+  right: 0;
+  padding: 1rem;
 }
 
 .show-columns-select {
@@ -98,5 +102,10 @@ button {
 }
 .remove-scroll {
   overflow: unset;
+}
+.actions{
+  background-color: nb-theme(background-basic-color-4);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  padding: 0px 1px 0px 1px;
 }
 
