@@ -368,6 +368,7 @@
 			>
 				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination
+            (selectedOption)="OnUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
 						[totalItems]="pagination?.totalItems"

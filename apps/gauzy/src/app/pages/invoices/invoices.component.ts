@@ -1125,6 +1125,13 @@ export class InvoicesComponent
 	 * On Changed Currency Event Emitter
 	 */
 	currencyChanged($event: ICurrency) { }
-
+  /**
+   * On change number of item per page option
+   * @param $event is a number
+   */
+   OnUpdateOption($event: number){
+    this.perPage = $event;
+    this.showPerPage();
+  }
 	ngOnDestroy() { }
 }
