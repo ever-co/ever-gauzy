@@ -28,15 +28,21 @@ export class FileStorage {
 	}
 
 	setProvider(providerName: FileStorageProviderEnum) {
+		const providers = Object.values(FileStorageProviderEnum);
 		if (isEmpty(providerName)) {
 			const request = RequestContext.currentRequest();
 			if (request && isNotEmpty(request['tenantSettings'])) {
-				this.config.provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
+				const provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
+				if (providers.includes(provider)) {
+					this.config.provider = provider;
+				} else {
+					this.config.provider = provider.toUpperCase() as FileStorageProviderEnum;
+				}
 			} else {
 				this.config.provider = (environment.fileSystem.name as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL);
 			}
 		} else {
-			if (Object.values(FileStorageProviderEnum).includes(providerName)) {
+			if (providers.includes(providerName)) {
 				this.config.provider = providerName;
 			} else {
 				this.config.provider = FileStorageProviderEnum.LOCAL;
