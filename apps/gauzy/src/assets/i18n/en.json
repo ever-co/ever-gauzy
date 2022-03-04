@@ -57,6 +57,7 @@
 		"SELECT": "Select",
 		"EMAIL": "Email",
 		"CONVERT_TO_INVOICE": "Convert to invoice",
+    "TO_INVOICE":"To invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
