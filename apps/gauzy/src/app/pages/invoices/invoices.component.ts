@@ -1040,14 +1040,14 @@ export class InvoicesComponent
 	}
 
 	toggleActionsPopover() {
-		this.popups.first.toggle();
-		this.popups.last.hide();
+		this.popups.last.toggle();
+		this.popups.first.hide();
 	}
 
 	toggleTableSettingsPopover() {
-		this.popups.last.toggle();
+		this.popups.first.toggle();
 		if (this.popups.length > 1) {
-			this.popups.first.hide();
+			this.popups.last.hide();
 		}
 	}
 
