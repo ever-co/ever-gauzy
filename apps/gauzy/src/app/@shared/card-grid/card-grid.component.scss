@@ -18,6 +18,9 @@
       background-color: nb-theme(background-basic-color-3);
       border-radius: 0.5rem;
       padding: 12px 10px;
+      &.active{
+        box-shadow: nb-theme(color-primary-active-border) 0px 1px 2px 0px, nb-theme(color-primary-hover-border) 0px 1px 3px 1px;
+      }
     }
     &:hover {
       border-color: nb-theme(color-primary-hover-border);
