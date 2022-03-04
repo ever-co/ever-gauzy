@@ -3173,7 +3173,8 @@
 			"RECURRING_EXPENSE_DELETED": "Повторяющиеся расходы были удалены для '{{ name }}'",
 			"IMAGE_UPDATED": "Изображение было обновлено",
 			"ORGANIZATION_PAGE_UPDATED": "Страница была изменена для '{{ name }}'",
-			"SCREENSHOT_DELETED": "Скриншот для '{{ name }}' ' удален из '{{ organization }}'"
+			"SCREENSHOT_DELETED": "Скриншот для '{{ name }}' ' удален из '{{ organization }}'",
+			"BUCKET_CREATED": "'{{ bucket }}' для '{{ region }}' был успешно создан"
 		}
 	},
 	"ACCEPT_INVITE": {
