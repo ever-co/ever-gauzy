@@ -1,12 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsString, IsUrl, ValidateIf } from "class-validator";
-import { FileStorageProviderEnum } from "@gauzy/contracts";
+import { FileStorageProviderEnum, IWasabiFileStorageProviderConfig } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
 
 /**
  * Wasabi S3 FileStorage Provider Configuration DTO validation
  */
-export class WasabiS3ProviderConfigDTO {
+export class WasabiS3ProviderConfigDTO implements IWasabiFileStorageProviderConfig {
 	
 	@ApiProperty({ type: () => String })
 	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)

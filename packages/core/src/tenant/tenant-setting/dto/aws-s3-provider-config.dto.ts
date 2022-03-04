@@ -1,12 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsString, ValidateIf } from "class-validator";
-import { FileStorageProviderEnum } from "@gauzy/contracts";
+import { FileStorageProviderEnum, IS3FileStorageProviderConfig } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
 
 /**
  * Aws S3 FileStorage Provider Configuration DTO validation
  */
-export class AwsS3ProviderConfigDTO {
+export class AwsS3ProviderConfigDTO implements IS3FileStorageProviderConfig {
 	
 	@ApiProperty({ type: () => String })
 	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)

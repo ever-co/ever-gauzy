@@ -66,7 +66,6 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	@Permissions(PermissionsEnum.TENANT_SETTING)
 	@Post()
 	async saveSettings(
 		@Body() entity: CreateTenantSettingDTO
@@ -89,11 +88,10 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	@Permissions(PermissionsEnum.TENANT_SETTING)
 	@Post('wasabi/validate')
 	async validateWasabiConfiguration(
 		@Body() entity: WasabiS3ProviderConfigDTO
-	) {
-		console.log(entity);	
+	): Promise<void | any> {
+		return await this.tenantSettingService.verifyWasabiConfiguration(entity);
 	}
 }

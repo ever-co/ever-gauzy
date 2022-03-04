@@ -92,6 +92,18 @@ export class FileStorageComponent
 					'wasabi_aws_access_key_id', 'wasabi_aws_secret_access_key',
 					'wasabi_aws_default_region', 'wasabi_aws_service_url', 'wasabi_aws_bucket'
 				]);
+
+				try {
+					await this.fileStorageService.validateWasabiCredentials(this.settings);
+					this.toastrService.success('TOASTR.MESSAGE.BUCKET_CREATED', {
+						bucket: `${this.settings.wasabi_aws_bucket}`,
+						region: `${this.settings.wasabi_aws_default_region}`
+					});
+				} catch (error) {
+					this.toastrService.danger(error);
+					return;
+				}
+
 			} else {
 				settings = {
 					fileStorageProvider: FileStorageProviderEnum.S3,
@@ -125,15 +137,6 @@ export class FileStorageComponent
 			wasabi_aws_default_region: 'us-east-1',
 			wasabi_aws_service_url: 's3.wasabisys.com',
 			wasabi_aws_bucket: 'gauzy'
-		}
-	}
-
-	async validateWasabi() {
-		try {
-			await this.fileStorageService.validateWasabiCredentials(this.settings);
-			console.log(this.fileStorageService, this.settings);
-		} catch (error) {
-			this.toastrService.danger(error);
 		}
 	}
 }
