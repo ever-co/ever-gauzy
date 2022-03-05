@@ -57,6 +57,7 @@
 		"SELECT": "Select",
 		"EMAIL": "Email",
 		"CONVERT_TO_INVOICE": "Convert to invoice",
+    "TO_INVOICE":"To invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
@@ -933,6 +934,8 @@
 		"CORPORATE": "Corporate",
     "MATERIAL_LIGHT_THEME": "Material Light",
     "MATERIAL_DARK_THEME":"Material Dark",
+    "GAUZY_LIGHT":"Gauzy Light",
+    "GAUZY_DARK":"Gauzy Dark",
 		"LANGUAGE": "Language",
 		"ENGLISH": "English",
 		"BULGARIAN": "Bulgarian",
@@ -2446,6 +2449,8 @@
 		}
 	},
 	"INVOICES_PAGE": {
+    "COMMENT":"Comment",
+    "COMMENTS":"Comments",
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
@@ -3783,5 +3788,8 @@
 			"TITLE": "Login Automatically into Demo accounts",
 			"SUB_TITLE": "Please select account type below."
 		}
-	}
+	},
+  "PAGINATION":{
+    "ITEMS":"Items"
+  }
 }

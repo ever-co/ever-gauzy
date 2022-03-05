@@ -11,6 +11,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
+import { CounterPointModule } from '../../counter-point/counter-point.module';
 
 @NgModule({
 	declarations: [DailyStatisticsComponent],
@@ -24,7 +25,8 @@ import { FiltersModule } from '../../timesheet/filters/filters.module';
 		NbCardModule,
 		FiltersModule,
 		NbSelectModule,
-		FormsModule
+		FormsModule,
+    CounterPointModule
 	]
 })
 export class DailyStatisticsModule {}

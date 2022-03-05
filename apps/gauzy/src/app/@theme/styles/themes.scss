@@ -162,7 +162,7 @@ $nb-themes: nb-register-theme((
       scrollbar-background-color: background-basic-color-2,
       button-rectangle-border-radius: 2rem,
       scrollbar-width: 0.3125rem,
-      shadow: 0px 1px 1px rgba(0, 0, 0, 0.15),
+      shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px,
       divider-color: border-basic-color-3,
       checkbox-border-radius: 1rem,
       divider-style: solid,
@@ -170,6 +170,9 @@ $nb-themes: nb-register-theme((
       tabset-tab-active-underline-color: background-basic-color-1,
       tabset-tab-active-background-color: background-basic-color-1,
       tabset-border-radius: 0.5rem,
+      select-rectangle-border-radius: 2rem,
+      tabset-tab-hover-underline-color: background-basic-color-1,
+      tabset-tab-focus-underline-color: background-basic-color-1
   ),
   gauzy-light,
   default
@@ -194,7 +197,7 @@ $nb-themes: nb-register-theme(
      scrollbar-color: background-basic-color-4,
      scrollbar-background-color: background-basic-color-2,
      scrollbar-width: 0.3125rem,
-     shadow: 0px 1px 1px rgba(0, 0, 0, 0.15),
+     shadow: rgba(0, 0, 0, 0.733) 0px 4px 8px -2px,
      divider-color: border-basic-color-3,
      button-rectangle-border-radius: 2rem,
      checkbox-border-radius: 1rem,
@@ -202,7 +205,10 @@ $nb-themes: nb-register-theme(
      divider-width: 1px,
      tabset-tab-active-underline-color: background-basic-color-1,
      tabset-tab-active-background-color: background-basic-color-1,
-     tabset-border-radius: 0.5rem
+     tabset-border-radius: 0.5rem,
+     select-rectangle-border-radius: 2rem,
+     tabset-tab-hover-underline-color: background-basic-color-1,
+     tabset-tab-focus-underline-color: background-basic-color-1
   ),
   gauzy-dark,
   dark

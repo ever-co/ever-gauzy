@@ -22,34 +22,36 @@
 			></nb-datepicker>
 		</div>
 	</div>
-	<div class="col">
-		<div class="form-group">
-			<label class="label">{{
-				'TIMER_TRACKER.START_TIME' | translate
-			}}</label>
-			<ga-timer-picker
-				name="start_time"
-				[min]="minSlotStartTime"
-				[max]="maxSlotStartTime"
-				(change)="changeStartTime($event)"
-				[(ngModel)]="startTime"
-				#startTimeModel="ngModel"
-			></ga-timer-picker>
-		</div>
-	</div>
-	<div class="col">
-		<div class="form-group">
-			<label class="label">{{
-				'TIMER_TRACKER.END_TIME' | translate
-			}}</label>
-			<ga-timer-picker
-				[disabled]="disableEndPicker"
-				name="end_time"
-				[min]="minSlotEndTime"
-				[max]="maxSlotEndTime"
-				[(ngModel)]="endTime"
-				#endTimeModel="ngModel"
-			></ga-timer-picker>
-		</div>
-	</div>
+</div>
+<div class="row range">
+  <div class="col-6">
+    <div class="form-group">
+      <label class="label">{{
+        'TIMER_TRACKER.START_TIME' | translate
+      }}</label>
+      <ga-timer-picker
+        name="start_time"
+        [min]="minSlotStartTime"
+        [max]="maxSlotStartTime"
+        (change)="changeStartTime($event)"
+        [(ngModel)]="startTime"
+        #startTimeModel="ngModel"
+      ></ga-timer-picker>
+    </div>
+  </div>
+  <div class="col-6">
+    <div class="form-group">
+      <label class="label">{{
+        'TIMER_TRACKER.END_TIME' | translate
+      }}</label>
+      <ga-timer-picker
+        [disabled]="disableEndPicker"
+        name="end_time"
+        [min]="minSlotEndTime"
+        [max]="maxSlotEndTime"
+        [(ngModel)]="endTime"
+        #endTimeModel="ngModel"
+      ></ga-timer-picker>
+    </div>
+  </div>
 </div>

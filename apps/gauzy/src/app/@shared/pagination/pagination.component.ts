@@ -49,6 +49,7 @@ export class PaginationComponent implements OnInit {
 		return this._itemsPerPage;
 	}
 	@Input() set itemsPerPage(value: number) {
+    this.selectedOption.emit(value)
 		this._itemsPerPage = value;
 	}
 
@@ -66,6 +67,7 @@ export class PaginationComponent implements OnInit {
 	subject$: Subject<any> = new Subject();
 
 	@Output() selectedPage = new EventEmitter<Number>();
+  @Output() selectedOption = new EventEmitter<Number>();
 
 	constructor() { }
 

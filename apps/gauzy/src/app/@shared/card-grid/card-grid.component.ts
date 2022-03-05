@@ -21,6 +21,7 @@ export class CardGridComponent extends TranslationBaseComponent
 	@Input() buttonTemplate: TemplateRef<any>;
 	@Input() cardSize: undefined | 'big';
   @Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
+  selected: any = {isSelected: false, data: null};
 
 	constructor(
 		readonly translationService: TranslateService
@@ -35,7 +36,8 @@ export class CardGridComponent extends TranslationBaseComponent
 	}
 
   selectedItem(item){
-    this.onSelectedItem.emit({isSelected: true, data: item});
+    this.selected = {isSelected: true, data: item};
+    this.onSelectedItem.emit(this.selected);
   }
 	ngOnDestroy() {}
 }

@@ -6,8 +6,9 @@
 				? 'primary'
 				: 'basic'
 		"
-		class="switch-button"
+		class="switch-button ml-2"
 		nbButton
+    size="small"
 		[nbTooltip]="'SETTINGS_MENU.CARDS_GRID' | translate"
 	>
 		<nb-icon icon="grid-outline"></nb-icon>
@@ -15,12 +16,13 @@
 	<button
 		(click)="changeLayout(layoutStyles.TABLE)"
 		[status]="
-			componentLayoutStyle === layoutStyles.TABLE 
-				? 'primary' 
+			componentLayoutStyle === layoutStyles.TABLE
+				? 'primary'
 				: 'basic'
 		"
-		class="switch-button"
+		class="switch-button ml-2"
 		nbButton
+    size="small"
 		[nbTooltip]="'SETTINGS_MENU.TABLE' | translate"
 	>
 		<nb-icon icon="list-outline"></nb-icon>
