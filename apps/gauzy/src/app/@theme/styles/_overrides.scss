@@ -319,3 +319,54 @@ nb-tabset .tab.active .tab-link{
   border: nb-theme(divider-width) nb-theme(divider-style) nb-theme(divider-color);
   border-radius: 8px 8px 0 0;
 }
+ng2-smart-table{
+ ng2-smart-table-pager{
+  nav.ng2-smart-pagination-nav .pagination {
+    border: none;
+    li:not(:last-child){
+      border-right: 0px solid black;
+    }
+    li {
+      cursor: pointer;
+      &.active span{
+        color: nb-theme(text-primary-color);
+        background-color: nb-theme(background-basic-color-3);
+        border-radius: nb-theme(button-rectangle-border-radius);
+      }
+      span {
+        font-size: 0.875rem;
+        background-color: transparent;
+        padding: .75rem 1rem;
+        color: nb-theme(text-basic-color);
+      }
+    }
+
+    a{
+      margin: 3px;
+    }
+
+    .page-link-next, .page-link-prev {
+      box-shadow: 1px 2px 2px nb-theme(background-basic-color-4);
+          border-radius: 20px;
+          padding: 0rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+    }
+  }
+
+  :host {
+    display: flex;
+    justify-content: space-between;
+
+    select {
+      margin: 1rem 0 1rem 1rem;
+    }
+    label {
+      margin: 1rem 0 1rem 1rem;
+      line-height: 2.5rem;
+    }
+
+  }
+ }
+}
