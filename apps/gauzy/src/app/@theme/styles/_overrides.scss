@@ -269,7 +269,11 @@ nb-card-header {
 nb-card-body {
 	.pagination-container {
 		display: flex;
-		justify-content: center;
+		justify-content: space-between;
+    width: 100%;
+    ga-pagination {
+      width: 100%;
+    }
 	}
 }
 
