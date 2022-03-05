@@ -57,6 +57,7 @@
 		"SELECT": "crwdns4310:0crwdne4310:0",
 		"EMAIL": "crwdns4366:0crwdne4366:0",
 		"CONVERT_TO_INVOICE": "crwdns7218:0crwdne7218:0",
+		"TO_INVOICE": "crwdns10998:0crwdne10998:0",
 		"PUBLIC_APPOINTMENT_BOOK": "crwdns7266:0crwdne7266:0",
 		"SAVE_AS_DRAFT": "crwdns7368:0crwdne7368:0",
 		"SAVE_AND_SEND_CONTACT": "crwdns7622:0crwdne7622:0",
@@ -933,6 +934,8 @@
 		"CORPORATE": "crwdns2114:0crwdne2114:0",
 		"MATERIAL_LIGHT_THEME": "crwdns10948:0crwdne10948:0",
 		"MATERIAL_DARK_THEME": "crwdns10950:0crwdne10950:0",
+		"GAUZY_LIGHT": "crwdns11000:0crwdne11000:0",
+		"GAUZY_DARK": "crwdns11002:0crwdne11002:0",
 		"LANGUAGE": "crwdns2116:0crwdne2116:0",
 		"ENGLISH": "crwdns2118:0crwdne2118:0",
 		"BULGARIAN": "crwdns2120:0crwdne2120:0",
@@ -2445,6 +2448,8 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"COMMENT": "crwdns11004:0crwdne11004:0",
+		"COMMENTS": "crwdns11006:0crwdne11006:0",
 		"HEADER": "crwdns3274:0crwdne3274:0",
 		"INVOICE_NUMBER": "crwdns3276:0crwdne3276:0",
 		"ESTIMATE_NUMBER": "crwdns4420:0crwdne4420:0",
@@ -3782,5 +3787,8 @@
 			"TITLE": "crwdns10851:0crwdne10851:0",
 			"SUB_TITLE": "crwdns10853:0crwdne10853:0"
 		}
+	},
+	"PAGINATION": {
+		"ITEMS": "crwdns11008:0crwdne11008:0"
 	}
 }
