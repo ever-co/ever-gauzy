@@ -313,7 +313,7 @@
         <div
 					*ngIf="(trackType$ | async) == timeLogType.TRACKED"
 				>
-					<button nbButton status="success" [ngClass]="running? 'button': 'button success start'" size="medium" [disabled]="running" (click)="toggleTimer()">
+					<button nbButton status="success" [ngClass]="running? 'button disabled': 'button success start'" size="medium" [disabled]="running" (click)="toggleTimer()">
 						{{ 'TIMER_TRACKER.START_TIMER' | translate }}
 					</button>
 				</div>
