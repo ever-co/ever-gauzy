@@ -16,18 +16,13 @@
         <button *ngIf="!isExpanded" nbButton ghost size="small" (click)="isExpanded = true" >
           <nb-icon icon="expand-outline"></nb-icon>
         </button>
-        <button *ngIf="isExpanded" nbButton ghost size="small" (click)="isExpanded = false" >
+        <button *ngIf="isExpanded" nbButton ghost size="small" (click)="$event.stopPropagation();setTimeType(timeLogType.TRACKED);
+              isExpanded = false">
           <nb-icon icon="minus-outline"></nb-icon>
         </button>
-				<button
-					class="btn-close"
-					size="small"
-					nbButton
-					ghost
-					(click)="toggleWindow()"
-				>
-					<nb-icon icon="close-outline"></nb-icon>
-				</button>
+        <button class="btn-close" size="small" nbButton ghost (click)="toggleWindow()">
+          <nb-icon icon="close-outline"></nb-icon>
+        </button>
 			</div>
 			<form #form="ngForm">
 				<div
@@ -175,7 +170,8 @@
 								type="button"
 								(click)="
 									$event.stopPropagation();
-									setTimeType(timeLogType.MANUAL)
+									setTimeType(timeLogType.MANUAL);
+                  isExpanded = true
 								"
 								size="tiny"
 								[status]="
@@ -307,15 +303,15 @@
 					class="time-manual"
 					*ngIf="(trackType$ | async) == timeLogType.MANUAL"
 				>
-					<button nbButton status="success" (click)="addTime()">
-						{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
+					<button nbButton status="success" size="small" (click)="addTime()">
+						{{ 'TIMER_TRACKER.ADD_TIME' | translate | titlecase }}
 					</button>
 				</div>
         <div
 					*ngIf="(trackType$ | async) == timeLogType.TRACKED"
 				>
-					<button nbButton status="success" [disabled]="running" (click)="toggleTimer()">
-						{{ 'TIMER_TRACKER.START_TIMER' | translate }}
+					<button nbButton status="success" size="small" [disabled]="running" (click)="toggleTimer()">
+						{{ 'TIMER_TRACKER.START_TIMER' | translate | titlecase }}
 					</button>
 				</div>
 					<a
@@ -323,8 +319,9 @@
 						ghost
             outline
 						[routerLink]="['/pages/employees/timesheets']"
+            size="small"
 					>
-						{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate }}
+						{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate | titlecase }}
 					</a>
 				</div>
         </div>
