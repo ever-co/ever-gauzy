@@ -32,7 +32,7 @@
 						[ngIf]="(trackType$ | async) == timeLogType.TRACKED"
 					>
             <div class="timer">
-              <h6>{{ 'TIMER_TRACKER.TIMER' | translate }}</h6>
+              <h6 *ngIf="isExpanded">{{ 'TIMER_TRACKER.TIMER' | translate }}</h6>
 						<div class="row">
               <div class="col">
                 <div class="time-tracker">
@@ -71,7 +71,7 @@
                         [status]="
                           running ? 'danger' : 'success'
                         "
-                        [ngClass]="running? '': 'success'"
+                        [ngClass]="running? '': 'button success'"
                         shape="round"
                         [nbTooltip]="
                           (running
@@ -113,7 +113,7 @@
 										[(ngModel)]="selectedRange"
 									></ngx-timer-range-picker>
 								</div>
-								<div class="col-12">
+								<div class="col-12 mb-5">
 									<nb-checkbox
 										[(ngModel)]="isBillable"
 										name="isBillable"
@@ -132,7 +132,7 @@
 						</div>
 					</ng-template>
 					<div
-						class="mode"
+						[ngClass]="isExpanded?'mode expanded':'mode'"
 						*ngxPermissionsOnly="[
 							OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
 						]"
@@ -150,7 +150,7 @@
 									? 'primary'
 									: 'basic'
 							"
-              class="btn switch"
+              class="button switch"
 							[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
 							[disabled]="running"
 						>
@@ -181,7 +181,7 @@
 										? 'primary'
 										: 'basic'
 								"
-                class="btn switch"
+                class="button switch"
 								[disabled]="
 									running || !organization?.allowManualTime
 								"
@@ -306,14 +306,14 @@
 					class="time-manual"
 					*ngIf="(trackType$ | async) == timeLogType.MANUAL"
 				>
-					<button nbButton status="success" class="success" size="small" (click)="addTime()">
+					<button nbButton status="success" class="button success add" size="medium" (click)="addTime()">
 						{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
 					</button>
 				</div>
         <div
 					*ngIf="(trackType$ | async) == timeLogType.TRACKED"
 				>
-					<button nbButton status="success" [ngClass]="running? 'btn': 'success'" size="small" [disabled]="running" (click)="toggleTimer()">
+					<button nbButton status="success" [ngClass]="running? 'button': 'button success start'" size="medium" [disabled]="running" (click)="toggleTimer()">
 						{{ 'TIMER_TRACKER.START_TIMER' | translate }}
 					</button>
 				</div>
@@ -321,9 +321,9 @@
 						nbButton
 						ghost
             outline
-            class="btn timesheet"
+            class="button timesheet"
 						[routerLink]="['/pages/employees/timesheets']"
-            size="small"
+            size="medium"
 					>
 						{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate  }}
 					</a>

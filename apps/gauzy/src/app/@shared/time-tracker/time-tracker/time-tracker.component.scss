@@ -77,7 +77,9 @@
       flex-direction: column;
       justify-content: center;
       padding-left: 10px;
-      margin-top: 3.4rem;
+      &.expanded{
+        margin-top: 3.4rem;
+      }
       button {
         margin: 4px;
         padding: 4px 2px 4px 2px;
@@ -172,15 +174,19 @@
   height: 42px;
 }
 
-.success{
-  box-shadow: 0px 10px 13px -7px #25B869;
-}
-
-.btn, .success{
+.button{
   text-transform: none;
   &.timesheet{
     background-color: transparent;
     font-weight: normal;
+    height: 36px;
+  }
+  &.success{
+    box-shadow: 0px 10px 13px -7px #25B869;
+   &.start, &.add{
+    height: 36px;
+    font-size: 14px;
+   }
   }
   &.switch{
     box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25);
