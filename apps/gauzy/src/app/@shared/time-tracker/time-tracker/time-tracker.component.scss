@@ -63,13 +63,17 @@
       }
     }
     .toggle {
-      .btn {
-        border-radius: 50px;
-        padding: 8px;
-        nb-icon {
-          color: #fff;
-          font-size: 24px;
-        }
+      [nbButton].appearance-filled.size-medium{
+        padding: 8px 7px 10px 7px;
+      }
+      [nbButton].appearance-filled.status-danger{
+        padding:  8px;
+      }
+      fa-icon{
+        border: 1px dashed transparent !important;
+        margin: 0;
+        border-radius: 50px ;
+        padding: 0px 3px 0px 4px;
       }
     }
     .mode {
