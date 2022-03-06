@@ -17,6 +17,10 @@ export class ServerConnectionService {
 					resolve(true);
 				},
 				(err) => {
+					const userDetail = localStorage.getItem('userDetail');
+					if (userDetail) {
+						resolve(true);
+					}
 					this.store.serverConnection = err.status;
 					reject(err);
 				}

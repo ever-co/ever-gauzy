@@ -19,8 +19,13 @@
 }
 
 .start-button {
-  font-size: 50px !important;
+  font-size: 45px !important;
   cursor: pointer;
+}
+
+.button-ghost {
+    border: none;
+    background-color: transparent;
 }
 
 .center-text {

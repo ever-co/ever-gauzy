@@ -133,6 +133,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	tableData = [];
 	sourceData: LocalDataSource;
+	isTrackingEnabled = true;
 
 	constructor(
 		private electronService: ElectronService,
@@ -260,7 +261,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 				this.lastScreenCapture = {
 					fullUrl: this.sanitize.bypassSecurityTrustUrl(arg.fullUrl),
 					textTime: moment().fromNow(),
-					createdAt: Date.now()
+					createdAt: Date.now(),
+					recordedAt: Date.now()
 				};
 			}
 		);
@@ -316,6 +318,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 		if (this.loading) {
 			return;
 		}
+
+		if (this.userData.employee && !this.userData.employee.isTrackingEnabled) {
+			return;
+		}
 		this.loading = true;
 
 		if (this.validationField()) {
@@ -353,6 +359,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 					})
 					.catch((error) => {
 						this.loading = false;
+						this._cdr.detectChanges();
+						this.toastrService.show(`${error.message}`, `Warning`, {
+							status: 'danger'
+						});
 						log.info(
 							`Timer Toggle Catch: ${moment().format()}`,
 							error
@@ -682,9 +692,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 				console.log('Get Last Timeslot Image Response:', screenshots);
 				if (screenshots && screenshots.length > 0) {
 					screenshots = _.sortBy(screenshots, 'createdAt').reverse();
-					const [lastCaptureScreen] = screenshots;
+					const [lastCaptureScreen] = screenshots;			
 					console.log('Last Capture Screen:', lastCaptureScreen);
 					this.lastScreenCapture = lastCaptureScreen;
+					this.localImage(this.lastScreenCapture);
 					this.screenshots = screenshots;
 					this.lastTimeSlot = res;
 				} else {
@@ -704,6 +715,32 @@ export class TimeTrackerComponent implements AfterViewInit {
 			});
 	}
 
+	async localImage(img) {
+		try {
+			const convScreenshot = await this.getBase64ImageFromUrl(img.fullUrl)
+			localStorage.setItem('lastScreenCapture', JSON.stringify({
+						fullUrl: convScreenshot,
+						textTime: moment().fromNow(),
+						createdAt: Date.now(),
+						recordedAt: Date.now()
+			}))
+		} catch (error) {
+			
+		}
+	}
+
+	updateImageUrl(e) {
+		console.log('image error', e);
+		this.lastScreenCapture = {};
+		this._cdr.detectChanges();
+		let localLastScreenCapture:any = localStorage.getItem('lastScreenCapture');
+		if (localLastScreenCapture) {
+			localLastScreenCapture = JSON.parse(localLastScreenCapture);
+			this.lastScreenCapture.fullUrl = this.sanitize.bypassSecurityTrustUrl(localLastScreenCapture.fullUrl)
+			this._cdr.detectChanges();
+		}
+	}
+	
 	getUserInfo(arg, start) {
 		this.timeTrackerService.getUserDetail(arg).then((res: any) => {
 			if (res.employee && res.employee.organization) {
@@ -712,6 +749,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 					this.userPermission = res.role.userPermission.map((permission) => permission.permission);
 				}
 				this.userOrganization = res.employee.organization;
+				this.isTrackingEnabled = typeof res.employee.isTrackingEnabled !== 'undefined' ? 
+					res.employee.isTrackingEnabled : true;
 				if (start) {
 					this.toggleStart(true);
 				}
@@ -1091,4 +1130,21 @@ export class TimeTrackerComponent implements AfterViewInit {
 		)}-${imgs.name}.png`; 
 		return this.convertToSlug(fileName)
 	}
+
+	async getBase64ImageFromUrl(imageUrl) {
+		var res = await fetch(imageUrl);
+		var blob = await res.blob();
+	  
+		return new Promise((resolve, reject) => {
+		  var reader  = new FileReader();
+		  reader.addEventListener("load", function () {
+			  resolve(reader.result);
+		  }, false);
+	  
+		  reader.onerror = () => {
+			return reject(this);
+		  };
+		  reader.readAsDataURL(blob);
+		})
+	  }
 }
