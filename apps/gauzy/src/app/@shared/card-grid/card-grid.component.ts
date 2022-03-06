@@ -36,7 +36,10 @@ export class CardGridComponent extends TranslationBaseComponent
 	}
 
   selectedItem(item){
-    this.selected = {isSelected: true, data: item};
+    this.selected =
+    this.selected.data && item.id === this.selected.data.id
+      ? { isSelected: !this.selected.isSelected, data: item }
+      : { isSelected: true, data: item };
     this.onSelectedItem.emit(this.selected);
   }
 	ngOnDestroy() {}
