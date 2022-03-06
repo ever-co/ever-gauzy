@@ -6,7 +6,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import { TimerRangePickerComponent } from './timer-range-picker/timer-range-picker.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { NbDatepickerModule } from '@nebular/theme';
+import { NbDatepickerModule, NbIconModule } from '@nebular/theme';
 
 @NgModule({
 	declarations: [TimerPickerComponent, TimerRangePickerComponent],
@@ -17,7 +17,8 @@ import { NbDatepickerModule } from '@nebular/theme';
 		NgSelectModule,
 		FormsModule,
 		TranslateModule,
-		NbDatepickerModule
+		NbDatepickerModule,
+    NbIconModule
 	]
 })
 export class TimerPickerModule {}

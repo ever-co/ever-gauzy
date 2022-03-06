@@ -2,7 +2,8 @@
 	<div class="col-12">
 		<div class="form-group">
 			<label class="label"> {{ 'TIMER_TRACKER.DATE' | translate }}</label>
-			<input
+     <div class="input">
+       <input
 				type="text"
 				[attr.disabled]="disableDatePicker === true ? 'disabled' : null"
 				class="form-control"
@@ -13,6 +14,7 @@
 				placeholder="YYYY-MM-DD"
 				#dateModel="ngModel"
 			/>
+      <nb-icon class="ml-3" icon="calendar-outline"></nb-icon>
 			<nb-datepicker
 				[filter]="filter"
 				[max]="maxDate"
@@ -20,6 +22,7 @@
 				(dateChange)="updateTimePickerLimit($event)"
 				#datepicker
 			></nb-datepicker>
+      </div>
 		</div>
 	</div>
 </div>

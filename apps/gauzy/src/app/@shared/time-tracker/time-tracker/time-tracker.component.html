@@ -71,6 +71,7 @@
                         [status]="
                           running ? 'danger' : 'success'
                         "
+                        [ngClass]="running? '': 'success'"
                         shape="round"
                         [nbTooltip]="
                           (running
@@ -149,6 +150,7 @@
 									? 'primary'
 									: 'basic'
 							"
+              class="btn switch"
 							[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
 							[disabled]="running"
 						>
@@ -179,6 +181,7 @@
 										? 'primary'
 										: 'basic'
 								"
+                class="btn switch"
 								[disabled]="
 									running || !organization?.allowManualTime
 								"
@@ -303,25 +306,26 @@
 					class="time-manual"
 					*ngIf="(trackType$ | async) == timeLogType.MANUAL"
 				>
-					<button nbButton status="success" size="small" (click)="addTime()">
-						{{ 'TIMER_TRACKER.ADD_TIME' | translate | titlecase }}
+					<button nbButton status="success" class="success" size="small" (click)="addTime()">
+						{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
 					</button>
 				</div>
         <div
 					*ngIf="(trackType$ | async) == timeLogType.TRACKED"
 				>
-					<button nbButton status="success" size="small" [disabled]="running" (click)="toggleTimer()">
-						{{ 'TIMER_TRACKER.START_TIMER' | translate | titlecase }}
+					<button nbButton status="success" [ngClass]="running? 'btn': 'success'" size="small" [disabled]="running" (click)="toggleTimer()">
+						{{ 'TIMER_TRACKER.START_TIMER' | translate }}
 					</button>
 				</div>
 					<a
 						nbButton
 						ghost
             outline
+            class="btn timesheet"
 						[routerLink]="['/pages/employees/timesheets']"
             size="small"
 					>
-						{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate | titlecase }}
+						{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate  }}
 					</a>
 				</div>
         </div>
