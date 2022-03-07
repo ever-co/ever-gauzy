@@ -175,7 +175,9 @@ $nb-themes: nb-register-theme((
       tabset-tab-hover-underline-color: background-basic-color-1,
       tabset-tab-focus-underline-color: background-basic-color-1,
       tabset-tab-text-transform: capitalize,
-      button-filled-text-transform: none
+      button-filled-text-transform: none,
+      font-family-primary: unquote('Inter, sans-serif'),
+      font-family-secondary: unquote('Inter, sans-serif')
   ),
   gauzy-light,
   default
@@ -212,7 +214,10 @@ $nb-themes: nb-register-theme(
      select-rectangle-border-radius: 2rem,
      tabset-tab-hover-underline-color: background-basic-color-1,
      tabset-tab-focus-underline-color: background-basic-color-1,
-     tabset-tab-text-transform: capitalize
+     tabset-tab-text-transform: capitalize,
+    button-filled-text-transform: none,
+    font-family-primary: unquote('Inter, sans-serif'),
+    font-family-secondary: unquote('Inter, sans-serif')
   ),
   gauzy-dark,
   dark
