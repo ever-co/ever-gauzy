@@ -175,3 +175,12 @@ ga-pagination{
   overflow-y: scroll;
   height: 15rem;
 }
+
+textarea{
+  height: 85px;
+  resize: none;
+}
+
+textarea, input{
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+}
