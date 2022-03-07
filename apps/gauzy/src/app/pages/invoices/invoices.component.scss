@@ -105,7 +105,7 @@ button {
   padding: 1rem 0 1rem 0;
 }
 .actions{
-  background-color: nb-theme(background-basic-color-4);
+  background: rgba(50, 50, 50, 0.03);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 0px 1px 0px 1px;
   margin-right: 20px;
@@ -115,7 +115,7 @@ button {
   overflow-x: hidden;
   border-radius: nb-theme(button-rectangle-border-radius);
   span{
-    background-color: nb-theme(background-basic-color-4);
+    background: rgba(50, 50, 50, 0.03);
     border-radius: nb-theme(button-rectangle-border-radius);
     padding: 0px 1px 0px 1px;
     margin-right: 10px;
@@ -125,7 +125,7 @@ button {
 .transition{
   display: flex;
   &.hide{
-    transform: translateX(88%);
+    transform: translateX(89%);
     transition: all 1s ease-in;
   }
   &.show{
@@ -183,4 +183,37 @@ textarea{
 
 textarea, input{
   box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+  background-color: rgba(126, 126, 143, 0.05);
+}
+
+.action{
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+  &[nbButton].appearance-filled.status-basic{
+    background-color: #ffffff;
+  }
+  &.info{
+    background-color: #0088FE;
+  }
+  &.secondary{
+    color: #7E7E8F;
+  }
+  &.primary{
+    &[nbButton].appearance-filled.status-basic, .appearance-filled.status-basic[nbButtonToggle]{
+      color: nb-theme(text-primary-color);
+    }
+  }
+  &.select-nb ::ng-deep {
+    box-shadow: none;
+    .select-button{
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      background: rgba(245, 245, 245);
+    }
+  }
+}
+
+:host nb-select ::ng-deep {
+  .select-button{
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+    background-color: rgba(126, 126, 143, 0.05);
+  }
 }

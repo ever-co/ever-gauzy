@@ -382,7 +382,7 @@
 >
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
-      <button *ngIf="isEstimate" nbButton status="info" (click)="convert(selectedItem)" class="mr-2"
+      <button *ngIf="isEstimate" nbButton status="info" (click)="convert(selectedItem)" class="action info mr-2"
         [disabled]="!selectedItem && disableButton" size="small">
         <nb-icon icon="swap"> </nb-icon>
         {{ 'BUTTONS.TO_INVOICE' | translate }}
@@ -390,7 +390,7 @@
       <nb-select
 				filled
 				status="basic"
-				class="mr-2 ml-1"
+				class="action select-nb mr-2 ml-1"
 				*ngIf="!isEstimate"
 				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
 				[(selected)]="status"
@@ -408,7 +408,7 @@
 			<nb-select
 				filled
 				status="basic"
-				class="mr-2"
+				class="action select-nb mr-2"
 				*ngIf="isEstimate"
 				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
 				[(selected)]="status"
@@ -424,17 +424,17 @@
 				</nb-option>
 			</nb-select>
       <ng-template ngxPermissionsOnly="INVOICES_VIEW">
-        <button nbButton status="basic" (click)="view()" class="mr-2" [disabled]="disableButton" size="small">
+        <button nbButton status="basic" (click)="view()" class="action secondary" [disabled]="disableButton" size="small">
           <nb-icon icon="eye-outline" pack="eva"></nb-icon>
           {{ 'BUTTONS.VIEW' | translate }}
         </button>
       </ng-template>
-      <button nbButton status="info" (click)="edit(selectedItem)" class="mr-2" [disabled]="!selectedItem && disableButton"
+      <button nbButton status="basic" (click)="edit(selectedItem)" class="action primary" [disabled]="!selectedItem && disableButton"
         size="small">
         <nb-icon icon="edit-outline"></nb-icon>
         {{ 'BUTTONS.EDIT' | translate }}
       </button>
-      <button nbButton status="basic" (click)="download(selectedItem)" class="mr-2"
+      <button nbButton status="basic" (click)="download(selectedItem)" class="action primary"
         [disabled]="!selectedItem && disableButton" size="small">
         <nb-icon icon="download-outline"></nb-icon>
         {{ 'BUTTONS.DOWNLOAD' | translate }}
@@ -451,11 +451,11 @@
 		<nb-icon icon="clipboard-outline"></nb-icon>
 		{{ 'BUTTONS.PAYMENTS' | translate }}
   </button>
-  <button nbButton nbPopoverPlacement="bottom" [nbPopover]="actionsPopover" nbPopoverTrigger="noop"
+  <button nbButton nbPopoverPlacement="bottom" class="action" [nbPopover]="actionsPopover" nbPopoverTrigger="noop"
     (click)="toggleActionsPopover()" size="small">
     <nb-icon icon="more-vertical-outline"></nb-icon>
   </button>
-  <button nbButton status="basic" (click)="delete()" [disabled]="disableButton" size="small">
+  <button nbButton status="basic" class="action" (click)="delete()" [disabled]="disableButton" size="small">
     <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
   </button>
   </div>
