@@ -19,7 +19,8 @@ import {
 	NbDialogService,
 	NbDialogModule,
 	NbToastrService,
-	NbFormFieldModule
+	NbFormFieldModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -45,7 +46,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		NgSelectModule,
 		NbDialogModule,
 		NbFormFieldModule,
-		Ng2SmartTableModule
+		Ng2SmartTableModule,
+		NbTooltipModule
 	],
 	providers: [
 		NbSidebarService,

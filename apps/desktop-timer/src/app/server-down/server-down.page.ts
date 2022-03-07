@@ -32,7 +32,7 @@ export class ServerDownPage implements OnInit, OnDestroy {
 				environment.API_BASE_URL
 			);
 
-			if (Number(this.store.serverConnection) === 200) {
+			if (Number(this.store.serverConnection) === 200 || localStorage.getItem('userDetail')) {
 				clearInterval(this.interval);
 				this.router.navigate(['']);
 			}
