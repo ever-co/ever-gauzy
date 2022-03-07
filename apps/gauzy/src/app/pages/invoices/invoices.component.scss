@@ -108,7 +108,33 @@ button {
   background-color: nb-theme(background-basic-color-4);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 0px 1px 0px 1px;
+  margin-right: 20px;
 }
+
+.transition-container{
+  overflow-x: hidden;
+  border-radius: nb-theme(button-rectangle-border-radius);
+  span{
+    background-color: nb-theme(background-basic-color-4);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    padding: 0px 1px 0px 1px;
+    margin-right: 10px;
+  }
+}
+
+.transition{
+  display: flex;
+  &.hide{
+    transform: translateX(88%);
+    transition: all 1s ease-in;
+  }
+  &.show{
+    opacity: 1;
+    transform: translateX(0%);
+    transition: all 1.5s ease-out;
+  }
+}
+
 
 nb-accordion-item-header ::ng-deep nb-icon{
   border: 1px solid nb-theme(border-basic-color-4);
@@ -149,4 +175,3 @@ ga-pagination{
   overflow-y: scroll;
   height: 15rem;
 }
-

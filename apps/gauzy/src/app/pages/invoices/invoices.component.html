@@ -28,22 +28,17 @@
 					<div class="mb-3">
 						<div class="actions-container">
 							<ng-template ngxPermissionsOnly="INVOICES_EDIT">
-								<button
-									nbButton
-									status="success"
-									(click)="add()"
-                  size = "small"
-								>
-									<nb-icon icon="plus-outline"> </nb-icon>
-									{{ 'BUTTONS.ADD' | translate }}
-								</button>
-								<ng-container
-
-								>
-									<ng-container
-										*ngTemplateOutlet="actionButtons"
-									></ng-container>
-								</ng-container>
+                <div class="transition-container">
+                  <div [ngClass]="!disableButton ? 'transition show' : 'transition hide'">
+                    <span>
+                      <button nbButton status="success" (click)="add()" size="small">
+                        <nb-icon icon="plus-outline"> </nb-icon>
+                        {{ 'BUTTONS.ADD' | translate }}
+                      </button>
+                    </span>
+                    <ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+                  </div>
+                </div>
 							</ng-template>
               <ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
 						</div>
@@ -456,18 +451,16 @@
 	>
 		<nb-icon icon="clipboard-outline"></nb-icon>
 		{{ 'BUTTONS.PAYMENTS' | translate }}
-	</button>
-  <div>
-    <button nbButton nbPopoverPlacement="bottom" [nbPopover]="actionsPopover" nbPopoverTrigger="noop"
-      (click)="toggleActionsPopover()" size="small">
-      <nb-icon icon="more-vertical-outline"></nb-icon>
-    </button>
-    <button nbButton status="basic" (click)="delete()" [disabled]="disableButton" size="small">
-      <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-    </button>
+  </button>
+  <button nbButton nbPopoverPlacement="bottom" [nbPopover]="actionsPopover" nbPopoverTrigger="noop"
+    (click)="toggleActionsPopover()" size="small">
+    <nb-icon icon="more-vertical-outline"></nb-icon>
+  </button>
+  <button nbButton status="basic" (click)="delete()" [disabled]="disableButton" size="small">
+    <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+  </button>
   </div>
-  </div>
-</ng-template>
+  </ng-template>
 
 <ng-template #settingsPopover>
 	<div class="popover-container">
