@@ -26,8 +26,8 @@ import { GAUZY_DARK } from '../../../styles/gauzy/theme.gauzy-dark';
 })
 export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	themes = [
-    { value: GAUZY_LIGHT.name, name: 'Gauzy Light'},
-    { value: GAUZY_DARK.name, name: 'Gauzy Dark'},
+    { value: GAUZY_LIGHT.name, name: 'SETTINGS_MENU.GAUZY_LIGHT'},
+    { value: GAUZY_DARK.name, name: 'SETTINGS_MENU.GAUZY_DARK'},
 		{ value: DEFAULT_THEME.name, name: 'SETTINGS_MENU.LIGHT' },
 		{ value: DARK_THEME.name, name: 'SETTINGS_MENU.DARK' },
 		{ value: COSMIC_THEME.name, name: 'SETTINGS_MENU.COSMIC' },

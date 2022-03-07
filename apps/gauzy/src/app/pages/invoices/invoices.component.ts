@@ -1040,14 +1040,14 @@ export class InvoicesComponent
 	}
 
 	toggleActionsPopover() {
-		this.popups.first.toggle();
-		this.popups.last.hide();
+		this.popups.last.toggle();
+		this.popups.first.hide();
 	}
 
 	toggleTableSettingsPopover() {
-		this.popups.last.toggle();
+		this.popups.first.toggle();
 		if (this.popups.length > 1) {
-			this.popups.first.hide();
+			this.popups.last.hide();
 		}
 	}
 
@@ -1125,6 +1125,13 @@ export class InvoicesComponent
 	 * On Changed Currency Event Emitter
 	 */
 	currencyChanged($event: ICurrency) { }
-
+  /**
+   * On change number of item per page option
+   * @param $event is a number
+   */
+   OnUpdateOption($event: number){
+    this.perPage = $event;
+    this.showPerPage();
+  }
 	ngOnDestroy() { }
 }

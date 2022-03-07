@@ -6,22 +6,11 @@ import { Router } from '@angular/router';
 	template: `
 		<ng-container *ngIf="value">
 			<a *ngIf="value?.name" (click)="navigateToContact()" class="link-text">
-				{{ value.name }}
+				<span>{{ value.name.substr(0,2).toUpperCase() }}</span>{{ value.name }}
 			</a>
 		</ng-container>
 	`,
-	styles: [
-		`
-			.link-text {
-				cursor: pointer;
-				text-decoration: none;
-				color: #1e6bb8;
-			}
-			.link-text:hover {
-				text-decoration: underline;
-			}
-		`
-	]
+	styleUrls: ['./contact-links.component.scss']
 })
 export class ContactLinksComponent {
 	@Input()
@@ -38,7 +27,6 @@ export class ContactLinksComponent {
 		if (!this.value) {
 			return;
 		}
-		
 		this._router.navigate([`/pages/contacts/view/${this.value.id}`, ]);
 	}
 }

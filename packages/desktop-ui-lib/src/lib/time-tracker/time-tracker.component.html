@@ -15,22 +15,38 @@
 					<nb-card-body>
 						<div class="row">
 							<div class="col-3">
-								<nb-icon
-									class="start-button"
-									icon="play-circle"
+								<button
+									ghost
 									*ngIf="!start"
+									class="button-ghost"
 									(click)="toggleStart(true)"
-									[disabled]="loading"
+									[disabled]="loading || !isTrackingEnabled"
 								>
-								</nb-icon>
-								<nb-icon
-									class="start-button"
-									icon="stop-circle-outline"
+									<nb-icon
+										class="start-button"
+										icon="play-circle"
+										nbTooltip="Time tracker has been disabled"
+										[nbTooltipIcon]="{icon: 'alert-triangle-outline', pack: 'eva'}" 
+										nbTooltipStatus="warning"
+										[nbTooltipDisabled]="isTrackingEnabled"
+										nbTooltipPlacement="bottom"
+									>
+									</nb-icon>
+								</button>
+								<button
 									*ngIf="start"
 									(click)="toggleStart(false)"
 									[disabled]="loading"
+									ghost
+									class="button-ghost"
 								>
-								</nb-icon>
+									<nb-icon
+										class="start-button"
+										icon="stop-circle-outline"
+									>
+									</nb-icon>
+								</button>
+								
 							</div>
 							<div class="col-6 timer-box">
 								<div class="timer-container">
@@ -198,6 +214,7 @@
 													[src]="
 														lastScreenCapture.fullUrl
 													"
+													(error)="updateImageUrl($event)"
 												/>
 												<nb-icon
 													*ngIf="

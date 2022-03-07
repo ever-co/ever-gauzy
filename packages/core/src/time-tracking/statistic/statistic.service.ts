@@ -180,7 +180,6 @@ export class StatisticService {
 							source
 						});
 					}
-					console.log('Employee Worked Count Query', employeesCountQuery.getQueryAndParameters());
 				})
 			)
 			.getCount();
@@ -246,7 +245,6 @@ export class StatisticService {
 							source
 						});
 					}
-					console.log('Project Worked Count Query', projectsCountQuery.getQueryAndParameters());
 				})
 			)
 			.getCount();
@@ -325,13 +323,11 @@ export class StatisticService {
 								source
 							});
 						}
-						console.log('Weekly Worked Time Query', query.getQueryAndParameters());
 					})
 				)
 				.groupBy(`"timeLogs"."id"`)
 				.getRawMany();
 
-			console.log('Weekly Worked Time Statistics', weekTimeStatistics);
 			const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
 			const weekPercentage = (
 				(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
@@ -422,13 +418,11 @@ export class StatisticService {
 								source
 							});
 						}
-						console.log('Today Worked Time Query', query.getQueryAndParameters());
 					})
 				)
 				.groupBy(`"timeLogs"."id"`)
 				.getRawMany();
 
-			console.log('Today Worked Time Statistics', todayTimeStatistics);
 			const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
 			const todayPercentage = (
 				(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) / 
@@ -550,7 +544,6 @@ export class StatisticService {
 							projectIds
 						});
 					}
-					console.log('Employee Worked Members Query', query.getQueryAndParameters());
 				})
 			)
 			.addGroupBy(`"${query.alias}"."id"`)
@@ -603,14 +596,12 @@ export class StatisticService {
 								projectIds
 							});
 						}
-						console.log('Weekly Worked Time Query For Members', weekTimeQuery.getQueryAndParameters());
 					})
 				)
 				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
-			console.log('Weekly Worked TimeSlots For Members Statistics', weekTimeSlots);
 			weekTimeSlots = mapObject(
 				groupBy(weekTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -619,11 +610,6 @@ export class StatisticService {
 						(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) / 
 						(reduce(pluck(values, 'duration'), ArraySum, 0))
 					);
-					console.log({
-						employeeId,
-						duration: weekDuration,
-						overall: weekPercentage
-					}, 'weekly worked member mapper by employee');
 					return {
 						employeeId,
 						duration: weekDuration,
@@ -688,7 +674,6 @@ export class StatisticService {
 								projectIds
 							});
 						}
-						console.log('Daily Worked Time Query For Members', dayTimeQuery.getQueryAndParameters());
 					})
 				)
 				.groupBy(`timeLogs.id`)
@@ -703,11 +688,6 @@ export class StatisticService {
 						(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) / 
 						(reduce(pluck(values, 'duration'), ArraySum, 0))
 					);
-					console.log({
-						employeeId,
-						duration: todayDuration,
-						overall: todayPercentage
-					}, 'daily worked member mapper by employee');
 					return {
 						employeeId,
 						duration: todayDuration,
@@ -726,12 +706,6 @@ export class StatisticService {
 				})
 				.indexBy('employeeId')
 				.value();
-
-
-			for (const member of employees) {
-				console.log(member);
-			}
-			
 
 			for (let index = 0; index < employees.length; index++) {
 				const member = employees[index];
@@ -794,7 +768,6 @@ export class StatisticService {
 						}`
 					)
 					.getRawMany();
-				console.log('Weekly Hours Difference Query For Members', weekHoursQuery.getQueryAndParameters());
 			}
 		}
 		return employees;
@@ -1416,43 +1389,28 @@ export class StatisticService {
 								);
 		console.log({ start, end }, 'Weekly Time Date Range For Employee TimeSlots Statistics');
 
-		const query = this.employeeRepository.createQueryBuilder();
-		query
-			.select(`"${query.alias}".*`)
-			.addSelect('MAX(timeLogs.startedAt)', 'startedAt')
-			.addSelect(
-				`("user"."firstName" || ' ' ||  "user"."lastName")`,
-				'user_name'
-			)
-			.addSelect(`"user"."imageUrl"`, 'user_image_url')
-			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`${query.alias}.user`, 'user')
-			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			})
-			.groupBy(`"${query.alias}".id`)
-			.addGroupBy('user.id')
-			.orderBy('"startedAt"', 'DESC')
-			.limit(3);
-
+		/*
+		 *  Get employees id of the organization or get current employee id
+		 */
+		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			const employeeId = user.employeeId;
-			query.andWhere(`"${query.alias}".id = :employeeId`, { employeeId });
+			employeeIds = [user.employeeId];
 		} else {
-			if (isNotEmpty(employeeId)) {
-				query.andWhere(`"${query.alias}"."id" = :employeeId`, {
-					employeeId
-				});
-			}
+			employeeIds = await this.getEmployeesIds(
+				organizationId,
+				tenantId,
+				employeeId
+			);
 		}
 
-		// convert projectId String to Array
+		/**
+		 * GET project filter IDs
+		 */
 		let projectIds: string[] = [];
 		if (typeof projectId === 'string') {
 			projectIds.push(projectId);
@@ -1460,20 +1418,51 @@ export class StatisticService {
 			projectIds = projectId;
 		}
 
-		// project filter query
-		if (isNotEmpty(projectIds)) {
-			query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
-		}
-
-		let employees: ITimeSlotStatistics[] = [];
-		employees = await query
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		query.select(`DISTINCT ON ("${query.alias}"."employeeId") "${query.alias}"."employeeId"`)
+		query.addSelect(`"${query.alias}"."startedAt"`, `startedAt`);
+		query.addSelect(`"user"."imageUrl"`, 'user_image_url');
+		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name');
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`employee.user`, 'user');
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 
+				qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				});
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				})
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				})
 			})
-			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
-			.getRawMany();
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => { 			
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
+				}
+			})
+		);
+		query.groupBy(`"${query.alias}"."id"`);
+		query.addGroupBy(`"${query.alias}"."employeeId"`);
+		query.addGroupBy(`"employee"."id"`);
+		query.addGroupBy(`"user"."id"`);
+		query.orderBy(`"${query.alias}"."employeeId"`);
+		query.addOrderBy(`"${query.alias}"."startedAt"`, 'DESC');
+		query.limit(3);
+		
+		let employees: ITimeSlotStatistics[] = [];
+		employees = await query.getRawMany();
 
 		for await (const employee of employees) {
 			employee.user = {
@@ -1497,7 +1486,7 @@ export class StatisticService {
 					'employee', 'employee.user', 'screenshots'
 				],
 				where: (qb: SelectQueryBuilder<TimeSlot>) => {
-					const employeeId = employee.id;
+					const { employeeId } = employee;
 					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 						employeeId
 					});
@@ -1517,7 +1506,6 @@ export class StatisticService {
 							projectIds
 						});
 					}
-					console.log('Weekly Employee Worked TimeSlots Recent Activities Query', qb.getQueryAndParameters());
 				},
 				take: 3,
 				order: {

@@ -4,8 +4,8 @@
 		class="card-item"
 		[ngClass]="{ 'big': cardSize === 'big' }"
 	>
-		<nb-card-body (click)="selectedItem(item)">
-			<div class="info-line mt-1" *ngFor="let key of getKeys()">
+		<nb-card-body [ngClass]="selected.isSelected && selected.data.id === item.id ? 'card-body active': 'card-body'" (click)="selectedItem(item)">
+			<div class="info-line" *ngFor="let key of getKeys()">
 				<div class="info-meta">{{ settings.columns[key].title }}</div>
 				<div class="info-value" [ngSwitch]="settings.columns[key].type">
 					<div *ngSwitchCase="'html'" [innerHTML]="item[key]"></div>
@@ -18,6 +18,7 @@
 							"
 							[value]="item[key]"
 							[rowData]="item"
+              class="custom"
 						>
 						</ga-custom-component>
 					</div>
@@ -25,7 +26,7 @@
 				</div>
 			</div>
 		</nb-card-body>
-		<nb-card-footer (click)="selectedItem(item)" class="card-footer">
+		<!-- <nb-card-footer (click)="selectedItem(item)" class="card-footer">
 			<ng-container
 				*ngTemplateOutlet="
 					buttonTemplate;
@@ -36,6 +37,6 @@
 				"
 			>
 			</ng-container>
-		</nb-card-footer>
+		</nb-card-footer> -->
 	</nb-card>
 </div>

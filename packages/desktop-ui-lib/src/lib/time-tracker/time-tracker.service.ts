@@ -27,7 +27,22 @@ export class TimeTrackerService {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
 	}
 
-	getTasks(values) {
+	async getTasks(values) {
+		let tasks;
+		try {
+			tasks = await this.reqGetTasks(values);
+			localStorage.setItem('tasks', JSON.stringify(tasks));
+			return tasks;
+		} catch (error) {
+			tasks = localStorage.getItem('tasks');
+			if (tasks) {
+				return JSON.parse(tasks);
+			}
+			throw error;
+		}
+	}
+
+	reqGetTasks(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
@@ -49,7 +64,22 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
-	getProjects(values) {
+	async getProjects(values) {
+		let projects;
+		try {
+			projects = await this.reqGetProjects(values);
+			localStorage.setItem('projects', JSON.stringify(projects));
+			return projects;
+		} catch (error) {
+			projects = localStorage.getItem('projects');
+			if (projects) {
+				return JSON.parse(projects);
+			}
+			throw error;
+		}
+	}
+
+	reqGetProjects(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
@@ -75,7 +105,22 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
-	getClient(values) {
+	async getClient(values) {
+		let clients;
+		try {
+			clients = await this.reqGetClient(values);
+			localStorage.setItem('client', JSON.stringify(clients));
+			return clients;
+		} catch (error) {
+			clients = localStorage.getItem('client');
+			if (clients) {
+				return JSON.parse(clients);
+			}
+			throw error;
+		}
+	}
+
+	reqGetClient(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
@@ -91,7 +136,22 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
-	getUserDetail(values) {
+	async getUserDetail(values) {
+		let userDetail;
+		try {
+			userDetail = await this.reqGetUserDetail(values);
+			localStorage.setItem('userDetail', JSON.stringify(userDetail));
+			return userDetail;	
+		} catch (error) {
+			userDetail = localStorage.getItem('userDetail');
+			if (userDetail) {
+				return JSON.parse(userDetail);
+			}
+			throw error;
+		}
+	}
+
+	reqGetUserDetail(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
@@ -109,7 +169,22 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
-	getTimeLogs(values) {
+	async getTimeLogs(values) {
+		let timeLogs;
+		try {
+			timeLogs = await this.reqGetTimeLogs(values);
+			localStorage.setItem('timeLogs', JSON.stringify(timeLogs));
+			return timeLogs;
+		} catch (error) {
+			timeLogs = localStorage.getItem('timeLogs');
+			if (timeLogs) {
+				return JSON.parse(timeLogs);
+			}
+			throw error;
+		}
+	}
+
+	reqGetTimeLogs(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
@@ -127,7 +202,22 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
-	getTimeSlot(values) {
+	async getTimeSlot(values) {
+		let timeSLot;
+		try {
+			timeSLot = await this.reqGetTimeSlot(values);
+			localStorage.setItem('timeSlot', JSON.stringify(timeSLot));
+			return timeSLot;	
+		} catch (error) {
+			timeSLot = localStorage.getItem('timeSlot');
+			if (timeSLot) {
+				return JSON.parse(timeSLot);
+			}
+			throw error;
+		}
+	}
+
+	reqGetTimeSlot(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
@@ -480,6 +570,22 @@ export class TimeTrackerService {
 			.replace(/\-\-+/g, '-') // Replace multiple - with single -
 			.replace(/^-+/, '') // Trim - from start of text
 			.replace(/-+$/, ''); // Trim - from end of text
+	}
+
+	async pingServer(values) {
+		try {
+			await this.pingApi(values);
+			return true;
+		} catch (error) {
+			if (error.status === 404) {
+				return true;
+			}
+			return false;
+		}
+	}
+
+	pingApi(values) {
+		return this.http.get(values.apiHost).pipe().toPromise();
 	}
 	  
 }

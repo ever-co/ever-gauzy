@@ -84,6 +84,7 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
 import { CurrencyPositionPipe } from '../../@shared/pipes';
+import { NbAccordionModule } from '@nebular/theme';
 
 @NgModule({
 	imports: [
@@ -125,7 +126,8 @@ import { CurrencyPositionPipe } from '../../@shared/pipes';
 		HeaderTitleModule,
 		PaginationModule,
 		ContactSelectModule,
-		SharedModule
+		SharedModule,
+    NbAccordionModule
 	],
 	providers: [
 		InvoicesService,

@@ -1,8 +1,9 @@
 <ng-template [ngIf]="isOpen">
 	<nb-card
 		class="timer-card card"
+    [ngStyle]="{'padding-bottom': isExpanded ? '': '0px'}"
 		[ngClass]="
-			theme === 'default' || theme === 'corporate'
+			theme === 'default' || theme === 'corporate' || theme === 'gauzy-light'
 				? 'background-basic-color-1'
 				: 'background-basic-color-2'
 		"
@@ -12,6 +13,12 @@
 	>
 		<nb-card-body>
 			<div class="header">
+        <button *ngIf="!isExpanded" nbButton ghost size="small" (click)="isExpanded = true" >
+          <nb-icon icon="expand-outline"></nb-icon>
+        </button>
+        <button *ngIf="isExpanded" nbButton ghost size="small" (click)="isExpanded = false" >
+          <nb-icon icon="minus-outline"></nb-icon>
+        </button>
 				<button
 					class="btn-close"
 					size="small"
@@ -23,67 +30,76 @@
 				</button>
 			</div>
 			<form #form="ngForm">
-				<div class="timer-container form-group pr-4">
+				<div
+        [ngStyle]="{'margin': isExpanded ? '': '0px'}"
+        class="timer-container form-group">
 					<ng-template
 						[ngIf]="(trackType$ | async) == timeLogType.TRACKED"
 					>
-						<div class="time-tracker">
-							<div class="is_billable">
-								<button
-									nbButton
-									type="button"
-									(click)="
-										$event.stopPropagation();
-										isBillable = !isBillable
-									"
-									size="small"
-									[status]="isBillable ? 'primary' : 'basic'"
-									[nbTooltip]="
-										'TIMER_TRACKER.IS_BILLABLE' | translate
-									"
-									[disabled]="running"
-								>
-									$
-								</button>
-							</div>
-							<div class="time-count">
-								<span class="current-session">
-									{{ currentSessionTime }}
-								</span>
-								<span class="today-time mt-2">
-									{{ 'TIMER_TRACKER.TODAY' | translate }}:
-									{{ todaySessionTime }}
-								</span>
-							</div>
-							<div class="actions">
-								<div class="toggle">
-									<button
-										nbButton
-										type="submit"
-										[status]="
-											running ? 'danger' : 'success'
-										"
-										shape="round"
-										[nbTooltip]="
-											(running
-												? 'TIMER_TRACKER.STOP_TIMER'
-												: 'TIMER_TRACKER.START_TIMER'
-											) | translate
-										"
-										(click)="toggleTimer()"
-										[disabled]="isDisable"
-									>
-										<nb-icon
-											[icon]="
-												!running
-													? 'play-circle-outline'
-													: 'pause-circle-outline'
-											"
-										></nb-icon>
-									</button>
-								</div>
-							</div>
-						</div>
+            <div class="timer">
+              <h6>{{ 'TIMER_TRACKER.TIMER' | translate }}</h6>
+						<div class="row">
+              <div class="col">
+                <div class="time-tracker">
+                  <div class="is_billable">
+                    <button
+                      nbButton
+                      type="button"
+                      (click)="
+                        $event.stopPropagation();
+                        isBillable = !isBillable
+                      "
+                      size="small"
+                      [status]="isBillable ? 'primary' : 'basic'"
+                      [nbTooltip]="
+                        'TIMER_TRACKER.IS_BILLABLE' | translate
+                      "
+                      [disabled]="running"
+                    >
+                      $
+                    </button>
+                  </div>
+                  <div class="time-count">
+                    <span class="current-session">
+                      {{ currentSessionTime }}
+                    </span>
+                    <span class="today-time mt-2">
+                      {{ 'TIMER_TRACKER.TODAY' | translate }}
+                      {{ todaySessionTime }}
+                    </span>
+                  </div>
+                  <div class="actions">
+                    <div class="toggle">
+                      <button
+                        nbButton
+                        type="submit"
+                        [status]="
+                          running ? 'danger' : 'success'
+                        "
+                        shape="round"
+                        [nbTooltip]="
+                          (running
+                            ? 'TIMER_TRACKER.STOP_TIMER'
+                            : 'TIMER_TRACKER.START_TIMER'
+                          ) | translate
+                        "
+                        (click)="toggleTimer()"
+                        [disabled]="isDisable"
+                      >
+                        <nb-icon
+                          [icon]="
+                            !running
+                              ? 'play-circle-outline'
+                              : 'pause-circle-outline'
+                          "
+                        ></nb-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
 					</ng-template>
 					<ng-template
 						[ngIf]="(trackType$ | async) == timeLogType.MANUAL"
@@ -93,6 +109,7 @@
 							<div class="row">
 								<div class="col-12">
 									<ngx-timer-range-picker
+                    class="custom-range-picker"
 										name="selectedRange"
 										[maxDate]="
 											allowFutureDate ? null : today
@@ -106,10 +123,13 @@
 										name="isBillable"
 										status="primary"
 									>
-										{{
+                  <span [ngClass]="isBillable? 'primary':''">
+                    {{
 											'TIMER_TRACKER.IS_BILLABLE'
 												| translate
 										}}
+                  </span>
+
 									</nb-checkbox>
 								</div>
 							</div>
@@ -137,7 +157,10 @@
 							[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
 							[disabled]="running"
 						>
-							<nb-icon icon="clock-outline"></nb-icon>
+            <svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs></defs>
+              <path d="M 8.589 3.997 L 9.083 3.524 C 9.191 3.417 9.191 3.266 9.083 3.159 L 8.718 2.794 C 8.611 2.686 8.46 2.686 8.353 2.794 L 7.902 3.245 C 7.236 2.643 6.398 2.257 5.474 2.149 L 5.474 1.075 L 6.075 1.075 C 6.204 1.075 6.333 0.967 6.333 0.817 L 6.333 0.301 C 6.333 0.173 6.204 0.044 6.075 0.044 L 3.841 0.044 C 3.691 0.044 3.583 0.173 3.583 0.301 L 3.583 0.817 C 3.583 0.967 3.691 1.075 3.841 1.075 L 4.443 1.075 L 4.443 2.149 C 2.208 2.407 0.49 4.298 0.49 6.575 C 0.49 9.046 2.488 11.044 4.958 11.044 C 7.407 11.044 9.427 9.046 9.427 6.575 C 9.427 5.63 9.105 4.727 8.589 3.997 Z M 4.958 10.012 C 3.046 10.012 1.521 8.487 1.521 6.575 C 1.521 4.684 3.046 3.137 4.958 3.137 C 6.849 3.137 8.396 4.684 8.396 6.575 C 8.396 8.487 6.849 10.012 4.958 10.012 Z M 5.216 7.606 C 5.345 7.606 5.474 7.499 5.474 7.348 L 5.474 4.426 C 5.474 4.298 5.345 4.169 5.216 4.169 L 4.7 4.169 C 4.55 4.169 4.443 4.298 4.443 4.426 L 4.443 7.348 C 4.443 7.499 4.55 7.606 4.7 7.606 L 5.216 7.606 Z" fill="white"></path>
+            </svg>
 						</button>
 						<span
 							[nbTooltip]="
@@ -169,8 +192,8 @@
 						</span>
 					</div>
 				</div>
-
-				<div class="form-group">
+        <div *ngIf="isExpanded">
+          <div class="form-group">
 					<label>{{
 						'TIMER_TRACKER.SELECT_CLIENT' | translate
 					}}</label>
@@ -277,25 +300,35 @@
 					</div>
 				</div>
 				<div
+					class="view-log-button mt-2"
+					*ngIf="user?.employee?.id"
+				>
+        <div
 					class="time-manual"
 					*ngIf="(trackType$ | async) == timeLogType.MANUAL"
 				>
-					<button class="btn btn-success" (click)="addTime()">
+					<button nbButton status="success" (click)="addTime()">
 						{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
 					</button>
 				</div>
-				<div
-					class="view-log-button mt-2 text-center"
-					*ngIf="user?.employee?.id"
+        <div
+					*ngIf="(trackType$ | async) == timeLogType.TRACKED"
 				>
+					<button nbButton status="success" [disabled]="running" (click)="toggleTimer()">
+						{{ 'TIMER_TRACKER.START_TIMER' | translate }}
+					</button>
+				</div>
 					<a
 						nbButton
 						ghost
+            outline
 						[routerLink]="['/pages/employees/timesheets']"
 					>
 						{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate }}
 					</a>
 				</div>
+        </div>
+
 			</form>
 		</nb-card-body>
 	</nb-card>

@@ -1,0 +1,24 @@
+@import 'var';
+.link-text {
+  cursor: pointer;
+  text-decoration: none;
+  color: #1e6bb8;
+}
+.link-text:hover {
+  text-decoration: underline;
+}
+span{
+  background: nb-theme(color-basic-transparent-600);
+  border-radius: 20px;
+  color: #FFFFFF;
+  padding: 4px 5px;
+  margin-right: 8px;
+  height: 18px;
+  width: 18px;
+}
+
+a {
+  background-color: nb-theme(background-basic-color-3);
+  border-radius: 20px;
+  padding: 7px 14px 7px 3px;
+}

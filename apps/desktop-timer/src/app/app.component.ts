@@ -208,6 +208,12 @@ export class AppComponent implements OnInit {
 							event.sender.send('server_is_ready');
 							clearInterval(pinghost);
 						}
+
+						const userDetail = localStorage.getItem('userDetail');
+						if (userDetail) {
+							event.sender.send('server_is_ready');
+							clearInterval(pinghost);
+						}
 					});
 			}, 1000);
 		});
@@ -236,6 +242,11 @@ export class AppComponent implements OnInit {
 							console.log('ping status result', e.status);
 							if (e.status === 404) {
 								event.sender.send('server_already_start');
+								clearInterval(pinghost);
+							}
+							const userDetail = localStorage.getItem('userDetail');
+							if (userDetail) {
+								event.sender.send('server_is_ready');
 								clearInterval(pinghost);
 							}
 						});
