@@ -2,7 +2,6 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
-	class="card-scroll"
 >
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
@@ -46,13 +45,13 @@
 		</ng-template>
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab
-				[tabTitle]="'INVOICES_PAGE.ACTIONS' | translate"
+				[tabTitle]="'INVOICES_PAGE.BROWSE' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.ACTIONS"
 			>
 			</nb-tab>
 			<nb-tab
 				class="remove-scroll"
-				[tabTitle]="'INVOICES_PAGE.SEARCH' | translate"
+				[tabTitle]="'INVOICES_PAGE.SEARCH' | translate| titlecase"
 				tabId="search"
 				[tabId]="invoiceTabsEnum.SEARCH"
 			>
@@ -243,7 +242,7 @@
         </nb-accordion>
 			</nb-tab>
 			<nb-tab
-				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate"
+				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.HISTORY"
         class="remove-scroll"
 			>

@@ -310,3 +310,8 @@ nb-card-body {
     border-top: 1px solid #edf1f7 !important;
   }
 }
+
+nb-tabset .tab.active .tab-link{
+  border: nb-theme(divider-width) nb-theme(divider-style) nb-theme(divider-color);
+  border-radius: 8px 8px 0 0;
+}

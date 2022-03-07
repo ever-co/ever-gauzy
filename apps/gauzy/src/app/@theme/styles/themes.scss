@@ -6,6 +6,7 @@
 @import './material/material-dark';
 @import './material/material-light';
 
+
 $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
@@ -172,7 +173,9 @@ $nb-themes: nb-register-theme((
       tabset-border-radius: 0.5rem,
       select-rectangle-border-radius: 2rem,
       tabset-tab-hover-underline-color: background-basic-color-1,
-      tabset-tab-focus-underline-color: background-basic-color-1
+      tabset-tab-focus-underline-color: background-basic-color-1,
+      tabset-tab-text-transform: capitalize,
+      button-filled-text-transform: none
   ),
   gauzy-light,
   default
@@ -208,7 +211,8 @@ $nb-themes: nb-register-theme(
      tabset-border-radius: 0.5rem,
      select-rectangle-border-radius: 2rem,
      tabset-tab-hover-underline-color: background-basic-color-1,
-     tabset-tab-focus-underline-color: background-basic-color-1
+     tabset-tab-focus-underline-color: background-basic-color-1,
+     tabset-tab-text-transform: capitalize
   ),
   gauzy-dark,
   dark
