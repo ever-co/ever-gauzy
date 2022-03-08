@@ -85,7 +85,7 @@ export class PaginationComponent implements OnInit {
 	}
 
 	getPages() {
-		const pagesCount = Math.ceil(this.totalItems / this.itemsPerPage);
+		const pagesCount = this.getPagesCount()
 		let pages = [];
 		let showPagesCount = 5;
 		showPagesCount =
@@ -100,6 +100,10 @@ export class PaginationComponent implements OnInit {
 		}
 		return pages;
 	}
+
+  getPagesCount(){
+    return Math.ceil(this.totalItems / this.itemsPerPage);
+  }
 
 	onChangePage(pageIdx: number) {
 		this.activePage = pageIdx;
