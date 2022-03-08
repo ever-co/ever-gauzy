@@ -85,13 +85,19 @@ export class PaginationComponent implements OnInit {
 	}
 
 	getPages() {
-		let countItems = Math.ceil(this.totalItems / this.itemsPerPage);
+		const pagesCount = Math.ceil(this.totalItems / this.itemsPerPage);
 		let pages = [];
-
-		for (let i = 1; i <= countItems; i++) {
-			pages.push(i)
+		let showPagesCount = 5;
+		showPagesCount =
+			pagesCount < showPagesCount ? pagesCount : showPagesCount;
+		let middleOne = Math.ceil(showPagesCount / 2);
+		middleOne = this.activePage >= middleOne ? this.activePage : middleOne;
+		let lastOne = middleOne + Math.floor(showPagesCount / 2);
+		lastOne = lastOne >= pagesCount ? pagesCount : lastOne;
+		const firstOne = lastOne - showPagesCount + 1;
+		for (let i = firstOne; i <= lastOne; i++) {
+			pages.push(i);
 		}
-
 		return pages;
 	}
 
