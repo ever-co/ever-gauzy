@@ -19,9 +19,9 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 		</div>
 	`,
 	styles: [
-		'.progress-bar-inner {background-color: #2ce69b; position: absolute; height: 20px; border-radius: 3px;}',
-		'.progress-bar {background-color: #e0e0e0; border-radius: 3px; position: relative;}',
-		'.paid-percent {color: #000; z-index: 1; font-weight: bold;}'
+		'.progress-bar-inner {background-color: #2ce69b; position: absolute; height: 32px; width:100%; border-radius: 4px;}',
+		'.progress-bar {background-color: #e0e0e0; border-radius: 4px; position: relative; height: 32px}',
+		'.paid-percent {color: #ffffff; z-index: 1; font-weight: bold;}'
 	]
 })
 export class InvoicePaidComponent extends TranslationBaseComponent

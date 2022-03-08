@@ -853,7 +853,7 @@ export class InvoicesComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '10%',
+					width: '18%',
 					renderComponent: NotesWithTagsComponent
 				}
 			}
@@ -880,15 +880,6 @@ export class InvoicesComponent
 				width: '10%',
 				filter: false,
 				renderComponent: DateViewComponent
-			};
-		}
-		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
-			this.settingsSmartTable['columns']['displayStatus'] = {
-				title: this.getTranslation('INVOICES_PAGE.STATUS'),
-				type: 'custom',
-				width: '5%',
-				renderComponent: StatusBadgeComponent,
-				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TOTAL_VALUE)) {
@@ -919,7 +910,7 @@ export class InvoicesComponent
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
 			this.settingsSmartTable['columns']['displayDiscountValue'] = {
 				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
+					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT'
 				),
 				type: 'text',
 				width: '5%',
@@ -941,11 +932,20 @@ export class InvoicesComponent
 				this.settingsSmartTable['columns']['paid'] = {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 					type: 'custom',
-					width: '20%',
+					width: '12%',
 					renderComponent: InvoicePaidComponent,
 					filter: false
 				};
 			}
+		}
+    if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
+			this.settingsSmartTable['columns']['displayStatus'] = {
+				title: this.getTranslation('INVOICES_PAGE.STATUS'),
+				type: 'custom',
+				width: '5%',
+				renderComponent: StatusBadgeComponent,
+				filter: false
+			};
 		}
 	}
 
