@@ -603,7 +603,8 @@ export class TimeTrackingComponent
 			endDate
 		}
 	}
-  private async loadEmployeesCount() {
+
+  	private async loadEmployeesCount() {
 		const { tenantId } = this.store.user;
 		const { total } = await firstValueFrom(
 			this.employeesService.getAll([], {
@@ -613,9 +614,10 @@ export class TimeTrackingComponent
 		);
 		this.employeesCount = total;
 	}
-  private async loadProjectsCount() {
-    const { tenantId } = this.store.user;
+
+  	private async loadProjectsCount() {
+    	const { tenantId } = this.store.user;
 		const { total } = await this.projectService.getAll([],{	organizationId: this.organization.id,tenantId});
-    this.projectCount = total;
+    	this.projectCount = total;
 	}
 }
