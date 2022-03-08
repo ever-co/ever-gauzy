@@ -3,6 +3,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RequestContext } from './../../../../core/context';
 import { TenantSettingGetCommand } from '../tenant-setting.get.command';
 import { TenantSettingService } from './../../tenant-setting.service';
+import { WrapSecrets } from './../../../../core/decorators';
+import { AwsS3ProviderConfigDTO, WasabiS3ProviderConfigDTO } from './../../dto';
 
 @CommandHandler(TenantSettingGetCommand)
 export class TenantSettingGetHandler
@@ -15,10 +17,15 @@ export class TenantSettingGetHandler
 
 	public async execute() {
 		const tenantId = RequestContext.currentTenantId();
-		return await this._tenantSettingService.get({
+		let settings = await this._tenantSettingService.get({
 			where: {
 				tenantId
 			}
 		});
+		return Object.assign(
+			{},
+			WrapSecrets(settings, new WasabiS3ProviderConfigDTO()),
+			WrapSecrets(settings, new AwsS3ProviderConfigDTO())
+		);
 	}
 }
