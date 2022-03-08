@@ -111,7 +111,7 @@ export class PaginationComponent implements OnInit {
 	}
 
 	onNextPageClick() {
-		if (this.activePage == this.getPages().length) return;
+		if (this.activePage == this.getPagesCount()) return;
 
 		this.activePage++;
 		this.subject$.next(this.activePage);

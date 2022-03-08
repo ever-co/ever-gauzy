@@ -15,7 +15,7 @@
         <li (click)="onNextPageClick()" [ngClass]="{disabled: activePage == getPages().length}">
             <a href="#" aria-label="Next">
                 <span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrow-ios-forward-outline"></nb-icon></span><span class="sr-only">Next</span></a></li>
-        <li  (click)="onChangePage(getPages().length)">
+        <li  (click)="onChangePage(getPagesCount())">
             <a href="#" aria-label="Last">
                 <span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrowhead-right-outline"></nb-icon></span>
                 <span class="sr-only">Last</span></a>
