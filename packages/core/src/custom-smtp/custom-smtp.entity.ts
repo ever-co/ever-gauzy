@@ -1,10 +1,11 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, AfterLoad } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICustomSmtp } from '@gauzy/contracts';
-import { Exclude } from 'class-transformer';
+import { ISMTPConfig } from '@gauzy/common';
+import { Exclude, Expose } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { ISMTPConfig } from '@gauzy/common';
+import { IsSecret, WrapSecrets } from './../core/decorators';
 
 @Entity('custom_smtp')
 export class CustomSmtp
@@ -37,6 +38,26 @@ export class CustomSmtp
 	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isValidate?: boolean;
+
+	@ApiProperty({ type: () => String })
+	@Expose({ toPlainOnly: true, name: 'username' })
+	@IsSecret()
+	secretKey?: string;
+
+	@ApiProperty({ type: () => String })
+	@Expose({ toPlainOnly: true, name: 'password' })
+	@IsSecret()
+	secretPassword?: string;
+
+	/**
+    * Called after entity is loaded.
+    */
+	@AfterLoad()
+	afterLoadEntity?() {
+		this.secretKey = this.username;
+		this.secretPassword = this.password;
+		WrapSecrets(this, this);
+	}
 
 	getSmtpTransporter?() {
 		return {
