@@ -1463,7 +1463,6 @@ export class StatisticService {
 		
 		let employees: ITimeSlotStatistics[] = [];
 		employees = await query.getRawMany();
-		console.log(employees, 'employees');
 
 		for await (const employee of employees) {
 			employee.user = {
