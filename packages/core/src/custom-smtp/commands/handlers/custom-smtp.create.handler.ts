@@ -1,4 +1,5 @@
 import { ICustomSmtp } from '@gauzy/contracts';
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CustomSmtpService } from '../../custom-smtp.service';
 import { CustomSmtpCreateCommand } from '../custom-smtp.create.command';
@@ -13,6 +14,10 @@ export class CustomSmtpCreateHandler
 	): Promise<ICustomSmtp> {
 		const { input } = command;
 		delete input['id'];
-		return this.customSmtpService.create(input);
+		try {
+			return this.customSmtpService.create(input);	
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

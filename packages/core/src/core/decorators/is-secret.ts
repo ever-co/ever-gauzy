@@ -25,7 +25,7 @@ export function IsSecret(boolean: boolean = true): PropertyDecorator {
  * @param character 
  * @returns 
  */
-export function WrapSecrets(secrets: any, targets : any, offset = 4, character = '*') {
+export function WrapSecrets(secrets: any, targets : any, offset = 6, character = '*') {
 	// Check if found class target, convert it into array to use for loop
 	if (isClassInstance(targets)) {
 		targets = [targets];
