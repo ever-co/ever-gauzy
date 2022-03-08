@@ -24,10 +24,9 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, pairwise, tap } from 'rxjs/operators';
-import { CustomSmtpService } from '../../@core/services/custom-smtp.service';
-import { Store } from '../../@core/services/store.service';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { CustomSmtpService, Store, ToastrService } from '../../@core/services';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { patterns } from '../regex/regex-patterns.const';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,7 +42,6 @@ export class SMTPComponent
 	@Input() organization?: IOrganization;
 	@Input() isOrganization?: boolean;
 
-	form: FormGroup;
 	loading: boolean;
 	secureOptions = [
 		{ label: SMTPSecureEnum.TRUE, value: true },
@@ -51,9 +49,33 @@ export class SMTPComponent
 	];
 	customSmtp: ICustomSmtp;
 	user: IUser;
-	hostPattern =
-		'^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]).)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$';
 	isValidated: boolean;
+
+	/*
+	* Income Mutation Form
+	*/
+	public form: FormGroup = SMTPComponent.buildForm(this.fb, this);
+	static buildForm(
+		fb: FormBuilder,
+		self: SMTPComponent
+	): FormGroup {
+		return fb.group({
+			id: [],
+			organizationId: [],
+			host: [
+				'',
+				Validators.compose([
+					Validators.required,
+					Validators.pattern(patterns.host)
+				])
+			],
+			port: [],
+			secure: [],
+			username: [],
+			password: [],
+			isValidate: [false]
+		});
+	}
 
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
@@ -67,7 +89,6 @@ export class SMTPComponent
 	}
 
 	ngOnInit(): void {
-		this._initializeForm();
 		this._activatedRoute.data
 			.pipe(
 				tap(
@@ -126,25 +147,6 @@ export class SMTPComponent
 					this.isValidated = false;
 				}
 			}
-		});
-	}
-
-	private _initializeForm() {
-		this.form = this.fb.group({
-			id: [''],
-			organizationId: [''],
-			host: [
-				'',
-				Validators.compose([
-					Validators.required,
-					Validators.pattern(this.hostPattern)
-				])
-			],
-			port: [''],
-			secure: [''],
-			username: [''],
-			password: [''],
-			isValidate: [false]
 		});
 	}
 
@@ -260,21 +262,16 @@ export class SMTPComponent
 			.finally(() => this.getTenantSmtpSetting());
 	}
 
-	validateSmtp() {
-		const { value } = this.form;
-		this.customSmtpService
-			.validateSMTPSetting(value)
-			.then(() => {
-				this.isValidated = true;
-				this.toastrService.success(
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-			})
-			.catch(() => {
-				this.isValidated = false;
-				this.toastrService.error(
-					this.getTranslation('TOASTR.MESSAGE.ERRORS')
-				);
-			});
+	async validateSmtp() {
+		try {
+			const smtp = this.form.getRawValue();
+			await this.customSmtpService.validateSMTPSetting(smtp);
+
+			this.isValidated = true;
+			this.toastrService.success(this.getTranslation('TOASTR.TITLE.SUCCESS'));
+		} catch (error) {
+			this.isValidated = false;
+			this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.ERRORS'));
+		}
 	}
 }
