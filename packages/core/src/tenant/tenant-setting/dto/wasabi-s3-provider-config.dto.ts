@@ -2,6 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsString, IsUrl, ValidateIf } from "class-validator";
 import { FileStorageProviderEnum, IWasabiFileStorageProviderConfig } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
+import { IsSecret } from "./../../../core/decorators";
 
 /**
  * Wasabi S3 FileStorage Provider Configuration DTO validation
@@ -13,6 +14,7 @@ export class WasabiS3ProviderConfigDTO implements IWasabiFileStorageProviderConf
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
 	@IsOptional()
 	@IsString()
+	@IsSecret()
 	readonly wasabi_aws_access_key_id: string;
 
 	@ApiProperty({ type: () => String })
@@ -20,6 +22,7 @@ export class WasabiS3ProviderConfigDTO implements IWasabiFileStorageProviderConf
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
 	@IsOptional()
 	@IsString()
+	@IsSecret()
 	readonly wasabi_aws_secret_access_key: string;
 
 	@ApiProperty({ type: () => String })

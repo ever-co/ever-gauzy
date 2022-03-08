@@ -2,10 +2,11 @@ import { ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contrac
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, In, Repository } from 'typeorm';
-import * as _ from 'underscore';
+import { indexBy, keys, object, pluck } from 'underscore';
 import * as AWS from 'aws-sdk';
 import { TenantAwareCrudService } from './../../core/crud';
 import { TenantSetting } from './tenant-setting.entity';
+
 @Injectable()
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {
 	constructor(
@@ -19,7 +20,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		const settings: TenantSetting[] = await this.tenantSettingRepository.find(
 			request
 		);
-		return _.object(_.pluck(settings, 'name'), _.pluck(settings, 'value'));
+		return object(pluck(settings, 'name'), pluck(settings, 'value'));
 	}
 
 	async saveSettngs(
@@ -27,7 +28,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		tenantId: string
 	): Promise<ITenantSetting> {
 
-		const settingsName = _.keys(input);
+		const settingsName = keys(input);
 		const settings: TenantSetting[] = await this.tenantSettingRepository.find(
 			{
 				where: {
@@ -37,7 +38,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 			}
 		);
 
-		const settingsByName = _.indexBy(settings, 'name');
+		const settingsByName = indexBy(settings, 'name');
 		const saveInput = [];
 		for (const key in input) {
 			if (Object.prototype.hasOwnProperty.call(input, key)) {
@@ -58,9 +59,9 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		}
 
 		await this.tenantSettingRepository.save(saveInput);
-		return _.object(
-			_.pluck(saveInput, 'name'),
-			_.pluck(saveInput, 'value')
+		return object(
+			pluck(saveInput, 'name'),
+			pluck(saveInput, 'value')
 		);
 	}
 
