@@ -679,16 +679,22 @@ export class InvoicesComponent
 
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
+			) {
+				// Initiate GRID or TABLE view pagination
 				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(
@@ -832,7 +838,7 @@ export class InvoicesComponent
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			pager: {
-				display: true,
+				display: false,
 				perPage: this.perPage ? this.perPage : 10
 			},
 			hideSubHeader: true,

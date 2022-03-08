@@ -57,7 +57,7 @@
 			>
         <nb-accordion>
           <nb-accordion-item collapsed="false">
-            <nb-accordion-item-header>{{ (!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER') | translate }} {{ 'INVOICES_PAGE.SEARCH' | translate }}</nb-accordion-item-header>
+            <nb-accordion-item-header>{{ (!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER') | translate }} {{ 'INVOICES_PAGE.SEARCH' | translate | lowercase }}</nb-accordion-item-header>
             <nb-accordion-item-body>
           <form [formGroup]="searchForm" (ngSubmit)="search()">
 					<div class="row w-100">
@@ -249,7 +249,7 @@
         <nb-accordion>
         <nb-accordion-item collapsed="false">
           <nb-accordion-item-header>
-            {{ (!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER') | translate }} {{ 'INVOICES_PAGE.COMMENTS' | translate }}
+            {{ (!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER') | translate }} {{ 'INVOICES_PAGE.COMMENTS' | translate | lowercase}}
           </nb-accordion-item-header>
           <nb-accordion-item-body>
 				<nb-list-item *ngIf="disableButton" class="history-list-select">
@@ -344,6 +344,21 @@
 					#invoicesTable
 				>
 				</ng2-smart-table>
+			</div>
+      <div
+        *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+				class="pagination-container"
+			>
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination
+            (selectedOption)="OnUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage">
+					</ga-pagination>
+				</ng-container>
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
