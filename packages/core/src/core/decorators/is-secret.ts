@@ -1,4 +1,4 @@
-import { isNotEmpty, isObject } from "@gauzy/common";
+import { isClassInstance, isNotEmpty, isObject } from "@gauzy/common";
 
 /**
  * Checks if value is needs to be wrap with specific character.
@@ -25,21 +25,27 @@ export function IsSecret(boolean: boolean = true): PropertyDecorator {
  * @param character 
  * @returns 
  */
-export function WrapSecrets(secrets: any, target : any, offset = 4, character = '*') {
-	if (isObject(secrets)) {
-		for (const [key, value] of Object.entries(secrets)) {
-			if (Reflect.hasMetadata(key, target)) {
-				if (Reflect.getMetadata(key, target)) {
-					if (isNotEmpty(value)) {
-						const string = value.toString();
-						// Get first offset character
-						const first = string.substring(0, offset);
-						// Get last offset character
-						const last = string.slice(string.length - offset);
-						// Create character repeater
-						const repeater = character.repeat(offset);
-						// ReplaceAll secrets with character
-						secrets[key] = string.replace(first, repeater).replace(last, repeater);
+export function WrapSecrets(secrets: any, targets : any, offset = 4, character = '*') {
+	// Check if found class target, convert it into array to use for loop
+	if (isClassInstance(targets)) {
+		targets = [targets];
+	}
+	for (const target of targets) {
+		if (isObject(secrets)) {
+			for (const [key, value] of Object.entries(secrets)) {
+				if (Reflect.hasMetadata(key, target)) {
+					if (Reflect.getMetadata(key, target)) {
+						if (isNotEmpty(value)) {
+							const string = value.toString();
+							// Get first offset character
+							const first = string.substring(0, offset);
+							// Get last offset character
+							const last = string.slice(string.length - offset);
+							// Create character repeater
+							const repeater = character.repeat(offset);
+							// ReplaceAll secrets with character
+							secrets[key] = string.replace(first, repeater).replace(last, repeater);
+						}
 					}
 				}
 			}

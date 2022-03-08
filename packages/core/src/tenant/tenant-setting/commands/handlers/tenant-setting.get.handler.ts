@@ -4,7 +4,7 @@ import { RequestContext } from './../../../../core/context';
 import { TenantSettingGetCommand } from '../tenant-setting.get.command';
 import { TenantSettingService } from './../../tenant-setting.service';
 import { WrapSecrets } from './../../../../core/decorators';
-import { WasabiS3ProviderConfigDTO } from './../../dto';
+import { AwsS3ProviderConfigDTO, WasabiS3ProviderConfigDTO } from './../../dto';
 
 @CommandHandler(TenantSettingGetCommand)
 export class TenantSettingGetHandler
@@ -22,8 +22,10 @@ export class TenantSettingGetHandler
 				tenantId
 			}
 		});
-
-		settings = WrapSecrets(settings, new WasabiS3ProviderConfigDTO());
-		return Object.assign({}, settings);
+		return Object.assign(
+			{},
+			WrapSecrets(settings, new WasabiS3ProviderConfigDTO()),
+			WrapSecrets(settings, new AwsS3ProviderConfigDTO())
+		);
 	}
 }
