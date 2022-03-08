@@ -10,18 +10,16 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-pagination',
 	templateUrl: './pagination.component.html',
-	styleUrls: ['./pagination.component.scss'],
+	styleUrls: ['./pagination.component.scss']
 })
 export class PaginationComponent implements OnInit {
-
 	/*
-	* Getter & Setter for dynamic totalItems
-	*/
+	 * Getter & Setter for dynamic totalItems
+	 */
 	_totalItems: number = 1;
 	get totalItems(): number {
 		return this._totalItems;
@@ -31,8 +29,8 @@ export class PaginationComponent implements OnInit {
 	}
 
 	/*
-	* Getter & Setter for dynamic activePage
-	*/
+	 * Getter & Setter for dynamic activePage
+	 */
 	_activePage: number = 1;
 	get activePage(): number {
 		return this._activePage;
@@ -42,20 +40,20 @@ export class PaginationComponent implements OnInit {
 	}
 
 	/*
-	* Getter & Setter for dynamic itemsPerPage
-	*/
+	 * Getter & Setter for dynamic itemsPerPage
+	 */
 	_itemsPerPage: number = 5;
 	get itemsPerPage(): number {
 		return this._itemsPerPage;
 	}
 	@Input() set itemsPerPage(value: number) {
-    this.selectedOption.emit(value)
+		this.selectedOption.emit(value);
 		this._itemsPerPage = value;
 	}
 
 	/*
-	* Getter & Setter for enable/disable emit EventEmitter
-	*/
+	 * Getter & Setter for enable/disable emit EventEmitter
+	 */
 	_doEmit: boolean = true;
 	get doEmit(): boolean {
 		return this._doEmit;
@@ -67,9 +65,9 @@ export class PaginationComponent implements OnInit {
 	subject$: Subject<any> = new Subject();
 
 	@Output() selectedPage = new EventEmitter<Number>();
-  @Output() selectedOption = new EventEmitter<Number>();
+	@Output() selectedOption = new EventEmitter<Number>();
 
-	constructor() { }
+	constructor() {}
 
 	ngOnInit() {
 		this.subject$
@@ -85,7 +83,7 @@ export class PaginationComponent implements OnInit {
 	}
 
 	getPages() {
-		const pagesCount = this.getPagesCount()
+		const pagesCount = this.getPagesCount();
 		let pages = [];
 		let showPagesCount = 5;
 		showPagesCount =
@@ -101,9 +99,9 @@ export class PaginationComponent implements OnInit {
 		return pages;
 	}
 
-  getPagesCount(){
-    return Math.ceil(this.totalItems / this.itemsPerPage);
-  }
+	getPagesCount() {
+		return Math.ceil(this.totalItems / this.itemsPerPage);
+	}
 
 	onChangePage(pageIdx: number) {
 		this.activePage = pageIdx;
