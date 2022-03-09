@@ -1135,7 +1135,7 @@ export class InvoicesComponent
    * On change number of item per page option
    * @param $event is a number
    */
-   OnUpdateOption($event: number){
+   onUpdateOption($event: number){
     this.perPage = $event;
     this.showPerPage();
   }
