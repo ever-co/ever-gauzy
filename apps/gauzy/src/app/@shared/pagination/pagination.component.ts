@@ -1,10 +1,4 @@
-import {
-	Component,
-	Output,
-	EventEmitter,
-	Input,
-	OnInit
-} from '@angular/core';
+import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { Subject } from 'rxjs';
@@ -109,9 +103,10 @@ export class PaginationComponent implements OnInit {
 	}
 
 	onNextPageClick() {
-		if (this.activePage == this.getPagesCount()) return;
-
-		this.activePage++;
+		this.activePage =
+			this.activePage >= this.getPagesCount()
+				? this.getPagesCount()
+				: this.activePage + 1;
 		this.subject$.next(this.activePage);
 	}
 
