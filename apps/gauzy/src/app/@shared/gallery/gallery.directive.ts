@@ -7,27 +7,27 @@ import {
 	OnDestroy,
 	OnInit
 } from '@angular/core';
-import { GalleryComponent } from './gallery.component';
 import { NbDialogService } from '@nebular/theme';
+import { sortBy } from 'underscore';
+import { GalleryComponent } from './gallery.component';
 import { GalleryService } from './gallery.service';
-import * as _ from 'underscore';
 
 export interface GalleryItem {
 	thumbUrl: string;
 	fullUrl: string;
 	recordedAt?: Date;
+	employeeId?: string;
 }
 
 @Directive({
 	selector: '[ngxGallery]'
 })
 export class GalleryDirective implements OnDestroy, OnInit {
-	disableClick = false;
-	_items: string;
+	disableClick: boolean = false;
 	dialogRef: ComponentRef<GalleryComponent>;
 
+	@Input() employeeId: string;
 	@Input() item: GalleryItem | GalleryItem[];
-
 	@Input() items: GalleryItem[] = [];
 
 	@Input() set disabled(value: any) {
@@ -40,9 +40,9 @@ export class GalleryDirective implements OnDestroy, OnInit {
 	}
 
 	constructor(
-		private el: ElementRef,
-		private nbDialogService: NbDialogService,
-		private galleryService: GalleryService
+		private readonly el: ElementRef,
+		private readonly nbDialogService: NbDialogService,
+		private readonly galleryService: GalleryService
 	) {}
 
 	@HostListener('click', [])
@@ -52,13 +52,14 @@ export class GalleryDirective implements OnDestroy, OnInit {
 		}
 
 		let items = JSON.parse(JSON.stringify(this.item));
-		items = _.sortBy(items, 'createdAt').reverse();
+		items = sortBy(items, 'createdAt').reverse();
 
 		const item = items instanceof Array ? items[0] : items;
 		this.nbDialogService.open(GalleryComponent, {
 			context: {
 				items: this.items,
-				item
+				item,
+				employeeId: this.employeeId
 			},
 			dialogClass: 'fullscreen'
 		});
@@ -66,7 +67,7 @@ export class GalleryDirective implements OnDestroy, OnInit {
 
 	ngOnInit() {
 		const item = this.item instanceof Array ? this.item : [this.item];
-		this.item = _.sortBy(item, 'createdAt');
+		this.item = sortBy(item, 'createdAt');
 		this.galleryService.appendItems(this.item);
 	}
 

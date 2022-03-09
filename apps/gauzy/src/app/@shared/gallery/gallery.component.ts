@@ -41,16 +41,24 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	@Input() item: GalleryItem;
 	items: GalleryItem[] = [];
 
+	@Input() employeeId: string;
+
 	constructor(
-		private dialogRef: NbDialogRef<GalleryComponent>,
-		private galleryService: GalleryService
+		private readonly dialogRef: NbDialogRef<GalleryComponent>,
+		private readonly galleryService: GalleryService
 	) { }
 
 	ngOnInit() {
 		this.galleryService.items$
 			.pipe(untilDestroyed(this))
 			.subscribe((items) => {
-				this.items = items;
+				if (this.employeeId) {
+					this.items = items.filter(
+						(item: GalleryItem) => item.employeeId === this.employeeId
+					);
+				} else {
+					this.items = items;
+				}
 				this.setFocus(this.item);
 			});
 	}
