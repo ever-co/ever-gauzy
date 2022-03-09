@@ -22,12 +22,11 @@
         </li>
     </ul>
     <div class="d-flex justify-between align-items-center pb-3">
-      <nb-select  [(selected)]="itemsPerPage">
+      <nb-select size="small" [(selected)]="itemsPerPage">
         <nb-option [value]="5">5</nb-option>
         <nb-option [value]="10">10</nb-option>
         <nb-option [value]="25">25</nb-option>
         <nb-option [value]="50">50</nb-option>
-        <nb-option [value]="100">100</nb-option>
       </nb-select>
       <span>{{activePage}} - {{getPagesCount()}} of {{totalItems}} {{ 'PAGINATION.ITEMS' | translate }}</span>
     </div>
