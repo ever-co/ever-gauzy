@@ -18,10 +18,9 @@ export abstract class PaginationParams<T> {
 	/**
 	 * Pagination limit
 	 */
-	@ApiPropertyOptional({ type: () => Number, minimum: 0, maximum: 50 })
+	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
 	@IsOptional()
 	@Min(0)
-	@Max(50)
 	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
 	readonly take = 10;
 
