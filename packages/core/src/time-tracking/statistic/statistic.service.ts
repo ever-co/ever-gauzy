@@ -1419,22 +1419,8 @@ export class StatisticService {
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
-		query.select(
-			`${
-				this.configService.dbConnectionOptions.type === 'sqlite'
-					? `DISTINCT "${query.alias}"."employeeId"`
-					: `DISTINCT ON ("${query.alias}"."employeeId") "${query.alias}"."employeeId"`
-			}`,
-			"id"
-		);
-		query.addSelect(
-			`${
-				this.configService.dbConnectionOptions.type === 'sqlite'
-					? `(julianday("${query.alias}"."startedAt") * 86400)`
-					: `extract(epoch from ("${query.alias}"."startedAt"))`
-			}`,
-			"startedAt"
-		);
+		query.select(`MAX("${query.alias}"."startedAt")`, "startedAt");
+		query.addSelect(`"employee"."id"`, "id");
 		query.addSelect(`"user"."imageUrl"`, 'user_image_url');
 		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -1468,17 +1454,13 @@ export class StatisticService {
 			})
 		);
 		query.groupBy(`"${query.alias}"."id"`);
-		query.addGroupBy(`"${query.alias}"."employeeId"`);
 		query.addGroupBy(`"employee"."id"`);
 		query.addGroupBy(`"user"."id"`);
-		query.orderBy(`"${query.alias}"."employeeId"`);
 		query.addOrderBy(`"${query.alias}"."startedAt"`, 'DESC');
 		query.limit(3);
 		
 		let employees: ITimeSlotStatistics[] = [];
 		employees = await query.getRawMany();
-
-		employees = employees.sort((a, b) => (a.startedAt > b.startedAt) ? -1 : 1);
 
 		for await (const employee of employees) {
 			employee.user = {
