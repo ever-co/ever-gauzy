@@ -63,13 +63,17 @@
       }
     }
     .toggle {
-      .btn {
-        border-radius: 50px;
-        padding: 8px;
-        nb-icon {
-          color: #fff;
-          font-size: 24px;
-        }
+      [nbButton].appearance-filled.size-medium{
+        padding: 8px 7px 10px 7px;
+      }
+      [nbButton].appearance-filled.status-danger{
+        padding:  8px;
+      }
+      fa-icon{
+        border: 1px dashed transparent !important;
+        margin: 0;
+        border-radius: 50px ;
+        padding: 0px 3px 0px 4px;
       }
     }
     .mode {
@@ -77,7 +81,9 @@
       flex-direction: column;
       justify-content: center;
       padding-left: 10px;
-      margin-top: 3.4rem;
+      &.expanded{
+        margin-top: 3.4rem;
+      }
       button {
         margin: 4px;
         padding: 4px 2px 4px 2px;
@@ -126,14 +132,20 @@
 
 .custom{
   textarea{
-    background-color: nb-theme(background-basic-color-1);
+    background: rgba(126, 126, 143, 0.05);
     color: nb-theme(text-basic-color);
     border-color: nb-theme(background-basic-color-3);
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+    resize: none;
+    width: 282.79px;
+    height: 84px;
+    border-radius: 8px;
+    margin-bottom: 30px;
     &:hover{
       border-color: nb-theme(color-primary-hover);
       color: nb-theme(text-basic-color);
       &:focus{
-        background-color: nb-theme(background-basic-color-1);
+        background: rgba(126, 126, 143, 0.05);
       }
     }
     &:active{
@@ -154,4 +166,47 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+::ng-deep .ng-select .ng-select-container{
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+  border-radius: 8px;
+  min-height: 42px;
+}
+
+::ng-deep .ng-select.ng-select-single .ng-select-container{
+  height: 42px;
+}
+
+.button{
+  &.timesheet{
+    background-color: transparent;
+    font-weight: normal;
+    height: 36px;
+    padding: 9px 20px 18px 20px;
+    margin: 0;
+  }
+  &.disabled{
+    height: 36px;
+  }
+  &.success{
+    box-shadow: 0px 10px 13px -7px #25B869;
+   &.start, &.add{
+    height: 36px;
+    font-size: 14px;
+    height: 36px;
+    padding: 9px 20px 18px 20px;
+   }
+  }
+  &.switch{
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.button, h6 {
+  display: inline-block;
+  text-transform: lowercase;
+  &:first-letter{
+    text-transform: uppercase;
+  }
 }

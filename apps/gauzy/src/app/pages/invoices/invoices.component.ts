@@ -679,16 +679,22 @@ export class InvoicesComponent
 
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
+			) {
+				// Initiate GRID or TABLE view pagination
 				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(
@@ -832,7 +838,7 @@ export class InvoicesComponent
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			pager: {
-				display: true,
+				display: false,
 				perPage: this.perPage ? this.perPage : 10
 			},
 			hideSubHeader: true,
@@ -847,7 +853,7 @@ export class InvoicesComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '10%',
+					width: '18%',
 					renderComponent: NotesWithTagsComponent
 				}
 			}
@@ -874,15 +880,6 @@ export class InvoicesComponent
 				width: '10%',
 				filter: false,
 				renderComponent: DateViewComponent
-			};
-		}
-		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
-			this.settingsSmartTable['columns']['displayStatus'] = {
-				title: this.getTranslation('INVOICES_PAGE.STATUS'),
-				type: 'custom',
-				width: '5%',
-				renderComponent: StatusBadgeComponent,
-				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TOTAL_VALUE)) {
@@ -913,7 +910,7 @@ export class InvoicesComponent
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
 			this.settingsSmartTable['columns']['displayDiscountValue'] = {
 				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
+					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT'
 				),
 				type: 'text',
 				width: '5%',
@@ -935,11 +932,20 @@ export class InvoicesComponent
 				this.settingsSmartTable['columns']['paid'] = {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 					type: 'custom',
-					width: '20%',
+					width: '12%',
 					renderComponent: InvoicePaidComponent,
 					filter: false
 				};
 			}
+		}
+    if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
+			this.settingsSmartTable['columns']['displayStatus'] = {
+				title: this.getTranslation('INVOICES_PAGE.STATUS'),
+				type: 'custom',
+				width: '5%',
+				renderComponent: StatusBadgeComponent,
+				filter: false
+			};
 		}
 	}
 
@@ -1129,7 +1135,7 @@ export class InvoicesComponent
    * On change number of item per page option
    * @param $event is a number
    */
-   OnUpdateOption($event: number){
+   onUpdateOption($event: number){
     this.perPage = $event;
     this.showPerPage();
   }

@@ -15,20 +15,19 @@
         <li (click)="onNextPageClick()" [ngClass]="{disabled: activePage == getPages().length}">
             <a href="#" aria-label="Next">
                 <span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrow-ios-forward-outline"></nb-icon></span><span class="sr-only">Next</span></a></li>
-        <li  (click)="onChangePage(getPages().length)">
+        <li  (click)="onChangePage(getPagesCount())">
             <a href="#" aria-label="Last">
                 <span class="icon" aria-hidden="true"><nb-icon status="primary" icon="arrowhead-right-outline"></nb-icon></span>
                 <span class="sr-only">Last</span></a>
         </li>
     </ul>
     <div class="d-flex justify-between align-items-center pb-3">
-      <nb-select  [(selected)]="itemsPerPage">
+      <nb-select size="small" [(selected)]="itemsPerPage">
         <nb-option [value]="5">5</nb-option>
         <nb-option [value]="10">10</nb-option>
         <nb-option [value]="25">25</nb-option>
         <nb-option [value]="50">50</nb-option>
-        <nb-option [value]="100">100</nb-option>
       </nb-select>
-      <span>{{activePage}} - {{getPages().length}} of {{totalItems}} {{ 'PAGINATION.ITEMS' | translate }}</span>
+      <span>{{activePage}} - {{getPagesCount()}} of {{totalItems}} {{ 'PAGINATION.ITEMS' | translate }}</span>
     </div>
 </nav>

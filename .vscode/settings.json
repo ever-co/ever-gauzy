@@ -58,6 +58,7 @@
 		"Timeoff",
 		"Timesheet",
 		"timesheets",
+		"titlecase",
 		"toastr",
 		"tsbuildinfo",
 		"typeorm",

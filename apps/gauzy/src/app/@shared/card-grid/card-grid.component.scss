@@ -8,6 +8,7 @@
   color: nb-theme(color-basic-default);
   padding: 0;
   margin: 0;
+  overflow-y: scroll;
   .card-item {
     display: flex;
     flex-direction: column;
@@ -29,8 +30,7 @@
       border-color: nb-theme(color-primary-focus-border);
     }
     &.big {
-      width: 415px;
-      margin-right: 65px;
+      width: 336px;
     }
     .info-line {
       display: flex;
@@ -74,6 +74,7 @@
           .progress-bar-container {
             width: 100%;
             position: absolute;
+            top:0;
             left: 0;
             margin: 0;
             .paid-percent {
