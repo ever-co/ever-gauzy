@@ -1,4 +1,8 @@
-<div class="card-layout">
+<div class="card-layout grid-scroll-container"
+  infinite-scroll
+  [scrollWindow]="false"
+  (scrolled)="onScroll()"
+>
 	<nb-card
 		*ngFor="let item of source"
 		class="card-item"
@@ -26,17 +30,5 @@
 				</div>
 			</div>
 		</nb-card-body>
-		<!-- <nb-card-footer (click)="selectedItem(item)" class="card-footer">
-			<ng-container
-				*ngTemplateOutlet="
-					buttonTemplate;
-					context: {
-						buttonSize: 'tiny',
-						selectedItem: item
-					}
-				"
-			>
-			</ng-container>
-		</nb-card-footer> -->
 	</nb-card>
 </div>
