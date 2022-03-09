@@ -178,7 +178,8 @@ $nb-themes: nb-register-theme((
       tabset-tab-text-transform: capitalize,
       button-filled-text-transform: none,
       font-family-primary: unquote('Inter, sans-serif'),
-      font-family-secondary: unquote('Inter, sans-serif')
+      font-family-secondary: unquote('Inter, sans-serif'),
+      button-outline-text-transform: none
   ),
   gauzy-light,
   default
@@ -218,7 +219,8 @@ $nb-themes: nb-register-theme(
      tabset-tab-text-transform: capitalize,
     button-filled-text-transform: none,
     font-family-primary: unquote('Inter, sans-serif'),
-    font-family-secondary: unquote('Inter, sans-serif')
+    font-family-secondary: unquote('Inter, sans-serif'),
+    button-outline-text-transform: none
   ),
   gauzy-dark,
   dark
