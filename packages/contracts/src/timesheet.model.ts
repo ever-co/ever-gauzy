@@ -298,6 +298,7 @@ export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel {
 	recordedAt?: Date;
 	storageProvider?: FileStorageProviderEnum;
 	employeeId?: string;
+	employee?: IEmployee;
 }
 
 export interface IScreenshotMap {

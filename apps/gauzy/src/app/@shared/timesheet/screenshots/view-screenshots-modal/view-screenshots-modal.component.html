@@ -48,10 +48,13 @@
 							status="danger"
 							nbButton
 							size="tiny"
-							(click)="deleteImage(image, timeSlot.timeLogs)"
+							(click)="deleteImage(image, image?.employee)"
 						>
 							<nb-icon icon="trash-2-outline"></nb-icon>
 						</button>
+						<div class="text-caption caption text-center mt-1">
+							{{ image?.recordedAt | dateTimeFormat }}
+						</div>
 					</div>
 				</div>
 			</div>
