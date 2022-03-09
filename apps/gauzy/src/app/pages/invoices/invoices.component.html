@@ -139,26 +139,33 @@
 													}}
 												</span>
 											</label>
-											<input
-												formControlName="invoiceDate"
-												type="text"
-												nbInput
-												[placeholder]="
-													(!isEstimate
-														? 'INVOICES_PAGE.INVOICE_DATE'
-														: 'INVOICES_PAGE.ESTIMATE_DATE'
-													) | translate
-												"
-												[nbDatepicker]="
-													invoiceDatePicker
-												"
-												id="inputInvoiceDate"
-												fullWidth
-												required
-											/>
-											<nb-datepicker
-												#invoiceDatePicker
-											></nb-datepicker>
+											<div class="input-icon">
+												<input
+													formControlName="invoiceDate"
+													type="text"
+													nbInput
+													[placeholder]="
+														(!isEstimate
+															? 'INVOICES_PAGE.INVOICE_DATE'
+															: 'INVOICES_PAGE.ESTIMATE_DATE'
+														) | translate
+													"
+													[nbDatepicker]="
+														invoiceDatePicker
+													"
+													id="inputInvoiceDate"
+													fullWidth
+													required
+													class="input-date"
+												/>
+												<nb-icon
+													class="icon ml-3"
+													icon="calendar-outline"
+												></nb-icon>
+												<nb-datepicker
+													#invoiceDatePicker
+												></nb-datepicker>
+											</div>
 										</div>
 									</div>
 									<div class="col-sm-3">
@@ -171,20 +178,29 @@
 														| translate
 												}}</label
 											>
-											<input
-												nbInput
-												[placeholder]="
-													'INVOICES_PAGE.DUE_DATE'
-														| translate
-												"
-												[nbDatepicker]="dueDatePicker"
-												formControlName="dueDate"
-												id="inputDueDate"
-												fullWidth
-											/>
-											<nb-datepicker
-												#dueDatePicker
-											></nb-datepicker>
+											<div class="input-icon">
+												<input
+													nbInput
+													[placeholder]="
+														'INVOICES_PAGE.DUE_DATE'
+															| translate
+													"
+													[nbDatepicker]="
+														dueDatePicker
+													"
+													formControlName="dueDate"
+													id="inputDueDate"
+													fullWidth
+													class="input-date"
+												/>
+												<nb-icon
+													class="icon ml-3"
+													icon="calendar-outline"
+												></nb-icon>
+												<nb-datepicker
+													#dueDatePicker
+												></nb-datepicker>
+											</div>
 										</div>
 									</div>
 								</div>

@@ -217,3 +217,34 @@ textarea, input{
     background-color: rgba(126, 126, 143, 0.05);
   }
 }
+
+.input-icon, .input-date{
+  display: flex;
+  align-items: center;
+  background: rgba(126, 126, 143, 0.05);
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+    color: nb-theme(text-basic-color);
+    border-color: nb-theme(background-basic-color-3);
+    border-radius: 0.5rem;
+    height: 42px;
+    position: relative;
+    &:hover{
+      border-color: nb-theme(color-primary-hover);
+      color: nb-theme(text-basic-color);
+      &:focus{
+        background: rgba(126, 126, 143, 0.05);
+      }
+    }
+    &:active{
+      background: rgba(126, 126, 143, 0.05);
+    }
+    .icon{
+      position: absolute;
+      right: 14px;
+    }
+}
+
+input{
+  background: transparent;
+  width: 100%;
+}
