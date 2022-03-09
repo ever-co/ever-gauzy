@@ -296,7 +296,8 @@ export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel {
 	fileUrl?: string;
 	thumbUrl?: string;
 	recordedAt?: Date;
-	storageProvider?: FileStorageProviderEnum
+	storageProvider?: FileStorageProviderEnum;
+	employeeId?: string;
 }
 
 export interface IScreenshotMap {

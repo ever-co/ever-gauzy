@@ -21,7 +21,7 @@ import { GalleryService } from './../../../../../@shared/gallery/gallery.service
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-screenshot',
+	selector: 'ngx-screenshots',
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss']
 })

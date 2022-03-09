@@ -34,10 +34,9 @@ import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	
 	public organization: IOrganization;
-	private _screenshots: IScreenshot[] = [];
-	private _timeSlot: ITimeSlot;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	progressStatus = progressStatus;
+	fallbackSvg = DEFAULT_SVG;
 
 	@Input() multiple: boolean = true;
 	@Input() selectionMode = false;
@@ -47,38 +46,57 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	@Output() delete: EventEmitter<any> = new EventEmitter();
 	@Output() toggle: EventEmitter<any> = new EventEmitter();
 
-	@Input()
-	public get timeSlot(): ITimeSlot {
+	/*
+	* Getter & Setter for TimeSlot
+	*/
+	private _timeSlot: ITimeSlot;
+	get timeSlot(): ITimeSlot {
 		return this._timeSlot;
 	}
-	public set timeSlot(timeSlot: ITimeSlot) {
+	@Input() set timeSlot(timeSlot: ITimeSlot) {
 		if (timeSlot) {
-			timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
-			timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
-			timeSlot.isAllowDelete = this.isEnableDelete(timeSlot);
-
-			this._timeSlot = timeSlot;
-
-			const screenshots = JSON.parse(
-				JSON.stringify(timeSlot.screenshots)
-			);
-			this._screenshots = _.sortBy(screenshots, 'createdAt').reverse();
-			if (this._screenshots.length) {
-				const [last] = this._screenshots;
+			let screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
+			this.screenshots = screenshots.map((screenshot: IScreenshot) => {
+				return {
+					employeeId: timeSlot.employeeId,
+					...screenshot
+				}
+			}); 
+			this._timeSlot = Object.assign({}, timeSlot, {
+				localStartedAt: toLocal(timeSlot.startedAt).toDate(),
+				localStoppedAt: toLocal(timeSlot.stoppedAt).toDate(),
+				isAllowDelete: this.isEnableDelete(timeSlot),
+				screenshots: this.screenshots
+			});
+			screenshots = _.sortBy(screenshots, 'createdAt').reverse();
+			if (screenshots.length) {
+				const [last] = screenshots;
 				this.lastScreenshot = last;
 			}
 		}
 	}
 
-	private _lastScreenshot: IScreenshot;
-	public get lastScreenshot(): IScreenshot {
-		return this._lastScreenshot;
+	/*
+	* Getter & Setter for Screenshots
+	*/
+	private _screenshots: IScreenshot[] = [];
+	get screenshots(): IScreenshot[] {
+		return this._screenshots;
 	}
-	public set lastScreenshot(screenshot: IScreenshot) {
-		this._lastScreenshot = screenshot;
+	set screenshots(screenshots: IScreenshot[]) {
+		this._screenshots = screenshots;
 	}
 
-	fallbackSvg = DEFAULT_SVG;
+	/*
+	* Getter & Setter for Screenshot
+	*/
+	private _lastScreenshot: IScreenshot;
+	get lastScreenshot(): IScreenshot {
+		return this._lastScreenshot;
+	}
+	set lastScreenshot(screenshot: IScreenshot) {
+		this._lastScreenshot = screenshot;
+	}
 
 	constructor(
 		private readonly nbDialogService: NbDialogService,

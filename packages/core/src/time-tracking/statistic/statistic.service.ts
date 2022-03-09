@@ -1419,8 +1419,15 @@ export class StatisticService {
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
-		query.select(`DISTINCT ON ("${query.alias}"."employeeId") "${query.alias}"."employeeId"`, "id")
-		query.addSelect(`"${query.alias}"."startedAt"`, `startedAt`);
+		query.select(`DISTINCT ON ("${query.alias}"."employeeId") "${query.alias}"."employeeId"`, "id");
+		query.addSelect(
+			`${
+				this.configService.dbConnectionOptions.type === 'sqlite'
+					? `julianday("${query.alias}"."startedAt")`
+					: `extract(epoch from ("${query.alias}"."startedAt"))`
+			}`,
+			"startedAt"
+		);
 		query.addSelect(`"user"."imageUrl"`, 'user_image_url');
 		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -1463,6 +1470,8 @@ export class StatisticService {
 		
 		let employees: ITimeSlotStatistics[] = [];
 		employees = await query.getRawMany();
+
+		employees = employees.sort((a, b) => (a.startedAt > b.startedAt) ? -1 : 1);
 
 		for await (const employee of employees) {
 			employee.user = {
