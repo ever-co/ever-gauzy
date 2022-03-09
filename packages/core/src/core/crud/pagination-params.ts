@@ -4,7 +4,7 @@
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsOptional, Max, Min } from 'class-validator';
+import { IsOptional, Min } from 'class-validator';
 
 export enum OrderTypeEnum {
 	DESC = 'DESC',
