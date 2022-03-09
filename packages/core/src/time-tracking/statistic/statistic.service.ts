@@ -1419,11 +1419,18 @@ export class StatisticService {
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
-		query.select(`DISTINCT ON ("${query.alias}"."employeeId") "${query.alias}"."employeeId"`, "id");
+		query.select(
+			`${
+				this.configService.dbConnectionOptions.type === 'sqlite'
+					? `DISTINCT "${query.alias}"."employeeId"`
+					: `DISTINCT ON ("${query.alias}"."employeeId") "${query.alias}"."employeeId"`
+			}`,
+			"id"
+		);
 		query.addSelect(
 			`${
 				this.configService.dbConnectionOptions.type === 'sqlite'
-					? `julianday("${query.alias}"."startedAt")`
+					? `(julianday("${query.alias}"."startedAt") * 86400)`
 					: `extract(epoch from ("${query.alias}"."startedAt"))`
 			}`,
 			"startedAt"
