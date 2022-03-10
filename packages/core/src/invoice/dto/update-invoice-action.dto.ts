@@ -1,12 +1,13 @@
+import { EstimateStatusTypesEnum, InvoiceStatusEnumType, InvoiceStatusTypesEnum } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class UpdateInvoiceActionDTO {
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String, enum: Object.assign({}, InvoiceStatusTypesEnum, EstimateStatusTypesEnum), readOnly: true })
     @IsOptional()
-    @IsNotEmpty()
-    readonly status: string;
+    @IsEnum(Object.assign({}, InvoiceStatusTypesEnum, EstimateStatusTypesEnum))
+    readonly status: InvoiceStatusEnumType;
 
     @ApiProperty({ type: () => Boolean, readOnly: true })
     @IsOptional()

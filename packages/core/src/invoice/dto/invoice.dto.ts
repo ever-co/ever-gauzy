@@ -2,6 +2,7 @@ import {
     CurrenciesEnum,
     EstimateStatusTypesEnum,
     IInvoiceEstimateHistory,
+    InvoiceStatusEnumType,
     InvoiceStatusTypesEnum,
     IOrganizationContact,
     IPayment
@@ -19,10 +20,11 @@ import {
     IsString,
     ValidateNested
 } from "class-validator";
-import { CreateInvoiceEstimateHistoryDTO } from "invoice-estimate-history/dto";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { CreateInvoiceEstimateHistoryDTO } from "./../../invoice-estimate-history/dto";
 import { CreateInvoiceItemDTO } from "./../../invoice-item/dto";
 
-export class InvoiceDTO {
+export class InvoiceDTO extends TenantOrganizationBaseDTO {
 
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsNotEmpty()
@@ -37,10 +39,10 @@ export class InvoiceDTO {
     @IsNotEmpty()
     readonly dueDate: Date;
 
-    @ApiProperty({ type: () => String, enum: InvoiceStatusTypesEnum, readOnly: true })
+    @ApiProperty({ type: () => String, enum: Object.assign({}, InvoiceStatusTypesEnum, EstimateStatusTypesEnum), readOnly: true })
     @IsNotEmpty()
     @IsEnum(Object.assign({}, InvoiceStatusTypesEnum, EstimateStatusTypesEnum))
-    readonly status: InvoiceStatusTypesEnum | EstimateStatusTypesEnum;
+    readonly status: InvoiceStatusEnumType;
 
     @ApiPropertyOptional({ type: () => Number, readOnly: true })
     @IsOptional()

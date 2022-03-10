@@ -425,7 +425,6 @@ export class InvoiceAddComponent
 		if (!this.organization) {
 			return;
 		}
-
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		const { value: currency } = this.currency;
@@ -444,34 +443,38 @@ export class InvoiceAddComponent
 			tags
 		} = this.form.value;
 
-		const createdInvoice = await this.invoicesService.add({
-			invoiceNumber,
-			invoiceDate,
-			dueDate,
-			currency,
-			discountValue,
-			discountType,
-			tax,
-			tax2,
-			taxType,
-			tax2Type,
-			terms,
-			paid: false,
-			totalValue: +this.total.toFixed(2),
-			toContact: organizationContact,
-			organizationContactId: organizationContact.id,
-			fromOrganization: this.organization,
-			organizationId,
-			tenantId,
-			invoiceType: this.selectedInvoiceType,
-			tags,
-			isEstimate: this.isEstimate,
-			status: status,
-			sentTo: sendTo,
-			isArchived: false
-		});
-		this.createdInvoice = createdInvoice;
-		return createdInvoice;
+		try {
+			const createdInvoice = await this.invoicesService.add({
+				invoiceNumber,
+				invoiceDate,
+				dueDate,
+				currency,
+				discountValue,
+				discountType,
+				tax,
+				tax2,
+				taxType,
+				tax2Type,
+				terms,
+				paid: false,
+				totalValue: +this.total.toFixed(2),
+				toContact: organizationContact,
+				organizationContactId: organizationContact.id,
+				fromOrganization: this.organization,
+				organizationId,
+				tenantId,
+				invoiceType: this.selectedInvoiceType,
+				tags,
+				isEstimate: this.isEstimate,
+				status: status,
+				sentTo: sendTo,
+				isArchived: false
+			});
+			this.createdInvoice = createdInvoice;
+			return createdInvoice;
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	async createInvoiceEstimateItems() {
@@ -522,29 +525,36 @@ export class InvoiceAddComponent
 			}
 			invoiceItems.push(itemToAdd);
 		}
-
-		return await this.invoiceItemService.createBulk(
-			createdInvoice.id,
-			invoiceItems
-		);
+		try {
+			return await this.invoiceItemService.createBulk(
+				createdInvoice.id,
+				invoiceItems
+			);
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	async createInvoiceEstimateHistory() {
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		await this.invoiceEstimateHistoryService.add({
-			action: this.isEstimate
-				? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
-				: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-			invoice: this.createdInvoice,
-			invoiceId: this.createdInvoice.id,
-			user: this.store.user,
-			userId: this.store.userId,
-			organization: this.organization,
-			organizationId,
-			tenantId
-		});
+		try {
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate
+					? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
+					: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+				invoice: this.createdInvoice,
+				invoiceId: this.createdInvoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId,
+				tenantId
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	async addInvoice(status: string, sendTo?: string) {

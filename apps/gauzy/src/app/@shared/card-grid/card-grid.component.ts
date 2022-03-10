@@ -14,16 +14,31 @@ import { PaginationComponent } from '../pagination/pagination.component';
 	templateUrl: './card-grid.component.html',
 	styleUrls: ['./card-grid.component.scss']
 })
-export class CardGridComponent
-	extends PaginationComponent
-	implements OnInit, OnDestroy
-{
+export class CardGridComponent extends PaginationComponent 
+	implements OnInit, OnDestroy {
+
 	@Input() source: any;
-	@Input() settings: any = {};
 	@Input() buttonTemplate: TemplateRef<any>;
 	@Input() cardSize: undefined | 'big';
 	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
 	selected: any = { isSelected: false, data: null };
+
+	/*
+	* Getter & Setter for dynamic columns settings
+	*/
+	_settings: any = {};
+	get settings(): any {
+		return this._settings;
+	}
+	@Input() set settings(settings: any) {
+		this.setColumns(settings.columns)
+		this._settings = settings;
+	}
+
+	/**
+	 * GRID defined columns
+	 */
+	columns: any = [];
 
 	constructor() {
 		super();
@@ -34,6 +49,13 @@ export class CardGridComponent
 	getKeys() {
 		return Object.keys(this.settings.columns);
 	}
+	
+	setColumns(columns: []) {
+        this.columns = columns;
+    }
+	getColumns() {
+        return this.columns;
+    }
 
 	selectedItem(item) {
 		this.selected =
@@ -45,6 +67,19 @@ export class CardGridComponent
 
 	onScroll() {
 		this.itemsPerPage += 10;
+	}
+
+	getValue(row: any, key: string) {
+		if (key in this.getColumns()) {
+			const column = this.getColumns()[key];
+			const value = row[key];
+			const valid = column['valuePrepareFunction'] instanceof Function;
+			if (valid) {
+				return column['valuePrepareFunction'].call(null, value, row);
+			} else {
+				return value;
+			}
+		}
 	}
 
 	ngOnDestroy() {}
