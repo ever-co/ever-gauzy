@@ -3,10 +3,12 @@ div {
   align-content: center;
   display: flex;
   justify-content: center;
+  width: 100%;
+  height: 23px;
 }
 
 .badge {
-  text-align: center;
-  padding: 5px 30px;
-  margin-bottom: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

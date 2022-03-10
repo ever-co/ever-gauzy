@@ -359,16 +359,21 @@ export class InvoicesComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
+		const status: any = this.selectedInvoice.status;
+		const tax: any = this.selectedInvoice.tax;
+		const tax2: any = this.selectedInvoice.tax2;
+		const discountValue: any = this.selectedInvoice.discountValue;
+
 		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(tenantId);
 		const createdInvoice = await this.invoicesService.add({
 			invoiceNumber: +invoiceNumber['max'] + 1,
 			invoiceDate: this.selectedInvoice.invoiceDate,
 			dueDate: this.selectedInvoice.dueDate,
 			currency: this.selectedInvoice.currency,
-			discountValue: this.selectedInvoice.discountValue,
+			discountValue: discountValue ? discountValue.originalValue : 0,
 			discountType: this.selectedInvoice.discountType,
-			tax: this.selectedInvoice.tax,
-			tax2: this.selectedInvoice.tax2,
+			tax: tax ? tax.originalValue : 0,
+			tax2: tax2 ? tax2.originalValue : 0,
 			taxType: this.selectedInvoice.taxType,
 			tax2Type: this.selectedInvoice.tax2Type,
 			terms: this.selectedInvoice.terms,
@@ -383,7 +388,7 @@ export class InvoicesComponent
 			invoiceType: this.selectedInvoice.invoiceType,
 			tags: this.selectedInvoice.tags,
 			isEstimate: this.isEstimate,
-			status: this.selectedInvoice.status
+			status: status ? status.originalValue : InvoiceStatusTypesEnum.DRAFT
 		});
 
 		const invoiceItems: IInvoiceItemCreateInput[] = [];
@@ -660,10 +665,10 @@ export class InvoicesComponent
 			resultMap: (invoice: IInvoice) => {
 				return Object.assign({}, invoice, {
 					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
-					displayStatus: this.statusMapper(invoice.status),
-					displayTax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
-					displayTax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax2}`,
-					displayDiscountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
+					status: this.statusMapper(invoice.status),
+					tax: this.taxMapper(invoice.taxType, invoice.tax),
+					tax2: this.taxMapper(invoice.tax2Type, invoice.tax2),
+					discountValue: this.taxMapper(invoice.discountType, invoice.discountValue)
 				});
 			},
 			finalize: () => {
@@ -679,16 +684,22 @@ export class InvoicesComponent
 
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
+			) {
+				// Initiate GRID or TABLE view pagination
 				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(
@@ -701,11 +712,12 @@ export class InvoicesComponent
 	}
 
 	async addComment(historyFormDirective) {
+		if(this.historyForm.invalid) {
+			return;
+		};
+
 		const { comment } = this.historyForm.value;
 		const { id: invoiceId } = this.selectedInvoice;
-    if(this.historyForm.invalid) {
-      return;
-    };
 		if (comment) {
 			const action = comment;
 			await this.createInvoiceHistory(action);
@@ -824,15 +836,23 @@ export class InvoicesComponent
 					: 'danger';
 		}
 		return {
+			originalValue: value,
 			text: this.getTranslation(`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`),
 			class: badgeClass
 		};
 	}
 
+	private taxMapper = (taxType: DiscountTaxTypeEnum, tax: number) => {
+		return {
+			originalValue: tax,
+			value: (DiscountTaxTypeEnum.PERCENT === taxType) ? `${tax}%` : `${tax}`
+		}
+	}
+
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			pager: {
-				display: true,
+				display: false,
 				perPage: this.perPage ? this.perPage : 10
 			},
 			hideSubHeader: true,
@@ -847,7 +867,7 @@ export class InvoicesComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '10%',
+					width: '18%',
 					renderComponent: NotesWithTagsComponent
 				}
 			}
@@ -876,15 +896,6 @@ export class InvoicesComponent
 				renderComponent: DateViewComponent
 			};
 		}
-		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
-			this.settingsSmartTable['columns']['displayStatus'] = {
-				title: this.getTranslation('INVOICES_PAGE.STATUS'),
-				type: 'custom',
-				width: '5%',
-				renderComponent: StatusBadgeComponent,
-				filter: false
-			};
-		}
 		if (this.columns.includes(InvoiceColumnsEnum.TOTAL_VALUE)) {
 			this.settingsSmartTable['columns']['totalValue'] = {
 				title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
@@ -895,29 +906,44 @@ export class InvoicesComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
-			this.settingsSmartTable['columns']['displayTax'] = {
+			this.settingsSmartTable['columns']['tax'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX'),
 				type: 'text',
 				width: '5%',
-				filter: false
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					if (cell) {
+						return cell['value'];
+					}
+				}
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX_2)) {
-			this.settingsSmartTable['columns']['displayTax2'] = {
+			this.settingsSmartTable['columns']['tax2'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
 				width: '5%',
-				filter: false
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					if (cell) {
+						return cell['value'];
+					}
+				}
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
-			this.settingsSmartTable['columns']['displayDiscountValue'] = {
+			this.settingsSmartTable['columns']['discountValue'] = {
 				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
+					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT'
 				),
 				type: 'text',
 				width: '5%',
-				filter: false
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					if (cell) {
+						return cell['value'];
+					}
+				}
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
@@ -935,11 +961,20 @@ export class InvoicesComponent
 				this.settingsSmartTable['columns']['paid'] = {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 					type: 'custom',
-					width: '20%',
+					width: '12%',
 					renderComponent: InvoicePaidComponent,
 					filter: false
 				};
 			}
+		}
+    if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
+			this.settingsSmartTable['columns']['status'] = {
+				title: this.getTranslation('INVOICES_PAGE.STATUS'),
+				type: 'custom',
+				width: '5%',
+				renderComponent: StatusBadgeComponent,
+				filter: false
+			};
 		}
 	}
 
@@ -1129,7 +1164,7 @@ export class InvoicesComponent
    * On change number of item per page option
    * @param $event is a number
    */
-   OnUpdateOption($event: number){
+   onUpdateOption($event: number){
     this.perPage = $event;
     this.showPerPage();
   }

@@ -127,7 +127,6 @@ export class ApprovalsComponent
 
 		try {
 			this.timesheets = await this.timesheetService.getTimeSheets(request);
-			console.log(this.timesheets);
 		} catch (error) {
 			console.log('Error while getting TimeSheets for selected date range')
 		} finally {

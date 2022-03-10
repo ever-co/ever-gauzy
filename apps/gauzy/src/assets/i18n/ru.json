@@ -2448,6 +2448,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"BROWSE": "Обзор",
 		"COMMENT": "Комментарий",
 		"COMMENTS": "Комментарии",
 		"HEADER": "Счета",
@@ -2477,6 +2478,7 @@
 		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
 		"INVOICES_SELECT_CURRENCY": "Валюта",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Значение скидки",
+		"INVOICES_SELECT_DISCOUNT": "Скидка",
 		"INVOICES_SELECT_PAID": "Оплачено",
 		"INVOICES_TAXES": "Налоги",
 		"INVOICES_SELECT_TERMS": "Условия",

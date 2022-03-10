@@ -2449,6 +2449,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+    "BROWSE":"Browse",
     "COMMENT":"Comment",
     "COMMENTS":"Comments",
 		"HEADER": "Invoices",
@@ -2478,6 +2479,7 @@
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
 		"INVOICES_SELECT_CURRENCY": "Currency",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
+    "INVOICES_SELECT_DISCOUNT": "Discount",
 		"INVOICES_SELECT_PAID": "Paid",
 		"INVOICES_TAXES": "Taxes",
 		"INVOICES_SELECT_TERMS": "Terms",

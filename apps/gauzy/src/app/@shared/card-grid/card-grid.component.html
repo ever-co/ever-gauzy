@@ -1,4 +1,8 @@
-<div class="card-layout">
+<div class="card-layout grid-scroll-container"
+  infinite-scroll
+  [scrollWindow]="false"
+  (scrolled)="onScroll()"
+>
 	<nb-card
 		*ngFor="let item of source"
 		class="card-item"
@@ -13,30 +17,16 @@
 					<div *ngSwitchCase="'function'">{{ item[key].name }}</div>
 					<div *ngSwitchCase="'custom'">
 						<ga-custom-component
-							[renderComponent]="
-								settings.columns[key].renderComponent
-							"
+							[renderComponent]="settings.columns[key].renderComponent"
 							[value]="item[key]"
 							[rowData]="item"
-              class="custom"
+              				class="custom"
 						>
 						</ga-custom-component>
 					</div>
-					<div *ngSwitchDefault>{{ item[key] }}</div>
+					<div *ngSwitchDefault>{{ getValue(item, key) }}</div>
 				</div>
 			</div>
 		</nb-card-body>
-		<!-- <nb-card-footer (click)="selectedItem(item)" class="card-footer">
-			<ng-container
-				*ngTemplateOutlet="
-					buttonTemplate;
-					context: {
-						buttonSize: 'tiny',
-						selectedItem: item
-					}
-				"
-			>
-			</ng-container>
-		</nb-card-footer> -->
 	</nb-card>
 </div>

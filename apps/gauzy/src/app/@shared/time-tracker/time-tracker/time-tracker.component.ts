@@ -18,6 +18,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
+import { faStopwatch, faPlay, faPause }  from '@fortawesome/free-solid-svg-icons';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +27,9 @@ import { ErrorHandlingService, Store, ToastrService } from '../../../@core/servi
 	styleUrls: ['./time-tracker.component.scss']
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
-
+  play = faPlay;
+  pause = faPause;
+  stopwatch = faStopwatch;
 	isDisable: boolean = false;
 	isOpen: boolean = false;
   isExpanded: boolean = true;

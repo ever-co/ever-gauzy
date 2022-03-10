@@ -2448,6 +2448,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"BROWSE": "crwdns11010:0crwdne11010:0",
 		"COMMENT": "crwdns11004:0crwdne11004:0",
 		"COMMENTS": "crwdns11006:0crwdne11006:0",
 		"HEADER": "crwdns3274:0crwdne3274:0",
@@ -2477,6 +2478,7 @@
 		"INVOICES_SELECT_DUE_DATE": "crwdns3290:0crwdne3290:0",
 		"INVOICES_SELECT_CURRENCY": "crwdns3292:0crwdne3292:0",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "crwdns3294:0crwdne3294:0",
+		"INVOICES_SELECT_DISCOUNT": "crwdns11012:0crwdne11012:0",
 		"INVOICES_SELECT_PAID": "crwdns3296:0crwdne3296:0",
 		"INVOICES_TAXES": "crwdns7776:0crwdne7776:0",
 		"INVOICES_SELECT_TERMS": "crwdns3300:0crwdne3300:0",

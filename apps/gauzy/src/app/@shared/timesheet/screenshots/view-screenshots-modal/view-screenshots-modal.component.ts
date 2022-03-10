@@ -1,8 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { IOrganization, IScreenshot, ITimeLog, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployee, IOrganization, IScreenshot, ITimeLog, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { progressStatus, toLocal } from '@gauzy/common-angular';
-import * as _ from 'underscore';
+import { sortBy } from 'underscore';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TimeLogsLabel } from './../../../../@core/constants';
@@ -30,21 +30,27 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		return this._timeSlot;
 	}
 	@Input() set timeSlot(timeSlot: ITimeSlot) {
-		timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
-		timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
-		this._timeSlot = timeSlot;
-
-		this.screenshots = _.sortBy(JSON.parse(JSON.stringify(timeSlot.screenshots)), 'createdAt').reverse();
+		let screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
+		this.screenshots = sortBy(screenshots, 'createdAt').map((screenshot: IScreenshot) => {
+			return {
+				employee: timeSlot.employee,
+				...screenshot
+			}
+		}); 
+		this._timeSlot = Object.assign({}, timeSlot, {
+			localStartedAt: toLocal(timeSlot.startedAt).toDate(),
+			localStoppedAt: toLocal(timeSlot.stoppedAt).toDate()
+		});
 	}
 
 	/*
-	* Getter & Setter for Screenshots element
+	* Getter & Setter for Screenshots
 	*/
 	private _screenshots: IScreenshot[] = [];
-	public get screenshots(): IScreenshot[] {
+	get screenshots(): IScreenshot[] {
 		return this._screenshots;
 	}
-	public set screenshots(screenshots: IScreenshot[]) {
+	set screenshots(screenshots: IScreenshot[]) {
 		this._screenshots = screenshots;
 	}
 
@@ -71,8 +77,8 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		try {
 			this.timeSlot = await this.timesheetService.getTimeSlot(this.timeSlot.id, {
 				relations: [
-					'timeLogs',
 					'screenshots',
+					'timeLogs',
 					'timeLogs.employee',
 					'timeLogs.employee.user',
 					'timeLogs.project',
@@ -103,13 +109,12 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	 */
 	async deleteImage(
 		screenshot: IScreenshot,
-		timeLogs: ITimeLog[]
+		employee: IEmployee
 	) {
 		if (!screenshot) {
 			return;
 		}
 		try {
-			const employee = timeLogs[0]['employee'];
 			await this.timesheetService.deleteScreenshot(screenshot.id).then(() => {
 				this.screenshots = this.screenshots.filter(
 					(item: IScreenshot) => item.id !== screenshot.id

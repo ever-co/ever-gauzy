@@ -1419,8 +1419,8 @@ export class StatisticService {
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
-		query.select(`DISTINCT ON ("${query.alias}"."employeeId") "${query.alias}"."employeeId"`)
-		query.addSelect(`"${query.alias}"."startedAt"`, `startedAt`);
+		query.select(`MAX("${query.alias}"."startedAt")`, "startedAt");
+		query.addSelect(`"employee"."id"`, "id");
 		query.addSelect(`"user"."imageUrl"`, 'user_image_url');
 		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -1454,10 +1454,8 @@ export class StatisticService {
 			})
 		);
 		query.groupBy(`"${query.alias}"."id"`);
-		query.addGroupBy(`"${query.alias}"."employeeId"`);
 		query.addGroupBy(`"employee"."id"`);
 		query.addGroupBy(`"user"."id"`);
-		query.orderBy(`"${query.alias}"."employeeId"`);
 		query.addOrderBy(`"${query.alias}"."startedAt"`, 'DESC');
 		query.limit(3);
 		
@@ -1486,7 +1484,7 @@ export class StatisticService {
 					'employee', 'employee.user', 'screenshots'
 				],
 				where: (qb: SelectQueryBuilder<TimeSlot>) => {
-					const { employeeId } = employee;
+					const { id: employeeId } = employee;
 					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 						employeeId
 					});

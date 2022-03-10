@@ -136,17 +136,17 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })
-	discountType: string;
+	discountType: DiscountTaxTypeEnum;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })
-	taxType: string;
+	taxType: DiscountTaxTypeEnum;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })
-	tax2Type: string;
+	tax2Type: DiscountTaxTypeEnum;
 
 	@ApiPropertyOptional({ type: () => String, enum: InvoiceTypeEnum })
 	@IsEnum(InvoiceTypeEnum)
