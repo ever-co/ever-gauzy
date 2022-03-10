@@ -17,16 +17,14 @@
 					<div *ngSwitchCase="'function'">{{ item[key].name }}</div>
 					<div *ngSwitchCase="'custom'">
 						<ga-custom-component
-							[renderComponent]="
-								settings.columns[key].renderComponent
-							"
+							[renderComponent]="settings.columns[key].renderComponent"
 							[value]="item[key]"
 							[rowData]="item"
-              class="custom"
+              				class="custom"
 						>
 						</ga-custom-component>
 					</div>
-					<div *ngSwitchDefault>{{ item[key] }}</div>
+					<div *ngSwitchDefault>{{ getValue(item, key) }}</div>
 				</div>
 			</div>
 		</nb-card-body>
