@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsBoolean, IsNotEmpty } from "class-validator";
 
-export abstract class UpdateEstimateInvoiceDTO {
+export class UpdateEstimateInvoiceDTO {
 
     @ApiProperty({ type: () => Boolean, readOnly: true })
     @IsNotEmpty()
