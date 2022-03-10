@@ -12,12 +12,12 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	dueDate: Date;
 	currency: string;
 	discountValue: number;
-	discountType: string;
+	discountType: DiscountTaxTypeEnum;
 	paid: boolean;
 	tax: number;
-	taxType: string;
+	taxType: DiscountTaxTypeEnum;
 	tax2: number;
-	tax2Type: string;
+	tax2Type: DiscountTaxTypeEnum;
 	terms?: string;
 	totalValue?: number;
 	organizationContactId?: string;
@@ -49,12 +49,12 @@ export interface IInvoiceCreateInput
 	dueDate?: Date;
 	currency?: string;
 	discountValue?: number;
-	discountType?: string;
+	discountType?: DiscountTaxTypeEnum;
 	paid?: boolean;
 	tax?: number;
 	tax2?: number;
-	taxType?: string;
-	tax2Type?: string;
+	taxType?: DiscountTaxTypeEnum;
+	tax2Type?: DiscountTaxTypeEnum;
 	terms?: string;
 	totalValue?: number;
 	organizationContactId?: string;
@@ -121,6 +121,8 @@ export enum EstimateStatusTypesEnum {
 	REJECTED = 'REJECTED',
 	VOID = 'VOID'
 }
+
+export type InvoiceStatusEnumType = InvoiceStatusTypesEnum | EstimateStatusTypesEnum;
 
 export enum InvoiceColumnsEnum {
 	INVOICE_DATE = 'INVOICE_DATE',
