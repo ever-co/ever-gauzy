@@ -3,6 +3,7 @@ import { Invoice } from './invoice.entity';
 import { faker } from '@ever-co/faker';
 import {
 	DiscountTaxTypeEnum,
+	EstimateStatusTypesEnum,
 	IInvoice,
 	IInvoiceEstimateHistory,
 	InvoiceStatusTypesEnum,
@@ -112,13 +113,15 @@ const generateInvoice = async (
 
 	if (invoice.isEstimate) {
 		invoice.isAccepted = faker.datatype.boolean();
+		invoice.status = faker.random.arrayElement(Object.values(EstimateStatusTypesEnum));
+	} else {
+		invoice.status = faker.random.arrayElement(Object.values(InvoiceStatusTypesEnum));
 	}
 
 	invoice.discountType = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
 	invoice.taxType = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
 	invoice.tax2Type = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
 	invoice.invoiceType = faker.random.arrayElement(Object.values(InvoiceTypeEnum));
-	invoice.status = faker.random.arrayElement(Object.values(InvoiceStatusTypesEnum));
 
 	invoice.organization = organization;
 	invoice.tenant = tenant;
