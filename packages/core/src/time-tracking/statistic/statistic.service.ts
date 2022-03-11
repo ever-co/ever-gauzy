@@ -1419,12 +1419,12 @@ export class StatisticService {
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
-		query.select(`MAX("${query.alias}"."startedAt")`, "startedAt");
-		query.addSelect(`"employee"."id"`, "id");
-		query.addSelect(`"user"."imageUrl"`, 'user_image_url');
-		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name');
+		query.select(`"time_log"."employeeId"`, "id");
+		query.addSelect(`MAX("${query.alias}"."startedAt")`, "startedAt");
+		query.addSelect(`"user"."imageUrl"`, "user_image_url");
+		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, "user_name");
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`employee.user`, 'user');
+		query.innerJoin(`employee.user`, "user");
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => { 
 				qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
@@ -1453,10 +1453,9 @@ export class StatisticService {
 				}
 			})
 		);
-		query.groupBy(`"${query.alias}"."id"`);
-		query.addGroupBy(`"employee"."id"`);
+		query.groupBy(`"${query.alias}"."employeeId"`);
 		query.addGroupBy(`"user"."id"`);
-		query.addOrderBy(`"${query.alias}"."startedAt"`, 'DESC');
+		query.addOrderBy(`"startedAt"`, "DESC");
 		query.limit(3);
 		
 		let employees: ITimeSlotStatistics[] = [];
