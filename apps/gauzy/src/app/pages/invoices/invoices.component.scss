@@ -126,12 +126,12 @@ button {
   display: flex;
   &.hide{
     transform: translateX(89%);
-    transition: all 1s ease-in;
+    transition: all .15s ease-in;
   }
   &.show{
     opacity: 1;
     transform: translateX(0%);
-    transition: all 1.5s ease-out;
+    transition: all .25s ease-out;
   }
 }
 
