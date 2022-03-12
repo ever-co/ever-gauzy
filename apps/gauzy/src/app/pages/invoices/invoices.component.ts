@@ -229,6 +229,7 @@ export class InvoicesComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(() => this.closeActionsPopover()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
@@ -1092,14 +1093,16 @@ export class InvoicesComponent
 	}
 
 	closeActionsPopover() {
-		const actionsPopup = this.popups.first;
-		const settingsPopup = this.popups.last;
-		if(settingsPopup.isShown){
-			settingsPopup.hide();
-		}
-
-		if (actionsPopup.isShown) {
-			actionsPopup.hide();
+		if (this.popups) {
+			const actionsPopup = this.popups.first;
+			const settingsPopup = this.popups.last;
+			if (settingsPopup.isShown) {
+				settingsPopup.hide();
+			}
+	
+			if (actionsPopup.isShown) {
+				actionsPopup.hide();
+			}
 		}
 	}
 
