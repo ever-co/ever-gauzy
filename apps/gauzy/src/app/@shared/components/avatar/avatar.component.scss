@@ -1,9 +1,11 @@
+@import 'themes';
+
 :host {
   display: block;
   .link-text {
     cursor: pointer;
     text-decoration: none;
-    color: #323232;
+    color: nb-theme(gauzy-text-contact);
     font-weight: bold;
   }
   .link-text:hover {
