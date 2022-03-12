@@ -3,7 +3,14 @@ import { UntilDestroy } from "@ngneat/until-destroy";
 import { TranslateService } from "@ngx-translate/core";
 import { isNotEmpty } from "@gauzy/common-angular";
 import { Subject } from "rxjs/internal/Subject";
+import { BehaviorSubject } from "rxjs/internal/BehaviorSubject";
 import { TranslationBaseComponent } from "../language-base/translation-base.component";
+
+export interface IPaginationBase {
+	totalItems?: number,
+	activePage: number,
+	itemsPerPage: number
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -11,12 +18,16 @@ import { TranslationBaseComponent } from "../language-base/translation-base.comp
 })
 export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
     
-	protected pagination: any = {
+	protected pagination: IPaginationBase = {
         totalItems: 0,
 		activePage: 1,
 		itemsPerPage: 10
 	};
     protected subject$: Subject<any> = new Subject();
+	protected pagination$: BehaviorSubject<IPaginationBase> = new BehaviorSubject({
+		activePage: this.pagination.activePage,
+		itemsPerPage: this.pagination.itemsPerPage
+	});
 
     /*
 	* getter setter for filters 
@@ -39,7 +50,10 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 	* refresh pagination
 	*/
 	protected refreshPagination() {
-		this.pagination['activePage'] = 1;
+		this.setPagination({
+			...this.getPagination(),
+			activePage: 1
+		});
 	}
 
 	protected setFilter(
@@ -64,7 +78,21 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 	}
 
     protected onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
+		this.setPagination({
+			...this.getPagination(),
+			activePage: selectedPage
+		});
         this.subject$.next(true);
+	}
+
+	protected getPagination(): IPaginationBase {
+		return this.pagination;
+	}
+
+	protected setPagination(pagination: IPaginationBase) {
+		this.pagination = pagination;
+
+		const { activePage, itemsPerPage } = this.getPagination();
+		this.pagination$.next({ activePage, itemsPerPage });
 	}
 }
