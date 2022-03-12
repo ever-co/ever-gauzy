@@ -26,7 +26,10 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { environment } from '../../../../environments/environment';
-import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
+import {
+	ALL_EMPLOYEES_SELECTED,
+	NO_EMPLOYEE_SELECTED
+} from './selectors/employee';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {
 	EmployeesService,
@@ -47,6 +50,7 @@ import {
 } from '../../../@core/services';
 import { LayoutService } from '../../../@core/utils';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { ChangeDetectorRef } from '@angular/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,7 +58,10 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 	styleUrls: ['./header.component.scss'],
 	templateUrl: './header.component.html'
 })
-export class HeaderComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+export class HeaderComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy, AfterViewInit
+{
 	hasPermissionE = false;
 	hasPermissionI = false;
 	hasPermissionP = false;
@@ -116,7 +123,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly organizationProjectStore: OrganizationProjectStore,
 		private readonly employeeStore: EmployeeStore,
-		public readonly selectorBuilderService: SelectorBuilderService
+		public readonly selectorBuilderService: SelectorBuilderService,
+		private readonly cd: ChangeDetectorRef
 	) {
 		super(translate);
 	}
@@ -136,7 +144,11 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				distinctUntilChange(),
 				debounceTime(200),
 				tap((selectors) => {
-					this.selectorsVisibility = Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors);
+					this.selectorsVisibility = Object.assign(
+						{},
+						DEFAULT_SELECTOR_VISIBILITY,
+						selectors
+					);
 				}),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -145,7 +157,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		this.router.events
 			.pipe(
 				filter((event) => event instanceof NavigationEnd),
-				tap(() => this.timeTrackerService.showTimerWindow = false),
+				tap(() => (this.timeTrackerService.showTimerWindow = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -209,6 +221,16 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				this.selectedDate = date;
 				this.subject$.next(true);
 			});
+		this.themeService
+			.onThemeChange()
+			.pipe(
+				tap((theme) => theme),
+				untilDestroyed(this)
+			)
+			.subscribe((theme) => {
+				this.theme = theme.name;
+				this.cd.detectChanges();
+			});
 		this._applyTranslationOnSmartTable();
 		this._loadRolePermissions();
 	}
@@ -248,7 +270,10 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					)
 				) {
 					this.showEmployeesSelector = employeeCount > 0;
-					if (this.showEmployeesSelector && !this.store.selectedEmployee) {
+					if (
+						this.showEmployeesSelector &&
+						!this.store.selectedEmployee
+					) {
 						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 					}
 				} else {
@@ -312,7 +337,9 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	ngAfterViewInit(): void {
 		this.organizationEditStore.organizationAction$
 			.pipe(
-				filter(({ action, organization }) => !!action && !!organization),
+				filter(
+					({ action, organization }) => !!action && !!organization
+				),
 				tap(() => this.organizationEditStore.destroy()),
 				untilDestroyed(this)
 			)
@@ -355,18 +382,12 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						break;
 				}
 			});
-		this.themeService
-			.onThemeChange()
-			.pipe(
-				tap((theme) => (this.theme = theme.name)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.cd.detectChanges();
 	}
 
 	toggleTimerWindow() {
-		this.timeTrackerService.showTimerWindow = !this.timeTrackerService
-			.showTimerWindow;
+		this.timeTrackerService.showTimerWindow =
+			!this.timeTrackerService.showTimerWindow;
 	}
 
 	toggleSidebarActions(item: ISidebarActionConfig) {
@@ -594,15 +615,11 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange
-			.pipe(
-				untilDestroyed(this)
-			)
-			.subscribe(() => {
-				this.createContextMenu = [];
-				this.supportContextMenu = [];
-				this._loadRolePermissions();
-			});
+		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this.createContextMenu = [];
+			this.supportContextMenu = [];
+			this._loadRolePermissions();
+		});
 	}
 
 	private async _checkTimerStatus() {
@@ -621,11 +638,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		const hasPermission = this.store.hasPermission(
 			PermissionsEnum.TIME_TRACKER
 		);
-		return (
-			isTrackingEnabled &&
-			hasPermission &&
-			!this.isElectron
-		);
+		return isTrackingEnabled && hasPermission && !this.isElectron;
 	}
 
 	ngOnDestroy() {}

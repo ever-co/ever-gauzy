@@ -34,7 +34,7 @@
 		[class.left]="position === 'normal'"
 		[class.right]="position === 'inverse'"
 	>
-		<nb-action class="show-large-up">
+		<nb-action *ngIf="createContextMenu" class="show-large-up">
 			<button
 				nbButton
 				status="warning"
@@ -98,6 +98,7 @@
 			(click)="toggleExtraActions()"
 		></nb-action>
 		<nb-action
+      *ngIf="supportContextMenu"
 			icon="message-circle-outline"
 			class="toggle-layout"
 			[nbContextMenu]="supportContextMenu"
