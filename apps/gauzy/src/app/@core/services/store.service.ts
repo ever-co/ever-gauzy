@@ -50,6 +50,7 @@ export interface PersistState {
 	preferredLanguage: LanguagesEnum;
 	preferredComponentLayout: ComponentLayoutStyleEnum;
 	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
+	themeName: string;
 }
 
 export function createInitialAppState(): AppState {
@@ -70,6 +71,7 @@ export function createInitialPersistState(): PersistState {
 		parseInt(localStorage.getItem('serverConnection')) || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
+  const themeName = localStorage.getItem('themeName')|| null;
 
 	return {
 		token,
@@ -77,7 +79,8 @@ export function createInitialPersistState(): PersistState {
 		organizationId,
 		serverConnection,
 		preferredLanguage,
-		componentLayout
+		componentLayout,
+    themeName
 	} as PersistState;
 }
 
@@ -165,9 +168,8 @@ export class Store {
 				.select((state) => state.preferredComponentLayout)
 				.pipe(
 					map((preferredLayout) => {
-						const dataLayout = this.getLayoutForComponent(
-							component
-						);
+						const dataLayout =
+							this.getLayoutForComponent(component);
 						return (
 							dataLayout ||
 							preferredLayout ||
@@ -453,11 +455,9 @@ export class Store {
 		let permissions = [];
 
 		// User permissions load here
-		const userPermissions = Object.keys(
-			PermissionsEnum
-		)
-		.map((key) => PermissionsEnum[key])
-		.filter((permission) => this.hasPermission(permission));
+		const userPermissions = Object.keys(PermissionsEnum)
+			.map((key) => PermissionsEnum[key])
+			.filter((permission) => this.hasPermission(permission));
 		permissions = permissions.concat(userPermissions);
 
 		// Organization time tracking permissions load here
@@ -465,8 +465,10 @@ export class Store {
 			const organizationPermissions = Object.keys(
 				OrganizationPermissionsEnum
 			)
-			.map((permission) => OrganizationPermissionsEnum[permission])
-			.filter((permission) => selectedOrganization[camelCase(permission)]);
+				.map((permission) => OrganizationPermissionsEnum[permission])
+				.filter(
+					(permission) => selectedOrganization[camelCase(permission)]
+				);
 			permissions = permissions.concat(organizationPermissions);
 		}
 
@@ -504,4 +506,15 @@ export class Store {
 			componentLayout
 		});
 	}
+
+  get currentTheme(): string | null {
+    const { themeName } = this.persistQuery.getValue();
+    return themeName;
+  }
+
+  set currentTheme(name: string){
+    this.persistStore.update({
+      themeName: name
+    })
+  }
 }
