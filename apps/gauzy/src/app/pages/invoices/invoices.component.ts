@@ -228,8 +228,8 @@ export class InvoicesComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(() => this.closeActionsPopover()),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(() => this.closeActionsPopover()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
@@ -1096,7 +1096,7 @@ export class InvoicesComponent
 		if (this.popups) {
 			const actionsPopup = this.popups.first;
 			const settingsPopup = this.popups.last;
-			if(settingsPopup.isShown){
+			if (settingsPopup.isShown) {
 				settingsPopup.hide();
 			}
 	
