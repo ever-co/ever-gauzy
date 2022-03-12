@@ -15,7 +15,14 @@ body {
   -ms-overflow-style: none;
 }
 
+.cdk-global-scrollblock{
+  overflow-y: overlay ;
+}
+
 @mixin nb-overrides() {
+  .cdk-global-scrollblock{
+    overflow-y: overlay ;
+  }
   // overrides bootstrap svg style
   nb-icon svg {
     vertical-align: top;
@@ -61,7 +68,7 @@ body {
 
   nb-layout {
     .scrollable-container {
-      overflow-y: auto !important;
+      overflow-y: overlay !important;
     }
   }
 
@@ -295,7 +302,7 @@ nb-card-body {
 .table-scroll-container,
 .grid-scroll-container {
   border-radius: 8px;
-  overflow-y: auto;
+  overflow-y: overlay;
   max-height: calc(70vh - 100px);
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
