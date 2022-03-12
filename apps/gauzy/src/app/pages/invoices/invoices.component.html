@@ -510,8 +510,7 @@
 					(userRowSelect)="selectInvoice($event)"
 					style="cursor: pointer"
 					#invoicesTable
-				>
-				</ng2-smart-table>
+				></ng2-smart-table>
 			</div>
 			<div
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
@@ -544,9 +543,7 @@
 					[buttonTemplate]="actionButtons"
 					[cardSize]="'big'"
 					(onSelectedItem)="selectInvoice($event)"
-				>
-					></ga-card-grid
-				>
+				></ga-card-grid>
 			</div>
 		</ng-template>
 	</nb-card-body>
@@ -580,11 +577,7 @@
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
-				[size]="
-					dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID
-						? 'small'
-						: 'small'
-				"
+				[size]="'small'"
 			>
 				<nb-option
 					*ngFor="let status of invoiceStatusTypes"
@@ -602,11 +595,7 @@
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
-				[size]="
-					dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID
-						? 'small'
-						: 'small'
-				"
+				[size]="'small'"
 			>
 				<nb-option
 					*ngFor="let status of estimateStatusTypes"
