@@ -209,13 +209,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				this.selectedDate = date;
 				this.subject$.next(true);
 			});
-		this.themeService
-			.onThemeChange()
-			.pipe(
-				tap((theme) => this.theme = theme.name),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this._applyTranslationOnSmartTable();
 		this._loadRolePermissions();
 	}
@@ -256,7 +249,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				) {
 					this.showEmployeesSelector = employeeCount > 0;
 					if (this.showEmployeesSelector && !this.store.selectedEmployee) {
-						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED; 
+						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 					}
 				} else {
 					const emp = await this.employeesService.getEmployeeById(
@@ -293,7 +286,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
-			) && 
+			) &&
 			userOrg.length > 1
 		) {
 			this.showOrganizationsSelector = true;
@@ -362,6 +355,13 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						break;
 				}
 			});
+		this.themeService
+			.onThemeChange()
+			.pipe(
+				tap((theme) => (this.theme = theme.name)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	toggleTimerWindow() {
