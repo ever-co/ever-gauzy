@@ -38,12 +38,13 @@
   margin: 10px auto;
 }
 
-.actions-container {
+:host .actions-container {
   display: flex;
   flex-wrap: wrap;
   position: absolute;
   align-items: center;
-  right: 0;
+  @include nb-rtl(left, 0);
+  @include nb-ltr(right, 0);
   padding: 1rem;
 }
 
@@ -104,17 +105,17 @@ button {
   width: 100%;
   padding: 1rem 0 1rem 0;
 }
-.actions{
+.actions {
   background: rgba(50, 50, 50, 0.03);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 0px 1px 0px 1px;
   margin-right: 20px;
 }
 
-.transition-container{
+.transition-container {
   overflow-x: hidden;
   border-radius: nb-theme(button-rectangle-border-radius);
-  span{
+  span {
     background: rgba(50, 50, 50, 0.03);
     border-radius: nb-theme(button-rectangle-border-radius);
     padding: 0px 1px 0px 1px;
@@ -122,89 +123,91 @@ button {
   }
 }
 
-.transition{
+:host .transition {
   display: flex;
-  &.hide{
-    transform: translateX(89%);
-    transition: all .15s ease-in;
+  &.hide {
+    @include nb-rtl(transform, translateX(-87%));
+    @include nb-ltr(transform, translateX(87%));
+    transition: all 0.15s ease-in;
   }
-  &.show{
+  &.show {
     opacity: 1;
     transform: translateX(0%);
-    transition: all .25s ease-out;
+    transition: all 0.25s ease-out;
   }
 }
 
-
-nb-accordion-item-header ::ng-deep nb-icon{
+nb-accordion-item-header ::ng-deep nb-icon {
   border: 1px solid nb-theme(border-basic-color-4);
   border-radius: nb-theme(input-rectangle-border-radius);
   width: 1.75rem;
   height: 1.75rem;
 }
 
-ga-currency::ng-deep nb-select{
-  .select-button{
+ga-currency::ng-deep nb-select {
+  .select-button {
     border-radius: nb-theme(input-rectangle-border-radius);
   }
 }
 
-#inputStatus::ng-deep{
-  .select-button{
+#inputStatus::ng-deep {
+  .select-button {
     border-radius: nb-theme(input-rectangle-border-radius);
   }
 }
 
-:host ngx-avatar::ng-deep{
+:host ngx-avatar::ng-deep {
   background-color: nb-theme(color-primary-transparent-100);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 3px 9px 3px 3px;
-  &.link-text{
+  &.link-text {
     color: nb-theme(text-primary-color);
     font-weight: normal;
   }
 }
 
-ga-pagination{
+ga-pagination {
   margin: 0;
   padding: 0;
   width: 100%;
 }
 
-.comments{
+.comments {
   overflow-y: scroll;
   height: 15rem;
 }
 
-textarea{
+textarea {
   height: 85px;
   resize: none;
 }
 
-textarea, input{
+textarea,
+input {
   box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
   background-color: rgba(126, 126, 143, 0.05);
 }
 
-.action{
+.action {
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
-  &[nbButton].appearance-filled.status-basic{
+  &[nbButton].appearance-filled.status-basic {
     background-color: #ffffff;
   }
-  &.info{
-    background-color: #0088FE;
+  &.info {
+    background-color: #0088fe;
   }
-  &.secondary{
-    color: #7E7E8F;
+  &.secondary {
+    color: #7e7e8f;
   }
-  &.primary{
-    &[nbButton].appearance-filled.status-basic, .appearance-filled.status-basic[nbButtonToggle]{
+  &.primary {
+    &[nbButton].appearance-filled.status-basic,
+    .appearance-filled.status-basic[nbButtonToggle] {
       color: nb-theme(text-primary-color);
     }
   }
   &.select-nb ::ng-deep {
     box-shadow: none;
-    .select-button{
+    .select-button {
       box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
       background: rgba(245, 245, 245);
     }
@@ -212,39 +215,41 @@ textarea, input{
 }
 
 :host nb-select ::ng-deep {
-  .select-button{
+  .select-button {
     box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
     background-color: rgba(126, 126, 143, 0.05);
   }
 }
 
-.input-icon, .input-date{
+:host .input-icon,
+:host .input-date {
   display: flex;
   align-items: center;
   background: rgba(126, 126, 143, 0.05);
   box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+  color: nb-theme(text-basic-color);
+  border-color: nb-theme(background-basic-color-3);
+  border-radius: 0.5rem;
+  height: 42px;
+  position: relative;
+  &:hover {
+    border-color: nb-theme(color-primary-hover);
     color: nb-theme(text-basic-color);
-    border-color: nb-theme(background-basic-color-3);
-    border-radius: 0.5rem;
-    height: 42px;
-    position: relative;
-    &:hover{
-      border-color: nb-theme(color-primary-hover);
-      color: nb-theme(text-basic-color);
-      &:focus{
-        background: rgba(126, 126, 143, 0.05);
-      }
-    }
-    &:active{
+    &:focus {
       background: rgba(126, 126, 143, 0.05);
     }
-    .icon{
-      position: absolute;
-      right: 14px;
-    }
+  }
+  &:active {
+    background: rgba(126, 126, 143, 0.05);
+  }
+  .icon {
+    position: absolute;
+    @include nb-ltr(right, 14px);
+    @include nb-rtl(left, 0);
+  }
 }
 
-input{
+input {
   background: transparent;
   width: 100%;
 }
