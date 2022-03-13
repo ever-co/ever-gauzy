@@ -121,7 +121,7 @@ $orange : #F56D58;
 }
 
 .organization-selector {
-  max-width: 400px;
+  max-width: 240px;
 }
 
 .employee-selector {
@@ -149,20 +149,20 @@ $orange : #F56D58;
   padding-left: 2rem;
   padding-right: 2rem;
 
-  div {
-    min-width: 300px;
-    width: 100%;
-    max-width: 500px;
-  }
+  // div {
+  //   min-width: 300px;
+  //   width: 100%;
+  //   max-width: 500px;
+  // }
 
-  .organization-selector,
-  .employee-selector,
-  .date-selector,
-  .project-selector {
-    min-width: 300px;
-    width: 100%;
-    max-width: 500px;
-  }
+  // .organization-selector,
+  // .employee-selector,
+  // .date-selector,
+  // .project-selector {
+  //   min-width: 300px;
+  //   width: 100%;
+  //   max-width: 500px;
+  // }
 }
 
 .timer-action {

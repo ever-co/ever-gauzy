@@ -15,6 +15,7 @@ import { OrganizationEditStore, Store, UsersOrganizationsService } from './../..
 export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 	organizations: IOrganization[] = [];
 	selectedOrganization: IOrganization;
+  isOpen: boolean = false;
 
 	constructor(
 		private readonly store: Store,
@@ -38,7 +39,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	private async loadOrganizations(): Promise<void> {
 		const { tenantId } = this.store.user;
 		const { userId } = this.store;
-		
+
 		const { items = [] } = await this.userOrganizationService.getAll([
 			'organization',
 			'organization.contact',
@@ -48,11 +49,11 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 
 		const organizations = items.map(({ organization }) => organization);
 		this.organizations = uniq(organizations, (item) => item.id);
-		
+
 		if (this.organizations.length > 0) {
 			const defaultOrganization = this.organizations.find((organization: IOrganization) => organization.isDefault);
 			const [ firstOrganization ] = this.organizations;
-	
+
 			if (this.store.organizationId) {
 				const organization = this.organizations.find(
 					(organization: IOrganization) => organization.id === this.store.organizationId
@@ -147,6 +148,18 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 
 		this.organizations = [...organizations].filter(isNotEmpty);
 	}
+  /**
+   * event fired on select dropdown open
+   */
+  onOpen(){
+    this.isOpen = true;
+  }
+  /**
+   * event fired on select dropdown close
+   */
+  onClose(){
+    this.isOpen = false;
+  }
 
 	ngOnDestroy() {}
 }

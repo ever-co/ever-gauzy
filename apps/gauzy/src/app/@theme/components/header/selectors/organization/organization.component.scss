@@ -12,8 +12,25 @@ ng-select {
   }
 }
 
-::ng-deep .organization.ng-select .ng-select-container .ng-value-container{
-  padding-left: 0;
+::ng-deep .organization{
+  display: flex;
+  &.open.ng-select, &.close.ng-select {
+    .ng-select-container{
+      .ng-value-container{
+        padding-left: 0;
+      }
+    }
+  }
+  &.close.ng-select .ng-select-container .ng-value-container{
+    span {
+      display: none;
+    }
+  }
+  &.open.ng-select .ng-select-container .ng-select-container{
+    .ng-value-container{
+      padding-left: 0;
+    }
+  }
 }
 
 ::ng-deep .ng-dropdown-panel {
