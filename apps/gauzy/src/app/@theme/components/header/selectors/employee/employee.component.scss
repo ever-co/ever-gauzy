@@ -7,5 +7,9 @@ ng-select {
 	img {
 		margin-right: 5px;
 		margin-left: 5px;
+    border-radius: 2.5rem;
 	}
+}
+::ng-deep .employee.ng-select .ng-select-container .ng-value-container{
+  padding-left: 0;
 }
