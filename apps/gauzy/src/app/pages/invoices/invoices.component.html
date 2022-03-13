@@ -40,7 +40,13 @@
 										: 'transition hide'
 								"
 							>
-								<span>
+								<span
+									[ngClass]="
+										!disableButton
+											? 'transition show'
+											: 'transition show-button'
+									"
+								>
 									<button
 										nbButton
 										status="success"
@@ -591,7 +597,9 @@
 				status="basic"
 				class="action select-nb mr-2"
 				*ngIf="isEstimate"
-				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
+				[placeholder]="
+					'INVOICES_PAGE.SET_STATUS' | translate | titlecase
+				"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"

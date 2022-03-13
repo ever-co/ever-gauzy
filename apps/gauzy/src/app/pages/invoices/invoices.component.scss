@@ -126,14 +126,18 @@ button {
 :host .transition {
   display: flex;
   &.hide {
-    @include nb-rtl(transform, translateX(-87%));
-    @include nb-ltr(transform, translateX(87%));
+    @include nb-rtl(transform, translateX(-100%));
+    @include nb-ltr(transform, translateX(100%));
     transition: all 0.15s ease-in;
   }
   &.show {
     opacity: 1;
     transform: translateX(0%);
     transition: all 0.25s ease-out;
+  }
+  &.show-button{
+    @include nb-rtl(transform, translateX(110%));
+    @include nb-ltr(transform, translateX(-110%));
   }
 }
 
