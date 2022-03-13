@@ -1,11 +1,27 @@
+$radius: 2.5rem;
 ng-select {
-	.selector-template {
-		display: flex;
-		align-items: center;
-		height: 100%;
-	}
-	img {
-		margin-right: 1rem;
-		margin-left: 1rem;
-	}
+  .selector-template {
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+  img {
+    margin-right: .25rem;
+    margin-left: .25rem;
+    border-radius: $radius;
+  }
+}
+
+::ng-deep .organization.ng-select .ng-select-container .ng-value-container{
+  padding-left: 0;
+}
+
+::ng-deep .ng-dropdown-panel {
+  ::ng-deep .ng-dropdown-panel-items {
+    img {
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+    }
+  }
 }
