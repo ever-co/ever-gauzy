@@ -4,9 +4,10 @@
 	input {
 		width: 100%;
 		max-width: 100% !important;
-		margin-right: 1rem;
     border-radius: 32px;
+    height: 32px;
     box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+    background-color: rgba(126, 126, 143, 0.05);
 	}
 	.calendar {
 		display: flex;
