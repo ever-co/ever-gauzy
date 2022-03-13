@@ -1,7 +1,7 @@
 @import '~bootstrap/scss/mixins/breakpoints';
 @import '~@nebular/theme/styles/global/breakpoints';
 @import '../../styles/themes';
-
+$orange : #F56D58;
 @include nb-install-component() {
   width: 100%;
 
@@ -153,7 +153,6 @@
     min-width: 300px;
     width: 100%;
     max-width: 500px;
-    margin-left: 10px;
   }
 
   .organization-selector,
@@ -163,7 +162,6 @@
     min-width: 300px;
     width: 100%;
     max-width: 500px;
-    padding-bottom: 20px;
   }
 }
 
@@ -183,10 +181,28 @@
 }
 
 .organization-selector-container {
-  width: 280px;
+  width: 240px;
 }
 
 .white-svg{
   filter: brightness(0) invert(1);
+}
+
+.button.create{
+  background: $orange;
+  box-shadow: 0px 10px 13px -7px $orange;
+  &:hover{
+    background: $orange;
+  }
+}
+
+::ng-deep .ng-select .ng-select-container {
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  min-height: 32px;
+}
+
+::ng-deep .ng-select.ng-select-single .ng-select-container{
+  height: 32px;
 }
 
