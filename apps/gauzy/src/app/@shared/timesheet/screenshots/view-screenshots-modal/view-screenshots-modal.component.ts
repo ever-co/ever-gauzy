@@ -54,6 +54,16 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		this._screenshots = screenshots;
 	}
 
+	/*
+	* Getter & Setter for Screenshots
+	*/
+	private _timeLogs: ITimeLog[] = [];
+	get timeLogs(): ITimeLog[] {
+		return this._timeLogs;
+	}
+	set timeLogs(timeLogs: ITimeLog[]) {
+		this._timeLogs = timeLogs;
+	}
 	constructor(
 		private readonly store: Store,
 		private readonly dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,
@@ -87,6 +97,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 					'timeLogs.organizationContact'
 				]
 			});
+			this.timeLogs = sortBy(this.timeSlot.timeLogs, 'createdAt');
 		} catch (error) {
 			console.log('Error while retrieve TimeSlot:', error);
 			this.toastrService.danger(error);
@@ -117,7 +128,6 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		}
 		try {
 			await this.timesheetService.deleteScreenshot(screenshot.id).then(() => {
-
 				this.screenshots = this.screenshots.filter(
 					(item: IScreenshot) => item.id !== screenshot.id
 				);

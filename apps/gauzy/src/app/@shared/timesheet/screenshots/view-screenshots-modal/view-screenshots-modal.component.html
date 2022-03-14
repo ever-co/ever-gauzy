@@ -59,8 +59,8 @@
 				</div>
 			</ng-template>
 			<h6>{{ 'TIMESHEET.SCREENSHOTS.TIME_LOG' | translate }}</h6>
-			<ng-container *ngIf="timeSlot?.timeLogs?.length > 0">
-				<div *ngFor="let timeLog of timeSlot?.timeLogs" class="mt-3 p-3 card">
+			<ng-container *ngIf="timeLogs?.length > 0">
+				<div *ngFor="let timeLog of timeLogs" class="mt-3 p-3 card">
 					<div
 						class="row"
 						*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
