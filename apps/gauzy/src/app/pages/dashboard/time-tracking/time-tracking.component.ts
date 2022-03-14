@@ -60,8 +60,8 @@ export class TimeTrackingComponent
 	members: IMembersStatistics[] = [];
 	manualTimes: IManualTimesStatistics[] = [];
 	counts: ICountsStatistics;
-  employeesCount: number;
-  projectCount: number;
+	employeesCount: number;
+	projectCount: number;
 
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
@@ -129,7 +129,7 @@ export class TimeTrackingComponent
 		private readonly changeRef: ChangeDetectorRef,
 		private readonly _router: Router,
 		private readonly employeesService: EmployeesService,
-    private readonly projectService: OrganizationProjectsService
+    	private readonly projectService: OrganizationProjectsService
 	) {
 		super(translateService);
 	}
@@ -167,8 +167,8 @@ export class TimeTrackingComponent
 					this.organizationId = organization.id;
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
-          this.loadEmployeesCount();
-          this.loadProjectsCount();
+					this.loadEmployeesCount();
+					this.loadProjectsCount();
 					this.logs$.next(true);
 				}),
 				tap(() => this.setAutoRefresh(true)),

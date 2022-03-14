@@ -14,7 +14,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
-import { filter, tap } from 'rxjs/operators';
+import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
@@ -156,10 +156,27 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	/**
+	 * View Time Slot Info
+	 * 
+	 * @param timeSlot 
+	 */
 	viewInfo(timeSlot) {
 		this.nbDialogService.open(ViewScreenshotsModalComponent, {
 			context: { timeSlot }
-		});
+		})
+		.onClose
+		.pipe(
+			filter(Boolean),
+			tap((data) => {
+				if (data && data['isDelete']) {
+					this.delete.emit();
+				}
+			}),
+			take(1),
+			untilDestroyed(this)
+		)
+		.subscribe();
 	}
 
 	isEnableDelete(timeSlot: ITimeSlot): boolean {

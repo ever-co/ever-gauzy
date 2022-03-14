@@ -21,7 +21,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { Store } from './../../../../../@core/services';
+import { Store, ToastrService } from './../../../../../@core/services';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
@@ -63,7 +63,8 @@ export class DailyComponent
 		private readonly nbMenuService: NbMenuService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly translateService: TranslateService,
-		private readonly route: ActivatedRoute
+		private readonly route: ActivatedRoute,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -235,13 +236,21 @@ export class DailyComponent
 		if (timeLog.isRunning) {
 			return;
 		}
-		this.timesheetService.deleteLogs(timeLog.id)
-			.then(() => {
+		try {
+			const employee = timeLog.employee;
+			this.timesheetService.deleteLogs(timeLog.id).then(() => {
 				this.checkTimerStatus();
-			})
-			.finally(() => {
+				this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
+					name: employee.fullName,
+					organization: this.organization.name
+				});
+			}).finally(() => {
 				this.logs$.next(true);
 			});
+		} catch (error) {
+			console.log('Error while delete TimeLog: ', error);
+			this.toastrService.danger(error);
+		}
 	}
 
 	private _bulkDeleteAction() {
@@ -254,21 +263,27 @@ export class DailyComponent
 				}
 			})
 			.onClose
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter(Boolean),
+				untilDestroyed(this)
+			)
 			.subscribe((type) => {
+				console.log(type);
 				if (type === true) {
 					const logIds = this.timeLogs.filter(
 						(timeLog: ITimeLog) => timeLog['checked'] && !timeLog['isRunning']
 					).map(
 						(timeLog: ITimeLog) => timeLog.id
 					);
-					this.timesheetService.deleteLogs(logIds)
-						.then(() => {
-							this.checkTimerStatus();
-						})
-						.finally(() => {
-							this.logs$.next(true);
+					this.timesheetService.deleteLogs(logIds).then(() => {
+						this.checkTimerStatus();
+						this.toastrService.success('TOASTR.MESSAGE.TIME_LOGS_DELETED', {
+							organization: this.organization.name
 						});
+					})
+					.finally(() => {
+						this.logs$.next(true);
+					});
 				}
 			});
 	}

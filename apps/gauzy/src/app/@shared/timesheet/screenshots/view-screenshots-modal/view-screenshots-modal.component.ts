@@ -81,6 +81,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 					'timeLogs',
 					'timeLogs.employee',
 					'timeLogs.employee.user',
+					'timeLogs.employee.organization',
 					'timeLogs.project',
 					'timeLogs.task',
 					'timeLogs.organizationContact'
@@ -116,6 +117,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		}
 		try {
 			await this.timesheetService.deleteScreenshot(screenshot.id).then(() => {
+
 				this.screenshots = this.screenshots.filter(
 					(item: IScreenshot) => item.id !== screenshot.id
 				);
@@ -140,7 +142,17 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			return;
 		}
 		try {
-			await this.timesheetService.deleteLogs(timeLog.id);
+			const employee = timeLog.employee;
+			await this.timesheetService.deleteLogs(timeLog.id).then(() => {
+				this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
+					name: employee.fullName,
+					organization: this.organization.name
+				});
+				this.dialogRef.close({
+					timeLog: timeLog,
+					isDelete: true
+				});
+			});
 		} catch (error) {
 			console.log('Error while delete TimeLog: ', error);
 			this.toastrService.danger(error);
