@@ -37,11 +37,7 @@ export class TimeLogDeleteHandler
 		console.log('TimeLog will be delete:', timeLogs);
 
 		for await (const timeLog of timeLogs) {
-			const { employeeId, startedAt, organizationId } = timeLog;
-			let { stoppedAt } = timeLog;
-			if (stoppedAt === null || typeof stoppedAt === 'undefined') {
-				stoppedAt = new Date();
-			}
+			const { employeeId, startedAt, stoppedAt, organizationId } = timeLog;
 			await this.commandBus.execute(
 				new TimeSlotRangeDeleteCommand(
 					organizationId,

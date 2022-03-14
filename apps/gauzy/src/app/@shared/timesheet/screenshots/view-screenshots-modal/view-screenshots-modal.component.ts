@@ -62,7 +62,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		return this._timeLogs;
 	}
 	@Input() set timeLogs(timeLogs: ITimeLog[]) {
-		this._timeLogs = timeLogs;
+		this._timeLogs = sortBy(timeLogs, 'createdAt');
 	}
 	constructor(
 		private readonly store: Store,
@@ -96,7 +96,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 					'timeLogs.organizationContact'
 				]
 			});
-			this.timeLogs = sortBy(this.timeSlot.timeLogs, 'createdAt');
+			this.timeLogs = this.timeSlot.timeLogs;
 		} catch (error) {
 			console.log('Error while retrieve TimeSlot:', error);
 			this.toastrService.danger(error);
