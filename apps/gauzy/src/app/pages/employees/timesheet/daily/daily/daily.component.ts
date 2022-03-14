@@ -238,7 +238,12 @@ export class DailyComponent
 		}
 		try {
 			const employee = timeLog.employee;
-			this.timesheetService.deleteLogs(timeLog.id).then(() => {
+			const { id: organizationId } = this.organization;
+			const request = {
+				logIds: [timeLog.id],
+				organizationId
+			}
+			this.timesheetService.deleteLogs(request).then(() => {
 				this.checkTimerStatus();
 				this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
 					name: employee.fullName,
@@ -275,7 +280,12 @@ export class DailyComponent
 					).map(
 						(timeLog: ITimeLog) => timeLog.id
 					);
-					this.timesheetService.deleteLogs(logIds).then(() => {
+					const { id: organizationId } = this.organization;
+					const request = {
+						logIds,
+						organizationId
+					}
+					this.timesheetService.deleteLogs(request).then(() => {
 						this.checkTimerStatus();
 						this.toastrService.success('TOASTR.MESSAGE.TIME_LOGS_DELETED', {
 							organization: this.organization.name

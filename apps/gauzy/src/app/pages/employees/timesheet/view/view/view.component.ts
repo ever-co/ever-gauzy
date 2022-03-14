@@ -8,7 +8,8 @@ import {
 	ITimesheet,
 	TimesheetStatus,
 	OrganizationPermissionsEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	IOrganization
 } from '@gauzy/contracts';
 import { chain } from 'underscore';
 import * as moment from 'moment';
@@ -19,6 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { Store } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,6 +31,7 @@ export class ViewComponent
 	extends TranslationBaseComponent 
 	implements OnInit, OnDestroy {
 
+	organization: IOrganization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
@@ -40,12 +43,20 @@ export class ViewComponent
 		private readonly timesheetService: TimesheetService,
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly nbDialogService: NbDialogService,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.logs$
 			.pipe(
 				tap(() => this.getLogs()),
@@ -98,7 +109,12 @@ export class ViewComponent
 			return;
 		}
 		try {
-			await this.timesheetService.deleteLogs([timeLog.id]);
+			const { id: organizationId } = this.organization;
+			const request = {
+				logIds: [timeLog.id],
+				organizationId
+			}
+			await this.timesheetService.deleteLogs(request);
 			this.logs$.next(true);
 		} catch (error) {
 			console.error('Error while deleting TimeLog', error);

@@ -153,7 +153,12 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		}
 		try {
 			const employee = timeLog.employee;
-			await this.timesheetService.deleteLogs(timeLog.id).then(() => {
+			const { id: organizationId } = this.organization;
+			const request = {
+				logIds: [timeLog.id],
+				organizationId
+			}
+			await this.timesheetService.deleteLogs(request).then(() => {
 				this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
 					name: employee.fullName,
 					organization: this.organization.name

@@ -263,11 +263,7 @@
 					) | translate
 				}}
 			</button>
-			<ng-template
-				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
-				]"
-			>
+			<ng-template ngxPermissionsOnly="ALLOW_DELETE_TIME">
 				<button
 					type="button"
 					class="mr-2"
@@ -275,7 +271,7 @@
 					status="danger"
 					ngxConfirmDialog
 					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-					(confirm)="onDeleteConfirm()"
+					(confirm)="onDeleteConfirm(timeLog)"
 					*ngIf="mode == 'update'"
 				>
 					<nb-icon icon="trash-2-outline"></nb-icon>
