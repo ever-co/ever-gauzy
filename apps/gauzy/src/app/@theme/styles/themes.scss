@@ -183,7 +183,12 @@ $nb-themes: nb-register-theme((
       font-family-primary: unquote('Inter, sans-serif'),
       font-family-secondary: unquote('Inter, sans-serif'),
       button-outline-text-transform: none,
-      gauzy-text-contact: #323232
+      gauzy-text-contact: #323232,
+      button-filled-medium-padding:	0.4375rem 0.875rem,
+      button-outline-medium-padding: 0.4375rem 0.875rem,
+      toggle-height: 1.5rem,
+      toggle-switcher-size: 1.4rem,
+      toggle-switcher-icon-size: 0
   ),
   gauzy-light,
   default
@@ -224,7 +229,12 @@ $nb-themes: nb-register-theme(
     button-filled-text-transform: none,
     font-family-primary: unquote('Inter, sans-serif'),
     font-family-secondary: unquote('Inter, sans-serif'),
-    button-outline-text-transform: none
+    button-outline-text-transform: none,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    toggle-height: 1.5rem,
+    toggle-switcher-size: 1.4rem,
+    toggle-switcher-icon-size: 0
   ),
   gauzy-dark,
   dark

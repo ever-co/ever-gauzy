@@ -4,25 +4,35 @@
 ::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
 }
+
 ::-webkit-scrollbar-track {
   background: nb-theme(scrollbar-background-color);
 }
+
 ::-webkit-scrollbar-thumb {
   background: nb-theme(scrollbar-color);
   border-radius: 0.15625rem;
 }
+
 body {
   -ms-overflow-style: none;
 }
 
 .cdk-global-scrollblock{
-  overflow-y: overlay ;
+  overflow-y: overlay;
 }
 
 @mixin nb-overrides() {
-  .cdk-global-scrollblock{
-    overflow-y: overlay ;
+
+  .cdk-global-scrollblock {
+    overflow-y: overlay;
   }
+  
+  .h1 {
+    font-size: 44px;
+    font-weight: 400;
+  }
+  
   // overrides bootstrap svg style
   nb-icon svg {
     vertical-align: top;
