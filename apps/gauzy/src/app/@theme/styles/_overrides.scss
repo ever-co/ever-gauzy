@@ -16,6 +16,10 @@ body {
 }
 
 @mixin nb-overrides() {
+  .h1{
+    font-size: 44px;
+    font-weight: 400;
+  }
   // overrides bootstrap svg style
   nb-icon svg {
     vertical-align: top;
