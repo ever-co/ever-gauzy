@@ -224,12 +224,10 @@ export class TimesheetService {
 		);
 	}
 
-	deleteTimeSlots(ids?: string[]) {
-		const params = toParams({ ids });
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/timesheet/time-slot`, { params })
-		);
+	deleteTimeSlots(request) {
+		return firstValueFrom(this.http .delete(`${API_PREFIX}/timesheet/time-slot`, {
+			params: toParams(request)
+		}));
 	}
 
 	deleteLogs(request) {

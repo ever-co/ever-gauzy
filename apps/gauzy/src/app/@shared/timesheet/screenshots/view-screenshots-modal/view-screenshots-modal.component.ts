@@ -61,7 +61,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	get timeLogs(): ITimeLog[] {
 		return this._timeLogs;
 	}
-	set timeLogs(timeLogs: ITimeLog[]) {
+	@Input() set timeLogs(timeLogs: ITimeLog[]) {
 		this._timeLogs = timeLogs;
 	}
 	constructor(
@@ -91,7 +91,6 @@ export class ViewScreenshotsModalComponent implements OnInit {
 					'timeLogs',
 					'timeLogs.employee',
 					'timeLogs.employee.user',
-					'timeLogs.employee.organization',
 					'timeLogs.project',
 					'timeLogs.task',
 					'timeLogs.organizationContact'

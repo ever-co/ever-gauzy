@@ -130,7 +130,12 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 			return;
 		}
 		try {
-			this.timesheetService.deleteTimeSlots([timeSlot.id]).then(() => {
+			const { id: organizationId } = this.organization;
+			const request = {
+				ids: [timeSlot.id],
+				organizationId
+			}
+			this.timesheetService.deleteTimeSlots(request).then(() => {
 				const screenshots = this._screenshots.map(
 					(screenshot: IScreenshot) => {
 						return {
@@ -161,9 +166,12 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	 * 
 	 * @param timeSlot 
 	 */
-	viewInfo(timeSlot) {
+	viewInfo(timeSlot: ITimeSlot) {
 		this.nbDialogService.open(ViewScreenshotsModalComponent, {
-			context: { timeSlot }
+			context: { 
+				timeSlot,
+				timeLogs: timeSlot.timeLogs
+			}
 		})
 		.onClose
 		.pipe(
