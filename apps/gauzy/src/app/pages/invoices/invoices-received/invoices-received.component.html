@@ -1,9 +1,19 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
-					{{ (!isEstimate ? 'INVOICES_PAGE.RECEIVED_INVOICES' : 'INVOICES_PAGE.RECEIVED_ESTIMATES') | translate }}
+					{{
+						(!isEstimate
+							? 'INVOICES_PAGE.RECEIVED_INVOICES'
+							: 'INVOICES_PAGE.RECEIVED_ESTIMATES'
+						) | translate
+					}}
 				</ngx-header-title>
 			</h4>
 		</div>
@@ -15,12 +25,12 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
-			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+			<ng-container>
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-		<ng-template 
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<ng2-smart-table
@@ -32,26 +42,35 @@
 				#invoiceReceivedTable
 			>
 			</ng2-smart-table>
+			<div class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems">
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
+					</ga-pagination>
+				</ng-container>
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
 			<ga-card-grid
 				[settings]="settingsSmartTable"
 				[source]="invoices"
 				[buttonTemplate]="actionButtons"
-			></ga-card-grid>
-			<div 
-				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
-				class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-					<ga-pagination 
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems" 
-						[itemsPerPage]="pagination?.itemsPerPage" 
-						[activePage]="pagination?.activePage">
-					</ga-pagination>
-				</ng-container>
-			</div>
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+        (onSelectedItem)="selectInvoice($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			>
+				></ga-card-grid
+			>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

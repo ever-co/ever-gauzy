@@ -5,6 +5,7 @@
 // material themes
 @import './material/material-dark';
 @import './material/material-light';
+// Google Inter font
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 
@@ -25,7 +26,8 @@ $nb-themes: nb-register-theme(
     select-min-width: 6rem,
     slide-out-background: #f7f9fc,
     slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
-    slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3
+    slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
+    gauzy-text-contact: #323232,
   ),
   default,
   default
@@ -94,7 +96,8 @@ $nb-themes: nb-register-theme(
     select-min-width: 6rem,
     slide-out-background: linear-gradient(270deg, #222b45 0%, #151a30 100%),
     slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
-    slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3
+    slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
+    gauzy-text-contact: #eeeeee
   ),
   dark,
   dark
@@ -180,6 +183,7 @@ $nb-themes: nb-register-theme((
       font-family-primary: unquote('Inter, sans-serif'),
       font-family-secondary: unquote('Inter, sans-serif'),
       button-outline-text-transform: none,
+      gauzy-text-contact: #323232,
       button-filled-medium-padding:	0.4375rem 0.875rem,
       button-outline-medium-padding: 0.4375rem 0.875rem,
       toggle-height: 1.5rem,

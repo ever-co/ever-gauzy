@@ -32,8 +32,8 @@ import { InputFilterComponent } from '../../../@shared/table-filters/input-filte
 })
 export class InvoicesReceivedComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	loading: boolean = false;
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
@@ -53,8 +53,8 @@ export class InvoicesReceivedComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
 	/*
-	* getter setter for check esitmate or invoice
-	*/
+	 * getter setter for check esitmate or invoice
+	 */
 	private _isEstimate: boolean = false;
 	@Input() set isEstimate(val: boolean) {
 		this._isEstimate = val;
@@ -64,8 +64,10 @@ export class InvoicesReceivedComponent
 	}
 
 	/*
-	* getter setter for filters 
-	*/
+	 * getter setter for filters
+	 * getter setter for filters
+	 * getter setter for filters
+	 */
 	private _filters: any = {};
 	set filters(val: any) {
 		this._filters = val;
@@ -75,7 +77,9 @@ export class InvoicesReceivedComponent
 	}
 
 	invoiceReceivedTable: Ng2SmartTableComponent;
-	@ViewChild('invoiceReceivedTable', { static: false }) set content(content: Ng2SmartTableComponent) {
+	@ViewChild('invoiceReceivedTable', { static: false }) set content(
+		content: Ng2SmartTableComponent
+	) {
 		if (content) {
 			this.invoiceReceivedTable = content;
 			this.onChangedSource();
@@ -89,7 +93,7 @@ export class InvoicesReceivedComponent
 		private readonly router: Router,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly toastrService: ToastrService,
-		private readonly httpClient: HttpClient,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -102,7 +106,7 @@ export class InvoicesReceivedComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
@@ -144,8 +148,14 @@ export class InvoicesReceivedComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -154,21 +164,27 @@ export class InvoicesReceivedComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
-	*/
+	 * Register Smart Table Source Config
+	 * Register Smart Table Source Config
+	 * Register Smart Table Source Config
+	 * Register Smart Table Source Config
+	 * Register Smart Table Source Config
+	 * Register Smart Table Source Config
+	 * Register Smart Table Source Config
+	 * Register Smart Table Source Config
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
-			relations: [
-				'payments'
-			],
+			relations: ['payments'],
 			where: {
 				sentTo: organizationId,
 				tenantId,
-				isEstimate: (this.isEstimate === true) ? 1 : 0,
-				...(this.filters.where) ? this.filters.where : {}
+				isEstimate: this.isEstimate === true ? 1 : 0,
+				...(this.filters.where ? this.filters.where : {})
 			},
 			finalize: () => {
 				this.loading = false;
@@ -179,16 +195,22 @@ export class InvoicesReceivedComponent
 	async getInvoices() {
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE ||
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+			) {
+				// Initiate TABLE and GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
@@ -204,9 +226,12 @@ export class InvoicesReceivedComponent
 		}
 		const { id } = this.selectedInvoice;
 		if (this.isEstimate) {
-			this.router.navigate([ `/pages/accounting/invoices/estimates/view`, id ]);
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/view`,
+				id
+			]);
 		} else {
-			this.router.navigate([ `/pages/accounting/invoices/view`, id ]);
+			this.router.navigate([`/pages/accounting/invoices/view`, id]);
 		}
 	}
 
@@ -218,12 +243,16 @@ export class InvoicesReceivedComponent
 					data: selectedItem
 				});
 			}
-			await this.invoicesService.updateEstimate(this.selectedInvoice.id, {
-				isAccepted: true
-			}).then(() => {
-				this.subject$.next(true);
-				this.toastrService.success('INVOICES_PAGE.INVOICE_ACCEPTED');
-			});
+			await this.invoicesService
+				.updateEstimate(this.selectedInvoice.id, {
+					isAccepted: true
+				})
+				.then(() => {
+					this.subject$.next(true);
+					this.toastrService.success(
+						'INVOICES_PAGE.INVOICE_ACCEPTED'
+					);
+				});
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
@@ -237,12 +266,16 @@ export class InvoicesReceivedComponent
 					data: selectedItem
 				});
 			}
-			await this.invoicesService.updateEstimate(this.selectedInvoice.id, {
-				isAccepted: false
-			}).then(() => {
-				this.subject$.next(true);
-				this.toastrService.success('INVOICES_PAGE.INVOICE_REJECTED');
-			});
+			await this.invoicesService
+				.updateEstimate(this.selectedInvoice.id, {
+					isAccepted: false
+				})
+				.then(() => {
+					this.subject$.next(true);
+					this.toastrService.success(
+						'INVOICES_PAGE.INVOICE_REJECTED'
+					);
+				});
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
@@ -252,7 +285,7 @@ export class InvoicesReceivedComponent
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
-				display: true,
+				display: false,
 				perPage: 10
 			},
 			mode: 'external',
@@ -267,16 +300,16 @@ export class InvoicesReceivedComponent
 					sortDirection: 'asc',
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
 						if (isNotEmpty(value)) {
 							this.filters = {
-								where: { 
+								where: {
 									...this.filters.where,
 									invoiceNumber: value
 								}
-							}
+							};
 						} else {
 							delete this.filters.where.invoiceNumber;
 						}
@@ -289,16 +322,16 @@ export class InvoicesReceivedComponent
 					renderComponent: InvoiceEstimateTotalValueComponent,
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
 						if (isNotEmpty(value)) {
 							this.filters = {
-								where: { 
+								where: {
 									...this.filters.where,
 									totalValue: value
 								}
-							}
+							};
 						} else {
 							delete this.filters.where.totalValue;
 						}
@@ -341,8 +374,8 @@ export class InvoicesReceivedComponent
 	}
 
 	/*
-	* refresh pagination
-	*/
+	 * refresh pagination
+	 */
 	refreshPagination() {
 		this.pagination['activePage'] = 1;
 	}
@@ -355,6 +388,11 @@ export class InvoicesReceivedComponent
 			this.invoiceReceivedTable.grid.dataSet['willSelect'] = 'false';
 			this.invoiceReceivedTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	onUpdateOption($event: number) {
+		this.pagination.itemsPerPage = $event;
+		this.getInvoices();
 	}
 
 	ngOnDestroy() {}

@@ -881,7 +881,7 @@ export class InvoicesComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '18%',
+					width: '17%',
 					renderComponent: NotesWithTagsComponent
 				}
 			}
@@ -936,7 +936,7 @@ export class InvoicesComponent
 			this.settingsSmartTable['columns']['tax2'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
-				width: '5%',
+				width: '6%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					if (cell) {
