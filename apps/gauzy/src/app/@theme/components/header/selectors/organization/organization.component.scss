@@ -1,4 +1,5 @@
-$radius: 2.5rem;
+@import 'var';
+$radius: nb-theme(button-rectangle-border-radius);
 ng-select {
   .selector-template {
     display: flex;
@@ -6,39 +7,23 @@ ng-select {
     height: 100%;
   }
   img {
-    margin-right: .25rem;
-    margin-left: .25rem;
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
     border-radius: $radius;
   }
 }
 
-::ng-deep .organization{
-  display: flex;
-  &.open.ng-select, &.close.ng-select {
-    .ng-select-container{
-      .ng-value-container{
+::ng-deep .organization {
+  &.ng-select {
+    .ng-select-container {
+      .ng-value-container {
         padding-left: 0;
       }
     }
-  }
-  &.close.ng-select .ng-select-container .ng-value-container{
-    span {
-      display: none;
-    }
-  }
-  &.open.ng-select .ng-select-container .ng-select-container{
-    .ng-value-container{
-      padding-left: 0;
-    }
-  }
-}
-
-::ng-deep .ng-dropdown-panel {
-  ::ng-deep .ng-dropdown-panel-items {
-    img {
-      border-radius: 4px;
-      width: 24px;
-      height: 24px;
+    &.close.ng-select .ng-select-container .ng-value-container {
+      span {
+        display: none;
+      }
     }
   }
 }
