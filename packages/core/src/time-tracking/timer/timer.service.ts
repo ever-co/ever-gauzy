@@ -54,6 +54,12 @@ export class TimerService {
 
 		// Get today's completed timelogs
 		const logs = await this.timeLogRepository.find({
+			join: {
+				alias: 'timeLog',
+				innerJoin: {
+					timeSlots: 'timeLog.timeSlots'
+				}
+			},
 			where: {
 				deletedAt: IsNull(),
 				employeeId,
@@ -243,6 +249,12 @@ export class TimerService {
 				tenantId,
 				organizationId,
 				isRunning: true
+			},
+			join: {
+				alias: 'timeLog',
+				innerJoin: {
+					timeSlots: 'timeLog.timeSlots'
+				}
 			},
 			order: {
 				startedAt: 'DESC',

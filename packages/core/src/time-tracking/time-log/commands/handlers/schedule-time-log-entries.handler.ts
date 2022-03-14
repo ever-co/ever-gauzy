@@ -30,13 +30,15 @@ export class ScheduleTimeLogEntriesHandler
 		} else {
 			timeLogs = await this.timeLogRepository.find({
 				where: (query: SelectQueryBuilder<TimeLog>) => {
-					query.andWhere(`"${query.alias}"."stoppedAt" IS NULL`);
+					query.andWhere(`"${query.alias}"."stoppedAt" NOT NULL`);
+					query.orWhere(`"${query.alias}"."isRunning" =: isRunning`, { isRunning: true });
 				},
 				relations: ['timeSlots']
 			});
 		}
 		
 		for await (const timeLog of timeLogs) {
+			console.log('Schedule Time Log Entry', timeLog);
 			const logDifference = moment().diff(moment.utc(timeLog.startedAt), 'minutes');
 			if (
 				isEmpty(timeLog.timeSlots) &&
