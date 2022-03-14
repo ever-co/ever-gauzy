@@ -9,7 +9,7 @@
 		appendTo="body"
     (open)="onOpen()"
     (close)="onClose()"
-    [ngClass]="isOpen ? 'organization open': 'organization close'"
+    [ngClass]="isOpen ? 'organization': 'organization close'"
 	>
 		<ng-template ng-option-tmp let-item="item" let-index="index">
 			<img

@@ -1,10 +1,12 @@
+@import 'var';
+
 .calendar-picker {
 	position: relative;
 	max-height: 40px;
 	input {
 		width: 100%;
 		max-width: 100% !important;
-    border-radius: 32px;
+    border-radius: nb-theme(button-rectangle-border-radius);
     height: 32px;
     box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
     background-color: rgba(126, 126, 143, 0.05);

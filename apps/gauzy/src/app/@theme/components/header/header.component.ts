@@ -47,6 +47,7 @@ import {
 } from '../../../@core/services';
 import { LayoutService } from '../../../@core/utils';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { ChangeDetectorRef } from '@angular/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -76,6 +77,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 	isDemo: boolean = environment.DEMO;
+  isOpenOrganization: boolean = false;
 
 	@Input() position = 'normal';
 	user: IUser;
@@ -116,7 +118,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly organizationProjectStore: OrganizationProjectStore,
 		private readonly employeeStore: EmployeeStore,
-		public readonly selectorBuilderService: SelectorBuilderService
+		public readonly selectorBuilderService: SelectorBuilderService,
+    private readonly cd: ChangeDetectorRef
 	) {
 		super(translate);
 	}
@@ -256,7 +259,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				) {
 					this.showEmployeesSelector = employeeCount > 0;
 					if (this.showEmployeesSelector && !this.store.selectedEmployee) {
-						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED; 
+						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 					}
 				} else {
 					const emp = await this.employeesService.getEmployeeById(
@@ -293,7 +296,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
-			) && 
+			) &&
 			userOrg.length > 1
 		) {
 			this.showOrganizationsSelector = true;
@@ -362,6 +365,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						break;
 				}
 			});
+    this.cd.detectChanges();
 	}
 
 	toggleTimerWindow() {
@@ -627,6 +631,12 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			!this.isElectron
 		);
 	}
+
+  onOpen(event: any){
+    console.log('ok');
+    this.isOpenOrganization = event;
+    this.cd.detectChanges();
+  }
 
 	ngOnDestroy() {}
 }
