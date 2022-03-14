@@ -1147,4 +1147,9 @@ export class TimeTrackerComponent implements AfterViewInit {
 		  reader.readAsDataURL(blob);
 		})
 	  }
+
+
+	  refreshTimer() {
+		  this.electronService.ipcRenderer.send('refresh-timer');
+	  }
 }
