@@ -203,8 +203,7 @@ export default class Timerhandler {
 
 		this.intervalUpdateTime = setInterval(async () => {
 			console.log('Last Time Id:', this.lastTimer.id);
-			console.log('Timeslot Start Time', this.timeSlotStart);
-			this.timeSlotStart = moment();
+
 			await this.getSetActivity(
 				knex,
 				setupWindow,
@@ -212,6 +211,8 @@ export default class Timerhandler {
 				timeTrackerWindow,
 				false,
 			);
+			console.log('Timeslot Start Time', this.timeSlotStart);
+			this.timeSlotStart = moment();
 		}, 60 * 1000 * updatePeriod);
 	}
 
