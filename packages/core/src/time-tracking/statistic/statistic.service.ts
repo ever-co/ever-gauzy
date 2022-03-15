@@ -74,7 +74,6 @@ export class StatisticService {
 			logType = [],
 			source = []
 		} = request;
-		console.log(request, 'Get Counts Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -88,7 +87,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Counts Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -351,7 +349,6 @@ export class StatisticService {
 				moment().startOf('day').utc(),
 				moment().endOf('day').utc()
 			);
-			console.log({ startToday, endToday }, 'Today Time Date Range For Counts Statistics');
 			const query = this.timeSlotRepository.createQueryBuilder();
 			const todayTimeStatistics = await query
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -460,7 +457,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get Members Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -474,7 +470,6 @@ export class StatisticService {
 										moment().startOf('day').utc(),
 										moment().endOf('day').utc()
 									);
-		console.log({ weeklyStart, weeklyEnd }, 'Weekly Time Date Range For Members Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -653,7 +648,7 @@ export class StatisticService {
 							moment().startOf('day').utc(),
 							moment().endOf('day').utc()
 						);
-						console.log({ startToday, endToday }, 'Daily Time Date Range For Members Statistics');
+			
 						qb.where(`"timeLogs"."startedAt" BETWEEN :startToday AND :endToday`, {
 							startToday,
 							endToday
@@ -787,7 +782,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get Projects Statistic Request');
 		
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -800,7 +794,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Projects Statistics');
 		const query = this.organizationProjectsRepository.createQueryBuilder();
 		query
 			.select(`"${query.alias}".*`)
@@ -812,7 +805,8 @@ export class StatisticService {
 				}`,
 				`duration`
 			)
-			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -882,6 +876,7 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${totalDurationQuery.alias}.timeLogs`, 'timeLogs')
+				.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 				.where(
 					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
 					{ organizationId }
@@ -940,7 +935,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get Tasks Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -953,7 +947,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Tasks Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -995,6 +988,7 @@ export class StatisticService {
 				)
 				.innerJoin(`${query.alias}.project`, 'project')
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -1035,6 +1029,7 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${totalDurationQuery.alias}.timeLogs`, 'timeLogs')
+				.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -1088,7 +1083,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get Manual Times Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -1101,7 +1095,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Manual Times Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -1220,7 +1213,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Activities Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -1251,10 +1243,11 @@ export class StatisticService {
 		if (employeeIds.length > 0) {
 			const query = this.activityRepository.createQueryBuilder();
 			query
-				.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
 				.select(`COUNT("${query.alias}"."id")`, `sessions`)
 				.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
 				.addSelect(`"${query.alias}"."title"`, `title`)
+				.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
+				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
 				.addGroupBy(`"${query.alias}"."title"`)
 				.andWhere(
 					new Brackets((qb) => {
@@ -1303,11 +1296,12 @@ export class StatisticService {
 			 */
 			const totalDurationQuery = this.activityRepository.createQueryBuilder();
 			totalDurationQuery
-				.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
 				.select(
 					`SUM("${totalDurationQuery.alias}"."duration")`,
 					`duration`
 				)
+				.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
+				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
 				.andWhere(
 					`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeId)`,
 					{ employeeId: employeeIds }
@@ -1349,8 +1343,7 @@ export class StatisticService {
 
 			const totalDuration = await totalDurationQuery.getRawOne();
 			activities = activities.map((activity) => {
-				activity.durationPercentage =
-					(activity.duration * 100) / totalDuration.duration;
+				activity.durationPercentage = (activity.duration * 100) / totalDuration.duration;
 				return activity;
 			});
 
@@ -1374,7 +1367,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get TimeSlot Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -1387,7 +1379,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Employee TimeSlots Statistics');
 
 		/*
 		 *  Get employees id of the organization or get current employee id
