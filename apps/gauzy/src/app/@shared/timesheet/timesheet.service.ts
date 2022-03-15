@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
 	ITimeLog,
 	IGetTimeLogInput,
@@ -224,26 +224,16 @@ export class TimesheetService {
 		);
 	}
 
-	deleteTimeSlots(ids?: string[]) {
-		const params = toParams({ ids });
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/timesheet/time-slot`, { params })
-		);
+	deleteTimeSlots(request) {
+		return firstValueFrom(this.http .delete(`${API_PREFIX}/timesheet/time-slot`, {
+			params: toParams(request)
+		}));
 	}
 
-	deleteLogs(logIds: string | string[]) {
-		let payload = new HttpParams();
-		if (typeof logIds === 'string') {
-			logIds = [logIds];
-		}
-		logIds.forEach((id: string) => {
-			payload = payload.append(`logIds[]`, id);
-		});
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/timesheet/time-log`, { params: payload })
-		);
+	deleteLogs(request) {
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/timesheet/time-log`, {
+			params: toParams(request)
+		}));
 	}
 
 	deleteScreenshot(screenshotId: string) {

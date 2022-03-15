@@ -35,6 +35,8 @@ export class CreateTimeSlotHandler
 		const { input } = command;
 		let { organizationId } = input;
 
+		console.log({ input });
+
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -78,24 +80,10 @@ export class CreateTimeSlotHandler
 			}
 		});
 
-		console.log(
-			`Attempt to get timeSlot from DB with Parameters`,
-			{
-				organizationId,
-				tenantId,
-				employeeId,
-				startedAt: input.startedAt
-			},
-			{
-				timeSlot
-			}
-		);
-
 		if (!timeSlot) {
 			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
 			timeSlot.tenantId = tenantId;
 			timeSlot.organizationId = organizationId;
-			console.log('Omit New TimeSlot:', timeSlot);
 		}
 
 		if (input.timeLogId) {
@@ -177,15 +165,12 @@ export class CreateTimeSlotHandler
 				maxDate
 			)
 		);
-
-		console.log('TimeSlot Before Create:', timeSlot);
 		
 		// If merge timeSlots not found then pass created timeSlot
 		if (!createdTimeSlot) {
 			createdTimeSlot = timeSlot;
 		}
 
-		console.log('Created Time Slot:', { timeSlot: createdTimeSlot });
 		return await this.timeSlotRepository.findOne(createdTimeSlot.id, {
 			relations: ['timeLogs', 'screenshots']
 		});

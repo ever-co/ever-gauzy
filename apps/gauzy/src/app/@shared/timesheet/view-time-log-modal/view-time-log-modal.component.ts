@@ -4,14 +4,15 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ITimeLog,
 	PermissionsEnum,
-	OrganizationPermissionsEnum
+	OrganizationPermissionsEnum,
+	IOrganization
 } from '@gauzy/contracts';
+import { filter, tap } from 'rxjs/operators';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { TimesheetService } from '../timesheet.service';
 import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 import { TimeLogsLabel } from './../../../@core/constants';
 import { Store } from './../../../@core/services';
-import { tap } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,6 +22,7 @@ import { tap } from 'rxjs/operators';
 })
 export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	
+	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	TimeLogsLabel = TimeLogsLabel;
@@ -35,7 +37,15 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		private readonly timeTrackerService: TimeTrackerService,
 	) {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	openDialog() {
 		if (this.timeLog.isRunning) {
@@ -58,7 +68,12 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	}
 
 	onDeleteConfirm() {
-		this.timesheetService.deleteLogs(this.timeLog.id).then((res) => {
+		const { id: organizationId } = this.organization;
+		const request = {
+			logIds: [this.timeLog.id],
+			organizationId
+		}
+		this.timesheetService.deleteLogs(request).then((res) => {
 			this.dialogRef.close(res);
 			this.checkTimerStatus();
 		});

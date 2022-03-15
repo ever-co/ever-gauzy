@@ -887,26 +887,33 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return await this.timeLogRepository.findOne(request.id);
 	}
 
-	async deleteTimeLog(ids: string | string[]): Promise<DeleteResult | UpdateResult> {
-		if (isEmpty(ids)) {
+	async deleteTimeLogs(query: any): Promise<DeleteResult | UpdateResult> {
+		let logIds: string | string[] = query.logIds;
+		if (isEmpty(logIds)) {
 			throw new NotAcceptableException('You can not delete time logs');
 		}
-		const tenantId = RequestContext.currentTenantId();
-		const user = RequestContext.currentUser();
-		if (typeof ids === 'string') {
-			ids = [ids];
+		if (typeof logIds === 'string') {
+			logIds = [logIds];
 		}
 
-		const timeLogs = await this.timeLogRepository.find({
-			...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ? {} : {
-				employeeId: user.employeeId
-			}),
-			tenantId,
-			id: In(ids)
-		});
+		const tenantId = RequestContext.currentTenantId();
+		const user = RequestContext.currentUser();
+		const { organizationId, forceDelete } = query;
 
+		const timeLogs = await this.timeLogRepository.find({
+			...(
+				RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				) ? {} : {
+					employeeId: user.employeeId
+				}
+			),
+			tenantId,
+			organizationId,
+			id: In(logIds)
+		});
 		return await this.commandBus.execute(
-			new TimeLogDeleteCommand(timeLogs, true)
+			new TimeLogDeleteCommand(timeLogs, forceDelete)
 		);
 	}
 

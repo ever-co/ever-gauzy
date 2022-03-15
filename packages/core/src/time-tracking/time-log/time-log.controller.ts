@@ -267,7 +267,9 @@ export class TimeLogController {
 	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async deleteTimeLog(@Query() query: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {
-		return await this.timeLogService.deleteTimeLog(query.logIds);
+	async deleteTimeLog(
+		@Query() query: DeleteTimeLogDTO
+	): Promise<DeleteResult | UpdateResult> {
+		return await this.timeLogService.deleteTimeLogs(query);
 	}
 }

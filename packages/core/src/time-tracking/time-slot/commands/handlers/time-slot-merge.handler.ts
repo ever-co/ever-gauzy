@@ -47,6 +47,7 @@ export class TimeSlotMergeHandler
 			startDate,
 			endDate
 		);
+		console.log({ startedAt, stoppedAt }, 'Time Slot Merging Dates');
 		const timerSlots = await this.timeSlotRepository.find({
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
 				query.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
@@ -63,7 +64,6 @@ export class TimeSlotMergeHandler
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
-
 		const createdTimeSlots: any = [];
 		if (timerSlots.length > 0) {
 			const savePromises = _.chain(timerSlots)
