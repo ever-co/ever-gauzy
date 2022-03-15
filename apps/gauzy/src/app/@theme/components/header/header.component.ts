@@ -83,6 +83,7 @@ export class HeaderComponent
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 	isDemo: boolean = environment.DEMO;
+  isOpenOrganization: boolean = false;
 
 	@Input() position = 'normal';
 	user: IUser;
@@ -270,10 +271,7 @@ export class HeaderComponent
 					)
 				) {
 					this.showEmployeesSelector = employeeCount > 0;
-					if (
-						this.showEmployeesSelector &&
-						!this.store.selectedEmployee
-					) {
+					if (this.showEmployeesSelector && !this.store.selectedEmployee) {
 						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 					}
 				} else {
@@ -640,6 +638,12 @@ export class HeaderComponent
 		);
 		return isTrackingEnabled && hasPermission && !this.isElectron;
 	}
+
+  onOpen(event: any){
+    console.log('ok');
+    this.isOpenOrganization = event;
+    this.cd.detectChanges();
+  }
 
 	ngOnDestroy() {}
 }

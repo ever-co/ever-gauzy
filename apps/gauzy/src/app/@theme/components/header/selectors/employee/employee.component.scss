@@ -1,3 +1,4 @@
+@import 'var';
 ng-select {
 	.selector-template {
 		display: flex;
@@ -7,5 +8,9 @@ ng-select {
 	img {
 		margin-right: 5px;
 		margin-left: 5px;
+    border-radius: nb-theme(button-rectangle-border-radius);
 	}
+}
+::ng-deep .employee.ng-select .ng-select-container .ng-value-container{
+  padding-left: 0;
 }

@@ -4,7 +4,11 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { uniq } from 'underscore';
-import { OrganizationEditStore, Store, UsersOrganizationsService } from './../../../../../@core/services';
+import {
+	OrganizationEditStore,
+	Store,
+	UsersOrganizationsService
+} from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -12,9 +16,12 @@ import { OrganizationEditStore, Store, UsersOrganizationsService } from './../..
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
+export class OrganizationSelectorComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	organizations: IOrganization[] = [];
 	selectedOrganization: IOrganization;
+	isOpen: boolean = false;
 
 	constructor(
 		private readonly store: Store,
@@ -38,29 +45,37 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	private async loadOrganizations(): Promise<void> {
 		const { tenantId } = this.store.user;
 		const { userId } = this.store;
-		
-		const { items = [] } = await this.userOrganizationService.getAll([
-			'organization',
-			'organization.contact',
-			'organization.featureOrganizations',
-			'organization.featureOrganizations.feature'
-		], { userId, tenantId });
+
+		const { items = [] } = await this.userOrganizationService.getAll(
+			[
+				'organization',
+				'organization.contact',
+				'organization.featureOrganizations',
+				'organization.featureOrganizations.feature'
+			],
+			{ userId, tenantId }
+		);
 
 		const organizations = items.map(({ organization }) => organization);
 		this.organizations = uniq(organizations, (item) => item.id);
-		
+
 		if (this.organizations.length > 0) {
-			const defaultOrganization = this.organizations.find((organization: IOrganization) => organization.isDefault);
-			const [ firstOrganization ] = this.organizations;
-	
+			const defaultOrganization = this.organizations.find(
+				(organization: IOrganization) => organization.isDefault
+			);
+			const [firstOrganization] = this.organizations;
+
 			if (this.store.organizationId) {
 				const organization = this.organizations.find(
-					(organization: IOrganization) => organization.id === this.store.organizationId
+					(organization: IOrganization) =>
+						organization.id === this.store.organizationId
 				);
-				this.store.selectedOrganization = organization || defaultOrganization || firstOrganization;
+				this.store.selectedOrganization =
+					organization || defaultOrganization || firstOrganization;
 			} else {
 				// set default organization as selected
-				this.store.selectedOrganization = defaultOrganization || firstOrganization;
+				this.store.selectedOrganization =
+					defaultOrganization || firstOrganization;
 			}
 		}
 	}
@@ -146,6 +161,18 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 		}
 
 		this.organizations = [...organizations].filter(isNotEmpty);
+	}
+	/**
+	 * event fired on select dropdown open
+	 */
+	onOpen() {
+		this.isOpen = true;
+	}
+	/**
+	 * event fired on select dropdown close
+	 */
+	onClose() {
+		this.isOpen = false;
 	}
 
 	ngOnDestroy() {}
