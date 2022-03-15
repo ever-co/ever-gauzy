@@ -19,11 +19,13 @@ $button-radius : nb-theme(button-rectangle-border-radius);
   box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.1);
   border-radius: nb-theme(button-rectangle-border-radius);
   /* I've used padding so you can see the edges of the elements. */
-  padding: 2px 10px 2px 5px;
+  padding: 2px 0px 2px 5px;
   margin-right: 16px;
   input{
     height: 1.875rem;
     margin-right: 5px;
+    width: 240px;
+    background-color: transparent;
     /* Tell the input to use all the available space */
   flex-grow:2;
   /* And hide the input's outline, so the form looks like the outline */
