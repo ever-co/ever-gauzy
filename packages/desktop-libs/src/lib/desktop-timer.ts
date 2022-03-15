@@ -10,6 +10,7 @@ import NotificationDesktop from './desktop-notifier';
 import { powerMonitor, ipcMain, screen } from 'electron';
 import { getScreeshot } from './desktop-screenshot';
 import log from 'electron-log';
+import { ActivityType, TimeLogSourceEnum } from '@gauzy/contracts';
 console.log = log.log;
 Object.assign(console, log.functions);
 const EmbeddedQueue = require('embedded-queue');
@@ -65,13 +66,13 @@ export default class Timerhandler {
 
 		this.notificationDesktop.timerActionNotification(true);
 		this.configs = LocalStore.getStore('configs');
+
 		if (appSetting.randomScreenshotTime) {
 			this.nextScreenshot = 0;
-			this.timeSlotStart = moment();
 			this.nextTickScreenshot();
-
 		}
 
+		this.timeSlotStart = moment();
 		this.timeStart = moment();
 
 		(async () => {
@@ -85,7 +86,6 @@ export default class Timerhandler {
 				this.startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow);
 			}
 			
-
 			/*
 			 * Create screenshots at begining of timer
 			//  */
@@ -114,12 +114,13 @@ export default class Timerhandler {
 						data: {
 							id: this.lastTimer.id,
 							durations: moment().diff(
-								moment(this.timeSlotStart),
-								'milliseconds')
+								moment(this.timeSlotStart), 'milliseconds'
+							)
 						}
 					},
 					knex
 				)
+				console.log(projectInfo, this.timeSlotStart, 'collect activities');
 				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
 					setupWindow.webContents.send('collect_data', {
 						start: this.timeSlotStart.utc().format(),
@@ -153,7 +154,6 @@ export default class Timerhandler {
 						timerId: this.lastTimer.id
 					});
 				}
-
 
 				this.calculateTimeRecord();
 				timeTrackerWindow.webContents.send('timer_push', {
@@ -197,13 +197,10 @@ export default class Timerhandler {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
 		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
-
-		this.timeSlotStart = moment();
 		console.log('Timeslot Start Time', this.timeSlotStart);
 
 		this.intervalUpdateTime = setInterval(async () => {
-			console.log('Last Time Id:', this.lastTimer.id);
-
+			console.log('Last Timer Id:', this.lastTimer.id);
 			await this.getSetActivity(
 				knex,
 				setupWindow,
@@ -286,15 +283,16 @@ export default class Timerhandler {
 		const dataCollection = await this.activitiesCollection(knex, lastTimeSlot); 
 		this.takeScreenshotActivities(timeTrackerWindow, lastTimeSlot, dataCollection);
 		// get aw activity
-		
 	}
 
 	async activitiesCollection(knex, lastTimeSlot) {
 		const userInfo = LocalStore.beforeRequestParams();
 		const appSetting = LocalStore.getStore('appSetting');
 		const config = LocalStore.getStore('configs');
+		
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
+		
 		const { id: lastTimerId } = this.lastTimer;
 		let awActivities = await TimerData.getWindowEvent(knex, lastTimerId);
 
@@ -331,7 +329,7 @@ export default class Timerhandler {
 				organizationContactId: userInfo.organizationContactId,
 				organizationId: userInfo.organizationId,
 				employeeId: userInfo.employeeId,
-				source: 'DESKTOP'
+				source: TimeLogSourceEnum.DESKTOP
 			};
 		});
 
@@ -352,7 +350,7 @@ export default class Timerhandler {
 				date: moment.unix(item.time).format('YYYY-MM-DD'),
 				time: moment.unix(item.time).format('HH:mm:ss'),
 				duration: 0,
-				type: 'APP',
+				type: ActivityType.APP,
 				taskId: userInfo.taskId,
 				organizationId: userInfo.organizationId,
 				projectId: userInfo.projectId,
