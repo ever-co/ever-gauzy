@@ -58,6 +58,8 @@ import { ProjectSelectModule } from '../@shared/project-select/project-select.mo
 import { TranslateModule } from '../@shared/translate/translate.module';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
 import { MatRippleModule } from '@angular/material/core';
+import { NbAccordionModule } from '@nebular/theme';
+import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -73,7 +75,8 @@ const NB_MODULES = [
 	NbIconModule,
 	NbTooltipModule,
 	NbPopoverModule,
-	NbEvaIconsModule
+	NbEvaIconsModule,
+  NbAccordionModule
 ];
 
 const MODULES = [
@@ -93,7 +96,8 @@ const COMPONENTS = [
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
-	LayoutSelectorComponent
+	LayoutSelectorComponent,
+  GauzyLogoComponent
 ];
 
 const PIPES = [...Pipes];
