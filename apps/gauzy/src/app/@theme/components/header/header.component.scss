@@ -73,8 +73,6 @@ $orange: #f56d58;
         font-size: 1.85rem;
         padding: 0 1.25rem;
         margin-top: 5px;
-        @include nb-ltr(border-left, 1px solid nb-theme(divider-color));
-        @include nb-rtl(border-right, 1px solid nb-theme(divider-color));
         white-space: nowrap;
         text-decoration: none;
 
@@ -171,9 +169,6 @@ $orange: #f56d58;
   max-width: auto;
 }
 
-.white-svg {
-  filter: brightness(0) invert(1);
-}
 
 .button.create {
   background: $orange;
