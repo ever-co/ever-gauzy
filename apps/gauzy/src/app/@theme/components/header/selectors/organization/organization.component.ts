@@ -163,15 +163,9 @@ export class OrganizationSelectorComponent
 		this.organizations = [...organizations].filter(isNotEmpty);
 	}
 	/**
-	 * event fired on select dropdown open
+	 * event fired on model change.
 	 */
-	onOpen() {
-		this.isOpen = true;
-	}
-	/**
-	 * event fired on select dropdown close
-	 */
-	onClose() {
+	onChange() {
 		this.isOpen = false;
 	}
 
