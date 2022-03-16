@@ -27,12 +27,12 @@ body {
   .cdk-global-scrollblock {
     overflow-y: overlay;
   }
-  
+
   .h1 {
     font-size: 44px;
     font-weight: 400;
   }
-  
+
   // overrides bootstrap svg style
   nb-icon svg {
     vertical-align: top;
@@ -259,6 +259,9 @@ body {
   }
   .table {
     color: nb-theme(text-basic-color) !important;
+  }
+  nb-accordion-item-body .item-body{
+    overflow-x: hidden;
   }
 }
 
