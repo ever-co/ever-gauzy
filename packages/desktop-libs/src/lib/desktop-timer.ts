@@ -114,13 +114,13 @@ export default class Timerhandler {
 						data: {
 							id: this.lastTimer.id,
 							durations: moment().diff(
-								moment(this.timeSlotStart), 'milliseconds'
+								moment(this.timeSlotStart),
+								'milliseconds'
 							)
 						}
 					},
 					knex
 				)
-				console.log(projectInfo, this.timeSlotStart, 'collect activities');
 				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
 					setupWindow.webContents.send('collect_data', {
 						start: this.timeSlotStart.utc().format(),
@@ -320,8 +320,8 @@ export default class Timerhandler {
 			const dataParse = JSON.parse(item.data);
 			return {
 				title: dataParse.title || dataParse.app,
-				date: moment().utc().format('YYYY-MM-DD'),
-				time: moment().utc().format('HH:mm:ss'),
+				date: moment().utc(item.created_at).format('YYYY-MM-DD'),
+				time: moment().utc(item.created_at).format('HH:mm:ss'),
 				duration: Math.floor(item.durations),
 				type: item.type,
 				taskId: userInfo.taskId,
@@ -329,7 +329,8 @@ export default class Timerhandler {
 				organizationContactId: userInfo.organizationContactId,
 				organizationId: userInfo.organizationId,
 				employeeId: userInfo.employeeId,
-				source: TimeLogSourceEnum.DESKTOP
+				source: TimeLogSourceEnum.DESKTOP,
+				recordedAt: moment().utc(item.created_at).toDate()
 			};
 		});
 
