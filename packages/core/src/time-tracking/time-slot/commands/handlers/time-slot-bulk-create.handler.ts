@@ -92,14 +92,14 @@ export class TimeSlotBulkCreateHandler
 		slots = insertedSlots.concat(slots);
 
 		const dates = slots.map((slot) => moment(slot.startedAt).toDate());
-		const mnDate = dates.reduce(function (a, b) {
+		const minDate = dates.reduce(function (a, b) {
 			return a < b ? a : b;
 		});
-		const mxDate = dates.reduce(function (a, b) {
+		const maxDate = dates.reduce(function (a, b) {
 			return a > b ? a : b;
 		});
 		return await this.commandBus.execute(
-			new TimeSlotMergeCommand(employeeId, mnDate, mxDate)
+			new TimeSlotMergeCommand(employeeId, minDate, maxDate)
 		);
 	}
 }

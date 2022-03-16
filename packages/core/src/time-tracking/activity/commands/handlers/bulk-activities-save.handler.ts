@@ -1,10 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Activity } from '../../activity.entity';
+import { IActivity } from '@gauzy/contracts';
 import { Repository } from 'typeorm';
+import { Activity } from '../../activity.entity';
+import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { RequestContext } from '../../../../core/context';
-import { Employee } from '../../../../employee/employee.entity';
+import { Employee } from './../../../../core/entities/internal';
 
 @CommandHandler(BulkActivitiesSaveCommand)
 export class BulkActivitiesSaveHandler
@@ -12,24 +13,28 @@ export class BulkActivitiesSaveHandler
 	constructor(
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
 	) {}
 
 	public async execute(command: BulkActivitiesSaveCommand): Promise<any> {
 		const { input } = command;
-		if (!input.organizationId) {
+		const tenantId = RequestContext.currentTenantId();
+		let { employeeId, organizationId, activities = [] } = input;
+
+		if (!organizationId) {
 			const user = RequestContext.currentUser();
 			const employee = await this.employeeRepository.findOne(
 				user.employeeId
 			);
-			input.organizationId = employee.organizationId;
+			organizationId = employee.organizationId;
 		}
-		const insertActivities = input.activities.map((activity) => {
+		const insertActivities = activities.map((activity: IActivity) => {
 			activity = new Activity({
-				employeeId: input.employeeId,
-				organizationId: input.organizationId,
-				tenantId: RequestContext.currentTenantId(),
+				employeeId,
+				organizationId,
+				tenantId,
 				...(input.projectId ? { projectId: input.projectId } : {}),
 				...activity
 			});
