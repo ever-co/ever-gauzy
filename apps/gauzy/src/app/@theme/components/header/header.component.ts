@@ -83,7 +83,6 @@ export class HeaderComponent
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 	isDemo: boolean = environment.DEMO;
-  isOpenOrganization: boolean = false;
 
 	@Input() position = 'normal';
 	user: IUser;
@@ -638,12 +637,6 @@ export class HeaderComponent
 		);
 		return isTrackingEnabled && hasPermission && !this.isElectron;
 	}
-
-  onOpen(event: any){
-    console.log('ok');
-    this.isOpenOrganization = event;
-    this.cd.detectChanges();
-  }
 
 	ngOnDestroy() {}
 }
