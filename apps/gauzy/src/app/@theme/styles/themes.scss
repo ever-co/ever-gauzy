@@ -30,7 +30,6 @@ $nb-themes: nb-register-theme(
     gauzy-text-contact: #323232,
     accordion-padding: 0.625rem,
     actions-divider-style: none,
-    header-height: 5.625rem
   ),
   default,
   default
@@ -55,7 +54,6 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color: 2px 0 3px #29157a,
     slide-out-shadow-color-rtl: -2px 0 3px #29157a,
     accordion-padding: 0.625rem,
-    header-height: 5.625rem
   ),
   cosmic,
   cosmic
@@ -80,7 +78,6 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
     slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
     accordion-padding: 0.625rem,
-    header-height: 5.625rem
   ),
   corporate,
   corporate
@@ -107,7 +104,6 @@ $nb-themes: nb-register-theme(
     gauzy-text-contact: #eeeeee,
     accordion-padding: 0.625rem,
     actions-divider-style: none,
-    header-height: 5.625rem
   ),
   dark,
   dark
@@ -134,7 +130,6 @@ $nb-themes: nb-register-theme((
    slide-out-shadow-color: 0 4px 14px 0 #ebebeb,
    slide-out-shadow-color-rtl: 0 4px 14px 0 #ebebeb,
    accordion-padding: 0.625rem,
-   header-height: 5.625rem
  ), material-light, material-light);
 
  $nb-themes: nb-register-theme((
@@ -158,7 +153,6 @@ $nb-themes: nb-register-theme((
    slide-out-shadow-color: 0 4px 14px 0 #292929,
    slide-out-shadow-color-rtl: 0 4px 14px 0 #292929,
    accordion-padding: 0.625rem,
-   header-height: 5.625rem
  ), material-dark, material-dark);
 
  $nb-themes: nb-register-theme(
@@ -203,7 +197,6 @@ $nb-themes: nb-register-theme((
       toggle-height: 1.5rem,
       toggle-switcher-size: 1.4rem,
       toggle-switcher-icon-size: 0,
-      header-height: 5.625rem
   ),
   gauzy-light,
   default
@@ -250,7 +243,6 @@ $nb-themes: nb-register-theme(
     toggle-height: 1.5rem,
     toggle-switcher-size: 1.4rem,
     toggle-switcher-icon-size: 0,
-    header-height: 5.625rem
   ),
   gauzy-dark,
   dark
