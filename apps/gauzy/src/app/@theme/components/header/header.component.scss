@@ -4,17 +4,15 @@
 $orange: #f56d58;
 @include nb-install-component() {
   width: 100%;
-
   .notification-header {
     background-color: #1b005d;
     text-align: center;
     font-weight: 300;
-    margin-top: -12px;
-    margin-bottom: 5px;
+    margin: 0;
     padding: 3px;
     width: 100vw;
     position: relative;
-    left: calc(-50vw + 50%);
+    left: calc(-100vw + 100%);
     color: rgb(236, 236, 236);
     a {
       color: rgb(236, 236, 236);
@@ -28,6 +26,7 @@ $orange: #f56d58;
     display: flex;
     justify-content: space-between;
     width: 100%;
+    padding: .5rem 0;
     .show-large-down {
       display: none;
     }
@@ -42,12 +41,16 @@ $orange: #f56d58;
       height: auto;
       display: flex;
       align-content: center;
+      margin-right: 0.625rem;
 
       .header-selector {
         width: auto !important;
       }
     }
 
+    nb-actions.size-small nb-action{
+      padding: 0.5625rem;
+    }
     ::ng-deep nb-search button {
       padding: 0 !important;
     }
@@ -181,7 +184,7 @@ $orange: #f56d58;
 .organization-selector,
 .employee-selector,
 .project-selector {
-  max-width: 180px;
+  max-width: 10rem;
   ::ng-deep {
     .ng-select.ng-select-opened.ng-select-bottom > .ng-select-container {
       border-radius: nb-theme(button-rectangle-border-radius);
@@ -197,3 +200,11 @@ $orange: #f56d58;
   }
 }
 
+.actions{
+  padding: .625rem 0rem .625rem .625rem;
+  border-radius: nb-theme(button-rectangle-border-radius);
+  background-color:rgba(50, 50, 50, 0.03);
+  display: flex;
+  align-items: center;
+  margin-right: 1.25rem;
+}
