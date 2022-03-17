@@ -320,8 +320,8 @@ export default class Timerhandler {
 			const dataParse = JSON.parse(item.data);
 			return {
 				title: dataParse.title || dataParse.app,
-				date: moment().utc(item.created_at).format('YYYY-MM-DD'),
-				time: moment().utc(item.created_at).format('HH:mm:ss'),
+				date: moment().utc().format('YYYY-MM-DD'),
+				time: moment().utc().format('HH:mm:ss'),
 				duration: Math.floor(item.durations),
 				type: item.type,
 				taskId: userInfo.taskId,
