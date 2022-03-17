@@ -330,7 +330,7 @@ export default class Timerhandler {
 				organizationId: userInfo.organizationId,
 				employeeId: userInfo.employeeId,
 				source: TimeLogSourceEnum.DESKTOP,
-				recordedAt: moment().utc(item.created_at).toDate()
+				recordedAt: moment(item.created_at).utc().toDate()
 			};
 		});
 
