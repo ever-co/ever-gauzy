@@ -35,8 +35,6 @@ export class CreateTimeSlotHandler
 		const { input } = command;
 		let { organizationId } = input;
 
-		console.log({ input });
-
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -97,15 +95,14 @@ export class CreateTimeSlotHandler
 				id: In(timeLogIds),
 				tenantId,
 				organizationId,
-				employeeId,
-				isRunning: true
+				employeeId
 			});
 		} else {
 			try {
 				/**
 				 * Find TimeLog for TimeSlot Range 
 				 */
-				 timeSlot.timeLogs = await this.timeLogRepository.find({
+				const timeLogs = await this.timeLogRepository.find({
 					where: (query: SelectQueryBuilder<TimeLog>) => {
 						query.andWhere(
 							new Brackets((qb: WhereExpressionBuilder) => { 
@@ -117,13 +114,14 @@ export class CreateTimeSlotHandler
 						query.andWhere(
 							new Brackets((qb: WhereExpressionBuilder) => {
 								const { startedAt } = timeSlot;
-								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" > :startedAt`, { startedAt });
-								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."isRunning" = :isRunning`, { startedAt, isRunning: true });
+								qb.andWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" > :startedAt`, { startedAt });
 							})
 						);
 						console.log(query.getQueryAndParameters(), 'Find TimeLog for TimeSlot Range');
 					}
 				});
+				timeSlot.timeLogs = timeLogs;
+				console.log('Found TimeLogs for TimeSlots Range', { timeLogs })
 			} catch (error) {
 				throw new BadRequestException('Can\'t find TimeLog for TimeSlot');
 			}
@@ -150,6 +148,7 @@ export class CreateTimeSlotHandler
 			);
 		}
 
+		console.log({ input, timeSlot });
 		await this.timeSlotRepository.save(timeSlot);
 
 		const minDate = input.startedAt;
@@ -158,20 +157,17 @@ export class CreateTimeSlotHandler
 		/*
 		* Merge timeSlots into 10 minutes slots
 		*/
-		let [createdTimeSlot] = await this.commandBus.execute(
+		let [mergedTimeSlot] = await this.commandBus.execute(
 			new TimeSlotMergeCommand(
 				employeeId,
 				minDate, 
 				maxDate
 			)
 		);
-		
-		// If merge timeSlots not found then pass created timeSlot
-		if (!createdTimeSlot) {
-			createdTimeSlot = timeSlot;
+		if (mergedTimeSlot) {
+			timeSlot = mergedTimeSlot;
 		}
-
-		return await this.timeSlotRepository.findOne(createdTimeSlot.id, {
+		return await this.timeSlotRepository.findOne(timeSlot.id, {
 			relations: ['timeLogs', 'screenshots']
 		});
 	}
