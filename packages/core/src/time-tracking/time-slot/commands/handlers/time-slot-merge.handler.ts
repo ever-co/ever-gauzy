@@ -60,7 +60,7 @@ export class TimeSlotMergeHandler
 				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
-				query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
+				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
@@ -124,7 +124,6 @@ export class TimeSlotMergeHandler
 					activities = activities.map(
 						(item) => new Activity(_.omit(item, ['timeSlotId']))
 					);
-
 
 					timeLogs = _.uniq(timeLogs, x => x.id);
 
