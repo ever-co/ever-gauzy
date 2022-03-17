@@ -3181,6 +3181,8 @@
 			"IMAGE_UPDATED": "Изображение было обновлено",
 			"ORGANIZATION_PAGE_UPDATED": "Страница была изменена для '{{ name }}'",
 			"SCREENSHOT_DELETED": "Скриншот для '{{ name }}' ' удален из '{{ organization }}'",
+			"TIME_LOG_DELETED": "Журнал времени для '{{ name }}' ' удален из '{{ organization }}'",
+			"TIME_LOGS_DELETED": "Журналы времени удалены из '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' для '{{ region }}' был успешно создан"
 		}
 	},
