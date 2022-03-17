@@ -47,7 +47,11 @@
 			{{ childItem.title }}
 		</div>
 		<div class="col-sm-8">
-			{{ childItem.description }}
+			<a [title]="childItem.title" [href]="childItem.url" target="_blank">
+				<span class="menu-title">
+					{{ childItem.url }}
+				</span>
+			</a>
 		</div>
 		<div class="col-sm-2 text-right">
 			{{ childItem.duration | durationFormat }}

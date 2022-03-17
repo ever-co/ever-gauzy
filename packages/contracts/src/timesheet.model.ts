@@ -272,6 +272,7 @@ export interface IURLMetaData {
 	title?: string;
 	description?: string;
 	image?: string;
+	[x: string]: any;
 }
 
 export interface IUpdateScreenshotInput
