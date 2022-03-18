@@ -16,19 +16,41 @@
 					}}
 				</ngx-header-title>
 			</h4>
-		</div>
-		<div>
-			<ga-layout-selector
-				[componentName]="viewComponentName"
-			></ga-layout-selector>
+			<div class="actions-container">
+				<div class="transition-container">
+					<div
+						[ngClass]="
+							!disableButton
+								? 'transition show'
+								: 'transition hide'
+						"
+					>
+						<span
+							[ngClass]="
+								!disableButton
+									? 'transition show'
+									: 'transition show-button'
+							"
+						>
+							<button nbButton status="success" size="small">
+								<nb-icon icon="plus-outline"> </nb-icon>
+								{{ 'BUTTONS.ADD' | translate }}
+							</button>
+						</span>
+						<ng-container
+							*ngTemplateOutlet="actionButtons"
+						></ng-container>
+					</div>
+				</div>
+				<ga-layout-selector
+					[componentName]="viewComponentName"
+				></ga-layout-selector>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
-			<ng-container>
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
+		<!-- <div class="mb-3">
+		</div> -->
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
@@ -63,7 +85,7 @@
 				[buttonTemplate]="actionButtons"
 				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"
-        (onSelectedItem)="selectInvoice($event)"
+				(onSelectedItem)="selectInvoice($event)"
 				[doEmit]="false"
 				[totalItems]="pagination?.totalItems"
 				[itemsPerPage]="pagination?.itemsPerPage"
@@ -79,39 +101,42 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		status="info"
-		class="mr-2"
-		(click)="view(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.VIEW' | translate }}
-	</button>
-	<button
-		*ngIf="isEstimate"
-		nbButton
-		status="success"
-		class="mr-2"
-		(click)="accept(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="checkmark-outline"></nb-icon>
-		{{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
-	</button>
-	<button
-		*ngIf="isEstimate"
-		nbButton
-		status="danger"
-		class="mr-2"
-		(click)="reject(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-		{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
-	</button>
+	<div class="btn-group actions">
+		<button
+			nbButton
+			status="basic"
+			class="action secondary mr-2"
+			(click)="view(selectedItem)"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			*ngIf="isEstimate"
+			nbButton
+			status="basic"
+			class="action success mr-2"
+			size="small"
+			(click)="accept(selectedItem)"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="checkmark-outline"></nb-icon>
+			{{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
+		</button>
+		<button
+			*ngIf="isEstimate"
+			nbButton
+			status="basic"
+			class="action warning"
+			size="small"
+			(click)="reject(selectedItem)"
+			[disabled]="!selectedItem && disableButton"
+		>
+			<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
+		</button>
+	</div>
 </ng-template>
