@@ -19,7 +19,6 @@ import { NgxRegisterComponent } from './register/register.component'
 import { NgxLoginComponent } from './login/login.component'
 import { TranslateModule } from '../@shared/translate/translate.module'
 import { NgxWhatsNewComponent } from "./login/whats-new/whats-new.component"
-import { NgxDemoAccountsAsideComponent } from "./login/demo-accounts-aside/demo-accounts-aside.component"
 import { NgxForgotPasswordComponent } from "./forgot-password/forgot-password.component"
 import { NgxRegisterSideFeaturesComponent } from "./register/register-side-features/register-side-features.component"
 import {
@@ -49,10 +48,8 @@ import { NgxThemeSwitchComponent } from "./theme-switch/theme-switch.component"
     NbLayoutModule,
   ],
   declarations: [
-    NgxRegisterComponent,
     NgxLoginComponent,
     NgxWhatsNewComponent,
-    NgxDemoAccountsAsideComponent,
     NgxForgotPasswordComponent,
     NgxRegisterSideFeaturesComponent,
     NgxRegisterSideSingleFeatureComponent,

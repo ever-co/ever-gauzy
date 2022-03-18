@@ -26,6 +26,11 @@ $wrapperPadding: 30px;
   }
 }
 
+@mixin bigScreen {
+  @media screen and (min-width: 1400px) {
+    @content
+  }
+}
 // End of queries
 
 

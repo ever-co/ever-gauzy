@@ -53,6 +53,13 @@
       justify-content: center;
       align-items: center;
       position: relative;
+
+      & > ::ng-deep .ng-star-inserted {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     }
   }
 }

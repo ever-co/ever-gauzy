@@ -7,13 +7,17 @@
 }
 
 .main-section {
-  width: 100%;
+  width: 1000px;
   display: flex;
   justify-content: space-between;
 
   @include tabletScreen {
     flex-direction: column;
     align-items: center;
+  }
+
+  @include smallLaptopScreen {
+    width: 100%;
   }
 
   & > .register-wrapper {
