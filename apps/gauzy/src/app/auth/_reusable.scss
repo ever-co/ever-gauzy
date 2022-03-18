@@ -1,0 +1,123 @@
+$button-color: #fa754e;
+$wrapperPadding: 30px;
+
+// Queries
+@mixin mobileScreen {
+  @media screen and (max-width: 320px) {
+    @content
+  }
+}
+
+@mixin smallLaptopScreen {
+  @media screen and (max-width: 1024px) {
+    @content
+  }
+}
+
+@mixin notMobileScreen {
+  @media screen and (min-width: 321px) {
+    @content
+  }
+}
+
+// End of queries
+
+
+@mixin submitBtn {
+  padding-left: 70px;
+  padding-right: 70px;
+  -webkit-box-shadow: 0px 19px 15px -14px rgba(0, 0, 0, 0.22);
+  box-shadow: 0px 19px 15px -14px rgba(0, 0, 0, 0.22);
+
+  &:enabled {
+    background-color: $button-color;
+    border: 1px solid $button-color;
+    color: #FFFFFF;
+  }
+}
+
+@mixin socialLinksStyle {
+  text-align: start;
+  color: #808080;
+
+  @include mobileScreen {
+    text-align: center;
+  }
+
+  & .socials {
+    margin-top: 15px;
+
+    @include mobileScreen {
+      text-align: center;
+    }
+
+    & .social-link {
+      margin: 0;
+      margin-right: 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 5px;
+      display: inline-flex;
+      justify-content: flex-start;
+      align-items: center;
+
+      @include mobileScreen {
+        padding: 0;
+        justify-content: center;
+      }
+
+
+      @include notMobileScreen {
+        &:first-of-type {
+          margin-left: -10px;
+        }
+      }
+
+      & nb-icon {
+        width: 35px;
+        height: 35px;
+
+        @include mobileScreen {
+          width: 25px;
+          height: 25px;
+        }
+      }
+
+      @include notMobileScreen {
+        &:hover {
+          border: 1px solid nb-theme(color-primary-500);
+
+          & * {
+            color: nb-theme(color-primary-500) !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+@mixin anotherAction {
+  text-align: start;
+  padding-top: 10px;
+  margin-top: 45px;
+  border-top: 1px solid #eeeeee;
+  padding-left: 10px;
+  width: 105%;
+  margin-left: -2.5%;
+  color: #808080;
+
+  @include mobileScreen {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  & a {
+    color: nb-theme(color-primary-500);
+    text-decoration: none;
+    font-weight: bold;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

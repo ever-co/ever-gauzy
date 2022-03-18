@@ -1,0 +1,28 @@
+@import "themes";
+
+.wrapper {
+  border-radius: 30px;
+  background: nb-theme(color-basic-transparent-600);
+  width: 85px;
+  padding: 7px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  & nb-icon {
+    min-width: 27px;
+    min-height: 27px;
+    padding: 3px;
+    cursor: pointer;
+    color: nb-theme(color-basic-300);
+  }
+
+  & .active {
+    background: nb-theme(color-basic-100);
+    box-sizing: border-box;
+    border-radius: 50%;
+    color: nb-theme(color-basic-transparent-600);
+    -webkit-box-shadow: 5px 5px 23px -5px rgba(0,0,0,0.72);
+    box-shadow: 5px 5px 23px -5px rgba(0,0,0,0.72);
+  }
+}

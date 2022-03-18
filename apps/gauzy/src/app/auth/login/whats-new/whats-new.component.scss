@@ -1,0 +1,59 @@
+@import "themes";
+@import "../../reusable";
+
+.section-wrapper {
+  background: rgb(255, 250, 247);
+  padding: $wrapperPadding;
+  box-sizing: border-box;
+  border-radius: 10px;
+
+  & .learn-more {
+    @include mobileScreen {
+      display: none;
+    }
+  }
+}
+
+.whats-new-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  & .main-header {
+    color: nb-theme(color-primary-500);
+    font-size: 28px;
+  }
+
+  & .entry {
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid lightgray;
+    padding: 10px;
+
+    &:last-of-type {
+      margin-bottom: 80px;
+
+      @include mobileScreen {
+        margin-bottom: 0;
+      }
+    }
+
+    & .entry-headings-wrapper {
+      display: flex;
+      margin-bottom: 5px;
+
+      & .icon {
+        margin-right: 15px;
+      }
+
+      & .entry-header {
+        font-size: 18px;
+        font-weight: bold;
+        line-height: 22px;
+        margin-bottom: 10px;
+      }
+    }
+  }
+}

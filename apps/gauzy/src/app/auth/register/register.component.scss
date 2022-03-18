@@ -1,0 +1,130 @@
+@import "../reusable";
+@import "themes";
+
+@mixin addPaddings {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.main-section {
+  width: 1050px;
+  display: flex;
+  justify-content: space-between;
+
+  @include mobileScreen {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  & > .register-wrapper {
+    width: 60%;
+    padding: 40px;
+    border: 1px solid black;
+    border-radius: 10px;
+
+    @include mobileScreen {
+      width: 100%;
+      padding: 20px;
+    }
+
+    & .svg-wrapper {
+      margin-bottom: 40px;
+      @include addPaddings;
+    }
+
+    & .title-wrapper {
+      border-bottom: 1px solid #e1e1e1;
+      margin-bottom: 30px;
+
+      & > .title {
+        text-align: start;
+        @include addPaddings;
+        @include smallLaptopScreen {
+          font-size: 22px;
+          text-align: center;
+        }
+      }
+    }
+
+    & form {
+      border-bottom: 1px solid nb-theme(border-basic-color-3);
+      padding-bottom: 40px;
+
+      @include mobileScreen {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      & .btn-wrapper {
+        text-align: end;
+        @include mobileScreen {
+          text-align: center;
+
+        }
+
+        & .submit-btn {
+          @include submitBtn;
+        }
+      }
+
+      & .accept-group {
+        @include mobileScreen {
+          margin-left: -10px;
+          min-width: calc(100% + 30px);
+          text-align: center;
+          margin-top: 0;
+
+          & .normal-terms-text {
+            font-size: 10px;
+          }
+
+          & .terms-link {
+            font-size: 10px;
+          }
+        }
+      }
+    }
+
+    & .links {
+      @include socialLinksStyle;
+      @include smallLaptopScreen {
+        & .social-link > nb-icon {
+          width: 30px;
+          height: 30px;
+        }
+      }
+    }
+
+    & .another-action {
+      @include anotherAction;
+      @include smallLaptopScreen {
+        margin-top: 30px;
+      }
+
+      @include mobileScreen {
+        font-size: 14px;
+
+        & a {
+          font-size: 14px;
+        }
+      }
+    }
+
+    & .form-control-group {
+      @include mobileScreen {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+
+  & .features-wrapper {
+    width: 35%;
+
+    @include mobileScreen {
+      width: 100%;
+      margin-top: 20px;
+    }
+  }
+}
+
+

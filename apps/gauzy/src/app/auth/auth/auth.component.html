@@ -1,0 +1,22 @@
+<nb-layout>
+  <nb-layout-column class="wrapper">
+    <nb-card class="card">
+      <nb-card-header class="header">
+        <nav class="navigation">
+          <a href="#" (click)="back()" class="link back-link" aria-label="Back">
+            <nb-icon icon="arrow-back"></nb-icon>
+          </a>
+        </nav>
+        <ngx-theme-switch></ngx-theme-switch>
+      </nb-card-header>
+      <nb-card-body class="body">
+        <nb-auth-block class="auth-block">
+          <router-outlet></router-outlet>
+          <div class="message-us-wrapper">
+            <nb-icon icon="message-square-outline"></nb-icon>
+          </div>
+        </nb-auth-block>
+      </nb-card-body>
+    </nb-card>
+  </nb-layout-column>
+</nb-layout>

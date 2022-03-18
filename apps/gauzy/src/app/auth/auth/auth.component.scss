@@ -1,0 +1,77 @@
+@import "../reusable";
+@import "themes";
+
+.wrapper {
+  padding: 0 !important;
+
+  & .header {
+    border-bottom: none;
+    margin-top: 20px;
+    padding-left: 40px;
+    padding-right: 40px;
+    display: flex;
+    justify-content: space-between;
+
+    @include mobileScreen {
+      display: none;
+    }
+  }
+
+  & .card {
+    margin-bottom: 0;
+    height: 100vh;
+
+    @include mobileScreen {
+      height: auto;
+    }
+  }
+
+  & .body {
+
+    @include mobileScreen {
+      padding-left: 10px;
+      padding-right: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    & .auth-block {
+      min-width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+  }
+}
+
+.back-link {
+  border: 1px solid lightgray;
+  border-radius: 50%;
+  padding: 15px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    -webkit-box-shadow: 5px 5px 30px -10px rgba(0, 0, 0, 0.3);
+    box-shadow: 5px 5px 30px -10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+}
+
+.message-us-wrapper {
+  background: nb-theme(color-primary-500);
+  padding: 20px;
+  border-radius: 20px;
+  position: absolute;
+  bottom: 40px;
+  right: 20px;
+  -webkit-box-shadow: 5px 5px 23px -5px rgba(0, 0, 0, 0.72);
+  box-shadow: 5px 5px 23px -5px rgba(0, 0, 0, 0.72);
+
+  & > nb-icon {
+    width: 40px;
+    height: 40px;
+    color: nb-theme(text-alternate-color);
+  }
+}

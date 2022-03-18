@@ -1,0 +1,17 @@
+<section class="section-wrapper">
+  <div class="whats-new-wrapper">
+    <h3 class="main-header">What's New?</h3>
+    <div *ngFor="let entry of dataMock" class="entry">
+      <div class="entry-headings-wrapper">
+        <span class="icon">Icon</span>
+        <div class="entry-headings">
+          <div class="entry-header">Entry Header</div>
+          <div *ngIf="showDate">Jan 16.2022</div>
+        </div>
+      </div>
+      <p class="paragraph">
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Adipisci delectus, fugit non odit qui rerum!</p>
+    </div>
+  </div>
+  <button nbButton outline status="primary" class="learn-more">Learn more</button>
+</section>

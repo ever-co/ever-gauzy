@@ -1,13 +1,13 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { NbAuthComponent } from '@nebular/auth';
 import { NgxLoginComponent } from './login/login.component';
 import { NgxRegisterComponent } from './register/register.component';
+import { NgxAuthComponent } from "./auth/auth.component"
 
 export const routes: Routes = [
 	{
 		path: 'auth',
-		component: NbAuthComponent,
+		component: NgxAuthComponent,
 		children: [
 			{
 				path: 'register',

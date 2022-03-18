@@ -1,69 +1,195 @@
-::ng-deep nb-auth-block {
-	max-width: 35rem;
-}
-nb-accordion-item-header{
-	padding: 5px
+@import "themes";
+@import "../reusable";
+
+.login-main-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+
+  .login-container {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    width: 80%;
+
+
+    @include mobileScreen {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    & .login-wrapper {
+      background: nb-theme(color-basic-200);
+      border-radius: 10px;
+      box-sizing: border-box;
+      padding: 40px 40px;
+      width: 60%;
+
+      @include mobileScreen {
+        width: 100%;
+        padding: 20px;
+        margin-bottom: 30px;
+      }
+
+      & .headings {
+        display: flex;
+        justify-content: space-between;
+
+        & .headings-inner * {
+          @include mobileScreen {
+            text-align: center;
+          }
+        }
+
+        @include mobileScreen {
+          flex-direction: column;
+        }
+      }
+    }
+
+    & .features-wrapper {
+      width: 35%;
+
+      @include mobileScreen {
+        width: 100%;
+      }
+    }
+
+    & .ever-logo-svg {
+      width: 180px;
+      margin-bottom: 40px;
+    }
+
+    & .title, .sub-title {
+      text-align: start;
+    }
+
+    & .title {
+      font-size: 28px;
+    }
+
+    & .sub-title {
+      margin-bottom: 20px;
+    }
+
+    & form {
+      border-top: 1px solid #e1e1e1;
+      border-bottom: 1px solid #eeeeee;
+      padding: 30px 10px;
+      width: 105%;
+      margin-left: -2.5%;
+
+      & .form-control-group {
+        @include mobileScreen {
+          margin-bottom: 20px;
+        }
+      }
+
+      & .submit-btn-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        @include mobileScreen {
+          flex-direction: column;
+        }
+
+        & .forgot-password {
+          color: $button-color;
+          font-size: 16px;
+
+          @include mobileScreen {
+            display: none;
+          }
+        }
+
+        & .submit-btn {
+          @include submitBtn;
+        }
+      }
+
+      & .accept-group {
+        @include mobileScreen {
+          display: flex;
+          justify-content: center;
+        }
+      }
+    }
+
+    & .links {
+      @include socialLinksStyle;
+    }
+
+    & .another-action {
+      @include anotherAction;
+    }
+  }
 }
 
-.login-container {
-	position: relative;
+::ng-deep nb-auth-block {
+  max-width: 35rem;
+}
+
+nb-accordion-item-header {
+  padding: 5px
 }
 
 .demo-credentials-card {
-	position: absolute;
-	top: 0px;
-	right: -30px;
-	width: 231px;
+  position: absolute;
+  top: 0px;
+  right: -30px;
+  width: 231px;
   z-index: 1;
 }
 
-.demo-credentials-head-text{
-	display: flex;
-	.head-text{
-		margin-right: 5px;
-	}
+.demo-credentials-head-text {
+  display: flex;
+
+  .head-text {
+    margin-right: 5px;
+  }
 }
 
-.demo-credentials-buttons{
-	position: absolute;
-	right: 650px;
-	top:0px
+.demo-credentials-buttons {
+  position: absolute;
+  right: 650px;
+  top: 0px
 }
 
 
 @media screen and (max-width: 1425px) {
-	.demo-credentials-buttons{
-		position: relative;
-		right: 0px;
-		top: 0px
-	}
+  .demo-credentials-buttons {
+    position: relative;
+    right: 0px;
+    top: 0px
+  }
 
-	.demo-credentials-card{
-		top: 37.5%;
-		width: 190px;
-		right: 0px;
-	}
+  .demo-credentials-card {
+    top: 37.5%;
+    width: 190px;
+    right: 0px;
+  }
 }
 
 @media screen and (max-width: 970px) {
-	.head-text{
-		display: none;
-	}
-	.demo-credentials-card{
-	  width: 145px;
-	  right: 0px;
-	}
+  .head-text {
+    display: none;
+  }
+  .demo-credentials-card {
+    width: 145px;
+    right: 0px;
+  }
 }
 
 
 @media screen and (max-width: 490px) {
-	.demo-credentials-head-text {
-		display: block;
-	}
+  .demo-credentials-head-text {
+    display: block;
+  }
 
-	.demo-credentials-card{
-	  width: 146px;
-	  right: 0px;
-	  top:45.5%
-	}
+  .demo-credentials-card {
+    width: 146px;
+    right: 0px;
+    top: 45.5%
+  }
 }
