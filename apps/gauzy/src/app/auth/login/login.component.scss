@@ -4,162 +4,261 @@
 .login-main-section {
   display: flex;
   justify-content: center;
+  width: 100%;
 
-  @include tabletScreen {
-    width: 100%;
-  }
-
-  .login-container {
-    position: relative;
+  & .login-inner-wrapper {
     display: flex;
-    justify-content: space-between;
-    width: 80%;
+    justify-content: center;
+    width: 1000px;
 
     @include smallLaptopScreen {
-      width: 90%;
-    }
-
-    @include tabletScreen {
-      flex-direction: column;
-      align-items: center;
       width: 100%;
     }
 
-    @include mobileScreen {
+    & .login-container {
       width: 100%;
-    }
-
-    & .login-wrapper {
-      background: nb-theme(color-basic-200);
-      border-radius: 10px;
-      box-sizing: border-box;
-      padding: 40px 40px;
-      width: 60%;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
 
       @include tabletScreen {
-        width: 80%;
-        margin-bottom: 30px;
-      }
-
-      @include mobileScreen {
-        width: 100%;
-        padding: 20px;
-      }
-
-      & .svg-wrapper {
-        display: flex;
-        justify-content: space-between;
-      }
-
-      & .headings {
-        display: flex;
-        justify-content: space-between;
-
-        & .headings-inner * {
-          @include mobileScreen {
-            text-align: center;
-          }
-        }
-
-        @include mobileScreen {
-          flex-direction: column;
-        }
-      }
-    }
-
-    & .features-wrapper {
-      width: 35%;
-
-      @include tabletScreen {
-        width: 70%;
-      }
-
-      @include mobileScreen {
-        width: 100%;
-      }
-    }
-
-    & .ever-logo-svg {
-      width: 180px;
-      margin-bottom: 40px;
-    }
-
-    & .title, .sub-title {
-      text-align: start;
-    }
-
-    & .title {
-      font-size: 28px;
-    }
-
-    & .sub-title {
-      margin-bottom: 20px;
-    }
-
-    & form {
-      border-top: 1px solid #e1e1e1;
-      border-bottom: 1px solid #eeeeee;
-      padding: 30px 10px;
-      width: 105%;
-      margin-left: -2.5%;
-
-      & .form-control-group {
-        @include mobileScreen {
-          margin-bottom: 20px;
-        }
-      }
-
-      & .submit-btn-wrapper {
-        display: flex;
-        justify-content: space-between;
+        flex-direction: column;
         align-items: center;
+        width: 100%;
+      }
+
+      @include mobileScreen {
+        width: 100%;
+      }
+
+      & .login-wrapper {
+        background: nb-theme(color-basic-200);
+        border-radius: 10px;
+        box-sizing: border-box;
+        padding: 40px 40px;
+        width: 60%;
 
         @include tabletScreen {
-          flex-direction: column;
+          width: 80%;
+          margin-bottom: 30px;
         }
 
-        & .forgot-password {
-          color: $button-color;
-          font-size: 16px;
+        @include mobileScreen {
+          width: 100%;
+          padding: 20px;
+        }
+
+        & .svg-wrapper {
+          display: flex;
+          justify-content: space-between;
+        }
+
+        & .headings {
+          display: flex;
+          justify-content: space-between;
+          position: relative;
 
           @include smallLaptopScreen {
-            font-size: 14px;
-          }
-
-          @include tabletScreen {
-            order: 2;
-            //font-size: 14px;
+            flex-direction: column;
+            height: 150px;
           }
 
           @include mobileScreen {
-            display: none;
+            flex-direction: column;
+          }
+
+          & .headings-inner {
+            //position: absolute;
+            //top: 0;
+            //left: 50%;
+            //transform: translate(-50%);
+
+            & * {
+              @include mobileScreen {
+                text-align: center;
+              }
+            }
+          }
+        }
+      }
+
+      & .features-wrapper {
+        width: 35%;
+
+        @include tabletScreen {
+          width: 70%;
+        }
+
+        @include mobileScreen {
+          width: 100%;
+        }
+      }
+
+      & .ever-logo-svg {
+        width: 180px;
+        margin-bottom: 40px;
+      }
+
+      & .title, .sub-title {
+        text-align: start;
+
+      }
+
+      & .title {
+        font-size: 28px;
+      }
+
+      & .sub-title {
+        margin-bottom: 20px;
+      }
+
+      & form {
+        border-top: 1px solid #e1e1e1;
+        border-bottom: 1px solid #eeeeee;
+        padding: 30px 10px;
+        width: 105%;
+        margin-left: -2.5%;
+
+        @include mobileScreen {
+          padding-bottom: 15px;
+        }
+
+        & .form-control-group {
+          @include mobileScreen {
+            margin-bottom: 20px;
           }
         }
 
-        & .submit-btn {
-          @include submitBtn;
+        & .submit-btn-wrapper {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
 
           @include tabletScreen {
-            order: 1;
-            margin-bottom: 15px;
+            flex-direction: column;
+            align-items: flex-end;
+          }
+
+          @include mobileScreen {
+            align-items: center;
+          }
+
+          & .forgot-password {
+            color: $button-color;
+            font-size: 16px;
+
+            @include smallLaptopScreen {
+              font-size: 14px;
+            }
+            @include tabletScreen {
+              order: 2;
+              //font-size: 14px;
+            }
+            @include mobileScreen {
+              display: none;
+            }
+          }
+
+          & .forgot-password-big {
+            display: block;
+
+            @include tabletScreen {
+              display: none;
+            }
+          }
+
+          & .forgot-password-small {
+            display: none;
+
+            @include tabletScreen {
+              display: block;
+            }
+          }
+
+          & .submit-inner-wrapper {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+
+          }
+
+
+          & .submit-btn {
+            @include submitBtn;
+
+            @include tabletScreen {
+              order: 1;
+              margin-bottom: 15px;
+            }
+          }
+        }
+
+        & .accept-group {
+          @include mobileScreen {
+            display: flex;
+            justify-content: center;
           }
         }
       }
 
-      & .accept-group {
-        @include mobileScreen {
-          display: flex;
-          justify-content: center;
-        }
+      & .links {
+        @include socialLinksStyle;
+      }
+
+      & .another-action {
+        @include anotherAction;
       }
     }
+  }
+}
 
-    & .links {
-      @include socialLinksStyle;
+.demo-credentials-select {
+  width: 200px;
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  & * {
+    z-index: 2;
+  }
+
+  @include smallLaptopScreen {
+    top: initial;
+  }
+
+  @include mobileScreen {
+    left: 50%;
+    transform: translate(-50%);
+  }
+
+  &, .demo-credentials-select-item {
+    border-radius: 30px;
+    box-sizing: border-box;
+  }
+
+  & .demo-credentials-select-item {
+    width: 200px;
+    padding: 5px;
+    position: relative;
+    z-index: 5;
+
+    @include mobileScreen {
+      width: auto;
     }
+  }
 
-    & .another-action {
-      @include anotherAction;
+  & .demo-credentials-header {
+    padding: 5px;
+    padding-left: 15px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+
+    & .demo-text-span {
+      @include mobileScreen {
+        display: none;
+      }
     }
   }
 }
@@ -170,70 +269,52 @@
   }
 }
 
-::ng-deep nb-auth-block {
-  max-width: 35rem;
-}
 
-nb-accordion-item-header {
-  padding: 5px
-}
+.features-wrapper {
+  & .features-card {
+    border: none;
+    background: nb-theme(color-info-100);
+    border-radius: 10px;
 
-.demo-credentials-card {
-  position: absolute;
-  top: 0px;
-  right: -30px;
-  width: 231px;
-  z-index: 1;
-}
-
-.demo-credentials-head-text {
-  display: flex;
-
-  .head-text {
-    margin-right: 5px;
-  }
-}
-
-.demo-credentials-buttons {
-  position: absolute;
-  right: 650px;
-  top: 0px
-}
-
-
-@media screen and (max-width: 1425px) {
-  .demo-credentials-buttons {
-    position: relative;
-    right: 0px;
-    top: 0px
   }
 
-  .demo-credentials-card {
-    top: 37.5%;
-    width: 190px;
-    right: 0px;
-  }
-}
-
-@media screen and (max-width: 970px) {
-  .head-text {
-    display: none;
-  }
-  .demo-credentials-card {
-    width: 145px;
-    right: 0px;
-  }
-}
-
-
-@media screen and (max-width: 490px) {
-  .demo-credentials-head-text {
-    display: block;
+  & .title {
+    font-size: 18px !important;
   }
 
-  .demo-credentials-card {
-    width: 146px;
-    right: 0px;
-    top: 45.5%
+  & .sub-title {
+    width: 70%;
+    color: #a9a9a9;
+    font-size: 16px;
+  }
+
+
+  & .custom-btn {
+    -webkit-box-shadow: 3px 11px 30px -17px #3366ff;
+    box-shadow: 3px 11px 30px -17px #3366ff;
+    width: auto;
+    padding: 15px 25px;
+    display: inline-flex;
+    justify-content: flex-start;
+    background-color: white;
+    color: nb-theme(color-primary-500);
+    border: 1px solid white;
+
+    @include smallLaptopScreen {
+      padding: 10px 20px;
+    }
+
+    @include tabletScreen {
+      padding: 15px 25px;
+    }
+
+    &:hover {
+      background-color: #fafafa;
+      border: 1px solid #fafafa;
+    }
+  }
+
+  & .card-body {
+    padding-bottom: 30px;
   }
 }
