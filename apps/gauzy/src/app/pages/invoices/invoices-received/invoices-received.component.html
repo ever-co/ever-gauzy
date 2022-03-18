@@ -31,7 +31,8 @@
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<ng2-smart-table
+    <div class="table-scroll-container">
+      <ng2-smart-table
 				class="tags-table"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
@@ -40,6 +41,7 @@
 				#invoiceReceivedTable
 			>
 			</ng2-smart-table>
+    </div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems">
 					<ga-pagination
