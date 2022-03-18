@@ -859,7 +859,7 @@ export class StatisticService {
 			}
 
 			let projects: IProjectsStatistics[] = await query
-				.groupBy(`"${query.alias}"."projectId"`)
+				.groupBy(`"project"."id"`)
 				.orderBy('duration', 'DESC')
 				.limit(5)
 				.getRawMany();
@@ -1004,7 +1004,7 @@ export class StatisticService {
 			}
 
 			let tasks: ITask[] = await query
-				.groupBy(`"${query.alias}"."taskId"`)
+				.groupBy(`"task"."id"`)
 				.orderBy('duration', 'DESC')
 				.limit(5)
 				.getRawMany();
