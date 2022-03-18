@@ -48,4 +48,12 @@ button {
   display: flex;
   justify-content: flex-end;
   width: 100%;
+  padding-bottom: 0;
 }
+
+.card-custom-header{
+ display: flex;
+ flex-direction: column;
+ width: 100%;
+}
+

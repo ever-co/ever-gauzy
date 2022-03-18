@@ -4,7 +4,7 @@
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
@@ -17,18 +17,18 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="gauzy-button-container mb-3">
+		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[text]="isEstimate ? 'BUTTONS.ADD' : 'BUTTONS.PAY'"
-				[icon]="isEstimate ? 'plus-outline':'credit-card-outline'"
+				[icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'"
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
 			>
 			</ngx-gauzy-button-action>
 		</div>
+	</nb-card-header>
+	<nb-card-body>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
@@ -92,6 +92,39 @@
 		>
 			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			*ngIf="!isEstimate"
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="disableButton"
+			size="small"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			*ngIf="!isEstimate"
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="disableButton"
+			size="small"
+		>
+			<nb-icon icon="download-outline"></nb-icon>
+			{{ 'BUTTONS.DOWNLOAD' | translate }}
+		</button>
+		<button
+			*ngIf="!isEstimate"
+			nbButton
+			status="basic"
+			class="action secondary mr-2"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon icon="clipboard-outline"></nb-icon>
+			{{ 'BUTTONS.PAYMENTS' | translate }}
 		</button>
 		<button
 			*ngIf="isEstimate"
