@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { NgxLoginComponent } from './login/login.component';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxAuthComponent } from "./auth/auth.component"
+import { NgxForgotPasswordComponent } from "./login/forgot-password/forgot-password.component"
 
 export const routes: Routes = [
 	{
@@ -16,6 +17,10 @@ export const routes: Routes = [
 			{
 				path: 'login',
 				component: NgxLoginComponent
+			},
+			{
+				path: 'request-password',
+				component: NgxForgotPasswordComponent
 			}
 		]
 	}

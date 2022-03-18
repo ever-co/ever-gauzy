@@ -3,7 +3,7 @@ $wrapperPadding: 30px;
 
 // Queries
 @mixin mobileScreen {
-  @media screen and (max-width: 320px) {
+  @media screen and (max-width: 480px) {
     @content
   }
 }
@@ -14,8 +14,14 @@ $wrapperPadding: 30px;
   }
 }
 
+@mixin tabletScreen {
+  @media screen and (max-width: 768px) {
+    @content
+  }
+}
+
 @mixin notMobileScreen {
-  @media screen and (min-width: 321px) {
+  @media screen and (min-width: 481px) {
     @content
   }
 }
@@ -61,11 +67,15 @@ $wrapperPadding: 30px;
       justify-content: flex-start;
       align-items: center;
 
-      @include mobileScreen {
-        padding: 0;
-        justify-content: center;
+      @include tabletScreen {
+        margin-right: 0.3rem;
       }
 
+      @include mobileScreen {
+        padding: 0;
+        margin-right: 0.5rem;
+        justify-content: center;
+      }
 
       @include notMobileScreen {
         &:first-of-type {
@@ -77,9 +87,14 @@ $wrapperPadding: 30px;
         width: 35px;
         height: 35px;
 
+        @include tabletScreen {
+          width: 30px;
+          height: 30px;
+        }
+
         @include mobileScreen {
-          width: 25px;
-          height: 25px;
+          width: 30px;
+          height: 30px;
         }
       }
 

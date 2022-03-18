@@ -6,11 +6,13 @@
 
   & .header {
     border-bottom: none;
-    margin-top: 20px;
+    padding-top: 20px;
     padding-left: 40px;
     padding-right: 40px;
+    width: 100vw;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 
     @include mobileScreen {
       display: none;
@@ -19,7 +21,11 @@
 
   & .card {
     margin-bottom: 0;
-    height: 100vh;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
     @include mobileScreen {
       height: auto;
@@ -27,6 +33,11 @@
   }
 
   & .body {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
     @include mobileScreen {
       padding-left: 10px;
@@ -64,8 +75,9 @@
   padding: 20px;
   border-radius: 20px;
   position: absolute;
-  bottom: 40px;
+  bottom: 30px;
   right: 20px;
+  cursor: pointer;
   -webkit-box-shadow: 5px 5px 23px -5px rgba(0, 0, 0, 0.72);
   box-shadow: 5px 5px 23px -5px rgba(0, 0, 0, 0.72);
 
@@ -74,4 +86,12 @@
     height: 40px;
     color: nb-theme(text-alternate-color);
   }
+
+  @include smallLaptopScreen {
+    display: none;
+  }
+}
+
+.register {
+  background: nb-theme(color-basic-transparent-300);
 }

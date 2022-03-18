@@ -51,10 +51,15 @@
 
     @include smallLaptopScreen {
       margin-bottom: 30px;
+      height: 20vw;
+    }
+
+    @include tabletScreen {
+      height: 35vw;
     }
 
     @include mobileScreen {
-      height: 150px;
+      height: 45vw;
       margin-bottom: 20px;
     }
   }

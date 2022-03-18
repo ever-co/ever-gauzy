@@ -7,20 +7,26 @@
 }
 
 .main-section {
-  width: 1050px;
+  width: 100%;
   display: flex;
   justify-content: space-between;
 
-  @include mobileScreen {
-    width: 100%;
+  @include tabletScreen {
     flex-direction: column;
+    align-items: center;
   }
 
   & > .register-wrapper {
     width: 60%;
     padding: 40px;
-    border: 1px solid black;
     border-radius: 10px;
+    background: nb-theme(color-basic-100);
+
+    @include tabletScreen {
+      width: 80%;
+      margin-bottom: 30px;
+      padding: 30px;
+    }
 
     @include mobileScreen {
       width: 100%;
@@ -29,6 +35,9 @@
 
     & .svg-wrapper {
       margin-bottom: 40px;
+      display: flex;
+      justify-content: space-between;
+
       @include addPaddings;
     }
 
@@ -39,9 +48,14 @@
       & > .title {
         text-align: start;
         @include addPaddings;
+
         @include smallLaptopScreen {
           font-size: 22px;
           text-align: center;
+        }
+
+        @include mobileScreen {
+          font-size: 1.5rem;
         }
       }
     }
@@ -97,6 +111,7 @@
 
     & .another-action {
       @include anotherAction;
+
       @include smallLaptopScreen {
         margin-top: 30px;
       }
@@ -120,6 +135,10 @@
   & .features-wrapper {
     width: 35%;
 
+    @include tabletScreen {
+      width: 70%;
+    }
+
     @include mobileScreen {
       width: 100%;
       margin-top: 20px;
@@ -127,4 +146,8 @@
   }
 }
 
-
+.theme-switch {
+  @include notMobileScreen {
+    display: none;
+  }
+}
