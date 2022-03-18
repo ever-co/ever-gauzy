@@ -85,6 +85,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
 import { CurrencyPositionPipe } from '../../@shared/pipes';
 import { NbAccordionModule } from '@nebular/theme';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -127,7 +128,8 @@ import { NbAccordionModule } from '@nebular/theme';
 		PaginationModule,
 		ContactSelectModule,
 		SharedModule,
-    NbAccordionModule
+    NbAccordionModule,
+    GauzyButtonActionModule
 	],
 	providers: [
 		InvoicesService,

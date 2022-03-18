@@ -1,14 +1,5 @@
 @import 'var';
 
-:host .actions-container {
-  display: flex;
-  flex-wrap: wrap;
-  position: absolute;
-  align-items: center;
-  @include nb-rtl(left, 0);
-  @include nb-ltr(right, 0);
-  padding: 1rem;
-}
 
 .action {
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
@@ -53,32 +44,8 @@ button {
   margin-right: 20px;
 }
 
-.transition-container {
-  overflow-x: hidden;
-  border-radius: nb-theme(button-rectangle-border-radius);
-  span {
-    background: rgba(50, 50, 50, 0.03);
-    border-radius: nb-theme(button-rectangle-border-radius);
-    padding: 0px 1px 0px 1px;
-    margin-right: 10px;
-  }
-}
-
-:host .transition {
+.gauzy-button-container{
   display: flex;
-  &.hide {
-    @include nb-rtl(transform, translateX(-100%));
-    @include nb-ltr(transform, translateX(100%));
-    transition: all 0.15s ease-in;
-  }
-  &.show {
-    opacity: 1;
-    transform: translateX(0%);
-    transition: all 0.25s ease-out;
-  }
-  &.show-button{
-    @include nb-rtl(transform, translateX(110%));
-    @include nb-ltr(transform, translateX(-110%));
-    transition: all 0.15s ease-out;
-  }
+  justify-content: flex-end;
+  width: 100%;
 }
