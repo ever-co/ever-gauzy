@@ -1,0 +1,65 @@
+@import 'var';
+
+
+.action {
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+  &[nbButton].appearance-filled.status-basic {
+    background-color: #ffffff;
+  }
+  &.info {
+    background-color: #0088fe;
+  }
+  &.secondary {
+    color: #7e7e8f;
+  }
+  &.success{
+    color: rgba(37, 184, 105, 1);
+  }
+  &.warning{
+    color: rgba(245, 109, 88, 1);
+  }
+  &.primary {
+    &[nbButton].appearance-filled.status-basic,
+    .appearance-filled.status-basic[nbButtonToggle] {
+      color: nb-theme(text-primary-color);
+    }
+    &.soft{
+      &[nbButton].appearance-filled.status-basic {
+        background-color: rgba(110, 73, 232, 0.1);
+      }
+    }
+  }
+  &.select-nb ::ng-deep {
+    box-shadow: none;
+    .select-button {
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      background: rgba(245, 245, 245);
+    }
+  }
+}
+
+button {
+  margin: 5px;
+}
+
+.actions {
+  background: rgba(50, 50, 50, 0.03);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  padding: 0 1px;
+  margin-right: 20px;
+}
+
+.gauzy-button-container{
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  padding-bottom: 0;
+}
+
+.card-custom-header{
+ display: flex;
+ flex-direction: column;
+ width: 100%;
+ padding-bottom: 0;
+}
+
