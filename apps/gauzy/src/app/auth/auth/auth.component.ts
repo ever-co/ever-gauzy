@@ -1,7 +1,7 @@
 import { NbAuthComponent, NbAuthService } from "@nebular/auth"
-import { Component, OnChanges, OnInit } from "@angular/core"
+import { Component, OnInit } from "@angular/core"
 import { Location } from '@angular/common'
-import { ActivatedRoute, NavigationStart, Router } from "@angular/router"
+import { NavigationStart, Router } from "@angular/router"
 import { filter } from "rxjs/operators"
 import { map } from "rxjs"
 
