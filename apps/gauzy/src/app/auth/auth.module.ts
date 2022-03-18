@@ -20,7 +20,7 @@ import { NgxLoginComponent } from './login/login.component'
 import { TranslateModule } from '../@shared/translate/translate.module'
 import { NgxWhatsNewComponent } from "./login/whats-new/whats-new.component"
 import { NgxDemoAccountsAsideComponent } from "./login/demo-accounts-aside/demo-accounts-aside.component"
-import { NgxForgotPasswordComponent } from "./login/forgot-password/forgot-password.component"
+import { NgxForgotPasswordComponent } from "./forgot-password/forgot-password.component"
 import { NgxRegisterSideFeaturesComponent } from "./register/register-side-features/register-side-features.component"
 import {
   NgxRegisterSideSingleFeatureComponent

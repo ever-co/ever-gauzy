@@ -2,9 +2,12 @@
 @import "../reusable";
 
 .login-main-section {
-  width: 100%;
   display: flex;
   justify-content: center;
+
+  @include tabletScreen {
+    width: 100%;
+  }
 
   .login-container {
     position: relative;
@@ -12,9 +15,17 @@
     justify-content: space-between;
     width: 80%;
 
+    @include smallLaptopScreen {
+      width: 90%;
+    }
+
+    @include tabletScreen {
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
 
     @include mobileScreen {
-      flex-direction: column;
       width: 100%;
     }
 
@@ -25,10 +36,19 @@
       padding: 40px 40px;
       width: 60%;
 
+      @include tabletScreen {
+        width: 80%;
+        margin-bottom: 30px;
+      }
+
       @include mobileScreen {
         width: 100%;
         padding: 20px;
-        margin-bottom: 30px;
+      }
+
+      & .svg-wrapper {
+        display: flex;
+        justify-content: space-between;
       }
 
       & .headings {
@@ -49,6 +69,10 @@
 
     & .features-wrapper {
       width: 35%;
+
+      @include tabletScreen {
+        width: 70%;
+      }
 
       @include mobileScreen {
         width: 100%;
@@ -90,13 +114,22 @@
         justify-content: space-between;
         align-items: center;
 
-        @include mobileScreen {
+        @include tabletScreen {
           flex-direction: column;
         }
 
         & .forgot-password {
           color: $button-color;
           font-size: 16px;
+
+          @include smallLaptopScreen {
+            font-size: 14px;
+          }
+
+          @include tabletScreen {
+            order: 2;
+            //font-size: 14px;
+          }
 
           @include mobileScreen {
             display: none;
@@ -105,6 +138,11 @@
 
         & .submit-btn {
           @include submitBtn;
+
+          @include tabletScreen {
+            order: 1;
+            margin-bottom: 15px;
+          }
         }
       }
 
@@ -123,6 +161,12 @@
     & .another-action {
       @include anotherAction;
     }
+  }
+}
+
+.theme-switch {
+  @include notMobileScreen {
+    display: none;
   }
 }
 

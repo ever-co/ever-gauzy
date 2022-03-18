@@ -3,7 +3,7 @@ $wrapperPadding: 30px;
 
 // Queries
 @mixin mobileScreen {
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 490px) {
     @content
   }
 }
@@ -15,13 +15,13 @@ $wrapperPadding: 30px;
 }
 
 @mixin tabletScreen {
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 780px) {
     @content
   }
 }
 
 @mixin notMobileScreen {
-  @media screen and (min-width: 481px) {
+  @media screen and (min-width: 491px) {
     @content
   }
 }

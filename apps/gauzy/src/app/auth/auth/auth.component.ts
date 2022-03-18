@@ -1,7 +1,9 @@
 import { NbAuthComponent, NbAuthService } from "@nebular/auth"
-import { Component, OnInit } from "@angular/core"
+import { Component, OnChanges, OnInit } from "@angular/core"
 import { Location } from '@angular/common'
-import { Router } from "@angular/router"
+import { ActivatedRoute, NavigationStart, Router } from "@angular/router"
+import { filter } from "rxjs/operators"
+import { map } from "rxjs"
 
 
 @Component({
@@ -20,7 +22,19 @@ export class NgxAuthComponent extends NbAuthComponent implements OnInit {
     super(auth, location)
   }
 
+  updateRegisterClas (url: string) {
+    this.isRegister = url === '/auth/register'
+  }
+
   ngOnInit () {
-    this.isRegister = this.router.url === '/auth/register'
+    this.updateRegisterClas(this.router.url)
+
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationStart),
+      map(e => e as NavigationStart),
+    )
+      .subscribe(e => {
+        this.updateRegisterClas(e.url)
+      })
   }
 }
