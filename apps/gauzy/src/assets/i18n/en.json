@@ -2449,6 +2449,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+    "SENDER":"Sender",
 		"BROWSE":"Browse",
 		"COMMENT":"Comment",
 		"COMMENTS":"Comments",
