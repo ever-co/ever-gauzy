@@ -15,8 +15,8 @@
         "
       >
         <button nbButton status="success" size="small" (click)="onAdd()">
-          <nb-icon icon="plus-outline"> </nb-icon>
-          {{ 'BUTTONS.ADD' | translate }}
+          <nb-icon [icon]=icon> </nb-icon>
+          {{ text | translate }}
         </button>
       </span>
       <ng-container

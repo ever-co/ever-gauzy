@@ -7,6 +7,8 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 	styleUrls: ['./gauzy-button-action.component.scss']
 })
 export class GauzyButtonActionComponent implements OnInit {
+  @Input() icon: string;
+  @Input() text: string;
 	@Input() isDisable: boolean = true;
 	@Input() buttonTemplate: any;
 	@Input() componentName: ComponentEnum;

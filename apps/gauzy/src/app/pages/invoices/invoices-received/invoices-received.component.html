@@ -19,29 +19,31 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-    <div class="gauzy-button-container mb-3">
-      <ngx-gauzy-button-action
-        [isDisable]="disableButton"
-        [buttonTemplate]="actionButtons"
-        [componentName]="viewComponentName"
-      >
-      </ngx-gauzy-button-action>
-    </div>
+		<div class="gauzy-button-container mb-3">
+			<ngx-gauzy-button-action
+				[text]="isEstimate ? 'BUTTONS.ADD' : 'BUTTONS.PAY'"
+				[icon]="isEstimate ? 'plus-outline':'credit-card-outline'"
+				[isDisable]="disableButton"
+				[buttonTemplate]="actionButtons"
+				[componentName]="viewComponentName"
+			>
+			</ngx-gauzy-button-action>
+		</div>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-    <div class="table-scroll-container">
-      <ng2-smart-table
-				class="tags-table"
-				[settings]="settingsSmartTable"
-				[source]="smartTableSource"
-				(userRowSelect)="selectInvoice($event)"
-				style="cursor: pointer"
-				#invoiceReceivedTable
-			>
-			</ng2-smart-table>
-    </div>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					class="tags-table"
+					[settings]="settingsSmartTable"
+					[source]="smartTableSource"
+					(userRowSelect)="selectInvoice($event)"
+					style="cursor: pointer"
+					#invoiceReceivedTable
+				>
+				</ng2-smart-table>
+			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems">
 					<ga-pagination
@@ -116,7 +118,7 @@
 			<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 			{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
 		</button>
-    <button
+		<button
 			nbButton
 			status="basic"
 			class="action"
