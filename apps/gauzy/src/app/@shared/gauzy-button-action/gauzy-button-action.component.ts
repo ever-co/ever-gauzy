@@ -12,13 +12,13 @@ export class GauzyButtonActionComponent implements OnInit {
 	@Input() isDisable: boolean = true;
 	@Input() buttonTemplate: any;
 	@Input() componentName: ComponentEnum;
-  @Output() add: EventEmitter<any> = new EventEmitter<any>();
+  @Output() addOnClick: EventEmitter<any> = new EventEmitter<any>();
 
 	constructor() {}
 
 	ngOnInit(): void {}
 
   onAdd(){
-    this.add.emit();
+    this.addOnClick.emit();
   }
 }
