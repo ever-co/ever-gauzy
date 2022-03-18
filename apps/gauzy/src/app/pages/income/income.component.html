@@ -54,20 +54,10 @@
 				>
 				</ng2-smart-table>
 			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="smartTableSettings"
-				[source]="incomes"
-				[buttonTemplate]="actionButtons"
-				[cardSize]="'big'"
-			>
-			</ga-card-grid>
 			<div class="pagination-container">
-				<ng-container
-					*ngIf="pagination.totalItems > pagination.itemsPerPage"
-				>
+				<ng-container *ngIf="pagination.totalItems">
 					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
 						[totalItems]="pagination?.totalItems"
@@ -77,6 +67,21 @@
 					</ga-pagination>
 				</ng-container>
 			</div>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ga-card-grid
+				[settings]="smartTableSettings"
+				[source]="incomes"
+				[buttonTemplate]="actionButtons"
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				(onSelectedItem)="selectInvoice($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			>
+			</ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

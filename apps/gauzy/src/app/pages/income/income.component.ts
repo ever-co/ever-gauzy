@@ -62,7 +62,7 @@ export class IncomeComponent
 	}
 
 	/*
-	* Actions Buttons directive 
+	* Actions Buttons directive
 	*/
 	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
 
@@ -226,7 +226,7 @@ export class IncomeComponent
 					},
 					filterFunction: (tags: ITag[]) => {
 						const tagIds = [];
-						for (const tag of tags) { 
+						for (const tag of tags) {
 							tagIds.push(tag.id);
 						}
 						this.setFilter({ field: 'tags', search: tagIds });
@@ -235,7 +235,7 @@ export class IncomeComponent
 				}
 			},
 			pager: {
-				display: true,
+				display: false,
 				perPage: this.pagination.itemsPerPage
 			}
 		};
@@ -367,14 +367,14 @@ export class IncomeComponent
 							id,
 							employee ? employee.id : null
 						)
-						.then(() => { 
+						.then(() => {
 							this.toastrService.success('NOTES.INCOME.DELETE_INCOME', {
 								name: this.employeeName(employee)
 							});
 						})
 						.finally(() => {
 							this.subject$.next(true);
-						});						
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -383,7 +383,7 @@ export class IncomeComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
@@ -399,9 +399,9 @@ export class IncomeComponent
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/income/pagination`,
 			relations: [
-				'employee', 
-				'employee.user', 
-				'tags', 
+				'employee',
+				'employee.user',
+				'tags',
 				'organization',
 				'client'
 			],
@@ -429,9 +429,10 @@ export class IncomeComponent
 	}
 
 	private async getIncomes() {
-		try { 
+		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE ||
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
@@ -472,6 +473,11 @@ export class IncomeComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
+	}
+
+  onUpdateOption($event: number) {
+		this.pagination.itemsPerPage = $event;
+		this.getIncomes();
 	}
 
 	ngOnDestroy() { }
