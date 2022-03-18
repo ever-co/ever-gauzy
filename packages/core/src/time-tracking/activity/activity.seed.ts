@@ -100,10 +100,11 @@ export const createRandomActivities = async (
 					activity.task = task;
 					activity.title = url;
 					activity.metaData = {
+						url: faker.internet.url(),
 						title: faker.internet.domainSuffix(),
 						description: faker.lorem.sentence()
 					};
-					activity.description = faker.internet.url();
+					activity.description = faker.lorem.sentence();
 					activity.date = moment(date).format('YYYY-MM-DD');
 					activity.time = moment(
 						faker.date.between(
