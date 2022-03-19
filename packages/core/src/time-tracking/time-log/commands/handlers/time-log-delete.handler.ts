@@ -1,7 +1,7 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DeleteResult, UpdateResult } from 'typeorm';
-import * as _ from 'underscore';
+import { chain, pluck } from 'underscore';
 import { TimeLog } from './../../time-log.entity';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
@@ -43,7 +43,8 @@ export class TimeLogDeleteHandler
 					organizationId,
 					employeeId,
 					startedAt,
-					stoppedAt
+					stoppedAt,
+					timeLog
 				)
 			);
 		}
@@ -51,11 +52,11 @@ export class TimeLogDeleteHandler
 		let deleteResult: DeleteResult | UpdateResult;
 		if (forceDelete) {
 			deleteResult = await this.timeLogRepository.delete({
-				id: In(_.pluck(timeLogs, 'id'))
+				id: In(pluck(timeLogs, 'id'))
 			});
 		} else {
 			deleteResult = await this.timeLogRepository.update(
-				{ id: In(_.pluck(timeLogs, 'id')) },
+				{ id: In(pluck(timeLogs, 'id')) },
 				{ deletedAt: new Date() }
 			);
 		}
@@ -64,17 +65,21 @@ export class TimeLogDeleteHandler
 			/**
 			 * Timesheet Recalculate Command
 			 */
-			const timesheetIds = _.chain(timeLogs).pluck('timesheetId').uniq().value();
+			const timesheetIds = chain(timeLogs).pluck('timesheetId').uniq().value();
 			for await (const timesheetId of timesheetIds) {
-				await this.commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
+				await this.commandBus.execute(
+					new TimesheetRecalculateCommand(timesheetId)
+				);
 			}
 
 			/**
 			 * Employee Worked Hours Recalculate Command
 			 */
-			const employeeIds = _.chain(timeLogs).pluck('employeeId').uniq().value();
+			const employeeIds = chain(timeLogs).pluck('employeeId').uniq().value();
 			for await (const employeeId of employeeIds) {
-				await this.commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(employeeId));
+				await this.commandBus.execute(
+					new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
+				);
 			}
 		} catch (error) {
 			console.log('TimeLogDeleteHandler', { error });

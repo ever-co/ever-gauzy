@@ -1,3 +1,4 @@
+import { ITimeLog } from '@gauzy/contracts';
 import { ICommand } from '@nestjs/cqrs';
 
 export class TimeSlotRangeDeleteCommand implements ICommand {
@@ -7,6 +8,7 @@ export class TimeSlotRangeDeleteCommand implements ICommand {
 		public readonly organizationId: string,
 		public readonly employeeId: string,
 		public readonly start: Date,
-		public readonly stop: Date
+		public readonly stop: Date,
+		public readonly timeLog?: ITimeLog
 	) {}
 }

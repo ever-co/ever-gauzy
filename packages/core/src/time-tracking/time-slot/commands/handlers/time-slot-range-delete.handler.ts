@@ -18,23 +18,31 @@ export class TimeSlotRangeDeleteHandler
 	public async execute(
 		command: TimeSlotRangeDeleteCommand
 	): Promise<boolean> {
-
 		const tenantId = RequestContext.currentTenantId();
-		const { organizationId, employeeId, start, stop } = command;
+		const { organizationId, employeeId, start, stop, timeLog } = command;
+
+		let startMinute = moment(start).utc().get('minute');
+		startMinute = startMinute - (startMinute % 10);
+
+		let mStart: any = moment
+			.utc(start)
+			.set('minute', startMinute)
+			.set('second', 0)
+			.set('millisecond', 0);
+
+		let endMinute = moment(stop).utc().get('minute');
+		endMinute = endMinute - (endMinute % 10);
+
+		let mEnd: any = moment
+			.utc(stop)
+			.set('minute', endMinute + 10)
+			.set('second', 0)
+			.set('millisecond', 0);
 		
-		let mStart: any = moment.utc(start);
-		mStart.set('minute', mStart.get('minute') - (mStart.get('minute') % 10));
-		mStart.set('second', 0).set('millisecond', 0);
-
-		let mEnd: any = moment.utc(stop);
-		mEnd.set('minute', mEnd.get('minute') + (mEnd.get('minute') % 10) - 1);
-		mEnd.set('second', 59).set('millisecond', 0);
-
 		const { start: startDate, end: endDate } = getDateFormat(
 			mStart,
 			mEnd
 		);
-		console.log(startDate, endDate);
 		const timeSlots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
@@ -50,11 +58,18 @@ export class TimeSlotRangeDeleteHandler
 				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
-				console.log('TimeSlot Range Delete', qb.getQueryAndParameters());
 			},
-			relations: ['screenshots']
+			relations: ['screenshots', 'timeLogs']
 		});
-		await this.timeSlotRepository.remove(timeSlots);
+		for await (const timeSlot of timeSlots) {
+			const { timeLogs } = timeSlot;
+			if (timeLogs.length === 1) {
+				const [ firstTimeLog ] = timeLogs;
+				if (firstTimeLog.id === timeLog.id) {
+					await this.timeSlotRepository.remove(timeSlot);
+				}
+			}
+		}
 		return true;
 	}
 }

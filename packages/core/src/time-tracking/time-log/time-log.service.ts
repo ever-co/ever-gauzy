@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
+import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -899,18 +899,29 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
 		const { organizationId, forceDelete } = query;
-
+	
 		const timeLogs = await this.timeLogRepository.find({
-			...(
-				RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				) ? {} : {
-					employeeId: user.employeeId
-				}
-			),
-			tenantId,
-			organizationId,
-			id: In(logIds)
+			where: (query: SelectQueryBuilder<TimeLog>) => {
+				query.where({
+					...(
+						RequestContext.hasPermission(
+							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+						) ? {} : {
+							employeeId: user.employeeId
+						}
+					)
+				});
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(`"${query.alias}"."id" IN (:...logIds)`, {
+							logIds
+						});
+					})
+				);
+			},
+			relations: ['timeSlots']
 		});
 		return await this.commandBus.execute(
 			new TimeLogDeleteCommand(timeLogs, forceDelete)
