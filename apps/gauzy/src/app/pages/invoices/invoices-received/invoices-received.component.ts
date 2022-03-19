@@ -8,7 +8,9 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	IInvoice,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+  EstimateColumnsEnum,
+  InvoiceColumnsEnum
 } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
@@ -23,6 +25,13 @@ import { API_PREFIX } from '../../../@core/constants';
 import { HttpClient } from '@angular/common/http';
 import { InvoiceEstimateTotalValueComponent } from '../table-components/invoice-total-value.component';
 import { InputFilterComponent } from '../../../@shared/table-filters/input-filter.component';
+import { DateViewComponent } from '../../../@shared/table-components';
+import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
+import { ContactLinksComponent } from '../../../@shared/table-components/contact-links/contact-links.component';
+import { TagsOnlyComponent } from '../../../@shared/table-components/tags-only/tags-only.component';
+import { TagsColorFilterComponent } from '../../../@shared/table-filters/tags-color-filter.component';
+import { ITag } from '../../../../../../../packages/contracts/dist/tag-entity.model';
+import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,6 +60,7 @@ export class InvoicesReceivedComponent
 		itemsPerPage: this.perPage
 	};
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	columns: any;
 
 	/*
 	 * getter setter for check esitmate or invoice
@@ -100,6 +110,7 @@ export class InvoicesReceivedComponent
 	}
 
 	ngOnInit() {
+		this.columns = this.getColumns();
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
@@ -179,12 +190,24 @@ export class InvoicesReceivedComponent
 		const { id: organizationId } = this.organization;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
-			relations: ['payments'],
+			relations: ['payments', 'tags', 'toContact'],
+			join: {
+				alias: 'invoice',
+				leftJoin: {
+					tags: 'invoice.tags',
+					toContact: 'invoice.toContact'
+				}
+			},
 			where: {
 				sentTo: organizationId,
 				tenantId,
 				isEstimate: this.isEstimate === true ? 1 : 0,
 				...(this.filters.where ? this.filters.where : {})
+			},
+			resultMap: (invoice: IInvoice) => {
+				return Object.assign({}, invoice, {
+					status: this.statusMapper(invoice.status)
+				});
 			},
 			finalize: () => {
 				this.loading = false;
@@ -296,8 +319,12 @@ export class InvoicesReceivedComponent
 					title: this.isEstimate
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
-					type: 'string',
+					type: this.isEstimate ? 'string' : 'custom',
+					renderComponent: this.isEstimate
+						? null
+						: NotesWithTagsComponent,
 					sortDirection: 'asc',
+					width: '20%',
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -316,10 +343,27 @@ export class InvoicesReceivedComponent
 						this.subject$.next(true);
 					}
 				},
+				invoiceDate: {
+					title: this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
+						: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+					type: 'custom',
+					filter: false,
+					width: '10%',
+					renderComponent: DateViewComponent
+				},
+				dueDate: {
+					title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
+					type: 'custom',
+					filter: false,
+					width: '10%',
+					renderComponent: DateViewComponent
+				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'custom',
 					renderComponent: InvoiceEstimateTotalValueComponent,
+					width: '10%',
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -340,13 +384,55 @@ export class InvoicesReceivedComponent
 				}
 			}
 		};
+		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
+			this.settingsSmartTable['columns']['toContact'] = {
+				title: this.getTranslation('INVOICES_PAGE.SENDER'),
+				type: 'custom',
+				filter: false,
+				sort: false,
+				renderComponent: ContactLinksComponent
+			};
+		}
 		if (!this.isEstimate) {
 			this.settingsSmartTable['columns']['paid'] = {
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
+        width: '15%',
 				renderComponent: InvoicePaidComponent,
-				filter: false,
-				width: '33%'
+				filter: false
+			};
+		}
+		if (this.isEstimate) {
+			this.settingsSmartTable['columns']['tags'] = {
+				title: this.getTranslation('SM_TABLE.TAGS'),
+				type: 'custom',
+				class: 'align-row',
+				width: '10%',
+				renderComponent: TagsOnlyComponent,
+				filter: {
+					type: 'custom',
+					component: TagsColorFilterComponent
+				},
+				filterFunction: (tags: ITag[]) => {
+					const tagIds = [];
+					for (const tag of tags) {
+						tagIds.push(tag.id);
+					}
+					this.filters = tagIds;
+				},
+				sort: false
+			};
+		}
+		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
+			this.settingsSmartTable['columns']['status'] = {
+				title: this.getTranslation('INVOICES_PAGE.STATUS'),
+				type: 'custom',
+				width: '5%',
+				renderComponent: StatusBadgeComponent,
+				filter: {
+					type: 'custom',
+					component: InputFilterComponent
+				}
 			};
 		}
 	}
@@ -394,6 +480,39 @@ export class InvoicesReceivedComponent
 		this.pagination.itemsPerPage = $event;
 		this.getInvoices();
 	}
+
+	getColumns(): string[] {
+		if (this.isEstimate) {
+			return Object.values(EstimateColumnsEnum);
+		}
+		return Object.values(InvoiceColumnsEnum);
+	}
+
+	private statusMapper = (value: string) => {
+		let badgeClass;
+		if (value) {
+			badgeClass = [
+				'sent',
+				'viewed',
+				'accepted',
+				'active',
+				'fully paid'
+			].includes(value.toLowerCase())
+				? 'success'
+				: ['void', 'draft', 'partially paid'].includes(
+						value.toLowerCase()
+				  )
+				? 'warning'
+				: 'danger';
+		}
+		return {
+			originalValue: value,
+			text: this.getTranslation(
+				`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`
+			),
+			class: badgeClass
+		};
+	};
 
 	ngOnDestroy() {}
 }

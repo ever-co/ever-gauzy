@@ -8,10 +8,11 @@ import {
 	IGetActivitiesInput,
 	ActivityType,
 	IDailyActivity,
-	IActivity
+	IActivity,
+	IURLMetaData
 } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { toUTC, toLocal } from '@gauzy/common-angular';
+import { isJsObject, toUTC, toLocal } from '@gauzy/common-angular';
 import { ActivatedRoute } from '@angular/router';
 import * as _ from 'underscore';
 import * as moment from 'moment';
@@ -31,7 +32,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 		activities: IDailyActivity[];
 	}[];
 	request: any;
-	updateLogs$: Subject<any> = new Subject();
+	activities$: Subject<any> = new Subject();
 	organization: IOrganization;
 	type: 'apps' | 'urls';
 	selectedEmployeeId: string | null = null;
@@ -45,14 +46,20 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
+		this.activities$
+			.pipe(
+				untilDestroyed(this),
+				debounceTime(500),
+				tap(() => this.getLogs())
+			)
+			.subscribe();
 		this.activatedRoute.data
-			.pipe(untilDestroyed(this))
-			.subscribe((params) => {
-				if (params.type) {
-					this.type = params.type;
-					this.updateLogs$.next(true);
-				}
-			});
+			.pipe(
+				tap((params) => this.type = params.type),
+				tap(() => this.activities$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
@@ -64,17 +71,10 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
-						this.updateLogs$.next(true);
+						this.activities$.next(true);
 					}
 				}),
 				untilDestroyed(this)
-			)
-			.subscribe();
-		this.updateLogs$
-			.pipe(
-				untilDestroyed(this),
-				debounceTime(500),
-				tap(() => this.getLogs())
 			)
 			.subscribe();
 	}
@@ -82,7 +82,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
 		this.timesheetFilterService.filter = $event;
-		this.updateLogs$.next(true);
+		this.activities$.next(true);
 	}
 
 	loadChild(item: IDailyActivity) {
@@ -98,16 +98,20 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 		this.activityService.getActivities(request).then((items) => {
 			item.childItems = items.map(
 				(activity: IActivity): IDailyActivity => {
-					return {
-						sessions: 1,
+					const dailyActivity = {
 						duration: activity.duration,
 						employeeId: activity.employeeId,
 						date: activity.date,
 						title: activity.title,
 						description: activity.description,
-						durationPercentage:
-							(activity.duration * 100) / item.duration
-					};
+						durationPercentage: (activity.duration * 100) / item.duration
+					}
+					if (activity.metaData && isJsObject(activity.metaData)) {
+						const metaData = activity.metaData as IURLMetaData;
+						dailyActivity['metaData'] = metaData;
+						dailyActivity['url'] = metaData.url || '';
+					}
+					return dailyActivity;
 				}
 			);
 		});

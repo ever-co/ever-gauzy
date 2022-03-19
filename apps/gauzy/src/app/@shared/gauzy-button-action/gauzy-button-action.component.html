@@ -1,0 +1,30 @@
+<div class="actions-container">
+  <div class="transition-container">
+    <div
+      [ngClass]="
+        !isDisable
+          ? 'transition show'
+          : 'transition hide'
+      "
+    >
+      <span
+        [ngClass]="
+          !isDisable
+            ? 'transition show'
+            : 'transition show-button'
+        "
+      >
+        <button nbButton status="success" size="small" (click)="onAdd()">
+          <nb-icon [icon]=icon> </nb-icon>
+          {{ text | translate }}
+        </button>
+      </span>
+      <ng-container
+        *ngTemplateOutlet="buttonTemplate"
+      ></ng-container>
+    </div>
+  </div>
+  <ga-layout-selector
+    [componentName]="componentName"
+  ></ga-layout-selector>
+</div>

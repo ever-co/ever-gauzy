@@ -13,6 +13,7 @@ import {
 	ITimerStatusInput,
 	ITimeLog
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { Employee, TimeLog } from './../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import { getDateRange } from './../../core/utils';
@@ -198,19 +199,22 @@ export class TimerService {
 			tenantId
 		};
 
-		const conflict = await this.commandBus.execute(
+		const conflicts = await this.commandBus.execute(
 			new IGetConflictTimeLogCommand(conflictInput)
 		);
 
+		console.log('Get Conflicts Time Logs', conflicts);
 		const times: IDateRange = {
 			start: new Date(lastLog.startedAt),
 			end: new Date(lastLog.stoppedAt)
 		};
 
-		for (let index = 0; index < conflict.length; index++) {
-			await this.commandBus.execute(
-				new DeleteTimeSpanCommand(times, conflict[index])
-			);
+		if (isNotEmpty(conflicts)) {
+			for await (const conflict of conflicts) {
+				await this.commandBus.execute(
+					new DeleteTimeSpanCommand(times, conflict)
+				);
+			}
 		}
 		return lastLog;
 	}

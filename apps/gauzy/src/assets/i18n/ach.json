@@ -3181,6 +3181,8 @@
 			"IMAGE_UPDATED": "crwdns9162:0crwdne9162:0",
 			"ORGANIZATION_PAGE_UPDATED": "crwdns9164:0{{ name }}crwdne9164:0",
 			"SCREENSHOT_DELETED": "crwdns10883:0{{ name }}crwdnd10883:0{{ organization }}crwdne10883:0",
+			"TIME_LOG_DELETED": "crwdns11014:0{{ name }}crwdnd11014:0{{ organization }}crwdne11014:0",
+			"TIME_LOGS_DELETED": "crwdns11016:0{{ organization }}crwdne11016:0",
 			"BUCKET_CREATED": "crwdns10996:0{{ bucket }}crwdnd10996:0{{ region }}crwdne10996:0"
 		}
 	},

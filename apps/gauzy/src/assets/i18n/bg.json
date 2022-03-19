@@ -3181,6 +3181,8 @@
 			"IMAGE_UPDATED": "The image has been updated",
 			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'",
 			"SCREENSHOT_DELETED": "Screenshot for '{{ name }}' removed from '{{ organization }}'",
+			"TIME_LOG_DELETED": "Time log for '{{ name }}' removed from '{{ organization }}'",
+			"TIME_LOGS_DELETED": "Time logs removed from '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully"
 		}
 	},

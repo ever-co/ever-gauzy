@@ -8,7 +8,6 @@
 // Google Inter font
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
-
 $nb-themes: nb-register-theme(
   (
     font-family-secondary: font-family-primary,
@@ -30,6 +29,8 @@ $nb-themes: nb-register-theme(
     gauzy-text-contact: #323232,
     accordion-padding: 0.625rem,
     actions-divider-style: none,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem
   ),
   default,
   default
@@ -54,6 +55,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color: 2px 0 3px #29157a,
     slide-out-shadow-color-rtl: -2px 0 3px #29157a,
     accordion-padding: 0.625rem,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem
   ),
   cosmic,
   cosmic
@@ -78,6 +81,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
     slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
     accordion-padding: 0.625rem,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem
   ),
   corporate,
   corporate
@@ -104,6 +109,8 @@ $nb-themes: nb-register-theme(
     gauzy-text-contact: #eeeeee,
     accordion-padding: 0.625rem,
     actions-divider-style: none,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem
   ),
   dark,
   dark
@@ -130,6 +137,8 @@ $nb-themes: nb-register-theme((
    slide-out-shadow-color: 0 4px 14px 0 #ebebeb,
    slide-out-shadow-color-rtl: 0 4px 14px 0 #ebebeb,
    accordion-padding: 0.625rem,
+   button-filled-medium-padding:	0.4375rem 0.875rem,
+   button-outline-medium-padding: 0.4375rem 0.875rem
  ), material-light, material-light);
 
  $nb-themes: nb-register-theme((
@@ -153,6 +162,8 @@ $nb-themes: nb-register-theme((
    slide-out-shadow-color: 0 4px 14px 0 #292929,
    slide-out-shadow-color-rtl: 0 4px 14px 0 #292929,
    accordion-padding: 0.625rem,
+   button-filled-medium-padding:	0.4375rem 0.875rem,
+   button-outline-medium-padding: 0.4375rem 0.875rem
  ), material-dark, material-dark);
 
  $nb-themes: nb-register-theme(
@@ -196,7 +207,7 @@ $nb-themes: nb-register-theme((
       button-outline-medium-padding: 0.4375rem 0.875rem,
       toggle-height: 1.5rem,
       toggle-switcher-size: 1.4rem,
-      toggle-switcher-icon-size: 0,
+      toggle-switcher-icon-size: 0
   ),
   gauzy-light,
   default
@@ -234,15 +245,15 @@ $nb-themes: nb-register-theme(
      tabset-tab-hover-underline-color: background-basic-color-1,
      tabset-tab-focus-underline-color: background-basic-color-1,
      tabset-tab-text-transform: capitalize,
-    button-filled-text-transform: none,
-    font-family-primary: unquote('Inter, sans-serif'),
-    font-family-secondary: unquote('Inter, sans-serif'),
-    button-outline-text-transform: none,
-    button-filled-medium-padding:	0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem,
-    toggle-height: 1.5rem,
-    toggle-switcher-size: 1.4rem,
-    toggle-switcher-icon-size: 0,
+     button-filled-text-transform: none,
+     font-family-primary: unquote('Inter, sans-serif'),
+     font-family-secondary: unquote('Inter, sans-serif'),
+     button-outline-text-transform: none,
+     button-filled-medium-padding:	0.4375rem 0.875rem,
+     button-outline-medium-padding: 0.4375rem 0.875rem,
+     toggle-height: 1.5rem,
+     toggle-switcher-size: 1.4rem,
+     toggle-switcher-icon-size: 0
   ),
   gauzy-dark,
   dark

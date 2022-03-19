@@ -20,11 +20,11 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 
 	@Output() loadChild: EventEmitter<any> = new EventEmitter();
 	@Input() allowChild = false;
-	@Input()
+	
 	public get item(): IDailyActivity {
 		return this._item;
 	}
-	public set item(value: IDailyActivity) {
+	@Input() public set item(value: IDailyActivity) {
 		value.durationPercentage = parseFloat(
 			parseInt(value.durationPercentage + '', 10).toFixed(1)
 		);
