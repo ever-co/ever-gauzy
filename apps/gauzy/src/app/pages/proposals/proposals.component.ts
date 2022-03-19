@@ -285,10 +285,13 @@ export class ProposalsComponent
 					renderComponent: NotesWithTagsComponent,
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (value: string) => {
-						this.setFilter({ field: 'jobPostContent', search: value });
+						this.setFilter({
+							field: 'jobPostContent',
+							search: value
+						});
 					}
 				},
 				jobPostUrl: {
@@ -296,14 +299,6 @@ export class ProposalsComponent
 					type: 'html',
 					width: '25%',
 					filter: false
-				},
-				statusBadge: {
-					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'custom',
-					width: '10%',
-					class: 'text-center',
-					filter: false,
-					renderComponent: StatusBadgeComponent
 				},
 				organizationContact: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
@@ -314,8 +309,11 @@ export class ProposalsComponent
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
-					filterFunction: (value: IOrganizationContact| null) => {
-						this.setFilter({ field: 'organizationContactId', search: (value)?.id || null });
+					filterFunction: (value: IOrganizationContact | null) => {
+						this.setFilter({
+							field: 'organizationContactId',
+							search: value?.id || null
+						});
 					}
 				},
 				author: {
@@ -323,7 +321,15 @@ export class ProposalsComponent
 					type: 'custom',
 					width: '20%',
 					filter: false,
-					renderComponent: EmployeeLinksComponent,
+					renderComponent: EmployeeLinksComponent
+				},
+				statusBadge: {
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'custom',
+					width: '5%',
+					class: 'text-center',
+					filter: false,
+					renderComponent: StatusBadgeComponent
 				}
 			}
 		};
@@ -335,7 +341,7 @@ export class ProposalsComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
@@ -378,7 +384,7 @@ export class ProposalsComponent
 
 	private calculateStatistics() {
 		this.countAccepted = 0
-		const proposals = this.smartTableSource.getData();		
+		const proposals = this.smartTableSource.getData();
 		for (const proposal of proposals) {
 			if (proposal.status === ProposalStatusEnum.ACCEPTED) {
 				this.countAccepted++;
@@ -397,7 +403,7 @@ export class ProposalsComponent
 		return {
 			id: i.id,
 			valueDate: i.valueDate,
-			jobPostUrl: i.jobPostUrl ? 
+			jobPostUrl: i.jobPostUrl ?
 				'<a href="' + i.jobPostUrl +`" target="_blank">${i.jobPostUrl}</a>`: '',
 			jobTitle: i.jobPostContent
 				.toString()
@@ -416,7 +422,7 @@ export class ProposalsComponent
 	}
 
 	private async getProposals() {
-		try { 
+		try {
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 
@@ -424,13 +430,13 @@ export class ProposalsComponent
 				const { activePage, itemsPerPage } = this.pagination;
 				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 				this.smartTableSource.setSort(
-					[{ field: 'valueDate', direction: 'desc' }], 
+					[{ field: 'valueDate', direction: 'desc' }],
 					false
 				);
 
 				await this.smartTableSource.getElements();
 				this.proposals = this.smartTableSource.getData();
-				
+
 				const count = this.smartTableSource.count();
 				this.pagination['totalItems'] =  count;
 			}
