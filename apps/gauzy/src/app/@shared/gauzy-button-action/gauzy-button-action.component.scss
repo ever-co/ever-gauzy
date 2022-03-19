@@ -36,6 +36,6 @@
   &.show-button{
     @include nb-rtl(transform, translateX(110%));
     @include nb-ltr(transform, translateX(-110%));
-    transition: all 0.15s ease-out;
+    transition: all 0.1s ease-out;
   }
 }
