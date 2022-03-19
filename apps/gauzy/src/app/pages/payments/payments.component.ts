@@ -363,19 +363,26 @@ export class PaymentsComponent
 				perPage: this.pagination.itemsPerPage
 			},
 			columns: {
+				invoiceNumber: {
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+					type: 'text',
+					filter: false,
+					width: '8%',
+					sort: false
+				},
+        paymentDate: {
+					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
+					type: 'custom',
+					filter: false,
+					width: '10%',
+					renderComponent: DateViewComponent
+				},
 				amount: {
 					title: this.getTranslation('PAYMENTS_PAGE.AMOUNT'),
 					type: 'custom',
 					filter: false,
 					width: '8%',
 					renderComponent: IncomeExpenseAmountComponent
-				},
-				paymentDate: {
-					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
-					type: 'custom',
-					filter: false,
-					width: '10%',
-					renderComponent: DateViewComponent
 				},
 				paymentMethodEnum: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
@@ -425,7 +432,14 @@ export class PaymentsComponent
 					filter: false,
 					sort: false
 				},
-				tags: {
+				overdue: {
+					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
+					type: 'custom',
+					width: '10%',
+					renderComponent: StatusBadgeComponent,
+					filter: false
+				},
+        tags: {
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
 					type: 'custom',
 					width: '12%',
@@ -442,20 +456,6 @@ export class PaymentsComponent
 						this.setFilter({ field: 'tags', search: tagIds });
 					},
 					sort: false
-				},
-				invoiceNumber: {
-					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
-					type: 'text',
-					filter: false,
-					width: '8%',
-					sort: false
-				},
-				overdue: {
-					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
-					type: 'custom',
-					width: '10%',
-					renderComponent: StatusBadgeComponent,
-					filter: false
 				}
 			}
 		};
