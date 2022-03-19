@@ -270,10 +270,7 @@ export class HeaderComponent
 					)
 				) {
 					this.showEmployeesSelector = employeeCount > 0;
-					if (
-						this.showEmployeesSelector &&
-						!this.store.selectedEmployee
-					) {
+					if (this.showEmployeesSelector && !this.store.selectedEmployee) {
 						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 					}
 				} else {

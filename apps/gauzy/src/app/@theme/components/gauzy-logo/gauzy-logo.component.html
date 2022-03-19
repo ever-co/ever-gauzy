@@ -1,0 +1,105 @@
+<nb-accordion class="accordion workspace">
+	<nb-accordion-item (collapsedChange)="onCollapse($event)">
+		<nb-accordion-item-header>
+			<div
+				*ngIf="isCollapse"
+				[ngClass]="
+					theme === 'default' ||
+					theme === 'corporate' ||
+					theme === 'gauzy-light'
+						? ''
+						: 'white-svg'
+				"
+				class="logo"
+				(click)="navigateHome()"
+			>
+				<object
+					data="assets/images/logos/logo_Gauzy.svg"
+					type="image/svg+xml"
+				>
+					<img src="assets/images/logos/logo_Gauzy.png" />
+				</object>
+			</div>
+			<div class="organization" *ngIf="!isCollapse">
+				<img [src]="organization.imageUrl" alt="" />
+				<div class="description">
+					<div>{{ organization?.name }}</div>
+					<div>{{ organization?.website }}</div>
+				</div>
+			</div>
+		</nb-accordion-item-header>
+		<nb-accordion-item-body>
+			<i class="fas fa-user-plus"></i
+			><span class="ml-1">Invite people</span>
+		</nb-accordion-item-body>
+		<nb-accordion-item-body>
+			<i class="fas fa-users"></i><span class="ml-1">Users</span>
+		</nb-accordion-item-body>
+		<nb-accordion-item-body>
+			<i class="fas fa-exchange-alt"></i
+			><span class="ml-1">Import/Export</span>
+		</nb-accordion-item-body>
+		<nb-accordion-item-body>
+			<i class="fas fa-globe"></i><span class="ml-1">Organizations</span>
+		</nb-accordion-item-body>
+		<nb-accordion-item-body>
+			<i class="fas fa-swatchbook"></i
+			><span class="ml-1">Apps & Integrations</span>
+		</nb-accordion-item-body>
+		<nb-accordion-item-body>
+			<nb-accordion>
+				<nb-accordion-item>
+					<nb-accordion-item-header>
+						<i class="fas fa-cog"></i
+						><span class="ml-1">Settings</span>
+					</nb-accordion-item-header>
+					<nb-accordion-item-body>
+						<i class="fas fa-pen"></i
+						><span class="ml-1">General</span>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<i class="fas fa-swatchbook"></i
+						><span class="ml-1">features</span>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<i class="fas fa-envelope-open"></i
+						><span class="ml-1">Email History</span>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<i class="fas fa-envelope"></i
+						><span class="ml-1">Email Templates</span>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<i class="fas fa-address-card"></i
+						><span class="ml-1">Accounting Templates</span>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<i class="fas fa-database"></i
+						><span class="ml-1">File Storage</span>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<i class="fas fa-at"></i
+						><span class="ml-1">SMS Gateways</span>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<i class="fas fa-at"></i
+						><span class="ml-1">Custom SMTP</span>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<i class="fas fa-award"></i
+						><span class="ml-1">Roles & Permissions</span>
+					</nb-accordion-item-body>
+				</nb-accordion-item>
+			</nb-accordion>
+		</nb-accordion-item-body>
+		<nb-accordion-item-body class="item footer">
+			<div class="content">
+				<span>Download Apps:</span>
+				<i class="fab fa-apple"></i>
+				<i class="fab fa-google-drive"></i>
+				<i class="fas fa-desktop"></i>
+				<i class="fas fa-print"></i>
+			</div>
+		</nb-accordion-item-body>
+	</nb-accordion-item>
+</nb-accordion>

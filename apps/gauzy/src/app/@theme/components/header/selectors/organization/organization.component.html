@@ -7,6 +7,10 @@
 		[(ngModel)]="selectedOrganization"
 		placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate }}"
 		appendTo="body"
+		[isOpen]="isOpen"
+		(change)="onChange()"
+		(click)="isOpen = !isOpen"
+		[ngClass]="isOpen ? 'organization' : 'organization close'"
 	>
 		<ng-template ng-option-tmp let-item="item" let-index="index">
 			<img

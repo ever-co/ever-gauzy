@@ -27,12 +27,12 @@ body {
   .cdk-global-scrollblock {
     overflow-y: overlay;
   }
-  
+
   .h1 {
     font-size: 44px;
     font-weight: 400;
   }
-  
+
   // overrides bootstrap svg style
   nb-icon svg {
     vertical-align: top;
@@ -95,7 +95,7 @@ body {
   }
   //Override header padding from 1.25rem to 0.5rem
   nb-layout .layout nb-layout-header nav {
-    padding: 0.5rem !important;
+    padding: 0rem !important;
   }
 
   // Override default min-width for nb-select
@@ -179,11 +179,9 @@ body {
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
     background: nb-theme(background-basic-color-1);
     color: nb-theme(text-basic-color);
-    padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
     transition-duration: 0.15s;
     transition-property: border, background-color, color, box-shadow;
     transition-timing-function: ease-in;
-    font-family: Open Sans, sans-serif;
     font-weight: 600;
     font-size: 0.8125rem;
     line-height: 1.5rem;
@@ -209,13 +207,21 @@ body {
   }
 
   .ng-dropdown-panel {
-    border-bottom-left-radius: nb-theme(border-radius);
-    border-bottom-right-radius: nb-theme(border-radius);
-    box-shadow: nb-theme(shadow);
-    transform: translateY(1px);
-    border-color: nb-theme(color-primary-transparent-active-border);
-    border-width: 1px;
-    border-style: solid;
+    transform: translateY(10px);
+    width: auto !important;
+    box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.2);
+    &.ng-select-bottom {
+      border-radius: nb-theme(border-radius);
+    }
+    .ng-dropdown-panel-items {
+      border-radius: nb-theme(border-radius);
+      img {
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        z-index: 10000001;
+      }
+    }
   }
 
   .ng-select .ng-select-container {
@@ -253,6 +259,9 @@ body {
   }
   .table {
     color: nb-theme(text-basic-color) !important;
+  }
+  nb-accordion-item-body .item-body{
+    overflow-x: hidden;
   }
 }
 
