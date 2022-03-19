@@ -1,5 +1,6 @@
 {
 	"BUTTONS": {
+		"PAY": "crwdns11018:0crwdne11018:0",
 		"ADD_EXISTING_USER": "crwdns3148:0crwdne3148:0",
 		"ADD_NEW": "crwdns3150:0crwdne3150:0",
 		"ADD": "crwdns2:0crwdne2:0",
@@ -2448,6 +2449,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SENDER": "crwdns11020:0crwdne11020:0",
 		"BROWSE": "crwdns11010:0crwdne11010:0",
 		"COMMENT": "crwdns11004:0crwdne11004:0",
 		"COMMENTS": "crwdns11006:0crwdne11006:0",
