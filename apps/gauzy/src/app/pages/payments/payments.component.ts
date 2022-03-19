@@ -415,7 +415,6 @@ export class PaymentsComponent
 					valuePrepareFunction: (cell, row) => {
 						return row.organizationContactName;
 					},
-					width: '12%',
 					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
@@ -428,21 +427,21 @@ export class PaymentsComponent
 				projectName: {
 					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
-					width: '10%',
+					width: '12%',
 					filter: false,
 					sort: false
 				},
 				overdue: {
 					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
 					type: 'custom',
-					width: '10%',
+					width: '8%',
 					renderComponent: StatusBadgeComponent,
 					filter: false
 				},
         tags: {
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
 					type: 'custom',
-					width: '12%',
+					width: '8%',
 					renderComponent: TagsOnlyComponent,
 					filter: {
 						type: 'custom',
