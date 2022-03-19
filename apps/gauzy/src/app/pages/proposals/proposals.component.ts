@@ -26,6 +26,9 @@ import { ErrorHandlingService, ProposalsService, Store, ToastrService } from '..
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { InputFilterComponent } from '../../@shared/table-filters/input-filter.component';
 import { OrganizationContactFilterComponent } from '../../@shared/table-filters';
+import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
+import { TagsColorFilterComponent } from '../../@shared/table-filters/tags-color-filter.component';
+import { ITag } from '../../../../../../packages/contracts/dist/tag-entity.model';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -280,9 +283,15 @@ export class ProposalsComponent
 				},
 				jobTitle: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
-					type: 'custom',
+					type:
+						this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
+							? 'custom'
+							: 'string',
 					width: '25%',
-					renderComponent: NotesWithTagsComponent,
+					renderComponent:
+						this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
+							? NotesWithTagsComponent
+							: null,
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -333,6 +342,27 @@ export class ProposalsComponent
 				}
 			}
 		};
+    if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+			this.smartTableSettings['columns']['tags'] = {
+				title: this.getTranslation('SM_TABLE.TAGS'),
+				type: 'custom',
+					width: '20%',
+					class: 'align-row',
+					renderComponent: TagsOnlyComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
+					sort: false
+        }
+		}
 	}
 
 	selectProposal({ isSelected, data }) {
