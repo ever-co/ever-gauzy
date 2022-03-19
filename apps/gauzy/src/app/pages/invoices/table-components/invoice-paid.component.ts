@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 				<span
 					id="progress-bar-inner"
 					class="progress-bar-inner"
-					[ngStyle]="{ width: barWidthString }"
+					[style.width]="barWidthString"
 				></span>
 			</div>
 		</div>

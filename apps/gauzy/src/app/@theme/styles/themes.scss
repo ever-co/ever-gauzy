@@ -28,6 +28,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
     slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
     gauzy-text-contact: #323232,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
   ),
   default,
   default
@@ -50,7 +52,9 @@ $nb-themes: nb-register-theme(
     select-min-width: 6rem,
     slide-out-background: #252547,
     slide-out-shadow-color: 2px 0 3px #29157a,
-    slide-out-shadow-color-rtl: -2px 0 3px #29157a
+    slide-out-shadow-color-rtl: -2px 0 3px #29157a,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
   ),
   cosmic,
   cosmic
@@ -73,7 +77,9 @@ $nb-themes: nb-register-theme(
     select-min-width: 6rem,
     slide-out-background: linear-gradient(270deg, #edf1f7 0%, #e4e9f2 100%),
     slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
-    slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3
+    slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
   ),
   corporate,
   corporate
@@ -97,7 +103,9 @@ $nb-themes: nb-register-theme(
     slide-out-background: linear-gradient(270deg, #222b45 0%, #151a30 100%),
     slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
     slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
-    gauzy-text-contact: #eeeeee
+    gauzy-text-contact: #eeeeee,
+    button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
   ),
   dark,
   dark
@@ -123,6 +131,8 @@ $nb-themes: nb-register-theme((
    slide-out-background: linear-gradient(270deg, #e0e0e0 0%, #ebebeb 100%),
    slide-out-shadow-color: 0 4px 14px 0 #ebebeb,
    slide-out-shadow-color-rtl: 0 4px 14px 0 #ebebeb,
+   button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
  ), material-light, material-light);
 
  $nb-themes: nb-register-theme((
@@ -145,6 +155,8 @@ $nb-themes: nb-register-theme((
    slide-out-background: linear-gradient(270deg, #1f1f1f 0%, #292929 100%),
    slide-out-shadow-color: 0 4px 14px 0 #292929,
    slide-out-shadow-color-rtl: 0 4px 14px 0 #292929,
+   button-filled-medium-padding:	0.4375rem 0.875rem,
+    button-outline-medium-padding: 0.4375rem 0.875rem,
  ), material-dark, material-dark);
 
  $nb-themes: nb-register-theme(

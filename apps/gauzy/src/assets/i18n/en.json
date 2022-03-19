@@ -1,5 +1,6 @@
 {
 	"BUTTONS": {
+    "PAY":"Pay",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
@@ -2449,6 +2450,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+    "SENDER":"Sender",
 		"BROWSE":"Browse",
 		"COMMENT":"Comment",
 		"COMMENTS":"Comments",

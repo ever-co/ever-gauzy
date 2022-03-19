@@ -26,6 +26,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -50,7 +51,8 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		TagsColorInputModule,
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
-		PaginationModule
+		PaginationModule,
+    GauzyButtonActionModule
 	],
 	declarations: [ExpensesComponent, ExpenseCategoriesComponent],
 	providers: [
