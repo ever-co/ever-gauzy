@@ -1,59 +1,83 @@
-<nb-card 
-	[nbSpinner]="loading" 
-	nbSpinnerStatus="primary" 
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title" fixed>
-		<div>
+	<nb-card-header class="card-custom-header" fixed>
+		<div class="card-header-title">
 			<h4>
 				<ngx-header-title>
 					{{ 'PROPOSALS_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
+      <ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
+        <button
+          nbButton
+          status="info"
+          class="action"
+          [routerLink]="['/pages/jobs/proposal-template']"
+          size="small"
+        >
+          <nb-icon
+            icon="file-text-outline"
+          ></nb-icon>
+          {{ 'BUTTONS.MANAGE_TEMPLATES' | translate | titlecase }}
+        </button>
+      </ng-template>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="statistics">
+			<h6>{{ 'PROPOSALS_PAGE.STATISTICS' | translate }}</h6>
+			<div class="custom-container">
+				<div>
+					<span
+						>{{
+							'PROPOSALS_PAGE.ACCEPTED_PROPOSALS' | translate
+						}}: </span
+					><span>{{ countAccepted }}</span>
+				</div>
+				<div>
+					<span
+						>{{ 'PROPOSALS_PAGE.TOTAL_PROPOSALS' | translate }}:
+					</span>
+					<span>{{ totalProposals }}</span>
+				</div>
+				<div>
+					<span
+						>{{ 'PROPOSALS_PAGE.SUCCESS_RATE' | translate }}:
+					</span>
+					<span>
+						{{ successRate }}
+					</span>
+				</div>
+			</div>
+		</div>
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[text]="'BUTTONS.ADD'"
+				[icon]="'plus-outline'"
+				[isDisable]="disableButton"
+				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+			>
+			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-card class="p-3">
-			<h6>{{ 'PROPOSALS_PAGE.STATISTICS' | translate }}</h6>
-			<div>
-				<span
-					>{{
-						'PROPOSALS_PAGE.ACCEPTED_PROPOSALS' | translate
-					}}: </span
-				><span>{{ countAccepted }}</span>
-			</div>
-			<div>
-				<span
-					>{{ 'PROPOSALS_PAGE.TOTAL_PROPOSALS' | translate }}:
-				</span>
-				<span>{{ totalProposals }}</span>
-			</div>
-			<div>
-				<span>{{ 'PROPOSALS_PAGE.SUCCESS_RATE' | translate }}: </span>
-				<span
-					><b>{{ successRate }}</b>
-				</span>
-			</div>
-		</nb-card>
-
-		<ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
+		<!-- <ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
 			<div class="mb-3">
-				<button 
-					nbButton 
-					status="success" 
+				<button
+					nbButton
+					status="success"
 					class="mr-2"
 					[routerLink]="['/pages/sales/proposals/register']"
 				>
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 					{{ 'BUTTONS.ADD' | translate }}
 				</button>
-				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+				<ng-container
+					*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+				>
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
 					></ng-container>
@@ -73,10 +97,9 @@
 					</button>
 				</ng-template>
 			</div>
-		</ng-template>
-
-		<ng-template 
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+		</ng-template> -->
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
@@ -89,7 +112,7 @@
 					#proposalsTable
 				>
 				</ng2-smart-table>
-			</div>			
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid-scroll-container">
@@ -100,17 +123,20 @@
 					[cardSize]="'big'"
 				></ga-card-grid>
 			</div>
-			<div 
+			<div
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 				class="pagination-container"
 			>
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-					<ga-pagination 
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
+					<ga-pagination
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
-						[totalItems]="pagination?.totalItems" 
-						[itemsPerPage]="pagination?.itemsPerPage" 
-						[activePage]="pagination?.activePage">
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
 					</ga-pagination>
 				</ng-container>
 			</div>
@@ -122,40 +148,52 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
+<div class="btn-group actions">
+  <ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
+		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="disableButton"
+			size="small"
+		>
+			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
 		<button
 			nbButton
 			(click)="details(selectedItem)"
-			status="info"
-			class="mr-2"
+			status="basic"
+			class="action primary"
 			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
+			size="small"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			<nb-icon icon="edit-outline"></nb-icon
 			>{{ 'BUTTONS.DETAILS' | translate }}
-		</button>
-		<button
-			nbButton
-			(click)="delete(selectedItem)"
-			status="danger"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-			>{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 		<ng-container
 			[ngTemplateOutlet]="statusButtonTemplate"
-			[ngTemplateOutletContext]="{ item: selectedProposal || selectedItem, buttonSize: buttonSize }"
+			[ngTemplateOutletContext]="{
+				item: selectedProposal || selectedItem,
+				buttonSize: buttonSize
+			}"
 		></ng-container>
+		<button
+			nbButton
+			(click)="delete(selectedItem)"
+			status="basic"
+			class="action"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
 	</ng-template>
+</div>
+
 </ng-template>
 
-<ng-template #statusButtonTemplate 
-	let-item="item"
-	let-buttonSize="buttonSize"
->
+<ng-template #statusButtonTemplate let-item="item" let-buttonSize="buttonSize">
 	<button
 		*ngIf="item?.status"
 		nbButton
@@ -164,12 +202,12 @@
 				? switchToAccepted(item)
 				: switchToSent(item)
 		"
-		[size]="buttonSize || 'medium'"
-		status="warning"
-		class="mr-2"
+		size="small"
+		status="basic"
+		class="action warning"
 		[disabled]="!item && disableButton"
 	>
-		<nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>
+		<nb-icon icon="done-all-outline"></nb-icon>
 		<span *ngIf="item?.status == proposalStatusEnum.ACCEPTED">{{
 			'BUTTONS.MARK_AS_SENT' | translate
 		}}</span>
