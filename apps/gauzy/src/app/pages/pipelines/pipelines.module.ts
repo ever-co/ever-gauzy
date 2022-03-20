@@ -32,6 +32,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { DealsService, PipelinesService } from '../../@core/services';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { StageComponent } from './stage/stage.component';
 
 @NgModule({
 	declarations: [
@@ -41,7 +42,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		PipelineDealsComponent,
 		PipelineFormComponent,
 		PipelinesComponent,
-		StageFormComponent
+		StageFormComponent,
+		StageComponent
 	],
 	exports: [
 		PipelineDealExcerptComponent,
@@ -76,7 +78,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		PaginationModule,
-    GauzyButtonActionModule
+		GauzyButtonActionModule
 	]
 })
 export class PipelinesModule {}
