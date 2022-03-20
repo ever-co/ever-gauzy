@@ -1,45 +1,31 @@
-<nb-card 
-	[nbSpinner]="loading" 
-	nbSpinnerStatus="primary" 
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
-			<h4> 
+			<h4>
 				<ngx-header-title [allowEmployee]="false">
 					{{ 'PIPELINES_PAGE.HEADER' | translate }}
-				</ngx-header-title> 
+				</ngx-header-title>
 			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[text]="'BUTTONS.ADD'"
+				[icon]="'plus-outline'"
+				[isDisable]="disableButton"
+				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+				(addOnClick)="createPipeline()"
+			>
+			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="btn-container mb-3">
-			<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
-				<button
-					(click)="createPipeline()"
-					style="cursor: pointer"
-					status="success"
-					type="button"
-					class="mr-2"
-					nbButton
-				>
-					<nb-icon icon="plus-outline" pack="eva"></nb-icon>
-					<span [innerHTML]="'BUTTONS.ADD' | translate"></span>
-				</button>
-			</ng-template>
-
-			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-				<ng-container 
-					*ngTemplateOutlet="actionButtons; context:{ selectedItem: pipeline }">
-				</ng-container>
-			</ng-container>
-
+		<!-- <div class="btn-container mb-3">
 			<input
 				[placeholder]="'FORM.FILTER' | translate"
 				[formControl]="inputControl"
@@ -47,10 +33,9 @@
 				type="text"
 				nbInput
 			/>
-		</div>
-
-		<ng-template 
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+		</div> -->
+		<ng-template
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
@@ -62,7 +47,7 @@
 					#pipelineTable
 				>
 				</ng2-smart-table>
-			</div>			
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid-scroll-container">
@@ -72,20 +57,21 @@
 					[buttonTemplate]="actionButtons"
 					[cardSize]="'big'"
 				></ga-card-grid>
-			</div>			
-			<div 
-				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID" 
+			</div>
+			<div
+				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 				class="pagination-container"
 			>
-				<ng-container 
+				<ng-container
 					*ngIf="pagination.totalItems > pagination.itemsPerPage"
 				>
-					<ga-pagination 
+					<ga-pagination
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
-						[totalItems]="pagination?.totalItems" 
-						[itemsPerPage]="pagination?.itemsPerPage" 
-						[activePage]="pagination?.activePage">
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
 					</ga-pagination>
 				</ng-container>
 			</div>
@@ -98,44 +84,47 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
-		<button
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-			(click)="editPipeline(selectedItem)"
-			style="cursor: pointer"
-			status="info"
-			type="button"
-			class="mr-2"
-			nbButton
-		>
-			<nb-icon icon="edit-outline" pack="eva"></nb-icon>
-			<span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
-		</button>
-		<button
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-			(click)="deletePipeline(selectedItem)"
-			style="cursor: pointer"
-			status="danger"
-			type="button"
-			class="mr-2"
-			nbButton
-		>
-			<nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
-			<span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
-		</button>
-	</ng-template>
-	<button
-		[disabled]="!selectedItem && disableButton"
-		(click)="viewDeals(selectedItem)"
-		status="basic"
-		type="button"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-		nbButton
-	>
-		<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-		<span> {{ 'PIPELINES_PAGE.VIEW_DEALS' | translate }} </span>
-	</button>
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
+			<button
+				[disabled]="!selectedItem && disableButton"
+				(click)="viewDeals(selectedItem)"
+				status="basic"
+				class="action secondary"
+				size="small"
+				nbButton
+			>
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				<span> {{ 'PIPELINES_PAGE.VIEW_DEALS' | translate }} </span>
+			</button>
+			<button
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+				(click)="editPipeline(selectedItem)"
+				style="cursor: pointer"
+				status="basic"
+				class="action primary"
+				nbButton
+			>
+				<nb-icon icon="edit-outline" pack="eva"></nb-icon>
+				<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+			</button>
+			<button
+				[disabled]="!selectedItem && disableButton"
+				(click)="deletePipeline(selectedItem)"
+				style="cursor: pointer"
+				status="basic"
+				class="action"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+				nbButton
+			>
+				<nb-icon
+					status="danger"
+					icon="trash-2-outline"
+					pack="eva"
+				></nb-icon>
+			</button>
+		</ng-template>
+	</div>
 </ng-template>
