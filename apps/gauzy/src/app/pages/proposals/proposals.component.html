@@ -11,20 +11,18 @@
 					{{ 'PROPOSALS_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
-      <ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
-        <button
-          nbButton
-          status="info"
-          class="action"
-          [routerLink]="['/pages/jobs/proposal-template']"
-          size="small"
-        >
-          <nb-icon
-            icon="file-text-outline"
-          ></nb-icon>
-          {{ 'BUTTONS.MANAGE_TEMPLATES' | translate | titlecase }}
-        </button>
-      </ng-template>
+			<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
+				<button
+					nbButton
+					status="info"
+					class="action"
+					[routerLink]="['/pages/jobs/proposal-template']"
+					size="small"
+				>
+					<nb-icon icon="file-text-outline"></nb-icon>
+					{{ 'BUTTONS.MANAGE_TEMPLATES' | translate | titlecase }}
+				</button>
+			</ng-template>
 		</div>
 		<div class="statistics">
 			<h6>{{ 'PROPOSALS_PAGE.STATISTICS' | translate }}</h6>
@@ -113,24 +111,13 @@
 				>
 				</ng2-smart-table>
 			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ga-card-grid
-					[settings]="smartTableSettings"
-					[source]="proposals"
-					[buttonTemplate]="actionButtons"
-					[cardSize]="'big'"
-				></ga-card-grid>
-			</div>
 			<div
-				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
+				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 				class="pagination-container"
 			>
-				<ng-container
-					*ngIf="pagination.totalItems > pagination.itemsPerPage"
-				>
+				<ng-container *ngIf="pagination.totalItems">
 					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
 						[totalItems]="pagination?.totalItems"
@@ -141,6 +128,21 @@
 				</ng-container>
 			</div>
 		</ng-template>
+		<ng-template #gridLayout>
+			<div *ngIf="pagination.totalItems">
+				<ga-card-grid
+					[settings]="smartTableSettings"
+					[source]="proposals"
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					(onSelectedItem)="selectProposal($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-card-grid>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template
@@ -148,49 +150,48 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-<div class="btn-group actions">
-  <ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			[disabled]="disableButton"
-			size="small"
-		>
-			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button
-			nbButton
-			(click)="details(selectedItem)"
-			status="basic"
-			class="action primary"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-		>
-			<nb-icon icon="edit-outline"></nb-icon
-			>{{ 'BUTTONS.DETAILS' | translate }}
-		</button>
-		<ng-container
-			[ngTemplateOutlet]="statusButtonTemplate"
-			[ngTemplateOutletContext]="{
-				item: selectedProposal || selectedItem,
-				buttonSize: buttonSize
-			}"
-		></ng-container>
-		<button
-			nbButton
-			(click)="delete(selectedItem)"
-			status="basic"
-			class="action"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
-	</ng-template>
-</div>
-
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
+			<button
+				nbButton
+				status="basic"
+				class="action secondary"
+				[disabled]="disableButton"
+				size="small"
+			>
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+			<button
+				nbButton
+				(click)="details(selectedItem)"
+				status="basic"
+				class="action primary"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+			>
+				<nb-icon icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.DETAILS' | translate }}
+			</button>
+			<ng-container
+				[ngTemplateOutlet]="statusButtonTemplate"
+				[ngTemplateOutletContext]="{
+					item: selectedProposal || selectedItem,
+					buttonSize: buttonSize
+				}"
+			></ng-container>
+			<button
+				nbButton
+				(click)="delete(selectedItem)"
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
+	</div>
 </ng-template>
 
 <ng-template #statusButtonTemplate let-item="item" let-buttonSize="buttonSize">
