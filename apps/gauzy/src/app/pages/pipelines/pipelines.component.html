@@ -40,6 +40,7 @@
 		>
 			<div class="table-scroll-container">
 				<ng2-smart-table
+					class="tags-table"
 					(userRowSelect)="selectPipeline($event)"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
@@ -48,23 +49,8 @@
 				>
 				</ng2-smart-table>
 			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ga-card-grid
-					[settings]="smartTableSettings"
-					[source]="pipelines"
-					[buttonTemplate]="actionButtons"
-					[cardSize]="'big'"
-				></ga-card-grid>
-			</div>
-			<div
-				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
-				class="pagination-container"
-			>
-				<ng-container
-					*ngIf="pagination.totalItems > pagination.itemsPerPage"
-				>
+			<div class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems">
 					<ga-pagination
 						(selectedPage)="onPageChange($event)"
 						[doEmit]="false"
@@ -75,6 +61,19 @@
 					</ga-pagination>
 				</ng-container>
 			</div>
+		</ng-template>
+		<ng-template #gridLayout>
+				<ga-card-grid
+					[settings]="smartTableSettings"
+					[source]="pipelines"
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					(onSelectedItem)="selectPipeline($event)"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+				></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

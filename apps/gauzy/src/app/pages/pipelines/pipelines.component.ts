@@ -130,6 +130,9 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 	private _loadSmartTableSettings() {
 		this.smartTableSettings = {
+      pager: {
+				display: false
+			},
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
 			columns: {
@@ -223,16 +226,22 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	async getPipelines() {
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
+			) {
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 
 				await this.smartTableSource.getElements();
 				this.pipelines = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
@@ -350,6 +359,11 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			this.pipelineTable.grid.dataSet['willSelect'] = 'false';
 			this.pipelineTable.grid.dataSet.deselectAll();
 		}
+	}
+
+  onUpdateOption($event: number) {
+		this.pagination.itemsPerPage = $event;
+		this.getPipelines();
 	}
 
 	ngOnDestroy(): void {
