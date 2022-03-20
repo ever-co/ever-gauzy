@@ -38,8 +38,8 @@ import { ITag } from '../../../../../../packages/contracts/dist/tag-entity.model
 })
 export class ProposalsComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	proposalsTable: Ng2SmartTableComponent;
 	@ViewChild('proposalsTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -74,7 +74,7 @@ export class ProposalsComponent
 		private readonly dialogService: NbDialogService,
 		private readonly errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService,
-		private readonly httpClient: HttpClient,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -86,7 +86,7 @@ export class ProposalsComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.clearItem()),
 				tap(() => this.getProposals()),
 				untilDestroyed(this)
@@ -118,7 +118,10 @@ export class ProposalsComponent
 		const { employeeId } = this.store.user;
 		if (employeeId) {
 			delete this.smartTableSettings['columns']['author'];
-			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+			this.smartTableSettings = Object.assign(
+				{},
+				this.smartTableSettings
+			);
 		}
 	}
 
@@ -127,8 +130,14 @@ export class ProposalsComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -155,7 +164,10 @@ export class ProposalsComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate([ `/pages/sales/proposals/details`, this.selectedProposal.id]);
+		this.router.navigate([
+			`/pages/sales/proposals/details`,
+			this.selectedProposal.id
+		]);
 	}
 
 	delete(selectedItem?: IProposal) {
@@ -179,7 +191,9 @@ export class ProposalsComponent
 							this.selectedProposal.id
 						);
 						this.subject$.next(true);
-						this.toastrService.success('NOTES.PROPOSALS.DELETE_PROPOSAL');
+						this.toastrService.success(
+							'NOTES.PROPOSALS.DELETE_PROPOSAL'
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -244,7 +258,9 @@ export class ProposalsComponent
 							{ status: ProposalStatusEnum.SENT, tenantId }
 						);
 						this.subject$.next(true);
-						this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_SENT');
+						this.toastrService.success(
+							'NOTES.PROPOSALS.PROPOSAL_SENT'
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -265,12 +281,15 @@ export class ProposalsComponent
 			text: cell,
 			class: badgeClass
 		};
-	}
+	};
 
 	private _loadSettingsSmartTable() {
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
+			pager: {
+				display: false
+			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA_MESSAGE'),
 			columns: {
 				valueDate: {
@@ -342,26 +361,26 @@ export class ProposalsComponent
 				}
 			}
 		};
-    if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 			this.smartTableSettings['columns']['tags'] = {
 				title: this.getTranslation('SM_TABLE.TAGS'),
 				type: 'custom',
-					width: '20%',
-					class: 'align-row',
-					renderComponent: TagsOnlyComponent,
-					filter: {
-						type: 'custom',
-						component: TagsColorFilterComponent
-					},
-					filterFunction: (tags: ITag[]) => {
-						const tagIds = [];
-						for (const tag of tags) {
-							tagIds.push(tag.id);
-						}
-						this.setFilter({ field: 'tags', search: tagIds });
-					},
-					sort: false
-        }
+				width: '20%',
+				class: 'align-row',
+				renderComponent: TagsOnlyComponent,
+				filter: {
+					type: 'custom',
+					component: TagsColorFilterComponent
+				},
+				filterFunction: (tags: ITag[]) => {
+					const tagIds = [];
+					for (const tag of tags) {
+						tagIds.push(tag.id);
+					}
+					this.setFilter({ field: 'tags', search: tagIds });
+				},
+				sort: false
+			};
 		}
 	}
 
@@ -371,8 +390,8 @@ export class ProposalsComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
@@ -383,7 +402,9 @@ export class ProposalsComponent
 			delete this.smartTableSettings['columns']['author'];
 		}
 		if (moment(this.selectedDate).isValid()) {
-			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
+			request['valueDate'] = moment(this.selectedDate).format(
+				'YYYY-MM-DD HH:mm:ss'
+			);
 		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/proposal/pagination`,
@@ -395,7 +416,7 @@ export class ProposalsComponent
 				'organizationContact'
 			],
 			join: {
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				...{ organizationId, tenantId },
@@ -413,7 +434,7 @@ export class ProposalsComponent
 	}
 
 	private calculateStatistics() {
-		this.countAccepted = 0
+		this.countAccepted = 0;
 		const proposals = this.smartTableSource.getData();
 		for (const proposal of proposals) {
 			if (proposal.status === ProposalStatusEnum.ACCEPTED) {
@@ -423,7 +444,9 @@ export class ProposalsComponent
 
 		this.totalProposals = this.smartTableSource.count();
 		if (this.totalProposals) {
-			this.successRate = ((this.countAccepted / this.totalProposals) * 100).toFixed(0) + ' %';
+			this.successRate =
+				((this.countAccepted / this.totalProposals) * 100).toFixed(0) +
+				' %';
 		} else {
 			this.successRate = '0 %';
 		}
@@ -433,8 +456,11 @@ export class ProposalsComponent
 		return {
 			id: i.id,
 			valueDate: i.valueDate,
-			jobPostUrl: i.jobPostUrl ?
-				'<a href="' + i.jobPostUrl +`" target="_blank">${i.jobPostUrl}</a>`: '',
+			jobPostUrl: i.jobPostUrl
+				? '<a href="' +
+				  i.jobPostUrl +
+				  `" target="_blank">${i.jobPostUrl}</a>`
+				: '',
 			jobTitle: i.jobPostContent
 				.toString()
 				.replace(/<[^>]*(>|$)|&nbsp;/g, '')
@@ -446,19 +472,27 @@ export class ProposalsComponent
 			tags: i.tags,
 			status: i.status,
 			statusBadge: this.statusMapper(i.status),
-			author: i.employee ? i.employee.user ? i.employee.user : '' : '',
-			organizationContact: i.organizationContact ? i.organizationContact : null,
+			author: i.employee ? (i.employee.user ? i.employee.user : '') : '',
+			organizationContact: i.organizationContact
+				? i.organizationContact
+				: null
 		};
-	}
+	};
 
 	private async getProposals() {
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
+			) {
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 				this.smartTableSource.setSort(
 					[{ field: 'valueDate', direction: 'desc' }],
 					false
@@ -468,7 +502,7 @@ export class ProposalsComponent
 				this.proposals = this.smartTableSource.getData();
 
 				const count = this.smartTableSource.count();
-				this.pagination['totalItems'] =  count;
+				this.pagination['totalItems'] = count;
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -503,6 +537,11 @@ export class ProposalsComponent
 			this.proposalsTable.grid.dataSet['willSelect'] = 'false';
 			this.proposalsTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	onUpdateOption($event: number) {
+		this.pagination.itemsPerPage = $event;
+		this.getProposals();
 	}
 
 	ngOnDestroy() {}
