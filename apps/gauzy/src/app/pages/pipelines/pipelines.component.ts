@@ -18,6 +18,7 @@ import { InputFilterComponent } from '../../@shared/table-filters/input-filter.c
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { StageComponent } from './stage/stage.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -154,12 +155,18 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 						this.setFilter({ field: 'description', search: value });
 					}
 				},
+        stages: {
+          title: this.getTranslation('SM_TABLE.STAGE'),
+					type: 'custom',
+					filter: false,
+          renderComponent: StageComponent
+        },
 				status: {
 					filter: false,
 					editor: false,
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					width: '15%',
+					width: '10%',
 					renderComponent: StatusBadgeComponent
 				}
 			}
@@ -176,7 +183,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
