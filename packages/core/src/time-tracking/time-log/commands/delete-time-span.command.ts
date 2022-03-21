@@ -1,12 +1,13 @@
 import { ICommand } from '@nestjs/cqrs';
-import { TimeLog } from './../time-log.entity';
-import { IDateRange } from '@gauzy/contracts';
+import { IDateRange, ITimeSlot } from '@gauzy/contracts';
+import { TimeLog } from '../time-log.entity';
 
 export class DeleteTimeSpanCommand implements ICommand {
 	static readonly type = '[TimeLog] delete time span';
 
 	constructor(
 		public readonly newTime: IDateRange,
-		public readonly timeLog: TimeLog
+		public readonly timeLog: TimeLog,
+		public readonly timeSlot: ITimeSlot
 	) {}
 }

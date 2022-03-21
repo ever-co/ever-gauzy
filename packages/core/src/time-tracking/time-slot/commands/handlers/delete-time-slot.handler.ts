@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
@@ -19,7 +19,8 @@ export class DeleteTimeSlotHandler
 	) {}
 
 	public async execute(command: DeleteTimeSlotCommand): Promise<boolean> {
-		const { ids } = command;
+		const { query } = command;
+		const ids: string | string[] = query.ids;
 		if (isEmpty(ids)) {
 			throw new NotAcceptableException('You can not delete time slots');
 		}
@@ -35,12 +36,15 @@ export class DeleteTimeSlotHandler
 		}
 
 		const tenantId = RequestContext.currentTenantId();
+		const { organizationId } = query;
+
 		for await (const id of Object.values(ids)) {
-			const timeSlots = await this.timeSlotRepository.find({
+			const timeSlots: ITimeSlot[] = await this.timeSlotRepository.find({
 				where: (query: SelectQueryBuilder<TimeSlot>) => {
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => { 
 							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 							qb.andWhere(`"${query.alias}"."id" = :id`, { id });
 						})
 					);
@@ -69,7 +73,8 @@ export class DeleteTimeSlotHandler
 										start: timeSlot.startedAt,
 										end: timeSlot.stoppedAt
 									},
-									timeLog
+									timeLog,
+									timeSlot
 								)
 							);
 						}

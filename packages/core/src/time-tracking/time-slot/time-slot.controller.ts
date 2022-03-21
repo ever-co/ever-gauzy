@@ -95,9 +95,11 @@ export class TimeSlotController {
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@UsePipes(new ValidationPipe({ transform: true }))
 	@Delete('/')
-	async deleteTimeSlot(@Query() { ids }: DeleteTimeSlotDTO) {
+	async deleteTimeSlot(
+		@Query() query: DeleteTimeSlotDTO
+	) {
 		return await this.commandBus.execute(
-			new DeleteTimeSlotCommand(ids)
+			new DeleteTimeSlotCommand(query)
 		);
 	}
 }

@@ -19,7 +19,9 @@ export class TimeSlotRangeDeleteHandler
 		command: TimeSlotRangeDeleteCommand
 	): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
-		const { organizationId, employeeId, start, stop, timeLog } = command;
+
+		const { input, forceDirectDelete } = command;
+		const { organizationId, employeeId, start, stop, timeLog, timeSlot } = input;
 
 		let startMinute = moment(start).utc().get('minute');
 		startMinute = startMinute - (startMinute % 10);
@@ -43,6 +45,7 @@ export class TimeSlotRangeDeleteHandler
 			mStart,
 			mEnd
 		);
+		console.log({ startDate, endDate });
 		const timeSlots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
@@ -58,15 +61,27 @@ export class TimeSlotRangeDeleteHandler
 				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
+				if (timeSlot) {
+					const { id: timeSlotId } = timeSlot;
+					qb.andWhere(`"${qb.alias}"."id" = :timeSlotId`, {
+						timeSlotId
+					});
+				}
+				console.log('Time Slots Delete Range Query', qb.getQueryAndParameters());
 			},
 			relations: ['screenshots', 'timeLogs']
 		});
-		for await (const timeSlot of timeSlots) {
-			const { timeLogs } = timeSlot;
-			if (timeLogs.length === 1) {
-				const [ firstTimeLog ] = timeLogs;
-				if (firstTimeLog.id === timeLog.id) {
-					await this.timeSlotRepository.remove(timeSlot);
+		console.log({ timeSlots }, 'Time Slots Delete Range');
+		if (forceDirectDelete) {
+			await this.timeSlotRepository.remove(timeSlots);
+		} else {
+			for await (const timeSlot of timeSlots) {
+				const { timeLogs } = timeSlot;
+				if (timeLogs.length === 1) {
+					const [ firstTimeLog ] = timeLogs;
+					if (firstTimeLog.id === timeLog.id) {
+						await this.timeSlotRepository.remove(timeSlot);
+					}
 				}
 			}
 		}

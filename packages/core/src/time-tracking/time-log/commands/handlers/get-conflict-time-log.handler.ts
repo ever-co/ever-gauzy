@@ -30,6 +30,7 @@ export class GetConflictTimeLogHandler
 		let conflictQuery = this.timeLogRepository.createQueryBuilder();
 
 		conflictQuery = conflictQuery
+			.innerJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
 			.where(`"${conflictQuery.alias}"."employeeId" = :employeeId`, { employeeId })
 			.andWhere(`"${conflictQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 			.andWhere(`"${conflictQuery.alias}"."organizationId" = :organizationId`, { organizationId })

@@ -29,7 +29,7 @@ export class DeleteTimeSpanHandler
 	) {}
 
 	public async execute(command: DeleteTimeSpanCommand) {
-		const { newTime, timeLog } = command;
+		const { newTime, timeLog, timeSlot } = command;
 		const { id } = timeLog;
 		const { start, end } = newTime;
 
@@ -50,12 +50,14 @@ export class DeleteTimeSpanHandler
 			 */
 			if (employeeId && start && end) {
 				await this.commandBus.execute(
-					new TimeSlotRangeDeleteCommand(
+					new TimeSlotRangeDeleteCommand({
 						organizationId,
 						employeeId,
 						start,
-						end
-					)
+						end,
+						refreshTimeLog,
+						timeSlot
+					}, true)
 				);
 				await this.commandBus.execute(
 					new TimesheetRecalculateCommand(timesheetId)
@@ -86,7 +88,7 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time				DB Stop Time
 				 *  		|--------------------------------------|
 				 */
-				console.log('Delete time log because overlap entire time.')
+				console.log('Delete time log because overlap entire time.', { timeLog })
 				try {
 					await this.commandBus.execute(
 						new TimeLogDeleteCommand(timeLog, true)
@@ -109,7 +111,7 @@ export class DeleteTimeSpanHandler
 				if (remainingDuration > 0) {
 					try {
 						console.log('Update startedAt time.');
-						await this.commandBus.execute(
+						const updatedTimeLog = await this.commandBus.execute(
 							new TimeLogUpdateCommand(
 								{
 									startedAt: end
@@ -119,12 +121,14 @@ export class DeleteTimeSpanHandler
 							)
 						);
 						await this.commandBus.execute(
-							new TimeSlotRangeDeleteCommand(
+							new TimeSlotRangeDeleteCommand({
 								organizationId,
 								employeeId,
 								start,
-								end
-							)
+								end,
+								updatedTimeLog,
+								timeSlot
+							}, true)
 						);
 					} catch (error) {
 						console.log('Error while, updating startedAt time', error);
@@ -166,7 +170,7 @@ export class DeleteTimeSpanHandler
 				if (remainingDuration > 0) {
 					console.log('Update stoppedAt time.');
 					try {
-						await this.commandBus.execute(
+						const updatedTimeLog = await this.commandBus.execute(
 							new TimeLogUpdateCommand(
 								{
 									stoppedAt: start
@@ -176,12 +180,14 @@ export class DeleteTimeSpanHandler
 							)
 						);
 						await this.commandBus.execute(
-							new TimeSlotRangeDeleteCommand(
+							new TimeSlotRangeDeleteCommand({
 								organizationId,
 								employeeId,
 								start,
-								end
-							)
+								end,
+								updatedTimeLog,
+								timeSlot
+							}, true)
 						);
 					} catch (error) {
 						console.log('Error while, updating stoppedAt time', error);
@@ -238,12 +244,14 @@ export class DeleteTimeSpanHandler
 						}
 					}
 					await this.commandBus.execute(
-						new TimeSlotRangeDeleteCommand(
+						new TimeSlotRangeDeleteCommand({
 							organizationId,
 							employeeId,
 							start,
-							end
-						)
+							end,
+							timeLog,
+							timeSlot
+						}, true)
 					);
 				} catch (error) {
 					console.error(`Error while split time entires: ${remainingDuration}`);

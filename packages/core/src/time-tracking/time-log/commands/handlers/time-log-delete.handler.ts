@@ -7,6 +7,7 @@ import { TimesheetRecalculateCommand } from './../../../timesheet/commands/times
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { TimeSlotRangeDeleteCommand } from './../../../time-slot/commands';
+import moment from 'moment';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler
@@ -39,13 +40,13 @@ export class TimeLogDeleteHandler
 		for await (const timeLog of timeLogs) {
 			const { employeeId, startedAt, stoppedAt, organizationId } = timeLog;
 			await this.commandBus.execute(
-				new TimeSlotRangeDeleteCommand(
+				new TimeSlotRangeDeleteCommand({
 					organizationId,
 					employeeId,
 					startedAt,
 					stoppedAt,
 					timeLog
-				)
+				})
 			);
 		}
 

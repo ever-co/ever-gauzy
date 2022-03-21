@@ -1,8 +1,9 @@
+import { IDeleteTimeLog } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsBoolean, IsNotEmpty, IsOptional } from "class-validator";
 import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 
-export class DeleteTimeLogDTO extends TenantOrganizationBaseDTO {
+export class DeleteTimeLogDTO extends TenantOrganizationBaseDTO implements IDeleteTimeLog {
 
 	@ApiProperty({ type: () => Array })
 	@IsNotEmpty({
