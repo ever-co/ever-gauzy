@@ -2,6 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
+import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
 import { TimeSlotRangeDeleteCommand } from '../time-slot-range-delete.command';
 import { RequestContext } from './../../../../core/context';
@@ -21,7 +22,7 @@ export class TimeSlotRangeDeleteHandler
 		const tenantId = RequestContext.currentTenantId();
 
 		const { input, forceDirectDelete } = command;
-		const { organizationId, employeeId, start, stop, timeLog, timeSlot } = input;
+		const { organizationId, employeeId, start, stop, timeLog, timeSlotsIds = [] } = input;
 
 		let startMinute = moment(start).utc().get('minute');
 		startMinute = startMinute - (startMinute % 10);
@@ -48,10 +49,16 @@ export class TimeSlotRangeDeleteHandler
 		console.log({ startDate, endDate });
 		const timeSlots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
-				qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
-					startDate,
-					endDate
-				});
+				if (isNotEmpty(timeSlotsIds)) {
+					qb.andWhere(`"${qb.alias}"."id" IN (:...timeSlotsIds)`, {
+						timeSlotsIds
+					});
+				} else {
+					qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
+						startDate,
+						endDate
+					});
+				}
 				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
@@ -61,30 +68,29 @@ export class TimeSlotRangeDeleteHandler
 				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
-				if (timeSlot) {
-					const { id: timeSlotId } = timeSlot;
-					qb.andWhere(`"${qb.alias}"."id" = :timeSlotId`, {
-						timeSlotId
-					});
-				}
 				console.log('Time Slots Delete Range Query', qb.getQueryAndParameters());
 			},
 			relations: ['screenshots', 'timeLogs']
 		});
 		console.log({ timeSlots }, 'Time Slots Delete Range');
-		if (forceDirectDelete) {
-			await this.timeSlotRepository.remove(timeSlots);
-		} else {
-			for await (const timeSlot of timeSlots) {
-				const { timeLogs } = timeSlot;
-				if (timeLogs.length === 1) {
-					const [ firstTimeLog ] = timeLogs;
-					if (firstTimeLog.id === timeLog.id) {
-						await this.timeSlotRepository.remove(timeSlot);
+
+		if (isNotEmpty(timeSlots)) {
+			if (forceDirectDelete) {
+				await this.timeSlotRepository.remove(timeSlots);
+				return true;
+			} else {
+				for await (const timeSlot of timeSlots) {
+					const { timeLogs } = timeSlot;
+					if (timeLogs.length === 1) {
+						const [ firstTimeLog ] = timeLogs;
+						if (firstTimeLog.id === timeLog.id) {
+							await this.timeSlotRepository.remove(timeSlot);
+						}
 					}
 				}
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 }
