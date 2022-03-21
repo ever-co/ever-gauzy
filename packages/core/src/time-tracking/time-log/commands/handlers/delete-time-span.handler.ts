@@ -55,7 +55,7 @@ export class DeleteTimeSpanHandler
 						employeeId,
 						start,
 						end,
-						refreshTimeLog,
+						timeLog: refreshTimeLog,
 						timeSlot
 					}, true)
 				);
@@ -126,7 +126,7 @@ export class DeleteTimeSpanHandler
 								employeeId,
 								start,
 								end,
-								updatedTimeLog,
+								timeLog: updatedTimeLog,
 								timeSlot
 							}, true)
 						);
@@ -185,7 +185,7 @@ export class DeleteTimeSpanHandler
 								employeeId,
 								start,
 								end,
-								updatedTimeLog,
+								timeLog: updatedTimeLog,
 								timeSlot
 							}, true)
 						);
