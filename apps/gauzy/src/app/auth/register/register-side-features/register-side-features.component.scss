@@ -4,48 +4,39 @@
 .main-section {
   background: linear-gradient(to bottom, nb-theme(color-primary-400), nb-theme(color-primary-600));
   width: 100%;
-  height: 90%;
-  border-radius: 10px;
-  padding: 20px;
+  height: 100%;
+  border-radius: 12px;
+  padding: 20px 20px 40px;
+}
+.main-header {
+  color: nb-theme(text-alternate-color);
+  font-family: Inter;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 22px;
+  letter-spacing: -0.009em;
+  text-align: left;
+  margin-bottom: 39px;
+}
+.feature-wrapper {
+  width: 100%;
+}
+.small-hr-div {
+  width: 220px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+.hidden {
+  display: none;
+}
 
-  @include smallLaptopScreen {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-  }
-  @include mobileScreen {
-    height: auto;
-    padding-right: 30px;
-    padding-left: 30px;
-  }
-
-  & .main-header {
-    color: nb-theme(text-alternate-color);
-    margin-bottom: 30px;
-
-    @include mobileScreen {
-      font-size: 18px;
-      margin-bottom: 20px;
-      padding-left: 5px;
-    }
-  }
-
-  & .feature-wrapper {
+@include tablet-screen {
+  .small-hr-div {
     width: 100%;
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-
-    @include smallLaptopScreen {
-      margin-bottom: 30px;
-    }
-
-    @include mobileScreen {
-      margin-bottom: 15px;
-    }
-
-    &:last-of-type {
-      border-bottom: none;
-    }
   }
 }

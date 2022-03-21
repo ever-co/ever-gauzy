@@ -1,5 +1,5 @@
-import { Component } from '@angular/core'
-import { featureIntF } from "../interfaces"
+import { Component } from '@angular/core';
+import { IRegisterSideFeature } from "@gauzy/contracts";
 
 
 @Component({
@@ -8,7 +8,7 @@ import { featureIntF } from "../interfaces"
   styleUrls: ['./register-side-features.component.scss'],
 })
 export class NgxRegisterSideFeaturesComponent {
-  featuresData: featureIntF[] = [{
+  featuresData: IRegisterSideFeature[] = [{
     icon: 'cube-outline',
     heading: 'New CRM',
     description: 'Now you can read latest features changelog directly in Gauzy',
@@ -22,7 +22,7 @@ export class NgxRegisterSideFeaturesComponent {
     icon: 'flash-outline',
     heading: 'Visit our website',
     description: 'You are welcome to check more information about the platform at our official website.',
-  }]
+  }];
 
   constructor () {}
 }

@@ -4,11 +4,10 @@
       <img src="/assets/images/logos/logo_Gauzy.svg" alt="gauzy logo">
       <ngx-theme-switch class="theme-switch"></ngx-theme-switch>
     </div>
-
     <div class="title-wrapper">
       <h1 id="title" class="title">Register</h1>
     </div>
-
+    <div class="hr-div-strong"></div>
     <nb-alert
       *ngIf="showMessages.error && errors?.length && !submitted"
       outline="danger"
@@ -19,7 +18,6 @@
         <li *ngFor="let error of errors" class="alert-message">{{ error }}</li>
       </ul>
     </nb-alert>
-
     <nb-alert
       *ngIf="showMessages.success && messages?.length && !submitted"
       outline="success"
@@ -33,7 +31,7 @@
       </ul>
     </nb-alert>
 
-    <form (ngSubmit)="register()" #form="ngForm" aria-labelledby="title">
+    <form (ngSubmit)="register()" #form="ngForm" aria-labelledby="title" class="form">
       <div class="form-control-group">
         <label class="label" for="input-name">Full name:</label>
         <input
@@ -211,9 +209,7 @@
           <p
             class="caption status-danger"
             *ngIf="
-					password.value != rePass.value && !rePass.errors?.required
-				"
-          >
+					password.value != rePass.value && !rePass.errors?.required">
             Password does not match the confirm password.
           </p>
         </ng-container>
@@ -221,8 +217,7 @@
 
       <div
         class="form-control-group accept-group"
-        *ngIf="getConfigValue('forms.register.terms')"
-      >
+        *ngIf="getConfigValue('forms.register.terms')">
         <nb-checkbox
           name="terms"
           [(ngModel)]="user.terms"
@@ -252,7 +247,7 @@
         </button>
       </div>
     </form>
-
+    <div class="hr-div-soft"></div>
     <section
       *ngIf="socialLinks && socialLinks.length > 0"
       class="links"
@@ -288,7 +283,7 @@
         </ng-container>
       </div>
     </section>
-
+    <div class="hr-div-soft"></div>
     <section class="another-action" aria-label="Sign in">
       Already have an account?
       <a class="text-link" routerLink="../login">Log in</a>

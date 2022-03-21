@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { Component } from '@angular/core';
 
 
 @Component({
@@ -7,9 +7,9 @@ import { Component } from '@angular/core'
   styleUrls: ['./theme-switch.component.scss'],
 })
 export class NgxThemeSwitchComponent {
-  theme: string = 'dark'
+  theme: string = 'dark';
 
   changeTheme () {
-    this.theme = this.theme === 'dark' ? 'light' : 'dark'
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
   }
 }

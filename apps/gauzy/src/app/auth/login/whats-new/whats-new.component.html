@@ -3,10 +3,10 @@
     <h3 class="main-header">What's New?</h3>
     <div *ngFor="let entry of dataMock" class="entry">
       <div class="entry-headings-wrapper">
-        <span class="icon">Icon</span>
+        <nb-icon icon="globe-outline" class="icon"></nb-icon>
         <div class="entry-headings">
           <div class="entry-header">Entry Header</div>
-          <div *ngIf="showDate">Jan 16.2022</div>
+          <div *ngIf="showDate" class="entry-header-date">Jan 16, 2022</div>
         </div>
       </div>
       <p class="paragraph">

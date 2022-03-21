@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core'
-import { featureIntF } from "../../interfaces"
+import { Component, Input } from '@angular/core';
+import { IRegisterSideFeature } from "@gauzy/contracts";
 
 
 @Component({
@@ -10,5 +10,5 @@ import { featureIntF } from "../../interfaces"
 export class NgxRegisterSideSingleFeatureComponent {
   constructor () {}
 
-  @Input() feature: featureIntF | null = null
+  @Input() feature: IRegisterSideFeature | null = null;
 }

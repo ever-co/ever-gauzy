@@ -1,214 +1,117 @@
 @import "themes";
 @import "../reusable";
 
-.login-main-section {
+.login-container {
+  width: 765px;
+  position: relative;
   display: flex;
-  justify-content: center;
-  width: 100%;
-
-  & .login-inner-wrapper {
-    display: flex;
-    justify-content: center;
-    width: 1000px;
-
-    @include smallLaptopScreen {
-      width: 100%;
+  justify-content: space-between;
+  & .login-wrapper {
+    background: nb-theme(color-basic-200);
+    border-radius: 10px;
+    box-sizing: border-box;
+    padding: 30px;
+    width: 476px;
+    height: 100%;
+    & > * {
+      padding-left: 15px;
+      padding-right: 15px;
     }
-
-    & .login-container {
-      width: 100%;
-      position: relative;
+    & .svg-wrapper {
       display: flex;
       justify-content: space-between;
 
-      @include tabletScreen {
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-      }
-
-      @include mobileScreen {
-        width: 100%;
-      }
-
-      & .login-wrapper {
-        background: nb-theme(color-basic-200);
-        border-radius: 10px;
-        box-sizing: border-box;
-        padding: 40px 40px;
-        width: 60%;
-
-        @include tabletScreen {
-          width: 80%;
-          margin-bottom: 30px;
-        }
-
-        @include mobileScreen {
-          width: 100%;
-          padding: 20px;
-        }
-
-        & .svg-wrapper {
-          display: flex;
-          justify-content: space-between;
-        }
-
-        & .headings {
-          display: flex;
-          justify-content: space-between;
-          position: relative;
-
-          @include smallLaptopScreen {
-            flex-direction: column;
-            height: 150px;
-          }
-
-          @include mobileScreen {
-            flex-direction: column;
-          }
-
-          & .headings-inner {
-            //position: absolute;
-            //top: 0;
-            //left: 50%;
-            //transform: translate(-50%);
-
-            & * {
-              @include mobileScreen {
-                text-align: center;
-              }
-            }
-          }
-        }
-      }
-
-      & .features-wrapper {
-        width: 35%;
-
-        @include tabletScreen {
-          width: 70%;
-        }
-
-        @include mobileScreen {
-          width: 100%;
-        }
-      }
-
       & .ever-logo-svg {
-        width: 180px;
-        margin-bottom: 40px;
-      }
-
-      & .title, .sub-title {
-        text-align: start;
-
-      }
-
-      & .title {
-        font-size: 28px;
-      }
-
-      & .sub-title {
-        margin-bottom: 20px;
-      }
-
-      & form {
-        border-top: 1px solid #e1e1e1;
-        border-bottom: 1px solid #eeeeee;
-        padding: 30px 10px;
-        width: 105%;
-        margin-left: -2.5%;
-
-        @include mobileScreen {
-          padding-bottom: 15px;
-        }
-
-        & .form-control-group {
-          @include mobileScreen {
-            margin-bottom: 20px;
-          }
-        }
-
-        & .submit-btn-wrapper {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-
-          @include tabletScreen {
-            flex-direction: column;
-            align-items: flex-end;
-          }
-
-          @include mobileScreen {
-            align-items: center;
-          }
-
-          & .forgot-password {
-            color: $button-color;
-            font-size: 16px;
-
-            @include smallLaptopScreen {
-              font-size: 14px;
-            }
-            @include tabletScreen {
-              order: 2;
-              //font-size: 14px;
-            }
-            @include mobileScreen {
-              display: none;
-            }
-          }
-
-          & .forgot-password-big {
-            display: block;
-
-            @include tabletScreen {
-              display: none;
-            }
-          }
-
-          & .forgot-password-small {
-            display: none;
-
-            @include tabletScreen {
-              display: block;
-            }
-          }
-
-          & .submit-inner-wrapper {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-
-          }
-
-
-          & .submit-btn {
-            @include submitBtn;
-
-            @include tabletScreen {
-              order: 1;
-              margin-bottom: 15px;
-            }
-          }
-        }
-
-        & .accept-group {
-          @include mobileScreen {
-            display: flex;
-            justify-content: center;
-          }
-        }
-      }
-
-      & .links {
-        @include socialLinksStyle;
-      }
-
-      & .another-action {
-        @include anotherAction;
+        margin-bottom: 57px;
       }
     }
+    & .headings {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      & .headings-inner {
+        & .title {
+          font-family: Inter;
+          font-size: 24px;
+          font-style: normal;
+          font-weight: 700;
+          line-height: 30px;
+          letter-spacing: 0em;
+          margin-bottom: 18px;
+          text-align: start;
+        }
+        & .sub-title {
+          font-family: Inter;
+          font-size: 14px;
+          font-style: normal;
+          font-weight: 400;
+          line-height: 11px;
+          letter-spacing: 0em;
+          margin-bottom: 26px;
+          text-align: start;
+        }
+      }
+    }
+    & .hr-div-strong {
+      @include hr-div-strong;
+    }
+    & .hr-div-soft {
+      @include hr-div-soft;
+    }
+  }
+  & form {
+    margin-top: 29px;
+    margin-bottom: 42px;
+    & .submit-btn-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      & .forgot-password {
+        color: $button-color;
+        font-family: Inter;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 17px;
+        letter-spacing: -0.01em;
+        text-align: left;
+        @include mobile-screen {
+          display: none;
+        }
+      }
+      & .forgot-password-big {
+        display: block;
+        @include mobile-screen {
+          display: none;
+        }
+      }
+      & .forgot-password-small {
+        display: none;
+      }
+      & .submit-inner-wrapper {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      & .submit-btn {
+        @include submit-btn;
+        padding: 13px 59px;
+      }
+    }
+    & .accept-group {
+      margin-bottom: 20px;
+      @include mobile-screen {
+        display: flex;
+        justify-content: center;
+      }
+    }
+  }
+  & .links {
+    margin-top: 21px;
+    @include social-links-style;
+  }
+  & .another-action {
+    @include another-action;
   }
 }
 
@@ -217,36 +120,18 @@
   position: absolute;
   top: 0;
   right: 0;
-
   & * {
-    z-index: 2;
+    z-index: 6;
   }
-
-  @include smallLaptopScreen {
-    top: initial;
-  }
-
-  @include mobileScreen {
-    left: 50%;
-    transform: translate(-50%);
-  }
-
   &, .demo-credentials-select-item {
     border-radius: 30px;
     box-sizing: border-box;
   }
-
   & .demo-credentials-select-item {
     width: 200px;
-    padding: 5px;
     position: relative;
     z-index: 5;
-
-    @include mobileScreen {
-      width: auto;
-    }
   }
-
   & .demo-credentials-header {
     padding: 5px;
     padding-left: 15px;
@@ -254,9 +139,8 @@
     display: flex;
     justify-content: space-between;
     width: 100%;
-
     & .demo-text-span {
-      @include mobileScreen {
+      @include mobile-screen {
         display: none;
       }
     }
@@ -264,57 +148,176 @@
 }
 
 .theme-switch {
-  @include notMobileScreen {
+  @include not-mobile-screen {
     display: none;
   }
 }
 
-
 .features-wrapper {
+  width: 260px;
   & .features-card {
     border: none;
     background: nb-theme(color-info-100);
     border-radius: 10px;
-
+    width: 100%;
   }
-
+  & .card-body {
+    padding: 15px;
+    padding-bottom: 38px;
+    padding-top: 38px;
+  }
   & .title {
-    font-size: 18px !important;
-  }
-
-  & .sub-title {
-    width: 70%;
-    color: #a9a9a9;
+    font-family: Inter;
     font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 19px;
+    letter-spacing: -0.009em;
+    text-align: left;
+    padding-left: 13px;
   }
-
-
+  & .sub-title {
+    font-family: Inter;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 17px;
+    letter-spacing: 0em;
+    text-align: left;
+    margin-bottom: 20px;
+    padding-left: 13px;
+  }
   & .custom-btn {
     -webkit-box-shadow: 3px 11px 30px -17px #3366ff;
     box-shadow: 3px 11px 30px -17px #3366ff;
     width: auto;
-    padding: 15px 25px;
+    padding: 13px 28px;
     display: inline-flex;
     justify-content: flex-start;
     background-color: white;
     color: nb-theme(color-primary-500);
     border: 1px solid white;
-
-    @include smallLaptopScreen {
+    //styleName: Button label;
+    font-family: Inter;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 16px;
+    letter-spacing: -0.009em;
+    text-align: left;
+    & > nb-icon {
+      width: 16px;
+      height: 14px;
+    }
+    @include small-laptop-screen {
       padding: 10px 20px;
     }
-
-    @include tabletScreen {
+    @include tablet-screen {
       padding: 15px 25px;
     }
-
     &:hover {
       background-color: #fafafa;
       border: 1px solid #fafafa;
     }
   }
+}
 
-  & .card-body {
-    padding-bottom: 30px;
+@include tablet-screen {
+  .login-container {
+    flex-direction: column;
+    align-items: center;
+    & .another-action {
+      margin-top: 0;
+    }
   }
+  .features-wrapper {
+    width: 476px;
+    margin-top: 30px;
+    & .demo-credentials-buttons {
+      & * {
+        text-align: center;
+      }
+      & .title, .sub-title {
+        text-align: center;
+      }
+    }
+  }
+}
+
+@include mobile-screen {
+  .login-container {
+    width: 100%;
+    & .login-wrapper {
+      width: 100%;
+      padding: 20px 12px;
+      & .headings {
+        & .headings-inner {
+          width: 100%;
+          & .title, .sub-title {
+            width: 100%;
+            text-align: center;
+          }
+        }
+      }
+      & .headings.headings-demo {
+        height: 135px;
+        align-items: flex-start;
+      }
+    }
+    & form {
+      margin-bottom: 35px;
+      & .submit-btn-wrapper {
+        justify-content: center;
+        & .submit-inner-wrapper {
+          justify-content: center;
+        }
+        & .submit-btn {
+          margin-bottom: 0;
+        }
+      }
+      & .form-control-group {
+        margin-bottom: 13px;
+      }
+      & .links {
+        margin-bottom: 10px;
+      }
+    }
+  }
+  .features-wrapper {
+    width: 100%;
+  }
+  .demo-credentials-select {
+    top: 83px;
+    left: 50%;
+    transform: translate(-50%);
+    z-index: 6;
+  }
+}
+
+@include small-mobile-screen {
+  .features-wrapper {
+    & .demo-credentials-buttons {
+      & * {
+        text-align: left;
+      }
+      & .title, .sub-title {
+        text-align: left;
+      }
+    }
+  }
+}
+
+::ng-deep .remember-me .text {
+  font-family: Inter;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 13px;
+  letter-spacing: 0em;
+  text-align: left;
+  color: #6E49E8 !important;
+}
+.hr-div-soft {
+  @include hr-div-soft;
+  margin-bottom: 12px;
 }

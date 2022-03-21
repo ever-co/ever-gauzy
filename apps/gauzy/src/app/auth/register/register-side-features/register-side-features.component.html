@@ -1,7 +1,7 @@
 <section class="main-section">
   <h4 class="main-header">Gauzy features</h4>
-
-  <div class="feature-wrapper" *ngFor="let feature of featuresData">
+  <div class="feature-wrapper" *ngFor="let feature of featuresData; let last = last">
     <ngx-register-side-single-feature [feature]="feature"></ngx-register-side-single-feature>
+    <div class="small-hr-div" [class]="last ? 'hidden' : ''"></div>
   </div>
 </section>

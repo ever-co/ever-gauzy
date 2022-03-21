@@ -1,14 +1,14 @@
 @import "themes";
+@import "../reusable";
 
 .wrapper {
-  border-radius: 30px;
+  border-radius: 35px;
   background: nb-theme(color-basic-transparent-600);
-  width: 85px;
-  padding: 7px;
+  width: 70px;
+  padding: 4.5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   & nb-icon {
     min-width: 27px;
     min-height: 27px;
@@ -16,7 +16,6 @@
     cursor: pointer;
     color: nb-theme(color-basic-300);
   }
-
   & .active {
     background: nb-theme(color-basic-100);
     box-sizing: border-box;
@@ -24,5 +23,17 @@
     color: nb-theme(color-basic-transparent-600);
     -webkit-box-shadow: 5px 5px 23px -5px rgba(0,0,0,0.72);
     box-shadow: 5px 5px 23px -5px rgba(0,0,0,0.72);
+  }
+}
+
+@include mobile-screen {
+  .wrapper {
+    width: 54px;
+    height: 26px;
+    & nb-icon {
+      min-width: 18px;
+      min-height: 18px;
+      padding: 2px;
+    }
   }
 }

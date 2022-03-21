@@ -1,143 +1,144 @@
 $button-color: #fa754e;
-$wrapperPadding: 30px;
+$wrapper-padding: 30px;
 
 // Queries
-@mixin mobileScreen {
+@mixin mobile-screen {
   @media screen and (max-width: 490px) {
     @content
   }
 }
-
-@mixin smallLaptopScreen {
+@mixin small-mobile-screen {
+  @media screen and (max-width: 320px) {
+    @content
+  }
+}
+@mixin small-laptop-screen {
   @media screen and (max-width: 1024px) {
     @content
   }
 }
-
-@mixin tabletScreen {
-  @media screen and (max-width: 780px) {
+@mixin tablet-screen {
+  @media screen and (max-width: 790px) {
     @content
   }
 }
-
-@mixin notMobileScreen {
+@mixin not-mobile-screen {
   @media screen and (min-width: 491px) {
     @content
   }
 }
-
-@mixin bigScreen {
+@mixin big-screen {
   @media screen and (min-width: 1400px) {
     @content
   }
 }
 // End of queries
 
-
-@mixin submitBtn {
-  padding-left: 70px;
-  padding-right: 70px;
+@mixin submit-btn {
+  padding: 13px 39px;
   -webkit-box-shadow: 0px 19px 15px -14px rgba(0, 0, 0, 0.22);
   box-shadow: 0px 19px 15px -14px rgba(0, 0, 0, 0.22);
-
+  //styleName: Button label;
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: -0.009em;
+  text-align: left;
   &:enabled {
     background-color: $button-color;
     border: 1px solid $button-color;
     color: #FFFFFF;
   }
 }
-
-@mixin socialLinksStyle {
+@mixin social-links-style {
   text-align: start;
   color: #808080;
-
-  @include mobileScreen {
+  @include mobile-screen {
     text-align: center;
   }
-
   & .socials {
     margin-top: 15px;
-
-    @include mobileScreen {
-      text-align: center;
-    }
-
+    margin-left: -11px;
     & .social-link {
-      margin: 0;
-      margin-right: 0.5rem;
+      margin: 0 10px 0 0;
       border: 1px solid transparent;
       border-radius: 12px;
-      padding: 5px;
+      width: 40px;
+      height: 40px;
       display: inline-flex;
-      justify-content: flex-start;
+      justify-content: center;
       align-items: center;
-
-      @include tabletScreen {
-        margin-right: 0.3rem;
+      @include small-mobile-screen {
+        margin: 0;
       }
-
-      @include mobileScreen {
-        padding: 0;
-        margin-right: 0.5rem;
-        justify-content: center;
-      }
-
-      @include notMobileScreen {
-        &:first-of-type {
-          margin-left: -10px;
-        }
-      }
-
       & nb-icon {
-        width: 35px;
-        height: 35px;
-
-        @include tabletScreen {
-          width: 30px;
-          height: 30px;
+        height: 28px;
+        @include small-laptop-screen {
+          height: 24px;
         }
-
-        @include mobileScreen {
-          width: 30px;
-          height: 30px;
+        @include small-mobile-screen {
+          height: 21px;
         }
       }
-
-      @include notMobileScreen {
-        &:hover {
-          border: 1px solid nb-theme(color-primary-500);
-
-          & * {
-            color: nb-theme(color-primary-500) !important;
-          }
+      &:hover {
+        border: 1px solid nb-theme(color-primary-500);
+        & * {
+          color: nb-theme(color-primary-500) !important;
         }
       }
     }
   }
 }
-
-@mixin anotherAction {
-  text-align: start;
+@mixin another-action {
   padding-top: 10px;
   margin-top: 45px;
-  border-top: 1px solid #eeeeee;
   padding-left: 10px;
-  width: 105%;
-  margin-left: -2.5%;
   color: #808080;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
 
-  @include mobileScreen {
+  @include mobile-screen {
     text-align: center;
     margin-top: 20px;
   }
-
   & a {
     color: nb-theme(color-primary-500);
     text-decoration: none;
     font-weight: bold;
-
     &:hover {
       text-decoration: underline;
     }
+  }
+}
+@mixin hr-div-strong {
+  width: 416px;
+  height: 1px;
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  background: rgba(50, 50, 50, 0.15);
+  margin-bottom: 29px;
+  padding-left: 0;
+  padding-right: 0;
+  @include mobile-screen {
+    width: 100%;
+  }
+}
+@mixin hr-div-soft {
+  width: 416px;
+  height: 1px;
+  background: rgba(50, 50, 50, 0.05);
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  padding-left: 0;
+  padding-right: 0;
+  @include mobile-screen {
+    width: 100%;
   }
 }

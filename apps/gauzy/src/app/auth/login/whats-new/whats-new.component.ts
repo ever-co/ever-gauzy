@@ -1,4 +1,4 @@
-import { Component } from "@angular/core"
+import { Component } from "@angular/core";
 
 
 @Component({
@@ -7,8 +7,8 @@ import { Component } from "@angular/core"
   styleUrls: ['./whats-new.component.scss'],
 })
 export class NgxWhatsNewComponent {
-  dataMock: any[] = [1,2,3]
-  showDate: boolean = true
+  dataMock: any[] = [1,2,3];
+  showDate: boolean = true;
 
-  constructor () {}
+  constructor () {};
 }

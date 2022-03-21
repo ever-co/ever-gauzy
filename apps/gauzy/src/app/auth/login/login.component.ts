@@ -1,11 +1,11 @@
-import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core'
-import { Router } from '@angular/router'
-import { FormGroupDirective } from '@angular/forms'
-import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth'
-import { ElectronService } from 'ngx-electron'
-import { RolesEnum } from '@gauzy/contracts'
-import { environment } from './../../../environments/environment'
-import { CookieService } from 'ngx-cookie-service'
+import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { FormGroupDirective } from '@angular/forms';
+import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
+import { ElectronService } from 'ngx-electron';
+import { RolesEnum } from '@gauzy/contracts';
+import { environment } from './../../../environments/environment';
+import { CookieService } from 'ngx-cookie-service';
 
 
 @Component({
@@ -15,14 +15,14 @@ import { CookieService } from 'ngx-cookie-service'
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
-  @ViewChild('form') private readonly form: FormGroupDirective
+  @ViewChild('form') private readonly form: FormGroupDirective;
 
   // TODO: selected property based on the things that will be in the select element, to change type and value.
-  selected: any = [1]
-  isShown: boolean = false
-  RolesEnum = RolesEnum
-  isDemo: boolean = environment.DEMO
-  showPassword: boolean = false
+  selected: any = [1];
+  isShown: boolean = false;
+  RolesEnum = RolesEnum;
+  isDemo: boolean = environment.DEMO;
+  showPassword: boolean = false;
 
   constructor (
     private readonly cookieService: CookieService,
@@ -32,12 +32,12 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
     public readonly router: Router,
     @Inject(NB_AUTH_OPTIONS) options,
   ) {
-    super(nbAuthService, options, cdr, router)
+    super(nbAuthService, options, cdr, router);
   }
 
   ngOnInit () {
-    this.checkRememberdMe()
-    this.autoFillCredential()
+    this.checkRememberdMe();
+    this.autoFillCredential();
   }
 
   /**
@@ -45,15 +45,15 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
    */
   checkRememberdMe () {
     if (this.cookieService.check('rememberMe')) {
-      const { email, rememberMe } = this.cookieService.getAll()
-      this.user.email = email
-      this.user.rememberMe = rememberMe
+      const { email, rememberMe } = this.cookieService.getAll();
+      this.user.email = email;
+      this.user.rememberMe = rememberMe;
     }
   }
 
   collapseDemo () {
     if (this.isDemo) {
-      this.isShown = !this.isShown
+      this.isShown = !this.isShown;
     }
   }
 
@@ -62,8 +62,8 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
    */
   autoFillCredential () {
     if (this.isDemo) {
-      this.user.email = environment.DEMO_SUPER_ADMIN_EMAIL
-      this.user.password = environment.DEMO_SUPER_ADMIN_PASSWORD
+      this.user.email = environment.DEMO_SUPER_ADMIN_EMAIL;
+      this.user.password = environment.DEMO_SUPER_ADMIN_PASSWORD;
     }
   }
 
@@ -76,20 +76,20 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
     if (this.isDemo) {
       switch (role) {
         case RolesEnum.SUPER_ADMIN:
-          this.autoFillCredential()
-          break
+          this.autoFillCredential();
+          break;
         case RolesEnum.ADMIN:
-          this.user.email = environment.DEMO_ADMIN_EMAIL
-          this.user.password = environment.DEMO_ADMIN_PASSWORD
-          break
+          this.user.email = environment.DEMO_ADMIN_EMAIL;
+          this.user.password = environment.DEMO_ADMIN_PASSWORD;
+          break;
         case RolesEnum.EMPLOYEE:
-          this.user.email = environment.DEMO_EMPLOYEE_EMAIL
-          this.user.password = environment.DEMO_EMPLOYEE_PASSWORD
-          break
+          this.user.email = environment.DEMO_EMPLOYEE_EMAIL;
+          this.user.password = environment.DEMO_EMPLOYEE_PASSWORD;
+          break;
         default:
-          break
+          break;
       }
-      this.form.ngSubmit.emit()
+      this.form.ngSubmit.emit();
     }
   }
 }
