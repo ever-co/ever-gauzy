@@ -6,7 +6,7 @@ import { TimeLog } from './../../time-log.entity';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
-import { TimeSlotRangeDeleteCommand } from './../../../time-slot/commands';
+import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler
@@ -40,7 +40,7 @@ export class TimeLogDeleteHandler
 			const { employeeId, organizationId, timeSlots } = timeLog;
 			const timeSlotsIds = pluck(timeSlots, 'id');
 			await this.commandBus.execute(
-				new TimeSlotRangeDeleteCommand({
+				new TimeSlotBulkDeleteCommand({
 					organizationId,
 					employeeId,
 					timeLog,

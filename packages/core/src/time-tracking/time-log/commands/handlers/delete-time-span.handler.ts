@@ -11,7 +11,7 @@ import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { moment } from '../../../../core/moment-extend';
 import { TimeSlot } from './../../../../core/entities/internal';
-import { TimeSlotRangeDeleteCommand } from './../../../time-slot/commands';
+import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 
 @CommandHandler(DeleteTimeSpanCommand)
@@ -54,7 +54,7 @@ export class DeleteTimeSpanHandler
 			if (employeeId && start && end) {
 				const timeSlotsIds = [timeSlot.id];
 				await this.commandBus.execute(
-					new TimeSlotRangeDeleteCommand({
+					new TimeSlotBulkDeleteCommand({
 						organizationId,
 						employeeId,
 						timeLog: refreshTimeLog,
@@ -124,7 +124,7 @@ export class DeleteTimeSpanHandler
 						);
 						const timeSlotsIds = [timeSlot.id];
 						await this.commandBus.execute(
-							new TimeSlotRangeDeleteCommand({
+							new TimeSlotBulkDeleteCommand({
 								organizationId,
 								employeeId,
 								timeLog: updatedTimeLog,
@@ -193,7 +193,7 @@ export class DeleteTimeSpanHandler
 						);
 						const timeSlotsIds = [timeSlot.id];
 						await this.commandBus.execute(
-							new TimeSlotRangeDeleteCommand({
+							new TimeSlotBulkDeleteCommand({
 								organizationId,
 								employeeId,
 								timeLog: updatedTimeLog,
@@ -268,7 +268,7 @@ export class DeleteTimeSpanHandler
 					}
 					const timeSlotsIds = [timeSlot.id];
 					await this.commandBus.execute(
-						new TimeSlotRangeDeleteCommand({
+						new TimeSlotBulkDeleteCommand({
 							organizationId,
 							employeeId,
 							timeLog,

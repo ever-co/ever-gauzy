@@ -2,20 +2,20 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
-import { TimeSlot } from './../../time-slot.entity';
-import { TimeSlotRangeDeleteCommand } from '../time-slot-range-delete.command';
-import { RequestContext } from './../../../../core/context';
+import { TimeSlot } from '../../time-slot.entity';
+import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
+import { RequestContext } from '../../../../core/context';
 
-@CommandHandler(TimeSlotRangeDeleteCommand)
-export class TimeSlotRangeDeleteHandler
-	implements ICommandHandler<TimeSlotRangeDeleteCommand> {
+@CommandHandler(TimeSlotBulkDeleteCommand)
+export class TimeSlotBulkDeleteHandler
+	implements ICommandHandler<TimeSlotBulkDeleteCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>
 	) {}
 
 	public async execute(
-		command: TimeSlotRangeDeleteCommand
+		command: TimeSlotBulkDeleteCommand
 	): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 

@@ -33,7 +33,7 @@ export class CreateTimeSlotHandler
 
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
 		const { input } = command;
-		let { organizationId } = input;
+		let { organizationId, activities = [] } = input;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -139,16 +139,16 @@ export class CreateTimeSlotHandler
 		}
 
 		if (input.activities) {
+			console.log({ activities });
 			timeSlot.activities = await this.commandBus.execute(
 				new BulkActivitiesSaveCommand({
 					employeeId: timeSlot.employeeId,
 					projectId: input.projectId,
-					activities: input.activities
+					activities: activities
 				})
 			);
 		}
 
-		console.log({ input, timeSlot });
 		await this.timeSlotRepository.save(timeSlot);
 
 		const minDate = input.startedAt;

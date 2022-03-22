@@ -1,6 +1,6 @@
 import { ICommand } from '@nestjs/cqrs';
 
-export class TimeSlotRangeDeleteCommand implements ICommand {
+export class TimeSlotBulkDeleteCommand implements ICommand {
 	static readonly type = '[TimeSlot] delete';
 
 	constructor(
