@@ -1,12 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import * as moment from 'moment';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
 import { TimeSlotRangeDeleteCommand } from '../time-slot-range-delete.command';
 import { RequestContext } from './../../../../core/context';
-import { getDateFormat } from './../../../../core/utils';
 
 @CommandHandler(TimeSlotRangeDeleteCommand)
 export class TimeSlotRangeDeleteHandler
@@ -22,41 +20,13 @@ export class TimeSlotRangeDeleteHandler
 		const tenantId = RequestContext.currentTenantId();
 
 		const { input, forceDirectDelete } = command;
-		const { organizationId, employeeId, start, stop, timeLog, timeSlotsIds = [] } = input;
+		const { organizationId, employeeId, timeLog, timeSlotsIds = [] } = input;
 
-		let startMinute = moment(start).utc().get('minute');
-		startMinute = startMinute - (startMinute % 10);
-
-		let mStart: any = moment
-			.utc(start)
-			.set('minute', startMinute)
-			.set('second', 0)
-			.set('millisecond', 0);
-
-		let endMinute = moment(stop).utc().get('minute');
-		endMinute = endMinute - (endMinute % 10);
-
-		let mEnd: any = moment
-			.utc(stop)
-			.set('minute', endMinute + 10)
-			.set('second', 0)
-			.set('millisecond', 0);
-		
-		const { start: startDate, end: endDate } = getDateFormat(
-			mStart,
-			mEnd
-		);
-		console.log({ startDate, endDate });
 		const timeSlots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				if (isNotEmpty(timeSlotsIds)) {
 					qb.andWhere(`"${qb.alias}"."id" IN (:...timeSlotsIds)`, {
 						timeSlotsIds
-					});
-				} else {
-					qb.andWhere(`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`, {
-						startDate,
-						endDate
 					});
 				}
 				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
@@ -72,7 +42,7 @@ export class TimeSlotRangeDeleteHandler
 			},
 			relations: ['screenshots', 'timeLogs']
 		});
-		console.log({ timeSlots }, 'Time Slots Delete Range');
+		console.log({ timeSlots, forceDirectDelete }, 'Time Slots Delete Range');
 
 		if (isNotEmpty(timeSlots)) {
 			if (forceDirectDelete) {

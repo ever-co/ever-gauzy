@@ -37,14 +37,12 @@ export class TimeLogDeleteHandler
 		console.log('TimeLog will be delete:', timeLogs);
 
 		for await (const timeLog of timeLogs) {
-			const { employeeId, startedAt, stoppedAt, organizationId, timeSlots } = timeLog;
+			const { employeeId, organizationId, timeSlots } = timeLog;
 			const timeSlotsIds = pluck(timeSlots, 'id');
 			await this.commandBus.execute(
 				new TimeSlotRangeDeleteCommand({
 					organizationId,
 					employeeId,
-					startedAt,
-					stoppedAt,
 					timeLog,
 					timeSlotsIds
 				})

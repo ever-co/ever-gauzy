@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as _ from 'underscore';
 import { ITimeLog } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TimeLog } from './../../time-log.entity';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
@@ -41,6 +41,7 @@ export class DeleteTimeSpanHandler
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
 
+		console.log({ newTimeRange, dbTimeRange });
 		/*
 		 * Check is overlapping time or not.
 		 */
@@ -56,8 +57,6 @@ export class DeleteTimeSpanHandler
 					new TimeSlotRangeDeleteCommand({
 						organizationId,
 						employeeId,
-						start,
-						end,
 						timeLog: refreshTimeLog,
 						timeSlotsIds
 					}, true)
@@ -114,12 +113,12 @@ export class DeleteTimeSpanHandler
 				if (remainingDuration > 0) {
 					try {
 						console.log('Update startedAt time.');
-						const updatedTimeLog = await this.commandBus.execute(
+						let updatedTimeLog: ITimeLog = await this.commandBus.execute(
 							new TimeLogUpdateCommand(
 								{
 									startedAt: end
 								},
-								timeLog,
+								refreshTimeLog,
 								true
 							)
 						);
@@ -128,12 +127,21 @@ export class DeleteTimeSpanHandler
 							new TimeSlotRangeDeleteCommand({
 								organizationId,
 								employeeId,
-								start,
-								end,
 								timeLog: updatedTimeLog,
 								timeSlotsIds
 							}, true)
 						);
+						/*
+						* Delete TimeLog if remaining timeSlots are 0
+						*/
+						updatedTimeLog = await this.timeLogRepository.findOne(updatedTimeLog.id, {
+							relations: ['timeSlots']
+						});
+						if (isEmpty(updatedTimeLog.timeSlots)) {
+							await this.commandBus.execute(
+								new TimeLogDeleteCommand(updatedTimeLog, true)
+							);
+						}
 					} catch (error) {
 						console.log('Error while, updating startedAt time', error);
 					}
@@ -174,7 +182,7 @@ export class DeleteTimeSpanHandler
 				if (remainingDuration > 0) {
 					console.log('Update stoppedAt time.');
 					try {
-						const updatedTimeLog = await this.commandBus.execute(
+						let updatedTimeLog: ITimeLog = await this.commandBus.execute(
 							new TimeLogUpdateCommand(
 								{
 									stoppedAt: start
@@ -188,12 +196,22 @@ export class DeleteTimeSpanHandler
 							new TimeSlotRangeDeleteCommand({
 								organizationId,
 								employeeId,
-								start,
-								end,
 								timeLog: updatedTimeLog,
 								timeSlotsIds
 							}, true)
 						);
+
+						/*
+						* Delete TimeLog if remaining timeSlots are 0
+						*/
+						updatedTimeLog = await this.timeLogRepository.findOne(updatedTimeLog.id, {
+							relations: ['timeSlots']
+						});
+						if (isEmpty(updatedTimeLog.timeSlots)) {
+							await this.commandBus.execute(
+								new TimeLogDeleteCommand(updatedTimeLog, true)
+							);
+						}
 					} catch (error) {
 						console.log('Error while, updating stoppedAt time', error);
 					}
@@ -253,8 +271,6 @@ export class DeleteTimeSpanHandler
 						new TimeSlotRangeDeleteCommand({
 							organizationId,
 							employeeId,
-							start,
-							end,
 							timeLog,
 							timeSlotsIds
 						}, true)
