@@ -250,7 +250,7 @@ export class TimeLogController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
-		return await this.timeLogService.updateTime(id, entity);
+		return await this.timeLogService.updateManualTime(id, entity);
 	}
 
 	@ApiOperation({ summary: 'Delete time log' })

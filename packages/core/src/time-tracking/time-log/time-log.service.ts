@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
+import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -22,7 +22,8 @@ import {
 	OrganizationContactBudgetTypeEnum,
 	IClientBudgetLimitReport,
 	ReportGroupFilterEnum,
-	IOrganizationProject
+	IOrganizationProject,
+	IDeleteTimeLog
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { CommandBus } from '@nestjs/cqrs';
@@ -782,7 +783,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
-		
 		const tenantId = RequestContext.currentTenantId();
 		const { employeeId, startedAt, stoppedAt, organizationId } = request;
 
@@ -810,32 +810,42 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		const conflicts = await this.checkConflictTime({
-			employeeId: employeeId,
 			startDate: startedAt,
 			endDate: stoppedAt,
+			employeeId,
 			organizationId,
 			tenantId,
 			...(request.id ? { ignoreId: request.id } : {})
 		});
 
-		const times: IDateRange = {
-			start: new Date(startedAt),
-			end: new Date(stoppedAt)
-		};
-		
-		for await (const conflict of conflicts)  {
-			await this.commandBus.execute(
-				new DeleteTimeSpanCommand(times, conflict)
-			);
+		if (isNotEmpty(conflicts)) {
+			console.log('Get Conflicts Time Logs', conflicts);
+			const times: IDateRange = {
+				start: new Date(startedAt),
+				end: new Date(stoppedAt)
+			};
+			for await (const timeLog of conflicts)  {
+				const { timeSlots = [] } = timeLog;
+				for await (const timeSlot of timeSlots) {
+					await this.commandBus.execute(
+						new DeleteTimeSpanCommand(
+							times,
+							timeLog,
+							timeSlot
+						)
+					);
+				}
+			}
 		}
-
 		return await this.commandBus.execute(
 			new TimeLogCreateCommand(request)
 		);
 	}
 
-	async updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
-		const { startedAt, stoppedAt, employeeId } = request;
+	async updateManualTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
+		const tenantId = RequestContext.currentTenantId();
+		const { startedAt, stoppedAt, employeeId, organizationId } = request;
+		
 		if (!startedAt || !stoppedAt) {
 			throw new BadRequestException('Please select valid Date start and end time');
 		}
@@ -864,20 +874,30 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		 */
 		const timeLog = await this.timeLogRepository.findOne(id);
 		const conflicts = await this.checkConflictTime({
-			employeeId: timeLog.employeeId,
 			startDate: startedAt,
 			endDate: stoppedAt,
+			employeeId,
+			organizationId,
+			tenantId,
 			...(id ? { ignoreId: id } : {})
 		});
 		if (isNotEmpty(conflicts)) {
+			console.log('Get Conflicts Time Logs', conflicts);
 			const times: IDateRange = {
 				start: new Date(startedAt),
 				end: new Date(stoppedAt)
 			};
-			for await (const conflict of conflicts) {
-				await this.commandBus.execute(
-					new DeleteTimeSpanCommand(times, conflict)
-				);
+			for await (const timeLog of conflicts)  {
+				const { timeSlots = [] } = timeLog;
+				for await (const timeSlot of timeSlots) {
+					await this.commandBus.execute(
+						new DeleteTimeSpanCommand(
+							times,
+							timeLog,
+							timeSlot
+						)
+					);
+				}
 			}
 		}
 
@@ -887,7 +907,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return await this.timeLogRepository.findOne(request.id);
 	}
 
-	async deleteTimeLogs(query: any): Promise<DeleteResult | UpdateResult> {
+	async deleteTimeLogs(
+		query: IDeleteTimeLog
+	): Promise<DeleteResult | UpdateResult> {
 		let logIds: string | string[] = query.logIds;
 		if (isEmpty(logIds)) {
 			throw new NotAcceptableException('You can not delete time logs');
@@ -899,18 +921,29 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
 		const { organizationId, forceDelete } = query;
-
+	
 		const timeLogs = await this.timeLogRepository.find({
-			...(
-				RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				) ? {} : {
-					employeeId: user.employeeId
-				}
-			),
-			tenantId,
-			organizationId,
-			id: In(logIds)
+			where: (query: SelectQueryBuilder<TimeLog>) => {
+				query.where({
+					...(
+						RequestContext.hasPermission(
+							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+						) ? {} : {
+							employeeId: user.employeeId
+						}
+					)
+				});
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(`"${query.alias}"."id" IN (:...logIds)`, {
+							logIds
+						});
+					})
+				);
+			},
+			relations: ['timeSlots']
 		});
 		return await this.commandBus.execute(
 			new TimeLogDeleteCommand(timeLogs, forceDelete)
