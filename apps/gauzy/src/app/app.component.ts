@@ -31,7 +31,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	) {}
 
 	async ngOnInit() {
-		if (environment.CHATWOOT_SDK_TOKEN) {8
+		if (environment.CHATWOOT_SDK_TOKEN) {
 			this.loadChatwoot(document, 'script');
 		}
 
