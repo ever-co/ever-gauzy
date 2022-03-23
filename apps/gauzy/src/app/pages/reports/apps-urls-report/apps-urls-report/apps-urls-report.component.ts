@@ -53,7 +53,11 @@ export class AppsUrlsReportComponent
 
 	filtersChange($event) {
 		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+		this.filters = Object.assign(
+			{},
+			this.logRequest,
+			this.getAdjustDateRangeFutureAllowed(this.logRequest)
+		);
 	}
 
 	ngOnDestroy() {}

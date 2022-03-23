@@ -12,15 +12,14 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-      <ngx-gauzy-range-picker
-        [arrows]="true"
-        [hasEmployeeFilter]="false"
+			<ngx-gauzy-range-picker
+				[arrows]="true"
+				[hasEmployeeFilter]="false"
 				[hasProjectFilter]="false"
 				[saveFilters]="false"
 				[filters]="logRequest"
 				(onDateChange)="filtersChange($event)"
-      >
-      </ngx-gauzy-range-picker>
+			></ngx-gauzy-range-picker>
 		</div>
 		<ga-activities-report-grid
 			[filters]="filters"
