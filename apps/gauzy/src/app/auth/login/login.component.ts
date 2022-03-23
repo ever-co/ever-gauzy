@@ -20,8 +20,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
   isShown: boolean = false;
   RolesEnum = RolesEnum;
-  // isDemo: boolean = environment.DEMO;
-  isDemo: boolean = true;
+  isDemo: boolean = environment.DEMO;
   showPassword: boolean = false;
   lightMode: number
 
