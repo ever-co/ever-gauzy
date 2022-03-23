@@ -42,8 +42,7 @@ export class BulkActivitiesSaveHandler
 		});
 
 		if (insertActivities.length > 0) {
-			await this.activityRepository.save(insertActivities);
-			return insertActivities;
+			return await this.activityRepository.save(insertActivities);
 		} else {
 			return [];
 		}

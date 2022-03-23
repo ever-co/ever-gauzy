@@ -23,7 +23,7 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
     }
 
     /**
-     * Called before employee insertion.
+     * Called before organization insertion.
      */
      beforeInsert(event: InsertEvent<Organization>) {
         if (event) {

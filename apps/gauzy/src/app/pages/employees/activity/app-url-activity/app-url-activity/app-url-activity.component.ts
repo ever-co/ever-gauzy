@@ -14,7 +14,7 @@ import {
 	IActivity,
 	IURLMetaData
 } from '@gauzy/contracts';
-import { toUTC, toLocal, distinctUntilChange } from '@gauzy/common-angular';
+import { toUTC, toLocal, distinctUntilChange, isJsObject } from '@gauzy/common-angular';
 import { Store } from './../../../../../@core/services';
 import { ActivityService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 
@@ -83,7 +83,8 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	}
 
 	loadChild(item: IDailyActivity) {
-		const dateTime = toLocal(moment.utc(item.date + ' ' + item.time));
+		const date = moment(item.date).format('YYYY-MM-DD');
+		const dateTime = toLocal(moment.utc(date + ' ' + item.time));
 		const request: IGetActivitiesInput = {
 			startDate: toUTC(dateTime).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(dateTime).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
@@ -103,8 +104,13 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 						description: activity.description,
 						durationPercentage: (activity.duration * 100) / item.duration
 					}
-					if (activity.metaData && typeof activity.metaData === 'string') {
-						const metaData = JSON.parse(activity.metaData) as IURLMetaData;
+					if (activity.metaData) {
+						let metaData: IURLMetaData = new Object();
+						if (typeof activity.metaData === 'string') {
+							metaData = JSON.parse(activity.metaData) as IURLMetaData;
+						} else if (isJsObject(activity.metaData)) {
+							metaData = activity.metaData as IURLMetaData;
+						}
 						dailyActivity['metaData'] = metaData;
 						dailyActivity['url'] = metaData.url || '';
 					}
