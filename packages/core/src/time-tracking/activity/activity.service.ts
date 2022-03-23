@@ -186,6 +186,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeSlot`, 'timeSlot');
+		query.innerJoin(`timeSlot.timeLogs`, 'timeLogs');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -194,10 +195,15 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				const { types } = request;
-				if (types) {
+				const { titles, types } = request;
+				if (isNotEmpty(types)) {
 					qb.andWhere(`"${query.alias}"."type" IN (:...types)`, {
 						types
+					});
+				}
+				if (isNotEmpty(titles)) {
+					qb.andWhere(`"${query.alias}"."title" IN (:...titles)`, {
+						titles
 					});
 				}
 			})
@@ -235,12 +241,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				const { titles, activityLevel, source, logType } = request;
-				if (isNotEmpty(titles)) {
-					qb.andWhere(`"${query.alias}"."title" IN (:...titles)`, {
-						titles
-					});
-				}
+				const { activityLevel, source, logType } = request;
 				if (isNotEmpty(activityLevel)) {
 					/**
 					 * Activity Level should be 0-100%
@@ -256,28 +257,29 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				}
 				if (isNotEmpty(source)) {
 					if (source instanceof Array) {
-						qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
+						qb.andWhere(`"timeLogs"."source" IN (:...source)`, {
 							source
 						});
 					} else {
-						qb.andWhere(`"${query.alias}"."source" = :source`, {
+						qb.andWhere(`"timeLogs"."source" = :source`, {
 							source
 						});
 					}
 				}
 				if (isNotEmpty(logType)) {
 					if (logType instanceof Array) {
-						qb.andWhere(`"${query.alias}"."logType" IN (:...logType)`, {
+						qb.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
 							logType
 						});
 					} else {
-						qb.andWhere(`"${query.alias}"."logType" = :logType`, {
+						qb.andWhere(`"timeLogs"."logType" = :logType`, {
 							logType
 						});
 					}
 				}
 			})
 		);
+		console.log(query.getQueryAndParameters());
 		return query;
 	}
 }
