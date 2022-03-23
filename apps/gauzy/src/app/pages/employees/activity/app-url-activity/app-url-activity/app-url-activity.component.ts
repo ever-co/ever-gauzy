@@ -85,12 +85,15 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	loadChild(item: IDailyActivity) {
 		const date = moment(item.date).format('YYYY-MM-DD');
 		const dateTime = toLocal(moment.utc(date + ' ' + item.time));
+
+		const { id: organizationId } = this.organization;
 		const request: IGetActivitiesInput = {
 			startDate: toUTC(dateTime).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(dateTime).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
 			employeeIds: [item.employeeId],
 			types: [this.type === 'urls' ? ActivityType.URL : ActivityType.APP],
-			titles: [item.title]
+			titles: [item.title],
+			organizationId
 		};
 
 		this.activityService.getActivities(request).then((items) => {

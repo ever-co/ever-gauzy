@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Brackets, In, Repository, WhereExpressionBuilder } from 'typeorm';
 import { TenantAwareCrudService } from './../../core/crud';
 import { Activity } from './activity.entity';
-import * as moment from 'moment';
 import { RequestContext } from '../../core/context';
 import {
 	PermissionsEnum,
@@ -14,9 +13,9 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
 import { indexBy, pluck } from 'underscore';
+import { isNotEmpty } from '@gauzy/common';
 import { getConfig } from '@gauzy/config';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
-import { getDateFormat } from './../../core/utils';
 const config = getConfig();
 
 @Injectable()
@@ -155,11 +154,14 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		return await query.getMany();
 	}
 
-	bulkSave(input: IBulkActivitiesInput) {
-		return this.commandBus.execute(new BulkActivitiesSaveCommand(input));
+	async bulkSave(input: IBulkActivitiesInput) {
+		return await this.commandBus.execute(
+			new BulkActivitiesSaveCommand(input)
+		);
 	}
 
 	private filterQuery(request: IGetActivitiesInput) {
+		const { organizationId } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.activityRepository.createQueryBuilder();
@@ -184,97 +186,98 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeSlot`, 'timeSlot');
-		query.where((qb) => {
-			if (request.startDate && request.endDate) {
-				const { start: startDate, end: endDate } = getDateFormat(
-					moment.utc(request.startDate),
-					moment.utc(request.endDate)
-				);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				const { types } = request;
+				if (types) {
+					qb.andWhere(`"${query.alias}"."type" IN (:...types)`, {
+						types
+					});
+				}
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				const { startDate, endDate } = request;
 				if (config.dbConnectionOptions.type === 'sqlite') {
-					qb.andWhere(
-						`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`,
-						{ startDate, endDate }
-					);
+					qb.andWhere(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`, {
+						startDate,
+						endDate
+					});
 				} else {
-					qb.andWhere(
-						`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
-						{ startDate, endDate }
-					);
+					qb.andWhere(`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`, {
+						startDate,
+						endDate
+					});
 				}
-			}
-			if (employeeIds) {
-				qb.andWhere(
-					`"${query.alias}"."employeeId" IN (:...employeeId)`,
-					{
-						employeeId: employeeIds
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				const { projectIds = [] } = request;
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
+				}
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				const { titles, activityLevel, source, logType } = request;
+				if (isNotEmpty(titles)) {
+					qb.andWhere(`"${query.alias}"."title" IN (:...titles)`, {
+						titles
+					});
+				}
+				if (isNotEmpty(activityLevel)) {
+					/**
+					 * Activity Level should be 0-100%
+					 * So, we have convert it into 10 minutes timeslot by multiply by 6
+					 */
+					const start = (activityLevel.start * 6);
+					const end = (activityLevel.end * 6);
+	
+					qb.andWhere(`"timeSlot"."overall" BETWEEN :start AND :end`, {
+						start,
+						end
+					});
+				}
+				if (isNotEmpty(source)) {
+					if (source instanceof Array) {
+						qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
+							source
+						});
+					} else {
+						qb.andWhere(`"${query.alias}"."source" = :source`, {
+							source
+						});
 					}
-				);
-			}
-			if (request.projectIds) {
-				qb.andWhere(`"${query.alias}"."projectId" IN (:...projectId)`, {
-					projectId: request.projectIds
-				});
-			}
-			if (request.titles) {
-				qb.andWhere(`"${query.alias}"."title" IN (:...title)`, {
-					title: request.titles
-				});
-			}
-			if (request.organizationId) {
-				qb.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{
-						organizationId: request.organizationId
+				}
+				if (isNotEmpty(logType)) {
+					if (logType instanceof Array) {
+						qb.andWhere(`"${query.alias}"."logType" IN (:...logType)`, {
+							logType
+						});
+					} else {
+						qb.andWhere(`"${query.alias}"."logType" = :logType`, {
+							logType
+						});
 					}
-				);
-			}
-
-			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			});
-			if (request.activityLevel) {
-				/**
-				 * Activity Level should be 0-100%
-				 * So, we have convert it into 10 minutes timeslot by multiply by 6
-				 */
-				const { activityLevel } = request;
-				const start = (activityLevel.start * 6);
-				const end = (activityLevel.end * 6);
-
-				qb.andWhere(`"timeSlot"."overall" BETWEEN :start AND :end`, {
-					start,
-					end
-				});
-			}
-			if (request.source) {
-				if (request.source instanceof Array) {
-					qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
-						source: request.source
-					});
-				} else {
-					qb.andWhere(`"${query.alias}"."source" = :source`, {
-						source: request.source
-					});
 				}
-			}
-			if (request.logType) {
-				if (request.logType instanceof Array) {
-					qb.andWhere(`"${query.alias}"."logType" IN (:...logType)`, {
-						logType: request.logType
-					});
-				} else {
-					qb.andWhere(`"${query.alias}"."logType" = :logType`, {
-						logType: request.logType
-					});
-				}
-			}
-			if (request.types) {
-				qb.andWhere(`"${query.alias}"."type" IN (:...type)`, {
-					type: request.types
-				});
-			}
-		});
-
+			})
+		);
 		return query;
 	}
 }
