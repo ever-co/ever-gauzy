@@ -3,16 +3,23 @@
 
 .wrapper {
   padding: 0 !important;
+  & .card {
+    border: none;
+  }
 
   & .header {
     border-bottom: none;
-    padding-top: 20px;
+    padding-top: 30px;
     padding-left: 40px;
     padding-right: 40px;
     width: 100vw;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-radius: 0;
+    &.dark {
+      background: #202023;
+    }
     @include mobile-screen {
       display: none;
     }
@@ -34,6 +41,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    &.dark {
+      background: #202023;
+    }
     @include mobile-screen {
       padding-left: 10px;
       padding-right: 10px;
@@ -87,7 +97,7 @@
   }
 }
 .register {
-  background: nb-theme(color-basic-transparent-300);
+  background: $register-background-light-color;
 }
 
 ::ng-deep ngx-register {

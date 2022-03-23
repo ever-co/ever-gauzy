@@ -26,6 +26,7 @@ import {
 } from "./register/register-side-features/register-side-single-feature/register-side-single-feature.component";
 import { NgxAuthComponent } from "./auth/auth.component";
 import { NgxThemeSwitchComponent } from "./theme-switch/theme-switch.component";
+import { ThemeSwitchService } from "../@core";
 
 
 @NgModule({
@@ -57,5 +58,8 @@ import { NgxThemeSwitchComponent } from "./theme-switch/theme-switch.component";
     NgxRegisterComponent,
     NgxThemeSwitchComponent,
   ],
+  providers: [
+    ThemeSwitchService,
+  ]
 })
 export class NgxAuthModule {}

@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, Input } from "@angular/core";
 
 
 @Component({
@@ -9,6 +9,5 @@ import { Component } from "@angular/core";
 export class NgxWhatsNewComponent {
   dataMock: any[] = [1,2,3];
   showDate: boolean = true;
-
-  constructor () {};
+  @Input() dark: boolean
 }

@@ -1,5 +1,5 @@
 <section class="login-container">
-  <div class="login-wrapper">
+  <div class="login-wrapper" [ngClass]="{dark: lightMode === 0}">
     <div class="svg-wrapper">
       <img src="/assets/images/logos/logo_Gauzy.svg" alt="gauzy logo" class="ever-logo-svg">
       <ngx-theme-switch class="theme-switch"></ngx-theme-switch>
@@ -144,6 +144,7 @@
             size="large"
             ghost
             (click)="showPassword = !showPassword"
+            class="show-password-icon"
           >
             <nb-icon
               [icon]="showPassword ? 'eye-outline' : 'eye-off-outline'"
@@ -253,8 +254,8 @@
         </ng-container>
       </div>
     </section>
-    <section class="another-action" aria-label="Register">
     <div class="hr-div-soft"></div>
+    <section class="another-action" aria-label="Register">
       {{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
       <a class="text-link" routerLink="/auth/register">
         {{ 'BUTTONS.REGISTER' | translate }}
@@ -265,7 +266,7 @@
     <ng-container *ngIf="(!electronService.isElectronApp && isDemo); else whatsNew">
       <div class="demo-credentials-buttons">
         <nb-card class="features-card">
-          <nb-card-body class="card-body">
+          <nb-card-body class="card-body" [class]="lightMode === 0 ? 'dark' : ''">
             <h6 class="title">{{ 'LOGIN_PAGE.DEMO.TITLE' | translate }}</h6>
             <p class="sub-title">{{ 'LOGIN_PAGE.DEMO.SUB_TITLE' | translate }}</p>
             <button nbButton fullWidth size="large" class="mt-3 custom-btn"
@@ -287,7 +288,7 @@
     </ng-container>
     <ng-template #whatsNew>
       <div>
-        <ngx-whats-new></ngx-whats-new>
+        <ngx-whats-new [dark]="lightMode === 0"></ngx-whats-new>
       </div>
     </ng-template>
   </div>

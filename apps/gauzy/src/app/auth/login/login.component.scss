@@ -7,12 +7,15 @@
   display: flex;
   justify-content: space-between;
   & .login-wrapper {
-    background: nb-theme(color-basic-200);
+    background: nb-theme(background-basic-color-2);
     border-radius: 10px;
     box-sizing: border-box;
     padding: 30px;
     width: 476px;
     height: 100%;
+    &.dark {
+      background: #292933;
+    }
     & > * {
       padding-left: 15px;
       padding-right: 15px;
@@ -109,62 +112,40 @@
   & .links {
     margin-top: 21px;
     @include social-links-style;
+    & .socials {
+      margin-top: 15px;
+      margin-bottom: 25px;
+    }
   }
   & .another-action {
     @include another-action;
+    margin-top: 10px;
   }
 }
+.features-wrapper {
+  width: 260px;
 
-.demo-credentials-select {
-  width: 200px;
-  position: absolute;
-  top: 0;
-  right: 0;
-  & * {
-    z-index: 6;
-  }
-  &, .demo-credentials-select-item {
-    border-radius: 30px;
-    box-sizing: border-box;
-  }
-  & .demo-credentials-select-item {
-    width: 200px;
-    position: relative;
-    z-index: 5;
-  }
-  & .demo-credentials-header {
-    padding: 5px;
-    padding-left: 15px;
-    box-sizing: border-box;
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    & .demo-text-span {
-      @include mobile-screen {
-        display: none;
+  // demo side container
+  & .card-body {
+    padding: 38px 15px;
+    background: nb-theme(color-primary-100);
+    border-radius: 12px;
+    &.dark {
+      background: nb-theme(color-primary-700);
+      & .custom-btn {
+        color: white;
+        background: #6E49E8;
+        border: 1px solid #6E49E8;
       }
     }
   }
-}
 
-.theme-switch {
-  @include not-mobile-screen {
-    display: none;
-  }
-}
-
-.features-wrapper {
-  width: 260px;
+  // non-demo side container
   & .features-card {
     border: none;
     background: nb-theme(color-info-100);
-    border-radius: 10px;
+    border-radius: 14px;
     width: 100%;
-  }
-  & .card-body {
-    padding: 15px;
-    padding-bottom: 38px;
-    padding-top: 38px;
   }
   & .title {
     font-family: Inter;
@@ -186,6 +167,7 @@
     text-align: left;
     margin-bottom: 20px;
     padding-left: 13px;
+    color: #7E7E8F;
   }
   & .custom-btn {
     -webkit-box-shadow: 3px 11px 30px -17px #3366ff;
@@ -218,6 +200,42 @@
     &:hover {
       background-color: #fafafa;
       border: 1px solid #fafafa;
+    }
+  }
+}
+.demo-credentials-select {
+  width: 200px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-radius: 20px;
+  & * {
+    z-index: 6;
+  }
+  &, .demo-credentials-select-item {
+    border-radius: 30px;
+    box-sizing: border-box;
+  }
+  & .demo-credentials-select-item {
+    width: 200px;
+    position: relative;
+    z-index: 5;
+    background: nb-theme(color-basic-200);
+    color: nb-theme(color-basic-700);
+  }
+  & .demo-credentials-header {
+    padding: 5px 5px 5px 15px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    background: nb-theme(color-basic-200);
+    color: nb-theme(color-basic-700);
+    border-radius: 20px;
+    & .demo-text-span {
+      @include mobile-screen {
+        display: none;
+      }
     }
   }
 }
@@ -307,6 +325,18 @@
   }
 }
 
+.hr-div-soft {
+  @include hr-div-soft;
+  margin-bottom: 12px;
+}
+.theme-switch {
+  @include not-mobile-screen {
+    display: none;
+  }
+}
+// input fields color
+  @include input-fields-color;
+
 ::ng-deep .remember-me .text {
   font-family: Inter;
   font-size: 13px;
@@ -317,7 +347,10 @@
   text-align: left;
   color: #6E49E8 !important;
 }
-.hr-div-soft {
-  @include hr-div-soft;
-  margin-bottom: 12px;
+
+// changing the demo select border radius when its expanded, because color change, new border radiuses had to be introduced.
+::ng-deep .accordion-item-header-expanded {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-bottom: 1px solid transparent;
 }

@@ -1,5 +1,8 @@
+@import "themes";
+
 $button-color: #fa754e;
 $wrapper-padding: 30px;
+$register-background-light-color: rgba(126, 126, 143, 0.05);
 
 // Queries
 @mixin mobile-screen {
@@ -59,7 +62,6 @@ $wrapper-padding: 30px;
     text-align: center;
   }
   & .socials {
-    margin-top: 15px;
     margin-left: -11px;
     & .social-link {
       margin: 0 10px 0 0;
@@ -75,6 +77,8 @@ $wrapper-padding: 30px;
       }
       & nb-icon {
         height: 28px;
+        color: nb-theme(background-alternative-color-2) !important;
+        opacity: 0.8;
         @include small-laptop-screen {
           height: 24px;
         }
@@ -93,7 +97,6 @@ $wrapper-padding: 30px;
 }
 @mixin another-action {
   padding-top: 10px;
-  margin-top: 45px;
   padding-left: 10px;
   color: #808080;
   font-family: Inter;
@@ -106,7 +109,6 @@ $wrapper-padding: 30px;
 
   @include mobile-screen {
     text-align: center;
-    margin-top: 20px;
   }
   & a {
     color: nb-theme(color-primary-500);
@@ -122,7 +124,8 @@ $wrapper-padding: 30px;
   height: 1px;
   border-radius: 1px;
   transform: matrix(1, 0, 0, -1, 0, 0);
-  background: rgba(50, 50, 50, 0.15);
+  background: nb-theme(border-alternative-color-4);
+  opacity: 0.15;
   margin-bottom: 29px;
   padding-left: 0;
   padding-right: 0;
@@ -133,12 +136,27 @@ $wrapper-padding: 30px;
 @mixin hr-div-soft {
   width: 416px;
   height: 1px;
-  background: rgba(50, 50, 50, 0.05);
+  background: nb-theme(border-alternative-color-4);
+  opacity: 0.05;
   border-radius: 1px;
   transform: matrix(1, 0, 0, -1, 0, 0);
   padding-left: 0;
   padding-right: 0;
   @include mobile-screen {
     width: 100%;
+  }
+}
+
+@mixin input-fields-color {
+  ::ng-deep .input-full-width {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  ::ng-deep ngx-register .register-wrapper .input-full-width {
+    background-color: $register-background-light-color !important;
+  }
+
+  ::ng-deep ngx-register .register-wrapper.dark .input-full-width {
+    background-color: rgba(255, 255, 255, 0.15) !important;
   }
 }

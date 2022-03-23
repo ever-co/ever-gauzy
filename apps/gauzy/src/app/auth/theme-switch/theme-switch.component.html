@@ -1,4 +1,4 @@
-<div class="wrapper">
-  <nb-icon icon="sun-outline" (click)="changeTheme()" [class]="theme === 'light' ? 'active' : ''"></nb-icon>
-  <nb-icon icon="moon-outline" (click)="changeTheme()" [class]="theme === 'dark' ? 'active' : ''"></nb-icon>
+<div class="wrapper" [ngClass]="{dark: lightMode === 0}">
+  <nb-icon icon="sun-outline" (click)="applyTheme()" [ngClass]="{active: lightMode === 1, dark: lightMode === 0}"></nb-icon>
+  <nb-icon icon="moon-outline" (click)="applyTheme()" [ngClass]="{active: lightMode === 0, dark: lightMode === 0}"></nb-icon>
 </div>

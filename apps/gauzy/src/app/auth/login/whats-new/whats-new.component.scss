@@ -3,6 +3,9 @@
 
 .section-wrapper {
   background: rgba(245, 109, 88, 0.05);
+  &.dark {
+    background: rgba(245, 109, 88, 0.1);
+  }
   border-radius: 12px;
   padding: 25px;
   box-sizing: border-box;
@@ -45,6 +48,7 @@
       & .icon {
         margin-right: 15px;
         height: 14px;
+        margin-top: 2px;
       }
       & .entry-header {
         font-family: Inter;
@@ -54,6 +58,7 @@
         line-height: 17px;
         letter-spacing: 0em;
         text-align: left;
+        margin-bottom: 5px;
       }
       & .entry-header-date {
         font-family: Inter;

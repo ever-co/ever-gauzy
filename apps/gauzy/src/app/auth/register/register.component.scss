@@ -16,7 +16,10 @@
   height: 100%;
   padding: 30px;
   border-radius: 10px;
-  background: nb-theme(color-basic-100);
+  background: white;
+  &.dark {
+    background: #292933;
+  }
   & > * {
     padding-left: 15px;
     padding-right: 15px;
@@ -169,3 +172,5 @@
     width: 100%;
   }
 }
+// input fields color
+@include input-fields-color;
