@@ -1,7 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from './../../../../../@core/services/store.service';
+import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { chain, reduce } from 'underscore';
+import * as moment from 'moment';
 import {
 	IOrganization,
 	ITimeLogFilters,
@@ -11,13 +14,9 @@ import {
 	IActivity,
 	IURLMetaData
 } from '@gauzy/contracts';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { isJsObject, toUTC, toLocal } from '@gauzy/common-angular';
-import { ActivatedRoute } from '@angular/router';
-import * as _ from 'underscore';
-import * as moment from 'moment';
-import { ActivityService } from './../../../../../@shared/timesheet/activity.service';
-import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
+import { isJsObject, toUTC, toLocal, distinctUntilChange } from '@gauzy/common-angular';
+import { Store } from './../../../../../@core/services';
+import { ActivityService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -48,15 +47,14 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		this.activities$
 			.pipe(
-				untilDestroyed(this),
-				debounceTime(500),
-				tap(() => this.getLogs())
+				debounceTime(100),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.activatedRoute.data
 			.pipe(
 				tap((params) => this.type = params.type),
-				tap(() => this.activities$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -65,14 +63,13 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 		const storeProject$ = this.store.selectedProject$;
 		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				filter(([organization]) => !!organization),
+				filter(([organization, employee]) => !!organization && !!employee),
+				distinctUntilChange(),
 				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
-						this.selectedEmployeeId = employee ? employee.id : null;
-						this.projectId = project ? project.id : null;
-						this.activities$.next(true);
-					}
+					this.organization = organization;
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this.projectId = project ? project.id : null;
+					this.activities$.next(true);
 				}),
 				untilDestroyed(this)
 			)
@@ -151,7 +148,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 		this.activityService
 			.getDailyActivities(request)
 			.then((activities) => {
-				this.apps = _.chain(activities)
+				this.apps = chain(activities)
 					.map((activity) => {
 						activity.hours = toLocal(
 							moment.utc(
@@ -165,7 +162,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 					.groupBy('hours')
 					.mapObject((value, key) => {
 						value = value.slice(0, 6);
-						const sum = _.reduce(
+						const sum = reduce(
 							value,
 							(memo, activity) =>
 								memo + parseInt(activity.duration + '', 10),
