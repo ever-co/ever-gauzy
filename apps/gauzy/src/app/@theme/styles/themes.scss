@@ -30,7 +30,8 @@ $nb-themes: nb-register-theme(
     accordion-padding: 0.625rem,
     actions-divider-style: none,
     button-filled-medium-padding:	0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    sidebar-padding: 0.625rem
   ),
   default,
   default
@@ -56,7 +57,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color-rtl: -2px 0 3px #29157a,
     accordion-padding: 0.625rem,
     button-filled-medium-padding:	0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    sidebar-padding: 0.625rem
   ),
   cosmic,
   cosmic
@@ -82,7 +84,8 @@ $nb-themes: nb-register-theme(
     slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
     accordion-padding: 0.625rem,
     button-filled-medium-padding:	0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    sidebar-padding: 0.625rem
   ),
   corporate,
   corporate
@@ -110,7 +113,8 @@ $nb-themes: nb-register-theme(
     accordion-padding: 0.625rem,
     actions-divider-style: none,
     button-filled-medium-padding:	0.4375rem 0.875rem,
-    button-outline-medium-padding: 0.4375rem 0.875rem
+    button-outline-medium-padding: 0.4375rem 0.875rem,
+    sidebar-padding: 0.625rem
   ),
   dark,
   dark
