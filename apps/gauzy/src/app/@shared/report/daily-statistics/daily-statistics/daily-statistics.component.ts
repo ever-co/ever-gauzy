@@ -103,22 +103,24 @@ export class DailyStatisticsComponent extends ReportBaseComponent
 
 	private async loadEmployeesCount() {
 		const { tenantId } = this.store.user;
-		const { total } = await firstValueFrom(
-			this.employeesService.getAll([], {
-				organizationId: this.organization.id,
-				tenantId
-			})
-		);
-		this.employeesCount = total;
-	}
-	private async loadProjectsCount() {
-		const { tenantId } = this.store.user;
-		const { total } = await this.projectService.getAll([], {
-			organizationId: this.organization.id,
+		const { id: organizationId } = this.organization;
+
+		this.employeesCount = await this.employeesService.getCount([], {
+			organizationId,
 			tenantId
 		});
-		this.projectsCount = total;
 	}
+
+	private async loadProjectsCount() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.projectsCount = await this.projectService.getCount([], {
+			organizationId,
+			tenantId
+		});
+	}
+
 	get period() {
 		if(this.logRequest){
 			const { startDate, endDate } = this.logRequest;
