@@ -18,7 +18,8 @@ import {
 	IProjectBudgetLimitReport,
 	IProjectBudgetLimitReportInput,
 	IClientBudgetLimitReportInput,
-	IReportDayData
+	IReportDayData,
+	ReportDayData
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -157,7 +158,7 @@ export class TimesheetService {
 		const params = toParams(request);
 		return firstValueFrom(
 			this.http
-			.get(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })
+			.get<ReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })
 		);
 	}
 

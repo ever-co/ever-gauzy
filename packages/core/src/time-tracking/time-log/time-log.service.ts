@@ -122,17 +122,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		});
 
-		let dayList = [];
-		const range = {};
+		const { startDate, endDate } = request;
+
+		const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
+		const end = moment(moment(endDate).format('YYYY-MM-DD')).add(1, 'day');
+		const range = Array.from(moment.range(start, end).by('day'));
+
+		const days: Array<string> = new Array();
 		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
+		while (i < range.length) {
+			const date = range[i].format('YYYY-MM-DD');
+			days.push(date);
 			i++;
 		}
-		dayList = Object.keys(range);
 
 		const weeklyLogs = _.chain(logs)
 			.groupBy('employeeId')
@@ -149,10 +151,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					})
 					.value();
 
-				const employee =
-					innerLogs.length > 0 ? innerLogs[0].employee : null;
+				const employee = innerLogs.length > 0 ? innerLogs[0].employee : null;
 				const dates: any = {};
-				dayList.forEach((date) => {
+				days.forEach((date) => {
 					dates[date] = byDate[date] || 0;
 				});
 				return { employee, dates };
