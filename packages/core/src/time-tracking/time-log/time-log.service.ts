@@ -25,7 +25,6 @@ import {
 	IOrganizationProject,
 	IDeleteTimeLog
 } from '@gauzy/contracts';
-import * as moment from 'moment';
 import { CommandBus } from '@nestjs/cqrs';
 import * as _ from 'underscore';
 import { chain } from 'underscore';
@@ -48,6 +47,7 @@ import {
 	TimeLogUpdateCommand
 } from './commands';
 import { getDateFormat } from './../../core/utils';
+import { moment } from './../../core/moment-extend';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -179,17 +179,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		});
 
-		let dayList = [];
-		const range = {};
+		const { startDate, endDate } = request;
+		console.log({ request });
+
+		const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
+		const end = moment(moment(endDate).format('YYYY-MM-DD')).add(1, 'day');
+		const range = Array.from(moment.range(start, end).by('day'));
+
+		const days: Array<string> = new Array();
 		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
+		while (i < range.length) {
+			const date = range[i].format('YYYY-MM-DD');
+			days.push(date);
 			i++;
 		}
-		dayList = Object.keys(range);
 
 		const byDate = chain(logs)
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
@@ -234,7 +237,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 			.value();
 
-		const dates = dayList.map((date) => {
+		const dates = days.map((date) => {
 			if (byDate[date]) {
 				return byDate[date];
 			} else {
@@ -249,7 +252,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				};
 			}
 		});
-
 		return dates;
 	}
 
