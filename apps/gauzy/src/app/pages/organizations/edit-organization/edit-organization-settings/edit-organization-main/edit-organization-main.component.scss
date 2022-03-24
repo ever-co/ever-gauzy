@@ -1,58 +1,152 @@
-.main-form {
-  width: 100%;
+@import "themes";
+@import "var";
+
+:host.ng-star-inserted {
+    padding: 20px;
+    background-color: nb-theme(background-basic-color-3);
+    height: 100%;
 }
+
 .content {
-  display: flex;
-  padding: 50px 0px;
+    display: flex;
+    height: 100%;
 }
 
 .organization-container {
-  padding-right: 70px;
-  margin-right: 70px;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  transition: transform 150ms ease-in-out;
-
-  .organization-photo {
-    width: fit-content;
-    height: fit-content;
+    padding: 15px;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 150ms ease-in-out;
+    background-color: nb-theme(background-basic-color-4);
+    border-radius: 10px;
+    width: 563px;
+    height: 100%;
 
-    div {
-      pointer-events: none;
-      background: black;
-      position: absolute;
-      height: 100%;
-      width: 100%;
-      border-radius: 13px;
-    }
+    .organization-photo {
+        width: fit-content;
+        height: fit-content;
+        position: relative;
+        margin-left: 0 !important;
 
-    img {
-      width: 180px;
-      height: auto;
-      border-radius: 13px;
-    }
+        div {
+            pointer-events: none;
+            background: black;
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            border-radius: 13px;
+        }
 
-    input {
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      position: absolute;
-      z-index: 3;
-      cursor: pointer;
-    }
+        img {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+        }
 
-    svg {
-      z-index: 2;
-      transition: opacity 0.2s ease-in;
-      opacity: 0.3;
-      position: absolute;
-      top: calc(50% - 68px / 2);
-      left: calc(50% - 68px / 2);
+        input {
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            position: absolute;
+            z-index: 3;
+            cursor: pointer;
+        }
+
+        svg {
+            z-index: 2;
+            transition: opacity 0.2s ease-in;
+            opacity: 0.3;
+            position: absolute;
+            top: calc(50% - 68px / 2);
+            left: calc(50% - 68px / 2);
+        }
     }
-  }
+    .employees-count-text {
+        font-family: Inter;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+        margin-left: 1px;
+    }
+}
+.main-form {
+    width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+
+    .actions {
+        margin-top: 60px;
+    }
+}
+
+::ng-deep ga-currency .form-group {
+    display: inline-flex;
+    flex-direction: column;
+    min-width: 180px;
+}
+
+.tax-form-group {
+    display: flex;
+    flex-direction: column;
+    & #taxIdInput {
+        width: 80%;
+    }
+}
+
+.registration-form-group {
+    display: inline-flex;
+    flex-direction: column;
+    & #registrationDate {
+        width: 175px;
+    }
+}
+
+@include respond(lg) {
+    .organization-container {
+        width: 350px;
+    }
+}
+
+@include respond(sm) {
+    .content {
+        flex-direction: column;
+    }
+    .organization-container, .main-form {
+        width: 100%;
+    }
+    .main-form {
+        padding: 0;
+        margin-top: 20px;
+    }
+    .row {
+        flex-direction: column;
+    }
+    .form-group {
+        width: 100% !important;
+    }
+    .tax-form-group {
+        & #taxIdInput {
+            width: 100%;
+        }
+    }
+    .registration-form-group {
+        & #registrationDate {
+            width: 100%;
+        }
+    }
+    ::ng-deep ga-currency .form-group {
+        display: flex;
+    }
+    .col-6 {
+        max-width: 100%;
+    }
+    .main-form .actions {
+        margin-top: 20px;
+    }
 }
 
 // .color {

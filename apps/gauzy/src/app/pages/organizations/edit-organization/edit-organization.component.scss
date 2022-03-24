@@ -1,61 +1,142 @@
+@import "themes";
+@import "var";
+
+.card-scroll {
+    & .header {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 25px;
+        border-bottom: none;
+        background: nb-theme(background-basic-color-2);
+    }
+
+    & .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .org-image {
+        margin-left: 0 !important;
+        width: 48px;
+        height: 48px;
+        margin-right: 17px !important;
+    }
+    .org-name {
+        font-family: Inter;
+        font-size: 14px !important;
+        font-style: normal;
+        font-weight: 600 !important;
+        line-height: 17px;
+        letter-spacing: 0em;
+        text-align: left;
+        margin-bottom: 3px;
+    }
+    .org-position {
+        font-family: Inter;
+        font-size: 12px !important;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+    }
+
+    & .edit-public-page {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        padding: 2px 12px 2px 12px;
+        border: 2px solid rgba(110, 73, 232, 0.2);
+        box-sizing: border-box;
+        border-radius: 20px;
+        border: 2px solid #6E49E833;
+        font-family: Inter;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 11px;
+        letter-spacing: 0em;
+        text-align: left;
+        color: #6E49E8;
+        cursor: pointer;
+    }
+
+    & nb-card-body {
+        padding: 0;
+    }
+}
+
+// old styles
 .edit-icon {
-  margin-left: 30px;
-  position: relative;
-  width: 36px;
+    margin-left: 30px;
+    position: relative;
+    width: 36px;
 
-  svg {
-    position: absolute;
-  }
+    svg {
+        position: absolute;
+    }
 
-  nb-icon {
-    position: absolute;
-  }
+    nb-icon {
+        position: absolute;
+    }
 }
 
 .org-details {
-  .edit-public-page {
-    cursor: pointer;
-    color: #027ad6;
-    padding-top: 3px;
-  }
+    .edit-public-page {
+        cursor: pointer;
+        color: #027ad6;
+        padding-top: 3px;
+    }
 }
 
 .setting-name {
-  font-size: 24px;
-  font-weight: bold;
+    font-size: 24px;
+    font-weight: bold;
 }
 
 .body-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-}
-
-.mutation-card.setting-block {
-  background: #eaf3fc;
-}
-
-.transparent {
-  opacity: 0.7;
-}
-
-.settings-body {
-  padding: 35px;
-}
-
-.sub-header {
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
-.header-content {
-  display: flex;
-  .header-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 560px;
-    padding-left: 30px;
-  }
+    margin-bottom: 35px;
+}
+
+.mutation-card.setting-block {
+    background: #eaf3fc;
+}
+
+.transparent {
+    opacity: 0.7;
+}
+
+.settings-body {
+    padding: 35px;
+}
+
+.sub-header {
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.header-content {
+    display: flex;
+    .header-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 560px;
+        padding-left: 30px;
+    }
+}
+
+@include respond(sm) {
+    .header .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .org-image {
+        margin-bottom: 10px;
+    }
 }
