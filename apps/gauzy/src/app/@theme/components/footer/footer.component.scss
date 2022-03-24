@@ -9,8 +9,9 @@
   align-items: center;
 
   .socials {
-    font-size: 2rem;
-
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
     a {
       padding: 0.4rem;
       color: nb-theme(text-hint-color);
@@ -22,6 +23,7 @@
     }
     .ion-logo-gitlab svg {
       vertical-align: text-top;
+      width: 1.25rem;
     }
   }
   .right-side {

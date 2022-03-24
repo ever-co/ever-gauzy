@@ -221,6 +221,8 @@ $nb-themes: nb-register-theme((
       tabset-divider-width: 0,
       route-tabset-divider-width: 0,
       route-tabset-tab-underline-width:0,
+      footer-shadow: none,
+      footer-divider-style: none
   ),
   gauzy-light,
   default
