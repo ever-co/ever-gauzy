@@ -51,6 +51,7 @@ export interface PersistState {
 	preferredComponentLayout: ComponentLayoutStyleEnum;
 	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
 	themeName: string;
+  lightMode: number;
 }
 
 export function createInitialAppState(): AppState {
@@ -72,6 +73,7 @@ export function createInitialPersistState(): PersistState {
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
   const themeName = localStorage.getItem('themeName')|| null;
+  const lightMode = localStorage.getItem('lightMode')|| 1;
 
 	return {
 		token,
@@ -80,7 +82,8 @@ export function createInitialPersistState(): PersistState {
 		serverConnection,
 		preferredLanguage,
 		componentLayout,
-    themeName
+    themeName,
+    lightMode,
 	} as PersistState;
 }
 
@@ -515,6 +518,17 @@ export class Store {
   set currentTheme(name: string){
     this.persistStore.update({
       themeName: name
+    })
+  }
+
+  get currentDayNightSwitchValue (): number | null {
+    const { lightMode } = this.persistQuery.getValue();
+    return lightMode;
+  }
+
+  set currentDayNightSwitchValue(lightMode: number){
+    this.persistStore.update({
+      lightMode
     })
   }
 }

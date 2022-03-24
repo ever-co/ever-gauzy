@@ -1,0 +1,176 @@
+@import "../reusable";
+@import "themes";
+
+@mixin addPaddings {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.main-section {
+  width: 765px;
+  display: flex;
+  justify-content: space-between;
+}
+.register-wrapper {
+  width: 476px;
+  height: 100%;
+  padding: 30px;
+  border-radius: 10px;
+  background: white;
+  &.dark {
+    background: #292933;
+  }
+  & > * {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  & .title-wrapper {
+    margin-bottom: 24px;
+    & > .title {
+      font-family: Inter;
+      font-size: 24px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 30px;
+      letter-spacing: 0em;
+      text-align: left;
+    }
+  }
+  & .hr-div-strong {
+    @include hr-div-strong;
+  }
+  & .hr-div-soft {
+    @include hr-div-soft;
+  }
+  & .another-action {
+    @include another-action;
+    margin-top: 12px;
+  }
+  & .form-control-group {
+    @include mobile-screen {
+      margin-bottom: 1rem;
+    }
+  }
+}
+.features-wrapper {
+  width: 260px;
+  height: 100%;
+}
+.svg-wrapper {
+  margin-bottom: 55px;
+  display: flex;
+  justify-content: space-between;
+}
+.form {
+  margin-top: 21px;
+  margin-bottom: 42px;
+  & .form-control-group {
+    margin-bottom: 16px;
+  }
+  & .btn-wrapper {
+    text-align: end;
+    @include mobile-screen {
+      text-align: center;
+    }
+    & .submit-btn {
+      @include submit-btn;
+      padding: 13px 65px;
+    }
+  }
+  & .accept-group {
+    @include mobile-screen {
+      margin-left: -10px;
+      min-width: calc(100% + 30px);
+      text-align: center;
+      margin-top: 0;
+      & .normal-terms-text {
+        font-family: Inter;
+        font-size: 10px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 13px;
+        letter-spacing: 0em;
+        text-align: left;
+      }
+      & .terms-link {
+        font-family: Inter;
+        font-size: 10px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 13px;
+        letter-spacing: 0em;
+        text-align: left;
+      }
+    }
+  }
+}
+.links {
+  margin-top: 21px;
+  margin-bottom: 28px;
+  @include social-links-style;
+}
+
+.theme-switch {
+  @include not-mobile-screen {
+    display: none;
+  }
+}
+
+::ng-deep .label .text:not(:empty) {
+  padding-left: 5px !important;
+  vertical-align: middle;
+}
+
+@include small-laptop-screen {
+  .register-wrapper {
+    padding: 20px 30px;
+    & .another-action {
+      margin-top: 0;
+      padding-left: 10px;
+    }
+  }
+  .svg-wrapper {
+    margin-bottom: 30px;
+  }
+  .form {
+    margin-bottom: 25px;
+    & .accept-group {
+      margin-top: 15px;
+    }
+  }
+  .links {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+}
+
+@include tablet-screen {
+  .main-section {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .features-wrapper {
+    width: 476px;
+    margin-top: 30px;
+  }
+}
+
+@include mobile-screen {
+  .main-section, .register-wrapper {
+    width: 100%;
+  }
+  .register-wrapper {
+    padding: 20px 12px;
+    & .title-wrapper {
+      & > .title {
+        text-align: center;
+      }
+    }
+  }
+  .features-wrapper {
+    width: 100%;
+  }
+}
+// input fields color
+@include input-fields-color;

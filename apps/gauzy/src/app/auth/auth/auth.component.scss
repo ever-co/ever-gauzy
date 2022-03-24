@@ -1,0 +1,118 @@
+@import "../reusable";
+@import "themes";
+
+.wrapper {
+  padding: 0 !important;
+  & .card {
+    border: none;
+  }
+
+  & .header {
+    border-bottom: none;
+    padding-top: 30px;
+    padding-left: 30px;
+    padding-right: 30px;
+    width: 100vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0;
+    &.dark {
+      background: #202023;
+    }
+    @include mobile-screen {
+      display: none;
+    }
+  }
+  & .card {
+    margin-bottom: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    @include mobile-screen {
+      height: auto;
+    }
+  }
+  & .body {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    &.dark {
+      background: #202023;
+    }
+    @include mobile-screen {
+      padding-left: 10px;
+      padding-right: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    & .auth-block {
+      min-width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      & > ::ng-deep .ng-star-inserted {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    }
+  }
+}
+.back-link {
+  border: 1px solid lightgray;
+  border-radius: 50%;
+  padding: 15px;
+  transition: all 0.3s ease;
+  &:hover {
+    -webkit-box-shadow: 5px 5px 30px -10px rgba(0, 0, 0, 0.3);
+    box-shadow: 5px 5px 30px -10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+}
+.message-us-wrapper {
+  background: nb-theme(color-primary-500);
+  padding: 20px;
+  border-radius: 20px;
+  position: absolute;
+  bottom: 30px;
+  right: 20px;
+  cursor: pointer;
+  -webkit-box-shadow: 5px 5px 23px -5px rgba(0, 0, 0, 0.72);
+  box-shadow: 5px 5px 23px -5px rgba(0, 0, 0, 0.72);
+  & > nb-icon {
+    width: 40px;
+    height: 40px;
+    color: nb-theme(text-alternate-color);
+  }
+  @include small-laptop-screen {
+    display: none;
+  }
+}
+.register {
+  background: $register-background-light-color;
+}
+
+::ng-deep ngx-register {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@include mobile-screen {
+  ::ng-deep ngx-forgot-password {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

@@ -123,3 +123,5 @@ export * from './users.service';
 export * from './warehouse.service';
 export * from './gauzy-cloud.service';
 export * from './file-storage.service';
+export * from './theme-switch.service';
+
