@@ -178,6 +178,10 @@ $nb-themes: nb-register-theme((
       color-primary-700: #3d2a7a,
       color-primary-800: #291d52,
       color-primary-900: #1a1038,
+      color-primary-transparent-100:rgba(110, 73, 232, 0.05),
+      // Basic colors: background
+      layout-background-color:#ffffff,
+      background-basic-color-3: #F9F9F9,
       // Supporting variables - border radius, outline, shadow, divider
       border-radius: 0.5rem,
       outline-width: 0.375rem,
@@ -192,7 +196,8 @@ $nb-themes: nb-register-theme((
       divider-style: solid,
       divider-width: 1px,
       tabset-tab-active-underline-color: background-basic-color-1,
-      tabset-tab-active-background-color: background-basic-color-1,
+      tabset-tab-active-background-color: rgba(50, 50, 50, 0.03),
+      card-background-color:rgba(50, 50, 50, 0.03),
       tabset-border-radius: 0.5rem,
       select-rectangle-border-radius: 2rem,
       tabset-tab-hover-underline-color: background-basic-color-1,
@@ -207,7 +212,15 @@ $nb-themes: nb-register-theme((
       button-outline-medium-padding: 0.4375rem 0.875rem,
       toggle-height: 1.5rem,
       toggle-switcher-size: 1.4rem,
-      toggle-switcher-icon-size: 0
+      toggle-switcher-icon-size: 0,
+      header-shadow: none,
+      card-border-style: none,
+      tabset-divider-style: none,
+      route-tabset-divider-style: none,
+      //card-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05),
+      tabset-divider-width: 0,
+      route-tabset-divider-width: 0,
+      route-tabset-tab-underline-width:0,
   ),
   gauzy-light,
   default
@@ -225,6 +238,7 @@ $nb-themes: nb-register-theme(
      color-primary-700: #3d2a7a,
      color-primary-800: #291d52,
      color-primary-900: #1a1038,
+     color-primary-transparent-100:rgba(110, 73, 232, 0.05),
      // Supporting variables - border radius, outline, shadow, divider
      border-radius: 0.5rem,
      outline-width: 0.375rem,
@@ -239,7 +253,6 @@ $nb-themes: nb-register-theme(
      divider-style: solid,
      divider-width: 1px,
      tabset-tab-active-underline-color: background-basic-color-1,
-     tabset-tab-active-background-color: background-basic-color-1,
      tabset-border-radius: 0.5rem,
      select-rectangle-border-radius: 2rem,
      tabset-tab-hover-underline-color: background-basic-color-1,
