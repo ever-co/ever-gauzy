@@ -1,8 +1,12 @@
 <nb-layout windowMode>
-	<nb-layout-header subheader *ngIf="user">
+	<nb-layout-header fixed *ngIf="user">
 		<ngx-header></ngx-header>
 	</nb-layout-header>
 
+	<nb-sidebar state="compacted" tag="user-workspace">
+    <div></div>
+		<gauzy-user [user]="user" (click)="isOpen = !isOpen"></gauzy-user>
+	</nb-sidebar>
 	<nb-sidebar
 		class="menu-sidebar sidebar_class"
 		tag="menu-sidebar"
@@ -10,15 +14,8 @@
 		*ngIf="user"
 	>
 		<ng-content select="nb-menu"></ng-content>
-		<div class="user-container">
-			<nb-user
-				[nbContextMenu]="userMenu"
-				[name]="(user?.username || user?.email)"
-				[picture]="user?.imageUrl"
-			></nb-user>
-		</div>
+    <button nbButton outline size="small"><i class="fas fa-angle-double-left"></i></button>
 	</nb-sidebar>
-
 	<nb-layout-column *ngIf="!loading">
 		<ng-content select="router-outlet"></ng-content>
 	</nb-layout-column>
@@ -38,3 +35,8 @@
 		<ngx-theme-sidebar [config]="sidebar"></ngx-theme-sidebar>
 	</nb-sidebar>
 </nb-layout>
+<gauzy-user-menu
+	[user]="user"
+	(close)="isOpen=false"
+	*ngIf="isOpen"
+></gauzy-user-menu>

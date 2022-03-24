@@ -33,6 +33,8 @@ export class OneColumnLayoutComponent
 		{ title: 'Log out', link: '/auth/logout' }
 	];
 
+  isOpen: boolean = false;
+
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,
 		private readonly windowModeBlockScrollService: WindowModeBlockScrollService,
