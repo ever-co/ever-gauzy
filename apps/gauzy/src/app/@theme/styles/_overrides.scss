@@ -24,6 +24,13 @@ body {
 
 @mixin nb-overrides() {
 
+  .scrollable{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .cdk-global-scrollblock {
     overflow-y: overlay;
   }
