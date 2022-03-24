@@ -52,11 +52,11 @@
 			</div>
 		</div>
 	</div>
-	<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
+	<ng-template [ngIf]="dailyLogs?.length > 0" [ngIfElse]="notFound">
 		<nb-card
 			[ngSwitch]="groupBy"
 			class="card"
-			*ngFor="let day of dailyData"
+			*ngFor="let day of dailyLogs"
 		>
 			<ng-container *ngSwitchCase="ReportGroupFilterEnum.employee">
 				<ng-container
