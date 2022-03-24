@@ -64,7 +64,7 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 	}
 
 	getFilterRequest(request: ITimeLogFilters): ITimeLogFilters {
-		const { startDate, endDate } = request;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed(request);
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
@@ -112,8 +112,8 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 			endDate = moment.utc().toDate();
 		}
 		return {
-			startDate: startDate,
-			endDate: endDate
+			startDate: moment(startDate).toDate(),
+			endDate: moment(endDate).toDate()
 		} as ISelectedDateRange
 	}
 }

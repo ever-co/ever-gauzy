@@ -180,7 +180,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 
 		const { startDate, endDate } = request;
-		console.log({ request });
 
 		const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
 		const end = moment(moment(endDate).format('YYYY-MM-DD')).add(1, 'day');

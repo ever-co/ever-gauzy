@@ -17,7 +17,8 @@ import {
 	IClientBudgetLimitReport,
 	IProjectBudgetLimitReport,
 	IProjectBudgetLimitReportInput,
-	IClientBudgetLimitReportInput
+	IClientBudgetLimitReportInput,
+	IReportDayData
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -113,11 +114,11 @@ export class TimesheetService {
 		);
 	}
 
-	getDailyReport(request?: IGetTimeLogInput) {
+	getDailyReport(request?: IGetTimeLogInput): Promise<IReportDayData[]> {
 		const params = toParams(request);
 		return firstValueFrom(
 			this.http
-			.get(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
+			.get<IReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
 		);
 	}
 

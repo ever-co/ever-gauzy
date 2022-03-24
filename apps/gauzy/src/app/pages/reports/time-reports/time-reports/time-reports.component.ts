@@ -62,7 +62,11 @@ export class TimeReportsComponent
 
 	filtersChange($event) {
 		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+		this.filters = Object.assign(
+			{},
+			this.logRequest,
+			this.getAdjustDateRangeFutureAllowed(this.logRequest)
+		);
 		this.subject$.next(true);
 	}
 

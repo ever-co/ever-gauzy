@@ -27,18 +27,21 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 	templateUrl: './daily-grid.component.html',
 	styleUrls: ['./daily-grid.component.scss']
 })
-export class DailyGridComponent extends ReportBaseComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DailyGridComponent extends ReportBaseComponent
+	implements OnInit, AfterViewInit, OnDestroy {
 	
 	logRequest: ITimeLogFilters = this.request;
-	dailyData: IReportDayData[] = [];
+	dailyLogs: IReportDayData[] = [];
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
 	@Input()
 	set filters(value: ITimeLogFilters) {
-		this.logRequest = value;
-		this.subject$.next(true);
+		if (value) {
+			this.logRequest = value;
+			this.subject$.next(true);
+		}
 	}
 
 	constructor(
@@ -54,7 +57,6 @@ export class DailyGridComponent extends ReportBaseComponent implements OnInit, A
 		this.subject$
 			.pipe(
 				debounceTime(500),
-				tap(() => this.loading = true),
 				tap(() => this.getLogs()),
 				untilDestroyed(this),
 			)
@@ -64,13 +66,7 @@ export class DailyGridComponent extends ReportBaseComponent implements OnInit, A
 	ngAfterViewInit() {
 		this.cd.detectChanges();
 	}
-
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
-		this.subject$.next(true);
-	}
-
+	
 	groupByChange() {
 		this.subject$.next(true);
 	}
@@ -79,6 +75,7 @@ export class DailyGridComponent extends ReportBaseComponent implements OnInit, A
 		if (!this.organization || !this.logRequest) {
 			return;
 		}
+		this.loading = true;
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
@@ -90,13 +87,15 @@ export class DailyGridComponent extends ReportBaseComponent implements OnInit, A
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		}
-		this.timesheetService
-			.getDailyReport(request)
-			.then((logs: IReportDayData[]) => {
-				this.dailyData = logs;
-			})
-			.catch((error) => {})
-			.finally(() => (this.loading = false));
+
+		try {
+			const logs: IReportDayData[] = await this.timesheetService.getDailyReport(request);
+			this.dailyLogs = logs;
+		} catch (error) {
+			console.log('Error while retrieving daily logs report', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	ngOnDestroy() {}
