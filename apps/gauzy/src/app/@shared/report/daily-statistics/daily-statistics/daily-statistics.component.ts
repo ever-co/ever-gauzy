@@ -30,10 +30,9 @@ import * as moment from 'moment';
 	templateUrl: './daily-statistics.component.html',
 	styleUrls: ['./daily-statistics.component.scss']
 })
-export class DailyStatisticsComponent
-	extends ReportBaseComponent
-	implements OnInit, AfterViewInit
-{
+export class DailyStatisticsComponent extends ReportBaseComponent
+	implements OnInit, AfterViewInit {
+
 	PermissionsEnum = PermissionsEnum;
 	logRequest: ITimeLogFilters = this.request;
 	counts: ICountsStatistics;
@@ -43,8 +42,10 @@ export class DailyStatisticsComponent
 
 	@Input()
 	set filters(value: ITimeLogFilters) {
-		this.logRequest = value;
-		this.subject$.next(true);
+		if (value) {
+			this.logRequest = value;
+			this.subject$.next(true);
+		}
 	}
 
 	constructor(
@@ -61,8 +62,7 @@ export class DailyStatisticsComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(300),
-				tap(() => (this.loading = true)),
+				debounceTime(500),
 				tap(() => this.getCounts()),
 				untilDestroyed(this)
 			)
@@ -73,47 +73,32 @@ export class DailyStatisticsComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
-		this.subject$.next(true);
-	}
-
-	getCounts() {
+	async getCounts() {
 		if (!this.organization || !this.logRequest) {
 			return;
 		}
+		this.loading = true;
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
 			'activityLevel',
-			'logType',
-			'startDate',
-			'endDate'
+			'logType'
 		);
-		const {
-			employeeIds = [],
-			projectIds = [],
-			tenantId,
-			organizationId
-		}: ITimeLogFilters = this.getFilterRequest(this.logRequest);
 		const request: IGetCountsStatistics = {
 			...appliedFilter,
-			organizationId,
-			tenantId,
-			...(isNotEmpty(employeeIds) ? { employeeId: employeeIds[0] } : {}),
-			...(isNotEmpty(projectIds) ? { projectId: projectIds[0] } : {})
+			...this.getFilterRequest(this.logRequest),
 		};
-		this.timesheetStatisticsService
-			.getCounts(request)
-			.then((resp) => {
-				this.counts = resp;
-				this.loadEmployeesCount();
-				this.loadProjectsCount();
-			})
-			.finally(() => {
-				this.loading = false;
-			});
+		try {
+			const counts = await this.timesheetStatisticsService.getCounts(request);
+			this.counts = counts;
+
+			this.loadEmployeesCount();
+			this.loadProjectsCount();
+		} catch (error) {
+			console.log('Error while retrieving daily statistics', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	private async loadEmployeesCount() {
@@ -134,12 +119,12 @@ export class DailyStatisticsComponent
 		});
 		this.projectsCount = total;
 	}
-  get period() {
-    if(this.logRequest){
-      const { startDate, endDate } = this.logRequest;
-      const start = moment(startDate);
-      const end = moment(endDate);
-      return end.diff(start, 'days') * 86400;
-    }
-  }
+	get period() {
+		if(this.logRequest){
+			const { startDate, endDate } = this.logRequest;
+			const start = moment(startDate);
+			const end = moment(endDate);
+			return end.diff(start, 'days') * 86400;
+		}
+	}
 }

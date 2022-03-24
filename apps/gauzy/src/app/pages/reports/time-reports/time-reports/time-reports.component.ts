@@ -28,9 +28,9 @@ import { IChartData } from './../../../../@shared/report/charts/line-chart/line-
 	templateUrl: './time-reports.component.html',
 	styleUrls: ['./time-reports.component.scss']
 })
-export class TimeReportsComponent
-	extends ReportBaseComponent
+export class TimeReportsComponent extends ReportBaseComponent
 	implements OnInit, AfterViewInit, OnDestroy {
+		
 	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
 	loading: boolean;
