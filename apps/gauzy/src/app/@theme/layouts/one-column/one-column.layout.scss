@@ -47,4 +47,11 @@
     bottom: 0px;
     left: 0px;
   }
+
+  button.chevron{
+    width: 2rem;
+    height: 2rem;
+    align-self: flex-end;
+    margin-bottom: 0.625rem;
+  }
 }

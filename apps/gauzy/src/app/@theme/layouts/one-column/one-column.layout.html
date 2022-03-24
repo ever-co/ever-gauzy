@@ -14,7 +14,7 @@
 		*ngIf="user"
 	>
 		<ng-content select="nb-menu"></ng-content>
-    <button nbButton outline size="small"><i class="fas fa-angle-double-left"></i></button>
+    <button nbButton class="chevron" outline size="small"><i class="fas fa-angle-double-left"></i></button>
 	</nb-sidebar>
 	<nb-layout-column *ngIf="!loading">
 		<ng-content select="router-outlet"></ng-content>
