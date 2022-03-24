@@ -53,5 +53,8 @@
     height: 2rem;
     align-self: flex-end;
     margin-bottom: 0.625rem;
+    &.collapsed{
+      align-self: center;
+    }
   }
 }

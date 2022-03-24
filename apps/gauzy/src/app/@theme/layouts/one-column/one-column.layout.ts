@@ -8,13 +8,14 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { NbLayoutComponent } from '@nebular/theme';
+import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
 import { IUser } from '@gauzy/contracts';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { NavigationBuilderService, Store } from '../../../@core/services';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LayoutService } from '../../../@core/utils/layout.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,7 +24,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	templateUrl: './one-column.layout.html'
 })
 export class OneColumnLayoutComponent
-	implements OnInit, AfterViewInit, OnDestroy {
+	implements OnInit, AfterViewInit, OnDestroy
+{
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: IUser;
@@ -33,13 +35,16 @@ export class OneColumnLayoutComponent
 		{ title: 'Log out', link: '/auth/logout' }
 	];
 
-  isOpen: boolean = false;
+	isOpen: boolean = false;
+	isExpanded: boolean = true;
 
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,
 		private readonly windowModeBlockScrollService: WindowModeBlockScrollService,
 		private readonly store: Store,
-		public readonly navigationBuilderService: NavigationBuilderService
+		public readonly navigationBuilderService: NavigationBuilderService,
+		private readonly sidebarService: NbSidebarService,
+		private readonly layoutService: LayoutService
 	) {
 		Object.entries(DEFAULT_SIDEBARS).forEach(([id, config]) => {
 			navigationBuilderService.registerSidebar(id, config);
@@ -63,6 +68,16 @@ export class OneColumnLayoutComponent
 	ngAfterViewInit() {
 		if (isPlatformBrowser(this.platformId)) {
 			this.windowModeBlockScrollService.register(this.layout);
+		}
+	}
+
+	toggle() {
+    this.isExpanded = !this.isExpanded;
+		if (this.isExpanded) {
+			this.sidebarService.expand('menu-sidebar');
+		} else {
+			this.sidebarService.toggle(true, 'menu-sidebar');
+			this.layoutService.changeLayoutSize();
 		}
 	}
 

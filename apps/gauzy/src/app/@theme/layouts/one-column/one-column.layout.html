@@ -4,7 +4,7 @@
 	</nb-layout-header>
 
 	<nb-sidebar state="compacted" tag="user-workspace">
-    <div></div>
+		<div></div>
 		<gauzy-user [user]="user" (click)="isOpen = !isOpen"></gauzy-user>
 	</nb-sidebar>
 	<nb-sidebar
@@ -14,7 +14,17 @@
 		*ngIf="user"
 	>
 		<ng-content select="nb-menu"></ng-content>
-    <button nbButton class="chevron" outline size="small"><i class="fas fa-angle-double-left"></i></button>
+		<button
+			(click)="toggle()"
+			nbButton
+			[ngClass]="isExpanded ? 'chevron': 'chevron collapsed'"
+			outline
+			size="small"
+		>
+			<i
+				[ngClass]="isExpanded? 'fas fa-angle-double-left':'fas fa-angle-double-right'"
+			></i>
+		</button>
 	</nb-sidebar>
 	<nb-layout-column *ngIf="!loading">
 		<ng-content select="router-outlet"></ng-content>
