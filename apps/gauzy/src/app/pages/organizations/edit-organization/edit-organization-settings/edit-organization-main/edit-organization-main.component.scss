@@ -4,7 +4,7 @@
 :host.ng-star-inserted {
     padding: 20px;
     background-color: nb-theme(background-basic-color-3);
-    height: 100%;
+    height: 93%;
 }
 
 .content {
@@ -82,6 +82,11 @@
         margin-top: 60px;
     }
 }
+.row {
+    & .col {
+        max-width: 50%;
+    }
+}
 
 ::ng-deep ga-currency .form-group {
     display: inline-flex;
@@ -105,13 +110,31 @@
     }
 }
 
+::ng-deep nb-select.shape-rectangle .select-button {
+    border-radius: 8px;
+}
+
 @include respond(lg) {
     .organization-container {
         width: 350px;
     }
+    .registration-form-group #registrationDate{
+        width: 100%;
+    }
+    .tax-form-group #taxIdInput {
+        width: 100%;
+    }
+    ::ng-deep ga-currency .form-group {
+        display: flex;
+        flex-direction: column;
+        //min-width: 180px;
+    }
 }
 
-@include respond(sm) {
+@include respond(md) {
+    :host.ng-star-inserted {
+        height: auto;
+    }
     .content {
         flex-direction: column;
     }
@@ -124,6 +147,12 @@
     }
     .row {
         flex-direction: column;
+        max-width: 100%;
+        margin-left: 0;
+        & .col {
+            max-width: 100%;
+            padding: 0;
+        }
     }
     .form-group {
         width: 100% !important;
@@ -143,6 +172,7 @@
     }
     .col-6 {
         max-width: 100%;
+        padding: 0 !important;
     }
     .main-form .actions {
         margin-top: 20px;

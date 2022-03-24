@@ -36,19 +36,21 @@ nb-card-body {
         }
 
         li {
+            background: nb-theme(background-basic-color-2);
+
             &:last-of-type {
                 margin-left: auto;
                 @include respond(sm) {
                     margin-left: 0;
                 }
             }
-            background: nb-theme(background-basic-color-2);
             & svg {
                 fill: #7E7E8F !important;
             }
             &.active {
                 & .tab-link {
                     background: nb-theme(background-basic-color-3);
+                    transition: background 0.5s ease-in-out;
                 }
             }
             &.active, &:hover {
@@ -63,6 +65,7 @@ nb-card-body {
                 justify-content: space-between;
                 align-items: center;
                 background: nb-theme(background-basic-color-2);
+                transition: background 0.5s ease-in-out;
 
                 &:before {
                     width: 0 !important;
