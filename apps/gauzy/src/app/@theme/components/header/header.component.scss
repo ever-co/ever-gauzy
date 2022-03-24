@@ -26,6 +26,7 @@ $orange: #f56d58;
     display: flex;
     justify-content: space-between;
     width: 100%;
+    background-color: transparent;
     .show-large-down {
       display: none;
     }
@@ -33,7 +34,9 @@ $orange: #f56d58;
     .logo-container {
       display: flex;
       align-items: center;
-      width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
+      //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
+      max-width: nb-theme(sidebar-width);
+      margin-left: nb-theme(sidebar-width-compact);
     }
 
     nb-action {
