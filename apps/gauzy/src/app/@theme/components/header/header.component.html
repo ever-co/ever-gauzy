@@ -25,7 +25,8 @@
         <img src="assets/images/logos/logo_Gauzy.png" />
       </object>
 		</div> -->
-    <ngx-gauzy-logo></ngx-gauzy-logo>
+    <ngx-gauzy-logo (onCollapsed)="onCollapse($event)" ></ngx-gauzy-logo>
+    <button *ngIf="isCollapse" class="hidden-menu" outline nbButton><i class="fas fa-ellipsis-h"></i></button>
 	</div>
 </div>
 

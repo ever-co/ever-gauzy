@@ -34,9 +34,19 @@ $orange: #f56d58;
     .logo-container {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
       max-width: nb-theme(sidebar-width);
+      width: nb-theme(sidebar-width);
       margin-left: nb-theme(sidebar-width-compact);
+      button.hidden-menu{
+        height: 2rem;
+        width: 2rem;
+        margin-left: .625rem;
+      }
+      ngx-gauzy-logo{
+        width: 100%;
+      }
     }
 
     nb-action {
