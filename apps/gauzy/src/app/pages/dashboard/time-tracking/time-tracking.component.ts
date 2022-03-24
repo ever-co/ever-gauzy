@@ -22,7 +22,7 @@ import {
 	IEmployee,
 	ISelectedDateRange
 } from '@gauzy/contracts';
-import { combineLatest, Subject, Subscription, timer, firstValueFrom } from 'rxjs';
+import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
 import { distinctUntilChange, progressStatus, toUTC } from '@gauzy/common-angular';
