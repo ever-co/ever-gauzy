@@ -1,6 +1,7 @@
 @import 'var';
 .accordion.workspace {
-  width: 15.625rem;
+  width: 100%;
+  max-width: nb-theme(sidebar-width);
   max-height: 2.625rem;
   height: 2.25rem;
   .organization {
