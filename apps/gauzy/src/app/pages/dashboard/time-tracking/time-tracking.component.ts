@@ -606,18 +606,21 @@ export class TimeTrackingComponent
 
   	private async loadEmployeesCount() {
 		const { tenantId } = this.store.user;
-		const { total } = await firstValueFrom(
-			this.employeesService.getAll([], {
-				organizationId: this.organization.id,
-				tenantId
-			})
-		);
-		this.employeesCount = total;
+		const { id: organizationId } = this.organization;
+
+		this.employeesCount = await this.employeesService.getCount([], {
+			organizationId,
+			tenantId
+		});
 	}
 
   	private async loadProjectsCount() {
     	const { tenantId } = this.store.user;
-		const { total } = await this.projectService.getAll([],{	organizationId: this.organization.id,tenantId});
-    	this.projectCount = total;
+		const { id: organizationId } = this.organization;
+
+		this.projectCount = await this.projectService.getCount([],{
+			organizationId,
+			tenantId
+		});
 	}
 }
