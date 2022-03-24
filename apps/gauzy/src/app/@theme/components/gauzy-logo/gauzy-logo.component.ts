@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, EventEmitter, Output } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { tap, debounceTime, filter } from 'rxjs/operators';
@@ -15,6 +15,7 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 	theme: string;
 	isCollapse: boolean = true;
 	organization: IOrganization;
+  @Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
 	constructor(
 		private readonly themeService: NbThemeService,
 		private readonly store: Store
@@ -45,6 +46,7 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 	}
 	onCollapse(event: boolean) {
 		this.isCollapse = event;
+    this.onCollapsed.emit(this.isCollapse);
 	}
 	navigateHome() {
 		//this.menuService.navigateHome();
