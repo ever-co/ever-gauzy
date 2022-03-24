@@ -1,0 +1,43 @@
+<div class="main-menu">
+  <div class="left-menu">
+    <div class="sub-menu">
+      <span><i class="far fa-smile"></i> Status</span>
+      <div class="status">
+        <div class="button selected">Available</div>
+        <div class="button">Unavailable</div>
+      </div>
+    </div>
+    <div class="sub-menu">
+      <span>Pause notifications</span>
+      <div class="notifications">
+        <div class="button">For 1hour</div>
+        <div class="button">For 2hour</div>
+        <div class="button selected">Until tomorrow</div>
+        <div class="button">Custom</div>
+        <div class="button"><i class="far fa-calendar"></i> Set as notification schedule</div>
+      </div>
+    </div>
+    <div>
+      <p>Set yourself as away</p>
+      <p class="link" routerLink="/pages/auth/profile">profile</p>
+      <p class="link" routerLink="/auth/logout">Sign Out</p>
+    </div>
+    <div class="sub-user-menu">
+      <gauzy-user showIdentity="true" [user]="user"></gauzy-user>
+    </div>
+  </div>
+  <div class="right-menu">
+    <span><i (click)="onClick()" class="fas fa-times"></i></span>
+    <p>Help</p>
+    <p>Hotkeys</p>
+    <p>Language<nb-select placeholder="Language" size="small" shape="round">
+      <nb-option value="1">En</nb-option>
+      <nb-option value="2">Ru</nb-option>
+    </nb-select></p>
+    <p>Light/dark<nb-toggle status="basic"></nb-toggle></p>
+    <p>theme<nb-select placeholder="Theme" size="small" shape="round" outline>
+      <nb-option value="1">Gauzi</nb-option>
+      <nb-option value="2">Material</nb-option>
+    </nb-select> </p>
+  </div>
+</div>
