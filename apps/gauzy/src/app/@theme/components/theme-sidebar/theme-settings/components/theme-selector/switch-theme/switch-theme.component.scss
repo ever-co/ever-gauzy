@@ -34,8 +34,8 @@
     justify-content: end;
     &:before {
       content: '\f186';
-      @include nb-rtl(margin-left, .325rem);
-      @include nb-ltr(margin-right, .325rem);
+      @include nb-rtl(margin-left, .275rem);
+      @include nb-ltr(margin-right, .275rem);
       color: rgba(255, 255, 255, 0.25);
     }
     span {
@@ -44,8 +44,8 @@
       }
     }
     .toggle-switcher{
-      @include nb-ltr(margin-left, .325rem);
-      @include nb-rtl(margin-right, .325rem);
+      @include nb-ltr(margin-left, .25rem);
+      @include nb-rtl(margin-right, .25rem);
     }
   }
 
