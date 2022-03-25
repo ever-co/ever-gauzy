@@ -948,7 +948,8 @@
 		"RESET_LAYOUT_TOOLTIP": "Reset layout to default for all pages",
 		"TABLE": "Table",
 		"CARDS_GRID": "Cards Grid",
-		"SPRINT_VIEW": "Sprint View"
+		"SPRINT_VIEW": "Sprint View",
+    "QUICK_SETTINGS":"Quick Settings"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
