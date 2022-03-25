@@ -49,8 +49,9 @@
   }
 
   button.chevron{
-    width: 2rem;
-    height: 2rem;
+    width: 1.625rem;
+    height: 1.625rem;
+    padding: 0;
     align-self: flex-end;
     margin-bottom: 0.625rem;
     &.collapsed{
