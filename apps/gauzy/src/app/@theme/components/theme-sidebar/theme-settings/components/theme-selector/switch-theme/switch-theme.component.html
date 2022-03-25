@@ -1,0 +1,4 @@
+<div class="switch-container">
+  Light/dark
+  <nb-toggle [checked]="switch|async" [ngClass]="(switch|async) ? 'dark': 'light'" (checkedChange)="switchTheme()" size="small" ></nb-toggle>
+</div>
