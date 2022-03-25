@@ -15,7 +15,9 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 	theme: string;
 	isCollapse: boolean = true;
 	organization: IOrganization;
-  @Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
+	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(
+		this.isCollapse
+	);
 	constructor(
 		private readonly themeService: NbThemeService,
 		private readonly store: Store
@@ -37,16 +39,14 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 		this.themeService
 			.onThemeChange()
 			.pipe(
-				tap((theme) => theme),
+				tap((theme) => (this.theme = theme)),
 				untilDestroyed(this)
 			)
-			.subscribe((theme) => {
-				this.theme = theme.name;
-			});
+			.subscribe();
 	}
 	onCollapse(event: boolean) {
 		this.isCollapse = event;
-    this.onCollapsed.emit(this.isCollapse);
+		this.onCollapsed.emit(this.isCollapse);
 	}
 	navigateHome() {
 		//this.menuService.navigateHome();
