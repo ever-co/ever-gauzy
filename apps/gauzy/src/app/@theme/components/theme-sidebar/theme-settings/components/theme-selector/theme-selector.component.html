@@ -1,0 +1,16 @@
+<div class="theme-container">{{ 'SETTINGS_MENU.THEMES' | translate }}
+	<div>
+		<nb-select
+			[(selected)]="currentTheme"
+			placeholder="{{ themes[0] | translate }}"
+			(selectedChange)="toggleTheme()"
+			status="basic"
+      size="small"
+      outline
+		>
+			<nb-option *ngFor="let theme of themes" [value]="theme.value">
+				{{ theme.name | translate }}</nb-option
+			>
+		</nb-select>
+	</div>
+</div>
