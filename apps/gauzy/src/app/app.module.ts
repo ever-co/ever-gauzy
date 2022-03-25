@@ -59,7 +59,6 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import * as moment from 'moment';
-import { NgxAuthModule } from './auth/auth.module';
 import { LegalModule } from './legal/legal.module';
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
@@ -104,7 +103,6 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 	declarations: [AppComponent],
 	imports: [
 		LegalModule,
-		NgxAuthModule,
 		EstimateEmailModule,
 		BrowserModule,
 		BrowserAnimationsModule,

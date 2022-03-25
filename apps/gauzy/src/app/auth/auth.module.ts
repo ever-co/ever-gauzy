@@ -21,45 +21,45 @@ import { TranslateModule } from '../@shared/translate/translate.module';
 import { NgxWhatsNewComponent } from "./login/whats-new/whats-new.component";
 import { NgxForgotPasswordComponent } from "./forgot-password/forgot-password.component";
 import { NgxRegisterSideFeaturesComponent } from "./register/register-side-features/register-side-features.component";
-import {
-  NgxRegisterSideSingleFeatureComponent,
-} from "./register/register-side-features/register-side-single-feature/register-side-single-feature.component";
+import { NgxRegisterSideSingleFeatureComponent, } from "./register/register-side-features/register-side-single-feature/register-side-single-feature.component";
 import { NgxAuthComponent } from "./auth/auth.component";
 import { NgxThemeSwitchComponent } from "./theme-switch/theme-switch.component";
-import { ThemeSwitchService } from "../@core";
+import { ThemeSwitchService } from "../@core/services";
+import { ThemeModule } from '../@theme/theme.module';
 
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    NbAlertModule,
-    NbInputModule,
-    NbButtonModule,
-    NbCheckboxModule,
-    NgxAuthRoutingModule,
-    NbAuthModule,
-    NbIconModule,
-    NbCardModule,
-    TranslateModule,
-    NbAccordionModule,
-    NbFormFieldModule,
-    NbSelectModule,
-    NbLayoutModule,
-  ],
-  declarations: [
-    NgxLoginComponent,
-    NgxWhatsNewComponent,
-    NgxForgotPasswordComponent,
-    NgxRegisterSideFeaturesComponent,
-    NgxRegisterSideSingleFeatureComponent,
-    NgxAuthComponent,
-    NgxRegisterComponent,
-    NgxThemeSwitchComponent,
-  ],
-  providers: [
-    ThemeSwitchService,
-  ]
+	imports: [
+		CommonModule,
+		FormsModule,
+		RouterModule,
+		NgxAuthRoutingModule,
+		NbAlertModule,
+		NbInputModule,
+		NbButtonModule,
+		NbCheckboxModule,
+		NbAuthModule,
+		NbIconModule,
+		NbCardModule,
+		TranslateModule,
+		NbAccordionModule,
+		NbFormFieldModule,
+		NbSelectModule,
+		NbLayoutModule,
+		ThemeModule
+	],
+	declarations: [
+		NgxLoginComponent,
+		NgxWhatsNewComponent,
+		NgxForgotPasswordComponent,
+		NgxRegisterSideFeaturesComponent,
+		NgxRegisterSideSingleFeatureComponent,
+		NgxAuthComponent,
+		NgxRegisterComponent,
+		NgxThemeSwitchComponent,
+	],
+	providers: [
+		ThemeSwitchService,
+	]
 })
 export class NgxAuthModule {}

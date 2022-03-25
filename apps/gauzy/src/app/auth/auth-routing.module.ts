@@ -4,31 +4,67 @@ import { NgxLoginComponent } from './login/login.component';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxAuthComponent } from "./auth/auth.component";
 import { NgxForgotPasswordComponent } from "./forgot-password/forgot-password.component";
-
+import { NoAuthGuard } from '../@core/auth/no-auth.guard';
+import { NbLogoutComponent, NbResetPasswordComponent } from '@nebular/auth';
+import { AcceptInvitePage } from './accept-invite/accept-invite.component';
+import { AcceptClientInvitePage } from './onboard-organization-client';
+import { EstimateEmailComponent } from './estimate-email';
 
 export const routes: Routes = [
-  {
-    path: 'auth',
-    component: NgxAuthComponent,
-    children: [
-      {
-        path: 'register',
-        component: NgxRegisterComponent,
-      },
-      {
-        path: 'login',
-        component: NgxLoginComponent,
-      },
-      {
-        path: 'request-password',
-        component: NgxForgotPasswordComponent,
-      }
-    ],
-  },
+	{
+		path: '',
+		component: NgxAuthComponent,
+		children: [
+			{
+				path: '',
+				redirectTo: 'login',
+				pathMatch: 'full'
+			},
+			{
+				path: 'login',
+				component: NgxLoginComponent,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'register',
+				component: NgxRegisterComponent,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'logout',
+				component: NbLogoutComponent
+			},
+			{
+				path: 'request-password',
+				component: NgxForgotPasswordComponent,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'reset-password',
+				component: NbResetPasswordComponent,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'accept-invite',
+				component: AcceptInvitePage,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'accept-client-invite',
+				component: AcceptClientInvitePage,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'estimate',
+				component: EstimateEmailComponent,
+				canActivate: [NoAuthGuard]
+			}
+		],
+	},
 ];
 
 @NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
+	imports: [RouterModule.forChild(routes)],
+	exports: [RouterModule],
 })
 export class NgxAuthRoutingModule {}
