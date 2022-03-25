@@ -63,6 +63,7 @@ import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { UserComponent } from './components/user/user.component';
 import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector.module';
+import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -90,6 +91,7 @@ const MODULES = [
 	TimeTrackerModule,
 	TranslateModule,
   ThemeLanguageSelectorModule,
+  ThemeSelectorModule,
 	NgxPermissionsModule.forChild(),
 ];
 
@@ -102,7 +104,9 @@ const COMPONENTS = [
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
 	LayoutSelectorComponent,
-  GauzyLogoComponent
+  GauzyLogoComponent,
+  UserMenuComponent,
+  UserComponent
 ];
 
 const PIPES = [...Pipes];
@@ -112,7 +116,7 @@ const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule];
 @NgModule({
 	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
 	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS],
-	declarations: [...COMPONENTS, ...PIPES, UserMenuComponent, UserComponent],
+	declarations: [...COMPONENTS, ...PIPES],
 	providers: [
 		UsersService,
 		SelectorService,
