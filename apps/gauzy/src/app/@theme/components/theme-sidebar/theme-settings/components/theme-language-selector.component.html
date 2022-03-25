@@ -5,8 +5,9 @@
 				[(selected)]="currentLang"
 				[placeholder]="'SETTINGS_MENU.ENGLISH' | translate"
 				(selectedChange)="switchLanguage()"
-				status="primary"
+				status="basic"
         size="small"
+        outline
 			>
 				<nb-option *ngFor="let lang of languages" [value]="lang.value">
 					{{ lang.name | translate }}</nb-option
