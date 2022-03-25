@@ -62,6 +62,7 @@ import { NbAccordionModule, NbToggleModule } from '@nebular/theme';
 import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { UserComponent } from './components/user/user.component';
+import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -88,6 +89,7 @@ const MODULES = [
 	ProjectSelectModule,
 	TimeTrackerModule,
 	TranslateModule,
+  ThemeLanguageSelectorModule,
 	NgxPermissionsModule.forChild(),
 ];
 

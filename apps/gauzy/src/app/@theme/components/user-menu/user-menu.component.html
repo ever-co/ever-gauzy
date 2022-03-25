@@ -30,12 +30,9 @@
     <span><i (click)="onClick()" class="fas fa-times"></i></span>
     <p>Help</p>
     <p>Hotkeys</p>
-    <p>Language<nb-select placeholder="Language" size="small" shape="round">
-      <nb-option value="1">En</nb-option>
-      <nb-option value="2">Ru</nb-option>
-    </nb-select></p>
+    <p><ngx-theme-language-selector class="theme"></ngx-theme-language-selector></p>
     <p>Light/dark<nb-toggle status="basic"></nb-toggle></p>
-    <p>theme<nb-select placeholder="Theme" size="small" shape="round" outline>
+    <p>Theme<nb-select placeholder="Theme" size="small" shape="round" outline>
       <nb-option value="1">Gauzi</nb-option>
       <nb-option value="2">Material</nb-option>
     </nb-select> </p>
