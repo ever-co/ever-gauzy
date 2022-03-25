@@ -1,6 +1,6 @@
 <nb-layout windowMode>
 	<nb-layout-header fixed *ngIf="user">
-		<ngx-header></ngx-header>
+		<ngx-header [expanded]="isExpanded"></ngx-header>
 	</nb-layout-header>
 
 	<nb-sidebar state="compacted" tag="user-workspace">

@@ -11,20 +11,7 @@
 	[class.left]="position === 'normal'"
 	[class.right]="position === 'inverse'"
 >
-	<div class="logo-container">
-		<!-- <a (click)="toggleSidebar()" href="#" class="sidebar-toggle">
-			<nb-icon icon="menu-2-outline"></nb-icon>
-		</a>
-
-		<div
-      [ngClass]="theme === 'default' || theme === 'corporate' || theme === 'gauzy-light'? '': 'white-svg'"
-			class="logo"
-			(click)="navigateHome()"
-		>
-      <object data="assets/images/logos/logo_Gauzy.svg" type="image/svg+xml">
-        <img src="assets/images/logos/logo_Gauzy.png" />
-      </object>
-		</div> -->
+	<div [ngClass]="expanded || !isCollapse? 'logo-container' : 'logo-container compacted'">
     <ngx-gauzy-logo (onCollapsed)="onCollapse($event)" ></ngx-gauzy-logo>
     <button *ngIf="isCollapse" class="hidden-menu" outline nbButton><i class="fas fa-ellipsis-h"></i></button>
 	</div>

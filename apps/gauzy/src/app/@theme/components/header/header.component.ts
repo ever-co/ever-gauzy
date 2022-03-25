@@ -107,6 +107,7 @@ export class HeaderComponent
 	selectorsVisibility: ISelectorVisibility;
 
   isCollapse: boolean = true;
+  @Input() expanded: boolean = true;
 
 	constructor(
 		private readonly sidebarService: NbSidebarService,

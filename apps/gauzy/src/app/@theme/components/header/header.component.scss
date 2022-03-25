@@ -48,6 +48,29 @@ $orange: #f56d58;
       ngx-gauzy-logo{
         width: 100%;
       }
+      &.compacted{
+        width: nb-theme(sidebar-width-compact);
+        justify-content: space-around;
+        align-items: center;
+        button.hidden-menu{
+          margin-left: 0;
+        }
+        ::ng-deep .accordion.workspace {
+          box-shadow: none;
+          width: 1.75rem;
+          height: auto;
+          .logo{
+            display: none;
+          }
+          nb-accordion-item-header{
+            padding: 0px;
+            nb-icon {
+              border: none;
+              left: 0rem;
+            }
+          }
+        }
+      }
     }
 
     nb-action {
