@@ -17,14 +17,14 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-      <ngx-gauzy-range-picker
-        [filters]="logRequest"
-        [arrows]="true"
-        [hasEmployeeFilter]="false"
-        [hasProjectFilter]="false"
-        [saveFilters]="false"
-        (onDateChange)="filtersChange($event)"
-      ></ngx-gauzy-range-picker>
+			<ngx-gauzy-range-picker
+				[filters]="logRequest"
+				[arrows]="true"
+				[hasEmployeeFilter]="false"
+				[hasProjectFilter]="false"
+				[saveFilters]="false"
+				(onDateChange)="filtersChange($event)"
+			></ngx-gauzy-range-picker>
 		</div>
 
 		<ga-daily-statistics
@@ -41,6 +41,7 @@
 				</nb-card>
 			</div>
 		</div>
+
 		<div class="table mt-4">
 			<div
 				class="weekly-logs row-table"
@@ -56,7 +57,7 @@
 							</div>
 							<div
 								class="col text-center day-col"
-								*ngFor="let date of weekDayList"
+								*ngFor="let date of weekDays"
 							>
 								{{ date | date }}
 							</div>
@@ -64,12 +65,12 @@
 					</nb-card-header>
 					<nb-card-body>
 						<ng-template
-							[ngIf]="weekData?.length > 0"
+							[ngIf]="weekLogs?.length > 0"
 							[ngIfElse]="notFound"
 						>
 							<div
 								class="row py-3 align-items-center"
-								*ngFor="let day of weekData"
+								*ngFor="let day of weekLogs"
 							>
 								<div class="col-sm-2 project-name">
 									<ngx-avatar
@@ -86,7 +87,7 @@
 								</div>
 								<div
 									class="col text-center day-col"
-									*ngFor="let date of weekDayList"
+									*ngFor="let date of weekDays"
 								>
 									<span
 										*ngIf="day.dates[date]; else noLogsCol"

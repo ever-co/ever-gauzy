@@ -15,11 +15,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
 import { debounceTime, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { isNotEmpty } from '@gauzy/common-angular';
 import { Store } from './../../../../@core/services';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 import { ReportBaseComponent } from '../../report-base/report-base.component';
-import { firstValueFrom } from 'rxjs';
 import { EmployeesService } from '../../../../@core/services/employees.service';
 import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
 import * as moment from 'moment';
@@ -30,10 +28,9 @@ import * as moment from 'moment';
 	templateUrl: './daily-statistics.component.html',
 	styleUrls: ['./daily-statistics.component.scss']
 })
-export class DailyStatisticsComponent
-	extends ReportBaseComponent
-	implements OnInit, AfterViewInit
-{
+export class DailyStatisticsComponent extends ReportBaseComponent
+	implements OnInit, AfterViewInit {
+
 	PermissionsEnum = PermissionsEnum;
 	logRequest: ITimeLogFilters = this.request;
 	counts: ICountsStatistics;
@@ -43,8 +40,10 @@ export class DailyStatisticsComponent
 
 	@Input()
 	set filters(value: ITimeLogFilters) {
-		this.logRequest = value;
-		this.subject$.next(true);
+		if (value) {
+			this.logRequest = value;
+			this.subject$.next(true);
+		}
 	}
 
 	constructor(
@@ -61,8 +60,7 @@ export class DailyStatisticsComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(300),
-				tap(() => (this.loading = true)),
+				debounceTime(500),
 				tap(() => this.getCounts()),
 				untilDestroyed(this)
 			)
@@ -73,73 +71,60 @@ export class DailyStatisticsComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
-		this.subject$.next(true);
-	}
-
-	getCounts() {
+	async getCounts() {
 		if (!this.organization || !this.logRequest) {
 			return;
 		}
+		this.loading = true;
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
 			'activityLevel',
-			'logType',
-			'startDate',
-			'endDate'
+			'logType'
 		);
-		const {
-			employeeIds = [],
-			projectIds = [],
-			tenantId,
-			organizationId
-		}: ITimeLogFilters = this.getFilterRequest(this.logRequest);
 		const request: IGetCountsStatistics = {
 			...appliedFilter,
-			organizationId,
-			tenantId,
-			...(isNotEmpty(employeeIds) ? { employeeId: employeeIds[0] } : {}),
-			...(isNotEmpty(projectIds) ? { projectId: projectIds[0] } : {})
+			...this.getFilterRequest(this.logRequest),
 		};
-		this.timesheetStatisticsService
-			.getCounts(request)
-			.then((resp) => {
-				this.counts = resp;
-				this.loadEmployeesCount();
-				this.loadProjectsCount();
-			})
-			.finally(() => {
-				this.loading = false;
-			});
+		try {
+			const counts = await this.timesheetStatisticsService.getCounts(request);
+			this.counts = counts;
+
+			this.loadEmployeesCount();
+			this.loadProjectsCount();
+		} catch (error) {
+			console.log('Error while retrieving daily statistics', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	private async loadEmployeesCount() {
 		const { tenantId } = this.store.user;
-		const { total } = await firstValueFrom(
-			this.employeesService.getAll([], {
-				organizationId: this.organization.id,
-				tenantId
-			})
-		);
-		this.employeesCount = total;
-	}
-	private async loadProjectsCount() {
-		const { tenantId } = this.store.user;
-		const { total } = await this.projectService.getAll([], {
-			organizationId: this.organization.id,
+		const { id: organizationId } = this.organization;
+
+		this.employeesCount = await this.employeesService.getCount([], {
+			organizationId,
 			tenantId
 		});
-		this.projectsCount = total;
 	}
-  get period() {
-    if(this.logRequest){
-      const { startDate, endDate } = this.logRequest;
-      const start = moment(startDate);
-      const end = moment(endDate);
-      return end.diff(start, 'days') * 86400;
-    }
-  }
+
+	private async loadProjectsCount() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.projectsCount = await this.projectService.getCount([], {
+			organizationId,
+			tenantId
+		});
+	}
+
+	get period() {
+		if(this.logRequest){
+			const { startDate, endDate } = this.logRequest;
+			const start = moment(startDate);
+			const end = moment(endDate);
+			return end.diff(start, 'days') * 86400;
+		}
+	}
 }

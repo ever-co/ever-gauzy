@@ -1,0 +1,22 @@
+<nb-layout>
+  <nb-layout-column class="wrapper">
+    <nb-card class="card">
+      <nb-card-header class="header" [ngClass]="{register: isRegister, dark: lightMode === 0}">
+        <nav class="navigation">
+          <a href="#" (click)="back()" class="link back-link" aria-label="Back">
+            <nb-icon icon="arrow-back"></nb-icon>
+          </a>
+        </nav>
+        <ngx-theme-switch></ngx-theme-switch>
+      </nb-card-header>
+        <nb-card-body class="body" [ngClass]="{register: isRegister, dark: lightMode === 0}">
+        <nb-auth-block class="auth-block">
+          <router-outlet></router-outlet>
+        </nb-auth-block>
+<!--        <div class="message-us-wrapper">-->
+<!--          <nb-icon icon="message-square-outline"></nb-icon>-->
+<!--        </div>-->
+      </nb-card-body>
+    </nb-card>
+  </nb-layout-column>
+</nb-layout>

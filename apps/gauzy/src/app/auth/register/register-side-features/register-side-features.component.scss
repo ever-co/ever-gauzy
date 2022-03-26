@@ -1,0 +1,42 @@
+@import "themes";
+@import "../../reusable";
+
+.main-section {
+  background: linear-gradient(to bottom, nb-theme(color-primary-400), nb-theme(color-primary-600));
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  padding: 20px 20px 40px;
+}
+.main-header {
+  color: white;
+  font-family: Inter;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 22px;
+  letter-spacing: -0.009em;
+  text-align: left;
+  margin-bottom: 39px;
+}
+.feature-wrapper {
+  width: 100%;
+}
+.small-hr-div {
+  width: 220px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+.hidden {
+  display: none;
+}
+
+@include tablet-screen {
+  .small-hr-div {
+    width: 100%;
+  }
+}

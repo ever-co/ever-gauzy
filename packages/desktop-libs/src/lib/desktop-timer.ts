@@ -69,10 +69,10 @@ export default class Timerhandler {
 
 		if (appSetting.randomScreenshotTime) {
 			this.nextScreenshot = 0;
+			this.timeSlotStart = moment();
 			this.nextTickScreenshot();
 		}
 
-		this.timeSlotStart = moment();
 		this.timeStart = moment();
 
 		(async () => {
@@ -197,6 +197,8 @@ export default class Timerhandler {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
 		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
+		
+		this.timeSlotStart = moment();
 		console.log('Timeslot Start Time', this.timeSlotStart);
 
 		this.intervalUpdateTime = setInterval(async () => {

@@ -43,7 +43,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			.subscribe((languages) => {
 				//Returns the language code name from the browser, e.g. "en", "bg", "he", "ru"
 				const browserLang = this.translate.getBrowserLang();
-				
+
 				//Gets default enum languages, e.g. "en", "bg", "he", "ru"
 				const defaultLanguages = Object.values(LanguagesEnum);
 
@@ -58,7 +58,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 				this.translate.use(
 					systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH
 				);
-				
+
 				this.translate.onLangChange.subscribe(() => {
 					this.loading = false;
 				});
@@ -72,7 +72,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	async ngAfterViewInit() {
 		await this.loadLanguages();
 	}
-	
+
 	private async loadLanguages() {
 		const { items = [] } = await this.languagesService.getSystemLanguages();
 		this.store.systemLanguages = items.filter((item: ILanguage) => item.is_system);

@@ -190,30 +190,35 @@ export class TimerService {
 			)
 		);
 
-		const conflictInput: IGetTimeLogConflictInput = {
-			ignoreId: lastLog.id,
-			startDate: lastLog.startedAt,
-			endDate: lastLog.stoppedAt,
-			employeeId: lastLog.employeeId,
-			organizationId: organizationId || lastLog.organizationId,
-			tenantId
-		};
-
 		const conflicts = await this.commandBus.execute(
-			new IGetConflictTimeLogCommand(conflictInput)
+			new IGetConflictTimeLogCommand({
+				ignoreId: lastLog.id,
+				startDate: lastLog.startedAt,
+				endDate: lastLog.stoppedAt,
+				employeeId: lastLog.employeeId,
+				organizationId: organizationId || lastLog.organizationId,
+				tenantId
+			} as IGetTimeLogConflictInput)
 		);
-
-		console.log('Get Conflicts Time Logs', conflicts);
-		const times: IDateRange = {
-			start: new Date(lastLog.startedAt),
-			end: new Date(lastLog.stoppedAt)
-		};
-
 		if (isNotEmpty(conflicts)) {
-			for await (const conflict of conflicts) {
-				await this.commandBus.execute(
-					new DeleteTimeSpanCommand(times, conflict)
-				);
+			console.log('Get Conflicts Time Logs', conflicts);
+			const times: IDateRange = {
+				start: new Date(lastLog.startedAt),
+				end: new Date(lastLog.stoppedAt)
+			};
+			if (isNotEmpty(conflicts)) {
+				for await (const timeLog of conflicts) {
+					const { timeSlots = [] } = timeLog;
+					for await (const timeSlot of timeSlots) {
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(
+								times,
+								timeLog,
+								timeSlot
+							)
+						);
+					}
+				}
 			}
 		}
 		return lastLog;

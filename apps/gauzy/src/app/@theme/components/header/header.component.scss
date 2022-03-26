@@ -26,6 +26,7 @@ $orange: #f56d58;
     display: flex;
     justify-content: space-between;
     width: 100%;
+    background-color: transparent;
     .show-large-down {
       display: none;
     }
@@ -33,7 +34,43 @@ $orange: #f56d58;
     .logo-container {
       display: flex;
       align-items: center;
-      width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
+      justify-content: space-between;
+      //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
+      max-width: nb-theme(sidebar-width);
+      width: nb-theme(sidebar-width);
+      margin-left: nb-theme(sidebar-width-compact);
+      button.hidden-menu{
+        padding: 0 .5rem;
+        height: 1.625rem;
+        width: 1.625rem;
+        margin-left: .625rem;
+      }
+      ngx-gauzy-logo{
+        width: 100%;
+      }
+      &.compacted{
+        width: nb-theme(sidebar-width-compact);
+        justify-content: space-around;
+        align-items: center;
+        button.hidden-menu{
+          margin-left: 0;
+        }
+        ::ng-deep .accordion.workspace {
+          box-shadow: none;
+          width: 1.75rem;
+          height: auto;
+          .logo{
+            display: none;
+          }
+          nb-accordion-item-header{
+            padding: 0px;
+            nb-icon {
+              border: none;
+              left: 0rem;
+            }
+          }
+        }
+      }
     }
 
     nb-action {

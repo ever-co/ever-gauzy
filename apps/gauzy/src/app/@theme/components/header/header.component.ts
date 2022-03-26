@@ -106,6 +106,9 @@ export class HeaderComponent
 	subject$: Subject<any> = new Subject();
 	selectorsVisibility: ISelectorVisibility;
 
+  isCollapse: boolean = true;
+  @Input() expanded: boolean = true;
+
 	constructor(
 		private readonly sidebarService: NbSidebarService,
 		private readonly menuService: NbMenuService,
@@ -637,6 +640,10 @@ export class HeaderComponent
 		);
 		return isTrackingEnabled && hasPermission && !this.isElectron;
 	}
+
+  onCollapse(event: boolean){
+    this.isCollapse = event;
+  }
 
 	ngOnDestroy() {}
 }

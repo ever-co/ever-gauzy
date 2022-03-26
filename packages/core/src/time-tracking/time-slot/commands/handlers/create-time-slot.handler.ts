@@ -3,8 +3,9 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import * as _ from 'underscore';
+import { omit } from 'underscore';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../../core/context';
 import {
 	Employee,
@@ -33,7 +34,7 @@ export class CreateTimeSlotHandler
 
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
 		const { input } = command;
-		let { organizationId } = input;
+		let { organizationId, activities = [] } = input;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -79,7 +80,7 @@ export class CreateTimeSlotHandler
 		});
 
 		if (!timeSlot) {
-			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
+			timeSlot = new TimeSlot(omit(input, ['timeLogId']));
 			timeSlot.tenantId = tenantId;
 			timeSlot.organizationId = organizationId;
 		}
@@ -138,17 +139,17 @@ export class CreateTimeSlotHandler
 			}
 		}
 
-		if (input.activities) {
-			timeSlot.activities = await this.commandBus.execute(
+		if (isNotEmpty(activities)) {
+			const bulkActivities = await this.commandBus.execute(
 				new BulkActivitiesSaveCommand({
 					employeeId: timeSlot.employeeId,
 					projectId: input.projectId,
-					activities: input.activities
+					activities: activities
 				})
 			);
+			timeSlot.activities = bulkActivities;
 		}
 
-		console.log({ input, timeSlot });
 		await this.timeSlotRepository.save(timeSlot);
 
 		const minDate = input.startedAt;

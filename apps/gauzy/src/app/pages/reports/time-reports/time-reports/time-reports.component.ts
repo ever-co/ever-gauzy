@@ -28,9 +28,9 @@ import { IChartData } from './../../../../@shared/report/charts/line-chart/line-
 	templateUrl: './time-reports.component.html',
 	styleUrls: ['./time-reports.component.scss']
 })
-export class TimeReportsComponent
-	extends ReportBaseComponent
+export class TimeReportsComponent extends ReportBaseComponent
 	implements OnInit, AfterViewInit, OnDestroy {
+
 	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
 	loading: boolean;
@@ -51,8 +51,7 @@ export class TimeReportsComponent
 	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				debounceTime(300),
-				tap(() => this.loading = true),
+				debounceTime(500),
 				tap(() => this.updateChart()),
 				untilDestroyed(this)
 			)
@@ -62,17 +61,25 @@ export class TimeReportsComponent
 
 	filtersChange($event) {
 		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+		this.filters = Object.assign(
+			{},
+			this.logRequest,
+			this.getAdjustDateRangeFutureAllowed(this.logRequest)
+		);
 		this.subject$.next(true);
 	}
 
 	updateChart() {
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
 			'activityLevel',
 			'logType'
 		);
+		this.loading = true;
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.logRequest),

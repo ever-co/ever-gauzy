@@ -39,7 +39,7 @@
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
 				<nb-toggle
 					class="mr-3 ml-3"
-          size="small"
+          			size="small"
 					[(ngModel)]="autoRefresh"
 					(checkedChange)="setAutoRefresh($event)"
 				>
@@ -47,11 +47,10 @@
 				</nb-toggle>
 				<button
 					[disabled]="autoRefresh"
-          size="small"
+          			size="small"
 					type="button"
 					nbButton
-          size="small"
-          outline
+          			outline
 					status="basic"
 					(click)="logs$.next(true)"
 				>
