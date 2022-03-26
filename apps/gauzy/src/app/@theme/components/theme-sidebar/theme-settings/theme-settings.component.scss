@@ -18,6 +18,19 @@
     }
   }
 
+  p{
+    color: nb-theme(text-primary-color);
+  }
+
+  nb-list-item{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    .theme{
+      width: 100%;
+    }
+  }
+
   .settings-row {
     display: flex;
     flex-direction: row;

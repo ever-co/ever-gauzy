@@ -1,0 +1,10 @@
+<div class="user-container">
+  <div class="img-container">
+    <img [src]="user?.imageUrl" alt="">
+    <div></div>
+  </div>
+  <div *ngIf="showIdentity" class="identity-container">
+    <div class="name">{{user?.fullName}}</div>
+    <div class="email">{{user?.email}}</div>
+  </div>
+</div>

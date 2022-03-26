@@ -1,0 +1,31 @@
+@import 'themes';
+.user-container{
+  display: flex;
+  align-items: center;
+  .img-container{
+    border: 3px solid nb-theme(text-primary-color);
+    border-radius: 32px;
+    position: relative;
+    img{
+      width: 28px;
+      height: 28px;
+      border-radius: 32px;
+    }
+    >div{
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #00D060;
+      border-radius: 8px;
+      border: 2px solid #ebebeb;
+      right: 0;
+      top: 0;
+    }
+  }
+  .identity-container{
+    margin-left: 10px;
+    .email{
+      color: nb-theme(text-primary-color);
+    }
+  }
+}

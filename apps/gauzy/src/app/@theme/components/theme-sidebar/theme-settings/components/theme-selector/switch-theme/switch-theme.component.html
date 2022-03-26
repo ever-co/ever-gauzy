@@ -1,0 +1,11 @@
+<div class="switch-container">
+	{{ 'SETTINGS_MENU.LIGHT' | translate }}/{{
+		'SETTINGS_MENU.DARK' | translate
+	}}
+	<nb-toggle
+		[checked]="switch | async"
+		[ngClass]="(switch | async) ? 'dark' : 'light'"
+		(checkedChange)="switchTheme()"
+		size="small"
+	></nb-toggle>
+</div>
