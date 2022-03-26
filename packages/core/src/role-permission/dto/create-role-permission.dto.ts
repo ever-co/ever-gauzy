@@ -1,12 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsBoolean, IsEnum, IsNotEmpty, ValidateIf } from "class-validator";
-import { IRolePermissionCreateInput, PermissionsEnum } from "@gauzy/contracts";
+import { IRole, IRolePermissionCreateInput, PermissionsEnum } from "@gauzy/contracts";
 import { IsRoleShouldExist } from "./../../shared/decorators/validations";
+import { TenantBaseDTO } from "./../../core/dto";
 
 /**
  * Create Role Permission DTO validation
  */
-export class CreateRolePermissionDTO implements IRolePermissionCreateInput {
+export class CreateRolePermissionDTO extends TenantBaseDTO implements IRolePermissionCreateInput {
 
     @ApiProperty({ type: () => String, enum: PermissionsEnum })
     @IsNotEmpty()
@@ -20,8 +21,18 @@ export class CreateRolePermissionDTO implements IRolePermissionCreateInput {
     readonly enabled: boolean;
 
     @ApiProperty({ type: () => String })
-    @ValidateIf((it) => Object.values(PermissionsEnum).includes(it.permission))
+    @ValidateIf((it) => !it.role)
     @IsNotEmpty()
-    @IsRoleShouldExist()
+    @IsRoleShouldExist({
+        message: 'roleId {$value} must be a valid value'
+    })
     readonly roleId: string;
+
+    @ApiProperty({ type: () => String })
+    @ValidateIf((it) => !it.roleId)
+    @IsNotEmpty()
+    @IsRoleShouldExist({
+        message: 'role must be a valid value'
+    })
+    readonly role: IRole;
 }

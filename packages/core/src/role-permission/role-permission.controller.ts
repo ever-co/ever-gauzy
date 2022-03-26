@@ -95,6 +95,7 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	async create(
 		@Body() entity: CreateRolePermissionDTO
 	): Promise<IRolePermission> {
+		console.log({ entity });
 		return this.rolePermissionService.createPermission(entity);
 	}
 

@@ -1,13 +1,7 @@
 import { IRolePermissionUpdateInput } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean } from "class-validator";
+import { CreateRolePermissionDTO } from "./create-role-permission.dto";
 
 /**
  * Update Role Permission DTO validation
  */
-export class UpdateRolePermissionDTO implements IRolePermissionUpdateInput {
-
-    @ApiProperty({ type: () => Boolean })
-    @IsBoolean()
-    readonly enabled: boolean;
-}
+export class UpdateRolePermissionDTO extends CreateRolePermissionDTO implements IRolePermissionUpdateInput {}
