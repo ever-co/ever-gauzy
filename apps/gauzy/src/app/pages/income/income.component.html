@@ -14,12 +14,10 @@
 		</div>
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
-				[text]="'BUTTONS.ADD'"
-				[icon]="'plus-outline'"
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-        (addOnClick)="addIncome()"
+        [buttonTemplateVisible]="visibleButton"
 			>
 			</ngx-gauzy-button-action>
 		</div>
@@ -115,4 +113,17 @@
 			</button>
 		</ng-template>
 	</div>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_INCOMES_EDIT">
+		<button
+			nbButton
+			status="success"
+			size="small"
+      (click)="addIncome()"
+		>
+			<nb-icon icon="plus-outline"> </nb-icon>
+      {{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
 </ng-template>
