@@ -948,7 +948,8 @@
 		"RESET_LAYOUT_TOOLTIP": "crwdns7054:0crwdne7054:0",
 		"TABLE": "crwdns7056:0crwdne7056:0",
 		"CARDS_GRID": "crwdns7058:0crwdne7058:0",
-		"SPRINT_VIEW": "crwdns8236:0crwdne8236:0"
+		"SPRINT_VIEW": "crwdns8236:0crwdne8236:0",
+		"QUICK_SETTINGS": "crwdns11022:0crwdne11022:0"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "crwdns10190:0crwdne10190:0",
@@ -3796,5 +3797,21 @@
 	},
 	"PAGINATION": {
 		"ITEMS": "crwdns11008:0crwdne11008:0"
+	},
+	"USER_MENU": {
+		"STATUS": "crwdns11024:0crwdne11024:0",
+		"AVAILABLE": "crwdns11026:0crwdne11026:0",
+		"UNAVAILABLE": "crwdns11028:0crwdne11028:0",
+		"PAUSE_NOTIFICATIONS": "crwdns11030:0crwdne11030:0",
+		"FOR_1_HOUR": "crwdns11032:0crwdne11032:0",
+		"FOR_2_HOURS": "crwdns11034:0crwdne11034:0",
+		"UNTIL_TOMORROW": "crwdns11036:0crwdne11036:0",
+		"CUSTOM": "crwdns11038:0crwdne11038:0",
+		"SET_AS_NOTIFICATION_SCHEDULE": "crwdns11040:0crwdne11040:0",
+		"SET_YOURSELF_AS_AWAY": "crwdns11042:0crwdne11042:0",
+		"HOTKEYS": "crwdns11044:0crwdne11044:0",
+		"HELP": "crwdns11046:0crwdne11046:0",
+		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
+		"PROFILE": "crwdns11050:0crwdne11050:0"
 	}
 }
