@@ -194,18 +194,21 @@ export class RolesPermissionsComponent
 				(p) => p.permission === permission
 			);
 
+			const payload = {
+				enabled,
+				roleId,
+				tenantId,
+				permission
+			}
 			permissionToEdit && permissionToEdit.id
 				? await this.rolePermissionsService.update(
 						permissionToEdit.id,
 						{
-							enabled
+							...payload
 						}
 				  )
 				: await this.rolePermissionsService.create({
-						roleId,
-						permission,
-						enabled,
-						tenantId
+						...payload
 				  });
 			this.toastrService.success(
 				this.getTranslation('TOASTR.MESSAGE.PERMISSION_UPDATED', {
