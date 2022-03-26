@@ -225,13 +225,13 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 	async getPipelines() {
 		try {
-			this.setSmartTableSource();
-			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+      this.setSmartTableSource();
+      const { activePage, itemsPerPage } = this.getPagination();
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 			if (
 				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
 			) {
