@@ -12,8 +12,6 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import {
 	NbAuthComponent,
-	NbLogoutComponent,
-	NbRegisterComponent,
 	NbRequestPasswordComponent,
 	NbResetPasswordComponent
 } from '@nebular/auth';
