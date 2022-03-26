@@ -14,7 +14,7 @@ import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
 import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import {
-	AlertComponent,
+	NgxLoginModule,
 	ImageViewerModule,
 	UpdaterModule,
 	SettingsModule,
@@ -24,7 +24,6 @@ import {
 	SplashScreenModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { NgxAuthModule } from '../../../gauzy/src/app/auth/auth.module';
 import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { AuthModule } from './auth/auth.module';
@@ -45,7 +44,6 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
-		NgxAuthModule,
 		NbLayoutModule,
 		AuthModule,
 		NbDialogModule.forRoot(),
@@ -56,6 +54,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 		BrowserAnimationsModule,
 		AppRoutingModule,
 		NbThemeModule.forRoot({ name: 'default' }),
+		NgxLoginModule,
 		SetupModule,
 		TimeTrackerModule,
 		NgxElectronModule,

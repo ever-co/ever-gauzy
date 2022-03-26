@@ -1,10 +1,8 @@
-import { Observable, from, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { IUser, ITag, ITenant, IAuthResponse } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { IAuthResponse } from '@gauzy/contracts';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from './services/auth.service';
 import { Store } from './services/store.service';
@@ -62,8 +60,6 @@ export class AuthStrategy extends NbAuthStrategy {
 	};
 
 	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
 		private readonly authService: AuthService,
 		private readonly store: Store,
 		private readonly electronService: ElectronService
@@ -87,80 +83,6 @@ export class AuthStrategy extends NbAuthStrategy {
 			email,
 			password
 		});
-	}
-
-	register(args: {
-		email: string;
-		fullName: string;
-		password: string;
-		confirmPassword: string;
-		terms: boolean;
-		tenant: ITenant;
-		tags: ITag[];
-	}): Observable<NbAuthResult> {
-		const {
-			email,
-			fullName,
-			password,
-			confirmPassword,
-			tenant,
-			tags
-		} = args;
-
-		if (password !== confirmPassword) {
-			return of(
-				new NbAuthResult(false, null, null, [
-					"The passwords don't match."
-				])
-			);
-		}
-
-		const registerInput = {
-			user: {
-				firstName: fullName
-					? fullName.split(' ').slice(0, -1).join(' ')
-					: null,
-				lastName: fullName
-					? fullName.split(' ').slice(-1).join(' ')
-					: null,
-				email,
-				tenant,
-				tags
-			},
-			password,
-			confirmPassword
-		};
-
-		return this.authService.register(registerInput).pipe(
-			switchMap((res: IUser | any) => {
-				if (res.status === 400) {
-					throw new Error(res.message)
-				}
-				const user: IUser = res;
-				if (isNotEmpty(user)) {
-					return this.login({
-						email,
-						password
-					});
-				}
-			}),
-			catchError((err) => {
-				console.log(err);
-				return of(
-					new NbAuthResult(
-						false,
-						err,
-						false,
-						AuthStrategy.config.register.defaultErrors,
-						[AuthStrategy.config.register.defaultErrors]
-					)
-				);
-			})
-		);
-	}
-
-	logout(): Observable<NbAuthResult> {
-		return from(this._logout());
 	}
 
 	requestPassword(args: { email: string }): Observable<NbAuthResult> {
@@ -206,70 +128,8 @@ export class AuthStrategy extends NbAuthStrategy {
 			);
 	}
 
-	resetPassword(args: {
-		password: string;
-		confirmPassword: string;
-	}): Observable<NbAuthResult> {
-		const { password, confirmPassword } = args;
-		const token = this.route.snapshot.queryParamMap.get('token');
-
-		if (password !== confirmPassword) {
-			return of(
-				new NbAuthResult(false, null, null, [
-					"The passwords don't match."
-				])
-			);
-		}
-
-		return this.authService.resetPassword({
-			token,
-			password,
-			confirmPassword
-		}).pipe(
-			map((res) => {
-				return new NbAuthResult(
-					true,
-					res,
-					AuthStrategy.config.resetPass.redirect.success,
-					[],
-					AuthStrategy.config.resetPass.defaultMessages
-				);
-			}),
-			catchError((err) => {
-				console.log(err);
-				return of(
-					new NbAuthResult(
-						false,
-						err,
-						false,
-						AuthStrategy.config.resetPass.defaultErrors,
-						[AuthStrategy.config.resetPass.defaultErrors]
-					)
-				);
-			})
-		);
-	}
-
 	refreshToken(data?: any): Observable<NbAuthResult> {
 		throw new Error('Not implemented yet');
-	}
-
-	private async _logout(): Promise<NbAuthResult> {
-		this.store.clear();
-		this.store.serverConnection = 200;
-		if (this.electronService.isElectronApp) {
-			try {
-				this.electronService.ipcRenderer.send('logout');
-			} catch (error) {}
-		}
-
-		return new NbAuthResult(
-			true,
-			null,
-			AuthStrategy.config.logout.redirect.success,
-			[],
-			AuthStrategy.config.logout.defaultMessages
-		);
 	}
 
 	public login(loginInput): Observable<NbAuthResult> {
