@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
