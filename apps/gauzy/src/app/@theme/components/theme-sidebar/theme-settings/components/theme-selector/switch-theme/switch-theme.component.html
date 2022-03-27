@@ -3,6 +3,7 @@
 		'SETTINGS_MENU.DARK' | translate
 	}}
 	<nb-toggle
+    class="switch"
 		[checked]="switch | async"
 		[ngClass]="(switch | async) ? 'dark' : 'light'"
 		(checkedChange)="switchTheme()"
