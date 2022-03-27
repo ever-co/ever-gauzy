@@ -77,17 +77,19 @@
 		<nb-accordion-item-body class="item footer">
 			<div class="content">
 				<span>Download Apps:</span>
-				<i class="fab fa-apple"></i>
-				<i class="fab fa-google-drive"></i>
-				<i class="fas fa-desktop"></i>
-				<i class="fas fa-print"></i>
+				<span>
+					<i class="fab fa-apple mr-1 ml-1"></i>
+					<i class="fab fa-google-drive mr-1 ml-1"></i>
+					<i class="fas fa-desktop mr-1 ml-1"></i>
+					<i class="fas fa-print mr-1 ml-1"></i>
+				</span>
 			</div>
 		</nb-accordion-item-body>
 	</nb-accordion-item>
 </nb-accordion>
 
 <div *ngIf="!isAccordion">
-  <ng-container *ngTemplateOutlet="logo"></ng-container>
+	<ng-container *ngTemplateOutlet="logo"></ng-container>
 </div>
 
 <ng-template #logo>
