@@ -1,8 +1,8 @@
 <section class="main-section">
-  <div class="register-wrapper" [ngClass]="{dark: lightMode === 0}">
+  <div class="register-wrapper">
     <div class="svg-wrapper">
-      <img src="/assets/images/logos/logo_Gauzy.svg" alt="gauzy logo">
-      <ngx-theme-switch class="theme-switch"></ngx-theme-switch>
+      <ngx-gauzy-logo [isAccordion]="false"></ngx-gauzy-logo>
+      <gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
     </div>
     <div class="title-wrapper">
       <h1 id="title" class="title">Register</h1>
@@ -136,7 +136,7 @@
           <a
             nbSuffix
             nbButton
-            size="large"
+            size="small"
             ghost
             (click)="showPassword = !showPassword"
           >
@@ -191,7 +191,7 @@
           <a
             nbSuffix
             nbButton
-            size="large"
+            size="small"
             ghost
             (click)="showConfirmPassword = !showConfirmPassword"
           >
@@ -238,7 +238,7 @@
       <div class="btn-wrapper">
         <button
           nbButton
-          size="large"
+          size="small"
           class="submit-btn"
           [disabled]="submitted || !form.valid || !user.terms"
           [class.btn-pulse]="submitted"

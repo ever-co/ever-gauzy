@@ -1,5 +1,5 @@
-@import "../reusable";
-@import "themes";
+@import '../reusable';
+@import 'themes';
 
 @mixin addPaddings {
   padding-left: 10px;
@@ -15,8 +15,8 @@
   width: 476px;
   height: 100%;
   padding: 30px;
-  border-radius: 10px;
-  background: white;
+  background: nb-theme(gauzy-card-2);
+  border-radius: nb-theme(border-radius);
   &.dark {
     background: #292933;
   }
@@ -157,7 +157,8 @@
 }
 
 @include mobile-screen {
-  .main-section, .register-wrapper {
+  .main-section,
+  .register-wrapper {
     width: 100%;
   }
   .register-wrapper {

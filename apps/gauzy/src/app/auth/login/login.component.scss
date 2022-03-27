@@ -7,8 +7,8 @@
   display: flex;
   justify-content: space-between;
   & .login-wrapper {
-    background: nb-theme(background-basic-color-2);
-    border-radius: 10px;
+    background: nb-theme(gauzy-card-2);
+    border-radius: nb-theme(border-radius);
     box-sizing: border-box;
     padding: 30px;
     width: 476px;
@@ -128,8 +128,8 @@
   // demo side container
   & .card-body {
     padding: 38px 15px;
-    background: nb-theme(color-primary-100);
-    border-radius: 12px;
+    background: nb-theme(color-primary-transparent-default);
+    border-radius: nb-theme(border-radius);
     &.dark {
       background: nb-theme(color-primary-700);
       & .custom-btn {
@@ -143,8 +143,8 @@
   // non-demo side container
   & .features-card {
     border: none;
-    background: nb-theme(color-info-100);
-    border-radius: 14px;
+    background: nb-theme(color-primary-transparent-default);
+    border-radius: nb-theme(border-radius);
     width: 100%;
   }
   & .title {
@@ -208,20 +208,20 @@
   position: absolute;
   top: 0;
   right: 0;
-  border-radius: 20px;
+  border-radius: nb-theme(button-rectangle-border-radius);
   & * {
     z-index: 6;
   }
   &, .demo-credentials-select-item {
-    border-radius: 30px;
+    border-radius: nb-theme(button-rectangle-border-radius);
     box-sizing: border-box;
   }
   & .demo-credentials-select-item {
     width: 200px;
     position: relative;
     z-index: 5;
-    background: nb-theme(color-basic-200);
-    color: nb-theme(color-basic-700);
+    background: nb-theme(background-basic-color-2);
+    color: nb-theme(text-basic-color);
   }
   & .demo-credentials-header {
     padding: 5px 5px 5px 15px;
@@ -229,8 +229,8 @@
     display: flex;
     justify-content: space-between;
     width: 100%;
-    background: nb-theme(color-basic-200);
-    color: nb-theme(color-basic-700);
+    background: nb-theme(background-basic-color-2);
+    color: nb-theme(text-basic-color);
     border-radius: 20px;
     & .demo-text-span {
       @include mobile-screen {
@@ -345,7 +345,7 @@
   line-height: 13px;
   letter-spacing: 0em;
   text-align: left;
-  color: #6E49E8 !important;
+  color: nb-theme(text-primary-color);
 }
 
 // changing the demo select border radius when its expanded, because color change, new border radiuses had to be introduced.

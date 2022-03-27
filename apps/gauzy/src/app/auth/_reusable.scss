@@ -2,7 +2,11 @@
 
 $button-color: #fa754e;
 $wrapper-padding: 30px;
-$register-background-light-color: rgba(126, 126, 143, 0.05);
+$register-background-light-color: nb-theme(gauzy-card-1);
+
+.card{
+  background: nb-theme(gauzy-card-1);
+}
 
 // Queries
 @mixin mobile-screen {
@@ -149,11 +153,14 @@ $register-background-light-color: rgba(126, 126, 143, 0.05);
 
 @mixin input-fields-color {
   ::ng-deep .input-full-width {
-    background-color: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px .5px 0.5px .5px inset;
+    border-radius: nb-theme(border-radius);
+    background-color: nb-theme(gauzy-input-background) !important;
+    border: unset;
   }
 
   ::ng-deep ngx-register .register-wrapper .input-full-width {
-    background-color: $register-background-light-color !important;
+    background-color: nb-theme(gauzy-input-background) !important;
   }
 
   ::ng-deep ngx-register .register-wrapper.dark .input-full-width {
