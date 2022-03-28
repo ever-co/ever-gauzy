@@ -28,7 +28,7 @@ import { InputFilterComponent } from '../../@shared/table-filters/input-filter.c
 import { OrganizationContactFilterComponent } from '../../@shared/table-filters';
 import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
 import { TagsColorFilterComponent } from '../../@shared/table-filters/tags-color-filter.component';
-import { ITag } from '../../../../../../packages/contracts/dist/tag-entity.model';
+import { ITag } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
