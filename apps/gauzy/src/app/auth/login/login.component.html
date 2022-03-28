@@ -1,8 +1,8 @@
 <section class="login-container">
-  <div class="login-wrapper" [ngClass]="{dark: lightMode === 0}">
+  <div class="login-wrapper">
     <div class="svg-wrapper">
-      <img src="/assets/images/logos/logo_Gauzy.svg" alt="gauzy logo" class="ever-logo-svg">
-      <ngx-theme-switch class="theme-switch"></ngx-theme-switch>
+      <ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
+      <gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
     </div>
     <div class="headings" [class]="isDemo ? 'headings-demo' : ''">
       <div class="headings-inner">
@@ -141,7 +141,7 @@
           <a
             nbSuffix
             nbButton
-            size="large"
+            size="small"
             ghost
             (click)="showPassword = !showPassword"
             class="show-password-icon"
@@ -207,7 +207,7 @@
           <button
             type="submit"
             nbButton
-            size="large"
+            size="small"
             class="submit-btn"
             [disabled]="submitted || !form.valid"
             [class.btn-pulse]="submitted"
@@ -269,17 +269,17 @@
           <nb-card-body class="card-body" [class]="lightMode === 0 ? 'dark' : ''">
             <h6 class="title">{{ 'LOGIN_PAGE.DEMO.TITLE' | translate }}</h6>
             <p class="sub-title">{{ 'LOGIN_PAGE.DEMO.SUB_TITLE' | translate }}</p>
-            <button nbButton fullWidth size="large" class="mt-3 custom-btn"
+            <button nbButton fullWidth size="small" class="mt-3 custom-btn"
                     (click)="autoLogin(RolesEnum.SUPER_ADMIN)">
               <nb-icon icon="star"></nb-icon>
               {{ 'BUTTONS.SUPER_ADMIN_DEMO' | translate }}
             </button>
             <br/>
-            <button nbButton fullWidth size="large" class="mt-3 custom-btn" (click)="autoLogin(RolesEnum.ADMIN)">
+            <button nbButton fullWidth size="small" class="mt-3 custom-btn" (click)="autoLogin(RolesEnum.ADMIN)">
               {{ 'BUTTONS.ADMIN_DEMO' | translate }}
             </button>
             <br/>
-            <button nbButton fullWidth size="large" class="mt-3 custom-btn" (click)="autoLogin(RolesEnum.EMPLOYEE)">
+            <button nbButton fullWidth size="small" class="mt-3 custom-btn" (click)="autoLogin(RolesEnum.EMPLOYEE)">
               {{ 'BUTTONS.EMPLOYEE_DEMO' | translate }}
             </button>
           </nb-card-body>

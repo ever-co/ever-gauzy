@@ -10,6 +10,7 @@ import { ThemeSidebarComponent } from './theme-sidebar.component';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
 import { ThemeSettingsModule } from './theme-settings/theme-settings.module';
 import { ChangelogComponent } from './changelog/changelog.component';
+import { ThemeSettingsComponent } from './theme-settings/theme-settings.component';
 
 @NgModule({
 	imports: [
@@ -23,7 +24,8 @@ import { ChangelogComponent } from './changelog/changelog.component';
 	],
 	exports: [
 		ThemeSidebarComponent,
-		ChangelogComponent
+		ChangelogComponent,
+    ThemeSettingsComponent
 	],
 	declarations: [
 		ThemeSidebarComponent,
