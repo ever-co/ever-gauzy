@@ -148,15 +148,14 @@ $register-background-light-color: rgba(126, 126, 143, 0.05);
 }
 
 @mixin input-fields-color {
-  ::ng-deep .input-full-width {
-    background-color: rgba(255, 255, 255, 0.15) !important;
+  :host ::ng-deep .input-full-width {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  :host ::ng-deep ngx-register .register-wrapper .input-full-width {
+    background-color: $register-background-light-color;
   }
 
-  ::ng-deep ngx-register .register-wrapper .input-full-width {
-    background-color: $register-background-light-color !important;
-  }
-
-  ::ng-deep ngx-register .register-wrapper.dark .input-full-width {
-    background-color: rgba(255, 255, 255, 0.15) !important;
+  :host ::ng-deep ngx-register .register-wrapper.dark .input-full-width {
+    background-color: rgba(255, 255, 255, 0.15);
   }
 }

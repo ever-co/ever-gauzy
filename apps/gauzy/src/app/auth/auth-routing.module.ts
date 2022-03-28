@@ -9,6 +9,7 @@ import { NbLogoutComponent, NbResetPasswordComponent } from '@nebular/auth';
 import { AcceptInvitePage } from './accept-invite/accept-invite.component';
 import { AcceptClientInvitePage } from './onboard-organization-client';
 import { EstimateEmailComponent } from './estimate-email';
+import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
 
 export const routes: Routes = [
 	{
@@ -41,7 +42,7 @@ export const routes: Routes = [
 			},
 			{
 				path: 'reset-password',
-				component: NbResetPasswordComponent,
+				component: NgxResetPasswordComponent,
 				canActivate: [NoAuthGuard]
 			},
 			{

@@ -26,6 +26,7 @@ import { NgxAuthComponent } from "./auth/auth.component";
 import { NgxThemeSwitchComponent } from "./theme-switch/theme-switch.component";
 import { ThemeSwitchService } from "../@core/services";
 import { ThemeModule } from '../@theme/theme.module';
+import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
 
 
 @NgModule({
@@ -57,6 +58,7 @@ import { ThemeModule } from '../@theme/theme.module';
 		NgxAuthComponent,
 		NgxRegisterComponent,
 		NgxThemeSwitchComponent,
+		NgxResetPasswordComponent,
 	],
 	providers: [
 		ThemeSwitchService,
