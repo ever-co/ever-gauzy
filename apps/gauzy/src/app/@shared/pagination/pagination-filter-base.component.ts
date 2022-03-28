@@ -1,10 +1,10 @@
-import { AfterViewInit, Component } from '@angular/core';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { isNotEmpty } from '@gauzy/common-angular';
-import { Subject } from 'rxjs/internal/Subject';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { AfterViewInit, Component } from "@angular/core";
+import { UntilDestroy } from "@ngneat/until-destroy";
+import { TranslateService } from "@ngx-translate/core";
+import { isNotEmpty } from "@gauzy/common-angular";
+import { Subject } from "rxjs/internal/Subject";
+import { BehaviorSubject } from "rxjs/internal/BehaviorSubject";
+import { TranslationBaseComponent } from "../language-base/translation-base.component";
 
 export interface IPaginationBase {
 	totalItems?: number;
@@ -16,10 +16,9 @@ export interface IPaginationBase {
 @Component({
 	template: ''
 })
-export class PaginationFilterBaseComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit
-{
+export class PaginationFilterBaseComponent extends TranslationBaseComponent 
+	implements AfterViewInit {
+		
 	protected pagination: IPaginationBase = {
 		totalItems: 0,
 		activePage: 1,
