@@ -15,7 +15,8 @@ import {
 	NbTabsetModule,
 	NbToggleModule,
 	NbBadgeModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbAccordionModule,
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';
@@ -90,7 +91,8 @@ import { TranslateModule } from '../../../../@shared/translate/translate.module'
 		TimerPickerModule,
 		CurrencyModule,
 		LocationFormModule,
-		LeafletMapModule
+		LeafletMapModule,
+		NbAccordionModule,
 	],
 	providers: [
 		OrganizationDepartmentsService,

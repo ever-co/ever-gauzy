@@ -1647,6 +1647,8 @@
 		"PROFILE": "Profile",
 		"PORTFOLIO": "Portfolio",
 		"EDIT": {
+			"SETTINGS_SECTION": "Settings Section",
+			"ALL": "All",
 			"ACCOUNTING": "Accounting",
 			"HEADER": "Manage",
 			"CLIENT": "Client",

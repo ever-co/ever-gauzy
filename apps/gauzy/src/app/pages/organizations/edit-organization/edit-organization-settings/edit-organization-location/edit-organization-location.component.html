@@ -1,22 +1,23 @@
 <form class="main-form" [formGroup]="form" *ngIf="form">
-	<ga-location-form
-		#locationFormDirective
-		[form]="form"
-		[showAutocompleteSearch]="true"
-		(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
-		(mapGeometryEmitter)="onGeometrySend($event)"
-	>
-	</ga-location-form>
-	<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)">
-	</ga-leaflet-map>
-	<div class="actions">
-		<button
-			[disabled]="this.form.invalid"
-			(click)="updateOrganizationSettings()"
-			nbButton
-			status="success"
+	<div class="location-form-wrapper">
+		<ga-location-form
+			#locationFormDirective
+			[form]="form"
+			[showAutocompleteSearch]="true"
+			(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+			(mapGeometryEmitter)="onGeometrySend($event)"
 		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
+		</ga-location-form>
+		<div class="actions">
+			<button
+				[disabled]="this.form.invalid"
+				(click)="updateOrganizationSettings()"
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
 	</div>
+	<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"></ga-leaflet-map>
 </form>
