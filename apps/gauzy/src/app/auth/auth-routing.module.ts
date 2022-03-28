@@ -5,7 +5,7 @@ import { NgxRegisterComponent } from './register/register.component';
 import { NgxAuthComponent } from "./auth/auth.component";
 import { NgxForgotPasswordComponent } from "./forgot-password/forgot-password.component";
 import { NoAuthGuard } from '../@core/auth/no-auth.guard';
-import { NbLogoutComponent, NbResetPasswordComponent } from '@nebular/auth';
+import { NbLogoutComponent } from '@nebular/auth';
 import { AcceptInvitePage } from './accept-invite/accept-invite.component';
 import { AcceptClientInvitePage } from './onboard-organization-client';
 import { EstimateEmailComponent } from './estimate-email';
