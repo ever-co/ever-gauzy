@@ -130,7 +130,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 	private _loadSmartTableSettings() {
 		this.smartTableSettings = {
-      pager: {
+      		pager: {
 				display: false
 			},
 			actions: false,
@@ -158,12 +158,12 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 						this.setFilter({ field: 'description', search: value });
 					}
 				},
-        stages: {
-          title: this.getTranslation('SM_TABLE.STAGE'),
+				stages: {
+					title: this.getTranslation('SM_TABLE.STAGE'),
 					type: 'custom',
 					filter: false,
-          renderComponent: StageComponent
-        },
+					renderComponent: StageComponent
+				},
 				status: {
 					filter: false,
 					editor: false,
@@ -225,18 +225,17 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 	async getPipelines() {
 		try {
-      this.setSmartTableSource();
-      const { activePage, itemsPerPage } = this.getPagination();
-				this.smartTableSource.setPaging(
-					activePage,
-					itemsPerPage,
-					false
-				);
+			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 			if (
 				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
 			) {
 				// Initiate GRID view pagination
-
 				await this.smartTableSource.getElements();
 				this.pipelines = this.smartTableSource.getData();
 
