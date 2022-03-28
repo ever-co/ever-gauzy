@@ -938,7 +938,7 @@
 		"GAUZY_LIGHT": "Гаузивый свет",
 		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Английский",
+		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -1647,6 +1647,8 @@
 		"PROFILE": "Профиль",
 		"PORTFOLIO": "Портфолио",
 		"EDIT": {
+			"SETTINGS_SECTION": "Settings Section",
+			"ALL": "All",
 			"ACCOUNTING": "Бухгалтер",
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -2376,7 +2378,7 @@
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации",
 			"PREFERRED_LANGUAGE": {
-				"en": "Английский",
+				"en": "Russian",
 				"he": "Иврит",
 				"bg": "Болгарский",
 				"ru": "Русский"
@@ -3637,7 +3639,7 @@
 			"TEMPLATE_NAMES": "Названия шаблонов"
 		},
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
@@ -3759,7 +3761,7 @@
 	"ACCOUNTING_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны счетов",
 		"LANGUAGE_CODES": {
-			"en": "Английский",
+			"en": "Russian",
 			"ru": "Русский",
 			"he": "Иврит",
 			"bg": "Болгарский"
