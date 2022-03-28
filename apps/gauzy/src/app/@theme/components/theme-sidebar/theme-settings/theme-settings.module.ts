@@ -11,6 +11,7 @@ import { TranslateModule } from './../../../../@shared/translate/translate.modul
 import { ThemeLanguageSelectorModule } from './components/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-selector/theme-selector.module';
 import { NbCardModule, NbListModule } from '@nebular/theme';
+import { ThemeSelectorComponent } from './components/theme-selector/theme-selector.component';
 
 @NgModule({
 	imports: [
@@ -26,7 +27,8 @@ import { NbCardModule, NbListModule } from '@nebular/theme';
     NbListModule
 	],
 	exports: [
-		ThemeSettingsComponent
+		ThemeSettingsComponent,
+    ThemeSelectorComponent
 	],
 	declarations: [
 		ThemeSettingsComponent

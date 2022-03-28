@@ -1,8 +1,11 @@
 <div class="switch-container">
-	{{ 'SETTINGS_MENU.LIGHT' | translate }}/{{
-		'SETTINGS_MENU.DARK' | translate
-	}}
+	<span *ngIf="hasText"
+		>{{ 'SETTINGS_MENU.LIGHT' | translate }}/{{
+			'SETTINGS_MENU.DARK' | translate
+		}}</span
+	>
 	<nb-toggle
+		class="switch"
 		[checked]="switch | async"
 		[ngClass]="(switch | async) ? 'dark' : 'light'"
 		(checkedChange)="switchTheme()"

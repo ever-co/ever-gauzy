@@ -26,7 +26,7 @@ import { NgxAuthComponent } from "./auth/auth.component";
 import { NgxThemeSwitchComponent } from "./theme-switch/theme-switch.component";
 import { ThemeSwitchService } from "../@core/services";
 import { ThemeModule } from '../@theme/theme.module';
-import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
+import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 
 @NgModule({
@@ -47,7 +47,8 @@ import { NgxResetPasswordComponent } from "./reset-password/reset-password.compo
 		NbFormFieldModule,
 		NbSelectModule,
 		NbLayoutModule,
-		ThemeModule
+    ThemeModule,
+    ThemeSelectorModule
 	],
 	declarations: [
 		NgxLoginComponent,
@@ -58,7 +59,6 @@ import { NgxResetPasswordComponent } from "./reset-password/reset-password.compo
 		NgxAuthComponent,
 		NgxRegisterComponent,
 		NgxThemeSwitchComponent,
-		NgxResetPasswordComponent,
 	],
 	providers: [
 		ThemeSwitchService,

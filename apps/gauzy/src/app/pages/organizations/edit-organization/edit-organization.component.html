@@ -1,45 +1,42 @@
 <nb-card class="org-edit card-scroll">
-	<nb-card-header class="header">
-		<div
-			class="header-container"
-			*ngIf="selectedOrgFromHeader; else noName"
-		>
-			<div class="org-info">
-				<img
-					class="org-image"
-					[src]="selectedOrg.imageUrl"
-					alt="Organization Avatar"
-				/>
-				<div class="org-details">
-					<span class="org-name">{{ selectedOrg.name }} </span>
-					<div class="org-position">
-						{{ employeesCount }}
-						{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
-					</div>
-					<ng-template [ngxPermissionsOnly]="['PUBLIC_PAGE_EDIT']">
+    <nb-card-header class="header">
+        <div class="header-container"
+                *ngIf="selectedOrgFromHeader; else noName">
+            <div class="org-info">
+                <img
+                        class="org-image"
+                        [src]="selectedOrg.imageUrl"
+                        alt="Organization Avatar"
+                />
+                <div class="org-details">
+                    <span class="org-name">{{ selectedOrg.name }} </span>
+                    <div class="org-position">
+                        {{ employeesCount }}
+                        {{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <ng-template [ngxPermissionsOnly]="['PUBLIC_PAGE_EDIT']">
 						<span
-							class="edit-public-page"
-							(click)="editPublicPage()"
-						>
+                                class="edit-public-page"
+                                (click)="editPublicPage()"
+                        >
 							<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-							>{{
-								'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE'
-									| translate
-							}}
+                            >{{
+							'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE'
+								| translate
+                            }}
 						</span>
-					</ng-template>
-				</div>
-			</div>
-		</div>
+                </ng-template>
+            </div>
+        </div>
+        <ng-template #noName>
+            <h6>{{ 'POP_UPS.SELECT_ORGANIZATION' | translate }}</h6>
+        </ng-template>
+    </nb-card-header>
 
-		<ng-template #noName>
-			<h6>{{ 'POP_UPS.SELECT_ORGANIZATION' | translate }}</h6>
-		</ng-template>
-	</nb-card-header>
-
-	<nb-card-body>
-		<ngx-edit-organization-settings
-			[organization]="selectedOrg"
-		></ngx-edit-organization-settings
-	></nb-card-body>
+    <nb-card-body>
+        <ngx-edit-organization-settings [organization]="selectedOrg"></ngx-edit-organization-settings>
+    </nb-card-body>
 </nb-card>

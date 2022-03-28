@@ -37,6 +37,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -69,7 +70,8 @@ import { TableFiltersModule } from '../../@shared/table-filters/table-filters.mo
 		HeaderTitleModule,
 		PaginationModule,
 		ContactSelectModule,
-		TableFiltersModule
+		TableFiltersModule,
+    GauzyButtonActionModule
 	],
 	declarations: [
 		ProposalsComponent,

@@ -31,7 +31,10 @@ $nb-themes: nb-register-theme(
     actions-divider-style: none,
     button-filled-medium-padding:	0.4375rem 0.875rem,
     button-outline-medium-padding: 0.4375rem 0.875rem,
-    sidebar-padding: 0.625rem
+    sidebar-padding: 0.625rem,
+    gauzy-card-1:rgba(255, 255, 255, 1),
+    gauzy-card-2:rgba(50, 50, 50, 0.03),
+    gauzy-input-background: rgba(255, 255, 255, 1)
   ),
   default,
   default
@@ -58,7 +61,10 @@ $nb-themes: nb-register-theme(
     accordion-padding: 0.625rem,
     button-filled-medium-padding:	0.4375rem 0.875rem,
     button-outline-medium-padding: 0.4375rem 0.875rem,
-    sidebar-padding: 0.625rem
+    sidebar-padding: 0.625rem,
+    gauzy-card-2:rgba(41, 41, 51, 1),
+    gauzy-card-1:rgba(32, 32, 35, 1),
+    gauzy-input-background: rgba(255, 255, 255, .15)
   ),
   cosmic,
   cosmic
@@ -85,7 +91,10 @@ $nb-themes: nb-register-theme(
     accordion-padding: 0.625rem,
     button-filled-medium-padding:	0.4375rem 0.875rem,
     button-outline-medium-padding: 0.4375rem 0.875rem,
-    sidebar-padding: 0.625rem
+    sidebar-padding: 0.625rem,
+    gauzy-card-1:rgba(255, 255, 255, 1),
+    gauzy-card-2:rgba(50, 50, 50, 0.03),
+    gauzy-input-background: rgba(255, 255, 255, 1)
   ),
   corporate,
   corporate
@@ -114,7 +123,10 @@ $nb-themes: nb-register-theme(
     actions-divider-style: none,
     button-filled-medium-padding:	0.4375rem 0.875rem,
     button-outline-medium-padding: 0.4375rem 0.875rem,
-    sidebar-padding: 0.625rem
+    sidebar-padding: 0.625rem,
+    gauzy-card-2:rgba(41, 41, 51, 1),
+    gauzy-card-1:rgba(32, 32, 35, 1),
+    gauzy-input-background: rgba(255, 255, 255, .15)
   ),
   dark,
   dark

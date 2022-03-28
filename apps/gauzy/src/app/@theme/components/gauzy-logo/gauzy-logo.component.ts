@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, EventEmitter, Output, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, EventEmitter, Output, ChangeDetectorRef, Input } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { tap, debounceTime, filter } from 'rxjs/operators';
@@ -12,10 +12,15 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 	styleUrls: ['./gauzy-logo.component.scss']
 })
 export class GauzyLogoComponent implements OnInit, OnDestroy {
+
 	theme: string;
 	isCollapse: boolean = true;
 	organization: IOrganization;
+
+  @Input() isAccordion: boolean = true;
+
   @Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
+
 	constructor(
 		private readonly themeService: NbThemeService,
 		private readonly store: Store,
