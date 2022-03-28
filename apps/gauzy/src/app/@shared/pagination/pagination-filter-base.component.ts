@@ -16,9 +16,9 @@ export interface IPaginationBase {
 @Component({
 	template: ''
 })
-export class PaginationFilterBaseComponent extends TranslationBaseComponent 
+export class PaginationFilterBaseComponent extends TranslationBaseComponent
 	implements AfterViewInit {
-		
+
 	protected pagination: IPaginationBase = {
 		totalItems: 0,
 		activePage: 1,
@@ -101,5 +101,6 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 			...this.getPagination(),
 			itemsPerPage: this.pagination.itemsPerPage
 		});
+    this.subject$.next(true);
 	}
 }
