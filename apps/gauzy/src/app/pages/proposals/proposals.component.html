@@ -79,7 +79,7 @@
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 				class="pagination-container"
 			>
-				<ng-container *ngIf="pagination.totalItems">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
