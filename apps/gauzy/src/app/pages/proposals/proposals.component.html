@@ -51,8 +51,7 @@
 		</div>
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
-				[text]="'BUTTONS.ADD'"
-				[icon]="'plus-outline'"
+        [buttonTemplateVisible]="visibleButton"
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
@@ -61,40 +60,6 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<!-- <ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
-			<div class="mb-3">
-				<button
-					nbButton
-					status="success"
-					class="mr-2"
-					[routerLink]="['/pages/sales/proposals/register']"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-					{{ 'BUTTONS.ADD' | translate }}
-				</button>
-				<ng-container
-					*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-				>
-					<ng-container
-						*ngTemplateOutlet="actionButtons"
-					></ng-container>
-				</ng-container>
-				<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
-					<button
-						nbButton
-						status="info"
-						[routerLink]="['/pages/jobs/proposal-template']"
-						class="mr-2"
-					>
-						<nb-icon
-							class="mr-1"
-							icon="file-text-outline"
-						></nb-icon>
-						{{ 'BUTTONS.MANAGE_TEMPLATES' | translate }}
-					</button>
-				</ng-template>
-			</div>
-		</ng-template> -->
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
@@ -215,4 +180,17 @@
 			'BUTTONS.MARK_AS_ACCEPTED' | translate
 		}}</span>
 	</button>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
+		<button
+			nbButton
+			status="success"
+			size="small"
+			[routerLink]="['/pages/sales/proposals/register']"
+		>
+			<nb-icon icon="plus-outline"> </nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
 </ng-template>
