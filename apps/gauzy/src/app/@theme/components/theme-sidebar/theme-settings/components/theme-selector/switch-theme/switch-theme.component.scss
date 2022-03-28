@@ -6,7 +6,7 @@
   align-items: center;
   flex-wrap: wrap;
 
-  nb-toggle ::ng-deep .toggle {
+  nb-toggle.switch ::ng-deep .toggle {
     height: 1.5rem;
     width: 3.375rem;
     font-family: 'Font Awesome 6 Free' !important;
@@ -65,10 +65,10 @@
   }
 }
 
-::ng-deep [dir=ltr] nb-toggle .toggle.checked .toggle-switcher {
+::ng-deep [dir=ltr] nb-toggle.switch .toggle.checked .toggle-switcher {
   left: calc(100% - 1.375rem);
 }
 
-::ng-deep [dir=rtl] nb-toggle .toggle.checked .toggle-switcher {
+::ng-deep [dir=rtl] nb-toggle.switch .toggle.checked .toggle-switcher {
   right: calc(100% - 1.375rem);
 }

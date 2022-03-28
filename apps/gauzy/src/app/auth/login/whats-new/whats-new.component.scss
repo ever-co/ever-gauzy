@@ -6,7 +6,7 @@
   &.dark {
     background: rgba(245, 109, 88, 0.1);
   }
-  border-radius: 12px;
+  border-radius: nb-theme(border-radius);
   padding: 25px;
   box-sizing: border-box;
   width: 100%;
@@ -23,7 +23,7 @@
   flex-direction: column;
   position: relative;
   & .main-header {
-    color: nb-theme(color-primary-500);
+    color: nb-theme(text-primary-color);
     font-family: Inter;
     font-size: 18px;
     font-style: normal;

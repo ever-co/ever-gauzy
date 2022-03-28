@@ -17,6 +17,7 @@
     align-items: center;
     position: absolute;
     z-index: 9999;
+    background-color: nb-theme(background-basic-color-1);
     nb-calendar-year-picker,
     nb-calendar-month-picker {
       z-index: 1;

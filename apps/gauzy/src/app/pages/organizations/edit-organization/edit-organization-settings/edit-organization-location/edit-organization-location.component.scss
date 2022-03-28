@@ -1,9 +1,119 @@
+@import "themes";
+@import "var";
+
+:host {
+    &.ng-star-inserted {
+        min-height: 100%;
+        height: 100%;
+    }
+    ::ng-deep input {
+        background-color: nb-theme(background-basic-color-1) !important;
+    }
+}
+
 .main-form {
-  width: 100%;
-  margin-top: 2rem;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: nb-theme(background-basic-color-3);
+
+    & .location-form-wrapper {
+        width: 40%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        ::ng-deep .row {
+            flex-direction: column;
+            &:last-child {
+                flex-direction: row;
+                margin-top: 0 !important;
+            }
+        }
+        ::ng-deep .col-4 {
+            max-width: 100%;
+            &:first-child, &:nth-child(2) {
+                width: 80%;
+            }
+            &:nth-child(3) {
+                width: 50%;
+            }
+        }
+        ::ng-deep & .col-6 {
+            width: 100%;
+            max-width: 100%;
+        }
+        ::ng-deep nb-select.shape-rectangle .select-button {
+            border-radius: 8px;
+            background-color: nb-theme(background-basic-color-1);
+        }
+        ::ng-deep .form-group {
+            margin-bottom: 6px;
+        }
+     }
+    ga-leaflet-map {
+        width: 55%;
+        ::ng-deep & .row {
+            height: 100%;
+            margin: 0 !important;
+        }
+        ::ng-deep & .col-12 {
+            height: 100%;
+            padding: 0;
+        }
+        ::ng-deep & .leaflet-container {
+            height: 100% !important;
+            border-radius: 6px;
+        }
+    }
+
+    ::ng-deep .col-sm-12 {
+        margin-top: 10px;
+        margin-bottom: 5px;
+    }
+    .actions {
+        margin-top: 15px;
+    }
 }
 
 .content {
-  display: flex;
-  padding: 50px 0px;
+    display: flex;
+    padding: 50px 0px;
+}
+
+@include respond(md) {
+    :host.ng-star-inserted {
+        height: auto;
+    }
+    .main-form {
+        flex-direction: column;
+        justify-content: flex-start;
+
+        .location-form-wrapper, ga-leaflet-map {
+            width: 100%;
+        }
+        & .location-form-wrapper {
+            ::ng-deep .row .col-4 {
+                width: 100% ;
+            }
+        }
+        & ga-leaflet-map {
+            order: 1;
+            margin-top: 30px;
+            height: 500px;
+        }
+        ::ng-deep .col-sm-12 {
+            margin-bottom: 15px;
+        }
+    }
+}
+
+@include respond(sm) {
+    .main-form {
+        & ga-leaflet-map {
+            height: 350px;
+        }
+    }
 }

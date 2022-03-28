@@ -26,6 +26,7 @@ import { NgxAuthComponent } from "./auth/auth.component";
 import { NgxThemeSwitchComponent } from "./theme-switch/theme-switch.component";
 import { ThemeSwitchService } from "../@core/services";
 import { ThemeModule } from '../@theme/theme.module';
+import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 
 @NgModule({
@@ -46,7 +47,8 @@ import { ThemeModule } from '../@theme/theme.module';
 		NbFormFieldModule,
 		NbSelectModule,
 		NbLayoutModule,
-		ThemeModule
+    ThemeModule,
+    ThemeSelectorModule
 	],
 	declarations: [
 		NgxLoginComponent,

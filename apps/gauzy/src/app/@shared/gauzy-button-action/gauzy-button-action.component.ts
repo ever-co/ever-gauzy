@@ -14,7 +14,8 @@ export class GauzyButtonActionComponent implements OnInit {
   @Input() buttonTemplateVisible: any;
 
 	constructor() {}
-
+	/**
+	 * not implemented
+	 */
 	ngOnInit(): void {}
-
 }
