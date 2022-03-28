@@ -82,7 +82,7 @@
 	let-selectedItem="selectedItem"
 >
 	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
+		<ng-template ngxPermissionsOnly="VIEW_SALES_PIPELINES">
 			<button
 				[disabled]="!selectedItem && disableButton"
 				(click)="viewDeals(selectedItem)"
@@ -94,6 +94,8 @@
 				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 				<span> {{ 'PIPELINES_PAGE.VIEW_DEALS' | translate }} </span>
 			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
 			<button
 				[disabled]="!selectedItem && disableButton"
 				size="small"
