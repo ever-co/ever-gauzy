@@ -1,1 +1,25 @@
+@import 'gauzy/_gauzy-table.scss';
+.statistics{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .5rem .75rem .5625rem .8125rem;
+  background: rgba(0, 136, 254, 0.05);
+  border-radius: nb-theme(border-radius);
+  margin-top: 1rem;
+  .custom-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 40%;
+    >div>span{
+      &:last-child{
+        font-size: 1.0625rem;
+      }
+    }
+  }
+}
 
+nb-card-body{
+  overflow-y: unset;
+}
