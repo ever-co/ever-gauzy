@@ -1,10 +1,10 @@
 import { faker } from '@ever-co/faker';
 import * as _ from 'underscore';
 import * as moment from 'moment';
+import { Connection } from 'typeorm';
 import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';
 import { Activity } from './activity.entity';
-import { OrganizationProject } from '../../organization-project/organization-project.entity';
-import { Connection } from 'typeorm';
+import { OrganizationProject } from './../../core/entities/internal';
 import { Employee } from '../../employee/employee.entity';
 
 const AppsNames: string[] = [
@@ -72,6 +72,8 @@ export const createRandomActivities = async (
 						moment(date).endOf('day').toDate()
 					)
 				).format('HH:mm:ss');
+
+				activity.recordedAt = moment(date).toDate();
 				activity.duration = faker.datatype.number(100);
 				activity.type = ActivityType.APP;
 
@@ -100,10 +102,11 @@ export const createRandomActivities = async (
 					activity.task = task;
 					activity.title = url;
 					activity.metaData = {
+						url: faker.internet.url(),
 						title: faker.internet.domainSuffix(),
 						description: faker.lorem.sentence()
 					};
-					activity.description = faker.internet.url();
+					activity.description = faker.lorem.sentence();
 					activity.date = moment(date).format('YYYY-MM-DD');
 					activity.time = moment(
 						faker.date.between(

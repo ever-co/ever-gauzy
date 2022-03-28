@@ -104,6 +104,7 @@ export * from './wakatime.model';
 export * from './accounting-template.model';
 export * from './role.model';
 export * from './password-reset.model';
+export * from './auth.model';
 
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {

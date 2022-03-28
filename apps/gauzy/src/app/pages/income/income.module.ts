@@ -25,6 +25,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -50,7 +51,8 @@ import { TableFiltersModule } from '../../@shared/table-filters/table-filters.mo
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		PaginationModule,
-		TableFiltersModule
+		TableFiltersModule,
+    GauzyButtonActionModule
 	],
 	declarations: [IncomeComponent],
 	providers: [IncomeService]

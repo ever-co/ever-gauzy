@@ -7,13 +7,11 @@ import {
 	TimeTrackerComponent,
 	SetupComponent,
 	UpdaterComponent,
-	SplashScreenComponent
+	SplashScreenComponent,
+	NgxLoginComponent
 } from '@gauzy/desktop-ui-lib';
 import {
 	NbAuthComponent,
-	NbLoginComponent,
-	NbLogoutComponent,
-	NbRegisterComponent,
 	NbRequestPasswordComponent,
 	NbResetPasswordComponent
 } from '@nebular/auth';
@@ -33,30 +31,23 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				component: NbLoginComponent,
-				canActivate: [AppModuleGuard, NoAuthGuard]
+				redirectTo: 'login',
+				pathMatch: 'full'
 			},
 			{
 				path: 'login',
-				component: NbLoginComponent,
+				component: NgxLoginComponent,
 				canActivate: [AppModuleGuard, NoAuthGuard]
 			},
 			{
-				path: 'register',
-				component: NbRegisterComponent,
-				canActivate: [NoAuthGuard]
-			},
-			{
-				path: 'logout',
-				component: NbLogoutComponent
-			},
-			{
 				path: 'request-password',
-				component: NbRequestPasswordComponent
+				component: NbRequestPasswordComponent,
+				canActivate: [AppModuleGuard, NoAuthGuard]
 			},
 			{
 				path: 'reset-password',
-				component: NbResetPasswordComponent
+				component: NbResetPasswordComponent,
+				canActivate: [AppModuleGuard, NoAuthGuard]
 			}
 		]
 	},

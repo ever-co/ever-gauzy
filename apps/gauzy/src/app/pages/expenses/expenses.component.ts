@@ -111,7 +111,7 @@ export class ExpensesComponent
 						this.selectedDate = date;
 						this.employeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
-						
+
 						this.refreshPagination();
 						this.subject$.next(true);
 					}
@@ -182,6 +182,10 @@ export class ExpensesComponent
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
+      pager: {
+				display: false,
+				perPage: this.pagination.itemsPerPage
+			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				valueDate: {
@@ -270,7 +274,7 @@ export class ExpensesComponent
 	}
 
 	getFormData(data) {
-		const { 
+		const {
 			amount,
 			category,
 			vendor,
@@ -378,8 +382,8 @@ export class ExpensesComponent
 							organizationId
 						}).then(() => {
 							this.subject$.next(true);
-							this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', { 
-								name: this.employeeName(employee) 
+							this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
+								name: this.employeeName(employee)
 							});
 						});
 					} catch (error) {
@@ -447,8 +451,8 @@ export class ExpensesComponent
 							isNotEmpty(employee) ? employee.id : null
 						).then(() => {
 							this.subject$.next(true);
-							this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', { 
-								name: this.employeeName(employee) 
+							this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', {
+								name: this.employeeName(employee)
 							});
 						});
 					} catch (error) {
@@ -464,7 +468,7 @@ export class ExpensesComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
@@ -511,9 +515,9 @@ export class ExpensesComponent
 	}
 
 	private async getExpenses() {
-		try { 
+		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID||this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE) {
 
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
@@ -565,6 +569,11 @@ export class ExpensesComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
+	}
+
+  onUpdateOption($event: number) {
+		this.pagination.itemsPerPage = $event;
+		this.getExpenses();
 	}
 
 	ngOnDestroy() {}

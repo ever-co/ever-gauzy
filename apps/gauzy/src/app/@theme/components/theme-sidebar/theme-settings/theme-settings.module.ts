@@ -9,6 +9,9 @@ import {
 import { ThemeSettingsComponent } from './theme-settings.component';
 import { TranslateModule } from './../../../../@shared/translate/translate.module';
 import { ThemeLanguageSelectorModule } from './components/theme-language-selector.module';
+import { ThemeSelectorModule } from './components/theme-selector/theme-selector.module';
+import { NbCardModule, NbListModule } from '@nebular/theme';
+import { ThemeSelectorComponent } from './components/theme-selector/theme-selector.component';
 
 @NgModule({
 	imports: [
@@ -18,10 +21,14 @@ import { ThemeLanguageSelectorModule } from './components/theme-language-selecto
 		NbIconModule,
 		NbTooltipModule,
 		TranslateModule,
-		ThemeLanguageSelectorModule
+		ThemeLanguageSelectorModule,
+    ThemeSelectorModule,
+    NbCardModule,
+    NbListModule
 	],
 	exports: [
-		ThemeSettingsComponent
+		ThemeSettingsComponent,
+    ThemeSelectorComponent
 	],
 	declarations: [
 		ThemeSettingsComponent

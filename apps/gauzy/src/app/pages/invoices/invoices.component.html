@@ -40,7 +40,13 @@
 										: 'transition hide'
 								"
 							>
-								<span>
+								<span
+									[ngClass]="
+										!disableButton
+											? 'transition show'
+											: 'transition show-button'
+									"
+								>
 									<button
 										nbButton
 										status="success"
@@ -510,14 +516,13 @@
 					(userRowSelect)="selectInvoice($event)"
 					style="cursor: pointer"
 					#invoicesTable
-				>
-				</ng2-smart-table>
+				></ng2-smart-table>
 			</div>
 			<div
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 				class="pagination-container"
 			>
-				<ng-container *ngIf="pagination.totalItems">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -544,9 +549,7 @@
 					[buttonTemplate]="actionButtons"
 					[cardSize]="'big'"
 					(onSelectedItem)="selectInvoice($event)"
-				>
-					></ga-card-grid
-				>
+				></ga-card-grid>
 			</div>
 		</ng-template>
 	</nb-card-body>
@@ -580,11 +583,7 @@
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
-				[size]="
-					dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID
-						? 'small'
-						: 'small'
-				"
+				[size]="'small'"
 			>
 				<nb-option
 					*ngFor="let status of invoiceStatusTypes"
@@ -598,15 +597,13 @@
 				status="basic"
 				class="action select-nb mr-2"
 				*ngIf="isEstimate"
-				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
+				[placeholder]="
+					'INVOICES_PAGE.SET_STATUS' | translate | titlecase
+				"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
-				[size]="
-					dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID
-						? 'small'
-						: 'small'
-				"
+				[size]="'small'"
 			>
 				<nb-option
 					*ngFor="let status of estimateStatusTypes"
@@ -665,6 +662,17 @@
 		</button>
 		<button
 			nbButton
+			status="basic"
+			class="action"
+			(click)="delete()"
+			[disabled]="disableButton"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+		</button>
+		<button
+			nbButton
 			nbPopoverPlacement="bottom"
 			class="action"
 			[nbPopover]="actionsPopover"
@@ -673,16 +681,6 @@
 			size="small"
 		>
 			<nb-icon icon="more-vertical-outline"></nb-icon>
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action"
-			(click)="delete()"
-			[disabled]="disableButton"
-			size="small"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 		</button>
 	</div>
 </ng-template>

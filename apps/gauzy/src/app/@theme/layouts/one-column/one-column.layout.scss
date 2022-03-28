@@ -41,4 +41,22 @@
   .menu-sidebar {
     order: 0 !important;
   }
+
+  gauzy-user-menu{
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    z-index: 100;
+  }
+
+  button.chevron{
+    width: 1.625rem;
+    height: 1.625rem;
+    padding: 0;
+    align-self: flex-end;
+    margin-bottom: 0.625rem;
+    &.collapsed{
+      align-self: center;
+    }
+  }
 }

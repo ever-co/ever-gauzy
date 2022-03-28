@@ -39,6 +39,7 @@
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
 				<nb-toggle
 					class="mr-3 ml-3"
+          			size="small"
 					[(ngModel)]="autoRefresh"
 					(checkedChange)="setAutoRefresh($event)"
 				>
@@ -46,12 +47,14 @@
 				</nb-toggle>
 				<button
 					[disabled]="autoRefresh"
+          			size="small"
 					type="button"
 					nbButton
-					status="primary"
+          			outline
+					status="basic"
 					(click)="logs$.next(true)"
 				>
-					<nb-icon icon="refresh-outline"></nb-icon>
+					<nb-icon icon="sync-outline"></nb-icon>
 					{{ 'BUTTONS.REFRESH' | translate }}
 				</button>
 			</div>
@@ -286,6 +289,7 @@
 													<button
 														nbButton
 														status="primary"
+                            size="small"
 														outline
 														(click)="
 															redirectToScreenshots(
@@ -366,6 +370,7 @@
 					<nb-card-header class="nb-card-header">
 						{{ 'TIMESHEET.TASKS' | translate }}
 						<button
+              size="small"
 							nbButton
 							status="primary"
 							outline
@@ -454,6 +459,7 @@
 							nbButton
 							status="primary"
 							outline
+              size="small"
 							(click)="redirectToManualTimeReport()"
 						>
 							{{ 'BUTTONS.VIEW_REPORT' | translate }}
@@ -639,6 +645,7 @@
 						<button
 							nbButton
 							status="primary"
+              size="small"
 							outline
 							(click)="redirectToAppUrlReport()"
 						>

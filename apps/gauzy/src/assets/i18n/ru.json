@@ -1,5 +1,6 @@
 {
 	"BUTTONS": {
+		"PAY": "Оплатить",
 		"ADD_EXISTING_USER": "Добавить существующего пользователя",
 		"ADD_NEW": "Добавить новый",
 		"ADD": "Добавить",
@@ -947,7 +948,8 @@
 		"RESET_LAYOUT_TOOLTIP": "Сбросить макет по умолчанию для всех страниц",
 		"TABLE": "Таблица",
 		"CARDS_GRID": "Сетка карт",
-		"SPRINT_VIEW": "Просмотр спринта"
+		"SPRINT_VIEW": "Просмотр спринта",
+		"QUICK_SETTINGS": "Быстрые настройки"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Что нового?",
@@ -1645,6 +1647,8 @@
 		"PROFILE": "Профиль",
 		"PORTFOLIO": "Портфолио",
 		"EDIT": {
+			"SETTINGS_SECTION": "Settings Section",
+			"ALL": "All",
 			"ACCOUNTING": "Бухгалтер",
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -2448,6 +2452,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SENDER": "Отправитель",
 		"BROWSE": "Обзор",
 		"COMMENT": "Комментарий",
 		"COMMENTS": "Комментарии",
@@ -3181,6 +3186,8 @@
 			"IMAGE_UPDATED": "Изображение было обновлено",
 			"ORGANIZATION_PAGE_UPDATED": "Страница была изменена для '{{ name }}'",
 			"SCREENSHOT_DELETED": "Скриншот для '{{ name }}' ' удален из '{{ organization }}'",
+			"TIME_LOG_DELETED": "Журнал времени для '{{ name }}' ' удален из '{{ organization }}'",
+			"TIME_LOGS_DELETED": "Журналы времени удалены из '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' для '{{ region }}' был успешно создан"
 		}
 	},
@@ -3792,5 +3799,21 @@
 	},
 	"PAGINATION": {
 		"ITEMS": "Предметы"
+	},
+	"USER_MENU": {
+		"STATUS": "Статус",
+		"AVAILABLE": "Доступно",
+		"UNAVAILABLE": "Unavailable",
+		"PAUSE_NOTIFICATIONS": "Приостановить уведомления",
+		"FOR_1_HOUR": "На 1 час",
+		"FOR_2_HOURS": "На 2 часа",
+		"UNTIL_TOMORROW": "До завтра",
+		"CUSTOM": "Свой",
+		"SET_AS_NOTIFICATION_SCHEDULE": "Установить как расписание уведомлений",
+		"SET_YOURSELF_AS_AWAY": "Выключить себя",
+		"HOTKEYS": "Горячие клавиши",
+		"HELP": "Помогите",
+		"SIGN_OUT": "Выйти",
+		"PROFILE": "Профиль"
 	}
 }

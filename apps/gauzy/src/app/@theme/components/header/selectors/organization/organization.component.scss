@@ -1,11 +1,29 @@
+@import 'var';
+$radius: nb-theme(button-rectangle-border-radius);
 ng-select {
-	.selector-template {
-		display: flex;
-		align-items: center;
-		height: 100%;
-	}
-	img {
-		margin-right: 1rem;
-		margin-left: 1rem;
-	}
+  .selector-template {
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+  img {
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
+    border-radius: $radius;
+  }
+}
+
+::ng-deep .organization {
+  &.ng-select {
+    .ng-select-container {
+      .ng-value-container {
+        padding-left: 0;
+      }
+    }
+    &.close.ng-select .ng-select-container .ng-value-container {
+      span {
+        display: none;
+      }
+    }
+  }
 }

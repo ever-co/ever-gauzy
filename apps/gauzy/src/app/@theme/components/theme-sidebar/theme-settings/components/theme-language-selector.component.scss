@@ -7,14 +7,16 @@
 		font-size: 1rem;
     }
     nb-select {
-      	width: 12.5rem;
+      	width: auto;
     }
-	nb-select ::ng-deep {
+	nb-select.appearance-outline ::ng-deep {
 		.select-button {
 			text-overflow: inherit;
-			padding-left: 0.5rem !important;
+      box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+      border-width: 0;
+      outline: none;
 		}
-	}	
+	}
     .settings-row {
 		display: flex;
 		flex-direction: row;
@@ -32,4 +34,11 @@
 			font-size: 0.9rem;
 		}
     }
+}
+
+.theme-container{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
 }

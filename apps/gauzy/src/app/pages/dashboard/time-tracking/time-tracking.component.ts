@@ -22,7 +22,7 @@ import {
 	IEmployee,
 	ISelectedDateRange
 } from '@gauzy/contracts';
-import { combineLatest, Subject, Subscription, timer, firstValueFrom } from 'rxjs';
+import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
 import { distinctUntilChange, progressStatus, toUTC } from '@gauzy/common-angular';
@@ -60,8 +60,8 @@ export class TimeTrackingComponent
 	members: IMembersStatistics[] = [];
 	manualTimes: IManualTimesStatistics[] = [];
 	counts: ICountsStatistics;
-  employeesCount: number;
-  projectCount: number;
+	employeesCount: number;
+	projectCount: number;
 
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
@@ -129,7 +129,7 @@ export class TimeTrackingComponent
 		private readonly changeRef: ChangeDetectorRef,
 		private readonly _router: Router,
 		private readonly employeesService: EmployeesService,
-    private readonly projectService: OrganizationProjectsService
+    	private readonly projectService: OrganizationProjectsService
 	) {
 		super(translateService);
 	}
@@ -167,8 +167,8 @@ export class TimeTrackingComponent
 					this.organizationId = organization.id;
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
-          this.loadEmployeesCount();
-          this.loadProjectsCount();
+					this.loadEmployeesCount();
+					this.loadProjectsCount();
 					this.logs$.next(true);
 				}),
 				tap(() => this.setAutoRefresh(true)),
@@ -606,18 +606,21 @@ export class TimeTrackingComponent
 
   	private async loadEmployeesCount() {
 		const { tenantId } = this.store.user;
-		const { total } = await firstValueFrom(
-			this.employeesService.getAll([], {
-				organizationId: this.organization.id,
-				tenantId
-			})
-		);
-		this.employeesCount = total;
+		const { id: organizationId } = this.organization;
+
+		this.employeesCount = await this.employeesService.getCount([], {
+			organizationId,
+			tenantId
+		});
 	}
 
   	private async loadProjectsCount() {
     	const { tenantId } = this.store.user;
-		const { total } = await this.projectService.getAll([],{	organizationId: this.organization.id,tenantId});
-    	this.projectCount = total;
+		const { id: organizationId } = this.organization;
+
+		this.projectCount = await this.projectService.getCount([],{
+			organizationId,
+			tenantId
+		});
 	}
 }

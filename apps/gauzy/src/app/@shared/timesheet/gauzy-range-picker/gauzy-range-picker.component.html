@@ -1,14 +1,15 @@
 <div class="row col-auto">
   <div class="filter-input">
     <div class="custom-input">
-      <button *ngIf="arrows" size="small" nbButton status="primary" (click)="previousRange()">
+      <button *ngIf="arrows" size="tiny" nbButton status="primary" (click)="previousRange()">
         <nb-icon icon="arrow-ios-back-outline"></nb-icon>
       </button>
-      <button *ngIf="arrows" size="small" nbButton [disabled]="isDisable" status="primary" (click)="nextRange()">
+      <button *ngIf="arrows" size="tiny" nbButton [disabled]="isDisable" status="primary" (click)="nextRange()">
         <nb-icon icon="arrow-ios-forward-outline"></nb-icon>
       </button>
       <input
             nbInput
+            size="small"
             type="text"
             ngxDaterangepickerMd
             showCustomRangeLabel="true"
@@ -20,7 +21,7 @@
             (datesUpdated)="onUpdate($event)"
           />
     </div>
-        <button outline nbButton status="basic" (click)="today()" *ngIf="todayButton">
+        <button outline size="small" nbButton status="basic" (click)="today()" *ngIf="todayButton">
           {{
           'TIMESHEET.TODAY' | translate
           }}

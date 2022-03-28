@@ -4,6 +4,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { Color } from '@kurkle/color';
 import { NbThemeService } from '@nebular/theme';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { Rgba } from 'ngx-color-picker';
 
 @Component({
 	selector: 'ga-notes-with-tags',
@@ -21,32 +22,33 @@ export class NotesWithTagsComponent implements ViewCell, OnInit {
 	layout?: ComponentLayoutStyleEnum | undefined;
 
 	private textColor!: string;
-  data$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
-  data: Observable<any> = new Observable<any>(null);
+	data$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+	data: Observable<any> = new Observable<any>(null);
 
 	constructor(private themeService: NbThemeService) {}
 
 	ngOnInit(): void {
 		this.themeService.getJsTheme().subscribe((theme) => {
 			this.textColor = theme.variables.fgText.toString();
-      this.data$.next(this.rowData);
-      this.data = this.data$.asObservable();
+			this.data$.next(this.rowData);
+			this.data = this.data$.asObservable();
 		});
 	}
 
 	backgroundContrast(bgColor: string) {
-		const color = new Color(bgColor);
-    const MIN_THRESHOLD = 150;
-    const MAX_THRESHOLD = 186;
+		let color = new Color(bgColor);
+		color = color.valid ? color : new Color(new Rgba(255, 255, 255, 0.5));
+		const MIN_THRESHOLD = 128;
+		const MAX_THRESHOLD = 186;
 		const contrast = color.rgb
 			? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114
 			: null;
-		if (contrast && contrast < MIN_THRESHOLD) {
+		if (contrast < MIN_THRESHOLD) {
 			return '#ffffff';
-		} else if (contrast && contrast > MAX_THRESHOLD) {
+		} else if (contrast > MAX_THRESHOLD) {
 			return '#000000';
 		} else {
-      return this.textColor;
-    }
+			return this.textColor;
+		}
 	}
 }

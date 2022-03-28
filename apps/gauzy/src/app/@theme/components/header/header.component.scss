@@ -1,34 +1,32 @@
 @import '~bootstrap/scss/mixins/breakpoints';
 @import '~@nebular/theme/styles/global/breakpoints';
 @import '../../styles/themes';
-
+$orange: #f56d58;
 @include nb-install-component() {
   width: 100%;
-
   .notification-header {
     background-color: #1b005d;
     text-align: center;
     font-weight: 300;
-    margin-top: -12px;
-    margin-bottom: 5px;
+    margin: 0;
     padding: 3px;
     width: 100vw;
     position: relative;
-    left: calc(-50vw + 50%);
-    font-family: 'Open Sans', sans-serif;
+    left: calc(-100vw + 100%);
     color: rgb(236, 236, 236);
-    a{
+    a {
       color: rgb(236, 236, 236);
     }
-    a:hover{
+    a:hover {
       color: rgb(226, 226, 226);
     }
   }
 
-  .main-header{
+  .main-header {
     display: flex;
     justify-content: space-between;
     width: 100%;
+    background-color: transparent;
     .show-large-down {
       display: none;
     }
@@ -36,19 +34,59 @@
     .logo-container {
       display: flex;
       align-items: center;
-      width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
+      justify-content: space-between;
+      //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
+      max-width: nb-theme(sidebar-width);
+      width: nb-theme(sidebar-width);
+      margin-left: nb-theme(sidebar-width-compact);
+      button.hidden-menu{
+        padding: 0 .5rem;
+        height: 1.625rem;
+        width: 1.625rem;
+        margin-left: .625rem;
+      }
+      ngx-gauzy-logo{
+        width: 100%;
+      }
+      &.compacted{
+        width: nb-theme(sidebar-width-compact);
+        justify-content: space-around;
+        align-items: center;
+        button.hidden-menu{
+          margin-left: 0;
+        }
+        ::ng-deep .accordion.workspace {
+          box-shadow: none;
+          width: 1.75rem;
+          height: auto;
+          .logo{
+            display: none;
+          }
+          nb-accordion-item-header{
+            padding: 0px;
+            nb-icon {
+              border: none;
+              left: 0rem;
+            }
+          }
+        }
+      }
     }
 
     nb-action {
       height: auto;
       display: flex;
       align-content: center;
+      margin-right: 0.625rem;
 
       .header-selector {
-        width: 360px;
+        width: auto !important;
       }
     }
 
+    nb-actions.size-small nb-action{
+      padding: 0.5625rem;
+    }
     ::ng-deep nb-search button {
       padding: 0 !important;
     }
@@ -70,13 +108,10 @@
       }
 
       .logo {
-        font-family: 'Crimson Text', serif;
         cursor: pointer;
         font-size: 1.85rem;
         padding: 0 1.25rem;
         margin-top: 5px;
-        @include nb-ltr(border-left, 1px solid nb-theme(divider-color));
-        @include nb-rtl(border-right, 1px solid nb-theme(divider-color));
         white-space: nowrap;
         text-decoration: none;
 
@@ -114,23 +149,12 @@
         display: block;
       }
     }
-
   }
-
-
-}
-
-.organization-selector {
-  max-width: 400px;
-}
-
-.employee-selector {
-  max-width: 250px;
 }
 
 .date-selector {
-  max-width: 180px;
-  min-width: 170px;
+  max-width: 160px;
+  min-width: 150px;
 }
 
 .extra-actions {
@@ -153,7 +177,6 @@
     min-width: 300px;
     width: 100%;
     max-width: 500px;
-    margin-left: 10px;
   }
 
   .organization-selector,
@@ -163,7 +186,6 @@
     min-width: 300px;
     width: 100%;
     max-width: 500px;
-    padding-bottom: 20px;
   }
 }
 
@@ -183,10 +205,42 @@
 }
 
 .organization-selector-container {
-  width: 280px;
+  max-width: auto;
 }
 
-.white-svg{
-  filter: brightness(0) invert(1);
+
+.button.create {
+  background: $orange;
+  box-shadow: 0px 10px 13px -7px $orange;
+  &:hover {
+    background: $orange;
+  }
 }
 
+.organization-selector,
+.employee-selector,
+.project-selector {
+  max-width: 10rem;
+  ::ng-deep {
+    .ng-select.ng-select-opened.ng-select-bottom > .ng-select-container {
+      border-radius: nb-theme(button-rectangle-border-radius);
+    }
+    .ng-select.ng-select-single .ng-select-container {
+      height: 2rem;
+    }
+    .ng-select .ng-select-container {
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      min-height: 2rem;
+    }
+  }
+}
+
+.actions{
+  padding: .625rem 0rem .625rem .625rem;
+  border-radius: nb-theme(button-rectangle-border-radius);
+  background-color:rgba(50, 50, 50, 0.03);
+  display: flex;
+  align-items: center;
+  margin-right: 1.25rem;
+}

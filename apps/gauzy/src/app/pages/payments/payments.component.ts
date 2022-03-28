@@ -40,7 +40,7 @@ import { environment as ENV } from './../../../environments/environment';
 export class PaymentsComponent
 	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
-		
+
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedPayment: IPayment;
@@ -152,7 +152,7 @@ export class PaymentsComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
@@ -219,16 +219,22 @@ export class PaymentsComponent
 	async getPayments() {
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
+			) {
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.setPaging(
+					activePage,
+					itemsPerPage,
+					false
+				);
 
 				await this.smartTableSource.getElements();
 				this.payments = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.pagination['totalItems'] = this.smartTableSource.count();
 			}
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
@@ -255,7 +261,7 @@ export class PaymentsComponent
 					invoice
 				);
 			}
-		
+
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
 			this.subject$.next(true);
 		}
@@ -286,7 +292,7 @@ export class PaymentsComponent
 			if (result.invoice) {
 				const { invoice } = result;
 				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
-	
+
 				await this.createInvoiceHistory(
 					action,
 					invoice
@@ -315,7 +321,7 @@ export class PaymentsComponent
 				return;
 			}
 			await this.paymentService.delete(this.selectedPayment.id);
-			
+
 			const { invoice } = this.selectedPayment;
 			if (invoice) {
 				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
@@ -352,20 +358,31 @@ export class PaymentsComponent
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+      pager: {
+				display: false,
+				perPage: this.pagination.itemsPerPage
+			},
 			columns: {
+				invoiceNumber: {
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+					type: 'text',
+					filter: false,
+					width: '8%',
+					sort: false
+				},
+        paymentDate: {
+					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
+					type: 'custom',
+					filter: false,
+					width: '10%',
+					renderComponent: DateViewComponent
+				},
 				amount: {
 					title: this.getTranslation('PAYMENTS_PAGE.AMOUNT'),
 					type: 'custom',
 					filter: false,
 					width: '8%',
 					renderComponent: IncomeExpenseAmountComponent
-				},
-				paymentDate: {
-					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
-					type: 'custom',
-					filter: false,
-					width: '10%',
-					renderComponent: DateViewComponent
 				},
 				paymentMethodEnum: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
@@ -398,7 +415,6 @@ export class PaymentsComponent
 					valuePrepareFunction: (cell, row) => {
 						return row.organizationContactName;
 					},
-					width: '12%',
 					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
@@ -411,14 +427,21 @@ export class PaymentsComponent
 				projectName: {
 					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
-					width: '10%',
+					width: '12%',
 					filter: false,
 					sort: false
 				},
-				tags: {
+				overdue: {
+					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
+					type: 'custom',
+					width: '8%',
+					renderComponent: StatusBadgeComponent,
+					filter: false
+				},
+        tags: {
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
 					type: 'custom',
-					width: '12%',
+					width: '8%',
 					renderComponent: TagsOnlyComponent,
 					filter: {
 						type: 'custom',
@@ -426,26 +449,12 @@ export class PaymentsComponent
 					},
 					filterFunction: (tags: ITag[]) => {
 						const tagIds = [];
-						for (const tag of tags) { 
+						for (const tag of tags) {
 							tagIds.push(tag.id);
 						}
 						this.setFilter({ field: 'tags', search: tagIds });
 					},
 					sort: false
-				},
-				invoiceNumber: {
-					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
-					type: 'text',
-					filter: false,
-					width: '8%',
-					sort: false
-				},
-				overdue: {
-					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
-					type: 'custom',
-					width: '10%',
-					renderComponent: StatusBadgeComponent,
-					filter: false
 				}
 			}
 		};
@@ -484,7 +493,7 @@ export class PaymentsComponent
 	}
 
 	/*
-	* Create Payment Invoice History Event 
+	* Create Payment Invoice History Event
 	*/
 	async createInvoiceHistory(
 		action: string,
@@ -504,6 +513,11 @@ export class PaymentsComponent
 			organizationId,
 			tenantId
 		});
+	}
+
+  onUpdateOption($event: number) {
+		this.pagination.itemsPerPage = $event;
+		this.getPayments();
 	}
 
 	ngOnDestroy() {}

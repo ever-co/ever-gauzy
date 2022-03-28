@@ -58,6 +58,12 @@ import { ProjectSelectModule } from '../@shared/project-select/project-select.mo
 import { TranslateModule } from '../@shared/translate/translate.module';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
 import { MatRippleModule } from '@angular/material/core';
+import { NbAccordionModule, NbToggleModule } from '@nebular/theme';
+import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
+import { UserMenuComponent } from './components/user-menu/user-menu.component';
+import { UserComponent } from './components/user/user.component';
+import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector.module';
+import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -73,7 +79,9 @@ const NB_MODULES = [
 	NbIconModule,
 	NbTooltipModule,
 	NbPopoverModule,
-	NbEvaIconsModule
+	NbEvaIconsModule,
+  NbAccordionModule,
+  NbToggleModule
 ];
 
 const MODULES = [
@@ -82,6 +90,8 @@ const MODULES = [
 	ProjectSelectModule,
 	TimeTrackerModule,
 	TranslateModule,
+  ThemeLanguageSelectorModule,
+  ThemeSelectorModule,
 	NgxPermissionsModule.forChild(),
 ];
 
@@ -93,7 +103,10 @@ const COMPONENTS = [
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
-	LayoutSelectorComponent
+	LayoutSelectorComponent,
+  GauzyLogoComponent,
+  UserMenuComponent,
+  UserComponent
 ];
 
 const PIPES = [...Pipes];

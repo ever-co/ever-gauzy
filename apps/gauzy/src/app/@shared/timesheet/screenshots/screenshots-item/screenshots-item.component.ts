@@ -14,7 +14,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
-import { filter, tap } from 'rxjs/operators';
+import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
@@ -130,7 +130,12 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 			return;
 		}
 		try {
-			this.timesheetService.deleteTimeSlots([timeSlot.id]).then(() => {
+			const { id: organizationId } = this.organization;
+			const request = {
+				ids: [timeSlot.id],
+				organizationId
+			}
+			this.timesheetService.deleteTimeSlots(request).then(() => {
 				const screenshots = this._screenshots.map(
 					(screenshot: IScreenshot) => {
 						return {
@@ -156,10 +161,30 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	viewInfo(timeSlot) {
+	/**
+	 * View Time Slot Info
+	 * 
+	 * @param timeSlot 
+	 */
+	viewInfo(timeSlot: ITimeSlot) {
 		this.nbDialogService.open(ViewScreenshotsModalComponent, {
-			context: { timeSlot }
-		});
+			context: { 
+				timeSlot,
+				timeLogs: timeSlot.timeLogs
+			}
+		})
+		.onClose
+		.pipe(
+			filter(Boolean),
+			tap((data) => {
+				if (data && data['isDelete']) {
+					this.delete.emit();
+				}
+			}),
+			take(1),
+			untilDestroyed(this)
+		)
+		.subscribe();
 	}
 
 	isEnableDelete(timeSlot: ITimeSlot): boolean {

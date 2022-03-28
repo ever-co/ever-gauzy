@@ -143,9 +143,16 @@
 	}
 }
 
-::ng-deep nb-route-tabset .route-tab.active .tab-link {
+::ng-deep nb-route-tabset .route-tab .tab-link {
   border-radius: 0.5rem 0.5rem 0 0;
   svg{
     fill: nb-theme(text-primary-color);
+  }
+  span{
+    display: inline-block;
+    text-transform: lowercase;
+    &:first-letter{
+      text-transform: uppercase;
+    }
   }
 }

@@ -30,6 +30,7 @@ export class PaginationComponent implements OnInit {
 		return this._activePage;
 	}
 	@Input() set activePage(value: number) {
+		this.subject$.next(value);
 		this._activePage = value;
 	}
 
@@ -66,7 +67,7 @@ export class PaginationComponent implements OnInit {
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(100),
+				debounceTime(200),
 				distinctUntilChange(), // do not emit pagination on multiple click on same element,
 				tap(() => this.selectedPage.emit(this.activePage))
 			)
@@ -99,7 +100,6 @@ export class PaginationComponent implements OnInit {
 
 	onChangePage(pageIdx: number) {
 		this.activePage = pageIdx;
-		this.subject$.next(this.activePage);
 	}
 
 	onNextPageClick() {

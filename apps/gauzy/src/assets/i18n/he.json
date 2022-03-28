@@ -1,5 +1,6 @@
 {
 	"BUTTONS": {
+		"PAY": "Pay",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
 		"ADD": "הוסף",
@@ -947,7 +948,8 @@
 		"RESET_LAYOUT_TOOLTIP": "Reset layout to default for all pages",
 		"TABLE": "Table",
 		"CARDS_GRID": "Cards Grid",
-		"SPRINT_VIEW": "Sprint View"
+		"SPRINT_VIEW": "Sprint View",
+		"QUICK_SETTINGS": "Quick Settings"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
@@ -1645,6 +1647,8 @@
 		"PROFILE": "Profile",
 		"PORTFOLIO": "Portfolio",
 		"EDIT": {
+			"SETTINGS_SECTION": "Settings Section",
+			"ALL": "All",
 			"ACCOUNTING": "Accounting",
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
@@ -2448,6 +2452,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SENDER": "Sender",
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",
 		"COMMENTS": "Comments",
@@ -3181,6 +3186,8 @@
 			"IMAGE_UPDATED": "The image has been updated",
 			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'",
 			"SCREENSHOT_DELETED": "Screenshot for '{{ name }}' removed from '{{ organization }}'",
+			"TIME_LOG_DELETED": "Time log for '{{ name }}' removed from '{{ organization }}'",
+			"TIME_LOGS_DELETED": "Time logs removed from '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully"
 		}
 	},
@@ -3792,5 +3799,21 @@
 	},
 	"PAGINATION": {
 		"ITEMS": "Items"
+	},
+	"USER_MENU": {
+		"STATUS": "עבודה",
+		"AVAILABLE": "Available",
+		"UNAVAILABLE": "Unavailable",
+		"PAUSE_NOTIFICATIONS": "Pause notifications",
+		"FOR_1_HOUR": "For 1hour",
+		"FOR_2_HOURS": "For 2hours",
+		"UNTIL_TOMORROW": "Until tomorrow",
+		"CUSTOM": "Custom",
+		"SET_AS_NOTIFICATION_SCHEDULE": "Set as notification schedule",
+		"SET_YOURSELF_AS_AWAY": "Set yourself as away",
+		"HOTKEYS": "Hotkeys",
+		"HELP": "עזרה",
+		"SIGN_OUT": "Sign Out",
+		"PROFILE": "Profile"
 	}
 }

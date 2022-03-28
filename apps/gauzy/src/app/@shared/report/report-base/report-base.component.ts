@@ -3,7 +3,7 @@ import { combineLatest } from 'rxjs';
 import { Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
+import { IOrganization, ISelectedDateRange, ITimeLogFilters } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
@@ -64,7 +64,7 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 	}
 
 	getFilterRequest(request: ITimeLogFilters): ITimeLogFilters {
-		const { startDate, endDate } = request;
+		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed(request);
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
@@ -78,5 +78,42 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 		return filterRequest;
+	}
+
+	/**
+	 * We are having issue, when organization not allowed future date
+	 * When someone run timer for today, all statistic not displaying correctly
+	 *
+	 * @returns
+	 */
+	protected getAdjustDateRangeFutureAllowed(request: ITimeLogFilters): ISelectedDateRange {
+		const now = moment();
+		let { startDate, endDate } = request;
+		/**
+		 * If, user selected single day date range.
+		 */
+		if (
+			moment(moment(startDate).format('YYYY-MM-DD')).isSame(
+				moment(endDate).format('YYYY-MM-DD')
+			)
+		) {
+			startDate = moment(startDate).startOf('day').utc().toDate();
+			endDate = moment(endDate).endOf('day').utc().toDate();
+		}
+
+		/**
+		 * If, user selected TODAY date range.
+		 */
+		if (
+			moment(now.format('YYYY-MM-DD')).isSame(
+				moment(endDate).format('YYYY-MM-DD')
+			)
+		) {
+			endDate = moment.utc().toDate();
+		}
+		return {
+			startDate: moment(startDate).toDate(),
+			endDate: moment(endDate).toDate()
+		} as ISelectedDateRange
 	}
 }

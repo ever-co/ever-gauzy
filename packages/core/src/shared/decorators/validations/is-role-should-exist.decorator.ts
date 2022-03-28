@@ -35,25 +35,30 @@ export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface
 			return false;
 		}
 		const tenantId = RequestContext.currentTenantId();
-		return !!(
+		let roleId: string;
+		if (typeof(role) === 'string') {
+			roleId = role;
+		} else if (typeof role == 'object') {
+			roleId = role.id
+		}
+
+		if (!roleId) {
+			return false;
+		}
+		const existed = (
 			await getConnection().getRepository(Role).findOne({
 				where: (query: SelectQueryBuilder<Role>) => {
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
-							if (typeof(role) === 'string') {
-								qb.andWhere(`"${query.alias}"."id" = :roleId`, {
-									roleId: role
-								});
-							} else if (role instanceof Role) {
-								qb.andWhere(`"${query.alias}"."id" = :roleId`, {
-									roleId: role.id
-								});
-							}
+							qb.andWhere(`"${query.alias}"."id" = :roleId`, {
+								roleId: roleId
+							});
 							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						})
 					);
 				}
 			})
 		);
+		return !!existed;
 	}
 }

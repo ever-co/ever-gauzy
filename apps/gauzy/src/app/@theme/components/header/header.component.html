@@ -11,40 +11,33 @@
 	[class.left]="position === 'normal'"
 	[class.right]="position === 'inverse'"
 >
-	<div class="logo-container">
-		<a (click)="toggleSidebar()" href="#" class="sidebar-toggle">
-			<nb-icon icon="menu-2-outline"></nb-icon>
-		</a>
-
-		<div
-      [ngClass]="theme === 'default' || theme === 'corporate' || theme === 'gauzy-light'? '': 'white-svg'"
-			class="logo"
-			(click)="navigateHome()"
-		>
-      <object data="assets/images/logos/logo_Gauzy.svg" type="image/svg+xml">
-        <img src="assets/images/logos/logo_Gauzy.png" />
-      </object>
-		</div>
+	<div [ngClass]="expanded || !isCollapse? 'logo-container' : 'logo-container compacted'">
+    <ngx-gauzy-logo (onCollapsed)="onCollapse($event)" ></ngx-gauzy-logo>
+    <button *ngIf="isCollapse" class="hidden-menu" outline nbButton><i class="fas fa-ellipsis-h"></i></button>
 	</div>
 </div>
 
 <div class="header-container">
-	<nb-actions
+  <nb-action size="small"
+  [class.left]="position === 'normal'"
+  [class.right]="position === 'inverse'" *ngIf="createContextMenu" class="show-large-up">
+    <button
+      nbButton
+      class="button create"
+      status="warning"
+      size="small"
+      [nbContextMenu]="createContextMenu"
+      nbContextMenuTag="create-context-menu"
+    >
+      + {{ 'BUTTONS.CREATE' | translate }}
+    </button>
+  </nb-action>
+	<div
+    class="actions"
 		size="small"
 		[class.left]="position === 'normal'"
 		[class.right]="position === 'inverse'"
 	>
-		<nb-action class="show-large-up">
-			<button
-				nbButton
-				status="warning"
-				[nbContextMenu]="createContextMenu"
-				nbContextMenuTag="create-context-menu"
-			>
-				+ {{ 'BUTTONS.CREATE' | translate }}
-			</button>
-		</nb-action>
-
 		<nb-action
 			*ngIf="
 				showProjectsSelector &&
@@ -53,7 +46,7 @@
 			"
 			class="show-large-up"
 		>
-			<ga-project-selector> </ga-project-selector>
+			<ga-project-selector class="header-selector project-selector"> </ga-project-selector>
 		</nb-action>
 
 		<nb-action
@@ -98,6 +91,7 @@
 			(click)="toggleExtraActions()"
 		></nb-action>
 		<nb-action
+      *ngIf="supportContextMenu"
 			icon="message-circle-outline"
 			class="toggle-layout"
 			[nbContextMenu]="supportContextMenu"
@@ -121,7 +115,7 @@
 			(click)="toggleSidebarActions(action)"
 		>
 		</nb-action>
-	</nb-actions>
+	</div>
 </div>
 
 <div

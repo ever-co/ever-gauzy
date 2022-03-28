@@ -232,6 +232,7 @@ export interface IActivity extends IBasePerTenantAndOrganizationEntityModel {
 	source?: string;
 	id?: string;
 	activityTimestamp?: string;
+	recordedAt?: Date;
 }
 
 export interface IDailyActivity {
@@ -271,6 +272,7 @@ export interface IURLMetaData {
 	title?: string;
 	description?: string;
 	image?: string;
+	[x: string]: any;
 }
 
 export interface IUpdateScreenshotInput
@@ -527,4 +529,15 @@ export interface IClientBudgetLimitReport {
 	spent?: number;
 	spentPercentage?: number;
 	reamingBudget?: number;
+}
+
+export interface IDeleteTimeSlot
+	extends IBasePerTenantAndOrganizationEntityModel {
+	ids: string[];
+}
+
+export interface IDeleteTimeLog
+	extends IBasePerTenantAndOrganizationEntityModel {
+	logIds: string[];
+	forceDelete: boolean;
 }

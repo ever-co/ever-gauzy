@@ -6,19 +6,16 @@ import {
 } from '@angular/core';
 import {
 	IGetTimeLogReportInput,
-	IOrganization,
 	ITimeLogFilters,
-	OrganizationPermissionsEnum,
-	PermissionsEnum,
 	ReportDayData
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
+import { moment } from './../../../../@core/moment-extend';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pluck, pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
-import { Store } from './../../../../@core/services/store.service';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
@@ -30,17 +27,13 @@ import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-
 	templateUrl: './weekly-time-reports.component.html',
 	styleUrls: ['./weekly-time-reports.component.scss']
 })
-export class WeeklyTimeReportsComponent
-	extends ReportBaseComponent
+export class WeeklyTimeReportsComponent extends ReportBaseComponent
 	implements OnInit, AfterViewInit {
 
-	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	PermissionsEnum = PermissionsEnum;
 	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
-	organization: IOrganization;
-	weekData: ReportDayData[] = [];
-	weekDayList: string[] = [];
+	weekLogs: ReportDayData[] = [];
+	weekDays: string[] = [];
 	loading: boolean;
 	chartData: IChartData;
 
@@ -56,10 +49,9 @@ export class WeeklyTimeReportsComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				debounceTime(300),
-				tap(() => this.loading = true),
+				debounceTime(500),
 				tap(() => this.getWeeklyLogs()),
-				tap(() => this.updateWeekDayList()),
+				tap(() => this.updateWeekDays()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -69,17 +61,21 @@ export class WeeklyTimeReportsComponent
 		this.cd.detectChanges();
 	}
 
-	updateWeekDayList() {
-		const range = {};
+	updateWeekDays() {
+		const { startDate, endDate } = this.logRequest;
+
+		const start = moment(moment(startDate).format('YYYY-MM-DD'));
+		const end = moment(moment(endDate).format('YYYY-MM-DD'));
+		const range = Array.from(moment.range(start, end).by('day'));
+
+		const days: Array<string> = new Array();
 		let i = 0;
-		const start = moment(this.logRequest.startDate);
-		while (start.isSameOrBefore(this.logRequest.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
+		while (i < range.length) {
+			const date = range[i].format('YYYY-MM-DD');
+			days.push(date);
 			i++;
 		}
-		this.weekDayList = Object.keys(range);
+		this.weekDays = days;
 	}
 
 	filtersChange($event: ITimeLogFilters) {
@@ -88,35 +84,42 @@ export class WeeklyTimeReportsComponent
 		this.subject$.next(true);
 	}
 
-	getWeeklyLogs() {
-		const appliedFilter = pick(
-			this.logRequest,
-			'source',
-			'activityLevel',
-			'logType'
-		);
-		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
-			...this.getFilterRequest(this.logRequest)
-		};
-		this.timesheetService
-			.getWeeklyReportChart(request)
-			.then((logs: any) => {
-				this.weekData = logs;
-				this._mapLogs(logs);
-			})
-			.finally(() => (this.loading = false));
+	async getWeeklyLogs() {
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
+		this.loading = true;
+		try {
+			const appliedFilter = pick(
+				this.logRequest,
+				'source',
+				'activityLevel',
+				'logType'
+			);
+			const request: IGetTimeLogReportInput = {
+				...appliedFilter,
+				...this.getFilterRequest(this.logRequest)
+			};
+
+			const logs: ReportDayData[] = await this.timesheetService.getWeeklyReportChart(request);
+			this.weekLogs = logs;
+			this._mapLogs(logs);
+		} catch (error) {
+			console.log('Error while retriving weekly time logs reports', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	/**
 	* Weekly reports for employee logs
 	* @param logs 
 	*/
-	private _mapLogs(logs: any) {
+	private _mapLogs(logs: ReportDayData[]) {
 		let employees = [];
 		const datasets = [];
 
-		logs.forEach((log: any) => {
+		logs.forEach((log: ReportDayData) => {
 			const color = randomColor({ 
 				luminosity: 'light',
 				format: 'rgba',

@@ -250,7 +250,7 @@ export class TimeLogController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
-		return await this.timeLogService.updateTime(id, entity);
+		return await this.timeLogService.updateManualTime(id, entity);
 	}
 
 	@ApiOperation({ summary: 'Delete time log' })
@@ -267,7 +267,9 @@ export class TimeLogController {
 	@UseGuards(PermissionGuard, OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async deleteTimeLog(@Query() query: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {
-		return await this.timeLogService.deleteTimeLog(query.logIds);
+	async deleteTimeLog(
+		@Query() query: DeleteTimeLogDTO
+	): Promise<DeleteResult | UpdateResult> {
+		return await this.timeLogService.deleteTimeLogs(query);
 	}
 }

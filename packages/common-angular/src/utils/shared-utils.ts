@@ -16,7 +16,7 @@ export function toParams(query) {
 	return params;
 }
 
-function isJsObject(object: any) {
+export function isJsObject(object: any) {
 	return (
 		object !== null && object !== undefined && typeof object === 'object'
 	);

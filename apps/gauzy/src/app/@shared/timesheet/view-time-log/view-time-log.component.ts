@@ -1,8 +1,9 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { ITimeLog, OrganizationPermissionsEnum } from '@gauzy/contracts';
+import { IOrganization, ITimeLog, OrganizationPermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter, tap } from 'rxjs/operators';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { ViewTimeLogModalComponent } from './../view-time-log-modal';
 import { TimesheetService } from './../timesheet.service';
@@ -17,6 +18,7 @@ import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	
+	organization: IOrganization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	@Input() timeLogs: ITimeLog[] = [];
 	@Input() callback: CallableFunction;
@@ -28,7 +30,15 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		private readonly timeTrackerService: TimeTrackerService,
 	) {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	openAddByDateProject($event: MouseEvent) {
 		const [ timeLog ] = this.timeLogs;
@@ -85,7 +95,12 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		if (timeLog.isRunning) {
 			return;
 		}
-		this.timesheetService.deleteLogs(timeLog.id).then((res) => {
+		const { id: organizationId } = this.organization;
+		const request = {
+			logIds: [timeLog.id],
+			organizationId
+		}
+		this.timesheetService.deleteLogs(request).then((res) => {
 			this.callback(res);
 			this.checkTimerStatus();
 		});

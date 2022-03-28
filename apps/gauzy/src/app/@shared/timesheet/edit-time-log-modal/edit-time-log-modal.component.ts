@@ -302,8 +302,21 @@ export class EditTimeLogModalComponent
 			.finally(() => (this.loading = false));
 	}
 
-	onDeleteConfirm(log) {
-		this.timesheetService.deleteLogs(log.id).then((res) => {
+	onDeleteConfirm(timeLog: ITimeLog) {
+		if (timeLog.isRunning) {
+			return;
+		}
+		const employee = timeLog.employee;
+		const { id: organizationId, name } = this.organization;
+		const request = {
+			logIds: [timeLog.id],
+			organizationId
+		}
+		this.timesheetService.deleteLogs(request).then((res) => {
+			this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
+				name: employee.fullName,
+				organization: name
+			});
 			this.dialogRef.close(res);
 		});
 	}

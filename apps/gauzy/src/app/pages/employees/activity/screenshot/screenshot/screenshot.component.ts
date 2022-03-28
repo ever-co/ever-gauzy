@@ -165,7 +165,12 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						.keys()
 						.values()
 						.value();
-					this.timesheetService.deleteTimeSlots(ids).then(() => {
+					const { id: organizationId } = this.organization;
+					const request = {
+						ids,
+						organizationId
+					}
+					this.timesheetService.deleteTimeSlots(request).then(() => {
 						this._deleteScreenshotGallery(ids);
 						this.subject$.next(true);
 					});

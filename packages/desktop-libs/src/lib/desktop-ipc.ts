@@ -383,6 +383,21 @@ export function ipcTimer(
 	ipcMain.on('timer_stopped', (event, arg) => {
 		timeTrackerWindow.webContents.send('timer_already_stop');
 	})
+
+	ipcMain.on('refresh-timer', async (event) => {
+		const [ lastTime ] = await TimerData.getLastCaptureTimeSlot(
+			knex,
+			LocalStore.beforeRequestParams()
+		);
+		console.log('Last Capture Time Start Tracking Time (Desktop Try):', lastTime);
+		event.sender.send(
+			'timer_tracker_show',
+			{
+				...LocalStore.beforeRequestParams(),
+				timeSlotId: lastTime ? lastTime.timeSlotId : null
+			}
+		);
+	})
 }
 
 export function removeMainListener() {

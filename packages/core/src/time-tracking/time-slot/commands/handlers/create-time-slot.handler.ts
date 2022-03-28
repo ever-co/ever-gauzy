@@ -3,8 +3,9 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import * as _ from 'underscore';
+import { omit } from 'underscore';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../../core/context';
 import {
 	Employee,
@@ -33,7 +34,7 @@ export class CreateTimeSlotHandler
 
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
 		const { input } = command;
-		let { organizationId } = input;
+		let { organizationId, activities = [] } = input;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -78,24 +79,10 @@ export class CreateTimeSlotHandler
 			}
 		});
 
-		console.log(
-			`Attempt to get timeSlot from DB with Parameters`,
-			{
-				organizationId,
-				tenantId,
-				employeeId,
-				startedAt: input.startedAt
-			},
-			{
-				timeSlot
-			}
-		);
-
 		if (!timeSlot) {
-			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
+			timeSlot = new TimeSlot(omit(input, ['timeLogId']));
 			timeSlot.tenantId = tenantId;
 			timeSlot.organizationId = organizationId;
-			console.log('Omit New TimeSlot:', timeSlot);
 		}
 
 		if (input.timeLogId) {
@@ -109,15 +96,14 @@ export class CreateTimeSlotHandler
 				id: In(timeLogIds),
 				tenantId,
 				organizationId,
-				employeeId,
-				isRunning: true
+				employeeId
 			});
 		} else {
 			try {
 				/**
 				 * Find TimeLog for TimeSlot Range 
 				 */
-				 timeSlot.timeLogs = await this.timeLogRepository.find({
+				const timeLogs = await this.timeLogRepository.find({
 					where: (query: SelectQueryBuilder<TimeLog>) => {
 						query.andWhere(
 							new Brackets((qb: WhereExpressionBuilder) => { 
@@ -129,13 +115,14 @@ export class CreateTimeSlotHandler
 						query.andWhere(
 							new Brackets((qb: WhereExpressionBuilder) => {
 								const { startedAt } = timeSlot;
-								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" > :startedAt`, { startedAt });
-								qb.orWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."isRunning" = :isRunning`, { startedAt, isRunning: true });
+								qb.andWhere(`"${query.alias}"."startedAt" <= :startedAt AND "${query.alias}"."stoppedAt" > :startedAt`, { startedAt });
 							})
 						);
 						console.log(query.getQueryAndParameters(), 'Find TimeLog for TimeSlot Range');
 					}
 				});
+				timeSlot.timeLogs = timeLogs;
+				console.log('Found TimeLogs for TimeSlots Range', { timeLogs })
 			} catch (error) {
 				throw new BadRequestException('Can\'t find TimeLog for TimeSlot');
 			}
@@ -152,14 +139,15 @@ export class CreateTimeSlotHandler
 			}
 		}
 
-		if (input.activities) {
-			timeSlot.activities = await this.commandBus.execute(
+		if (isNotEmpty(activities)) {
+			const bulkActivities = await this.commandBus.execute(
 				new BulkActivitiesSaveCommand({
 					employeeId: timeSlot.employeeId,
 					projectId: input.projectId,
-					activities: input.activities
+					activities: activities
 				})
 			);
+			timeSlot.activities = bulkActivities;
 		}
 
 		await this.timeSlotRepository.save(timeSlot);
@@ -170,23 +158,17 @@ export class CreateTimeSlotHandler
 		/*
 		* Merge timeSlots into 10 minutes slots
 		*/
-		let [createdTimeSlot] = await this.commandBus.execute(
+		let [mergedTimeSlot] = await this.commandBus.execute(
 			new TimeSlotMergeCommand(
 				employeeId,
 				minDate, 
 				maxDate
 			)
 		);
-
-		console.log('TimeSlot Before Create:', timeSlot);
-		
-		// If merge timeSlots not found then pass created timeSlot
-		if (!createdTimeSlot) {
-			createdTimeSlot = timeSlot;
+		if (mergedTimeSlot) {
+			timeSlot = mergedTimeSlot;
 		}
-
-		console.log('Created Time Slot:', { timeSlot: createdTimeSlot });
-		return await this.timeSlotRepository.findOne(createdTimeSlot.id, {
+		return await this.timeSlotRepository.findOne(timeSlot.id, {
 			relations: ['timeLogs', 'screenshots']
 		});
 	}

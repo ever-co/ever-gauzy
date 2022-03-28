@@ -1,0 +1,55 @@
+@import 'var';
+.accordion.workspace {
+  width: 100%;
+  max-width: nb-theme(sidebar-width);
+  max-height: 2.625rem;
+  .organization {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    img {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: nb-theme(button-rectangle-border-radius);
+      margin-right: 0.25rem;
+    }
+    .description {
+      > div {
+        &:first-child {
+          font-size: 0.75rem;
+        }
+        &:last-child {
+          font-size: 0.6875rem;
+          color: nb-theme(text-primary-color);
+        }
+      }
+    }
+  }
+  .item.footer {
+    background-color: #f1f1f1;
+    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+    box-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%);
+    .content {
+      display: flex;
+      align-items: center;
+      color: #7e7e8f;
+    }
+  }
+}
+
+nb-accordion-item-header ::ng-deep nb-icon {
+  border: 1px solid nb-theme(border-basic-color-4);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+nb-accordion-item:last-child.collapsed nb-accordion-item-header {
+  border-bottom: none;
+  max-height: 42px;
+}
+
+.white-svg {
+  filter: brightness(0) invert(1);
+}

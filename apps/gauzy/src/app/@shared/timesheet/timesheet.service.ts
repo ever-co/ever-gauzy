@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
 	ITimeLog,
 	IGetTimeLogInput,
@@ -17,7 +17,9 @@ import {
 	IClientBudgetLimitReport,
 	IProjectBudgetLimitReport,
 	IProjectBudgetLimitReportInput,
-	IClientBudgetLimitReportInput
+	IClientBudgetLimitReportInput,
+	IReportDayData,
+	ReportDayData
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -113,11 +115,11 @@ export class TimesheetService {
 		);
 	}
 
-	getDailyReport(request?: IGetTimeLogInput) {
+	getDailyReport(request?: IGetTimeLogInput): Promise<IReportDayData[]> {
 		const params = toParams(request);
 		return firstValueFrom(
 			this.http
-			.get(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
+			.get<IReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
 		);
 	}
 
@@ -156,7 +158,7 @@ export class TimesheetService {
 		const params = toParams(request);
 		return firstValueFrom(
 			this.http
-			.get(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })
+			.get<ReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })
 		);
 	}
 
@@ -224,26 +226,16 @@ export class TimesheetService {
 		);
 	}
 
-	deleteTimeSlots(ids?: string[]) {
-		const params = toParams({ ids });
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/timesheet/time-slot`, { params })
-		);
+	deleteTimeSlots(request) {
+		return firstValueFrom(this.http .delete(`${API_PREFIX}/timesheet/time-slot`, {
+			params: toParams(request)
+		}));
 	}
 
-	deleteLogs(logIds: string | string[]) {
-		let payload = new HttpParams();
-		if (typeof logIds === 'string') {
-			logIds = [logIds];
-		}
-		logIds.forEach((id: string) => {
-			payload = payload.append(`logIds[]`, id);
-		});
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/timesheet/time-log`, { params: payload })
-		);
+	deleteLogs(request) {
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/timesheet/time-log`, {
+			params: toParams(request)
+		}));
 	}
 
 	deleteScreenshot(screenshotId: string) {

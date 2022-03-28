@@ -13,6 +13,7 @@ import {
 	ITimerStatusInput,
 	ITimeLog
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { Employee, TimeLog } from './../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import { getDateRange } from './../../core/utils';
@@ -54,6 +55,12 @@ export class TimerService {
 
 		// Get today's completed timelogs
 		const logs = await this.timeLogRepository.find({
+			join: {
+				alias: 'timeLog',
+				innerJoin: {
+					timeSlots: 'timeLog.timeSlots'
+				}
+			},
 			where: {
 				deletedAt: IsNull(),
 				employeeId,
@@ -183,28 +190,36 @@ export class TimerService {
 			)
 		);
 
-		const conflictInput: IGetTimeLogConflictInput = {
-			ignoreId: lastLog.id,
-			startDate: lastLog.startedAt,
-			endDate: lastLog.stoppedAt,
-			employeeId: lastLog.employeeId,
-			organizationId: organizationId || lastLog.organizationId,
-			tenantId
-		};
-
-		const conflict = await this.commandBus.execute(
-			new IGetConflictTimeLogCommand(conflictInput)
+		const conflicts = await this.commandBus.execute(
+			new IGetConflictTimeLogCommand({
+				ignoreId: lastLog.id,
+				startDate: lastLog.startedAt,
+				endDate: lastLog.stoppedAt,
+				employeeId: lastLog.employeeId,
+				organizationId: organizationId || lastLog.organizationId,
+				tenantId
+			} as IGetTimeLogConflictInput)
 		);
-
-		const times: IDateRange = {
-			start: new Date(lastLog.startedAt),
-			end: new Date(lastLog.stoppedAt)
-		};
-
-		for (let index = 0; index < conflict.length; index++) {
-			await this.commandBus.execute(
-				new DeleteTimeSpanCommand(times, conflict[index])
-			);
+		if (isNotEmpty(conflicts)) {
+			console.log('Get Conflicts Time Logs', conflicts);
+			const times: IDateRange = {
+				start: new Date(lastLog.startedAt),
+				end: new Date(lastLog.stoppedAt)
+			};
+			if (isNotEmpty(conflicts)) {
+				for await (const timeLog of conflicts) {
+					const { timeSlots = [] } = timeLog;
+					for await (const timeSlot of timeSlots) {
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(
+								times,
+								timeLog,
+								timeSlot
+							)
+						);
+					}
+				}
+			}
 		}
 		return lastLog;
 	}
@@ -243,6 +258,12 @@ export class TimerService {
 				tenantId,
 				organizationId,
 				isRunning: true
+			},
+			join: {
+				alias: 'timeLog',
+				innerJoin: {
+					timeSlots: 'timeLog.timeSlots'
+				}
 			},
 			order: {
 				startedAt: 'DESC',

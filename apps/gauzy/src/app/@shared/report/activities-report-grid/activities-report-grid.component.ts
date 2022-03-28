@@ -16,7 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '../../../@core/services';
 import { ActivityService } from '../../timesheet/activity.service';
 import { ReportBaseComponent } from '../report-base/report-base.component';
 
@@ -26,7 +26,8 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 	templateUrl: './activities-report-grid.component.html',
 	styleUrls: ['./activities-report-grid.component.scss']
 })
-export class ActivitiesReportGridComponent extends ReportBaseComponent implements OnInit, AfterViewInit {
+export class ActivitiesReportGridComponent extends ReportBaseComponent 
+	implements OnInit, AfterViewInit {
 	
 	logRequest: ITimeLogFilters = this.request;
 	dailyData: IReportDayData[] = [];
@@ -61,12 +62,6 @@ export class ActivitiesReportGridComponent extends ReportBaseComponent implement
 
 	ngAfterViewInit() {
 		this.cd.detectChanges();
-	}
-
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
-		this.subject$.next(true);
 	}
 
 	groupByChange() {

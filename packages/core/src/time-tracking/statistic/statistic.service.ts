@@ -74,7 +74,6 @@ export class StatisticService {
 			logType = [],
 			source = []
 		} = request;
-		console.log(request, 'Get Counts Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -88,7 +87,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Counts Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -263,8 +261,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
-							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
+							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
+							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
 					}`,
 					`week_duration`
 				)
@@ -351,15 +349,14 @@ export class StatisticService {
 				moment().startOf('day').utc(),
 				moment().endOf('day').utc()
 			);
-			console.log({ startToday, endToday }, 'Today Time Date Range For Counts Statistics');
 			const query = this.timeSlotRepository.createQueryBuilder();
 			const todayTimeStatistics = await query
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
-							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
+							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
+							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
 					}`,
 					`today_duration`
 				)
@@ -438,11 +435,11 @@ export class StatisticService {
 			weekActivities: parseFloat(
 				parseFloat(weekActivities.overall + '').toFixed(1)
 			),
-			weekDuration: Math.round(weekActivities.duration),
+			weekDuration: weekActivities.duration,
 			todayActivities: parseFloat(
 				parseFloat(todayActivities.overall + '').toFixed(1)
 			),
-			todayDuration: Math.round(todayActivities.duration)
+			todayDuration: todayActivities.duration
 		};
 	}
 
@@ -460,7 +457,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get Members Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -474,7 +470,6 @@ export class StatisticService {
 										moment().startOf('day').utc(),
 										moment().endOf('day').utc()
 									);
-		console.log({ weeklyStart, weeklyEnd }, 'Weekly Time Date Range For Members Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -510,8 +505,8 @@ export class StatisticService {
 			.addSelect(
 				`${
 					this.configService.dbConnectionOptions.type === 'sqlite'
-						? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
-						: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
+						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
+						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`
 				}`,
 				`duration`
 			)
@@ -562,8 +557,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
-							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
+							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
+							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 					}`,
 					`week_duration`
 				)
@@ -635,8 +630,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE((SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
-							: `COALESCE((SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
+							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
+							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 					}`,
 					`today_duration`
 				)
@@ -653,7 +648,7 @@ export class StatisticService {
 							moment().startOf('day').utc(),
 							moment().endOf('day').utc()
 						);
-						console.log({ startToday, endToday }, 'Daily Time Date Range For Members Statistics');
+			
 						qb.where(`"timeLogs"."startedAt" BETWEEN :startToday AND :endToday`, {
 							startToday,
 							endToday
@@ -729,8 +724,8 @@ export class StatisticService {
 						`${
 							this.configService.dbConnectionOptions.type ===
 							'sqlite'
-								? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
-								: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
+								? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
+								: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`
 						}`,
 						`duration`
 					)
@@ -787,7 +782,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get Projects Statistic Request');
 		
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -800,22 +794,10 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Projects Statistics');
-		const query = this.organizationProjectsRepository.createQueryBuilder();
-		query
-			.select(`"${query.alias}".*`)
-			.addSelect(
-				`${
-					this.configService.dbConnectionOptions.type === 'sqlite'
-						? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
-						: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
-				}`,
-				`duration`
-			)
-			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+
 		/*
-		 *  Get employees id of the organization or get current employee id
-		 */
+		*  Get employees id of the organization or get current employee id
+		*/
 		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
@@ -832,7 +814,7 @@ export class StatisticService {
 				employeeId
 			);
 		}
-
+		
 		// convert projectId String to Array
 		let projectIds: string[] = [];
 		if (typeof projectId === 'string') {
@@ -842,77 +824,83 @@ export class StatisticService {
 		}
 
 		if (isNotEmpty(employeeIds)) {
+			const query = this.timeLogRepository.createQueryBuilder();
 			query
-				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
-					employeeId: employeeIds
+				.select(`"project"."name"`, "name")
+				.addSelect(
+					`${
+						this.configService.dbConnectionOptions.type === 'sqlite'
+							? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400)), 0)`
+							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt")))), 0)`
+					}`,
+					`duration`
+				)
+				.innerJoin(`${query.alias}.project`, 'project')
+				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
+					employeeIds
 				})
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+				.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
 				})
-				.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				)
+				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				})
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
 
 			// project filter query
 			if (isNotEmpty(projectIds)) {
-				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-					projectIds
-				});
+				query
+					.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					});
 			}
 
 			let projects: IProjectsStatistics[] = await query
+				.groupBy(`"project"."id"`)
 				.orderBy('duration', 'DESC')
-				.addGroupBy(`"${query.alias}"."id"`)
 				.limit(5)
 				.getRawMany();
 
-			const totalDurationQuery = this.organizationProjectsRepository.createQueryBuilder();
+			const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
 			totalDurationQuery
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
-							: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
+							? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
+							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
 					}`,
 					`duration`
 				)
-				.innerJoin(`${totalDurationQuery.alias}.timeLogs`, 'timeLogs')
-				.where(
-					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				)
-				.andWhere(
-					`"${totalDurationQuery.alias}"."tenantId" = :tenantId`,
-					{
-						tenantId
-					}
-				);
-
-			// project filter query
-			if (isNotEmpty(projectIds)) {
-				totalDurationQuery.andWhere(
-					`"timeLogs"."projectId" IN (:...projectIds)`,
-					{
-						projectIds
-					}
-				);
-			}
-
-			totalDurationQuery
-				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
-					employeeId: employeeIds
+				.innerJoin(`${totalDurationQuery.alias}.project`, 'project')
+				.where(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
+					organizationId
 				})
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+				.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				})
+				.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+					employeeIds
+				})
+				.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
 				});
-			const totalDuration = await totalDurationQuery.getRawOne();
 
+			// project filter query
+			if (isNotEmpty(projectIds)) {
+				totalDurationQuery
+					.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
+						projectIds
+					})
+					.andWhere(`"project"."id" IN (:...projectIds)`, {
+						projectIds
+					});
+			}
+
+			const totalDuration = await totalDurationQuery.getRawOne();
 			projects = projects.map((project) => {
 				project.durationPercentage = parseFloat(
 					parseFloat(
@@ -940,7 +928,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get Tasks Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -953,7 +940,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Tasks Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -982,83 +968,80 @@ export class StatisticService {
 		}
 
 		if (employeeIds.length > 0) {
-			const query = this.taskRepository.createQueryBuilder();
+			const query = this.timeLogRepository.createQueryBuilder();
 			query
-				.select(`"${query.alias}".*`)
+				.select(`"task"."title"`, "title")
+				.addSelect(`"task"."description"`, "description")
+				.addSelect(`"task"."status"`, "status")
 				.addSelect(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
-							: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
+							? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400)), 0)`
+							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt")))), 0)`
 					}`,
 					`duration`
 				)
-				.innerJoin(`${query.alias}.project`, 'project')
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
-					employeeId: employeeIds
+				.innerJoin(`${query.alias}.task`, 'task')
+				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
+					employeeIds
 				})
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+				.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
 				})
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
-				.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{
-						organizationId
-					}
-				)
-				.orderBy('duration', 'DESC')
-				.addGroupBy(`"${query.alias}"."id"`)
-				.limit(5);
+				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				});
 
 			// project filter query
 			if (isNotEmpty(projectIds)) {
-				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+				query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
 					projectIds
 				});
 			}
 
-			let tasks: ITask[] = await query.getRawMany();
-
-			const totalDurationQuery = this.taskRepository.createQueryBuilder();
+			let tasks: ITask[] = await query
+				.groupBy(`"task"."id"`)
+				.orderBy('duration', 'DESC')
+				.limit(5)
+				.getRawMany();
+	
+			const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
 			totalDurationQuery
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? `COALESCE(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400), 0)`
-							: `COALESCE(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))), 0)`
+							? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
+							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
 					}`,
 					`duration`
 				)
-				.innerJoin(`${totalDurationQuery.alias}.timeLogs`, 'timeLogs')
-				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
-					employeeId: employeeIds
+				.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
+				.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
+					employeeIds
 				})
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+				.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
 				})
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
-				.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				);
+				.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				});
 
 			// project filter query
 			if (isNotEmpty(projectIds)) {
-				totalDurationQuery.andWhere(
-					`"timeLogs"."projectId" IN (:...projectIds)`,
-					{
+				totalDurationQuery
+					.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
 						projectIds
-					}
-				);
+					});
 			}
+
 			const totalDuration = await totalDurationQuery.getRawOne();
 			tasks = tasks.map((task: any) => {
 				task.durationPercentage = parseFloat(
@@ -1088,7 +1071,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get Manual Times Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -1101,7 +1083,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Manual Times Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -1220,7 +1201,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Activities Statistics');
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -1251,10 +1231,11 @@ export class StatisticService {
 		if (employeeIds.length > 0) {
 			const query = this.activityRepository.createQueryBuilder();
 			query
-				.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
 				.select(`COUNT("${query.alias}"."id")`, `sessions`)
 				.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
 				.addSelect(`"${query.alias}"."title"`, `title`)
+				.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
+				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
 				.addGroupBy(`"${query.alias}"."title"`)
 				.andWhere(
 					new Brackets((qb) => {
@@ -1303,11 +1284,12 @@ export class StatisticService {
 			 */
 			const totalDurationQuery = this.activityRepository.createQueryBuilder();
 			totalDurationQuery
-				.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
 				.select(
 					`SUM("${totalDurationQuery.alias}"."duration")`,
 					`duration`
 				)
+				.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
+				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
 				.andWhere(
 					`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeId)`,
 					{ employeeId: employeeIds }
@@ -1349,8 +1331,7 @@ export class StatisticService {
 
 			const totalDuration = await totalDurationQuery.getRawOne();
 			activities = activities.map((activity) => {
-				activity.durationPercentage =
-					(activity.duration * 100) / totalDuration.duration;
+				activity.durationPercentage = (activity.duration * 100) / totalDuration.duration;
 				return activity;
 			});
 
@@ -1374,7 +1355,6 @@ export class StatisticService {
 			startDate,
 			endDate
 		} = request;
-		console.log(request, 'Get TimeSlot Statistic Request');
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -1387,7 +1367,6 @@ export class StatisticService {
 									moment().startOf('day').utc(),
 									moment().endOf('day').utc()
 								);
-		console.log({ start, end }, 'Weekly Time Date Range For Employee TimeSlots Statistics');
 
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -1419,12 +1398,12 @@ export class StatisticService {
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
-		query.select(`MAX("${query.alias}"."startedAt")`, "startedAt");
-		query.addSelect(`"employee"."id"`, "id");
-		query.addSelect(`"user"."imageUrl"`, 'user_image_url');
-		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name');
+		query.select(`"time_log"."employeeId"`, "id");
+		query.addSelect(`MAX("${query.alias}"."startedAt")`, "startedAt");
+		query.addSelect(`"user"."imageUrl"`, "user_image_url");
+		query.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, "user_name");
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`employee.user`, 'user');
+		query.innerJoin(`employee.user`, "user");
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => { 
 				qb.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
@@ -1453,10 +1432,9 @@ export class StatisticService {
 				}
 			})
 		);
-		query.groupBy(`"${query.alias}"."id"`);
-		query.addGroupBy(`"employee"."id"`);
+		query.groupBy(`"${query.alias}"."employeeId"`);
 		query.addGroupBy(`"user"."id"`);
-		query.addOrderBy(`"${query.alias}"."startedAt"`, 'DESC');
+		query.addOrderBy(`"startedAt"`, "DESC");
 		query.limit(3);
 		
 		let employees: ITimeSlotStatistics[] = [];

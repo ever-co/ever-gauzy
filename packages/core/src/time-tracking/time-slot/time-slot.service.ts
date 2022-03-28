@@ -15,7 +15,6 @@ import {
 	CreateTimeSlotMinutesCommand,
 	TimeSlotBulkCreateCommand,
 	TimeSlotBulkCreateOrUpdateCommand,
-	TimeSlotRangeDeleteCommand,
 	UpdateTimeSlotCommand,
 	UpdateTimeSlotMinutesCommand
 } from './commands';
@@ -163,17 +162,6 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				employeeId,
 				organizationId
 			)
-		);
-	}
-
-	async rangeDelete(
-		organizationId: string,
-		employeeId: string,
-		start: Date,
-		stop: Date
-	) {
-		return await this.commandBus.execute(
-			new TimeSlotRangeDeleteCommand(organizationId, employeeId, start, stop)
 		);
 	}
 

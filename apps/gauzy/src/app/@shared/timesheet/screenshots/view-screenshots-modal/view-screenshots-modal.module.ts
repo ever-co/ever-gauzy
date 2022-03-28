@@ -6,7 +6,8 @@ import {
 	NbCardModule,
 	NbButtonModule,
 	NbIconModule,
-	NbProgressBarModule
+	NbProgressBarModule,
+	NbAlertModule
 } from '@nebular/theme';
 import { SharedModule } from '../../../shared.module';
 import { MomentModule } from 'ngx-moment';
@@ -20,6 +21,7 @@ import { DialogsModule } from '../../../dialogs/dialogs.module';
 	exports: [ViewScreenshotsModalComponent],
 	imports: [
 		CommonModule,
+		NbAlertModule,
 		NbDialogModule.forChild(),
 		NbCardModule,
 		NbButtonModule,
@@ -30,7 +32,7 @@ import { DialogsModule } from '../../../dialogs/dialogs.module';
 		TranslateModule,
 		LabelModule,
 		GalleryModule,
-    DialogsModule
+    	DialogsModule
 	]
 })
 export class ViewScreenshotsModalModule {}

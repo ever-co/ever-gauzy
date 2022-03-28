@@ -18,6 +18,7 @@ import { InputFilterComponent } from '../../@shared/table-filters/input-filter.c
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { StageComponent } from './stage/stage.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -129,6 +130,9 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 	private _loadSmartTableSettings() {
 		this.smartTableSettings = {
+      		pager: {
+				display: false
+			},
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
 			columns: {
@@ -154,12 +158,18 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 						this.setFilter({ field: 'description', search: value });
 					}
 				},
+				stages: {
+					title: this.getTranslation('SM_TABLE.STAGE'),
+					type: 'custom',
+					filter: false,
+					renderComponent: StageComponent
+				},
 				status: {
 					filter: false,
 					editor: false,
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					width: '15%',
+					width: '10%',
 					renderComponent: StatusBadgeComponent
 				}
 			}
@@ -176,7 +186,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/*
-	* Register Smart Table Source Config 
+	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
@@ -216,16 +226,23 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	async getPipelines() {
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
+			) {
 				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
 				await this.smartTableSource.getElements();
 				this.pipelines = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.errorHandlingService.handleError(error);

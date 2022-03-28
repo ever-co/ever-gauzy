@@ -47,6 +47,7 @@ export class TimeSlotMergeHandler
 			startDate,
 			endDate
 		);
+		console.log({ startedAt, stoppedAt }, 'Time Slot Merging Dates');
 		const timerSlots = await this.timeSlotRepository.find({
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
 				query.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
@@ -59,11 +60,10 @@ export class TimeSlotMergeHandler
 				query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
-				query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
+				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
-
 		const createdTimeSlots: any = [];
 		if (timerSlots.length > 0) {
 			const savePromises = _.chain(timerSlots)
@@ -124,7 +124,6 @@ export class TimeSlotMergeHandler
 					activities = activities.map(
 						(item) => new Activity(_.omit(item, ['timeSlotId']))
 					);
-
 
 					timeLogs = _.uniq(timeLogs, x => x.id);
 

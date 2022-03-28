@@ -1,29 +1,34 @@
-.calendar-picker {
-	position: relative;
-	max-height: 40px;
-	input {
-		width: 100%;
-		max-width: 100% !important;
-		margin-right: 1rem;
-    border-radius: 32px;
+@import 'var';
+
+:host .calendar-picker {
+  position: relative;
+  max-height: 40px;
+  input {
+    width: 100%;
+    max-width: 100% !important;
+    border-radius: nb-theme(button-rectangle-border-radius);
+    height: 32px;
     box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
-	}
-	.calendar {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		position: absolute;
-		z-index: 9999;
-		nb-calendar-year-picker,
-		nb-calendar-month-picker {
-			z-index: 1;
-		}
-	}
-	.date-reset {
-		position: absolute;
-		top: 28%;
-		transform: scale(1.5);
-		right: 20px;
-		cursor: pointer;
-	}
+    background-color: rgba(126, 126, 143, 0.05);
+  }
+  .calendar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    z-index: 9999;
+    background-color: nb-theme(background-basic-color-1);
+    nb-calendar-year-picker,
+    nb-calendar-month-picker {
+      z-index: 1;
+    }
+    margin-top: 10px;
+  }
+  .date-reset {
+    position: absolute;
+    top: 18%;
+    cursor: pointer;
+    @include nb-ltr(right, 20px);
+    @include nb-rtl(left, 16px);
+  }
 }

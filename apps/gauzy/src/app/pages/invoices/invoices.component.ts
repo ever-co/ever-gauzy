@@ -45,7 +45,7 @@ import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
 import { ContactLinksComponent, DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
@@ -181,9 +181,10 @@ export class InvoicesComponent
 	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				debounceTime(300),
+				debounceTime(100),
 				tap(() => this.loading = true),
 				tap(() => this.cdr.detectChanges()),
+				tap(() => this.setSmartTableSource()),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
@@ -192,14 +193,21 @@ export class InvoicesComponent
 		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(100),
-				filter((organization) => !!organization),
 				distinctUntilChange(),
-				tap((organization) => (this.organization = organization)),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			).subscribe();
 	}
 
 	/*
@@ -221,6 +229,7 @@ export class InvoicesComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(() => this.closeActionsPopover()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
@@ -627,6 +636,9 @@ export class InvoicesComponent
 	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
@@ -673,6 +685,10 @@ export class InvoicesComponent
 			},
 			finalize: () => {
 				this.loading = false;
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		});
 	}
@@ -681,25 +697,22 @@ export class InvoicesComponent
 		if (!this.organization) {
 			return;
 		}
-
 		try {
-			this.setSmartTableSource();
-			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
-			) {
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID or TABLE view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(
-					activePage,
-					itemsPerPage,
-					false
-				);
-
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] = this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(
@@ -850,10 +863,11 @@ export class InvoicesComponent
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			pager: {
 				display: false,
-				perPage: this.perPage ? this.perPage : 10
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			hideSubHeader: true,
 			actions: false,
@@ -867,7 +881,7 @@ export class InvoicesComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '18%',
+					width: '17%',
 					renderComponent: NotesWithTagsComponent
 				}
 			}
@@ -922,7 +936,7 @@ export class InvoicesComponent
 			this.settingsSmartTable['columns']['tax2'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
-				width: '5%',
+				width: '6%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					if (cell) {
@@ -984,18 +998,10 @@ export class InvoicesComponent
 			Number.isInteger(this.perPage) &&
 			this.perPage > 0
 		) {
-			const { page } = this.smartTableSource.getPaging();
-			this.pagination = Object.assign({}, this.pagination, {
-				activePage: page,
+			this.setPagination({
+				...this.getPagination(),
 				itemsPerPage: this.perPage
 			});
-
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				this.subject$.next(true);
-			} else {
-				this.smartTableSource.setPaging(page, this.perPage, false);
-				this._loadSmartTableSettings();
-			}
 		}
 	}
 
@@ -1087,14 +1093,16 @@ export class InvoicesComponent
 	}
 
 	closeActionsPopover() {
-		const actionsPopup = this.popups.first;
-		const settingsPopup = this.popups.last;
-		if(settingsPopup.isShown){
-			settingsPopup.hide();
-		}
-
-		if (actionsPopup.isShown) {
-			actionsPopup.hide();
+		if (this.popups) {
+			const actionsPopup = this.popups.first;
+			const settingsPopup = this.popups.last;
+			if (settingsPopup.isShown) {
+				settingsPopup.hide();
+			}
+	
+			if (actionsPopup.isShown) {
+				actionsPopup.hide();
+			}
 		}
 	}
 
@@ -1160,13 +1168,18 @@ export class InvoicesComponent
 	 * On Changed Currency Event Emitter
 	 */
 	currencyChanged($event: ICurrency) { }
-  /**
-   * On change number of item per page option
-   * @param $event is a number
-   */
-   onUpdateOption($event: number){
-    this.perPage = $event;
-    this.showPerPage();
-  }
+
+	/**
+	 * On change number of item per page option
+	 * @param $event is a number
+	 */
+	onUpdateOption($event: number) {
+		this.perPage = $event;
+		this.setPagination({
+			...this.getPagination(),
+			itemsPerPage: this.perPage
+		});
+	}
+	
 	ngOnDestroy() { }
 }

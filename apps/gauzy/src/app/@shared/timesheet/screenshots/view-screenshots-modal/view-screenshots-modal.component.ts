@@ -54,6 +54,16 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		this._screenshots = screenshots;
 	}
 
+	/*
+	* Getter & Setter for Screenshots
+	*/
+	private _timeLogs: ITimeLog[] = [];
+	get timeLogs(): ITimeLog[] {
+		return this._timeLogs;
+	}
+	@Input() set timeLogs(timeLogs: ITimeLog[]) {
+		this._timeLogs = sortBy(timeLogs, 'createdAt');
+	}
 	constructor(
 		private readonly store: Store,
 		private readonly dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,
@@ -86,6 +96,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 					'timeLogs.organizationContact'
 				]
 			});
+			this.timeLogs = this.timeSlot.timeLogs;
 		} catch (error) {
 			console.log('Error while retrieve TimeSlot:', error);
 			this.toastrService.danger(error);
@@ -140,7 +151,22 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			return;
 		}
 		try {
-			await this.timesheetService.deleteLogs(timeLog.id);
+			const employee = timeLog.employee;
+			const { id: organizationId } = this.organization;
+			const request = {
+				logIds: [timeLog.id],
+				organizationId
+			}
+			await this.timesheetService.deleteLogs(request).then(() => {
+				this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
+					name: employee.fullName,
+					organization: this.organization.name
+				});
+				this.dialogRef.close({
+					timeLog: timeLog,
+					isDelete: true
+				});
+			});
 		} catch (error) {
 			console.log('Error while delete TimeLog: ', error);
 			this.toastrService.danger(error);
