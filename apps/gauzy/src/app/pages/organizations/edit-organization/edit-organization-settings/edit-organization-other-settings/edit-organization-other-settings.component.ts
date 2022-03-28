@@ -107,7 +107,6 @@ export class EditOrganizationOtherSettingsComponent
 	
 	toggleAllSettings() {
 		this.accordionItemsState = { ...this.accordionItemsStateDefault, all: !this.accordionItemsState.all }
-		console.log(this.accordionItemsState)
 		this.accordionItemsState.all ? this.accordion.openAll() : this.accordion.closeAll()
 	}
 

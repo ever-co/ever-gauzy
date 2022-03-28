@@ -15,7 +15,8 @@ import {
 	NbTabsetModule,
 	NbToggleModule,
 	NbBadgeModule,
-	NbTooltipModule, NbAccordionModule,
+	NbTooltipModule,
+	NbAccordionModule,
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';

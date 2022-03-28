@@ -1,7 +1,7 @@
 @import "themes";
 @import "var";
 
-:host.ng-star-inserted {
+:host {
     padding: 20px;
     background-color: nb-theme(background-basic-color-3);
     height: 93%;
@@ -133,7 +133,7 @@
 }
 
 @include respond(md) {
-    :host.ng-star-inserted {
+    :host {
         height: auto;
     }
     .content {
