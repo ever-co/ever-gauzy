@@ -16,6 +16,7 @@
     padding: 15px;
     position: relative;
     display: flex;
+    align-items: flex-start;
     flex-direction: column;
     transition: transform 150ms ease-in-out;
     background-color: nb-theme(background-basic-color-4);

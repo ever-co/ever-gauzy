@@ -1,6 +1,6 @@
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	AlignmentOptions,
@@ -31,6 +31,7 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
+import { NbAccordionComponent, NbAccordionItemComponent } from "@nebular/theme";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -72,6 +73,19 @@ export class EditOrganizationOtherSettingsComponent
 	regionCodes = Object.keys(RegionsEnum);
 	regionCode: string;
 	regions = Object.values(RegionsEnum);
+	accordionItemsStateDefault = {
+		all: false,
+		generalSettings: false,
+		designSettings: false,
+		accountingSettings: false,
+		bonusSettings: false,
+		invitesSettings: false,
+		dateLimitSettings: false,
+		timerSettings: false,
+	}
+	accordionItemsState = this.accordionItemsStateDefault
+	
+	@ViewChild('accordion') accordion: NbAccordionComponent;
 
 	constructor(
 		private readonly router: Router,
@@ -84,6 +98,17 @@ export class EditOrganizationOtherSettingsComponent
 		private readonly accountingTemplateService: AccountingTemplateService
 	) {
 		super(translateService);
+	}
+	
+	toggleAccordionSection(e: NbAccordionItemComponent, itemState: string) {
+		e.toggle()
+		this.accordionItemsState[itemState] = e.expanded
+	}
+	
+	toggleAllSettings() {
+		this.accordionItemsState = { ...this.accordionItemsStateDefault, all: !this.accordionItemsState.all }
+		console.log(this.accordionItemsState)
+		this.accordionItemsState.all ? this.accordion.openAll() : this.accordion.closeAll()
 	}
 
 	getTimeWithOffset(zone: string) {

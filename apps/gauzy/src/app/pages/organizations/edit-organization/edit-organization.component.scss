@@ -2,6 +2,8 @@
 @import "var";
 
 .card-scroll {
+    background-color: nb-theme(background-basic-color-3);
+
     & .header {
         padding-left: 20px;
         padding-right: 20px;
