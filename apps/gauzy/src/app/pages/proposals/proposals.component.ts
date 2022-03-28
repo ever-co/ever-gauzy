@@ -482,17 +482,10 @@ export class ProposalsComponent
 	private async getProposals() {
 		try {
 			this.setSmartTableSource();
-			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
-			) {
+			const { activePage, itemsPerPage } = this.pagination;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(
-					activePage,
-					itemsPerPage,
-					false
-				);
 				this.smartTableSource.setSort(
 					[{ field: 'valueDate', direction: 'desc' }],
 					false
@@ -501,8 +494,10 @@ export class ProposalsComponent
 				await this.smartTableSource.getElements();
 				this.proposals = this.smartTableSource.getData();
 
-				const count = this.smartTableSource.count();
-				this.pagination['totalItems'] = count;
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -539,10 +534,6 @@ export class ProposalsComponent
 		}
 	}
 
-	onUpdateOption($event: number) {
-		this.pagination.itemsPerPage = $event;
-		this.getProposals();
-	}
 
 	ngOnDestroy() {}
 }
