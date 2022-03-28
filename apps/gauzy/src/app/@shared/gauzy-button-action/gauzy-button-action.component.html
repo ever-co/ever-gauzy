@@ -14,10 +14,9 @@
             : 'transition show-button'
         "
       >
-        <button nbButton status="success" size="small" (click)="onAdd()">
-          <nb-icon [icon]=icon> </nb-icon>
-          {{ text | translate }}
-        </button>
+        <ng-container
+        *ngTemplateOutlet="buttonTemplateVisible"
+        ></ng-container>
       </span>
       <ng-container
         *ngTemplateOutlet="buttonTemplate"

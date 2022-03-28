@@ -32,6 +32,8 @@ export class PipelineController extends CrudController<Pipeline> {
 		super(pipelineService);
 	}
 
+	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
+	@UseGuards(PermissionGuard)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
@@ -45,6 +47,8 @@ export class PipelineController extends CrudController<Pipeline> {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
+	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
+	@UseGuards(PermissionGuard)
 	@Get()
 	public async findAll(
 		@Query('data', ParseJsonPipe) data: any
@@ -61,6 +65,8 @@ export class PipelineController extends CrudController<Pipeline> {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
+	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
+	@UseGuards(PermissionGuard)
 	@Get(':id/deals')
 	public async findDeals(
 		@Param('id', UUIDValidationPipe) id: string
@@ -78,8 +84,8 @@ export class PipelineController extends CrudController<Pipeline> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@HttpCode(HttpStatus.CREATED)
+	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@UseGuards(PermissionGuard)
 	@Post()
 	async create(
@@ -90,7 +96,6 @@ export class PipelineController extends CrudController<Pipeline> {
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
-	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully edited.'
@@ -105,6 +110,7 @@ export class PipelineController extends CrudController<Pipeline> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@UseGuards(PermissionGuard)
 	@Put(':id')
 	async update(
@@ -116,7 +122,6 @@ export class PipelineController extends CrudController<Pipeline> {
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
-	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
 		description: 'The record has been successfully deleted'
@@ -126,9 +131,13 @@ export class PipelineController extends CrudController<Pipeline> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@UseGuards(PermissionGuard)
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+	async delete(
+		@Param('id', UUIDValidationPipe) id: string,
+		...options: any[]
+	): Promise<any> {
 		return super.delete(id);
 	}
 }
