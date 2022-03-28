@@ -429,6 +429,10 @@ export class ProposalsComponent
 			finalize: () => {
 				this.loading = false;
 				this.calculateStatistics();
+        this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		});
 	}
