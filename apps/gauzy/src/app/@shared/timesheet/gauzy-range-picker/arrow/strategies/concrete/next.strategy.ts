@@ -16,12 +16,6 @@ export class Next implements IArrowStrategy {
 		const range = end.diff(start, 'days');
 		
 		const startDate = range === 0 ? end.add(1, 'days').toDate() : start.add(range, 'days').toDate();
-		const date = moment(startDate);
-
-		if (date.isAfter(new Date())) {
-			this.disable = true;
-			return request;
-		}
 		return {
 			startDate: startDate,
 			endDate: moment(startDate).add(range, 'days').toDate()

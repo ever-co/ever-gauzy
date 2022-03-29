@@ -12,6 +12,16 @@ import { Next, Previous } from './../../../../../@shared/timesheet/gauzy-range-p
 import { IDateRangeStrategy } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/strategies/arrow-strategy.interface';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 
+export enum DateRangeKeyEnum {
+	TODAY = 'Today',
+	YESTERDAY = 'Yesterday',
+	CURRENT_WEEK = 'Current week',
+	LAST_WEEK = 'Last week',
+	LAST_30_DAYS = 'Last 30 days',
+	CURRENT_MONTH = 'Current month',
+	LAST_MONTH = 'Last month'
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-date-range-picker',
@@ -99,7 +109,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				}),
 				tap((organization: IOrganization) => {
 					this.futureDateAllowed = organization.futureDateAllowed;
-					this.setMaxDateStrategy()
+					this.setFutureStrategy()
 				}),
 				untilDestroyed(this)
 			)
@@ -108,31 +118,35 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	ngAfterViewInit() {
 		this.createDateRangeMenus();
-		this._applyTranslationOnDateRangeMenus();
 	}
 
 	/**
 	 * Create Date Range Translated Menus 
 	 */
 	createDateRangeMenus() {
-		this.ranges = {};
-		this.ranges[this.getTranslation('DATE_RANGE_PICKER.TODAY')] = [moment(), moment()];
-		this.ranges[this.getTranslation('DATE_RANGE_PICKER.YESTERDAY')] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
-		this.ranges[this.getTranslation('DATE_RANGE_PICKER.CURRENT_WEEK')] = [moment().startOf('week'), moment().endOf('week')];
-		this.ranges[this.getTranslation('DATE_RANGE_PICKER.LAST_WEEK')] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
-		this.ranges[this.getTranslation('DATE_RANGE_PICKER.CURRENT_MONTH')] = [moment().startOf('month'), moment().endOf('month')];
-		this.ranges[this.getTranslation('DATE_RANGE_PICKER.LAST_MONTH')] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+		this.ranges = new Object();
+		this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
+		this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
+		this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
+		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
+		this.ranges[DateRangeKeyEnum.LAST_30_DAYS] = [moment().subtract(29, 'days'), moment()];
+		this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
+		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
 	}
 
 	/**
 	 * Allowed/Disallowed future max date strategy.
 	 */
-	setMaxDateStrategy() {
+	setFutureStrategy() {
 		const isSameOrAfter = moment(this.selectedDateRange.endDate).isSameOrAfter(moment());
 		if (this.futureDateAllowed) {
 			this.maxDate = null;
 		} else if (!this.futureDateAllowed && isSameOrAfter) {
 			this.maxDate = moment();
+			this.selectedDateRange = {
+				...this.selectedDateRange,
+				endDate: moment().toDate()
+			}
 		}
 	}
 
@@ -140,6 +154,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * get next selected range
 	 */
 	nextRange() {
+		if (this.isNextDisabled()) {
+			return;
+		}
 		this.arrow.setStrategy = this.next;
 		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
 	}
@@ -170,22 +187,14 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	onDatesUpdated(event: any) {
 		if (this.dateRangePickerDirective) {
 			const { startDate, endDate } = event;
-			if (startDate) {
-				this.selectedDateRange['startDate'] = startDate.toDate();
-			}
-			if (endDate) {
-				this.selectedDateRange['endDate'] = endDate.toDate();
+			if (startDate && endDate) {
+				this.selectedDateRange = {
+					...this.selectedDateRange,
+					startDate: startDate.toDate(),
+					endDate: endDate.toDate()
+				}
 			}
 		}
-	}
-
-	private _applyTranslationOnDateRangeMenus() {
-		this.translateService.onLangChange
-			.pipe(
-				tap(() => this.createDateRangeMenus()),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	ngOnDestroy() {}

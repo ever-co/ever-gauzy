@@ -3816,13 +3816,5 @@
 		"HELP":"Help",
 		"SIGN_OUT":"Sign Out",
 		"PROFILE":"Profile"
-	},
-	"DATE_RANGE_PICKER": {
-		"TODAY": "Today",
-		"YESTERDAY": "Yesterday",
-		"CURRENT_WEEK": "Current Week",
-		"LAST_WEEK": "Last Week",
-		"CURRENT_MONTH": "Current Month",
-		"LAST_MONTH": "Last Month"
 	}
 }
