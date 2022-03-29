@@ -23,10 +23,11 @@ import { NgxForgotPasswordComponent } from "./forgot-password/forgot-password.co
 import { NgxRegisterSideFeaturesComponent } from "./register/register-side-features/register-side-features.component";
 import { NgxRegisterSideSingleFeatureComponent, } from "./register/register-side-features/register-side-single-feature/register-side-single-feature.component";
 import { NgxAuthComponent } from "./auth/auth.component";
-import { NgxThemeSwitchComponent } from "./theme-switch/theme-switch.component";
-import { ThemeSwitchService } from "../@core/services";
 import { ThemeModule } from '../@theme/theme.module';
 import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
+import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
+
+
 
 
 @NgModule({
@@ -47,8 +48,8 @@ import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-se
 		NbFormFieldModule,
 		NbSelectModule,
 		NbLayoutModule,
-    ThemeModule,
-    ThemeSelectorModule
+        ThemeModule,
+        ThemeSelectorModule,
 	],
 	declarations: [
 		NgxLoginComponent,
@@ -58,10 +59,7 @@ import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-se
 		NgxRegisterSideSingleFeatureComponent,
 		NgxAuthComponent,
 		NgxRegisterComponent,
-		NgxThemeSwitchComponent,
+		NgxResetPasswordComponent,
 	],
-	providers: [
-		ThemeSwitchService,
-	]
 })
 export class NgxAuthModule {}

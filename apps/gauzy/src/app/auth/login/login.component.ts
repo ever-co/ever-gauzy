@@ -6,7 +6,6 @@ import { ElectronService } from 'ngx-electron';
 import { RolesEnum } from '@gauzy/contracts';
 import { environment } from './../../../environments/environment';
 import { CookieService } from 'ngx-cookie-service';
-import { ThemeSwitchService } from "../../@core";
 
 
 @Component({
@@ -22,11 +21,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
   RolesEnum = RolesEnum;
   isDemo: boolean = environment.DEMO;
   showPassword: boolean = false;
-  lightMode: number
 
   constructor (
     private readonly cookieService: CookieService,
-    private themeSwitchService: ThemeSwitchService,
     public readonly electronService: ElectronService,
     public readonly nbAuthService: NbAuthService,
     public readonly cdr: ChangeDetectorRef,
@@ -39,7 +36,6 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
   ngOnInit () {
     this.checkRememberdMe();
     this.autoFillCredential();
-    this.themeSwitchService.lightMode$.subscribe(x => this.lightMode = x)
   }
 
   /**

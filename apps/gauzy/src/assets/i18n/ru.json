@@ -1647,8 +1647,8 @@
 		"PROFILE": "Профиль",
 		"PORTFOLIO": "Портфолио",
 		"EDIT": {
-			"SETTINGS_SECTION": "Settings Section",
-			"ALL": "All",
+			"SETTINGS_SECTION": "Раздел настроек",
+			"ALL": "Все",
 			"ACCOUNTING": "Бухгалтер",
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
