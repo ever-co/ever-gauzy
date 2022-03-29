@@ -59,7 +59,7 @@
 						>
 						</ng2-smart-table>
 					</div>
-          <ng-container
+					<ng-container
 						*ngTemplateOutlet="
 							paginationTemplate;
 							context: {
@@ -70,12 +70,17 @@
 					</ng-container>
 				</ng-template>
 				<ng-template #gridLayout>
-					<div class="grid-scroll-container">
+					<div>
 						<ga-card-grid
 							[settings]="settingsSmartTable"
 							[source]="availableTasks$ | async"
-							[cardSize]="'big'"
-							[buttonTemplate]="actionButtons"
+							(selectedOption)="onUpdateOption($event)"
+							(selectedPage)="onPageChange($event)"
+							(onSelectedItem)="selectTask($event)"
+							[doEmit]="false"
+							[totalItems]="pagination?.totalItems"
+							[itemsPerPage]="pagination?.itemsPerPage"
+							[activePage]="pagination?.activePage"
 						></ga-card-grid>
 					</div>
 				</ng-template>
