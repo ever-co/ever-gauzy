@@ -14,7 +14,7 @@
 				*ngIf="arrows"
 				size="tiny"
 				nbButton
-				[disabled]="isDisable"
+				[disabled]="isNextDisabled()"
 				status="primary"
 				(click)="nextRange()"
 			>
@@ -26,14 +26,12 @@
 				size="small"
 				type="text"
 				ngxDaterangepickerMd
-				[autoApply]="true"
 				[showCustomRangeLabel]="true"
 				[alwaysShowCalendars]="true"
-				[customRangeDirection]="true"
-				[lockStartDate]="true"
 				[maxDate]="maxDate"
 				[ranges]="ranges"
 				[locale]="localConfig"
+				[(ngModel)]="selectedDateRange"
 				(datesUpdated)="onDatesUpdated($event)"
 			/>
 		</div>

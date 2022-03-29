@@ -1,14 +1,16 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
-import { debounceTime, filter, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
-import { IOrganization, OrganizationPermissionsEnum } from '@gauzy/contracts';
+import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { NgxPermissionsService } from 'ngx-permissions';
+import { TranslateService } from '@ngx-translate/core';
 import { Store } from './../../../../../@core/services';
 import { Arrow } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/context/arrow.class';
-import { Next, Previous } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/strategies/concrete';
+import { Next, Previous } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/strategies';
+import { IDateRangeStrategy } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/strategies/arrow-strategy.interface';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,15 +18,16 @@ import { Next, Previous } from './../../../../../@shared/timesheet/gauzy-range-p
 	templateUrl: './date-range-picker.component.html',
 	styleUrls: ['./date-range-picker.component.scss']
 })
-export class DateRangePickerComponent implements AfterViewInit, OnInit, OnDestroy {
-	public isDisable: boolean;
+export class DateRangePickerComponent extends TranslationBaseComponent 
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	public maxDate: moment.Moment;
-	private futureDateAllowed: boolean;
+	public futureDateAllowed: boolean;
 
 	/**
 	 * declaration of arrow variables
 	 */
-	private arrow: Arrow;
+	private arrow: Arrow = new Arrow();
 	private next: Next = new Next();
 	private previous: Previous = new Previous();
 
@@ -36,57 +39,109 @@ export class DateRangePickerComponent implements AfterViewInit, OnInit, OnDestro
 		format: 'YYYY-MM-DD', // default is format value
 		direction: 'ltr'
 	}
+	
 	/**
 	 * Define ngx-daterangepicker-material range configuration
 	 */
-	public ranges: any = {
-		'Today': [moment(), moment()],
-		'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-		'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-		'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-		'This Month': [moment().startOf('month'), moment().endOf('month')],
-		'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+	public ranges: any;
+
+	/*
+	* Getter & Setter for dynamic interval units
+	*/
+	_intervalUnit: moment.unitOfTime.Base = 'month';
+	get intervalUnit(): moment.unitOfTime.Base {
+		return this._intervalUnit;
+	}
+	@Input() set intervalUnit(value: moment.unitOfTime.Base) {
+		this._intervalUnit = value;
 	}
 
-	// show or hide arrows button, show by default
+	/**
+	 * show or hide arrows button, show by default
+	 */
 	@Input()
 	arrows: boolean = true;
+
+	/*
+	* Getter & Setter for dynamic enabled/disabled element
+	*/
+	_selectedDateRange: IDateRangeStrategy = {
+		startDate: moment().startOf(this.intervalUnit).toDate(),
+		endDate: moment().endOf(this.intervalUnit).toDate()
+	};
+	get selectedDateRange(): IDateRangeStrategy {
+		return this._selectedDateRange;
+	}
+	@Input() set selectedDateRange(range: IDateRangeStrategy) {
+		this._selectedDateRange = range;
+	}
 
 	@ViewChild(DateRangePickerDirective, { static: false }) dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
-		private readonly ngxPermissionsService: NgxPermissionsService,
-		private readonly store: Store
-	) {}
+		private readonly store: Store,
+		public readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				distinctUntilChange(),
 				debounceTime(200),
-				filter((organization: IOrganization) => !!organization && !!organization.dateFormat),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => {
 					this.localConfig = {
 						...this.localConfig,
 						displayFormat: organization.dateFormat
 					}
 				}),
-				switchMap(() => this.ngxPermissionsService.hasPermission(
-					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
-				)),
-				tap((futureDateAllowed: boolean) => this.futureDateAllowed = futureDateAllowed),
+				tap((organization: IOrganization) => {
+					this.futureDateAllowed = organization.futureDateAllowed;
+					this.setMaxDateStrategy()
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngAfterViewInit() {}
+	ngAfterViewInit() {
+		this.createDateRangeMenus();
+		this._applyTranslationOnDateRangeMenus();
+	}
+
+	/**
+	 * Create Date Range Translated Menus 
+	 */
+	createDateRangeMenus() {
+		this.ranges = {};
+		this.ranges[this.getTranslation('DATE_RANGE_PICKER.TODAY')] = [moment(), moment()];
+		this.ranges[this.getTranslation('DATE_RANGE_PICKER.YESTERDAY')] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
+		this.ranges[this.getTranslation('DATE_RANGE_PICKER.CURRENT_WEEK')] = [moment().startOf('week'), moment().endOf('week')];
+		this.ranges[this.getTranslation('DATE_RANGE_PICKER.LAST_WEEK')] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
+		this.ranges[this.getTranslation('DATE_RANGE_PICKER.CURRENT_MONTH')] = [moment().startOf('month'), moment().endOf('month')];
+		this.ranges[this.getTranslation('DATE_RANGE_PICKER.LAST_MONTH')] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+	}
+
+	/**
+	 * Allowed/Disallowed future max date strategy.
+	 */
+	setMaxDateStrategy() {
+		const isSameOrAfter = moment(this.selectedDateRange.endDate).isSameOrAfter(moment());
+		if (this.futureDateAllowed) {
+			this.maxDate = null;
+		} else if (!this.futureDateAllowed && isSameOrAfter) {
+			this.maxDate = moment();
+		}
+	}
 
 	/**
 	 * get next selected range
 	 */
 	nextRange() {
 		this.arrow.setStrategy = this.next;
+		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
 	}
 
    /**
@@ -94,14 +149,43 @@ export class DateRangePickerComponent implements AfterViewInit, OnInit, OnDestro
    */
 	previousRange() {
 		this.arrow.setStrategy = this.previous;
+		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+	}
+
+	/**
+	 * Is check to disabled Next Button or Not
+	 * 
+	 * @returns 
+	 */
+	isNextDisabled() {
+		return this.futureDateAllowed
+			? false
+			: moment(this.selectedDateRange.endDate).isSameOrAfter(moment(), 'day');
 	}
 
 	/**
 	 * listen event on ngx-daterangepicker-material
-	 * @param $event
+	 * @param event
 	 */
-	 onDatesUpdated($event) {
-		console.log($event);
+	onDatesUpdated(event: any) {
+		if (this.dateRangePickerDirective) {
+			const { startDate, endDate } = event;
+			if (startDate) {
+				this.selectedDateRange['startDate'] = startDate.toDate();
+			}
+			if (endDate) {
+				this.selectedDateRange['endDate'] = endDate.toDate();
+			}
+		}
+	}
+
+	private _applyTranslationOnDateRangeMenus() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this.createDateRangeMenus()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy() {}
