@@ -7,7 +7,8 @@ import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ngx-employee-with-links',
-	templateUrl: './employee-with-links.component.html'
+	templateUrl: './employee-with-links.component.html',
+  styleUrls: ['./employee-with-links.component.scss']
 })
 export class EmployeeWithLinksComponent implements ViewCell {
 	@Input()

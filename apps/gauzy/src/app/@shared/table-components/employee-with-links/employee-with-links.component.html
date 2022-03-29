@@ -1,18 +1,30 @@
-<ng-container *ngIf="value">
-	<ng-container *ngFor="let employee of value; let i = index">
-		<a
-			*ngIf="employee.user"
-			(click)="
-				selectEmployee(
-					employee,
-					employee.user.firstName,
-					employee.user.lastName,
-					employee.user.imageUrl
-				)
-			"
-		>
-			{{ employee.user.firstName }} {{ employee.user.lastName
-			}}<span *ngIf="i !== value.length - 1">, </span>
-		</a>
+<div class="avatar-container">
+	<ng-container *ngIf="value">
+		<div class="avatar-group">
+			<ng-container *ngFor="let employee of value; let i = index">
+				<a
+					class="avatar"
+					*ngIf="employee.user"
+					(click)="
+						selectEmployee(
+							employee,
+							employee.user.firstName,
+							employee.user.lastName,
+							employee.user.imageUrl
+						)
+					"
+				>
+					<img
+						class="img"
+						type="user"
+						[src]="employee.user.imageUrl"
+					/>
+					<span
+						>{{ employee.user.firstName }}
+						{{ employee.user.lastName }}</span
+					>
+				</a>
+			</ng-container>
+		</div>
 	</ng-container>
-</ng-container>
+</div>
