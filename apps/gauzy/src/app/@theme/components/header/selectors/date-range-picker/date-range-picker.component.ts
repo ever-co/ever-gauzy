@@ -83,6 +83,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		return this._selectedDateRange;
 	}
 	@Input() set selectedDateRange(range: IDateRangeStrategy) {
+		this.store.selectedDateRange = range;
 		this._selectedDateRange = range;
 	}
 
@@ -90,7 +91,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly store: Store,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
 	) {
 		super(translateService);
 	}
@@ -101,6 +102,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
+				tap(() => this.createDateRangeMenus()),
 				tap((organization: IOrganization) => {
 					this.localConfig = {
 						...this.localConfig,
@@ -116,9 +118,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit() {
-		this.createDateRangeMenus();
-	}
+	ngAfterViewInit() {}
 
 	/**
 	 * Create Date Range Translated Menus 
@@ -196,6 +196,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			}
 		}
 	}
-
+	
 	ngOnDestroy() {}
 }

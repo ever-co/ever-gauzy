@@ -12,7 +12,8 @@ import {
 	IFeatureToggle,
 	IFeatureOrganization,
 	FeatureEnum,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IDateRange
 } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
@@ -26,6 +27,7 @@ import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 import * as _ from 'underscore';
 import * as camelCase from 'camelcase';
+import { IDateRangeStrategy } from '../../@shared/timesheet/gauzy-range-picker/arrow/strategies/arrow-strategy.interface';
 
 export interface AppState {
 	user: IUser;
@@ -35,6 +37,7 @@ export interface AppState {
 	selectedProposal: IProposalViewModel;
 	selectedProject: IOrganizationProject;
 	selectedDate: Date;
+	selectedDateRange: IDateRangeStrategy;
 	systemLanguages: ILanguage[];
 	featureToggles: IFeatureToggle[];
 	featureOrganizations: IFeatureOrganization[];
@@ -51,7 +54,6 @@ export interface PersistState {
 	preferredComponentLayout: ComponentLayoutStyleEnum;
 	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
 	themeName: string;
-  lightMode: number;
 }
 
 export function createInitialAppState(): AppState {
@@ -68,12 +70,10 @@ export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
 	const userId = localStorage.getItem('_userId') || null;
 	const organizationId = localStorage.getItem('_organizationId') || null;
-	const serverConnection =
-		parseInt(localStorage.getItem('serverConnection')) || null;
+	const serverConnection = parseInt(localStorage.getItem('serverConnection')) || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
-  const themeName = localStorage.getItem('themeName')|| null;
-  const lightMode = localStorage.getItem('lightMode')|| 1;
+	const themeName = localStorage.getItem('themeName')|| null;
 
 	return {
 		token,
@@ -82,8 +82,7 @@ export function createInitialPersistState(): PersistState {
 		serverConnection,
 		preferredLanguage,
 		componentLayout,
-    themeName,
-    lightMode,
+		themeName
 	} as PersistState;
 }
 
@@ -135,6 +134,7 @@ export class Store {
 	selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
 	selectedProject$ = this.appQuery.select((state) => state.selectedProject);
 	selectedDate$ = this.appQuery.select((state) => state.selectedDate);
+	selectedDateRange$ = this.appQuery.select((state) => state.selectedDateRange);
 	userRolePermissions$ = this.appQuery.select(
 		(state) => state.userRolePermissions
 	);
@@ -296,6 +296,17 @@ export class Store {
 	set selectedDate(date: Date) {
 		this.appStore.update({
 			selectedDate: date
+		});
+	}
+
+	get selectedDateRange() {
+		const { selectedDateRange } = this.appQuery.getValue();
+		return selectedDateRange;
+	}
+
+	set selectedDateRange(range: IDateRangeStrategy) {
+		this.appStore.update({
+			selectedDateRange: range
 		});
 	}
 
@@ -510,25 +521,14 @@ export class Store {
 		});
 	}
 
-  get currentTheme(): string | null {
-    const { themeName } = this.persistQuery.getValue();
-    return themeName;
-  }
+	get currentTheme(): string | null {
+		const { themeName } = this.persistQuery.getValue();
+		return themeName;
+	}
 
-  set currentTheme(name: string){
-    this.persistStore.update({
-      themeName: name
-    })
-  }
-
-  get currentDayNightSwitchValue (): number | null {
-    const { lightMode } = this.persistQuery.getValue();
-    return lightMode;
-  }
-
-  set currentDayNightSwitchValue(lightMode: number){
-    this.persistStore.update({
-      lightMode
-    })
-  }
+	set currentTheme(name: string){
+		this.persistStore.update({
+			themeName: name
+		})
+	}
 }
