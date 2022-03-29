@@ -161,6 +161,8 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
+		this.store.clear();
+		this.store.serverConnection = 200;
 		if (this.electronService.isElectronApp) {
 			try {
 				this.electronService.ipcRenderer.send('logout');
