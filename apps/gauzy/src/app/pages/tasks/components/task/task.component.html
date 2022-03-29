@@ -50,13 +50,20 @@
 						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 						>{{ 'BUTTONS.ADD' | translate }}
 					</button>
-					<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+					<ng-container
+						*ngIf="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+						"
+					>
 						<ng-container
 							*ngTemplateOutlet="actionButtons"
 						></ng-container>
 					</ng-container>
 				</div>
-				<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
+				<ng-template
+					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+					[ngIfElse]="gridLayout"
+				>
 					<div class="table-scroll-container">
 						<ng2-smart-table
 							[settings]="settingsSmartTable"
@@ -66,7 +73,7 @@
 							#tasksTable
 						>
 						</ng2-smart-table>
-					</div>					
+					</div>
 				</ng-template>
 				<ng-template #gridLayout>
 					<div class="grid-scroll-container">
@@ -76,11 +83,15 @@
 							[cardSize]="'big'"
 							[buttonTemplate]="actionButtons"
 						></ga-card-grid>
-					</div>					
-					<ng-container 
-						*ngTemplateOutlet="paginationTemplate; context: { 
-							pagination: pagination 
-						}">
+					</div>
+					<ng-container
+						*ngTemplateOutlet="
+							paginationTemplate;
+							context: {
+								pagination: pagination
+							}
+						"
+					>
 					</ng-container>
 				</ng-template>
 			</ng-template>
@@ -92,10 +103,14 @@
 					[project]="selectedProject"
 					[tasks]="availableTasks$ | async"
 				></ga-tasks-sprint-view>
-				<ng-container 
-					*ngTemplateOutlet="paginationTemplate; context: { 
-						pagination: pagination 
-					}">
+				<ng-container
+					*ngTemplateOutlet="
+						paginationTemplate;
+						context: {
+							pagination: pagination
+						}
+					"
+				>
 				</ng-container>
 			</ng-template>
 		</ng-container>
@@ -104,58 +119,64 @@
 
 <ng-template
 	#actionButtons
-	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		status="info"
-		(click)="duplicateTaskDialog(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.DUPLICATE' | translate }}
-	</button>
-	<button
-		nbButton
-		status="info"
-		(click)="editTaskDialog(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		nbButton
-		status="danger"
-		(click)="deleteTask(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+	<div class="btn-group actions">
+		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="disableButton"
+			size="small"
+		>
+			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			(click)="editTaskDialog(selectedItem)"
+			[disabled]="!selectedItem && disableButton"
+			class="action primary"
+			size="small"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			(click)="duplicateTaskDialog(selectedItem)"
+			[disabled]="!selectedItem && disableButton"
+			class="action primary"
+			size="small"
+		>
+			<nb-icon icon="copy-outline"></nb-icon>
+			{{ 'BUTTONS.DUPLICATE' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			(click)="deleteTask(selectedItem)"
+			[disabled]="!selectedItem && disableButton"
+			class="action"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+		</button>
+	</div>
 </ng-template>
 
-
-<ng-template 
-	#paginationTemplate
-	let-pagination="pagination">
+<ng-template #paginationTemplate let-pagination="pagination">
 	<div class="pagination-container">
-		<ng-container 
-			*ngIf="pagination.totalItems > pagination.itemsPerPage"
-		>
-			<ga-pagination 
+		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+			<ga-pagination
 				(selectedPage)="onPageChange($event)"
 				[doEmit]="false"
-				[totalItems]="pagination?.totalItems" 
-				[itemsPerPage]="pagination?.itemsPerPage" 
-				[activePage]="pagination?.activePage">
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			>
 			</ga-pagination>
 		</ng-container>
 	</div>
