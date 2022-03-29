@@ -1,15 +1,15 @@
 <nb-layout>
   <nb-layout-column class="wrapper">
     <nb-card class="card">
-      <nb-card-header class="header" [ngClass]="{register: isRegister, dark: lightMode === 0}">
+      <nb-card-header class="header" [ngClass]="{register: isRegister}">
         <nav class="navigation">
           <a href="#" (click)="back()" class="link back-link" aria-label="Back">
             <nb-icon icon="arrow-back"></nb-icon>
           </a>
         </nav>
-        <ngx-theme-switch></ngx-theme-switch>
+        <gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
       </nb-card-header>
-        <nb-card-body class="body" [ngClass]="{register: isRegister, dark: lightMode === 0}">
+        <nb-card-body class="body" [ngClass]="{register: isRegister}">
         <nb-auth-block class="auth-block">
           <router-outlet></router-outlet>
         </nb-auth-block>
