@@ -1,4 +1,4 @@
-import { Observable, of } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
@@ -85,6 +85,30 @@ export class AuthStrategy extends NbAuthStrategy {
 		});
 	}
 
+	register(data?: any): Observable<NbAuthResult> {
+		return of(
+			new NbAuthResult(
+				false,
+				{},
+				false,
+				AuthStrategy.config.register.defaultErrors,
+				[AuthStrategy.config.register.defaultErrors]
+			)
+		);
+	}
+
+	resetPassword(data?: any): Observable<NbAuthResult> {
+		return of(
+			new NbAuthResult(
+				false,
+				{},
+				false,
+				AuthStrategy.config.register.defaultErrors,
+				[AuthStrategy.config.register.defaultErrors]
+			)
+		);
+	}
+
 	requestPassword(args: { email: string }): Observable<NbAuthResult> {
 		const { email } = args;
 		return this.authService
@@ -130,6 +154,26 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	refreshToken(data?: any): Observable<NbAuthResult> {
 		throw new Error('Not implemented yet');
+	}
+
+	logout(): Observable<NbAuthResult> {
+		return from(this._logout());
+	}
+
+	private async _logout(): Promise<NbAuthResult> {
+		if (this.electronService.isElectronApp) {
+			try {
+				this.electronService.ipcRenderer.send('logout');
+			} catch (error) {}
+		}
+
+		return new NbAuthResult(
+			true,
+			null,
+			AuthStrategy.config.logout.redirect.success,
+			[],
+			AuthStrategy.config.logout.defaultMessages
+		);
 	}
 
 	public login(loginInput): Observable<NbAuthResult> {
