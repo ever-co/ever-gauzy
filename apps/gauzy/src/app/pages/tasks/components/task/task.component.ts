@@ -45,6 +45,7 @@ import { ServerDataSource } from './../../../../@core/utils/smart-table/server.d
 import { OrganizationTeamFilterComponent, TaskStatusFilterComponent } from './../../../../@shared/table-filters';
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { InputFilterComponent } from './../../../../@shared/table-filters/input-filter.component';
+import { CreateByComponent } from '../../../../@shared/table-components/create-by/create-by.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -265,7 +266,7 @@ export class TaskComponent
 					projectName: task.project ? task.project.name : undefined,
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
-					creator: task.creator ? `${task.creator.name}` : null
+					creator: task.creator ? task.creator : undefined
 				});
 			},
 			finalize: () => {
@@ -323,30 +324,43 @@ export class TaskComponent
 				projectName: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'string',
-					filter: false
+          filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'projectName', search: value });
+					}
 				},
 				creator: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
-					type: 'string',
-					filter: false
+					type: 'custom',
+          renderComponent: CreateByComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'creator', search: value });
+					}
 				},
 				...this.getColumnsByPage(),
-				estimate: {
-					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
-					type: 'custom',
-					filter: false,
-					renderComponent: TaskEstimateComponent
-				},
 				dueDate: {
 					title: this.getTranslation('TASKS_PAGE.DUE_DATE'),
 					type: 'custom',
-					filter: false,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter({ field: 'dueDate', search: value });
+					},
 					renderComponent: DateViewComponent
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'custom',
-					width: '12%',
+					width: '5%',
 					renderComponent: StatusViewComponent,
 					filter: {
 						type: 'custom',
