@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, take, tap } from 'rxjs/operators';
-import { EmployeesService, Store } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';
 import { Future, Next, Previous } from './arrow/strategies/concrete';
@@ -159,7 +159,6 @@ export class GauzyRangePickerComponent
 	constructor(
 		private readonly store: Store,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		private readonly employeesService: EmployeesService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly cd: ChangeDetectorRef
 	) {
@@ -189,7 +188,6 @@ export class GauzyRangePickerComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.loadEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -305,24 +303,6 @@ export class GauzyRangePickerComponent
 		}
 		this.setDefaultEmployee();
 		this.updateLogs$.next(true);
-	}
-
-	private async loadEmployees(): Promise<void> {
-		if (!this.hasEmployeeFilter) {
-			return;
-		}
-
-		this.employeesService
-			.getWorking(
-				this.organization.id,
-				this.organization.tenantId,
-				this.selectedDate,
-				true
-			)
-			.then(({ items }) => {
-				this.employees = items;
-				this.setDefaultEmployee();
-			});
 	}
 
 	setDefaultEmployee() {

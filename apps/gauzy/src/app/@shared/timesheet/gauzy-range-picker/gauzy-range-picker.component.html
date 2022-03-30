@@ -29,29 +29,6 @@
   </div>
   <div class="col-auto ml-auto">
     <div class="row filter-item-list align-items-end">
-      <ng-template
-        [ngxPermissionsOnly]="[
-          PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-        ]"
-      >
-        <div
-          class="col-auto filter-item ml-auto pl-1"
-          *ngIf="hasEmployeeFilter"
-        >
-          <ga-employee-multi-select
-            class="select-box"
-            name="employeeId"
-            [label]="false"
-            [placeholder]="'TIMESHEET.ALL_EMPLOYEE' | translate"
-            [selectedEmployeeIds]="employeeIds"
-            [(ngModel)]="employeeIds"
-            [allEmployees]="employees"
-            [multiple]="multipleEmployeeSelect"
-            (selectedChange)="onChangeEmployee($event)"
-          >
-          </ga-employee-multi-select>
-        </div>
-      </ng-template>
       <div
         class="col-auto filter-item ml-auto pl-1"
         *ngIf="hasProjectFilter"
