@@ -18,6 +18,7 @@ import { SharedModule } from '../shared.module';
 import { ContactLinksComponent } from './contact-links/contact-links.component';
 import { TagsOnlyComponent } from './tags-only/tags-only.component';
 import { EmployeeLinksComponent } from './employee-links/employee-links.component';
+import { CreateByComponent } from './create-by/create-by.component';
 
 @NgModule({
 	imports: [
@@ -43,7 +44,8 @@ import { EmployeeLinksComponent } from './employee-links/employee-links.componen
 		DocumentDateTableComponent,
 		TagsOnlyComponent,
 		ContactLinksComponent,
-		EmployeeLinksComponent
+		EmployeeLinksComponent,
+  CreateByComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
