@@ -8,8 +8,8 @@
 					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate"
 					[value]="
 						aggregatedEmployeeStatistics?.total?.income || 0
-							| currency: selectedOrganization?.currency
-							| position: selectedOrganization?.currencyPosition
+							| currency: organization?.currency
+							| position: organization?.currencyPosition
 					"
 				></ga-single-statistic>
 			</div>
@@ -19,8 +19,8 @@
 					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate"
 					[value]="
 						aggregatedEmployeeStatistics?.total?.expense || 0
-							| currency: selectedOrganization?.currency
-              | position: selectedOrganization?.currencyPosition
+							| currency: organization?.currency
+              				| position: organization?.currencyPosition
 					"
 				></ga-single-statistic>
 			</div>
@@ -30,19 +30,19 @@
 					[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
 					[value]="
 						aggregatedEmployeeStatistics?.total?.profit || 0
-							| currency: selectedOrganization?.currency
-              | position: selectedOrganization?.currencyPosition
+							| currency: organization?.currency
+              				| position: organization?.currencyPosition
 					"
 				></ga-single-statistic>
 			</div>
 
-			<div *ngIf="selectedOrganization?.bonusType" class="col">
+			<div *ngIf="organization?.bonusType" class="col">
 				<ga-single-statistic
 					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
 					[value]="
 						aggregatedEmployeeStatistics?.total?.bonus || 0
-							| currency: selectedOrganization?.currency
-              | position: selectedOrganization?.currencyPosition
+							| currency: organization?.currency
+              				| position: organization?.currencyPosition
 					"
 					type="highlight"
 				></ga-single-statistic>
@@ -70,7 +70,7 @@
 				<div class="col">
 					{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
 				</div>
-				<div *ngIf="selectedOrganization?.bonusType" class="col">
+				<div *ngIf="organization?.bonusType" class="col">
 					{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
 				</div>
 			</div>
@@ -102,32 +102,32 @@
 						<div class="col">
 							{{
 								employeeExpense.income || 0
-									| currency: selectedOrganization?.currency
-                  | position: selectedOrganization?.currencyPosition
+									| currency: organization?.currency
+                  					| position: organization?.currencyPosition
 							}}
 						</div>
 						<div class="col">
 							{{
 								employeeExpense.expense || 0
-									| currency: selectedOrganization?.currency
-                  | position: selectedOrganization?.currencyPosition
+									| currency: organization?.currency
+                  					| position: organization?.currencyPosition
 							}}
 						</div>
 						<div class="col">
 							{{
 								employeeExpense.profit || 0
-									| currency: selectedOrganization?.currency
-                  | position: selectedOrganization?.currencyPosition
+									| currency: organization?.currency
+                 		 			| position: organization?.currencyPosition
 							}}
 						</div>
 						<div
-							*ngIf="selectedOrganization?.bonusType"
+							*ngIf="organization?.bonusType"
 							class="col"
 						>
 							{{
 								employeeExpense.bonus || 0
-									| currency: selectedOrganization?.currency
-                  | position: selectedOrganization?.currencyPosition
+									| currency: organization?.currency
+                  					| position: organization?.currencyPosition
 							}}
 						</div>
 					</div>

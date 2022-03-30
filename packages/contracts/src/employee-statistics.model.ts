@@ -42,10 +42,10 @@ export interface IMonthAggregatedSplitExpense {
 	valueDate?: Date;
 }
 
-export interface IAggregatedEmployeeStatisticFindInput {
-	organizationId: string;
-	tenantId: string;
-	filterDate: Date;
+export interface IAggregatedEmployeeStatisticFindInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
+	startDate: Date;
+	endDate: Date;
 }
 
 export interface IStatisticSum {
