@@ -5,8 +5,10 @@ $radius: 18px;
 .avatar-container {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  flex-direction: column;
+  height: 2.5rem;
   .avatar-group {
     position: absolute;
     display: flex;
