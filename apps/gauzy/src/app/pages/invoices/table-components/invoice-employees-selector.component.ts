@@ -61,12 +61,12 @@ export class InvoiceEmployeesSelectorComponent
 	 private async _getWorkingEmployees(): Promise<void> {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { selectedDate } = this.store;
+		const { selectedDateRange } = this.store;
 
 		const { items = [] } = await this.employeeService.getWorking(
 			organizationId,
 			tenantId,
-			selectedDate,
+			selectedDateRange,
 			true
 		);
 		this.employees = items;

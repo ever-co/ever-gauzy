@@ -84,7 +84,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						});
 					})
 				);
-				console.log(query.getQueryAndParameters());
 			},
 			relations: [
 				...(withUser ? ['user'] : [])

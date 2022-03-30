@@ -60,7 +60,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbRouteTabsetModule,
 		TimeTrackingModule,
 		HeaderTitleModule,
-    SharedModule
+    	SharedModule
 	],
 	declarations: [
 		DashboardComponent,
