@@ -29,7 +29,7 @@ export class EmployeeWithLinksComponent implements ViewCell, OnInit {
 		let group: any[] = [];
 
 		for (let employee of this.value) {
-			if (count % GROUP === 0) {
+			if ((2*count+1) % GROUP === 0) {
 				group.push(employee);
 				this.employees.push(group);
 				group = [];
