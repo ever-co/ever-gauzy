@@ -271,6 +271,7 @@ export class TaskComponent
 			},
 			finalize: () => {
 				const tasks = this.smartTableSource.getData();
+        console.log(tasks);
 				this.storeInstance.loadAllTasks(tasks);
 				this.loading = false;
 			}
@@ -308,6 +309,11 @@ export class TaskComponent
 				display: false
 			},
 			columns: {
+        id: {
+          title: 'TaskID',
+          type: 'string',
+          width: '5%'
+        },
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'custom',
