@@ -24,21 +24,24 @@ export class EmployeeWithLinksComponent implements ViewCell, OnInit {
 	}
 
 	initializeGrouping() {
-    const GROUP = 3;
+		const GROUP = 3;
+		const SIZE = this.value.length;
 		let count = 0;
 		let group: any[] = [];
 
 		for (let employee of this.value) {
-			if ((2*count+1) % GROUP === 0) {
+			if ((2 * count - 1) % GROUP === 0) {
 				group.push(employee);
 				this.employees.push(group);
 				group = [];
 			} else {
 				group.push(employee);
+				if (SIZE - count < GROUP - 1 && SIZE - count > 0) {
+					this.employees.push(group);
+				}
 			}
 			count++;
 		}
-		this.employees = this.employees.reverse();
 	}
 
 	selectEmployee(
