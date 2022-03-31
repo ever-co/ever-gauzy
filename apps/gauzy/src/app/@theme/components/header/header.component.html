@@ -80,7 +80,8 @@
 				selectorsVisibility?.date
 			"
 		>
-			<ngx-date-range-picker 
+			<ngx-date-range-picker
+				[intervalUnit]="(dateRangePickerBuilderService.pickerRangeUnit$ | async)"
 				class="date-range-selector"
 			></ngx-date-range-picker>
 		</nb-action>

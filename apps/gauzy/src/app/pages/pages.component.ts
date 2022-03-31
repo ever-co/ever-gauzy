@@ -17,6 +17,7 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { SelectorService } from '../@core/utils/selector.service';
 import { EmployeesService, Store, UsersService } from '../@core/services';
 import {
+	DateRangePickerBuilderService,
 	DEFAULT_SELECTOR_VISIBILITY,
 	ISelectorVisibility,
 	SelectorBuilderService
@@ -66,7 +67,8 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly usersService: UsersService,
 		private readonly authStrategy: AuthStrategy,
-		public readonly selectorBuilderService: SelectorBuilderService
+		public readonly selectorBuilderService: SelectorBuilderService,
+		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translate);
 		this.router.events
@@ -78,7 +80,13 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					return route;
 				}),
 				filter((route) => route.outlet === 'primary'),
-				mergeMap((route) => route.data)
+				mergeMap((route) => route.data),
+				/**
+				 * Set Date Range Picker Default Unit
+				 */
+				tap(({ datePickerInterval }:  any) => {
+					dateRangePickerBuilderService.setPickerRangeUnit(datePickerInterval);
+				})
 			)
 			.subscribe(({ selectors }: any) => {
 				this.headerSelectors = Object.assign(
