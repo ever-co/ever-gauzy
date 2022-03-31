@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { IUser } from '../../../../../../../packages/contracts/dist/user.model';
+import { IUser } from '@gauzy/contracts';
 
 @Component({
   selector: 'gauzy-user',
