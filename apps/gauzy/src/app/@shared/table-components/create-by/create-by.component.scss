@@ -7,6 +7,8 @@ $radius: nb-theme(button-rectangle-border-radius);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 7.8rem;
+  height: 42px;
   .avatar {
     position: absolute;
     border: 2px solid nb-theme(border-basic-color-1);
