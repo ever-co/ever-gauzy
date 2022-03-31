@@ -8,8 +8,7 @@ import {
 } from '@angular/core';
 import {
 	IGetTimeLogReportInput,
-	IReportDayData, 
-	IReportDayGroupByProject,
+	IReportDayData,
 	ITimeLogFilters,
 	ReportGroupByFilter,
 	ReportGroupFilterEnum,

@@ -94,7 +94,7 @@ export class TimeReportsComponent extends ReportBaseComponent
 						data: logs.map((log) => log.value[TimeLogType.MANUAL]),
 						borderColor: ChartUtil.CHART_COLORS.red,
 						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
-						borderWidth: 2,
+						borderWidth: 2
 					},
 					{
 						label: TimeLogType.TRACKED,

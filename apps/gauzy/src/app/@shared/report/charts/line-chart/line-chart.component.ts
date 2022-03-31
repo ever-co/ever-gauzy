@@ -70,10 +70,10 @@ export class LineChartComponent implements OnInit, OnDestroy {
 						config.variables.primary,
 						config.variables.primaryLight
 					],
-						backgroundColor: [
-							config.variables.primary,
-							config.variables.primaryLight
-						],
+					backgroundColor: [
+						config.variables.primary,
+						config.variables.primaryLight
+					],
 					elements: {
 						rectangle: {
 							borderWidth: 2
@@ -108,9 +108,6 @@ export class LineChartComponent implements OnInit, OnDestroy {
 						align: 'start',
 						labels: {
 							fontColor: chartJs.textColor,
-							borderRadius: 100,
-							boxWidth: 30,
-							boxHeight: 10,
 						}
 					},
 					tooltips: this.selectedDate
