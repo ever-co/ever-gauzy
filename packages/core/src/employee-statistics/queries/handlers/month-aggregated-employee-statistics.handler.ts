@@ -80,7 +80,6 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		} = await this.employeeStatisticsService.employeeIncomeInNMonths(
 			[input.employeeId],
 			input.valueDate,
-			input.months,
 			input.organizationId
 		);
 		incomes.forEach((income) => {
@@ -134,7 +133,6 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		} = await this.employeeStatisticsService.employeeExpenseInNMonths(
 			[input.employeeId],
 			input.valueDate,
-			input.months,
 			input.organizationId
 		);
 
@@ -272,7 +270,6 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		const splitExpensesMap = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
 			input.employeeId,
 			input.valueDate,
-			input.months,
 			input.organizationId
 		);
 
@@ -320,7 +317,6 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		const splitExpensesMap = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
 			input.employeeId,
 			input.valueDate,
-			input.months,
 			input.organizationId
 		);
 

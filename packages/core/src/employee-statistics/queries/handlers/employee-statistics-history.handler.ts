@@ -47,7 +47,6 @@ export class EmployeeStatisticsHistoryQueryHandler
 		} = await this.employeeStatisticsService.employeeIncomeInNMonths(
 			[input.employeeId],
 			input.valueDate,
-			input.months,
 			input.organizationId
 		);
 		const history: IEmployeeStatisticsHistory[] = [];
@@ -100,7 +99,6 @@ export class EmployeeStatisticsHistoryQueryHandler
 		} = await this.employeeStatisticsService.employeeExpenseInNMonths(
 			[input.employeeId],
 			input.valueDate,
-			input.months,
 			input.organizationId
 		);
 
@@ -179,7 +177,6 @@ export class EmployeeStatisticsHistoryQueryHandler
 		const splitExpensesMap = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
 			input.employeeId,
 			input.valueDate,
-			input.months,
 			input.organizationId
 		);
 
@@ -208,7 +205,6 @@ export class EmployeeStatisticsHistoryQueryHandler
 		const splitExpensesMap = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
 			input.employeeId,
 			input.valueDate,
-			input.months,
 			input.organizationId
 		);
 		// 2. Extract required attributes from the expense and populate EmployeeStatisticsHistory
