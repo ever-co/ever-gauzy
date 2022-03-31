@@ -1,7 +1,114 @@
 @import 'themes';
 @import 'var';
 
-nb-card, nb-card-body, nb-card-header, .card{
-  background-color: nb-theme(background-basic-color-1);
-  border-color: nb-theme(border-basic-color-3);
+nb-card, nb-card-header, nb-card-body, .card {
+    background-color: nb-theme(background-basic-color-1);
+    border-color: nb-theme(border-basic-color-3);
+}
+
+:host {
+    .card {
+        background-color: nb-theme(gauzy-card-1);
+        border-radius: 10px;
+        & nb-card-header {
+            background-color: nb-theme(gauzy-card-1);
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+        & nb-card-body {
+            background-color: nb-theme(background-basic-color-2);
+        }
+    }
+
+    nb-card-header {
+        padding: 20px;
+        border-bottom: none;
+        background-color: nb-theme(background-basic-color-2);
+    }
+
+    nb-card-body {
+        background-color: nb-theme(background-basic-color-3);
+        padding: 18px;
+    }
+}
+
+.table-row {
+    border-radius: 8px;
+    height: 86px;
+    background-color: nb-theme(gauzy-card-1);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+.table-inner-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.columns-header {
+    background-color: nb-theme(background-basic-color-3);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
+}
+
+.responsive-table-header {
+    display: none;
+}
+
+@include respond(lg) {
+    .card nb-card-body {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .table-row {
+        border-radius: 0;
+        margin-bottom: 15px;
+    }
+    .responsive-table-row {
+        width: 100% !important;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 1px solid nb-theme(border-basic-color-4);
+    }
+    .responsive-table-header {
+        display: block;
+        font-family: Inter;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+    }
+    .responsive-table-content, .responsive-table-header {
+        width: 50%;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    .table-row {
+        height: auto;
+    }
+    .table-inner-wrapper {
+        flex-direction: column;
+    }
 }

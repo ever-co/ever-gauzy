@@ -25,7 +25,7 @@
 	</div>
 </div>
 <div
-	class="row-table mt-4"
+	class="row-table tables-wrapper"
 	[nbSpinner]="loading"
 	nbSpinnerSize="giant"
 	nbSpinnerStatus="primary"
@@ -88,8 +88,8 @@
 	<nb-card-body>
 	<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let logs of day.logs">
-			<div class="employee-row" *ngFor="let employeeLog of logs.employeeLogs">
-				<div class="employee-inner-wrapper">
+			<div class="table-row" *ngFor="let employeeLog of logs.employeeLogs">
+				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
 						<div class="responsive-table-header">Employee</div>
 						<div class="responsive-table-content project-name">
@@ -151,8 +151,8 @@
 	<nb-card-body>
 	<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let day of employee.logs">
-			<div class="employee-row" *ngFor="let projectLog of day.projectLogs">
-				<div class="employee-inner-wrapper">
+			<div class="table-row" *ngFor="let projectLog of day.projectLogs">
+				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
 						<div class="responsive-table-header">Date</div>
 						<div class="responsive-table-content">{{ day.date }}</div>
@@ -207,8 +207,8 @@
 	<nb-card-body>
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let day of project.logs">
-			<div class="employee-row" *ngFor="let employeeLog of day.employeeLogs">
-				<div class="employee-inner-wrapper">
+			<div class="table-row" *ngFor="let employeeLog of day.employeeLogs">
+				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
 						<div class="responsive-table-header">Date</div>
 						<div class="responsive-table-content project-name">
@@ -266,8 +266,8 @@
 		<div class="cart-body project-row" >
 			<ng-template ngFor let-clientLogs [ngForOf]="client.logs">
 			<ng-template ngFor let-day [ngForOf]="clientLogs.logs">
-				<div class="employee-row" *ngFor="let projectLog of day.projectLogs">
-					<div class="employee-inner-wrapper">
+				<div class="table-row" *ngFor="let projectLog of day.projectLogs">
+					<div class="table-inner-wrapper">
 						<div class="responsive-table-row employee-column">
 							<div class="responsive-table-header">Date</div>
 							<div class="responsive-table-content project-name">
@@ -369,7 +369,7 @@
 
 <ng-template #columnsHeader>
 	<div class="columns-header">
-		<div class="employee-inner-wrapper font-weight-bold align-items-center">
+		<div class="table-inner-wrapper font-weight-bold align-items-center">
 			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="employee-column">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>

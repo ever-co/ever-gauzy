@@ -1,8 +1,5 @@
-@import "../../_reportsReusable";
+@import "report";
 @import "themes";
-
-@include header-styles;
-@include body-styles;
 
 .filters {
     margin-bottom: 30px;
@@ -10,13 +7,4 @@
 
 .daily-statistics {
     margin-bottom: 25px;
-}
-
-.daily-time-report {
-    nb-card {
-        border-radius: 15px;
-    }
-    nb-card-body {
-        background-color: nb-theme(gauzy-card-1);
-    }
 }
