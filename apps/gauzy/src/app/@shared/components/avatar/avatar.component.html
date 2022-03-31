@@ -1,14 +1,16 @@
-<div class="row align-items-center">
-	<div class="col-auto pr-0" *ngIf="src">
-		<div class="image-container {{ size }}" (click)="edit(id)">
-			<img class="rounded-circle" type="user" [src]="src" />
+<div class="avatar-wrapper">
+	<div class="inner-wrapper">
+		<div class="image-outer-wrapper" *ngIf="src">
+			<div class="image-container {{ size }}" (click)="edit(id)">
+				<img class="rounded-circle" type="user" [src]="src" />
+			</div>
 		</div>
-	</div>
-	<div class="col">
-		<ng-container *ngIf="name && !isOption">
-			<a class="link-text" *ngIf="name" (click)="edit(id)">{{ name }}</a>
-		</ng-container>
-		<div *ngIf="name && isOption">{{ name }}</div>
-		<div class="text-caption caption" *ngIf="caption">{{ caption }}</div>
+		<div class="names-wrapper">
+			<ng-container *ngIf="name && !isOption">
+				<a class="link-text" *ngIf="name" (click)="edit(id)" [title]="name">{{ name }}</a>
+			</ng-container>
+			<div *ngIf="name && isOption">{{ name }}</div>
+			<div class="text-caption caption" *ngIf="caption">{{ caption }}</div>
+		</div>
 	</div>
 </div>

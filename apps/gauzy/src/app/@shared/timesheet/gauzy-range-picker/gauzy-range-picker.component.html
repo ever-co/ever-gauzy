@@ -1,5 +1,5 @@
-<div class="row col-auto">
-  <div class="filter-input">
+<div class="row col-auto main-wrapper">
+  <div class="filter-input" *ngIf="hasDateRangeFilter">
     <div class="custom-input">
       <button *ngIf="arrows" size="tiny" nbButton status="primary" (click)="previousRange()">
         <nb-icon icon="arrow-ios-back-outline"></nb-icon>
@@ -35,7 +35,7 @@
         ]"
       >
         <div
-          class="col-auto filter-item ml-auto pl-1"
+          class="col-auto filter-item single-filter-wrapper pl-1"
           *ngIf="hasEmployeeFilter"
         >
           <ga-employee-multi-select
@@ -53,7 +53,7 @@
         </div>
       </ng-template>
       <div
-        class="col-auto filter-item ml-auto pl-1"
+        class="col-auto filter-item pl-1 single-filter-wrapper"
         *ngIf="hasProjectFilter"
       >
         <ga-project-selector
@@ -64,7 +64,7 @@
         ></ga-project-selector>
       </div>
       <div
-        class="col-auto filter-item ml-auto pl-1"
+        class="col-auto filter-item single-filter-wrapper pl-1"
         *ngIf="hasSourceFilter"
       >
         <nb-select
@@ -82,7 +82,7 @@
         </nb-select>
       </div>
       <div
-        class="col-auto filter-item ml-auto pl-1"
+        class="col-auto filter-item single-filter-wrapper pl-1"
         *ngIf="hasActivityLevelFilter"
       >
         <button
@@ -120,7 +120,7 @@
         </ng-template>
       </div>
       <div
-        class="col-auto filter-item ml-auto pl-1"
+        class="col-auto filter-item single-filter-wrapper pl-1"
         *ngIf="hasLogTypeFilter"
       >
         <nb-select
@@ -139,7 +139,7 @@
       </div>
 
       <div
-        class="col-auto ml-auto pl-1 clear-fitlers"
+        class="col-auto single-filter-wrapper pl-1 clear-fitlers"
         *ngIf="hasFilterApplies"
       >
         <button nbButton status="danger" (click)="clearFilters()">

@@ -6,6 +6,7 @@ import {
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ChartComponent } from 'angular2-chartjs';
+import { Chart } from "chart.js";
 
 export interface IChartData {
 	labels?: any[];
@@ -69,10 +70,10 @@ export class LineChartComponent implements OnInit, OnDestroy {
 						config.variables.primary,
 						config.variables.primaryLight
 					],
-					backgroundColor: [
-						config.variables.primary,
-						config.variables.primaryLight
-					],
+						backgroundColor: [
+							config.variables.primary,
+							config.variables.primaryLight
+						],
 					elements: {
 						rectangle: {
 							borderWidth: 2
@@ -104,8 +105,12 @@ export class LineChartComponent implements OnInit, OnDestroy {
 					},
 					legend: {
 						position: 'bottom',
+						align: 'start',
 						labels: {
-							fontColor: chartJs.textColor
+							fontColor: chartJs.textColor,
+							borderRadius: 100,
+							boxWidth: 30,
+							boxHeight: 10,
 						}
 					},
 					tooltips: this.selectedDate
