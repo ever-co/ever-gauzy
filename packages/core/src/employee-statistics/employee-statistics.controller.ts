@@ -104,12 +104,6 @@ export class EmployeeStatisticsController {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatisticsHistory[]> {
 		const { findInput } = data;
-		/**
-		 * JSON parse changes Date object to String type
-		 * Changing Date String to Date Object using parseISO
-		 */
-		findInput.valueDate = parseISO(findInput.valueDate);
-
 		return this.queryBus.execute(
 			new EmployeeStatisticsHistoryQuery(findInput)
 		);
