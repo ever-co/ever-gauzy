@@ -261,8 +261,8 @@ export class EmployeeStatisticsService {
 					id: In(employeeIds)
 				},
 				valueDate: Between(
-					moment(startDate).toDate(),
-					moment(endDate).toDate()
+					moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS'),
+					moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')
 				)
 			},
 			order: {
@@ -298,8 +298,8 @@ export class EmployeeStatisticsService {
 				},
 				splitExpense: false,
 				valueDate: Between(
-					moment(startDate).toDate(),
-					moment(endDate).toDate()
+					moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS'),
+					moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')
 				)
 			},
 			order: {
