@@ -17,7 +17,7 @@ export class ProjectComponent implements OnInit, ViewCell {
 	constructor(private readonly organizationService: OrganizationsService) {}
 
 	ngOnInit(): void {
-		this.organization =  firstValueFrom(
+		if(this.value.organizationId) this.organization =  firstValueFrom(
 			this.organizationService.getById(this.value.organizationId)
 		);
 	}

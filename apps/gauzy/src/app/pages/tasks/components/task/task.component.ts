@@ -47,6 +47,7 @@ import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/
 import { InputFilterComponent } from './../../../../@shared/table-filters/input-filter.component';
 import { CreateByComponent } from '../../../../@shared/table-components/create-by/create-by.component';
 import { ProjectComponent } from 'apps/gauzy/src/app/@shared/table-components/project/project.component';
+import { EmployeesMergedTeamsComponent } from '../../../../@shared/table-components/employees-merged-teams/employees-merged-teams.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -267,12 +268,12 @@ export class TaskComponent
 					projectName: task.project ? task.project : undefined,
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
-					creator: task.creator ? task.creator : undefined
+					creator: task.creator ? task.creator : undefined,
+          employeesMergedTeams: [task.members, task.teams]
 				});
 			},
 			finalize: () => {
 				const tasks = this.smartTableSource.getData();
-        console.log(tasks);
 				this.storeInstance.loadAllTasks(tasks);
 				this.loading = false;
 			}
@@ -385,18 +386,24 @@ export class TaskComponent
 	private getColumnsByPage() {
 		if (this.isTasksPage()) {
 			return {
-				employees: {
-					title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS'),
-					type: 'custom',
-					filter: false,
-					renderComponent: EmployeeWithLinksComponent
-				},
-				teams: {
-					title: this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
-					type: 'custom',
-					filter: false,
-					renderComponent: TaskTeamsComponent
-				}
+				// employees: {
+				// 	title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS'),
+				// 	type: 'custom',
+				// 	filter: false,
+				// 	renderComponent: EmployeeWithLinksComponent
+				// },
+				// teams: {
+				// 	title: this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
+				// 	type: 'custom',
+				// 	filter: false,
+				// 	renderComponent: TaskTeamsComponent
+				// }
+        employeesMergedTeams: {
+          title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS')+'/'+this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
+          type:'custom',
+          filter: true,
+          renderComponent: EmployeesMergedTeamsComponent
+        }
 			};
 		} else if (this.isMyTasksPage()) {
 			return {
