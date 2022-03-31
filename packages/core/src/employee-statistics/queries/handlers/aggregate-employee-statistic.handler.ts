@@ -198,7 +198,7 @@ export class AggregateOrganizationQueryHandler
 
 			for (
 				const date = new Date(requiredStartDate);
-				date <= endDate;
+				date <= new Date(endDate);
 				date.setMonth(date.getMonth() + 1)
 			) {
 				// Stop loading expense if the recurring expense has ended before input date
