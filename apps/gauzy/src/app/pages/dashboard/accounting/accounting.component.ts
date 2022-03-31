@@ -6,6 +6,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import {
 	IAggregatedEmployeeStatistic,
+	IDateRangePicker,
 	IOrganization,
 	ISelectedEmployee,
 	IUser
@@ -18,7 +19,6 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { IDateRangeStrategy } from '../../../@shared/timesheet/gauzy-range-picker/arrow/strategies/arrow-strategy.interface';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,7 +32,7 @@ import { IDateRangeStrategy } from '../../../@shared/timesheet/gauzy-range-picke
 export class AccountingComponent implements OnInit, OnDestroy {
 
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
-	selectedDateRange: IDateRangeStrategy;
+	selectedDateRange: IDateRangePicker;
 	organization: IOrganization;
 	isEmployee: boolean;
 

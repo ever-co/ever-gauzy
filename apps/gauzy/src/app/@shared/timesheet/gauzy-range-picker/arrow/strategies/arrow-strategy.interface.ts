@@ -5,8 +5,3 @@ export interface IArrowStrategy {
 	 */
 	action(request: any): any;
 }
-
-export interface IDateRangeStrategy {
-	startDate: Date;
-	endDate: Date;
-}

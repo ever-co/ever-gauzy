@@ -1,5 +1,6 @@
-import { IArrowStrategy, IDateRangeStrategy } from "../arrow-strategy.interface";
 import * as moment from 'moment';
+import { IDateRangePicker } from "@gauzy/contracts";
+import { IArrowStrategy } from "../arrow-strategy.interface";
 
 export class Previous implements IArrowStrategy {
 	/**
@@ -7,7 +8,7 @@ export class Previous implements IArrowStrategy {
 	 * @param request
 	 * @returns any type of request
 	 */
-	action(request: IDateRangeStrategy): IDateRangeStrategy {
+	action(request: IDateRangePicker): IDateRangePicker {
 		const end = moment(request.endDate);
 		const start = moment(request.startDate);
 		const range = end.diff(start, 'days');
@@ -16,6 +17,6 @@ export class Previous implements IArrowStrategy {
 		return {
 			startDate: startDate,
 			endDate: moment(startDate).add(range, 'days').toDate()
-		} as IDateRangeStrategy;
+		} as IDateRangePicker;
 	}
 }

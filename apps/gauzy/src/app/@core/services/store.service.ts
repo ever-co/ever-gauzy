@@ -13,7 +13,7 @@ import {
 	IFeatureOrganization,
 	FeatureEnum,
 	ISelectedEmployee,
-	IDateRange
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
@@ -27,7 +27,6 @@ import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 import * as _ from 'underscore';
 import * as camelCase from 'camelcase';
-import { IDateRangeStrategy } from '../../@shared/timesheet/gauzy-range-picker/arrow/strategies/arrow-strategy.interface';
 
 export interface AppState {
 	user: IUser;
@@ -37,7 +36,7 @@ export interface AppState {
 	selectedProposal: IProposalViewModel;
 	selectedProject: IOrganizationProject;
 	selectedDate: Date;
-	selectedDateRange: IDateRangeStrategy;
+	selectedDateRange: IDateRangePicker;
 	systemLanguages: ILanguage[];
 	featureToggles: IFeatureToggle[];
 	featureOrganizations: IFeatureOrganization[];
@@ -304,7 +303,7 @@ export class Store {
 		return selectedDateRange;
 	}
 
-	set selectedDateRange(range: IDateRangeStrategy) {
+	set selectedDateRange(range: IDateRangePicker) {
 		this.appStore.update({
 			selectedDateRange: range
 		});

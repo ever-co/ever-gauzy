@@ -3,13 +3,12 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
-import { IOrganization } from '@gauzy/contracts';
+import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from './../../../../../@core/services';
 import { Arrow } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/context/arrow.class';
 import { Next, Previous } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/strategies';
-import { IDateRangeStrategy } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/strategies/arrow-strategy.interface';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 
 export enum DateRangeKeyEnum {
@@ -75,14 +74,14 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/*
 	* Getter & Setter for dynamic enabled/disabled element
 	*/
-	_selectedDateRange: IDateRangeStrategy = {
+	_selectedDateRange: IDateRangePicker = {
 		startDate: moment().startOf(this.intervalUnit).toDate(),
 		endDate: moment().endOf(this.intervalUnit).toDate()
 	};
-	get selectedDateRange(): IDateRangeStrategy {
+	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
 	}
-	@Input() set selectedDateRange(range: IDateRangeStrategy) {
+	@Input() set selectedDateRange(range: IDateRangePicker) {
 		this.store.selectedDateRange = range;
 		this._selectedDateRange = range;
 	}
