@@ -13,7 +13,6 @@ import { EmployeeService } from '../employee/employee.service';
 import { ExpenseService } from '../expense/expense.service';
 import { IncomeService } from '../income/income.service';
 import { Between, In, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
-import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
 
@@ -238,7 +237,7 @@ export class EmployeeStatisticsService {
 	 */
 	employeeIncomeInNMonths = async (
 		employeeIds: string[],
-		{ startDate, endDate }: IDateRangePicker | any,
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	) => 
 		await this.incomeService.findAll({
@@ -279,7 +278,7 @@ export class EmployeeStatisticsService {
 	 */
 	employeeExpenseInNMonths = async (
 		employeeIds: string[],
-		{ startDate, endDate }: IDateRangePicker | any,
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	) => 
 		await this.expenseService.findAll({
@@ -343,7 +342,7 @@ export class EmployeeStatisticsService {
 	 */
 	employeeSplitExpenseInNMonths = async (
 		employeeId: string,
-		{ startDate, endDate }: IDateRangePicker | any,
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	): Promise<Map<string, IMonthAggregatedSplitExpense>> => {
 		// 1 Get Employee's Organization
@@ -417,7 +416,7 @@ export class EmployeeStatisticsService {
 	 */
 	organizationRecurringSplitExpenses = async (
 		employeeId: string,
-		{ startDate, endDate }: IDateRangePicker | any,
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	) => {
 		// 1 Get Employee's Organization

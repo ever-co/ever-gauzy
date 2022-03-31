@@ -1,13 +1,14 @@
 import {
+	IDateRangePicker,
 	IMonthAggregatedEmployeeStatistics,
 	IMonthAggregatedEmployeeStatisticsFindInput,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import * as moment from 'moment';
 import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../employee-statistics.service';
 import { MonthAggregatedEmployeeStatisticsQuery } from '../month-aggregated-employee-statistics.query';
-import { startOfMonth, subMonths } from 'date-fns';
 
 /**
  * Finds income, expense, profit and bonus
@@ -17,8 +18,8 @@ import { startOfMonth, subMonths } from 'date-fns';
 export class MonthAggregatedEmployeeStatisticsQueryHandler
 	implements IQueryHandler<MonthAggregatedEmployeeStatisticsQuery> {
 	constructor(
-		private employeeStatisticsService: EmployeeStatisticsService,
-		private employeeService: EmployeeService
+		private readonly employeeStatisticsService: EmployeeStatisticsService,
+		private readonly employeeService: EmployeeService
 	) {}
 
 	public async execute(
@@ -43,10 +44,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		await this._loadEmployeeExpenses(input, statisticsMap);
 		await this._loadEmployeeRecurringExpenses(input, statisticsMap);
 		await this._loadOrganizationSplitExpenses(input, statisticsMap);
-		await this._loadOrganizationRecurringSplitExpenses(
-			input,
-			statisticsMap
-		);
+		await this._loadOrganizationRecurringSplitExpenses(input, statisticsMap);
 
 		// 3. Populate Profit in statisticsMap
 		this._calculateProfit(statisticsMap);
@@ -74,14 +72,22 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		input: IMonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
+		const {
+			startDate = moment().startOf('month').toDate(),
+			endDate = moment().endOf('month').toDate(),
+			employeeId,
+			organizationId
+		} = input;
+
 		// Fetch employee's incomes for past N months from given date
 		const {
 			items: incomes
 		} = await this.employeeStatisticsService.employeeIncomeInNMonths(
-			[input.employeeId],
-			input.valueDate,
-			input.organizationId
+			[employeeId],
+			{ startDate, endDate } as IDateRangePicker,
+			organizationId
 		);
+
 		incomes.forEach((income) => {
 			const key = `${income.valueDate.getMonth()}-${income.valueDate.getFullYear()}`;
 			const amount = Number(income.amount);
@@ -127,13 +133,20 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		input: IMonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
+		const {
+			startDate = moment().startOf('month').toDate(),
+			endDate = moment().endOf('month').toDate(),
+			employeeId,
+			organizationId
+		} = input;
+
 		// Fetch employee's expenses for past N months from given date
 		const {
 			items: expenses
 		} = await this.employeeStatisticsService.employeeExpenseInNMonths(
-			[input.employeeId],
-			input.valueDate,
-			input.organizationId
+			[employeeId],
+			{ startDate, endDate } as IDateRangePicker,
+			organizationId
 		);
 
 		expenses.forEach((expense) => {
@@ -176,10 +189,17 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
 		const {
+			startDate = moment().startOf('month').toDate(),
+			endDate = moment().endOf('month').toDate(),
+			employeeId,
+			organizationId
+		} = input;
+
+		const {
 			items: employeeRecurringExpenses
 		} = await this.employeeStatisticsService.employeeRecurringExpenses(
-			[input.employeeId],
-			input.organizationId
+			[employeeId],
+			organizationId
 		);
 
 		/**
@@ -193,10 +213,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		 */
 		employeeRecurringExpenses.forEach((expense) => {
 			// Find start date based on input date and X months.
-			const inputStartDate = subMonths(
-				startOfMonth(input.valueDate),
-				input.months - 1
-			);
+			const inputStartDate = startDate;
 
 			/**
 			 * Add recurring expense from the
@@ -210,8 +227,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 					: inputStartDate;
 
 			for (
-				const date = requiredStartDate;
-				date <= input.valueDate;
+				const date = new Date(requiredStartDate);
+				date <= endDate;
 				date.setMonth(date.getMonth() + 1)
 			) {
 				// Stop loading expense if the recurring expense has ended before input date
@@ -265,12 +282,19 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		input: IMonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
+		const {
+			startDate = moment().startOf('month').toDate(),
+			endDate = moment().endOf('month').toDate(),
+			employeeId,
+			organizationId
+		} = input;
+
 		// Fetch split expenses and the number of employees the expense need to be split among
 		// the split among will be different for every month, depending upon the number of active employees in the month
 		const splitExpensesMap = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
-			input.employeeId,
-			input.valueDate,
-			input.organizationId
+			employeeId,
+			{ startDate, endDate } as IDateRangePicker,
+			organizationId
 		);
 
 		splitExpensesMap.forEach((value, key) => {
@@ -314,10 +338,17 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		input: IMonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
+		const {
+			startDate = moment().startOf('month').toDate(),
+			endDate = moment().endOf('month').toDate(),
+			employeeId,
+			organizationId
+		} = input;
+
 		const splitExpensesMap = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
-			input.employeeId,
-			input.valueDate,
-			input.organizationId
+			employeeId,
+			{ startDate, endDate } as IDateRangePicker,
+			organizationId
 		);
 
 		splitExpensesMap.forEach((value, key) => {

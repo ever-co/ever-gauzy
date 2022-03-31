@@ -17,8 +17,8 @@ export interface IEmployeeStatistics {
 export interface IMonthAggregatedEmployeeStatisticsFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
-	valueDate: Date;
-	months: number;
+	startDate: Date;
+    endDate: Date;
 }
 
 export interface IMonthAggregatedEmployeeStatistics {

@@ -83,15 +83,9 @@ export class EmployeeStatisticsController {
 	})
 	@Get('/months')
 	async findAggregatedStatisticsByEmployeeId(
-		@Query('data', ParseJsonPipe) data?: any
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IMonthAggregatedEmployeeStatistics> {
 		const { findInput } = data;
-		/**
-		 * JSON parse changes Date object to String type
-		 * Changing Date String to Date Object using parseISO
-		 */
-		findInput.valueDate = parseISO(findInput.valueDate);
-
 		return this.queryBus.execute(
 			new MonthAggregatedEmployeeStatisticsQuery(findInput)
 		);
