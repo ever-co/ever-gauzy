@@ -19,6 +19,7 @@ import { ContactLinksComponent } from './contact-links/contact-links.component';
 import { TagsOnlyComponent } from './tags-only/tags-only.component';
 import { EmployeeLinksComponent } from './employee-links/employee-links.component';
 import { CreateByComponent } from './create-by/create-by.component';
+import { ProjectComponent } from './project/project.component';
 
 @NgModule({
 	imports: [
@@ -45,7 +46,8 @@ import { CreateByComponent } from './create-by/create-by.component';
 		TagsOnlyComponent,
 		ContactLinksComponent,
 		EmployeeLinksComponent,
-  CreateByComponent
+  CreateByComponent,
+  ProjectComponent
 	],
 	exports: [
 		NotesWithTagsComponent,

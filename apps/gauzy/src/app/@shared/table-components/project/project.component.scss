@@ -1,0 +1,14 @@
+.project-render{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  img{
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    margin: 0 10px;
+  }
+  span .member{
+    font-size: 11px;
+  }
+}
