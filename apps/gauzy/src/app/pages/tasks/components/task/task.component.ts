@@ -46,6 +46,7 @@ import { OrganizationTeamFilterComponent, TaskStatusFilterComponent } from './..
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { InputFilterComponent } from './../../../../@shared/table-filters/input-filter.component';
 import { CreateByComponent } from '../../../../@shared/table-components/create-by/create-by.component';
+import { ProjectComponent } from 'apps/gauzy/src/app/@shared/table-components/project/project.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -229,7 +230,7 @@ export class TaskComponent
 		if (this.viewComponentName == ComponentEnum.ALL_TASKS) {
 			endPoint = `${API_PREFIX}/tasks/pagination`;
 			relations.push(
-				...['project', 'tags', 'teams', 'creator', 'organizationSprint']
+				...['project', 'tags', 'teams','teams.members','teams.members.employee' ,'creator', 'organizationSprint']
 			);
 			join = {
 				alias: 'task',
@@ -263,7 +264,7 @@ export class TaskComponent
 			},
 			resultMap: (task: ITask) => {
 				return Object.assign({}, task, {
-					projectName: task.project ? task.project.name : undefined,
+					projectName: task.project ? task.project : undefined,
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
 					creator: task.creator ? task.creator : undefined
@@ -329,7 +330,8 @@ export class TaskComponent
 				},
 				projectName: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
-					type: 'string',
+					type: 'custom',
+          renderComponent: ProjectComponent,
           filter: {
 						type: 'custom',
 						component: InputFilterComponent
