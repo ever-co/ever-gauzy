@@ -313,6 +313,7 @@ export class EmployeeStatisticsService {
 	 */
 	employeeRecurringExpenses = async (
 		employeeIds: string[],
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	) =>
 		await this.employeeRecurringExpenseService.findAll({
@@ -324,10 +325,20 @@ export class EmployeeStatisticsService {
 				'startDate',
 				'endDate'
 			],
-			where: {
-				employeeId: In(employeeIds),
-				organizationId
-			}
+			where: [
+				{
+					employeeId: In(employeeIds),
+					organizationId,
+					startDate: LessThanOrEqual(endDate),
+					endDate: MoreThanOrEqual(startDate)
+				},
+				{
+					employeeId: In(employeeIds),
+					organizationId,
+					startDate: LessThanOrEqual(endDate),
+					endDate: IsNull()
+				}
+			]
 		});
 
 	/**

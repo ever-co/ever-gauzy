@@ -199,6 +199,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			items: employeeRecurringExpenses
 		} = await this.employeeStatisticsService.employeeRecurringExpenses(
 			[employeeId],
+			{ startDate, endDate } as IDateRangePicker,
 			organizationId
 		);
 

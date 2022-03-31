@@ -8,7 +8,6 @@ import {
 	IStatisticSum
 } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { startOfMonth, subMonths } from 'date-fns';
 import * as moment from 'moment';
 import { EmployeeService } from '../../../employee/employee.service';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
@@ -169,6 +168,7 @@ export class AggregateOrganizationQueryHandler
 			items: employeeRecurringExpenses
 		} = await this.employeeStatisticsService.employeeRecurringExpenses(
 			[...employeeMap.keys()],
+			searchInput.rangeDate,
 			organizationId
 		);
 
