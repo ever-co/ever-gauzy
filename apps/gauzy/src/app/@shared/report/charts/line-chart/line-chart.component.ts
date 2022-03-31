@@ -6,7 +6,6 @@ import {
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ChartComponent } from 'angular2-chartjs';
-import { Chart } from "chart.js";
 
 export interface IChartData {
 	labels?: any[];
