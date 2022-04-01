@@ -1,0 +1,11 @@
+<div *ngFor="let workSpace of mockedWorkSpaces">
+	<div [ngClass]="selected?.id === workSpace.id ? 'selected' : ''">
+		<div class="img-container">
+			<img [src]="workSpace.imgUrl" alt="" (click)="select(workSpace)" />
+			<div *ngIf="workSpace.isOnline"></div>
+		</div>
+	</div>
+</div>
+<div>
+	<button nbButton [nbContextMenu]="options" nbContextMenuPlacement="right" outline><i class="fas fa-plus"></i></button>
+</div>

@@ -1,0 +1,61 @@
+@import 'themes';
+
+div {
+  margin-bottom: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  button {
+    width: 34px;
+    height: 34px;
+  }
+  .img-container {
+    object-fit: cover;
+    position: relative;
+    img {
+      width: 34px;
+      height: 34px;
+      border-radius: 34px;
+      margin: 0;
+    }
+    > div {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #00d060;
+      border-radius: 8px;
+      border: 2px solid #ebebeb;
+      right: 0;
+      top: 0;
+    }
+  }
+  &.selected .img-container {
+    border: 6px solid rgba(50, 50, 50, 0.2);
+    mix-blend-mode: multiply;
+    border-radius: 34px;
+    img {
+      box-shadow: 0px 0px 6px 3px rgba(50, 50, 50, 0.5);
+    }
+  }
+}
+
+::ng-deep {
+  nb-context-menu {
+    transform: translateY(50%);
+    nb-menu .menu-item {
+      border-width: 0;
+      a {
+        text-align: left;
+        border-radius:  nb-theme(border-radius);
+        &:hover {
+          background-color: nb-theme(color-primary-transparent-default);
+        }
+      }
+    }
+  }
+  nb-context-menu,
+  .context-menu {
+    border-radius: 0 10px 10px 10px;
+    padding: 0.3125rem;
+  }
+}
