@@ -6,8 +6,19 @@
       height: 10px;
     }
   }
-  .card{
-    border-radius: 8px;
+  .card {
+    border-radius: nb-theme(border-radius);
+    background: rgba(66, 66, 66, 0.03);
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+    min-width: 189px;
+    max-width: 270px;
+    height: 237px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    &:hover {
+      box-shadow: 0px 36px 18px -24px rgba(0, 0, 0, 0.15);
+    }
   }
   .curser-pointer {
     cursor: pointer;
