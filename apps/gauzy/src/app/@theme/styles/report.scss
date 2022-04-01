@@ -7,7 +7,7 @@ nb-card, nb-card-header, nb-card-body, .card {
 }
 
 :host {
-    .card, .card-scroll {
+    .card {
         background-color: nb-theme(gauzy-card-1);
         border-radius: 10px;
         & nb-card-header {
@@ -41,7 +41,7 @@ nb-card, nb-card-header, nb-card-body, .card {
     justify-content: flex-start;
     margin-bottom: 10px;
     padding-top: 10px;
-    padding-bottom: 10px;
+    padding-bottom: 20px;
 }
 .table-inner-wrapper {
     display: flex;
