@@ -33,9 +33,14 @@
         }
 
     }
-        .option-list > nb-option {
-            padding: 5px !important;
+    #cdk-overlay-0 {
+        nb-option-list {
+            width: auto !important;
+            .option-list > nb-option {
+                padding: 15px !important;
+            }
         }
+    }
 }
 
 :host {
