@@ -1,45 +1,45 @@
 <div class="group-by-wrapper">
 	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
 	<div class="ml-3">
-		<nb-select 
-			[(ngModel)]="groupBy" 
-			(selectedChange)="groupByChange()"
+		<nb-select
+				[(ngModel)]="groupBy"
+				(selectedChange)="groupByChange()"
 		>
-			<nb-option 
-				[value]="ReportGroupFilterEnum.date"
+			<nb-option
+					[value]="ReportGroupFilterEnum.date"
 			>{{ 'REPORT_PAGE.DATE' | translate }}
 			</nb-option>
 			<nb-option
-				[value]="ReportGroupFilterEnum.employee"
+					[value]="ReportGroupFilterEnum.employee"
 			>{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</nb-option>
 			<nb-option
-				[value]="ReportGroupFilterEnum.project"
+					[value]="ReportGroupFilterEnum.project"
 			>{{ 'REPORT_PAGE.PROJECT' | translate }}
 			</nb-option>
 			<nb-option
-				[value]="ReportGroupFilterEnum.client"
+					[value]="ReportGroupFilterEnum.client"
 			>{{ 'REPORT_PAGE.CLIENT' | translate }}
 			</nb-option>
 		</nb-select>
 	</div>
 </div>
 <div
-	class="row-table mt-4"
-	[nbSpinner]="loading"
-	nbSpinnerSize="giant"
-	nbSpinnerStatus="primary"
+		class="row-table tables-wrapper"
+		[nbSpinner]="loading"
+		nbSpinnerSize="giant"
+		nbSpinnerStatus="primary"
 >
 
 	<ng-template [ngIf]="dailyLogs?.length > 0" [ngIfElse]="notFound">
 		<nb-card
-			[ngSwitch]="groupBy"
-			class="card"
-			*ngFor="let day of dailyLogs"
+				[ngSwitch]="groupBy"
+				class="card"
+				*ngFor="let day of dailyLogs"
 		>
 			<ng-container *ngSwitchCase="ReportGroupFilterEnum.employee">
 				<ng-container
-					*ngTemplateOutlet="
+						*ngTemplateOutlet="
 						groupByEmployeeCardEl;
 						context: { $implicit: day }
 					"
@@ -47,7 +47,7 @@
 			</ng-container>
 			<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
 				<ng-container
-					*ngTemplateOutlet="
+						*ngTemplateOutlet="
 						groupByProjectCardEl;
 						context: { $implicit: day }
 					"
@@ -55,7 +55,7 @@
 			</ng-container>
 			<ng-container *ngSwitchCase="ReportGroupFilterEnum.client">
 				<ng-container
-					*ngTemplateOutlet="
+						*ngTemplateOutlet="
 						groupByClientCardEl;
 						context: { $implicit: day }
 					"
@@ -63,7 +63,7 @@
 			</ng-container>
 			<ng-container *ngSwitchDefault>
 				<ng-container
-					*ngTemplateOutlet="
+						*ngTemplateOutlet="
 						groupByDateCardEl;
 						context: { $implicit: day }
 					"
@@ -86,10 +86,10 @@
 <ng-template class="table-template" let-day #groupByDateCardEl>
 	<nb-card-header class="card-title">{{ day.date }}</nb-card-header>
 	<nb-card-body>
-	<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let logs of day.logs">
-			<div class="employee-row" *ngFor="let employeeLog of logs.employeeLogs">
-				<div class="employee-inner-wrapper">
+			<div class="table-row" *ngFor="let employeeLog of logs.employeeLogs">
+				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
 						<div class="responsive-table-header">Employee</div>
 						<div class="responsive-table-content project-name">
@@ -141,7 +141,7 @@
 <ng-template class="table-template" let-employee #groupByEmployeeCardEl>
 	<nb-card-header class="card-title">
 		<ng-container
-			*ngTemplateOutlet="
+				*ngTemplateOutlet="
 				employeeEl;
 				context: { $implicit: employee?.employee }
 			"
@@ -149,10 +149,10 @@
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
-	<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let day of employee.logs">
-			<div class="employee-row" *ngFor="let projectLog of day.projectLogs">
-				<div class="employee-inner-wrapper">
+			<div class="table-row" *ngFor="let projectLog of day.projectLogs">
+				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
 						<div class="responsive-table-header">Date</div>
 						<div class="responsive-table-content">{{ day.date }}</div>
@@ -199,7 +199,7 @@
 <ng-template class="table-template" let-project #groupByProjectCardEl>
 	<nb-card-header class="card-title">
 		<ng-container
-			*ngTemplateOutlet="
+				*ngTemplateOutlet="
 				projectEl;
 				context: { $implicit: project?.project, members: projects[project.project?.id] }">
 		</ng-container>
@@ -207,8 +207,8 @@
 	<nb-card-body>
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let day of project.logs">
-			<div class="employee-row" *ngFor="let employeeLog of day.employeeLogs">
-				<div class="employee-inner-wrapper">
+			<div class="table-row" *ngFor="let employeeLog of day.employeeLogs">
+				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
 						<div class="responsive-table-header">Date</div>
 						<div class="responsive-table-content project-name">
@@ -257,7 +257,7 @@
 <ng-template class="table-template" let-client #groupByClientCardEl>
 	<nb-card-header class="card-title">
 		<ng-container
-			*ngTemplateOutlet="clientEl; context: { $implicit: client?.client }"
+				*ngTemplateOutlet="clientEl; context: { $implicit: client?.client }"
 		>
 		</ng-container>
 	</nb-card-header>
@@ -265,61 +265,61 @@
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" >
 			<ng-template ngFor let-clientLogs [ngForOf]="client.logs">
-			<ng-template ngFor let-day [ngForOf]="clientLogs.logs">
-				<div class="employee-row" *ngFor="let projectLog of day.projectLogs">
-					<div class="employee-inner-wrapper">
-						<div class="responsive-table-row employee-column">
-							<div class="responsive-table-header">Date</div>
-							<div class="responsive-table-content project-name">
-								{{ day.date }}
+				<ng-template ngFor let-day [ngForOf]="clientLogs.logs">
+					<div class="table-row" *ngFor="let projectLog of day.projectLogs">
+						<div class="table-inner-wrapper">
+							<div class="responsive-table-row employee-column">
+								<div class="responsive-table-header">Date</div>
+								<div class="responsive-table-content project-name">
+									{{ day.date }}
+								</div>
 							</div>
-						</div>
-						<div class="responsive-table-row employee-column">
-							<div class="responsive-table-header">Employee</div>
-							<div class="responsive-table-content project-name">
-								<ng-container
-										*ngTemplateOutlet="
+							<div class="responsive-table-row employee-column">
+								<div class="responsive-table-header">Employee</div>
+								<div class="responsive-table-content project-name">
+									<ng-container
+											*ngTemplateOutlet="
 										employeeEl;
 										context: { $implicit: projectLog?.employee }">
-								</ng-container>
+									</ng-container>
+								</div>
 							</div>
-						</div>
-						<div class="responsive-table-row project-column">
-							<div class="responsive-table-header">Project</div>
-							<div class="responsive-table-content project-name">
-								<ng-container
-										*ngTemplateOutlet="
+							<div class="responsive-table-row project-column">
+								<div class="responsive-table-header">Project</div>
+								<div class="responsive-table-content project-name">
+									<ng-container
+											*ngTemplateOutlet="
 										projectEl;
 										context: { $implicit: clientLogs?.project, members: projects[clientLogs.project?.id] }">
-								</ng-container>
+									</ng-container>
+								</div>
 							</div>
-						</div>
-						<div class="responsive-table-row todo-column">
-							<div class="responsive-table-header">To Do</div>
-							<div class="responsive-table-content day-col">
-								<ng-container
-										*ngTemplateOutlet="
+							<div class="responsive-table-row todo-column">
+								<div class="responsive-table-header">To Do</div>
+								<div class="responsive-table-content day-col">
+									<ng-container
+											*ngTemplateOutlet="
 										taskEl;
 										context: { $implicit: projectLog?.task }"
-								></ng-container>
+									></ng-container>
+								</div>
 							</div>
-						</div>
-						<div class="responsive-table-row time-column">
-							<div class="responsive-table-header">Time</div>
-							<div class="responsive-table-content day-col">
-								{{ projectLog.sum | durationFormat }}
+							<div class="responsive-table-row time-column">
+								<div class="responsive-table-header">Time</div>
+								<div class="responsive-table-content day-col">
+									{{ projectLog.sum | durationFormat }}
+								</div>
 							</div>
-						</div>
-						<div class="responsive-table-row activity-column">
-							<div class="responsive-table-header">Activity</div>
-							<div class="responsive-table-content day-col">
-								{{ projectLog.activity || 0 }}%
+							<div class="responsive-table-row activity-column">
+								<div class="responsive-table-header">Activity</div>
+								<div class="responsive-table-content day-col">
+									{{ projectLog.activity || 0 }}%
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
+				</ng-template>
 			</ng-template>
-		</ng-template>
 		</div>
 	</nb-card-body>
 </ng-template>
@@ -356,10 +356,10 @@
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper">
 		<ngx-avatar
-			*ngIf="employee"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id"
+				*ngIf="employee"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id"
 		></ngx-avatar>
 	</div>
 	<ng-template #noEmployee>
@@ -369,7 +369,7 @@
 
 <ng-template #columnsHeader>
 	<div class="columns-header">
-		<div class="employee-inner-wrapper font-weight-bold align-items-center">
+		<div class="table-inner-wrapper font-weight-bold align-items-center">
 			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="employee-column">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>

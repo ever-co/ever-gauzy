@@ -33,9 +33,9 @@
         }
 
     }
-        .option-list > nb-option {
-            padding: 5px !important;
-        }
+    .option-list > nb-option {
+        padding: 5px !important;
+    }
 }
 
 :host {
@@ -47,56 +47,10 @@
             border-radius: 2rem !important;
             box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);;
         }
-
-        .card {
-            background-color: nb-theme(gauzy-card-1);
-            border-radius: 10px;
-            & nb-card-header {
-                background-color: nb-theme(gauzy-card-1);
-                margin-bottom: 0;
-                border-bottom: none;
-            }
-            & nb-card-body {
-                background-color: nb-theme(background-basic-color-2);
-            }
-        }
-        .employee-row {
-            border-radius: 8px;
-            height: 86px;
-            background-color: nb-theme(gauzy-card-1);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            margin-bottom: 10px;
-            padding-top: 10px;
-            padding-bottom: 20px;
-        }
-        .employee-inner-wrapper {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding-left: 20px;
-            padding-right: 20px;
-        }
         .names-wrapper {
             max-width: 110px;
         }
     }
-}
-
-.columns-header {
-    background-color: nb-theme(background-basic-color-3);
-    border-radius: 8px;
-    margin-bottom: 10px;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
 }
 
 
@@ -147,6 +101,9 @@
     }
 }
 
+.tables-wrapper {
+    margin-top: 10px;
+}
 .employee-column {
     width: 20%;
     min-width: 165px;
@@ -165,9 +122,7 @@
 .activity-column {
     width: 15%;
 }
-.responsive-table-header {
-    display: none;
-}
+
 .avatar-wrapper {
     max-width: 190px;
     padding-top: 5px;
@@ -179,14 +134,6 @@
 }
 
 @include respond(lg) {
-    .card nb-card-body {
-        padding-left: 0;
-        padding-right: 0;
-    }
-    .employee-row {
-        border-radius: 0;
-        margin-bottom: 15px;
-    }
     .employee-column {
         min-width: auto;
         max-width: unset;
@@ -194,44 +141,12 @@
     .columns-header {
         display: none;
     }
-    .responsive-table-row {
-        width: 100%;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        margin-bottom: 10px;
-        padding: 10px;
-        border-radius: 8px;
-        border-left: 1px solid nb-theme(border-basic-color-4);
-    }
-    .responsive-table-header {
-        display: block;
-        font-family: Inter;
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 15px;
-        letter-spacing: 0em;
-        text-align: left;
-    }
-    .responsive-table-content, .responsive-table-header {
-        width: 50%;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-    }
     .single-project-template .headers-wrapper .main-header {
         white-space: break-spaces;
     }
 
     :host {
         ::ng-deep {
-            .employee-row {
-                height: auto;
-            }
-            .employee-inner-wrapper {
-                flex-direction: column;
-            }
             .avatar-wrapper {
                 width: unset;
                 max-width: 100%;

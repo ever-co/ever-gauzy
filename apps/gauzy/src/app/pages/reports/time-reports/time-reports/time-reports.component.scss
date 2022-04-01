@@ -1,8 +1,5 @@
-@import "../../_reportsReusable";
+@import "report";
 @import "themes";
-
-@include header-styles;
-@include body-styles;
 
 .filters {
     margin-bottom: 30px;
