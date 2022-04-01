@@ -29,12 +29,13 @@
 				[autoApply]="true"
 				[showCustomRangeLabel]="true"
 				[alwaysShowCalendars]="true"
-				[customRangeDirection]="true"
+				[customRangeDirection]="false"
 				[maxDate]="maxDate"
 				[ranges]="ranges"
 				[locale]="localConfig"
 				[(ngModel)]="selectedDateRange"
 				(datesUpdated)="onDatesUpdated($event)"
+				(rangeClicked)="rangeClicked($event)"
 			/>
 		</div>
 	</div>

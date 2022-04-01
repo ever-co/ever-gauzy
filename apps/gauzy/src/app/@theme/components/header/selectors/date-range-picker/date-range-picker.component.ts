@@ -73,7 +73,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}
 		this.selectedDateRange = {
 			startDate: moment().startOf(this.unitOfTime).toDate(),
-			endDate: moment().endOf(this.unitOfTime).toDate()
+			endDate: moment().endOf(this.unitOfTime).toDate(),
+			isCustomDate: false
 		}
 	}
 
@@ -193,11 +194,44 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				this.selectedDateRange = {
 					...this.selectedDateRange,
 					startDate: startDate.toDate(),
-					endDate: endDate.toDate()
+					endDate: endDate.toDate(),
+					isCustomDate: this.isCustomDate(event)
 				}
 			}
 		}
 	}
+
+	/**
+	 * Check is custom date
+	 * 
+	 * @param dateRange 
+	 * @returns 
+	 */
+	isCustomDate(dateRange: any): boolean {
+		let isCustomRange = true;
+
+		const ranges = this.dateRangePickerDirective.ranges;
+		for (const range in ranges) {
+			if (this.ranges[range]) {
+				const [startDate, endDate] = this.ranges[range];
+				// ignore times when comparing dates if time picker is not enabled
+				if (
+					dateRange.startDate.format('YYYY-MM-DD') === startDate.format('YYYY-MM-DD') &&
+					dateRange.endDate.format('YYYY-MM-DD') === endDate.format('YYYY-MM-DD')
+				) {
+					isCustomRange = false;
+					break;
+				}
+			}
+		}
+		return isCustomRange;
+	}
+
+	/**
+	 * listen range click event on ngx-daterangepicker-material
+	 * @param event
+	 */
+	rangeClicked(event: any) {}
 	
 	ngOnDestroy() {}
 }

@@ -12,7 +12,7 @@ export class DateRangePickerBuilderService {
 	constructor() {}
 
 	setDatePicker(options: any) {
-		if (options.hasOwnProperty('unitOfTime')) {
+		if (options && options.hasOwnProperty('unitOfTime')) {
 			this.setPickerRangeUnitOfTime(options.unitOfTime);
 		}
 	}
