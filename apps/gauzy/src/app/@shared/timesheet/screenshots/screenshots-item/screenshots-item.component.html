@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card mb-3">
 	<div class="activity" *ngIf="timeSlot; else noActivity">
 		<div
 			class="image-contaer curser-pointer"
@@ -71,7 +71,7 @@
 				</span>
 			</ng-template>
 		</div>
-		<div class="slot-info text-left p-2">
+		<div class="slot-info text-left p-3">
 			<div class="time-span mb-3 mt-1">
 				{{ timeSlot.localStartedAt | timeFormat }} -
 				{{ timeSlot.localStoppedAt | timeFormat }}
