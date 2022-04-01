@@ -21,6 +21,11 @@
 }
 
 @include respond(lg) {
+    :host {
+        .employee-column {
+            margin-right: 0;
+        }
+    }
     .weekly-main-header {
         display: none;
     }

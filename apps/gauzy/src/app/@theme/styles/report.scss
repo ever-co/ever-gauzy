@@ -137,11 +137,6 @@ nb-card, nb-card-header, nb-card-body, .card {
         .filters-range-wrapper {
             flex-wrap: wrap !important;
         }
-    }
-}
-
-@include respond(sm){
-    :host ::ng-deep {
         .filters .main-wrapper {
             padding-left: 0;
             padding-right: 0;
