@@ -7,6 +7,11 @@ nb-card, nb-card-header, nb-card-body, .card {
 }
 
 :host {
+    ::ng-deep {
+        .filters-range-wrapper {
+            flex-wrap: nowrap !important;
+        }
+    }
     .card {
         background-color: nb-theme(gauzy-card-1);
         border-radius: 10px;
@@ -29,6 +34,15 @@ nb-card, nb-card-header, nb-card-body, .card {
     nb-card-body {
         background-color: nb-theme(background-basic-color-3);
         padding: 18px;
+    }
+
+    .daily-time-report nb-card-body {
+        background-color: nb-theme(gauzy-card-1);
+    }
+    .filters {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
     }
 }
 
@@ -64,6 +78,11 @@ nb-card, nb-card-header, nb-card-body, .card {
     line-height: 15px;
     letter-spacing: 0em;
     text-align: left;
+}
+.header-flex {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .responsive-table-header {
@@ -110,5 +129,17 @@ nb-card, nb-card-header, nb-card-body, .card {
     }
     .table-inner-wrapper {
         flex-direction: column;
+    }
+}
+
+@include respond(md) {
+    :host ::ng-deep {
+        .filters-range-wrapper {
+            flex-wrap: wrap !important;
+        }
+        .filters .main-wrapper {
+            padding-left: 0;
+            padding-right: 0;
+        }
     }
 }

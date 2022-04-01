@@ -1,6 +1,8 @@
 @import 'themes';
 
 :host {
+    width: 100%;
+
     .inner-wrapper {
         background: rgba(110, 73, 232, 0.1);
         display: flex;
