@@ -5,24 +5,32 @@
 	class="card-scroll"
 >
 	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}
-			</ngx-header-title>
-		</h4>
+		<div class="header-flex">
+			<div>
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ngx-date-range-title
+						[start]="logRequest.startDate"
+						[end]="logRequest.endDate"
+				></ngx-date-range-title>
+			</div>
+			<div class="filters">
+				<ngx-gauzy-range-picker
+						[filters]="logRequest"
+						[arrows]="true"
+						[hasEmployeeFilter]="false"
+						[hasProjectFilter]="false"
+						[hasDateRangeFilter]="true"
+						[saveFilters]="false"
+						(onDateChange)="filtersChange($event)"
+				></ngx-gauzy-range-picker>
+			</div>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="filters mt-4 mb-4">
-			<ngx-gauzy-range-picker
-				[filters]="logRequest"
-				[arrows]="true"
-				[hasEmployeeFilter]="false"
-				[hasProjectFilter]="false"
-				[saveFilters]="false"
-				(onDateChange)="filtersChange($event)"
-			></ngx-gauzy-range-picker>
-		</div>
-
 		<ga-daily-statistics
 			class="mb-4"
 			[filters]="filters"
@@ -38,7 +46,7 @@
 			</div>
 		</div>
 
-		<div class="table mt-4">
+		<div class="table card mt-4">
 			<div
 				class="weekly-logs row-table"
 				[nbSpinner]="loading"
@@ -64,12 +72,13 @@
 							<div class="table-inner-wrapper">
 								<div class="responsive-table-row employee-column">
 									<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
-									<div class="responsive-table-content justify-content-mobile">
+									<div class="responsive-table-content mobile-padding">
 										<div class="avatar-wrapper">
-											<ngx-avatar
+											<ga-report-table-user-avatar
 													[src]="day?.employee?.user?.imageUrl"
-													[name]="day?.employee?.user?.name" [id]="day?.employee?.id">
-											</ngx-avatar>
+													[name]="day?.employee?.user?.name"
+													[id]="day?.employee?.id">
+											</ga-report-table-user-avatar>
 											<ng-template #noProjects>
 												<span>{{
 													'REPORT_PAGE.NO_EMPLOYEE'| translate}}</span>
@@ -79,7 +88,7 @@
 								</div>
 								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
 									<div class="responsive-table-header">{{ date | date:'E d MM, y' }}</div>
-									<div class="responsive-table-content justify-center-mobile">
+									<div class="responsive-table-content mobile-padding">
 										<span *ngIf="day.dates[date]; else noLogsCol">
 											{{ day.dates[date]?.sum | durationFormat }}
 										</span>

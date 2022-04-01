@@ -5,28 +5,32 @@
 	class="card-scroll"
 >
 	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.TIME_AND_ACTIVITY_REPORT' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ngx-date-range-title
-				[start]="logRequest.startDate"
-				[end]="logRequest.endDate"
-		></ngx-date-range-title>
+		<div class="header-flex">
+			<div>
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.TIME_AND_ACTIVITY_REPORT' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ngx-date-range-title
+						[start]="logRequest.startDate"
+						[end]="logRequest.endDate"
+				></ngx-date-range-title>
+			</div>
+			<div class="filters">
+				<ngx-gauzy-range-picker
+						[filters]="logRequest"
+						[arrows]="true"
+						[hasEmployeeFilter]="false"
+						[hasProjectFilter]="false"
+						[hasDateRangeFilter]="false"
+						[saveFilters]="false"
+						(onDateChange)="filtersChange($event)"
+				></ngx-gauzy-range-picker>
+			</div>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="filters">
-			<ngx-gauzy-range-picker
-				[filters]="logRequest"
-				[arrows]="true"
-				[hasEmployeeFilter]="false"
-				[hasProjectFilter]="false"
-				[hasDateRangeFilter]="true"
-				[saveFilters]="false"
-				(onDateChange)="filtersChange($event)"
-			></ngx-gauzy-range-picker>
-		</div>
 		<div class="daily-statistics">
 			<ga-daily-statistics
 				class="mb-4"
