@@ -1,3 +1,61 @@
+@import "var";
+
 :host {
-  display: block;
+    display: block;
+}
+
+.main-wrapper {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+nb-card {
+    background-color: nb-theme(gauzy-card-1);
+}
+
+.daily-item {
+    width: 23%;
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.05);
+
+    &.activity {
+        width: 19%;
+    }
+    &.total-hours {
+        width: 27%;
+    }
+}
+
+.progress-container {
+    width: 75%;
+}
+
+@include respond(dsk) {
+    .main-wrapper {
+        justify-content: space-around;
+    }
+    .daily-item {
+        margin-bottom: 10px;
+        &, &.activity, &.total-hours {
+            width: 49%;
+        }
+    }
+}
+
+@include respond(md) {
+    .daily-item {
+        &, &.activity, &.total-hours {
+            width: 100%;
+        }
+    }
+}
+
+@include respond(sm){
+    .progress-container {
+        width: 100%;
+    }
+    .h1 {
+        font-size: nb-theme(text-heading-1-font-size);
+    }
 }

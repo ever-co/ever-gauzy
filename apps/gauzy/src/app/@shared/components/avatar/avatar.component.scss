@@ -1,37 +1,37 @@
 @import 'themes';
 
 :host {
-  display: block;
-  .link-text {
-    cursor: pointer;
-    text-decoration: none;
-    color: nb-theme(gauzy-text-contact);
-    font-weight: bold;
-  }
-  .link-text:hover {
-    text-decoration: underline;
-  }
-  .image-container {
-    width: 48px;
-    cursor: pointer;
-    img {
-      width: 48px;
-      height: 48px;
-      object-fit: cover;
+    display: block;
+    .link-text {
+        cursor: pointer;
+        text-decoration: none;
+        color: nb-theme(gauzy-text-contact);
+        font-weight: bold;
     }
-    &.lg {
-      width: 64px;
-      img {
-        width: 64px;
-        height: 64px;
-      }
+    .link-text:hover {
+        text-decoration: underline;
     }
-    &.sm {
-      width: 32px;
-      img {
-        width: 32px;
-        height: 32px;
-      }
+    .image-container {
+        width: 48px;
+        cursor: pointer;
+        img {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+        }
+        &.lg {
+            width: 64px;
+            img {
+                width: 64px;
+                height: 64px;
+            }
+        }
+        &.sm {
+            width: 32px;
+            img {
+                width: 32px;
+                height: 32px;
+            }
+        }
     }
-  }
 }

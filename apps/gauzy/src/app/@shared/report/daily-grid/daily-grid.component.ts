@@ -11,7 +11,7 @@ import {
 	IReportDayData,
 	ITimeLogFilters,
 	ReportGroupByFilter,
-	ReportGroupFilterEnum
+	ReportGroupFilterEnum,
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
@@ -32,6 +32,7 @@ export class DailyGridComponent extends ReportBaseComponent
 	
 	logRequest: ITimeLogFilters = this.request;
 	dailyLogs: IReportDayData[] = [];
+	projects: {[key: string]: number} = {}
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
@@ -82,15 +83,35 @@ export class DailyGridComponent extends ReportBaseComponent
 			'activityLevel',
 			'logType'
 		);
-		const request: IGetTimeLogReportInput = {
+		const baseRequest: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		}
+		const request = {
+			...baseRequest,
+			groupBy: this.groupBy
+		}
+		const requestProject = {
+			...baseRequest,
+			groupBy: ReportGroupFilterEnum.project
+		}
 
 		try {
-			const logs: IReportDayData[] = await this.timesheetService.getDailyReport(request);
+			const [logs, projects] = await Promise.all([
+				this.timesheetService.getDailyReport(request),
+				this.timesheetService.getDailyReport(requestProject)
+			]);
 			this.dailyLogs = logs;
+
+			// calculating all the unique employees for each project
+			this.projects = projects.reduce((a,v) => {
+				if ("project" in v) {
+					const initial = [].concat(...v.logs.map(x => x.employeeLogs.map(y => y.employee.id)))
+					const uniqueEployees = initial.filter((v, i, arr) => arr.indexOf(v) === i)
+					return { ...a, [v.project.id]: uniqueEployees.length }
+				}
+			}, {});
 		} catch (error) {
 			console.log('Error while retrieving daily logs report', error);
 		} finally {

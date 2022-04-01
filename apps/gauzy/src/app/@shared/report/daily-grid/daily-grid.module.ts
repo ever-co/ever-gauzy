@@ -11,6 +11,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
+import { ReportTableUserAvatarModule } from "../report-table-user-avatar/report-table-user-avatar.module";
 
 @NgModule({
 	declarations: [DailyGridComponent],
@@ -24,7 +25,8 @@ import { FiltersModule } from '../../timesheet/filters/filters.module';
 		NbCardModule,
 		FiltersModule,
 		NbSelectModule,
-		FormsModule
-	]
+		FormsModule,
+		ReportTableUserAvatarModule,
+	],
 })
 export class DailyGridModule {}

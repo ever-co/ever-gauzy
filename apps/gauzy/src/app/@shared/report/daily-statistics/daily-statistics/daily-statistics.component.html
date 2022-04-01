@@ -1,7 +1,7 @@
-<div class="row">
+<div class="main-wrapper">
 	<ng-container *ngIf="!request.employeeIds">
 		<div
-			class="col-sm-4 col-md-3 col-lg"
+			class="daily-item"
 			*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
 		>
 			<nb-card
@@ -17,17 +17,19 @@
 					<div class="h1">
 						{{ counts?.employeesCount || 0 }}
 					</div>
-					<gauzy-counter-point
-						[total]="employeesCount"
-						[value]="counts?.employeesCount || 0"
-						[color]="'#0088FE'"
-					></gauzy-counter-point>
+					<div class="progress-container">
+						<gauzy-counter-point
+							[total]="employeesCount"
+							[value]="counts?.employeesCount || 0"
+							[color]="'#0088FE'"
+						></gauzy-counter-point>
+					</div>
 				</nb-card-body>
 			</nb-card>
 		</div>
 	</ng-container>
 	<ng-container *ngIf="!request.projectIds">
-		<div class="col-sm-4 col-md-3 col-lg">
+		<div class="daily-item">
 			<nb-card
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
@@ -41,16 +43,18 @@
 					<div class="h1">
 						{{ counts?.projectsCount || 0 }}
 					</div>
-					<gauzy-counter-point
-						[total]="projectsCount"
-						[value]="counts?.projectsCount || 0"
-						[color]="'#00D68F'"
-					></gauzy-counter-point>
+					<div class="progress-container">
+						<gauzy-counter-point
+							[total]="projectsCount"
+							[value]="counts?.projectsCount || 0"
+							[color]="'#00D68F'"
+						></gauzy-counter-point>
+					</div>
 				</nb-card-body>
 			</nb-card>
 		</div>
 	</ng-container>
-	<div class="col-sm-4 col-md-3 col-lg">
+	<div class="daily-item activity">
 		<nb-card
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
@@ -62,14 +66,16 @@
 					{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 				</p>
 				<div class="h1">{{ counts?.weekActivities || 0 }}%</div>
-				<gauzy-counter-point
-					[progress]="true"
-					[value]="counts?.weekActivities || 0"
-				></gauzy-counter-point>
+				<div class="progress-container">
+					<gauzy-counter-point
+							[progress]="true"
+							[value]="counts?.weekActivities || 0"
+					></gauzy-counter-point>
+				</div>
 			</nb-card-body>
 		</nb-card>
 	</div>
-	<div class="col-sm-4 col-md-3 col-lg">
+	<div class="daily-item total-hours">
 		<nb-card
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
@@ -83,11 +89,13 @@
 				<div class="h1">
 					{{ counts?.weekDuration || 0 | durationFormat }}
 				</div>
-				<gauzy-counter-point
-					[total]="period"
-					[value]="counts?.weekDuration || 0"
-					[color]="'#00D68F'"
-				></gauzy-counter-point>
+				<div class="progress-container">
+					<gauzy-counter-point
+						[total]="period"
+						[value]="counts?.weekDuration || 0"
+						[color]="'#00D68F'"
+					></gauzy-counter-point>
+				</div>
 			</nb-card-body>
 		</nb-card>
 	</div>
