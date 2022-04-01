@@ -6,12 +6,18 @@ import { BehaviorSubject, Observable } from 'rxjs';
 	providedIn: 'root'
 })
 export class DateRangePickerBuilderService {
-	private _pickerRangeUnit$: BehaviorSubject<string> = new BehaviorSubject('month');
-	public pickerRangeUnit$: Observable<string> = this._pickerRangeUnit$.asObservable();
+	private _pickerRangeUnitOfTime$: BehaviorSubject<string> = new BehaviorSubject('month');
+	public pickerRangeUnitOfTime$: Observable<string> = this._pickerRangeUnitOfTime$.asObservable();
 
 	constructor() {}
 
-	setPickerRangeUnit(unit: moment.unitOfTime.Base): void {
-        this._pickerRangeUnit$.next(unit);
+	setDatePicker(options: any) {
+		if (options.hasOwnProperty('unitOfTime')) {
+			this.setPickerRangeUnitOfTime(options.unitOfTime);
+		}
+	}
+
+	setPickerRangeUnitOfTime(unit: moment.unitOfTime.Base): void {
+        this._pickerRangeUnitOfTime$.next(unit);
 	}
 }

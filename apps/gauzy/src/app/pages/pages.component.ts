@@ -84,9 +84,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
-				tap(({ datePickerInterval }:  any) => {
-					dateRangePickerBuilderService.setPickerRangeUnit(datePickerInterval);
-				})
+				tap(({ datePicker }:  any) => dateRangePickerBuilderService.setDatePicker(datePicker))
 			)
 			.subscribe(({ selectors }: any) => {
 				this.headerSelectors = Object.assign(

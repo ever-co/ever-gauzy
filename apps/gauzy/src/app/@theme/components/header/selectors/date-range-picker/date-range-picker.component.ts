@@ -54,17 +54,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 */
 	public ranges: any;
 
-	/*
-	* Getter & Setter for dynamic interval units
-	*/
-	_intervalUnit: moment.unitOfTime.Base = 'month';
-	get intervalUnit(): moment.unitOfTime.Base {
-		return this._intervalUnit;
-	}
-	@Input() set intervalUnit(value: moment.unitOfTime.Base) {
-		this._intervalUnit = value;
-	}
-
 	/**
 	 * show or hide arrows button, show by default
 	 */
@@ -72,12 +61,26 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	arrows: boolean = true;
 
 	/*
+	* Getter & Setter for dynamic unitOfTime
+	*/
+	_unitOfTime: moment.unitOfTime.Base = 'month';
+	get unitOfTime(): moment.unitOfTime.Base {
+		return this._unitOfTime;
+	}
+	@Input() set unitOfTime(value: moment.unitOfTime.Base) {
+		if (value) {
+			this._unitOfTime = value;
+		}
+		this.selectedDateRange = {
+			startDate: moment().startOf(this.unitOfTime).toDate(),
+			endDate: moment().endOf(this.unitOfTime).toDate()
+		}
+	}
+
+	/*
 	* Getter & Setter for dynamic enabled/disabled element
 	*/
-	_selectedDateRange: IDateRangePicker = {
-		startDate: moment().startOf(this.intervalUnit).toDate(),
-		endDate: moment().endOf(this.intervalUnit).toDate()
-	};
+	_selectedDateRange: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
 	}

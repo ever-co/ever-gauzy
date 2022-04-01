@@ -66,8 +66,6 @@ export class TimeTrackingComponent
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
 
-
-
 	timeSlotLoading = false;
 	activitiesLoading = false;
 	projectsLoading = false;
