@@ -20,7 +20,7 @@ import {
 	IUser,
 	ISelectedEmployee,
 	IEmployee,
-	ISelectedDateRange
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -86,16 +86,15 @@ export class TimeTrackingComponent
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
 
-	private _selectedDateRange: ISelectedDateRange = {
+	private _selectedDateRange: IDateRangePicker = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate(),
 		isCustomDate: false
 	};
-
-	get selectedDateRange(): ISelectedDateRange {
+	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
 	}
-	set selectedDateRange(range: ISelectedDateRange) {
+	set selectedDateRange(range: IDateRangePicker) {
 		if (range) {
 			if (!range.hasOwnProperty('isCustomDate')) {
 				range.isCustomDate = true
@@ -111,9 +110,6 @@ export class TimeTrackingComponent
 				}
 			} else {
 				this._selectedDateRange = range;
-			}
-			if (range.startDate && range.endDate) {
-				this.logs$.next(true);
 			}
 		}
 	}
@@ -155,19 +151,26 @@ export class TimeTrackingComponent
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+		const selectedDateRange$ = this.store.selectedDateRange$;
+
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$, selectedDateRange$])
 			.pipe(
 				filter(([organization]) => !!organization),
 				distinctUntilChange(),
-				tap(([organization, employee, project]) => {
+				debounceTime(300),
+				tap(([organization, employee, project, dateRange]) => {
 					this.organization = organization;
 
 					this.organizationId = organization.id;
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
+					this.selectedDateRange = dateRange;
+
+					this.logs$.next(true);
+				}),
+				tap(() => {
 					this.loadEmployeesCount();
 					this.loadProjectsCount();
-					this.logs$.next(true);
 				}),
 				tap(() => this.setAutoRefresh(true)),
 				untilDestroyed(this)
@@ -439,12 +442,14 @@ export class TimeTrackingComponent
 		this.galleryService.clearGallery();
 	}
 
-  get period() {
-    const { startDate, endDate } = this.selectedDateRange;
-    const start = moment(startDate);
-		const end = moment(endDate);
-    return end.diff(start, 'days') * 86400;
-  }
+	get period() {
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			const start = moment(startDate);
+			const end = moment(endDate);
+			return end.diff(start, 'days') * 86400;
+		}
+	}
 
 	/**
 	 * Get selected date range period
@@ -469,7 +474,7 @@ export class TimeTrackingComponent
 	 * If, selected date range are more than a week
 	 */
 	isMoreThanWeek(): boolean {
-		const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		if (startDate && endDate) {
 			return moment(endDate).diff(moment(startDate), 'weeks') > 0;
 		}
@@ -523,7 +528,7 @@ export class TimeTrackingComponent
 	 */
 	public redirectToManualTimeReport() {
 		try {
-			const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
+			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 			this._router.navigate(['/pages/reports/manual-time-edits'], {
 				queryParams: {
 					start: moment(startDate).format("MM-DD-YYYY"),
@@ -540,7 +545,7 @@ export class TimeTrackingComponent
 	 */
 	public redirectToAppUrlReport() {
 		try {
-			const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
+			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 			this._router.navigate(['/pages/reports/apps-urls'], {
 				queryParams: {
 					start: moment(startDate).format("MM-DD-YYYY"),
@@ -551,17 +556,6 @@ export class TimeTrackingComponent
 			console.log('Error while redirecting to apps & urls report.', error);
 		}
 	}
-	/**
-	 * Listen date event on update
-	 * @param event
-	 */
-	public onUpdateDate(event: any): void {
-		this.selectedDateRange = {
-			startDate: event.startDate,
-			endDate: event.endDate,
-			isCustomDate: false
-		} as ISelectedDateRange
-	}
 
 	/**
 	 * We are having issue, when organization not allowed future date
@@ -569,7 +563,7 @@ export class TimeTrackingComponent
 	 *
 	 * @returns
 	 */
-	private getAdjustDateRangeFutureAllowed(): ISelectedDateRange {
+	private getAdjustDateRangeFutureAllowed(): IDateRangePicker {
 		const { selectedDateRange } = this;
 		const now = moment();
 
