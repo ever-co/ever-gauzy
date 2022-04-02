@@ -3815,5 +3815,12 @@
 		"HELP": "crwdns11046:0crwdne11046:0",
 		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
 		"PROFILE": "crwdns11050:0crwdne11050:0"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "crwdns11058:0crwdne11058:0",
+			"CREATE_NEW_WORKSPACE": "crwdns11060:0crwdne11060:0",
+			"FIND_WORKSPACE": "crwdns11062:0crwdne11062:0"
+		}
 	}
 }
