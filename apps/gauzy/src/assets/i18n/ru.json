@@ -3815,5 +3815,12 @@
 		"HELP": "Помогите",
 		"SIGN_OUT": "Выйти",
 		"PROFILE": "Профиль"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "Войти в другую рабочую область",
+			"CREATE_NEW_WORKSPACE": "Создать новую рабочую область",
+			"FIND_WORKSPACE": "Найти рабочую область"
+		}
 	}
 }
