@@ -3798,23 +3798,30 @@
 			"SUB_TITLE": "Please select account type below."
 		}
 	},
-  "PAGINATION":{
-    "ITEMS":"Items"
-  },
-  "USER_MENU":{
-    "STATUS":"Status",
-    "AVAILABLE":"Available",
-    "UNAVAILABLE":"Unavailable",
-    "PAUSE_NOTIFICATIONS":"Pause notifications",
-    "FOR_1_HOUR":"For 1hour",
-    "FOR_2_HOURS":"For 2hours",
-    "UNTIL_TOMORROW":"Until tomorrow",
-    "CUSTOM":"Custom",
-    "SET_AS_NOTIFICATION_SCHEDULE":"Set as notification schedule",
-    "SET_YOURSELF_AS_AWAY":"Set yourself as away",
-    "HOTKEYS":"Hotkeys",
-    "HELP":"Help",
-    "SIGN_OUT":"Sign Out",
-    "PROFILE":"Profile"
-  }
+	"PAGINATION": {
+		"ITEMS":"Items"
+	},
+	"USER_MENU": {
+		"STATUS":"Status",
+		"AVAILABLE":"Available",
+		"UNAVAILABLE":"Unavailable",
+		"PAUSE_NOTIFICATIONS":"Pause notifications",
+		"FOR_1_HOUR":"For 1hour",
+		"FOR_2_HOURS":"For 2hours",
+		"UNTIL_TOMORROW":"Until tomorrow",
+		"CUSTOM":"Custom",
+		"SET_AS_NOTIFICATION_SCHEDULE":"Set as notification schedule",
+		"SET_YOURSELF_AS_AWAY":"Set yourself as away",
+		"HOTKEYS":"Hotkeys",
+		"HELP":"Help",
+		"SIGN_OUT":"Sign Out",
+		"PROFILE":"Profile"
+	},
+	"WORKSPACES": {
+		"MENUS" : {
+			"SING_ANOTHER_WORKSPACE" : "Sign in another workspace",
+			"CREATE_NEW_WORKSPACE" : "Create a new workspace",
+			"FIND_WORKSPACE": "Find workspace"
+		}
+	}
 }

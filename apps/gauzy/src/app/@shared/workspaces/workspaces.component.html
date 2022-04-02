@@ -1,11 +1,18 @@
-<div *ngFor="let workSpace of mockedWorkSpaces">
-	<div [ngClass]="selected?.id === workSpace.id ? 'selected' : ''">
+<div *ngFor="let workspace of workspaces">
+	<div [ngClass]="selected?.id === workspace.id ? 'selected' : ''">
 		<div class="img-container">
-			<img [src]="workSpace.imgUrl" alt="" (click)="select(workSpace)" />
-			<div *ngIf="workSpace.isOnline"></div>
+			<img [src]="workspace.imgUrl" alt="" (click)="onChangeWorkspace(workspace)" />
+			<div *ngIf="workspace.isOnline"></div>
 		</div>
 	</div>
 </div>
 <div>
-	<button nbButton [nbContextMenu]="options" nbContextMenuPlacement="right" outline><i class="fas fa-plus"></i></button>
+	<button
+		nbButton
+		[nbContextMenu]="contextMenus"
+		nbContextMenuPlacement="right"
+		outline
+	>
+		<i class="fas fa-plus"></i>
+	</button>
 </div>

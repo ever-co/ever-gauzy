@@ -1,4 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { ITenant, IUser } from '@gauzy/contracts';
+import { NbMenuItem } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs/internal/Subject';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Store } from '../../@core/services';
+import { TranslationBaseComponent } from '../language-base';
 
 interface IWorkSpace {
 	id: string;
@@ -6,51 +14,105 @@ interface IWorkSpace {
 	isOnline: boolean;
 }
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-workspaces',
 	templateUrl: './workspaces.component.html',
 	styleUrls: ['./workspaces.component.scss']
 })
-export class WorkspacesComponent implements OnInit {
-	mockedWorkSpaces: IWorkSpace[] = [];
+export class WorkspacesComponent extends TranslationBaseComponent implements 
+	AfterViewInit, OnInit {
+	
+	workspaces: IWorkSpace[] = [];
 	selected: IWorkSpace;
-	options = [
-		{ title: 'Sign in another workspace' },
-		{ title: 'Create a new workspace' },
-		{ title: 'Find workspace' }
-	];
+	contextMenus: NbMenuItem[];
+	user: IUser;
+	workspaces$: Subject<any> = new Subject();
 
-	constructor() {}
-
-	ngOnInit(): void {
-		this.loadWorkSpaces();
+	constructor(
+		public readonly translateService: TranslateService,
+		private readonly store: Store
+	) {
+		super(translateService);
 	}
 
-	loadWorkSpaces() {
-		let unique = 0;
-		let lasts = [];
-		for (let i = 0; i < 8; i++) {
-			while (lasts.includes(unique)) {
-				unique = Math.floor(Math.random() * (8 - 1)) + 1;
-			}
-			this.mockedWorkSpaces.push({
-				id: '' + i,
-				imgUrl:
-					'https://source.unsplash.com/random/200x200?sig=' + unique,
-				isOnline:
-					Math.floor(Math.random() * (10 - 1)) + 1 > 5 ? true : false
-			});
-			lasts.push(unique);
+	ngOnInit() {
+		this._createContextMenus();
+		this._applyTranslationOnChange();
+	}
+
+	ngAfterViewInit() {
+		this.workspaces$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.getWorkspaces()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				tap(() => this.workspaces$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	getWorkspaces() {
+		const tenant: ITenant = this.user.tenant;
+		const defaultWorkspace = {
+			id: tenant.id,
+			imgUrl: tenant.logo,
+			isOnline: true
 		}
-		this.selected = this.mockedWorkSpaces[Math.floor(Math.random() * 8)];
+		this.workspaces.push(defaultWorkspace);
+		this.selected = defaultWorkspace;
+	}
+
+	/**
+	 * Translate context menus
+	 */
+	private _applyTranslationOnChange() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._createContextMenus()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * On Change Workspace
+	 * 
+	 * @param workSpace 
+	 */
+	onChangeWorkspace(workspace: IWorkSpace) {
+		this.selected = workspace;
 		this.selected.isOnline = true;
 	}
 
-	select(workSpace: IWorkSpace) {
-		this.selected = workSpace;
-		this.selected.isOnline = true;
+	/**
+	 * Create bulk action context menus
+	 */
+	private _createContextMenus() {
+		this.contextMenus = [
+			{
+				title: this.getTranslation('WORKSPACES.MENUS.SING_ANOTHER_WORKSPACE')
+			},
+			{
+				title: this.getTranslation('WORKSPACES.MENUS.CREATE_NEW_WORKSPACE')
+			},
+			{
+				title: this.getTranslation('WORKSPACES.MENUS.FIND_WORKSPACE')
+			}
+		];
 	}
 
+	/**
+	 * Create new workspace
+	 * 
+	 */
 	add() {
 		// TODO
 	}
