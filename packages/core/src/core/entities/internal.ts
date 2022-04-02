@@ -139,13 +139,14 @@ export * from './../../export-import/import-history/import-history.entity';
 
 //core subscribers
 export * from './../../candidate/candidate.subscriber';
+export * from './../../email-template/email-template.subscriber';
 export * from './../../employee/employee.subscriber';
 export * from './../../feature/feature.subscriber';
+export * from './../../organization-contact/organization-contact.subscriber';
 export * from './../../organization/organization.subscriber';
 export * from './../../reports/report.subscriber';
+export * from './../../tenant/tenant.subscriber';
 export * from './../../time-tracking/activity/activity.subscriber';
 export * from './../../time-tracking/screenshot/screenshot.subscriber';
 export * from './../../time-tracking/time-slot/time-slot.subscriber';
 export * from './../../user/user.subscriber';
-export * from './../../organization-contact/organization-contact.subscriber';
-export * from './../../email-template/email-template.subscriber';

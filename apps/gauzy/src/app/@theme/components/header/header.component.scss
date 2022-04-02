@@ -212,7 +212,10 @@ $orange: #f56d58;
 .button.create {
   background: $orange;
   box-shadow: 0px 10px 13px -7px $orange;
-  &:hover {
+  &[nbButton].appearance-filled{
+    border-width: 0;
+  }
+  &:hover, &:focus {
     background: $orange;
   }
 }

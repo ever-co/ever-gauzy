@@ -1,7 +1,7 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
 import { faker } from '@ever-co/faker';
 import { Organization } from "./organization.entity";
-import { generateSlug, getOrganizationDummyImage } from "core/utils";
+import { generateSlug, getOrganizationDummyImage } from "./../core/utils";
 
 @EventSubscriber()
 export class OrganizationSubscriber implements EntitySubscriberInterface<Organization> {
@@ -25,7 +25,7 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
     /**
      * Called before organization insertion.
      */
-     beforeInsert(event: InsertEvent<Organization>) {
+    beforeInsert(event: InsertEvent<Organization>) {
         if (event) {
             const { entity } = event;
             if(entity.name || entity.officialName) {

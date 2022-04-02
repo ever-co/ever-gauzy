@@ -72,7 +72,7 @@ export class OneColumnLayoutComponent
 	}
 
 	toggle() {
-    this.isExpanded = !this.isExpanded;
+    	this.isExpanded = !this.isExpanded;
 		if (this.isExpanded) {
 			this.sidebarService.expand('menu-sidebar');
 		} else {

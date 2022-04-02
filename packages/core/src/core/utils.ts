@@ -203,6 +203,11 @@ export const getOrganizationDummyImage = (name: string) => {
 	return getDummyImage(330, 300, firstNameLetter);
 };
 
+export const getTenantLogo = (name: string) => {
+	const firstNameLetter = name ? name.charAt(0).toUpperCase() : '';
+	return getDummyImage(330, 300, firstNameLetter);
+};
+
 /**
  * Merge Overlapping Date & Time
  * 
