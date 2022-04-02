@@ -41,12 +41,11 @@ div {
 
 ::ng-deep {
   nb-context-menu {
-    transform: translateY(50%);
     nb-menu .menu-item {
       border-width: 0;
       a {
         text-align: left;
-        border-radius:  nb-theme(border-radius);
+        border-radius: nb-theme(border-radius);
         &:hover {
           background-color: nb-theme(color-primary-transparent-default);
         }
@@ -55,7 +54,8 @@ div {
   }
   nb-context-menu,
   .context-menu {
-    border-radius: 0 10px 10px 10px;
+    border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
+      nb-theme(border-radius);
     padding: 0.3125rem;
   }
 }
