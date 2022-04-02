@@ -958,7 +958,7 @@
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
 		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
-		"GROUP_BY": "Group By",
+		"GROUP_BY": "Group",
 		"DATE": "Дата",
 		"TO_DO": "TO-DO",
 		"TIME": "Time",
@@ -3815,5 +3815,12 @@
 		"HELP": "Помощ",
 		"SIGN_OUT": "Sign Out",
 		"PROFILE": "Profile"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
+			"CREATE_NEW_WORKSPACE": "Create a new workspace",
+			"FIND_WORKSPACE": "Find workspace"
+		}
 	}
 }

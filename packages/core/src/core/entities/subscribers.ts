@@ -8,6 +8,7 @@ import {
 	OrganizationSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	TenantSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber
 } from "./internal";
@@ -26,5 +27,6 @@ export const coreSubscribers = [
 	ReportSubscriber,
 	ScreenshotSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
+	UserSubscriber,
+	TenantSubscriber
 ];

@@ -958,7 +958,7 @@
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Участники Раболи",
 		"MANUAL_TIME_EDIT_REPORT": "Отчет о времени вручную",
-		"GROUP_BY": "Группировать по",
+		"GROUP_BY": "Группа",
 		"DATE": "Дата",
 		"TO_DO": "ДО",
 		"TIME": "Время",
@@ -3815,5 +3815,12 @@
 		"HELP": "Помогите",
 		"SIGN_OUT": "Выйти",
 		"PROFILE": "Профиль"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "Войти в другую рабочую область",
+			"CREATE_NEW_WORKSPACE": "Создать новую рабочую область",
+			"FIND_WORKSPACE": "Найти рабочую область"
+		}
 	}
 }

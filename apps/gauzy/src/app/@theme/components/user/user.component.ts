@@ -1,19 +1,22 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { IUser } from '../../../../../../../packages/contracts/dist/user.model';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { IUser } from '@gauzy/contracts';
 
 @Component({
-  selector: 'gauzy-user',
-  templateUrl: './user.component.html',
-  styleUrls: ['./user.component.scss']
+	selector: 'gauzy-user',
+	templateUrl: './user.component.html',
+	styleUrls: ['./user.component.scss']
 })
 export class UserComponent implements OnInit {
+	@Input() showIdentity: boolean = false;
+	@Input() user: IUser;
 
-  @Input() showIdentity: boolean = false;
-  @Input() user: IUser;
+	@Output() clicked: EventEmitter<any> = new EventEmitter<boolean>();
 
-  constructor() { }
+	constructor() {}
 
-  ngOnInit(): void {
-  }
+	ngOnInit(): void {}
 
+	onClicked() {
+		this.clicked.emit();
+	}
 }

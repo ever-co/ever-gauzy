@@ -23,7 +23,7 @@
       <p class="link" routerLink="/auth/logout">{{ 'USER_MENU.SIGN_OUT' | translate}}</p>
     </div>
     <div class="sub-user-menu">
-      <gauzy-user showIdentity="true" [user]="user"></gauzy-user>
+      <gauzy-user showIdentity="true" [user]="user" (clicked)="onClick()"></gauzy-user>
     </div>
   </div>
   <div class="right-menu">

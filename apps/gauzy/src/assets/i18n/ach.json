@@ -958,7 +958,7 @@
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "crwdns8242:0crwdne8242:0",
 		"MANUAL_TIME_EDIT_REPORT": "crwdns8488:0crwdne8488:0",
-		"GROUP_BY": "crwdns8468:0crwdne8468:0",
+		"GROUP_BY": "crwdns11056:0crwdne11056:0",
 		"DATE": "crwdns8470:0crwdne8470:0",
 		"TO_DO": "crwdns8490:0crwdne8490:0",
 		"TIME": "crwdns8474:0crwdne8474:0",
@@ -3815,5 +3815,12 @@
 		"HELP": "crwdns11046:0crwdne11046:0",
 		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
 		"PROFILE": "crwdns11050:0crwdne11050:0"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "crwdns11058:0crwdne11058:0",
+			"CREATE_NEW_WORKSPACE": "crwdns11060:0crwdne11060:0",
+			"FIND_WORKSPACE": "crwdns11062:0crwdne11062:0"
+		}
 	}
 }
