@@ -20,7 +20,8 @@ export class TrayIcon {
 		settingsWindow,
 		config,
 		windowPath,
-		iconPath
+		iconPath,
+		mainwindow
 	) {
 		this.removeTrayListner()
 		let loginPageAlreadyShow = false;
@@ -259,6 +260,30 @@ export class TrayIcon {
 		const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById(
 			'window-setting'
 		);
+		const openWindow = () => {
+			if (app.getName() === 'gauzy-desktop-timer') {
+				timeTrackerWindow.show();
+				setTimeout(async () => {
+					let lastTime;
+					if (auth && auth.employeeId) {
+						[ lastTime ] = await TimerData.getLastCaptureTimeSlot(
+							knex,
+							LocalStore.beforeRequestParams()
+						);
+					}
+					console.log('Last Capture Time Open Time Tracker (Desktop Try):', lastTime);
+					timeTrackerWindow.webContents.send(
+						'timer_tracker_show',
+						{
+							...LocalStore.beforeRequestParams(),
+							timeSlotId: lastTime ? lastTime.timeSlotId : null
+						}
+					);
+				}, 1000);
+			} else {
+				mainwindow.show();
+			}
+		}
 		if (auth && auth.employeeId) {
 			contextMenu = menuAuth;
 			menuWindowSetting.enabled = true;
@@ -269,6 +294,9 @@ export class TrayIcon {
 			);
 		}
 		this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+		this.tray.on('double-click', (e) => {
+			openWindow();
+		})
 
 		ipcMain.on('update_tray_start', (event, arg) => {
 			contextMenu[2].enabled = false;
