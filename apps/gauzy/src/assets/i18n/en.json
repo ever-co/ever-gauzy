@@ -1,6 +1,6 @@
 {
 	"BUTTONS": {
-    "PAY":"Pay",
+		"PAY": "Pay",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
@@ -58,7 +58,7 @@
 		"SELECT": "Select",
 		"EMAIL": "Email",
 		"CONVERT_TO_INVOICE": "Convert to invoice",
-    	"TO_INVOICE":"To invoice",
+		"TO_INVOICE": "To invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
@@ -106,7 +106,7 @@
 		"GENERATE": "Generate",
 		"SEND_RECEIPT": "Send Receipt",
 		"ADD_COMMENT": "Add Comment",
-		"CONTINUE" : "Continue",
+		"CONTINUE": "Continue",
 		"SUPER_ADMIN_DEMO": "Super Admin Demo",
 		"ADMIN_DEMO": "Admin Demo",
 		"EMPLOYEE_DEMO": "Employee Demo",
@@ -115,7 +115,7 @@
 		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role",
 		"RESTORE": "Restore",
 		"VIEW_ALL": "View All",
-    	"VIEW_REPORT": "View Report",
+		"VIEW_REPORT": "View Report",
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
 		"TIME_TRACKING_DISABLE": "Disable Time Tracking"
 	},
@@ -573,7 +573,7 @@
 			"WAS": "was",
 			"ENABLED": "enabled",
 			"DISABLED": "disabled",
-			"WAIT_UNTIL_RELOAD" : "Please wait till application reloads"
+			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
 		}
 	},
 	"POP_UPS": {
@@ -690,7 +690,7 @@
 		"ROLES": "Roles & Permissions",
 		"DANGER_ZONE": "Danger Zone",
 		"FILE_STORAGE": "File Storage",
-    "INVITE_PEOPLE": "Invite People",
+		"INVITE_PEOPLE": "Invite People",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT_EXPORT_DATA": "Import / Export Data",
@@ -796,7 +796,7 @@
 			"EMPLOYEE_PROPOSAL_TEMPLATE": "Employee Proposal Template",
 			"EMPLOYEE_RECURRING_EXPENSE": "Employee Recurring Expense",
 			"EMPLOYEE_SETTING": "Employee Setting",
-			"EMPLOYEE_UPWORK_JOB_SEARCH_CRITERION":"Employee Upwork Job Search Criterion",
+			"EMPLOYEE_UPWORK_JOB_SEARCH_CRITERION": "Employee Upwork Job Search Criterion",
 			"INTEGRATION_ENTITY_SETTING": "Integration Entity Setting",
 			"INTEGRATION_ENTITY_SETTING_TIED_ENTITY": "Integration Entity Setting Tied Entity",
 			"INTEGRATION_MAP": "Integration Map",
@@ -935,9 +935,9 @@
 		"COSMIC": "Cosmic",
 		"CORPORATE": "Corporate",
 		"MATERIAL_LIGHT_THEME": "Material Light",
-		"MATERIAL_DARK_THEME":"Material Dark",
-		"GAUZY_LIGHT":"Gauzy Light",
-		"GAUZY_DARK":"Gauzy Dark",
+		"MATERIAL_DARK_THEME": "Material Dark",
+		"GAUZY_LIGHT": "Gauzy Light",
+		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Language",
 		"ENGLISH": "English",
 		"BULGARIAN": "Bulgarian",
@@ -950,7 +950,7 @@
 		"TABLE": "Table",
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View",
-    "QUICK_SETTINGS":"Quick Settings"
+		"QUICK_SETTINGS": "Quick Settings"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
@@ -2232,8 +2232,7 @@
 		"SELECTED": "Selected",
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "Main",
-		"INVENTORY":"Inventory"
-
+		"INVENTORY": "Inventory"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -2454,10 +2453,10 @@
 		}
 	},
 	"INVOICES_PAGE": {
-    "SENDER":"Sender",
-		"BROWSE":"Browse",
-		"COMMENT":"Comment",
-		"COMMENTS":"Comments",
+		"SENDER": "Sender",
+		"BROWSE": "Browse",
+		"COMMENT": "Comment",
+		"COMMENTS": "Comments",
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
@@ -2485,7 +2484,7 @@
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
 		"INVOICES_SELECT_CURRENCY": "Currency",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
-    	"INVOICES_SELECT_DISCOUNT": "Discount",
+		"INVOICES_SELECT_DISCOUNT": "Discount",
 		"INVOICES_SELECT_PAID": "Paid",
 		"INVOICES_TAXES": "Taxes",
 		"INVOICES_SELECT_TERMS": "Terms",
@@ -2784,7 +2783,7 @@
 		"CANDIDATE": "Candidate",
 		"MANAGE_ORGANIZATION": "Manage Organization",
 		"PRODUCT_INVENTORY": "Product Inventory",
-		"PROJECT":"Project",
+		"PROJECT": "Project",
 		"ORGANIZATION_TEAM": "Organization Team",
 		"ORGANIZATION_DOCUMENT": "Organization Document",
 		"LEAD_CUSTOMER_CLIENT": "Lead, Customer & Client",
@@ -2958,7 +2957,7 @@
 		"PRODUCT_INVENTORY": {
 			"": ""
 		},
-		"PROJECT":{
+		"PROJECT": {
 			"": ""
 		},
 		"ORGANIZATION_TEAM": {
@@ -3516,7 +3515,7 @@
 			"TIME_LOG": "TimeLog"
 		},
 		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app",
-    	"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?"
+		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
@@ -3800,28 +3799,28 @@
 		}
 	},
 	"PAGINATION": {
-		"ITEMS":"Items"
+		"ITEMS": "Items"
 	},
 	"USER_MENU": {
-		"STATUS":"Status",
-		"AVAILABLE":"Available",
-		"UNAVAILABLE":"Unavailable",
-		"PAUSE_NOTIFICATIONS":"Pause notifications",
-		"FOR_1_HOUR":"For 1hour",
-		"FOR_2_HOURS":"For 2hours",
-		"UNTIL_TOMORROW":"Until tomorrow",
-		"CUSTOM":"Custom",
-		"SET_AS_NOTIFICATION_SCHEDULE":"Set as notification schedule",
-		"SET_YOURSELF_AS_AWAY":"Set yourself as away",
-		"HOTKEYS":"Hotkeys",
-		"HELP":"Help",
-		"SIGN_OUT":"Sign Out",
-		"PROFILE":"Profile"
+		"STATUS": "Status",
+		"AVAILABLE": "Available",
+		"UNAVAILABLE": "Unavailable",
+		"PAUSE_NOTIFICATIONS": "Pause notifications",
+		"FOR_1_HOUR": "For 1hour",
+		"FOR_2_HOURS": "For 2hours",
+		"UNTIL_TOMORROW": "Until tomorrow",
+		"CUSTOM": "Custom",
+		"SET_AS_NOTIFICATION_SCHEDULE": "Set as notification schedule",
+		"SET_YOURSELF_AS_AWAY": "Set yourself as away",
+		"HOTKEYS": "Hotkeys",
+		"HELP": "Help",
+		"SIGN_OUT": "Sign Out",
+		"PROFILE": "Profile"
 	},
 	"WORKSPACES": {
-		"MENUS" : {
-			"SING_ANOTHER_WORKSPACE" : "Sign in another workspace",
-			"CREATE_NEW_WORKSPACE" : "Create a new workspace",
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
+			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
 		}
 	}
