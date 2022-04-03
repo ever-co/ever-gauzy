@@ -333,7 +333,7 @@ export class AppService {
 			.toPromise();
 	}
 
-	toggleApi(values) {
+	stopTimer(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
@@ -353,7 +353,7 @@ export class AppService {
 		console.log(body, 'body from toggle API from app.service.ts 353 line');
 		return firstValueFrom(
 			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/toggle`,
+				`${values.apiHost}/api/timesheet/timer/stop`,
 				{ ...body },
 				{ headers: headers }
 			)
