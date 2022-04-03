@@ -690,6 +690,7 @@
 		"ROLES": "crwdns2645:0crwdne2645:0",
 		"DANGER_ZONE": "crwdns2769:0crwdne2769:0",
 		"FILE_STORAGE": "crwdns8148:0crwdne8148:0",
+		"INVITE_PEOPLE": "crwdns11064:0crwdne11064:0",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "crwdns2941:0crwdne2941:0",
 			"IMPORT_EXPORT_DATA": "crwdns8588:0crwdne8588:0",
