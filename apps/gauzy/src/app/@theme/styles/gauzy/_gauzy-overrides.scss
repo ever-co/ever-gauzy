@@ -1,0 +1,41 @@
+$default-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
+$default-height: 42px;
+$default-radius: nb-theme(border-radius);
+
+@mixin ng-select-overrides($height, $radius) {
+  .ng-select {
+    .ng-select-container {
+      border-radius: $radius;
+      box-shadow: $default-box-shadow;
+      height: $height;
+    }
+  }
+}
+
+@mixin text-inputs-overrides() {
+  input {
+    border-radius: $default-radius;
+    box-shadow: $default-box-shadow;
+    height: $default-height;
+  }
+  textarea {
+    border-radius: $default-radius;
+    box-shadow: $default-box-shadow;
+    resize: none;
+    height: 102px;
+  }
+}
+
+@mixin nb-select-overrides($height, $radius) {
+  nb-select.shape-rectangle .select-button {
+    border-radius: $radius;
+    box-shadow: $default-box-shadow;
+    height: $height;
+  }
+}
+
+@mixin gauzy-overrides() {
+  @include nb-select-overrides($default-height, $default-radius);
+  @include text-inputs-overrides;
+  @include ng-select-overrides($default-height, $default-radius);
+}
