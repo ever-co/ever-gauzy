@@ -11,65 +11,46 @@
 			</div>
 		</nb-accordion-item-header>
 		<nb-accordion-item-body>
-			<i class="fas fa-user-plus"></i
-			><span class="ml-1">Invite people</span>
-		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<i class="fas fa-users"></i><span class="ml-1">Users</span>
-		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<i class="fas fa-exchange-alt"></i
-			><span class="ml-1">Import/Export</span>
-		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<i class="fas fa-globe"></i><span class="ml-1">Organizations</span>
-		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<i class="fas fa-swatchbook"></i
-			><span class="ml-1">Apps & Integrations</span>
+			<div class="d-flex flex-column" *ngFor="let action of actions">
+				<ng-container *ngxPermissionsOnly="action.data.permissionKeys">
+					<span class="link mb-3"
+						><i [class]="action.icon"></i
+						><span [routerLink]="action.link" class="ml-1">{{
+							action.data.translationKey | translate
+						}}</span></span
+					>
+				</ng-container>
+			</div>
 		</nb-accordion-item-body>
 		<nb-accordion-item-body>
 			<nb-accordion>
 				<nb-accordion-item>
 					<nb-accordion-item-header>
-						<i class="fas fa-cog"></i
-						><span class="ml-1">Settings</span>
+						<i [class]="settings.icon"></i
+						><span class="ml-1">{{
+							settings.data.translationKey | translate
+						}}</span>
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
-						<i class="fas fa-pen"></i
-						><span class="ml-1">General</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-swatchbook"></i
-						><span class="ml-1">features</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-envelope-open"></i
-						><span class="ml-1">Email History</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-envelope"></i
-						><span class="ml-1">Email Templates</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-address-card"></i
-						><span class="ml-1">Accounting Templates</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-database"></i
-						><span class="ml-1">File Storage</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-at"></i
-						><span class="ml-1">SMS Gateways</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-at"></i
-						><span class="ml-1">Custom SMTP</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-award"></i
-						><span class="ml-1">Roles & Permissions</span>
+						<div
+							class="d-flex flex-column"
+							*ngFor="let setting of settings.children"
+						>
+						<ng-container
+							*ngxPermissionsOnly="setting.data.permissionKeys"
+						>
+							<span class="link mb-3">
+								<i [class]="setting.icon"></i
+								><span
+									[routerLink]="setting.link"
+									class="ml-1"
+									>{{
+										setting.data.translationKey | translate
+									}}</span
+								>
+							</span>
+						</ng-container>
+            </div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
 			</nb-accordion>

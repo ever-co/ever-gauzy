@@ -68,3 +68,10 @@ nb-accordion-item:last-child.collapsed nb-accordion-item-header {
 .white-svg {
   filter: brightness(0) invert(1);
 }
+
+.link{
+  cursor: pointer;
+  &:hover{
+    color: nb-theme(text-primary-color);
+  }
+}
