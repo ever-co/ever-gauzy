@@ -23,7 +23,7 @@ export class ScheduleTimeLogEntriesHandler
 		if (timeLog) {
 			timeLogs = await this.timeLogRepository.find({
 				where: (query: SelectQueryBuilder<TimeLog>) => {
-					query.andWhere(`"${query.alias}"."id" =: id`, { id: timeLog.id });
+					query.andWhere(`"${query.alias}"."id" = :id`, { id: timeLog.id });
 				},
 				relations: ['timeSlots']
 			});
@@ -31,7 +31,7 @@ export class ScheduleTimeLogEntriesHandler
 			timeLogs = await this.timeLogRepository.find({
 				where: (query: SelectQueryBuilder<TimeLog>) => {
 					query.andWhere(`"${query.alias}"."stoppedAt" NOT NULL`);
-					query.orWhere(`"${query.alias}"."isRunning" =: isRunning`, { isRunning: true });
+					query.orWhere(`"${query.alias}"."isRunning" = :isRunning`, { isRunning: true });
 				},
 				relations: ['timeSlots']
 			});
