@@ -93,6 +93,7 @@ const MODULES = [
 	TranslateModule,
   ThemeLanguageSelectorModule,
   ThemeSelectorModule,
+  WorkspacesModule,
 	NgxPermissionsModule.forChild(),
 ];
 
@@ -112,7 +113,7 @@ const COMPONENTS = [
 
 const PIPES = [...Pipes];
 
-const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule, WorkspacesModule];
+const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule];
 
 @NgModule({
 	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
