@@ -1,5 +1,6 @@
 @import 'var';
 @import '../filters/filters.component.scss';
+@import 'gauzy/_gauzy-overrides';
 
 $button-radius : nb-theme(button-rectangle-border-radius);
 
@@ -164,4 +165,8 @@ $button-radius : nb-theme(button-rectangle-border-radius);
 .single-filter-wrapper {
     margin-bottom: 5px;
     padding-right: 0 !important;
+}
+
+:host ::ng-deep{
+  @include nb-select-overrides(2rem, $default-radius, $default-box-shadow);
 }
