@@ -37,6 +37,7 @@ export class OneColumnLayoutComponent
 
 	isOpen: boolean = false;
 	isExpanded: boolean = true;
+  isCollapse:boolean = true;
 
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,
@@ -80,6 +81,11 @@ export class OneColumnLayoutComponent
 			this.layoutService.changeLayoutSize();
 		}
 	}
+
+  onCollapse(event: boolean){
+    this.isCollapse = event;
+    if(!this.isCollapse && !this.isExpanded) this.toggle();
+  }
 
 	ngOnDestroy() {
 		this.navigationBuilderService.clearSidebars();
