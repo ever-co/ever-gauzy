@@ -5,7 +5,7 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import {
