@@ -65,6 +65,7 @@ import { UserComponent } from './components/user/user.component';
 import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
+import { OutsideDirective } from './directives/outside.directive';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -115,10 +116,12 @@ const PIPES = [...Pipes];
 
 const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule];
 
+const DIRECTIVES =  [OutsideDirective];
+
 @NgModule({
 	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
 	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS],
-	declarations: [...COMPONENTS, ...PIPES],
+	declarations: [...COMPONENTS, ...PIPES, ...DIRECTIVES],
 	providers: [
 		UsersService,
 		SelectorService,
