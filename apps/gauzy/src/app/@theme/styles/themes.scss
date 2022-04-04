@@ -34,7 +34,10 @@ $nb-themes: nb-register-theme(
     sidebar-padding: 0.625rem,
     gauzy-card-1:rgba(255, 255, 255, 1),
     gauzy-card-2:rgba(50, 50, 50, 0.03),
-    gauzy-input-background: rgba(255, 255, 255, 1)
+    gauzy-input-background: rgba(255, 255, 255, 1),
+    gauzy-sidebar-background-1: #EBEBEB,
+    gauzy-sidebar-background-2 : rgba(251, 251, 251, 1),
+    accordion-item-background-color: #FBFBFB
   ),
   default,
   default
@@ -126,7 +129,9 @@ $nb-themes: nb-register-theme(
     sidebar-padding: 0.625rem,
     gauzy-card-2:rgba(41, 41, 51, 1),
     gauzy-card-1:rgba(32, 32, 35, 1),
-    gauzy-input-background: rgba(255, 255, 255, .15)
+    gauzy-input-background: rgba(255, 255, 255, .15),
+    gauzy-sidebar-background-1: #181818,
+    gauzy-sidebar-background-2 : 5px 0px 1px 0px rgba(0,0,0,0.5)
   ),
   dark,
   dark
@@ -238,7 +243,8 @@ $nb-themes: nb-register-theme((
       route-tabset-divider-width: 0,
       route-tabset-tab-underline-width:0,
       footer-shadow: none,
-      footer-divider-style: none
+      footer-divider-style: none,
+      sidebar-shadow:none
   ),
   gauzy-light,
   default
@@ -284,7 +290,8 @@ $nb-themes: nb-register-theme(
      button-outline-medium-padding: 0.4375rem 0.875rem,
      toggle-height: 1.5rem,
      toggle-switcher-size: 1.4rem,
-     toggle-switcher-icon-size: 0
+     toggle-switcher-icon-size: 0,
+     sidebar-shadow:none
   ),
   gauzy-dark,
   dark
