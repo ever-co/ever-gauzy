@@ -14,7 +14,6 @@ import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { ProgressStatusModule } from '../../progress-status/progress-status.module';
 import { ReportTableUserAvatarModule } from "../report-table-user-avatar/report-table-user-avatar.module";
 import { OrganizationModule } from "../organization/organization.module";
-import { TableProgressBarModule } from "../table-progress-bar/table-progress-bar.module";
 
 @NgModule({
 	declarations: [ActivitiesReportGridComponent],
@@ -32,7 +31,6 @@ import { TableProgressBarModule } from "../table-progress-bar/table-progress-bar
 		ProgressStatusModule,
 		ReportTableUserAvatarModule,
 		OrganizationModule,
-		TableProgressBarModule,
 	],
 })
 export class ActivitiesReportGridModule {}

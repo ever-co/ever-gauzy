@@ -20,6 +20,7 @@ export class ProgressStatusComponent implements OnInit {
 	@Input() set percentage(value: boolean) {
 		this._percentage = value;
 	}
+	@Input() oneStatus?: string
 
 	constructor() {}
 

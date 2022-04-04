@@ -4,7 +4,7 @@
 		<nb-progress-bar
 			class="mb-1"
 			[value]="percentage"
-			[status]="progressStatus(percentage)"
+			[status]="oneStatus ? oneStatus : progressStatus(percentage)"
 			[displayValue]="true"
 			size="tiny"
 		>
