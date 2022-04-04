@@ -33,7 +33,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/common": "^8.4.3",
+		"@nestjs/common": "^8.3.1",
 		"@nestjs/cqrs": "^8.0.2",
 		"@nestjs/passport": "^8.2.1",
 		"@nestjs/swagger": "^5.2.0",
