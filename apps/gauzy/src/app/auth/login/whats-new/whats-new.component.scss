@@ -3,6 +3,9 @@
 
 .section-wrapper {
   background: rgba(245, 109, 88, 0.05);
+  &.dark {
+    background: rgba(245, 109, 88, 0.1);
+  }
   border-radius: nb-theme(border-radius);
   padding: 25px;
   box-sizing: border-box;
