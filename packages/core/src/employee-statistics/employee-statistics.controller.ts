@@ -15,7 +15,6 @@ import {
 } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { parseISO } from 'date-fns';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { TransformInterceptor } from './../core/interceptors';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
