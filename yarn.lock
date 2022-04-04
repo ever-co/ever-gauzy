@@ -3566,6 +3566,16 @@
     tslib "2.3.1"
     uuid "8.3.2"
 
+"@nestjs/common@^8.4.3":
+  version "8.4.3"
+  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-8.4.3.tgz#185d15ac1835256e8c5d4035a8b2d04cd705dfb4"
+  integrity sha512-QIhWykB7IPOwHQB/K9wMwmQKibQ5dhg9dt8ySOoD36uFFwN3RJQelzMFF9Rtu7hrMPk6pSyismEUKQ8BZMUD9w==
+  dependencies:
+    axios "0.26.1"
+    iterare "1.2.1"
+    tslib "2.3.1"
+    uuid "8.3.2"
+
 "@nestjs/config@^1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@nestjs/config/-/config-1.2.0.tgz#a4eb58390dd8145b761ee0c8e98e78c8471cabb1"
@@ -7792,6 +7802,13 @@ axios@0.26.0, axios@^0.26.0:
   version "0.26.0"
   resolved "https://registry.yarnpkg.com/axios/-/axios-0.26.0.tgz#9a318f1c69ec108f8cd5f3c3d390366635e13928"
   integrity sha512-lKoGLMYtHvFrPVt3r+RBMp9nh34N0M8zEfCWqdWZx6phynIEhQqAdydpyBAAG211zlhX9Rgu08cOamy6XjE5Og==
+  dependencies:
+    follow-redirects "^1.14.8"
+
+axios@0.26.1:
+  version "0.26.1"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.26.1.tgz#1ede41c51fcf51bbbd6fd43669caaa4f0495aaa9"
+  integrity sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==
   dependencies:
     follow-redirects "^1.14.8"
 
