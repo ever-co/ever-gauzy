@@ -34,10 +34,16 @@
       display: flex;
       align-items: center;
       color: #7e7e8f;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 13px;
+      letter-spacing: 0em;
+      text-align: left;
+      padding: 6px;
       a {
         margin: 0 0.2rem;
         color: #7e7e8f;
-        transition: .2s;
+        transition: 0.2s;
         i {
           padding: 0;
           margin: 0;
@@ -69,9 +75,24 @@ nb-accordion-item:last-child.collapsed nb-accordion-item-header {
   filter: brightness(0) invert(1);
 }
 
-.link{
+.link {
   cursor: pointer;
-  &:hover{
+  margin: 0 10px;
+  padding: 10px;
+  &:hover {
     color: nb-theme(text-primary-color);
+    background-color: rgba(126, 126, 143, 0.1);
+    border-radius: nb-theme(border-radius);
   }
+}
+
+.text {
+  margin: 0 10px;
+  font-family: Inter;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0em;
+  text-align: left;
 }
