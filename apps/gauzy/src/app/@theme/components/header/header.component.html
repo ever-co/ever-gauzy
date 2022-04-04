@@ -63,17 +63,6 @@
 			></ga-employee-selector>
 		</nb-action>
 
-		<nb-action
-			*ngIf="
-				showDateSelector &&
-				!showExtraActions &&
-				selectorsVisibility?.date
-			"
-			class="show-large-up"
-		>
-			<ga-date-selector class="date-selector"></ga-date-selector>
-		</nb-action>
-
 		<nb-action 
 			*ngIf="
 				showDateSelector &&
