@@ -1,6 +1,5 @@
 import { Component } from "@angular/core";
 import { ChangelogComponent } from "../../../@theme/components/theme-sidebar/changelog/changelog.component";
-import { IChangelog } from "@gauzy/contracts";
 import { tap } from "rxjs/operators";
 import { untilDestroyed } from "@ngneat/until-destroy";
 
