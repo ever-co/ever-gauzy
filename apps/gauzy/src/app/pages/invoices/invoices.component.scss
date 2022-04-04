@@ -214,6 +214,8 @@ input {
     .select-button {
       box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
       background: rgba(245, 245, 245);
+      height: 2rem;
+      border-radius: nb-theme(button-rectangle-border-radius);
     }
   }
 }
