@@ -1,0 +1,27 @@
+.wrapper {
+    width: 100%;
+    display: flex;
+
+    .percentage-column {
+        margin-right: 10px;
+        width: 65px;
+    }
+    .progress-bar-column {
+        width: 75%;
+        display: flex;
+        align-items: flex-end;
+    }
+}
+
+:host {
+    width: 100%;
+
+    ::ng-deep {
+        .progress-container {
+            height: 10px !important;
+        }
+        nb-progress-bar {
+            width: 100%;
+        }
+    }
+}

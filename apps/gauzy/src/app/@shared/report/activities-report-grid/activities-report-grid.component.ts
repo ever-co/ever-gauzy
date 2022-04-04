@@ -68,7 +68,7 @@ export class ActivitiesReportGridComponent extends ReportBaseComponent
 		this.subject$.next(true);
 	}
 
-	getActivities() {
+	async getActivities() {
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
