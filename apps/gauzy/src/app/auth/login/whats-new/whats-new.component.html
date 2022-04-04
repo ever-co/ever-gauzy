@@ -11,10 +11,7 @@
             </div>
             <p class="paragraph">
                 {{ item.content }}</p>
-            <ng-template [ngIf]="item.learnMoreUrl" [ngTemplateOutlet]="learnMore"></ng-template>
         </div>
     </div>
-    <ng-template #learnMore>
-        <a nbButton outline status="primary" class="learn-more" [href]="learnMore">Learn more</a>
-    </ng-template>
+    <a *ngIf="learnMore" nbButton outline status="primary" class="learn-more" [href]="learnMore">Learn more</a>
 </section>
