@@ -5,7 +5,7 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import {
@@ -14,7 +14,8 @@ import {
 	StatusTypesEnum,
 	StatusTypesMapRequestApprovalEnum,
 	ApprovalPolicyTypesStringEnum,
-	IPagination
+	IPagination,
+	ITimeOffFindInput
 } from '@gauzy/contracts';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestContext } from '../core/context';
@@ -63,48 +64,44 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	}
 
 	async getAllTimeOffRequests(
-		relations, 
-		findInput?, 
-		filterDate?
+		relations: string[], 
+		findInput: ITimeOffFindInput
 	): Promise<IPagination<TimeOffRequest>> {
 		try {
+			const { organizationId, employeeId } = findInput;
 			const tenantId = RequestContext.currentTenantId();
-			const query = this.timeOffRequestRepository.createQueryBuilder(
-				'timeoff'
-			);
+			const query = this.timeOffRequestRepository.createQueryBuilder('timeoff');
 			query
 				.leftJoinAndSelect(`${query.alias}.employees`, `employees`)
 				.leftJoinAndSelect(`${query.alias}.policy`, `policy`)
 				.leftJoinAndSelect(`employees.user`, `user`);
-			query.where((qb) => {
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId: findInput.organizationId
+			query
+				.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					})
+				);
+				
+			if (employeeId) {
+				const employeeIds = [employeeId];
+				query.innerJoin(`${query.alias}.employees`, 'employee', 'employee.id IN (:...employeeIds)', {
+					employeeIds
 				});
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
+			}
+			const {
+				startDate = moment().startOf('month').toDate(),
+				endDate = moment().endOf('month').toDate(),
+			} = findInput;
+			
+			const start = moment(startDate).format('YYYY-MM-DD hh:mm:ss');
+			const end = moment(endDate).format('YYYY-MM-DD hh:mm:ss');
+
+			query.andWhere(`"${query.alias}"."start" BETWEEN :begin AND :end`, {
+				begin: start,
+				end: end
 			});
-			if (findInput['employeeId']) {
-				const employeeIds = [findInput['employeeId']];
-				query.innerJoin(
-					`${query.alias}.employees`,
-					'employee',
-					'employee.id IN (:...employeeIds)',
-					{ employeeIds }
-				);
-			}
-			if (filterDate) {
-				const startDate = moment(filterDate)
-					.startOf('month')
-					.format('YYYY-MM-DD hh:mm:ss');
-				const endDate = moment(filterDate)
-					.endOf('month')
-					.format('YYYY-MM-DD hh:mm:ss');
-				query.andWhere(
-					`"${query.alias}"."start" BETWEEN :begin AND :end`,
-					{ begin: startDate, end: endDate }
-				);
-			}
+			
 			const items = await query.getMany();
 			return { items, total: items.length };
 		} catch (err) {
