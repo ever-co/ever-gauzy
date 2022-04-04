@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component, Input } from "@angular/core";
 import { IOrganizationProject } from "@gauzy/contracts";
 
 @Component({
@@ -6,11 +6,7 @@ import { IOrganizationProject } from "@gauzy/contracts";
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationComponent implements OnInit {
+export class OrganizationComponent {
 	@Input() members: number
 	@Input() project: IOrganizationProject
-	
-	ngOnInit () {
-		console.log(this.project)
-	}
 }
