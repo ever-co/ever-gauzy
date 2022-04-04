@@ -11,6 +11,7 @@ import { IRolePermission } from './role-permission.model';
 export interface ITenant {
 	id?: string;
 	name?: string;
+	logo?: string;
 
 	readonly createdAt?: Date;
 	readonly updatedAt?: Date;

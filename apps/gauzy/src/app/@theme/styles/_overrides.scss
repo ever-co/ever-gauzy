@@ -18,18 +18,21 @@ body {
   -ms-overflow-style: none;
 }
 
-.cdk-global-scrollblock{
+.cdk-global-scrollblock {
   overflow-y: overlay;
 }
 
-.dashboard-card-scroll nb-card{
+.dashboard-card-scroll nb-card {
   background: nb-theme(background-basic-color-1);
   box-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05);
 }
 
 @mixin nb-overrides() {
+  nb-toggle .toggle {
+      align-items: center;
+  }
 
-  .scrollable{
+  .scrollable {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -272,7 +275,7 @@ body {
   .table {
     color: nb-theme(text-basic-color) !important;
   }
-  nb-accordion-item-body .item-body{
+  nb-accordion-item-body .item-body {
     overflow-x: hidden;
   }
 }

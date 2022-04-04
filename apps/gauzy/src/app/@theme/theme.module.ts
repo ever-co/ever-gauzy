@@ -62,6 +62,7 @@ import { UserComponent } from './components/user/user.component';
 import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { DateRangePickerModule } from './components/header/selectors/date-range-picker';
+import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -91,6 +92,9 @@ const MODULES = [
 	TranslateModule,
   	ThemeLanguageSelectorModule,
   	ThemeSelectorModule,
+	ThemeLanguageSelectorModule,
+	ThemeSelectorModule,
+	WorkspacesModule,
 	NgxPermissionsModule.forChild(),
 ];
 

@@ -4,13 +4,12 @@
 	</nb-layout-header>
 
 	<nb-sidebar state="compacted" tag="user-workspace">
-		<div></div>
+		<div><gauzy-workspaces></gauzy-workspaces></div>
 		<gauzy-user [user]="user" (click)="isOpen = !isOpen"></gauzy-user>
 	</nb-sidebar>
 	<nb-sidebar
 		class="menu-sidebar sidebar_class"
 		tag="menu-sidebar"
-		responsive
 		*ngIf="user"
 	>
 		<ng-content select="nb-menu"></ng-content>

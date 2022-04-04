@@ -260,7 +260,7 @@ export class TimeTrackerService {
 		log.info(`Toggle Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
 			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/toggle`,
+				`${values.apiHost}/api/timesheet/timer/start`,
 				{ ...body },
 				{ headers: headers }
 			)
@@ -286,7 +286,7 @@ export class TimeTrackerService {
 		};
 		return firstValueFrom(
 			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/toggle`,
+				`${values.apiHost}/api/timesheet/timer/stop`,
 				{ ...body },
 				{ headers: headers }
 			)
