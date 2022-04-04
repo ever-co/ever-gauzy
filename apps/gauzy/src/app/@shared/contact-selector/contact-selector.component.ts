@@ -72,7 +72,7 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 				);
 			});
 
-		merge(this.loadContacts$, this.store.selectedDate$)
+		merge(this.loadContacts$)
 			.pipe(untilDestroyed(this), debounceTime(300))
 			.subscribe(async () => {
 				if (this.store.selectedOrganization) {

@@ -35,7 +35,6 @@ export interface AppState {
 	selectedEmployee: ISelectedEmployee;
 	selectedProposal: IProposalViewModel;
 	selectedProject: IOrganizationProject;
-	selectedDate: Date;
 	selectedDateRange: IDateRangePicker;
 	systemLanguages: ILanguage[];
 	featureToggles: IFeatureToggle[];
@@ -57,7 +56,6 @@ export interface PersistState {
 
 export function createInitialAppState(): AppState {
 	return {
-		selectedDate: new Date(),
 		userRolePermissions: [],
 		featureToggles: [],
 		featureOrganizations: [],
@@ -132,7 +130,6 @@ export class Store {
 	);
 	selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
 	selectedProject$ = this.appQuery.select((state) => state.selectedProject);
-	selectedDate$ = this.appQuery.select((state) => state.selectedDate);
 	selectedDateRange$ = this.appQuery.select((state) => state.selectedDateRange);
 	userRolePermissions$ = this.appQuery.select(
 		(state) => state.userRolePermissions
@@ -278,26 +275,6 @@ export class Store {
 		});
 	}
 
-	get selectedDate() {
-		const { selectedDate } = this.appQuery.getValue();
-		if (selectedDate instanceof Date) {
-			return selectedDate;
-		}
-
-		const date = new Date(selectedDate);
-		this.appStore.update({
-			selectedDate: date
-		});
-
-		return date;
-	}
-
-	set selectedDate(date: Date) {
-		this.appStore.update({
-			selectedDate: date
-		});
-	}
-
 	get selectedDateRange() {
 		const { selectedDateRange } = this.appQuery.getValue();
 		return selectedDateRange;
@@ -399,7 +376,7 @@ export class Store {
 	}
 
 	getDateFromOrganizationSettings() {
-		const dateObj = this.selectedDate;
+		const { startDate } = this.selectedDateRange;
 		switch (
 			this.selectedOrganization &&
 			this.selectedOrganization.defaultValueDateType
@@ -408,10 +385,10 @@ export class Store {
 				return new Date(Date.now());
 			}
 			case DefaultValueDateTypeEnum.END_OF_MONTH: {
-				return new Date(dateObj.getFullYear(), dateObj.getMonth(), 0);
+				return new Date(startDate.getFullYear(), startDate.getMonth(), 0);
 			}
 			case DefaultValueDateTypeEnum.START_OF_MONTH: {
-				return new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+				return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 			}
 			default: {
 				return new Date(Date.now());

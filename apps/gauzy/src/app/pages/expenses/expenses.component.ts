@@ -338,9 +338,6 @@ export class ExpensesComponent
 	}
 
 	openAddExpenseDialog() {
-		if (!this.store.selectedDate) {
-			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
-		}
 		this.dialogService
 			.open(ExpensesMutationComponent)
 			.onClose.pipe(untilDestroyed(this))
@@ -401,10 +398,7 @@ export class ExpensesComponent
 				data: selectedItem
 			});
 		}
-		if (!this.store.selectedDate) {
-			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
-		}
-
+	
 		this.dialogService
 			.open(ExpensesMutationComponent, {
 				context: {

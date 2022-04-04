@@ -258,9 +258,6 @@ export class IncomeComponent
 	}
 
 	async addIncome() {
-		if (!this.store.selectedDate) {
-			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
-		}
 		this.dialogService
 			.open(IncomeMutationComponent)
 			.onClose
