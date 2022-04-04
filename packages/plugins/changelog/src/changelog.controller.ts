@@ -18,6 +18,7 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import {
+	AuthGuard,
 	CrudController,
 	Public,
 	UUIDValidationPipe
@@ -27,6 +28,7 @@ import { ChangelogService } from './changelog.service';
 import { ChangelogCreateCommand, ChangelogUpdateCommand } from './commands';
 
 @ApiTags('Changelog')
+@UseGuards(AuthGuard)
 @Controller()
 export class ChangelogController extends CrudController<Changelog> {
 	constructor(
