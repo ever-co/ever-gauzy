@@ -1,17 +1,20 @@
-<section class="section-wrapper" [ngClass]="{dark}">
+<section class="section-wrapper">
     <div class="whats-new-wrapper">
         <h3 class="main-header">What's New?</h3>
-        <div *ngFor="let entry of dataMock" class="entry">
+        <div *ngFor="let item of items$ | async " class="entry">
             <div class="entry-headings-wrapper">
-                <nb-icon icon="globe-outline" class="icon"></nb-icon>
+                <nb-icon [icon]="item.icon" class="icon"></nb-icon>
                 <div class="entry-headings">
-                    <div class="entry-header">Entry Header</div>
-                    <div *ngIf="showDate" class="entry-header-date">Jan 16, 2022</div>
+                    <div class="entry-header">{{ item.title }}</div>
+                    <div class="entry-header-date">{{ item.date | date }}</div>
                 </div>
             </div>
             <p class="paragraph">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Adipisci delectus, fugit non odit qui rerum!</p>
+                {{ item.content }}</p>
+            <ng-template [ngIf]="item.learnMoreUrl" [ngTemplateOutlet]="learnMore"></ng-template>
         </div>
     </div>
-    <button nbButton outline status="primary" class="learn-more">Learn more</button>
+    <ng-template #learnMore>
+        <a nbButton outline status="primary" class="learn-more" [href]="learnMore">Learn more</a>
+    </ng-template>
 </section>
