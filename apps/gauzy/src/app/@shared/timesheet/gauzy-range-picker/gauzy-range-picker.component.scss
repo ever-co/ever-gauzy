@@ -168,5 +168,5 @@ $button-radius : nb-theme(button-rectangle-border-radius);
 }
 
 :host ::ng-deep{
-  @include nb-select-overrides(2rem, $default-radius, $default-box-shadow);
+  @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
 }
