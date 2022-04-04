@@ -59,9 +59,13 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 			const { where } = filter;
 			if ('valueDate' in where) {
 				const { valueDate } = where;
+				const {
+					startDate = moment().startOf('month').format(),
+					endDate = moment().endOf('month').format()
+				} = valueDate;
 				const { start, end } = getDateRangeFormat(
-					new Date(moment(valueDate).startOf('month').format()),
-					new Date(moment(valueDate).endOf('month').format()),
+					new Date(startDate),
+					new Date(endDate),
 					true
 				);
 				filter.where.valueDate = Between(start, end); 
