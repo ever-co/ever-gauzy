@@ -20,8 +20,15 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: relative;
+      cursor: pointer;
       .theme{
         width: 100%;
+      }
+      gauzy-popup{
+        position: absolute;
+        left: 25%;
+        bottom: 0;
       }
     }
   }

@@ -11,6 +11,7 @@ export class UserMenuComponent implements OnInit {
 	@Output() close: EventEmitter<any> = new EventEmitter<any>(null);
 
 	clicks: boolean[] = [];
+  isOpen: boolean = false;
 
 	constructor() {}
 

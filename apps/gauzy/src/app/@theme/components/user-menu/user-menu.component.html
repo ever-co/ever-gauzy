@@ -52,8 +52,17 @@
 	</div>
 	<div class="right-menu">
 		<span><i (click)="onClick()" class="fas fa-times"></i></span>
-		<p><a target="_blank" href="https://gauzy.co">{{ 'USER_MENU.HELP' | translate }}</a></p>
-		<p>{{ 'USER_MENU.HOTKEYS' | translate }}</p>
+		<p>
+			<a target="_blank" href="https://gauzy.co">{{
+				'USER_MENU.HELP' | translate
+			}}</a>
+		</p>
+		<p (click)="isOpen = !isOpen">
+			{{ 'USER_MENU.HOTKEYS' | translate
+			}}<ng-container *ngIf="isOpen"
+				><gauzy-popup></gauzy-popup
+			></ng-container>
+		</p>
 		<p>
 			<ngx-theme-language-selector
 				class="theme"
