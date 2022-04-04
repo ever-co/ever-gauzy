@@ -1,19 +1,25 @@
 import { Component } from "@angular/core";
-import { ChangelogComponent } from "../../../@theme/components/theme-sidebar/changelog/changelog.component";
+import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
+import { Observable } from "rxjs";
+import { IChangelog } from "@gauzy/contracts";
+import { ChangelogService } from "../../../@core";
 import { tap } from "rxjs/operators";
-import { untilDestroyed } from "@ngneat/until-destroy";
 
 
+@UntilDestroy({checkProperties: true})
 @Component({
 	selector: 'ngx-whats-new',
 	templateUrl: './whats-new.component.html',
 	styleUrls: ['./whats-new.component.scss'],
 })
-export class NgxWhatsNewComponent extends ChangelogComponent {
+export class NgxWhatsNewComponent {
 	learnMore: string
+	items$: Observable<IChangelog[]> = this._changelogService.changelogs$;
+
+	constructor(private readonly _changelogService: ChangelogService) {}
 
 	ngOnInit () {
-		super.ngOnInit();
+		this._changelogService.getAll().pipe(untilDestroyed(this)).subscribe();
 		this.items$
 			.pipe(
 				tap(changeLogs => changeLogs.forEach(x => this.learnMore = x.learnMoreUrl)),
