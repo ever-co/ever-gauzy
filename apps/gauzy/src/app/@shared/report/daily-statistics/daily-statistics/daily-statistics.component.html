@@ -2,14 +2,12 @@
 	<ng-container *ngIf="!request.employeeIds">
 		<div
 			class="daily-item"
-			*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
-		>
+			*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
 			<nb-card
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
-				class="mb-0"
-			>
+				class="mb-0">
 				<nb-card-body>
 					<p>
 						{{ 'REPORT_PAGE.MEMBERS_WORKED' | translate }}

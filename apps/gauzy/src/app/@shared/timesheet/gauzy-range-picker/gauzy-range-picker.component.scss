@@ -150,7 +150,6 @@ $button-radius : nb-theme(button-rectangle-border-radius);
 
         .activity-level-filter, .select-button {
             box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
-            border-radius: 2rem !important;
             background-color: nb-theme(gauzy-card-1) !important;
             color: nb-theme(select-outline-basic-text-color) !important;
         }
