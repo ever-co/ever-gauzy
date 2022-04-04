@@ -1,0 +1,12 @@
+<div *ngIf="project; else noProjects" class="single-project-template">
+    <div class="logo-wrapper">
+        <img [src]="project && project.organizationContact && project['organizationContact']['imageUrl'] " alt="company logo">
+    </div>
+    <div class="headers-wrapper">
+        <div class="main-header" [title]="project?.name">{{ project?.name }} </div>
+        <div class="employees-count">Members count {{ members }}</div>
+    </div>
+</div>
+<ng-template #noProjects>
+    <span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+</ng-template>

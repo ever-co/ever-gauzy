@@ -33,8 +33,8 @@
 	<nb-card-body>
 		<ga-daily-statistics
 			class="mb-4"
-			[filters]="filters"
-		></ga-daily-statistics>
+			[filters]="filters">
+		</ga-daily-statistics>
 
 		<div class="daily-time-report mt-4">
 			<div class="daily-time-report">
@@ -51,8 +51,7 @@
 				class="weekly-logs row-table"
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
-				nbSpinnerStatus="primary"
-			>
+				nbSpinnerStatus="primary">
 				<nb-card *ngIf="weekLogs?.length > 0; else notFound">
 					<nb-card-header>
 						Reports
@@ -60,10 +59,10 @@
 					<nb-card-body>
 						<div class="columns-header weekly-main-header">
 							<div class="table-inner-wrapper">
-								<div class="employee-column">
+								<div class="responsive-table-row employee-column">
 									{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 								</div>
-								<div class="day-column" *ngFor="let date of weekDays">
+								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
 									{{ date | date:'E d MM, y' }}
 								</div>
 							</div>
@@ -100,13 +99,9 @@
 					</nb-card-body>
 				</nb-card>
 				<ng-template #notFound>
-					<div
-							class="row font-weight-bold py-3 align-items-center"
-					>
+					<div class="row font-weight-bold py-3 align-items-center">
 						<div class="col text-center">
-							{{
-							'REPORT_PAGE.NO_ACTIVITIES' | translate
-							}}
+							{{ 'REPORT_PAGE.NO_ACTIVITIES' | translate }}
 						</div>
 					</div>
 				</ng-template>

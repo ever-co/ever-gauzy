@@ -9,7 +9,6 @@ import {
 	Param,
 	Put
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -19,8 +18,9 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import {
+	AuthGuard,
 	CrudController,
-	TenantPermissionGuard,
+	Public,
 	UUIDValidationPipe
 } from '@gauzy/core';
 import { Changelog } from './changelog.entity';
@@ -28,7 +28,7 @@ import { ChangelogService } from './changelog.service';
 import { ChangelogCreateCommand, ChangelogUpdateCommand } from './commands';
 
 @ApiTags('Changelog')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(AuthGuard)
 @Controller()
 export class ChangelogController extends CrudController<Changelog> {
 	constructor(
@@ -48,6 +48,7 @@ export class ChangelogController extends CrudController<Changelog> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found'
 	})
+	@Public()
 	@Get()
 	async findAll(): Promise<IPagination<IChangelog>> {
 		return this.changelogService.findAll();
@@ -64,7 +65,7 @@ export class ChangelogController extends CrudController<Changelog> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post()
-	async createSmtpSetting(
+	async create(
 		@Body() entity: IChangelogCreateInput
 	): Promise<IChangelog> {
 		return await this.commandBus.execute(
@@ -87,7 +88,7 @@ export class ChangelogController extends CrudController<Changelog> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async updateSmtpSetting(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IChangelogUpdateInput
 	): Promise<IChangelog> {

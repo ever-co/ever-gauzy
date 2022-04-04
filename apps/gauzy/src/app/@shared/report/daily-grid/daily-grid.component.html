@@ -325,18 +325,7 @@
 </ng-template>
 
 <ng-template let-project let-members="members" #projectEl>
-	<div *ngIf="project; else noProjects" class="single-project-template">
-		<div class="logo-wrapper">
-			<img [src]="project && project['organizationContact']['imageUrl'] " alt="company logo">
-		</div>
-		<div class="headers-wrapper">
-			<div class="main-header" [title]="project?.name">{{ project?.name }} </div>
-			<div class="employees-count">Members count {{ members }}</div>
-		</div>
-	</div>
-	<ng-template #noProjects>
-		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-	</ng-template>
+	<ga-organization [project]="project" [members]="members"></ga-organization>
 </ng-template>
 
 <ng-template let-task #taskEl>
@@ -354,7 +343,7 @@
 </ng-template>
 
 <ng-template let-employee #employeeEl>
-	<div class="avatar-wrapper">
+	<div class="avatar-wrapper-outer">
 		<ga-report-table-user-avatar
 			*ngIf="employee"
 			[src]="employee?.user?.imageUrl"
@@ -370,25 +359,25 @@
 <ng-template #columnsHeader>
 	<div class="columns-header">
 		<div class="table-inner-wrapper font-weight-bold align-items-center">
-			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="employee-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="responsive-table-row mployee-column">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy !== ReportGroupFilterEnum.project" class="employee-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy !== ReportGroupFilterEnum.project" class="responsive-table-row employee-column">
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy === ReportGroupFilterEnum.project" class="project-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy === ReportGroupFilterEnum.project" class="responsive-table-row project-column">
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="project-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="responsive-table-row project-column">
 				{{ 'REPORT_PAGE.PROJECT' | translate }}
 			</div>
-			<div class="todo-column day-col">
+			<div class="responsive-table-row todo-column day-col">
 				{{ 'REPORT_PAGE.TO_DO' | translate }}
 			</div>
-			<div class="time-column day-col">
+			<div class="responsive-table-row time-column day-col">
 				{{ 'REPORT_PAGE.TIME' | translate }}
 			</div>
-			<div class="activity-column day-col">
+			<div class="responsive-table-row activity-column day-col">
 				{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 			</div>
 		</div>
