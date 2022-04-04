@@ -39,7 +39,7 @@ import { COSMIC_THEME } from './styles/theme.cosmic';
 import { CORPORATE_THEME } from './styles/theme.corporate';
 import { DARK_THEME } from './styles/theme.dark';
 import { MATERIAL_LIGHT_THEME } from './styles/material/theme.material-light';
- import { MATERIAL_DARK_THEME } from './styles/material/theme.material-dark';
+import { MATERIAL_DARK_THEME } from './styles/material/theme.material-dark';
 import { GAUZY_LIGHT } from './styles/gauzy/theme.gauzy-light';
 import { GAUZY_DARK } from './styles/gauzy/theme.gauzy-dark';
 
@@ -58,7 +58,11 @@ import { ProjectSelectModule } from '../@shared/project-select/project-select.mo
 import { TranslateModule } from '../@shared/translate/translate.module';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
 import { MatRippleModule } from '@angular/material/core';
-import { NbAccordionModule, NbToggleModule } from '@nebular/theme';
+import {
+	NbAccordionModule,
+	NbToggleModule,
+	NbCardModule
+} from '@nebular/theme';
 import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { UserComponent } from './components/user/user.component';
@@ -66,6 +70,7 @@ import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-se
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
 import { OutsideDirective } from './directives/outside.directive';
+import { PopupComponent } from './components/popup/popup.component';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -82,8 +87,9 @@ const NB_MODULES = [
 	NbTooltipModule,
 	NbPopoverModule,
 	NbEvaIconsModule,
-  NbAccordionModule,
-  NbToggleModule
+	NbAccordionModule,
+	NbToggleModule,
+	NbCardModule
 ];
 
 const MODULES = [
@@ -92,10 +98,10 @@ const MODULES = [
 	ProjectSelectModule,
 	TimeTrackerModule,
 	TranslateModule,
-  ThemeLanguageSelectorModule,
-  ThemeSelectorModule,
-  WorkspacesModule,
-	NgxPermissionsModule.forChild(),
+	ThemeLanguageSelectorModule,
+	ThemeSelectorModule,
+	WorkspacesModule,
+	NgxPermissionsModule.forChild()
 ];
 
 const COMPONENTS = [
@@ -107,16 +113,17 @@ const COMPONENTS = [
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
 	LayoutSelectorComponent,
-  GauzyLogoComponent,
-  UserMenuComponent,
-  UserComponent
+	GauzyLogoComponent,
+	UserMenuComponent,
+	UserComponent,
+	PopupComponent
 ];
 
 const PIPES = [...Pipes];
 
 const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule];
 
-const DIRECTIVES =  [OutsideDirective];
+const DIRECTIVES = [OutsideDirective];
 
 @NgModule({
 	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
@@ -141,10 +148,10 @@ export class ThemeModule {
 					COSMIC_THEME,
 					CORPORATE_THEME,
 					DARK_THEME,
-          MATERIAL_LIGHT_THEME,
-          MATERIAL_DARK_THEME,
-          GAUZY_LIGHT,
-          GAUZY_DARK
+					MATERIAL_LIGHT_THEME,
+					MATERIAL_DARK_THEME,
+					GAUZY_LIGHT,
+					GAUZY_DARK
 				]).providers,
 				WindowModeBlockScrollService
 			]
