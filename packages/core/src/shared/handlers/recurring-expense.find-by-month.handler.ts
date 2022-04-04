@@ -5,7 +5,7 @@ import {
 } from '@gauzy/contracts';
 import { Between, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { CrudService } from './../../core/crud';
-import { getDateRange, getLastDayOfMonth } from './../../core/utils';
+import { getDateRange } from './../../core/utils';
 import { RequestContext } from './../../core/context';
 
 /**
@@ -26,12 +26,8 @@ export abstract class FindRecurringExpenseByMonthHandler<
 		input: IRecurringExpenseByMonthFindInput | any,
 		relations?: string[]
 	): Promise<IPagination<T>> {
-		const { organizationId, year, month, employeeId } = input;
+		const { organizationId, employeeId, startDate, endDate } = input;
 		const tenantId = RequestContext.currentTenantId();
-
-		const lastDayOfMonth = getLastDayOfMonth(year, month);
-		const inputStartDate = new Date(year, month, 1);
-		const inputEndDate = new Date(year, month, lastDayOfMonth);
 
 		const where: Object = {
 			organizationId,
@@ -46,7 +42,7 @@ export abstract class FindRecurringExpenseByMonthHandler<
 			};
 		}
 
-		const { start, end } = getDateRange(inputStartDate, inputEndDate);
+		const { start, end } = getDateRange(startDate, endDate);
 		const expenses = await this.crudService.findAll({
 			where: [
 				{
