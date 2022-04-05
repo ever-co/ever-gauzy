@@ -26,11 +26,11 @@ import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.servi
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-gauzy-range-picker',
-	templateUrl: './gauzy-range-picker.component.html',
-	styleUrls: ['./gauzy-range-picker.component.scss']
+	selector: 'ngx-gauzy-filters',
+	templateUrl: './gauzy-filters.component.html',
+	styleUrls: ['./gauzy-filters.component.scss']
 })
-export class GauzyRangePickerComponent
+export class GauzyFiltersComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	// declaration of variables
