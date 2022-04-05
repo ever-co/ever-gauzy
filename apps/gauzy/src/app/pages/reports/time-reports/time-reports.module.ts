@@ -10,7 +10,6 @@ import {
 	NbSelectModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { FormsModule } from '@angular/forms';
 import { DailyGridModule } from '../../../@shared/report/daily-grid/daily-grid.module';
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
@@ -32,12 +31,11 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		NbSelectModule,
 		FormsModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    GauzyRangePickerModule
+    	GauzyRangePickerModule
 	]
 })
 export class TimeReportsModule {}

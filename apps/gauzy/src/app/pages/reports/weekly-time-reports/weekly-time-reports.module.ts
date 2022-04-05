@@ -5,7 +5,6 @@ import { NbIconModule, NbSpinnerModule, NbCardModule } from '@nebular/theme';
 import { WeeklyTimeReportsRoutingModule } from './weekly-time-reports-routing.module';
 import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-reports.component';
 import { SharedModule } from '../../../@shared/shared.module';
-import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
@@ -27,7 +26,6 @@ import {
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		GauzyRangePickerModule,
