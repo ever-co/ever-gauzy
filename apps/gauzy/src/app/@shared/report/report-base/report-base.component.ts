@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { combineLatest } from 'rxjs';
+import { combineLatest, debounceTime } from 'rxjs';
 import { Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
@@ -16,10 +16,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 	template: ''
 })
 export class ReportBaseComponent extends TranslationBaseComponent {
-	today: Date = new Date();
 	request: ITimeLogFilters = {
-		startDate: moment(this.today).startOf('week').toDate(),
-		endDate: moment(this.today).endOf('week').toDate(),
 		employeeIds: [],
 		projectIds: []
 	};
@@ -40,8 +37,9 @@ export class ReportBaseComponent extends TranslationBaseComponent {
 		const storeProject$ = this.store.selectedProject$;
 		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				distinctUntilChange(),
 				filter(([organization]) => !!organization),
+				debounceTime(300),
+				distinctUntilChange(),
 				tap(([organization]) => (this.organization = organization)),
 				tap(([organization, employee, project]) => {
 					if (organization) {
