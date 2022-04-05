@@ -16,7 +16,7 @@ import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
-import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-picker/gauzy-range-picker.module';
+import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
 	declarations: [TimeReportsComponent],
@@ -35,7 +35,7 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		FormsModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    	GauzyRangePickerModule
+    	GauzyFiltersModule
 	]
 })
 export class TimeReportsModule {}

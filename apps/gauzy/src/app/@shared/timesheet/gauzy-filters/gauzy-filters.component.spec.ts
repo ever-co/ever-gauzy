@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { GauzyRangePickerComponent } from './gauzy-range-picker.component';
+import { GauzyRangePickerComponent } from './gauzy-filters.component';
 
 describe('GauzyRangePickerComponent', () => {
   let component: GauzyRangePickerComponent;

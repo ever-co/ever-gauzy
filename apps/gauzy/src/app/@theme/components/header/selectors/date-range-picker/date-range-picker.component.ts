@@ -7,8 +7,8 @@ import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from './../../../../../@core/services';
-import { Arrow } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/context/arrow.class';
-import { Next, Previous } from './../../../../../@shared/timesheet/gauzy-range-picker/arrow/strategies';
+import { Arrow } from './arrow/context/arrow.class';
+import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 
 export enum DateRangeKeyEnum {
