@@ -106,6 +106,7 @@ export class ManualTimeComponent
 						};
 					})
 					.value();
+				console.log(this.dailyData)
 			})
 			.finally(() => (this.loading = false));
 	}

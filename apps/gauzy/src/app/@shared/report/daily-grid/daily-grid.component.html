@@ -344,12 +344,13 @@
 
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper-outer">
-		<ga-report-table-user-avatar
-			*ngIf="employee"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id"
-		></ga-report-table-user-avatar>
+		<ngx-avatar
+				class="report-table"
+				*ngIf="employee"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id"
+		></ngx-avatar>
 	</div>
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
@@ -359,7 +360,7 @@
 <ng-template #columnsHeader>
 	<div class="columns-header">
 		<div class="table-inner-wrapper font-weight-bold align-items-center">
-			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="responsive-table-row mployee-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="responsive-table-row employee-column">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>
 			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy !== ReportGroupFilterEnum.project" class="responsive-table-row employee-column">

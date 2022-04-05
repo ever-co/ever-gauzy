@@ -297,12 +297,13 @@
 
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper-outer" *ngIf="employee; else noEmployee">
-		<ga-report-table-user-avatar
-			*ngIf="employee"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id">
-		</ga-report-table-user-avatar>
+		<ngx-avatar
+				class="report-table"
+				*ngIf="employee"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id">
+		</ngx-avatar>
 	</div>
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
