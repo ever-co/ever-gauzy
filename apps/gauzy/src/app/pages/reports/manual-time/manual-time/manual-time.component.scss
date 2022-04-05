@@ -1,6 +1,50 @@
 @import 'report';
+
 :host {
-  nb-badge {
-    position: relative;
-  }
+    nb-badge {
+        border: 2px solid rgba(126, 126, 143, 0.2);
+        border-radius: 4px;
+        position: relative;
+    }
+    .table-row {
+        height: auto;
+    }
+    .table-inner-wrapper {
+        align-items: flex-start;
+    }
+    ::ng-deep {
+        .action-select button {
+            background-color: nb-theme(gauzy-card-1) !important;
+        }
+    }
+}
+
+.employee-column {
+    width: 15%;
+    min-width: 115px;
+    max-width: 185px;
+}
+.project-column {
+    width: 20%;
+    min-width: 15%;
+}
+.to-do-column{
+    width: 15%;
+    min-width: 9%;
+}
+.small-column {
+    width: 10%;
+    min-width: 5%;
+}
+.action-column{
+    text-align: right;
+    width: 5%;
+}
+.filters {
+    text-align: right;
+    margin-bottom: 15px;
+}
+
+@include respond(ipad) {
+    @include mobile-table-styles;
 }

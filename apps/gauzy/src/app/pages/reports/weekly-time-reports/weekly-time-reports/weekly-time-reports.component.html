@@ -73,11 +73,12 @@
 									<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 									<div class="responsive-table-content mobile-padding">
 										<div class="avatar-wrapper">
-											<ga-report-table-user-avatar
+											<ngx-avatar
+													class="report-table"
 													[src]="day?.employee?.user?.imageUrl"
 													[name]="day?.employee?.user?.name"
 													[id]="day?.employee?.id">
-											</ga-report-table-user-avatar>
+											</ngx-avatar>
 											<ng-template #noProjects>
 												<span>{{
 													'REPORT_PAGE.NO_EMPLOYEE'| translate}}</span>
