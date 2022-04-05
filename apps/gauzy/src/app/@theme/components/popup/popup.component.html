@@ -1,7 +1,7 @@
 <nb-card>
 	<nb-card-body>
 		<div class="close-popup">
-			<span><i class="fas fa-times"></i></span>
+			<span><i (click)="close()" class="fas fa-times"></i></span>
 		</div>
 		<div class="content">
 			<img
@@ -20,6 +20,7 @@
 				nbButton
 				status="info"
 				size="small"
+				(click)="close()"
 			>
 				Ok
 			</button>
