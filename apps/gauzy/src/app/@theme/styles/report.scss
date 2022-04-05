@@ -1,6 +1,59 @@
 @import 'themes';
 @import 'var';
 
+@mixin mobile-table-styles {
+    ::ng-deep {
+        .group-by-wrapper {
+            margin-left: 10px;
+        }
+    }
+    .columns-header {
+        display: none;
+    }
+    .card nb-card-body {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .table-row {
+        border-radius: 0;
+        margin-bottom: 15px;
+    }
+    .responsive-table-row {
+        width: 100% !important;
+        min-width: auto !important;
+        max-width: unset !important;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 1px solid nb-theme(border-basic-color-4);
+    }
+    .responsive-table-header {
+        display: block;
+        font-family: Inter;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+    }
+    .responsive-table-content, .responsive-table-header {
+        width: 50%;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    .table-row {
+        height: auto;
+    }
+    .table-inner-wrapper {
+        flex-direction: column;
+    }
+}
+
 nb-card, nb-card-header, nb-card-body, .card {
     background-color: nb-theme(background-basic-color-1);
     border-color: nb-theme(border-basic-color-3);
@@ -131,7 +184,6 @@ nb-card, nb-card-header, nb-card-body, .card {
 .responsive-table-row {
     margin-right: 10px
 }
-
 .avatar-wrapper-outer {
     max-width: 95%;
     padding-top: 5px;
@@ -143,56 +195,7 @@ nb-card, nb-card-header, nb-card-body, .card {
 }
 
 @include respond(lg) {
-    ::ng-deep {
-        .group-by-wrapper {
-            margin-left: 10px;
-        }
-    }
-    .columns-header {
-        display: none;
-    }
-    .card nb-card-body {
-        padding-left: 0;
-        padding-right: 0;
-    }
-    .table-row {
-        border-radius: 0;
-        margin-bottom: 15px;
-    }
-    .responsive-table-row {
-        width: 100% !important;
-        min-width: auto !important;
-        max-width: unset !important;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        margin-bottom: 10px;
-        padding: 10px;
-        border-radius: 8px;
-        border-left: 1px solid nb-theme(border-basic-color-4);
-    }
-    .responsive-table-header {
-        display: block;
-        font-family: Inter;
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 15px;
-        letter-spacing: 0em;
-        text-align: left;
-    }
-    .responsive-table-content, .responsive-table-header {
-        width: 50%;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-    }
-    .table-row {
-        height: auto;
-    }
-    .table-inner-wrapper {
-        flex-direction: column;
-    }
+    @include mobile-table-styles;
 }
 
 @include respond(md) {
@@ -203,6 +206,9 @@ nb-card, nb-card-header, nb-card-body, .card {
         .filters .main-wrapper {
             padding-left: 0;
             padding-right: 0;
+        }
+        .main-page-header {
+            font-size: 1.3rem;
         }
     }
 }

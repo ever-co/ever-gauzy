@@ -11,7 +11,6 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
-import { ReportTableUserAvatarModule } from "../report-table-user-avatar/report-table-user-avatar.module";
 import { OrganizationModule } from "../organization/organization.module";
 
 @NgModule({
@@ -27,7 +26,6 @@ import { OrganizationModule } from "../organization/organization.module";
 		FiltersModule,
 		NbSelectModule,
 		FormsModule,
-		ReportTableUserAvatarModule,
 		OrganizationModule,
 	],
 })
