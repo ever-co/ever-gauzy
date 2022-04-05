@@ -69,8 +69,7 @@ $nb-themes: nb-register-theme(
     gauzy-card-1: rgba(32, 32, 35, 1),
     gauzy-input-background: rgba(255, 255, 255, 0.15),
     gauzy-sidebar-background-1: #ebebeb,
-    gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
-    accordion-item-background-color: #fbfbfb
+    gauzy-sidebar-background-2: rgba(251, 251, 251, 1)
   ),
   cosmic,
   cosmic
@@ -135,7 +134,7 @@ $nb-themes: nb-register-theme(
     gauzy-input-background: rgba(255, 255, 255, 0.15),
     gauzy-sidebar-background-1: #181818,
     gauzy-sidebar-background-2: rgba(38, 38, 46, 1),
-    accordion-item-background-color: rgba(255, 255, 255, 0.05)
+    accordion-item-background-color: gauzy-sidebar-background-2
   ),
   dark,
   dark

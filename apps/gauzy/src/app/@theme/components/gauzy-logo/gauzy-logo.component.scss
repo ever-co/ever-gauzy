@@ -66,9 +66,15 @@ nb-accordion-item-header ::ng-deep nb-icon {
   height: 1.75rem;
 }
 
+nb-accordion-item-body ::ng-deep {
+  background-color: rgba(255, 255, 255, .05);
+}
+
 nb-accordion-item:last-child.collapsed nb-accordion-item-header {
   border-bottom: none;
   max-height: 42px;
+  background-color: rgba(255, 255, 255, .1);
+  border-radius: nb-theme(border-radius);
 }
 
 .white-svg {
