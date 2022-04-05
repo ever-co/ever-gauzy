@@ -34,7 +34,9 @@
 			</div>
 		</div>
 		<div>
-			<p>{{ 'USER_MENU.SET_YOURSELF_AS_AWAY' | translate }}</p>
+			<p class="link" (click)="open(popup)">
+				{{ 'USER_MENU.SET_YOURSELF_AS_AWAY' | translate }}
+			</p>
 			<p class="link" routerLink="/pages/auth/profile">
 				{{ 'USER_MENU.PROFILE' | translate }}
 			</p>
@@ -57,11 +59,8 @@
 				'USER_MENU.HELP' | translate
 			}}</a>
 		</p>
-		<p (click)="isOpen = !isOpen">
-			{{ 'USER_MENU.HOTKEYS' | translate
-			}}<ng-container *ngIf="isOpen"
-				><gauzy-popup></gauzy-popup
-			></ng-container>
+		<p class="link" (click)="open(popup)">
+			{{ 'USER_MENU.HOTKEYS' | translate }}
 		</p>
 		<p>
 			<ngx-theme-language-selector
@@ -72,3 +71,11 @@
 		<p><gauzy-theme-selector class="theme"></gauzy-theme-selector></p>
 	</div>
 </div>
+
+<ng-template #popup let-ref="dialogRef">
+	<ng-container
+		><gauzy-popup
+			(onClosed)="ref.close()"
+		></gauzy-popup
+	></ng-container>
+</ng-template>
