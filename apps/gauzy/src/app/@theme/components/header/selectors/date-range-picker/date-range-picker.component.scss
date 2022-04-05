@@ -16,7 +16,7 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     display: flex;
     align-items: center;
     background: nb-theme(background-basic-color-2);
-    box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 1px 1px .75px rgba(0, 0, 0, 0.15) inset;
     border-radius: nb-theme(button-rectangle-border-radius);
     /* I've used padding so you can see the edges of the elements. */
     padding: 2px 0px 2px 5px;
@@ -30,6 +30,7 @@ $button-radius: nb-theme(button-rectangle-border-radius);
         flex-grow: 2;
         /* And hide the input's outline, so the form looks like the outline */
         border: none;
+        box-shadow: none;
     }
     input:focus {
         /* removing the input focus blue box. Put this on the form if you like. */
@@ -48,6 +49,9 @@ $button-radius: nb-theme(button-rectangle-border-radius);
             background-color: nb-theme(background-basic-color-1);
             color: nb-theme(text-basic-color);
             border-radius: nb-theme(border-radius);
+            margin-top: 25px;
+            @include nb-ltr(margin-left, -103%);
+            @include nb-rtl(margin-right, -103%);
             .calendar-table {
                 background-color: nb-theme(background-basic-color-1);
                 border-color: nb-theme(border-basic-color-3);
@@ -135,4 +139,11 @@ $button-radius: nb-theme(button-rectangle-border-radius);
             }
         }
     }
+}
+::ng-deep nb-action nb-icon {
+  color: nb-theme(text-primary-color);
+}
+:host i{
+  @include nb-ltr(margin-left, 10px);
+  @include nb-rtl(margin-right, 12px);
 }
