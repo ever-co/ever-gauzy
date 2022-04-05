@@ -8,13 +8,15 @@ import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
 	IClientBudgetLimitReport,
-	OrganizationContactBudgetTypeEnum
+	OrganizationContactBudgetTypeEnum,
+	ITimeLogFilters
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from './../../../../@core/services/store.service';
+import { isEmpty } from '@gauzy/common-angular';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 
@@ -24,14 +26,14 @@ import { ReportBaseComponent } from './../../../../@shared/report/report-base/re
 	templateUrl: './client-budgets-report.component.html',
 	styleUrls: ['./client-budgets-report.component.scss']
 })
-export class ClientBudgetsReportComponent
-	extends ReportBaseComponent
+export class ClientBudgetsReportComponent extends ReportBaseComponent 
 	implements OnInit, AfterViewInit {
+		
 	logRequest: IGetPaymentInput = this.request;
 	OrganizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
 	loading: boolean;
 	filters: IGetPaymentInput;
-	clients: IClientBudgetLimitReport[];
+	clients: IClientBudgetLimitReport[] = [];
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -46,7 +48,6 @@ export class ClientBudgetsReportComponent
 		this.subject$
 			.pipe(
 				debounceTime(1350),
-				tap(() => this.loading = true),
 				tap(() => this.getReport()),
 				untilDestroyed(this)
 			)
@@ -57,14 +58,13 @@ export class ClientBudgetsReportComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.subject$.next(true);
 	}
 
-	async getReport() {
-		if (!this.organization || !this.logRequest) {
+	getReport() {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 		const appliedFilter = pick(this.logRequest, 'clientIds');
@@ -72,6 +72,7 @@ export class ClientBudgetsReportComponent
 			...appliedFilter,
 			...this.getFilterRequest(this.logRequest)
 		};
+		this.loading = true;
 		this.timesheetService
 			.getClientBudgetLimit(request)
 			.then((logs: IClientBudgetLimitReport[]) => {
