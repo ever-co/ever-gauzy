@@ -49,6 +49,9 @@ $button-radius: nb-theme(button-rectangle-border-radius);
             background-color: nb-theme(background-basic-color-1);
             color: nb-theme(text-basic-color);
             border-radius: nb-theme(border-radius);
+            margin-top: 25px;
+            @include nb-ltr(margin-left, -103%);
+            @include nb-rtl(margin-right, -103%);
             .calendar-table {
                 background-color: nb-theme(background-basic-color-1);
                 border-color: nb-theme(border-basic-color-3);
