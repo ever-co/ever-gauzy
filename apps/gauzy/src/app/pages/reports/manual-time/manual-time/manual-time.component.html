@@ -12,14 +12,6 @@
     </nb-card-header>
     <nb-card-body>
         <div class="filters">
-            <ngx-gauzy-range-picker
-                    [filters]="logRequest"
-                    [arrows]="true"
-                    [hasEmployeeFilter]="false"
-                    [hasProjectFilter]="false"
-                    [saveFilters]="false"
-                    (onDateChange)="filtersChange($event)">
-            </ngx-gauzy-range-picker>
             <nb-select placeholder="Action" class="action-select">
                 <nb-option value="0">Action</nb-option>
             </nb-select>

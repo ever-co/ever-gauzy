@@ -103,7 +103,7 @@
 				<div class="activity-row" *ngFor="let activityRow of projectRow.activity;let activityIndex = index">
 					<div class="table-inner-wrapper">
 						<div class="responsive-table-row employee-column main-column-responsive" *ngIf="activityIndex == 0 && projectIndex == 0; else noColumn">
-							<div class="responsive-table-header">Employee</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 							<div class="responsive-table-content employee">
 								<ng-container
 										*ngTemplateOutlet="
@@ -116,7 +116,7 @@
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
 						<div class="responsive-table-row project-column">
-							<div class="responsive-table-header">Project</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								<ng-template [ngIf]="activityIndex == 0">
 									<ng-container
@@ -128,13 +128,13 @@
 							</div>
 						</div>
 						<div class="responsive-table-row title-column">
-							<div class="responsive-table-header">Title</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								{{ activityRow?.title }}
 							</div>
 						</div>
 						<div class="responsive-table-row duration-column">
-							<div class="responsive-table-header">Duration</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
 							<div class="responsive-table-content day-col">
 								{{ activityRow.duration | durationFormat }}
 							</div>
@@ -170,7 +170,7 @@
 				<div class="activity-row" *ngFor="let activityRow of projectRow.activity;let activityIndex = index">
 					<div class="table-inner-wrapper">
 						<div class="responsive-table-row employee-column main-column-responsive" *ngIf="projectIndex == 0 && activityIndex == 0; else noColumn">
-							<div class="responsive-table-header">Date</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 							<div class="responsive-table-content employee">
 								{{ dateRow.date }}
 							</div>
@@ -179,7 +179,7 @@
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
 						<div class="responsive-table-row project-column">
-							<div class="responsive-table-header">Project</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								<ng-template [ngIf]="activityIndex == 0">
 									<ng-container
@@ -191,13 +191,13 @@
 							</div>
 						</div>
 						<div class="responsive-table-row title-column">
-							<div class="responsive-table-header">Title</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								{{ activityRow?.title }}
 							</div>
 						</div>
 						<div class="responsive-table-row duration-column">
-							<div class="responsive-table-header">Duration</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
 							<div class="responsive-table-content day-col">
 								{{ activityRow.duration | durationFormat }}
 							</div>
@@ -233,7 +233,7 @@
 				<div class="activity-row" *ngFor="let activityRow of employeeRow.activity;let activityIndex = index">
 					<div class="table-inner-wrapper">
 						<div class="responsive-table-row employee-column main-column-responsive" *ngIf="employeeIndex == 0 && activityIndex == 0; else noColumn">
-							<div class="responsive-table-header">Date</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 							<div class="responsive-table-content employee">
 								{{ dateRow.date }}
 							</div>
@@ -242,7 +242,7 @@
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
 						<div class="responsive-table-row employee-column">
-							<div class="responsive-table-header">Employee</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								<ng-template [ngIf]="activityIndex == 0">
 									<ng-container
@@ -254,13 +254,13 @@
 							</div>
 						</div>
 						<div class="responsive-table-row title-column">
-							<div class="responsive-table-header">Title</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								{{ activityRow?.title }}
 							</div>
 						</div>
 						<div class="responsive-table-row duration-column">
-							<div class="responsive-table-header">Duration</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
 							<div class="responsive-table-content day-col">
 								{{ activityRow.duration | durationFormat }}
 							</div>
