@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
-import { IGetActivitiesInput } from '@gauzy/contracts';
+import { IGetActivitiesInput, ITimeLogFilters } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Store } from './../../../../@core/services';
@@ -36,6 +36,10 @@ export class AppsUrlsReportComponent
 	}
 
 	ngOnInit() {
+		this.cd.detectChanges();
+  	}
+
+	ngAfterViewInit() {
 		this.activatedRoute.queryParams
 			.pipe(
 				filter((params) => !!params && params.start),
@@ -45,14 +49,10 @@ export class AppsUrlsReportComponent
 				}))
 			)
 			.subscribe();
-  	}
-
-	ngAfterViewInit() {
-		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.filters = Object.assign(
 			{},
 			this.logRequest,
