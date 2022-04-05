@@ -63,3 +63,6 @@ p.link, .button, i, a{
   text-decoration: none;
   color: nb-theme(text-basic-color);
 }
+::ng-deep .cdk-overlay-container{
+  z-index: 1052;
+}
