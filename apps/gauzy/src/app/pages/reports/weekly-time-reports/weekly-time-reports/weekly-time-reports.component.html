@@ -12,20 +12,20 @@
 						{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}
 					</ngx-header-title>
 				</h4>
-				<ngx-date-range-title
-						[start]="logRequest.startDate"
-						[end]="logRequest.endDate"
-				></ngx-date-range-title>
+				<ng-container
+					*ngIf="logRequest?.startDate && logRequest?.endDate"
+				>
+					<ngx-date-range-title
+						[start]="logRequest?.startDate"
+						[end]="logRequest?.endDate"
+					></ngx-date-range-title>
+				</ng-container>
 			</div>
 			<div class="filters">
 				<ngx-gauzy-range-picker
-						[filters]="logRequest"
-						[arrows]="true"
-						[hasEmployeeFilter]="false"
-						[hasProjectFilter]="false"
-						[hasDateRangeFilter]="false"
-						[saveFilters]="false"
-						(onDateChange)="filtersChange($event)"
+					[filters]="logRequest"
+					[saveFilters]="false"
+					(filtersChange)="filtersChange($event)"
 				></ngx-gauzy-range-picker>
 			</div>
 		</div>
@@ -33,9 +33,8 @@
 	<nb-card-body>
 		<ga-daily-statistics
 			class="mb-4"
-			[filters]="filters">
-		</ga-daily-statistics>
-
+			[filters]="filters"
+		></ga-daily-statistics>
 		<div class="daily-time-report mt-4">
 			<div class="daily-time-report">
 				<nb-card>
@@ -45,7 +44,6 @@
 				</nb-card>
 			</div>
 		</div>
-
 		<div class="table card mt-4">
 			<div
 				class="weekly-logs row-table"
@@ -74,9 +72,9 @@
 									<div class="responsive-table-content mobile-padding">
 										<div class="avatar-wrapper">
 											<ga-report-table-user-avatar
-													[src]="day?.employee?.user?.imageUrl"
-													[name]="day?.employee?.user?.name"
-													[id]="day?.employee?.id">
+												[src]="day?.employee?.user?.imageUrl"
+												[name]="day?.employee?.user?.name"
+												[id]="day?.employee?.id">
 											</ga-report-table-user-avatar>
 											<ng-template #noProjects>
 												<span>{{
