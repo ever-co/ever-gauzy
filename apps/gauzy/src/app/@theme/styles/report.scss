@@ -60,10 +60,8 @@ nb-card, nb-card-header, nb-card-body, .card {
 }
 
 ::ng-deep {
-    ::ng-deep {
-        .filters-range-wrapper {
-            flex-wrap: nowrap !important;
-        }
+    .filter-item-list {
+        flex-wrap: nowrap !important;
     }
     .group-by-wrapper {
         display: inline-flex;
