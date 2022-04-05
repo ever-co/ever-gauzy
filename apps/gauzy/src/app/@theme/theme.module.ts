@@ -46,14 +46,11 @@ import { GAUZY_DARK } from './styles/gauzy/theme.gauzy-dark';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { WindowModeBlockScrollService } from './services';
 
-import { UsersService } from '../@core/services/users.service';
+import { LanguagesService, OrganizationsService, UsersOrganizationsService, UsersService } from '../@core/services';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 import { SelectorService } from '../@core/utils/selector.service';
-import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
-import { OrganizationsService } from '../@core/services/organizations.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
-import { LanguagesService } from '../@core/services/languages.service';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { TranslateModule } from '../@shared/translate/translate.module';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
@@ -64,6 +61,7 @@ import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { UserComponent } from './components/user/user.component';
 import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
+import { DateRangePickerModule } from './components/header/selectors/date-range-picker';
 import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
 
 const NB_MODULES = [
@@ -81,19 +79,22 @@ const NB_MODULES = [
 	NbTooltipModule,
 	NbPopoverModule,
 	NbEvaIconsModule,
-  NbAccordionModule,
-  NbToggleModule
+  	NbAccordionModule,
+  	NbToggleModule
 ];
 
 const MODULES = [
 	HeaderSelectorsModule,
+	DateRangePickerModule,
 	EmployeeSelectorsModule,
 	ProjectSelectModule,
 	TimeTrackerModule,
 	TranslateModule,
-  ThemeLanguageSelectorModule,
-  ThemeSelectorModule,
-  WorkspacesModule,
+  	ThemeLanguageSelectorModule,
+  	ThemeSelectorModule,
+	ThemeLanguageSelectorModule,
+	ThemeSelectorModule,
+	WorkspacesModule,
 	NgxPermissionsModule.forChild(),
 ];
 
@@ -106,9 +107,9 @@ const COMPONENTS = [
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
 	LayoutSelectorComponent,
-  GauzyLogoComponent,
-  UserMenuComponent,
-  UserComponent
+  	GauzyLogoComponent,
+  	UserMenuComponent,
+  	UserComponent
 ];
 
 const PIPES = [...Pipes];
@@ -138,10 +139,10 @@ export class ThemeModule {
 					COSMIC_THEME,
 					CORPORATE_THEME,
 					DARK_THEME,
-          MATERIAL_LIGHT_THEME,
-          MATERIAL_DARK_THEME,
-          GAUZY_LIGHT,
-          GAUZY_DARK
+					MATERIAL_LIGHT_THEME,
+					MATERIAL_DARK_THEME,
+					GAUZY_LIGHT,
+					GAUZY_DARK
 				]).providers,
 				WindowModeBlockScrollService
 			]

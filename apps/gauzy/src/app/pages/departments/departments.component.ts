@@ -17,7 +17,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { OrganizationDepartmentsService, Store, ToastrService } from '../../@core/services';
-import { distinctUntilChange } from 'packages/common-angular/dist';
+import { distinctUntilChange } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

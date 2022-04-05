@@ -4,14 +4,15 @@ import {
 	IEmployeeStatisticsFindInput,
 	DEFAULT_PROFIT_BASED_BONUS,
 	DEFAULT_REVENUE_BASED_BONUS,
-	IMonthAggregatedSplitExpense
+	IMonthAggregatedSplitExpense,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
+import * as moment from 'moment';
 import { EmployeeService } from '../employee/employee.service';
 import { ExpenseService } from '../expense/expense.service';
 import { IncomeService } from '../income/income.service';
 import { Between, In, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
-import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
 
@@ -33,11 +34,11 @@ export class EmployeeStatisticsService {
 	];
 
 	constructor(
-		private incomeService: IncomeService,
-		private expenseService: ExpenseService,
-		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
-		private employeeService: EmployeeService,
-		private organizationRecurringExpenseService: OrganizationRecurringExpenseService
+		private readonly incomeService: IncomeService,
+		private readonly expenseService: ExpenseService,
+		private readonly employeeRecurringExpenseService: EmployeeRecurringExpenseService,
+		private readonly employeeService: EmployeeService,
+		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
 	) {}
 
 	async getStatisticsByEmployeeId(
@@ -227,15 +228,6 @@ export class EmployeeStatisticsService {
 		}
 	};
 
-	/**
-	 * helper function to create a date range to use in SQL between condition
-	 */
-	private _beforeDateFilter = (date: Date, lastNMonths: number) => {
-		return Between(
-			subMonths(startOfMonth(date), lastNMonths - 1).toISOString(),
-			endOfMonth(date).toISOString()
-		);
-	}
 
 	/**
 	 * Gets all income records of one or more employees(using employeeId)
@@ -245,10 +237,9 @@ export class EmployeeStatisticsService {
 	 */
 	employeeIncomeInNMonths = async (
 		employeeIds: string[],
-		searchMonth: Date,
-		lastNMonths: number,
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
-	) =>
+	) => 
 		await this.incomeService.findAll({
 			select: [
 				'employeeId',
@@ -269,7 +260,10 @@ export class EmployeeStatisticsService {
 				employee: {
 					id: In(employeeIds)
 				},
-				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+				valueDate: Between(
+					moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS'),
+					moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')
+				)
 			},
 			order: {
 				valueDate: 'DESC'
@@ -284,10 +278,9 @@ export class EmployeeStatisticsService {
 	 */
 	employeeExpenseInNMonths = async (
 		employeeIds: string[],
-		searchMonth: Date,
-		lastNMonths: number,
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
-	) =>
+	) => 
 		await this.expenseService.findAll({
 			select: [
 				'employeeId',
@@ -304,7 +297,10 @@ export class EmployeeStatisticsService {
 					id: In(employeeIds)
 				},
 				splitExpense: false,
-				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+				valueDate: Between(
+					moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS'),
+					moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')
+				)
 			},
 			order: {
 				valueDate: 'DESC'
@@ -317,6 +313,7 @@ export class EmployeeStatisticsService {
 	 */
 	employeeRecurringExpenses = async (
 		employeeIds: string[],
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	) =>
 		await this.employeeRecurringExpenseService.findAll({
@@ -328,10 +325,20 @@ export class EmployeeStatisticsService {
 				'startDate',
 				'endDate'
 			],
-			where: {
-				employeeId: In(employeeIds),
-				organizationId
-			}
+			where: [
+				{
+					employeeId: In(employeeIds),
+					organizationId,
+					startDate: LessThanOrEqual(endDate),
+					endDate: MoreThanOrEqual(startDate)
+				},
+				{
+					employeeId: In(employeeIds),
+					organizationId,
+					startDate: LessThanOrEqual(endDate),
+					endDate: IsNull()
+				}
+			]
 		});
 
 	/**
@@ -346,8 +353,7 @@ export class EmployeeStatisticsService {
 	 */
 	employeeSplitExpenseInNMonths = async (
 		employeeId: string,
-		searchMonth: Date,
-		lastNMonths: number,
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	): Promise<Map<string, IMonthAggregatedSplitExpense>> => {
 		// 1 Get Employee's Organization
@@ -365,7 +371,10 @@ export class EmployeeStatisticsService {
 			where: {
 				organization: { id: employee.organization.id },
 				splitExpense: true,
-				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+				valueDate: Between(
+					moment(startDate).toDate(),
+					moment(endDate).toDate()
+				)
 			},
 			relations: ['category']
 		});
@@ -418,8 +427,7 @@ export class EmployeeStatisticsService {
 	 */
 	organizationRecurringSplitExpenses = async (
 		employeeId: string,
-		searchMonth: Date,
-		lastNMonths: number,
+		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	) => {
 		// 1 Get Employee's Organization
@@ -446,15 +454,13 @@ export class EmployeeStatisticsService {
 				{
 					organizationId: employee.organization.id,
 					splitExpense: true,
-					startDate: LessThanOrEqual(endOfMonth(searchMonth)),
-					endDate: MoreThanOrEqual(
-						subMonths(startOfMonth(searchMonth), lastNMonths - 1)
-					)
+					startDate: LessThanOrEqual(endDate),
+					endDate: MoreThanOrEqual(startDate)
 				},
 				{
 					organizationId: employee.organization.id,
 					splitExpense: true,
-					startDate: LessThanOrEqual(endOfMonth(searchMonth)),
+					startDate: LessThanOrEqual(endDate),
 					endDate: IsNull()
 				}
 			]
@@ -476,10 +482,7 @@ export class EmployeeStatisticsService {
 		 */
 		for (const expense of items) {
 			// Find start date based on input date and X months.
-			const inputStartDate = subMonths(
-				startOfMonth(searchMonth),
-				lastNMonths - 1
-			);
+			const inputStartDate = startDate;
 
 			/**
 			 * Add Organization split recurring expense from the
@@ -493,8 +496,8 @@ export class EmployeeStatisticsService {
 					: inputStartDate;
 
 			for (
-				const date = requiredStartDate;
-				date <= endOfMonth(searchMonth);
+				const date = new Date(requiredStartDate);
+				date <= new Date(endDate);
 				date.setMonth(date.getMonth() + 1)
 			) {
 				// Stop loading expense if the split recurring expense has ended before input date

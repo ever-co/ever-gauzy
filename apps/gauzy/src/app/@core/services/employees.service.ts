@@ -6,7 +6,8 @@ import {
 	IEmployeeCreateInput,
 	IEmployeeUpdateInput,
 	IEmployeeUpdateProfileStatus,
-	IBasePerTenantAndOrganizationEntityModel
+	IBasePerTenantAndOrganizationEntityModel,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -64,13 +65,13 @@ export class EmployeesService {
 	getWorking(
 		organizationId: string,
 		tenantId: string,
-		forMonth: Date,
+		forRange: IDateRangePicker,
 		withUser: boolean
 	): Promise<{ items: IEmployee[]; total: number }> {
 		const query = {
 			organizationId,
 			tenantId,
-			forMonth,
+			forRange,
 			withUser
 		};
 		const data = JSON.stringify({ findInput: query });
@@ -87,13 +88,13 @@ export class EmployeesService {
 	getWorkingCount(
 		organizationId: string,
 		tenantId: string,
-		forMonth: Date,
+		forRange: IDateRangePicker,
 		withUser: boolean
 	): Promise<{ total: number }> {
 		const query = {
 			organizationId,
 			tenantId,
-			forMonth,
+			forRange,
 			withUser
 		};
 		const data = JSON.stringify({ findInput: query });

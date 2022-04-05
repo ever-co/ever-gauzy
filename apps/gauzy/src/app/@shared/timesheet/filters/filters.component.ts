@@ -23,7 +23,6 @@ import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
 import { Options, ChangeContext } from 'ng5-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
 import {
@@ -155,7 +154,6 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	constructor(
 		private store: Store,
 		private timesheetFilterService: TimesheetFilterService,
-		private employeesService: EmployeesService,
 		private ngxPermissionsService: NgxPermissionsService,
 		private cd: ChangeDetectorRef
 	) {}
@@ -188,7 +186,6 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
-					this.loadEmployees();
 				}
 			});
 		this.updateLogs$
@@ -272,24 +269,6 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 		}
 		this.setDefaultEmployee();
 		this.updateLogs$.next(true);
-	}
-
-	private async loadEmployees(): Promise<void> {
-		if (!this.hasEmployeeFilter) {
-			return;
-		}
-
-		this.employeesService
-			.getWorking(
-				this.organization.id,
-				this.organization.tenantId,
-				this.selectedDate,
-				true
-			)
-			.then(({ items }) => {
-				this.employees = items;
-				this.setDefaultEmployee();
-			});
 	}
 
 	setDefaultEmployee() {

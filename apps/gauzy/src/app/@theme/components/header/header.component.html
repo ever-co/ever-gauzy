@@ -63,15 +63,17 @@
 			></ga-employee-selector>
 		</nb-action>
 
-		<nb-action
+		<nb-action 
 			*ngIf="
 				showDateSelector &&
 				!showExtraActions &&
 				selectorsVisibility?.date
 			"
-			class="show-large-up"
 		>
-			<ga-date-selector class="date-selector"></ga-date-selector>
+			<ngx-date-range-picker
+				[unitOfTime]="(dateRangePickerBuilderService.pickerRangeUnitOfTime$ | async)"
+				class="date-range-selector"
+			></ngx-date-range-picker>
 		</nb-action>
 
 		<nb-action
@@ -92,7 +94,7 @@
 			(click)="toggleExtraActions()"
 		></nb-action>
 		<nb-action
-      *ngIf="supportContextMenu"
+      		*ngIf="supportContextMenu"
 			icon="message-circle-outline"
 			class="toggle-layout"
 			[nbContextMenu]="supportContextMenu"

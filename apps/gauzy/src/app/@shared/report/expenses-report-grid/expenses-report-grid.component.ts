@@ -9,73 +9,65 @@ import {
 	IExpenseReportData,
 	IGetTimeLogReportInput,
 	ITimeLogFilters,
-	OrganizationPermissionsEnum,
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxPermissionsService } from 'ngx-permissions';
-import { debounceTime } from 'rxjs/operators';
+import { isEmpty } from '@gauzy/common-angular';
+import { debounceTime, tap } from 'rxjs/operators';
 import { ExpensesService } from '../../../@core/services/expenses.service';
 import { Store } from '../../../@core/services/store.service';
 import { ReportBaseComponent } from '../report-base/report-base.component';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-expenses-report-grid',
 	templateUrl: './expenses-report-grid.component.html',
 	styleUrls: ['./expenses-report-grid.component.scss']
 })
-export class ExpensesReportGridComponent
-	extends ReportBaseComponent
+export class ExpensesReportGridComponent extends ReportBaseComponent
 	implements OnInit, AfterViewInit {
+
 	logRequest: ITimeLogFilters = this.request;
 
 	dailyData: IExpenseReportData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
 
-	futureDateAllowed: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
 	@Input()
-	set filters(value) {
+	set filters(value: ITimeLogFilters) {
 		this.logRequest = value || {};
 		this.subject$.next(true);
 	}
 
 	constructor(
-		private expensesService: ExpensesService,
-		private ngxPermissionsService: NgxPermissionsService,
-		protected store: Store,
-		readonly translateService: TranslateService,
-		private cd: ChangeDetectorRef
+		private readonly expensesService: ExpensesService,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly cd: ChangeDetectorRef
 	) {
 		super(store, translateService);
 	}
 
 	ngOnInit() {
 		this.subject$
-			.pipe(debounceTime(1350), untilDestroyed(this))
-			.subscribe(() => {
-				this.getExpenses();
-			});
-		this.ngxPermissionsService.permissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(async () => {
-				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
-					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
-				);
-			});
+			.pipe(
+				debounceTime(500),
+				tap(() => this.getExpenses()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.subject$.next(true);
 	}
 
@@ -83,8 +75,8 @@ export class ExpensesReportGridComponent
 		this.subject$.next(true);
 	}
 
-	async getExpenses() {
-		if (!this.organization || !this.logRequest) {
+	getExpenses() {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 		const request: IGetTimeLogReportInput = {
@@ -94,7 +86,7 @@ export class ExpensesReportGridComponent
 		this.loading = true;
 		this.expensesService
 			.getDailyExpensesReport(request)
-			.then((logs) => {
+			.then((logs: IExpenseReportData[]) => {
 				this.dailyData = logs;
 			})
 			.catch(() => {})

@@ -1,0 +1,42 @@
+<div class="row col-auto">
+	<div class="filter-input">
+		<div class="custom-input">
+			<button
+				*ngIf="arrows"
+				size="tiny"
+				nbButton
+				status="primary"
+				(click)="previousRange()"
+			>
+				<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+			</button>
+			<button
+				*ngIf="arrows"
+				size="tiny"
+				nbButton
+				[disabled]="isNextDisabled()"
+				status="primary"
+				(click)="nextRange()"
+			>
+				<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+			</button>
+			<input
+				nbInput
+				name="date-range"
+				size="small"
+				type="text"
+				ngxDaterangepickerMd
+				[autoApply]="true"
+				[showCustomRangeLabel]="true"
+				[alwaysShowCalendars]="true"
+				[customRangeDirection]="false"
+				[maxDate]="maxDate"
+				[ranges]="ranges"
+				[locale]="localConfig"
+				[(ngModel)]="selectedDateRange"
+				(datesUpdated)="onDatesUpdated($event)"
+				(rangeClicked)="rangeClicked($event)"
+			/>
+		</div>
+	</div>
+</div>

@@ -22,6 +22,9 @@ const routes: Routes = [
 				data: {
 					selectors: {
 						project: false
+					},
+					datePicker: {
+						unitOfTime: 'month'
 					}
 				}
 			},
@@ -31,16 +34,29 @@ const routes: Routes = [
 				data: {
 					selectors: {
 						project: false
+					},
+					datePicker: {
+						unitOfTime: 'month'
 					}
 				}
 			},
 			{
 				path: 'time-tracking',
-				component: TimeTrackingComponent
+				component: TimeTrackingComponent,
+				data: {
+					datePicker: {
+						unitOfTime: 'week'
+					}
+				}
 			},
 			{
 				path: 'project-management',
-				component: ProjectManagementComponent
+				component: ProjectManagementComponent,
+				data: {
+					datePicker: {
+						unitOfTime: 'month'
+					}
+				}
 			}
 		]
 	}

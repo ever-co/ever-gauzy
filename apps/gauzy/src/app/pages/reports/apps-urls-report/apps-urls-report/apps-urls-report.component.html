@@ -7,25 +7,27 @@
 						{{ 'REPORT_PAGE.APPS_AND_URLS_REPORT' | translate }}
 					</ngx-header-title>
 				</h4>
-				<ngx-date-range-title
-						[start]="logRequest.startDate"
-						[end]="logRequest.endDate"
-				></ngx-date-range-title>
+				<ng-container
+					*ngIf="logRequest?.startDate && logRequest?.endDate"
+				>
+					<ngx-date-range-title
+						[start]="logRequest?.startDate"
+						[end]="logRequest?.endDate"
+					></ngx-date-range-title>
+				</ng-container>
 			</div>
 			<div class="filters">
 				<ngx-gauzy-range-picker
-						[filters]="logRequest"
-						[arrows]="true"
-						[hasEmployeeFilter]="false"
-						[hasProjectFilter]="false"
-						[hasDateRangeFilter]="true"
-						[saveFilters]="false"
-						(onDateChange)="filtersChange($event)"
+					[filters]="logRequest"
+					[saveFilters]="false"
+					(filtersChange)="filtersChange($event)"
 				></ngx-gauzy-range-picker>
 			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-activities-report-grid [filters]="filters"></ga-activities-report-grid>
+		<ga-activities-report-grid
+			[filters]="filters"
+		></ga-activities-report-grid>
 	</nb-card-body>
 </nb-card>

@@ -9,12 +9,11 @@ import {
 	ChangeDetectorRef,
 	ChangeDetectionStrategy
 } from '@angular/core';
-import { EmployeesService } from './../../../../../@core/services/employees.service';
 import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
-import { EmployeeStore, Store } from './../../../../../@core/services';
 import {
 	CrudActionEnum,
 	DEFAULT_TYPE,
+	IDateRangePicker,
 	IEmployee,
 	IOrganization,
 	ISelectedEmployee
@@ -22,8 +21,9 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
-import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import { isNotEmpty } from '@gauzy/common-angular';
+import { ALL_EMPLOYEES_SELECTED } from './default-employee';
+import { EmployeesService, EmployeeStore, Store } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -75,13 +75,14 @@ export class EmployeeSelectorComponent
 		this._showAllEmployeesOption = value;
 	}
 
-	private _selectedDate?: Date;
-	get selectedDate(): Date {
-		return this._selectedDate;
+	private _selectedDateRange?: IDateRangePicker;
+	get selectedDateRange(): IDateRangePicker {
+		return this._selectedDateRange;
 	}
-	@Input() set selectedDate(value: Date) {
-		//This will set _selectDate too
-		this.subject$.next([this.store.selectedOrganization, value]);
+
+	@Input() set selectedDateRange(range: IDateRangePicker) {
+		//This will set _selectedDateRange too
+		this.subject$.next([this.store.selectedOrganization, range]);
 	}
 
 	@Output()
@@ -104,10 +105,10 @@ export class EmployeeSelectorComponent
 		this.subject$
 			.pipe(
 				debounceTime(200),
-				switchMap(async ([organization, date]) => {
+				switchMap(async ([organization, dateRange]) => {
 					await this.loadWorkingEmployeesIfRequired(
 						organization,
-						date
+						dateRange
 					);
 				}),
 				untilDestroyed(this)
@@ -134,13 +135,13 @@ export class EmployeeSelectorComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDate$ = this.store.selectedDate$;
-		combineLatest([storeOrganization$, selectedDate$])
+		const selectedDateRange$ = this.store.selectedDateRange$;
+		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
 				filter(([organization]) => !!organization),
-				tap(([organization, date]) => {
-					this._selectedDate = date;
-					this.subject$.next([organization, date])
+				tap(([organization, dateRange]) => {
+					this._selectedDateRange = dateRange;
+					this.subject$.next([organization, dateRange])
 				}),
 				untilDestroyed(this)
 			)
@@ -265,28 +266,32 @@ export class EmployeeSelectorComponent
 
 	loadWorkingEmployeesIfRequired = async (
 		organization: IOrganization,
-		selectedDate: Date
+		selectedDateRange: IDateRangePicker
 	) => {
 		//If no organization, then something is wrong
 		if (!organization) {
 			this.people = [];
 			return;
 		}
-		this._selectedDate = selectedDate;
-		await this.getEmployees(organization, selectedDate);
+		this._selectedDateRange = selectedDateRange;
+		await this.getEmployees(organization, selectedDateRange);
 	};
 
-	private getEmployees = async (organization: IOrganization, selectedDate: Date) => {
+	private getEmployees = async (
+		organization: IOrganization,
+		selectedDateRange: IDateRangePicker
+	) => {
 		if (!organization) {
 			this.people = [];
 			return;
 		}
 		const { tenantId } = this.store.user;
-		const { id } = organization;
+		const { id: organizationId } = organization;
+
 		const { items } = await this.employeesService.getWorking(
-			id,
+			organizationId,
 			tenantId,
-			selectedDate,
+			selectedDateRange,
 			true
 		);
 		

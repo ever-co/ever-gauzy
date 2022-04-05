@@ -1,5 +1,6 @@
-import { IArrowStrategy, IDateRangeStrategy } from "../arrow-strategy.interface";
 import * as moment from 'moment';
+import { IDateRangePicker } from "@gauzy/contracts";
+import { IArrowStrategy } from "../arrow-strategy.interface";
 
 export class Future implements IArrowStrategy {
   /**
@@ -7,11 +8,11 @@ export class Future implements IArrowStrategy {
    * @param request
    * @returns any type of request
    */
-	action(request: IDateRangeStrategy): IDateRangeStrategy {
+	action(request: IDateRangePicker): IDateRangePicker {
 		const start = moment(request.startDate);
 		return {
 			startDate: start.toDate(),
 			endDate: moment().endOf('week').toDate()
-		} as IDateRangeStrategy;
+		} as IDateRangePicker;
 	}
 }

@@ -65,9 +65,8 @@ export class TimeOffService {
 	getAllTimeOffRecords(
 		relations?: string[],
 		findInput?: ITimeOffFindInput,
-		filterDate?: Date
 	): Observable<IPagination<ITimeOff>> {
-		const data = JSON.stringify({ relations, findInput, filterDate });
+		const data = JSON.stringify({ relations, findInput });
 		return this.http.get<IPagination<ITimeOff>>(
 			`${API_PREFIX}/time-off-request`,
 			{ params: { data } }

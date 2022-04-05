@@ -194,12 +194,14 @@ export class OrganizationComponent
 	private async getEmployeeStatistics() {
 		const { tenantId } = this;
 		const { id: organizationId } = this.organization;
+		const { startDate, endDate } = this.store.selectedDateRange;
 
 		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 			{
 				organizationId,
 				tenantId,
-				filterDate: new Date()
+				startDate,
+				endDate
 			}
 		);
 		if (!!this.organization.show_bonuses_paid) {

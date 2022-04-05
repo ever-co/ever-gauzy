@@ -10,7 +10,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
   EstimateColumnsEnum,
-  InvoiceColumnsEnum
+  InvoiceColumnsEnum,
+  ITag
 } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
@@ -30,7 +31,6 @@ import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge
 import { ContactLinksComponent } from '../../../@shared/table-components/contact-links/contact-links.component';
 import { TagsOnlyComponent } from '../../../@shared/table-components/tags-only/tags-only.component';
 import { TagsColorFilterComponent } from '../../../@shared/table-filters/tags-color-filter.component';
-import { ITag } from '../../../../../../../packages/contracts/dist/tag-entity.model';
 import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 @UntilDestroy({ checkProperties: true })

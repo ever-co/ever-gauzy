@@ -4,11 +4,12 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { IGetExpenseInput, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
+import { IGetExpenseInput, ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pluck } from 'underscore';
+import { isEmpty } from '@gauzy/common-angular';
 import { ExpensesService, Store } from './../../../../@core/services';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
@@ -20,9 +21,9 @@ import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-
 	templateUrl: './expenses-report.component.html',
 	styleUrls: ['./expenses-report.component.scss']
 })
-export class ExpensesReportComponent
-	extends ReportBaseComponent
+export class ExpensesReportComponent extends ReportBaseComponent 
 	implements OnInit, AfterViewInit {
+		
 	logRequest: IGetExpenseInput = this.request;
 	loading: boolean;
 	chartData: IChartData;
@@ -42,7 +43,6 @@ export class ExpensesReportComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this.updateChart()),
 				untilDestroyed(this)
 			)
@@ -53,16 +53,21 @@ export class ExpensesReportComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
+		this.filters = Object.assign(
+			{},
+			this.logRequest,
+			this.getAdjustDateRangeFutureAllowed(this.logRequest)
+		);
 		this.subject$.next(true);
 	}
 
 	updateChart() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
+		this.loading = true;
 		const request: IGetExpenseInput = {
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy

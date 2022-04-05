@@ -1,14 +1,24 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { combineLatest, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import {
 	IAggregatedEmployeeStatistic,
+	IDateRangePicker,
 	IOrganization,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IUser
 } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import { EmployeesService, EmployeeStatisticsService, Store } from '../../../@core/services';
+import {
+	EmployeesService,
+	EmployeeStatisticsService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,80 +30,89 @@ import { EmployeesService, EmployeeStatisticsService, Store } from '../../../@co
 	]
 })
 export class AccountingComponent implements OnInit, OnDestroy {
+
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
-	selectedDate: Date;
-	selectedOrganization: IOrganization;
-	selectedEmployee: ISelectedEmployee;
+	selectedDateRange: IDateRangePicker;
+	organization: IOrganization;
 	isEmployee: boolean;
+
+	statistics$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
 		private readonly router: Router,
-		private readonly employeeStatisticsService: EmployeeStatisticsService
+		private readonly employeeStatisticsService: EmployeeStatisticsService,
+		private readonly toastrService: ToastrService
 	) {}
 
 	ngOnInit() {
 		this.store.user$
 			.pipe(
-				filter((user) => !!user),
-				tap((user) => (this.isEmployee = user.employee ? true : false)),
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (
+					this.isEmployee = user.employee ? true : false
+				)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
-				filter((employee) => !!employee),
+				filter((employee) => !!employee && !!employee.id),
+				tap(() => this.navigateToEmployeeStatistics()),
 				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				this.selectedEmployee = employee;
-				if (employee && employee.id) {
-					this.navigateToEmployeeStatistics();
-				}
-			});
-		this.store.selectedDate$
+			.subscribe();
+		this.statistics$
 			.pipe(
-				filter((date) => !!date),
+				debounceTime(300),
+				tap(() => this.getAggregateStatistics()),
 				untilDestroyed(this)
 			)
-			.subscribe((date) => {
-				this.selectedDate = date;
-				if (this.selectedOrganization && !this.isEmployee) {
-					this.loadData(this.selectedOrganization);
-				}
-			});
-		this.store.selectedOrganization$
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDateRange$ = this.store.selectedDateRange$;
+		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
-				filter((organization) => !!organization),
+				debounceTime(300),
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, range]) => {
+					this.organization = organization;
+					this.selectedDateRange = range;
+				}),
+				tap(() => this.statistics$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				this.selectedOrganization = organization;
-				if (!this.isEmployee) {
-					this.loadData(organization);
-				}
-			});
+			.subscribe();
 	}
 
 	navigateToEmployeeStatistics() {
 		this.router.navigate(['/pages/dashboard/hr']);
 	}
 
-	loadData = async (organization) => {
-		if (organization) {
+	async getAggregateStatistics() {
+		if (!this.organization || this.isEmployee) {
+			return;
+		}
+		try {
 			const { tenantId } = this.store.user;
-			const { id: organizationId } = organization;
+			const { id: organizationId } = this.organization;
+			const { startDate, endDate } = this.selectedDateRange;
+
 			this.aggregatedEmployeeStatistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 				{
 					organizationId,
 					tenantId,
-					filterDate:
-						this.selectedDate || this.store.selectedDate || null
+					startDate,
+					endDate
 				}
-			);	
+			);
+		} catch (error) {
+			console.log('Error while retriving employee aggregate statistics', error);
+			this.toastrService.danger(error);
 		}
-	};
+	}
 
 	async selectEmployee(employee: ISelectedEmployee) {
 		const people  = await this.employeesService.getEmployeeById(

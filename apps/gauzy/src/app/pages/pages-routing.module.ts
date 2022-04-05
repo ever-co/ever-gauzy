@@ -555,31 +555,51 @@ const routes: Routes = [
 					},
 					{
 						path: 'time-activity',
-						loadChildren: () =>
-							import(
-								'./reports/time-reports/time-reports.module'
-							).then((m) => m.TimeReportsModule)
+						loadChildren: () => 
+							import('./reports/time-reports/time-reports.module').then(
+								(m) => m.TimeReportsModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: 'weekly',
-						loadChildren: () =>
-							import(
-								'./reports/weekly-time-reports/weekly-time-reports.module'
-							).then((m) => m.WeeklyTimeReportsModule)
+						loadChildren: () => 
+							import('./reports/weekly-time-reports/weekly-time-reports.module').then(
+								(m) => m.WeeklyTimeReportsModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: 'apps-urls',
 						loadChildren: () =>
-							import(
-								'./reports/apps-urls-report/apps-urls-report.module'
-							).then((m) => m.AppsUrlsReportModule)
+							import('./reports/apps-urls-report/apps-urls-report.module').then(
+								(m) => m.AppsUrlsReportModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: 'manual-time-edits',
 						loadChildren: () =>
-							import(
-								'./reports/manual-time/manual-time.module'
-							).then((m) => m.ManualTimeModule)
+							import('./reports/manual-time/manual-time.module').then(
+								(m) => m.ManualTimeModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: 'accounting',
@@ -591,59 +611,90 @@ const routes: Routes = [
 					{
 						path: 'expense',
 						loadChildren: () =>
-							import(
-								'./reports/expenses-report/expenses-report.module'
-							).then((m) => m.ExpensesReportModule)
+							import('./reports/expenses-report/expenses-report.module').then(
+								(m) => m.ExpensesReportModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: 'payments',
 						loadChildren: () =>
-							import(
-								'./reports/payment-report/payment-report.module'
-							).then((m) => m.PaymentReportModule)
+							import('./reports/payment-report/payment-report.module').then(
+								(m) => m.PaymentReportModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: 'amounts-owed',
 						loadChildren: () =>
-							import(
-								'./reports/amounts-owed-report/amounts-owed-report.module'
-							).then((m) => m.AmountsOwedReportModule)
+							import('./reports/amounts-owed-report/amounts-owed-report.module').then(
+								(m) => m.AmountsOwedReportModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: 'weekly-limits',
 						data: {
 							duration: 'week',
-							title: 'REPORT_PAGE.WEEKLY_LIMIT_REPORT'
+							title: 'REPORT_PAGE.WEEKLY_LIMIT_REPORT',
+							datePicker: {
+								unitOfTime: 'week'
+							}
 						},
 						loadChildren: () =>
-							import(
-								'./reports/time-limit-report/time-limit-report.module'
-							).then((m) => m.TimeLimitReportModule)
+							import('./reports/time-limit-report/time-limit-report.module').then(
+								(m) => m.TimeLimitReportModule
+							)
 					},
 					{
 						path: 'daily-limits',
 						data: {
 							duration: 'day',
-							title: 'REPORT_PAGE.DAILY_LIMIT_REPORT'
+							title: 'REPORT_PAGE.DAILY_LIMIT_REPORT',
+							datePicker: {
+								unitOfTime: 'week'
+							}
 						},
 						loadChildren: () =>
-							import(
-								'./reports/time-limit-report/time-limit-report.module'
-							).then((m) => m.TimeLimitReportModule)
+							import('./reports/time-limit-report/time-limit-report.module').then(
+								(m) => m.TimeLimitReportModule
+							)
 					},
 					{
 						path: 'project-budgets',
 						loadChildren: () =>
-							import(
-								'./reports/project-budgets-report/project-budgets-report.module'
-							).then((m) => m.ProjectBudgetsReportModule)
+							import('./reports/project-budgets-report/project-budgets-report.module').then(
+								(m) => m.ProjectBudgetsReportModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: 'client-budgets',
 						loadChildren: () =>
-							import(
-								'./reports/client-budgets-report/client-budgets-report.module'
-							).then((m) => m.ClientBudgetsReportModule)
+							import('./reports/client-budgets-report/client-budgets-report.module').then(
+								(m) => m.ClientBudgetsReportModule
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'week'
+							}
+						}
 					},
 					{
 						path: '*',

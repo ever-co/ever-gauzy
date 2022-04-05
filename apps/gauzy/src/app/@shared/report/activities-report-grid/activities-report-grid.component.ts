@@ -16,6 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
+import { isEmpty } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
 import { ActivityService } from '../../timesheet/activity.service';
 import { ReportBaseComponent } from '../report-base/report-base.component';
@@ -43,13 +44,17 @@ export class ActivitiesReportGridComponent extends ReportBaseComponent
 	constructor(
 		private readonly activityService: ActivityService,
 		public readonly store: Store,
-		private readonly cd: ChangeDetectorRef,
+		private readonly cdr: ChangeDetectorRef,
 		public readonly translateService: TranslateService,
 	) {
 		super(store, translateService);
 	}
 
 	ngOnInit() {
+		this.cdr.detectChanges();
+	}
+
+	ngAfterViewInit() {
 		this.subject$
 			.pipe(
 				debounceTime(500),
@@ -60,15 +65,14 @@ export class ActivitiesReportGridComponent extends ReportBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit() {
-		this.cd.detectChanges();
-	}
-
 	groupByChange() {
 		this.subject$.next(true);
 	}
 
 	getActivities() {
+		if (!this.organization || isEmpty(this.logRequest)) {
+			return;
+		}
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
