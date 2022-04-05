@@ -10,7 +10,6 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { PaymentReportGridModule } from '../../../@shared/report/payment-report-grid/payment-report-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
@@ -28,7 +27,6 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		NbSelectModule,
 		FormsModule,
 		LineChartModule,

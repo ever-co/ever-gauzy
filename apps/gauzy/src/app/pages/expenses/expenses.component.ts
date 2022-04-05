@@ -8,7 +8,8 @@ import {
 	IExpenseViewModel,
 	IEmployee,
 	IOrganizationVendor,
-	IExpenseCategory
+	IExpenseCategory,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -48,7 +49,7 @@ export class ExpensesComponent
 	smartTableSettings: object;
 	employeeId: string | null;
 	projectId: string | null;
-	selectedDate: Date;
+	selectedDateRange: IDateRangePicker;
 	smartTableSource: ServerDataSource;
 	expenses: IExpenseViewModel[];
 	selectedExpense: IExpenseViewModel;
@@ -98,17 +99,17 @@ export class ExpensesComponent
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDate$ = this.store.selectedDate$;
+		const selectedDateRange$ = this.store.selectedDateRange$;
 		const selectedProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, selectedDate$, selectedProject$])
+		combineLatest([storeOrganization$, storeEmployee$, selectedDateRange$, selectedProject$])
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(([organization, employee, date, project]) => {
+				tap(([organization, employee, dateRange, project]) => {
 					if (organization) {
-						this.selectedDate = date;
+						this.selectedDateRange = dateRange;
 						this.employeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
 
@@ -337,9 +338,6 @@ export class ExpensesComponent
 	}
 
 	openAddExpenseDialog() {
-		if (!this.store.selectedDate) {
-			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
-		}
 		this.dialogService
 			.open(ExpensesMutationComponent)
 			.onClose.pipe(untilDestroyed(this))
@@ -400,10 +398,7 @@ export class ExpensesComponent
 				data: selectedItem
 			});
 		}
-		if (!this.store.selectedDate) {
-			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
-		}
-
+	
 		this.dialogService
 			.open(ExpensesMutationComponent, {
 				context: {
@@ -477,9 +472,18 @@ export class ExpensesComponent
 		const request = {};
 		if (this.employeeId) { request['employeeId'] = this.employeeId; }
 		if (this.projectId) { request['projectId'] = this.projectId; }
-		if (moment(this.selectedDate).isValid()) {
-			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
+
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			request['valueDate'] = {};
+			if (moment(startDate).isValid()) {
+				request['valueDate']['startDate'] = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+			if (moment(endDate).isValid()) {
+				request['valueDate']['endDate'] = moment(endDate).format('YYYY-MM-DD HH:mm:ss');
+			}
 		}
+		
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense/pagination`,
 			relations: [

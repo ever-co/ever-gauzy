@@ -3,17 +3,19 @@ import { Router } from '@angular/router';
 import {
 	BonusTypeEnum,
 	EmployeeStatisticsHistoryEnum,
+	IDateRangePicker,
 	IMonthAggregatedEmployeeStatistics,
 	IOrganization,
 	ISelectedEmployee
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
-import { Store } from '../../../@core/services/store.service';
-import { ProfitHistoryComponent } from '../../../@shared/dashboard/profit-history/profit-history.component';
-import { RecordsHistoryComponent } from '../../../@shared/dashboard/records-history/records-history.component';
+import { Subject } from 'rxjs/internal/Subject';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { EmployeeStatisticsService, Store } from '../../../@core/services';
+import { ProfitHistoryComponent, RecordsHistoryComponent } from '../../../@shared/dashboard';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,6 +29,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	selectedDate: Date;
 	selectedEmployee: ISelectedEmployee;
 	selectedOrganization: IOrganization;
+	selectedDateRange: IDateRangePicker;
 
 	defaultCurrency: string;
 
@@ -47,70 +50,68 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	salary: number;
 	averageBonus: number;
 
+	statistics$: Subject<any> = new Subject();
+
 	constructor(
-		private store: Store,
-		private dialogService: NbDialogService,
-		private router: Router,
-		private employeeStatisticsService: EmployeeStatisticsService
+		private readonly store: Store,
+		private readonly dialogService: NbDialogService,
+		private readonly router: Router,
+		private readonly employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
 	async ngOnInit() {
-		this.loading = true;
-		this.store.selectedEmployee$
+		this.statistics$
 			.pipe(
-				filter((employee) => !!employee),
-				debounceTime(200),
+				debounceTime(300),
+				tap(() => this.getEmployeeStatistics()),
 				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				this.selectedEmployee = employee;
-				if (this.selectedDate) {
-					this._loadEmployeeStatistics();
-				}
-			});
-		this.store.selectedDate$
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDateRange$ = this.store.selectedDateRange$;
+		const selectedEmployee$ = this.store.selectedEmployee$
+		combineLatest([storeOrganization$, selectedDateRange$, selectedEmployee$])
 			.pipe(
-				filter((date) => !!date),
+				debounceTime(300),
+				distinctUntilChange(),
+				filter(([organization, range, employee]) => !!organization && !!range && !!employee),
+				tap(([organization, range, employee]) => {
+					this.selectedOrganization = organization;
+					this.selectedDateRange = range;
+					this.selectedEmployee = employee;
+				}),
+				tap(() => {
+					if (!this.selectedEmployee || !this.selectedEmployee.id) {
+						this.navigateToAccounting();
+						return;
+					}
+				}),
+				tap(([organization]) => {
+					this.bonusType = organization.bonusType as BonusTypeEnum;
+					this.bonusPercentage = organization.bonusPercentage;
+					this.defaultCurrency = organization.currency;
+				}),
+				tap(() => this.statistics$.next(true)),
 				untilDestroyed(this)
 			)
-			.subscribe((date) => {
-				this.selectedDate = date;
-				if (this.selectedEmployee) {
-					this._loadEmployeeStatistics();
-				}
-			});
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				tap(() => (this.defaultCurrency = null)),
-				untilDestroyed(this)
-			)
-			.subscribe((organization) => {
-				this.selectedOrganization = organization;
-				if (this.selectedOrganization) {
-					this.bonusType = this.selectedOrganization
-						.bonusType as BonusTypeEnum;
-					this.bonusPercentage = this.selectedOrganization.bonusPercentage;
-					this.defaultCurrency = this.selectedOrganization.currency;
-				}
-			});
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee) => {
-				if (!employee || !employee.id) {
-					this.navigateToAccounting();
-				}
-			});
-		this.loading = false;
+			.subscribe();
 	}
 
-	async _loadEmployeeStatistics() {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+	async getEmployeeStatistics() {
+		if (!this.selectedOrganization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+		const { startDate, endDate } = this.selectedDateRange;
+
+		this.loading = true;
+
 		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
 			{
 				employeeId: this.selectedEmployee.id,
-				valueDate: this.selectedDate || new Date(),
-				months: this.selectedDate ? 1 : 12,
+				startDate,
+				endDate,
 				organizationId,
 				tenantId
 			}
@@ -132,18 +133,26 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			2
 		);
 		this.salary = +(this.expense - this.expenseWithoutSalary).toFixed(2);
+
+		this.loading = false;
 	}
 
 	async openHistoryDialog(type: EmployeeStatisticsHistoryEnum) {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		if (!this.selectedOrganization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+		const { startDate, endDate } = this.selectedDateRange;
+
 		this.dialogService.open(RecordsHistoryComponent, {
 			context: {
 				type,
 				recordsData: await this.employeeStatisticsService.getEmployeeStatisticsHistory(
 					{
 						employeeId: this.selectedEmployee.id,
-						valueDate: this.selectedDate || new Date(),
-						months: this.selectedDate ? 1 : 12,
+						startDate,
+						endDate,
 						type,
 						organizationId,
 						tenantId
@@ -154,12 +163,18 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	async openProfitDialog() {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		if (!this.selectedOrganization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+		const { startDate, endDate } = this.selectedDateRange;
+
 		const incomes = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
 			{
 				employeeId: this.selectedEmployee.id,
-				valueDate: this.selectedDate || new Date(),
-				months: this.selectedDate ? 1 : 12,
+				startDate,
+				endDate,
 				type: EmployeeStatisticsHistoryEnum.INCOME,
 				organizationId,
 				tenantId
@@ -168,8 +183,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		const expenses = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
 			{
 				employeeId: this.selectedEmployee.id,
-				valueDate: this.selectedDate || new Date(),
-				months: this.selectedDate ? 1 : 12,
+				startDate,
+				endDate,
 				type: EmployeeStatisticsHistoryEnum.EXPENSES,
 				organizationId,
 				tenantId

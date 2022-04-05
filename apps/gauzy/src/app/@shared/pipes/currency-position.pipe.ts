@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from "@angular/core";
-import { CurrencyPosition } from "packages/contracts/dist";
+import { CurrencyPosition } from "@gauzy/contracts";
 
 @Pipe({ name: 'position' })
 export class CurrencyPositionPipe implements PipeTransform {

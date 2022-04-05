@@ -12,20 +12,20 @@
 						{{ 'REPORT_PAGE.TIME_AND_ACTIVITY_REPORT' | translate }}
 					</ngx-header-title>
 				</h4>
-				<ngx-date-range-title
-						[start]="logRequest.startDate"
-						[end]="logRequest.endDate"
-				></ngx-date-range-title>
+				<ng-container
+					*ngIf="logRequest?.startDate && logRequest?.endDate"
+				>
+					<ngx-date-range-title
+						[start]="logRequest?.startDate"
+						[end]="logRequest?.endDate"
+					></ngx-date-range-title>
+				</ng-container>
 			</div>
 			<div class="filters">
 				<ngx-gauzy-range-picker
-						[filters]="logRequest"
-						[arrows]="true"
-						[hasEmployeeFilter]="false"
-						[hasProjectFilter]="false"
-						[hasDateRangeFilter]="false"
-						[saveFilters]="false"
-						(onDateChange)="filtersChange($event)"
+					[filters]="logRequest"
+					[saveFilters]="false"
+					(filtersChange)="filtersChange($event)"
 				></ngx-gauzy-range-picker>
 			</div>
 		</div>

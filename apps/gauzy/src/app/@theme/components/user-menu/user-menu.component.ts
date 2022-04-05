@@ -6,8 +6,8 @@ import {
 	EventEmitter,
 	TemplateRef
 } from '@angular/core';
-import { IUser } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
+import { IUser } from '@gauzy/contracts';
 
 @Component({
 	selector: 'gauzy-user-menu',

@@ -3799,8 +3799,8 @@
 			"SUB_TITLE": "Please select account type below."
 		}
 	},
-	"PAGINATION": {
-		"ITEMS": "Items"
+	"PAGINATION":{
+		"ITEMS":"Items"
 	},
 	"USER_MENU": {
 		"STATUS": "Status",

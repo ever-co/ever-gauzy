@@ -5,20 +5,36 @@
                 {{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
             </ngx-header-title>
         </h4>
-        <ngx-date-range-title
-                [start]="logRequest.startDate"
-                [end]="logRequest.endDate"
-        ></ngx-date-range-title>
+        <ng-container
+			*ngIf="logRequest?.startDate && logRequest?.endDate"
+		>
+			<ngx-date-range-title
+				[start]="logRequest?.startDate"
+				[end]="logRequest?.endDate"
+			></ngx-date-range-title>
+		</ng-container>
     </nb-card-header>
     <nb-card-body>
         <div class="filters">
+            <ngx-gauzy-range-picker
+                [filters]="logRequest"
+                [saveFilters]="false"
+                [hasLogTypeFilter]="false"
+                [hasSourceFilter]="false"
+                [hasActivityLevelFilter]="false"
+                (filtersChange)="filtersChange($event)"
+            ></ngx-gauzy-range-picker>
             <nb-select placeholder="Action" class="action-select">
                 <nb-option value="0">Action</nb-option>
             </nb-select>
         </div>
-
         <div class="table">
-            <div class="weekly-logs row-table" [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+            <div 
+                class="weekly-logs row-table"
+                [nbSpinner]="loading"
+                nbSpinnerSize="giant"
+                nbSpinnerStatus="primary"
+            >
                 <ng-template class="table-template" [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
                     <nb-card class="card" *ngFor="let day of dailyData">
                         <nb-card-header class="card-title">{{day.date}}</nb-card-header>

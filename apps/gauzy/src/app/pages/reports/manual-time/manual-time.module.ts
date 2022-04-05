@@ -13,7 +13,6 @@ import {
 	NbSelectModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-picker/gauzy-range-picker.module';
@@ -29,7 +28,6 @@ import { OrganizationModule } from "../../../@shared/report/organization/organiz
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		NbSelectModule,
 		FormsModule,
 		NbBadgeModule,

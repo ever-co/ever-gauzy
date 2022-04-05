@@ -16,7 +16,8 @@ import {
 	ISelectedPayment,
 	IInvoice,
 	ITag,
-	IOrganizationContact
+	IOrganizationContact,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
@@ -53,7 +54,7 @@ export class PaymentsComponent
 	currency: string;
 	loading: boolean;
 	projectId: string | null;
-	selectedDate: Date;
+	selectedDateRange: IDateRangePicker;
 	subject$: Subject<any> = new Subject();
 
 	paymentsTable: Ng2SmartTableComponent;
@@ -92,19 +93,19 @@ export class PaymentsComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDate$ = this.store.selectedDate$;
+		const selectedDateRange$ = this.store.selectedDateRange$;
 		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, selectedDate$, storeProject$])
+		combineLatest([storeOrganization$, selectedDateRange$, storeProject$])
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				tap(([organization]) => (this.currency = organization.currency || ENV.DEFAULT_CURRENCY)),
 				distinctUntilChange(),
-				tap(([organization, date, project]) => {
+				tap(([organization, dateRange, project]) => {
 					if (organization) {
 						this.organization = organization;
-						this.selectedDate = date;
+						this.selectedDateRange = dateRange;
 						this.projectId = project ? project.id : null;
 
 						this.refreshPagination();
@@ -162,8 +163,15 @@ export class PaymentsComponent
 		if (this.projectId) {
 			request['projectId'] = this.projectId;
 		}
-		if (moment(this.selectedDate).isValid()) {
-			request['paymentDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			request['paymentDate'] = {};
+			if (moment(startDate).isValid()) {
+				request['paymentDate']['startDate'] = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+			if (moment(endDate).isValid()) {
+				request['paymentDate']['endDate'] = moment(endDate).format('YYYY-MM-DD HH:mm:ss');
+			}
 		}
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {

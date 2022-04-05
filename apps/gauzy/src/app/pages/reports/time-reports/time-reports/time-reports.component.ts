@@ -16,7 +16,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { pick, pluck } from 'underscore';
-import { Store } from './../../../../@core/services/store.service';
+import { isEmpty } from '@gauzy/common-angular';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
@@ -41,12 +42,14 @@ export class TimeReportsComponent extends ReportBaseComponent
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
 		public readonly translateService: TranslateService,
-		private readonly cd: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef
 	) {
 		super(store, translateService);
 	}
 
-	ngOnInit() {}
+	ngOnInit() {
+		this.cdr.detectChanges();
+	}
 
 	ngAfterViewInit() {
 		this.subject$
@@ -56,11 +59,10 @@ export class TimeReportsComponent extends ReportBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.filters = Object.assign(
 			{},
 			this.logRequest,
@@ -70,7 +72,7 @@ export class TimeReportsComponent extends ReportBaseComponent
 	}
 
 	updateChart() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 		const appliedFilter = pick(

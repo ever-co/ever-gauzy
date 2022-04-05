@@ -7,7 +7,8 @@ import {
 	ITimeOff,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IEmployeeJobsStatisticsResponse
+	IEmployeeJobsStatisticsResponse,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
@@ -29,13 +30,12 @@ import { AvatarComponent } from '../../@shared/components/avatar/avatar.componen
 	templateUrl: './time-off.component.html',
 	styleUrls: ['./time-off.component.scss']
 })
-export class TimeOffComponent
-	extends TranslationBaseComponent
+export class TimeOffComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
 	selectedEmployeeId: string | null;
-	selectedDate: Date;
+	selectedDateRange: IDateRangePicker;
 	sourceSmartTable = new LocalDataSource();
 	timeOffs: ITimeOff[] = [];
 	selectedTimeOffRecord: ITimeOff;
@@ -78,7 +78,6 @@ export class TimeOffComponent
 	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-
 		this.timeoff$
 			.pipe(
 				debounceTime(300),
@@ -88,19 +87,17 @@ export class TimeOffComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDate$ = this.store.selectedDate$;
-	
-		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
+		const selectedDateRange$ = this.store.selectedDateRange$;
+		combineLatest([storeOrganization$, storeEmployee$, selectedDateRange$])
 			.pipe(
 				debounceTime(400),
 				filter(([organization]) => !!organization),
-				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(([organization, employee, date]) => {
-					this.selectedDate = date;
+				tap(([organization, employee, dateRange]) => {
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
 				tap(() => this.timeoff$.next(true)),
@@ -435,102 +432,95 @@ export class TimeOffComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.timeOffService
-			.getAllTimeOffRecords(
-				[],
-				{
-					organizationId,
-					tenantId,
-					employeeId: this.selectedEmployeeId || null
-				},
-				this.selectedDate || null
-			)
-			.pipe(
-				first(),
-				finalize(() => this.loading = false),
-				untilDestroyed(this)
-			)
-			.subscribe(({ items }) => {
-					this.rows = [];
-					items.forEach((timeOff: ITimeOff) => {
-						let employeeName: string;
-						let employeeImage: string;
-						let extendedDescription = '';
+		try {
+			const request = {
+				organizationId,
+				tenantId,
+				employeeId: this.selectedEmployeeId || null,
+				...this.selectedDateRange
+			}
+			this.timeOffService.getAllTimeOffRecords([], request)
+				.pipe(
+					first(),
+					tap(({ items }) => this.mapTimeOffRequests(items)),
+					finalize(() => this.loading = false),
+					untilDestroyed(this)
+				).subscribe()
+		} catch (error) {
+			this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS')
+		}
+	}
 
-						if (timeOff.employees.length !== 1) {
-							employeeName = this.getTranslation('TIME_OFF_PAGE.MULTIPLE_EMPLOYEES');
-							employeeImage = 'assets/images/avatars/people-outline.svg';
-						} else {
-							employeeName = `${timeOff.employees[0].fullName}`;
-							employeeImage = timeOff.employees[0].user.imageUrl;
-						}
+	mapTimeOffRequests(items: ITimeOff[]) {
+		this.rows = [];
+		items.forEach((timeOff: ITimeOff) => {
+			let employeeName: string;
+			let employeeImage: string;
+			let extendedDescription = '';
 
-						if (timeOff.documentUrl) {
-							extendedDescription = `<a href=${
-								timeOff.documentUrl
-							} target="_blank">${this.getTranslation(
-								'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
-							)}</a><br>${timeOff.description}`;
-						} else {
-							extendedDescription = timeOff.description;
-						}
+			if (timeOff.employees.length !== 1) {
+				employeeName = this.getTranslation('TIME_OFF_PAGE.MULTIPLE_EMPLOYEES');
+				employeeImage = 'assets/images/avatars/people-outline.svg';
+			} else {
+				employeeName = `${timeOff.employees[0].fullName}`;
+				employeeImage = timeOff.employees[0].user.imageUrl;
+			}
 
-						if (!timeOff.isArchived || this.includeArchived) {
-							this.rows.push({
-								...timeOff,
-								fullName: employeeName,
-								imageUrl: employeeImage,
-								policyName: timeOff.policy.name,
-								description: extendedDescription
-							});
-						}
-					});
-					this.timeOffs = this.rows;
-					this.sourceSmartTable.load(this.rows);
-				},
-				() =>
-					this.toastrService.danger(
-						'TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS'
-					)
-			);
+			if (timeOff.documentUrl) {
+				extendedDescription = `<a href=${
+					timeOff.documentUrl
+				} target="_blank">${this.getTranslation(
+					'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
+				)}</a><br>${timeOff.description}`;
+			} else {
+				extendedDescription = timeOff.description;
+			}
+
+			if (!timeOff.isArchived || this.includeArchived) {
+				this.rows.push({
+					...timeOff,
+					fullName: employeeName,
+					imageUrl: employeeImage,
+					policyName: timeOff.policy.name,
+					description: extendedDescription
+				});
+			}
+		});
+		this.timeOffs = this.rows;
+		this.sourceSmartTable.load(this.rows);
 	}
 
 	private _createRecord() {
-		if (this.timeOffRequest) {
-			this.timeOffService
-				.createRequest(this.timeOffRequest)
-				.pipe(untilDestroyed(this), first())
-				.subscribe(
-					() => {
-						this.toastrService.success(
-							'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
-						);
-						this.timeoff$.next(true);
-					},
-					() =>
-						this.toastrService.danger(
-							'TIME_OFF_PAGE.NOTIFICATIONS.ERR_CREATE_RECORD'
-						)
-				);
+		try {
+			if (this.timeOffRequest) {
+				this.timeOffService
+					.createRequest(this.timeOffRequest)
+					.pipe(
+						untilDestroyed(this),
+						first(),
+						tap(() => this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED')),
+						finalize(() => this.timeoff$.next(true)),
+					)
+					.subscribe();
+			}
+		} catch (error) {
+			this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_CREATE_RECORD');
 		}
 	}
 
 	private _updateRecord(id: string) {
-		this.timeOffService
-			.updateRequest(id, this.timeOffRequest)
-			.pipe(untilDestroyed(this), first())
-			.subscribe(
-				() => {
-					this.toastrService.success(
-						'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED'
-					);
-					this.timeoff$.next(true);
-				},
-				() =>
-					this.toastrService.danger(
-						'TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD'
-					)
-			);
+		try {
+			this.timeOffService
+				.updateRequest(id, this.timeOffRequest)
+				.pipe(
+					untilDestroyed(this),
+					first(),
+					tap(() => this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED')),
+					finalize(() => this.timeoff$.next(true)),
+				)
+		} catch (error) {
+			this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD');
+		}
 	}
 
 	private _removeDocUrl() {

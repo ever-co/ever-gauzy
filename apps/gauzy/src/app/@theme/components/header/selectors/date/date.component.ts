@@ -23,7 +23,6 @@ export class DateSelectorComponent implements OnInit {
 	constructor(private store: Store) {}
 
 	ngOnInit() {
-		this.store.selectedDate = this.date;
 		this.dateInputValue = this.formatDateMMMMyy(this.date);
 	}
 
@@ -35,7 +34,6 @@ export class DateSelectorComponent implements OnInit {
 		 */
 		chosenDate = min([chosenDate, this.max]);
 
-		this.store.selectedDate = chosenDate;
 		this.date = chosenDate;
 
 		/**
@@ -75,10 +73,10 @@ export class DateSelectorComponent implements OnInit {
 
 		this.loadCalendar = true;
 	}
+	
 	clear() {
 		this.dateInputValue = '';
 		this.date = new Date();
-		this.store.selectedDate = null;
 	}
 
 	clickOutside(event) {
