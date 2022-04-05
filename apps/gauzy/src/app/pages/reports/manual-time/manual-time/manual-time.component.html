@@ -12,14 +12,11 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-      <ngx-gauzy-range-picker
-        [filters]="logRequest"
-        [arrows]="true"
-        [hasEmployeeFilter]="false"
-				[hasProjectFilter]="false"
+			<ngx-gauzy-range-picker
+				[filters]="logRequest"
 				[saveFilters]="false"
-        (onDateChange)="filtersChange($event)"
-      ></ngx-gauzy-range-picker>
+				(filtersChange)="filtersChange($event)"
+			></ngx-gauzy-range-picker>
 		</div>
 
 		<div class="table">
