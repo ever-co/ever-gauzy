@@ -10,24 +10,25 @@
 				{{ 'REPORT_PAGE.AMOUNT_OWED' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title
-			[start]="logRequest.startDate"
-			[end]="logRequest.endDate"
-		></ngx-date-range-title>
+		<ng-container
+			*ngIf="logRequest?.startDate && logRequest?.endDate"
+		>
+			<ngx-date-range-title
+				[start]="logRequest?.startDate"
+				[end]="logRequest?.endDate"
+			></ngx-date-range-title>
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-      <ngx-gauzy-range-picker
-        [arrows]="true"
-        [hasEmployeeFilter]="false"
+			<ngx-gauzy-range-picker
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
 				[hasLogTypeFilter]="false"
-				[hasProjectFilter]="false"
 				[saveFilters]="false"
 				[filters]="logRequest"
-				(onDateChange)="filtersChange($event)"
-      ></ngx-gauzy-range-picker>
+				(filtersChange)="filtersChange($event)"
+			></ngx-gauzy-range-picker>
 		</div>
 		<div class="daily-time-report">
 			<nb-card>

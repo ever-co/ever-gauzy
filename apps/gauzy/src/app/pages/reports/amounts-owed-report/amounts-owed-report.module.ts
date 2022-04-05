@@ -11,7 +11,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { AmountsOwedGridModule } from '../../../@shared/report/amounts-owed-grid/amounts-owed-grid.module';
-import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -28,7 +27,6 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		NbSelectModule,
 		FormsModule,
 		AmountsOwedGridModule,
