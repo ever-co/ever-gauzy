@@ -5,6 +5,7 @@ div {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1050;
   button {
     width: 34px;
     height: 34px;
@@ -30,7 +31,7 @@ div {
     }
   }
   &.selected .img-container {
-    border: 6px solid rgba(50, 50, 50, 0.2);
+    border: 6px solid rgba(126, 126, 143, 0.5);
     mix-blend-mode: multiply;
     border-radius: 34px;
     img {

@@ -4,17 +4,13 @@
 		Click here to Sign Up and start using for free!
 	</a>
 </div>
-
 <div class="main-header">
 	<div
 	class="header-container"
 	[class.left]="position === 'normal'"
 	[class.right]="position === 'inverse'"
 >
-	<div [ngClass]="expanded || !isCollapse? 'logo-container' : 'logo-container compacted'">
-    <ngx-gauzy-logo (onCollapsed)="onCollapse($event)" ></ngx-gauzy-logo>
-    <button *ngIf="isCollapse" class="hidden-menu" outline nbButton><i class="fas fa-ellipsis-h"></i></button>
-	</div>
+
 </div>
 
 <div class="header-container">
