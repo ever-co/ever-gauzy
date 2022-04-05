@@ -86,7 +86,6 @@ nb-accordion-item:last-child.collapsed nb-accordion-item-header {
   margin: 0 10px;
   padding: 10px;
   &:hover {
-    color: nb-theme(text-primary-color);
     background-color: rgba(126, 126, 143, 0.1);
     border-radius: nb-theme(border-radius);
   }
