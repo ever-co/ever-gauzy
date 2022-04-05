@@ -31,7 +31,7 @@
     margin-right: -1.25rem;
     padding-left: 8px;
     z-index: 2;
-    background-color: nb-theme(background-basic-color-1);
+  //  background-color: nb-theme(background-basic-color-1);
   }
 
   .menu-sidebar-rtl {
@@ -73,7 +73,6 @@ nb-sidebar[tag="menu-sidebar"]{
     .scrollable{
       background: nb-theme(gauzy-sidebar-background-2);
       nb-menu{
-        background: nb-theme(gauzy-sidebar-background-2);
         z-index: -1;
       }
     }
