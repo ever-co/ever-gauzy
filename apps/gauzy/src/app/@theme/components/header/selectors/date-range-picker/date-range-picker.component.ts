@@ -79,7 +79,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic enabled/disabled element
+	* Getter & Setter for dynamic selected date range
 	*/
 	_selectedDateRange: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
