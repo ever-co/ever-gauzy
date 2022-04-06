@@ -44,8 +44,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * ngx-daterangepicker-material local configuration
 	 */
 	_locale: LocaleConfig = {
-		displayFormat: 'MMM DD, YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
-		format: 'YYYY-MM-DD', // default is format value
+		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
+		format: 'DD.MM.YYYY', // default is format value
 		direction: 'ltr'
 	};
 	get locale(): LocaleConfig {
@@ -120,10 +120,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				filter((organization: IOrganization) => !!organization),
 				tap(() => this.createDateRangeMenus()),
 				tap((organization: IOrganization) => {
-					if (organization.dateFormat) {
+					if (organization.timeZone) {
+						let format: string; 
+						if (moment.tz.zonesForCountry('US').includes(organization.timeZone)) {
+							format = 'MM.DD.YYYY';
+						} else {
+							format = 'DD.MM.YYYY';
+						}
 						this.locale = {
 							...this.locale,
-							displayFormat: organization.dateFormat
+							displayFormat: format,
+							format: format
 						}
 					}
 				}),
