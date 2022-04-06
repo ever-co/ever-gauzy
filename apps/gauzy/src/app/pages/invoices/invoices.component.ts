@@ -203,7 +203,7 @@ export class InvoicesComponent
 		const storeDateRange$ = this.store.selectedDateRange$;
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
-				debounceTime(100),
+				debounceTime(300),
 				filter(([organization]) => !!organization),
 				distinctUntilChange(),
 				tap(([organization, dateRange]) => {

@@ -1,37 +1,33 @@
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit, Component, OnDestroy, ViewChild, Input } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
-import { InvoicesService } from '../../../@core/services/invoices.service';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	IInvoice,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-  EstimateColumnsEnum,
-  InvoiceColumnsEnum,
-  ITag
+	EstimateColumnsEnum,
+	InvoiceColumnsEnum,
+	ITag,
+	IDateRangePicker
 } from '@gauzy/contracts';
-import { Router } from '@angular/router';
+import * as moment from 'moment';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { Subject } from 'rxjs';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../../@core/constants';
-import { HttpClient } from '@angular/common/http';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { ErrorHandlingService, InvoicesService, Store, ToastrService } from '../../../@core/services';
 import { InvoiceEstimateTotalValueComponent } from '../table-components/invoice-total-value.component';
 import { InputFilterComponent } from '../../../@shared/table-filters/input-filter.component';
-import { DateViewComponent } from '../../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, NotesWithTagsComponent, TagsOnlyComponent } from '../../../@shared/table-components';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
-import { ContactLinksComponent } from '../../../@shared/table-components/contact-links/contact-links.component';
-import { TagsOnlyComponent } from '../../../@shared/table-components/tags-only/tags-only.component';
-import { TagsColorFilterComponent } from '../../../@shared/table-filters/tags-color-filter.component';
-import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { TagsColorFilterComponent } from '../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,10 +35,9 @@ import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class InvoicesReceivedComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
+
 	loading: boolean = false;
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
@@ -52,6 +47,7 @@ export class InvoicesReceivedComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	organization: IOrganization;
+	selectedDateRange: IDateRangePicker;
 	subject$: Subject<any> = new Subject();
 	perPage: number = 10;
 	pagination: any = {
@@ -116,19 +112,22 @@ export class InvoicesReceivedComponent
 
 		this.subject$
 			.pipe(
-				debounceTime(300),
-				tap(() => (this.loading = true)),
+				debounceTime(500),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeDateRange$ = this.store.selectedDateRange$;
+		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
-				debounceTime(100),
-				filter((organization) => !!organization),
+				filter(([organization]) => !!organization),
 				distinctUntilChange(),
-				tap((organization) => (this.organization = organization)),
+				tap(([organization, dateRange]) => {
+					this.organization = organization as IOrganization;
+					this.selectedDateRange = dateRange as IDateRangePicker;
+				}),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -186,8 +185,15 @@ export class InvoicesReceivedComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+		this.loading = true;
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { startDate, endDate } = this.selectedDateRange;
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
 			relations: ['payments', 'tags', 'toContact'],
@@ -202,6 +208,10 @@ export class InvoicesReceivedComponent
 				sentTo: organizationId,
 				tenantId,
 				isEstimate: this.isEstimate === true ? 1 : 0,
+				invoiceDate: {
+					startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
 				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (invoice: IInvoice) => {
