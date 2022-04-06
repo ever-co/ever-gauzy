@@ -82,11 +82,11 @@ nb-sidebar[tag='menu-sidebar'] {
 .logo-container {
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-between;
   //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
   max-width: nb-theme(sidebar-width);
   width: nb-theme(sidebar-width);
-  padding-top: 0.75rem;
+  padding: 0.75rem;
   button.hidden-menu {
     padding: 0 0.5rem;
     height: 1.625rem;
