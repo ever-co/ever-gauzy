@@ -38,6 +38,9 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
@@ -46,7 +49,12 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./expenses/expenses.module').then(
 								(m) => m.ExpensesModule
-							)
+							),
+						data: {
+							datePicker: {
+								unitOfTime: 'month'
+							}
+						}
 					},
 					{
 						path: 'expense-recurring',
@@ -58,6 +66,9 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								employee: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
@@ -71,6 +82,9 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								employee: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
@@ -83,6 +97,9 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								employee: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					}
@@ -143,6 +160,9 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
@@ -156,6 +176,9 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								employee: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
@@ -169,6 +192,9 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								employee: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
@@ -181,6 +207,9 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								employee: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
