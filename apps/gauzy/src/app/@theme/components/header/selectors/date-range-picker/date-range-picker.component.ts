@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from './../../../../../@core/services';
+import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
@@ -44,8 +44,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * ngx-daterangepicker-material local configuration
 	 */
 	_locale: LocaleConfig = {
-		displayFormat: 'MMM DD, YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
-		format: 'YYYY-MM-DD', // default is format value
+		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
+		format: 'DD.MM.YYYY', // default is format value
 		direction: 'ltr'
 	};
 	get locale(): LocaleConfig {
@@ -100,22 +100,37 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly store: Store,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.dateRangePickerBuilderService.pickerRangeUnitOfTime$
+			.pipe(
+				tap((unitOfTime: moment.unitOfTime.Base) => {
+					this.unitOfTime = unitOfTime || 'month'
+				}),
+				untilDestroyed(this)
+			).subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap(() => this.createDateRangeMenus()),
 				tap((organization: IOrganization) => {
-					if (organization.dateFormat) {
+					if (organization.timeZone) {
+						let format: string; 
+						if (moment.tz.zonesForCountry('US').includes(organization.timeZone)) {
+							format = 'MM.DD.YYYY';
+						} else {
+							format = 'DD.MM.YYYY';
+						}
 						this.locale = {
 							...this.locale,
-							displayFormat: organization.dateFormat
+							displayFormat: format,
+							format: format
 						}
 					}
 				}),

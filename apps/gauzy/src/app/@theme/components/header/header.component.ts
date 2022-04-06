@@ -33,7 +33,6 @@ import {
 } from './selectors/employee';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {
-	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeStore,
 	ISidebarActionConfig,
@@ -128,8 +127,7 @@ export class HeaderComponent extends TranslationBaseComponent
 		private readonly organizationProjectStore: OrganizationProjectStore,
 		private readonly employeeStore: EmployeeStore,
 		public readonly selectorBuilderService: SelectorBuilderService,
-		private readonly cd: ChangeDetectorRef,
-		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly cd: ChangeDetectorRef
 	) {
 		super(translate);
 	}
