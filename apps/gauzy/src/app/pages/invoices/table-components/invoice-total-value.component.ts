@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
-import { IOrganization } from '../../../../../../../packages/contracts/dist/organization.model';
+import { IOrganization } from '@gauzy/contracts';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -8,22 +8,19 @@
 		<ngx-date-range-title
 			[start]="logRequest.startDate"
 			[end]="logRequest.endDate"
+			[format]="'dddd, LL'"
 		></ngx-date-range-title>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-      <ngx-gauzy-range-picker
-        [arrows]="true"
-        [hasEmployeeFilter]="false"
+			<ngx-gauzy-filters
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
 				[hasLogTypeFilter]="false"
-				[hasProjectFilter]="false"
 				[saveFilters]="false"
 				[filters]="logRequest"
-				(onDateChange)="filtersChange($event)"
-      >
-      </ngx-gauzy-range-picker>
+				(filtersChange)="filtersChange($event)"
+			></ngx-gauzy-filters>
 		</div>
 		<div
 			class="weekly-logs row-table"
@@ -83,7 +80,12 @@
 										client.budgetType ===
 										OrganizationContactBudgetTypeEnum.COST
 									"
-									>{{ client?.spent | currency: client?.spent.currency | position: organization?.currencyPosition }}</span
+									>{{
+										client?.spent
+											| currency: client?.spent.currency
+											| position
+												: organization?.currencyPosition
+									}}</span
 								>
 							</div>
 							<div class="col-4 text-center day-col">
@@ -91,7 +93,10 @@
 									[percentage]="client?.spentPercentage"
 								></ngx-progress-status>
 								<span class="ml-3">{{
-									client?.spent | currency: client?.spent.currency | position: organization?.currencyPosition
+									client?.spent
+										| currency: client?.spent.currency
+										| position
+											: organization?.currencyPosition
 								}}</span>
 							</div>
 							<div class="col text-center day-col">
@@ -115,7 +120,11 @@
 											OrganizationContactBudgetTypeEnum.COST
 										"
 										>{{
-											client.reamingBudget| currency: client?.spent.currency | position: organization?.currencyPosition
+											client.reamingBudget
+												| currency
+													: client?.spent.currency
+												| position
+													: organization?.currencyPosition
 										}}</span
 									>
 								</div>

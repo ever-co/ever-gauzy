@@ -1,6 +1,12 @@
+@import 'gauzy/_gauzy-overrides';
+
 .theme-container{
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+}
+
+:host ::ng-deep{
+  @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow-inset);
 }

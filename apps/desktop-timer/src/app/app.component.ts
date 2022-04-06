@@ -171,7 +171,7 @@ export class AppComponent implements OnInit {
 		);
 
 		this.electronService.ipcRenderer.on('time_toggle', (event, arg) => {
-			this.appService.toggleApi(arg).then((res) => {
+			this.appService.stopTimer(arg).then((res) => {
 				event.sender.send('return_toggle_api', {
 					result: res,
 					timerId: arg.timerId
@@ -183,7 +183,7 @@ export class AppComponent implements OnInit {
 			'update_toggle_timer',
 			(event, arg) => {
 				console.log('event toggle stopped', arg);
-				this.appService.toggleApi(arg).then((res) => {
+				this.appService.stopTimer(arg).then((res) => {
 					event.sender.send('timer_stopped');
 					console.log('success stopped timer', res);
 				}).catch((e) => {

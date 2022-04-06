@@ -1,8 +1,8 @@
-import { IEmployee, IEmployeeCreateInput, IPagination } from '@gauzy/contracts';
+import { IDateRangePicker, IEmployee, IEmployeeCreateInput, IPagination } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from './employee.entity';
@@ -55,47 +55,40 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findWorkingEmployees(
 		organizationId: string,
-		forMonth: Date,
+		forRange: IDateRangePicker | any,
 		withUser: boolean
 	): Promise<IPagination<IEmployee>> {
-		const tenantId = RequestContext.currentTenantId();
-		const query = this.employeeRepository.createQueryBuilder('employee');
-		query
-			.where(`${query.alias}."organizationId" = :organizationId`, {
-				organizationId
-			})
-			.andWhere(`${query.alias}."tenantId" = :tenantId`, {
-				tenantId
-			})
-			.andWhere(`${query.alias}."isActive" = true`)
-			.andWhere(
-				`${query.alias}."startedWorkOn" <= :startedWorkOnCondition`,
-				{
-					startedWorkOnCondition: moment(forMonth)
-						.endOf('month')
-						.format('YYYY-MM-DD hh:mm:ss')
-				}
-			)
-			.andWhere(
-				new Brackets((notEndedCondition) => {
-					notEndedCondition
-						.where(`${query.alias}."endWork" IS NULL`)
-						.orWhere(
-							`${query.alias}."endWork" >= :endWorkOnCondition`,
-							{
-								endWorkOnCondition: moment(forMonth)
-									.startOf('month')
-									.format('YYYY-MM-DD hh:mm:ss')
-							}
-						);
-				})
-			);
-
-		if (withUser) {
-			query.leftJoinAndSelect(`${query.alias}.user`, 'user');
-		}
-
-		const [items, total] = await query.getManyAndCount();
+		const [items, total] = await this.employeeRepository.findAndCount({
+			where: (query: SelectQueryBuilder<Employee>) => {
+				const { startDate, endDate } = forRange;
+				const tenantId = RequestContext.currentTenantId();
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => { 
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(`"${query.alias}"."isActive" = :isActive`, { isActive: true });
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(`"${query.alias}"."startedWorkOn" <= :startedWorkOn`, {
+							startedWorkOn: moment.utc(endDate).format('YYYY-MM-DD hh:mm:ss')
+						});
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.where(`"${query.alias}"."endWork" IS NULL`);
+						qb.orWhere( `"${query.alias}"."endWork" >= :endWork`, {
+							endWork: moment.utc(startDate).format('YYYY-MM-DD hh:mm:ss')
+						});
+					})
+				);
+			},
+			relations: [
+				...(withUser ? ['user'] : [])
+			]
+		});
 		return {
 			total,
 			items
@@ -113,12 +106,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findWorkingEmployeesCount(
 		organizationId: string,
-		forMonth: Date,
+		forRange: IDateRangePicker | any,
 		withUser: boolean
 	): Promise<{ total: number }> {
 		const { total } = await this.findWorkingEmployees(
 			organizationId,
-			forMonth,
+			forRange,
 			withUser
 		);
 		return {

@@ -91,7 +91,7 @@
 			<div class="table-row" *ngFor="let employeeLog of logs.employeeLogs">
 				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
-						<div class="responsive-table-header">Employee</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 						<div class="responsive-table-content project-name">
 							<ng-container
 									*ngTemplateOutlet="
@@ -101,7 +101,7 @@
 						</div>
 					</div>
 					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">Project</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
 						<div class="responsive-table-content project-name">
 							<ng-container
 									*ngTemplateOutlet="
@@ -111,7 +111,7 @@
 						</div>
 					</div>
 					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">To Do</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							<ng-container
 									*ngTemplateOutlet="
@@ -121,13 +121,13 @@
 						</div>
 					</div>
 					<div class="responsive-table-row time-column">
-						<div class="responsive-table-header">Time</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.TIME' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							{{ employeeLog.sum | durationFormat }}
 						</div>
 					</div>
 					<div class="responsive-table-row activity-column">
-						<div class="responsive-table-header">Activity</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							{{ employeeLog.activity || 0 }}%
 						</div>
@@ -154,11 +154,11 @@
 			<div class="table-row" *ngFor="let projectLog of day.projectLogs">
 				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
-						<div class="responsive-table-header">Date</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 						<div class="responsive-table-content">{{ day.date }}</div>
 					</div>
 					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">Employee</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 						<div class="responsive-table-content">
 							<ng-container
 									*ngTemplateOutlet="
@@ -169,7 +169,7 @@
 						</div>
 					</div>
 					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">To Do</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							<ng-container
 									*ngTemplateOutlet="
@@ -179,13 +179,13 @@
 						</div>
 					</div>
 					<div class="responsive-table-row time-column">
-						<div class="responsive-table-header">Time</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.TIME' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							{{ projectLog.sum | durationFormat }}
 						</div>
 					</div>
 					<div class="responsive-table-row activity-column">
-						<div class="responsive-table-header">Activity</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							{{ projectLog.activity || 0 }}%
 						</div>
@@ -210,13 +210,13 @@
 			<div class="table-row" *ngFor="let employeeLog of day.employeeLogs">
 				<div class="table-inner-wrapper">
 					<div class="responsive-table-row employee-column">
-						<div class="responsive-table-header">Date</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 						<div class="responsive-table-content project-name">
 							{{ day.date }}
 						</div>
 					</div>
 					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">Employee</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 						<div class="responsive-table-content project-name">
 							<ng-container
 									*ngTemplateOutlet="
@@ -227,7 +227,7 @@
 
 					</div>
 					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">To Do</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							<ng-container
 									*ngTemplateOutlet="
@@ -237,13 +237,13 @@
 						</div>
 					</div>
 					<div class="responsive-table-row time-column">
-						<div class="responsive-table-header">Time</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.TIME' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							{{ employeeLog.sum | durationFormat }}
 						</div>
 					</div>
 					<div class="responsive-table-row activity-column">
-						<div class="responsive-table-header">Activity</div>
+						<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
 						<div class="responsive-table-content day-col">
 							{{ employeeLog.activity || 0 }}%
 						</div>
@@ -269,13 +269,13 @@
 				<div class="table-row" *ngFor="let projectLog of day.projectLogs">
 					<div class="table-inner-wrapper">
 						<div class="responsive-table-row employee-column">
-							<div class="responsive-table-header">Date</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								{{ day.date }}
 							</div>
 						</div>
 						<div class="responsive-table-row employee-column">
-							<div class="responsive-table-header">Employee</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								<ng-container
 										*ngTemplateOutlet="
@@ -285,7 +285,7 @@
 							</div>
 						</div>
 						<div class="responsive-table-row project-column">
-							<div class="responsive-table-header">Project</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								<ng-container
 										*ngTemplateOutlet="
@@ -295,7 +295,7 @@
 							</div>
 						</div>
 						<div class="responsive-table-row todo-column">
-							<div class="responsive-table-header">To Do</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
 							<div class="responsive-table-content day-col">
 								<ng-container
 										*ngTemplateOutlet="
@@ -305,13 +305,13 @@
 							</div>
 						</div>
 						<div class="responsive-table-row time-column">
-							<div class="responsive-table-header">Time</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.TIME' | translate }}</div>
 							<div class="responsive-table-content day-col">
 								{{ projectLog.sum | durationFormat }}
 							</div>
 						</div>
 						<div class="responsive-table-row activity-column">
-							<div class="responsive-table-header">Activity</div>
+							<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
 							<div class="responsive-table-content day-col">
 								{{ projectLog.activity || 0 }}%
 							</div>
@@ -325,18 +325,7 @@
 </ng-template>
 
 <ng-template let-project let-members="members" #projectEl>
-	<div *ngIf="project; else noProjects" class="single-project-template">
-		<div class="logo-wrapper">
-			<img [src]="project && project['organizationContact']['imageUrl'] " alt="company logo">
-		</div>
-		<div class="headers-wrapper">
-			<div class="main-header" [title]="project?.name">{{ project?.name }} </div>
-			<div class="employees-count">Members count {{ members }}</div>
-		</div>
-	</div>
-	<ng-template #noProjects>
-		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-	</ng-template>
+	<ga-organization [project]="project" [members]="members"></ga-organization>
 </ng-template>
 
 <ng-template let-task #taskEl>
@@ -354,13 +343,14 @@
 </ng-template>
 
 <ng-template let-employee #employeeEl>
-	<div class="avatar-wrapper">
-		<ga-report-table-user-avatar
-			*ngIf="employee"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id"
-		></ga-report-table-user-avatar>
+	<div class="avatar-wrapper-outer">
+		<ngx-avatar
+				class="report-table"
+				*ngIf="employee"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id"
+		></ngx-avatar>
 	</div>
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
@@ -370,25 +360,25 @@
 <ng-template #columnsHeader>
 	<div class="columns-header">
 		<div class="table-inner-wrapper font-weight-bold align-items-center">
-			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="employee-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="responsive-table-row employee-column">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy !== ReportGroupFilterEnum.project" class="employee-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy !== ReportGroupFilterEnum.project" class="responsive-table-row employee-column">
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy === ReportGroupFilterEnum.project" class="project-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy === ReportGroupFilterEnum.project" class="responsive-table-row project-column">
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="project-column">
+			<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="responsive-table-row project-column">
 				{{ 'REPORT_PAGE.PROJECT' | translate }}
 			</div>
-			<div class="todo-column day-col">
+			<div class="responsive-table-row todo-column day-col">
 				{{ 'REPORT_PAGE.TO_DO' | translate }}
 			</div>
-			<div class="time-column day-col">
+			<div class="responsive-table-row time-column day-col">
 				{{ 'REPORT_PAGE.TIME' | translate }}
 			</div>
-			<div class="activity-column day-col">
+			<div class="responsive-table-row activity-column day-col">
 				{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 			</div>
 		</div>

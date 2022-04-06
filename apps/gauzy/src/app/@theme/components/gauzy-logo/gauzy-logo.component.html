@@ -4,72 +4,51 @@
 			<ng-container *ngTemplateOutlet="logo"></ng-container>
 			<div class="organization" *ngIf="!isCollapse">
 				<img [src]="organization.imageUrl" alt="" />
-				<div class="description">
+				<div class="description text">
 					<div>{{ organization?.name }}</div>
 					<div>{{ organization?.website }}</div>
 				</div>
 			</div>
 		</nb-accordion-item-header>
 		<nb-accordion-item-body>
-			<i class="fas fa-user-plus"></i
-			><span class="ml-1">Invite people</span>
-		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<i class="fas fa-users"></i><span class="ml-1">Users</span>
-		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<i class="fas fa-exchange-alt"></i
-			><span class="ml-1">Import/Export</span>
-		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<i class="fas fa-globe"></i><span class="ml-1">Organizations</span>
-		</nb-accordion-item-body>
-		<nb-accordion-item-body>
-			<i class="fas fa-swatchbook"></i
-			><span class="ml-1">Apps & Integrations</span>
+			<div class="d-flex flex-column" *ngFor="let action of actions">
+				<ng-container *ngxPermissionsOnly="action.data.permissionKeys">
+					<span [routerLink]="action.link" class="link"
+						><i [class]="action.icon"></i
+						><span class="text">{{
+							action.data.translationKey | translate
+						}}</span></span
+					>
+				</ng-container>
+			</div>
 		</nb-accordion-item-body>
 		<nb-accordion-item-body>
 			<nb-accordion>
 				<nb-accordion-item>
 					<nb-accordion-item-header>
-						<i class="fas fa-cog"></i
-						><span class="ml-1">Settings</span>
+						<i [class]="settings.icon"></i
+						><span class="text">{{
+							settings.data.translationKey | translate
+						}}</span>
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
-						<i class="fas fa-pen"></i
-						><span class="ml-1">General</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-swatchbook"></i
-						><span class="ml-1">features</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-envelope-open"></i
-						><span class="ml-1">Email History</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-envelope"></i
-						><span class="ml-1">Email Templates</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-address-card"></i
-						><span class="ml-1">Accounting Templates</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-database"></i
-						><span class="ml-1">File Storage</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-at"></i
-						><span class="ml-1">SMS Gateways</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-at"></i
-						><span class="ml-1">Custom SMTP</span>
-					</nb-accordion-item-body>
-					<nb-accordion-item-body>
-						<i class="fas fa-award"></i
-						><span class="ml-1">Roles & Permissions</span>
+						<div
+							class="d-flex flex-column"
+							*ngFor="let setting of settings.children"
+						>
+							<ng-container
+								*ngxPermissionsOnly="
+									setting.data.permissionKeys
+								"
+							>
+								<span [routerLink]="setting.link" class="link">
+									<i [class]="setting.icon"></i
+									><span class="text">{{
+										setting.data.translationKey | translate
+									}}</span>
+								</span>
+							</ng-container>
+						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
 			</nb-accordion>
@@ -78,10 +57,31 @@
 			<div class="content">
 				<span>Download Apps:</span>
 				<span>
-					<i class="fab fa-apple mr-1 ml-1"></i>
-					<i class="fab fa-google-drive mr-1 ml-1"></i>
-					<i class="fas fa-desktop mr-1 ml-1"></i>
-					<i class="fas fa-print mr-1 ml-1"></i>
+					<a
+						target="_blank"
+						href="https://web.gauzy.co/downloads#desktop/apple"
+						><i class="fab fa-apple"></i
+					></a>
+					<a
+						target="_blank"
+						href="https://web.gauzy.co/downloads#desktop/windows"
+						><i class="fa-brands fa-windows"></i
+					></a>
+					<a
+						target="_blank"
+						href="https://web.gauzy.co/downloads#desktop/linux"
+						><i class="fa-brands fa-linux"></i
+					></a>
+					<a
+						target="_blank"
+						href=" https://web.gauzy.co/downloads#mobile"
+						><i class="fas fa-mobile"></i
+					></a>
+					<a
+						target="_blank"
+						href="https://web.gauzy.co/downloads#extensions"
+						><i class="fa-brands fa-chrome"></i
+					></a>
 				</span>
 			</div>
 		</nb-accordion-item-body>

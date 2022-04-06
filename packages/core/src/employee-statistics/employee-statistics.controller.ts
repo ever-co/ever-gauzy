@@ -10,12 +10,13 @@ import {
 	HttpStatus,
 	Param,
 	Query,
-	UseGuards
+	UseGuards,
+	UseInterceptors
 } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { parseISO } from 'date-fns';
 import { EmployeeStatisticsService } from './employee-statistics.service';
+import { TransformInterceptor } from './../core/interceptors';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import {
@@ -26,10 +27,11 @@ import {
 
 @ApiTags('EmployeeStatistics')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(
-		private employeeStatisticsService: EmployeeStatisticsService,
+		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly queryBus: QueryBus
 	) {}
 
@@ -43,16 +45,9 @@ export class EmployeeStatisticsController {
 	})
 	@Get('/aggregate')
 	async findAggregatedByOrganizationId(
-		@Query('data', ParseJsonPipe) data?: any
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IAggregatedEmployeeStatistic[]> {
 		const { findInput } = data;
-		/**
-		 * JSON parse changes Date object to String type
-		 * Changing Date String to Date Object using parseISO
-		 */
-		findInput.filterDate = findInput.filterDate
-			? parseISO(findInput.filterDate)
-			: null;
 		return this.queryBus.execute(
 			new AggregatedEmployeeStatisticQuery(findInput)
 		);
@@ -87,15 +82,9 @@ export class EmployeeStatisticsController {
 	})
 	@Get('/months')
 	async findAggregatedStatisticsByEmployeeId(
-		@Query('data', ParseJsonPipe) data?: any
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IMonthAggregatedEmployeeStatistics> {
 		const { findInput } = data;
-		/**
-		 * JSON parse changes Date object to String type
-		 * Changing Date String to Date Object using parseISO
-		 */
-		findInput.valueDate = parseISO(findInput.valueDate);
-
 		return this.queryBus.execute(
 			new MonthAggregatedEmployeeStatisticsQuery(findInput)
 		);
@@ -114,12 +103,6 @@ export class EmployeeStatisticsController {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatisticsHistory[]> {
 		const { findInput } = data;
-		/**
-		 * JSON parse changes Date object to String type
-		 * Changing Date String to Date Object using parseISO
-		 */
-		findInput.valueDate = parseISO(findInput.valueDate);
-
 		return this.queryBus.execute(
 			new EmployeeStatisticsHistoryQuery(findInput)
 		);

@@ -22,6 +22,7 @@
 @import './layout';
 @import './overrides';
 @import './material/material-overrides';
+@import './gauzy/gauzy-overrides';
 
 @import './site-menu.scss';
 
@@ -48,4 +49,5 @@
 
   @include nb-overrides();
   @include material-overrides();
+  @include gauzy-overrides();
 }

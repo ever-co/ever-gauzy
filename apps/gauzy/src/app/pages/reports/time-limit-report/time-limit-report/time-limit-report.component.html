@@ -5,23 +5,24 @@
 				{{ title | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title
-			[start]="logRequest.startDate"
-			[end]="logRequest.endDate"
-		></ngx-date-range-title>
+		<ng-container
+			*ngIf="logRequest?.startDate && logRequest?.endDate"
+		>
+			<ngx-date-range-title
+				[start]="logRequest?.startDate"
+				[end]="logRequest?.endDate"
+				[format]="'dddd, LL'"
+			></ngx-date-range-title>
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-			<ngx-gauzy-range-picker
-        [filters]="logRequest"
-        [arrows]="true"
-        [hasEmployeeFilter]="false"
-        [hasProjectFilter]="false"
-        [saveFilters]="false"
-        (onDateChange)="filtersChange($event)"
-      ></ngx-gauzy-range-picker>
+			<ngx-gauzy-filters
+        		[filters]="logRequest"
+        		[saveFilters]="false"
+        		(filtersChange)="filtersChange($event)">
+			</ngx-gauzy-filters>
 		</div>
-
 		<div class="table">
 			<div
 				class="time-logs row-table"
@@ -50,9 +51,7 @@
 
 			<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
 				<nb-card class="card" *ngFor="let day of dailyData">
-					<nb-card-header class="card-title">{{
-						day.date
-					}}</nb-card-header>
+					<nb-card-header class="card-title">{{ day.date}}</nb-card-header>
 					<nb-card-body class="cart-body">
 						<div *ngIf="day.employees.length == 0">
 							{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}

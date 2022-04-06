@@ -31,6 +31,17 @@ export class DateRangeTitleComponent {
 		this._end = end;
 	}
 
+	/*
+	* Getter & Setter for default format
+	*/
+	_format: string;
+	get format(): string {
+		return this._format;
+	}
+	@Input() set format(format: string) {
+		this._format = format;
+	}
+
 	constructor(
 		private readonly dateFormatPipe: DateFormatPipe
 	) {}
@@ -39,8 +50,8 @@ export class DateRangeTitleComponent {
 	 * GET date range title
 	 */
 	get title() {
-		const start = this.dateFormatPipe.transform(this.start);
-		const end = this.dateFormatPipe.transform(this.end);
+		const start = this.dateFormatPipe.transform(this.start, null, this.format);
+		const end = this.dateFormatPipe.transform(this.end, null, this.format);
 		return [ start, end ].filter(Boolean).join(' - ');
 	}
 }

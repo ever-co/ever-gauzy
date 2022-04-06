@@ -48,7 +48,7 @@ export class EmployeeRecurringExpenseService {
 		);
 	}
 
-	getAllByMonth(
+	getAllByRange(
 		relations?: string[],
 		findInput?: IEmployeeRecurringExpenseByMonthFindInput
 	): Promise<{

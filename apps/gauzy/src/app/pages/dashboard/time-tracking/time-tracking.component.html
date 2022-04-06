@@ -3,7 +3,7 @@
 		<h4>
 			<ngx-header-title>
 				{{
-					!selectedDateRange.isCustomDate
+					!selectedDateRange?.isCustomDate
 						? ('TIMESHEET.WEEKLY' | translate)
 						: ''
 				}}
@@ -11,31 +11,14 @@
 			</ngx-header-title>
 		</h4>
 		<ngx-date-range-title
-			[start]="selectedDateRange.startDate"
-			[end]="selectedDateRange.endDate"
+			[start]="selectedDateRange?.startDate"
+			[end]="selectedDateRange?.endDate"
+			[format]="'dddd, LL'"
 		>
 		</ngx-date-range-title>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
-			<div class="col">
-				<div class="row col-auto">
-					<div class="filter">
-						<ngx-gauzy-range-picker
-							[hasActivityLevelFilter]="false"
-							[hasEmployeeFilter]="false"
-							[hasProjectFilter]="false"
-							[hasLogTypeFilter]="false"
-							[hasSourceFilter]="false"
-							[saveFilters]="false"
-							[filters]="selectedDateRange"
-							[arrows]="true"
-							(onDateChange)="onUpdateDate($event)"
-						>
-						</ngx-gauzy-range-picker>
-					</div>
-				</div>
-			</div>
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
 				<nb-toggle
 					class="mr-3 ml-3"

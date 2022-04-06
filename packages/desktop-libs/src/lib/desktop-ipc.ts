@@ -398,6 +398,12 @@ export function ipcTimer(
 			}
 		);
 	})
+
+	ipcMain.on('aw_status', (event, arg) => {
+		LocalStore.updateApplicationSetting({
+			awIsConnected: arg
+		});
+	})
 }
 
 export function removeMainListener() {

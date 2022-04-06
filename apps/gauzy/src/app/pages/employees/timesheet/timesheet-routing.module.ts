@@ -56,7 +56,10 @@ const routes: Routes = [
 				redirectTo: '/pages/employees/timesheets/daily'
 			},
 			selectors: {
-				project: false
+				project: false,
+				employee: false,
+				date: false,
+				organization: false
 			}
 		},
 		loadChildren: () => import('./view/view.module').then((m) => m.ViewModule)

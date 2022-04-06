@@ -579,7 +579,7 @@
 				status="basic"
 				class="action select-nb mr-2 ml-1"
 				*ngIf="!isEstimate"
-				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
+				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"

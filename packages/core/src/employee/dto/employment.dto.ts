@@ -5,7 +5,7 @@ import {
     ISkill
 } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsDateString, IsOptional, IsString, ValidateNested } from "class-validator";
 import { Type } from 'class-transformer';
 import { CreateOrganizationEmploymentTypeDTO } from "./../../organization-employment-type/dto";
 import { CreateOrganizationDepartmentDTO } from "./../../organization-department/dto";
@@ -18,7 +18,12 @@ export class EmploymentDTO extends TenantOrganizationBaseDTO {
     @IsString({
         message: "Started worked on must be a Date string"
     })
-    readonly startedWorkOn?: String;
+    readonly startedWorkOn?: string;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsDateString()
+    readonly endWork?: string;
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()

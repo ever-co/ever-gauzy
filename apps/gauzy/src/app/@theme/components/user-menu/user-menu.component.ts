@@ -1,5 +1,13 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-import { IUser } from '../../../../../../../packages/contracts/dist/user.model';
+import {
+	Component,
+	Input,
+	OnInit,
+	Output,
+	EventEmitter,
+	TemplateRef
+} from '@angular/core';
+import { NbDialogService } from '@nebular/theme';
+import { IUser } from '@gauzy/contracts';
 
 @Component({
 	selector: 'gauzy-user-menu',
@@ -10,11 +18,23 @@ export class UserMenuComponent implements OnInit {
 	@Input() user: IUser;
 	@Output() close: EventEmitter<any> = new EventEmitter<any>(null);
 
-	constructor() {}
+	clicks: boolean[] = [];
 
-	ngOnInit(): void {}
+	constructor(private dialogService: NbDialogService) {}
+
+	ngOnInit(): void {
+  }
 
 	onClick() {
 		this.close.emit();
+	}
+
+	onClickOutside(event: boolean) {
+		this.clicks.push(event);
+		if (!event && this.clicks.length > 1) this.onClick();
+	}
+
+	open(dialog: TemplateRef<any>) {
+		this.dialogService.open(dialog);
 	}
 }
