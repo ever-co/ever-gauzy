@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from './../../../../../@core/services';
+import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
@@ -100,12 +100,20 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly store: Store,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.dateRangePickerBuilderService.pickerRangeUnitOfTime$
+			.pipe(
+				tap((unitOfTime: moment.unitOfTime.Base) => {
+					this.unitOfTime = unitOfTime || 'month'
+				}),
+				untilDestroyed(this)
+			).subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
