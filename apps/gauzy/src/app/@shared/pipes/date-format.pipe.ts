@@ -3,8 +3,8 @@ import { IOrganization, RegionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import * as moment from 'moment';
-import { Store } from '../../@core/services/store.service';
-import { isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
@@ -15,9 +15,10 @@ export class DateFormatPipe implements PipeTransform {
 	dateFormat: string = 'd MMMM, y';;
 	regionCode: string = RegionsEnum.EN;
 
-	constructor(private store: Store) {
+	constructor(private readonly store: Store) {
 		this.store.selectedOrganization$
 			.pipe(
+				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				untilDestroyed(this)
 			)
@@ -29,7 +30,8 @@ export class DateFormatPipe implements PipeTransform {
 
 	transform(
 		value: Date | string | number | null | undefined,
-		locale?: string
+		locale?: string,
+		defaultFormat?: string
 	) {
 		if (!value) {
 			return;
@@ -43,7 +45,13 @@ export class DateFormatPipe implements PipeTransform {
 		if (isEmpty(locale)) {
 			locale = this.regionCode;
 		}
-		if (date && this.dateFormat) {
+
+		if (date && defaultFormat) {
+			/**
+			 * Override default format to organization date format as a priority format
+			 */
+			return date.locale(locale).format(defaultFormat);
+		} else if (date && this.dateFormat) {
 			return date.locale(locale).format(this.dateFormat);
 		}
 		return;
