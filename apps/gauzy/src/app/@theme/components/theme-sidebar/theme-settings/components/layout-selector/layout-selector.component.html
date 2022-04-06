@@ -21,3 +21,14 @@
 		</nb-select>
 	</div>
 </div>
+<div class="reset-button">
+	<button
+		nbTooltip="{{ 'SETTINGS_MENU.RESET_LAYOUT_TOOLTIP' | translate }}"
+		status="danger"
+		nbButton
+		size="small"
+		(click)="resetLayoutForAllComponents()"
+	>
+		{{ 'SETTINGS_MENU.RESET_LAYOUT' | translate }}
+	</button>
+</div>

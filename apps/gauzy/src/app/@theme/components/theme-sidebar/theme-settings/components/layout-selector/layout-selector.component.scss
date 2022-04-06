@@ -7,6 +7,11 @@
   flex-wrap: wrap;
 }
 
+.reset-button{
+  margin-top: 1rem;
+  display: flex;
+}
+
 :host ::ng-deep{
   nb-select.appearance-outline .select-button{
     color: rgba($color: rgba(126, 126, 143), $alpha: 1);
