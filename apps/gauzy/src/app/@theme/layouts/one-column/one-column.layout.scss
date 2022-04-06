@@ -96,6 +96,9 @@ nb-sidebar[tag='menu-sidebar'] {
   ngx-gauzy-logo {
     width: 100%;
   }
+  &.not-collapsed {
+    padding: 0.75rem 0;
+  }
   &.compacted {
     width: nb-theme(sidebar-width-compact);
     justify-content: space-around;
@@ -107,7 +110,6 @@ nb-sidebar[tag='menu-sidebar'] {
       box-shadow: none;
       width: 1.75rem;
       height: auto;
-      background-color: black;
       .logo {
         display: none;
       }
