@@ -300,6 +300,9 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
@@ -388,6 +391,9 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								employee: false
+							},
+							datePicker: {
+								unitOfTime: 'month'
 							}
 						}
 					},
