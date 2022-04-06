@@ -15,36 +15,37 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
-			<div class="row" *ngIf="isAdd">
-				<div class="col-sm-12 mb-3">
-					<ga-employee-selector
-						#employeeSelector
-						placeholder="Employee"
-						[defaultSelected]="true"
-						[showAllEmployeesOption]="true"
-						[skipGlobalChange]="true"
-						class="employees"
-						[selectedDate]="selectedDate"
-					>
-					</ga-employee-selector>
+		<form [formGroup]="form">
+			<ng-container *ngIf="componentType === 'EMPLOYEE'">
+				<div class="row" [hidden]="recurringExpense">
+					<div class="col-sm-12 mb-3">
+						<ga-employee-selector
+							#employeeSelector
+							placeholder="Employee"
+							[defaultSelected]="true"
+							[showAllEmployeesOption]="true"
+							[skipGlobalChange]="true"
+							class="employees"
+						>
+						</ga-employee-selector>
+					</div>
 				</div>
-			</div>
+			</ng-container>
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label class="label" for="currencySelect">{{
+						<label class="label" for="categoryInput">{{
 							'POP_UPS.CATEGORY_NAME' | translate
 						}}</label>
 						<ng-select
 							[items]="defaultFilteredCategories"
 							[addTag]="addNewCustomCategoryName"
-							id="positionInput"
+							id="categoryInput"
 							[searchable]="true"
 							fullWidth
-							placeholder="{{
+							[placeholder]="
 								'POP_UPS.CATEGORY_NAME' | translate
-							}}"
+							"
 							formControlName="categoryName"
 							bindValue="value"
 							appendTo="body"
@@ -71,11 +72,11 @@
 			<div class="row">
 				<div class="col-6">
 					<div class="form-group">
-						<label class="label" for="currencySelect">{{
+						<label class="label" for="valueInput">{{
 							'SM_TABLE.VALUE' | translate
 						}}</label>
 						<input
-							placeholder="{{ 'SM_TABLE.VALUE' | translate }}"
+							[placeholder]="'SM_TABLE.VALUE' | translate"
 							fullWidth
 							id="valueInput"
 							type="number"
@@ -99,7 +100,7 @@
 							[nbDatepicker]="datepicker"
 							nbInput
 							fullWidth
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							[placeholder]="'POP_UPS.PICK_DATE' | translate"
 							formControlName="startDate"
 							(ngModelChange)="datePickerChanged($event)"
 						/>

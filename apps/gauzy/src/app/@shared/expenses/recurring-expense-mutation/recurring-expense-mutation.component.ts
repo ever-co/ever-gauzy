@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, OnDestroy, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	OrganizationSelectInput,
@@ -6,11 +6,14 @@ import {
 	RecurringExpenseDefaultCategoriesEnum,
 	StartDateUpdateTypeEnum,
 	IEmployee,
-	IOrganization
+	IOrganization,
+	IExpenseCategory
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { firstValueFrom } from 'rxjs';
+import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	EmployeeRecurringExpenseService,
 	EmployeesService,
@@ -22,30 +25,25 @@ import {
 	ToastrService
 } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
 import { defaultDateFormat } from '../../../@core/utils/date';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { COMPONENT_TYPE, DEFAULT_CATEGORIES } from './recurring-expense.setting';
 
-export enum COMPONENT_TYPE {
-	EMPLOYEE = 'EMPLOYEE',
-	ORGANIZATION = 'ORGANIZATION'
-}
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-recurring-expense-mutation',
 	templateUrl: './recurring-expense-mutation.component.html',
 	styleUrls: ['./recurring-expense-mutation.component.scss']
 })
-export class RecurringExpenseMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
-	public form: FormGroup;
-	@ViewChild('employeeSelector')
+export class RecurringExpenseMutationComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
+	organization: IOrganization;
+
+	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
 
-	startDateUpdateType: StartDateUpdateTypeEnum =
-		StartDateUpdateTypeEnum.NO_CHANGE;
-
+	startDateUpdateType: StartDateUpdateTypeEnum = StartDateUpdateTypeEnum.NO_CHANGE;
 	startDateChangeLoading = false;
 
 	defaultFilteredCategories: {
@@ -56,30 +54,55 @@ export class RecurringExpenseMutationComponent
 	defaultCategories: {
 		category: string;
 		types: COMPONENT_TYPE[];
-	}[] = [
-		{
-			category: RecurringExpenseDefaultCategoriesEnum.SALARY,
-			types: [COMPONENT_TYPE.EMPLOYEE]
-		},
-		{
-			category: RecurringExpenseDefaultCategoriesEnum.SALARY_TAXES,
-			types: [COMPONENT_TYPE.EMPLOYEE]
-		},
-		{
-			category: RecurringExpenseDefaultCategoriesEnum.RENT,
-			types: [COMPONENT_TYPE.ORGANIZATION]
-		},
-		{
-			category: RecurringExpenseDefaultCategoriesEnum.EXTRA_BONUS,
-			types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
-		}
-	];
-	@Input() isAdd: boolean;
-	recurringExpense?: IRecurringExpenseModel;
+	}[] = DEFAULT_CATEGORIES;
+
+	/*
+	* Getter & Setter for dynamic enabled/disabled element
+	*/
+	_recurringExpense: IRecurringExpenseModel;
+	get recurringExpense(): IRecurringExpenseModel {
+		return this._recurringExpense;
+	}
+	@Input() set recurringExpense(recurringExpense: IRecurringExpenseModel) {
+		if (recurringExpense) {
+			this._recurringExpense = recurringExpense;
+			this._initializeForm(recurringExpense);
+		}	
+	}
+	
 	componentType: COMPONENT_TYPE;
-	selectedDate: Date;
 	conflicts: IRecurringExpenseModel[] = [];
 	selectedOrganization: IOrganization;
+
+	/*
+	* Recurring Expense Mutation Form
+	*/
+	public form: FormGroup = RecurringExpenseMutationComponent.buildForm(this.fb, this);
+	static buildForm(
+		fb: FormBuilder,
+		self: RecurringExpenseMutationComponent
+	): FormGroup {
+		const { startDate } = self.store.selectedDateRange;
+		return fb.group({
+			categoryName: [null, Validators.required],
+			value: [null, Validators.required],
+			currency: [
+				{
+					value: null,
+					disabled: true
+				},
+				Validators.required
+			],
+			splitExpense: [false],
+			startDate: [
+				new Date(
+					startDate.getFullYear(),
+					startDate.getMonth(),
+					1
+				)
+			]
+		});
+	}
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -130,33 +153,57 @@ export class RecurringExpenseMutationComponent
 		return moment(date).format('MMM, YYYY');
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._loadDefaultCurrency()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.defaultFilteredCategories = this.defaultCategories
 			.filter((c) => c.types.indexOf(this.componentType) > -1)
 			.map((i) => ({
 				value: i.category,
 				label: this.getTranslatedExpenseCategory(i.category)
 			}));
-		this.expenseCategoriesStore.expenseCategories$.subscribe(
-			(categories) => {
-				const storedCategories: {
-					label: string;
-					value: string;
-				}[] = [];
-				for (let category of categories) {
-					storedCategories.push({
-						value: category.name,
-						label: category.name
-					});
-				}
-				this.defaultFilteredCategories = [
-					...this.defaultFilteredCategories,
-					...storedCategories
-				];
-			}
-		);
-    this.expenseCategoriesStore.loadAll();
-		this._initializeForm(this.recurringExpense);
+		this.expenseCategoriesStore.expenseCategories$
+			.pipe(
+				filter((categories: IExpenseCategory[]) => !!categories.length),
+				tap((categories: IExpenseCategory[]) => this.mappedExpenseCategories(categories)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		this.expenseCategoriesStore.loadAll();
+	}
+
+	ngOnDestroy(): void {}
+
+	/**
+	 * Mapped Expense Categories
+	 * 
+	 * @param categories 
+	 */
+	mappedExpenseCategories(categories: IExpenseCategory[]) {
+		const storedCategories: {
+			label: string;
+			value: string;
+		}[] = [];
+		for (let category of categories) {
+			storedCategories.push({
+				value: category.name,
+				label: category.name
+			});
+		}
+		this.defaultFilteredCategories = [
+			...this.defaultFilteredCategories,
+			...storedCategories
+		];
 	}
 
 	submitForm() {
@@ -166,34 +213,37 @@ export class RecurringExpenseMutationComponent
 	}
 
 	async closeAndSubmit() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
 		let employee: IEmployee;
 		if (this.recurringExpense && this.recurringExpense.employeeId) {
 			employee = await this.employeesService.getEmployeeById(
 				this.recurringExpense.employeeId
 			);
-		}
-		const {
-			id: organizationId,
-			tenantId
-		} = this.store.selectedOrganization;
-		let formValues = this.form.getRawValue();
-		formValues = {
-			...formValues,
-			categoryName: formValues.categoryName,
-			startDay: formValues.startDate.getDate(),
-			startMonth: formValues.startDate.getMonth(),
-			startYear: formValues.startDate.getFullYear(),
+		}	
+		const { categoryName, startDate } = this.form.getRawValue();
+		const payload = {
+			...this.form.getRawValue(),
+			categoryName: categoryName,
+			startDay: startDate.getDate(),
+			startMonth: startDate.getMonth(),
+			startYear: startDate.getFullYear(),
 			organizationId,
 			tenantId
 		};
 		if (this.recurringExpense && this.recurringExpense.employeeId) {
-			formValues['employee'] = employee;
+			payload['employee'] = employee;
 		} else {
-			formValues['employee'] = this.employeeSelector
+			payload['employee'] = this.employeeSelector
 				? this.employeeSelector.selectedEmployee
 				: null;
 		}
-		this.dialogRef.close(formValues);
+		this.dialogRef.close(payload);
 	}
 
 	getTranslatedExpenseCategory(categoryName) {
@@ -214,7 +264,7 @@ export class RecurringExpenseMutationComponent
 					name
 				}
 			);
-      const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
+      		const createdCategory =  await firstValueFrom(this.expenseCategoriesStore.create(name));
 			return {
 				value: createdCategory.name,
 				label: createdCategory.name
@@ -225,38 +275,18 @@ export class RecurringExpenseMutationComponent
 	};
 
 	private _initializeForm(recurringExpense?: any) {
-		this.form = this.fb.group({
-			categoryName: [
-				recurringExpense ? recurringExpense.categoryName : '',
-				Validators.required
-			],
-			value: [
-				recurringExpense ? recurringExpense.value : '',
-				Validators.required
-			],
-			currency: [
-				{
-					value: recurringExpense ? recurringExpense.currency : '',
-					disabled: true
-				},
-				Validators.required
-			],
-			splitExpense: [
-				recurringExpense && recurringExpense.splitExpense
-					? recurringExpense.splitExpense
-					: false
-			],
-			startDate: [
-				recurringExpense && recurringExpense.startDate
-					? new Date(recurringExpense.startDate)
-					: new Date(
-						this.selectedDate.getFullYear(),
-						this.selectedDate.getMonth(),
-						1
-					)
-			]
+		const { startDate } = this.store.selectedDateRange;
+		this.form.patchValue({
+			categoryName: recurringExpense ? recurringExpense.categoryName : '',
+			value: recurringExpense ? recurringExpense.value : '',
+			currency: recurringExpense ? recurringExpense.currency : '',
+			splitExpense: recurringExpense && recurringExpense.splitExpense ? recurringExpense.splitExpense : false,
+			startDate: recurringExpense && recurringExpense.startDate ? new Date(recurringExpense.startDate) : new Date(
+				startDate.getFullYear(),
+				startDate.getMonth(),
+				1
+			)
 		});
-
 		if (
 			recurringExpense &&
 			!(
@@ -272,7 +302,6 @@ export class RecurringExpenseMutationComponent
 				...this.defaultFilteredCategories
 			];
 		}
-		this._loadDefaultCurrency();
 	}
 
 	async datePickerChanged(newValue: string) {
@@ -312,6 +341,7 @@ export class RecurringExpenseMutationComponent
 
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);
+			this.currency.updateValueAndValidity();
 		}
 	}
 

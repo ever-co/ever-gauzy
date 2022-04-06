@@ -146,17 +146,11 @@ export class ExpenseRecurringComponent
 	}
 
 	async addOrganizationRecurringExpense() {
-		const { startDate } = this.selectedDateRange;
-		console.log( {
-			componentType: COMPONENT_TYPE.ORGANIZATION,
-			selectedDate: startDate
-		});
 		const result = await firstValueFrom(
 			this.dialogService
 				.open(RecurringExpenseMutationComponent, {
 					context: {
-						componentType: COMPONENT_TYPE.ORGANIZATION,
-						selectedDate: startDate
+						componentType: COMPONENT_TYPE.ORGANIZATION
 					}
 				}).onClose
 		);
@@ -185,14 +179,12 @@ export class ExpenseRecurringComponent
 	}
 
 	async editOrganizationRecurringExpense(index: number) {
-		const { startDate } = this.selectedDateRange;
 		const result = await firstValueFrom(
 			this.dialogService
 				.open(RecurringExpenseMutationComponent, {
 					context: {
 						recurringExpense: this.expenses[index],
-						componentType: COMPONENT_TYPE.ORGANIZATION,
-						selectedDate: startDate
+						componentType: COMPONENT_TYPE.ORGANIZATION
 					}
 				})
 				.onClose
