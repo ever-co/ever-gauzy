@@ -21,7 +21,7 @@ export class AutocompleteOffDirective implements OnInit {
 	
 	ngOnInit() {
 		if (this._chrome) {
-			if (this._el.nativeElement.hasAttribute('autocomplete-off')) {
+			if (this._el.nativeElement && this._el.nativeElement.hasAttribute('autocomplete-off')) {
 				/**
 				 * disabled autocomplete for form
 				 */
