@@ -1,0 +1,23 @@
+<div class="theme-container">
+	<span
+		>{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}
+		<nb-icon icon="question-mark-circle-outline"></nb-icon
+	></span>
+	<div>
+		<nb-select
+			placeholder="{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}"
+			(selectedChange)="switchComponentLayout($event)"
+			[(selected)]="currentLayout"
+			status="basic"
+			size="small"
+			outline
+		>
+			<nb-option
+				*ngFor="let componentLayout of componentLayouts"
+				[value]="componentLayout"
+			>
+				{{ 'SETTINGS_MENU.' + componentLayout | translate }}</nb-option
+			>
+		</nb-select>
+	</div>
+</div>
