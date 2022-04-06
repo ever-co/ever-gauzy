@@ -31,7 +31,7 @@
     margin-right: -1.25rem;
     padding-left: 8px;
     z-index: 2;
-  //  background-color: nb-theme(background-basic-color-1);
+    //  background-color: nb-theme(background-basic-color-1);
   }
 
   .menu-sidebar-rtl {
@@ -42,37 +42,37 @@
     order: 0 !important;
   }
 
-  gauzy-user-menu{
+  gauzy-user-menu {
     position: absolute;
     bottom: 0px;
     left: 0px;
     z-index: 1051;
   }
 
-  button.chevron{
+  button.chevron {
     width: 1.625rem;
     height: 1.625rem;
     padding: 0;
     align-self: flex-end;
     margin-bottom: 0.625rem;
-    &.collapsed{
+    &.collapsed {
       align-self: center;
     }
   }
 }
-nb-sidebar[tag="user-workspace"]{
-  ::ng-deep{
-    .scrollable{
+nb-sidebar[tag='user-workspace'] {
+  ::ng-deep {
+    .scrollable {
       background: nb-theme(gauzy-sidebar-background-1);
     }
   }
 }
 
-nb-sidebar[tag="menu-sidebar"]{
-  ::ng-deep{
-    .scrollable{
+nb-sidebar[tag='menu-sidebar'] {
+  ::ng-deep {
+    .scrollable {
       background: nb-theme(gauzy-sidebar-background-2);
-      nb-menu{
+      nb-menu {
         z-index: -1;
       }
     }
@@ -87,20 +87,20 @@ nb-sidebar[tag="menu-sidebar"]{
   max-width: nb-theme(sidebar-width);
   width: nb-theme(sidebar-width);
   padding-top: 0.75rem;
-  button.hidden-menu{
-    padding: 0 .5rem;
+  button.hidden-menu {
+    padding: 0 0.5rem;
     height: 1.625rem;
     width: 1.625rem;
-    margin: 0 .625rem;
+    margin: 0 0.625rem;
   }
-  ngx-gauzy-logo{
+  ngx-gauzy-logo {
     width: 100%;
   }
-  &.compacted{
+  &.compacted {
     width: nb-theme(sidebar-width-compact);
     justify-content: space-around;
     align-items: center;
-    button.hidden-menu{
+    button.hidden-menu {
       margin-left: 0;
     }
     ::ng-deep .accordion.workspace {
@@ -108,10 +108,10 @@ nb-sidebar[tag="menu-sidebar"]{
       width: 1.75rem;
       height: auto;
       background-color: black;
-      .logo{
+      .logo {
         display: none;
       }
-      nb-accordion-item-header{
+      nb-accordion-item-header {
         padding: 0px;
         nb-icon {
           border: none;
@@ -121,15 +121,35 @@ nb-sidebar[tag="menu-sidebar"]{
     }
   }
 }
-::ng-deep{
-  nb-layout .layout .layout-container nb-sidebar[tag="menu-sidebar"] .main-container-fixed {
+::ng-deep {
+  nb-layout
+    .layout
+    .layout-container
+    nb-sidebar[tag='menu-sidebar']
+    .main-container-fixed {
     top: 0;
     height: 100vh;
     z-index: 1041;
   }
-  nb-layout .layout .layout-container nb-sidebar[tag="user-workspace"] .main-container-fixed {
+  nb-layout
+    .layout
+    .layout-container
+    nb-sidebar[tag='user-workspace']
+    .main-container-fixed {
     top: 0;
     height: 100vh;
     z-index: 1041;
+  }
+
+  @media screen and (min-width: 1940px) {
+    nb-layout.window-mode
+      nb-layout-header.fixed
+      ~ .layout-container
+      nb-sidebar
+      .main-container-fixed {
+      top: 0;
+      height: 100vh;
+      z-index: 1041;
+    }
   }
 }
