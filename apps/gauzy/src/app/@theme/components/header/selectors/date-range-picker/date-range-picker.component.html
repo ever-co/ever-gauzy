@@ -6,7 +6,7 @@
 				size="tiny"
 				nbButton
 				status="primary"
-        outline
+        		outline
 				(click)="previousRange()"
 			>
 				<nb-icon icon="arrow-ios-back-outline"></nb-icon>
@@ -17,12 +17,12 @@
 				nbButton
 				[disabled]="isNextDisabled()"
 				status="primary"
-        outline
+        		outline
 				(click)="nextRange()"
 			>
 				<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 			</button>
-      <i class="far fa-calendar"></i>
+      		<i class="far fa-calendar"></i>
 			<input
 				nbInput
 				name="date-range"
@@ -35,7 +35,7 @@
 				[customRangeDirection]="false"
 				[maxDate]="maxDate"
 				[ranges]="ranges"
-				[locale]="localConfig"
+				[locale]="locale"
 				[(ngModel)]="selectedDateRange"
 				(datesUpdated)="onDatesUpdated($event)"
 				(rangeClicked)="rangeClicked($event)"
