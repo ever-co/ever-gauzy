@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
@@ -43,12 +43,18 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/**
 	 * ngx-daterangepicker-material local configuration
 	 */
-	public localConfig: LocaleConfig = {
+	_locale: LocaleConfig = {
 		displayFormat: 'MMM DD, YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'YYYY-MM-DD', // default is format value
 		direction: 'ltr'
+	};
+	get locale(): LocaleConfig {
+		return this._locale;
 	}
-	
+	set locale(locale: LocaleConfig) {
+		this._locale = locale;
+	}
+
 	/**
 	 * Define ngx-daterangepicker-material range configuration
 	 */
@@ -94,7 +100,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly store: Store,
-		public readonly translateService: TranslateService,
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
@@ -102,14 +108,15 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap(() => this.createDateRangeMenus()),
 				tap((organization: IOrganization) => {
-					this.localConfig = {
-						...this.localConfig,
-						displayFormat: organization.dateFormat
+					if (organization.dateFormat) {
+						this.locale = {
+							...this.locale,
+							displayFormat: organization.dateFormat
+						}
 					}
 				}),
 				tap((organization: IOrganization) => {
