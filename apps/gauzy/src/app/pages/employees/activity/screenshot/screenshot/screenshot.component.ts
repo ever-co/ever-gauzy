@@ -6,18 +6,19 @@ import {
 	IScreenshotMap,
 	IScreenshot
 } from '@gauzy/contracts';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { toUTC, toLocal, distinctUntilChange } from '@gauzy/common-angular';
+import { debounceTime, tap } from 'rxjs/operators';
+import { toLocal, isEmpty } from '@gauzy/common-angular';
 import { chain, indexBy, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { Store } from './../../../../../@core/services';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import { GalleryService } from './../../../../../@shared/gallery/gallery.service';
+import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,52 +26,34 @@ import { GalleryService } from './../../../../../@shared/gallery/gallery.service
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss']
 })
-export class ScreenshotComponent implements OnInit, OnDestroy {
+export class ScreenshotComponent extends BaseSelectorFilterComponent 
+	implements OnInit, OnDestroy {
 
-	filters: ITimeLogFilters;
+	filters: ITimeLogFilters = this.request;
 	loading: boolean;
 	timeSlots: IScreenshotMap[];
 	checkAllCheckbox: any;
 	selectedIds: any = {};
-	subject$: Subject<any> = new Subject();
-	organization: any;
 	screenshotsUrls: { thumbUrl: string; fullUrl: string }[] = [];
 	selectedIdsCount = 0;
 	allSelected = false;
 	originalTimeSlots: ITimeSlot[] = [];
-	selectedEmployeeId: string | null = null;
-	projectId: string | null = null;
 
 	constructor(
+		public readonly translateService: TranslateService,
 		private readonly timesheetService: TimesheetService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly nbDialogService: NbDialogService,
-		private readonly store: Store,
-		private readonly galleryService: GalleryService
-	) {}
+		protected readonly store: Store,
+		private readonly galleryService: GalleryService,
+	) {
+		super(store, translateService);
+	}
 
 	ngOnInit(): void {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				distinctUntilChange(),
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
-						this.selectedEmployeeId = employee ? employee.id : null;
-						this.projectId = project ? project.id : null;
-						this.subject$.next(true);
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.subject$
 			.pipe(
-				debounceTime(100),
+				debounceTime(300),
 				tap(() => this.galleryService.clearGallery()),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
@@ -78,43 +61,21 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	async filtersChange(filters: ITimeLogFilters) {
+	filtersChange(filters: ITimeLogFilters) {
 		this.timesheetFilterService.filter = filters;
 		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
 	}
 
-	async getLogs() {
-		if (!this.organization || !this.filters) {
+	getLogs() {
+		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-
-		const { startDate, endDate } = this.filters;
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-
-		const employeeIds: string[] = [];
-		if (this.selectedEmployeeId) {
-			employeeIds.push(this.selectedEmployeeId);
-		}
-
-		const projectIds: string[] = [];
-		if (this.projectId) {
-			projectIds.push(this.projectId);
-		}
-
+		this.loading = true;
 		const request: IGetTimeSlotInput = {
-			organizationId,
-			tenantId,
-			...this.filters,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-			...(employeeIds.length > 0 ? { employeeIds } : {}),
-			...(projectIds.length > 0 ? { projectIds } : {}),
+			...this.getFilterRequest(this.filters),
 			relations: ['screenshots', 'timeLogs']
 		};
-
-		this.loading = true;
 		this.screenshotsUrls = [];
 		this.timesheetService
 			.getTimeSlots(request)
@@ -129,7 +90,6 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		if (slotId) {
 			this.selectedIds[slotId] = !this.selectedIds[slotId];
 		}
-
 		this.updateSelections();
 	}
 
