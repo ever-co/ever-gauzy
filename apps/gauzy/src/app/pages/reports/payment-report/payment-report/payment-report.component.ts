@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pluck } from 'underscore';
 import { isEmpty } from '@gauzy/common-angular';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { PaymentService, Store } from './../../../../@core/services';
@@ -22,7 +22,7 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 	templateUrl: './payment-report.component.html',
 	styleUrls: ['./payment-report.component.scss']
 })
-export class PaymentReportComponent extends ReportBaseComponent
+export class PaymentReportComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 		
 	logRequest: IGetPaymentInput = this.request;

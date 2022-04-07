@@ -19,7 +19,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { isEmpty } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
 import { ActivityService } from '../../timesheet/activity.service';
-import { ReportBaseComponent } from '../report-base/report-base.component';
+import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,7 +27,7 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 	templateUrl: './activities-report-grid.component.html',
 	styleUrls: ['./activities-report-grid.component.scss']
 })
-export class ActivitiesReportGridComponent extends ReportBaseComponent 
+export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
 	
 	logRequest: ITimeLogFilters = this.request;

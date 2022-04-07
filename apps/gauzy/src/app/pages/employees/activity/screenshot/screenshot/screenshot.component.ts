@@ -27,7 +27,7 @@ import { GalleryService } from './../../../../../@shared/gallery/gallery.service
 })
 export class ScreenshotComponent implements OnInit, OnDestroy {
 
-	request: ITimeLogFilters;
+	filters: ITimeLogFilters;
 	loading: boolean;
 	timeSlots: IScreenshotMap[];
 	checkAllCheckbox: any;
@@ -78,18 +78,18 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	async filtersChange($event: ITimeLogFilters) {
-		this.request = $event;
-		this.timesheetFilterService.filter = $event;
+	async filtersChange(filters: ITimeLogFilters) {
+		this.timesheetFilterService.filter = filters;
+		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
 	}
 
 	async getLogs() {
-		if (!this.organization || !this.request) {
+		if (!this.organization || !this.filters) {
 			return;
 		}
 
-		const { startDate, endDate } = this.request;
+		const { startDate, endDate } = this.filters;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
@@ -106,7 +106,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		const request: IGetTimeSlotInput = {
 			organizationId,
 			tenantId,
-			...this.request,
+			...this.filters,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 			...(employeeIds.length > 0 ? { employeeIds } : {}),

@@ -83,12 +83,14 @@ export class GauzyFiltersComponent
 	get filters(): ITimeLogFilters {
 		return this._filters;
 	}
-	@Input() set filters(value: ITimeLogFilters) {
-		this._filters = value;
-		this.activityLevel = {
-			start: value.activityLevel ? value.activityLevel.start : 0,
-			end: value.activityLevel ? value.activityLevel.end : 100
-		};
+	@Input() set filters(filters: ITimeLogFilters) {
+		if (filters) {
+			this._filters = filters;
+			this.activityLevel = {
+				start: filters.activityLevel ? filters.activityLevel.start : 0,
+				end: filters.activityLevel ? filters.activityLevel.end : 100
+			};
+		}
 		this.cd.detectChanges();
 	}
 
