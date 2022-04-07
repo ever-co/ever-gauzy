@@ -5,3 +5,4 @@ export * from './tags-color-filter.component';
 export * from './vendor-filter.component';
 export * from './organization-team-filter.component';
 export * from './task-status-filter.component';
+export * from './input-filter.component';
