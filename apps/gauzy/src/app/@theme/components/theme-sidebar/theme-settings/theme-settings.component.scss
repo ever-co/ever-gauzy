@@ -18,6 +18,10 @@
     }
   }
 
+  nb-list{
+    overflow-y: overlay;
+  }
+
   p{
     color: nb-theme(text-primary-color);
   }
