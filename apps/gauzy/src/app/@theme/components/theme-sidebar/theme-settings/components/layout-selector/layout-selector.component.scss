@@ -5,7 +5,11 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  width: 100%;
+}
+
+.reset-button{
+  margin-top: 1rem;
+  display: flex;
 }
 
 :host ::ng-deep{

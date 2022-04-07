@@ -1,0 +1,34 @@
+<div class="theme-container">
+	<span
+		>{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}
+		<nb-icon icon="question-mark-circle-outline"></nb-icon
+	></span>
+	<div>
+		<nb-select
+			placeholder="{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}"
+			(selectedChange)="switchComponentLayout($event)"
+			[(selected)]="currentLayout"
+			status="basic"
+			size="small"
+			outline
+		>
+			<nb-option
+				*ngFor="let componentLayout of componentLayouts"
+				[value]="componentLayout"
+			>
+				{{ 'SETTINGS_MENU.' + componentLayout | translate }}</nb-option
+			>
+		</nb-select>
+	</div>
+</div>
+<div class="reset-button">
+	<button
+		nbTooltip="{{ 'SETTINGS_MENU.RESET_LAYOUT_TOOLTIP' | translate }}"
+		status="danger"
+		nbButton
+		size="small"
+		(click)="resetLayoutForAllComponents()"
+	>
+		{{ 'SETTINGS_MENU.RESET_LAYOUT' | translate }}
+	</button>
+</div>

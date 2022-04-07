@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { GAUZY_LIGHT } from '../../../../../styles/gauzy/theme.gauzy-light';
 import { GAUZY_DARK } from '../../../../../styles/gauzy/theme.gauzy-dark';
 import { CORPORATE_THEME } from '../../../../../styles/theme.corporate';
@@ -23,29 +23,49 @@ export class ThemeSelectorComponent implements OnInit {
 		{
 			light: {
 				value: GAUZY_LIGHT.name,
-				name: 'SETTINGS_MENU.GAUZY_LIGHT'
+				name: 'SETTINGS_MENU.GAUZY_LIGHT',
+				imageUrl: 'assets/images/themes/gauzy_light.png'
 			},
-			dark: { value: GAUZY_DARK.name, name: 'SETTINGS_MENU.GAUZY_DARK' }
+			dark: {
+				value: GAUZY_DARK.name,
+				name: 'SETTINGS_MENU.GAUZY_DARK',
+				imageUrl: 'assets/images/themes/gauzy_dark.png'
+			}
 		},
 		{
-			light: { value: DEFAULT_THEME.name, name: 'SETTINGS_MENU.LIGHT' },
-			dark: { value: DARK_THEME.name, name: 'SETTINGS_MENU.DARK' }
+			light: {
+				value: DEFAULT_THEME.name,
+				name: 'SETTINGS_MENU.LIGHT',
+				imageUrl: 'assets/images/themes/light.png'
+			},
+			dark: {
+				value: DARK_THEME.name,
+				name: 'SETTINGS_MENU.DARK',
+				imageUrl: 'assets/images/themes/dark.png'
+			}
 		},
 		{
 			light: {
 				value: CORPORATE_THEME.name,
-				name: 'SETTINGS_MENU.CORPORATE'
+				name: 'SETTINGS_MENU.CORPORATE',
+				imageUrl: 'assets/images/themes/corporate.png'
 			},
-			dark: { value: COSMIC_THEME.name, name: 'SETTINGS_MENU.COSMIC' }
+			dark: {
+				value: COSMIC_THEME.name,
+				name: 'SETTINGS_MENU.COSMIC',
+				imageUrl: 'assets/images/themes/cosmic.png'
+			}
 		},
 		{
 			light: {
 				value: MATERIAL_LIGHT_THEME.name,
-				name: 'SETTINGS_MENU.MATERIAL_LIGHT_THEME'
+				name: 'SETTINGS_MENU.MATERIAL_LIGHT_THEME',
+				imageUrl: 'assets/images/themes/material_light.png'
 			},
 			dark: {
 				value: MATERIAL_DARK_THEME.name,
-				name: 'SETTINGS_MENU.MATERIAL_DARK_THEME'
+				name: 'SETTINGS_MENU.MATERIAL_DARK_THEME',
+				imageUrl: 'assets/images/themes/material_dark.png'
 			}
 		}
 	];
@@ -56,6 +76,12 @@ export class ThemeSelectorComponent implements OnInit {
 	currentTheme = GAUZY_LIGHT.name;
 
 	currentTheme$: BehaviorSubject<string> = new BehaviorSubject<string>(null);
+
+	selected: Observable<any> = new Observable<any>();
+	selected$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+
+	@Input()
+	isClassic: boolean = true;
 
 	constructor(
 		protected readonly themeService: NbThemeService,
@@ -72,6 +98,7 @@ export class ThemeSelectorComponent implements OnInit {
 			.subscribe((themeName) => {
 				this.currentTheme = themeName;
 				this.updateSwitch();
+				this.updateCard();
 			});
 
 		this.currentTheme$.subscribe((theme) => {
@@ -84,7 +111,9 @@ export class ThemeSelectorComponent implements OnInit {
 			this.themeService.changeTheme(theme);
 		});
 		this.switch$.subscribe();
+		this.selected$.subscribe();
 		this.switch = this.switch$.asObservable();
+		this.selected = this.selected$.asObservable();
 	}
 
 	toggleTheme() {
@@ -104,6 +133,15 @@ export class ThemeSelectorComponent implements OnInit {
 		this.switch$.next(this.isDark.state);
 	}
 
+	updateCard() {
+		this.selected$.next(this.isDark.previous);
+	}
+
+	onSelectedTheme(theme: any) {
+		this.currentTheme = theme;
+		this.toggleTheme();
+	}
+
 	reverseTheme() {
 		this.currentTheme = this.isDark.reverse;
 		this.toggleTheme();
@@ -111,6 +149,7 @@ export class ThemeSelectorComponent implements OnInit {
 
 	get isDark() {
 		const res = {
+			previous: null,
 			reverse: this.currentTheme,
 			state: false
 		};
@@ -118,9 +157,11 @@ export class ThemeSelectorComponent implements OnInit {
 			if (theme.light.value === this.currentTheme) {
 				res.reverse = theme.dark.value;
 				res.state = false;
+				res.previous = theme.light;
 			} else if (theme.dark.value === this.currentTheme) {
 				res.reverse = theme.light.value;
 				res.state = true;
+				res.previous = theme.dark;
 			}
 		});
 		return res;

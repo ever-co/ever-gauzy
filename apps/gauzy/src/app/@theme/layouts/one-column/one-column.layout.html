@@ -12,10 +12,14 @@
 		tag="menu-sidebar"
 		*ngIf="user"
 	>
-    <div [ngClass]="isExpanded || !isCollapse? 'logo-container' : 'logo-container compacted'">
-      <ngx-gauzy-logo (onCollapsed)="onCollapse($event)" ></ngx-gauzy-logo>
-      <button *ngIf="isCollapse" class="hidden-menu" outline nbButton><i class="fas fa-ellipsis-h"></i></button>
-    </div>
+		<div
+			[ngClass]="isExpanded? isCollapse? 'logo-container':'logo-container not-collapsed' : 'logo-container compacted'"
+		>
+			<ngx-gauzy-logo (onCollapsed)="onCollapse($event)"></ngx-gauzy-logo>
+			<button *ngIf="isCollapse" class="hidden-menu" outline nbButton>
+				<i class="fas fa-ellipsis-h"></i>
+			</button>
+		</div>
 		<ng-content select="nb-menu"></ng-content>
 		<button
 			(click)="toggle()"
