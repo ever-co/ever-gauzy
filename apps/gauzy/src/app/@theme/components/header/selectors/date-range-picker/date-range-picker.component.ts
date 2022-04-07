@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
+import { combineLatest, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
-import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { IDateRangePicker } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { Arrow } from './arrow/context/arrow.class';
@@ -32,6 +33,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 	public maxDate: moment.Moment;
 	public futureDateAllowed: boolean;
+
+	/**
+	 * Local store date range 
+	 */
+	private range$: Subject<IDateRangePicker> = new Subject();
 
 	/**
 	 * declaration of arrow variables
@@ -92,8 +98,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		return this._selectedDateRange;
 	}
 	@Input() set selectedDateRange(range: IDateRangePicker) {
-		this.store.selectedDateRange = range;
-		this._selectedDateRange = range;
+		if (isNotEmpty(range)) {
+			this._selectedDateRange = range;
+			this.range$.next(range);
+		}		
 	}
 
 	@ViewChild(DateRangePickerDirective, { static: false }) dateRangePickerDirective: DateRangePickerDirective;
@@ -107,19 +115,21 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.dateRangePickerBuilderService.pickerRangeUnitOfTime$
-			.pipe(
-				tap((unitOfTime: moment.unitOfTime.Base) => {
-					this.unitOfTime = unitOfTime || 'month'
-				}),
-				untilDestroyed(this)
-			).subscribe();
-		this.store.selectedOrganization$
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeUnitOfTime$ = this.dateRangePickerBuilderService.pickerRangeUnitOfTime$;
+		combineLatest([storeOrganization$, storeUnitOfTime$])
 			.pipe(
 				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap(() => this.createDateRangeMenus()),
-				tap((organization: IOrganization) => {
+				filter(([organization]) => !!organization),
+				tap(([organization, unitOfTime]) => {
+					this.futureDateAllowed = organization.futureDateAllowed;
+					this.unitOfTime = (unitOfTime || 'month') as moment.unitOfTime.Base;
+				}),
+				tap(() => {
+					this.createDateRangeMenus();
+					this.setFutureStrategy();
+				}),
+				tap(([organization]) => {
 					if (organization.timeZone) {
 						let format: string; 
 						if (moment.tz.zonesForCountry('US').includes(organization.timeZone)) {
@@ -134,16 +144,22 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 						}
 					}
 				}),
-				tap((organization: IOrganization) => {
-					this.futureDateAllowed = organization.futureDateAllowed;
-					this.setFutureStrategy()
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngAfterViewInit() {}
+	ngAfterViewInit() {
+		this.range$
+			.pipe(
+				distinctUntilChange(),
+				tap((range: IDateRangePicker) => {
+					this.store.selectedDateRange = range;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	/**
 	 * Create Date Range Translated Menus 
@@ -200,9 +216,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * @returns 
 	 */
 	isNextDisabled() {
-		return this.futureDateAllowed
-			? false
-			: moment(this.selectedDateRange.endDate).isSameOrAfter(moment(), 'day');
+		if (!this.selectedDateRange) {
+			return true;
+		}
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			return this.futureDateAllowed
+				? false
+				: moment(this.selectedDateRange.endDate).isSameOrAfter(moment(), 'day');
+		} else {
+			return true;
+		}
 	}
 
 	/**
