@@ -2,147 +2,151 @@
 
 $button-radius: nb-theme(button-rectangle-border-radius);
 .filter-input {
-    width: fit-content;
-    display: flex;
-    align-items: center;
-    button {
-        margin-right: 5px;
-        border-radius: nb-theme(button-rectangle-border-radius);
-    }
+	width: fit-content;
+	display: flex;
+	align-items: center;
+	button {
+	margin-right: 5px;
+	border-radius: nb-theme(button-rectangle-border-radius);
+	}
 }
 .custom-input {
-    height: inherit;
-    display: flex;
-    align-items: center;
-    background: nb-theme(background-basic-color-2);
-    box-shadow: 0px 1px 1px .75px rgba(0, 0, 0, 0.15) inset;
-    border-radius: nb-theme(button-rectangle-border-radius);
-    /* I've used padding so you can see the edges of the elements. */
-    padding: 2px 0px 2px 5px;
-    margin-right: 16px;
-    input {
-        height: 1.875rem;
-        margin-right: 5px;
-        width: 218px;
-        background-color: transparent;
-        /* Tell the input to use all the available space */
-        flex-grow: 2;
-        /* And hide the input's outline, so the form looks like the outline */
-        border: none;
-        box-shadow: none;
-    }
-    input:focus {
-        /* removing the input focus blue box. Put this on the form if you like. */
-        outline: none;
-    }
-    &:hover,
-    &:focus {
-        background: nb-theme(background-basic-color-3);
-        transition: ease-in-out 0.3s;
-    }
+	height: inherit;
+	display: flex;
+	align-items: center;
+	background: nb-theme(background-basic-color-2);
+	box-shadow: 0px 1px 1px 0.75px rgba(0, 0, 0, 0.15) inset;
+	border-radius: nb-theme(button-rectangle-border-radius);
+	/* I've used padding so you can see the edges of the elements. */
+	padding: 2px 0px 2px 5px;
+	margin-right: 16px;
+	input {
+	height: 1.875rem;
+	width: 220px;
+	background-color: transparent;
+	/* Tell the input to use all the available space */
+	flex-grow: 2;
+	/* And hide the input's outline, so the form looks like the outline */
+	border: none;
+	box-shadow: none;
+	}
+	input:focus {
+	/* removing the input focus blue box. Put this on the form if you like. */
+	outline: none;
+	}
+	&:hover,
+	&:focus {
+	background: nb-theme(background-basic-color-3);
+	transition: ease-in-out 0.3s;
+	}
 }
 
 :host {
-    ::ng-deep {
-        &.md-drppicker {
-            background-color: nb-theme(background-basic-color-1);
-            color: nb-theme(text-basic-color);
-            border-radius: nb-theme(border-radius);
-            margin-top: 25px;
-            @include nb-ltr(margin-left, -117%);
-            @include nb-rtl(margin-right, -103%);
-            .calendar-table {
-                background-color: nb-theme(background-basic-color-1);
-                border-color: nb-theme(border-basic-color-3);
-                box-shadow: nb-theme(border-basic-color-1) 0px 1px 3px, nb-theme(border-basic-color-3) 0px 1px 2px;
-                border-radius: nb-theme(border-radius);
-            }
-            .calendar-time select.disabled {
-                color: nb-theme(text-basic-color);
-            }
-            .label-input {
-                color: nb-theme(text-basic-color);
-            }
-            .show-ranges {
-                .drp-calendar.left {
-                    border-left: 1px solid nb-theme(border-basic-color-1);
-                }
-            }
-            th {
-                color: nb-theme(text-basic-color);
-            }
-            td,
-            th {
-                &.available {
-                    &.prev {
-                        filter: invert(0.65);
-                    }
-                    &.next {
-                        filter: invert(0.65);
-                    }
-                }
-            }
-            td {
-                &.off {
-                    &,
-                    &.in-range,
-                    &.start-date,
-                    &.end-date {
-                        background-color: nb-theme(background-basic-color-3);
-                        border-color: nb-theme(border-basic-color-1);
-                        color: nb-theme(text-basic-color);
-                    }
-                }
-                &.active {
-                    &,
-                    &:hover {
-                        background-color: nb-theme(color-primary-default);
-                        border-color: nb-theme(border-basic-color-3);
-                        color: nb-theme(text-control-color);
-                    }
-                }
-            }
-            .ranges {
-                ul {
-                    li {
-                        button {
-                            border-radius: $button-radius;
-                            color: nb-theme(text-basic-color);
-                            &.active {
-                                background-color: nb-theme(color-primary-active);
-                            }
-                        }
-                    }
-                    li:hover {
-                        background-color: nb-theme(color-primary-hover);
-                        border-radius: $button-radius;
-                    }
-                }
-            }
-            .btn {
-                border-radius: $button-radius;
-                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-                background-color: nb-theme(color-primary-default);
-                color: nb-theme(text-control-color);
-                padding: 0 0.75rem;
-                height: 2rem;
-                &:hover,
-                &:focus {
-                    background-color: nb-theme(color-primary-focus);
-                }
-                &.btn-default {
-                    border-radius: nb-theme(button-rectangle-border-radius);
-                    color: nb-theme(text-control-color);
-                    background-color: nb-theme(color-primary-default);
-                }
-            }
-        }
-    }
+	::ng-deep {
+	&.md-drppicker {
+		background-color: nb-theme(background-basic-color-1);
+		color: nb-theme(text-basic-color);
+		border-radius: nb-theme(border-radius);
+		margin-top: 25px;
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		@include nb-ltr(margin-left, -118%);
+		@include nb-rtl(margin-right, -118%);
+		.calendar-table {
+		background-color: nb-theme(background-basic-color-1);
+		border-color: nb-theme(border-basic-color-3);
+		box-shadow: nb-theme(border-basic-color-1) 0px 1px 3px,
+			nb-theme(border-basic-color-3) 0px 1px 2px;
+		border-radius: nb-theme(border-radius);
+		}
+		.calendar-time select.disabled {
+		color: nb-theme(text-basic-color);
+		}
+		.label-input {
+		color: nb-theme(text-basic-color);
+		}
+		.show-ranges {
+		.drp-calendar.left {
+			border-left: 1px solid nb-theme(border-basic-color-1);
+		}
+		}
+		th {
+		color: nb-theme(text-basic-color);
+		}
+		td,
+		th {
+		&.available {
+			&.prev {
+			filter: invert(0.65);
+			}
+			&.next {
+			filter: invert(0.65);
+			}
+		}
+		}
+		td {
+		&.off {
+			&,
+			&.in-range,
+			&.start-date,
+			&.end-date {
+			background-color: nb-theme(background-basic-color-3);
+			border-color: nb-theme(border-basic-color-1);
+			color: nb-theme(text-basic-color);
+			}
+		}
+		&.active {
+			&,
+			&:hover {
+			background-color: nb-theme(color-primary-default);
+			border-color: nb-theme(border-basic-color-3);
+			color: nb-theme(text-control-color);
+			}
+		}
+		}
+		.ranges {
+		ul {
+			min-width: 110px;
+			li {
+			button {
+				border-radius: $button-radius;
+				color: nb-theme(text-basic-color);
+				&.active {
+				background-color: nb-theme(color-primary-active);
+				}
+			}
+			}
+			li:hover {
+			background-color: nb-theme(color-primary-hover);
+			border-radius: $button-radius;
+			}
+		}
+		}
+		.btn {
+		border-radius: $button-radius;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+		background-color: nb-theme(color-primary-default);
+		color: nb-theme(text-control-color);
+		padding: 0 0.75rem;
+		height: 2rem;
+		&:hover,
+		&:focus {
+			background-color: nb-theme(color-primary-focus);
+		}
+		&.btn-default {
+			border-radius: nb-theme(button-rectangle-border-radius);
+			color: nb-theme(text-control-color);
+			background-color: nb-theme(color-primary-default);
+		}
+		}
+	}
+	}
 }
 ::ng-deep nb-action nb-icon {
-  color: nb-theme(text-primary-color);
+	color: nb-theme(text-primary-color);
 }
-:host i{
-  @include nb-ltr(margin-left, 10px);
-  @include nb-rtl(margin-right, 12px);
+:host i {
+	@include nb-ltr(margin-left, 10px);
+	@include nb-rtl(margin-right, 12px);
 }
