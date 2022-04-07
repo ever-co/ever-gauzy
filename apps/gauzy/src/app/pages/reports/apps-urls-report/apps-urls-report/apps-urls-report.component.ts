@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Store } from './../../../../@core/services';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @Component({
 	selector: 'ga-apps-urls-report',
@@ -56,7 +57,7 @@ export class AppsUrlsReportComponent
 		this.filters = Object.assign(
 			{},
 			this.logRequest,
-			this.getAdjustDateRangeFutureAllowed(this.logRequest)
+			getAdjustDateRangeFutureAllowed(this.logRequest)
 		);
 	}
 

@@ -14,6 +14,7 @@ import { ExpensesService, Store } from './../../../../@core/services';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
+import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -58,7 +59,7 @@ export class ExpensesReportComponent extends ReportBaseComponent
 		this.filters = Object.assign(
 			{},
 			this.logRequest,
-			this.getAdjustDateRangeFutureAllowed(this.logRequest)
+			getAdjustDateRangeFutureAllowed(this.logRequest)
 		);
 		this.subject$.next(true);
 	}
