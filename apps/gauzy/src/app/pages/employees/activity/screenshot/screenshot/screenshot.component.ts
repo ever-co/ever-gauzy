@@ -53,7 +53,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
-				debounceTime(100),
+				debounceTime(300),
 				tap(() => this.galleryService.clearGallery()),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
