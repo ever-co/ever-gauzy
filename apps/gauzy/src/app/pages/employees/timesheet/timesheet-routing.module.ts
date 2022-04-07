@@ -16,13 +16,21 @@ const routes: Routes = [
 		children: [
 			{
 				path: 'daily',
-				loadChildren: () =>
-					import('./daily/daily.module').then((m) => m.DailyModule)
+				data: {
+					datePicker: {
+						unitOfTime: 'day'
+					}
+				},
+				loadChildren: () => import('./daily/daily.module').then((m) => m.DailyModule)
 			},
 			{
 				path: 'weekly',
-				loadChildren: () =>
-					import('./weekly/weekly.module').then((m) => m.WeeklyModule)
+				data: {
+					datePicker: {
+						unitOfTime: 'week'
+					}
+				},
+				loadChildren: () => import('./weekly/weekly.module').then((m) => m.WeeklyModule)
 			},
 			{
 				path: 'calendar',
@@ -41,6 +49,9 @@ const routes: Routes = [
 					},
 					selectors: {
 						project: false
+					},
+					datePicker: {
+						unitOfTime: 'month'
 					}
 				},
 				loadChildren: () => import('./approvals/approvals.module').then((m) => m.ApprovalsModule)
