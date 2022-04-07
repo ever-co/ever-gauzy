@@ -11,7 +11,7 @@ import { debounceTime, tap } from 'rxjs/operators';
 import { pluck } from 'underscore';
 import { isEmpty } from '@gauzy/common-angular';
 import { ExpensesService, Store } from './../../../../@core/services';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
@@ -22,7 +22,7 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 	templateUrl: './expenses-report.component.html',
 	styleUrls: ['./expenses-report.component.scss']
 })
-export class ExpensesReportComponent extends ReportBaseComponent 
+export class ExpensesReportComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
 		
 	logRequest: IGetExpenseInput = this.request;

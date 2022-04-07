@@ -18,18 +18,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { debounceTime } from 'rxjs/operators';
-import { PaymentService } from '../../../@core/services/payment.service';
-import { Store } from '../../../@core/services/store.service';
-import { ReportBaseComponent } from '../report-base/report-base.component';
+import { PaymentService, Store } from '../../../@core/services';
+import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-payment-report-grid',
 	templateUrl: './payment-report-grid.component.html',
 	styleUrls: ['./payment-report-grid.component.scss']
 })
-export class PaymentReportGridComponent
-	extends ReportBaseComponent
+export class PaymentReportGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	logRequest: IGetPaymentInput = this.request;

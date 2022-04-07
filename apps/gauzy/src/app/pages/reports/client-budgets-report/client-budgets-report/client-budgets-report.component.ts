@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { isEmpty } from '@gauzy/common-angular';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +26,7 @@ import { ReportBaseComponent } from './../../../../@shared/report/report-base/re
 	templateUrl: './client-budgets-report.component.html',
 	styleUrls: ['./client-budgets-report.component.scss']
 })
-export class ClientBudgetsReportComponent extends ReportBaseComponent 
+export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
 		
 	logRequest: IGetPaymentInput = this.request;

@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { isEmpty } from '@gauzy/common-angular';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,7 +24,7 @@ import { ReportBaseComponent } from './../../../../@shared/report/report-base/re
 	templateUrl: './time-limit-report.component.html',
 	styleUrls: ['./time-limit-report.component.scss']
 })
-export class TimeLimitReportComponent extends ReportBaseComponent 
+export class TimeLimitReportComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
 
 	logRequest: IGetTimeLimitReportInput = this.request;

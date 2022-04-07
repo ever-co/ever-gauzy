@@ -19,7 +19,7 @@ import { chain, pick } from 'underscore';
 import { isEmpty } from '@gauzy/common-angular';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,7 +27,7 @@ import { ReportBaseComponent } from './../../../../@shared/report/report-base/re
 	templateUrl: './manual-time.component.html',
 	styleUrls: ['./manual-time.component.scss']
 })
-export class ManualTimeComponent extends ReportBaseComponent
+export class ManualTimeComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	logRequest: ITimeLogFilters = this.request;

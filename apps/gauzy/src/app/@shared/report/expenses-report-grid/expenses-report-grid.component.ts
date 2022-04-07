@@ -16,9 +16,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty } from '@gauzy/common-angular';
 import { debounceTime, tap } from 'rxjs/operators';
-import { ExpensesService } from '../../../@core/services/expenses.service';
-import { Store } from '../../../@core/services/store.service';
-import { ReportBaseComponent } from '../report-base/report-base.component';
+import { ExpensesService, Store } from '../../../@core/services';
+import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +25,7 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 	templateUrl: './expenses-report-grid.component.html',
 	styleUrls: ['./expenses-report-grid.component.scss']
 })
-export class ExpensesReportGridComponent extends ReportBaseComponent
+export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	logRequest: ITimeLogFilters = this.request;

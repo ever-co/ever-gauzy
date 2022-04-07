@@ -7,15 +7,15 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { pick } from 'underscore';
-import { Store } from '../../../@core/services/store.service';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
+import { Store } from './../../../../@core/services';
+import { TranslationBaseComponent } from './../../../language-base/translation-base.component';
+import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: ''
 })
-export class ReportBaseComponent extends TranslationBaseComponent {
+export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 	request: ITimeLogFilters = {
 		employeeIds: [],
 		projectIds: []

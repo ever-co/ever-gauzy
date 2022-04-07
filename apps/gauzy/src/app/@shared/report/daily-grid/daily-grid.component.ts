@@ -17,9 +17,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
-import { ReportBaseComponent } from '../report-base/report-base.component';
+import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,7 +27,7 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 	templateUrl: './daily-grid.component.html',
 	styleUrls: ['./daily-grid.component.scss']
 })
-export class DailyGridComponent extends ReportBaseComponent
+export class DailyGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 	
 	logRequest: ITimeLogFilters = this.request;
