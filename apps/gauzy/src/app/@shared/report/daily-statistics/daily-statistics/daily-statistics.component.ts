@@ -14,21 +14,19 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
 import { debounceTime, tap } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
-import { Store } from './../../../../@core/services';
-import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
-import { ReportBaseComponent } from '../../report-base/report-base.component';
-import { EmployeesService } from '../../../../@core/services/employees.service';
-import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
 import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
+import { EmployeesService, OrganizationProjectsService, Store } from './../../../../@core/services';
+import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
+import { BaseSelectorFilterComponent } from '../../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-daily-statistics',
 	templateUrl: './daily-statistics.component.html',
 	styleUrls: ['./daily-statistics.component.scss']
 })
-export class DailyStatisticsComponent extends ReportBaseComponent
+export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	PermissionsEnum = PermissionsEnum;

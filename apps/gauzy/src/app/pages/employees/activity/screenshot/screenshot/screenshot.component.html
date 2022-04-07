@@ -1,12 +1,7 @@
-<div class="filters row mb-3 pr-2">
-	<div class="col">
-		<ngx-filters
-			(filtersChange)="filtersChange($event)"
-			[multipleEmployeeSelect]="false"
-			[hasEmployeeFilter]="false"
-			[hasProjectFilter]="false"
-		></ngx-filters>
-	</div>
+<div class="filters mt-4 pr-2">
+	<ngx-gauzy-filters
+		(filtersChange)="filtersChange($event)"
+	></ngx-gauzy-filters>
 </div>
 <div
 	class="screenshot-container"

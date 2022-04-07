@@ -19,7 +19,7 @@ import { pick, pluck } from 'underscore';
 import { isEmpty } from '@gauzy/common-angular';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
@@ -30,7 +30,7 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 	templateUrl: './time-reports.component.html',
 	styleUrls: ['./time-reports.component.scss']
 })
-export class TimeReportsComponent extends ReportBaseComponent
+export class TimeReportsComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 
 	logRequest: ITimeLogFilters = this.request;

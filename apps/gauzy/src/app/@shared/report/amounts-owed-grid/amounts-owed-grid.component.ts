@@ -18,7 +18,7 @@ import { debounceTime, tap } from 'rxjs/operators';
 import { isEmpty } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
-import { ReportBaseComponent } from '../report-base/report-base.component';
+import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +26,7 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 	templateUrl: './amounts-owed-grid.component.html',
 	styleUrls: ['./amounts-owed-grid.component.scss']
 })
-export class AmountsOwedGridComponent extends ReportBaseComponent
+export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	logRequest: ITimeLogFilters = this.request;

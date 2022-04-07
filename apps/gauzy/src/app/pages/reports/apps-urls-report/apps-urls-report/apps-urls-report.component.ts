@@ -11,7 +11,7 @@ import { IGetActivitiesInput, ITimeLogFilters } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Store } from './../../../../@core/services';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @Component({
@@ -19,8 +19,7 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 	templateUrl: './apps-urls-report.component.html',
 	styleUrls: ['./apps-urls-report.component.scss']
 })
-export class AppsUrlsReportComponent 
-	extends ReportBaseComponent 
+export class AppsUrlsReportComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit, OnDestroy {
 		
 	today: Date = new Date();
