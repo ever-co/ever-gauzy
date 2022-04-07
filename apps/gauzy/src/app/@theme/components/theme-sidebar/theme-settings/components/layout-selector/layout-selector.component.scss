@@ -15,7 +15,7 @@
 :host ::ng-deep{
   nb-select.appearance-outline .select-button{
     color: rgba($color: rgba(126, 126, 143), $alpha: 1);
-    border-width: 3px;
+    border-width: 2px;
     border-color: rgba($color: rgba(126, 126, 143), $alpha: .5);
   }
   @include nb-select-overrides(2rem, $default-button-radius, unset);
