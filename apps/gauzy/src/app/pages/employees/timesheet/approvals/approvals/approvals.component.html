@@ -1,14 +1,11 @@
 <div class="filters row mb-3">
 	<div class="col">
-		<ngx-filters
-			dateRange="month"
-			[hasEmployeeFilter]="false"
+		<ngx-gauzy-filters
 			[hasLogTypeFilter]="false"
 			[hasSourceFilter]="false"
 			[hasActivityLevelFilter]="false"
-			[hasProjectFilter]="false"
 			(filtersChange)="filtersChange($event)"
-		></ngx-filters>
+		></ngx-gauzy-filters>
 	</div>
 </div>
 <div class="row">
