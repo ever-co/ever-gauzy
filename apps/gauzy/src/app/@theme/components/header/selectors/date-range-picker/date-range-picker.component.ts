@@ -205,6 +205,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}
 		this.arrow.setStrategy = this.next;
 		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+		this.setFutureStrategy();
 	}
 
    /**
