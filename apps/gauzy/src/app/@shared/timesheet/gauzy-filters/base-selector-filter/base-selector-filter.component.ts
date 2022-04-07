@@ -37,9 +37,9 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 		const storeProject$ = this.store.selectedProject$;
 		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				filter(([organization]) => !!organization),
 				debounceTime(300),
 				distinctUntilChange(),
+				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				tap(([organization, employee, project]) => {
 					if (organization) {
