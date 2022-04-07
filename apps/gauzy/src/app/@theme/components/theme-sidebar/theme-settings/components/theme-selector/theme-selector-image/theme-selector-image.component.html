@@ -1,0 +1,32 @@
+<div class="theme-card">
+	<div class="theme-container">
+		{{ 'SETTINGS_MENU.THEMES' | translate }}
+		<nb-select
+			status="basic"
+			size="small"
+			outline
+			placeholder="{{ (selected | async)?.name | translate }}"
+			(click)="isOpen = !isOpen"
+			[ngClass]="isOpen ? 'open' : ''"
+		></nb-select>
+	</div>
+	<ng-container *ngIf="isOpen">
+		<div
+			*ngFor="let theme of themes"
+			[ngClass]="
+				(selected | async)?.value === theme.value
+					? 'card-container selected'
+					: 'card-container'
+			"
+			(click)="onSelectedTheme(theme.value)"
+		>
+			<span>
+				{{ theme.name | translate }}
+				<div class="check"></div
+			></span>
+			<div class="image-container">
+				<img [src]="theme.imageUrl" />
+			</div>
+		</div>
+	</ng-container>
+</div>

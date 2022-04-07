@@ -36,6 +36,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { Router } from '@angular/router';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 
 export enum RangePeriod {
 	DAY = "DAY",
@@ -151,14 +152,14 @@ export class TimeTrackingComponent
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
-		const selectedDateRange$ = this.store.selectedDateRange$;
+		const storeDateRange$ = this.store.selectedDateRange$;
 
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$, selectedDateRange$])
+		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])
 			.pipe(
-				filter(([organization]) => !!organization),
+				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				distinctUntilChange(),
 				debounceTime(300),
-				tap(([organization, employee, project, dateRange]) => {
+				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
 
 					this.organizationId = organization.id;
@@ -215,9 +216,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const timeSlotRequest: IGetTimeSlotStatistics = {
 			tenantId,
 			organizationId,
@@ -247,9 +249,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const request: IGetCountsStatistics = {
 			tenantId,
 			organizationId,
@@ -274,9 +277,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const activityRequest: IGetActivitiesStatistics = {
 			tenantId,
 			organizationId,
@@ -311,9 +315,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const projectRequest: IGetProjectsStatistics = {
 			tenantId,
 			organizationId,
@@ -338,9 +343,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const taskRequest: IGetTasksStatistics = {
 			tenantId,
 			organizationId,
@@ -365,9 +371,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const request: IGetManualTimesStatistics = {
 			tenantId,
 			organizationId,
@@ -397,9 +404,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const memberRequest: IGetMembersStatistics = {
 			tenantId,
 			organizationId,
@@ -554,45 +562,6 @@ export class TimeTrackingComponent
 			});
 		} catch (error) {
 			console.log('Error while redirecting to apps & urls report.', error);
-		}
-	}
-
-	/**
-	 * We are having issue, when organization not allowed future date
-	 * When someone run timer for today, all statistic not displaying correctly
-	 *
-	 * @returns
-	 */
-	private getAdjustDateRangeFutureAllowed(): IDateRangePicker {
-		const { selectedDateRange } = this;
-		const now = moment();
-
-		let { startDate, endDate } = selectedDateRange;
-		/**
-		 * If, user selected single day date range.
-		 */
-		if (
-			moment(moment(startDate).format('YYYY-MM-DD')).isSame(
-				moment(endDate).format('YYYY-MM-DD')
-			)
-		) {
-			startDate = moment(startDate).startOf('day').utc().toDate();
-			endDate = moment(endDate).endOf('day').utc().toDate();
-		}
-
-		/**
-		 * If, user selected TODAY date range.
-		 */
-		if (
-			moment(now.format('YYYY-MM-DD')).isSame(
-				moment(endDate).format('YYYY-MM-DD')
-			)
-		) {
-			endDate = moment.utc().toDate();
-		}
-		return {
-			startDate,
-			endDate
 		}
 	}
 

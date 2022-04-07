@@ -95,15 +95,15 @@ nb-card, nb-card-header, nb-card-body, .card {
             }
         }
     }
-    .cdk-overlay-pane {
-        nb-option-list.size-medium {
-            width: auto !important;
+    // .cdk-overlay-pane {
+    //     nb-option-list.size-medium {
+    //         width: auto !important;
 
-            .option-list > nb-option {
-                padding: 15px !important;
-            }
-        }
-    }
+    //         .option-list > nb-option {
+    //             padding: 15px !important;
+    //         }
+    //     }
+    // }
 }
 
 :host {

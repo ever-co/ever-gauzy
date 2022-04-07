@@ -35,12 +35,13 @@ import {
 	ICurrency,
 	IInvoiceItemCreateInput,
 	InvoiceTabsEnum,
-	DiscountTaxTypeEnum
+	DiscountTaxTypeEnum,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Subject, firstValueFrom, combineLatest } from 'rxjs';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -83,6 +84,7 @@ export class InvoicesComponent
 	canBeSend = true;
 	invoices: IInvoice[] = [];
 	organization: IOrganization;
+	selectedDateRange: IDateRangePicker;
 	viewComponentName: ComponentEnum;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -182,22 +184,10 @@ export class InvoicesComponent
 		this.subject$
 			.pipe(
 				debounceTime(100),
-				tap(() => this.loading = true),
 				tap(() => this.cdr.detectChanges()),
 				tap(() => this.setSmartTableSource()),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.store.selectedOrganization$
-			.pipe(
-				debounceTime(100),
-				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(() => this.refreshPagination()),
-				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -207,7 +197,24 @@ export class InvoicesComponent
 				distinctUntilChange(),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeDateRange$ = this.store.selectedDateRange$;
+		combineLatest([storeOrganization$, storeDateRange$])
+			.pipe(
+				debounceTime(300),
+				filter(([organization]) => !!organization),
+				distinctUntilChange(),
+				tap(([organization, dateRange]) => {
+					this.organization = organization as IOrganization;
+					this.selectedDateRange = dateRange as IDateRangePicker;
+				}),
+				tap(() => this.refreshPagination()),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -639,8 +646,12 @@ export class InvoicesComponent
 		if (!this.organization) {
 			return;
 		}
+		this.loading = true;
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { startDate, endDate } = this.selectedDateRange;
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
 			relations: [
@@ -672,6 +683,10 @@ export class InvoicesComponent
 				tenantId,
 				isEstimate: (this.isEstimate === true) ? 1 : 0,
 				isArchived: (this.includeArchived === true) ? 1 : 0,
+				invoiceDate: {
+					startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
 				...this.filters.where
 			},
 			resultMap: (invoice: IInvoice) => {

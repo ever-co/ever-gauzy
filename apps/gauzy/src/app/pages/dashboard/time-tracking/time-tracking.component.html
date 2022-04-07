@@ -10,12 +10,15 @@
 				{{ 'TIMESHEET.TIME_TRACKING' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title
-			[start]="selectedDateRange?.startDate"
-			[end]="selectedDateRange?.endDate"
-			[format]="'dddd, LL'"
+		<ng-container
+			*ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate"
 		>
-		</ngx-date-range-title>
+			<ngx-date-range-title
+				[start]="selectedDateRange?.startDate"
+				[end]="selectedDateRange?.endDate"
+				[format]="'dddd, LL'"
+			></ngx-date-range-title>
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
