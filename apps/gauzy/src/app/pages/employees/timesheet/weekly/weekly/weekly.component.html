@@ -15,12 +15,9 @@
 
 <div class="filters row mb-3">
 	<div class="col">
-		<ngx-filters
-			dateRange="week"
-			[hasEmployeeFilter]="false"
-			[hasProjectFilter]="false"
+		<ngx-gauzy-filters
 			(filtersChange)="filtersChange($event)"
-		></ngx-filters>
+		></ngx-gauzy-filters>
 	</div>
 </div>
 <div

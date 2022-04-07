@@ -1,22 +1,19 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-	IOrganization,
 	ITimeLogFilters,
 	ITimesheet,
-	TimesheetStatus,
-	IGetTimesheetInput,
+	TimesheetStatus
 } from '@gauzy/contracts';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/common-angular';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
-import { combineLatest } from 'rxjs';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { Store, ToastrService } from './../../../../../@core/services';
+import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,11 +21,10 @@ import { Store, ToastrService } from './../../../../../@core/services';
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })
-export class ApprovalsComponent 
-	extends TranslationBaseComponent 
+export class ApprovalsComponent extends BaseSelectorFilterComponent 
 	implements AfterViewInit, OnInit, OnDestroy {
 
-	logRequest: ITimeLogFilters;
+	logRequest: ITimeLogFilters = this.request;
 	timesheets: ITimesheet[] = [];
 
 	showBulkAction: boolean;
@@ -37,22 +33,20 @@ export class ApprovalsComponent
 	TimesheetStatus = TimesheetStatus;
 	contextMenus: NbMenuItem[];
 
-	public organization: IOrganization;
-	timesheets$: Subject<any> = new Subject();
-	selectedEmployeeId: string;
+	timesheets$: Subject<any> = this.subject$;
 
 	allChecked: boolean;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
-		private readonly store: Store,
+		protected readonly store: Store,
 		private readonly router: Router,
 		private readonly toastrService: ToastrService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly nbMenuService: NbMenuService,
-		public readonly translate: TranslateService,
+		public readonly translateService: TranslateService,
 	) {
-		super(translate);
+		super(store, translateService);
 	}
 
 	ngOnInit() {
@@ -60,7 +54,6 @@ export class ApprovalsComponent
 		this.timesheets$
 			.pipe(
 				debounceTime(500),
-				tap(() => this.loading = true),
 				tap(() => this.getTimeSheets()),
 				tap(() => this.allChecked = false),
 				untilDestroyed(this)
@@ -79,58 +72,26 @@ export class ApprovalsComponent
 
 	ngAfterViewInit() {
 		this._createContextMenus();
-
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		combineLatest([storeOrganization$, storeEmployee$])
-			.pipe(
-				debounceTime(200),
-				distinctUntilChange(),
-				filter(([organization]) => !!organization),
-				tap(([organization, employee]) => {
-					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
-				}),
-				tap(() => this.timesheets$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.timesheetFilterService.filter = $event;
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
+		this.timesheetFilterService.filter = filters;
 		this.timesheets$.next(true);
 	}
 
 	async getTimeSheets() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
-
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-		const { startDate, endDate } = this.logRequest;
-
-		const employeeIds: string[] = [];
-		if (this.selectedEmployeeId) {
-			employeeIds.push(this.selectedEmployeeId);
-		}
-
-		const request: IGetTimesheetInput = {
-			organizationId,
-			tenantId,
-			...(employeeIds.length > 0 ? { employeeIds } : {}),
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
-		};
-
+		this.loading = true;
 		try {
-			this.timesheets = await this.timesheetService.getTimeSheets(request);
+			this.timesheets = await this.timesheetService.getTimeSheets({
+				...this.getFilterRequest(this.logRequest),
+			})
+			.finally(() => this.loading = false);
 		} catch (error) {
-			console.log('Error while getting TimeSheets for selected date range')
-		} finally {
-			this.loading = false
+			console.log('Error while getting timesheets for selected date range')
 		}
 	}
 
@@ -233,7 +194,7 @@ export class ApprovalsComponent
 	 * Translate context menus
 	 */
 	private _applyTranslationOnChange() {
-		this.translate.onLangChange
+		this.translateService.onLangChange
 			.pipe(
 				tap(() => this._createContextMenus()),
 				untilDestroyed(this)

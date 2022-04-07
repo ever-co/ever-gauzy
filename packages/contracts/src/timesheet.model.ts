@@ -83,8 +83,8 @@ export interface ISubmitTimesheetInput {
 
 export interface IGetTimesheetInput
 	extends IBasePerTenantAndOrganizationEntityModel {
-	startDate?: string;
-	endDate?: string;
+	startDate?: Date | string;
+	endDate?: Date | string;
 	projectIds?: string[];
 	clientId?: string[];
 	employeeIds?: string[];

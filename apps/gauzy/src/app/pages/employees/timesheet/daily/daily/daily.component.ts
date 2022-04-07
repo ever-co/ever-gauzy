@@ -1,22 +1,19 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/common-angular';
 import {
 	NbDialogService,
 	NbMenuItem,
 	NbMenuService
 } from '@nebular/theme';
-import { combineLatest } from 'rxjs';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as _ from 'underscore';
 import {
 	IGetTimeLogInput,
 	ITimeLog,
-	IOrganization,
 	PermissionsEnum,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
@@ -26,7 +23,7 @@ import { TimesheetService, TimesheetFilterService } from './../../../../../@shar
 import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
 import { TimeTrackerService } from './../../../../../@shared/time-tracker/time-tracker.service';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,8 +31,7 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent 
-	extends TranslationBaseComponent 
+export class DailyComponent  extends BaseSelectorFilterComponent 
 	implements AfterViewInit, OnInit, OnDestroy {
 	
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
@@ -44,13 +40,8 @@ export class DailyComponent
 	loading: boolean;
 	showBulkAction: boolean;
 	
-	logRequest: ITimeLogFilters;
+	logRequest: ITimeLogFilters = this.request;
 	timeLogs: ITimeLog[] = [];
-
-	logs$: Subject<any> = new Subject();
-	public organization: IOrganization;
-	selectedEmployeeId: string | null = null;
-	projectId: string | null = null;
 
 	allChecked: boolean;
 	contextMenus: NbMenuItem[];
@@ -59,22 +50,21 @@ export class DailyComponent
 		private readonly timesheetService: TimesheetService,
 		private readonly timeTrackerService: TimeTrackerService,
 		private readonly dialogService: NbDialogService,
-		private readonly store: Store,
+		protected readonly store: Store,
 		private readonly nbMenuService: NbMenuService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
 		private readonly toastrService: ToastrService
 	) {
-		super(translateService);
+		super(store, translateService);
 	}
 
 	ngOnInit() {
 		this._applyTranslationOnChange();
-		this.logs$
+		this.subject$
 			.pipe(
 				debounceTime(500),
-				tap(() => this.loading = true),
 				tap(() => this.getLogs()),
 				tap(() => this.allChecked = false),
 				untilDestroyed(this)
@@ -110,74 +100,39 @@ export class DailyComponent
 
 	ngAfterViewInit() {
 		this._createContextMenus();
-
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				debounceTime(200),
-				distinctUntilChange(),
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
-					this.projectId = project ? project.id : null;
-				}),
-				tap(() => this.logs$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
-	async filtersChange($event: ITimeLogFilters) {
-		this.logRequest = $event;
-		this.timesheetFilterService.filter = $event;
-		this.logs$.next(true);
+	async filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
+		this.timesheetFilterService.filter = filters;
+		this.subject$.next(true);
 	}
 
 	async getLogs() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
-
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-		const { startDate, endDate } = this.logRequest;
-
+		this.loading = true;
 		const appliedFilter = _.pick(
 			this.logRequest,
 			'source',
 			'activityLevel',
 			'logType'
 		);
-
-		const employeeIds: string[] = [];
-		if (this.selectedEmployeeId) {
-			employeeIds.push(this.selectedEmployeeId);
-		}
-
-		const projectIds: string[] = [];
-		if (this.projectId) {
-			projectIds.push(this.projectId);
-		}
-
 		const request: IGetTimeLogInput = {
-			organizationId,
-			tenantId,
 			...appliedFilter,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeIds.length > 0 ? { employeeIds } : {}),
-			...(projectIds.length > 0 ? { projectIds } : {})
+			...this.getFilterRequest(this.logRequest),
 		};
-
-		this.timeLogs = await this.timesheetService
-			.getTimeLogs(request)
-			.then((logs: ITimeLog[]) => {
-				return logs;
-			})
-			.finally(() => (this.loading = false));
+		try {
+			this.timeLogs = await this.timesheetService
+				.getTimeLogs(request)
+				.then((logs: ITimeLog[]) => {
+					return logs;
+				})
+				.finally(() => (this.loading = false));
+		} catch (error) {
+			console.log('Error while retriving daily time logs entries', error);
+		}
 	}
 
 	openAdd() {
@@ -198,7 +153,7 @@ export class DailyComponent
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.logs$.next(true);
+					this.subject$.next(true);
 				}
 			});
 	}
@@ -211,7 +166,7 @@ export class DailyComponent
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.logs$.next(true);
+					this.subject$.next(true);
 				}
 			});
 	}
@@ -227,7 +182,7 @@ export class DailyComponent
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
-					this.logs$.next(true);
+					this.subject$.next(true);
 				}
 			});
 	}
@@ -250,7 +205,7 @@ export class DailyComponent
 					organization: this.organization.name
 				});
 			}).finally(() => {
-				this.logs$.next(true);
+				this.subject$.next(true);
 			});
 		} catch (error) {
 			console.log('Error while delete TimeLog: ', error);
@@ -273,7 +228,6 @@ export class DailyComponent
 				untilDestroyed(this)
 			)
 			.subscribe((type) => {
-				console.log(type);
 				if (type === true) {
 					const logIds = this.timeLogs.filter(
 						(timeLog: ITimeLog) => timeLog['checked'] && !timeLog['isRunning']
@@ -292,7 +246,7 @@ export class DailyComponent
 						});
 					})
 					.finally(() => {
-						this.logs$.next(true);
+						this.subject$.next(true);
 					});
 				}
 			});
