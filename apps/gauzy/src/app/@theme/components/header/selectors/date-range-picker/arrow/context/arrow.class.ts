@@ -16,7 +16,7 @@ export class Arrow {
 	/**
 	 * @param request
 	 */
-	execute(request: any): any {
-		return this.strategy.action(request);
+	execute(request: any, unitOfTime: moment.unitOfTime.Base): any {
+		return this.strategy.action(request, unitOfTime);
 	}
 }
