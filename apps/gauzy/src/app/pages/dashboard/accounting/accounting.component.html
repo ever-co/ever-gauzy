@@ -1,4 +1,4 @@
-<nb-card class="dashboard-card-scroll">
+<nb-card>
 	<nb-card-header>
 		<div class="row organization-employee-header">
 			<div class="col"></div>
@@ -20,7 +20,7 @@
 					[value]="
 						aggregatedEmployeeStatistics?.total?.expense || 0
 							| currency: organization?.currency
-              				| position: organization?.currencyPosition
+							| position: organization?.currencyPosition
 					"
 				></ga-single-statistic>
 			</div>
@@ -31,7 +31,7 @@
 					[value]="
 						aggregatedEmployeeStatistics?.total?.profit || 0
 							| currency: organization?.currency
-              				| position: organization?.currencyPosition
+							| position: organization?.currencyPosition
 					"
 				></ga-single-statistic>
 			</div>
@@ -42,14 +42,14 @@
 					[value]="
 						aggregatedEmployeeStatistics?.total?.bonus || 0
 							| currency: organization?.currency
-              				| position: organization?.currencyPosition
+							| position: organization?.currencyPosition
 					"
 					type="highlight"
 				></ga-single-statistic>
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="settings-body">
+	<nb-card-body>
 		<div class="body-header">
 			<h4>
 				<ngx-header-title>
@@ -103,31 +103,28 @@
 							{{
 								employeeExpense.income || 0
 									| currency: organization?.currency
-                  					| position: organization?.currencyPosition
+									| position: organization?.currencyPosition
 							}}
 						</div>
 						<div class="col">
 							{{
 								employeeExpense.expense || 0
 									| currency: organization?.currency
-                  					| position: organization?.currencyPosition
+									| position: organization?.currencyPosition
 							}}
 						</div>
 						<div class="col">
 							{{
 								employeeExpense.profit || 0
 									| currency: organization?.currency
-                 		 			| position: organization?.currencyPosition
+									| position: organization?.currencyPosition
 							}}
 						</div>
-						<div
-							*ngIf="organization?.bonusType"
-							class="col"
-						>
+						<div *ngIf="organization?.bonusType" class="col">
 							{{
 								employeeExpense.bonus || 0
 									| currency: organization?.currency
-                  					| position: organization?.currencyPosition
+									| position: organization?.currencyPosition
 							}}
 						</div>
 					</div>
