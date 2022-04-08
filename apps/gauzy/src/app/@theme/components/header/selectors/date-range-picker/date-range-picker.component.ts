@@ -83,11 +83,12 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (value) {
 			this._unitOfTime = value;
 		}
-		this.selectedDateRange = {
+		const defaultSelectedDateRange = {
 			startDate: moment().startOf(this.unitOfTime).toDate(),
 			endDate: moment().endOf(this.unitOfTime).toDate(),
 			isCustomDate: false
 		}
+		this.selectedDateRange = this.rangePicker = defaultSelectedDateRange;
 	}
 
 	/*
@@ -101,6 +102,19 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (isNotEmpty(range)) {
 			this._selectedDateRange = range;
 			this.range$.next(range);
+		}		
+	}
+
+	/*
+	* Getter & Setter for dynamic selected internal date range
+	*/
+	private _rangePicker: IDateRangePicker;
+	public get rangePicker(): IDateRangePicker {
+		return this._rangePicker;
+	}
+	public set rangePicker(range: IDateRangePicker) {
+		if (isNotEmpty(range)) {
+			this._rangePicker = range;
 		}		
 	}
 
@@ -194,6 +208,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				endDate: moment().toDate()
 			}
 		}
+		console.log(this.selectedDateRange);
 	}
 
 	/**
@@ -204,7 +219,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			return;
 		}
 		this.arrow.setStrategy = this.next;
-		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+		const nextRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
+		this.selectedDateRange = this.rangePicker = nextRange;
 		this.setFutureStrategy();
 	}
 
@@ -213,7 +229,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
    */
 	previousRange() {
 		this.arrow.setStrategy = this.previous;
-		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
+		this.selectedDateRange = this.rangePicker = previousRange;
 	}
 
 	/**
@@ -243,13 +260,34 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (this.dateRangePickerDirective) {
 			const { startDate, endDate } = event;
 			if (startDate && endDate) {
-				this.selectedDateRange = {
+				const range = {
 					...this.selectedDateRange,
 					startDate: startDate.toDate(),
 					endDate: endDate.toDate(),
 					isCustomDate: this.isCustomDate(event)
 				}
+				this.selectedDateRange = this.rangePicker = range;
 			}
+		}
+	}
+
+	/**
+	 * listen range click event on ngx-daterangepicker-material
+	 * @param event
+	 */
+	 rangeClicked(range: any) {
+		const { label } = range 
+		switch (label) {
+			case DateRangeKeyEnum.TODAY:
+			case DateRangeKeyEnum.YESTERDAY:
+				this.unitOfTime = 'day';
+				break;
+			case DateRangeKeyEnum.CURRENT_WEEK:
+			case DateRangeKeyEnum.LAST_WEEK:
+				this.unitOfTime = 'week';
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -278,12 +316,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}
 		return isCustomRange;
 	}
-
-	/**
-	 * listen range click event on ngx-daterangepicker-material
-	 * @param event
-	 */
-	rangeClicked(event: any) {}
 	
 	ngOnDestroy() {}
 }
