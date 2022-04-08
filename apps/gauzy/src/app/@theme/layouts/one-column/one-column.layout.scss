@@ -49,14 +49,19 @@
     z-index: 1051;
   }
 
-  button.chevron {
-    width: 1.625rem;
-    height: 1.625rem;
-    padding: 0;
-    align-self: flex-end;
+  div.chevron {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
     margin-bottom: 0.625rem;
+    button {
+      height: 1.625rem;
+      width: 1.625rem;
+      padding: 0;
+    }
     &.collapsed {
-      align-self: center;
+      justify-content: center;
     }
   }
 }
@@ -70,11 +75,12 @@ nb-sidebar[tag='user-workspace'] {
 
 nb-sidebar[tag='menu-sidebar'] {
   ::ng-deep {
+    nb-menu {
+      margin: 0;
+      height: 100%;
+    }
     .scrollable {
       background: nb-theme(gauzy-sidebar-background-2);
-      nb-menu {
-        z-index: -1;
-      }
     }
   }
 }
@@ -95,6 +101,7 @@ nb-sidebar[tag='menu-sidebar'] {
   }
   ngx-gauzy-logo {
     width: 100%;
+    z-index: 2;
   }
   &.not-collapsed {
     padding: 0.75rem 0;
@@ -166,4 +173,24 @@ nb-sidebar[tag='menu-sidebar'] {
     > .scrollable {
     overflow-y: overlay;
   }
+}
+
+.custom-box {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.custom-box .custom-row.logo {
+  flex: 0 1 auto;
+}
+
+.custom-box .custom-row.menu {
+  flex: 1 1 auto;
+  overflow-y: overlay;
+  padding: 0 0.75rem;
+}
+
+.custom-box .custom-row.button {
+  flex: 0 1 auto;
 }
