@@ -22,3 +22,26 @@ $default-radius: nb-theme(border-radius);
     }
   }
 }
+
+@mixin card_overrides($overflow, $height, $radius) {
+  .card {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    border-radius: $radius;
+    border: unset;
+    .card-header {
+      flex: 0 1 auto;
+      border-bottom:unset
+    }
+    .card-body {
+      flex: 1 1 auto;
+      overflow: $overflow;
+      height: $height;
+      background-color: rgba(50, 50, 50, 0.03);
+    }
+    .card-footer {
+      flex: 0 1 auto;
+    }
+  }
+}
