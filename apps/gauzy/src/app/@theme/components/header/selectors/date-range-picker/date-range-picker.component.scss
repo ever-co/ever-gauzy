@@ -23,7 +23,7 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     input {
         height: 1.875rem;
         margin-right: 5px;
-        width: 240px;
+        width: 218px;
         background-color: transparent;
         /* Tell the input to use all the available space */
         flex-grow: 2;
@@ -49,7 +49,7 @@ $button-radius: nb-theme(button-rectangle-border-radius);
             color: nb-theme(text-basic-color);
             border-radius: nb-theme(border-radius);
             margin-top: 25px;
-            @include nb-ltr(margin-left, -103%);
+            @include nb-ltr(margin-left, -117%);
             @include nb-rtl(margin-right, -103%);
             .calendar-table {
                 background-color: nb-theme(background-basic-color-1);
