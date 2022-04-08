@@ -110,13 +110,14 @@ nb-sidebar[tag='menu-sidebar'] {
       box-shadow: none;
       width: 1.75rem;
       height: auto;
-      .logo {
+      .logo,
+      .organization,
+      nb-accordion-item-body {
         display: none;
       }
       nb-accordion-item-header {
-        padding: 0px;
+        padding: 0.75rem 0;
         nb-icon {
-          border: none;
           left: 0rem;
         }
       }
