@@ -144,10 +144,10 @@
 		<div>
 			<h6>{{ 'HEADER.SELECT_A_DATE' | translate }}</h6>
 		</div>
-		<ga-date-selector
+		<ngx-date-range-picker
 			*ngIf="showDateSelector"
-			class="date-selector"
-		></ga-date-selector>
+			class="date-range-selector"
+		></ngx-date-range-picker>
 	</ng-container>
 	<ng-container *ngIf="selectorsVisibility?.organization">
 		<div>
