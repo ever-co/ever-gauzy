@@ -59,6 +59,7 @@
       height: 1.625rem;
       width: 1.625rem;
       padding: 0;
+      margin: 0 .5rem;
     }
     &.collapsed {
       justify-content: center;
@@ -108,7 +109,7 @@ nb-sidebar[tag='menu-sidebar'] {
   }
   &.compacted {
     width: nb-theme(sidebar-width-compact);
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
     button.hidden-menu {
       margin-left: 0;
@@ -183,6 +184,7 @@ nb-sidebar[tag='menu-sidebar'] {
 
 .custom-box .custom-row.logo {
   flex: 0 1 auto;
+  align-self: center;
 }
 
 .custom-box .custom-row.menu {
