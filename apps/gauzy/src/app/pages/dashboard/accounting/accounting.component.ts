@@ -76,10 +76,10 @@ export class AccountingComponent implements OnInit, OnDestroy {
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization]) => !!organization),
-				tap(([organization, range]) => {
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				tap(([organization, dateRange]) => {
 					this.organization = organization;
-					this.selectedDateRange = range;
+					this.selectedDateRange = dateRange;
 				}),
 				tap(() => this.statistics$.next(true)),
 				untilDestroyed(this)

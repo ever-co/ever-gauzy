@@ -1,12 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
 import { chain, reduce } from 'underscore';
 import * as moment from 'moment';
 import {
-	IOrganization,
 	ITimeLogFilters,
 	IGetActivitiesInput,
 	ActivityType,
@@ -14,9 +13,11 @@ import {
 	IActivity,
 	IURLMetaData
 } from '@gauzy/contracts';
-import { toUTC, toLocal, distinctUntilChange, isJsObject } from '@gauzy/common-angular';
+import { TranslateService } from '@ngx-translate/core';
+import { toUTC, toLocal, isJsObject, isEmpty } from '@gauzy/common-angular';
 import { Store } from './../../../../../@core/services';
 import { ActivityService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,30 +25,30 @@ import { ActivityService, TimesheetFilterService } from './../../../../../@share
 	styleUrls: ['./app-url-activity.component.scss'],
 	templateUrl: './app-url-activity.component.html'
 })
-export class AppUrlActivityComponent implements OnInit, OnDestroy {
+export class AppUrlActivityComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	loading: boolean;
 	apps: {
 		hour: string;
 		activities: IDailyActivity[];
 	}[];
-	request: any;
-	activities$: Subject<any> = new Subject();
-	organization: IOrganization;
+	filters: ITimeLogFilters;
+	activities$: Subject<boolean> = this.subject$;
 	type: 'apps' | 'urls';
-	selectedEmployeeId: string | null = null;
-	projectId: string | null = null;
 
 	constructor(
-		private readonly store: Store,
+		public readonly translateService: TranslateService,
+		protected readonly store: Store,
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly activityService: ActivityService
-	) {}
+	) {
+		super(store, translateService);
+	}
 
 	ngOnInit(): void {
 		this.activities$
 			.pipe(
-				debounceTime(100),
+				debounceTime(300),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
@@ -58,27 +59,11 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				filter(([organization, employee]) => !!organization && !!employee),
-				distinctUntilChange(),
-				tap(([organization, employee, project]) => {
-					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
-					this.projectId = project ? project.id : null;
-					this.activities$.next(true);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
-	async filtersChange($event: ITimeLogFilters) {
-		this.request = $event;
-		this.timesheetFilterService.filter = $event;
+	filtersChange(filters: ITimeLogFilters) {
+		this.timesheetFilterService.filter = filters;
+		this.filters = Object.assign({}, filters);
 		this.activities$.next(true);
 	}
 
@@ -123,33 +108,12 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	async getLogs() {
-		if (!this.organization || !this.request) {
+	getLogs() {
+		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-
-		const { startDate, endDate } = this.request;
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-
-		const employeeIds: string[] = [];
-		if (this.selectedEmployeeId) {
-			employeeIds.push(this.selectedEmployeeId);
-		}
-
-		const projectIds: string[] = [];
-		if (this.projectId) {
-			projectIds.push(this.projectId);
-		}
-
 		const request: IGetActivitiesInput = {
-			organizationId,
-			tenantId,
-			...this.request,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeIds.length > 0 ? { employeeIds } : {}),
-			...(projectIds.length > 0 ? { projectIds } : {}),
+			...this.getFilterRequest(this.filters),
 			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
 		};
 
