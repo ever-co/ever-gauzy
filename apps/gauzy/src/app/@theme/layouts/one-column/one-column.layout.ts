@@ -37,7 +37,8 @@ export class OneColumnLayoutComponent
 
 	isOpen: boolean = false;
 	isExpanded: boolean = true;
-  isCollapse:boolean = true;
+	isCollapse: boolean = true;
+  trigger: boolean = true;
 
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,
@@ -73,19 +74,25 @@ export class OneColumnLayoutComponent
 	}
 
 	toggle() {
-    	this.isExpanded = !this.isExpanded;
+		this.isExpanded = !this.isExpanded;
 		if (this.isExpanded) {
 			this.sidebarService.expand('menu-sidebar');
 		} else {
+      this.trigger = true;
 			this.sidebarService.toggle(true, 'menu-sidebar');
 			this.layoutService.changeLayoutSize();
 		}
 	}
 
-  onCollapse(event: boolean){
-    this.isCollapse = event;
-    if(!this.isCollapse && !this.isExpanded) this.toggle();
-  }
+	onCollapse(event: boolean) {
+		this.isCollapse = event;
+		if (!this.isCollapse && !this.isExpanded) this.toggle();
+	}
+
+	onStateChange(event) {
+		this.isExpanded = event === 'expanded' ? true : false;
+    this.trigger = event === 'compacted' ? true : this.isCollapse;
+	}
 
 	ngOnDestroy() {
 		this.navigationBuilderService.clearSidebars();

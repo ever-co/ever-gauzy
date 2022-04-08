@@ -11,11 +11,12 @@
 		class="menu-sidebar sidebar_class"
 		tag="menu-sidebar"
 		*ngIf="user"
+    (stateChange)="onStateChange($event)"
 	>
 		<div
 			[ngClass]="isExpanded? isCollapse? 'logo-container':'logo-container not-collapsed' : 'logo-container compacted'"
 		>
-			<ngx-gauzy-logo (onCollapsed)="onCollapse($event)"></ngx-gauzy-logo>
+			<ngx-gauzy-logo [controlled]="trigger" (onCollapsed)="onCollapse($event)"></ngx-gauzy-logo>
 			<button
 				*ngIf="isCollapse && isExpanded"
 				class="hidden-menu"
