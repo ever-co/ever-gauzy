@@ -1,5 +1,7 @@
 @import 'report';
 @import 'gauzy/_gauzy-overrides';
+@import 'gauzy/_gauzy-cards';
+
 .popover-container {
   border: solid 1px nb-theme(border-basic-color-3);
   padding: 20px 30px;
@@ -104,7 +106,7 @@ button {
 .remove-scroll {
   overflow: unset;
   width: 100%;
-  padding: 1rem 0 1rem 0;
+  padding: 1rem;
 }
 .actions {
   background: rgba(50, 50, 50, 0.03);
@@ -136,7 +138,7 @@ button {
     transform: translateX(0%);
     transition: all 0.25s ease-out;
   }
-  &.show-button{
+  &.show-button {
     @include nb-rtl(transform, translateX(110%));
     @include nb-ltr(transform, translateX(-110%));
   }
@@ -162,12 +164,17 @@ ga-currency::ng-deep nb-select {
 }
 
 :host ngx-avatar::ng-deep {
-  background-color: nb-theme(color-primary-transparent-100);
-  border-radius: nb-theme(button-rectangle-border-radius);
-  padding: 3px 9px 3px 3px;
-  &.link-text {
-    color: nb-theme(text-primary-color);
-    font-weight: normal;
+  .inner-wrapper {
+    background-color: nb-theme(color-primary-transparent-100);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    padding: 3px 9px 3px 3px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    .link-text {
+      color: nb-theme(text-primary-color);
+      font-weight: normal;
+    }
   }
 }
 
@@ -253,9 +260,24 @@ input {
   width: 100%;
 }
 
-nb-card-body{
+:host nb-card-body {
   overflow: unset;
+  padding: 0;
 }
-:host ::ng-deep{
-  @include ng-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
+
+nb-tab {
+  background-color: rgba(50, 50, 50, 0.03);
+}
+:host ::ng-deep {
+  @include card_overrides(overlay, $default-card-height, $default-radius);
+  @include ng-select-overrides(
+    $default-height,
+    $default-radius,
+    $default-box-shadow-inset
+  );
+  nb-tabset .tab.active .tab-link {
+    background-color: rgba(50, 50, 50, 0.03);
+    border: unset;
+    text-decoration: none;
+  }
 }

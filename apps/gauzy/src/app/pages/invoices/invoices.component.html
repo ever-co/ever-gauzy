@@ -27,7 +27,7 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="card-body">
 		<ng-template [ngxPermissionsOnly]="['INVOICES_EDIT', 'INVOICES_VIEW']">
 			<div class="mb-3">
 				<div class="actions-container">
@@ -71,9 +71,20 @@
 		</ng-template>
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab
+				class="remove-scroll"
 				[tabTitle]="'INVOICES_PAGE.BROWSE' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.ACTIONS"
 			>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
+					>
+					</ng-template>
+				</ng-container>
 			</nb-tab>
 			<nb-tab
 				class="remove-scroll"
@@ -369,6 +380,16 @@
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
+					>
+					</ng-template>
+				</ng-container>
 			</nb-tab>
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate | titlecase"
@@ -503,13 +524,20 @@
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
+					>
+					</ng-template>
+				</ng-container>
 			</nb-tab>
 		</nb-tabset>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container">
+		<ng-template #tableLayout>
+			<div class="table-scroll-container mt-3">
 				<ng2-smart-table
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
@@ -522,7 +550,9 @@
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 				class="pagination-container"
 			>
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -536,7 +566,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div *ngIf="pagination.totalItems">
+			<div class="mt-3" *ngIf="pagination.totalItems">
 				<ga-card-grid
 					(selectedOption)="onUpdateOption($event)"
 					(selectedPage)="onPageChange($event)"
@@ -579,7 +609,9 @@
 				status="basic"
 				class="action select-nb mr-2 ml-1"
 				*ngIf="!isEstimate"
-				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
+				[placeholder]="
+					'INVOICES_PAGE.SET_STATUS' | translate | titlecase
+				"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
