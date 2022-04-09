@@ -92,7 +92,7 @@
 				tabId="search"
 				[tabId]="invoiceTabsEnum.SEARCH"
 			>
-				<nb-accordion>
+				<nb-accordion class="mb-3">
 					<nb-accordion-item collapsed="false">
 						<nb-accordion-item-header
 							>{{
@@ -396,7 +396,7 @@
 				[tabId]="invoiceTabsEnum.HISTORY"
 				class="remove-scroll"
 			>
-				<nb-accordion>
+				<nb-accordion class="mb-3">
 					<nb-accordion-item collapsed="false">
 						<nb-accordion-item-header>
 							{{
@@ -537,7 +537,7 @@
 			</nb-tab>
 		</nb-tabset>
 		<ng-template #tableLayout>
-			<div class="table-scroll-container mt-3">
+			<div class="table-scroll-container">
 				<ng2-smart-table
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
@@ -566,7 +566,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<div class="mt-3" *ngIf="pagination.totalItems">
+			<div *ngIf="pagination.totalItems">
 				<ga-card-grid
 					(selectedOption)="onUpdateOption($event)"
 					(selectedPage)="onPageChange($event)"

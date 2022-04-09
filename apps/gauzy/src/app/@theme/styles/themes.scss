@@ -246,7 +246,11 @@ $nb-themes: nb-register-theme(
     footer-shadow: none,
     footer-divider-style: none,
     sidebar-shadow: none,
-    tabset-tab-underline-width: 0
+    tabset-tab-underline-width: 0,
+    tabset-tab-text-font-size: 1rem,
+    route-tabset-tab-text-font-size: 1rem,
+    tabset-tab-text-font-weight: 400,
+    route-tabset-tab-text-font-weight: 400
   ),
   gauzy-light,
   default
@@ -305,7 +309,9 @@ $nb-themes: nb-register-theme(
     layout-background-color: gauzy-card-1,
     footer-background-color: gauzy-card-1,
     header-background-color: gauzy-card-1,
-    tabset-tab-underline-width: 0
+    tabset-tab-underline-width: 0,
+    tabset-tab-text-font-size: 1rem,
+    route-tabset-tab-text-font-size: 1rem
   ),
   gauzy-dark,
   dark
