@@ -719,6 +719,10 @@
 
 <ng-template #settingsPopover>
 	<div class="popover-container">
+		<span class="d-flex justify-content-end w-100"
+			><i class="fas fa-times" (click)="toggleTableSettingsPopover()"></i
+		></span>
+		<span class="title">Settings</span>
 		<div class="show-columns" *ngIf="columns">
 			<label class="show-columns-label label">
 				{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}
@@ -739,7 +743,7 @@
 				</nb-option>
 			</nb-select>
 		</div>
-		<div class="per-page-container">
+		<div class="per-page-container mr-3">
 			<div class="per-page">
 				<label class="label per-page-label" *ngIf="!isEstimate">
 					{{ 'INVOICES_PAGE.INVOICES_PER_PAGE' | translate }}
@@ -753,24 +757,25 @@
 					type="number"
 					nbInput
 				/>
-				<button
-					class="per-page-button"
-					status="success"
-					nbButton
-					(click)="showPerPage()"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
 			</div>
 		</div>
-		<div class="mt-3 text-center">
+		<div
+			class="w-100 d-flex justify-content-between align-items-center mr-3"
+		>
 			<nb-checkbox
 				(checkedChange)="toggleIncludeArchived($event)"
 				status="warning"
-				class="mr-3"
 			>
 				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
 			</nb-checkbox>
+			<button
+				class="per-page-button"
+				status="success"
+				nbButton
+				(click)="showPerPage()"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
 		</div>
 	</div>
 </ng-template>

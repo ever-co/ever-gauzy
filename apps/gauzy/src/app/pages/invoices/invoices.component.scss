@@ -3,9 +3,26 @@
 @import 'gauzy/_gauzy-cards';
 
 .popover-container {
+  display: flex;
+  flex-direction: column;
+  justify-items: flex-start;
+  align-items: flex-start;
   border: solid 1px nb-theme(border-basic-color-3);
-  padding: 20px 30px;
-  border-radius: 10px;
+  padding: 12.5px 14px 12.5px 18px;
+  border-radius: $default-radius;
+  width: 411px;
+  .title {
+    color: nb-theme(text-primary-color);
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+  i{
+    cursor: pointer;
+  }
 }
 
 ::ng-deep nb-popover {
@@ -14,31 +31,36 @@
 
 .per-page {
   display: flex;
-  text-align: center;
+  flex-direction: column;
+  text-align: left;
 }
 
 .per-page-input {
-  width: 100px;
-  margin: auto 0;
+  width: 138px;
 }
 
 .per-page-label {
-  margin-right: 20px;
-  align-self: center;
-  margin-bottom: 0;
+  align-self: flex-start;
 }
 
-.per-page-button {
-  margin-left: 20px;
+.per-page-container {
+  margin: 10px 0;
 }
 
 .show-columns {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  margin-top: 2rem;
+  .show-columns-select.size-medium:not(.full-width) {
+    max-width: unset;
+    margin-right: 9px;
+  }
 }
 
 .show-columns-label {
-  margin: 10px auto;
+  text-align: left;
+  width: 100%;
 }
 
 :host .actions-container {
