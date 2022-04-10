@@ -483,6 +483,11 @@
             "polyfills": "apps/desktop/src/polyfills.ts",
             "tsConfig": "apps/desktop/tsconfig.app.json",
             "aot": true,
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "apps/desktop-timer/src/assets/styles"
+              ]
+            },
             "assets": [
               "apps/desktop/src/favicon.ico",
               "apps/desktop/src/assets"
@@ -498,7 +503,8 @@
               "node_modules/nebular-icons/scss/nebular-icons.scss",
               "apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
               "node_modules/leaflet/dist/leaflet.css",
-              "apps/desktop/src/assets/styles/styles.scss"
+              "apps/desktop/src/assets/styles/styles.scss",
+              "apps/gauzy/src/app/@theme/styles/styles.scss"
             ],
             "scripts": []
           },
@@ -660,6 +666,11 @@
             "polyfills": "apps/desktop-timer/src/polyfills.ts",
             "tsConfig": "apps/desktop-timer/tsconfig.app.json",
             "aot": true,
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "apps/desktop-timer/src/assets/styles"
+              ]
+            },
             "assets": [
               "apps/desktop-timer/src/favicon.ico",
               "apps/desktop-timer/src/assets",
@@ -683,7 +694,7 @@
               "node_modules/nebular-icons/scss/nebular-icons.scss",
               "apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
               "node_modules/leaflet/dist/leaflet.css",
-              "apps/desktop-timer/src/assets/styles/styles.scss"
+              "apps/gauzy/src/app/@theme/styles/styles.scss"
             ],
             "scripts": []
           },

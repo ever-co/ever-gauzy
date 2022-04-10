@@ -1,0 +1,144 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			Add Task
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<label class="label">Projects</label>
+					<ng-select
+							[clearable]="true"
+							placeholder="Project"
+							[(ngModel)]="projectSelect"
+							[items]="projects"
+							bindValue="id"
+							bindLabel="name"
+							(ngModelChange)="setProject($event)"
+						>
+					</ng-select>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<label class="label">Status</label>
+					<ng-select
+							[clearable]="true"
+							placeholder="Status"
+							[(ngModel)]="statusTaskSelect"
+							[items]="statuses"
+							bindValue="id"
+							bindLabel="name"
+							(ngModelChange)="setStatusTask($event)"
+						>
+					</ng-select>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label class="label">Add or Remove Employees</label>
+					<ng-select
+							[clearable]="true"
+							placeholder="Employee"
+							[(ngModel)]="employeeSelect"
+							[items]="employees"
+							bindValue="id"
+							bindLabel="user.name"
+							(ngModelChange)="setEmployee($event)"
+						>
+					</ng-select>
+				</div>
+			</div>
+		</div>			
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label class="label">Title</label>
+					<input
+						class="name-input"
+						[(ngModel)]="title"
+						type="text"
+						nbInput
+						placeholder="Title"
+						(ngModelChange)="validation()"
+					/>
+				</div>					
+			</div>
+			<div class="col-sm-12">
+				<label class="label">
+					Tags
+				</label>
+				<div class="form-group">
+					<ng-select
+							[clearable]="true"
+							placeholder="Tags"
+							[(ngModel)]="selectedTags"
+							[items]="tags"
+							bindValue="id"
+							bindLabel="name"
+							[multiple]="true"
+							(add)="setTags($event)"
+							(remove)="setTags($event)"
+						>
+					</ng-select>
+				</div>					
+			</div>					
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<label for="dueDate" class="label">Due Date</label>
+					<input
+						type="text"
+						[(ngModel)]="dueDate"
+						nbInput
+						placeholder="Due Date"
+						[nbDatepicker]="taskDueDatePicker"
+						id="dueDate"
+						fullWidth
+						(ngModelChange)="validation()"
+					/>
+					<nb-datepicker #taskDueDatePicker></nb-datepicker>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<label class="label">Description</label>
+				<textarea
+					[(ngModel)]="description"
+					nbInput
+					fullWidth
+					class="description"
+					placeholder="Description"
+				></textarea>
+			</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			status="danger"
+			class="mr-3"
+			nbButton
+            (click)="closeAdd()"
+		>
+			Cancel
+		</button>
+		<button
+			[disabled]="disableSave"
+			status="success"
+			nbButton
+			(click)="saveTask()"
+		>
+			Save
+		</button>
+	</nb-card-footer>
+</nb-card>
