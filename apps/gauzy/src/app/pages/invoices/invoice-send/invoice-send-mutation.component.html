@@ -1,6 +1,9 @@
 <nb-card class="pdf-preview-card card-scroll">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header>
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<h5 class="title">
 			<span *ngIf="!isEstimate">{{
 				'INVOICES_PAGE.SEND.CONFIRMATION_INVOICE' | translate
 			}}</span>
@@ -24,10 +27,11 @@
 			{{ invoice.toContact.name }}.
 		</span>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			(click)="closeDialog()"
-			status="danger"
+			outline
+			status="basic"
 			class="mr-3"
 			*ngIf="!alreadySent"
 			nbButton

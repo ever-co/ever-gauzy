@@ -2,6 +2,7 @@
 .user-container{
   display: flex;
   align-items: center;
+  cursor: pointer;
   .img-container{
     border: 3px solid nb-theme(text-primary-color);
     border-radius: 32px;

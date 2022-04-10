@@ -3,7 +3,8 @@ import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-project-management',
-	templateUrl: './project-management.component.html'
+	templateUrl: './project-management.component.html',
+  styleUrls:['./project-management.component.scss']
 })
 export class ProjectManagementComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();

@@ -16,7 +16,8 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-invoice-email',
-	templateUrl: './invoice-email-mutation.component.html'
+	templateUrl: './invoice-email-mutation.component.html',
+  styleUrls:['./invoice-email-mutation.component.scss']
 })
 export class InvoiceEmailMutationComponent
 	extends TranslationBaseComponent

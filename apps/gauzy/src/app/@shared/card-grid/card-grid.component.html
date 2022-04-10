@@ -1,4 +1,4 @@
-<div 
+<div
 	class="card-layout grid-scroll-container"
 	infinite-scroll
 	[scrollWindow]="false"
@@ -9,7 +9,7 @@
 		class="card-item"
 		[ngClass]="{ 'big': cardSize === 'big' }"
 	>
-		<nb-card-body 
+		<nb-card-body
 			[ngClass]="selected.isSelected && selected.data.id === item.id ? 'card-body active': 'card-body'"
 			(click)="selectedItem(item)"
 		>

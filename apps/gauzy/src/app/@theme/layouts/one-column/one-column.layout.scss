@@ -49,14 +49,20 @@
     z-index: 1051;
   }
 
-  button.chevron {
-    width: 1.625rem;
-    height: 1.625rem;
-    padding: 0;
-    align-self: flex-end;
+  div.chevron {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
     margin-bottom: 0.625rem;
+    button {
+      height: 1.625rem;
+      width: 1.625rem;
+      padding: 0;
+      margin: 0 .5rem;
+    }
     &.collapsed {
-      align-self: center;
+      justify-content: center;
     }
   }
 }
@@ -70,11 +76,12 @@ nb-sidebar[tag='user-workspace'] {
 
 nb-sidebar[tag='menu-sidebar'] {
   ::ng-deep {
+    nb-menu {
+      margin: 0;
+      height: 100%;
+    }
     .scrollable {
       background: nb-theme(gauzy-sidebar-background-2);
-      nb-menu {
-        z-index: -1;
-      }
     }
   }
 }
@@ -95,13 +102,14 @@ nb-sidebar[tag='menu-sidebar'] {
   }
   ngx-gauzy-logo {
     width: 100%;
+    z-index: 2;
   }
   &.not-collapsed {
     padding: 0.75rem 0;
   }
   &.compacted {
     width: nb-theme(sidebar-width-compact);
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
     button.hidden-menu {
       margin-left: 0;
@@ -110,13 +118,14 @@ nb-sidebar[tag='menu-sidebar'] {
       box-shadow: none;
       width: 1.75rem;
       height: auto;
-      .logo {
+      .logo,
+      .organization,
+      nb-accordion-item-body {
         display: none;
       }
       nb-accordion-item-header {
-        padding: 0px;
+        padding: 0.75rem 0;
         nb-icon {
-          border: none;
           left: 0rem;
         }
       }
@@ -154,4 +163,36 @@ nb-sidebar[tag='menu-sidebar'] {
       z-index: 1041;
     }
   }
+}
+
+::ng-deep {
+  nb-layout
+    .layout
+    .layout-container
+    nb-sidebar
+    .main-container-fixed
+    > .scrollable {
+    overflow-y: overlay;
+  }
+}
+
+.custom-box {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.custom-box .custom-row.logo {
+  flex: 0 1 auto;
+  align-self: center;
+}
+
+.custom-box .custom-row.menu {
+  flex: 1 1 auto;
+  overflow-y: overlay;
+  padding: 0 0.75rem;
+}
+
+.custom-box .custom-row.button {
+  flex: 0 1 auto;
 }
