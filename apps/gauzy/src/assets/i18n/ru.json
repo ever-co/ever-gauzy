@@ -117,7 +117,8 @@
 		"VIEW_ALL": "Посмотреть все",
 		"VIEW_REPORT": "Просмотр отчета",
 		"TIME_TRACKING_ENABLE": "Включить отслеживание времени",
-		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени"
+		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени",
+		"PRINT": "Печать"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
