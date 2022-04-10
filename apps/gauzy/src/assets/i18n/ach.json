@@ -117,7 +117,8 @@
 		"VIEW_ALL": "crwdns10927:0crwdne10927:0",
 		"VIEW_REPORT": "crwdns10931:0crwdne10931:0",
 		"TIME_TRACKING_ENABLE": "crwdns10940:0crwdne10940:0",
-		"TIME_TRACKING_DISABLE": "crwdns10942:0crwdne10942:0"
+		"TIME_TRACKING_DISABLE": "crwdns10942:0crwdne10942:0",
+		"PRINT": "crwdns11070:0crwdne11070:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
