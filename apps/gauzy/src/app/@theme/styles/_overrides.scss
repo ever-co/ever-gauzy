@@ -336,7 +336,7 @@ nb-card-body {
 .grid-scroll-container {
   border-radius: 8px;
   overflow-y: overlay;
-  max-height: calc(70vh - 100px);
+  max-height: calc(100vh - 28rem);
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
   }
@@ -393,9 +393,12 @@ nb-card-body {
   }
 }
 
+.grid-scroll-container {
+  max-height: calc(100vh - 24rem);
+}
+
 nb-tabset .tab.active .tab-link {
-  border: nb-theme(divider-width) nb-theme(divider-style)
-    nb-theme(divider-color);
+  background-color: rgba(50, 50, 50, 0.03);
   border-radius: 8px 8px 0 0;
 }
 ng2-smart-table {

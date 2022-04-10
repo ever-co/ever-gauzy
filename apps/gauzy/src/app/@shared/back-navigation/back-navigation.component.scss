@@ -1,3 +1,19 @@
+@import 'themes';
+
+$border-primary: nb-theme(text-primary-color);
+
 .main {
   display: inline;
+  button {
+    width: 1.5rem;
+    height: 1.5rem;
+    &.appearance-outline.status-primary {
+      border-width: 2px;
+      border-color: nb-theme(color-primary-transparent-default);
+      padding: 0.1rem 0;
+    }
+    i {
+      font-size: 11px;
+    }
+  }
 }

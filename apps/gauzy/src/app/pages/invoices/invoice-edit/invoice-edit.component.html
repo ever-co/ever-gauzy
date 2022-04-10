@@ -5,10 +5,7 @@
 	nbSpinnerSize="large"
 >
 	<nb-card-header>
-		<div
-			class="card-header-title"
-			*ngIf="duplicate; else headerTemplate"
-		>
+		<div class="card-header-title" *ngIf="duplicate; else headerTemplate">
 			<div class="card-header-title">
 				<ngx-back-navigation></ngx-back-navigation>
 				<h4>{{ 'POP_UPS.DUPLICATE' | translate }}</h4>
@@ -146,7 +143,9 @@
 							</label>
 							<ga-contact-select
 								[addTag]="true"
-								[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+								[placeholder]="
+									'POP_UPS.ALL_CONTACTS' | translate
+								"
 								formControlName="organizationContact"
 								(onChanged)="selectOrganizationContact($event)"
 							></ga-contact-select>
@@ -348,18 +347,20 @@
 			</div>
 		</form>
 		<div *ngIf="shouldLoadTable">
-			<ng2-smart-table
-				class="table"
-				[settings]="settingsSmartTable"
-				[source]="smartTableSource"
-				style="cursor: pointer"
-				(createConfirm)="onCreateConfirm($event)"
-				(editConfirm)="onEditConfirm($event)"
-				(deleteConfirm)="onDeleteConfirm($event)"
-			>
-			</ng2-smart-table>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					class="table"
+					[settings]="settingsSmartTable"
+					[source]="smartTableSource"
+					style="cursor: pointer"
+					(createConfirm)="onCreateConfirm($event)"
+					(editConfirm)="onEditConfirm($event)"
+					(deleteConfirm)="onDeleteConfirm($event)"
+				>
+				</ng2-smart-table>
+			</div>
 			<div class="total d-flex">
-				<div>
+				<div class="d-flex">
 					<div class="total-item">
 						{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}:
 						{{ currency.value }} {{ subtotal.toFixed(2) }}
@@ -370,6 +371,7 @@
 					</div>
 				</div>
 				<div
+					class="d-flex"
 					*ngIf="
 						isRemainingAmount || invoice.hasRemainingAmountInvoiced
 					"
@@ -386,7 +388,7 @@
 			</div>
 		</div>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			*ngIf="!duplicate"
 			status="danger"

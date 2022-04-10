@@ -1,9 +1,33 @@
 @import 'report';
 @import 'gauzy/_gauzy-overrides';
+@import 'gauzy/_gauzy-cards';
+
 .popover-container {
+  display: flex;
+  flex-direction: column;
+  justify-items: flex-start;
+  align-items: flex-start;
   border: solid 1px nb-theme(border-basic-color-3);
-  padding: 20px 30px;
-  border-radius: 10px;
+  padding: 12.5px 14px 12.5px 18px;
+  border-radius: $default-radius;
+  width: 411px;
+  .title {
+    color: nb-theme(text-primary-color);
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+  i {
+    cursor: pointer;
+  }
+}
+
+.popover-container-action {
+  padding: 0.5rem;
+  border-radius: $default-radius;
 }
 
 ::ng-deep nb-popover {
@@ -12,31 +36,36 @@
 
 .per-page {
   display: flex;
-  text-align: center;
+  flex-direction: column;
+  text-align: left;
 }
 
 .per-page-input {
-  width: 100px;
-  margin: auto 0;
+  width: 138px;
 }
 
 .per-page-label {
-  margin-right: 20px;
-  align-self: center;
-  margin-bottom: 0;
+  align-self: flex-start;
 }
 
-.per-page-button {
-  margin-left: 20px;
+.per-page-container {
+  margin: 10px 0;
 }
 
 .show-columns {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  margin-top: 2rem;
+  .show-columns-select.size-medium:not(.full-width) {
+    max-width: unset;
+    margin-right: 9px;
+  }
 }
 
 .show-columns-label {
-  margin: 10px auto;
+  text-align: left;
+  width: 100%;
 }
 
 :host .actions-container {
@@ -104,7 +133,7 @@ button {
 .remove-scroll {
   overflow: unset;
   width: 100%;
-  padding: 1rem 0 1rem 0;
+  padding: 1rem;
 }
 .actions {
   background: rgba(50, 50, 50, 0.03);
@@ -136,7 +165,7 @@ button {
     transform: translateX(0%);
     transition: all 0.25s ease-out;
   }
-  &.show-button{
+  &.show-button {
     @include nb-rtl(transform, translateX(110%));
     @include nb-ltr(transform, translateX(-110%));
   }
@@ -162,12 +191,17 @@ ga-currency::ng-deep nb-select {
 }
 
 :host ngx-avatar::ng-deep {
-  background-color: nb-theme(color-primary-transparent-100);
-  border-radius: nb-theme(button-rectangle-border-radius);
-  padding: 3px 9px 3px 3px;
-  &.link-text {
-    color: nb-theme(text-primary-color);
-    font-weight: normal;
+  .inner-wrapper {
+    background-color: nb-theme(color-primary-transparent-100);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    padding: 3px 9px 3px 3px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    .link-text {
+      color: nb-theme(text-primary-color);
+      font-weight: normal;
+    }
   }
 }
 
@@ -194,6 +228,9 @@ textarea {
   }
   &.info {
     background-color: #0088fe;
+  }
+  &.danger {
+    color: nb-theme(color-danger-default);
   }
   &.secondary {
     color: #7e7e8f;
@@ -253,9 +290,25 @@ input {
   width: 100%;
 }
 
-nb-card-body{
+:host nb-card-body {
   overflow: unset;
+  padding: 0;
 }
-:host ::ng-deep{
-  @include ng-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
+
+nb-tab {
+  background-color: rgba(50, 50, 50, 0.03);
+  border: 0 0 $default-radius $default-radius;
+}
+:host ::ng-deep {
+  @include card_overrides(overlay, $default-card-height, $default-radius);
+  @include ng-select-overrides(
+    $default-height,
+    $default-radius,
+    $default-box-shadow-inset
+  );
+  nb-tabset .tab.active .tab-link {
+    background-color: rgba(50, 50, 50, 0.03);
+    border: unset;
+    text-decoration: none;
+  }
 }
