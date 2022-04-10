@@ -1,6 +1,9 @@
+@import 'themes';
+
 .table {
   margin-top: 50px;
-  padding: 0 3rem;
+  padding: 10px;
+  background-color: nb-theme(gauzy-card-2);
 }
 
 .bottom-data-container {

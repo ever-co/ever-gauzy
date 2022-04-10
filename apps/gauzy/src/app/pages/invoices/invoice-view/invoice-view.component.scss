@@ -1,3 +1,4 @@
+@import 'gauzy/_gauzy-cards';
 .grid {
   display: grid;
   grid-template-columns: 0.3fr 0.3fr;
@@ -19,4 +20,20 @@
 */
 :host > nb-card {
   min-height: 47.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  .title {
+    font-family: Inter;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+}
+:host {
+  @include nb-card_overrides(unset, $default-card-height, $default-radius);
 }
