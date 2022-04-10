@@ -8,7 +8,8 @@ import {
 	NbThemeModule,
 	NbToastrModule,
 	NbDialogService,
-	NbLayoutModule
+	NbLayoutModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -73,6 +74,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 				deps: [HttpClient]
 			}
 		}),
+		NbDatepickerModule.forRoot()
 	],
 	providers: [
 		AppService,
