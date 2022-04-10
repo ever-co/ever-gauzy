@@ -35,5 +35,8 @@
   }
 }
 :host {
-  @include nb-card_overrides(unset, $default-card-height, $default-radius);
+  $height: calc(
+    100vh - 18rem
+  );
+  @include nb-card_overrides(unset, $height, $default-radius);
 }
