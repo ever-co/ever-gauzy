@@ -43,6 +43,7 @@
 		"moment": "^2.29.1",
 		"rxjs": "^7.4.0",
 		"sound-play": "1.1.0",
-		"underscore": "^1.13.2"
+		"underscore": "^1.13.2",
+		"@angular/material": "13.2.2"
 	}
 }
