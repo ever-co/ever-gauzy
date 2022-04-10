@@ -25,6 +25,7 @@ import {
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TasksModule } from '../tasks/tasks.module';
 
 @NgModule({
 	declarations: [TimeTrackerComponent, CustomRenderComponent],
@@ -47,7 +48,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		NbDialogModule,
 		NbFormFieldModule,
 		Ng2SmartTableModule,
-		NbTooltipModule
+		NbTooltipModule,
+		TasksModule
 	],
 	providers: [
 		NbSidebarService,

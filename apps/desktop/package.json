@@ -67,6 +67,7 @@
 		"twing": "^5.0.2",
 		"typeorm": "^0.2.38",
 		"typeorm-aurora-data-api-driver": "^2.3.3",
-		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git"
+		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git",
+		"@angular/material": "13.2.2"
 	}
 }

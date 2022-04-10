@@ -135,6 +135,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 	sourceData: LocalDataSource;
 	isTrackingEnabled = true;
 
+	isAddTask = false;
+
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -316,6 +318,13 @@ export class TimeTrackerComponent implements AfterViewInit {
 			return;
 		}
 
+		if (!this.checkOnlineStatus()) {
+			this.toastrService.show(`Your connection lost`, `Warning`, {
+				status: 'danger'
+			});
+			return;
+		}
+
 		if (this.userData.employee && !this.userData.employee.isTrackingEnabled) {
 			return;
 		}
@@ -347,7 +356,13 @@ export class TimeTrackerComponent implements AfterViewInit {
 					.catch((error) => {
 						this.loading = false;
 						this._cdr.detectChanges();
-						this.toastrService.show(`${error.message}`, `Warning`, {
+						let messageError = error.message;
+						if (messageError.includes('Http failure response')) {
+							messageError = `Can't connect to api server`;
+						} else {
+							messageError = 'Internal server error';
+						}
+						this.toastrService.show(messageError, `Warning`, {
 							status: 'danger'
 						});
 						log.info(
@@ -473,6 +488,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	async selectClient(item) {
 		this.organizationContactId = item;
+		this.argFromMain.organizationContactId = item;
 		this.electronService.ipcRenderer.send('update_project_on', {
 			organizationContactId: this.organizationContactId
 		});
@@ -1117,10 +1133,39 @@ export class TimeTrackerComponent implements AfterViewInit {
 		  };
 		  reader.readAsDataURL(blob);
 		})
-	  }
+	}
 
+	refreshTimer() {
+		this.electronService.ipcRenderer.send('refresh-timer');
+	}
 
-	  refreshTimer() {
-		  this.electronService.ipcRenderer.send('refresh-timer');
-	  }
+	checkOnlineStatus() {
+		if (navigator.onLine) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	addTask() {
+		this.isAddTask = true;
+	}
+
+	cloasAddTask(e) {
+		this.isAddTask = false;
+		this.electronService.ipcRenderer.send('refresh-timer');
+	}
+
+	callbackNewTask(e) {
+		if (e.isSuccess) {
+			this.toastrService.show(e.message, `Success`, {
+				status: 'success'
+			});
+			this.electronService.ipcRenderer.send('refresh-timer');
+		} else {
+			this.toastrService.show(e.message, `Warning`, {
+				status: 'danger'
+			});
+		}
+	}
 }
