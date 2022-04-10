@@ -8,17 +8,24 @@
 	<div class="py-5">
 		<div class="d-flex justify-content-between">
 			<div class="mb-5 w-100">
-				<div class="mb-5 font-weight-bold">
-					<h4 class="d-inline mr-2">
-						{{
-							(!isEstimate
-								? 'INVOICES_PAGE.INVOICE_NUMBER'
-								: 'INVOICES_PAGE.ESTIMATE_NUMBER'
-							) | translate
-						}}
-					</h4>
-					<h4 class="d-inline">{{ invoice?.invoiceNumber }}</h4>
-				</div>
+				<div class="d-flex justify-content-between">
+          <div class="mb-5 font-weight-bold">
+            <h4 class="d-inline mr-2">
+              {{
+                (!isEstimate
+                  ? 'INVOICES_PAGE.INVOICE_NUMBER'
+                  : 'INVOICES_PAGE.ESTIMATE_NUMBER'
+                ) | translate
+              }}
+            </h4>
+            <h4 class="d-inline">{{ invoice?.invoiceNumber }}</h4>
+          </div>
+          <div>
+            <ng-container>
+              <ng-template [ngTemplateOutlet]="buttonsOutlet"></ng-template>
+            </ng-container>
+          </div>
+        </div>
 				<div class="d-flex justify-content-between w-100">
 					<div>
 						<div class="d-flex">
