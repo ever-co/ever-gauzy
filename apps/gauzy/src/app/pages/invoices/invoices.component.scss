@@ -20,9 +20,14 @@
     letter-spacing: 0em;
     text-align: left;
   }
-  i{
+  i {
     cursor: pointer;
   }
+}
+
+.popover-container-action {
+  padding: 0.5rem;
+  border-radius: $default-radius;
 }
 
 ::ng-deep nb-popover {
@@ -223,6 +228,9 @@ textarea {
   }
   &.info {
     background-color: #0088fe;
+  }
+  &.danger {
+    color: nb-theme(color-danger-default);
   }
   &.secondary {
     color: #7e7e8f;

@@ -781,11 +781,13 @@
 </ng-template>
 
 <ng-template #actionsPopover>
-	<div class="popover-container d-flex flex-column">
+	<div class="popover-container-action d-flex flex-column">
 		<ng-container>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="addInternalNote()"
 				[disabled]="disableButton"
 			>
@@ -794,7 +796,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="duplicated()"
 				[disabled]="disableButton"
 			>
@@ -805,7 +809,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="send()"
 				[disabled]="!canBeSend"
 			>
@@ -814,7 +820,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="generatePublicLink()"
 				[disabled]="disableButton"
 			>
@@ -825,7 +833,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="email()"
 				[disabled]="disableButton"
 			>
@@ -834,7 +844,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="exportToCsv()"
 				[disabled]="disableButton"
 			>
@@ -845,7 +857,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="archive()"
 				[disabled]="disableButton || selectedInvoice.isArchived"
 			>
@@ -856,11 +870,13 @@
 			</button>
 			<button
 				nbButton
-				status="danger"
+				status="basic"
+				class="action danger"
+				size="small"
 				(click)="delete()"
 				[disabled]="disableButton"
 			>
-				<nb-icon icon="trash-2-outline"> </nb-icon>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 				<span class="icon-text">{{
 					'BUTTONS.DELETE' | translate
 				}}</span>
