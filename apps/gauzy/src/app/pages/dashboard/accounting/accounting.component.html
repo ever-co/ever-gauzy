@@ -1,55 +1,79 @@
-<nb-card>
-	<nb-card-header>
+<nb-card class="card">
+	<nb-card-header class="card-header">
 		<div class="row organization-employee-header">
 			<div class="col"></div>
 
 			<div class="col">
-				<ga-single-statistic
-					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate"
-					[value]="
-						aggregatedEmployeeStatistics?.total?.income || 0
-							| currency: organization?.currency
-							| position: organization?.currencyPosition
-					"
-				></ga-single-statistic>
+				<nb-card>
+					<nb-card-body>
+						<ga-single-statistic
+							[title]="
+								'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate
+							"
+							[value]="
+								aggregatedEmployeeStatistics?.total?.income || 0
+									| currency: organization?.currency
+									| position: organization?.currencyPosition
+							"
+						></ga-single-statistic>
+					</nb-card-body>
+				</nb-card>
 			</div>
 
 			<div class="col">
-				<ga-single-statistic
-					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate"
-					[value]="
-						aggregatedEmployeeStatistics?.total?.expense || 0
-							| currency: organization?.currency
-							| position: organization?.currencyPosition
-					"
-				></ga-single-statistic>
+				<nb-card>
+					<nb-card-body>
+						<ga-single-statistic
+							[title]="
+								'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES'
+									| translate
+							"
+							[value]="
+								aggregatedEmployeeStatistics?.total?.expense ||
+									0
+									| currency: organization?.currency
+									| position: organization?.currencyPosition
+							"
+						></ga-single-statistic>
+					</nb-card-body>
+				</nb-card>
 			</div>
 
 			<div class="col">
-				<ga-single-statistic
-					[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
-					[value]="
-						aggregatedEmployeeStatistics?.total?.profit || 0
-							| currency: organization?.currency
-							| position: organization?.currencyPosition
-					"
-				></ga-single-statistic>
+				<nb-card>
+					<nb-card-body>
+						<ga-single-statistic
+							[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
+							[value]="
+								aggregatedEmployeeStatistics?.total?.profit || 0
+									| currency: organization?.currency
+									| position: organization?.currencyPosition
+							"
+						></ga-single-statistic>
+					</nb-card-body>
+				</nb-card>
 			</div>
 
 			<div *ngIf="organization?.bonusType" class="col">
-				<ga-single-statistic
-					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
-					[value]="
-						aggregatedEmployeeStatistics?.total?.bonus || 0
-							| currency: organization?.currency
-							| position: organization?.currencyPosition
-					"
-					type="highlight"
-				></ga-single-statistic>
+				<nb-card>
+					<nb-card-body>
+						<ga-single-statistic
+							[title]="
+								'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate
+							"
+							[value]="
+								aggregatedEmployeeStatistics?.total?.bonus || 0
+									| currency: organization?.currency
+									| position: organization?.currencyPosition
+							"
+							type="highlight"
+						></ga-single-statistic>
+					</nb-card-body>
+				</nb-card>
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="card-body">
 		<div class="body-header">
 			<h4>
 				<ngx-header-title>
