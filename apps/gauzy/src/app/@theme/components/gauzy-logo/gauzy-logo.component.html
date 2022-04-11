@@ -1,7 +1,6 @@
 <nb-accordion *ngIf="isAccordion" class="accordion workspace">
 	<nb-accordion-item [collapsed]="controlled" (collapsedChange)="onCollapse($event)">
 		<nb-accordion-item-header>
-      {{collapsed}}
 			<ng-container *ngTemplateOutlet="logo"></ng-container>
 			<div class="organization" *ngIf="!isCollapse">
 				<img [src]="organization.imageUrl" alt="" />
