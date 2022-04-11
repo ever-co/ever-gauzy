@@ -1,10 +1,14 @@
+@import 'themes';
+
 .employee-form {
   width: 100%;
 }
 
 .content {
   display: flex;
-  padding: 1.5rem 0px;
+  padding: 1rem;
+  background-color: rgba(50, 50, 50, 0.03);
+  border-radius: nb-theme(border-radius);
 }
 
 .bill-rate {

@@ -1,5 +1,5 @@
 <div class="content">
-	<div class="organization-container d-flex flex-column">
+	<div class="organization-container w-25 d-flex flex-column">
 		<div class="organization-photo">
 			<ngx-image-uploader
 				(changeHoverState)="hoverState = $event"
@@ -92,8 +92,8 @@
 		</div>
 	</div>
 
-	<div class="employee-form">
-		<form [formGroup]="form">
+	<div class="employee-form w-75 pl-3">
+		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="col">
 					<div class="form-group">

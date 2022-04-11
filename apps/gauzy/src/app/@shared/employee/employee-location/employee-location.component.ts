@@ -11,7 +11,8 @@ import { CandidateStore, EmployeeStore, Store } from '../../../@core/services';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-location',
-	templateUrl: 'employee-location.component.html'
+	templateUrl: 'employee-location.component.html',
+  styleUrls:['employee-location.component.scss']
 })
 export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;
@@ -72,7 +73,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 			...location,
 			...{ latitude, longitude }
 		};
-		
+
 		if (this.form.valid && this.isCandidate) {
 			this.candidateStore.candidateForm = {
 				contact,
