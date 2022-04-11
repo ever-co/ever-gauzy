@@ -28,8 +28,18 @@ body {
 }
 
 @mixin nb-overrides() {
+  nb-route-tabset .route-tab.active .tab-link {
+    background: rgba(50, 50, 50, 0.03);
+    margin-bottom: 1px;
+  }
+
+  nb-tabset .tab.active .tab-link {
+    background-color: rgba(50, 50, 50, 0.03);
+    margin-bottom: 1px;
+  }
+
   nb-toggle .toggle {
-      align-items: center;
+    align-items: center;
   }
 
   .scrollable {

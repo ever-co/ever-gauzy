@@ -1,3 +1,21 @@
+@import 'themes';
+
+$radius: nb-theme(border-radius);
+
 .employee-optional-info {
   margin-top: 20px;
+}
+
+.organization-container{
+ background-color: rgba(126, 126, 143, 0.1);
+}
+
+.content{
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 20px;
+  border-radius: 0 $radius $radius $radius;
+}
+
+:host{
+  padding: 0;
 }
