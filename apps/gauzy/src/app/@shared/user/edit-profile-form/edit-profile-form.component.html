@@ -9,7 +9,7 @@
 					<nb-badge
 						status="danger"
 						style="position: relative; margin-top: 20px;"
-						[text]="role?.name"
+						[text]="role?.name | replace : '_' : ' '"
 						position="bottom-left"
 					></nb-badge>
 				</ng-template>
@@ -57,7 +57,7 @@
 								[placeholder]="'PROFILE_PAGE.PASSWORD' | translate"
 								[ctrl]="form.get('password')"
 								formControlName="password"
-                [autocomplete] = "'new-password'"
+                				[autocomplete]="'new-password'"
 							></ngx-password-form-field>
 						</div>
 						<div class="col">
@@ -66,7 +66,7 @@
 								[placeholder]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
 								[ctrl]="form.get('repeatPassword')"
 								formControlName="repeatPassword"
-                [autocomplete] = "'new-password'"
+                				[autocomplete]="'new-password'"
 							>
 								<div
 									*ngIf="FormHelpers.isInvalidControl(form, 'repeatPassword')"
