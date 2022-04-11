@@ -28,7 +28,6 @@ import {
 	Activity,
 	Employee,
 	OrganizationProject,
-	Task,
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
@@ -39,9 +38,6 @@ export class StatisticService {
 	constructor(
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
-
-		@InjectRepository(Task)
-		private readonly taskRepository: Repository<Task>,
 
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
@@ -72,7 +68,8 @@ export class StatisticService {
 			endDate,
 			projectId,
 			logType = [],
-			source = []
+			source = [],
+			activityLevel
 		} = request;
 
 		const user = RequestContext.currentUser();
@@ -148,12 +145,11 @@ export class StatisticService {
 							projectIds
 						});
 					}
-					if (request.activityLevel) {
+					if (activityLevel) {
 						/**
 						 * Activity Level should be 0-100%
 						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
-						const { activityLevel } = request;
 						const startLevel = (activityLevel.start * 6);
 						const endLevel = (activityLevel.end * 6);
 				
@@ -213,12 +209,11 @@ export class StatisticService {
 							projectIds
 						});
 					}
-					if (request.activityLevel) {
+					if (activityLevel) {
 						/**
 						 * Activity Level should be 0-100%
 						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
-						const { activityLevel } = request;
 						const startLevel = (activityLevel.start * 6);
 						const endLevel = (activityLevel.end * 6);
 				
@@ -291,12 +286,11 @@ export class StatisticService {
 								projectIds
 							});
 						}
-						if (request.activityLevel) {
+						if (activityLevel) {
 							/**
 							 * Activity Level should be 0-100%
 							 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 							 */
-							const { activityLevel } = request;
 							const startLevel = (activityLevel.start * 6);
 							const endLevel = (activityLevel.end * 6);
 					
@@ -374,9 +368,11 @@ export class StatisticService {
 						/**
 						 * If Employee Selected
 						 */
-						qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
-							employeeIds
-						});
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+								employeeIds
+							});
+						}
 						/**
 						 * If Project Selected
 						 */
@@ -385,12 +381,11 @@ export class StatisticService {
 								projectIds
 							});
 						}
-						if (request.activityLevel) {
+						if (activityLevel) {
 							/**
 							 * Activity Level should be 0-100%
 							 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 							 */
-							const { activityLevel } = request;
 							const startLevel = (activityLevel.start * 6);
 							const endLevel = (activityLevel.end * 6);
 					
@@ -524,13 +519,14 @@ export class StatisticService {
 					/**
 					 * If Employee Selected
 					 */
-					qb.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
-						employeeIds
-					})
-					.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
-						employeeIds
-					});
-
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
+							employeeIds
+						})
+						.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+							employeeIds
+						});
+					}
 					/**
 					 * If Project Selected
 					 */
@@ -836,9 +832,6 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${query.alias}.project`, 'project')
-				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				})
 				.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
@@ -849,8 +842,17 @@ export class StatisticService {
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
-
-			// project filter query
+			/**
+			 * If Employee Selected
+			 */
+			 if (isNotEmpty(employeeIds)) {
+				query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
+					employeeIds
+				});
+			}
+			/**
+			 * If Project Selected
+			 */
 			if (isNotEmpty(projectIds)) {
 				query
 					.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
@@ -881,15 +883,21 @@ export class StatisticService {
 				.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
-				.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
-					employeeIds
-				})
 				.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
 				});
-
-			// project filter query
+			/**
+			 * If Employee Selected
+			 */
+			if (isNotEmpty(employeeIds)) {
+				query.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+					employeeIds
+				});
+			}
+			/**
+			 * If Project Selected
+			 */
 			if (isNotEmpty(projectIds)) {
 				totalDurationQuery
 					.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
@@ -982,9 +990,6 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${query.alias}.task`, 'task')
-				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				})
 				.andWhere(`"${query.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
@@ -995,8 +1000,17 @@ export class StatisticService {
 				.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
 					organizationId
 				});
-
-			// project filter query
+			/**
+			 * If Employee Selected
+			 */
+			if (isNotEmpty(employeeIds)) {
+				query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
+					employeeIds
+				});
+			}
+			/**
+			 * If Project Selected
+			 */
 			if (isNotEmpty(projectIds)) {
 				query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
 					projectIds
@@ -1020,9 +1034,6 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
-				.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
-					employeeIds
-				})
 				.andWhere(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
@@ -1033,8 +1044,17 @@ export class StatisticService {
 				.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, {
 					organizationId
 				});
-
-			// project filter query
+			/**
+			 * If Employee Selected
+			 */
+			if (isNotEmpty(employeeIds)) {
+				totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeIds)`, {
+					employeeIds
+				});
+			}
+			/**
+			 * If Project Selected
+			 */
 			if (isNotEmpty(projectIds)) {
 				totalDurationQuery
 					.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
@@ -1255,9 +1275,6 @@ export class StatisticService {
 						}
 					})
 				)
-				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeId)`, {
-					employeeId: employeeIds
-				})
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
@@ -1266,15 +1283,21 @@ export class StatisticService {
 				})
 				.orderBy(`"duration"`, 'DESC')
 				.limit(5);
-
-			// project filter query
+			/**
+			 * If Employee Selected
+			 */
+			if (isNotEmpty(employeeIds)) {
+				query.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
+					employeeIds
+				});
+			}
+			/**
+			 * If Project Selected
+			 */
 			if (isNotEmpty(projectIds)) {
-				query.andWhere(
-					`"${query.alias}"."projectId" IN (:...projectIds)`,
-					{
-						projectIds
-					}
-				);
+				query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+					projectIds
+				});
 			}
 
 			let activities: IActivitiesStatistics[] = await query.getRawMany();
