@@ -891,7 +891,7 @@ export class StatisticService {
 			 * If Employee Selected
 			 */
 			if (isNotEmpty(employeeIds)) {
-				query.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
+				totalDurationQuery.andWhere(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`, {
 					employeeIds
 				});
 			}
