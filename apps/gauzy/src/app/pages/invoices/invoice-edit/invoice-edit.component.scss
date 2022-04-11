@@ -48,6 +48,7 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 36px;
 
   .block-wrap {
     width: 100%;
@@ -78,18 +79,18 @@
 }
 
 .group {
-  border: 1px #edf1f7 solid;
   border-radius: 0.6rem;
-  margin-bottom: 9px;
-  padding-top: 14px;
-  position: relative;
-  margin-top: 1rem;
+  margin-bottom: 20px;
+  padding: 9px 18px 2px 12px;
 
   .label-group {
-    position: absolute;
-    top: -7px;
-    left: 15px;
-    background-color: #fff;
+    font-family: Inter;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 17px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    margin-bottom: 18px;
   }
 }
 
@@ -101,5 +102,16 @@
 }
 
 .discountCheckbox {
-  margin: 20px 0;
+  margin: 20px -1rem;
+}
+
+nb-card{
+  background-color: rgba(50, 50, 50, 0.03);
+}
+
+.content {
+  background-color: rgba(50, 50, 50, 0.03);
+  .row.group {
+    background: rgba(255, 255, 255, 0.5);
+  }
 }

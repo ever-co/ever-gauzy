@@ -33,7 +33,7 @@
 		</ng-template>
 	</nb-card-header>
 
-	<nb-card-body class="body">
+	<nb-card-body class="body content">
 		<form [formGroup]="form" class="form">
 			<div class="block-wrap">
 				<div class="block mt-2">
@@ -67,12 +67,17 @@
 							</div>
 						</div>
 						<div class="col-sm-6">
-							<ga-tags-color-input
-								[selectedTags]="form.get('tags').value"
-								(selectedTagsEvent)="selectedTagsEvent($event)"
-								[isOrgLevel]="true"
-							>
-							</ga-tags-color-input>
+							<label for="inputOrganizationContact" class="label"
+								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
+							</label>
+							<ga-contact-select
+								[addTag]="true"
+								[placeholder]="
+									'POP_UPS.ALL_CONTACTS' | translate
+								"
+								formControlName="organizationContact"
+								(onChanged)="selectOrganizationContact($event)"
+							></ga-contact-select>
 						</div>
 					</div>
 					<div class="row">
@@ -137,19 +142,6 @@
 								(optionChange)="onCurrencyChange($event)"
 							></ga-currency>
 						</div>
-						<div class="col-sm-6">
-							<label for="inputOrganizationContact" class="label"
-								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
-							</label>
-							<ga-contact-select
-								[addTag]="true"
-								[placeholder]="
-									'POP_UPS.ALL_CONTACTS' | translate
-								"
-								formControlName="organizationContact"
-								(onChanged)="selectOrganizationContact($event)"
-							></ga-contact-select>
-						</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-12">
@@ -171,69 +163,90 @@
 							</div>
 						</div>
 					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<ga-tags-color-input
+								[selectedTags]="form.get('tags').value"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
+					</div>
 				</div>
 				<div class="block">
-					<div class="row group">
-						<label class="label label-group">{{
-							'INVOICES_PAGE.DISCOUNT' | translate
-						}}</label>
-						<div class="col-sm-6">
-							<div class="form-group">
-								<label for="inputDiscountValue" class="label">{{
-									'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
-										| translate
-								}}</label>
-								<input
-									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
-											| translate
-									}}"
-									type="number"
-									[min]="0"
-									formControlName="discountValue"
-									id="inputDiscountValue"
-									(ngModelChange)="calculateTotal()"
-									fullWidth
-								/>
-							</div>
+					<div class="row group d-flex flex-column">
+						<div class="label label-group">
+							{{ 'INVOICES_PAGE.DISCOUNT' | translate }}
 						</div>
-						<div class="col-sm-6">
-							<div class="form-group">
-								<label for="inputDiscountType" class="label">{{
-									'INVOICES_PAGE.DISCOUNT_TYPE' | translate
-								}}</label>
-								<nb-select
-									formControlName="discountType"
-									placeholder="{{
-										'INVOICES_PAGE.DISCOUNT_TYPE'
-											| translate
-									}}"
-									(ngModelChange)="calculateTotal()"
-									id="inputDiscountType"
-									fullWidth
-								>
-									<nb-option
-										*ngFor="
-											let discountTaxType of discountTaxTypes
-										"
-										value="{{ discountTaxType }}"
-									>
-										{{
-											'INVOICES_PAGE.' + discountTaxType
+						<div class="row">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label
+										for="inputDiscountValue"
+										class="label"
+										>{{
+											'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
 												| translate
-										}}
-									</nb-option>
-								</nb-select>
+										}}</label
+									>
+									<input
+										nbInput
+										placeholder="{{
+											'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
+												| translate
+										}}"
+										type="number"
+										[min]="0"
+										formControlName="discountValue"
+										id="inputDiscountValue"
+										(ngModelChange)="calculateTotal()"
+										fullWidth
+									/>
+								</div>
+							</div>
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label
+										for="inputDiscountType"
+										class="label"
+										>{{
+											'INVOICES_PAGE.DISCOUNT_TYPE'
+												| translate
+										}}</label
+									>
+									<nb-select
+										formControlName="discountType"
+										placeholder="{{
+											'INVOICES_PAGE.DISCOUNT_TYPE'
+												| translate
+										}}"
+										(ngModelChange)="calculateTotal()"
+										id="inputDiscountType"
+										fullWidth
+									>
+										<nb-option
+											*ngFor="
+												let discountTaxType of discountTaxTypes
+											"
+											value="{{ discountTaxType }}"
+										>
+											{{
+												'INVOICES_PAGE.' +
+													discountTaxType | translate
+											}}
+										</nb-option>
+									</nb-select>
+								</div>
 							</div>
 						</div>
 					</div>
-					<div class="group row">
-						<label class="label label-group">{{
-							'INVOICES_PAGE.INVOICES_TAXES' | translate
-						}}</label>
-						<div class="col-sm-6">
-							<div class="col-sm-12 p-0">
+					<div class="row group d-flex flex-column">
+						<div class="label label-group">
+							{{ 'INVOICES_PAGE.INVOICES_TAXES' | translate }}
+						</div>
+						<div class="row">
+							<div class="col-sm-6">
 								<div class="form-group">
 									<label for="inputTax" class="label">{{
 										'INVOICES_PAGE.TAX' | translate
@@ -252,8 +265,7 @@
 									/>
 								</div>
 							</div>
-
-							<div class="col-sm-12 p-0">
+							<div class="col-sm-6">
 								<div class="form-group">
 									<label for="inputTaxType" class="label">{{
 										'INVOICES_PAGE.TAX_TYPE' | translate
@@ -282,8 +294,8 @@
 								</div>
 							</div>
 						</div>
-						<div class="col-sm-6">
-							<div class="col-sm-12 p-0">
+						<div class="row">
+							<div class="col-sm-6">
 								<div class="form-group">
 									<label for="inputTax2" class="label"
 										>{{ 'INVOICES_PAGE.TAX_2' | translate }}
@@ -302,7 +314,7 @@
 									/>
 								</div>
 							</div>
-							<div class="col-sm-12 p-0">
+							<div class="col-sm-6">
 								<div class="form-group">
 									<label for="inputTaxType" class="label">{{
 										'INVOICES_PAGE.TAX_TYPE' | translate
