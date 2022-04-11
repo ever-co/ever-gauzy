@@ -13,7 +13,8 @@ import { UrlPatternValidator } from './../../../../../@core/validators';
 	selector: 'ga-edit-employee-networks',
 	templateUrl: './edit-employee-networks.component.html',
 	styleUrls: [
-		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss'
+		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
+    './edit-employee-networks.component.scss'
 	]
 })
 export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
@@ -31,7 +32,7 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 			gitlabUrl: [],
 			upworkUrl: [],
 			stackoverflowUrl: []
-		}, { 
+		}, {
 			validators: [
 				UrlPatternValidator.websiteUrlValidator('linkedInUrl'),
 				UrlPatternValidator.websiteUrlValidator('facebookUrl'),
@@ -40,7 +41,7 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 				UrlPatternValidator.websiteUrlValidator('githubUrl'),
 				UrlPatternValidator.websiteUrlValidator('gitlabUrl'),
 				UrlPatternValidator.websiteUrlValidator('upworkUrl')
-			] 
+			]
 		});
 		return form;
 	}
