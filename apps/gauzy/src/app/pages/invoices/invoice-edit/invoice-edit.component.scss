@@ -111,7 +111,11 @@ nb-card{
 
 .content {
   background-color: rgba(50, 50, 50, 0.03);
-  .row.group {
+  .row.group{
     background: rgba(255, 255, 255, 0.5);
+  }
+  .custom-table{
+    background-color: rgba(50, 50, 50, 0.03);
+    padding: 12px;
   }
 }
