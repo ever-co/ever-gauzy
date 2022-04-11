@@ -1,0 +1,5 @@
+@import 'gauzy/_gauzy-cards';
+
+:host {
+  @include nb-card_overrides(overlay, $default-card-height, $default-radius);
+}

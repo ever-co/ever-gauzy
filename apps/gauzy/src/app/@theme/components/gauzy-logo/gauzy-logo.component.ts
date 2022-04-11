@@ -24,6 +24,7 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 	isCollapse: boolean = true;
 	organization: IOrganization;
 
+  @Input() controlled: boolean = true;
 	@Input() isAccordion: boolean = true;
 
 	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(
