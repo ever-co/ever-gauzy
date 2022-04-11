@@ -16,11 +16,19 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 
 @Component({
 	selector: 'ga-edit-employee-departments',
-	templateUrl: './edit-employee-projects.component.html'
+	templateUrl: './edit-employee-projects.component.html',
+	styles: [
+		`
+			:host {
+				max-height: calc(100vh - 27rem);
+			}
+		`
+	]
 })
 export class EditEmployeeProjectsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	organizationProjects: IOrganizationProject[] = [];
 	employeeProjects: IOrganizationProject[] = [];
 
@@ -95,10 +103,11 @@ export class EditEmployeeProjectsComponent
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.employeeProjects = await this.organizationProjectsService.getAllByEmployee(
-			this.selectedEmployee.id,
-			{ organizationId, tenantId }
-		);
+		this.employeeProjects =
+			await this.organizationProjectsService.getAllByEmployee(
+				this.selectedEmployee.id,
+				{ organizationId, tenantId }
+			);
 	}
 
 	private async getOrganizationProjects() {
