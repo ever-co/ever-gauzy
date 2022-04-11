@@ -126,7 +126,7 @@ export class TimeTrackingComponent
 		super(translateService);
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),

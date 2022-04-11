@@ -49,9 +49,7 @@
 							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 						"
 					>
-						<div
-							class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl"
-						>
+						<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
 							<nb-card
 								[nbSpinner]="countsLoading"
 								nbSpinnerSize="giant"
@@ -78,7 +76,7 @@
 					</ng-container>
 				</ng-container>
 				<ng-container *ngIf="!projectId">
-					<div class="col">
+					<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
 						<nb-card
 							[nbSpinner]="countsLoading"
 							nbSpinnerSize="giant"
@@ -690,7 +688,7 @@
 								*ngIf="!activitiesLoading"
 								[ngSwitch]="selectedPeriod"
 							>
-								<div class="text-center">
+								<div class="text-center p-3">
 									<ng-template
 										[ngSwitchCase]="RangePeriod.DAY"
 									>
