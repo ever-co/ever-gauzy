@@ -8,15 +8,25 @@ export class Previous implements IArrowStrategy {
 	 * @param request
 	 * @returns any type of request
 	 */
-	action(request: IDateRangePicker): IDateRangePicker {
-		const end = moment(request.endDate);
-		const start = moment(request.startDate);
-		const range = end.diff(start, 'days');
+	action(
+		request: IDateRangePicker,
+		unitOfTime: moment.unitOfTime.Base
+	): IDateRangePicker {
+		const { startDate, endDate, isCustomDate } = request;
+		let end: moment.Moment = moment(startDate).subtract(1, 'days');
+		let start: moment.Moment;
 
-		const startDate = range === 0 ? end.subtract(1, 'days').toDate() : start.subtract(range, 'days').toDate();
+		if (isCustomDate) {
+			const range = moment(endDate).diff(moment(startDate), 'days');
+			start = moment(end).subtract(range, 'days');
+		} else {
+			start = moment(end).startOf(unitOfTime);
+		}
+
 		return {
-			startDate: startDate,
-			endDate: moment(startDate).add(range, 'days').toDate()
+			startDate: start.toDate(),
+			endDate: end.toDate(),
+			isCustomDate
 		} as IDateRangePicker;
 	}
 }

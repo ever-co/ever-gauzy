@@ -25,7 +25,7 @@ import {
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
-import { distinctUntilChange, progressStatus, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
@@ -96,10 +96,7 @@ export class TimeTrackingComponent
 		return this._selectedDateRange;
 	}
 	set selectedDateRange(range: IDateRangePicker) {
-		if (range) {
-			if (!range.hasOwnProperty('isCustomDate')) {
-				range.isCustomDate = true
-			}
+		if (isNotEmpty(range)) {
 			/**
 			 * Check, if start date is Greater Than end date
 			 */
@@ -156,9 +153,9 @@ export class TimeTrackingComponent
 
 		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])
 			.pipe(
-				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
+				debounceTime(500),
 				distinctUntilChange(),
-				debounceTime(300),
+				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
 
