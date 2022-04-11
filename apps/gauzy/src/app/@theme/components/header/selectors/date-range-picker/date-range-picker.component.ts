@@ -11,15 +11,7 @@ import { DateRangePickerBuilderService, OrganizationsService, Store } from './..
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-
-export enum DateRangeKeyEnum {
-	TODAY = 'Today',
-	YESTERDAY = 'Yesterday',
-	CURRENT_WEEK = 'Current week',
-	LAST_WEEK = 'Last week',
-	CURRENT_MONTH = 'Current month',
-	LAST_MONTH = 'Last month'
-}
+import { DateRangeKeyEnum } from './date-range-picker.setting';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

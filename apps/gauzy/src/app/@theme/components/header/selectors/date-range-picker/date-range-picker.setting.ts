@@ -1,5 +1,15 @@
 import * as moment from 'moment';
 import { IDateRangePicker, ISelectedDateRange, ITimeLogFilters } from "@gauzy/contracts";
+
+export enum DateRangeKeyEnum {
+	TODAY = 'Today',
+	YESTERDAY = 'Yesterday',
+	CURRENT_WEEK = 'Current week',
+	LAST_WEEK = 'Last week',
+	CURRENT_MONTH = 'Current month',
+	LAST_MONTH = 'Last month'
+}
+
 /**
  * We are having issue, when organization not allowed future date
  * When someone run timer for today, all statistic not displaying correctly
