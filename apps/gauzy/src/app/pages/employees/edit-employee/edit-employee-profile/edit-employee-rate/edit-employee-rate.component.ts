@@ -8,7 +8,8 @@ import { Component } from '@angular/core';
 	styles: [
 		`
 			:host {
-				max-height: calc(100vh - 27rem);
+        overflow-y: overlay;
+				max-height: calc(100vh - 28rem);
 			}
 		`
 	]
