@@ -158,12 +158,12 @@ export class TimeTrackingComponent
 				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
-
+					
 					this.organizationId = organization.id;
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
 					this.selectedDateRange = dateRange;
-
+					
 					this.logs$.next(true);
 				}),
 				tap(() => {
@@ -460,19 +460,67 @@ export class TimeTrackingComponent
 	 * Get selected date range period
 	 */
 	get selectedPeriod(): RangePeriod {
-		const { startDate, endDate, isCustomDate } = this.selectedDateRange;
+		const { startDate, endDate } = this.selectedDateRange;
 
 		const start = moment(startDate);
 		const end = moment(endDate);
 		const days = end.diff(start, 'days');
 
-		if (days === 6 && isCustomDate === false) {
+		if (days === 6) {
 			return RangePeriod.WEEK;
-		} else if (days === 0 && isCustomDate === true) {
+		} else if (days === 0) {
 			return RangePeriod.DAY;
 		} else {
-			return RangePeriod.PERIOD
+			return RangePeriod.PERIOD;
 		}
+	}
+
+	/**
+	 * GET header title accordingly selected date range
+	 */
+	get headerTitle() {
+		const { startDate, endDate, isCustomDate } = this.selectedDateRange as IDateRangePicker;
+		if (startDate && endDate) {
+			if (!isCustomDate) {
+				if (this.isMoreThanWeek()) {
+					return this.getTranslation('TIMESHEET.MONTHLY');
+				} else if (this.isMoreThanDays()) {
+					return this.getTranslation('TIMESHEET.WEEKLY');
+				} else {
+					return this.getTranslation('TIMESHEET.DAILY');
+				}
+			}
+		}
+	}
+
+	/**
+	 * If, selected date range are in current week
+	 * 
+	 * @returns 
+	 */
+	isCurrentWeek() {
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
+		return (
+			(
+				moment(startDate).format('YYYY-MM-DD') === 
+				moment().startOf('week').format('YYYY-MM-DD')
+			) && 
+			(
+				moment(endDate).format('YYYY-MM-DD') === 
+				moment().endOf('week').format('YYYY-MM-DD')
+			)
+		);
+	}
+
+	/**
+	 * If, selected date range are more than a days
+	 */
+	isMoreThanDays(): boolean {
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
+		if (startDate && endDate) {
+			return moment(endDate).diff(moment(startDate), 'days') > 0;
+		}
+		return false;
 	}
 
 	/**

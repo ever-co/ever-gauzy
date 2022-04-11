@@ -2,11 +2,7 @@
 	<nb-card-header class="card-header">
 		<h4>
 			<ngx-header-title>
-				{{
-					!selectedDateRange?.isCustomDate
-						? ('TIMESHEET.WEEKLY' | translate)
-						: ''
-				}}
+				{{ headerTitle }}
 				{{ 'TIMESHEET.TIME_TRACKING' | translate }}
 			</ngx-header-title>
 		</h4>
@@ -122,8 +118,7 @@
 							<gauzy-counter-point
 								[progress]="true"
 								[value]="counts?.todayActivities || 0"
-							>
-							</gauzy-counter-point>
+							></gauzy-counter-point>
 						</nb-card-body>
 					</nb-card>
 				</div>
@@ -162,11 +157,16 @@
 									<ng-template
 										[ngSwitchCase]="RangePeriod.PERIOD"
 									>
-										{{ 'TIMESHEET.ACTIVITY' | translate }}
+										{{ 'TIMESHEET.ACTIVITY_OVER_PERIOD' | translate }}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.DAY"
+									>
+										{{ 'TIMESHEET.ACTIVITY_FOR_DAY' | translate }}
 									</ng-template>
 									<ng-template [ngSwitchDefault]>
 										{{
-											'TIMESHEET.WEEKLY_ACTIVITY'
+											'TIMESHEET.ACTIVITY_FOR_WEEK'
 												| translate
 										}}
 									</ng-template>
@@ -199,10 +199,16 @@
 												| translate
 										}}
 									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.DAY"
+									>
+										{{ 'TIMESHEET.WORKED_FOR_DAY' | translate }}
+									</ng-template>
 									<ng-template [ngSwitchDefault]>
-										{{
-											'TIMESHEET.WORKED_THIS_WEEK'
-												| translate
+										{{ 
+											(
+												isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK'
+											) | translate
 										}}
 									</ng-template>
 								</p>
