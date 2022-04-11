@@ -15,16 +15,21 @@ export class Next implements IArrowStrategy {
 		request: IDateRangePicker,
 		unitOfTime: moment.unitOfTime.Base
 	): IDateRangePicker {
-		const { endDate } = request;
-		const start = moment(endDate).add(1, 'days');
-		const end = moment(start).endOf(unitOfTime);
-
-		const range = end.diff(start, 'days');
-		console.log('next selected range', { range });
+		const { startDate, endDate, isCustomDate } = request;
+		let start: moment.Moment = moment(endDate).add(1, 'days');
+		let end: moment.Moment;
+		
+		if (isCustomDate) {
+			const range = moment(endDate).diff(moment(startDate), 'days');
+			end = moment(start).add(range, 'days');
+		} else {
+			end = moment(start).endOf(unitOfTime);
+		}
 
 		return {
 			startDate: start.toDate(),
-			endDate: end.toDate()
+			endDate: end.toDate(),
+			isCustomDate
 		} as IDateRangePicker;
 	}
 	/**

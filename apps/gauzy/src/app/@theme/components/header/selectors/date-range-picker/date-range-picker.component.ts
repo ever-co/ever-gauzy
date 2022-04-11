@@ -17,7 +17,6 @@ export enum DateRangeKeyEnum {
 	YESTERDAY = 'Yesterday',
 	CURRENT_WEEK = 'Current week',
 	LAST_WEEK = 'Last week',
-	LAST_30_DAYS = 'Last 30 days',
 	CURRENT_MONTH = 'Current month',
 	LAST_MONTH = 'Last month'
 }
@@ -189,7 +188,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
 		this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
 		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
-		this.ranges[DateRangeKeyEnum.LAST_30_DAYS] = [moment().subtract(29, 'days'), moment()];
 		this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
 		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
 	}
@@ -208,7 +206,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				endDate: moment().toDate()
 			}
 		}
-		console.log(this.selectedDateRange);
 	}
 
 	/**
@@ -220,7 +217,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}
 		this.arrow.setStrategy = this.next;
 		const nextRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
-		this.selectedDateRange = this.rangePicker = nextRange;
+		this.selectedDateRange = this.rangePicker = {
+			...this.selectedDateRange,
+			...nextRange
+		};
 		this.setFutureStrategy();
 	}
 
@@ -230,7 +230,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	previousRange() {
 		this.arrow.setStrategy = this.previous;
 		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
-		this.selectedDateRange = this.rangePicker = previousRange;
+		this.selectedDateRange = this.rangePicker = {
+			...this.selectedDateRange,
+			...previousRange
+		};
 	}
 
 	/**
@@ -286,6 +289,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			case DateRangeKeyEnum.LAST_WEEK:
 				this.unitOfTime = 'week';
 				break;
+			case DateRangeKeyEnum.CURRENT_MONTH:
+			case DateRangeKeyEnum.LAST_MONTH:
+					this.unitOfTime = 'month';
+					break;
 			default:
 				break;
 		}
