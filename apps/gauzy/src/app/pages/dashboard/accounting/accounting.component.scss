@@ -47,7 +47,7 @@
   }
   @include card_overrides(
     overlay,
-    $default-card-height,
+    calc($default-card-height - 3rem),
     0 $default-radius $default-radius $default-radius
   );
   .card,
