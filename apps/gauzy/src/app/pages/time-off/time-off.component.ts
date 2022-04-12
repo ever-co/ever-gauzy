@@ -23,6 +23,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { AvatarComponent } from '../../@shared/components/avatar/avatar.component';
+import { DateViewComponent } from '../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -374,26 +375,23 @@ export class TimeOffComponent extends TranslationBaseComponent
 				},
 				start: {
 					title: this.getTranslation('SM_TABLE.START'),
-					type: 'date',
+					type: 'custom',
 					filter: false,
-					valuePrepareFunction: (date) =>
-						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					renderComponent: DateViewComponent,
 					class: 'text-center'
 				},
 				end: {
 					title: this.getTranslation('SM_TABLE.END'),
-					type: 'date',
+					type: 'custom',
 					filter: false,
-					valuePrepareFunction: (date) =>
-						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					renderComponent: DateViewComponent,
 					class: 'text-center'
 				},
 				requestDate: {
 					title: this.getTranslation('SM_TABLE.REQUEST_DATE'),
-					type: 'date',
+					type: 'custom',
 					filter: false,
-					valuePrepareFunction: (date) =>
-						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					renderComponent: DateViewComponent,
 					class: 'text-center'
 				},
 				status: {
