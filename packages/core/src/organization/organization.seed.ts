@@ -87,11 +87,11 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.banner = faker.name.jobDescriptor();
 		defaultOrganization.skills = organizationSkills;
 		defaultOrganization.brandColor = faker.random.arrayElement([
-			'red',
-			'green',
-			'blue',
-			'orange',
-			'yellow'
+			'#FF0000',
+			'#008000',
+			'#0000FF',
+			'#FFA500',
+			'#FFFF00'
 		]);
 		defaultOrganization.contact = faker.random.arrayElement(contacts);
 		defaultOrganization.timeZone = faker.random.arrayElement(
@@ -194,11 +194,11 @@ export const createRandomOrganizations = async (
 
 				organization.skills = organizationSkills;
 				organization.brandColor = faker.random.arrayElement([
-					'red',
-					'green',
-					'blue',
-					'orange',
-					'yellow'
+					'#FF0000',
+					'#008000',
+					'#0000FF',
+					'#FFA500',
+					'#FFFF00'
 				]);
 				organization.contact = faker.random.arrayElement(contacts);
 				organization.timeZone = faker.random.arrayElement(

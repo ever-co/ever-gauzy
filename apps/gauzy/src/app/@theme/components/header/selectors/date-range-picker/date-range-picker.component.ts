@@ -315,6 +315,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}
 		return isCustomRange;
 	}
+
+	/**
+	 * Open Date Picker On Calender Click
+	 */
+	openDatepicker() {
+		this.dateRangePickerDirective.toggle();
+	}
 	
 	ngOnDestroy() {}
 }
