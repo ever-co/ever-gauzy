@@ -21,9 +21,10 @@ import {
 import { formatDate } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs/operators';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbAccordionComponent, NbAccordionItemComponent } from "@nebular/theme";
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base';
 import {
 	AccountingTemplateService,
@@ -72,17 +73,6 @@ export class EditOrganizationOtherSettingsComponent extends TranslationBaseCompo
 	regionCodes = Object.keys(RegionsEnum);
 	regionCode: string;
 	regions = Object.values(RegionsEnum);
-	accordionItemsStateDefault = {
-		all: false,
-		generalSettings: false,
-		designSettings: false,
-		accountingSettings: false,
-		bonusSettings: false,
-		invitesSettings: false,
-		dateLimitSettings: false,
-		timerSettings: false,
-	}
-	accordionItemsState = this.accordionItemsStateDefault
 	
 	/**
 	 * Nebular Accordion Main Component
@@ -118,6 +108,24 @@ export class EditOrganizationOtherSettingsComponent extends TranslationBaseCompo
 	) {
 		super(translateService);
 	}
+
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				switchMap((organization) => this.organizationService.getById(organization.id, null, [
+					'contact',
+					'tags',
+					'accountingTemplates'
+				])),
+				tap((organization: IOrganization) => this._loadOrganizationData(organization)),
+				tap((organization: IOrganization) => this.regionCode = organization.regionCode),
+				tap(() => this.getTemplates()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 	
 	getTimeWithOffset(zone: string) {
 		let cutZone = zone;
@@ -136,8 +144,7 @@ export class EditOrganizationOtherSettingsComponent extends TranslationBaseCompo
 				untilDestroyed(this)
 			)
 			.subscribe();
-		moment.locale(this.regionCode);
-		return moment().format(format);
+		return moment().locale(this.regionCode).format(format);
 	}
 
 	numberFormatPreview(format: string) {
@@ -161,16 +168,7 @@ export class EditOrganizationOtherSettingsComponent extends TranslationBaseCompo
 		});
 	}
 
-	ngOnInit(): void {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this._loadOrganizationData(organization)),
-				tap(() => this.getTemplates()),
-				untilDestroyed(this)
-			)
-			.subscribe();	
-	}
+	
 
 	async updateOrganizationSettings() {
 		this.organizationService
@@ -385,20 +383,11 @@ export class EditOrganizationOtherSettingsComponent extends TranslationBaseCompo
 		}
 	}
 
-	private async _loadOrganizationData(organization) {
+	private _loadOrganizationData(organization: IOrganization) {
 		if (!organization) {
 			return;
 		}
-		const id = organization.id;
-		const { tenantId } = this.store.user;
-		const { items } = await this.organizationService.getAll(
-			['contact', 'tags', 'accountingTemplates'],
-			{
-				id,
-				tenantId
-			}
-		);
-		this.organization = items[0];
+		this.organization = organization;
 		this.organizationEditStore.selectedOrganization = this.organization;
 
 		if (this.organization.accountingTemplates) {
