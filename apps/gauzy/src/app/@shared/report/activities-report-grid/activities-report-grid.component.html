@@ -65,12 +65,6 @@
 					"
 				></ng-container>
 			</ng-container>
-			<!-- <ng-container *ngSwitchCase="'client'">
-				<ng-container *ngTemplateOutlet="
-						groupByClientCardEl;
-						context: { $implicit: day }
-					"></ng-container>
-			</ng-container> -->
 			<ng-container *ngSwitchDefault>
 				<ng-container
 					*ngTemplateOutlet="
@@ -95,7 +89,9 @@
 </div>
 
 <ng-template let-day #groupByDateCardEl>
-	<nb-card-header class="card-title">{{ day.date }}</nb-card-header>
+	<nb-card-header class="card-title">
+		{{ day.date | dateFormat }}
+	</nb-card-header>
 	<nb-card-body>
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		<div class="cart-body project-row" *ngFor="let employeeRow of day.employees; let employeeIndex = index">
@@ -106,9 +102,9 @@
 							<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 							<div class="responsive-table-content employee">
 								<ng-container
-										*ngTemplateOutlet="
-										employeeEl;
-										context: {$implicit: employeeRow?.employee}">
+									*ngTemplateOutlet="
+									employeeEl;
+									context: {$implicit: employeeRow?.employee}">
 								</ng-container>
 							</div>
 						</div>
@@ -120,7 +116,7 @@
 							<div class="responsive-table-content project-name">
 								<ng-template [ngIf]="activityIndex == 0">
 									<ng-container
-											*ngTemplateOutlet="
+										*ngTemplateOutlet="
 										projectEl;
 										context: { $implicit: projectRow?.project }">
 									</ng-container>
@@ -142,9 +138,9 @@
 						<div class="responsive-table-row progress-bar-column">
 							<div class="responsive-table-content day-col">
 								<ngx-progress-status
-										[defaultStatus]="'success'"
-										class="report-progress"
-										[percentage]="activityRow.duration_percentage">
+									[defaultStatus]="'success'"
+									class="report-progress"
+									[percentage]="activityRow.duration_percentage">
 								</ngx-progress-status>
 							</div>
 						</div>
@@ -172,7 +168,7 @@
 						<div class="responsive-table-row employee-column main-column-responsive" *ngIf="projectIndex == 0 && activityIndex == 0; else noColumn">
 							<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 							<div class="responsive-table-content employee">
-								{{ dateRow.date }}
+								{{ dateRow.date | dateFormat }}
 							</div>
 						</div>
 						<ng-template #noColumn>
@@ -235,7 +231,7 @@
 						<div class="responsive-table-row employee-column main-column-responsive" *ngIf="employeeIndex == 0 && activityIndex == 0; else noColumn">
 							<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 							<div class="responsive-table-content employee">
-								{{ dateRow.date }}
+								{{ dateRow.date | dateFormat }}
 							</div>
 						</div>
 						<ng-template #noColumn>
@@ -268,9 +264,9 @@
 						<div class="responsive-table-row progress-bar-column">
 							<div class="responsive-table-content day-col">
 								<ngx-progress-status
-										[defaultStatus]="'success'"
-										class="report-progress"
-										[percentage]="activityRow.duration_percentage">
+									[defaultStatus]="'success'"
+									class="report-progress"
+									[percentage]="activityRow.duration_percentage">
 								</ngx-progress-status>
 							</div>
 						</div>
@@ -298,11 +294,11 @@
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper-outer" *ngIf="employee; else noEmployee">
 		<ngx-avatar
-				class="report-table"
-				*ngIf="employee"
-				[src]="employee?.user?.imageUrl"
-				[name]="employee?.user?.name"
-				[id]="employee?.id">
+			class="report-table"
+			*ngIf="employee"
+			[src]="employee?.user?.imageUrl"
+			[name]="employee?.user?.name"
+			[id]="employee?.id">
 		</ngx-avatar>
 	</div>
 	<ng-template #noEmployee>

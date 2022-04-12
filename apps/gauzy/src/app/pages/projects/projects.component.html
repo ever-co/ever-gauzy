@@ -1,7 +1,16 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header class="main-header">
 		<div class="main-header">
-			<h4> <ngx-header-title> {{ 'ORGANIZATIONS_PAGE.PROJECTS' | translate }} </ngx-header-title> </h4>
+			<h4>
+				<ngx-header-title>
+					{{ 'ORGANIZATIONS_PAGE.PROJECTS' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
 		<div class="main-header">
 			<div class="main-header" *ngIf="!showAddCard">
@@ -81,7 +90,7 @@
 								}}
 							</div>
 							<div class="info-value">
-								{{ p.startDate | date }}
+								{{ p.startDate | dateFormat }}
 							</div>
 						</div>
 						<div class="info-line">
@@ -91,7 +100,7 @@
 										| translate
 								}}
 							</div>
-							<div class="info-value">{{ p.endDate | date }}</div>
+							<div class="info-value">{{ p.endDate | dateFormat }}</div>
 						</div>
 						<div class="info-line">
 							<div class="info-meta">
