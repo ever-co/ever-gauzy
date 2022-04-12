@@ -73,11 +73,11 @@
 			<div class="col">{{ timesheet.duration | durationFormat }}</div>
 			<div class="col">{{ timesheet.keyboard }}</div>
 			<div class="col">
-				{{ timesheet.startedAt | amDateFormat: 'LL' }} -
-				{{ timesheet.stoppedAt | amDateFormat: 'LL' }}
+				{{ timesheet.startedAt | dateFormat }} -
+				{{ timesheet.stoppedAt | dateFormat }}
 			</div>
-			<div class="col">{{ timesheet.approvedAt | amDateFormat: 'LL' }}</div>
-			<div class="col">{{ timesheet.submittedAt | amDateFormat: 'LL' }}</div>
+			<div class="col">{{ timesheet.approvedAt | dateFormat }}</div>
+			<div class="col">{{ timesheet.submittedAt | dateFormat }}</div>
 			<div class="col"><ga-status-badge [value]="statusMapper(timesheet)"></ga-status-badge></div>
 			<div class="col">
 				<div>
