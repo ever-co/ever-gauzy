@@ -11,7 +11,7 @@
 		</button>
 		<ga-layout-selector
 			*ngIf="!showAddCard"
-			componentName="{{ viewComponentName }}"
+			[componentName]="viewComponentName"
 		></ga-layout-selector>
 		<div *ngIf="showAddCard" class="row m-0">
 			<div class="col-8 documents-card">
@@ -81,7 +81,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body
-		*ngIf="documentList?.length && dataLayoutStyle === 'TABLE'"
+		*ngIf="documentList?.length && dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 		class="mt-3"
 	>
 		<nb-card *ngFor="let document of documentList; let i = index">
@@ -92,12 +92,12 @@
 							class="doc-icon"
 							icon="file-text-outline"
 						></nb-icon>
-						<a href="{{ document.documentUrl }}">
+						<a [href]="document.documentUrl">
 							{{ document.name }}
 						</a>
 					</div>
 					<div class="document-data">
-						{{ document.updatedAt | date: 'medium' }}
+						{{ document.updatedAt | dateTimeFormat }}
 					</div>
 				</div>
 
@@ -118,7 +118,7 @@
 	</nb-card-body>
 	<nb-card-body>
 		<ga-card-grid
-			*ngIf="documentList?.length && dataLayoutStyle === 'CARDS_GRID'"
+			*ngIf="documentList?.length && dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 			[settings]="settingsSmartTable"
 			[source]="documentList"
 			[buttonTemplate]="actionButtons"
