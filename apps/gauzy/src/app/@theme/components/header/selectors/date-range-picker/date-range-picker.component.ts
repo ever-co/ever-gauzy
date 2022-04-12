@@ -43,8 +43,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	_locale: LocaleConfig = {
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
-		direction: 'ltr',
-		separator: '-'
+		direction: 'ltr'
 	};
 	get locale(): LocaleConfig {
 		return this._locale;
