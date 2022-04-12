@@ -30,7 +30,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants';
-import { ContactLinksComponent, PictureNameTagsComponent } from '../../@shared/table-components';
+import { ContactLinksComponent, DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
@@ -273,7 +273,7 @@ export class ProjectsComponent
 			});
 	}
 
-	async loadSmartTable() {
+	loadSmartTable() {
 		this.settingsSmartTable = {
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			actions: false,
@@ -298,23 +298,17 @@ export class ProjectsComponent
 					renderComponent: ContactLinksComponent,
 				},
 				startDate: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.START_DATE'
-					),
-					type: 'date',
+					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.START_DATE'),
+					type: 'custom',
 					filter: false,
-					valuePrepareFunction: (date) =>
-						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					renderComponent: DateViewComponent,
 					class: 'text-center'
 				},
 				endDate: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.END_DATE'
-					),
-					type: 'date',
+					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.END_DATE'),
+					type: 'custom',
 					filter: false,
-					valuePrepareFunction: (date) =>
-						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					renderComponent: DateViewComponent,
 					class: 'text-center'
 				},
 				billing: {
