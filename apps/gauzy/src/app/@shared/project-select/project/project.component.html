@@ -1,11 +1,16 @@
-<ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
+<ng-template 
+	[ngIf]="!multiple" 
+	[ngIfElse]="multipleSelect"
+>
 	<ng-select
+		#select
 		[addTag]="hasPermissionProjEdit ? createNew : null"
 		[multiple]="multiple"
 		[clearable]="isClearable()"
 		[disabled]="disabled"
 		[items]="projects"
-		(change)="selectProject($event)"
+		(change)="selectProject($event); select.blur();"
+		(clear)="select.blur();"
 		[(ngModel)]="projectId"
 		[placeholder]="
 			placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate

@@ -4,7 +4,7 @@ import { Component, Input, OnInit } from '@angular/core';
 	selector: 'ga-document-date',
 	template: `
 		<div *ngIf="rowData?.updatedAt">
-			{{ rowData.updatedAt }}
+			{{ rowData.updatedAt | dateTimeFormat }}
 		</div>
 	`
 })

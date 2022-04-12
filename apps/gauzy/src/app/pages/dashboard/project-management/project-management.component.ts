@@ -1,20 +1,43 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { combineLatest } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
+import { Store } from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-project-management',
 	templateUrl: './project-management.component.html',
-  styleUrls:['./project-management.component.scss']
+  	styleUrls:['./project-management.component.scss']
 })
 export class ProjectManagementComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 
-	constructor() {}
+	organization: IOrganization;
+	selectedDateRange: IDateRangePicker;
 
-	async ngOnInit() {}
+	constructor(
+		private readonly store: Store
+	) {}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	ngOnInit() {
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeDateRange$ = this.store.selectedDateRange$;
+
+		combineLatest([storeOrganization$, storeDateRange$])
+			.pipe(
+				debounceTime(500),
+				distinctUntilChange(),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				tap(([organization, dateRange]) => {
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
+
+	ngOnDestroy() {}
 }

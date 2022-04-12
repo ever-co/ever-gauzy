@@ -1,0 +1,8 @@
+@import 'themes';
+$radius: nb-theme(border-radius);
+:host {
+  background-color: rgba(50, 50, 50, 0.03);
+  border-radius: $radius;
+  overflow-y: overlay;
+  max-height: calc(100vh - 28rem);
+}

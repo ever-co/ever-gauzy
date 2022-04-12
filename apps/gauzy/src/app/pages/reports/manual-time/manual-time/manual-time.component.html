@@ -38,7 +38,7 @@
             >
                 <ng-template class="table-template" [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
                     <nb-card class="card" *ngFor="let day of dailyData">
-                        <nb-card-header class="card-title">{{day.date}}</nb-card-header>
+                        <nb-card-header class="card-title">{{ day.date | dateFormat }}</nb-card-header>
                         <nb-card-body>
                             <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
                             <div class="cart-body project-row" *ngFor="
@@ -145,12 +145,12 @@
 <ng-template let-employee #employeeEl>
     <div class="avatar-wrapper-outer">
         <ngx-avatar
-                class="report-table"
-                *ngIf="employee"
-                [src]="employee?.user?.imageUrl"
-                [name]="employee?.user?.name"
-                [id]="employee?.id">
-        </ngx-avatar>
+            class="report-table"
+            *ngIf="employee"
+            [src]="employee?.user?.imageUrl"
+            [name]="employee?.user?.name"
+            [id]="employee?.id"
+        ></ngx-avatar>
     </div>
     <ng-template #noEmployee>
         <span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>

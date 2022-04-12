@@ -62,7 +62,7 @@
 									{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 								</div>
 								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
-									{{ date | date:'E d MM, y' }}
+									{{ date | dateFormat }}
 								</div>
 							</div>
 						</div>

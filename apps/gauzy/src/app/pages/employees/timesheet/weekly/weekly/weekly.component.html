@@ -34,7 +34,7 @@
 			{{ 'TIMESHEET.TODO' | translate }}
 		</div>
 		<div class="col text-center day-col" *ngFor="let date of weekDayList">
-			{{ date | date }}
+			{{ date | dateFormat }}
 		</div>
 	</div>
 	<ng-template [ngIf]="weekData?.length > 0" [ngIfElse]="notFound">

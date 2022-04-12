@@ -16,7 +16,7 @@ import { Employee, OrganizationContact, Tag } from './../core/entities/internal'
 export const createDefaultOrganizationProjects = async (
 	connection: Connection,
 	tenant: ITenant,
-	organizations: IOrganization[]
+	organization: IOrganization
 ): Promise<IOrganizationProject[]> => {
 	const tag = await connection.getRepository(Tag).save({
 		name: 'Web',
@@ -27,7 +27,6 @@ export const createDefaultOrganizationProjects = async (
 	const projects: IOrganizationProject[] = [];
 	for (let index = 0; index < DEFAULT_ORGANIZATION_PROJECTS.length; index++) {
 		const name = DEFAULT_ORGANIZATION_PROJECTS[index];
-		const organization = faker.random.arrayElement(organizations);
 		const organizationContacts = await connection.manager.find(OrganizationContact, {
 			where: {
 				organization,
@@ -57,7 +56,7 @@ export const createDefaultOrganizationProjects = async (
  	await assignOrganizationProjectToEmployee(
 		connection,
 		tenant,
-		organizations
+		organization
 	);
 	return projects;
 };
@@ -115,7 +114,7 @@ export const createRandomOrganizationProjects = async (
 			await assignOrganizationProjectToEmployee(
 				connection,
 				tenant,
-				organizations
+				organization
 			);
 		}
 	}
@@ -128,29 +127,27 @@ export const createRandomOrganizationProjects = async (
 export const assignOrganizationProjectToEmployee = async (
 	connection: Connection,
 	tenant: ITenant,
-	organizations: IOrganization[]
+	organization: IOrganization
 ) => {
-	for await (const organization of organizations) {
-		const organizationProjects = await connection.manager.find(OrganizationProject, { 
-			where: {
-				tenant,
-				organization
-			}
-		});
-		const employees = await connection.manager.find(Employee, { 
-			where: {
-				tenant,
-				organization
-			}
-		});
-		for await (const employee of employees) {
-			employee.projects = chain(organizationProjects)
-				.shuffle()
-				.take(faker.datatype.number({ min: 2, max: 4 }))
-				.unique()
-				.values()
-				.value();
+	const organizationProjects = await connection.manager.find(OrganizationProject, { 
+		where: {
+			tenant,
+			organization
 		}
-		await connection.manager.save(employees);
+	});
+	const employees = await connection.manager.find(Employee, { 
+		where: {
+			tenant,
+			organization
+		}
+	});
+	for await (const employee of employees) {
+		employee.projects = chain(organizationProjects)
+			.shuffle()
+			.take(faker.datatype.number({ min: 2, max: 4 }))
+			.unique()
+			.values()
+			.value();
 	}
+	await connection.manager.save(employees);
 };

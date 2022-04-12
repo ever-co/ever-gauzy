@@ -13,7 +13,7 @@
 							*ngFor="let source of TimeLogSourceEnum | keyvalue"
 							[value]="source.key"
 						>
-							{{ source.value }}
+							{{ source.value | replace : '_' : ' ' }}
 						</nb-option>
 					</nb-select>
 				</div>

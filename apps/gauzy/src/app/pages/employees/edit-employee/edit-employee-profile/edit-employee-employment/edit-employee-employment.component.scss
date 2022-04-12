@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-cards';
+$radius: nb-theme(border-radius);
 .notes {
   margin-top: 16px;
   padding: 10px;
@@ -9,4 +11,15 @@
   color: #eac72d;
   font-size: 0.75rem;
   font-weight: 700;
+}
+.card{
+  background-color: rgba(50, 50, 50, 0.03);
+  border: unset;
+}
+:host {
+  @include nb-card_overrides(
+    overlay,
+    calc($default-card-height - 5rem),
+    $default-radius
+  );
 }

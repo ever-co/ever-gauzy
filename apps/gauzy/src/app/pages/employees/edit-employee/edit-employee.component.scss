@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-cards';
+
 .edit-icon {
   margin-left: 30px;
   position: relative;
@@ -10,6 +12,12 @@
   nb-icon {
     position: absolute;
   }
+}
+
+.employee-image {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
 }
 
 .edit-icon {
@@ -74,10 +82,14 @@
   }
 }
 
-:host > nb-card {
-  min-height: 47.5rem;
-}
 
 .icon-verified {
   margin-right: 5px;
+}
+:host {
+  @include nb-card_overrides(
+    unset,
+    $default-card-height,
+    $default-radius
+  );
 }

@@ -89,7 +89,9 @@
 </div>
 
 <ng-template let-day #groupByDateCardEl>
-	<nb-card-header class="card-title">{{ day.date }}</nb-card-header>
+	<nb-card-header class="card-title">
+		{{ day.date | dateFormat }}
+	</nb-card-header>
 	<nb-card-body
 		class="cart-body project-row"
 		*ngFor="let employeeRow of day.employees; let employeeIndex = index"
@@ -188,7 +190,7 @@
 					<div class="col-sm-2 project-name">
 						{{
 							projectIndex == 0 && expanseIndex == 0
-								? dateRow.date
+								? (dateRow.date | dateFormat)
 								: ''
 						}}
 					</div>
@@ -250,7 +252,7 @@
 					<div class="col-sm-2 project-name">
 						{{
 							employeeIndex == 0 && expanseIndex == 0
-								? dateRow.date
+								? (dateRow.date | dateFormat)
 								: ''
 						}}
 					</div>

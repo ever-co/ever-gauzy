@@ -11,7 +11,8 @@ import { CompareDateValidator } from './../../../../../@core/validators';
 	selector: 'ga-edit-employee-hiring',
 	templateUrl: './edit-employee-hiring.component.html',
 	styleUrls: [
-		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss'
+		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
+    './edit-employee-hiring.component.scss'
 	]
 })
 export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
@@ -23,7 +24,7 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 			offerDate: [],
 			acceptDate: [],
 			rejectDate: []
-		}, { 
+		}, {
 			validators: [
 				CompareDateValidator.validateDate('offerDate', 'acceptDate'),
 				CompareDateValidator.validateDate('offerDate', 'rejectDate')
@@ -60,7 +61,7 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 
 	private _patchForm(employee: IEmployee) {
 		const { offerDate, acceptDate, rejectDate } = employee;
-		this.form.patchValue({ 
+		this.form.patchValue({
 			offerDate: offerDate ? new Date(offerDate) : null,
 			acceptDate: acceptDate ? new Date(acceptDate) : null,
 			rejectDate: rejectDate ? new Date(rejectDate) : null

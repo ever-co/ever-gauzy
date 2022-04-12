@@ -16,7 +16,15 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 
 @Component({
 	selector: 'ga-edit-employee-departments',
-	templateUrl: './edit-employee-contact.component.html'
+	templateUrl: './edit-employee-contact.component.html',
+  styles: [
+		`
+			:host {
+        overflow-y: overlay;
+				max-height: calc(100vh - 28rem);
+			}
+		`
+	]
 })
 export class EditEmployeeContactComponent
 	extends TranslationBaseComponent

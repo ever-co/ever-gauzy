@@ -11,16 +11,7 @@ import { DateRangePickerBuilderService, OrganizationsService, Store } from './..
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-
-export enum DateRangeKeyEnum {
-	TODAY = 'Today',
-	YESTERDAY = 'Yesterday',
-	CURRENT_WEEK = 'Current week',
-	LAST_WEEK = 'Last week',
-	LAST_30_DAYS = 'Last 30 days',
-	CURRENT_MONTH = 'Current month',
-	LAST_MONTH = 'Last month'
-}
+import { DateRangeKeyEnum } from './date-range-picker.setting';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -83,11 +74,12 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (value) {
 			this._unitOfTime = value;
 		}
-		this.selectedDateRange = {
+		const defaultSelectedDateRange = {
 			startDate: moment().startOf(this.unitOfTime).toDate(),
 			endDate: moment().endOf(this.unitOfTime).toDate(),
 			isCustomDate: false
 		}
+		this.selectedDateRange = this.rangePicker = defaultSelectedDateRange;
 	}
 
 	/*
@@ -101,6 +93,19 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (isNotEmpty(range)) {
 			this._selectedDateRange = range;
 			this.range$.next(range);
+		}		
+	}
+
+	/*
+	* Getter & Setter for dynamic selected internal date range
+	*/
+	private _rangePicker: IDateRangePicker;
+	public get rangePicker(): IDateRangePicker {
+		return this._rangePicker;
+	}
+	public set rangePicker(range: IDateRangePicker) {
+		if (isNotEmpty(range)) {
+			this._rangePicker = range;
 		}		
 	}
 
@@ -175,7 +180,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
 		this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
 		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
-		this.ranges[DateRangeKeyEnum.LAST_30_DAYS] = [moment().subtract(29, 'days'), moment()];
 		this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
 		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
 	}
@@ -204,7 +208,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			return;
 		}
 		this.arrow.setStrategy = this.next;
-		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+		const nextRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
+		this.selectedDateRange = this.rangePicker = {
+			...this.selectedDateRange,
+			...nextRange
+		};
 		this.setFutureStrategy();
 	}
 
@@ -213,7 +221,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
    */
 	previousRange() {
 		this.arrow.setStrategy = this.previous;
-		this.selectedDateRange = this.arrow.execute(this.selectedDateRange);
+		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
+		this.selectedDateRange = this.rangePicker = {
+			...this.selectedDateRange,
+			...previousRange
+		};
 	}
 
 	/**
@@ -243,13 +255,38 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (this.dateRangePickerDirective) {
 			const { startDate, endDate } = event;
 			if (startDate && endDate) {
-				this.selectedDateRange = {
+				const range = {
 					...this.selectedDateRange,
 					startDate: startDate.toDate(),
 					endDate: endDate.toDate(),
 					isCustomDate: this.isCustomDate(event)
 				}
+				this.selectedDateRange = this.rangePicker = range;
 			}
+		}
+	}
+
+	/**
+	 * listen range click event on ngx-daterangepicker-material
+	 * @param event
+	 */
+	 rangeClicked(range: any) {
+		const { label } = range 
+		switch (label) {
+			case DateRangeKeyEnum.TODAY:
+			case DateRangeKeyEnum.YESTERDAY:
+				this.unitOfTime = 'day';
+				break;
+			case DateRangeKeyEnum.CURRENT_WEEK:
+			case DateRangeKeyEnum.LAST_WEEK:
+				this.unitOfTime = 'week';
+				break;
+			case DateRangeKeyEnum.CURRENT_MONTH:
+			case DateRangeKeyEnum.LAST_MONTH:
+					this.unitOfTime = 'month';
+					break;
+			default:
+				break;
 		}
 	}
 
@@ -280,10 +317,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * listen range click event on ngx-daterangepicker-material
-	 * @param event
+	 * Open Date Picker On Calender Click
 	 */
-	rangeClicked(event: any) {}
+	openDatepicker() {
+		this.dateRangePickerDirective.toggle();
+	}
 	
 	ngOnDestroy() {}
 }

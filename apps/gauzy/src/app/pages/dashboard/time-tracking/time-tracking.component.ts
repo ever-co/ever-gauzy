@@ -25,7 +25,7 @@ import {
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
-import { distinctUntilChange, progressStatus, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
@@ -96,10 +96,7 @@ export class TimeTrackingComponent
 		return this._selectedDateRange;
 	}
 	set selectedDateRange(range: IDateRangePicker) {
-		if (range) {
-			if (!range.hasOwnProperty('isCustomDate')) {
-				range.isCustomDate = true
-			}
+		if (isNotEmpty(range)) {
 			/**
 			 * Check, if start date is Greater Than end date
 			 */
@@ -129,7 +126,7 @@ export class TimeTrackingComponent
 		super(translateService);
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
@@ -156,17 +153,17 @@ export class TimeTrackingComponent
 
 		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])
 			.pipe(
-				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
+				debounceTime(500),
 				distinctUntilChange(),
-				debounceTime(300),
+				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
-
+					
 					this.organizationId = organization.id;
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
 					this.selectedDateRange = dateRange;
-
+					
 					this.logs$.next(true);
 				}),
 				tap(() => {
@@ -463,19 +460,67 @@ export class TimeTrackingComponent
 	 * Get selected date range period
 	 */
 	get selectedPeriod(): RangePeriod {
-		const { startDate, endDate, isCustomDate } = this.selectedDateRange;
+		const { startDate, endDate } = this.selectedDateRange;
 
 		const start = moment(startDate);
 		const end = moment(endDate);
 		const days = end.diff(start, 'days');
 
-		if (days === 6 && isCustomDate === false) {
+		if (days === 6) {
 			return RangePeriod.WEEK;
-		} else if (days === 0 && isCustomDate === true) {
+		} else if (days === 0) {
 			return RangePeriod.DAY;
 		} else {
-			return RangePeriod.PERIOD
+			return RangePeriod.PERIOD;
 		}
+	}
+
+	/**
+	 * GET header title accordingly selected date range
+	 */
+	get headerTitle() {
+		const { startDate, endDate, isCustomDate } = this.selectedDateRange as IDateRangePicker;
+		if (startDate && endDate) {
+			if (!isCustomDate) {
+				if (this.isMoreThanWeek()) {
+					return this.getTranslation('TIMESHEET.MONTHLY');
+				} else if (this.isMoreThanDays()) {
+					return this.getTranslation('TIMESHEET.WEEKLY');
+				} else {
+					return this.getTranslation('TIMESHEET.DAILY');
+				}
+			}
+		}
+	}
+
+	/**
+	 * If, selected date range are in current week
+	 * 
+	 * @returns 
+	 */
+	isCurrentWeek() {
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
+		return (
+			(
+				moment(startDate).format('YYYY-MM-DD') === 
+				moment().startOf('week').format('YYYY-MM-DD')
+			) && 
+			(
+				moment(endDate).format('YYYY-MM-DD') === 
+				moment().endOf('week').format('YYYY-MM-DD')
+			)
+		);
+	}
+
+	/**
+	 * If, selected date range are more than a days
+	 */
+	isMoreThanDays(): boolean {
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
+		if (startDate && endDate) {
+			return moment(endDate).diff(moment(startDate), 'days') > 0;
+		}
+		return false;
 	}
 
 	/**
