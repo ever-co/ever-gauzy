@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-dialogs';
+
 :host ::ng-deep ng2-smart-table .ng2-smart-actions-title a {
   background-color: #00d68f !important;
   transform: scale(0.9);
@@ -101,8 +104,6 @@
   align-items: center;
 }
 
-@import 'gauzy/_gauzy-table.scss';
-
 .discountCheckbox {
   margin: 20px -1rem;
 }
@@ -133,4 +134,14 @@ div.button-action {
       justify-content: space-between;
     }
   }
+}
+
+:host button.gray {
+  background-color: rgba(126, 126, 143, 1);
+  color: nb-theme(text-control-color);
+  [nbButton].appearance-filled.status-basic {
+    background-color: var(--button-filled-basic-background-color);
+    border-color: var(--button-filled-basic-border-color);
+    color: var(--button-filled-basic-text-color);
+}
 }

@@ -25,7 +25,14 @@
 					</h4>
 				</div>
 				<div *ngIf="!isEstimate">
-					<button status="info" (click)="payments()" nbButton>
+					<button
+						status="basic"
+						class="action secondary mr-2"
+						size="small"
+						(click)="payments()"
+						nbButton
+					>
+						<nb-icon icon="clipboard-outline"></nb-icon>
 						{{ 'BUTTONS.PAYMENTS' | translate }}
 					</button>
 				</div>
@@ -362,10 +369,10 @@
 			<div class="table-scroll-container custom-table">
 				<ng-container>
 					<div class="btn-action">
-            <ng-template
-						[ngTemplateOutlet]="actionButtons"
-					></ng-template>
-          </div>
+						<ng-template
+							[ngTemplateOutlet]="actionButtons"
+						></ng-template>
+					</div>
 				</ng-container>
 				<ng2-smart-table
 					class="table"
@@ -412,6 +419,9 @@
 			*ngIf="!duplicate"
 			status="danger"
 			class="mr-3"
+			status="basic"
+			size="small"
+			outline
 			(click)="cancel()"
 			nbButton
 		>
@@ -420,8 +430,10 @@
 		<button
 			class="mr-3"
 			(click)="updateInvoice('DRAFT')"
-			status="success"
 			[disabled]="form.invalid"
+			size="small"
+			status="basic"
+			class="gray"
 			nbButton
 		>
 			{{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
@@ -430,6 +442,7 @@
 			class="mr-3"
 			(click)="sendToContact()"
 			status="success"
+			size="small"
 			[disabled]="form.invalid"
 			nbButton
 		>
@@ -439,6 +452,7 @@
 			class="mr-3"
 			(click)="sendViaEmail()"
 			status="success"
+			size="small"
 			[disabled]="form.invalid"
 			nbButton
 		>
@@ -448,13 +462,13 @@
 </nb-card>
 
 <ng-template #actionButtons>
-  <ng-template ngxPermissionsOnly="INVOICES_EDIT">
-    <div class="button-action mr-3 ml-3">
-      <button nbButton status="success" size="small">
-        <nb-icon icon="plus-outline"> </nb-icon>
-        {{ 'BUTTONS.ADD' | translate }}
-      </button>
-    </div>
+	<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+		<div class="button-action mr-3 ml-3">
+			<button nbButton status="success" size="small">
+				<nb-icon icon="plus-outline"> </nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		</div>
 	</ng-template>
 	<div class="button-action">
 		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
