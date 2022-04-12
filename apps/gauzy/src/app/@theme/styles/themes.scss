@@ -207,7 +207,7 @@ $nb-themes: nb-register-theme(
     layout-background-color: #ffffff,
     background-basic-color-3: #f9f9f9,
     // Supporting variables - border radius, outline, shadow, divider
-    border-radius: 0.5rem,
+    border-radius: 0.625rem,
     outline-width: 0.375rem,
     outline-color: color-basic-transparent-200,
     scrollbar-color: background-basic-color-4,
@@ -233,6 +233,8 @@ $nb-themes: nb-register-theme(
     gauzy-text-contact: #323232,
     button-filled-medium-padding: 0.4375rem 0.875rem,
     button-outline-medium-padding: 0.4375rem 0.875rem,
+    button-filled-small-padding: 0.375rem 0.875rem,
+    button-outline-small-padding: 0.375rem 0.875rem,
     toggle-height: 16px,
     toggle-switcher-size: 12px,
     toggle-border-width: 2px,

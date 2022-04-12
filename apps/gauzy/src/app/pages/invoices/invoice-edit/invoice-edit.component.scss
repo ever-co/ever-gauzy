@@ -101,21 +101,36 @@
   align-items: center;
 }
 
+@import 'gauzy/_gauzy-table.scss';
+
 .discountCheckbox {
   margin: 20px -1rem;
 }
 
-nb-card{
+nb-card {
   background-color: rgba(50, 50, 50, 0.03);
 }
-
+div.button-action {
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 6px 8px;
+  border-radius: nb-theme(button-rectangle-border-radius);
+  margin-bottom: 12px;
+}
 .content {
   background-color: rgba(50, 50, 50, 0.03);
-  .row.group{
+  .row.group {
     background: rgba(255, 255, 255, 0.5);
   }
-  .custom-table{
+  .custom-table {
+    display: flex;
+    flex-direction: column;
     background-color: rgba(50, 50, 50, 0.03);
     padding: 12px;
+    div.btn-action {
+      align-self: flex-end;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
   }
 }

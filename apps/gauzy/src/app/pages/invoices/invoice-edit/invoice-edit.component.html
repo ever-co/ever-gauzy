@@ -360,6 +360,13 @@
 		</form>
 		<div *ngIf="shouldLoadTable">
 			<div class="table-scroll-container custom-table">
+				<ng-container>
+					<div class="btn-action">
+            <ng-template
+						[ngTemplateOutlet]="actionButtons"
+					></ng-template>
+          </div>
+				</ng-container>
 				<ng2-smart-table
 					class="table"
 					[settings]="settingsSmartTable"
@@ -439,3 +446,39 @@
 		</button>
 	</nb-card-footer>
 </nb-card>
+
+<ng-template #actionButtons>
+  <ng-template ngxPermissionsOnly="INVOICES_EDIT">
+    <div class="button-action mr-3 ml-3">
+      <button nbButton status="success" size="small">
+        <nb-icon icon="plus-outline"> </nb-icon>
+        {{ 'BUTTONS.ADD' | translate }}
+      </button>
+    </div>
+	</ng-template>
+	<div class="button-action">
+		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+			<button
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+			>
+				<nb-icon icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				(click)="deleteIncome(selectedItem)"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</ng-template>
+	</div>
+</ng-template>
