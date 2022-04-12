@@ -101,6 +101,6 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 			...this.getPagination(),
 			itemsPerPage: this.pagination.itemsPerPage
 		});
-    this.subject$.next(true);
+    	this.subject$.next(true);
 	}
 }

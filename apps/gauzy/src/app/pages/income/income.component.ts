@@ -1,8 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-	ActivatedRoute
-} from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
 	IIncome,
 	ComponentLayoutStyleEnum,
@@ -94,7 +92,7 @@ export class IncomeComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => this.setSmartTableSource()),
 				tap(() => this.getIncomes()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
@@ -394,6 +392,7 @@ export class IncomeComponent
 			return;
 		}
 
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -447,18 +446,20 @@ export class IncomeComponent
 
 	private async getIncomes() {
 		try {
-			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE ||
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.incomes = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -490,11 +491,6 @@ export class IncomeComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
-	}
-
-  	onUpdateOption($event: number) {
-		this.pagination.itemsPerPage = $event;
-		this.getIncomes();
 	}
 
 	ngOnDestroy() { }

@@ -17,9 +17,8 @@
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-        [buttonTemplateVisible]="visibleButton"
-			>
-			</ngx-gauzy-button-action>
+        		[buttonTemplateVisible]="visibleButton"
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -64,8 +63,7 @@
 					[totalItems]="pagination?.totalItems"
 					[itemsPerPage]="pagination?.itemsPerPage"
 					[activePage]="pagination?.activePage"
-				>
-				</ga-card-grid>
+				></ga-card-grid>
 			</div>
 		</ng-template>
 	</nb-card-body>
@@ -78,16 +76,6 @@
 >
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="ORG_PAYMENT_ADD_EDIT">
-			<button
-				nbButton
-				status="basic"
-				class="action secondary"
-				[disabled]="disableButton"
-				size="small"
-			>
-				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
 			<button
 				nbButton
 				[disabled]="!selectedItem && disableButton"
@@ -105,7 +93,7 @@
 				status="basic"
 				(click)="deletePayment(selectedItem)"
 				class="action"
-        size="small"
+       	 		size="small"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
