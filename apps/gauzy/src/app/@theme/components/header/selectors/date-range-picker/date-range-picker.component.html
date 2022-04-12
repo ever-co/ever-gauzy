@@ -22,7 +22,7 @@
 			>
 				<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 			</button>
-      		<i class="far fa-calendar"></i>
+      		<i class="far fa-calendar" (click)="openDatepicker()"></i>
 			<input
 				nbInput
 				name="date-range"
@@ -33,6 +33,7 @@
 				[showCustomRangeLabel]="true"
 				[alwaysShowCalendars]="true"
 				[customRangeDirection]="false"
+				[linkedCalendars]="true"
 				[maxDate]="maxDate"
 				[ranges]="ranges"
 				[locale]="locale"

@@ -43,7 +43,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	_locale: LocaleConfig = {
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
-		direction: 'ltr'
+		direction: 'ltr',
+		separator: '-'
 	};
 	get locale(): LocaleConfig {
 		return this._locale;
@@ -314,6 +315,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			}
 		}
 		return isCustomRange;
+	}
+
+	/**
+	 * Open Date Picker On Calender Click
+	 */
+	openDatepicker() {
+		this.dateRangePickerDirective.toggle();
 	}
 	
 	ngOnDestroy() {}
