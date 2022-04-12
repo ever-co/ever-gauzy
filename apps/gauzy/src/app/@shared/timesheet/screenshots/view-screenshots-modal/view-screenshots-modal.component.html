@@ -12,7 +12,7 @@
 	<nb-card-body class="custom-scroll">
 		<ng-container *ngIf="timeSlot">
 			<h6>
-				{{ timeSlot?.startedAt | utcToLocal | date }}
+				{{ timeSlot?.startedAt | utcToLocal | dateFormat }}
 				{{ timeSlot?.localStartedAt | timeFormat }} -
 				{{ timeSlot?.localStoppedAt | timeFormat }}
 			</h6>

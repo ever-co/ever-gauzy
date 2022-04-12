@@ -264,7 +264,7 @@
 														(employee?.timeSlots)[0]
 															?.startedAt
 															| utcToLocal
-															| date
+															| dateFormat
 													"
 													[id]="employee?.id"
 												></ngx-avatar>
@@ -520,7 +520,7 @@
 											</div>
 											<div class="col-sm-2">
 												{{
-													manualTime.startedAt | date
+													manualTime.startedAt | dateFormat
 												}}
 											</div>
 										</div>
