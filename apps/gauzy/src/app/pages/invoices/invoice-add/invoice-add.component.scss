@@ -1,1 +1,32 @@
 @import '../invoice-edit/invoice-edit.component.scss';
+$green: rgba(37, 184, 105, 1);
+$shadow: 0 0 0 nb-theme(button-outline-width)
+    rgba(
+      $color: $green,
+      $alpha: 0.1
+    ),
+  inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+[nbButton].gen.appearance-outline.status-basic {
+  background-color: #ffffff;
+  border-color: transparent;
+  box-shadow: $shadow;
+  border-width: 2px;
+  color: $green;
+  &:hover {
+    border-color: transparent;
+  }
+}
+[nbButton].gen.appearance-outline:hover {
+  box-shadow: $shadow;
+}
+[nbButton].gen.appearance-outline:focus:not(:hover):not(:active) {
+  box-shadow: unset;
+}
+
+[nbButton].gen.appearance-outline.status-basic[disabled],
+[nbButton].appearance-outline.status-basic.btn-disabled {
+  background-color: nb-theme(button-outline-basic-disabled-background-color);
+  border-color: nb-theme(button-outline-basic-disabled-border-color);
+  color: nb-theme(button-outline-basic-disabled-text-color);
+  box-shadow: unset;
+}
