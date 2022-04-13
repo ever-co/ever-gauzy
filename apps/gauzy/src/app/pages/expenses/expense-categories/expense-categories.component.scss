@@ -1,4 +1,6 @@
 @import 'gauzy/_gauzy-dialogs';
+@import 'gauzy/_gauzy-cards';
+@import 'gauzy/_gauzy-table';
 
 nb-card-body {
   background: nb-theme(gauzy-card-2);
@@ -7,6 +9,7 @@ nb-card-body {
   background-color: nb-theme(gauzy-card-1);
   padding: 1rem 0 3px 0;
   border-radius: nb-theme(border-radius);
+  width: 400px;
 }
 .custom-table {
   background-color: nb-theme(gauzy-card-1);

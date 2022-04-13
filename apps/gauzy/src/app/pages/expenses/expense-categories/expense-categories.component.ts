@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -29,7 +29,7 @@ import { combineLatest } from 'rxjs';
 @Component({
 	selector: 'ga-expense-categories',
 	templateUrl: './expense-categories.component.html',
-  styleUrls:['expense-categories.component.scss']
+	styleUrls: ['expense-categories.component.scss']
 })
 export class ExpenseCategoriesComponent
 	extends TranslationBaseComponent
@@ -41,7 +41,10 @@ export class ExpenseCategoriesComponent
 	showEditDiv: boolean;
 	settingsSmartTable: object;
 	expenseCategories: IOrganizationExpenseCategory[];
-	selectedExpenseCategory: IOrganizationExpenseCategory;
+	selected = {
+		expenseCategory: null,
+		state: false
+	};
 	tags: ITag[] = [];
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum = ComponentEnum.EXPENSES_CATEGORY;
@@ -54,6 +57,7 @@ export class ExpenseCategoriesComponent
 		itemsPerPage: 8
 	};
 	loading: boolean;
+	disabled: boolean = true;
 
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
@@ -107,14 +111,14 @@ export class ExpenseCategoriesComponent
 	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
 		this.showEditDiv = true;
 		this.showAddCard = false;
-		this.selectedExpenseCategory = expenseCategory;
+		this.selected.expenseCategory = expenseCategory;
 		this.tags = expenseCategory.tags;
 	}
 
 	cancel() {
 		this.showEditDiv = false;
 		this.showAddCard = false;
-		this.selectedExpenseCategory = null;
+		this.selected.expenseCategory = null;
 		this.isGridEdit = false;
 		this.tags = [];
 	}
@@ -158,7 +162,7 @@ export class ExpenseCategoriesComponent
 
 	save(name: string) {
 		if (this.isGridEdit) {
-			this.editCategory(this.selectedExpenseCategory.id, name);
+			this.editCategory(this.selected.expenseCategory.id, name);
 		} else {
 			this.addCategory(name);
 		}
@@ -253,13 +257,21 @@ export class ExpenseCategoriesComponent
 	edit(expenseCategory: IOrganizationExpenseCategory) {
 		this.showAddCard = true;
 		this.isGridEdit = true;
-		this.selectedExpenseCategory = expenseCategory;
+		this.selected.expenseCategory = expenseCategory;
 		this.tags = expenseCategory.tags;
 	}
 
-  select(expenseCategory: IOrganizationExpenseCategory){
-    this.selectedExpenseCategory = expenseCategory;
-  }
+	selectExpenseCategory(expenseCategory: any) {
+		if (expenseCategory.data) expenseCategory = expenseCategory.data;
+		const res =
+			this.selected.expenseCategory &&
+			expenseCategory === this.selected.expenseCategory
+				? { state: !this.selected.state }
+				: { state: true };
+		this.selected.state = res.state;
+		this.disabled = !res.state;
+		this.selected.expenseCategory = expenseCategory;
+	}
 
 	/*
 	 * if empty employment levels then displayed add button
@@ -280,5 +292,14 @@ export class ExpenseCategoriesComponent
 	 */
 	refreshPagination() {
 		this.pagination['activePage'] = 1;
+	}
+
+	openDialog(template: TemplateRef<any>) {
+		try {
+			if (this.selected.state) this.edit(this.selected.expenseCategory);
+			this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
+		}
 	}
 }
