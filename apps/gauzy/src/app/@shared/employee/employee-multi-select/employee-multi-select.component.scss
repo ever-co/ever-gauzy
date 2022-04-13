@@ -6,9 +6,10 @@
     }
   }
 }
-::ng-deep {
-  .nb-theme-default nb-option-list {
-    min-width: 300px !important;
-    width: 100% !important;
+ngx-avatar ::ng-deep .inner-wrapper {
+  display: flex;
+  flex-direction: row;
+  .names-wrapper{
+    margin: 0 10px;
   }
 }
