@@ -46,7 +46,7 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
-import { getDateFormat } from './../../core/utils';
+import { getDateFormat, getDaysBetweenDates } from './../../core/utils';
 import { moment } from './../../core/moment-extend';
 
 @Injectable()
@@ -123,18 +123,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 
 		const { startDate, endDate } = request;
-
-		const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
-		const end = moment(moment(endDate).format('YYYY-MM-DD')).add(1, 'day');
-		const range = Array.from(moment.range(start, end).by('day'));
-
-		const days: Array<string> = new Array();
-		let i = 0;
-		while (i < range.length) {
-			const date = range[i].format('YYYY-MM-DD');
-			days.push(date);
-			i++;
-		}
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const weeklyLogs = _.chain(logs)
 			.groupBy('employeeId')
@@ -179,20 +168,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				this.getFilterTimeLogQuery(qb, request);
 			}
 		});
-
+	
 		const { startDate, endDate } = request;
-
-		const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
-		const end = moment(moment(endDate).format('YYYY-MM-DD')).add(1, 'day');
-		const range = Array.from(moment.range(start, end).by('day'));
-
-		const days: Array<string> = new Array();
-		let i = 0;
-		while (i < range.length) {
-			const date = range[i].format('YYYY-MM-DD');
-			days.push(date);
-			i++;
-		}
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const byDate = chain(logs)
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
@@ -385,17 +363,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		});
 
-		let dayList = [];
-		const range = {};
-		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
-			i++;
-		}
-		dayList = Object.keys(range);
+		const { startDate, endDate } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
@@ -434,7 +403,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 			.value();
 
-		const dates = dayList.map((date) => {
+		const dates = days.map((date) => {
 			if (byDate[date]) {
 				return byDate[date];
 			} else {
@@ -469,21 +438,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		});
 
-		let dayList = [];
-		const range = {};
-		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, request.duration);
-			i++;
-		}
-		dayList = Object.keys(range);
-
-		// const employees = await this.employeeRepository.find({
-		// 	organizationId: request.organizationId
-		// });
+		const { startDate, endDate } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log) => {
@@ -532,7 +488,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 			.value();
 
-		const dates = dayList.map((date) => {
+		const dates = days.map((date) => {
 			if (byDate[date]) {
 				return byDate[date];
 			} else {
@@ -821,7 +777,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 
 		if (isNotEmpty(conflicts)) {
-			console.log('Get Conflicts Time Logs', conflicts);
 			const times: IDateRange = {
 				start: new Date(startedAt),
 				end: new Date(stoppedAt)
@@ -884,7 +839,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			...(id ? { ignoreId: id } : {})
 		});
 		if (isNotEmpty(conflicts)) {
-			console.log('Get Conflicts Time Logs', conflicts);
 			const times: IDateRange = {
 				start: new Date(startedAt),
 				end: new Date(stoppedAt)
