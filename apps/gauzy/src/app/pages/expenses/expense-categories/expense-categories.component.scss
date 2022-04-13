@@ -1,0 +1,10 @@
+@import 'gauzy/_gauzy-dialogs';
+
+nb-card-body {
+  background: nb-theme(gauzy-card-2);
+}
+.editable {
+  background-color: nb-theme(background-basic-color-1);
+  padding: 1rem 0 3px 0;
+  border-radius: nb-theme(border-radius);
+}

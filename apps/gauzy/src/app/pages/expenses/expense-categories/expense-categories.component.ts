@@ -14,7 +14,12 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ErrorHandlingService, OrganizationExpenseCategoriesService, Store, ToastrService } from '../../../@core/services';
+import {
+	ErrorHandlingService,
+	OrganizationExpenseCategoriesService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { HttpClient } from '@angular/common/http';
@@ -24,12 +29,12 @@ import { combineLatest } from 'rxjs';
 @Component({
 	selector: 'ga-expense-categories',
 	templateUrl: './expense-categories.component.html',
-	styles: [':host > nb-card { min-height: 47.50rem; }']
+  styleUrls:['expense-categories.component.scss']
 })
 export class ExpenseCategoriesComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	smartTableSource: ServerDataSource;
 	organization: IOrganization;
 	showAddCard: boolean;
@@ -57,7 +62,7 @@ export class ExpenseCategoriesComponent
 		readonly translateService: TranslateService,
 		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly dialogService: NbDialogService,
-		private readonly httpClient: HttpClient,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 	}
@@ -66,7 +71,7 @@ export class ExpenseCategoriesComponent
 		this._loadSettingsSmartTable();
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				debounceTime(300),
 				tap(() => this.cancel()),
 				tap(() => this.getCategories()),
@@ -75,11 +80,16 @@ export class ExpenseCategoriesComponent
 			.subscribe();
 
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const componentLayout$ = this.store.componentLayout$(this.viewComponentName);
+		const componentLayout$ = this.store.componentLayout$(
+			this.viewComponentName
+		);
 		combineLatest([storeOrganization$, componentLayout$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization, componentLayout]) => !!organization && !!componentLayout),
+				filter(
+					([organization, componentLayout]) =>
+						!!organization && !!componentLayout
+				),
 				distinctUntilChange(),
 				tap(([organization, componentLayout]) => {
 					this.organization = organization;
@@ -92,7 +102,7 @@ export class ExpenseCategoriesComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
 		this.showEditDiv = true;
@@ -126,13 +136,12 @@ export class ExpenseCategoriesComponent
 	async removeCategory(id: string, name: string) {
 		try {
 			const result = await firstValueFrom(
-				this.dialogService
-					.open(DeleteConfirmationComponent, {
-						context: {
-							recordType: 'EXPENSES_PAGE.EXPENSE_CATEGORY'
-						}
-					})
-					.onClose);
+				this.dialogService.open(DeleteConfirmationComponent, {
+					context: {
+						recordType: 'EXPENSES_PAGE.EXPENSE_CATEGORY'
+					}
+				}).onClose
+			);
 
 			if (result) {
 				await this.organizationExpenseCategoryService.delete(id);
@@ -197,16 +206,14 @@ export class ExpenseCategoriesComponent
 	}
 
 	/*
-	* Register Smart Table Source Config 
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense-categories/pagination`,
-			relations: [
-				'tags'
-			],
+			relations: ['tags'],
 			where: {
 				organizationId,
 				tenantId
@@ -265,8 +272,8 @@ export class ExpenseCategoriesComponent
 	}
 
 	/*
-	* refresh pagination
-	*/
+	 * refresh pagination
+	 */
 	refreshPagination() {
 		this.pagination['activePage'] = 1;
 	}

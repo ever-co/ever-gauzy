@@ -1,8 +1,17 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
-			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES' | translate }} </ngx-header-title> </h4>
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
 		<div>
 			<ga-layout-selector
@@ -17,61 +26,64 @@
 			>
 			</ng-container>
 			<ng-template #editableTemplate>
-				<div class="row">
-					<div
-						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
-					>
-						<label class="label">{{
-							'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
-						}}</label>
-						<input
-							#addInput="ngModel"
-							[ngModel]="
-								isGridEdit ? selectedExpenseCategory?.name : ''
-							"
-							required
-							nbInput
-							type="text"
-							fullWidth
-							[placeholder]="
-								'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
-							"
-						/>
-					</div>
-					<div
-						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
-					>
-						<ga-tags-color-input
-							[selectedTags]="tags"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
-						>
-						</ga-tags-color-input>
-					</div>
-					<div
-						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
-					>
-						<button
-							class="w-100 mt-3"
-							(click)="save(addInput.value)"
-							nbButton
-							status="success"
-							[disabled]="addInput.invalid"
-						>
-							{{ 'BUTTONS.SAVE' | translate }}
-						</button>
-					</div>
-					<div
-						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
-					>
-						<button
-							class="w-100 mt-3"
-							(click)="cancel()"
-							nbButton
-							status="danger"
-						>
-							{{ 'BUTTONS.CANCEL' | translate }}
-						</button>
+				<div class="editable w-25">
+					<div class="container">
+						<div class="row mb-3">
+							<div class="col-sm-12 d-flex flex-column">
+								<label class="label">{{
+									'ORGANIZATIONS_PAGE.EXPENSE_NAME'
+										| translate
+								}}</label>
+								<input
+									#addInput="ngModel"
+									[ngModel]="
+										isGridEdit
+											? selectedExpenseCategory?.name
+											: ''
+									"
+									required
+									nbInput
+									type="text"
+									fullWidth
+									[placeholder]="
+										'ORGANIZATIONS_PAGE.EXPENSE_NAME'
+											| translate
+									"
+								/>
+							</div>
+						</div>
+						<div class="row mb-3">
+							<div class="col-sm-12 d-flex flex-column">
+								<ga-tags-color-input
+									[selectedTags]="tags"
+									(selectedTagsEvent)="
+										selectedTagsEvent($event)
+									"
+									[isOrgLevel]="true"
+								>
+								</ga-tags-color-input>
+							</div>
+						</div>
+						<div class="row mb-3">
+							<div class="col-sm-12"></div>
+							<button
+								class="mr-3 ml-3"
+								(click)="cancel()"
+								nbButton
+								status="basic"
+                outline
+							>
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button
+								(click)="save(addInput.value)"
+								nbButton
+								status="success"
+								[disabled]="addInput.invalid"
+							>
+								{{ 'BUTTONS.SAVE' | translate }}
+							</button>
+						</div>
 					</div>
 				</div>
 			</ng-template>
@@ -79,16 +91,19 @@
 				<button
 					(click)="showAddCard = !showAddCard"
 					nbButton
+          size="small"
 					status="success"
 					[disabled]="selectedExpenseCategory"
 				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					<nb-icon icon="plus-outline"></nb-icon>
 					{{ 'BUTTONS.ADD' | translate }}
 				</button>
 			</ng-template>
 		</div>
 
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+		<ng-container
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+		>
 			<div *ngIf="expenseCategories?.length">
 				<nb-card *ngFor="let v of expenseCategories">
 					<nb-card-body
@@ -190,7 +205,9 @@
 			</div>
 		</ng-container>
 
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
+		<ng-container
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
+		>
 			<ga-card-grid
 				*ngIf="expenseCategories?.length"
 				[settings]="settingsSmartTable"
@@ -200,13 +217,16 @@
 		</ng-container>
 
 		<div class="pagination-container">
-			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-				<ga-pagination 
+			<ng-container
+				*ngIf="pagination.totalItems > pagination.itemsPerPage"
+			>
+				<ga-pagination
 					(selectedPage)="onPageChange($event)"
 					[doEmit]="false"
-					[totalItems]="pagination.totalItems" 
-					[itemsPerPage]="pagination.itemsPerPage" 
-					[activePage]="pagination.activePage">
+					[totalItems]="pagination.totalItems"
+					[itemsPerPage]="pagination.itemsPerPage"
+					[activePage]="pagination.activePage"
+				>
 				</ga-pagination>
 			</ng-container>
 		</div>
