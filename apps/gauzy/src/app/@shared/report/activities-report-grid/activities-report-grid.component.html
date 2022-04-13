@@ -1,16 +1,18 @@
-<div class="group-by-wrapper" *ngIf="dailyData?.length > 0">
-	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
+<div class="group-by-wrapper">
+	<div class="label">
+		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+	</div>
 	<div class="ml-3">
 		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()">
-			<nb-option value="date">{{
-				'REPORT_PAGE.DATE' | translate
-			}}</nb-option>
-			<nb-option value="employee">{{
-				'REPORT_PAGE.EMPLOYEE' | translate
-			}}</nb-option>
-			<nb-option value="project">{{
-				'REPORT_PAGE.PROJECT' | translate
-			}}</nb-option>
+			<nb-option value="date">
+				{{ 'REPORT_PAGE.DATE' | translate }}
+			</nb-option>
+			<nb-option value="employee">
+				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+			</nb-option>
+			<nb-option value="project">
+				{{ 'REPORT_PAGE.PROJECT' | translate }}
+			</nb-option>
 		</nb-select>
 	</div>
 </div>
@@ -23,27 +25,41 @@
 	<ng-template #columnsHeader>
 		<div class="columns-header">
 			<div class="table-inner-wrapper font-weight-bold align-items-center">
-				<div *ngIf="groupBy != 'date'" class="responsive-table-row employee-column">
+				<div 
+					*ngIf="groupBy != 'date'"
+					class="responsive-table-row employee-column"
+				>
 					{{ 'REPORT_PAGE.DATE' | translate }}
 				</div>
-				<div *ngIf="groupBy != 'employee'" class="responsive-table-row employee-column">
+				<div
+					*ngIf="groupBy != 'employee'"
+					class="responsive-table-row employee-column"
+				>
 					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 				</div>
-				<div *ngIf="groupBy != 'project'" class="responsive-table-row project-column">
+				<div
+					*ngIf="groupBy != 'project'"
+					class="responsive-table-row project-column"
+				>
 					{{ 'REPORT_PAGE.PROJECT' | translate }}
 				</div>
-				<div class="responsive-table-row title-column">
+				<div
+					class="responsive-table-row title-column">
 					{{ 'REPORT_PAGE.TITLE' | translate }}
 				</div>
-				<div class="responsive-table-row duration-column">
+				<div
+					class="responsive-table-row duration-column"
+				>
 					{{ 'REPORT_PAGE.DURATION' | translate }}
 				</div>
 				<div class="responsive-table-row progress-bar-column"></div>
 			</div>
 		</div>
 	</ng-template>
-
-	<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
+	<ng-template
+		[ngIf]="dailyData?.length > 0"
+		[ngIfElse]="notFound"
+	>
 		<nb-card
 			[ngSwitch]="groupBy"
 			class="card"

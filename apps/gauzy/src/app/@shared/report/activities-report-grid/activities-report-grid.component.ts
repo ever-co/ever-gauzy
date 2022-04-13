@@ -58,7 +58,6 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
 		this.subject$
 			.pipe(
 				debounceTime(500),
-				tap(() => this.loading = true),
 				tap(() => this.getActivities()),
 				untilDestroyed(this)
 			)
@@ -73,6 +72,7 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
 		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
+		this.loading = true;
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',
