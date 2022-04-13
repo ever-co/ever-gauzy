@@ -26,10 +26,10 @@
 			>
 			</ng-container>
 			<ng-template #editableTemplate>
-				<div class="editable w-25">
+				<div class="editable w-50">
 					<div class="container">
 						<div class="row mb-3">
-							<div class="col-sm-12 d-flex flex-column">
+							<div class="col-sm-6 d-flex flex-column">
 								<label class="label">{{
 									'ORGANIZATIONS_PAGE.EXPENSE_NAME'
 										| translate
@@ -51,9 +51,7 @@
 									"
 								/>
 							</div>
-						</div>
-						<div class="row mb-3">
-							<div class="col-sm-12 d-flex flex-column">
+							<div class="col-sm-6 d-flex flex-column">
 								<ga-tags-color-input
 									[selectedTags]="tags"
 									(selectedTagsEvent)="
@@ -71,7 +69,7 @@
 								(click)="cancel()"
 								nbButton
 								status="basic"
-                outline
+								outline
 							>
 								{{ 'BUTTONS.CANCEL' | translate }}
 							</button>
@@ -91,7 +89,7 @@
 				<button
 					(click)="showAddCard = !showAddCard"
 					nbButton
-          size="small"
+					size="small"
 					status="success"
 					[disabled]="selectedExpenseCategory"
 				>
@@ -107,6 +105,7 @@
 			<div *ngIf="expenseCategories?.length">
 				<nb-card *ngFor="let v of expenseCategories">
 					<nb-card-body
+						class="custom-table"
 						style="
 							display: inline;
 							justify-content: space-between;
@@ -153,35 +152,31 @@
 								>
 								</ga-tags-color-input>
 							</div>
-							<div
-								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
-							>
-								<button
-									class="w-100 mt-3"
-									(click)="
-										editCategory(
-											selectedExpenseCategory.id,
-											editInput.value
-										)
-									"
-									nbButton
-									status="success"
-									[disabled]="editInput.invalid"
-								>
-									{{ 'BUTTONS.UPDATE' | translate }}
-								</button>
-							</div>
-							<div
-								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
-							>
-								<button
-									class="w-100 mt-3"
-									(click)="cancel()"
-									nbButton
-									status="danger"
-								>
-									{{ 'BUTTONS.CANCEL' | translate }}
-								</button>
+							<div class="d-flex">
+								<div class="align-self-end">
+									<button
+										outline
+										(click)="cancel()"
+										nbButton
+										status="basic"
+									>
+										{{ 'BUTTONS.CANCEL' | translate }}
+									</button>
+									<button
+										(click)="
+											editCategory(
+												selectedExpenseCategory.id,
+												editInput.value
+											)
+										"
+										nbButton
+										status="success"
+										[disabled]="editInput.invalid"
+										class="mr-3 ml-3"
+									>
+										{{ 'BUTTONS.UPDATE' | translate }}
+									</button>
+								</div>
 							</div>
 						</div>
 						<nb-actions
