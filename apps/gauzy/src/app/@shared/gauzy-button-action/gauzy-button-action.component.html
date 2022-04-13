@@ -23,7 +23,7 @@
       ></ng-container>
     </div>
   </div>
-  <ga-layout-selector
+  <ga-layout-selector *ngIf="hasSelector"
     [componentName]="componentName"
   ></ga-layout-selector>
 </div>

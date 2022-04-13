@@ -12,6 +12,7 @@ export class GauzyButtonActionComponent implements OnInit {
 	@Input() buttonTemplate: any;
 	@Input() componentName: ComponentEnum;
   @Input() buttonTemplateVisible: any;
+  @Input() hasSelector: boolean = true;
 
 	constructor() {}
 	/**
