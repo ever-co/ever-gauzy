@@ -51,7 +51,7 @@
 				*ngIf="expenseCategories?.length"
 				[settings]="settingsSmartTable"
 				[source]="expenseCategories"
-        (selectedOption)="onUpdateOption($event)"
+				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"
 				(onSelectedItem)="selectExpenseCategory($event)"
 			></ga-card-grid>
@@ -120,6 +120,14 @@
 <ng-template #addTemplate let-ref="dialogRef">
 	<div class="editable">
 		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i class="fas fa-times" (click)="ref.close()"></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">{{ 'POP_UPS.ADD' | translate }}</h5>
+			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
 					<label class="label">{{
@@ -153,7 +161,7 @@
 			<div class="row mb-3">
 				<div class="col-sm-12"></div>
 				<button
-					class="mr-3 ml-3"
+					class="delete mr-3 ml-3"
 					(click)="ref.close()"
 					nbButton
 					status="basic"
@@ -176,6 +184,14 @@
 <ng-template #editableTemplate let-ref="dialogRef">
 	<div class="editable">
 		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i class="fas fa-times" (click)="ref.close()"></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">{{ 'POP_UPS.EDIT' | translate }}</h5>
+			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
 					<label class="label">{{
@@ -203,8 +219,9 @@
 				</div>
 			</div>
 			<div class="row mb-3">
-				<div class="col-sm-12">
+				<div class="d-flex">
 					<button
+						class="delete mr-3 ml-3"
 						outline
 						(click)="ref.close()"
 						nbButton
