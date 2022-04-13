@@ -106,12 +106,8 @@
 				<nb-card *ngFor="let v of expenseCategories">
 					<nb-card-body
 						class="custom-table"
-						style="
-							display: inline;
-							justify-content: space-between;
-							align-items: center;
-							overflow: inherit;
-						"
+						[ngClass]="v === selectedExpenseCategory ? 'custom-table selected':'custom-table'"
+            (click)="select(v)"
 					>
 						<!-- {{ selectedExpenseCategory === v ? '' : v.name }} -->
 						<ga-notes-with-tags

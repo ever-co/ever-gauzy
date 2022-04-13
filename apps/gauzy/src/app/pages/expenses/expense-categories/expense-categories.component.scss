@@ -8,7 +8,13 @@ nb-card-body {
   padding: 1rem 0 3px 0;
   border-radius: nb-theme(border-radius);
 }
-.custom-table{
+.custom-table {
   background-color: nb-theme(gauzy-card-1);
   border-radius: nb-theme(border-radius);
+  &.selected {
+    box-shadow: -6px 0px 0px 0px rgba(126, 126, 143, 0.1);
+  }
+  &:hover {
+    background: rgba(126, 126, 143, 0.1);
+  }
 }

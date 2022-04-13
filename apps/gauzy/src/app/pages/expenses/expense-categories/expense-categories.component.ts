@@ -257,6 +257,10 @@ export class ExpenseCategoriesComponent
 		this.tags = expenseCategory.tags;
 	}
 
+  select(expenseCategory: IOrganizationExpenseCategory){
+    this.selectedExpenseCategory = expenseCategory;
+  }
+
 	/*
 	 * if empty employment levels then displayed add button
 	 */
