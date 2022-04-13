@@ -22,7 +22,6 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 export class AppsUrlsReportComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit, OnDestroy {
 		
-	today: Date = new Date();
 	logRequest: IGetActivitiesInput = this.request;
 	filters: IGetActivitiesInput;
 

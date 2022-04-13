@@ -27,8 +27,8 @@ export class Next implements IArrowStrategy {
 		}
 
 		return {
-			startDate: start.toDate(),
-			endDate: end.toDate(),
+			startDate: start.startOf('day').toDate(),
+			endDate: end.endOf('day').toDate(),
 			isCustomDate
 		} as IDateRangePicker;
 	}

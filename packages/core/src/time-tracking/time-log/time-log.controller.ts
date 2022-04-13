@@ -148,7 +148,9 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('/time-limit')
-	async weeklyLimit(@Query() request?: IGetTimeLimitReportInput) {
+	async getTimeLimitReport(
+		@Query() request: IGetTimeLimitReportInput
+	) {
 		return await this.timeLogService.getTimeLimit(request);
 	}
 

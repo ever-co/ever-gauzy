@@ -56,10 +56,10 @@ export class ActivityController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/report')
-	async getDailyActivitiesReport(@Query() request: IGetActivitiesInput) {
-		let activities = await this.activityService.getDailyActivitiesReport(
-			request
-		);
+	async getDailyActivitiesReport(
+		@Query() request: IGetActivitiesInput
+	) {
+		let activities = await this.activityService.getDailyActivitiesReport(request);
 
 		if (request.groupBy === ReportGroupFilterEnum.date) {
 			activities = this.activityMapService.mapByDate(activities);

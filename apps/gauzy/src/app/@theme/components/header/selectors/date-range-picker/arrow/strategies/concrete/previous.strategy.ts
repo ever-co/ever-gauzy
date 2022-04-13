@@ -22,10 +22,9 @@ export class Previous implements IArrowStrategy {
 		} else {
 			start = moment(end).startOf(unitOfTime);
 		}
-
 		return {
-			startDate: start.toDate(),
-			endDate: end.toDate(),
+			startDate: start.startOf('day').toDate(),
+			endDate: end.endOf('day').toDate(),
 			isCustomDate
 		} as IDateRangePicker;
 	}
