@@ -274,6 +274,27 @@
 							</div>
 							<div class="col-sm-6">
 								<div class="form-group">
+									<label for="inputTax2" class="label"
+										>{{ 'INVOICES_PAGE.TAX_2' | translate }}
+									</label>
+									<input
+										nbInput
+										placeholder="{{
+											'INVOICES_PAGE.TAX_2' | translate
+										}}"
+										type="number"
+										[min]="0"
+										formControlName="tax2"
+										id="inputTax2"
+										(ngModelChange)="calculateTotal()"
+										fullWidth
+									/>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6">
+								<div class="form-group">
 									<label for="inputTaxType" class="label">{{
 										'INVOICES_PAGE.TAX_TYPE' | translate
 									}}</label>
@@ -298,27 +319,6 @@
 											}}
 										</nb-option>
 									</nb-select>
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-sm-6">
-								<div class="form-group">
-									<label for="inputTax2" class="label"
-										>{{ 'INVOICES_PAGE.TAX_2' | translate }}
-									</label>
-									<input
-										nbInput
-										placeholder="{{
-											'INVOICES_PAGE.TAX_2' | translate
-										}}"
-										type="number"
-										[min]="0"
-										formControlName="tax2"
-										id="inputTax2"
-										(ngModelChange)="calculateTotal()"
-										fullWidth
-									/>
 								</div>
 							</div>
 							<div class="col-sm-6">
