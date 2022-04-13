@@ -4,7 +4,7 @@
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 >
-	<nb-card-header class="d-flex">
+	<nb-card-header class="d-flex align-items-start">
 		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
 			{{ 'INVOICES_PAGE.PAYMENTS.HEADER' | translate }}
@@ -14,18 +14,36 @@
 	<nb-card-body class="body">
 		<div class="info-container">
 			<div class="date-and-value">
-				<div>
-					{{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
-					{{ invoice ? (invoice.dueDate | dateFormat) : '' }}
-				</div>
-				<div>
-					{{ 'INVOICES_PAGE.PAYMENTS.TOTAL_VALUE' | translate }}:
-					{{ invoice ? invoice.currency + ' ' + invoice.totalValue : '' }}
-				</div>
-				<div>
-					{{ 'INVOICES_PAGE.PAYMENTS.LEFT_TO_PAY' | translate }}:
-					{{ invoice ? invoice.currency + ' ' + leftToPay: '' }}
-				</div>
+        <div class="block w-100">
+          <div class="row">
+            <div class="col-6">
+              {{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
+            </div>
+            <div class="col-6 pr-0 pl-0">
+              {{ invoice ? (invoice.dueDate | dateFormat) : '' }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              {{ 'INVOICES_PAGE.PAYMENTS.TOTAL_VALUE' | translate }}:
+            </div>
+            <div class="col-6 pr-0 pl-0">
+              {{
+                invoice
+                  ? invoice.currency + ' ' + invoice.totalValue
+                  : ''
+              }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              {{ 'INVOICES_PAGE.PAYMENTS.LEFT_TO_PAY' | translate }}:
+            </div>
+            <div class="col-6 pr-0 pl-0">
+              {{ invoice ? invoice.currency + ' ' + leftToPay : '' }}
+            </div>
+          </div>
+        </div>
 			</div>
 			<div class="total-paid-label">
 				{{ 'INVOICES_PAGE.PAYMENTS.TOTAL_PAID' | translate }}:
@@ -48,97 +66,101 @@
 				</span>
 			</div>
 		</div>
-		<div class="mb-3 buttons">
-			<button
-				class="mr-2"
-				status="success"
-				(click)="recordPayment()"
-				nbButton
-			>
-				<nb-icon icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				status="info"
-				(click)="editPayment()"
-				[disabled]="disableButton"
-				nbButton
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="info"
-				(click)="download()"
-				class="mr-2"
-				[disabled]="!payments?.length"
-			>
-				<nb-icon icon="download-outline"></nb-icon>
-				{{ 'BUTTONS.DOWNLOAD' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				status="danger"
-				(click)="deletePayment()"
-				[disabled]="disableButton"
-				nbButton
-			>
-				<nb-icon icon="trash-2-outline"></nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				nbButton
-				status="info"
-				[disabled]="disableButton"
-				(click)="sendReceipt()"
-			>
-				<nb-icon icon="email-outline"></nb-icon>
-				{{ 'BUTTONS.SEND_RECEIPT' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				nbButton
-				status="info"
-				(click)="exportToCsv()"
-				[disabled]="payments ? payments.length <= 0 : true"
-			>
-				<nb-icon icon="file-text-outline"></nb-icon>
-				{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				status="info"
-				debounceClick
-				(throttledClick)="recordFullPayment()"
-				[debounceTime]="500"
-				[disabled]="isDisabled"
-				nbButton
-			>
-				<nb-icon icon="credit-card-outline"></nb-icon>
-				{{ 'BUTTONS.RECORD_FULL_PAYMENT' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				status="info"
-				(click)="invoiceRemainingAmount()"
-				[disabled]="isDisabled"
-				nbButton
-			>
-				<nb-icon icon="file-text-outline"></nb-icon>
-				{{ 'BUTTONS.INVOICE_REMAINING_AMOUNT' | translate }}
-			</button>
-		</div>
-		<ng2-smart-table
-			class="tags-table"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			(userRowSelect)="selectPayment($event)"
-			style="cursor: pointer"
-			#paymentsTable
-		>
-		</ng2-smart-table>
+		<div class="custom-container">
+      <div class="mb-3 buttons">
+        <button
+          class="mr-2"
+          status="success"
+          (click)="recordPayment()"
+          nbButton
+        >
+          <nb-icon icon="plus-outline"></nb-icon>
+          {{ 'BUTTONS.ADD' | translate }}
+        </button>
+        <button
+          class="mr-2"
+          status="info"
+          (click)="editPayment()"
+          [disabled]="disableButton"
+          nbButton
+        >
+          <nb-icon icon="edit-outline"></nb-icon>
+          {{ 'BUTTONS.EDIT' | translate }}
+        </button>
+        <button
+          nbButton
+          status="info"
+          (click)="download()"
+          class="mr-2"
+          [disabled]="!payments?.length"
+        >
+          <nb-icon icon="download-outline"></nb-icon>
+          {{ 'BUTTONS.DOWNLOAD' | translate }}
+        </button>
+        <button
+          class="mr-2"
+          status="danger"
+          (click)="deletePayment()"
+          [disabled]="disableButton"
+          nbButton
+        >
+          <nb-icon icon="trash-2-outline"></nb-icon>
+          {{ 'BUTTONS.DELETE' | translate }}
+        </button>
+        <button
+          class="mr-2"
+          nbButton
+          status="info"
+          [disabled]="disableButton"
+          (click)="sendReceipt()"
+        >
+          <nb-icon icon="email-outline"></nb-icon>
+          {{ 'BUTTONS.SEND_RECEIPT' | translate }}
+        </button>
+        <button
+          class="mr-2"
+          nbButton
+          status="info"
+          (click)="exportToCsv()"
+          [disabled]="payments ? payments.length <= 0 : true"
+        >
+          <nb-icon icon="file-text-outline"></nb-icon>
+          {{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+        </button>
+        <button
+          class="mr-2"
+          status="info"
+          debounceClick
+          (throttledClick)="recordFullPayment()"
+          [debounceTime]="500"
+          [disabled]="isDisabled"
+          nbButton
+        >
+          <nb-icon icon="credit-card-outline"></nb-icon>
+          {{ 'BUTTONS.RECORD_FULL_PAYMENT' | translate }}
+        </button>
+        <button
+          class="mr-2"
+          status="info"
+          (click)="invoiceRemainingAmount()"
+          [disabled]="isDisabled"
+          nbButton
+        >
+          <nb-icon icon="file-text-outline"></nb-icon>
+          {{ 'BUTTONS.INVOICE_REMAINING_AMOUNT' | translate }}
+        </button>
+      </div>
+      <div class="table-scroll-container">
+        <ng2-smart-table
+        class="tags-table"
+        [settings]="settingsSmartTable"
+        [source]="smartTableSource"
+        (userRowSelect)="selectPayment($event)"
+        style="cursor: pointer"
+        #paymentsTable
+      >
+      </ng2-smart-table>
+      </div>
+    </div>
 	</nb-card-body>
 </nb-card>
