@@ -8,6 +8,11 @@
   &.info {
     background-color: #0088fe;
   }
+  &.info-text-1 {
+    &[nbButton].appearance-filled.status-basic {
+      color: rgba(0, 136, 254, 1);
+    }
+  }
   &.secondary {
     color: #7e7e8f;
   }
