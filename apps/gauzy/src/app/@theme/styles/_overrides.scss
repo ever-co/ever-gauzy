@@ -33,6 +33,10 @@ body {
     margin-bottom: 1px;
   }
 
+  .cdk-overlay-container {
+    z-index: 1052;
+  }
+
   nb-tabset .tab.active .tab-link {
     background-color: rgba(50, 50, 50, 0.03);
     margin-bottom: 1px;
