@@ -150,17 +150,6 @@
 			{{ 'BUTTONS.SEND_RECEIPT' | translate }}
 		</button>
 		<button
-			nbButton
-			size="small"
-			status="basic"
-			class="action info-text-1"
-			(click)="exportToCsv()"
-			[disabled]="payments ? payments.length <= 0 : true"
-		>
-			<nb-icon icon="file-text-outline"></nb-icon>
-			{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
-		</button>
-		<button
 			status="basic"
 			class="action secondary"
 			size="small"
@@ -196,6 +185,17 @@
 		>
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<button
+			nbButton
+			size="small"
+			status="basic"
+			class="action info-text-1"
+			(click)="exportToCsv()"
+			[disabled]="payments ? payments.length <= 0 : true"
+		>
+			<nb-icon icon="file-text-outline"></nb-icon>
+			{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
 		</button>
 	</ng-template>
 </ng-template>
