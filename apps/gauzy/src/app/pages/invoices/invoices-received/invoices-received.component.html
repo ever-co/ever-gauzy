@@ -113,6 +113,7 @@
 			class="action primary"
 			[disabled]="disableButton"
 			size="small"
+			(click)="download(selectedItem)"
 		>
 			<nb-icon icon="download-outline"></nb-icon>
 			{{ 'BUTTONS.DOWNLOAD' | translate }}

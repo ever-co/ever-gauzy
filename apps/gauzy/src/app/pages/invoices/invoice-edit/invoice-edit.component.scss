@@ -141,8 +141,12 @@ div.button-action {
   background-color: rgba(126, 126, 143, 1);
   color: nb-theme(text-control-color);
   [nbButton].appearance-filled.status-basic {
-    background-color: var(--button-filled-basic-background-color);
-    border-color: var(--button-filled-basic-border-color);
-    color: var(--button-filled-basic-text-color);
+    background-color: nb-theme(button-filled-basic-background-color);
+    border-color: nb-theme(button-filled-basic-border-color);
+    color: nb-theme(button-filled-basic-text-color);
+    :hover {
+      color: nb-theme(text-basic-color);
+      background-color: rgba($color: rgba(126, 126, 143), $alpha: 0.1);
+    }
   }
 }

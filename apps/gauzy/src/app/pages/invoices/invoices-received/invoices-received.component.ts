@@ -38,6 +38,8 @@ import {
 } from '../../../@shared/table-components';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { TagsColorFilterComponent } from '../../../@shared/table-filters';
+import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
+import { NbDialogService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -110,7 +112,8 @@ export class InvoicesReceivedComponent
 		private readonly router: Router,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly toastrService: ToastrService,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
 		this.setView();
@@ -558,6 +561,21 @@ export class InvoicesReceivedComponent
 		} else {
 			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
 		}
+	}
+
+	download(selectedItem?: IInvoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.dialogService.open(InvoiceDownloadMutationComponent, {
+			context: {
+				invoice: this.selectedInvoice,
+				isEstimate: this.isEstimate
+			}
+		});
 	}
 
 	ngOnDestroy() {}
