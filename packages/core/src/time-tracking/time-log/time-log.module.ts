@@ -4,6 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from './../../tenant/tenant.module';
 import { EmployeeModule } from './../../employee/employee.module';
 import { OrganizationProjectModule } from './../../organization-project/organization-project.module';
+import { OrganizationContactModule } from './../../organization-contact/organization-contact.module';
 import { CommandHandlers } from './commands/handlers';
 import { TimeLog } from './time-log.entity';
 import { TimeLogController } from './time-log.controller';
@@ -23,6 +24,7 @@ import { UserModule } from './../../user/user.module';
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
 		forwardRef(() => OrganizationProjectModule),
+		forwardRef(() => OrganizationContactModule),
 		forwardRef(() => TimeSlotModule),
 		CqrsModule
 	],

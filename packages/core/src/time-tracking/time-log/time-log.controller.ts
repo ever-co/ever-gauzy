@@ -190,7 +190,9 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('/client-budget-limit')
-	async clientBudgetLimit(@Query() request?: IClientBudgetLimitReportInput) {
+	async clientBudgetLimit(
+		@Query() request: IClientBudgetLimitReportInput
+	) {
 		return await this.timeLogService.clientBudgetLimit(request);
 	}
 
