@@ -49,7 +49,9 @@
 							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 						"
 					>
-						<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
+						<div
+							class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl"
+						>
 							<nb-card
 								[nbSpinner]="countsLoading"
 								nbSpinnerSize="giant"
@@ -155,12 +157,18 @@
 									<ng-template
 										[ngSwitchCase]="RangePeriod.PERIOD"
 									>
-										{{ 'TIMESHEET.ACTIVITY_OVER_PERIOD' | translate }}
+										{{
+											'TIMESHEET.ACTIVITY_OVER_PERIOD'
+												| translate
+										}}
 									</ng-template>
 									<ng-template
 										[ngSwitchCase]="RangePeriod.DAY"
 									>
-										{{ 'TIMESHEET.ACTIVITY_FOR_DAY' | translate }}
+										{{
+											'TIMESHEET.ACTIVITY_FOR_DAY'
+												| translate
+										}}
 									</ng-template>
 									<ng-template [ngSwitchDefault]>
 										{{
@@ -200,12 +208,16 @@
 									<ng-template
 										[ngSwitchCase]="RangePeriod.DAY"
 									>
-										{{ 'TIMESHEET.WORKED_FOR_DAY' | translate }}
+										{{
+											'TIMESHEET.WORKED_FOR_DAY'
+												| translate
+										}}
 									</ng-template>
 									<ng-template [ngSwitchDefault]>
-										{{ 
-											(
-												isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK'
+										{{
+											(isCurrentWeek()
+												? 'TIMESHEET.WORKED_THIS_WEEK'
+												: 'TIMESHEET.WORKED_FOR_WEEK'
 											) | translate
 										}}
 									</ng-template>
@@ -224,7 +236,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-xl-8 col-12">
+				<div class="col-xl-7 col-12">
 					<nb-card
 						[nbSpinner]="timeSlotLoading"
 						nbSpinnerSize="giant"
@@ -289,11 +301,8 @@
 													</ng-container>
 												</div>
 											</div>
-											<div
-												class="row my-3 align-items-center justify-content-between"
-											>
+											<div class="custom-container">
 												<div
-													class="col"
 													*ngFor="
 														let timeSlot of employee.timeSlots
 													"
@@ -520,7 +529,8 @@
 											</div>
 											<div class="col-sm-2">
 												{{
-													manualTime.startedAt | dateFormat
+													manualTime.startedAt
+														| dateFormat
 												}}
 											</div>
 										</div>
