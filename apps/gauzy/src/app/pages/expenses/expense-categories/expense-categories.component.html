@@ -122,7 +122,10 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i class="fas fa-times" (click)="ref.close()"></i>
+					<i
+						class="fas fa-times"
+						(click)="ref.close(); disabled = true"
+					></i>
 				</div>
 			</div>
 			<div class="row mb-3">
@@ -162,7 +165,7 @@
 				<div class="col-sm-12"></div>
 				<button
 					class="delete mr-3 ml-3"
-					(click)="ref.close()"
+					(click)="ref.close(); disabled = true"
 					nbButton
 					status="basic"
 					outline
@@ -186,11 +189,16 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i class="fas fa-times" (click)="ref.close()"></i>
+					<i
+						class="fas fa-times"
+						(click)="ref.close(); disabled = true"
+					></i>
 				</div>
 			</div>
 			<div class="row mb-3">
-				<h5 class="title mr-3 ml-3">{{ 'POP_UPS.EDIT' | translate }}</h5>
+				<h5 class="title mr-3 ml-3">
+					{{ 'POP_UPS.EDIT' | translate }}
+				</h5>
 			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
@@ -223,7 +231,7 @@
 					<button
 						class="delete mr-3 ml-3"
 						outline
-						(click)="ref.close()"
+						(click)="ref.close(); disabled = true"
 						nbButton
 						status="basic"
 					>
