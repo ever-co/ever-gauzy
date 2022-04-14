@@ -19,8 +19,8 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 		</div>
 	`,
 	styles: [
-		'.progress-bar-inner {background-color: #2ce69b; position: absolute; height: 32px; width:100%; border-radius: 4px;}',
-		'.progress-bar {background-color: #e0e0e0; border-radius: 4px; position: relative; height: 32px}',
+		'.progress-bar-inner {background-color: rgba(0, 214, 143, 1); position: absolute; height: 32px; width:100%; border-radius: 4px;}',
+		'.progress-bar {background-color: rgba(126, 126, 143, 0.2); border-radius: 4px; position: relative; height: 32px}',
 		'.paid-percent {color: #ffffff; z-index: 101; font-weight: bold;}'
 	]
 })
