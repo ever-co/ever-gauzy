@@ -153,30 +153,6 @@
 			<nb-icon icon="email-outline"></nb-icon>
 			{{ 'BUTTONS.SEND_RECEIPT' | translate }}
 		</button>
-		<button
-			status="basic"
-			class="action secondary"
-			size="small"
-			debounceClick
-			(throttledClick)="recordFullPayment()"
-			[debounceTime]="500"
-			[disabled]="isDisabled"
-			nbButton
-		>
-			<nb-icon icon="credit-card-outline"></nb-icon>
-			{{ 'BUTTONS.RECORD_FULL_PAYMENT' | translate }}
-		</button>
-		<button
-			status="basic"
-			class="action secondary"
-			size="small"
-			(click)="invoiceRemainingAmount()"
-			[disabled]="isDisabled"
-			nbButton
-		>
-			<nb-icon icon="file-text-outline"></nb-icon>
-			{{ 'BUTTONS.INVOICE_REMAINING_AMOUNT' | translate }}
-		</button>
 	</div>
 </ng-template>
 <ng-template #visibleButton>
@@ -200,6 +176,30 @@
 		>
 			<nb-icon icon="file-text-outline"></nb-icon>
 			{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+		</button>
+		<button
+			status="basic"
+			class="action secondary"
+			size="small"
+			debounceClick
+			(throttledClick)="recordFullPayment()"
+			[debounceTime]="500"
+			[disabled]="isDisabled"
+			nbButton
+		>
+			<nb-icon icon="credit-card-outline"></nb-icon>
+			{{ 'BUTTONS.RECORD_FULL_PAYMENT' | translate }}
+		</button>
+		<button
+			status="basic"
+			class="action secondary"
+			size="small"
+			(click)="invoiceRemainingAmount()"
+			[disabled]="isDisabled"
+			nbButton
+		>
+			<nb-icon icon="file-text-outline"></nb-icon>
+			{{ 'BUTTONS.INVOICE_REMAINING_AMOUNT' | translate }}
 		</button>
 	</ng-template>
 </ng-template>
