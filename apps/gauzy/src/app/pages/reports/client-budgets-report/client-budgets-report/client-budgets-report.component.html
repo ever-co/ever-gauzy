@@ -72,7 +72,7 @@
 										client.budgetType ===
 										OrganizationContactBudgetTypeEnum.HOURS
 									"
-									>{{ client?.spent | durationFormat }}
+									>{{ (client?.spent * 3600) | durationFormat }}
 									{{ 'REPORT_PAGE.HOURS' | translate }}</span
 								>
 								<span
@@ -82,7 +82,7 @@
 									"
 									>{{
 										client?.spent
-											| currency: client?.spent.currency
+											| currency: organization?.currency
 											| position
 												: organization?.currencyPosition
 									}}</span
@@ -92,12 +92,35 @@
 								<ngx-progress-status
 									[percentage]="client?.spentPercentage"
 								></ngx-progress-status>
-								<span class="ml-3">{{
-									client?.spent
-										| currency: client?.spent.currency
-										| position
-											: organization?.currencyPosition
-								}}</span>
+								<span
+									*ngIf="
+										client.budgetType ===
+										OrganizationContactBudgetTypeEnum.HOURS
+									"
+									class="ml-3"
+								>
+									{{ 
+										(client?.budget * 3600) | durationFormat
+									}}
+									{{ 
+										'REPORT_PAGE.HOURS' | translate 
+									}}
+								</span>
+								<span
+									*ngIf="
+										client.budgetType ===
+										OrganizationContactBudgetTypeEnum.COST
+									"
+									class="ml-3"
+								>
+									{{
+										client.budget
+											| currency
+												: organization?.currency
+											| position
+												: organization?.currencyPosition
+									}}
+								</span>
 							</div>
 							<div class="col text-center day-col">
 								<div class="col text-center day-col">
@@ -107,7 +130,7 @@
 											OrganizationContactBudgetTypeEnum.HOURS
 										"
 										>{{
-											client.reamingBudget
+											(client.reamingBudget * 3600)
 												| durationFormat
 										}}
 										{{
@@ -122,7 +145,7 @@
 										>{{
 											client.reamingBudget
 												| currency
-													: client?.spent.currency
+													: organization?.currency
 												| position
 													: organization?.currencyPosition
 										}}</span
