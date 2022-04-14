@@ -508,7 +508,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async projectBudgetLimit(request: IProjectBudgetLimitReportInput) {
-		const { organizationId } = request;
+		const { organizationId, employeeIds, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
@@ -516,55 +516,84 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
+
+				const { start, end } = getDateFormat(
+					moment.utc(startDate),
+					moment.utc(endDate)
+				);
+				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+					startDate: start,
+					endDate: end
+				});
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
 			})
 		);
 
 		const organizationProjects = await query.getMany();
 		const projects = organizationProjects.map(
-			(project: IOrganizationProject): IProjectBudgetLimitReport => {
+			(organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
+				const { budgetType, budget = 0, timeLogs = [] } = organizationProject;
+
 				let spent = 0;
 				let spentPercentage = 0;
-				const { budgetType, budget = 0 } = project;
+				let reamingBudget = 0;
 
 				if (
-					project.budgetType ==
+					organizationProject.budgetType ==
 					OrganizationProjectBudgetTypeEnum.HOURS
 				) {
-					spent = project.timeLogs.reduce(
-						(iteratee: any, log: any) => {
-							return iteratee + log.duration;
+					spent = timeLogs.reduce(
+						(iteratee: any, log: ITimeLog) => {
+							return iteratee + (log.duration / 3600);
 						},
 						0
 					);
-					spentPercentage = (spent * 100) / budget;
 				} else {
-					spent = project.timeLogs.reduce(
-						(iteratee: any, log: any) => {
+					spent = timeLogs.reduce(
+						(iteratee: any, log: ITimeLog) => {
 							let amount = 0;
 							if (log.employee) {
-								amount = log.duration * 60 * 60 * log.employee.billRateValue;
+								amount = ((log.duration / 3600) * log.employee.billRateValue);
 							}
 							return iteratee + amount;
 						},
 						0
 					);
-					spentPercentage = (spent * 100) / budget;
 				}
-				const reamingBudget = Math.max(budget - spent, 0);
+				
+				spentPercentage = (spent * 100) / budget;
+				reamingBudget = Math.max(budget - spent, 0);
+				
+				delete organizationProject['timeLogs'];
 				return {
-					project,
+					project: organizationProject,
 					budgetType,
 					budget,
-					spent: spent,
-					reamingBudget,
+					spent: parseFloat(spent.toFixed(2)),
+					reamingBudget: parseFloat(reamingBudget.toFixed(2)),
 					spentPercentage: parseFloat(spentPercentage.toFixed(2))
 				};
 			}
@@ -581,14 +610,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"employee"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
 			})
 		);
 		query.andWhere(
@@ -630,7 +664,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					);
 				} else {
 					spent = timeLogs.reduce(
-						(iteratee: any, log: any) => {
+						(iteratee: any, log: ITimeLog) => {
 							let amount = 0;
 							if (log.employee) {
 								amount = ((log.duration / 3600) * log.employee.billRateValue);
@@ -640,6 +674,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						0
 					);
 				}
+
 				spentPercentage = (spent * 100) / budget;
 				reamingBudget = Math.max(budget - spent, 0);
 
