@@ -407,7 +407,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 			this.settingsSmartTable['columns']['paid'] = {
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
-        width: '15%',
+				width: '15%',
 				renderComponent: InvoicePaidComponent,
 				filter: false
 			};
@@ -523,6 +523,11 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 			class: badgeClass
 		};
 	};
+
+	payments() {
+		const { id } = this.selectedInvoice;
+		this.router.navigate([`/pages/accounting/invoices/payments`, id]);
+	}
 
 	ngOnDestroy() {}
 }
