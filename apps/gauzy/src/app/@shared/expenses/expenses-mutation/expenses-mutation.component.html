@@ -1,26 +1,30 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h4 *ngIf="expense; else headerAdd">
-			{{
-				(duplicate ? 'POP_UPS.DUPLICATE' : 'POP_UPS.EDIT_EXPENSE')
-					| translate
-			}}
-		</h4>
-		<ng-template #headerAdd>
-			<h4>{{ 'POP_UPS.ADD_EXPENSE' | translate }}</h4>
-		</ng-template>
-		<span
-			*ngIf="showTooltip"
-			class="help-text"
-			[nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate"
-		>
-			<nb-icon icon="alert-triangle-outline"></nb-icon>
-		</span>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			(click)="close()"
-			icon="close-outline"
-		></nb-icon>
+	<nb-card-header class="d-flex flex-column">
+		<div class="cancel">
+			<i class="fas fa-times" (click)="close()"></i>
+		</div>
+		<div class="d-flex align-items-center">
+			<h4 class="title" *ngIf="expense; else headerAdd">
+				{{
+					(duplicate ? 'POP_UPS.DUPLICATE' : 'POP_UPS.EDIT_EXPENSE')
+						| translate
+				}}
+			</h4>
+			<ng-template #headerAdd>
+				<h4 class="title">{{ 'POP_UPS.ADD_EXPENSE' | translate }}</h4>
+			</ng-template>
+			<span
+				*ngIf="showTooltip"
+				class="help-text"
+				[nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate"
+			>
+				<nb-icon
+					size="small"
+					status="primary"
+					icon="alert-triangle-outline"
+				></nb-icon>
+			</span>
+		</div>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
@@ -30,7 +34,9 @@
 						*ngFor="let expenseType of expenseTypes"
 						[value]="expenseType"
 						(valueChange)="changeExpenseType($event)"
-						>{{ 'EXPENSES_PAGE.MUTATION.' + expenseType | translate }}
+						>{{
+							'EXPENSES_PAGE.MUTATION.' + expenseType | translate
+						}}
 					</nb-radio>
 				</nb-radio-group>
 			</div>
@@ -53,7 +59,10 @@
 						[hidden]="expense && !duplicate"
 						[skipGlobalChange]="true"
 						class="employees"
-						[placeholder]="'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE' | translate"
+						[placeholder]="
+							'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE'
+								| translate
+						"
 						[defaultSelected]="true"
 						(selectionChanged)="onEmployeeChange($event)"
 					></ga-employee-selector>
@@ -88,9 +97,7 @@
 						[placeholder]="'POP_UPS.PICK_DATE' | translate"
 						[nbDatepicker]="valueDatePicker"
 						[status]="
-							isInvalidControl('valueDate')
-								? 'danger'
-								: 'basic'
+							isInvalidControl('valueDate') ? 'danger' : 'basic'
 						"
 					/>
 					<nb-datepicker #valueDatePicker></nb-datepicker>
@@ -112,15 +119,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12">
-					<ga-currency
-						[formControl]="form.get('currency')"
-						(optionChange)="currencyChanged($event)"
-					></ga-currency>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">{{
 							'POP_UPS.AMOUNT' | translate
@@ -134,13 +133,17 @@
 							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
 							[status]="
-							isInvalidControl('amount')
-								? 'danger'
-								: 'basic'
+								isInvalidControl('amount') ? 'danger' : 'basic'
 							"
 							autocomplete="off"
 						/>
 					</div>
+				</div>
+				<div class="col-sm-6">
+					<ga-currency
+						[formControl]="form.get('currency')"
+						(optionChange)="currencyChanged($event)"
+					></ga-currency>
 				</div>
 			</div>
 			<div class="row">
@@ -177,7 +180,9 @@
 				</p>
 			</nb-card>
 			<div *ngIf="organizationContacts.length || projects.length">
-				<h6>{{ 'EXPENSES_PAGE.MUTATION.ASSIGN_TO' | translate }}</h6>
+				<h6 class="title mb-3">
+					{{ 'EXPENSES_PAGE.MUTATION.ASSIGN_TO' | translate }}
+				</h6>
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
@@ -194,7 +199,9 @@
 								appendTo="body"
 								formControlName="organizationContact"
 								(change)="selectOrganizationContact($event)"
-								[placeholder]="'CONTEXT_MENU.CONTACT' | translate"
+								[placeholder]="
+									'CONTEXT_MENU.CONTACT' | translate
+								"
 							>
 								<ng-template
 									ng-option-tmp
@@ -225,7 +232,9 @@
 								appendTo="body"
 								formControlName="project"
 								(change)="selectProject($event)"
-								[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
+								[placeholder]="
+									'CONTEXT_MENU.PROJECT' | translate
+								"
 							>
 								<ng-template
 									ng-option-tmp
@@ -245,7 +254,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-12">
 					<div class="form-group">
 						<ga-tags-color-input
 							[selectedTags]="tags"
@@ -255,7 +264,9 @@
 						</ga-tags-color-input>
 					</div>
 				</div>
-				<div class="col-sm-6">
+			</div>
+			<div class="row">
+				<div class="col-sm-4">
 					<div class="form-group">
 						<label class="label" for="status">
 							{{ 'FORM.LABELS.STATUS' | translate }}
@@ -263,7 +274,10 @@
 						<div>
 							<nb-select
 								id="status"
-								[placeholder]="'FORM.PLACEHOLDERS.SELECT_STATUS' | translate"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.SELECT_STATUS'
+										| translate
+								"
 								fullWidth
 								[disabled]="disableStatuses"
 								formControlName="status"
@@ -281,27 +295,77 @@
 						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row" *ngIf="showNotes">
-				<div class="col">
-					<div class="form-group">
-						<textarea
-							nbInput
-							fullWidth
-							[placeholder]="'POP_UPS.NOTES' | translate"
-							formControlName="notes"
-							[status]="
-							isInvalidControl('notes')
-									? 'danger'
-									: 'basic'
-							"
+				<div class="col-sm-8">
+					<div class="mt-3 text-right">
+						<button
+							nbButton
+							size="tiny"
+							status="basic"
+							outline
+							(click)="showNotesInput()"
+							*ngIf="!showNotes"
+							class="gray mr-3 mt-3"
 						>
-						</textarea>
+							<i class="fas fa-plus mr-1"></i>
+							{{ 'BUTTONS.ADD_NOTE' | translate }}
+						</button>
+						<button
+							nbButton
+							size="tiny"
+							status="basic"
+							outline
+							(click)="includeTaxes()"
+							*ngIf="!showTaxesInput"
+							class="gray mr-3 mt-3"
+						>
+							<i class="fas fa-percentage mr-1"></i>
+							{{
+								'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES'
+									| translate
+							}}
+						</button>
+						<button
+							nbButton
+							size="tiny"
+							status="basic"
+							outline
+							(click)="attachReceipt()"
+							class="gray mr-3 mt-3"
+						>
+							<i class="fas fa-paperclip mr-1"></i>
+							{{
+								'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT'
+									| translate
+							}}
+						</button>
+					</div>
+				</div>
+			</div>
+			<div *ngIf="showNotes">
+				<h6 class="title mb-3">
+					{{ 'POP_UPS.NOTES' | translate }}
+				</h6>
+				<div class="row">
+					<div class="col">
+						<div class="form-group">
+							<textarea
+								nbInput
+								fullWidth
+								[placeholder]="'POP_UPS.NOTES' | translate"
+								formControlName="notes"
+								[status]="
+									isInvalidControl('notes')
+										? 'danger'
+										: 'basic'
+								"
+							>
+							</textarea>
+						</div>
 					</div>
 				</div>
 			</div>
 			<div *ngIf="showTaxesInput">
-				<h6>
+				<h6 class="title mb-3">
 					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
 				</h6>
 				<div class="row">
@@ -355,41 +419,10 @@
 					</div>
 				</div>
 			</div>
-			<div class="mt-3 text-left">
-				<button
-					nbButton
-					size="tiny"
-					status="info"
-					(click)="showNotesInput()"
-					*ngIf="!showNotes"
-					class="mr-3 mb-3"
-				>
-					{{ 'BUTTONS.ADD_NOTE' | translate }}
-				</button>
-				<button
-					nbButton
-					size="tiny"
-					status="info"
-					(click)="includeTaxes()"
-					*ngIf="!showTaxesInput"
-					class="mr-3 mb-3"
-				>
-					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
-				</button>
-				<button
-					nbButton
-					size="tiny"
-					status="info"
-					(click)="attachReceipt()"
-					class="mr-3 mb-3"
-				>
-					{{ 'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT' | translate }}
-				</button>
-			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="close()" status="danger" class="mr-3" nbButton>
+	<nb-card-footer class="text-left">
+		<button (click)="close()" status="basic" outline class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
