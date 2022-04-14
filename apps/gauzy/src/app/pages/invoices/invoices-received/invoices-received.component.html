@@ -101,6 +101,7 @@
 			class="action primary"
 			[disabled]="disableButton"
 			size="small"
+			(click)="edit(selectedItem)"
 		>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
@@ -122,7 +123,7 @@
 			status="basic"
 			class="action secondary mr-2"
 			[disabled]="!selectedItem && disableButton"
-      (click)="payments()"
+			(click)="payments()"
 			size="small"
 		>
 			<nb-icon icon="clipboard-outline"></nb-icon>

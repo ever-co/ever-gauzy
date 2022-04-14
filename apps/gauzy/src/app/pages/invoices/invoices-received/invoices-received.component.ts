@@ -22,10 +22,20 @@ import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../../@core/constants';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { ErrorHandlingService, InvoicesService, Store, ToastrService } from '../../../@core/services';
+import {
+	ErrorHandlingService,
+	InvoicesService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { InvoiceEstimateTotalValueComponent } from '../table-components/invoice-total-value.component';
 import { InputFilterComponent } from '../../../@shared/table-filters/input-filter.component';
-import { ContactLinksComponent, DateViewComponent, NotesWithTagsComponent, TagsOnlyComponent } from '../../../@shared/table-components';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	NotesWithTagsComponent,
+	TagsOnlyComponent
+} from '../../../@shared/table-components';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { TagsColorFilterComponent } from '../../../@shared/table-filters';
 
@@ -35,9 +45,10 @@ import { TagsColorFilterComponent } from '../../../@shared/table-filters';
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class InvoicesReceivedComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	loading: boolean = false;
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
@@ -527,6 +538,26 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 	payments() {
 		const { id } = this.selectedInvoice;
 		this.router.navigate([`/pages/accounting/invoices/payments`, id]);
+	}
+
+	edit(selectedItem?: IInvoice) {
+		this.invoicesService.changeValue(false);
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		const { id } = this.selectedInvoice;
+		if (this.isEstimate) {
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/edit`,
+				id
+			]);
+		} else {
+			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
+		}
 	}
 
 	ngOnDestroy() {}
