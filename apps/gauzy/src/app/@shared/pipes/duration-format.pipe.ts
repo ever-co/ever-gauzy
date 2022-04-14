@@ -4,7 +4,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class DurationFormatPipe implements PipeTransform {
 	transform(seconds: number): any {
-		let duration = seconds;
+		let duration = (seconds < 0) ? 0 : seconds;
 		let hours: any = parseInt(duration / 3600 + '', 10);
 		duration = duration % 3600;
 
@@ -22,9 +22,6 @@ export class DurationFormatPipe implements PipeTransform {
 		if (hours < 10) {
 			hours = `0${hours}`;
 		}
-
 		return `${hours}:${min}:${sec}`;
-
-		//return moment.utc(seconds * 1000).format('HH:mm:ss');
 	}
 }
