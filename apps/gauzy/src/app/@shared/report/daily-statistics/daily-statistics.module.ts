@@ -26,7 +26,7 @@ import { CounterPointModule } from '../../counter-point/counter-point.module';
 		FiltersModule,
 		NbSelectModule,
 		FormsModule,
-    CounterPointModule
+        CounterPointModule,
 	]
 })
 export class DailyStatisticsModule {}

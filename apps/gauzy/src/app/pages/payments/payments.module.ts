@@ -38,7 +38,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		HeaderTitleModule,
 		PaginationModule,
 		TableFiltersModule,
-    GauzyButtonActionModule
+    	GauzyButtonActionModule
 	],
 	providers: [
 		PaymentService,

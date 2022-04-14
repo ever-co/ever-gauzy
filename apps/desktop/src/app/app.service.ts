@@ -326,14 +326,14 @@ export class AppService {
 			.toPromise();
 	}
 
-	toggleApi(values) {
+	stopTimer(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`
 		});
 
 		return this.http
 			.post(
-				`${values.apiHost}/api/timesheet/timer/toggle`,
+				`${values.apiHost}/api/timesheet/timer/stop`,
 				{
 					description: values.note,
 					isBillable: true,

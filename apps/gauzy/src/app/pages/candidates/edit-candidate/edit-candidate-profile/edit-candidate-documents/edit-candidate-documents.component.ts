@@ -1,54 +1,76 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { takeUntil } from 'rxjs/operators';
-import { CandidateDocumentsService } from 'apps/gauzy/src/app/@core/services/candidate-documents.service';
-import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-cv/candidate-cv.component';
+import { tap } from 'rxjs/operators';
 import {
 	ICandidateDocument,
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'ng2-smart-table';
-import { DocumentUrlTableComponent } from 'apps/gauzy/src/app/@shared/table-components/document-url/document-url.component';
-import { DocumentDateTableComponent } from 'apps/gauzy/src/app/@shared/table-components/document-date/document-date.component';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
+import { ComponentEnum } from './../../../../../@core/constants';
+import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';
+import {
+	CandidateDocumentsService,
+	CandidateStore,
+	Store,
+	ToastrService
+} from './../../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-documents',
 	templateUrl: './edit-candidate-documents.component.html',
 	styleUrls: ['./edit-candidate-documents.component.scss']
 })
-export class EditCandidateDocumentsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class EditCandidateDocumentsComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+		
 	@ViewChild('candidateCv')
 	candidateCv: CandidateCvComponent;
-	private _ngDestroy$ = new Subject<void>();
+
 	documentId = null;
 	showAddCard: boolean;
 	documentList: ICandidateDocument[] = [];
 	candidateId: string;
-	form: FormGroup;
 	formCv: FormGroup;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	documentUrl = '';
 	selectedOrganization: IOrganization;
+
+	/*
+	* Candidate Document Mutation Form
+	*/
+	public form: FormGroup = EditCandidateDocumentsComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		const form = fb.group({
+			documents: fb.array([])
+		});
+		const documentForm = form.controls.documents as FormArray;
+		documentForm.push(
+			fb.group({
+				name: ['', Validators.required],
+				documentUrl: ['', Validators.required]
+			})
+		);
+		return form;
+	}
+
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateDocumentsService: CandidateDocumentsService,
 		private readonly toastrService: ToastrService,
-		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore,
-		private store: Store
+		public readonly translateService: TranslateService,
+		private readonly candidateStore: CandidateStore,
+		private readonly store: Store
 	) {
 		super(translateService);
 		this.setView();
@@ -56,40 +78,36 @@ export class EditCandidateDocumentsComponent
 
 	ngOnInit() {
 		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				untilDestroyed(this)
+			)
 			.subscribe((candidate) => {
 				if (candidate) {
 					this.selectedOrganization = this.store.selectedOrganization;
 					this.candidateId = candidate.id;
-					this._initializeForm();
 					this.loadDocuments();
 					this.loadSmartTable();
-					this._applyTranslationOnSmartTable();
 				}
 			});
 	}
-	private async _initializeForm() {
-		this.form = new FormGroup({
-			documents: this.fb.array([])
-		});
-		const documentForm = this.form.controls.documents as FormArray;
-		documentForm.push(
-			this.fb.group({
-				name: ['', Validators.required],
-				documentUrl: ['', Validators.required]
-			})
-		);
+
+	ngAfterViewInit() {
+		this._applyTranslationOnSmartTable();
 	}
+	
 	setView() {
 		this.viewComponentName = ComponentEnum.DOCUMENTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
-	async loadSmartTable() {
+
+	loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -98,9 +116,7 @@ export class EditCandidateDocumentsComponent
 					type: 'string'
 				},
 				documentUrl: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.DOCUMENT_URL'
-					),
+					title: this.getTranslation('ORGANIZATIONS_PAGE.DOCUMENT_URL'),
 					type: 'custom',
 					renderComponent: DocumentUrlTableComponent
 				},
@@ -112,16 +128,24 @@ export class EditCandidateDocumentsComponent
 			}
 		};
 	}
+
 	private async loadDocuments() {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		if (!this.selectedOrganization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+
 		const { items = [] } = await this.candidateDocumentsService.getAll({
 			candidateId: this.candidateId,
 			organizationId,
 			tenantId
 		});
+		
 		this.documentList = items;
 		this.smartTableSource.load(items);
 	}
+
 	showCard() {
 		this.showAddCard = !this.showAddCard;
 		this.documents.reset();
@@ -165,9 +189,16 @@ export class EditCandidateDocumentsComponent
 			}
 		}
 	}
+
 	async updateDocument(formValue: ICandidateDocument) {
 		try {
-			const { id: organizationId, tenantId } = this.selectedOrganization;
+			if (!this.selectedOrganization) {
+				return;
+			}
+
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.selectedOrganization;
+
 			await this.candidateDocumentsService.update(this.documentId, {
 				...formValue,
 				organizationId,
@@ -188,9 +219,16 @@ export class EditCandidateDocumentsComponent
 		this.documentId = null;
 		this.documentUrl = '';
 	}
+
 	async createDocument(formValue: ICandidateDocument) {
 		try {
-			const { id: organizationId, tenantId } = this.selectedOrganization;
+			if (!this.selectedOrganization) {
+				return;
+			}
+
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.selectedOrganization;
+
 			await this.candidateDocumentsService.create({
 				...formValue,
 				candidateId: this.candidateId,
@@ -236,9 +274,6 @@ export class EditCandidateDocumentsComponent
 		);
 	}
 
-	private toastrSuccess(text: string) {
-		this.toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`);
-	}
 	private toastrInvalid() {
 		this.toastrService.danger(
 			'NOTES.CANDIDATE.INVALID_FORM',
@@ -246,17 +281,18 @@ export class EditCandidateDocumentsComponent
 			'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_REQUIRED'
 		);
 	}
-	_applyTranslationOnSmartTable() {
+
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this.loadSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+
+	ngOnDestroy() {}
+
 	/*
 	 * Getter for candidate documents form controls array
 	 */

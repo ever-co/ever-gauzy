@@ -27,7 +27,6 @@ export class EditEmployeeComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 
 	selectedEmployee: IEmployee;
-	selectedDate: Date;
 	selectedEmployeeFromHeader: ISelectedEmployee;
 
 	constructor(
@@ -42,13 +41,6 @@ export class EditEmployeeComponent
 	}
 
 	ngOnInit() {
-		this.store.selectedDate$
-			.pipe(
-				filter((date) => !!date),
-				tap((date) => this.selectedDate = date),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
 				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),

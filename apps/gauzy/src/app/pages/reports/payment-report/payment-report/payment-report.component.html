@@ -1,28 +1,35 @@
-<nb-card class="card-scroll">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header>
 		<h4>
 			<ngx-header-title>
 				{{ 'REPORT_PAGE.PAYMENT_REPORT' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title
-			[start]="logRequest.startDate"
-			[end]="logRequest.endDate"
-		></ngx-date-range-title>
+		<ng-container
+			*ngIf="logRequest?.startDate && logRequest?.endDate"
+		>
+			<ngx-date-range-title
+				[start]="logRequest?.startDate"
+				[end]="logRequest?.endDate"
+				[format]="'dddd, LL'"
+			></ngx-date-range-title>
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
-      <ngx-gauzy-range-picker
-        [filters]="logRequest"
-        [arrows]="true"
-        [hasEmployeeFilter]="false"
+			<ngx-gauzy-filters
+				[filters]="logRequest"
 				[hasActivityLevelFilter]="false"
 				[hasSourceFilter]="false"
 				[hasLogTypeFilter]="false"
-				[hasProjectFilter]="false"
 				[saveFilters]="false"
-        (onDateChange)="filtersChange($event)"
-      ></ngx-gauzy-range-picker>
+				(filtersChange)="filtersChange($event)"
+			></ngx-gauzy-filters>
 		</div>
 		<div class="daily-time-report">
 			<nb-card>
@@ -31,6 +38,8 @@
 				</nb-card-body>
 			</nb-card>
 		</div>
-		<ga-payment-report-grid [filters]="filters"></ga-payment-report-grid>
+		<ga-payment-report-grid 
+			[filters]="filters"
+		></ga-payment-report-grid>
 	</nb-card-body>
 </nb-card>

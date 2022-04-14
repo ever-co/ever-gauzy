@@ -20,6 +20,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	CrudActionEnum,
+	IDateRangePicker,
 	IOrganization,
 	IUser,
 	PermissionsEnum,
@@ -58,10 +59,9 @@ import { ChangeDetectorRef } from '@angular/core';
 	styleUrls: ['./header.component.scss'],
 	templateUrl: './header.component.html'
 })
-export class HeaderComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit
-{
+export class HeaderComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy, AfterViewInit {
+
 	hasPermissionE = false;
 	hasPermissionI = false;
 	hasPermissionP = false;
@@ -101,13 +101,13 @@ export class HeaderComponent
 	};
 	timerDuration: string;
 	organization: IOrganization;
-	selectedDate: Date;
+	selectedDateRange: IDateRangePicker;
 
 	subject$: Subject<any> = new Subject();
 	selectorsVisibility: ISelectorVisibility;
 
-  isCollapse: boolean = true;
-  @Input() expanded: boolean = true;
+	isCollapse: boolean = true;
+	@Input() expanded: boolean = true;
 
 	constructor(
 		private readonly sidebarService: NbSidebarService,
@@ -213,15 +213,15 @@ export class HeaderComponent
 				}
 			});
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDate$ = this.store.selectedDate$;
-		combineLatest([storeOrganization$, selectedDate$])
+		const selectedDateRange$ = this.store.selectedDateRange$;
+		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
-				filter(([organization, date]) => !!organization && !!date),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				untilDestroyed(this)
 			)
-			.subscribe(([organization, date]) => {
+			.subscribe(([organization, dateRange]) => {
 				this.organization = organization;
-				this.selectedDate = date;
+				this.selectedDateRange = dateRange;
 				this.subject$.next(true);
 			});
 		this.themeService
@@ -265,7 +265,7 @@ export class HeaderComponent
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		this.employeesService
-			.getWorkingCount(organizationId, tenantId, this.selectedDate, true)
+			.getWorkingCount(organizationId, tenantId, this.selectedDateRange, true)
 			.then(async ({ total: employeeCount }) => {
 				if (
 					this.store.hasPermission(

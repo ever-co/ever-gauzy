@@ -4,15 +4,17 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { IGetPaymentInput, IPaymentReportChartData, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
+import { IGetPaymentInput, IPaymentReportChartData, ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pluck } from 'underscore';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { isEmpty } from '@gauzy/common-angular';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { PaymentService, Store } from './../../../../@core/services';
+import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,9 +22,9 @@ import { PaymentService, Store } from './../../../../@core/services';
 	templateUrl: './payment-report.component.html',
 	styleUrls: ['./payment-report.component.scss']
 })
-export class PaymentReportComponent
-	extends ReportBaseComponent
+export class PaymentReportComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
+		
 	logRequest: IGetPaymentInput = this.request;
 	loading: boolean;
 	chartData: IChartData;
@@ -42,7 +44,6 @@ export class PaymentReportComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this.updateChart()),
 				untilDestroyed(this)
 			)
@@ -53,20 +54,25 @@ export class PaymentReportComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
+		this.filters = Object.assign(
+			{},
+			this.logRequest,
+			getAdjustDateRangeFutureAllowed(this.logRequest)
+		);
 		this.subject$.next(true);
 	}
 
 	updateChart() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 		const request: IGetPaymentInput = {
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		};
+		this.loading = true;
 		this.paymentService
 			.getReportChartData(request)
 			.then((logs: IPaymentReportChartData[]) => {

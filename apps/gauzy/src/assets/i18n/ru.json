@@ -117,7 +117,8 @@
 		"VIEW_ALL": "Посмотреть все",
 		"VIEW_REPORT": "Просмотр отчета",
 		"TIME_TRACKING_ENABLE": "Включить отслеживание времени",
-		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени"
+		"TIME_TRACKING_DISABLE": "Отключить отслеживание времени",
+		"PRINT": "Печать"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -690,6 +691,7 @@
 		"ROLES": "Роли и Разрешения",
 		"DANGER_ZONE": "Опасная зона",
 		"FILE_STORAGE": "Файловое хранилище",
+		"INVITE_PEOPLE": "Пригласить людей",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Импорт/Экспорт",
 			"IMPORT_EXPORT_DATA": "Импорт / Экспорт данных",
@@ -958,9 +960,9 @@
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Участники Раболи",
 		"MANUAL_TIME_EDIT_REPORT": "Отчет о времени вручную",
-		"GROUP_BY": "Группировать по",
+		"GROUP_BY": "Группа",
 		"DATE": "Дата",
-		"TO_DO": "ДО",
+		"TO_DO": "Задача",
 		"TIME": "Время",
 		"PROJECT": "Проект",
 		"CLIENT": "Kлиент",
@@ -980,6 +982,7 @@
 		"CHANGED_AT": "Изменено в",
 		"DURATION": "Продолжительность",
 		"NO_TASK": "Нет задач",
+		"FROM": "От",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Еженедельный отчет о времени и активности",
 		"TIME_AND_ACTIVITY_REPORT": "Отчет о времени и деятельности",
 		"NO_CLIENT": "Нет клиента",
@@ -3409,6 +3412,7 @@
 		"TODAY": "Сегодня",
 		"DAILY": "Ежедневно",
 		"WEEKLY": "Еженедельно",
+		"MONTHLY": "Ежемесячно",
 		"CALENDAR": "Календарь",
 		"APPROVALS": "Утверждения",
 		"APPROVE_SUCCESS": "Сроки успешно утверждены",
@@ -3462,9 +3466,13 @@
 		"TIME_TRACKING": "Время отслеживания",
 		"MEMBERS_WORKED": "Пользователи работали",
 		"PROJECTS_WORKED": "Выполнено проектов",
-		"ACTIVITY": "Активность за период",
-		"WEEKLY_ACTIVITY": "Еженедельная активность",
+		"ACTIVITY_OVER_PERIOD": "Активность за период",
+		"ACTIVITY_FOR_DAY": "Активность на день",
+		"ACTIVITY_FOR_WEEK": "Еженедельная активность",
 		"WORKED_THIS_WEEK": "Работал на этой неделе",
+		"WORKED_OVER_PERIOD": "Работал за период",
+		"WORKED_FOR_DAY": "Работал на день",
+		"WORKED_FOR_WEEK": "Работал на неделю",
 		"TODAY_ACTIVITY": "Текущая активность",
 		"WORKED_TODAY": "Работал сегодня",
 		"RECENT_ACTIVITIES": "Недавние действия",
@@ -3493,7 +3501,6 @@
 		"MEMBER_INFO": "Информация о участнике",
 		"THIS_WEEK": "Эта неделя",
 		"OVER_PERIOD": "За период",
-		"WORKED_OVER_PERIOD": "Работал за период",
 		"NO_MEMBER_ACTIVITY_DAY": "Нет активности участников на день",
 		"NO_MEMBER_ACTIVITY_WEEK": "Нет активности членов за неделю",
 		"NO_MEMBER_ACTIVITY_PERIOD": "Нет активности членов за период",
@@ -3815,5 +3822,12 @@
 		"HELP": "Помогите",
 		"SIGN_OUT": "Выйти",
 		"PROFILE": "Профиль"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "Войти в другую рабочую область",
+			"CREATE_NEW_WORKSPACE": "Создать новую рабочую область",
+			"FIND_WORKSPACE": "Найти рабочую область"
+		}
 	}
 }

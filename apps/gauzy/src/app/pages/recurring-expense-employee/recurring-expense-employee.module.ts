@@ -5,7 +5,8 @@ import {
 	NbButtonModule,
 	NbInputModule,
 	NbIconModule,
-	NbDialogModule
+	NbDialogModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { RecurringExpensesEmployeeRoutingModule } from './recurring-expense-employee-routing.module';
@@ -24,6 +25,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
+		NbSpinnerModule,
 		RecurringExpenseBlockModule,
 		NbDialogModule.forChild(),
 		TranslateModule,

@@ -1,6 +1,6 @@
 {
 	"BUTTONS": {
-    "PAY":"Pay",
+		"PAY": "Pay",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
@@ -58,7 +58,7 @@
 		"SELECT": "Select",
 		"EMAIL": "Email",
 		"CONVERT_TO_INVOICE": "Convert to invoice",
-    	"TO_INVOICE":"To invoice",
+		"TO_INVOICE": "To invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
@@ -106,7 +106,7 @@
 		"GENERATE": "Generate",
 		"SEND_RECEIPT": "Send Receipt",
 		"ADD_COMMENT": "Add Comment",
-		"CONTINUE" : "Continue",
+		"CONTINUE": "Continue",
 		"SUPER_ADMIN_DEMO": "Super Admin Demo",
 		"ADMIN_DEMO": "Admin Demo",
 		"EMPLOYEE_DEMO": "Employee Demo",
@@ -115,9 +115,10 @@
 		"DELETE_EXISTING_ROLE": "Delete {{ name }} Role",
 		"RESTORE": "Restore",
 		"VIEW_ALL": "View All",
-    	"VIEW_REPORT": "View Report",
+		"VIEW_REPORT": "View Report",
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
-		"TIME_TRACKING_DISABLE": "Disable Time Tracking"
+		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
+    "PRINT": "Print"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -573,7 +574,7 @@
 			"WAS": "was",
 			"ENABLED": "enabled",
 			"DISABLED": "disabled",
-			"WAIT_UNTIL_RELOAD" : "Please wait till application reloads"
+			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
 		}
 	},
 	"POP_UPS": {
@@ -690,6 +691,7 @@
 		"ROLES": "Roles & Permissions",
 		"DANGER_ZONE": "Danger Zone",
 		"FILE_STORAGE": "File Storage",
+		"INVITE_PEOPLE": "Invite People",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT_EXPORT_DATA": "Import / Export Data",
@@ -795,7 +797,7 @@
 			"EMPLOYEE_PROPOSAL_TEMPLATE": "Employee Proposal Template",
 			"EMPLOYEE_RECURRING_EXPENSE": "Employee Recurring Expense",
 			"EMPLOYEE_SETTING": "Employee Setting",
-			"EMPLOYEE_UPWORK_JOB_SEARCH_CRITERION":"Employee Upwork Job Search Criterion",
+			"EMPLOYEE_UPWORK_JOB_SEARCH_CRITERION": "Employee Upwork Job Search Criterion",
 			"INTEGRATION_ENTITY_SETTING": "Integration Entity Setting",
 			"INTEGRATION_ENTITY_SETTING_TIED_ENTITY": "Integration Entity Setting Tied Entity",
 			"INTEGRATION_MAP": "Integration Map",
@@ -934,9 +936,9 @@
 		"COSMIC": "Cosmic",
 		"CORPORATE": "Corporate",
 		"MATERIAL_LIGHT_THEME": "Material Light",
-		"MATERIAL_DARK_THEME":"Material Dark",
-		"GAUZY_LIGHT":"Gauzy Light",
-		"GAUZY_DARK":"Gauzy Dark",
+		"MATERIAL_DARK_THEME": "Material Dark",
+		"GAUZY_LIGHT": "Gauzy Light",
+		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Language",
 		"ENGLISH": "English",
 		"BULGARIAN": "Bulgarian",
@@ -949,7 +951,7 @@
 		"TABLE": "Table",
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View",
-    "QUICK_SETTINGS":"Quick Settings"
+		"QUICK_SETTINGS": "Quick Settings"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
@@ -958,9 +960,9 @@
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
 		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
-		"GROUP_BY": "Group By",
+		"GROUP_BY": "Group",
 		"DATE": "Date",
-		"TO_DO": "TO-DO",
+		"TO_DO": "To Do",
 		"TIME": "Time",
 		"PROJECT": "Project",
 		"CLIENT": "Client",
@@ -980,6 +982,7 @@
 		"CHANGED_AT": "Changed at",
 		"DURATION": "Duration",
 		"NO_TASK": "No Task",
+		"FROM": "From",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
 		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report",
 		"NO_CLIENT": "No Client",
@@ -2231,8 +2234,7 @@
 		"SELECTED": "Selected",
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "Main",
-		"INVENTORY":"Inventory"
-
+		"INVENTORY": "Inventory"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -2453,10 +2455,10 @@
 		}
 	},
 	"INVOICES_PAGE": {
-    "SENDER":"Sender",
-		"BROWSE":"Browse",
-		"COMMENT":"Comment",
-		"COMMENTS":"Comments",
+		"SENDER": "Sender",
+		"BROWSE": "Browse",
+		"COMMENT": "Comment",
+		"COMMENTS": "Comments",
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
@@ -2484,7 +2486,7 @@
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
 		"INVOICES_SELECT_CURRENCY": "Currency",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
-    	"INVOICES_SELECT_DISCOUNT": "Discount",
+		"INVOICES_SELECT_DISCOUNT": "Discount",
 		"INVOICES_SELECT_PAID": "Paid",
 		"INVOICES_TAXES": "Taxes",
 		"INVOICES_SELECT_TERMS": "Terms",
@@ -2783,7 +2785,7 @@
 		"CANDIDATE": "Candidate",
 		"MANAGE_ORGANIZATION": "Manage Organization",
 		"PRODUCT_INVENTORY": "Product Inventory",
-		"PROJECT":"Project",
+		"PROJECT": "Project",
 		"ORGANIZATION_TEAM": "Organization Team",
 		"ORGANIZATION_DOCUMENT": "Organization Document",
 		"LEAD_CUSTOMER_CLIENT": "Lead, Customer & Client",
@@ -2957,7 +2959,7 @@
 		"PRODUCT_INVENTORY": {
 			"": ""
 		},
-		"PROJECT":{
+		"PROJECT": {
 			"": ""
 		},
 		"ORGANIZATION_TEAM": {
@@ -3410,6 +3412,7 @@
 		"TODAY": "Today",
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
+		"MONTHLY": "Monthly",
 		"CALENDAR": "Calendar",
 		"APPROVALS": "Approvals",
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
@@ -3463,9 +3466,13 @@
 		"TIME_TRACKING": "Time Tracking",
 		"MEMBERS_WORKED": "Members worked",
 		"PROJECTS_WORKED": "Projects worked",
-		"ACTIVITY": "Activity over the period",
-		"WEEKLY_ACTIVITY": "Weekly Activity",
+		"ACTIVITY_OVER_PERIOD": "Activity over the period",
+		"ACTIVITY_FOR_DAY": "Activity for the day",
+		"ACTIVITY_FOR_WEEK": "Weekly Activity",
 		"WORKED_THIS_WEEK": "Worked this week",
+		"WORKED_OVER_PERIOD": "Worked over the period",
+		"WORKED_FOR_DAY": "Worked for the day",
+		"WORKED_FOR_WEEK": "Worked for the week",
 		"TODAY_ACTIVITY": "Today's Activity",
 		"WORKED_TODAY": "Worked today",
 		"RECENT_ACTIVITIES": "Recent Activities",
@@ -3494,7 +3501,6 @@
 		"MEMBER_INFO": "Member info",
 		"THIS_WEEK": "This week",
 		"OVER_PERIOD": "Over the period",
-		"WORKED_OVER_PERIOD": "Worked over the period",
 		"NO_MEMBER_ACTIVITY_DAY": "No member activity for the day",
 		"NO_MEMBER_ACTIVITY_WEEK": "No member activity for the week",
 		"NO_MEMBER_ACTIVITY_PERIOD": "No member activity for over the period",
@@ -3515,7 +3521,7 @@
 			"TIME_LOG": "TimeLog"
 		},
 		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app",
-    	"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?"
+		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?"
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
@@ -3798,23 +3804,30 @@
 			"SUB_TITLE": "Please select account type below."
 		}
 	},
-  "PAGINATION":{
-    "ITEMS":"Items"
-  },
-  "USER_MENU":{
-    "STATUS":"Status",
-    "AVAILABLE":"Available",
-    "UNAVAILABLE":"Unavailable",
-    "PAUSE_NOTIFICATIONS":"Pause notifications",
-    "FOR_1_HOUR":"For 1hour",
-    "FOR_2_HOURS":"For 2hours",
-    "UNTIL_TOMORROW":"Until tomorrow",
-    "CUSTOM":"Custom",
-    "SET_AS_NOTIFICATION_SCHEDULE":"Set as notification schedule",
-    "SET_YOURSELF_AS_AWAY":"Set yourself as away",
-    "HOTKEYS":"Hotkeys",
-    "HELP":"Help",
-    "SIGN_OUT":"Sign Out",
-    "PROFILE":"Profile"
-  }
+	"PAGINATION":{
+		"ITEMS":"Items"
+	},
+	"USER_MENU": {
+		"STATUS": "Status",
+		"AVAILABLE": "Available",
+		"UNAVAILABLE": "Unavailable",
+		"PAUSE_NOTIFICATIONS": "Pause notifications",
+		"FOR_1_HOUR": "For 1hour",
+		"FOR_2_HOURS": "For 2hours",
+		"UNTIL_TOMORROW": "Until tomorrow",
+		"CUSTOM": "Custom",
+		"SET_AS_NOTIFICATION_SCHEDULE": "Set as notification schedule",
+		"SET_YOURSELF_AS_AWAY": "Set yourself as away",
+		"HOTKEYS": "Hotkeys",
+		"HELP": "Help",
+		"SIGN_OUT": "Sign Out",
+		"PROFILE": "Profile"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
+			"CREATE_NEW_WORKSPACE": "Create a new workspace",
+			"FIND_WORKSPACE": "Find workspace"
+		}
+	}
 }

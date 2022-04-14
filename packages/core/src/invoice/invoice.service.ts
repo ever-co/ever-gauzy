@@ -323,7 +323,16 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					id: In(where.toContact)
 				}
 			}
-			if (where.invoiceDate) {
+
+			if (where.invoiceDate && typeof where.invoiceDate === 'object') {
+				const { startDate, endDate } = where.invoiceDate;
+				const { start, end } = getDateRangeFormat(
+					new Date(startDate), 
+					new Date(endDate),
+					true
+				);
+				filter.where.invoiceDate = Between(start, end);
+			} else if (where.invoiceDate) {
 				const { start, end } = getDateRangeFormat(
 					new Date(where.invoiceDate), 
 					new Date(where.invoiceDate),
@@ -331,6 +340,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				);
 				filter.where.invoiceDate = Between(start, end);
 			}
+
 			if (where.dueDate) {
 				const { start, end } = getDateRangeFormat(
 					new Date(where.dueDate), 

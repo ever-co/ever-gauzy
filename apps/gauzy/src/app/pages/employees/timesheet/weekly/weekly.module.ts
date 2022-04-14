@@ -1,10 +1,7 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WeeklyRoutingModule } from './weekly-routing.module';
-import { WeeklyComponent } from './weekly/weekly.component';
-import { TranslateModule } from '@ngx-translate/core';
-import { ShareModule } from 'apps/gauzy/src/app/share/share.module';
+import { FormsModule } from '@angular/forms';
 import {
 	NbDatepickerModule,
 	NbIconModule,
@@ -13,12 +10,16 @@ import {
 	NbSpinnerModule,
 	NbPopoverModule
 } from '@nebular/theme';
-import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
-import { FormsModule } from '@angular/forms';
-import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
-import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
-import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
-import { ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.module';
+import { TranslateModule } from '@ngx-translate/core';
+
+import { WeeklyRoutingModule } from './weekly-routing.module';
+import { WeeklyComponent } from './weekly/weekly.component';
+import { ShareModule } from './../../../../share/share.module';
+
+import { EmployeeSelectorsModule } from './../../../../@theme/components/header/selectors/employee/employee.module';
+import { SharedModule } from './../../../../@shared/shared.module';
+import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { EditTimeLogModalModule, ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet';
 
 @NgModule({
 	declarations: [WeeklyComponent],
@@ -33,7 +34,7 @@ import { ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet/view-tim
 		FormsModule,
 		NbButtonModule,
 		SharedModule,
-		FiltersModule,
+		GauzyFiltersModule,
 		EditTimeLogModalModule,
 		NbDialogModule,
 		NbSpinnerModule,

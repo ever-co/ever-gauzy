@@ -135,6 +135,8 @@ export class TimeTrackerComponent implements AfterViewInit {
 	sourceData: LocalDataSource;
 	isTrackingEnabled = true;
 
+	isAddTask = false;
+
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -167,9 +169,6 @@ export class TimeTrackerComponent implements AfterViewInit {
 				this.getUserInfo(arg, false);
 
 				(async () => {
-					if (!this.start) {
-						await this.removeInvalidTimeLog(arg);
-					}
 					if (arg.timeSlotId) {
 						this.getLastTimeSlotImage(arg);
 					}
@@ -319,6 +318,13 @@ export class TimeTrackerComponent implements AfterViewInit {
 			return;
 		}
 
+		if (!this.checkOnlineStatus()) {
+			this.toastrService.show(`Your connection lost`, `Warning`, {
+				status: 'danger'
+			});
+			return;
+		}
+
 		if (this.userData.employee && !this.userData.employee.isTrackingEnabled) {
 			return;
 		}
@@ -326,16 +332,6 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 		if (this.validationField()) {
 			if (val) {
-				if (this.userPermission.includes('ALLOW_DELETE_TIME')) {
-					await this.removeInvalidTimeLog({
-						token: this.token,
-						organizationId: this.userOrganization.id,
-						tenantId: this.userData.tenantId,
-						employeeId: this.userData.employeeId,
-						apiHost: this.apiHost
-					});
-				}
-
 				const paramsTimeStart = {
 					token: this.token,
 					note: this.note,
@@ -360,7 +356,13 @@ export class TimeTrackerComponent implements AfterViewInit {
 					.catch((error) => {
 						this.loading = false;
 						this._cdr.detectChanges();
-						this.toastrService.show(`${error.message}`, `Warning`, {
+						let messageError = error.message;
+						if (messageError.includes('Http failure response')) {
+							messageError = `Can't connect to api server`;
+						} else {
+							messageError = 'Internal server error';
+						}
+						this.toastrService.show(messageError, `Warning`, {
 							status: 'danger'
 						});
 						log.info(
@@ -486,6 +488,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	async selectClient(item) {
 		this.organizationContactId = item;
+		this.argFromMain.organizationContactId = item;
 		this.electronService.ipcRenderer.send('update_project_on', {
 			organizationContactId: this.organizationContactId
 		});
@@ -572,6 +575,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 				this.iconAw = 'checkmark-square-outline';
 				this.awCheck = true;
 				this.statusIcon = 'success';
+				this.electronService.ipcRenderer.send('aw_status', true);
 				this._cdr.detectChanges();
 			})
 			.catch((e) => {
@@ -579,6 +583,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 					this.iconAw = 'checkmark-square-outline';
 					this.awCheck = true;
 					this.statusIcon = 'success';
+					this.electronService.ipcRenderer.send('aw_status', true);
 					this._cdr.detectChanges();
 					this.loadingAw = false;
 				} else {
@@ -586,6 +591,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 					this.iconAw = 'close-square-outline';
 					this.awCheck = true;
 					this.statusIcon = 'danger';
+					this.electronService.ipcRenderer.send('aw_status', false);
 					this._cdr.detectChanges();
 				}
 			});
@@ -675,7 +681,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 			}
 			case 'minutes': {
 				const minteBackTime = val % 60;
-				return val.toString().length > 1
+				return minteBackTime.toString().length > 1
 					? `${minteBackTime}`
 					: `0${minteBackTime}`;
 			}
@@ -810,35 +816,16 @@ export class TimeTrackerComponent implements AfterViewInit {
 			});
 	}
 
-	removeInvalidTimeLog(arg) {
-		return this.timeTrackerService
-			.getInvalidTimeLog(arg)
-			.then(async (res: any) => {
-				if (res && res.length > 0) {
-					this.invalidTimeLog = res.filter((x) => !x.stoppedAt);
-					console.log('Invalid Timelog:', this.invalidTimeLog);
-					if (this.invalidTimeLog && this.invalidTimeLog.length > 0) {
-						const timeLogIds = this.invalidTimeLog.map(
-							(timeLog: any) => timeLog.id
-						);
-						try {
-							await this.timeTrackerService.deleteInvalidTimeLog({
-								...arg,
-								timeLogIds: timeLogIds
-							});
-						} catch (error) {
-							await this.timeTrackerService.toggleApiStop({
-								...arg,
-								manualTimeSlot: true
-							});
-						}
-					}
-				}
-				return res;
-			}).catch((err) => {
-				console.log('error on request to api get timelog', err);
-				return false;
-			});
+	async removeInvalidTimeLog(arg) {
+		try {
+			await this.getTimerStatus(arg);
+			console.log('this is time status', this.timerStatus);
+			if (this.timerStatus.running) {
+				await this.timeTrackerService.toggleApiStop(arg);
+			}
+		} catch (error) {
+			console.log('error get last status timer');
+		}
 	}
 
 	openSetting() {
@@ -1146,10 +1133,39 @@ export class TimeTrackerComponent implements AfterViewInit {
 		  };
 		  reader.readAsDataURL(blob);
 		})
-	  }
+	}
 
+	refreshTimer() {
+		this.electronService.ipcRenderer.send('refresh-timer');
+	}
 
-	  refreshTimer() {
-		  this.electronService.ipcRenderer.send('refresh-timer');
-	  }
+	checkOnlineStatus() {
+		if (navigator.onLine) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	addTask() {
+		this.isAddTask = true;
+	}
+
+	cloasAddTask(e) {
+		this.isAddTask = false;
+		this.electronService.ipcRenderer.send('refresh-timer');
+	}
+
+	callbackNewTask(e) {
+		if (e.isSuccess) {
+			this.toastrService.show(e.message, `Success`, {
+				status: 'success'
+			});
+			this.electronService.ipcRenderer.send('refresh-timer');
+		} else {
+			this.toastrService.show(e.message, `Warning`, {
+				status: 'danger'
+			});
+		}
+	}
 }

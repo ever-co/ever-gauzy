@@ -33,9 +33,8 @@ export class PaymentDTO extends TenantOrganizationBaseDTO {
     readonly note: string;
 
     @ApiProperty({ type: () => String, enum: PaymentMethodEnum, readOnly: true })
+    @IsOptional()
     @IsEnum(PaymentMethodEnum)
-    @IsNotEmpty()
-    @IsString()
     readonly paymentMethod: PaymentMethodEnum;
 
     @ApiProperty({ type: () => String, readOnly: true })

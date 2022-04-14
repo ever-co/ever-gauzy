@@ -20,12 +20,12 @@ import {
 	IUser,
 	ISelectedEmployee,
 	IEmployee,
-	ISelectedDateRange
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
-import { distinctUntilChange, progressStatus, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,6 +36,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { Router } from '@angular/router';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 
 export enum RangePeriod {
 	DAY = "DAY",
@@ -66,8 +67,6 @@ export class TimeTrackingComponent
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
 
-
-
 	timeSlotLoading = false;
 	activitiesLoading = false;
 	projectsLoading = false;
@@ -88,20 +87,16 @@ export class TimeTrackingComponent
 	private autoRefresh$: Subscription;
 	autoRefresh: boolean = true;
 
-	private _selectedDateRange: ISelectedDateRange = {
+	private _selectedDateRange: IDateRangePicker = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate(),
 		isCustomDate: false
 	};
-
-	get selectedDateRange(): ISelectedDateRange {
+	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
 	}
-	set selectedDateRange(range: ISelectedDateRange) {
-		if (range) {
-			if (!range.hasOwnProperty('isCustomDate')) {
-				range.isCustomDate = true
-			}
+	set selectedDateRange(range: IDateRangePicker) {
+		if (isNotEmpty(range)) {
 			/**
 			 * Check, if start date is Greater Than end date
 			 */
@@ -113,9 +108,6 @@ export class TimeTrackingComponent
 				}
 			} else {
 				this._selectedDateRange = range;
-			}
-			if (range.startDate && range.endDate) {
-				this.logs$.next(true);
 			}
 		}
 	}
@@ -134,7 +126,7 @@ export class TimeTrackingComponent
 		super(translateService);
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
@@ -157,19 +149,26 @@ export class TimeTrackingComponent
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				filter(([organization]) => !!organization),
-				distinctUntilChange(),
-				tap(([organization, employee, project]) => {
-					this.organization = organization;
+		const storeDateRange$ = this.store.selectedDateRange$;
 
+		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])
+			.pipe(
+				debounceTime(500),
+				distinctUntilChange(),
+				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
+				tap(([organization, dateRange, employee, project]) => {
+					this.organization = organization;
+					
 					this.organizationId = organization.id;
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
+					this.selectedDateRange = dateRange;
+					
+					this.logs$.next(true);
+				}),
+				tap(() => {
 					this.loadEmployeesCount();
 					this.loadProjectsCount();
-					this.logs$.next(true);
 				}),
 				tap(() => this.setAutoRefresh(true)),
 				untilDestroyed(this)
@@ -214,9 +213,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const timeSlotRequest: IGetTimeSlotStatistics = {
 			tenantId,
 			organizationId,
@@ -246,9 +246,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const request: IGetCountsStatistics = {
 			tenantId,
 			organizationId,
@@ -273,9 +274,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const activityRequest: IGetActivitiesStatistics = {
 			tenantId,
 			organizationId,
@@ -310,9 +312,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const projectRequest: IGetProjectsStatistics = {
 			tenantId,
 			organizationId,
@@ -337,9 +340,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const taskRequest: IGetTasksStatistics = {
 			tenantId,
 			organizationId,
@@ -364,9 +368,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const request: IGetManualTimesStatistics = {
 			tenantId,
 			organizationId,
@@ -396,9 +401,10 @@ export class TimeTrackingComponent
 			tenantId,
 			organizationId,
 			employeeId,
-			projectId
+			projectId,
+			selectedDateRange
 		} = this;
-		const { startDate, endDate } = this.getAdjustDateRangeFutureAllowed();
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const memberRequest: IGetMembersStatistics = {
 			tenantId,
 			organizationId,
@@ -441,37 +447,87 @@ export class TimeTrackingComponent
 		this.galleryService.clearGallery();
 	}
 
-  get period() {
-    const { startDate, endDate } = this.selectedDateRange;
-    const start = moment(startDate);
-		const end = moment(endDate);
-    return end.diff(start, 'days') * 86400;
-  }
+	get period() {
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			const start = moment(startDate);
+			const end = moment(endDate);
+			return end.diff(start, 'days') * 86400;
+		}
+	}
 
 	/**
 	 * Get selected date range period
 	 */
 	get selectedPeriod(): RangePeriod {
-		const { startDate, endDate, isCustomDate } = this.selectedDateRange;
+		const { startDate, endDate } = this.selectedDateRange;
 
 		const start = moment(startDate);
 		const end = moment(endDate);
 		const days = end.diff(start, 'days');
 
-		if (days === 6 && isCustomDate === false) {
+		if (days === 6) {
 			return RangePeriod.WEEK;
-		} else if (days === 0 && isCustomDate === true) {
+		} else if (days === 0) {
 			return RangePeriod.DAY;
 		} else {
-			return RangePeriod.PERIOD
+			return RangePeriod.PERIOD;
 		}
+	}
+
+	/**
+	 * GET header title accordingly selected date range
+	 */
+	get headerTitle() {
+		const { startDate, endDate, isCustomDate } = this.selectedDateRange as IDateRangePicker;
+		if (startDate && endDate) {
+			if (!isCustomDate) {
+				if (this.isMoreThanWeek()) {
+					return this.getTranslation('TIMESHEET.MONTHLY');
+				} else if (this.isMoreThanDays()) {
+					return this.getTranslation('TIMESHEET.WEEKLY');
+				} else {
+					return this.getTranslation('TIMESHEET.DAILY');
+				}
+			}
+		}
+	}
+
+	/**
+	 * If, selected date range are in current week
+	 * 
+	 * @returns 
+	 */
+	isCurrentWeek() {
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
+		return (
+			(
+				moment(startDate).format('YYYY-MM-DD') === 
+				moment().startOf('week').format('YYYY-MM-DD')
+			) && 
+			(
+				moment(endDate).format('YYYY-MM-DD') === 
+				moment().endOf('week').format('YYYY-MM-DD')
+			)
+		);
+	}
+
+	/**
+	 * If, selected date range are more than a days
+	 */
+	isMoreThanDays(): boolean {
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
+		if (startDate && endDate) {
+			return moment(endDate).diff(moment(startDate), 'days') > 0;
+		}
+		return false;
 	}
 
 	/**
 	 * If, selected date range are more than a week
 	 */
 	isMoreThanWeek(): boolean {
-		const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
+		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		if (startDate && endDate) {
 			return moment(endDate).diff(moment(startDate), 'weeks') > 0;
 		}
@@ -525,7 +581,7 @@ export class TimeTrackingComponent
 	 */
 	public redirectToManualTimeReport() {
 		try {
-			const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
+			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 			this._router.navigate(['/pages/reports/manual-time-edits'], {
 				queryParams: {
 					start: moment(startDate).format("MM-DD-YYYY"),
@@ -542,7 +598,7 @@ export class TimeTrackingComponent
 	 */
 	public redirectToAppUrlReport() {
 		try {
-			const { startDate, endDate } = this.selectedDateRange as ISelectedDateRange;
+			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 			this._router.navigate(['/pages/reports/apps-urls'], {
 				queryParams: {
 					start: moment(startDate).format("MM-DD-YYYY"),
@@ -551,56 +607,6 @@ export class TimeTrackingComponent
 			});
 		} catch (error) {
 			console.log('Error while redirecting to apps & urls report.', error);
-		}
-	}
-	/**
-	 * Listen date event on update
-	 * @param event
-	 */
-	public onUpdateDate(event: any): void {
-		this.selectedDateRange = {
-			startDate: event.startDate,
-			endDate: event.endDate,
-			isCustomDate: false
-		} as ISelectedDateRange
-	}
-
-	/**
-	 * We are having issue, when organization not allowed future date
-	 * When someone run timer for today, all statistic not displaying correctly
-	 *
-	 * @returns
-	 */
-	private getAdjustDateRangeFutureAllowed(): ISelectedDateRange {
-		const { selectedDateRange } = this;
-		const now = moment();
-
-		let { startDate, endDate } = selectedDateRange;
-		/**
-		 * If, user selected single day date range.
-		 */
-		if (
-			moment(moment(startDate).format('YYYY-MM-DD')).isSame(
-				moment(endDate).format('YYYY-MM-DD')
-			)
-		) {
-			startDate = moment(startDate).startOf('day').utc().toDate();
-			endDate = moment(endDate).endOf('day').utc().toDate();
-		}
-
-		/**
-		 * If, user selected TODAY date range.
-		 */
-		if (
-			moment(now.format('YYYY-MM-DD')).isSame(
-				moment(endDate).format('YYYY-MM-DD')
-			)
-		) {
-			endDate = moment.utc().toDate();
-		}
-		return {
-			startDate,
-			endDate
 		}
 	}
 

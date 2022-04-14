@@ -10,9 +10,8 @@ $orange: #f56d58;
     font-weight: 300;
     margin: 0;
     padding: 3px;
-    width: 100vw;
+    width: 100%;
     position: relative;
-    left: calc(-100vw + 100%);
     color: rgb(236, 236, 236);
     a {
       color: rgb(236, 236, 236);
@@ -212,7 +211,10 @@ $orange: #f56d58;
 .button.create {
   background: $orange;
   box-shadow: 0px 10px 13px -7px $orange;
-  &:hover {
+  &[nbButton].appearance-filled{
+    border-width: 0;
+  }
+  &:hover, &:focus {
     background: $orange;
   }
 }
@@ -237,7 +239,7 @@ $orange: #f56d58;
 }
 
 .actions{
-  padding: .625rem 0rem .625rem .625rem;
+  padding: .625rem;
   border-radius: nb-theme(button-rectangle-border-radius);
   background-color:rgba(50, 50, 50, 0.03);
   display: flex;

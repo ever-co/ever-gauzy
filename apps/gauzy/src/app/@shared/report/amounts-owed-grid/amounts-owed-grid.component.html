@@ -24,9 +24,9 @@
 
 		<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
 			<nb-card class="card" *ngFor="let day of dailyData">
-				<nb-card-header class="card-title">{{
-					day.date
-				}}</nb-card-header>
+				<nb-card-header class="card-title">
+					{{ day.date | dateFormat }}
+				</nb-card-header>
 				<nb-card-body
 					class="cart-body employee-row"
 					*ngFor="let employeeRow of day.employees"

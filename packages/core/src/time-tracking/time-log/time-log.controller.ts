@@ -148,7 +148,9 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('/time-limit')
-	async weeklyLimit(@Query() request?: IGetTimeLimitReportInput) {
+	async getTimeLimitReport(
+		@Query() request: IGetTimeLimitReportInput
+	) {
 		return await this.timeLogService.getTimeLimit(request);
 	}
 
@@ -188,7 +190,9 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('/client-budget-limit')
-	async clientBudgetLimit(@Query() request?: IClientBudgetLimitReportInput) {
+	async clientBudgetLimit(
+		@Query() request: IClientBudgetLimitReportInput
+	) {
 		return await this.timeLogService.clientBudgetLimit(request);
 	}
 

@@ -1,4 +1,5 @@
 @import 'themes';
+@import 'gauzy/_gauzy-overrides';
 
 :host {
 
@@ -45,6 +46,10 @@
         font-size: 0.875rem;
         display: flex;
         align-items: center;
+    }
+
+    ::ng-deep{
+      @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
     }
 }
 nav{

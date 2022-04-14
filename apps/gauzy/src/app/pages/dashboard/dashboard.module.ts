@@ -33,6 +33,7 @@ import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../@shared/shared.module';
+import { DateRangeTitleModule } from '../../@shared/components/date-range-title';
 
 @NgModule({
 	imports: [
@@ -60,7 +61,8 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbRouteTabsetModule,
 		TimeTrackingModule,
 		HeaderTitleModule,
-    SharedModule
+    	SharedModule,
+		DateRangeTitleModule
 	],
 	declarations: [
 		DashboardComponent,

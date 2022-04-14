@@ -13,29 +13,30 @@ import {
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, tap } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
-import { TimesheetService } from '../../timesheet/timesheet.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ReportBaseComponent } from '../report-base/report-base.component';
+import { debounceTime, tap } from 'rxjs/operators';
+import { isEmpty } from '@gauzy/common-angular';
+import { Store } from '../../../@core/services';
+import { TimesheetService } from '../../timesheet/timesheet.service';
+import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-amounts-owed-grid',
 	templateUrl: './amounts-owed-grid.component.html',
 	styleUrls: ['./amounts-owed-grid.component.scss']
 })
-export class AmountsOwedGridComponent
-	extends ReportBaseComponent
+export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
+
 	logRequest: ITimeLogFilters = this.request;
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	dailyData: IAmountOwedReport[];
 
 	@Input()
-	set filters(value) {
-		this.logRequest = value || {};
+	set filters(filters: ITimeLogFilters) {
+		this.logRequest = filters || {};
 		this.subject$.next(true);
 	}
 
@@ -52,7 +53,6 @@ export class AmountsOwedGridComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this.getExpenses()),
 				untilDestroyed(this)
 			)
@@ -63,9 +63,8 @@ export class AmountsOwedGridComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.subject$.next(true);
 	}
 
@@ -74,9 +73,10 @@ export class AmountsOwedGridComponent
 	}
 
 	getExpenses() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
+		this.loading = true;
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy

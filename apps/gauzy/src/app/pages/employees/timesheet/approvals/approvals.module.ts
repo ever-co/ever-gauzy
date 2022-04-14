@@ -16,11 +16,11 @@ import {
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { SharedModule } from './../../../../@shared/shared.module';
-import { FiltersModule } from './../../../../@shared/timesheet/filters/filters.module';
 import { TranslateModule } from './../../../../@shared/translate/translate.module';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
 import { StatusBadgeModule } from './../../../../@shared/status-badge';
+import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
@@ -40,7 +40,7 @@ import { StatusBadgeModule } from './../../../../@shared/status-badge';
 		TranslateModule,
 		MomentModule,
 		SharedModule,
-		FiltersModule,
+		GauzyFiltersModule,
 		ApprovalsRoutingModule,
 		StatusBadgeModule
 	]

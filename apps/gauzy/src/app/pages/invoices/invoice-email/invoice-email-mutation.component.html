@@ -1,6 +1,9 @@
 <nb-card class="pdf-preview-card">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header>
+    <span class="cancel"
+			><i class="fas fa-times" (click)="cancel()"></i
+		></span>
+		<h5 class="title">
 			<span *ngIf="!isEstimate">{{
 				'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate
 			}}</span>
@@ -17,20 +20,20 @@
 					<label for="email" class="label">{{
 						'FORM.EMAIL' | translate
 					}}</label>
-					<input
+					<textarea
 						type="text"
 						nbInput
 						fullWidth
 						formControlName="email"
 						id="email"
 						placeholder="{{ 'FORM.EMAIL' | translate }}"
-					/>
+					></textarea>
 				</div>
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+	<nb-card-footer class="text-left">
+		<button status="basic" outline class="mr-3" nbButton (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

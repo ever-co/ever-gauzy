@@ -944,7 +944,7 @@ export class SeedDataService {
 			createDefaultOrganizationProjects(
 				this.connection,
 				this.tenant,
-				this.organizations
+				this.defaultOrganization
 			)
 		);
 

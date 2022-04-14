@@ -16,9 +16,10 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { chain, pick } from 'underscore';
+import { isEmpty } from '@gauzy/common-angular';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,12 +27,10 @@ import { ReportBaseComponent } from './../../../../@shared/report/report-base/re
 	templateUrl: './manual-time.component.html',
 	styleUrls: ['./manual-time.component.scss']
 })
-export class ManualTimeComponent
-	extends ReportBaseComponent
+export class ManualTimeComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	logRequest: ITimeLogFilters = this.request;
-	filters: ITimeLogFilters;
 	loading: boolean;
 	dailyData: any;
 
@@ -48,7 +47,7 @@ export class ManualTimeComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
-				debounceTime(1350),
+				debounceTime(500),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
@@ -68,14 +67,13 @@ export class ManualTimeComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.subject$.next(true);
 	}
 
-	async getLogs() {
-		if (!this.organization || !this.logRequest) {
+	getLogs() {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 		const appliedFilter = pick(

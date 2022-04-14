@@ -14,15 +14,11 @@ export class WorkingEmployeeGetHandler implements ICommandHandler<WorkingEmploye
 		command: WorkingEmployeeGetCommand
 	): Promise<IPagination<IEmployee>> {
 		const { input } = command;
-		const {
-			organizationId = null,
-			forMonth = new Date(),
-			withUser
-		} = input;
+		const { organizationId = null, forRange, withUser } = input;
 
 		return await this.employeeService.findWorkingEmployees(
 			organizationId,
-			new Date(forMonth),
+			forRange,
 			withUser
 		);
 	}

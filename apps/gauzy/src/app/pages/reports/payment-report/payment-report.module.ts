@@ -10,13 +10,12 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { PaymentReportGridModule } from '../../../@shared/report/payment-report-grid/payment-report-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
-import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-picker/gauzy-range-picker.module';
+import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
 	declarations: [PaymentReportComponent],
@@ -28,14 +27,13 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		NbSelectModule,
 		FormsModule,
 		LineChartModule,
 		PaymentReportGridModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    	GauzyRangePickerModule
+    	GauzyFiltersModule
 	]
 })
 export class PaymentReportModule {}

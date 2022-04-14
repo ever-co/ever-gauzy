@@ -11,74 +11,76 @@ import {
 	ITimeLogFilters
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { debounceTime, tap } from 'rxjs/operators';
-import { ReportBaseComponent } from 'apps/gauzy/src/app/@shared/report/report-base/report-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { isEmpty } from '@gauzy/common-angular';
+import { Store } from './../../../../@core/services';
+import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-limit-report',
 	templateUrl: './time-limit-report.component.html',
 	styleUrls: ['./time-limit-report.component.scss']
 })
-export class TimeLimitReportComponent
-	extends ReportBaseComponent
+export class TimeLimitReportComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
-	logRequest: IGetTimeLimitReportInput = {
-		...this.request,
-		duration: 'day'
-	};
+
+	logRequest: IGetTimeLimitReportInput = this.request;
 	filters: ITimeLogFilters;
 	loading: boolean;
 	dailyData: any;
 	title: string;
+	duration: 'day' | 'week' | 'month';
 
 	constructor(
-		private cd: ChangeDetectorRef,
-		private timesheetService: TimesheetService,
-		private activatedRoute: ActivatedRoute,
-		protected store: Store,
-		readonly translateService: TranslateService
+		private readonly cd: ChangeDetectorRef,
+		private readonly timesheetService: TimesheetService,
+		private readonly activatedRoute: ActivatedRoute,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService
 	) {
 		super(store, translateService);
 	}
 
 	ngOnInit(): void {
+		this.activatedRoute.data
+			.pipe(
+				tap((data) => {
+					this.duration = data.duration || 'day';
+					this.title = data.title;
+				}),
+				untilDestroyed(this)
+			).subscribe();
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.activatedRoute.data
-			.pipe(untilDestroyed(this))
-			.subscribe((data) => {
-				this.logRequest.duration = data.duration || 'day';
-				this.title = data.title;
-			});
 	}
 
 	ngAfterViewInit() {
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.subject$.next(true);
 	}
 
 	getLogs() {
-		const { duration } = this.logRequest;
+		if (!this.organization || isEmpty(this.logRequest)) {
+			return;
+		}
 		const request: IGetTimeLimitReportInput = {
 			...this.getFilterRequest(this.logRequest),
-			duration,
+			duration: this.duration,
 			relations: ['task', 'project', 'employee', 'employee.user']
 		};
+		this.loading = true;
 		this.timesheetService
 			.getTimeLimit(request)
 			.then((logs: ITimeLimitReport[]) => {

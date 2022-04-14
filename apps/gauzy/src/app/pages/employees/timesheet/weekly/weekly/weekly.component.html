@@ -15,12 +15,9 @@
 
 <div class="filters row mb-3">
 	<div class="col">
-		<ngx-filters
-			dateRange="week"
-			[hasEmployeeFilter]="false"
-			[hasProjectFilter]="false"
+		<ngx-gauzy-filters
 			(filtersChange)="filtersChange($event)"
-		></ngx-filters>
+		></ngx-gauzy-filters>
 	</div>
 </div>
 <div
@@ -37,7 +34,7 @@
 			{{ 'TIMESHEET.TODO' | translate }}
 		</div>
 		<div class="col text-center day-col" *ngFor="let date of weekDayList">
-			{{ date | date }}
+			{{ date | dateFormat }}
 		</div>
 	</div>
 	<ng-template [ngIf]="weekData?.length > 0" [ngIfElse]="notFound">

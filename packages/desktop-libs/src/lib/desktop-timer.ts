@@ -103,10 +103,10 @@ export default class Timerhandler {
 	 * Collect windows and afk activities
 	 */
 	collectActivities(setupWindow, knex, timeTrackerWindow) {
-		const projectInfo = LocalStore.getStore('project');
-		const appSetting = LocalStore.getStore('appSetting');
 		this.intevalTimer = setInterval(async () => {
 			try {
+				const projectInfo = LocalStore.getStore('project');
+				const appSetting = LocalStore.getStore('appSetting');
 				await this.createQueue(
 					'sqlite-queue-gauzy-desktop-timer',
 					{
@@ -121,7 +121,7 @@ export default class Timerhandler {
 					},
 					knex
 				)
-				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
+				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw && appSetting.awIsConnected) {
 					setupWindow.webContents.send('collect_data', {
 						start: this.timeSlotStart.utc().format(),
 						end: moment().utc().format(),

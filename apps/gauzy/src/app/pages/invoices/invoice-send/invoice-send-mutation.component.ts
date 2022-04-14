@@ -10,7 +10,8 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-invoice-send',
-	templateUrl: './invoice-send-mutation.component.html'
+	templateUrl: './invoice-send-mutation.component.html',
+  styleUrls:['./invoice-send-mutation.component.scss']
 })
 export class InvoiceSendMutationComponent
 	extends TranslationBaseComponent

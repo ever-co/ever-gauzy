@@ -5,33 +5,37 @@
 	class="card-scroll"
 >
 	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ngx-date-range-title
-			[start]="logRequest.startDate"
-			[end]="logRequest.endDate"
-		></ngx-date-range-title>
+		<div class="header-flex">
+			<div>
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container
+					*ngIf="logRequest?.startDate && logRequest?.endDate"
+				>
+					<ngx-date-range-title
+						[start]="logRequest?.startDate"
+						[end]="logRequest?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+			<div class="filters">
+				<ngx-gauzy-filters
+					[filters]="logRequest"
+					[saveFilters]="false"
+					(filtersChange)="filtersChange($event)"
+				></ngx-gauzy-filters>
+			</div>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="filters mt-4 mb-4">
-			<ngx-gauzy-range-picker
-				[filters]="logRequest"
-				[arrows]="true"
-				[hasEmployeeFilter]="false"
-				[hasProjectFilter]="false"
-				[saveFilters]="false"
-				(onDateChange)="filtersChange($event)"
-			></ngx-gauzy-range-picker>
-		</div>
-
 		<ga-daily-statistics
 			class="mb-4"
 			[filters]="filters"
 		></ga-daily-statistics>
-
 		<div class="daily-time-report mt-4">
 			<div class="daily-time-report">
 				<nb-card>
@@ -41,78 +45,66 @@
 				</nb-card>
 			</div>
 		</div>
-
-		<div class="table mt-4">
+		<div class="table card mt-4">
 			<div
 				class="weekly-logs row-table"
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
-				nbSpinnerStatus="primary"
-			>
-				<nb-card>
+				nbSpinnerStatus="primary">
+				<nb-card *ngIf="weekLogs?.length > 0; else notFound">
 					<nb-card-header>
-						<div class="row font-weight-bold align-items-center">
-							<div class="col-sm-2 project-name">
-								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-							</div>
-							<div
-								class="col text-center day-col"
-								*ngFor="let date of weekDays"
-							>
-								{{ date | date }}
-							</div>
-						</div>
+						Reports
 					</nb-card-header>
 					<nb-card-body>
-						<ng-template
-							[ngIf]="weekLogs?.length > 0"
-							[ngIfElse]="notFound"
-						>
-							<div
-								class="row py-3 align-items-center"
-								*ngFor="let day of weekLogs"
-							>
-								<div class="col-sm-2 project-name">
-									<ngx-avatar
-										[src]="day?.employee?.user?.imageUrl"
-										[name]="day?.employee?.user?.name"
-										[id]="day?.employee?.id"
-									></ngx-avatar>
-									<ng-template #noProjects>
-										<span>{{
-											'REPORT_PAGE.NO_EMPLOYEE'
-												| translate
-										}}</span>
-									</ng-template>
+						<div class="columns-header weekly-main-header">
+							<div class="table-inner-wrapper">
+								<div class="responsive-table-row employee-column">
+									{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 								</div>
-								<div
-									class="col text-center day-col"
-									*ngFor="let date of weekDays"
-								>
-									<span
-										*ngIf="day.dates[date]; else noLogsCol"
-										>{{
-											day.dates[date]?.sum
-												| durationFormat
-										}}</span
-									>
-									<ng-template #noLogsCol> - </ng-template>
+								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
+									{{ date | dateFormat }}
 								</div>
 							</div>
-						</ng-template>
-						<ng-template #notFound>
-							<div
-								class="row font-weight-bold py-3 align-items-center"
-							>
-								<div class="col text-center">
-									{{
-										'REPORT_PAGE.NO_ACTIVITIES' | translate
-									}}
+						</div>
+						<div class="table-row" *ngFor="let day of weekLogs">
+							<div class="table-inner-wrapper">
+								<div class="responsive-table-row employee-column">
+									<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
+									<div class="responsive-table-content mobile-padding">
+										<div class="avatar-wrapper">
+											<ngx-avatar
+												class="report-table"
+												[src]="day?.employee?.user?.imageUrl"
+												[name]="day?.employee?.user?.name"
+												[id]="day?.employee?.id">
+											</ngx-avatar>
+											<ng-template #noProjects>
+												<span>{{
+													'REPORT_PAGE.NO_EMPLOYEE'| translate}}</span>
+											</ng-template>
+										</div>
+									</div>
+								</div>
+								<div class="responsive-table-row day-column" *ngFor="let date of weekDays">
+									<div class="responsive-table-header">{{ date | date:'E d MM, y' }}</div>
+									<div class="responsive-table-content mobile-padding">
+										<span *ngIf="day.dates[date]; else noLogsCol">
+											{{ day.dates[date]?.sum | durationFormat }}
+										</span>
+										<ng-template #noLogsCol> &#8212; </ng-template>
+									</div>
 								</div>
 							</div>
-						</ng-template>
+						</div>
 					</nb-card-body>
 				</nb-card>
+				<ng-template #notFound>
+					<div class="row font-weight-bold py-3 align-items-center">
+						<div class="col text-center">
+							{{ 'REPORT_PAGE.NO_ACTIVITIES' | translate }}
+						</div>
+					</div>
+				</ng-template>
 			</div>
 		</div>
 	</nb-card-body>

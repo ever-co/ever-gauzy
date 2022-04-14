@@ -13,19 +13,12 @@ const routes: Routes = [
 		component: LayoutComponent,
 		children: [
 			{
-				path: 'screenshots',
-				data: {
-					title: 'ACTIVITY.SCREENSHOTS'
-				},
-				loadChildren: () =>
-					import('./screenshot/screenshot.module').then(
-						(m) => m.ScreenshotModule
-					)
-			},
-			{
 				path: 'time-activities',
 				data: {
-					title: 'ACTIVITY.TIME_AND_ACTIVITIES'
+					title: 'ACTIVITY.TIME_AND_ACTIVITIES',
+					datePicker: {
+						unitOfTime: 'day'
+					}
 				},
 				loadChildren: () =>
 					import(
@@ -33,10 +26,26 @@ const routes: Routes = [
 					).then((m) => m.TimeAndActivitiesModule)
 			},
 			{
-				path: 'urls',
+				path: 'screenshots',
 				data: {
-					title: 'ACTIVITY.VISITED_SITES',
-					type: 'urls'
+					title: 'ACTIVITY.SCREENSHOTS',
+					datePicker: {
+						unitOfTime: 'day'
+					}
+				},
+				loadChildren: () =>
+					import('./screenshot/screenshot.module').then(
+						(m) => m.ScreenshotModule
+					)
+			},
+			{
+				path: 'apps',
+				data: {
+					title: 'ACTIVITY.APPS',
+					type: 'apps',
+					datePicker: {
+						unitOfTime: 'day'
+					}
 				},
 				loadChildren: () =>
 					import('./app-url-activity/app-url-activity.module').then(
@@ -44,10 +53,13 @@ const routes: Routes = [
 					)
 			},
 			{
-				path: 'apps',
+				path: 'urls',
 				data: {
-					title: 'ACTIVITY.APPS',
-					type: 'apps'
+					title: 'ACTIVITY.VISITED_SITES',
+					type: 'urls',
+					datePicker: {
+						unitOfTime: 'day'
+					}
 				},
 				loadChildren: () =>
 					import('./app-url-activity/app-url-activity.module').then(

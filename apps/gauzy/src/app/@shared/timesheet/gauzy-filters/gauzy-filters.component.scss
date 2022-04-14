@@ -1,0 +1,172 @@
+@import 'var';
+@import '../filters/filters.component.scss';
+@import 'gauzy/_gauzy-overrides';
+
+$button-radius : nb-theme(button-rectangle-border-radius);
+
+.filter-input{
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    button{
+        margin-right: 5px;
+        border-radius: nb-theme(button-rectangle-border-radius);
+    }
+}
+
+.custom-input{
+    height: inherit;
+    display: flex;
+    align-items: center;
+    background: nb-theme(background-basic-color-2);
+    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
+    border-radius: nb-theme(button-rectangle-border-radius);
+    /* I've used padding so you can see the edges of the elements. */
+    padding: 2px 0px 2px 5px;
+    margin-right: 16px;
+    input{
+        height: 1.875rem;
+        margin-right: 5px;
+        width: 240px;
+        background-color: transparent;
+        /* Tell the input to use all the available space */
+        flex-grow:2;
+        /* And hide the input's outline, so the form looks like the outline */
+        border:none;
+        box-shadow: none;
+    }
+    input:focus {
+        /* removing the input focus blue box. Put this on the form if you like. */
+        outline: none;
+    }
+    &:hover, &:focus{
+        background: nb-theme(background-basic-color-3);
+        transition: ease-in-out .3s;
+    }
+}
+
+:host{
+    ::ng-deep {
+        &.md-drppicker {
+            background-color: nb-theme(background-basic-color-1);
+            color: nb-theme(text-basic-color);
+            border-radius: nb-theme(border-radius);
+            .calendar-table{
+                background-color: nb-theme(background-basic-color-1);
+                border-color: nb-theme(border-basic-color-3);
+                box-shadow: nb-theme(border-basic-color-1) 0px 1px 3px, nb-theme(border-basic-color-3) 0px 1px 2px;
+                border-radius: nb-theme(border-radius);
+            }
+            .calendar-time select.disabled {
+                color: nb-theme(text-basic-color);
+            }
+            .label-input {
+                color: nb-theme(text-basic-color);
+            }
+
+            .show-ranges {
+                .drp-calendar.left {
+                    border-left: 1px solid nb-theme(border-basic-color-1);
+                }
+            }
+
+            th {
+                color: nb-theme(text-basic-color);
+            }
+
+            td, th {
+                &.available {
+                    &.prev {
+                        filter: invert(0.65);
+                    }
+                    &.next {
+                        filter: invert(0.65);;
+                    }
+                }
+            }
+
+            td {
+                &.off {
+                    &, &.in-range, &.start-date, &.end-date {
+                        background-color: nb-theme(background-basic-color-3);
+                        border-color: nb-theme(border-basic-color-1);
+                        color: nb-theme(text-basic-color);
+                    }
+                }
+
+                &.active {
+                    &, &:hover {
+                        background-color: nb-theme(color-primary-default);
+                        border-color: nb-theme(border-basic-color-3);
+                        color: nb-theme(text-control-color);
+                    }
+                }
+            }
+
+            .ranges {
+                ul {
+                    li {
+                        button {
+                            border-radius: $button-radius;
+                            color: nb-theme(text-basic-color);
+                            &.active {
+                                background-color: nb-theme(color-primary-active);
+                            }
+                        }
+                    }
+                    li:hover {
+                        background-color: nb-theme(color-primary-hover);
+                        border-radius: $button-radius;
+                    }
+                }
+            }
+            .btn {
+                border-radius: $button-radius;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+                background-color: nb-theme(color-primary-default);
+                color: nb-theme(text-control-color);
+                padding: 0 .75rem;
+                height: 2rem;
+                &:hover, &:focus {
+                    background-color: nb-theme(color-primary-focus);
+                }
+
+                &.btn-default {
+                    border-radius: nb-theme(button-rectangle-border-radius);
+                    color: nb-theme(text-control-color);
+                    background-color: nb-theme(color-primary-default);
+                }
+            }
+        }
+
+        .select-button {
+            padding-top: 3px !important;
+            padding-bottom: 3px !important;
+        }
+
+        .activity-level-filter {
+            padding: 7px 7px 7px 11px !important;
+            border: 1px solid nb-theme(select-outline-basic-border-color) !important;
+        }
+
+        .activity-level-filter, .select-button {
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+            background-color: nb-theme(gauzy-card-1) !important;
+            color: nb-theme(select-outline-basic-text-color) !important;
+        }
+    }
+}
+
+.main-wrapper {
+    justify-content: space-between;
+}
+
+.single-filter-wrapper {
+    margin-bottom: 5px;
+    padding-right: 0 !important;
+}
+
+:host ::ng-deep{
+  @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+}

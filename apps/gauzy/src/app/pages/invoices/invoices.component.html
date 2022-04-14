@@ -27,7 +27,7 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="card-body">
 		<ng-template [ngxPermissionsOnly]="['INVOICES_EDIT', 'INVOICES_VIEW']">
 			<div class="mb-3">
 				<div class="actions-container">
@@ -71,9 +71,20 @@
 		</ng-template>
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab
+				class="remove-scroll"
 				[tabTitle]="'INVOICES_PAGE.BROWSE' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.ACTIONS"
 			>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
+					>
+					</ng-template>
+				</ng-container>
 			</nb-tab>
 			<nb-tab
 				class="remove-scroll"
@@ -81,7 +92,7 @@
 				tabId="search"
 				[tabId]="invoiceTabsEnum.SEARCH"
 			>
-				<nb-accordion>
+				<nb-accordion class="mb-3">
 					<nb-accordion-item collapsed="false">
 						<nb-accordion-item-header
 							>{{
@@ -369,13 +380,23 @@
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
+					>
+					</ng-template>
+				</ng-container>
 			</nb-tab>
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.HISTORY"
 				class="remove-scroll"
 			>
-				<nb-accordion>
+				<nb-accordion class="mb-3">
 					<nb-accordion-item collapsed="false">
 						<nb-accordion-item-header>
 							{{
@@ -503,12 +524,19 @@
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
+					>
+					</ng-template>
+				</ng-container>
 			</nb-tab>
 		</nb-tabset>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
+		<ng-template #tableLayout>
 			<div class="table-scroll-container">
 				<ng2-smart-table
 					[settings]="settingsSmartTable"
@@ -522,7 +550,9 @@
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 				class="pagination-container"
 			>
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -579,7 +609,9 @@
 				status="basic"
 				class="action select-nb mr-2 ml-1"
 				*ngIf="!isEstimate"
-				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate"
+				[placeholder]="
+					'INVOICES_PAGE.SET_STATUS' | translate | titlecase
+				"
 				[(selected)]="status"
 				[disabled]="disableButton"
 				(selectedChange)="selectStatus($event)"
@@ -687,6 +719,10 @@
 
 <ng-template #settingsPopover>
 	<div class="popover-container">
+		<span class="d-flex justify-content-end w-100"
+			><i class="fas fa-times" (click)="toggleTableSettingsPopover()"></i
+		></span>
+		<span class="title">Settings</span>
 		<div class="show-columns" *ngIf="columns">
 			<label class="show-columns-label label">
 				{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}
@@ -707,7 +743,7 @@
 				</nb-option>
 			</nb-select>
 		</div>
-		<div class="per-page-container">
+		<div class="per-page-container mr-3">
 			<div class="per-page">
 				<label class="label per-page-label" *ngIf="!isEstimate">
 					{{ 'INVOICES_PAGE.INVOICES_PER_PAGE' | translate }}
@@ -721,34 +757,37 @@
 					type="number"
 					nbInput
 				/>
-				<button
-					class="per-page-button"
-					status="success"
-					nbButton
-					(click)="showPerPage()"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
 			</div>
 		</div>
-		<div class="mt-3 text-center">
+		<div
+			class="w-100 d-flex justify-content-between align-items-center mr-3"
+		>
 			<nb-checkbox
 				(checkedChange)="toggleIncludeArchived($event)"
 				status="warning"
-				class="mr-3"
 			>
 				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
 			</nb-checkbox>
+			<button
+				class="per-page-button"
+				status="success"
+				nbButton
+				(click)="showPerPage()"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
 		</div>
 	</div>
 </ng-template>
 
 <ng-template #actionsPopover>
-	<div class="popover-container d-flex flex-column">
+	<div class="popover-container-action d-flex flex-column">
 		<ng-container>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="addInternalNote()"
 				[disabled]="disableButton"
 			>
@@ -757,7 +796,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="duplicated()"
 				[disabled]="disableButton"
 			>
@@ -768,7 +809,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="send()"
 				[disabled]="!canBeSend"
 			>
@@ -777,7 +820,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="generatePublicLink()"
 				[disabled]="disableButton"
 			>
@@ -788,7 +833,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="email()"
 				[disabled]="disableButton"
 			>
@@ -797,7 +844,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="exportToCsv()"
 				[disabled]="disableButton"
 			>
@@ -808,7 +857,9 @@
 			</button>
 			<button
 				nbButton
-				status="info"
+				status="basic"
+				class="action primary"
+				size="small"
 				(click)="archive()"
 				[disabled]="disableButton || selectedInvoice.isArchived"
 			>
@@ -819,11 +870,13 @@
 			</button>
 			<button
 				nbButton
-				status="danger"
+				status="basic"
+				class="action danger"
+				size="small"
 				(click)="delete()"
 				[disabled]="disableButton"
 			>
-				<nb-icon icon="trash-2-outline"> </nb-icon>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 				<span class="icon-text">{{
 					'BUTTONS.DELETE' | translate
 				}}</span>

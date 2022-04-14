@@ -3,6 +3,14 @@ import { Component } from '@angular/core';
 	selector: 'ga-edit-employee-location',
 	template: `
 		<ga-employee-location [isEmployee]="true"></ga-employee-location>
-	`
+	`,
+	styles: [
+		`
+			:host {
+				overflow-y: overlay;
+				max-height: calc(100vh - 27rem);
+			}
+		`
+	]
 })
 export class EditEmployeeLocationComponent {}

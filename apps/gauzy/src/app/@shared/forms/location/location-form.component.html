@@ -33,14 +33,14 @@
 		</ng-container>
 		<ng-container>
 			<div class="row">
-				<div class="col-4">
+				<div class="col-6">
 					<ga-country
 						[(ngModel)]="country"
 						[formControl]="form.get('country')"
 						(selectChange)="onAddressChanges()"
 					></ga-country>
 				</div>
-				<div class="col-4">
+				<div class="col-6">
 					<div class="form-group">
 						<label class="label" for="cityInput">{{
 							'FORM.LABELS.CITY' | translate
@@ -59,7 +59,9 @@
 						/>
 					</div>
 				</div>
-				<div class="col-4">
+			</div>
+      <div class="row">
+        <div class="col-12">
 					<div class="form-group">
 						<label class="label" for="postcodeInput">{{
 							'FORM.LABELS.POSTCODE' | translate
@@ -82,7 +84,7 @@
 						/>
 					</div>
 				</div>
-			</div>
+      </div>
 			<div class="row">
 				<div class="col-6">
 					<div class="form-group">

@@ -24,6 +24,8 @@ export interface IRecurringExpenseByMonthFindInput
 	employeeId?: string;
 	month?: number;
 	year?: number;
+	startDate?: Date;
+	endDate?: Date;
 }
 
 /**

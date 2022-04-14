@@ -5,12 +5,11 @@ import { NbIconModule, NbSpinnerModule, NbCardModule } from '@nebular/theme';
 import { WeeklyTimeReportsRoutingModule } from './weekly-time-reports-routing.module';
 import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-reports.component';
 import { SharedModule } from '../../../@shared/shared.module';
-import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
-import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-picker/gauzy-range-picker.module';
+import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
 	declarations: [WeeklyTimeReportsComponent],
@@ -24,10 +23,9 @@ import { GauzyRangePickerModule } from '../../../@shared/timesheet/gauzy-range-p
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    	GauzyRangePickerModule
-	]
+		GauzyFiltersModule,
+	],
 })
 export class WeeklyTimeReportsModule {}

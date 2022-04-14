@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
 import { IGetPaymentInput } from '@gauzy/contracts';
 import { Payment } from './payment.entity';
-import { getDateRangeFormat,  } from '../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates,  } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailService } from '../email';
@@ -25,45 +25,19 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 
 	async getPayments(request: IGetPaymentInput) {
 		const query = this.filterQuery(request);
-		query.orderBy(`"${query.alias}"."paymentDate"`, 'ASC');
-
-		// if (
-		// 	RequestContext.hasPermission(
-		// 		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		// 	)
-		// ) {
-		// 	query.leftJoinAndSelect(
-		// 		`${query.alias}.employee`,
-		// 		'activityEmployee'
-		// 	);
-		// 	query.leftJoinAndSelect(
-		// 		`activityEmployee.user`,
-		// 		'activityUser',
-		// 		'"employee"."userId" = activityUser.id'
-		// 	);
-		// }
-
 		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
-		const payments = await query.getMany();
-		return payments;
+		query.orderBy(`"${query.alias}"."paymentDate"`, 'ASC');
+		
+		return await query.getMany();
 	}
 
 	async getDailyReportChartData(request: IGetPaymentInput) {
 		const query = this.filterQuery(request);
 		query.orderBy(`"${query.alias}"."paymentDate"`, 'ASC');
-
-		let dayList = [];
-		const range = {};
-		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 31) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
-			i++;
-		}
-		dayList = Object.keys(range);
 		const payments = await query.getMany();
+
+		const { startDate, endDate } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const byDate = chain(payments)
 			.groupBy((payment) =>
@@ -82,7 +56,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 			})
 			.value();
 
-		const dates = dayList.map((date) => {
+		const dates = days.map((date) => {
 			if (byDate[date]) {
 				return byDate[date];
 			} else {
@@ -197,9 +171,13 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 			const { where } = filter;
 			if ('paymentDate' in where) {
 				const { paymentDate } = where;
+				const {
+					startDate = moment().startOf('month').format(),
+					endDate = moment().endOf('month').format()
+				} = paymentDate;
 				const { start, end } = getDateRangeFormat(
-					new Date(moment(paymentDate).startOf('month').format()),
-					new Date(moment(paymentDate).endOf('month').format()),
+					new Date(startDate),
+					new Date(endDate),
 					true
 				);
 				filter.where.paymentDate = Between(start, end); 

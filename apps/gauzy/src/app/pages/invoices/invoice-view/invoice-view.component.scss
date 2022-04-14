@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-cards';
+@import 'gauzy/_gauzy-table.scss';
+
 .grid {
   display: grid;
   grid-template-columns: 0.3fr 0.3fr;
@@ -19,4 +22,29 @@
 */
 :host > nb-card {
   min-height: 47.5rem;
+}
+
+.button-container{
+  background: rgba(50, 50, 50, 0.03);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  padding: 6px 8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  .title {
+    font-family: Inter;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+}
+:host {
+  $height: calc(
+    100vh - 18rem
+  );
+  @include nb-card_overrides(unset, $height, $default-radius);
 }

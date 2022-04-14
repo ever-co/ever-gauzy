@@ -1,0 +1,80 @@
+@import 'gauzy/_gauzy-overrides';
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.theme-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.card-container {
+  background: nb-theme(gauzy-card-2);
+  margin-top: 10px;
+  border-radius: nb-theme(border-radius);
+  display: flex;
+  flex-direction: column;
+  &.selected {
+    .check {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: nb-theme(text-primary-color);
+      font-size: 8px;
+      font-weight: 900;
+      &:before {
+        font-family: 'Font Awesome 5 Free';
+        content: '\f00c';
+      }
+    }
+  }
+  .image-container {
+    object-fit: cover;
+    min-width: 200px;
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+    position: relative;
+    img {
+      position: absolute;
+      left: 1rem;
+      top: 1rem;
+      height: 150px;
+      border-radius: calc(nb-theme(border-radius) - 4px);
+    }
+  }
+  span {
+    padding: 6px;
+    font-size: 13px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .check {
+    width: 1rem;
+    height: 1rem;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 0 0.5px 0.5px 0.5px rgba(0, 0, 0, 0.2) inset;
+  }
+}
+:host .theme-card ::ng-deep {
+  nb-select.appearance-outline .select-button {
+    border-width: 2px;
+    border-color: rgba($color: rgba(126, 126, 143), $alpha: 0.5);
+  }
+  nb-select.appearance-outline.status-basic .select-button.placeholder {
+    color: rgba($color: rgba(126, 126, 143), $alpha: 1);
+  }
+  nb-select.size-small .select-button {
+    font-size: nb-theme(select-small-text-font-size);
+    font-weight: nb-theme(select-small-text-font-weight);
+    line-height: nb-theme(select-small-text-line-height);
+  }
+  @include nb-select-overrides(2rem, $default-button-radius, unset);
+}

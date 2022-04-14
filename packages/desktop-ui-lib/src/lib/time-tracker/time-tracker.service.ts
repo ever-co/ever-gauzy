@@ -64,6 +64,90 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
+	async getEmployees(values) {
+		let employees;
+		try {
+			employees = await this.reqGetEmployees(values);
+			localStorage.setItem('employees', JSON.stringify(employees));
+			return employees;
+		} catch (error) {
+			employees = localStorage.getItem('employees');
+			if (employees) {
+				return JSON.parse(employees);
+			}
+			throw error;
+		}
+	}
+
+	reqGetEmployees(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+		return this.http
+			.get(`${values.apiHost}/api/employee`, {
+				headers: headers,
+				params: this.toParams({
+					data: JSON.stringify({
+						relations: [
+						  'user'
+						],
+						findInput: {
+							organization: {
+							id: values.organizationId
+						  }
+						}
+					  })
+				})
+			})
+			.pipe()
+			.toPromise();
+	}
+
+	async getTags(values) {
+		let tags;
+		try {
+			tags = await this.reqGetTags(values);
+			localStorage.setItem('tags', JSON.stringify(tags));
+			return tags;
+		} catch (error) {
+			tags = localStorage.getItem('tags');
+			if (tags) {
+				return JSON.parse(tags);
+			}
+			throw error;
+		}
+	}
+
+	reqGetTags(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+		return this.http
+			.get(
+				`${values.apiHost}/api/tags/level/`,
+				{
+					headers: headers,
+					params: values.organizationContactId
+						? this.toParams({
+								data: JSON.stringify({
+									relations: [
+									  'organization'
+									],
+									findInput: {
+									  organizationId: values.organizationId,
+									  tenantId: values.tenantId
+									}
+								  })
+						  })
+						: this.toParams({})
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
 	async getProjects(values) {
 		let projects;
 		try {
@@ -260,7 +344,7 @@ export class TimeTrackerService {
 		log.info(`Toggle Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
 			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/toggle`,
+				`${values.apiHost}/api/timesheet/timer/start`,
 				{ ...body },
 				{ headers: headers }
 			)
@@ -286,7 +370,7 @@ export class TimeTrackerService {
 		};
 		return firstValueFrom(
 			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/toggle`,
+				`${values.apiHost}/api/timesheet/timer/stop`,
 				{ ...body },
 				{ headers: headers }
 			)
@@ -586,6 +670,26 @@ export class TimeTrackerService {
 
 	pingApi(values) {
 		return this.http.get(values.apiHost).pipe().toPromise();
+	}
+
+	saveNewTask(values, payload) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+		return this.http
+			.post(`${values.apiHost}/api/tasks`, payload, {
+				headers: headers
+			})
+			.pipe(
+				catchError((error) => {
+					error.error = {
+						...error.error
+					};
+					return throwError(error);
+				})
+			)
+			.toPromise();
 	}
 	  
 }

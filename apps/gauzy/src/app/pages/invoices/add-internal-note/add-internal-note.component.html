@@ -1,6 +1,7 @@
 <nb-card class="add-internal-note">
 	<nb-card-header>
-		<h5>
+		<span class="cancel"><i class="fas fa-times" (click)="cancel()"></i></span>
+		<h5 class="title">
 			{{ 'INVOICES_PAGE.INTERNAL_NOTE.ADD_INTERNAL_NOTE' | translate }}
 		</h5>
 	</nb-card-header>
@@ -25,8 +26,8 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+	<nb-card-footer class="text-left">
+		<button outline status="basic" class="mr-3" nbButton (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button *ngIf="form" (click)="addNote()" status="success" nbButton>

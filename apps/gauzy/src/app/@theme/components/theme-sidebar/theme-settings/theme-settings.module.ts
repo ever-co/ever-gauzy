@@ -12,6 +12,7 @@ import { ThemeLanguageSelectorModule } from './components/theme-language-selecto
 import { ThemeSelectorModule } from './components/theme-selector/theme-selector.module';
 import { NbCardModule, NbListModule } from '@nebular/theme';
 import { ThemeSelectorComponent } from './components/theme-selector/theme-selector.component';
+import { LayoutSelectorComponent } from './components/layout-selector/layout-selector.component';
 
 @NgModule({
 	imports: [
@@ -28,10 +29,12 @@ import { ThemeSelectorComponent } from './components/theme-selector/theme-select
 	],
 	exports: [
 		ThemeSettingsComponent,
-    ThemeSelectorComponent
+    ThemeSelectorComponent,
+    LayoutSelectorComponent
 	],
 	declarations: [
-		ThemeSettingsComponent
+		ThemeSettingsComponent,
+    LayoutSelectorComponent
 	],
 	providers: []
 })

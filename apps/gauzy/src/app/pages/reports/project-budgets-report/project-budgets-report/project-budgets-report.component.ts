@@ -8,38 +8,39 @@ import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
 	IProjectBudgetLimitReport,
+	ITimeLogFilters,
 	OrganizationProjectBudgetTypeEnum,
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { debounceTime, tap } from 'rxjs/operators';
-import { ReportBaseComponent } from 'apps/gauzy/src/app/@shared/report/report-base/report-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { isEmpty } from '@gauzy/common-angular';
+import { Store } from './../../../../@core/services';
+import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-project-budgets-report',
 	templateUrl: './project-budgets-report.component.html',
 	styleUrls: ['./project-budgets-report.component.scss']
 })
-export class ProjectBudgetsReportComponent
-	extends ReportBaseComponent
+export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
+		
 	logRequest: IGetPaymentInput = this.request;
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
-	filters: IGetPaymentInput;
 	OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
-	projects: IProjectBudgetLimitReport[];
+	projects: IProjectBudgetLimitReport[] = [];
 
 	constructor(
-		private timesheetService: TimesheetService,
-		protected store: Store,
-		readonly translateService: TranslateService,
-		private cd: ChangeDetectorRef
+		private readonly timesheetService: TimesheetService,
+		protected readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly cd: ChangeDetectorRef
 	) {
 		super(store, translateService);
 	}
@@ -58,14 +59,13 @@ export class ProjectBudgetsReportComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.subject$.next(true);
 	}
 
-	async getReportData() {
-		if (!this.organization || !this.logRequest) {
+	getReportData() {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 		const request: IGetTimeLogReportInput = {

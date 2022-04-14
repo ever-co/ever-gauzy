@@ -1,4 +1,9 @@
-<nb-card class="card-scroll">
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header>
 		<h4>
 			<ngx-header-title [allowEmployee]="false">
@@ -13,48 +18,42 @@
 					nbButton
 					status="success"
 				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</ng-template>
-    <div class="container">
-		<div
-			class="sub-header header-content mt-4"
-			*ngIf="selectedEmployeeRecurringExpense?.length"
-		>
-			<div class="block header-info">
-				<div class="block-item-big">
-					{{ 'POP_UPS.EMPLOYEE' | translate }}
-				</div>
-				<div class="block-item">
-					{{ 'POP_UPS.CATEGORY_NAME' | translate }}
-				</div>
-				<div class="block-item">
-					{{ 'POP_UPS.STARTS_ON' | translate }}
-				</div>
-				<div class="block-item">
-					{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		</ng-template>
+		<div class="container">
+			<div
+				class="sub-header header-content mt-4"
+				*ngIf="recurringExpenses?.length"
+			>
+				<div class="block header-info">
+					<div class="block-item-big">
+						{{ 'POP_UPS.EMPLOYEE' | translate }}
+					</div>
+					<div class="block-item">
+						{{ 'POP_UPS.CATEGORY_NAME' | translate }}
+					</div>
+					<div class="block-item">
+						{{ 'POP_UPS.STARTS_ON' | translate }}
+					</div>
+					<div class="block-item">
+						{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
+					</div>
 				</div>
 			</div>
-		</div>
-		<ng-container *ngIf="selectedEmployeeRecurringExpense.length">
-			<ng-container
-				*ngFor="
-					let expense of selectedEmployeeRecurringExpense;
-					let i = index
-				"
-			>
-				<ga-recurring-expense-block
-					(editRecurringExpense)="editEmployeeRecurringExpense(i)"
-					(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
-					(fetchRecurringExpenseHistory)="fetchHistory(i)"
-					[fetchedHistories]="fetchedHistories[i]"
-					[recurringExpense]="expense"
-					[selectedOrganization]="selectedOrganization"
-				>
-				</ga-recurring-expense-block>
+			<ng-container *ngIf="recurringExpenses.length">
+				<ng-container *ngFor="let expense of recurringExpenses; let i = index">
+					<ga-recurring-expense-block
+						(editRecurringExpense)="editEmployeeRecurringExpense(i)"
+						(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
+						(fetchRecurringExpenseHistory)="fetchHistory(i)"
+						[fetchedHistories]="fetchedHistories[i]"
+						[recurringExpense]="expense"
+						[selectedOrganization]="organization"
+					></ga-recurring-expense-block>
+				</ng-container>
 			</ng-container>
-		</ng-container>
-    </div>
+		</div>
 	</nb-card-body>
 </nb-card>

@@ -56,7 +56,8 @@ export const LocalStore = {
 					visibleAwOption: true,
 					randomScreenshotTime: false,
 					visibleWakatimeOption: false,
-					trackOnPcSleep: false
+					trackOnPcSleep: false,
+					awIsConnected: true
 				};
 				store.set({
 					appSetting: defaultAppSetting
@@ -66,6 +67,7 @@ export const LocalStore = {
 					typeof config.screenshotNotification === 'undefined'
 						? true
 						: config.screenshotNotification;
+				config.awIsConnected = true;
 				store.set({
 					appSetting: config
 				});
@@ -76,8 +78,9 @@ export const LocalStore = {
 	},
 
 	updateApplicationSetting: (values) => {
+		let appSetting = store.get('appSetting');
 		store.set({
-			appSetting: values
+			appSetting: {...appSetting, ...values}
 		});
 	},
 

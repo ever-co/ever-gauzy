@@ -10,16 +10,18 @@ import {
 	ReportDayData
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { moment } from './../../../../@core/moment-extend';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pluck, pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
+import { isEmpty } from '@gauzy/common-angular';
+import { moment } from './../../../../@core/moment-extend';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
+import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,7 +29,7 @@ import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-
 	templateUrl: './weekly-time-reports.component.html',
 	styleUrls: ['./weekly-time-reports.component.scss']
 })
-export class WeeklyTimeReportsComponent extends ReportBaseComponent
+export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
 	logRequest: ITimeLogFilters = this.request;
@@ -39,7 +41,7 @@ export class WeeklyTimeReportsComponent extends ReportBaseComponent
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
-		private readonly cd: ChangeDetectorRef,
+		private readonly cdr: ChangeDetectorRef,
 		protected readonly store: Store,
 		public readonly translateService: TranslateService
 	) {
@@ -47,6 +49,10 @@ export class WeeklyTimeReportsComponent extends ReportBaseComponent
 	}
 
 	ngOnInit() {
+		this.cdr.detectChanges();
+	}
+
+	ngAfterViewInit() {
 		this.subject$
 			.pipe(
 				debounceTime(500),
@@ -55,10 +61,6 @@ export class WeeklyTimeReportsComponent extends ReportBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	ngAfterViewInit() {
-		this.cd.detectChanges();
 	}
 
 	updateWeekDays() {
@@ -78,14 +80,18 @@ export class WeeklyTimeReportsComponent extends ReportBaseComponent
 		this.weekDays = days;
 	}
 
-	filtersChange($event: ITimeLogFilters) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
+		this.filters = Object.assign(
+			{},
+			this.logRequest,
+			getAdjustDateRangeFutureAllowed(this.logRequest)
+		);
 		this.subject$.next(true);
 	}
 
 	async getWeeklyLogs() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 		this.loading = true;

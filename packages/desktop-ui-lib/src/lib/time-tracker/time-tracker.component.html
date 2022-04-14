@@ -144,7 +144,6 @@
 											</div>
 											<div class="col-4">
 												<nb-icon
-													*ngIf="awCheck"
 													[icon]="iconAw"
 													[status]="statusIcon"
 												>
@@ -336,9 +335,20 @@
 				</nb-card>
 			</div>
 			<div class="col-8 full-width" *ngIf="isExpand">
-				<nb-card class="max-width-search">
+				<nb-card class="max-width-search" *ngIf="!isAddTask">
 					<nb-card-body>
 						<div class="row">
+							<div class="col-12">
+								<button
+									nbButton
+									status="success"
+									class="mr-2"
+									(click)="addTask()"
+								>
+									<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+									>Add
+								</button>
+							</div>
 							<div class="col-12">
 								<nb-form-field>
 										<nb-icon nbPrefix icon="search-outline"></nb-icon>
@@ -363,6 +373,13 @@
 						</div>
 					</nb-card-body>
 				</nb-card>
+				<ngx-tasks 
+					*ngIf="isAddTask"
+					[userData]="argFromMain"
+					[employee]="userData"
+					(isAddTask)="cloasAddTask($event)"
+					(newTaskCallback)="callbackNewTask($event)"
+				></ngx-tasks>
 			</div>
 		</div>
 	</nb-layout-column>

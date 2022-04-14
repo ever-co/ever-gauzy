@@ -20,6 +20,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: relative;
+      cursor: pointer;
       .theme{
         width: 100%;
       }
@@ -31,7 +33,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 19px 47px 11px 13px;
+    padding: 19px 47px 10px 11px;
     .sub-menu{
       background: rgba(126, 126, 143, 0.05);
       padding: 10px;
@@ -56,6 +58,11 @@
   flex-wrap: wrap;
 }
 
-p.link, .button, i{
+p.link, .button, i, a{
   cursor: pointer;
+  text-decoration: none;
+  color: nb-theme(text-basic-color);
+}
+::ng-deep .cdk-overlay-container{
+  z-index: 1052;
 }

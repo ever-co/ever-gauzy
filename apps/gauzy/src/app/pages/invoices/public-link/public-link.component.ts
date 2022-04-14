@@ -5,7 +5,8 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 
 @Component({
 	selector: 'public-link',
-	templateUrl: './public-link.component.html'
+	templateUrl: './public-link.component.html',
+	styleUrls: ['./public-link.component.scss']
 })
 export class PublicLinkComponent implements OnInit {
 	invoice: IInvoice;

@@ -1,17 +1,16 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Params } from '@angular/router';
-import { IEmployee, IOrganization, LanguagesEnum } from '@gauzy/contracts';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { Subject, Subscription } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
+import { IEmployee, IOrganization } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { combineLatest } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { EmployeeStore, Store, ToastrService } from '../../../../../@core/services';
 
 /**
  * This component contains the properties stored within the User Entity of an Employee.
  * Any property which is either stored directly in the Employee entity or as a relation of the Employee entity should NOT be put in this Component
  */
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-employee-main',
 	templateUrl: './edit-employee-main.component.html',
@@ -21,14 +20,28 @@ import { EmployeeStore } from '../../../../../@core/services/employee-store.serv
 	]
 })
 export class EditEmployeeMainComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-	form: FormGroup;
-	paramSubscription: Subscription;
+
+	organization: IOrganization;
 	hoverState: boolean;
-	routeParams: Params;
 	selectedEmployee: IEmployee;
-	selectedOrganization: IOrganization;
-	languages: string[] = Object.values(LanguagesEnum);
+
+	/*
+	* Employee Main Mutation Form
+	*/
+	public form: FormGroup = EditEmployeeMainComponent.buildForm(this.fb);
+	static buildForm(
+		fb: FormBuilder
+	): FormGroup {
+		return fb.group({
+			username: [],
+			email: [null, Validators.required],
+			firstName: [],
+			lastName: [],
+			imageUrl: ['', Validators.required],
+			preferredLanguage: [],
+			profile_link: []
+		});
+	}
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -38,63 +51,65 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this.employeeStore.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (emp) => {
-				this.selectedEmployee = emp;
-
-				if (this.selectedEmployee) {
-					this._initializeForm(this.selectedEmployee);
-				}
-
-				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((organization) => {
-						this.selectedOrganization = organization;
-					});
-			});
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.employeeStore.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
+			.pipe(
+				filter(([organization, employee]) => !!organization && !!employee),
+				tap(([organization, employee]) => {
+					this.organization = organization;
+					this.selectedEmployee = employee;
+				}),
+				tap(() => this._initializeFormValue(this.selectedEmployee)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	handleImageUploadError(error: any) {
 		this.toastrService.danger(error);
 	}
 
-	async updateImage(imageUrl: string) {
+	updateImage(imageUrl: string) {
 		this.form.get('imageUrl').setValue(imageUrl);
 		try  {
 			this.employeeStore.userForm = {
 				imageUrl
 			};
-		}catch (error) {
+		} catch (error) {
 			this.handleImageUploadError(error)
 		}
 	}
 
-	async submitForm() {
+	submitForm() {
 		if (this.form.valid) {
-			this.employeeStore.userForm = {
-				...this.form.value
-			};
-			this.employeeStore.employeeForm = {
-				...this.form.value
-			};
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+			
+			const values = {
+				...this.form.getRawValue(),
+				...{
+					organizationId,
+					tenantId
+				}
+			}
+
+			this.employeeStore.userForm = values;
+			this.employeeStore.employeeForm = values;
 		}
 	}
 
-	private _initializeForm(employee: IEmployee) {
-		this.form = this.fb.group({
-			username: [employee.user.username],
-			email: [employee.user.email, Validators.required],
-			firstName: [employee.user.firstName],
-			lastName: [employee.user.lastName],
-			imageUrl: [employee.user.imageUrl, Validators.required],
-			preferredLanguage: [employee.user.preferredLanguage],
-			profile_link: [employee.profile_link],
+	private _initializeFormValue(employee: IEmployee) {
+		this.form.patchValue({
+			username: employee.user.username,
+			email: employee.user.email,
+			firstName: employee.user.firstName,
+			lastName: employee.user.lastName,
+			imageUrl: employee.user.imageUrl,
+			preferredLanguage: employee.user.preferredLanguage,
+			profile_link: employee.profile_link
 		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

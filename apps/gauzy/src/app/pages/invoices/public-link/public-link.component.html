@@ -1,6 +1,9 @@
 <nb-card>
 	<nb-card-header>
-		<h5>
+    <span class="cancel"
+			><i class="fas fa-times" (click)="cancel()"></i
+		></span>
+		<h5 class="title">
 			{{ 'INVOICES_PAGE.PUBLIC_LINK.HEADER' | translate }}
 		</h5>
 	</nb-card-header>
@@ -19,8 +22,8 @@
 			<input [ngModel]="invoice.publicLink" disabled nbInput fullWidth />
 		</div>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+	<nb-card-footer class="text-left">
+		<button status="basic" outline class="mr-3" nbButton (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

@@ -1,15 +1,14 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-	ActivatedRoute
-} from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
 	IIncome,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IEmployee,
 	IOrganizationContact,
-	ITag
+	ITag,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { combineLatest } from 'rxjs';
@@ -21,7 +20,13 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
-import { ContactLinksComponent, DateViewComponent, EmployeeLinksComponent, IncomeExpenseAmountComponent, TagsOnlyComponent } from '../../@shared/table-components';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	EmployeeLinksComponent,
+	IncomeExpenseAmountComponent,
+	TagsOnlyComponent
+} from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -41,7 +46,7 @@ export class IncomeComponent
 
 	smartTableSettings: object;
 	selectedEmployeeId: string;
-	selectedDate: Date;
+	selectedDateRange: IDateRangePicker;
 	smartTableSource: ServerDataSource;
 	disableButton = true;
 	loading: boolean;
@@ -87,7 +92,7 @@ export class IncomeComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => this.setSmartTableSource()),
 				tap(() => this.getIncomes()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
@@ -96,16 +101,16 @@ export class IncomeComponent
 
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDate$ = this.store.selectedDate$;
-		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
+		const selectedDateRange$ = this.store.selectedDateRange$;
+		combineLatest([storeOrganization$, storeEmployee$, selectedDateRange$])
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(([organization, employee, date]) => {
+				tap(([organization, employee, dateRange]) => {
 					if (organization) {
-						this.selectedDate = date;
+						this.selectedDateRange = dateRange;
 						this.selectedEmployeeId = employee ? employee.id : null;
 
 						this.refreshPagination();
@@ -170,7 +175,7 @@ export class IncomeComponent
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
-					width: '3em',
+					width: '15%',
 					renderComponent: DateViewComponent,
 					filter: false
 				},
@@ -217,7 +222,7 @@ export class IncomeComponent
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
-					width: '20%',
+					width: '10%',
 					class: 'align-row',
 					renderComponent: TagsOnlyComponent,
 					filter: {
@@ -251,9 +256,6 @@ export class IncomeComponent
 	}
 
 	async addIncome() {
-		if (!this.store.selectedDate) {
-			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
-		}
 		this.dialogService
 			.open(IncomeMutationComponent)
 			.onClose
@@ -386,6 +388,11 @@ export class IncomeComponent
 	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -393,9 +400,18 @@ export class IncomeComponent
 		if (this.selectedEmployeeId) {
 			request['employeeId'] = this.selectedEmployeeId;
 		}
-		if (moment(this.selectedDate).isValid()) {
-			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
+
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			request['valueDate'] = {};
+			if (moment(startDate).isValid()) {
+				request['valueDate']['startDate'] = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+			if (moment(endDate).isValid()) {
+				request['valueDate']['endDate'] = moment(endDate).format('YYYY-MM-DD HH:mm:ss');
+			}
 		}
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/income/pagination`,
 			relations: [
@@ -430,18 +446,20 @@ export class IncomeComponent
 
 	private async getIncomes() {
 		try {
-			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE ||
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
-				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.incomes = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] =  this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -473,11 +491,6 @@ export class IncomeComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
-	}
-
-  onUpdateOption($event: number) {
-		this.pagination.itemsPerPage = $event;
-		this.getIncomes();
 	}
 
 	ngOnDestroy() { }

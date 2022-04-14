@@ -16,18 +16,33 @@ import {
 	ISelectedPayment,
 	IInvoice,
 	ITag,
-	IOrganizationContact
+	IOrganizationContact,
+	IDateRangePicker
 } from '@gauzy/contracts';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-import { API_PREFIX } from '../../@core/constants';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	IncomeExpenseAmountComponent,
+	TagsOnlyComponent
+} from '../../@shared/table-components';
+import { StatusBadgeComponent } from '../../@shared/status-badge';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { ErrorHandlingService, InvoiceEstimateHistoryService, PaymentService, Store, ToastrService } from '../../@core/services';
-import { OrganizationContactFilterComponent, PaymentMethodFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+import {
+	ErrorHandlingService,
+	InvoiceEstimateHistoryService,
+	PaymentService,
+	Store,
+	ToastrService
+} from '../../@core/services';
+import {
+	OrganizationContactFilterComponent,
+	PaymentMethodFilterComponent,
+	TagsColorFilterComponent
+} from '../../@shared/table-filters';
 import { environment as ENV } from './../../../environments/environment';
 
 
@@ -44,7 +59,7 @@ export class PaymentsComponent
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedPayment: IPayment;
-	payments: IPayment[];
+	payments: IPayment[] = [];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -53,7 +68,7 @@ export class PaymentsComponent
 	currency: string;
 	loading: boolean;
 	projectId: string | null;
-	selectedDate: Date;
+	selectedDateRange: IDateRangePicker;
 	subject$: Subject<any> = new Subject();
 
 	paymentsTable: Ng2SmartTableComponent;
@@ -85,26 +100,25 @@ export class PaymentsComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
 				tap(() => this.clearItem()),
 				tap(() => this.getPayments()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDate$ = this.store.selectedDate$;
+		const selectedDateRange$ = this.store.selectedDateRange$;
 		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, selectedDate$, storeProject$])
+		combineLatest([storeOrganization$, selectedDateRange$, storeProject$])
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				tap(([organization]) => (this.currency = organization.currency || ENV.DEFAULT_CURRENCY)),
 				distinctUntilChange(),
-				tap(([organization, date, project]) => {
+				tap(([organization, dateRange, project]) => {
 					if (organization) {
 						this.organization = organization;
-						this.selectedDate = date;
+						this.selectedDateRange = dateRange;
 						this.projectId = project ? project.id : null;
 
 						this.refreshPagination();
@@ -155,6 +169,9 @@ export class PaymentsComponent
 	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -162,10 +179,18 @@ export class PaymentsComponent
 		if (this.projectId) {
 			request['projectId'] = this.projectId;
 		}
-		if (moment(this.selectedDate).isValid()) {
-			request['paymentDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			request['paymentDate'] = {};
+			if (moment(startDate).isValid()) {
+				request['paymentDate']['startDate'] = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+			if (moment(endDate).isValid()) {
+				request['paymentDate']['endDate'] = moment(endDate).format('YYYY-MM-DD HH:mm:ss');
+			}
 		}
 
+		this.loading = true;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/payments/pagination`,
 			relations: [
@@ -219,10 +244,7 @@ export class PaymentsComponent
 	async getPayments() {
 		try {
 			this.setSmartTableSource();
-			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE
-			) {
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
 				this.smartTableSource.setPaging(
@@ -358,7 +380,7 @@ export class PaymentsComponent
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
-      pager: {
+			pager: {
 				display: false,
 				perPage: this.pagination.itemsPerPage
 			},
@@ -370,7 +392,7 @@ export class PaymentsComponent
 					width: '8%',
 					sort: false
 				},
-        paymentDate: {
+        		paymentDate: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
 					type: 'custom',
 					filter: false,
@@ -438,7 +460,7 @@ export class PaymentsComponent
 					renderComponent: StatusBadgeComponent,
 					filter: false
 				},
-        tags: {
+				tags: {
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
 					type: 'custom',
 					width: '8%',
@@ -478,7 +500,7 @@ export class PaymentsComponent
 		}
 	}
 
-	async selectPayment({ isSelected, data }) {
+	selectPayment({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedPayment = isSelected ? data : null;
 	}
@@ -513,11 +535,6 @@ export class PaymentsComponent
 			organizationId,
 			tenantId
 		});
-	}
-
-  onUpdateOption($event: number) {
-		this.pagination.itemsPerPage = $event;
-		this.getPayments();
 	}
 
 	ngOnDestroy() {}

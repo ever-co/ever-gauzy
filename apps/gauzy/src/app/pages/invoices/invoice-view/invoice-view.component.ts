@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IInvoice, IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
@@ -16,7 +16,8 @@ import { InvoicesService, Store, ToastrService } from '../../../@core/services';
 })
 export class InvoiceViewComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit
+{
 	invoiceId: string;
 	tenantId: string;
 	invoice: IInvoice;
@@ -28,7 +29,8 @@ export class InvoiceViewComponent
 		private readonly route: ActivatedRoute,
 		private readonly invoicesService: InvoicesService,
 		private readonly toastrService: ToastrService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly router: Router
 	) {
 		super(translateService);
 	}
@@ -97,5 +99,17 @@ export class InvoiceViewComponent
 				: this.getTranslation('INVOICES_PAGE.INVOICE')
 		}-${this.invoice.invoiceNumber}.pdf`;
 		saveAs(data, filename);
+	}
+
+	edit() {
+		const id = this.invoiceId;
+		if (this.isEstimate) {
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/edit`,
+				id
+			]);
+		} else {
+			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
+		}
 	}
 }

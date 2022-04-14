@@ -1,37 +1,81 @@
-<div class="main-menu">
-  <div class="left-menu">
-    <div class="sub-menu">
-      <span><i class="far fa-smile"></i> {{ 'USER_MENU.STATUS' | translate}}</span>
-      <div class="status">
-        <div class="button selected">{{ 'USER_MENU.AVAILABLE' | translate}}</div>
-        <div class="button">{{ 'USER_MENU.UNAVAILABLE' | translate}}</div>
-      </div>
-    </div>
-    <div class="sub-menu">
-      <span>{{ 'USER_MENU.PAUSE_NOTIFICATIONS' | translate}}</span>
-      <div class="notifications">
-        <div class="button">{{ 'USER_MENU.FOR_1_HOUR' | translate}}</div>
-        <div class="button">{{ 'USER_MENU.FOR_2_HOURS' | translate}}</div>
-        <div class="button selected">{{ 'USER_MENU.UNTIL_TOMORROW' | translate}}</div>
-        <div class="button">{{ 'USER_MENU.CUSTOM' | translate}}</div>
-        <div class="button"><i class="far fa-calendar"></i> {{ 'USER_MENU.SET_AS_NOTIFICATION_SCHEDULE' | translate}}</div>
-      </div>
-    </div>
-    <div>
-      <p>{{ 'USER_MENU.SET_YOURSELF_AS_AWAY' | translate}}</p>
-      <p class="link" routerLink="/pages/auth/profile">{{ 'USER_MENU.PROFILE' | translate}}</p>
-      <p class="link" routerLink="/auth/logout">{{ 'USER_MENU.SIGN_OUT' | translate}}</p>
-    </div>
-    <div class="sub-user-menu">
-      <gauzy-user showIdentity="true" [user]="user"></gauzy-user>
-    </div>
-  </div>
-  <div class="right-menu">
-    <span><i (click)="onClick()" class="fas fa-times"></i></span>
-    <p>{{ 'USER_MENU.HELP' | translate}}</p>
-    <p>{{ 'USER_MENU.HOTKEYS' | translate}}</p>
-    <p><ngx-theme-language-selector class="theme"></ngx-theme-language-selector></p>
-    <p><gauzy-switch-theme class="theme"></gauzy-switch-theme></p>
-    <p><gauzy-theme-selector class="theme"></gauzy-theme-selector></p>
-  </div>
+<div gauzyOutside (clickOutside)="onClickOutside($event)" class="main-menu">
+	<div class="left-menu">
+		<div class="sub-menu">
+			<span
+				><i class="far fa-smile"></i>
+				{{ 'USER_MENU.STATUS' | translate }}</span
+			>
+			<div class="status">
+				<div class="button selected">
+					{{ 'USER_MENU.AVAILABLE' | translate }}
+				</div>
+				<div class="button">
+					{{ 'USER_MENU.UNAVAILABLE' | translate }}
+				</div>
+			</div>
+		</div>
+		<div class="sub-menu">
+			<span>{{ 'USER_MENU.PAUSE_NOTIFICATIONS' | translate }}</span>
+			<div class="notifications">
+				<div class="button">
+					{{ 'USER_MENU.FOR_1_HOUR' | translate }}
+				</div>
+				<div class="button">
+					{{ 'USER_MENU.FOR_2_HOURS' | translate }}
+				</div>
+				<div class="button selected">
+					{{ 'USER_MENU.UNTIL_TOMORROW' | translate }}
+				</div>
+				<div class="button">{{ 'USER_MENU.CUSTOM' | translate }}</div>
+				<div class="button">
+					<i class="far fa-calendar"></i>
+					{{ 'USER_MENU.SET_AS_NOTIFICATION_SCHEDULE' | translate }}
+				</div>
+			</div>
+		</div>
+		<div>
+			<p class="link" (click)="open(popup)">
+				{{ 'USER_MENU.SET_YOURSELF_AS_AWAY' | translate }}
+			</p>
+			<p class="link" routerLink="/pages/auth/profile">
+				{{ 'USER_MENU.PROFILE' | translate }}
+			</p>
+			<p class="link" routerLink="/auth/logout">
+				{{ 'USER_MENU.SIGN_OUT' | translate }}
+			</p>
+		</div>
+		<div class="sub-user-menu">
+			<gauzy-user
+				showIdentity="true"
+				[user]="user"
+				(clicked)="onClick()"
+			></gauzy-user>
+		</div>
+	</div>
+	<div class="right-menu">
+		<span><i (click)="onClick()" class="fas fa-times"></i></span>
+		<p>
+			<a target="_blank" href="https://gauzy.co">{{
+				'USER_MENU.HELP' | translate
+			}}</a>
+		</p>
+		<p class="link" (click)="open(popup)">
+			{{ 'USER_MENU.HOTKEYS' | translate }}
+		</p>
+		<p>
+			<ngx-theme-language-selector
+				class="theme"
+			></ngx-theme-language-selector>
+		</p>
+		<p><gauzy-switch-theme class="theme"></gauzy-switch-theme></p>
+		<p><gauzy-theme-selector class="theme"></gauzy-theme-selector></p>
+	</div>
 </div>
+
+<ng-template #popup let-ref="dialogRef">
+	<ng-container
+		><gauzy-popup
+			(onClosed)="ref.close()"
+		></gauzy-popup
+	></ng-container>
+</ng-template>

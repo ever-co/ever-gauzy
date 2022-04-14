@@ -1,7 +1,212 @@
 @import 'themes';
 @import 'var';
 
-nb-card, nb-card-body, nb-card-header, .card{
-  background-color: nb-theme(background-basic-color-1);
-  border-color: nb-theme(border-basic-color-3);
+@mixin mobile-table-styles {
+    ::ng-deep {
+        .group-by-wrapper {
+            margin-left: 10px;
+        }
+    }
+    .columns-header {
+        display: none;
+    }
+    .card nb-card-body {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .table-row {
+        border-radius: 0;
+        margin-bottom: 15px;
+    }
+    .responsive-table-row {
+        width: 100% !important;
+        min-width: auto !important;
+        max-width: unset !important;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 1px solid nb-theme(border-basic-color-4);
+    }
+    .responsive-table-header {
+        display: block;
+        font-family: Inter;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+    }
+    .responsive-table-content, .responsive-table-header {
+        width: 50%;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    .table-row {
+        height: auto;
+    }
+    .table-inner-wrapper {
+        flex-direction: column;
+    }
+}
+
+nb-card, nb-card-header, nb-card-body, .card {
+    background-color: nb-theme(background-basic-color-1);
+    border-color: nb-theme(border-basic-color-3);
+}
+
+::ng-deep {
+    .filter-item-list {
+        flex-wrap: nowrap !important;
+    }
+    .group-by-wrapper {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 10px;
+
+        & .label {
+            font-family: Inter;
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 600;
+            line-height: 11px;
+            letter-spacing: 0em;
+            text-align: left;
+        }
+
+        .select-button.select-button {
+            padding: 5px 12px !important;
+            border-radius: 20px;
+            font-family: Inter;
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 15px;
+            letter-spacing: 0em;
+            text-align: left;
+            min-width: auto;
+
+            & > span {
+                margin-right: 25px;
+            }
+        }
+    }
+    // .cdk-overlay-pane {
+    //     nb-option-list.size-medium {
+    //         width: auto !important;
+
+    //         .option-list > nb-option {
+    //             padding: 15px !important;
+    //         }
+    //     }
+    // }
+}
+
+:host {
+    .card {
+        background-color: nb-theme(gauzy-card-1);
+        border-radius: nb-theme(border-radius);
+        & nb-card-header {
+            background-color: nb-theme(gauzy-card-1);
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+        & nb-card-body {
+            background-color: nb-theme(background-basic-color-2);
+        }
+    }
+
+    & nb-card-header {
+        padding: 20px;
+        border-bottom: none;
+        background-color: nb-theme(background-basic-color-2);
+    }
+
+    nb-card-body {
+        background-color: nb-theme(background-basic-color-3);
+        padding: 18px;
+    }
+}
+
+.daily-time-report {
+    nb-card-body {
+        background-color: nb-theme(gauzy-card-1);
+    }
+}
+.header-flex {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+.table-row {
+    border-radius: 8px;
+    height: 86px;
+    background-color: nb-theme(gauzy-card-1);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+.table-inner-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.columns-header {
+    background-color: nb-theme(background-basic-color-3);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
+}
+
+.responsive-table-header {
+    display: none;
+}
+.responsive-table-row {
+    margin-right: 10px
+}
+.avatar-wrapper-outer {
+    max-width: 95%;
+    padding-top: 5px;
+    display: inline-flex;
+
+    .inner-wrapper {
+        display: inline-flex !important;
+    }
+}
+
+@include respond(lg) {
+    @include mobile-table-styles;
+}
+
+@include respond(md) {
+    :host ::ng-deep {
+        .filters-range-wrapper {
+            flex-wrap: wrap !important;
+        }
+        .filters .main-wrapper {
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .main-page-header {
+            font-size: 1.3rem;
+        }
+    }
 }

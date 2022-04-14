@@ -8,7 +8,8 @@ import {
 	IOrganization,
 	IProposalViewModel,
 	ProposalStatusEnum,
-	IOrganizationContact
+	IOrganizationContact,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -50,7 +51,7 @@ export class ProposalsComponent
 
 	smartTableSettings: object;
 	employeeId: string | null;
-	selectedDate: Date;
+	selectedDateRange: IDateRangePicker;
 	proposals: IProposalViewModel[];
 	smartTableSource: ServerDataSource;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -94,16 +95,16 @@ export class ProposalsComponent
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDate$ = this.store.selectedDate$;
-		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
+		const selectedDateRange$ = this.store.selectedDateRange$;
+		combineLatest([storeOrganization$, storeEmployee$, selectedDateRange$])
 			.pipe(
 				debounceTime(500),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(([organization, employee, date]) => {
+				tap(([organization, employee, dateRange]) => {
 					if (organization) {
-						this.selectedDate = date;
+						this.selectedDateRange = dateRange;
 						this.employeeId = employee ? employee.id : null;
 						this.refreshPagination();
 						this.subject$.next(true);
@@ -401,10 +402,16 @@ export class ProposalsComponent
 			request['employeeId'] = this.employeeId;
 			delete this.smartTableSettings['columns']['author'];
 		}
-		if (moment(this.selectedDate).isValid()) {
-			request['valueDate'] = moment(this.selectedDate).format(
-				'YYYY-MM-DD HH:mm:ss'
-			);
+
+		const { startDate, endDate } = this.selectedDateRange;
+		if (startDate && endDate) {
+			request['valueDate'] = {};
+			if (moment(startDate).isValid()) {
+				request['valueDate']['startDate'] = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
+			}
+			if (moment(endDate).isValid()) {
+				request['valueDate']['endDate'] = moment(endDate).format('YYYY-MM-DD HH:mm:ss');
+			}
 		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/proposal/pagination`,

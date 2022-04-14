@@ -1,14 +1,26 @@
+@import 'themes';
 .tag-color {
   position: unset;
   display: inline-flex;
-  align-self: center;
+  align-items: center;
   width: 1rem;
   height: 1rem;
-  margin-right: 1em;
-  margin-left: 1em;
+  margin-right: 10px;
+  margin-left: 10px;
 }
 
 .tag-label {
   display: unset;
-  margin-right: 0.7em;
+  margin-right: 0;
+  border-radius: 2rem;
+}
+
+input{
+  box-shadow: unset;
+}
+:host ::ng-deep{
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value{
+    background-color: transparent;
+    margin-right: 0;
+  }
 }

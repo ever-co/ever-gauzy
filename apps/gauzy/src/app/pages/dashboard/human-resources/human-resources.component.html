@@ -2,7 +2,6 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	*ngIf="selectedEmployee && selectedEmployee.id"
-	class="dashboard-card-scroll"
 >
 	<nb-card-header class="header">
 		<nb-alert
@@ -35,7 +34,10 @@
 							(click)="edit()"
 						></nb-icon
 					></span>
-					<div class="employee-position" [innerText]="employeePosition"></div>
+					<div
+						class="employee-position"
+						[innerText]="employeePosition"
+					></div>
 				</div>
 			</div>
 
@@ -45,7 +47,11 @@
 					class="employee-details employee-salary"
 				>
 					{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}:
-					{{ salary | currency: defaultCurrency | position: selectedOrganization?.currencyPosition }}
+					{{
+						salary
+							| currency: defaultCurrency
+							| position: selectedOrganization?.currencyPosition
+					}}
 				</div>
 
 				<div
@@ -53,7 +59,11 @@
 					class="employee-details"
 				>
 					{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
-					{{ averageBonus | currency: defaultCurrency | position: selectedOrganization?.currencyPosition }}
+					{{
+						averageBonus
+							| currency: defaultCurrency
+							| position: selectedOrganization?.currencyPosition
+					}}
 				</div>
 			</div>
 		</div>
@@ -74,19 +84,26 @@
 							| translate
 								: {
 										totalNonBonusIncome: defaultCurrency
-											? (nonBonusIncome
-											  | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-											: nonBonusIncome,
+											? (nonBonusIncome || 0
+											  | currency: defaultCurrency
+											  | position
+													: selectedOrganization?.currencyPosition)
+											: nonBonusIncome || 0,
 										totalBonusIncome: defaultCurrency
-											? (directIncomeBonus
-											  | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-											: directIncomeBonus
+											? (directIncomeBonus || 0
+											  | currency: defaultCurrency
+											  | position
+													: selectedOrganization?.currencyPosition)
+											: directIncomeBonus || 0
 								  }
 					}}"
 					value="{{
 						defaultCurrency
-							? (income | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-							: income
+							? (income || 0
+							  | currency: defaultCurrency
+							  | position
+									: selectedOrganization?.currencyPosition)
+							: income || 0
 					}}"
 					color="#089c17"
 					(openInfo)="openHistoryDialog('INCOME')"
@@ -98,7 +115,10 @@
 						title="{{ 'INCOME_PAGE.INCOME' | translate }}"
 						value="{{
 							defaultCurrency
-								? (nonBonusIncome | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
+								? (nonBonusIncome
+								  | currency: defaultCurrency
+								  | position
+										: selectedOrganization?.currencyPosition)
 								: nonBonusIncome
 						}}"
 						color="#089c17"
@@ -120,7 +140,9 @@
 						value="{{
 							defaultCurrency
 								? (directIncomeBonus
-								  | currency: defaultCurrency |  position: selectedOrganization?.currencyPosition)
+								  | currency: defaultCurrency
+								  | position
+										: selectedOrganization?.currencyPosition)
 								: directIncomeBonus
 						}}"
 						color="#089c17"
@@ -136,8 +158,11 @@
 					}}"
 					value="{{
 						defaultCurrency
-							? (income | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-							: income
+							? (income || 0
+							  | currency: defaultCurrency
+							  | position
+									: selectedOrganization?.currencyPosition)
+							: income || 0
 					}}"
 					color="#089c17"
 					(openInfo)="openHistoryDialog('INCOME')"
@@ -156,8 +181,11 @@
 					}}"
 					value="{{
 						defaultCurrency
-							? (expenseWithoutSalary | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-							: expenseWithoutSalary
+							? (expenseWithoutSalary || 0
+							  | currency: defaultCurrency
+							  | position
+									: selectedOrganization?.currencyPosition)
+							: expenseWithoutSalary || 0
 					}}"
 					color="#dbc300"
 					(openInfo)="openHistoryDialog('EXPENSES_WITHOUT_SALARY')"
@@ -173,8 +201,11 @@
 					}}"
 					value="{{
 						defaultCurrency
-							? (expense | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-							: expense
+							? (expense || 0
+							  | currency: defaultCurrency
+							  | position
+									: selectedOrganization?.currencyPosition)
+							: expense || 0
 					}}"
 					color="#dbc300"
 					(openInfo)="openHistoryDialog('EXPENSES')"
@@ -188,19 +219,26 @@
 							| translate
 								: {
 										totalAllIncome: defaultCurrency
-											? (income
-											  | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-											: income,
+											? (income || 0
+											  | currency: defaultCurrency
+											  | position
+													: selectedOrganization?.currencyPosition)
+											: income || 0,
 										totalExpense: defaultCurrency
-											? (expense
-											  | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-											: expense
+											? (expense || 0
+											  | currency: defaultCurrency
+											  | position
+													: selectedOrganization?.currencyPosition)
+											: expense || 0
 								  }
 					}}"
 					value="{{
 						defaultCurrency
-							? (profit | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-							: profit
+							? (profit || 0
+							  | currency: defaultCurrency
+							  | position
+									: selectedOrganization?.currencyPosition)
+							: profit || 0
 					}}"
 					color="{{ profit >= 0 ? '#089c17' : '#ff7b00' }}"
 					blockType="highlight"
@@ -222,8 +260,11 @@
 					}}"
 					value="{{
 						defaultCurrency
-							? (directIncomeBonus | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-							: directIncomeBonus
+							? (directIncomeBonus || 0
+							  | currency: defaultCurrency
+							  | position
+									: selectedOrganization?.currencyPosition)
+							: directIncomeBonus || 0
 					}}"
 					color="#66de0b"
 					(openInfo)="openHistoryDialog('BONUS_INCOME')"
@@ -242,17 +283,22 @@
 						'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO'
 							| translate
 								: {
-										bonusPercentage: bonusPercentage,
+										bonusPercentage: bonusPercentage || 0,
 										difference: defaultCurrency
-											? (profit
-											  | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-											: profit
+											? (profit || 0
+											  | currency: defaultCurrency
+											  | position
+													: selectedOrganization?.currencyPosition)
+											: profit || 0
 								  }
 					}}"
 					value="{{
 						defaultCurrency
-							? (calculatedBonus | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-							: calculatedBonus
+							? (calculatedBonus || 0
+							  | currency: defaultCurrency
+							  | position
+									: selectedOrganization?.currencyPosition)
+							: calculatedBonus || 0
 					}}"
 					color="{{ calculatedBonus >= 0 ? '#66de0b' : '#ff7b00' }}"
 				>
@@ -270,17 +316,22 @@
 						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
 							| translate
 								: {
-										bonusPercentage: bonusPercentage,
+										bonusPercentage: bonusPercentage || 0,
 										totalIncome: defaultCurrency
-											? (income
-											  | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-											: income
+											? (income || 0
+											  | currency: defaultCurrency
+											  | position
+													: selectedOrganization?.currencyPosition)
+											: income || 0
 								  }
 					}}"
 					value="{{
 						defaultCurrency
-							? (calculatedBonus | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-							: calculatedBonus
+							? (calculatedBonus || 0
+							  | currency: defaultCurrency
+							  | position
+									: selectedOrganization?.currencyPosition)
+							: calculatedBonus || 0
 					}}"
 					color="{{ calculatedBonus >= 0 ? '#66de0b' : '#ff7b00' }}"
 				>
@@ -295,14 +346,21 @@
 								'DASHBOARD_PAGE.TITLE.TOTAL_BONUS_CALC'
 									| translate
 										: {
-												totalBonusIncome: defaultCurrency
-													? (directIncomeBonus
-                            | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-													: directIncomeBonus,
+												totalBonusIncome:
+													defaultCurrency
+														? (directIncomeBonus
+														  | currency
+																: defaultCurrency
+														  | position
+																: selectedOrganization?.currencyPosition)
+														: directIncomeBonus,
 												calculatedBonus: defaultCurrency
-													? (calculatedBonus
-                            | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-													: calculatedBonus
+													? (calculatedBonus || 0
+													  | currency
+															: defaultCurrency
+													  | position
+															: selectedOrganization?.currencyPosition)
+													: calculatedBonus || 0
 										  }
 							}}
 						</div>
@@ -319,11 +377,15 @@
 								'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
 									| translate
 										: {
-												bonusPercentage: bonusPercentage,
+												bonusPercentage:
+													bonusPercentage || 0,
 												totalIncome: defaultCurrency
-													? (income
-                              | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-													: income
+													? (income || 0
+													  | currency
+															: defaultCurrency
+													  | position
+															: selectedOrganization?.currencyPosition)
+													: income || 0
 										  }
 							}}
 						</div>
@@ -338,10 +400,15 @@
 								'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO'
 									| translate
 										: {
-												bonusPercentage: bonusPercentage,
+												bonusPercentage:
+													bonusPercentage || 0,
 												difference: defaultCurrency
-													? (profit | currency: defaultCurrency | position: selectedOrganization?.currencyPosition)
-													: profit
+													? (profit || 0
+													  | currency
+															: defaultCurrency
+													  | position
+															: selectedOrganization?.currencyPosition)
+													: profit || 0
 										  }
 							}}
 						</div>
@@ -353,7 +420,12 @@
 						>
 							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
 							:
-							{{ bonus | currency: defaultCurrency | position: selectedOrganization?.currencyPosition }}
+							{{
+								bonus || 0
+									| currency: defaultCurrency
+									| position
+										: selectedOrganization?.currencyPosition
+							}}
 						</div>
 						<!--
 							TODO: handle non-defaultCurrency case differently.
@@ -367,7 +439,12 @@
 						>
 							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
 							:
-							{{ bonus | currency: defaultCurrency | position: selectedOrganization?.currencyPosition }}
+							{{
+								bonus || 0
+									| currency: defaultCurrency
+									| position
+										: selectedOrganization?.currencyPosition
+							}}
 						</div>
 					</div>
 

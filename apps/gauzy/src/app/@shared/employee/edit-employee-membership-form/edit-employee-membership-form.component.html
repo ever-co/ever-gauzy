@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card class="card">
 	<nb-card-header>
 		<button
 			*ngIf="!showAddCard"
@@ -9,46 +9,49 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="showAddCard" class="row m-0">
-			<form [formGroup]="form" *ngIf="form" class="col">
-				<ng-select
-					id="departmentsSelect"
-					[hideSelected]="true"
-					multiple="true"
-					bindLabel="name"
-					appendTo="body"
-					formControlName="departments"
-					[placeholder]="placeholder"
-					fullWidth
-				>
-					<ng-option
-						*ngFor="let entity of organizationEntities"
-						value="{{ entity.id }}"
-						>{{ entity.name }}</ng-option
+		<div *ngIf="showAddCard" class="container m-0 w-25">
+			<div class="row">
+				<form [formGroup]="form" *ngIf="form" class="col">
+					<ng-select
+						id="departmentsSelect"
+						[hideSelected]="true"
+						multiple="true"
+						bindLabel="name"
+						appendTo="body"
+						formControlName="departments"
+						[placeholder]="placeholder"
+						fullWidth
 					>
-				</ng-select>
-			</form>
-			<span class="col-2 pl-2 pr-1"
-				><button
-					class="w-100"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-					[disabled]="!form.valid"
+						<ng-option
+							*ngFor="let entity of organizationEntities"
+							value="{{ entity.id }}"
+							>{{ entity.name }}</ng-option
+						>
+					</ng-select>
+				</form>
+			</div>
+			<div class="row mt-3">
+				<span class="mr-3 ml-3"
+					><button
+						(click)="showAddCard = !showAddCard"
+						nbButton
+						status="basic"
+            outline
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+				</span>
+				<span
+					><button
+						(click)="submitForm()"
+						nbButton
+						status="success"
+						[disabled]="!form.valid"
+					>
+						{{ 'BUTTONS.ADD' | translate }}
+					</button></span
 				>
-					{{ 'BUTTONS.ADD' | translate }}
-				</button></span
-			>
-			<span class="col-2 pl-1 pr-0"
-				><button
-					class="w-100"
-					(click)="showAddCard = !showAddCard"
-					nbButton
-					status="danger"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
-			</span>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="employeeEntities?.length">

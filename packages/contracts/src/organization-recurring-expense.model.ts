@@ -13,6 +13,8 @@ export interface IOrganizationRecurringExpenseFindInput
 	value?: number;
 	currency?: string;
 	parentRecurringExpenseId?: string;
+	startDate?: Date;
+	endDate?: Date;
 }
 
 export interface IOrganizationRecurringExpenseByMonthFindInput

@@ -1,9 +1,11 @@
 <div *ngIf="organizations">
 	<ng-select
+		#select
 		[clearable]="false"
 		[items]="organizations"
 		bindLabel="name"
-		(change)="selectOrganization($event)"
+		(change)="selectOrganization($event); select.blur();"
+		(clear)="select.blur();"
 		[(ngModel)]="selectedOrganization"
 		placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate }}"
 		appendTo="body"

@@ -4,16 +4,18 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { IGetExpenseInput, ReportGroupFilterEnum, ReportGroupByFilter } from '@gauzy/contracts';
+import { IGetExpenseInput, ReportGroupFilterEnum, ReportGroupByFilter, ITimeLogFilters } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pluck } from 'underscore';
-import { Store } from './../../../../@core/services/store.service';
+import { isEmpty } from '@gauzy/common-angular';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
+import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,9 +23,9 @@ import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-
 	templateUrl: './amounts-owed-report.component.html',
 	styleUrls: ['./amounts-owed-report.component.scss']
 })
-export class AmountsOwedReportComponent
-	extends ReportBaseComponent
+export class AmountsOwedReportComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
+
 	logRequest: IGetExpenseInput = this.request;
 	loading: boolean;
 	chartData: IChartData;
@@ -43,8 +45,7 @@ export class AmountsOwedReportComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
-				tap(() => this.updateChartData()),
+				tap(() => this.updateChart()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -54,16 +55,21 @@ export class AmountsOwedReportComponent
 		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
+		this.filters = Object.assign(
+			{},
+			this.logRequest,
+			getAdjustDateRangeFutureAllowed(this.logRequest)
+		);
 		this.subject$.next(true);
 	}
 
-	updateChartData() {
-		if (!this.organization || !this.logRequest) {
+	updateChart() {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
+		this.loading = true;
 		const request: IGetExpenseInput = {
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy

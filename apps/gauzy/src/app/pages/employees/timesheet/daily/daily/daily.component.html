@@ -14,11 +14,9 @@
 </div>
 <div class="filters row mb-3">
 	<div class="col">
-		<ngx-filters
-			[hasEmployeeFilter]="false"
-			[hasProjectFilter]="false"
+		<ngx-gauzy-filters
 			(filtersChange)="filtersChange($event)"
-		></ngx-filters>
+		></ngx-gauzy-filters>
 	</div>
 </div>
 <div class="row">
@@ -120,7 +118,7 @@
 				</div>
 			</div>
 			<div class="col">{{ log.logType }}</div>
-			<div class="col">{{ log.source }}</div>
+			<div class="col">{{ log.source | replace : '_' : ' ' }}</div>
 			<div class="col">{{ log.duration | durationFormat }}</div>
 			<div class="col">
 				<span class="start-timer">

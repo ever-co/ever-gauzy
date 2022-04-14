@@ -1,105 +1,55 @@
-<nb-card class="dashboard-card-scroll">
-	<nb-card-header>
+<nb-card class="card">
+	<nb-card-header class="card-header">
 		<h4>
 			<ngx-header-title>
-				{{
-					!selectedDateRange.isCustomDate
-						? ('TIMESHEET.WEEKLY' | translate)
-						: ''
-				}}
+				{{ headerTitle }}
 				{{ 'TIMESHEET.TIME_TRACKING' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title
-			[start]="selectedDateRange.startDate"
-			[end]="selectedDateRange.endDate"
+		<ng-container
+			*ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate"
 		>
-		</ngx-date-range-title>
+			<ngx-date-range-title
+				[start]="selectedDateRange?.startDate"
+				[end]="selectedDateRange?.endDate"
+				[format]="'dddd, LL'"
+			></ngx-date-range-title>
+		</ng-container>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="row">
-			<div class="col">
-				<div class="row col-auto">
-					<div class="filter">
-						<ngx-gauzy-range-picker
-							[hasActivityLevelFilter]="false"
-							[hasEmployeeFilter]="false"
-							[hasProjectFilter]="false"
-							[hasLogTypeFilter]="false"
-							[hasSourceFilter]="false"
-							[saveFilters]="false"
-							[filters]="selectedDateRange"
-							[arrows]="true"
-							(onDateChange)="onUpdateDate($event)"
-						>
-						</ngx-gauzy-range-picker>
-					</div>
+	<nb-card-body class="card-body">
+		<div class="container">
+			<div class="row">
+				<div class="mb-4 ml-auto col-auto d-flex align-items-center">
+					<nb-toggle
+						class="mr-3 ml-3"
+						size="small"
+						[(ngModel)]="autoRefresh"
+						(checkedChange)="setAutoRefresh($event)"
+					>
+						{{ 'BUTTONS.AUTO_REFRESH' | translate }}
+					</nb-toggle>
+					<button
+						[disabled]="autoRefresh"
+						size="small"
+						type="button"
+						nbButton
+						outline
+						status="basic"
+						(click)="logs$.next(true)"
+					>
+						<nb-icon icon="sync-outline"></nb-icon>
+						{{ 'BUTTONS.REFRESH' | translate }}
+					</button>
 				</div>
 			</div>
-			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
-				<nb-toggle
-					class="mr-3 ml-3"
-          			size="small"
-					[(ngModel)]="autoRefresh"
-					(checkedChange)="setAutoRefresh($event)"
-				>
-					{{ 'BUTTONS.AUTO_REFRESH' | translate }}
-				</nb-toggle>
-				<button
-					[disabled]="autoRefresh"
-          			size="small"
-					type="button"
-					nbButton
-          			outline
-					status="basic"
-					(click)="logs$.next(true)"
-				>
-					<nb-icon icon="sync-outline"></nb-icon>
-					{{ 'BUTTONS.REFRESH' | translate }}
-				</button>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-12">
-				<div class="row">
-					<ng-container *ngIf="!employeeId">
-						<ng-container
-							*ngxPermissionsOnly="
-								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-							"
-						>
-							<div
-								class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl"
-							>
-								<nb-card
-									[nbSpinner]="countsLoading"
-									nbSpinnerSize="giant"
-									nbSpinnerStatus="primary"
-								>
-									<nb-card-body>
-										<p>
-											{{
-												'TIMESHEET.MEMBERS_WORKED'
-													| translate
-											}}
-										</p>
-										<div class="h1">
-											{{ counts?.employeesCount || 0 }}
-										</div>
-										<gauzy-counter-point
-											[total]="employeesCount"
-											[value]="
-												counts?.employeesCount || 0
-											"
-											[color]="'#0088FE'"
-										></gauzy-counter-point>
-									</nb-card-body>
-								</nb-card>
-							</div>
-						</ng-container>
-					</ng-container>
-					<ng-container *ngIf="!projectId">
-						<div class="col">
+			<div class="row">
+				<ng-container *ngIf="!employeeId">
+					<ng-container
+						*ngxPermissionsOnly="
+							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+						"
+					>
+						<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
 							<nb-card
 								[nbSpinner]="countsLoading"
 								nbSpinnerSize="giant"
@@ -108,22 +58,24 @@
 								<nb-card-body>
 									<p>
 										{{
-											'TIMESHEET.PROJECTS_WORKED'
+											'TIMESHEET.MEMBERS_WORKED'
 												| translate
 										}}
 									</p>
 									<div class="h1">
-										{{ counts?.projectsCount || 0 }}
+										{{ counts?.employeesCount || 0 }}
 									</div>
 									<gauzy-counter-point
-										[total]="projectCount"
-										[value]="counts?.projectsCount || 0"
-										[color]="'#00D68F'"
+										[total]="employeesCount"
+										[value]="counts?.employeesCount || 0"
+										[color]="'#0088FE'"
 									></gauzy-counter-point>
 								</nb-card-body>
 							</nb-card>
 						</div>
 					</ng-container>
+				</ng-container>
+				<ng-container *ngIf="!projectId">
 					<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
 						<nb-card
 							[nbSpinner]="countsLoading"
@@ -132,203 +84,329 @@
 						>
 							<nb-card-body>
 								<p>
-									{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
-								</p>
-								<div class="h1">
-									{{ counts?.todayActivities || 0 }}%
-								</div>
-								<gauzy-counter-point
-									[progress]="true"
-									[value]="counts?.todayActivities || 0"
-								>
-								</gauzy-counter-point>
-							</nb-card-body>
-						</nb-card>
-					</div>
-					<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
-						<nb-card
-							[nbSpinner]="countsLoading"
-							nbSpinnerSize="giant"
-							nbSpinnerStatus="primary"
-						>
-							<nb-card-body>
-								<p>
-									{{ 'TIMESHEET.WORKED_TODAY' | translate }}
-								</p>
-								<div class="h1">
 									{{
-										counts?.todayDuration || 0
-											| durationFormat
+										'TIMESHEET.PROJECTS_WORKED' | translate
 									}}
+								</p>
+								<div class="h1">
+									{{ counts?.projectsCount || 0 }}
 								</div>
 								<gauzy-counter-point
-									[total]="period"
-									[value]="counts?.todayDuration || 0"
+									[total]="projectCount"
+									[value]="counts?.projectsCount || 0"
 									[color]="'#00D68F'"
 								></gauzy-counter-point>
 							</nb-card-body>
 						</nb-card>
 					</div>
-					<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
-						<nb-card
-							[nbSpinner]="countsLoading"
-							nbSpinnerSize="giant"
-							nbSpinnerStatus="primary"
-						>
-							<nb-card-body>
-								<ng-container [ngSwitch]="selectedPeriod">
-									<p>
-										<ng-template
-											[ngSwitchCase]="RangePeriod.PERIOD"
-										>
-											{{
-												'TIMESHEET.ACTIVITY' | translate
-											}}
-										</ng-template>
-										<ng-template [ngSwitchDefault]>
-											{{
-												'TIMESHEET.WEEKLY_ACTIVITY'
-													| translate
-											}}
-										</ng-template>
-									</p>
-								</ng-container>
-								<div class="h1">
-									{{ counts?.weekActivities || 0 }}%
-								</div>
-								<gauzy-counter-point
-									[progress]="true"
-									[value]="counts?.weekActivities || 0"
-								></gauzy-counter-point>
-							</nb-card-body>
-						</nb-card>
-					</div>
-					<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
-						<nb-card
-							[nbSpinner]="countsLoading"
-							nbSpinnerSize="giant"
-							nbSpinnerStatus="primary"
-						>
-							<nb-card-body>
-								<ng-container [ngSwitch]="selectedPeriod">
-									<p>
-										<ng-template
-											[ngSwitchCase]="RangePeriod.PERIOD"
-										>
-											{{
-												'TIMESHEET.WORKED_OVER_PERIOD'
-													| translate
-											}}
-										</ng-template>
-										<ng-template [ngSwitchDefault]>
-											{{
-												'TIMESHEET.WORKED_THIS_WEEK'
-													| translate
-											}}
-										</ng-template>
-									</p>
-								</ng-container>
-								<div class="h1">
-									{{
-										counts?.weekDuration || 0
-											| durationFormat
-									}}
-								</div>
-								<gauzy-counter-point
-									[total]="period"
-									[value]="counts?.weekDuration || 0"
-									[color]="'#00D68E'"
-								></gauzy-counter-point>
-							</nb-card-body>
-						</nb-card>
-					</div>
+				</ng-container>
+				<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
+					<nb-card
+						[nbSpinner]="countsLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-card-body>
+							<p>
+								{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
+							</p>
+							<div class="h1">
+								{{ counts?.todayActivities || 0 }}%
+							</div>
+							<gauzy-counter-point
+								[progress]="true"
+								[value]="counts?.todayActivities || 0"
+							></gauzy-counter-point>
+						</nb-card-body>
+					</nb-card>
+				</div>
+				<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
+					<nb-card
+						[nbSpinner]="countsLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-card-body>
+							<p>
+								{{ 'TIMESHEET.WORKED_TODAY' | translate }}
+							</p>
+							<div class="h1">
+								{{
+									counts?.todayDuration || 0 | durationFormat
+								}}
+							</div>
+							<gauzy-counter-point
+								[total]="period"
+								[value]="counts?.todayDuration || 0"
+								[color]="'#00D68F'"
+							></gauzy-counter-point>
+						</nb-card-body>
+					</nb-card>
+				</div>
+				<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
+					<nb-card
+						[nbSpinner]="countsLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-card-body>
+							<ng-container [ngSwitch]="selectedPeriod">
+								<p>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.PERIOD"
+									>
+										{{ 'TIMESHEET.ACTIVITY_OVER_PERIOD' | translate }}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.DAY"
+									>
+										{{ 'TIMESHEET.ACTIVITY_FOR_DAY' | translate }}
+									</ng-template>
+									<ng-template [ngSwitchDefault]>
+										{{
+											'TIMESHEET.ACTIVITY_FOR_WEEK'
+												| translate
+										}}
+									</ng-template>
+								</p>
+							</ng-container>
+							<div class="h1">
+								{{ counts?.weekActivities || 0 }}%
+							</div>
+							<gauzy-counter-point
+								[progress]="true"
+								[value]="counts?.weekActivities || 0"
+							></gauzy-counter-point>
+						</nb-card-body>
+					</nb-card>
+				</div>
+				<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
+					<nb-card
+						[nbSpinner]="countsLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-card-body>
+							<ng-container [ngSwitch]="selectedPeriod">
+								<p>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.PERIOD"
+									>
+										{{
+											'TIMESHEET.WORKED_OVER_PERIOD'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.DAY"
+									>
+										{{ 'TIMESHEET.WORKED_FOR_DAY' | translate }}
+									</ng-template>
+									<ng-template [ngSwitchDefault]>
+										{{ 
+											(
+												isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK'
+											) | translate
+										}}
+									</ng-template>
+								</p>
+							</ng-container>
+							<div class="h1">
+								{{ counts?.weekDuration || 0 | durationFormat }}
+							</div>
+							<gauzy-counter-point
+								[total]="period"
+								[value]="counts?.weekDuration || 0"
+								[color]="'#00D68E'"
+							></gauzy-counter-point>
+						</nb-card-body>
+					</nb-card>
 				</div>
 			</div>
-			<div class="col-xl-8 col-12">
-				<nb-card
-					[nbSpinner]="timeSlotLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-				>
-					<nb-card-header>{{
-						'TIMESHEET.RECENT_ACTIVITIES' | translate
-					}}</nb-card-header>
-					<nb-card-body>
-						<ng-template
-							[ngIf]="timeSlotEmployees?.length > 0"
-							[ngIfElse]="noScreenshot"
-						>
-							<div
-								class="row"
-								*ngFor="let employee of timeSlotEmployees"
+			<div class="row">
+				<div class="col-xl-8 col-12">
+					<nb-card
+						[nbSpinner]="timeSlotLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-card-header>{{
+							'TIMESHEET.RECENT_ACTIVITIES' | translate
+						}}</nb-card-header>
+						<nb-card-body>
+							<ng-template
+								[ngIf]="timeSlotEmployees?.length > 0"
+								[ngIfElse]="noScreenshot"
 							>
-								<ng-container
-									*ngIf="employee?.timeSlots?.length > 0"
+								<div
+									class="row"
+									*ngFor="let employee of timeSlotEmployees"
 								>
-									<div class="col">
-										<div
-											class="hour-label mt-3"
-											*ngxPermissionsOnly="
-												PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-											"
-										>
-											<ngx-avatar
-												size="sm"
-												[name]="employee?.user?.name"
-												[src]="employee?.user?.imageUrl"
-												[caption]="
-													(employee?.timeSlots)[0]
-														?.startedAt
-														| utcToLocal
-														| date
-												"
-												[id]="employee?.id"
-											></ngx-avatar>
-											<div class="view-all">
-												<ng-container>
-													<button
-														nbButton
-														status="primary"
-                            size="small"
-														outline
-														(click)="
-															redirectToScreenshots(
-																employee
-															)
-														"
-													>
-														{{
-															'BUTTONS.VIEW_ALL'
-																| translate
-														}}
-													</button>
-												</ng-container>
-											</div>
-										</div>
-										<div
-											class="row my-3 align-items-center justify-content-center"
-										>
+									<ng-container
+										*ngIf="employee?.timeSlots?.length > 0"
+									>
+										<div class="col">
 											<div
-												class="col"
-												*ngFor="
-													let timeSlot of employee.timeSlots
+												class="hour-label mt-3"
+												*ngxPermissionsOnly="
+													PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 												"
 											>
-												<ngx-screenshots-item
-													[timeSlot]="timeSlot"
-													(delete)="onDelete()"
-													[multiple]="false"
+												<ngx-avatar
+													size="sm"
+													[name]="
+														employee?.user?.name
+													"
+													[src]="
+														employee?.user?.imageUrl
+													"
+													[caption]="
+														(employee?.timeSlots)[0]
+															?.startedAt
+															| utcToLocal
+															| dateFormat
+													"
+													[id]="employee?.id"
+												></ngx-avatar>
+												<div class="view-all">
+													<ng-container>
+														<button
+															nbButton
+															status="primary"
+															size="small"
+															outline
+															(click)="
+																redirectToScreenshots(
+																	employee
+																)
+															"
+														>
+															{{
+																'BUTTONS.VIEW_ALL'
+																	| translate
+															}}
+														</button>
+													</ng-container>
+												</div>
+											</div>
+											<div
+												class="row my-3 align-items-center justify-content-between"
+											>
+												<div
+													class="col"
+													*ngFor="
+														let timeSlot of employee.timeSlots
+													"
 												>
-												</ngx-screenshots-item>
+													<ngx-screenshots-item
+														[timeSlot]="timeSlot"
+														(delete)="onDelete()"
+														[multiple]="false"
+													>
+													</ngx-screenshots-item>
+												</div>
+											</div>
+										</div>
+									</ng-container>
+								</div>
+							</ng-template>
+							<ng-template #noScreenshot>
+								<ng-container
+									*ngIf="!timeSlotLoading"
+									[ngSwitch]="selectedPeriod"
+								>
+									<div class="text-center p-3">
+										<ng-template
+											[ngSwitchCase]="RangePeriod.DAY"
+										>
+											{{
+												'TIMESHEET.NO_SCREENSHOT_DAY'
+													| translate
+											}}
+										</ng-template>
+										<ng-template
+											[ngSwitchCase]="RangePeriod.WEEK"
+										>
+											{{
+												'TIMESHEET.NO_SCREENSHOT_WEEK'
+													| translate
+											}}
+										</ng-template>
+										<ng-template
+											[ngSwitchCase]="RangePeriod.PERIOD"
+										>
+											{{
+												'TIMESHEET.NO_SCREENSHOT_PERIOD'
+													| translate
+											}}
+										</ng-template>
+									</div>
+								</ng-container>
+							</ng-template>
+						</nb-card-body>
+					</nb-card>
+					<nb-card
+						class="mt-4"
+						[nbSpinner]="tasksLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-card-header class="nb-card-header">
+							{{ 'TIMESHEET.TASKS' | translate }}
+							<button
+								size="small"
+								nbButton
+								status="primary"
+								outline
+								(click)="redirectToTask()"
+							>
+								{{ 'BUTTONS.VIEW_ALL' | translate }}
+							</button>
+						</nb-card-header>
+						<ng-template
+							[ngIf]="tasks?.length > 0"
+							[ngIfElse]="noTasks"
+						>
+							<nb-list>
+								<nb-list-item *ngFor="let task of tasks">
+									<div class="w-100">
+										<div class="row align-items-center">
+											<div class="col text-left">
+												{{ task.title }}
+											</div>
+											<div class="col text-center">
+												{{ task.durationPercentage }}%
+											</div>
+											<div class="col text-center">
+												<nb-progress-bar
+													class="mb-1 custom-progress"
+													[value]="
+														task.durationPercentage
+													"
+													[status]="
+														progressStatus(
+															task.durationPercentage
+														)
+													"
+													[displayValue]="true"
+													size="tiny"
+												>
+												</nb-progress-bar>
+											</div>
+											<div class="col text-right">
+												{{
+													task.duration
+														| durationFormat
+												}}
 											</div>
 										</div>
 									</div>
-								</ng-container>
-							</div>
+								</nb-list-item>
+							</nb-list>
 						</ng-template>
-						<ng-template #noScreenshot>
+						<ng-template #noTasks>
 							<ng-container
-								*ngIf="!timeSlotLoading"
+								*ngIf="!tasksLoading"
 								[ngSwitch]="selectedPeriod"
 							>
 								<div class="text-center p-3">
@@ -336,7 +414,7 @@
 										[ngSwitchCase]="RangePeriod.DAY"
 									>
 										{{
-											'TIMESHEET.NO_SCREENSHOT_DAY'
+											'TIMESHEET.NO_TASK_ACTIVITY_DAY'
 												| translate
 										}}
 									</ng-template>
@@ -344,7 +422,7 @@
 										[ngSwitchCase]="RangePeriod.WEEK"
 									>
 										{{
-											'TIMESHEET.NO_SCREENSHOT_WEEK'
+											'TIMESHEET.NO_TASK_ACTIVITY_WEEK'
 												| translate
 										}}
 									</ng-template>
@@ -352,446 +430,355 @@
 										[ngSwitchCase]="RangePeriod.PERIOD"
 									>
 										{{
-											'TIMESHEET.NO_SCREENSHOT_PERIOD'
+											'TIMESHEET.NO_TASK_ACTIVITY_PERIOD'
 												| translate
 										}}
 									</ng-template>
 								</div>
 							</ng-container>
 						</ng-template>
-					</nb-card-body>
-				</nb-card>
-				<nb-card
-					class="mt-4"
-					[nbSpinner]="tasksLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-				>
-					<nb-card-header class="nb-card-header">
-						{{ 'TIMESHEET.TASKS' | translate }}
-						<button
-              size="small"
-							nbButton
-							status="primary"
-							outline
-							(click)="redirectToTask()"
-						>
-							{{ 'BUTTONS.VIEW_ALL' | translate }}
-						</button>
-					</nb-card-header>
-					<ng-template
-						[ngIf]="tasks?.length > 0"
-						[ngIfElse]="noTasks"
+					</nb-card>
+					<nb-card
+						class="mt-4"
+						[nbSpinner]="manualTimeLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
 					>
-						<nb-list>
-							<nb-list-item *ngFor="let task of tasks">
-								<div class="w-100">
-									<div class="row align-items-center">
-										<div class="col text-left">
-											{{ task.title }}
-										</div>
-										<div class="col text-center">
-											{{ task.durationPercentage }}%
-										</div>
-										<div class="col text-center">
-											<nb-progress-bar
-												class="mb-1 custom-progress"
-												[value]="
-													task.durationPercentage
-												"
-												[status]="
-													progressStatus(
-														task.durationPercentage
-													)
-												"
-												[displayValue]="true"
-												size="tiny"
-											>
-											</nb-progress-bar>
-										</div>
-										<div class="col text-right">
-											{{ task.duration | durationFormat }}
-										</div>
-									</div>
-								</div>
-							</nb-list-item>
-						</nb-list>
-					</ng-template>
-					<ng-template #noTasks>
-						<ng-container
-							*ngIf="!tasksLoading"
-							[ngSwitch]="selectedPeriod"
-						>
-							<div class="text-center p-3">
-								<ng-template [ngSwitchCase]="RangePeriod.DAY">
-									{{
-										'TIMESHEET.NO_TASK_ACTIVITY_DAY'
-											| translate
-									}}
-								</ng-template>
-								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
-									{{
-										'TIMESHEET.NO_TASK_ACTIVITY_WEEK'
-											| translate
-									}}
-								</ng-template>
-								<ng-template
-									[ngSwitchCase]="RangePeriod.PERIOD"
-								>
-									{{
-										'TIMESHEET.NO_TASK_ACTIVITY_PERIOD'
-											| translate
-									}}
-								</ng-template>
-							</div>
-						</ng-container>
-					</ng-template>
-				</nb-card>
-				<nb-card
-					class="mt-4"
-					[nbSpinner]="manualTimeLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-				>
-					<nb-card-header class="nb-card-header">
-						{{ 'TIMESHEET.MANUAL_TIME' | translate }}
-						<button
-							nbButton
-							status="primary"
-							outline
-              size="small"
-							(click)="redirectToManualTimeReport()"
-						>
-							{{ 'BUTTONS.VIEW_REPORT' | translate }}
-						</button>
-					</nb-card-header>
-					<ng-template
-						[ngIf]="manualTimes?.length > 0"
-						[ngIfElse]="noManualTimes"
-					>
-						<nb-list>
-							<nb-list-item>
-								<div class="w-100">
-									<div class="row py-2 font-weight-bold">
-										<div class="col-sm-4">
-											{{ 'TIMESHEET.MEMBER' | translate }}
-										</div>
-										<div class="col-sm-4">
-											{{
-												'TIMESHEET.PROJECT' | translate
-											}}
-										</div>
-										<div class="col-sm-2">
-											{{
-												'TIMESHEET.DURATION' | translate
-											}}
-										</div>
-										<div class="col-sm-2">
-											{{ 'TIMESHEET.DATE' | translate }}
-										</div>
-									</div>
-								</div>
-							</nb-list-item>
-							<nb-list-item
-								*ngFor="let manualTime of manualTimes"
+						<nb-card-header class="nb-card-header">
+							{{ 'TIMESHEET.MANUAL_TIME' | translate }}
+							<button
+								nbButton
+								status="primary"
+								outline
+								size="small"
+								(click)="redirectToManualTimeReport()"
 							>
-								<div class="w-100">
-									<div class="row">
-										<div class="col-sm-4">
-											<ngx-avatar
-												[name]="manualTime?.user?.name"
-												[src]="
-													manualTime?.user?.imageUrl
-												"
-												[id]="manualTime?.employeeId"
-											></ngx-avatar>
-										</div>
-										<div class="col-sm-4">
-											{{ manualTime.project.name }}
-										</div>
-										<div class="col-sm-2">
-											{{
-												manualTime.duration
-													| durationFormat
-											}}
-										</div>
-										<div class="col-sm-2">
-											{{ manualTime.startedAt | date }}
-										</div>
-									</div>
-								</div>
-							</nb-list-item>
-						</nb-list>
-					</ng-template>
-					<ng-template #noManualTimes>
-						<ng-container
-							*ngIf="!manualTimeLoading"
-							[ngSwitch]="selectedPeriod"
+								{{ 'BUTTONS.VIEW_REPORT' | translate }}
+							</button>
+						</nb-card-header>
+						<ng-template
+							[ngIf]="manualTimes?.length > 0"
+							[ngIfElse]="noManualTimes"
 						>
-							<div class="text-center p-3">
-								<ng-template [ngSwitchCase]="RangePeriod.DAY">
-									{{
-										'TIMESHEET.NO_MANUAL_TIME_DAY'
-											| translate
-									}}
-								</ng-template>
-								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
-									{{
-										'TIMESHEET.NO_MANUAL_TIME_WEEK'
-											| translate
-									}}
-								</ng-template>
-								<ng-template
-									[ngSwitchCase]="RangePeriod.PERIOD"
-								>
-									{{
-										'TIMESHEET.NO_MANUAL_TIME_PERIOD'
-											| translate
-									}}
-								</ng-template>
-							</div>
-						</ng-container>
-					</ng-template>
-				</nb-card>
-			</div>
-			<div class="col">
-				<nb-card
-					[nbSpinner]="projectsLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-				>
-					<nb-card-header>{{
-						'TIMESHEET.PROJECTS' | translate
-					}}</nb-card-header>
-					<ng-template
-						[ngIf]="projects?.length > 0"
-						[ngIfElse]="noProjects"
-					>
-						<nb-list>
-							<nb-list-item *ngFor="let project of projects">
-								<div class="w-100">
-									<div class="row align-items-center">
-										<div class="col text-left">
-											{{ project.name }}
-										</div>
-										<div class="col text-center">
-											{{ project.durationPercentage }}%
-										</div>
-										<div class="col text-center">
-											<nb-progress-bar
-												class="mb-1 custom-progress"
-												[value]="
-													project.durationPercentage
-												"
-												[status]="
-													progressStatus(
-														project.durationPercentage
-													)
-												"
-												[displayValue]="true"
-												size="tiny"
-											>
-											</nb-progress-bar>
-										</div>
-										<div class="col text-right">
-											{{
-												project.duration
-													| durationFormat
-											}}
-										</div>
-									</div>
-								</div>
-							</nb-list-item>
-						</nb-list>
-					</ng-template>
-					<ng-template #noProjects>
-						<ng-container
-							*ngIf="!projectsLoading"
-							[ngSwitch]="selectedPeriod"
-						>
-							<div class="text-center p-3">
-								<ng-template [ngSwitchCase]="RangePeriod.DAY">
-									{{
-										'TIMESHEET.NO_PROJECT_ACTIVITY_DAY'
-											| translate
-									}}
-								</ng-template>
-								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
-									{{
-										'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK'
-											| translate
-									}}
-								</ng-template>
-								<ng-template
-									[ngSwitchCase]="RangePeriod.PERIOD"
-								>
-									{{
-										'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD'
-											| translate
-									}}
-								</ng-template>
-							</div>
-						</ng-container>
-					</ng-template>
-				</nb-card>
-				<nb-card
-					class="mt-4"
-					[nbSpinner]="activitiesLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-				>
-					<nb-card-header class="nb-card-header"
-						>{{ 'TIMESHEET.APPS_URLS' | translate }}
-						<button
-							nbButton
-							status="primary"
-              size="small"
-							outline
-							(click)="redirectToAppUrlReport()"
-						>
-							{{ 'BUTTONS.VIEW_REPORT' | translate }}
-						</button>
-					</nb-card-header>
-					<ng-template
-						[ngIf]="activities?.length > 0"
-						[ngIfElse]="noActivities"
-					>
-						<nb-list>
-							<nb-list-item *ngFor="let activity of activities">
-								<div class="w-100">
-									<ngx-activity-item
-										[item]="activity"
-									></ngx-activity-item>
-								</div>
-							</nb-list-item>
-						</nb-list>
-					</ng-template>
-					<ng-template #noActivities>
-						<ng-container
-							*ngIf="!activitiesLoading"
-							[ngSwitch]="selectedPeriod"
-						>
-							<div class="text-center p-3">
-								<ng-template [ngSwitchCase]="RangePeriod.DAY">
-									{{
-										'TIMESHEET.NO_APP_URL_ACTIVITY_DAY'
-											| translate
-									}}
-								</ng-template>
-								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
-									{{
-										'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK'
-											| translate
-									}}
-								</ng-template>
-								<ng-template
-									[ngSwitchCase]="RangePeriod.PERIOD"
-								>
-									{{
-										'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD'
-											| translate
-									}}
-								</ng-template>
-							</div>
-						</ng-container>
-					</ng-template>
-				</nb-card>
-
-				<nb-card
-					class="mt-4 member-list"
-					[nbSpinner]="memberLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-					*ngxPermissionsOnly="
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					"
-				>
-					<nb-card-header>{{
-						'TIMESHEET.MEMBERS' | translate
-					}}</nb-card-header>
-					<ng-template
-						[ngIf]="members?.length > 0"
-						[ngIfElse]="noMember"
-					>
-						<nb-list>
-							<nb-list-item>
-								<div class="w-100">
-									<div class="row font-weight-bold">
-										<div class="col">
-											{{
-												'TIMESHEET.MEMBER_INFO'
-													| translate
-											}}
-										</div>
-										<div class="col-2 text-center">
-											{{ 'TIMESHEET.TODAY' | translate }}
-										</div>
-										<div class="col-3 text-center">
-											{{
-												(selectedPeriod ===
-												RangePeriod.PERIOD
-													? 'TIMESHEET.OVER_PERIOD'
-													: 'TIMESHEET.THIS_WEEK'
-												) | translate
-											}}
-										</div>
-									</div>
-								</div>
-							</nb-list-item>
-							<nb-list-item *ngFor="let member of members">
-								<div class="w-100">
-									<div class="row">
-										<div class="col">
-											<ngx-avatar
-												[name]="member?.user?.name"
-												[src]="member?.user?.imageUrl"
-												[id]="member?.id"
-											>
-											</ngx-avatar>
-										</div>
-										<div class="col-2 text-center">
-											<div class="activity">
-												<div class="duration">
-													{{
-														member?.todayTime
-															?.duration || 0
-															| durationFormat
-													}}
-												</div>
-												<div
-													class="activity-percentage"
-												>
-													<nb-badge
-														[status]="
-															progressStatus(
-																member
-																	?.todayTime
-																	?.overall
-															)
-														"
-														[text]="
-															(member?.todayTime
-																?.overall ||
-																0) + '%'
-														"
-													></nb-badge>
-												</div>
+							<nb-list>
+								<nb-list-item>
+									<div class="w-100">
+										<div class="row py-2 font-weight-bold">
+											<div class="col-sm-4">
+												{{
+													'TIMESHEET.MEMBER'
+														| translate
+												}}
+											</div>
+											<div class="col-sm-4">
+												{{
+													'TIMESHEET.PROJECT'
+														| translate
+												}}
+											</div>
+											<div class="col-sm-2">
+												{{
+													'TIMESHEET.DURATION'
+														| translate
+												}}
+											</div>
+											<div class="col-sm-2">
+												{{
+													'TIMESHEET.DATE' | translate
+												}}
 											</div>
 										</div>
-										<div class="col-3 text-center">
-											<div
-												[ngClass]="
-													!isMoreThanWeek()
-														? 'd-flex'
-														: ''
-												"
-											>
-												<div
-													class="activity text-center"
+									</div>
+								</nb-list-item>
+								<nb-list-item
+									*ngFor="let manualTime of manualTimes"
+								>
+									<div class="w-100">
+										<div class="row">
+											<div class="col-sm-4">
+												<ngx-avatar
+													[name]="
+														manualTime?.user?.name
+													"
+													[src]="
+														manualTime?.user
+															?.imageUrl
+													"
+													[id]="
+														manualTime?.employeeId
+													"
+												></ngx-avatar>
+											</div>
+											<div class="col-sm-4">
+												{{ manualTime.project.name }}
+											</div>
+											<div class="col-sm-2">
+												{{
+													manualTime.duration
+														| durationFormat
+												}}
+											</div>
+											<div class="col-sm-2">
+												{{
+													manualTime.startedAt | dateFormat
+												}}
+											</div>
+										</div>
+									</div>
+								</nb-list-item>
+							</nb-list>
+						</ng-template>
+						<ng-template #noManualTimes>
+							<ng-container
+								*ngIf="!manualTimeLoading"
+								[ngSwitch]="selectedPeriod"
+							>
+								<div class="text-center p-3">
+									<ng-template
+										[ngSwitchCase]="RangePeriod.DAY"
+									>
+										{{
+											'TIMESHEET.NO_MANUAL_TIME_DAY'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.WEEK"
+									>
+										{{
+											'TIMESHEET.NO_MANUAL_TIME_WEEK'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.PERIOD"
+									>
+										{{
+											'TIMESHEET.NO_MANUAL_TIME_PERIOD'
+												| translate
+										}}
+									</ng-template>
+								</div>
+							</ng-container>
+						</ng-template>
+					</nb-card>
+				</div>
+				<div class="col">
+					<nb-card
+						[nbSpinner]="projectsLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-card-header>{{
+							'TIMESHEET.PROJECTS' | translate
+						}}</nb-card-header>
+						<ng-template
+							[ngIf]="projects?.length > 0"
+							[ngIfElse]="noProjects"
+						>
+							<nb-list>
+								<nb-list-item *ngFor="let project of projects">
+									<div class="w-100">
+										<div class="row align-items-center">
+											<div class="col text-left">
+												{{ project.name }}
+											</div>
+											<div class="col text-center">
+												{{
+													project.durationPercentage
+												}}%
+											</div>
+											<div class="col text-center">
+												<nb-progress-bar
+													class="mb-1 custom-progress"
+													[value]="
+														project.durationPercentage
+													"
+													[status]="
+														progressStatus(
+															project.durationPercentage
+														)
+													"
+													[displayValue]="true"
+													size="tiny"
 												>
+												</nb-progress-bar>
+											</div>
+											<div class="col text-right">
+												{{
+													project.duration
+														| durationFormat
+												}}
+											</div>
+										</div>
+									</div>
+								</nb-list-item>
+							</nb-list>
+						</ng-template>
+						<ng-template #noProjects>
+							<ng-container
+								*ngIf="!projectsLoading"
+								[ngSwitch]="selectedPeriod"
+							>
+								<div class="text-center p-3">
+									<ng-template
+										[ngSwitchCase]="RangePeriod.DAY"
+									>
+										{{
+											'TIMESHEET.NO_PROJECT_ACTIVITY_DAY'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.WEEK"
+									>
+										{{
+											'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.PERIOD"
+									>
+										{{
+											'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD'
+												| translate
+										}}
+									</ng-template>
+								</div>
+							</ng-container>
+						</ng-template>
+					</nb-card>
+					<nb-card
+						class="mt-4"
+						[nbSpinner]="activitiesLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-card-header class="nb-card-header"
+							>{{ 'TIMESHEET.APPS_URLS' | translate }}
+							<button
+								nbButton
+								status="primary"
+								size="small"
+								outline
+								(click)="redirectToAppUrlReport()"
+							>
+								{{ 'BUTTONS.VIEW_REPORT' | translate }}
+							</button>
+						</nb-card-header>
+						<ng-template
+							[ngIf]="activities?.length > 0"
+							[ngIfElse]="noActivities"
+						>
+							<nb-list>
+								<nb-list-item
+									*ngFor="let activity of activities"
+								>
+									<div class="w-100">
+										<ngx-activity-item
+											[item]="activity"
+										></ngx-activity-item>
+									</div>
+								</nb-list-item>
+							</nb-list>
+						</ng-template>
+						<ng-template #noActivities>
+							<ng-container
+								*ngIf="!activitiesLoading"
+								[ngSwitch]="selectedPeriod"
+							>
+								<div class="text-center p-3">
+									<ng-template
+										[ngSwitchCase]="RangePeriod.DAY"
+									>
+										{{
+											'TIMESHEET.NO_APP_URL_ACTIVITY_DAY'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.WEEK"
+									>
+										{{
+											'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.PERIOD"
+									>
+										{{
+											'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD'
+												| translate
+										}}
+									</ng-template>
+								</div>
+							</ng-container>
+						</ng-template>
+					</nb-card>
+					<nb-card
+						class="mt-4 member-list"
+						[nbSpinner]="memberLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+						*ngxPermissionsOnly="
+							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+						"
+					>
+						<nb-card-header>{{
+							'TIMESHEET.MEMBERS' | translate
+						}}</nb-card-header>
+						<ng-template
+							[ngIf]="members?.length > 0"
+							[ngIfElse]="noMember"
+						>
+							<nb-list>
+								<nb-list-item>
+									<div class="w-100">
+										<div class="row font-weight-bold">
+											<div class="col-4">
+												{{
+													'TIMESHEET.MEMBER_INFO'
+														| translate
+												}}
+											</div>
+											<div class="col-3 text-center">
+												{{
+													'TIMESHEET.TODAY'
+														| translate
+												}}
+											</div>
+											<div class="col-5 text-left">
+												{{
+													(selectedPeriod ===
+													RangePeriod.PERIOD
+														? 'TIMESHEET.OVER_PERIOD'
+														: 'TIMESHEET.THIS_WEEK'
+													) | translate
+												}}
+											</div>
+										</div>
+									</div>
+								</nb-list-item>
+								<nb-list-item *ngFor="let member of members">
+									<div class="w-100">
+										<div class="row">
+											<div class="col-4">
+												<ngx-avatar
+													[name]="member?.user?.name"
+													[src]="
+														member?.user?.imageUrl
+													"
+													[id]="member?.id"
+												>
+												</ngx-avatar>
+											</div>
+											<div class="col-3 text-center">
+												<div class="activity">
 													<div class="duration">
 														{{
-															member?.weekTime
+															member?.todayTime
 																?.duration || 0
 																| durationFormat
 														}}
@@ -803,74 +790,121 @@
 															[status]="
 																progressStatus(
 																	member
-																		?.weekTime
+																		?.todayTime
 																		?.overall
 																)
 															"
 															[text]="
 																(member
-																	?.weekTime
+																	?.todayTime
 																	?.overall ||
 																	0) + '%'
 															"
 														></nb-badge>
 													</div>
 												</div>
-												<ng-container
-													*ngIf="!isMoreThanWeek()"
+											</div>
+											<div class="col-5 text-center">
+												<div
+													[ngClass]="
+														!isMoreThanWeek()
+															? 'd-flex'
+															: ''
+													"
 												>
 													<div
-														class="member-weekly-activity-graph"
+														class="activity text-center"
+													>
+														<div class="duration">
+															{{
+																member?.weekTime
+																	?.duration ||
+																	0
+																	| durationFormat
+															}}
+														</div>
+														<div
+															class="activity-percentage"
+														>
+															<nb-badge
+																[status]="
+																	progressStatus(
+																		member
+																			?.weekTime
+																			?.overall
+																	)
+																"
+																[text]="
+																	(member
+																		?.weekTime
+																		?.overall ||
+																		0) + '%'
+																"
+															></nb-badge>
+														</div>
+													</div>
+													<ng-container
+														*ngIf="
+															!isMoreThanWeek()
+														"
 													>
 														<div
-															*ngFor="
-																let weekHour of member.weekHours
-															"
-															class="bar-graph-entry"
-															[style.height]="
-																weekHour.duration +
-																'%'
-															"
-														></div>
-													</div>
-												</ng-container>
+															class="member-weekly-activity-graph"
+														>
+															<div
+																*ngFor="
+																	let weekHour of member.weekHours
+																"
+																class="bar-graph-entry"
+																[style.height]="
+																	weekHour.duration +
+																	'%'
+																"
+															></div>
+														</div>
+													</ng-container>
+												</div>
 											</div>
 										</div>
 									</div>
+								</nb-list-item>
+							</nb-list>
+						</ng-template>
+						<ng-template #noMember>
+							<ng-container
+								*ngIf="!memberLoading"
+								[ngSwitch]="selectedPeriod"
+							>
+								<div class="text-center p-3">
+									<ng-template
+										[ngSwitchCase]="RangePeriod.DAY"
+									>
+										{{
+											'TIMESHEET.NO_MEMBER_ACTIVITY_DAY'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.WEEK"
+									>
+										{{
+											'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK'
+												| translate
+										}}
+									</ng-template>
+									<ng-template
+										[ngSwitchCase]="RangePeriod.PERIOD"
+									>
+										{{
+											'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD'
+												| translate
+										}}
+									</ng-template>
 								</div>
-							</nb-list-item>
-						</nb-list>
-					</ng-template>
-					<ng-template #noMember>
-						<ng-container
-							*ngIf="!memberLoading"
-							[ngSwitch]="selectedPeriod"
-						>
-							<div class="text-center p-3">
-								<ng-template [ngSwitchCase]="RangePeriod.DAY">
-									{{
-										'TIMESHEET.NO_MEMBER_ACTIVITY_DAY'
-											| translate
-									}}
-								</ng-template>
-								<ng-template [ngSwitchCase]="RangePeriod.WEEK">
-									{{
-										'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK'
-											| translate
-									}}
-								</ng-template>
-								<ng-template
-									[ngSwitchCase]="RangePeriod.PERIOD"
-								>
-									{{
-										'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD'
-											| translate
-									}}
-								</ng-template>
-							</div>
-						</ng-container>
-					</ng-template>
-				</nb-card>
+							</ng-container>
+						</ng-template>
+					</nb-card>
+				</div>
 			</div>
 		</div>
 	</nb-card-body>

@@ -1,14 +1,16 @@
 <ng-select
+	#select
 	[clearable]="isClearable()"
 	[disabled]="disabled"
 	[(items)]="people"
-	(change)="selectEmployee($event)"
+	(change)="selectEmployee($event); select.blur();"
+	(clear)="select.blur();"
 	[(ngModel)]="selectedEmployee"
 	[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate"
 	[searchFn]="searchEmployee"
 	bindName="firstName"
 	appendTo="body"
-  class="employee"
+  	class="employee"
 >
 	<ng-template ng-option-tmp let-item="item" let-index="index">
 		<img

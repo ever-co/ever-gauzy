@@ -365,25 +365,29 @@ export class InvoicePaymentsComponent
 
 	async updateInvoiceStatus(totalValue: number, totalPaid: number) {
 		if (totalPaid <= 0) {
-			await this.invoicesService.update(this.invoice.id, {
+			await this.invoicesService.updateAction(this.invoice.id, {
 				status: InvoiceStatusTypesEnum.VIEWED
 			});
 		} else if (totalPaid < totalValue) {
-			await this.invoicesService.update(this.invoice.id, {
+			await this.invoicesService.updateAction(this.invoice.id, {
 				status: InvoiceStatusTypesEnum.PARTIALLY_PAID
 			});
 		} else if (totalPaid === totalValue) {
-			await this.invoicesService.update(this.invoice.id, {
+			await this.invoicesService.updateAction(this.invoice.id, {
 				status: InvoiceStatusTypesEnum.FULLY_PAID
 			});
 		} else {
-			await this.invoicesService.update(this.invoice.id, {
+			await this.invoicesService.updateAction(this.invoice.id, {
 				status: InvoiceStatusTypesEnum.OVERPAID
 			});
 		}
 	}
 
 	async recordFullPayment() {
+		if (!this.invoice) {
+			return;
+		}
+
 		const { tenantId } = this.store.user;
 		const payment = {
 			amount: this.leftToPay,
@@ -419,7 +423,11 @@ export class InvoicePaymentsComponent
 	}
 
 	async invoiceRemainingAmount() {
-		this.invoicesService.update(this.invoice.id, {
+		if (!this.invoice) {
+			return;
+		}
+
+		this.invoicesService.updateAction(this.invoice.id, {
 			alreadyPaid: +this.totalPaid
 		});
 		this.router.navigate(

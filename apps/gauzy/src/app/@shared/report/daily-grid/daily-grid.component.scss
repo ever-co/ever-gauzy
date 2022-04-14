@@ -1,5 +1,58 @@
 @import 'report';
+@import "themes";
 
 :host {
-  display: block;
+    display: block;
+
+    ::ng-deep {
+        .select-button {
+            background-color: nb-theme(gauzy-card-1) !important;
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);;
+        }
+        .names-wrapper {
+            max-width: 110px;
+        }
+    }
+}
+
+.employee-column {
+    width: 20%;
+    min-width: 165px;
+    max-width: 200px;
+}
+.project-column {
+    width: 20%;
+    min-width: 20%;
+}
+.todo-column {
+    width: 30%;
+}
+.time-column {
+    width: 15%;
+}
+.activity-column {
+    width: 15%;
+}
+
+
+@include respond(lg) {
+    .employee-column {
+        min-width: auto;
+        max-width: unset;
+    }
+    .single-project-template .headers-wrapper .main-header {
+        white-space: break-spaces;
+    }
+
+    :host {
+        ::ng-deep {
+            .avatar-wrapper {
+                width: unset;
+                max-width: 100%;
+            }
+            .names-wrapper {
+                max-width: unset;
+            }
+        }
+    }
 }

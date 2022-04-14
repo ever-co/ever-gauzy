@@ -120,11 +120,10 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITimeOffRequest>> {
-		const { relations, findInput, filterDate } = data;
+		const { relations, findInput } = data;
 		return this.timeOffRequestService.getAllTimeOffRequests(
 			relations,
-			findInput,
-			filterDate
+			findInput
 		);
 	}
 

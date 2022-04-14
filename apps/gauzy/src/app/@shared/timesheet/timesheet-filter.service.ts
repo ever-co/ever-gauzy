@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Query, Store, StoreConfig } from '@datorama/akita';
 import { ITimeLogFilters } from '@gauzy/contracts';
-import * as moment from 'moment';
 
 export const ActivityLevel = {
 	start: 0,
@@ -14,12 +13,7 @@ export function initialTimesheetFilterState(): ITimeLogFilters {
 		employeeIds: [],
 		source: [],
 		logType: [],
-		projectIds: [],
-		startDate: new Date(
-			moment().startOf('day').format('YYYY-MM-DD HH:mm:ss')
-		),
-		endDate: new Date(moment().endOf('day').format('YYYY-MM-DD HH:mm:ss')),
-		date: new Date(moment().startOf('day').format('YYYY-MM-DD HH:mm:ss'))
+		projectIds: []
 	};
 }
 
@@ -33,7 +27,7 @@ export class TimesheetFilterStore extends Store<ITimeLogFilters> {
 
 @Injectable({ providedIn: 'root' })
 export class TimesheetFilterQuery extends Query<ITimeLogFilters> {
-	constructor(protected store: TimesheetFilterStore) {
+	constructor(protected readonly store: TimesheetFilterStore) {
 		super(store);
 	}
 }
@@ -43,8 +37,8 @@ export class TimesheetFilterQuery extends Query<ITimeLogFilters> {
 })
 export class TimesheetFilterService {
 	constructor(
-		protected timesheetFilterStore: TimesheetFilterStore,
-		protected timesheetFilterQuery: TimesheetFilterQuery
+		protected readonly timesheetFilterStore: TimesheetFilterStore,
+		protected readonly timesheetFilterQuery: TimesheetFilterQuery
 	) {}
 
 	filter$ = this.timesheetFilterQuery.select((state) => state);

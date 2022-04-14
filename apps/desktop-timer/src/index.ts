@@ -207,7 +207,8 @@ async function startServer(value, restart = false) {
 			'assets',
 			'icons',
 			'icon_16x16.png'
-		)
+		),
+		gauzyWindow
 	);
 
 	/* ping server before launch the ui */

@@ -4,27 +4,47 @@
 	</nb-layout-header>
 
 	<nb-sidebar state="compacted" tag="user-workspace">
-		<div></div>
+		<div><gauzy-workspaces></gauzy-workspaces></div>
 		<gauzy-user [user]="user" (click)="isOpen = !isOpen"></gauzy-user>
 	</nb-sidebar>
 	<nb-sidebar
 		class="menu-sidebar sidebar_class"
 		tag="menu-sidebar"
-		responsive
 		*ngIf="user"
+		(stateChange)="onStateChange($event)"
 	>
-		<ng-content select="nb-menu"></ng-content>
-		<button
-			(click)="toggle()"
-			nbButton
-			[ngClass]="isExpanded ? 'chevron': 'chevron collapsed'"
-			outline
-			size="small"
-		>
-			<i
-				[ngClass]="isExpanded? 'fas fa-angle-double-left':'fas fa-angle-double-right'"
-			></i>
-		</button>
+		<div class="custom-box">
+			<div class="custom-row logo">
+				<div
+					[ngClass]="isExpanded? isCollapse? 'logo-container':'logo-container not-collapsed' : 'logo-container compacted'"
+				>
+					<ngx-gauzy-logo
+						[controlled]="trigger"
+						(onCollapsed)="onCollapse($event)"
+					></ngx-gauzy-logo>
+					<button
+						*ngIf="isCollapse && isExpanded"
+						class="hidden-menu"
+						outline
+						nbButton
+					>
+						<i class="fas fa-ellipsis-h"></i>
+					</button>
+				</div>
+			</div>
+			<div class="custom-row menu">
+				<ng-content select="nb-menu"></ng-content>
+			</div>
+			<div class="custom-row button">
+				<div [ngClass]="isExpanded ? 'chevron': 'chevron collapsed'">
+					<button (click)="toggle()" nbButton outline size="small">
+						<i
+							[ngClass]="isExpanded? 'fas fa-angle-double-left':'fas fa-angle-double-right'"
+						></i>
+					</button>
+				</div>
+			</div>
+		</div>
 	</nb-sidebar>
 	<nb-layout-column *ngIf="!loading">
 		<ng-content select="router-outlet"></ng-content>

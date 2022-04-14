@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, TemplateRef } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -35,6 +35,7 @@ export class InvoiceViewInnerComponent
 
 	@Input() invoice: IInvoice;
 	@Input() isEstimate: boolean;
+  @Input() buttonsOutlet: TemplateRef<any>;
 
 	constructor(
 		readonly translateService: TranslateService,

@@ -16,11 +16,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { pick, pluck } from 'underscore';
-import { Store } from './../../../../@core/services/store.service';
+import { isEmpty } from '@gauzy/common-angular';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
-import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
+import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,7 +30,7 @@ import { IChartData } from './../../../../@shared/report/charts/line-chart/line-
 	templateUrl: './time-reports.component.html',
 	styleUrls: ['./time-reports.component.scss']
 })
-export class TimeReportsComponent extends ReportBaseComponent
+export class TimeReportsComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 
 	logRequest: ITimeLogFilters = this.request;
@@ -41,12 +43,14 @@ export class TimeReportsComponent extends ReportBaseComponent
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
 		public readonly translateService: TranslateService,
-		private readonly cd: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef
 	) {
 		super(store, translateService);
 	}
 
-	ngOnInit() {}
+	ngOnInit() {
+		this.cdr.detectChanges();
+	}
 
 	ngAfterViewInit() {
 		this.subject$
@@ -56,21 +60,20 @@ export class TimeReportsComponent extends ReportBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.cd.detectChanges();
 	}
 
-	filtersChange($event) {
-		this.logRequest = $event;
+	filtersChange(filters: ITimeLogFilters) {
+		this.logRequest = filters;
 		this.filters = Object.assign(
 			{},
 			this.logRequest,
-			this.getAdjustDateRangeFutureAllowed(this.logRequest)
+			getAdjustDateRangeFutureAllowed(this.logRequest)
 		);
 		this.subject$.next(true);
 	}
 
 	updateChart() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 		const appliedFilter = pick(
@@ -93,29 +96,29 @@ export class TimeReportsComponent extends ReportBaseComponent
 						label: TimeLogType.MANUAL,
 						data: logs.map((log) => log.value[TimeLogType.MANUAL]),
 						borderColor: ChartUtil.CHART_COLORS.red,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5),
-						borderWidth: 1
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
+						borderWidth: 2
 					},
 					{
 						label: TimeLogType.TRACKED,
 						data: logs.map((log) => log.value[TimeLogType.TRACKED]),
 						borderColor: ChartUtil.CHART_COLORS.blue,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.blue, 0.5),
-						borderWidth: 1
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.blue, 1),
+						borderWidth: 2
 					},
 					{
 						label: TimeLogType.IDEAL,
 						data: logs.map((log) => log.value[TimeLogType.IDEAL]),
 						borderColor: ChartUtil.CHART_COLORS.yellow,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 0.5),
-						borderWidth: 1
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 1),
+						borderWidth: 2
 					},
 					{
 						label: TimeLogType.RESUMED,
 						data: logs.map((log) => log.value[TimeLogType.RESUMED]),
 						borderColor: ChartUtil.CHART_COLORS.green,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 0.5),
-						borderWidth: 1
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 1),
+						borderWidth: 2
 					}
 				];
 				this.chartData = {

@@ -106,12 +106,12 @@
 					<div>
 						<div>
 							<nb-icon icon="file-text-outline"></nb-icon>
-							<a href="{{ document.documentUrl }}">
+							<a [href]="document.documentUrl">
 								{{ document.name }}
 							</a>
 						</div>
 						<div>
-							{{ document.updatedAt | date: 'medium' }}
+							{{ document.updatedAt | dateTimeFormat }}
 						</div>
 					</div>
 

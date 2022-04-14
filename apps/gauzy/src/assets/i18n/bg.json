@@ -117,7 +117,8 @@
 		"VIEW_ALL": "View All",
 		"VIEW_REPORT": "View Report",
 		"TIME_TRACKING_ENABLE": "Enable Time Tracking",
-		"TIME_TRACKING_DISABLE": "Disable Time Tracking"
+		"TIME_TRACKING_DISABLE": "Disable Time Tracking",
+		"PRINT": "Print"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -690,6 +691,7 @@
 		"ROLES": "Роли и Позволения",
 		"DANGER_ZONE": "Опасна Зона",
 		"FILE_STORAGE": "File Storage",
+		"INVITE_PEOPLE": "Invite People",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT_EXPORT_DATA": "Import / Export Data",
@@ -958,9 +960,9 @@
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
 		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
-		"GROUP_BY": "Group By",
+		"GROUP_BY": "Group",
 		"DATE": "Дата",
-		"TO_DO": "TO-DO",
+		"TO_DO": "To Do",
 		"TIME": "Time",
 		"PROJECT": "Проект",
 		"CLIENT": "Клиент",
@@ -980,6 +982,7 @@
 		"CHANGED_AT": "Changed at",
 		"DURATION": "Duration",
 		"NO_TASK": "No Task",
+		"FROM": "From",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
 		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report",
 		"NO_CLIENT": "No Client",
@@ -3409,6 +3412,7 @@
 		"TODAY": "Днес",
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
+		"MONTHLY": "Monthly",
 		"CALENDAR": "Calendar",
 		"APPROVALS": "Approvals",
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
@@ -3462,9 +3466,13 @@
 		"TIME_TRACKING": "Time Tracking",
 		"MEMBERS_WORKED": "Members worked",
 		"PROJECTS_WORKED": "Projects worked",
-		"ACTIVITY": "Activity over the period",
-		"WEEKLY_ACTIVITY": "Weekly Activity",
+		"ACTIVITY_OVER_PERIOD": "Activity over the period",
+		"ACTIVITY_FOR_DAY": "Activity for the day",
+		"ACTIVITY_FOR_WEEK": "Weekly Activity",
 		"WORKED_THIS_WEEK": "Worked this week",
+		"WORKED_OVER_PERIOD": "Worked over the period",
+		"WORKED_FOR_DAY": "Worked for the day",
+		"WORKED_FOR_WEEK": "Worked for the week",
 		"TODAY_ACTIVITY": "Today's Activity",
 		"WORKED_TODAY": "Worked today",
 		"RECENT_ACTIVITIES": "Recent Activities",
@@ -3493,7 +3501,6 @@
 		"MEMBER_INFO": "Member info",
 		"THIS_WEEK": "This week",
 		"OVER_PERIOD": "Over the period",
-		"WORKED_OVER_PERIOD": "Worked over the period",
 		"NO_MEMBER_ACTIVITY_DAY": "No member activity for the day",
 		"NO_MEMBER_ACTIVITY_WEEK": "No member activity for the week",
 		"NO_MEMBER_ACTIVITY_PERIOD": "No member activity for over the period",
@@ -3815,5 +3822,12 @@
 		"HELP": "Помощ",
 		"SIGN_OUT": "Sign Out",
 		"PROFILE": "Profile"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
+			"CREATE_NEW_WORKSPACE": "Create a new workspace",
+			"FIND_WORKSPACE": "Find workspace"
+		}
 	}
 }

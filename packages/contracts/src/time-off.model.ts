@@ -55,6 +55,8 @@ export interface ITimeOffFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	isArchived?: boolean;
+	startDate?: Date;
+	endDate?: Date;
 }
 
 export interface ITimeOffUpdateInput {

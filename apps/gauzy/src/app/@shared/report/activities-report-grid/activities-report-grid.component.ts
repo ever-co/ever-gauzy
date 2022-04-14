@@ -16,9 +16,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
+import { isEmpty } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
 import { ActivityService } from '../../timesheet/activity.service';
-import { ReportBaseComponent } from '../report-base/report-base.component';
+import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +27,7 @@ import { ReportBaseComponent } from '../report-base/report-base.component';
 	templateUrl: './activities-report-grid.component.html',
 	styleUrls: ['./activities-report-grid.component.scss']
 })
-export class ActivitiesReportGridComponent extends ReportBaseComponent 
+export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent 
 	implements OnInit, AfterViewInit {
 	
 	logRequest: ITimeLogFilters = this.request;
@@ -43,25 +44,24 @@ export class ActivitiesReportGridComponent extends ReportBaseComponent
 	constructor(
 		private readonly activityService: ActivityService,
 		public readonly store: Store,
-		private readonly cd: ChangeDetectorRef,
+		private readonly cdr: ChangeDetectorRef,
 		public readonly translateService: TranslateService,
 	) {
 		super(store, translateService);
 	}
 
 	ngOnInit() {
+		this.cdr.detectChanges();
+	}
+
+	ngAfterViewInit() {
 		this.subject$
 			.pipe(
 				debounceTime(500),
-				tap(() => this.loading = true),
 				tap(() => this.getActivities()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	ngAfterViewInit() {
-		this.cd.detectChanges();
 	}
 
 	groupByChange() {
@@ -69,6 +69,10 @@ export class ActivitiesReportGridComponent extends ReportBaseComponent
 	}
 
 	getActivities() {
+		if (!this.organization || isEmpty(this.logRequest)) {
+			return;
+		}
+		this.loading = true;
 		const appliedFilter = pick(
 			this.logRequest,
 			'source',

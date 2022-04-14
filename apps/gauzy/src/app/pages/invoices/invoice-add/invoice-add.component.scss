@@ -1,115 +1,32 @@
-:host ::ng-deep ng2-smart-table .ng2-smart-actions-title a {
-  background-color: #00d68f !important;
-  transform: scale(0.9);
-}
-
-:host ::ng-deep ng2-smart-table .ng2-smart-actions a {
-  transform: scale(0.6);
-  border-radius: 0.375rem;
-}
-
-:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(1) {
-  background-color: #00d68f !important;
-  color: white;
-}
-
-:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(2) {
-  background-color: #ff3d71 !important;
-  color: white;
-}
-
-:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(1):hover {
-  color: white;
-}
-
-:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(2):hover {
-  color: white;
-}
-
-.total {
-  float: right;
-  border: solid 2px #e4e9f2;
-  border-radius: 5px;
-  margin: 20px 0 0 40px;
-  background-color: #f7f9fc;
-
-  &-item {
-    font-weight: 600;
-    margin: 10px 40px;
-    padding: 10px;
-    font-size: 16px;
+@import '../invoice-edit/invoice-edit.component.scss';
+$green: rgba(37, 184, 105, 1);
+$shadow: 0 0 0 nb-theme(button-outline-width)
+    rgba(
+      $color: $green,
+      $alpha: 0.1
+    ),
+  inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+[nbButton].gen.appearance-outline.status-basic {
+  background-color: #ffffff;
+  border-color: transparent;
+  box-shadow: $shadow;
+  border-width: 2px;
+  color: $green;
+  &:hover {
+    border-color: transparent;
   }
 }
-
-:host ::ng-deep ng2-smart-table .ng2-smart-actions {
-  width: 5%;
+[nbButton].gen.appearance-outline:hover {
+  box-shadow: $shadow;
+}
+[nbButton].gen.appearance-outline:focus:not(:hover):not(:active) {
+  box-shadow: unset;
 }
 
-.form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-
-  .block-wrap {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-
-    .block {
-      width: 48%;
-    }
-  }
-}
-.footer-block-wrap {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-
-  .footer-block {
-    width: 100%;
-  }
-}
-
-.terms-textarea {
-  width: 98%;
-}
-
-.group {
-  border: 1px #edf1f7 solid;
-  border-radius: 0.6rem;
-  margin-bottom: 9px;
-  padding-top: 14px;
-  position: relative;
-  margin-top: 1rem;
-
-  .label-group {
-    position: absolute;
-    top: -7px;
-    left: 15px;
-    background-color: #fff;
-  }
-}
-
-.buttons {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-.discountCheckbox {
-  margin-top: 20px;
-}
-
-/**
-* By setting min-height of the card to this value, we ensure the card will properly adjust it's height
-*/
-:host > nb-card {
-  min-height: 47.5rem;
+[nbButton].gen.appearance-outline.status-basic[disabled],
+[nbButton].appearance-outline.status-basic.btn-disabled {
+  background-color: nb-theme(button-outline-basic-disabled-background-color);
+  border-color: nb-theme(button-outline-basic-disabled-border-color);
+  color: nb-theme(button-outline-basic-disabled-text-color);
+  box-shadow: unset;
 }

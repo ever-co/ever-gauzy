@@ -1,0 +1,61 @@
+@import 'gauzy/_gauzy-cards';
+@import 'gauzy/_gauzy-table';
+
+nb-card-body {
+  background: nb-theme(gauzy-card-2);
+}
+.editable {
+  $orange: rgba(245, 109, 88, 1);
+  i {
+    cursor: pointer;
+  }
+  .cancel {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+  [nbButton].delete.appearance-outline.status-basic {
+    background-color: transparent;
+    border-color: rgba($color: $orange, $alpha: 0.3);
+    border-width: 2px;
+    color: $orange;
+    &:hover {
+      border-color: $orange;
+    }
+  }
+
+  [nbButton].delete.appearance-outline:hover {
+    box-shadow: 0 0 0 nb-theme(button-outline-width)
+        rgba($color: $orange, $alpha: 0.05),
+      inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+  }
+  [nbButton].delete.appearance-outline:focus:not(:hover):not(:active) {
+    box-shadow: unset;
+  }
+
+  .title {
+    color: nb-theme(text-primary-color);
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+
+  background-color: nb-theme(gauzy-card-1);
+  padding: 1rem 0 3px 0;
+  border-radius: nb-theme(border-radius);
+  width: 400px;
+}
+
+.custom-table {
+  background-color: nb-theme(gauzy-card-1);
+  border-radius: nb-theme(border-radius);
+  &.selected {
+    box-shadow: -6px 0px 0px 0px rgba(126, 126, 143, 0.1);
+  }
+  &:hover {
+    background: rgba(126, 126, 143, 0.1);
+  }
+}

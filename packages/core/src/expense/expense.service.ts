@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, Like } from 'typeorm';
-import { Expense } from './expense.entity';
-import { getDateRangeFormat } from '../core';
-import { TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from '../core/context';
-import { IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { chain } from 'underscore';
-import { getConfig } from '@gauzy/config';
-const config = getConfig();
+import { ConfigService } from '@gauzy/config';
+import { IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { Expense } from './expense.entity';
+import { getDateRangeFormat } from '../core/utils';
+import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from '../core/context';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
 		@InjectRepository(Expense)
-		private readonly expenseRepository: Repository<Expense>
+		private readonly expenseRepository: Repository<Expense>,
+		private readonly configService: ConfigService
 	) {
 		super(expenseRepository);
 	}
@@ -156,7 +156,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				let startDate: any = moment.utc(request.startDate);
 				let endDate: any = moment.utc(request.endDate);
 
-				if (config.dbConnectionOptions.type === 'sqlite') {
+				if (this.configService.dbConnectionOptions.type === 'sqlite') {
 					startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
 					endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
 				} else {
@@ -214,9 +214,13 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			const { where } = filter;
 			if ('valueDate' in where) {
 				const { valueDate } = where;
+				const {
+					startDate = moment().startOf('month').format(),
+					endDate = moment().endOf('month').format()
+				} = valueDate;
 				const { start, end } = getDateRangeFormat(
-					new Date(moment(valueDate).startOf('month').format()),
-					new Date(moment(valueDate).endOf('month').format()),
+					new Date(startDate),
+					new Date(endDate),
 					true
 				);
 				filter.where.valueDate = Between(start, end); 

@@ -1,6 +1,5 @@
+@import 'gauzy/_gauzy-cards';
 .header {
-	padding: 30px;
-
 	.header-container {
 		display: flex;
 		justify-content: space-between;
@@ -54,7 +53,6 @@
 }
 
 .body {
-	padding: 36px;
 	display: flex;
 	justify-content: space-between;
 
@@ -101,4 +99,14 @@
 			width: 215px;
 		}
 	}
+}
+$height: calc(
+  100vh - nb-theme(header-height) - nb-theme(footer-height) - 13rem
+);
+:host {
+  @include nb-card_overrides(
+    overlay,
+    $height,
+    0 $default-radius $default-radius $default-radius
+  );
 }

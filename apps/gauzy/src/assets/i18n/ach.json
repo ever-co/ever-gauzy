@@ -117,7 +117,8 @@
 		"VIEW_ALL": "crwdns10927:0crwdne10927:0",
 		"VIEW_REPORT": "crwdns10931:0crwdne10931:0",
 		"TIME_TRACKING_ENABLE": "crwdns10940:0crwdne10940:0",
-		"TIME_TRACKING_DISABLE": "crwdns10942:0crwdne10942:0"
+		"TIME_TRACKING_DISABLE": "crwdns10942:0crwdne10942:0",
+		"PRINT": "crwdns11070:0crwdne11070:0"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "crwdns7534:0crwdne7534:0",
@@ -690,6 +691,7 @@
 		"ROLES": "crwdns2645:0crwdne2645:0",
 		"DANGER_ZONE": "crwdns2769:0crwdne2769:0",
 		"FILE_STORAGE": "crwdns8148:0crwdne8148:0",
+		"INVITE_PEOPLE": "crwdns11064:0crwdne11064:0",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "crwdns2941:0crwdne2941:0",
 			"IMPORT_EXPORT_DATA": "crwdns8588:0crwdne8588:0",
@@ -958,9 +960,9 @@
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "crwdns8242:0crwdne8242:0",
 		"MANUAL_TIME_EDIT_REPORT": "crwdns8488:0crwdne8488:0",
-		"GROUP_BY": "crwdns8468:0crwdne8468:0",
+		"GROUP_BY": "crwdns11056:0crwdne11056:0",
 		"DATE": "crwdns8470:0crwdne8470:0",
-		"TO_DO": "crwdns8490:0crwdne8490:0",
+		"TO_DO": "crwdns11066:0crwdne11066:0",
 		"TIME": "crwdns8474:0crwdne8474:0",
 		"PROJECT": "crwdns8476:0crwdne8476:0",
 		"CLIENT": "crwdns8478:0crwdne8478:0",
@@ -980,6 +982,7 @@
 		"CHANGED_AT": "crwdns8498:0crwdne8498:0",
 		"DURATION": "crwdns8486:0crwdne8486:0",
 		"NO_TASK": "crwdns8258:0crwdne8258:0",
+		"FROM": "crwdns11068:0crwdne11068:0",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "crwdns8260:0crwdne8260:0",
 		"TIME_AND_ACTIVITY_REPORT": "crwdns8262:0crwdne8262:0",
 		"NO_CLIENT": "crwdns8264:0crwdne8264:0",
@@ -3409,6 +3412,7 @@
 		"TODAY": "crwdns4690:0crwdne4690:0",
 		"DAILY": "crwdns3452:0crwdne3452:0",
 		"WEEKLY": "crwdns3858:0crwdne3858:0",
+		"MONTHLY": "crwdns11072:0crwdne11072:0",
 		"CALENDAR": "crwdns3860:0crwdne3860:0",
 		"APPROVALS": "crwdns3862:0crwdne3862:0",
 		"APPROVE_SUCCESS": "crwdns4044:0crwdne4044:0",
@@ -3462,9 +3466,13 @@
 		"TIME_TRACKING": "crwdns8048:0crwdne8048:0",
 		"MEMBERS_WORKED": "crwdns8050:0crwdne8050:0",
 		"PROJECTS_WORKED": "crwdns8052:0crwdne8052:0",
-		"ACTIVITY": "crwdns10885:0crwdne10885:0",
-		"WEEKLY_ACTIVITY": "crwdns8054:0crwdne8054:0",
+		"ACTIVITY_OVER_PERIOD": "crwdns11074:0crwdne11074:0",
+		"ACTIVITY_FOR_DAY": "crwdns11076:0crwdne11076:0",
+		"ACTIVITY_FOR_WEEK": "crwdns11078:0crwdne11078:0",
 		"WORKED_THIS_WEEK": "crwdns8056:0crwdne8056:0",
+		"WORKED_OVER_PERIOD": "crwdns10919:0crwdne10919:0",
+		"WORKED_FOR_DAY": "crwdns11080:0crwdne11080:0",
+		"WORKED_FOR_WEEK": "crwdns11082:0crwdne11082:0",
 		"TODAY_ACTIVITY": "crwdns8058:0crwdne8058:0",
 		"WORKED_TODAY": "crwdns8060:0crwdne8060:0",
 		"RECENT_ACTIVITIES": "crwdns8062:0crwdne8062:0",
@@ -3493,7 +3501,6 @@
 		"MEMBER_INFO": "crwdns8088:0crwdne8088:0",
 		"THIS_WEEK": "crwdns8090:0crwdne8090:0",
 		"OVER_PERIOD": "crwdns10917:0crwdne10917:0",
-		"WORKED_OVER_PERIOD": "crwdns10919:0crwdne10919:0",
 		"NO_MEMBER_ACTIVITY_DAY": "crwdns10921:0crwdne10921:0",
 		"NO_MEMBER_ACTIVITY_WEEK": "crwdns10923:0crwdne10923:0",
 		"NO_MEMBER_ACTIVITY_PERIOD": "crwdns10925:0crwdne10925:0",
@@ -3815,5 +3822,12 @@
 		"HELP": "crwdns11046:0crwdne11046:0",
 		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
 		"PROFILE": "crwdns11050:0crwdne11050:0"
+	},
+	"WORKSPACES": {
+		"MENUS": {
+			"SING_ANOTHER_WORKSPACE": "crwdns11058:0crwdne11058:0",
+			"CREATE_NEW_WORKSPACE": "crwdns11060:0crwdne11060:0",
+			"FIND_WORKSPACE": "crwdns11062:0crwdne11062:0"
+		}
 	}
 }

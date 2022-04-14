@@ -1,5 +1,6 @@
+@import 'gauzy/_gauzy-cards';
 .organization-employee-header {
-  padding: 0px 45px;
+  align-items: center;
 }
 
 .setting-block {
@@ -7,9 +8,8 @@
     box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
     transform: translateY(-1px);
   }
-  background-color: #f6f9fc;
-  color: #222b45;
-  border-radius: 4px 0 0 4px;
+  box-shadow: 0 1px 1px 0.5px rgba(50, 50, 50, 0.1);
+  border-radius: $default-radius 0 0 $default-radius;
   margin-bottom: 20px;
   padding: 10px 0px;
   .block-content {
@@ -36,5 +36,22 @@
     .row {
       cursor: pointer;
     }
+  }
+}
+
+:host {
+  nb-card {
+    background: nb-theme(background-basic-color-1);
+    box-shadow: 0px 6px 20px 0px rgb(0 0 0 / 5%);
+    margin-bottom: 0;
+  }
+  @include card_overrides(
+    overlay,
+    calc($default-card-height - 3rem),
+    0 $default-radius $default-radius $default-radius
+  );
+  .card,
+  .card-header:first-child {
+    border-radius: 0 $default-radius 0 0;
   }
 }

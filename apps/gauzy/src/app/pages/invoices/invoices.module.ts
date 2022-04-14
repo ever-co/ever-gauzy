@@ -128,8 +128,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		PaginationModule,
 		ContactSelectModule,
 		SharedModule,
-    NbAccordionModule,
-    GauzyButtonActionModule
+    	NbAccordionModule,
+    	GauzyButtonActionModule
 	],
 	providers: [
 		InvoicesService,

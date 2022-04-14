@@ -1,6 +1,19 @@
-<nb-card class="dashboard-card-scroll">
+<nb-card>
 	<nb-card-header>
-		<h4> <ngx-header-title> Project Management </ngx-header-title> </h4>
+		<h4>
+			<ngx-header-title>
+				Project Management
+			</ngx-header-title>
+		</h4>
+		<ng-container
+			*ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate"
+		>
+			<ngx-date-range-title
+				[start]="selectedDateRange?.startDate"
+				[end]="selectedDateRange?.endDate"
+				[format]="'dddd, LL'"
+			></ngx-date-range-title>
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
 		{{ 'PROJECT_MANAGEMENT_PAGE.THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA' | translate }}

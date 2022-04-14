@@ -7,10 +7,10 @@
 			<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 		</button>
 	</div>
-	<div class="col-sm-3 py-1" [nbTooltip]="item.title">
+	<div class="col-4" [nbTooltip]="item.title">
 		{{ item.title | truncate: 13 }}
 	</div>
-	<div class="col-sm py-1">
+	<div class="col-5">
 		<div class="row align-items-center">
 			<div class="col-auto percentage-col">
 				{{ item.durationPercentage || 0 }}%
@@ -27,7 +27,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-sm-2 text-right py-1">
+	<div class="col-3 text-right">
 		{{ item.duration | durationFormat }}
 	</div>
 </div>

@@ -12,7 +12,8 @@ import {
 	IFeatureToggle,
 	IFeatureOrganization,
 	FeatureEnum,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
@@ -34,7 +35,7 @@ export interface AppState {
 	selectedEmployee: ISelectedEmployee;
 	selectedProposal: IProposalViewModel;
 	selectedProject: IOrganizationProject;
-	selectedDate: Date;
+	selectedDateRange: IDateRangePicker;
 	systemLanguages: ILanguage[];
 	featureToggles: IFeatureToggle[];
 	featureOrganizations: IFeatureOrganization[];
@@ -51,12 +52,10 @@ export interface PersistState {
 	preferredComponentLayout: ComponentLayoutStyleEnum;
 	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
 	themeName: string;
-  lightMode: number;
 }
 
 export function createInitialAppState(): AppState {
 	return {
-		selectedDate: new Date(),
 		userRolePermissions: [],
 		featureToggles: [],
 		featureOrganizations: [],
@@ -68,12 +67,10 @@ export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
 	const userId = localStorage.getItem('_userId') || null;
 	const organizationId = localStorage.getItem('_organizationId') || null;
-	const serverConnection =
-		parseInt(localStorage.getItem('serverConnection')) || null;
+	const serverConnection = parseInt(localStorage.getItem('serverConnection')) || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
-  const themeName = localStorage.getItem('themeName')|| null;
-  const lightMode = localStorage.getItem('lightMode')|| 1;
+	const themeName = localStorage.getItem('themeName')|| null;
 
 	return {
 		token,
@@ -82,8 +79,7 @@ export function createInitialPersistState(): PersistState {
 		serverConnection,
 		preferredLanguage,
 		componentLayout,
-    themeName,
-    lightMode,
+		themeName
 	} as PersistState;
 }
 
@@ -134,7 +130,7 @@ export class Store {
 	);
 	selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
 	selectedProject$ = this.appQuery.select((state) => state.selectedProject);
-	selectedDate$ = this.appQuery.select((state) => state.selectedDate);
+	selectedDateRange$ = this.appQuery.select((state) => state.selectedDateRange);
 	userRolePermissions$ = this.appQuery.select(
 		(state) => state.userRolePermissions
 	);
@@ -279,23 +275,14 @@ export class Store {
 		});
 	}
 
-	get selectedDate() {
-		const { selectedDate } = this.appQuery.getValue();
-		if (selectedDate instanceof Date) {
-			return selectedDate;
-		}
-
-		const date = new Date(selectedDate);
-		this.appStore.update({
-			selectedDate: date
-		});
-
-		return date;
+	get selectedDateRange() {
+		const { selectedDateRange } = this.appQuery.getValue();
+		return selectedDateRange;
 	}
 
-	set selectedDate(date: Date) {
+	set selectedDateRange(range: IDateRangePicker) {
 		this.appStore.update({
-			selectedDate: date
+			selectedDateRange: range
 		});
 	}
 
@@ -389,7 +376,7 @@ export class Store {
 	}
 
 	getDateFromOrganizationSettings() {
-		const dateObj = this.selectedDate;
+		const { startDate } = this.selectedDateRange;
 		switch (
 			this.selectedOrganization &&
 			this.selectedOrganization.defaultValueDateType
@@ -398,10 +385,10 @@ export class Store {
 				return new Date(Date.now());
 			}
 			case DefaultValueDateTypeEnum.END_OF_MONTH: {
-				return new Date(dateObj.getFullYear(), dateObj.getMonth(), 0);
+				return new Date(startDate.getFullYear(), startDate.getMonth(), 0);
 			}
 			case DefaultValueDateTypeEnum.START_OF_MONTH: {
-				return new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+				return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 			}
 			default: {
 				return new Date(Date.now());
@@ -510,25 +497,14 @@ export class Store {
 		});
 	}
 
-  get currentTheme(): string | null {
-    const { themeName } = this.persistQuery.getValue();
-    return themeName;
-  }
+	get currentTheme(): string | null {
+		const { themeName } = this.persistQuery.getValue();
+		return themeName;
+	}
 
-  set currentTheme(name: string){
-    this.persistStore.update({
-      themeName: name
-    })
-  }
-
-  get currentDayNightSwitchValue (): number | null {
-    const { lightMode } = this.persistQuery.getValue();
-    return lightMode;
-  }
-
-  set currentDayNightSwitchValue(lightMode: number){
-    this.persistStore.update({
-      lightMode
-    })
-  }
+	set currentTheme(name: string){
+		this.persistStore.update({
+			themeName: name
+		})
+	}
 }

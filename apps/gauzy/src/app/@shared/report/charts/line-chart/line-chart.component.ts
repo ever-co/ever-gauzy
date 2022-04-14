@@ -104,8 +104,9 @@ export class LineChartComponent implements OnInit, OnDestroy {
 					},
 					legend: {
 						position: 'bottom',
+						align: 'start',
 						labels: {
-							fontColor: chartJs.textColor
+							fontColor: chartJs.textColor,
 						}
 					},
 					tooltips: this.selectedDate
