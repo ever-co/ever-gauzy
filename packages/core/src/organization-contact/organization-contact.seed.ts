@@ -97,8 +97,8 @@ const generateOrganizationContact = async (
 	);
 	orgContact.budget =
 		orgContact.budgetType == OrganizationContactBudgetTypeEnum.COST
-			? faker.datatype.number({ min: 200, max: 2000 })
-			: faker.datatype.number({ min: 20, max: 40 });
+			? faker.datatype.number({ min: 500, max: 5000 })
+			: faker.datatype.number({ min: 40, max: 400 });
 
 	const email = faker.internet.exampleEmail(contact.firstName, contact.lastName);
 	orgContact.emailAddresses = [email];
