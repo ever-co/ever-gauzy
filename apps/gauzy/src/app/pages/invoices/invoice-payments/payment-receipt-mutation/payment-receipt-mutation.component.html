@@ -1,6 +1,7 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header>
+    <span class="cancel"><i class="fas fa-times" (click)="cancel()"></i></span>
+		<h5 class="title">
 			{{
 				'INVOICES_PAGE.PAYMENTS.SEND_RECEIPT'
 					| translate: { name: invoice.toContact.name }
@@ -34,8 +35,8 @@
 			</p>
 		</div>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button status="danger" class="mr-3" (click)="cancel()" nbButton>
+	<nb-card-footer class="text-left">
+		<button status="basic" outline class="mr-3" (click)="cancel()" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button status="success" nbButton (click)="send()">

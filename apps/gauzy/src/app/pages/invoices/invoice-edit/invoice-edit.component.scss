@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-dialogs';
+
 :host ::ng-deep ng2-smart-table .ng2-smart-actions-title a {
   background-color: #00d68f !important;
   transform: scale(0.9);
@@ -5,7 +8,7 @@
 
 :host ::ng-deep ng2-smart-table .ng2-smart-actions a {
   transform: scale(0.6);
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
 }
 
 :host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(1) {
@@ -14,8 +17,9 @@
 }
 
 :host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(2) {
-  background-color: #ff3d71 !important;
-  color: white;
+  background-color: white !important;
+  color: #ff3d71;
+  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
 }
 
 :host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(1):hover {
@@ -48,6 +52,7 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 36px;
 
   .block-wrap {
     width: 100%;
@@ -78,18 +83,18 @@
 }
 
 .group {
-  border: 1px #edf1f7 solid;
   border-radius: 0.6rem;
-  margin-bottom: 9px;
-  padding-top: 14px;
-  position: relative;
-  margin-top: 1rem;
+  margin-bottom: 20px;
+  padding: 9px 18px 2px 12px;
 
   .label-group {
-    position: absolute;
-    top: -7px;
-    left: 15px;
-    background-color: #fff;
+    font-family: Inter;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 17px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    margin-bottom: 18px;
   }
 }
 
@@ -101,5 +106,43 @@
 }
 
 .discountCheckbox {
-  margin: 20px 0;
+  margin: 20px -1rem;
+}
+
+nb-card {
+  background-color: rgba(50, 50, 50, 0.03);
+}
+div.button-action {
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 6px 8px;
+  border-radius: nb-theme(button-rectangle-border-radius);
+  margin-bottom: 12px;
+}
+.content {
+  background-color: rgba(50, 50, 50, 0.03);
+  .row.group {
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .custom-table {
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(50, 50, 50, 0.03);
+    padding: 12px;
+    div.btn-action {
+      align-self: flex-end;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+  }
+}
+
+:host button.gray {
+  background-color: rgba(126, 126, 143, 1);
+  color: nb-theme(text-control-color);
+  [nbButton].appearance-filled.status-basic {
+    background-color: var(--button-filled-basic-background-color);
+    border-color: var(--button-filled-basic-border-color);
+    color: var(--button-filled-basic-text-color);
+  }
 }

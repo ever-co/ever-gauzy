@@ -1,6 +1,7 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header>
+    <span class="cancel"><i class="fas fa-times" (click)="cancel()"></i></span>
+		<h5 class="title">
 			{{
 				(payment
 					? 'INVOICES_PAGE.PAYMENTS.EDIT_PAYMENT'
@@ -204,14 +205,15 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+	<nb-card-footer class="text-left">
+		<button status="basic" outline size="small" class="mr-3" nbButton (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
 			(click)="addEditPayment()"
 			status="success"
 			[disabled]="form.invalid"
+      size="small"
 			nbButton
 		>
 			{{ 'BUTTONS.SAVE' | translate }}

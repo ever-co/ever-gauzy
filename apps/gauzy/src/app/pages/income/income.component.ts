@@ -175,7 +175,7 @@ export class IncomeComponent
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
-					width: '3em',
+					width: '15%',
 					renderComponent: DateViewComponent,
 					filter: false
 				},
@@ -222,7 +222,7 @@ export class IncomeComponent
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
-					width: '20%',
+					width: '10%',
 					class: 'align-row',
 					renderComponent: TagsOnlyComponent,
 					filter: {

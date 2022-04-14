@@ -1,37 +1,30 @@
+@import 'gauzy/_gauzy-table';
 .date-and-value {
   display: flex;
   flex-direction: column;
-
-  & div {
-    margin: 20px 0;
-  }
+  width: 24%;
 }
 
 .info-container {
   display: flex;
 }
 
-.buttons {
-  margin: 20px 0;
-}
-
 .total-paid-label {
-  margin-top: 20px;
-  margin-left: 20%;
+  margin-left: 8%;
 }
 
 .progress-bar {
-  background-color: #edf1f7;
-  height: 30px;
-  width: 450px;
+  background-color: rgba(126, 126, 143, 0.2);
+  height: 32px;
+  width: 200px;
   border-radius: 3px;
-  margin-top: 35px;
+  margin-top: 10px;
 }
 
 .progress-bar-inner {
   display: block;
-  height: 30px;
-  background-color: #2ce69b;
+  height: 32px;
+  background-color: rgba(0, 214, 143, 1);
   border-radius: 3px;
   position: relative;
 }
@@ -40,10 +33,21 @@
   position: absolute;
   z-index: 1;
   margin-left: 1%;
-  color: #000;
+  color: #ffffff;
   font-weight: bold;
 }
 
-button {
-  margin: 5px;
+.custom-container {
+  margin-top: 32px;
+  background-color: rgba(50, 50, 50, 0.03);
+  padding: 0 12px 12px 12px;
+  border-radius: 8px;
+  .gauzy-button-container{
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+.body{
+  background-color: rgba(50, 50, 50, 0.03);
+  border-radius: 0 0 8px 8px;
 }
