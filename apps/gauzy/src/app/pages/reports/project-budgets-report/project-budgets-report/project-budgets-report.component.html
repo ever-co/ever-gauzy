@@ -54,9 +54,7 @@
 						class="cart-body project-row"
 						*ngFor="let project of projects"
 					>
-						<div
-							class="row report-row py-1 mt-3 align-items-center"
-						>
+						<div class="row report-row py-1 mt-3 align-items-center">
 							<div class="col-3 project-name">
 								<ng-container
 									*ngTemplateOutlet="
@@ -65,8 +63,7 @@
 											$implicit: project?.project
 										}
 									"
-								>
-								</ng-container>
+								></ng-container>
 							</div>
 							<div class="col text-center day-col">
 								<span
@@ -74,7 +71,7 @@
 										project.budgetType ===
 										OrganizationProjectBudgetTypeEnum.HOURS
 									"
-									>{{ project?.spent | durationFormat }}
+									>{{ (project?.spent * 3600) | durationFormat }}
 									{{ 'REPORT_PAGE.HOURS' | translate }}</span
 								>
 								<span
@@ -82,16 +79,43 @@
 										project.budgetType ===
 										OrganizationProjectBudgetTypeEnum.COST
 									"
-									>{{ project?.budget | currency: project.reamingBudget.currency | position: organization?.currencyPosition }}</span
-								>
+									>{{
+										project?.spent
+											| currency: organization?.currency
+											| position
+												: organization?.currencyPosition
+									}}
+								</span>
 							</div>
 							<div class="col-4 text-center d-flex day-col">
 								<ngx-progress-status
 									[percentage]="project?.spentPercentage"
 								></ngx-progress-status>
-								<span class="ml-3">{{
-									project?.spent | currency: project.reamingBudget.currency | position: organization?.currencyPosition
-								}}</span>
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.HOURS
+									"
+									class="ml-3"
+								>
+									{{ (project?.budget * 3600) | durationFormat }}
+									{{ 'REPORT_PAGE.HOURS' | translate }}
+								</span>
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.COST
+									"
+									class="ml-3"
+								>
+									{{
+										project.budget
+											| currency
+												: organization?.currency
+											| position
+												: organization?.currencyPosition
+									}}
+								</span>
 							</div>
 							<div class="col text-center day-col">
 								<span
@@ -99,20 +123,22 @@
 										project.budgetType ===
 										OrganizationProjectBudgetTypeEnum.HOURS
 									"
-									>{{
-										project.reamingBudget | durationFormat
-									}}
-									{{ 'REPORT_PAGE.HOURS' | translate }}</span
 								>
+									{{ (project.reamingBudget * 3600) | durationFormat }}
+									{{ 'REPORT_PAGE.HOURS' | translate }}
+								</span>
 								<span
 									*ngIf="
 										project.budgetType ===
 										OrganizationProjectBudgetTypeEnum.COST
 									"
-									>{{
-										project.reamingBudget | currency: project.reamingBudget.currency | position: organization?.currencyPosition
-									}}</span
 								>
+									{{ 
+										project.reamingBudget 
+											| currency : organization?.currency 
+											| position : organization?.currencyPosition
+									}}
+								</span>
 							</div>
 						</div>
 					</nb-card-body>
@@ -121,9 +147,7 @@
 			<ng-template #notFound>
 				<nb-card>
 					<nb-card-body>
-						<div
-							class="row font-weight-bold py-5 align-items-center"
-						>
+						<div class="row font-weight-bold py-5 align-items-center">
 							<div class="col text-center">
 								{{ 'REPORT_PAGE.NO_PROJECTS' | translate }}
 							</div>
@@ -136,27 +160,10 @@
 </nb-card>
 
 <ng-template let-project #projectEl>
-	<span *ngIf="project; else noProjects">{{ project?.name }} </span>
+	<span *ngIf="project; else noProjects">
+		{{ project?.name }}
+	</span>
 	<ng-template #noProjects>
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-	</ng-template>
-</ng-template>
-
-<ng-template let-client #clientEl>
-	<span *ngIf="client; else noClient">{{ client?.name }} </span>
-	<ng-template #noClient>
-		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
-	</ng-template>
-</ng-template>
-
-<ng-template let-employee #employeeEl>
-	<ngx-avatar
-		*ngIf="employee"
-		[src]="employee?.user?.imageUrl"
-		[name]="employee?.user?.name"
-		[id]="employee?.id"
-	></ngx-avatar>
-	<ng-template #noEmployee>
-		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
 	</ng-template>
 </ng-template>
