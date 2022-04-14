@@ -77,7 +77,7 @@
 <ng-template #actionButtons>
 	<div class="actions">
 		<button
-			(click)="openDialog(editableTemplate)"
+			(click)="openDialog(editableTemplate, true)"
 			nbButton
 			status="basic"
 			class="action primary"
@@ -110,7 +110,7 @@
 			nbButton
 			status="success"
 			size="small"
-			(click)="openDialog(addTemplate)"
+			(click)="openDialog(addTemplate, false)"
 		>
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
