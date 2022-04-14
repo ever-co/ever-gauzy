@@ -105,17 +105,19 @@
 
 <ng-template #actionButtons>
 	<div class="btn-group actions">
-		<button
-			size="small"
-			status="basic"
-			class="action primary"
-			(click)="editPayment()"
-			[disabled]="disableButton"
-			nbButton
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
+		<ng-template ngxPermissionsOnly="ORG_PAYMENT_ADD_EDIT">
+			<button
+				size="small"
+				status="basic"
+				class="action primary"
+				(click)="editPayment()"
+				[disabled]="disableButton"
+				nbButton
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>
 		<button
 			nbButton
 			size="small"
@@ -127,17 +129,19 @@
 			<nb-icon icon="download-outline"></nb-icon>
 			{{ 'BUTTONS.DOWNLOAD' | translate }}
 		</button>
-		<button
-			size="small"
-			status="basic"
-			class="action"
-			(click)="deletePayment()"
-			[disabled]="disableButton"
-			nbButton
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
+		<ng-template ngxPermissionsOnly="ORG_PAYMENT_ADD_EDIT">
+			<button
+				size="small"
+				status="basic"
+				class="action"
+				(click)="deletePayment()"
+				[disabled]="disableButton"
+				nbButton
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
 		<button
 			nbButton
 			size="small"
@@ -160,34 +164,38 @@
 			<nb-icon icon="file-text-outline"></nb-icon>
 			{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
 		</button>
-		<button
-			status="basic"
-			class="action secondary"
-			size="small"
-			debounceClick
-			(throttledClick)="recordFullPayment()"
-			[debounceTime]="500"
-			[disabled]="isDisabled"
-			nbButton
-		>
-			<nb-icon icon="credit-card-outline"></nb-icon>
-			{{ 'BUTTONS.RECORD_FULL_PAYMENT' | translate }}
-		</button>
-		<button
-			status="basic"
-			class="action secondary"
-			size="small"
-			(click)="invoiceRemainingAmount()"
-			[disabled]="isDisabled"
-			nbButton
-		>
-			<nb-icon icon="file-text-outline"></nb-icon>
-			{{ 'BUTTONS.INVOICE_REMAINING_AMOUNT' | translate }}
-		</button>
+		<ng-template ngxPermissionsOnly="ORG_PAYMENT_ADD_EDIT">
+			<button
+				status="basic"
+				class="action secondary"
+				size="small"
+				debounceClick
+				(throttledClick)="recordFullPayment()"
+				[debounceTime]="500"
+				[disabled]="isDisabled"
+				nbButton
+			>
+				<nb-icon icon="credit-card-outline"></nb-icon>
+				{{ 'BUTTONS.RECORD_FULL_PAYMENT' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="ORG_PAYMENT_ADD_EDIT">
+			<button
+				status="basic"
+				class="action secondary"
+				size="small"
+				(click)="invoiceRemainingAmount()"
+				[disabled]="isDisabled"
+				nbButton
+			>
+				<nb-icon icon="file-text-outline"></nb-icon>
+				{{ 'BUTTONS.INVOICE_REMAINING_AMOUNT' | translate }}
+			</button>
+		</ng-template>
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<ng-template ngxPermissionsOnly="">
+	<ng-template ngxPermissionsOnly="ORG_PAYMENT_ADD_EDIT">
 		<button
 			status="success"
 			size="small"
