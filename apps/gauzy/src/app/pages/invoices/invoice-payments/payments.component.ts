@@ -384,9 +384,10 @@ export class InvoicePaymentsComponent
 	}
 
 	async recordFullPayment() {
-		if (!this.organization) {
+		if (!this.invoice) {
 			return;
 		}
+
 		const { tenantId } = this.store.user;
 		const payment = {
 			amount: this.leftToPay,
@@ -422,7 +423,11 @@ export class InvoicePaymentsComponent
 	}
 
 	async invoiceRemainingAmount() {
-		this.invoicesService.update(this.invoice.id, {
+		if (!this.invoice) {
+			return;
+		}
+
+		this.invoicesService.updateAction(this.invoice.id, {
 			alreadyPaid: +this.totalPaid
 		});
 		this.router.navigate(
