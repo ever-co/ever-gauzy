@@ -25,6 +25,7 @@ $radius: 18px;
       white-space: nowrap;
       width: 5rem;
       display: inline-block;
+      cursor: pointer;
       img {
         width: $radius;
         height: $radius;
@@ -52,6 +53,6 @@ $radius: 18px;
   margin-left: -4rem;
 }
 
-.main{
+.main {
   width: 7rem;
 }
