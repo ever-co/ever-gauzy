@@ -392,18 +392,6 @@ export class TaskComponent
 	private getColumnsByPage() {
 		if (this.isTasksPage()) {
 			return {
-				// employees: {
-				// 	title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS'),
-				// 	type: 'custom',
-				// 	filter: false,
-				// 	renderComponent: EmployeeWithLinksComponent
-				// },
-				// teams: {
-				// 	title: this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
-				// 	type: 'custom',
-				// 	filter: false,
-				// 	renderComponent: TaskTeamsComponent
-				// }
 				employeesMergedTeams: {
 					title:
 						this.getTranslation('TASKS_PAGE.TASK_MEMBERS') +
