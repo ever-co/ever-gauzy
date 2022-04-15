@@ -44,7 +44,9 @@
 				</ng2-smart-table>
 			</div>
 			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -99,6 +101,7 @@
 			class="action primary"
 			[disabled]="disableButton"
 			size="small"
+			(click)="edit(selectedItem)"
 		>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
@@ -110,6 +113,7 @@
 			class="action primary"
 			[disabled]="disableButton"
 			size="small"
+			(click)="download(selectedItem)"
 		>
 			<nb-icon icon="download-outline"></nb-icon>
 			{{ 'BUTTONS.DOWNLOAD' | translate }}
@@ -120,6 +124,7 @@
 			status="basic"
 			class="action secondary mr-2"
 			[disabled]="!selectedItem && disableButton"
+			(click)="payments()"
 			size="small"
 		>
 			<nb-icon icon="clipboard-outline"></nb-icon>
@@ -163,14 +168,9 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<ng-template>
-		<button
-			nbButton
-			status="success"
-			size="small"
-		>
-			<nb-icon [icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'"> </nb-icon>
-      {{ (isEstimate ? 'BUTTONS.ADD'  : 'BUTTONS.PAY')| translate }}
-		</button>
-	</ng-template>
+	<button nbButton status="success" size="small">
+		<nb-icon [icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'">
+		</nb-icon>
+		{{ (isEstimate ? 'BUTTONS.ADD' : 'BUTTONS.PAY') | translate }}
+	</button>
 </ng-template>

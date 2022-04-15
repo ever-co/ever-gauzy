@@ -8,11 +8,14 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
 
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
+    &.ng-select-single .ng-select-container {
+      height: $height;
+    }
     .ng-select-container {
       border-radius: $radius;
       box-shadow: $box-shadow;
       height: $height;
-      input{
+      input {
         height: unset;
       }
     }
@@ -42,7 +45,15 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
 }
 
 @mixin gauzy-overrides() {
-  @include nb-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
+  @include nb-select-overrides(
+    $default-height,
+    $default-radius,
+    $default-box-shadow-inset
+  );
   @include text-inputs-overrides;
-  @include ng-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
+  @include ng-select-overrides(
+    $default-height,
+    $default-radius,
+    $default-box-shadow-inset
+  );
 }
