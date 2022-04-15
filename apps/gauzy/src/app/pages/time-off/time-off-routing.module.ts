@@ -17,6 +17,9 @@ const routes: Routes = [
 			},
 			selectors: {
 				project: false
+			},
+			datePicker: {
+				unitOfTime: 'month'
 			}
 		}
 	},

@@ -125,7 +125,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		const storeUnitOfTime$ = this.dateRangePickerBuilderService.pickerRangeUnitOfTime$;
 		combineLatest([storeOrganization$, storeUnitOfTime$])
 			.pipe(
-				distinctUntilChange(),
 				filter(([organization]) => !!organization),
 				switchMap(([organization, unitOfTime]) => combineLatest([
 					this.organizationService.getById(organization.id),
