@@ -589,7 +589,8 @@ const routes: Routes = [
 						),
 						data: {
 							datePicker: {
-								unitOfTime: 'week'
+								unitOfTime: 'week',
+								isLockDatePicker: true
 							}
 						}
 					},
@@ -664,29 +665,30 @@ const routes: Routes = [
 					},
 					{
 						path: 'weekly-limits',
+						loadChildren: () => import('./reports/time-limit-report/time-limit-report.module').then(
+							(m) => m.TimeLimitReportModule
+						),
 						data: {
 							duration: 'week',
 							title: 'REPORT_PAGE.WEEKLY_LIMIT_REPORT',
 							datePicker: {
-								unitOfTime: 'week'
+								unitOfTime: 'week',
+								isLockDatePicker: true
 							}
-						},
-						loadChildren: () => import('./reports/time-limit-report/time-limit-report.module').then(
-							(m) => m.TimeLimitReportModule
-						)
+						}
 					},
 					{
 						path: 'daily-limits',
+						loadChildren: () => import('./reports/time-limit-report/time-limit-report.module').then(
+							(m) => m.TimeLimitReportModule
+						),
 						data: {
 							duration: 'day',
 							title: 'REPORT_PAGE.DAILY_LIMIT_REPORT',
 							datePicker: {
 								unitOfTime: 'week'
 							}
-						},
-						loadChildren: () => import('./reports/time-limit-report/time-limit-report.module').then(
-							(m) => m.TimeLimitReportModule
-						)
+						}
 					},
 					{
 						path: 'project-budgets',
