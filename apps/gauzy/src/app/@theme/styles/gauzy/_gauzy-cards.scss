@@ -41,6 +41,7 @@ $default-radius: nb-theme(border-radius);
       background-color: rgba(50, 50, 50, 0.03);
     }
     .card-footer {
+      border: unset;
       flex: 0 1 auto;
     }
   }
