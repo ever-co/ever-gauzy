@@ -125,7 +125,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
-				tap(({ datePicker = {} }: any) => this.dateRangePickerBuilderService.setDatePicker(datePicker))
+				tap(({ datePicker = {} }: any) => this.dateRangePickerBuilderService.setDatePickerConfig(datePicker))
 			)
 			.subscribe(({ selectors }: any) => {
 				this.headerSelectors = Object.assign(
