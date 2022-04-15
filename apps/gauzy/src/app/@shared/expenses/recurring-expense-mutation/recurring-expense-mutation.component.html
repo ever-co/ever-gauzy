@@ -1,6 +1,7 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+    <div class="cancel"><i (click)="close()" class="fas fa-times"></i></div>
+		<h5 class="title">
 			{{
 				(componentType === 'EMPLOYEE'
 					? 'EMPLOYEES_PAGE.RECURRING_EXPENSE'
@@ -8,11 +9,6 @@
 				) | translate
 			}}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			(click)="close()"
-			icon="close-outline"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form">
@@ -299,8 +295,8 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="close()" nbButton class="mr-2" status="danger">
+	<nb-card-footer class="text-left">
+		<button (click)="close()" nbButton size="small"  outline class="mr-2" status="basic">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
@@ -316,6 +312,7 @@
 		</button>
 		<button
 			(click)="submitForm()"
+      size="small"
 			[disabled]="
 				form.invalid || startDateUpdateType === 'INCREASE_CONFLICT'
 			"

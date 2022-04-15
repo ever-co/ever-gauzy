@@ -1,4 +1,4 @@
-<nb-card 
+<nb-card
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
@@ -13,10 +13,11 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div>
+		<div class="d-flex justify-content-end">
 			<ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
 				<button
 					nbButton
+          size="small"
 					status="success"
 					(click)="addOrganizationRecurringExpense()"
 				>
@@ -26,7 +27,7 @@
 			</ng-template>
 		</div>
 		<div class="mt-4">
-			<ng-container 
+			<ng-container
 				*ngIf="expenses.length > 0"
 			>
 				<div class="sub-header block-content">
@@ -42,7 +43,7 @@
 				</div>
 			</ng-container>
 		</div>
-		<ng-container 
+		<ng-container
 			*ngFor="let expense of expenses; let i = index"
 		>
 			<ga-recurring-expense-block
