@@ -13,6 +13,7 @@ import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import {
 	DateRangePickerBuilderService,
+	DEFAULT_DATE_PICKER_CONFIG,
 	DEFAULT_SELECTOR_VISIBILITY,
 	ISelectorVisibility,
 	LanguagesService,
@@ -125,7 +126,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
-				tap(({ datePicker = {} }: any) => this.dateRangePickerBuilderService.setDatePickerConfig(datePicker))
+				tap(({ datePicker }: any) => {
+					const datePickerConfig = Object.assign(
+						{},
+						DEFAULT_DATE_PICKER_CONFIG,
+						datePicker
+					);
+					this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
+				})
 			)
 			.subscribe(({ selectors }: any) => {
 				this.headerSelectors = Object.assign(

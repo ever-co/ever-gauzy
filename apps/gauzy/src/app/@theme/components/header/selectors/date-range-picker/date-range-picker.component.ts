@@ -146,7 +146,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				])),
 				tap(([organization, unitOfTime, isLockDatePicker]) => {
 					this.futureDateAllowed = organization.futureDateAllowed;
-					this.unitOfTime = (unitOfTime || 'month') as moment.unitOfTime.Base;
+					this.unitOfTime = unitOfTime;
 					this.isLockDatePicker = isLockDatePicker;
 				}),
 				tap(() => {
@@ -190,12 +190,14 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 */
 	createDateRangeMenus() {
 		this.ranges = new Object();
-		this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
-		this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
-		this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
-		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
-		this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
-		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+		if (!this.isLockDatePicker) {
+			this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
+			this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
+			this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
+			this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
+			this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
+			this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+		}		
 	}
 
 	/**
@@ -275,7 +277,14 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 					range['endDate'] = endDate.toDate();
 					range['isCustomDate'] = this.isCustomDate(event);
 				} else {
-
+					const start = moment(startDate).startOf(this.unitOfTime);
+					const end = moment(startDate).endOf(this.unitOfTime);
+					range['startDate'] = start.toDate();
+					range['endDate'] = end.toDate();
+					range['isCustomDate'] = this.isCustomDate({
+						startDate: start,
+						endDate: end
+					});
 				}
 				this.selectedDateRange = this.rangePicker = range;
 			}
