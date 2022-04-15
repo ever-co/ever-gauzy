@@ -1,8 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import {
-	Router,
-	ActivatedRoute
-} from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
 import { first, tap, filter, debounceTime } from 'rxjs/operators';
@@ -34,15 +31,15 @@ import {
 import {
 	AssignedToComponent,
 	DateViewComponent,
-	EmployeeWithLinksComponent,
 	NotesWithTagsComponent,
-	StatusViewComponent,
-	TaskEstimateComponent,
-	TaskTeamsComponent
+	StatusViewComponent
 } from './../../../../@shared/table-components';
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
-import { OrganizationTeamFilterComponent, TaskStatusFilterComponent } from './../../../../@shared/table-filters';
+import {
+	OrganizationTeamFilterComponent,
+	TaskStatusFilterComponent
+} from './../../../../@shared/table-filters';
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { InputFilterComponent } from './../../../../@shared/table-filters/input-filter.component';
 import { CreateByComponent } from '../../../../@shared/table-components/create-by/create-by.component';
@@ -231,7 +228,16 @@ export class TaskComponent
 		if (this.viewComponentName == ComponentEnum.ALL_TASKS) {
 			endPoint = `${API_PREFIX}/tasks/pagination`;
 			relations.push(
-				...['project', 'tags', 'teams','teams.members','teams.members.employee' ,'creator', 'organizationSprint']
+				...[
+					'project',
+					'tags',
+					'teams',
+					'teams.members',
+					'teams.members.employee',
+					'teams.members.employee.user',
+					'creator',
+					'organizationSprint'
+				]
 			);
 			join = {
 				alias: 'task',
@@ -269,7 +275,7 @@ export class TaskComponent
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
 					creator: task.creator ? task.creator : undefined,
-          employeesMergedTeams: [task.members, task.teams]
+					employeesMergedTeams: [task.members, task.teams]
 				});
 			},
 			finalize: () => {
@@ -311,11 +317,11 @@ export class TaskComponent
 				display: false
 			},
 			columns: {
-        id: {
-          title: 'TaskID',
-          type: 'string',
-          width: '5%'
-        },
+				id: {
+					title: 'TaskID',
+					type: 'string',
+					width: '5%'
+				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'custom',
@@ -332,8 +338,8 @@ export class TaskComponent
 				projectName: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'custom',
-          renderComponent: ProjectComponent,
-          filter: {
+					renderComponent: ProjectComponent,
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -344,7 +350,7 @@ export class TaskComponent
 				creator: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
 					type: 'custom',
-          renderComponent: CreateByComponent,
+					renderComponent: CreateByComponent,
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -398,12 +404,16 @@ export class TaskComponent
 				// 	filter: false,
 				// 	renderComponent: TaskTeamsComponent
 				// }
-        employeesMergedTeams: {
-          title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS')+'/'+this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
-          type:'custom',
-          filter: true,
-          renderComponent: EmployeesMergedTeamsComponent
-        }
+				employeesMergedTeams: {
+					title:
+						this.getTranslation('TASKS_PAGE.TASK_MEMBERS') +
+						'/' +
+						this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
+					type: 'custom',
+					width: '20%',
+					filter: true,
+					renderComponent: EmployeesMergedTeamsComponent
+				}
 			};
 		} else if (this.isMyTasksPage()) {
 			return {

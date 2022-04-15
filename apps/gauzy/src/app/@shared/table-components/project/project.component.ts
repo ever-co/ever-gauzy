@@ -12,13 +12,14 @@ import { firstValueFrom } from 'rxjs';
 export class ProjectComponent implements OnInit, ViewCell {
 	value: any;
 	rowData: any;
-	organization: Promise<IOrganization>|null = null;
+	organization: Promise<IOrganization> | null = null;
 
 	constructor(private readonly organizationService: OrganizationsService) {}
 
 	ngOnInit(): void {
-		if(this.value.organizationId) this.organization =  firstValueFrom(
-			this.organizationService.getById(this.value.organizationId)
-		);
+		if (this.value.organizationId)
+			this.organization = firstValueFrom(
+				this.organizationService.getById(this.value.organizationId)
+			);
 	}
 }
