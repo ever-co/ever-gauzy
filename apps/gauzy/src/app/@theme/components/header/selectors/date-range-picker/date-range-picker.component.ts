@@ -138,7 +138,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 
 		combineLatest([storeOrganization$, storeUnitOfTime$, storeLockingUnit$])
 			.pipe(
-				distinctUntilChange(),
 				filter(([organization]) => !!organization),
 				switchMap(([organization, unitOfTime, isLockDatePicker]) => combineLatest([
 					this.organizationService.getById(organization.id),

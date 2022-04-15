@@ -39,8 +39,8 @@
 			(mouseleave)="hoverState = false"
 		/>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="cancelReceipt()" status="danger" class="mr-3" nbButton>
+	<nb-card-footer class="text-left">
+		<button (click)="cancelReceipt()" status="basic" outline nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
@@ -48,6 +48,7 @@
 			(click)="saveReceipt()"
 			status="success"
 			nbButton
+      class="mr-3 ml-3"
 		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>

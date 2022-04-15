@@ -9,7 +9,10 @@ import { NgxPermissionsGuard } from 'ngx-permissions';
 
 const CONTACT_VIEW_PERMISSION = {
 	permissions: {
-		only: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_CONTACT_VIEW],
+		only: [
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_CONTACT_VIEW
+		],
 		redirectTo: '/pages/contacts/visitors'
 	}
 };
@@ -23,26 +26,51 @@ const routes: Routes = [
 		path: 'clients',
 		component: ClientsComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: CONTACT_VIEW_PERMISSION
+		data: {
+			...CONTACT_VIEW_PERMISSION,
+			selectors: {
+				project: false,
+				date: false
+			}
+		}
 	},
 	{
 		path: 'customers',
 		component: CustomersComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: CONTACT_VIEW_PERMISSION
+		data: {
+			...CONTACT_VIEW_PERMISSION,
+			selectors: {
+				project: false,
+				date: false
+			}
+		}
 	},
 	{
 		path: 'leads',
 		component: LeadsComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: CONTACT_VIEW_PERMISSION
+		data: {
+			...CONTACT_VIEW_PERMISSION,
+			selectors: {
+				project: false,
+				date: false
+			}
+		}
 	},
 	{
 		path: 'view/:id',
 		loadChildren: () =>
 			import('./contact-view/contact-view.module').then(
 				(m) => m.ContactViewModule
-			)
+			),
+		data: {
+			...CONTACT_VIEW_PERMISSION,
+			selectors: {
+				project: false,
+				date: false
+			}
+		}
 	},
 ];
 

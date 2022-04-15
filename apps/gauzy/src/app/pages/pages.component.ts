@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import {
 	FeatureEnum,
 	IOrganization,
@@ -9,19 +9,13 @@ import {
 } from '@gauzy/contracts';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, map, mergeMap, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { SelectorService } from '../@core/utils/selector.service';
 import { EmployeesService, Store, UsersService } from '../@core/services';
-import {
-	DateRangePickerBuilderService,
-	DEFAULT_SELECTOR_VISIBILITY,
-	ISelectorVisibility,
-	SelectorBuilderService
-} from '../@core/services/selector-builder';
 import { ReportService } from './reports/all-report/report.service';
 import { AuthStrategy } from '../@core/auth/auth-strategy.service';
 import { TranslationBaseComponent } from '../@shared/language-base';
@@ -54,7 +48,6 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 	user: IUser;
 	menu: NbMenuItem[] = [];
 	reportMenuItems: NbMenuItem[] = [];
-	headerSelectors: ISelectorVisibility;
 
 	constructor(
 		private readonly employeeService: EmployeesService,
@@ -63,40 +56,11 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		private readonly reportService: ReportService,
 		private readonly selectorService: SelectorService,
 		private readonly router: Router,
-		private readonly _activatedRoute: ActivatedRoute,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly usersService: UsersService,
-		private readonly authStrategy: AuthStrategy,
-		public readonly selectorBuilderService: SelectorBuilderService,
-		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly authStrategy: AuthStrategy
 	) {
 		super(translate);
-		this.router.events
-			.pipe(
-				filter((event) => event instanceof NavigationEnd),
-				map(() => this._activatedRoute),
-				map((route) => {
-					while (route.firstChild) route = route.firstChild;
-					return route;
-				}),
-				filter((route) => route.outlet === 'primary'),
-				mergeMap((route) => route.data),
-				/**
-				 * Set Date Range Picker Default Unit
-				 */
-				tap(({ datePicker = {} }:  any) => dateRangePickerBuilderService.setDatePickerConfig(datePicker))
-			)
-			.subscribe(({ selectors }: any) => {
-				this.headerSelectors = Object.assign(
-					{},
-					DEFAULT_SELECTOR_VISIBILITY,
-					selectors
-				);
-				Object.entries(this.headerSelectors).forEach(([id, value]) => {
-					selectorBuilderService.setSelectorsVisibility(id, value);
-				});
-				selectorBuilderService.getSelectorsVisibility();
-			});
 	}
 
 	getMenuItems(): GaMenuItem[] {

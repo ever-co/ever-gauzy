@@ -6,26 +6,25 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
-import { OrganizationPositionsService } from '../../@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
-import { takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { Store } from '../../@core/services/store.service';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { LocalDataSource } from 'ng2-smart-table';
+import { firstValueFrom, filter, tap } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { OrganizationPositionsService, Store, ToastrService } from '../../@core/services';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Subject, firstValueFrom } from 'rxjs';
-import { ToastrService } from '../../@core/services/toastr.service';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-positions',
 	templateUrl: './positions.component.html',
 	styleUrls: ['positions.component.scss']
 })
-export class PositionsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	organizationId: string;
+export class PositionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+
 	showAddCard: boolean;
 	positions: IOrganizationPosition[];
 	selectedPosition: IOrganizationPosition;
@@ -38,39 +37,36 @@ export class PositionsComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	selectedOrganization: IOrganization;
-	private _ngDestroy$ = new Subject<void>();
+	organization: IOrganization;
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private dialogService: NbDialogService,
-		readonly translateService: TranslateService
+		private readonly dialogService: NbDialogService,
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 		this.setView();
 	}
+
 	ngOnInit(): void {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization) => {
-				if (organization) {
-					this.selectedOrganization = organization;
-					this.organizationId = organization.id;
-					this.loadPositions();
-					this.loadSmartTable();
-					this._applyTranslationOnSmartTable();
-				}
-			});
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loadPositions()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void { }
 
-	async loadSmartTable() {
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -83,6 +79,7 @@ export class PositionsComponent
 			}
 		};
 	}
+
 	async removePosition(id: string, name: string) {
 		const result = await firstValueFrom(
 			this.dialogService
@@ -107,25 +104,33 @@ export class PositionsComponent
 			this.loadPositions();
 		}
 	}
+
 	edit(position: IOrganizationPosition) {
 		this.showAddCard = true;
 		this.isGridEdit = true;
 		this.selectedPosition = position;
 		this.tags = position.tags;
 	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.POSITIONS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedPosition = null;
 
-				//when layout selector change then hide edit showcard
+				//when layout selector change then hide edit show card
 				this.showAddCard = false;
 			});
 	}
+
 	save(name: string) {
 		if (this.isGridEdit) {
 			this.editPosition(this.selectedPosition.id, name);
@@ -133,11 +138,18 @@ export class PositionsComponent
 			this.addPosition(name);
 		}
 	}
+
 	async editPosition(id: string, name: string) {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
 		await this.organizationPositionsService.update(id, {
 			name: name,
-			organizationId: this.organizationId,
-			tenantId: this.selectedOrganization.tenantId,
+			organizationId,
+			tenantId,
 			tags: this.tags
 		});
 		this.loadPositions();
@@ -147,12 +159,19 @@ export class PositionsComponent
 		);
 		this.cancel();
 	}
+
 	private async addPosition(name: string) {
 		if (name) {
+			if (!this.organization) {
+				return;
+			}
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+
 			await this.organizationPositionsService.create({
 				name,
-				organizationId: this.organizationId,
-				tenantId: this.selectedOrganization.tenantId,
+				organizationId,
+				tenantId,
 				tags: this.tags
 			});
 
@@ -173,6 +192,7 @@ export class PositionsComponent
 			);
 		}
 	}
+
 	cancel() {
 		this.showEditDiv = false;
 		this.showAddCard = false;
@@ -180,6 +200,7 @@ export class PositionsComponent
 		this.isGridEdit = false;
 		this.tags = [];
 	}
+
 	showEditCard(position: IOrganizationPosition) {
 		this.tags = position.tags;
 		this.showEditDiv = true;
@@ -187,10 +208,16 @@ export class PositionsComponent
 	}
 
 	private async loadPositions() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
 		const res = await this.organizationPositionsService.getAll(
 			{
-				organizationId: this.organizationId,
-				tenantId: this.selectedOrganization.tenantId
+				organizationId,
+				tenantId
 			},
 			['tags']
 		);
@@ -207,15 +234,18 @@ export class PositionsComponent
 			this.emptyListInvoke();
 		}
 	}
+
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
-	_applyTranslationOnSmartTable() {
+
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*

@@ -1,5 +1,6 @@
 @import 'themes';
 $orange: rgba(245, 109, 88, 1);
+$gray: rgba(126, 126, 143, 1);
 :host {
   i{
     cursor: pointer;
@@ -36,5 +37,24 @@ $orange: rgba(245, 109, 88, 1);
     line-height: 16px;
     letter-spacing: 0em;
     text-align: left;
+  }
+
+  [nbButton].gray.appearance-outline.status-basic {
+    background-color: transparent;
+    border-color: rgba($color: $gray, $alpha: 0.3);
+    border-width: 2px;
+    color: $gray;
+    &:hover {
+      border-color: $gray;
+    }
+  }
+
+  [nbButton].gray.appearance-outline:hover {
+    box-shadow: 0 0 0 nb-theme(button-outline-width)
+        rgba($color: $gray, $alpha: 0.05),
+      inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+  }
+  [nbButton].gray.appearance-outline:focus:not(:hover):not(:active) {
+    box-shadow: unset;
   }
 }

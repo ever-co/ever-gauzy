@@ -294,9 +294,11 @@ export class ExpenseCategoriesComponent
 		this.pagination['activePage'] = 1;
 	}
 
-	openDialog(template: TemplateRef<any>) {
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
 		try {
-			if (this.selected.state) this.edit(this.selected.expenseCategory);
+			isEditTemplate
+				? this.edit(this.selected.expenseCategory)
+				: this.cancel();
 			this.dialogService.open(template);
 		} catch (error) {
 			console.log('An error occurred on open dialog');
