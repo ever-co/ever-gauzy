@@ -608,7 +608,8 @@ const routes: Routes = [
 							),
 						data: {
 							datePicker: {
-								unitOfTime: 'week'
+								unitOfTime: 'week',
+								isLockDatePicker: true
 							}
 						}
 					},
