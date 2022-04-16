@@ -11,6 +11,7 @@ export class SingleStatisticComponent implements OnInit {
 	@Input() value: string;
 	@Input() suffix: string;
 	@Input() type: string;
+  @Input() color:string;
 	constructor() {}
 
 	ngOnInit() {}

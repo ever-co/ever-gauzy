@@ -5,6 +5,7 @@
 				<nb-card>
 					<nb-card-body>
 						<ga-single-statistic
+							[color]="'#089c17'"
 							[title]="
 								'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate
 							"
@@ -22,6 +23,7 @@
 				<nb-card>
 					<nb-card-body>
 						<ga-single-statistic
+							[color]="'#dbc300'"
 							[title]="
 								'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES'
 									| translate
@@ -41,6 +43,11 @@
 				<nb-card>
 					<nb-card-body>
 						<ga-single-statistic
+							[color]="
+								aggregatedEmployeeStatistics?.total?.profit >= 0
+									? '#089c17'
+									: '#ff7b00'
+							"
 							[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
 							[value]="
 								aggregatedEmployeeStatistics?.total?.profit || 0
@@ -56,6 +63,7 @@
 				<nb-card>
 					<nb-card-body>
 						<ga-single-statistic
+							[color]="'#089c17'"
 							[title]="
 								'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate
 							"

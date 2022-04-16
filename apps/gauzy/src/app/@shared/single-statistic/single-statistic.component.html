@@ -6,6 +6,6 @@
 		<span *ngSwitchCase="'highlight'" class="block-amount"
 			>{{ prefix }} {{ value }} {{ suffix }}</span
 		>
-		<span *ngSwitchDefault> {{ prefix }} {{ value }} {{ suffix }} </span>
+		<span *ngSwitchDefault [style.color]="color"> {{ prefix }} {{ value }} {{ suffix }} </span>
 	</div>
 </div>
