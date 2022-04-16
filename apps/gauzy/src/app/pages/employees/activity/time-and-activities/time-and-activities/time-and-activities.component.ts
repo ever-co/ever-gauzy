@@ -1,6 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ITimeLogFilters } from '@gauzy/contracts';
-import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
+import { Observable } from 'rxjs/internal/Observable';
+import { DateRangePickerBuilderService } from './../../../../../@core/services';
+import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 
 @Component({
 	selector: 'gauzy-time-and-activities',
@@ -10,13 +13,19 @@ import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/tim
 export class TimeAndActivitiesComponent implements OnInit {
 	
 	filters: ITimeLogFilters;
-
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+	
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	
 	constructor(
-		private readonly timesheetFilterService: TimesheetFilterService
+		private readonly timesheetFilterService: TimesheetFilterService,
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.timesheetFilterService.filter = filters;
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
 		this.filters = Object.assign({}, filters);
 	}
 

@@ -1,5 +1,6 @@
 <div class="filters mt-4 pr-2">
 	<ngx-gauzy-filters
+		[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 		(filtersChange)="filtersChange($event)"
 	></ngx-gauzy-filters>
 </div>
