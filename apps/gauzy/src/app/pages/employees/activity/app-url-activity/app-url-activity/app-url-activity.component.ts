@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs/internal/Observable';
 import { chain, reduce } from 'underscore';
 import * as moment from 'moment';
 import {
@@ -15,9 +16,10 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { toUTC, toLocal, isJsObject, isEmpty } from '@gauzy/common-angular';
-import { Store } from './../../../../../@core/services';
+import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { ActivityService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,12 +37,16 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	activities$: Subject<boolean> = this.subject$;
 	type: 'apps' | 'urls';
 
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+
 	constructor(
 		public readonly translateService: TranslateService,
 		protected readonly store: Store,
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		private readonly activityService: ActivityService
+		private readonly activityService: ActivityService,
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(store, translateService);
 	}
@@ -62,7 +68,9 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.timesheetFilterService.filter = filters;
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
 		this.filters = Object.assign({}, filters);
 		this.activities$.next(true);
 	}
