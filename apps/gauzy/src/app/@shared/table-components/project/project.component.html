@@ -2,11 +2,8 @@
 	<img src="{{ (organization | async)?.imageUrl }}" />
 	<span>
 		<div>{{ value?.name }}</div>
-		<div class="member" *ngIf="rowData?.members?.length > 0">
-			Members count {{ rowData?.members?.length }}
-		</div>
-		<div class="member" *ngIf="employees?.length > 0">
-			Members count {{ employees.length }}
+		<div class="member" *ngIf="count">
+			Members count {{ count }}
 		</div>
 	</span>
 </div>
