@@ -106,8 +106,9 @@ $button-radius: nb-theme(button-rectangle-border-radius);
             }
             .ranges {
                 ul {
-                    min-width: 110px;
+                    min-width: auto;
                     li {
+                        min-width: 110px;
                         button {
                             border-radius: $button-radius;
                             color: nb-theme(text-basic-color);

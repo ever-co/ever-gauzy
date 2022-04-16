@@ -8,8 +8,8 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
@@ -52,20 +52,18 @@ export class EmployeeLevelComponent
 	}
 
 	ngOnInit(): void {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loadEmployeeLevels()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.loadEmployeeLevels();
-					this.loadSmartTable();
-					this._applyTranslationOnSmartTable();
-				}
-			});
+			.subscribe();
 	}
+
 	ngOnDestroy(): void {}
 
 	private async loadEmployeeLevels() {
@@ -84,6 +82,7 @@ export class EmployeeLevelComponent
 
 		await this.emptyListInvoke();
 	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.EMPLOYEE_LEVELS;
 		this.store
@@ -97,7 +96,8 @@ export class EmployeeLevelComponent
 				this.showAddCard = false;
 			});
 	}
-	async loadSmartTable() {
+
+	_loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -110,6 +110,7 @@ export class EmployeeLevelComponent
 			}
 		};
 	}
+
 	async addEmployeeLevel(level: string) {
 		if (level) {
 			const { tenantId } = this.store.user;
@@ -158,12 +159,14 @@ export class EmployeeLevelComponent
 		this.loadEmployeeLevels();
 		this.cancel();
 	}
+
 	edit(employeeLevel: IEmployeeLevelInput) {
 		this.showAddCard = true;
 		this.isGridEdit = true;
 		this.selectedEmployeeLevel = employeeLevel;
 		this.tags = employeeLevel.tags;
 	}
+
 	save(name: string) {
 		if (this.isGridEdit) {
 			this.editEmployeeLevel(this.selectedEmployeeLevel.id, name);
@@ -171,6 +174,7 @@ export class EmployeeLevelComponent
 			this.addEmployeeLevel(name);
 		}
 	}
+
 	async removeEmployeeLevel(id: string, name: string) {
 		const result = await firstValueFrom(this.dialogService
 			.open(DeleteConfirmationComponent, {
@@ -206,12 +210,14 @@ export class EmployeeLevelComponent
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
+
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*

@@ -109,6 +109,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}		
 	}
 
+	/*
+	* Getter & Setter for lock date picker
+	*/
+	_isLockDatePicker: boolean = false;
+	get isLockDatePicker(): boolean {
+		return this._isLockDatePicker;
+	}
+	@Input() set isLockDatePicker(isLock: boolean) {
+		this._isLockDatePicker = isLock;
+	}
+
 	@ViewChild(DateRangePickerDirective, { static: false }) dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
@@ -123,17 +134,20 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeUnitOfTime$ = this.dateRangePickerBuilderService.pickerRangeUnitOfTime$;
-		combineLatest([storeOrganization$, storeUnitOfTime$])
+		const storeLockingUnit$ = this.dateRangePickerBuilderService.isLockDatePickerUnit$;
+
+		combineLatest([storeOrganization$, storeUnitOfTime$, storeLockingUnit$])
 			.pipe(
-				distinctUntilChange(),
 				filter(([organization]) => !!organization),
-				switchMap(([organization, unitOfTime]) => combineLatest([
+				switchMap(([organization, unitOfTime, isLockDatePicker]) => combineLatest([
 					this.organizationService.getById(organization.id),
-					observableOf(unitOfTime)
+					observableOf(unitOfTime),
+					observableOf(isLockDatePicker),
 				])),
-				tap(([organization, unitOfTime]) => {
+				tap(([organization, unitOfTime, isLockDatePicker]) => {
 					this.futureDateAllowed = organization.futureDateAllowed;
-					this.unitOfTime = (unitOfTime || 'month') as moment.unitOfTime.Base;
+					this.unitOfTime = unitOfTime;
+					this.isLockDatePicker = isLockDatePicker;
 				}),
 				tap(() => {
 					this.createDateRangeMenus();
@@ -176,12 +190,14 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 */
 	createDateRangeMenus() {
 		this.ranges = new Object();
-		this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
-		this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
-		this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
-		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
-		this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
-		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+		if (!this.isLockDatePicker) {
+			this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
+			this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
+			this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
+			this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
+			this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
+			this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+		}		
 	}
 
 	/**
@@ -255,11 +271,20 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (this.dateRangePickerDirective) {
 			const { startDate, endDate } = event;
 			if (startDate && endDate) {
-				const range = {
-					...this.selectedDateRange,
-					startDate: startDate.toDate(),
-					endDate: endDate.toDate(),
-					isCustomDate: this.isCustomDate(event)
+				const range = {} as IDateRangePicker;
+				if (!this.isLockDatePicker) {
+					range['startDate'] = startDate.toDate();
+					range['endDate'] = endDate.toDate();
+					range['isCustomDate'] = this.isCustomDate(event);
+				} else {
+					const start = moment(startDate).startOf(this.unitOfTime);
+					const end = moment(startDate).endOf(this.unitOfTime);
+					range['startDate'] = start.toDate();
+					range['endDate'] = end.toDate();
+					range['isCustomDate'] = this.isCustomDate({
+						startDate: start,
+						endDate: end
+					});
 				}
 				this.selectedDateRange = this.rangePicker = range;
 			}
@@ -270,7 +295,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * listen range click event on ngx-daterangepicker-material
 	 * @param event
 	 */
-	 rangeClicked(range: any) {
+	rangeClicked(range: any) {
 		const { label } = range 
 		switch (label) {
 			case DateRangeKeyEnum.TODAY:
@@ -283,8 +308,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				break;
 			case DateRangeKeyEnum.CURRENT_MONTH:
 			case DateRangeKeyEnum.LAST_MONTH:
-					this.unitOfTime = 'month';
-					break;
+				this.unitOfTime = 'month';
+				break;
 			default:
 				break;
 		}

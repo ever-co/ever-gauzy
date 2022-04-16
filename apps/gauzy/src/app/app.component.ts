@@ -4,14 +4,24 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  */
 import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import { SeoService } from './@core/utils/seo.service';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { LanguagesService, Store } from './@core/services';
+import { filter, map, mergeMap, tap } from 'rxjs/operators';
+import {
+	DateRangePickerBuilderService,
+	DEFAULT_DATE_PICKER_CONFIG,
+	DEFAULT_SELECTOR_VISIBILITY,
+	ISelectorVisibility,
+	LanguagesService,
+	SelectorBuilderService,
+	Store
+} from './@core/services';
 import { environment } from '../environments/environment';
 import * as _ from 'underscore';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,16 +31,23 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class AppComponent implements OnInit, AfterViewInit {
 
 	loading: boolean = true;
+	headerSelectors: ISelectorVisibility;
 
 	constructor(
 		private readonly analytics: AnalyticsService,
 		private readonly seoService: SeoService,
 		private readonly store: Store,
 		private readonly languagesService: LanguagesService,
-		public readonly translate: TranslateService
-	) {}
+		public readonly translate: TranslateService,
+		private readonly router: Router,
+		private readonly activatedRoute: ActivatedRoute,
+		public readonly selectorBuilderService: SelectorBuilderService,
+		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+	) {
+		this.getActivateRouterDataEvent();
+	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		if (environment.CHATWOOT_SDK_TOKEN) {
 			this.loadChatwoot(document, 'script');
 		}
@@ -90,5 +107,44 @@ export class AppComponent implements OnInit, AfterViewInit {
 				baseUrl: chatwootBaseUrl
 			});
 		};
+	}
+
+	/**
+	 * GET activate router data events
+	 */
+	getActivateRouterDataEvent() {
+		this.router.events
+			.pipe(
+				filter((event) => event instanceof NavigationEnd),
+				map(() => this.activatedRoute),
+				map((route) => {
+					while (route.firstChild) route = route.firstChild;
+					return route;
+				}),
+				filter((route) => route.outlet === 'primary'),
+				mergeMap((route) => route.data),
+				/**
+				 * Set Date Range Picker Default Unit
+				 */
+				tap(({ datePicker }: any) => {
+					const datePickerConfig = Object.assign(
+						{},
+						DEFAULT_DATE_PICKER_CONFIG,
+						datePicker
+					);
+					this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
+				})
+			)
+			.subscribe(({ selectors }: any) => {
+				this.headerSelectors = Object.assign(
+					{},
+					DEFAULT_SELECTOR_VISIBILITY,
+					selectors
+				);
+				Object.entries(this.headerSelectors).forEach(([id, value]) => {
+					this.selectorBuilderService.setSelectorsVisibility(id, value as boolean);
+				});
+				this.selectorBuilderService.getSelectorsVisibility();
+			});
 	}
 }
