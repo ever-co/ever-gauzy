@@ -45,7 +45,6 @@ import {
 } from '../../@shared/table-filters';
 import { environment as ENV } from './../../../environments/environment';
 
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-payments',
@@ -54,8 +53,8 @@ import { environment as ENV } from './../../../environments/environment';
 })
 export class PaymentsComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedPayment: IPayment;
@@ -113,7 +112,11 @@ export class PaymentsComponent
 				debounceTime(300),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
-				tap(([organization]) => (this.currency = organization.currency || ENV.DEFAULT_CURRENCY)),
+				tap(
+					([organization]) =>
+						(this.currency =
+							organization.currency || ENV.DEFAULT_CURRENCY)
+				),
 				distinctUntilChange(),
 				tap(([organization, dateRange, project]) => {
 					if (organization) {
@@ -130,7 +133,10 @@ export class PaymentsComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.recordPayment()),
 				untilDestroyed(this)
@@ -144,8 +150,14 @@ export class PaymentsComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -166,8 +178,8 @@ export class PaymentsComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -183,10 +195,14 @@ export class PaymentsComponent
 		if (startDate && endDate) {
 			request['paymentDate'] = {};
 			if (moment(startDate).isValid()) {
-				request['paymentDate']['startDate'] = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
+				request['paymentDate']['startDate'] = moment(startDate).format(
+					'YYYY-MM-DD HH:mm:ss'
+				);
 			}
 			if (moment(endDate).isValid()) {
-				request['paymentDate']['endDate'] = moment(endDate).format('YYYY-MM-DD HH:mm:ss');
+				request['paymentDate']['endDate'] = moment(endDate).format(
+					'YYYY-MM-DD HH:mm:ss'
+				);
 			}
 		}
 
@@ -207,7 +223,7 @@ export class PaymentsComponent
 					tags: 'payment.tags',
 					organizationContact: 'payment.organizationContact'
 				},
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				...{ organizationId, tenantId },
@@ -216,7 +232,14 @@ export class PaymentsComponent
 			},
 			resultMap: (payment: IPayment) => {
 				try {
-					const { invoice, project, organizationContact, recordedBy, paymentMethod, overdue } = payment;
+					const {
+						invoice,
+						project,
+						organizationContact,
+						recordedBy,
+						paymentMethod,
+						overdue
+					} = payment;
 					let organizationContactName: any;
 					if (organizationContact) {
 						organizationContactName = organizationContact;
@@ -227,8 +250,12 @@ export class PaymentsComponent
 						overdue: this.statusMapper(overdue),
 						invoiceNumber: invoice ? invoice.invoiceNumber : null,
 						projectName: project ? project.name : null,
-						recordedByName: recordedBy ? recordedBy.name: null,
-						paymentMethodEnum: paymentMethod ? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`) : null,
+						recordedByName: recordedBy ? recordedBy.name : null,
+						paymentMethodEnum: paymentMethod
+							? this.getTranslation(
+									`INVOICES_PAGE.PAYMENTS.${paymentMethod}`
+							  )
+							: null,
 						organizationContactName: organizationContactName
 					});
 				} catch (error) {
@@ -236,6 +263,10 @@ export class PaymentsComponent
 				}
 			},
 			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 				this.loading = false;
 			}
 		});
@@ -244,19 +275,18 @@ export class PaymentsComponent
 	async getPayments() {
 		try {
 			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.pagination;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
-				const { activePage, itemsPerPage } = this.pagination;
-				this.smartTableSource.setPaging(
-					activePage,
-					itemsPerPage,
-					false
-				);
 
 				await this.smartTableSource.getElements();
 				this.payments = this.smartTableSource.getData();
 
-				this.pagination['totalItems'] = this.smartTableSource.count();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
@@ -264,24 +294,24 @@ export class PaymentsComponent
 	}
 
 	async recordPayment() {
-		const result = await firstValueFrom(this.dialogService
-			.open(PaymentMutationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(PaymentMutationComponent, {
 				context: {
-					organization: this.organization,
+					organization: this.organization
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			await this.paymentService.add(result);
 
 			if (result.invoice) {
 				const { invoice, amount, currency } = result;
-				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
-				await this.createInvoiceHistory(
-					action,
-					invoice
+				const action = this.getTranslation(
+					'INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED',
+					{ amount, currency }
 				);
+				await this.createInvoiceHistory(action, invoice);
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
@@ -296,14 +326,14 @@ export class PaymentsComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(this.dialogService
-			.open(PaymentMutationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(PaymentMutationComponent, {
 				context: {
 					payment: this.selectedPayment,
 					invoice: this.selectedPayment.invoice
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			if (!this.selectedPayment) {
@@ -313,12 +343,11 @@ export class PaymentsComponent
 
 			if (result.invoice) {
 				const { invoice } = result;
-				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
-
-				await this.createInvoiceHistory(
-					action,
-					invoice
+				const action = this.getTranslation(
+					'INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT'
 				);
+
+				await this.createInvoiceHistory(action, invoice);
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
@@ -334,9 +363,9 @@ export class PaymentsComponent
 			});
 		}
 
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			if (!this.selectedPayment) {
@@ -346,11 +375,10 @@ export class PaymentsComponent
 
 			const { invoice } = this.selectedPayment;
 			if (invoice) {
-				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
-				await this.createInvoiceHistory(
-					action,
-					invoice
+				const action = this.getTranslation(
+					'INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'
 				);
+				await this.createInvoiceHistory(action, invoice);
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
@@ -362,20 +390,16 @@ export class PaymentsComponent
 		let badgeClass: string;
 		if (value) {
 			badgeClass = 'danger';
-			value = this.getTranslation(
-				'INVOICES_PAGE.PAYMENTS.OVERDUE'
-			);
+			value = this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE');
 		} else {
 			badgeClass = 'success';
-			value = this.getTranslation(
-				'INVOICES_PAGE.PAYMENTS.ON_TIME'
-			);
+			value = this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME');
 		}
 		return {
 			text: value,
 			class: badgeClass
 		};
-	}
+	};
 
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
@@ -392,7 +416,7 @@ export class PaymentsComponent
 					width: '8%',
 					sort: false
 				},
-        		paymentDate: {
+				paymentDate: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
 					type: 'custom',
 					filter: false,
@@ -415,7 +439,10 @@ export class PaymentsComponent
 						component: PaymentMethodFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({ field: 'paymentMethod', search: value });
+						this.setFilter({
+							field: 'paymentMethod',
+							search: value
+						});
 					}
 				},
 				recordedByName: {
@@ -442,7 +469,10 @@ export class PaymentsComponent
 						component: OrganizationContactFilterComponent
 					},
 					filterFunction: (value: IOrganizationContact | null) => {
-						this.setFilter({ field: 'organizationContactId', search: (value)?.id || null });
+						this.setFilter({
+							field: 'organizationContactId',
+							search: value?.id || null
+						});
 					},
 					sort: false
 				},
@@ -515,12 +545,9 @@ export class PaymentsComponent
 	}
 
 	/*
-	* Create Payment Invoice History Event
-	*/
-	async createInvoiceHistory(
-		action: string,
-		invoice: IInvoice
-	) {
+	 * Create Payment Invoice History Event
+	 */
+	async createInvoiceHistory(action: string, invoice: IInvoice) {
 		const { tenantId, id: userId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { id: invoiceId } = invoice;

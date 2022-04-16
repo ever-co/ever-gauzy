@@ -1,0 +1,16 @@
+@import 'themes';
+
+.project-render{
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  img{
+    width: 28px;
+    height: 28px;
+    border-radius: nb-theme(border-radius);
+    margin: 0 10px;
+  }
+  span .member{
+    font-size: 11px;
+  }
+}

@@ -4,7 +4,7 @@
   grid-template-columns: repeat(auto-fill, 336px);
   grid-area: 346px;
   grid-gap: 10px;
-  justify-content:space-evenly;
+  justify-content: space-evenly;
   color: nb-theme(color-basic-default);
   padding: 0;
   margin: 0;
@@ -20,8 +20,9 @@
       background-color: nb-theme(background-basic-color-3);
       border-radius: 0.5rem;
       padding: 12px 10px;
-      &.active{
-        box-shadow: nb-theme(color-primary-active-border) 0px 1px 2px 0px, nb-theme(color-primary-hover-border) 0px 1px 3px 1px;
+      &.active {
+        box-shadow: nb-theme(color-primary-active-border) 0px 1px 2px 0px,
+          nb-theme(color-primary-hover-border) 0px 1px 3px 1px;
       }
     }
     &:hover {
@@ -47,9 +48,7 @@
         margin: 0px 2px 4px 0px;
       }
       .info-value {
-        display: flex;
-        justify-content: flex-end;
-        text-align: end;
+        text-align: start;
         font-size: 1em;
         background-color: nb-theme(background-basic-color-1);
         padding: 6px 10px;
@@ -58,6 +57,28 @@
         margin: 0px 0px 4px 2px;
         position: relative;
         .custom::ng-deep {
+          ga-notes-with-tags,
+          ga-only-tags {
+            .tags-right {
+              justify-content: start;
+            }
+          }
+          ngx-status-view {
+            height: 2rem;
+            width: 100%;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            margin: 0;
+            .badge {
+              position: absolute;
+              height: 2rem;
+              width: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
           ga-status-badge {
             width: 100%;
             position: absolute;
@@ -75,7 +96,7 @@
           .progress-bar-container {
             width: 100%;
             position: absolute;
-            top:0;
+            top: 0;
             left: 0;
             margin: 0;
             .paid-percent {

@@ -1,0 +1,18 @@
+<div>
+	<ng-container>
+		<ng-template
+			[ngTemplateOutlet]="value[0]?.length > 0 ? employeesLink : teams"
+		></ng-template>
+	</ng-container>
+</div>
+
+<ng-template #teams>
+	<ngx-employee-with-links
+    *ngIf="employees"
+		[value]="employees"
+	></ngx-employee-with-links>
+	<ngx-task-teams [value]="value[1]"></ngx-task-teams>
+</ng-template>
+<ng-template #employeesLink>
+	<ngx-employee-with-links [value]="value[0]"></ngx-employee-with-links>
+</ng-template>

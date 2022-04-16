@@ -1,0 +1,9 @@
+<div class="project-render">
+	<img src="{{ (organization | async)?.imageUrl }}" />
+	<span>
+		<div>{{ value?.name }}</div>
+		<div class="member" *ngIf="count">
+			Members count {{ count }}
+		</div>
+	</span>
+</div>

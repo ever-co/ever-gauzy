@@ -17,16 +17,16 @@
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-        		[buttonTemplateVisible]="visibleButton"
+				[buttonTemplateVisible]="visibleButton"
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="card p-0">
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll-container">
+			<div class="table-scroll-container card-body">
 				<ng2-smart-table
 					class="payments-table"
 					[settings]="settingsSmartTable"
@@ -37,8 +37,13 @@
 				>
 				</ng2-smart-table>
 			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+			<div
+				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+				class="pagination-container card-footer"
+			>
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"
@@ -93,7 +98,7 @@
 				status="basic"
 				(click)="deletePayment(selectedItem)"
 				class="action"
-       	 		size="small"
+				size="small"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>

@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table.scss';
+
 .tasks-component {
 	&__settings {
 		display: flex;
@@ -14,4 +16,8 @@
 			height: 100%;
 		}
 	}
+}
+
+nb-card-body{
+  overflow: unset;
 }

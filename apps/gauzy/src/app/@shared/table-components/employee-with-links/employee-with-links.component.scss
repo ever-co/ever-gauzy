@@ -1,0 +1,58 @@
+@import 'themes';
+
+$radius: 18px;
+
+.avatar-container {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
+  height: 2.5rem;
+  .avatar-group {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .avatar {
+      background-color: rgba(248, 246, 254, 1);
+      object-fit: cover;
+      color: nb-theme(text-primary-color);
+      padding: 5px 14px 5px 7px;
+      border-radius: $radius;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 5rem;
+      display: inline-block;
+      cursor: pointer;
+      img {
+        width: $radius;
+        height: $radius;
+        border-radius: $radius;
+      }
+      &:hover {
+        text-overflow: clip;
+        width: fit-content;
+      }
+    }
+  }
+}
+
+.avatar-group .avatar {
+  position: relative;
+  z-index: 2;
+  border: 2px solid #ffffff;
+}
+
+.avatar-group .avatar:hover {
+  z-index: 3;
+}
+
+.avatar-group .avatar + .avatar {
+  margin-left: -4rem;
+}
+
+.main {
+  width: 7rem;
+}
