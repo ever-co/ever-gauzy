@@ -14,57 +14,61 @@ const routes: Routes = [
 		children: [
 			{
 				path: 'time-activities',
+				loadChildren: () => import('./time-and-activities/time-and-activities.module').then(
+					(m) => m.TimeAndActivitiesModule
+				),
 				data: {
 					title: 'ACTIVITY.TIME_AND_ACTIVITIES',
 					datePicker: {
-						unitOfTime: 'day'
+						unitOfTime: 'day',
+						isLockDatePicker: true,
+						isSaveDatePicker: true
 					}
-				},
-				loadChildren: () =>
-					import(
-						'./time-and-activities/time-and-activities.module'
-					).then((m) => m.TimeAndActivitiesModule)
+				}
 			},
 			{
 				path: 'screenshots',
+				loadChildren: () => import('./screenshot/screenshot.module').then(
+					(m) => m.ScreenshotModule
+				),
 				data: {
 					title: 'ACTIVITY.SCREENSHOTS',
 					datePicker: {
-						unitOfTime: 'day'
+						unitOfTime: 'day',
+						isLockDatePicker: true,
+						isSaveDatePicker: true
 					}
-				},
-				loadChildren: () =>
-					import('./screenshot/screenshot.module').then(
-						(m) => m.ScreenshotModule
-					)
+				}
 			},
 			{
 				path: 'apps',
+				loadChildren: () => import('./app-url-activity/app-url-activity.module').then(
+					(m) => m.AppUrlActivityModule
+				),
 				data: {
 					title: 'ACTIVITY.APPS',
 					type: 'apps',
 					datePicker: {
-						unitOfTime: 'day'
+						unitOfTime: 'day',
+						isLockDatePicker: true,
+						isSaveDatePicker: true
 					}
-				},
-				loadChildren: () =>
-					import('./app-url-activity/app-url-activity.module').then(
-						(m) => m.AppUrlActivityModule
-					)
+				}
 			},
 			{
 				path: 'urls',
+				loadChildren: () => import('./app-url-activity/app-url-activity.module').then(
+					(m) => m.AppUrlActivityModule
+				),
 				data: {
 					title: 'ACTIVITY.VISITED_SITES',
 					type: 'urls',
 					datePicker: {
-						unitOfTime: 'day'
+						unitOfTime: 'day',
+						isLockDatePicker: true,
+						isSaveDatePicker: true
 					}
-				},
-				loadChildren: () =>
-					import('./app-url-activity/app-url-activity.module').then(
-						(m) => m.AppUrlActivityModule
-					)
+				}
 			}
 		]
 	}

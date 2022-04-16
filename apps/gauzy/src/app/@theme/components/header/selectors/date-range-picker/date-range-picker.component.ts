@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
-import { combineLatest, of as observableOf, Subject, switchMap } from 'rxjs';
+import { combineLatest, debounceTime, of as observableOf, Subject, switchMap, take } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
-import { IDateRangePicker } from '@gauzy/contracts';
+import { IDateRangePicker, ITimeLogFilters } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, OrganizationsService, Store } from './../../../../../@core/services';
@@ -12,6 +12,7 @@ import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { DateRangeKeyEnum } from './date-range-picker.setting';
+import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -74,12 +75,16 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		if (value) {
 			this._unitOfTime = value;
 		}
-		const defaultSelectedDateRange = {
+		const range = {
 			startDate: moment().startOf(this.unitOfTime).toDate(),
 			endDate: moment().endOf(this.unitOfTime).toDate(),
 			isCustomDate: false
 		}
-		this.selectedDateRange = this.rangePicker = defaultSelectedDateRange;
+		if (this.isSaveDatePicker) {
+			this.onSavingFilter(range);
+		} else {
+			this.selectedDateRange = this.rangePicker = range;
+		}
 	}
 
 	/*
@@ -120,34 +125,47 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this._isLockDatePicker = isLock;
 	}
 
+	/*
+	* Getter & Setter for save date picker
+	*/
+	_isSaveDatePicker: boolean = false;
+	get isSaveDatePicker(): boolean {
+		return this._isSaveDatePicker;
+	}
+	@Input() set isSaveDatePicker(isSave: boolean) {
+		this._isSaveDatePicker = isSave;
+	}
+
 	@ViewChild(DateRangePickerDirective, { static: false }) dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly organizationService: OrganizationsService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly timesheetFilterService: TimesheetFilterService,
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeUnitOfTime$ = this.dateRangePickerBuilderService.pickerRangeUnitOfTime$;
-		const storeLockingUnit$ = this.dateRangePickerBuilderService.isLockDatePickerUnit$;
+		const storeDatePickerConfig$ = this.dateRangePickerBuilderService.datePickerConfig$;
 
-		combineLatest([storeOrganization$, storeUnitOfTime$, storeLockingUnit$])
+		combineLatest([storeOrganization$, storeDatePickerConfig$])
 			.pipe(
 				filter(([organization]) => !!organization),
-				switchMap(([organization, unitOfTime, isLockDatePicker]) => combineLatest([
+				switchMap(([organization, datePickerConfig]) => combineLatest([
 					this.organizationService.getById(organization.id),
-					observableOf(unitOfTime),
-					observableOf(isLockDatePicker),
+					observableOf(datePickerConfig),
 				])),
-				tap(([organization, unitOfTime, isLockDatePicker]) => {
+				tap(([organization, datePickerConfig]) => {
 					this.futureDateAllowed = organization.futureDateAllowed;
-					this.unitOfTime = unitOfTime;
+					const { unitOfTime, isLockDatePicker, isSaveDatePicker } = datePickerConfig;
+
 					this.isLockDatePicker = isLockDatePicker;
+					this.isSaveDatePicker = isSaveDatePicker;
+					this.unitOfTime = unitOfTime;
 				}),
 				tap(() => {
 					this.createDateRangeMenus();
@@ -177,6 +195,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this.range$
 			.pipe(
 				distinctUntilChange(),
+				debounceTime(100),
 				tap((range: IDateRangePicker) => {
 					this.store.selectedDateRange = range;
 				}),
@@ -339,6 +358,33 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			}
 		}
 		return isCustomRange;
+	}
+
+	/**
+	 * When date range picker wants to save dates in local storage
+	 * 
+	 * @param range 
+	 */
+	onSavingFilter(range: IDateRangePicker) {
+		this.timesheetFilterService.filter$
+			.pipe(
+				take(1),
+				filter(() => !!this.isSaveDatePicker),
+				tap((filters: ITimeLogFilters) => {
+					const {
+						startDate = range.startDate,
+						endDate = range.endDate,
+						isCustomDate = range.isCustomDate
+					} = filters;
+					this.selectedDateRange = this.rangePicker = {
+						startDate: moment(startDate).toDate(),
+						endDate: moment(endDate).toDate(),
+						isCustomDate: isCustomDate
+					};
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

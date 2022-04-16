@@ -165,6 +165,7 @@ export interface ITimeLogFilters
 	date?: Date | string;
 	startDate?: Date | string;
 	endDate?: Date | string;
+	isCustomDate?: boolean;
 	projectIds?: string[];
 	employeeIds?: string[];
 	logType?: TimeLogType[];
