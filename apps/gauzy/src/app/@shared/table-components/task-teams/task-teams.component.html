@@ -1,7 +1,8 @@
 <ng-container *ngIf="value">
 	<ng-container *ngFor="let team of value; let i = index">
 		<span>
-			{{ team.name || team }}
+			<div>{{ team.name || team }}</div>
+      <div [style.font-size]="'11px'" *ngIf="team?.members">Members {{ team?.members?.length }}</div>
 			<span *ngIf="i !== value.length - 1">, </span>
 		</span>
 	</ng-container>

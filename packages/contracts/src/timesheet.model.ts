@@ -165,6 +165,7 @@ export interface ITimeLogFilters
 	date?: Date | string;
 	startDate?: Date | string;
 	endDate?: Date | string;
+	isCustomDate?: boolean;
 	projectIds?: string[];
 	employeeIds?: string[];
 	logType?: TimeLogType[];
@@ -499,10 +500,11 @@ export interface ITimeLimitReport {
 	}[];
 }
 
-export interface IProjectBudgetLimitReportInput {
-	organizationId?: string;
+export interface IProjectBudgetLimitReportInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	startDate?: string | Date;
 	endDate?: string | Date;
+	employeeIds?: string[];
 	employeeId?: string;
 }
 
@@ -515,12 +517,7 @@ export interface IProjectBudgetLimitReport {
 	reamingBudget?: number;
 }
 
-export interface IClientBudgetLimitReportInput {
-	organizationId?: string;
-	startDate?: string | Date;
-	endDate?: string | Date;
-	employeeId?: string;
-}
+export interface IClientBudgetLimitReportInput extends IProjectBudgetLimitReportInput {}
 
 export interface IClientBudgetLimitReport {
 	organizationContact?: IOrganizationContact;

@@ -1,23 +1,33 @@
 import { Injectable } from '@angular/core';
 import moment from 'moment';
+import { isNotEmpty } from '@gauzy/common-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
+
+export interface IDatePickerConfig {
+	readonly unitOfTime: moment.unitOfTime.Base,
+	readonly isLockDatePicker: boolean;
+	readonly isSaveDatePicker: boolean;
+}
+
+export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
+	unitOfTime: 'month',
+	isLockDatePicker: false,
+	isSaveDatePicker: false
+};
 
 @Injectable({
 	providedIn: 'root'
 })
 export class DateRangePickerBuilderService {
-	private _pickerRangeUnitOfTime$: BehaviorSubject<string> = new BehaviorSubject('month');
-	public pickerRangeUnitOfTime$: Observable<string> = this._pickerRangeUnitOfTime$.asObservable();
+	
+	private _datePickerConfig$: BehaviorSubject<IDatePickerConfig> = new BehaviorSubject(DEFAULT_DATE_PICKER_CONFIG);
+	public datePickerConfig$: Observable<IDatePickerConfig> = this._datePickerConfig$.asObservable();
 
 	constructor() {}
 
-	setDatePicker(options: any) {
-		if (options && options.hasOwnProperty('unitOfTime')) {
-			this.setPickerRangeUnitOfTime(options.unitOfTime);
+	setDatePickerConfig(options: IDatePickerConfig) {
+		if (isNotEmpty(options)) {
+			this._datePickerConfig$.next(options);
 		}
-	}
-
-	setPickerRangeUnitOfTime(unit: moment.unitOfTime.Base): void {
-        this._pickerRangeUnitOfTime$.next(unit);
 	}
 }

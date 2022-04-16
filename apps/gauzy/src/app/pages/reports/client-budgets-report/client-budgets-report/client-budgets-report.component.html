@@ -5,11 +5,15 @@
 				{{ 'REPORT_PAGE.CLIENT_BUDGET_REPORTS' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ngx-date-range-title
-			[start]="logRequest.startDate"
-			[end]="logRequest.endDate"
-			[format]="'dddd, LL'"
-		></ngx-date-range-title>
+		<ng-container
+			*ngIf="logRequest?.startDate && logRequest?.endDate"
+		>
+			<ngx-date-range-title
+				[start]="logRequest?.startDate"
+				[end]="logRequest?.endDate"
+				[format]="'dddd, LL'"
+			></ngx-date-range-title>
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="filters mt-4 mb-4">
@@ -51,9 +55,7 @@
 						class="cart-body client-row"
 						*ngFor="let client of clients"
 					>
-						<div
-							class="row report-row py-1 mt-3 align-items-center"
-						>
+						<div class="row report-row py-1 mt-3 align-items-center">
 							<div class="col-3 client-name">
 								<ng-container
 									*ngTemplateOutlet="
@@ -72,62 +74,62 @@
 										client.budgetType ===
 										OrganizationContactBudgetTypeEnum.HOURS
 									"
-									>{{ client?.spent | durationFormat }}
-									{{ 'REPORT_PAGE.HOURS' | translate }}</span
 								>
-								<span
-									*ngIf="
-										client.budgetType ===
-										OrganizationContactBudgetTypeEnum.COST
-									"
-									>{{
+									{{ (client?.spent * 3600) | durationFormat }}
+									{{ 'REPORT_PAGE.HOURS' | translate }}
+								</span>
+								<span 
+									*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST"
+								>
+									{{
 										client?.spent
-											| currency: client?.spent.currency
+											| currency: organization?.currency
 											| position
 												: organization?.currencyPosition
-									}}</span
-								>
+									}}
+								</span>
 							</div>
 							<div class="col-4 text-center day-col">
 								<ngx-progress-status
 									[percentage]="client?.spentPercentage"
 								></ngx-progress-status>
-								<span class="ml-3">{{
-									client?.spent
-										| currency: client?.spent.currency
-										| position
-											: organization?.currencyPosition
-								}}</span>
+								<span
+									*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS"
+									class="ml-3"
+								>
+									{{ (client?.budget * 3600) | durationFormat }}
+									{{ 'REPORT_PAGE.HOURS' | translate }}
+								</span>
+								<span
+									*ngIf="
+										client.budgetType ===
+										OrganizationContactBudgetTypeEnum.COST
+									"
+									class="ml-3"
+								>
+									{{
+										client.budget
+											| currency : organization?.currency 
+											| position : organization?.currencyPosition
+									}}
+								</span>
 							</div>
 							<div class="col text-center day-col">
-								<div class="col text-center day-col">
-									<span
-										*ngIf="
-											client.budgetType ===
-											OrganizationContactBudgetTypeEnum.HOURS
-										"
-										>{{
-											client.reamingBudget
-												| durationFormat
-										}}
-										{{
-											'REPORT_PAGE.HOURS' | translate
-										}}</span
-									>
-									<span
-										*ngIf="
-											client.budgetType ===
-											OrganizationContactBudgetTypeEnum.COST
-										"
-										>{{
-											client.reamingBudget
-												| currency
-													: client?.spent.currency
-												| position
-													: organization?.currencyPosition
-										}}</span
-									>
-								</div>
+								<span 
+									*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS"
+								>
+									{{ (client.reamingBudget * 3600) | durationFormat }}
+									{{ 'REPORT_PAGE.HOURS' | translate }}
+								</span>
+								<span
+									*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST"
+								>
+									{{ 
+										client.reamingBudget 
+											| currency : organization?.currency
+											| position : organization?.currencyPosition
+									}}
+								</span>
 							</div>
 						</div>
 					</nb-card-body>
@@ -136,9 +138,7 @@
 			<ng-template #notFound>
 				<nb-card>
 					<nb-card-body>
-						<div
-							class="row font-weight-bold py-5 align-items-center"
-						>
+						<div class="row font-weight-bold py-5 align-items-center">
 							<div class="col text-center">
 								{{ 'REPORT_PAGE.NO_CLIENTS' | translate }}
 							</div>

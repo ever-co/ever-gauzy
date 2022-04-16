@@ -9,10 +9,19 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 	styles: [
 		`
 			.badge {
-				text-align: center;
-				position: relative !important;
-				padding: 5px 30px;
-				margin-bottom: 5px;
+				display: flex;
+				flex-direction: row;
+				justify-content: center;
+				align-items: center;
+				position: relative;
+				width: fit-content;
+				height: 1.5rem;
+				padding: 4px 8px;
+				font-size: 12px;
+				font-weight: 600;
+				line-height: 15px;
+				letter-spacing: 0em;
+				text-align: left;
 			}
 		`
 	]

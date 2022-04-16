@@ -1,6 +1,6 @@
 import { sample } from 'underscore';
 import { IDateRange, IUser } from '@gauzy/contracts';
-import * as moment from 'moment';
+import { moment } from './../core/moment-extend';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -285,4 +285,30 @@ export function getDateFormat(
 			end: end.toDate()
 		}
 	}
+}
+
+/**
+ * Get All Dates Between Two Dates in Moment JS
+ * 
+ * @param startDate 
+ * @param endDate 
+ * @returns 
+ */
+export function getDaysBetweenDates(
+	startDate: string | Date,
+	endDate: string | Date
+): string[] {
+	const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
+	const end = moment(moment(endDate).format('YYYY-MM-DD'));
+	const range = Array.from(moment.range(start, end).by('day'));
+
+	const days: Array<string> = new Array();
+	let i = 0;
+	while (i < range.length) {
+		const date = range[i].format('YYYY-MM-DD');
+		days.push(date);
+		i++;
+	}
+
+	return days;
 }

@@ -47,6 +47,7 @@
 			class="action primary"
 			[disabled]="!selectedItem && disableButton"
 			size="small"
+      (click)="edit()"
 		>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}

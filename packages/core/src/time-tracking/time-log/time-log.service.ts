@@ -23,7 +23,8 @@ import {
 	IClientBudgetLimitReport,
 	ReportGroupFilterEnum,
 	IOrganizationProject,
-	IDeleteTimeLog
+	IDeleteTimeLog,
+	IOrganizationContact
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import * as _ from 'underscore';
@@ -33,6 +34,7 @@ import { TenantAwareCrudService } from './../../core/crud';
 import {
 	Employee,
 	Organization,
+	OrganizationContact,
 	OrganizationProject
 } from '../../core/entities/internal';
 import {
@@ -46,7 +48,7 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
-import { getDateFormat } from './../../core/utils';
+import { getDateFormat, getDaysBetweenDates } from './../../core/utils';
 import { moment } from './../../core/moment-extend';
 
 @Injectable()
@@ -61,7 +63,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		private readonly employeeRepository: Repository<Employee>,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectRepository: Repository<OrganizationProject>
+		private readonly organizationProjectRepository: Repository<OrganizationProject>,
+
+		@InjectRepository(OrganizationContact)
+		private readonly organizationContactRepository: Repository<OrganizationContact>
 	) {
 		super(timeLogRepository);
 	}
@@ -123,18 +128,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 
 		const { startDate, endDate } = request;
-
-		const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
-		const end = moment(moment(endDate).format('YYYY-MM-DD')).add(1, 'day');
-		const range = Array.from(moment.range(start, end).by('day'));
-
-		const days: Array<string> = new Array();
-		let i = 0;
-		while (i < range.length) {
-			const date = range[i].format('YYYY-MM-DD');
-			days.push(date);
-			i++;
-		}
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const weeklyLogs = _.chain(logs)
 			.groupBy('employeeId')
@@ -179,20 +173,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				this.getFilterTimeLogQuery(qb, request);
 			}
 		});
-
+	
 		const { startDate, endDate } = request;
-
-		const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
-		const end = moment(moment(endDate).format('YYYY-MM-DD')).add(1, 'day');
-		const range = Array.from(moment.range(start, end).by('day'));
-
-		const days: Array<string> = new Array();
-		let i = 0;
-		while (i < range.length) {
-			const date = range[i].format('YYYY-MM-DD');
-			days.push(date);
-			i++;
-		}
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const byDate = chain(logs)
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
@@ -385,17 +368,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		});
 
-		let dayList = [];
-		const range = {};
-		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
-			i++;
-		}
-		dayList = Object.keys(range);
+		const { startDate, endDate } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
@@ -434,7 +408,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 			.value();
 
-		const dates = dayList.map((date) => {
+		const dates = days.map((date) => {
 			if (byDate[date]) {
 				return byDate[date];
 			} else {
@@ -469,21 +443,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		});
 
-		let dayList = [];
-		const range = {};
-		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, request.duration);
-			i++;
-		}
-		dayList = Object.keys(range);
-
-		// const employees = await this.employeeRepository.find({
-		// 	organizationId: request.organizationId
-		// });
+		const { startDate, endDate } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log) => {
@@ -532,7 +493,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 			.value();
 
-		const dates = dayList.map((date) => {
+		const dates = days.map((date) => {
 			if (byDate[date]) {
 				return byDate[date];
 			} else {
@@ -547,7 +508,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async projectBudgetLimit(request: IProjectBudgetLimitReportInput) {
-		const { organizationId } = request;
+		const { organizationId, employeeIds, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
@@ -555,55 +516,84 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
+
+				const { start, end } = getDateFormat(
+					moment.utc(startDate),
+					moment.utc(endDate)
+				);
+				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+					startDate: start,
+					endDate: end
+				});
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
 			})
 		);
 
 		const organizationProjects = await query.getMany();
 		const projects = organizationProjects.map(
-			(project: IOrganizationProject): IProjectBudgetLimitReport => {
+			(organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
+				const { budgetType, budget = 0, timeLogs = [] } = organizationProject;
+
 				let spent = 0;
 				let spentPercentage = 0;
-				const { budgetType, budget = 0 } = project;
+				let reamingBudget = 0;
 
 				if (
-					project.budgetType ==
+					organizationProject.budgetType ==
 					OrganizationProjectBudgetTypeEnum.HOURS
 				) {
-					spent = project.timeLogs.reduce(
-						(iteratee: any, log: any) => {
-							return iteratee + log.duration;
+					spent = timeLogs.reduce(
+						(iteratee: any, log: ITimeLog) => {
+							return iteratee + (log.duration / 3600);
 						},
 						0
 					);
-					spentPercentage = (spent * 100) / budget;
 				} else {
-					spent = project.timeLogs.reduce(
-						(iteratee: any, log: any) => {
+					spent = timeLogs.reduce(
+						(iteratee: any, log: ITimeLog) => {
 							let amount = 0;
 							if (log.employee) {
-								amount = log.duration * 60 * 60 * log.employee.billRateValue;
+								amount = ((log.duration / 3600) * log.employee.billRateValue);
 							}
 							return iteratee + amount;
 						},
 						0
 					);
-					spentPercentage = (spent * 100) / budget;
 				}
-				const reamingBudget = Math.max(budget - spent, 0);
+				
+				spentPercentage = (spent * 100) / budget;
+				reamingBudget = Math.max(budget - spent, 0);
+				
+				delete organizationProject['timeLogs'];
 				return {
-					project,
+					project: organizationProject,
 					budgetType,
 					budget,
-					spent: spent,
-					reamingBudget,
+					spent: parseFloat(spent.toFixed(2)),
+					reamingBudget: parseFloat(reamingBudget.toFixed(2)),
 					spentPercentage: parseFloat(spentPercentage.toFixed(2))
 				};
 			}
@@ -612,71 +602,93 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	async clientBudgetLimit(request: IClientBudgetLimitReportInput) {
-		const { organizationId } = request;
+		const { organizationId, employeeIds, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 	
-		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
-		query.innerJoinAndSelect(`${query.alias}.organizationContact`, 'organizationContact');
+		const query = this.organizationContactRepository.createQueryBuilder('organization_contact');
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"organizationContact"."organizationId" =:organizationId`, { organizationId });
-				qb.andWhere(`"organizationContact"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
+				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
+
+				const { start, end } = getDateFormat(
+					moment.utc(startDate),
+					moment.utc(endDate)
+				);
+				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+					startDate: start,
+					endDate: end
+				});
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
+				}
 			})
 		);
-		const clientProjects = await query.getMany();
-		const projects = clientProjects.map(
-			(project: IOrganizationProject): IClientBudgetLimitReport => {
-				const { organizationContact } = project;
-				const { budgetType, budget } = organizationContact;
+
+		const organizationContacts = await query.getMany();		
+		return organizationContacts.map(
+			(organizationContact: IOrganizationContact): IClientBudgetLimitReport => {
+				const { budgetType, budget, timeLogs } = organizationContact;
+
 				let spent = 0;
 				let spentPercentage = 0;
+				let reamingBudget = 0;
+
 				if (budgetType == OrganizationContactBudgetTypeEnum.HOURS) {
-					spent = project.timeLogs.reduce(
-						(iteratee: any, log: any) => {
-							return iteratee + log.duration;
+					spent = timeLogs.reduce(
+						(iteratee: any, log: ITimeLog) => {
+							return iteratee + (log.duration / 3600);
 						},
 						0
 					);
-					spentPercentage = (spent * 100) / budget;
 				} else {
-					spent = project.timeLogs.reduce(
-						(iteratee: any, log: any) => {
+					spent = timeLogs.reduce(
+						(iteratee: any, log: ITimeLog) => {
 							let amount = 0;
 							if (log.employee) {
-								amount = log.duration * 60 * 60 * log.employee.billRateValue;
+								amount = ((log.duration / 3600) * log.employee.billRateValue);
 							}
 							return iteratee + amount;
 						},
 						0
 					);
-					spentPercentage = (spent * 100) / budget;
 				}
-				const reamingBudget = Math.max(budget - spent, 0);
+
+				spentPercentage = (spent * 100) / budget;
+				reamingBudget = Math.max(budget - spent, 0);
+
+				delete organizationContact['timeLogs'];
 				return {
 					organizationContact,
 					budgetType,
 					budget,
-					spent: spent,
-					reamingBudget,
+					spent: parseFloat(spent.toFixed(2)),
+					reamingBudget: parseFloat(reamingBudget.toFixed(2)),
 					spentPercentage: parseFloat(spentPercentage.toFixed(2))
 				};
 			}
 		);
-		return projects;
 	}
 
 	getFilterTimeLogQuery(
@@ -821,7 +833,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 
 		if (isNotEmpty(conflicts)) {
-			console.log('Get Conflicts Time Logs', conflicts);
 			const times: IDateRange = {
 				start: new Date(startedAt),
 				end: new Date(stoppedAt)
@@ -884,7 +895,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			...(id ? { ignoreId: id } : {})
 		});
 		if (isNotEmpty(conflicts)) {
-			console.log('Get Conflicts Time Logs', conflicts);
 			const times: IDateRange = {
 				start: new Date(startedAt),
 				end: new Date(stoppedAt)

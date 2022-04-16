@@ -4,7 +4,7 @@
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 >
-	<nb-card-header>
+	<nb-card-header class="d-flex">
 		<div class="card-header-title" *ngIf="duplicate; else headerTemplate">
 			<div class="card-header-title">
 				<ngx-back-navigation></ngx-back-navigation>
@@ -12,7 +12,7 @@
 			</div>
 		</div>
 		<ng-template #headerTemplate>
-			<div class="card-header-title">
+			<div class="card-header-title d-flex justify-content-between w-100">
 				<div class="card-header-title">
 					<ngx-back-navigation></ngx-back-navigation>
 					<h4>
@@ -25,7 +25,14 @@
 					</h4>
 				</div>
 				<div *ngIf="!isEstimate">
-					<button status="info" (click)="payments()" nbButton>
+					<button
+						status="basic"
+						class="action secondary mr-2"
+						size="small"
+						(click)="payments()"
+						nbButton
+					>
+						<nb-icon icon="clipboard-outline"></nb-icon>
 						{{ 'BUTTONS.PAYMENTS' | translate }}
 					</button>
 				</div>
@@ -33,7 +40,7 @@
 		</ng-template>
 	</nb-card-header>
 
-	<nb-card-body class="body">
+	<nb-card-body class="body content">
 		<form [formGroup]="form" class="form">
 			<div class="block-wrap">
 				<div class="block mt-2">
@@ -67,12 +74,17 @@
 							</div>
 						</div>
 						<div class="col-sm-6">
-							<ga-tags-color-input
-								[selectedTags]="form.get('tags').value"
-								(selectedTagsEvent)="selectedTagsEvent($event)"
-								[isOrgLevel]="true"
-							>
-							</ga-tags-color-input>
+							<label for="inputOrganizationContact" class="label"
+								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
+							</label>
+							<ga-contact-select
+								[addTag]="true"
+								[placeholder]="
+									'POP_UPS.ALL_CONTACTS' | translate
+								"
+								formControlName="organizationContact"
+								(onChanged)="selectOrganizationContact($event)"
+							></ga-contact-select>
 						</div>
 					</div>
 					<div class="row">
@@ -137,19 +149,6 @@
 								(optionChange)="onCurrencyChange($event)"
 							></ga-currency>
 						</div>
-						<div class="col-sm-6">
-							<label for="inputOrganizationContact" class="label"
-								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
-							</label>
-							<ga-contact-select
-								[addTag]="true"
-								[placeholder]="
-									'POP_UPS.ALL_CONTACTS' | translate
-								"
-								formControlName="organizationContact"
-								(onChanged)="selectOrganizationContact($event)"
-							></ga-contact-select>
-						</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-12">
@@ -171,69 +170,90 @@
 							</div>
 						</div>
 					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<ga-tags-color-input
+								[selectedTags]="form.get('tags').value"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
+					</div>
 				</div>
 				<div class="block">
-					<div class="row group">
-						<label class="label label-group">{{
-							'INVOICES_PAGE.DISCOUNT' | translate
-						}}</label>
-						<div class="col-sm-6">
-							<div class="form-group">
-								<label for="inputDiscountValue" class="label">{{
-									'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
-										| translate
-								}}</label>
-								<input
-									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
-											| translate
-									}}"
-									type="number"
-									[min]="0"
-									formControlName="discountValue"
-									id="inputDiscountValue"
-									(ngModelChange)="calculateTotal()"
-									fullWidth
-								/>
-							</div>
+					<div class="row group d-flex flex-column">
+						<div class="label label-group">
+							{{ 'INVOICES_PAGE.DISCOUNT' | translate }}
 						</div>
-						<div class="col-sm-6">
-							<div class="form-group">
-								<label for="inputDiscountType" class="label">{{
-									'INVOICES_PAGE.DISCOUNT_TYPE' | translate
-								}}</label>
-								<nb-select
-									formControlName="discountType"
-									placeholder="{{
-										'INVOICES_PAGE.DISCOUNT_TYPE'
-											| translate
-									}}"
-									(ngModelChange)="calculateTotal()"
-									id="inputDiscountType"
-									fullWidth
-								>
-									<nb-option
-										*ngFor="
-											let discountTaxType of discountTaxTypes
-										"
-										value="{{ discountTaxType }}"
-									>
-										{{
-											'INVOICES_PAGE.' + discountTaxType
+						<div class="row">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label
+										for="inputDiscountValue"
+										class="label"
+										>{{
+											'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
 												| translate
-										}}
-									</nb-option>
-								</nb-select>
+										}}</label
+									>
+									<input
+										nbInput
+										placeholder="{{
+											'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
+												| translate
+										}}"
+										type="number"
+										[min]="0"
+										formControlName="discountValue"
+										id="inputDiscountValue"
+										(ngModelChange)="calculateTotal()"
+										fullWidth
+									/>
+								</div>
+							</div>
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label
+										for="inputDiscountType"
+										class="label"
+										>{{
+											'INVOICES_PAGE.DISCOUNT_TYPE'
+												| translate
+										}}</label
+									>
+									<nb-select
+										formControlName="discountType"
+										placeholder="{{
+											'INVOICES_PAGE.DISCOUNT_TYPE'
+												| translate
+										}}"
+										(ngModelChange)="calculateTotal()"
+										id="inputDiscountType"
+										fullWidth
+									>
+										<nb-option
+											*ngFor="
+												let discountTaxType of discountTaxTypes
+											"
+											value="{{ discountTaxType }}"
+										>
+											{{
+												'INVOICES_PAGE.' +
+													discountTaxType | translate
+											}}
+										</nb-option>
+									</nb-select>
+								</div>
 							</div>
 						</div>
 					</div>
-					<div class="group row">
-						<label class="label label-group">{{
-							'INVOICES_PAGE.INVOICES_TAXES' | translate
-						}}</label>
-						<div class="col-sm-6">
-							<div class="col-sm-12 p-0">
+					<div class="row group d-flex flex-column">
+						<div class="label label-group">
+							{{ 'INVOICES_PAGE.INVOICES_TAXES' | translate }}
+						</div>
+						<div class="row">
+							<div class="col-sm-6">
 								<div class="form-group">
 									<label for="inputTax" class="label">{{
 										'INVOICES_PAGE.TAX' | translate
@@ -252,8 +272,28 @@
 									/>
 								</div>
 							</div>
-
-							<div class="col-sm-12 p-0">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label for="inputTax2" class="label"
+										>{{ 'INVOICES_PAGE.TAX_2' | translate }}
+									</label>
+									<input
+										nbInput
+										placeholder="{{
+											'INVOICES_PAGE.TAX_2' | translate
+										}}"
+										type="number"
+										[min]="0"
+										formControlName="tax2"
+										id="inputTax2"
+										(ngModelChange)="calculateTotal()"
+										fullWidth
+									/>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6">
 								<div class="form-group">
 									<label for="inputTaxType" class="label">{{
 										'INVOICES_PAGE.TAX_TYPE' | translate
@@ -281,28 +321,7 @@
 									</nb-select>
 								</div>
 							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="col-sm-12 p-0">
-								<div class="form-group">
-									<label for="inputTax2" class="label"
-										>{{ 'INVOICES_PAGE.TAX_2' | translate }}
-									</label>
-									<input
-										nbInput
-										placeholder="{{
-											'INVOICES_PAGE.TAX_2' | translate
-										}}"
-										type="number"
-										[min]="0"
-										formControlName="tax2"
-										id="inputTax2"
-										(ngModelChange)="calculateTotal()"
-										fullWidth
-									/>
-								</div>
-							</div>
-							<div class="col-sm-12 p-0">
+							<div class="col-sm-6">
 								<div class="form-group">
 									<label for="inputTaxType" class="label">{{
 										'INVOICES_PAGE.TAX_TYPE' | translate
@@ -347,7 +366,14 @@
 			</div>
 		</form>
 		<div *ngIf="shouldLoadTable">
-			<div class="table-scroll-container">
+			<div class="table-scroll-container custom-table">
+				<ng-container>
+					<div class="btn-action">
+						<ng-template
+							[ngTemplateOutlet]="actionButtons"
+						></ng-template>
+					</div>
+				</ng-container>
 				<ng2-smart-table
 					class="table"
 					[settings]="settingsSmartTable"
@@ -393,6 +419,9 @@
 			*ngIf="!duplicate"
 			status="danger"
 			class="mr-3"
+			status="basic"
+			size="small"
+			outline
 			(click)="cancel()"
 			nbButton
 		>
@@ -401,8 +430,10 @@
 		<button
 			class="mr-3"
 			(click)="updateInvoice('DRAFT')"
-			status="success"
 			[disabled]="form.invalid"
+			size="small"
+			status="basic"
+			class="gray"
 			nbButton
 		>
 			{{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
@@ -411,6 +442,7 @@
 			class="mr-3"
 			(click)="sendToContact()"
 			status="success"
+			size="small"
 			[disabled]="form.invalid"
 			nbButton
 		>
@@ -420,6 +452,7 @@
 			class="mr-3"
 			(click)="sendViaEmail()"
 			status="success"
+			size="small"
 			[disabled]="form.invalid"
 			nbButton
 		>
@@ -427,3 +460,39 @@
 		</button>
 	</nb-card-footer>
 </nb-card>
+
+<ng-template #actionButtons>
+	<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+		<div class="button-action mr-3 ml-3">
+			<button nbButton status="success" size="small">
+				<nb-icon icon="plus-outline"> </nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		</div>
+	</ng-template>
+	<div class="button-action">
+		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+			<button
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+			>
+				<nb-icon icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				(click)="deleteIncome(selectedItem)"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</ng-template>
+	</div>
+</ng-template>

@@ -22,12 +22,24 @@ import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../../@core/constants';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { ErrorHandlingService, InvoicesService, Store, ToastrService } from '../../../@core/services';
+import {
+	ErrorHandlingService,
+	InvoicesService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { InvoiceEstimateTotalValueComponent } from '../table-components/invoice-total-value.component';
 import { InputFilterComponent } from '../../../@shared/table-filters/input-filter.component';
-import { ContactLinksComponent, DateViewComponent, NotesWithTagsComponent, TagsOnlyComponent } from '../../../@shared/table-components';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	NotesWithTagsComponent,
+	TagsOnlyComponent
+} from '../../../@shared/table-components';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { TagsColorFilterComponent } from '../../../@shared/table-filters';
+import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
+import { NbDialogService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,9 +47,10 @@ import { TagsColorFilterComponent } from '../../../@shared/table-filters';
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class InvoicesReceivedComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	loading: boolean = false;
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
@@ -99,7 +112,8 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 		private readonly router: Router,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly toastrService: ToastrService,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
 		this.setView();
@@ -407,7 +421,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 			this.settingsSmartTable['columns']['paid'] = {
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
-        width: '15%',
+				width: '15%',
 				renderComponent: InvoicePaidComponent,
 				filter: false
 			};
@@ -523,6 +537,46 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 			class: badgeClass
 		};
 	};
+
+	payments() {
+		const { id } = this.selectedInvoice;
+		this.router.navigate([`/pages/accounting/invoices/payments`, id]);
+	}
+
+	edit(selectedItem?: IInvoice) {
+		this.invoicesService.changeValue(false);
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		const { id } = this.selectedInvoice;
+		if (this.isEstimate) {
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/edit`,
+				id
+			]);
+		} else {
+			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
+		}
+	}
+
+	download(selectedItem?: IInvoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.dialogService.open(InvoiceDownloadMutationComponent, {
+			context: {
+				invoice: this.selectedInvoice,
+				isEstimate: this.isEstimate
+			}
+		});
+	}
 
 	ngOnDestroy() {}
 }

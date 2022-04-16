@@ -16,14 +16,16 @@
 		[placeholder]="'MENU.TAGS' | translate"
 	>
 		<ng-template ng-option-tmp let-tag="item" let-tag$="item$">
-			<ng-container *ngIf="multiple">
-				<input type="checkbox" [ngModel]="tag$.selected" />
-			</ng-container>
-			<nb-badge
-				[style.background]="tag.color"
-				class="tag-color"
-			></nb-badge>
-			<span>{{ tag.name }}</span>
+      <div class="d-flex align-items-center">
+        <ng-container *ngIf="multiple">
+          <input type="checkbox" [ngModel]="tag$.selected" />
+        </ng-container>
+        <nb-badge
+          [style.background]="tag.color"
+          class="tag-color"
+        ></nb-badge>
+        <span>{{ tag.name }}</span>
+      </div>
 		</ng-template>
 
 		<ng-template ng-label-tmp let-tag="item" let-clear="clear">
@@ -31,10 +33,9 @@
 				class="tag-color tag-label"
 				[style.background]="tag.color"
 				[style.color]="backgroundContrast(tag.color)"
-				text="X"
+				text="{{ tag.name }}"
 				(click)="clear(tag)"
 			></nb-badge>
-			<span>{{ tag.name }}</span>
 		</ng-template>
 
 		<ng-template ng-tag-tmp let-newTagName="searchTerm">

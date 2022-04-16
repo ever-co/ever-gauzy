@@ -6,6 +6,7 @@ import { IUser, LanguagesEnum } from './user.model';
 import { ITag } from './tag-entity.model';
 import { IContact } from './contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ITimeLog } from './timesheet.model';
 
 export interface IOrganizationContact extends IBaseEntityWithMembers {
 	name: string;
@@ -19,6 +20,7 @@ export interface IOrganizationContact extends IBaseEntityWithMembers {
 	members?: IEmployee[];
 	imageUrl?: string;
 	inviteStatus?: string;
+	timeLogs?: ITimeLog[];
 	tags: ITag[];
 	contact?: IContact;
 	createdBy?: string;

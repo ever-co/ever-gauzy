@@ -1,4 +1,9 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	Input
+} from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, ISelectedEmployee, IUser } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
@@ -9,10 +14,26 @@ import { Store } from './../../../@core';
 @Component({
 	selector: 'ngx-header-title',
 	templateUrl: './header-title.component.html',
-	styleUrls: []
+	styles: [
+		`
+			.name {
+				font-size: 24px;
+				font-weight: 500;
+				line-height: 30px;
+				letter-spacing: 0em;
+				text-align: left;
+			}
+			.org-name {
+				font-size: 24px;
+				font-weight: 600;
+				line-height: 30px;
+				letter-spacing: 0em;
+				text-align: left;
+			}
+		`
+	]
 })
 export class HeaderTitleComponent implements AfterViewInit {
-	
 	user: IUser;
 	organization: IOrganization;
 	employee: ISelectedEmployee;
@@ -24,7 +45,7 @@ export class HeaderTitleComponent implements AfterViewInit {
 	@Input() set allowEmployee(value: boolean) {
 		this._allowEmployee = value;
 	}
-	
+
 	constructor(
 		private readonly store: Store,
 		private readonly crd: ChangeDetectorRef

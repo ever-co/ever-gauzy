@@ -2,7 +2,6 @@
 @import 'gauzy/_gauzy-overrides';
 
 :host {
-
     a,
     span {
         display: block;
@@ -18,29 +17,29 @@
       cursor: pointer;
       overflow: hidden;
 
-      &.active span{
-        color: nb-theme(text-primary-color);
-        background-color: nb-theme(background-basic-color-3);
-        border-radius: nb-theme(button-rectangle-border-radius);
-      }
-
-      span {
-        font-size: 0.875rem;
-        background-color: transparent;
-        color: nb-theme(text-basic-color);
-        padding: .75rem 1.1rem;
-        border: none;
-        &.icon{
-          box-shadow: 1px 2px 2px nb-theme(background-basic-color-4);
-          border-radius: 20px;
-          padding: 0.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-      }
+    &.active span {
+      color: nb-theme(text-primary-color);
+      background-color: nb-theme(background-basic-color-1);
+      border-radius: nb-theme(button-rectangle-border-radius);
     }
 
+    span {
+      font-size: 0.875rem;
+      background-color: transparent;
+      color: nb-theme(text-basic-color);
+      padding: 0.75rem 1.1rem;
+      border: none;
+      &.icon {
+        background: rgba(255, 255, 255, 0.75);
+        box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+        border-radius: nb-theme(button-rectangle-border-radius);
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
 
     .pagination {
         font-size: 0.875rem;

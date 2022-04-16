@@ -5,7 +5,7 @@
 </ng-template>
 
 <ng-template [ngIf]="organization?.id">
-    <span> {{ ((allowEmployee && employee?.id && !user?.employeeId) ? ('HEADER_TITLE.FROM' | translate) : ('HEADER_TITLE.FOR' | translate)) }}</span>
-    <span> {{ organization?.name }} </span>
+    <span class="name"> {{ ((allowEmployee && employee?.id && !user?.employeeId) ? ('HEADER_TITLE.FROM' | translate) : ('HEADER_TITLE.FOR' | translate)) }}</span>
+    <span class="org-name"> {{ organization?.name }} </span>
 </ng-template>
 

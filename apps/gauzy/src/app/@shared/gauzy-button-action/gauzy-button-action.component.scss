@@ -16,7 +16,7 @@
   span {
     background: rgba(50, 50, 50, 0.03);
     border-radius: nb-theme(button-rectangle-border-radius);
-    padding: 0px 1px 0px 1px;
+    padding: 2px 4px;
     margin-right: 10px;
   }
 }
@@ -34,8 +34,11 @@
     transition: all 0.2s ease-out;
   }
   &.show-button{
-    @include nb-rtl(transform, translateX(110%));
-    @include nb-ltr(transform, translateX(-110%));
+    @include nb-rtl(transform, translateX(100%));
+    @include nb-ltr(transform, translateX(-100%));
     transition: all 0.15s ease-out;
   }
+}
+ga-layout-selector{
+  margin-left: 20px;
 }

@@ -334,6 +334,7 @@ nb-card-body {
   .pagination-container {
     display: flex;
     justify-content: space-between;
+    align-self: flex-end;
     width: 100%;
     ga-pagination {
       width: 100%;

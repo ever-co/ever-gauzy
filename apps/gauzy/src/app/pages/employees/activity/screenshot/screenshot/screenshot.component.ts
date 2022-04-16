@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import {
 	ITimeLogFilters,
 	ITimeSlot,
@@ -7,18 +7,20 @@ import {
 	IScreenshot
 } from '@gauzy/contracts';
 import { debounceTime, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs/internal/Observable';
 import { toLocal, isEmpty } from '@gauzy/common-angular';
 import { chain, indexBy, sortBy } from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from './../../../../../@core/services';
+import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import { GalleryService } from './../../../../../@shared/gallery/gallery.service';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,6 +40,9 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	selectedIdsCount = 0;
 	allSelected = false;
 	originalTimeSlots: ITimeSlot[] = [];
+	
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -46,6 +51,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		private readonly nbDialogService: NbDialogService,
 		protected readonly store: Store,
 		private readonly galleryService: GalleryService,
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(store, translateService);
 	}
@@ -62,7 +68,9 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
-		this.timesheetFilterService.filter = filters;
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
 		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
 	}
