@@ -6,41 +6,28 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export interface IDatePickerConfig {
 	readonly unitOfTime: moment.unitOfTime.Base,
 	readonly isLockDatePicker: boolean;
+	readonly isSaveDatePicker: boolean;
 }
 
 export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
 	unitOfTime: 'month',
-	isLockDatePicker: false
+	isLockDatePicker: false,
+	isSaveDatePicker: false
 };
 
 @Injectable({
 	providedIn: 'root'
 })
 export class DateRangePickerBuilderService {
-	private _pickerRangeUnitOfTime$: BehaviorSubject<moment.unitOfTime.Base> = new BehaviorSubject(DEFAULT_DATE_PICKER_CONFIG.unitOfTime);
-	public pickerRangeUnitOfTime$: Observable<moment.unitOfTime.Base> = this._pickerRangeUnitOfTime$.asObservable();
-
-	private _isLockDatePickerUnit$: BehaviorSubject<boolean> = new BehaviorSubject(DEFAULT_DATE_PICKER_CONFIG.isLockDatePicker);
-	public isLockDatePickerUnit$: Observable<boolean> = this._isLockDatePickerUnit$.asObservable();
+	
+	private _datePickerConfig$: BehaviorSubject<IDatePickerConfig> = new BehaviorSubject(DEFAULT_DATE_PICKER_CONFIG);
+	public datePickerConfig$: Observable<IDatePickerConfig> = this._datePickerConfig$.asObservable();
 
 	constructor() {}
 
-	setDatePickerConfig(options: any) {
+	setDatePickerConfig(options: IDatePickerConfig) {
 		if (isNotEmpty(options)) {
-			if (options.hasOwnProperty('unitOfTime')) {
-				this.setPickerRangeUnitOfTime(options.unitOfTime);
-			}
-			if (options.hasOwnProperty('isLockDatePicker')) {
-				this.setPickerLockingUnit(options.isLockDatePicker);
-			}
+			this._datePickerConfig$.next(options);
 		}
-	}
-
-	setPickerRangeUnitOfTime(unit: moment.unitOfTime.Base): void {
-        this._pickerRangeUnitOfTime$.next(unit);
-	}
-
-	setPickerLockingUnit(isLockUnit: boolean) {
-		this._isLockDatePickerUnit$.next(isLockUnit);
 	}
 }
