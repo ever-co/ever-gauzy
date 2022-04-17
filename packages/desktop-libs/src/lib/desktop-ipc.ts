@@ -268,7 +268,10 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
-		notifyScreenshot(notificationWindow, arg, windowPath, soundPath, timeTrackerWindow);
+		const appSetting = LocalStore.getStore('appSetting');
+		if (appSetting.screenshotNotification) {
+			notifyScreenshot(notificationWindow, arg, windowPath, soundPath, timeTrackerWindow);
+		}
 	})
 
 	ipcMain.on('save_screen_shoot', (event, arg) => {
