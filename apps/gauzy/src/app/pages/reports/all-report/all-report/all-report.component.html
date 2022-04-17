@@ -9,7 +9,7 @@
 	<nb-card-body class="content">
 		<div *ngFor="let reportCategory of reportCategories">
 			<div class="mb-4">
-				<h5>
+				<h5 class="report-category-name">
 					<span class="category-icon mr-2">
 						<i class="fa {{ reportCategory.iconClass }}"></i>
 					</span>
@@ -24,7 +24,7 @@
 					<nb-card class="border-0 m-0 card-nb">
 						<nb-card-header>
 							<div class="row align-items-center">
-								<h6 class="col">{{ report?.name }}</h6>
+								<h6 class="col report-name">{{ report?.name }}</h6>
 								<div class="col-auto">
 									<nb-toggle
 										(click)="$event.stopPropagation()"
