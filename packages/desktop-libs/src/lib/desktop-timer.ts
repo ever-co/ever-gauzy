@@ -8,7 +8,7 @@ import { metaData } from './desktop-wakatime';
 import { LocalStore } from './desktop-store';
 import NotificationDesktop from './desktop-notifier';
 import { powerMonitor, ipcMain, screen } from 'electron';
-import { getScreeshot } from './desktop-screenshot';
+import { getScreeshot, detectActiveWindow } from './desktop-screenshot';
 import log from 'electron-log';
 import { ActivityType, TimeLogSourceEnum } from '@gauzy/contracts';
 console.log = log.log;
@@ -426,7 +426,8 @@ export default class Timerhandler {
 					idsAw: dataCollection.idsAw,
 					idsWakatime: dataCollection.idsWakatime,
 					duration: durationNow,
-					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk
+					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk,
+					activeWindow: detectActiveWindow()
 				});
 				break;
 			case 'ScreenshotDesktopLib':
@@ -453,7 +454,8 @@ export default class Timerhandler {
 					idsAw: dataCollection.idsAw,
 					idsWakatime: dataCollection.idsWakatime,
 					duration: durationNow,
-					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk
+					durationNonAfk: durationNonAfk < 0 ? 0 : durationNonAfk,
+					activeWindow: null
 				});
 				break;
 			default:
