@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-cards';
+@import 'gauzy/_gauzy-table';
+
 .tags {
   padding-top: 0.25rem !important;
   padding-bottom: 2rem !important;
@@ -23,7 +26,6 @@ nb-badge {
 
   .prop-card {
     align-items: center;
-    padding: 2em;
   }
 
   @media (max-width: 1120px) {
@@ -53,5 +55,98 @@ nb-badge {
 
   @media (max-width: 900px) {
     display: block;
+  }
+}
+h4 {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+:host {
+  @include nb-card-overrides(
+    overlay,
+    calc($default-card-height + 4rem),
+    $default-radius
+  );
+  nb-card {
+    background: rgba(50, 50, 50, 0.03);
+  }
+}
+
+.main-content {
+  background: rgba(50, 50, 50, 0.03);
+}
+.image-container {
+  object-fit: cover;
+  img {
+    width: 48px;
+    height: 48px;
+    border-radius: 32px;
+  }
+}
+.custom {
+  align-items: center;
+  background-color: nb-theme(gauzy-card-2);
+  .role {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 17px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+
+  &.author {
+    height: 84px;
+    .identity {
+      align-items: center;
+      margin: 0 10px;
+      .name {
+        font-family: Inter;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+        color: nb-theme(text-primary-color);
+      }
+    }
+  }
+
+  &.status {
+    height: 48px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px;
+    ::ng-deep ga-proposal-status {
+      div > div {
+        margin-top: 5px;
+        font-size: 9px;
+        font-weight: 400;
+        line-height: 11px;
+        letter-spacing: 0em;
+        text-align: left;
+        padding: 7px 14px;
+        border-radius: 4px;
+      }
+    }
+  }
+
+  &.job {
+    height: 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  &.cont {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
   }
 }
