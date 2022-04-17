@@ -6,6 +6,9 @@ import { NbDialogRef } from '@nebular/theme';
 	template: `
 		<nb-card class="center">
 			<nb-card-header>
+				<span class="cancel"
+					><i class="fas fa-times" (click)="close()"></i
+				></span>
 				<h6 class="title">{{ 'FORM.CONFIRM' | translate }}</h6>
 			</nb-card-header>
 			<nb-card-body>
