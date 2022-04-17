@@ -1,4 +1,25 @@
+@import 'gauzy/_gauzy-cards';
+
 .text-editors {
   padding-right: 15px;
   padding-left: 15px;
+}
+:host {
+  @include nb-card-overrides(
+    overlay,
+    calc($default-card-height),
+    $default-radius
+  );
+  nb-card,
+  nb-card-body,
+  nb-card-footer {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+}
+h4 {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
 }
