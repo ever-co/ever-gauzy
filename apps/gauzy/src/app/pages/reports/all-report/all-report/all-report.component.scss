@@ -72,7 +72,7 @@
   background-color: nb-theme(gauzy-card-2);
 }
 nb-card-body {
-  border-radius: nb-theme(border-radius);
+  border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
 }
 
 ::-webkit-scrollbar {
