@@ -1,5 +1,5 @@
-<nb-card class="main card-scroll">
-	<nb-card-header class="d-flex">
+<nb-card class="card">
+	<nb-card-header class="d-flex card-header">
 		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
 			<ngx-header-title>
@@ -7,7 +7,7 @@
 			</ngx-header-title>
 		</h4>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="card-body">
 		<form [formGroup]="form" #proposalForm="ngForm" (ngSubmit)="registerProposal()">
 			<div class="row">
 				<div class="col-sm-3">
@@ -146,7 +146,7 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left card-footer">
 		<button
 			[disabled]="form.invalid"
 			(click)="proposalForm.ngSubmit.emit()"

@@ -3,7 +3,7 @@
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 >
-	<nb-card-header class="card-custom-header" fixed>
+	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title>
@@ -59,12 +59,12 @@
 			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="content">
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll-container">
+			<div class="table-scroll-container custom-table ">
 				<ng2-smart-table
 					class="tags-table"
 					[settings]="smartTableSettings"

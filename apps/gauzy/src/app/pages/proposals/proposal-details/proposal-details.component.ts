@@ -25,7 +25,7 @@ export class ProposalDetailsComponent implements OnInit, OnDestroy {
 	jobPostLink: SafeHtml;
 	jobPostContent: SafeHtml;
 	proposalContent: SafeHtml;
-	author: string;
+	author: any;
 	proposalId: string;
 
 	ngOnInit() {
@@ -64,11 +64,7 @@ export class ProposalDetailsComponent implements OnInit, OnDestroy {
 				.split(/[\s,\n]+/)
 				.slice(0, 3)
 				.join(' '),
-			author: proposal.employee.user
-				? proposal.employee.user.firstName +
-				  ' ' +
-				  proposal.employee.user.lastName
-				: ''
+			author: proposal.employee
 		});
 		this.setProposal();
 	}
