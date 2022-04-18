@@ -167,7 +167,7 @@
 			<div class="table-row" *ngFor="let projectRow of dateRow.projects;let projectIndex = index">
 				<div class="expanse-row date-expanse-row" *ngFor="let expanseRow of projectRow.expanse;let expanseIndex = index">
 					<div class="table-inner-wrapper">
-						<div class="responsive-table-row project-column responsive-heading-row">
+						<div class="responsive-table-row employee-column responsive-heading-row">
 							<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 							<div class="responsive-table-content project-name">
 								{{ projectIndex == 0 && expanseIndex == 0 ? (dateRow.date | dateFormat) : '' }}
