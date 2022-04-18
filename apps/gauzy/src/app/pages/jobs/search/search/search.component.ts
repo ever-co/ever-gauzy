@@ -44,34 +44,35 @@ export class SearchComponent
 	settingsSmartTable: any = {
 		editable: false,
 		hideSubHeader: true,
-		actions: {
-			columnTitle: this.getTranslation('JOBS.ACTIONS'),
-			add: false,
-			edit: false,
-			delete: false,
-			position: 'right',
-			mode: 'external',
-			custom: [
-				{
-					name: 'view',
-					title: `<span class="btn btn-primary">${this.getTranslation(
-						'JOBS.VIEW'
-					)}</span>`
-				},
-				{
-					name: 'apply',
-					title: `<span class="btn btn-success">${this.getTranslation(
-						'JOBS.APPLY'
-					)}</span>`
-				},
-				{
-					name: 'hide',
-					title: `<span class="btn btn-danger">${this.getTranslation(
-						'JOBS.HIDE'
-					)}</span>`
-				}
-			]
-		}
+    actions: false,
+		// actions: {
+		// 	columnTitle: this.getTranslation('JOBS.ACTIONS'),
+		// 	add: false,
+		// 	edit: false,
+		// 	delete: false,
+		// 	position: 'right',
+		// 	mode: 'external',
+		// 	custom: [
+		// 		{
+		// 			name: 'view',
+		// 			title: `<span class="btn btn-primary">${this.getTranslation(
+		// 				'JOBS.VIEW'
+		// 			)}</span>`
+		// 		},
+		// 		{
+		// 			name: 'apply',
+		// 			title: `<span class="btn btn-success">${this.getTranslation(
+		// 				'JOBS.APPLY'
+		// 			)}</span>`
+		// 		},
+		// 		{
+		// 			name: 'hide',
+		// 			title: `<span class="btn btn-danger">${this.getTranslation(
+		// 				'JOBS.HIDE'
+		// 			)}</span>`
+		// 		}
+		// 	]
+		// }
 	};
 	isOpenAdvancedFilter = false;
 	jobs: IEmployeeJobPost[] = [];
@@ -319,8 +320,8 @@ export class SearchComponent
 											row.employee && row.employee.user
 												? row.employee.user.imageUrl
 												: null,
-										id: row.employee 
-												? row.employee.id 
+										id: row.employee
+												? row.employee.id
 												: null
 									};
 								}
@@ -362,7 +363,7 @@ export class SearchComponent
 				},
 				jobStatus: {
 					title: this.getTranslation('JOBS.STATUS'),
-					width: '15%',
+					width: '5%',
 					filter: false,
 					type: 'custom',
 					sort: false,
