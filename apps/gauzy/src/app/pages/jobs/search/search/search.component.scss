@@ -1,4 +1,5 @@
 @import 'gauzy/_gauzy-table.scss';
+@import 'gauzy/_gauzy-overrides';
 
 :host {
   .form-group {
@@ -59,4 +60,29 @@
       }
     }
   }
+  nb-tab.content-active {
+    padding: 1rem;
+  }
+  nb-card,
+  nb-tab {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  ::ng-deep .advanced-filter {
+    @include nb-select-overrides(
+      2rem,
+      nb-theme(button-rectangle-border-radius),
+      $default-box-shadow
+    );
+  }
+}
+
+.gauzy-button-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.advanced-filter {
+  background: nb-theme(background-basic-color-1);
+  border-radius: nb-theme(border-radius);
 }
