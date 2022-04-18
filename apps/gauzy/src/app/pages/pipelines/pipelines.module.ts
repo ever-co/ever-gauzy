@@ -33,6 +33,7 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { DealsService, PipelinesService } from '../../@core/services';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { StageComponent } from './stage/stage.component';
+import { NbTabsetModule } from '@nebular/theme';
 
 @NgModule({
 	declarations: [
@@ -78,7 +79,8 @@ import { StageComponent } from './stage/stage.component';
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		PaginationModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		NbTabsetModule
 	]
 })
 export class PipelinesModule {}

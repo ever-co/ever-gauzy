@@ -12,6 +12,8 @@
 				</ngx-header-title>
 			</h4>
 		</div>
+	</nb-card-header>
+	<nb-card-body class="p-0">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
@@ -21,58 +23,143 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<!-- <div class="btn-container mb-3">
-			<input
-				[placeholder]="'FORM.FILTER' | translate"
-				[formControl]="inputControl"
-				class="mr-2"
-				type="text"
-				nbInput
-			/>
-		</div> -->
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container">
-				<ng2-smart-table
-					class="tags-table"
-					(userRowSelect)="selectPipeline($event)"
-					[settings]="smartTableSettings"
-					[source]="smartTableSource"
-					style="cursor: pointer"
-					#pipelineTable
-				>
-				</ng2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-					<ga-pagination
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
+		<nb-tabset class="mt-4">
+			<nb-tab tabTitle="Browse">
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
 					>
-					</ga-pagination>
+					</ng-template>
 				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="smartTableSettings"
-				[source]="pipelines"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				(onSelectedItem)="selectPipeline($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-			></ga-card-grid>
-		</ng-template>
+			</nb-tab>
+			<nb-tab tabTitle="Search">
+				<nb-accordion class="mb-3">
+					<nb-accordion-item collapsed="false">
+						<nb-accordion-item-header>
+							Search Pipeline
+						</nb-accordion-item-header>
+						<nb-accordion-item-body>
+							<div class="row">
+								<div class="col-xl-4 col-lg-12">
+									<label for="name">Name</label>
+									<div class="w-100">
+										<input
+											[placeholder]="
+												'FORM.FILTER' | translate
+											"
+											[formControl]="inputControl"
+											type="text"
+											fullWidth
+											nbInput
+										/>
+									</div>
+								</div>
+								<div class="col-xl-2 col-lg-4 col-12">
+									<label for="stage">Stage</label>
+									<div class="w-100">
+										<input
+											[placeholder]="'Stage 1'"
+											type="text"
+											nbInput
+											fullWidth
+										/>
+									</div>
+								</div>
+								<div class="col-xl-2 col-lg-4 col-12">
+									<label for="tags">Tags</label>
+									<div class="w-100">
+										<nb-select
+											fullWidth
+											placeholder="All Tags"
+										>
+											<nb-option value=""
+												>Option empty</nb-option
+											>
+											<nb-option value="0"
+												>Option 0</nb-option
+											>
+											<nb-option value="1"
+												>Option 1</nb-option
+											>
+											<nb-option value="2"
+												>Option 2</nb-option
+											>
+											<nb-option value="3"
+												>Option 3</nb-option
+											>
+											<nb-option value="4"
+												>Option 4</nb-option
+											>
+										</nb-select>
+									</div>
+								</div>
+								<div class="col-xl-2 col-lg-4 col-12">
+									<label for="status">Status</label>
+									<div class="w-100">
+										<nb-select
+											fullWidth
+											placeholder="All Status"
+										>
+											<nb-option value=""
+												>Option empty</nb-option
+											>
+											<nb-option value="0"
+												>Option 0</nb-option
+											>
+											<nb-option value="1"
+												>Option 1</nb-option
+											>
+											<nb-option value="2"
+												>Option 2</nb-option
+											>
+											<nb-option value="3"
+												>Option 3</nb-option
+											>
+											<nb-option value="4"
+												>Option 4</nb-option
+											>
+										</nb-select>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-12 mt-3">
+									<button
+										nbButton
+										size="small"
+										status="success"
+									>
+										Search
+									</button>
+									<button
+										nbButton
+										size="small"
+										status="basic"
+										outline
+									>
+										Reset
+									</button>
+								</div>
+							</div>
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+				</nb-accordion>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
+					>
+					</ng-template>
+				</ng-container>
+			</nb-tab>
+		</nb-tabset>
 	</nb-card-body>
 </nb-card>
 
@@ -140,4 +227,43 @@
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
+</ng-template>
+
+<ng-template #tableLayout>
+	<div class="table-scroll-container">
+		<ng2-smart-table
+			class="tags-table"
+			(userRowSelect)="selectPipeline($event)"
+			[settings]="smartTableSettings"
+			[source]="smartTableSource"
+			style="cursor: pointer"
+			#pipelineTable
+		>
+		</ng2-smart-table>
+	</div>
+	<div class="pagination-container">
+		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+			<ga-pagination
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			>
+			</ga-pagination>
+		</ng-container>
+	</div>
+</ng-template>
+<ng-template #gridLayout>
+	<ga-card-grid
+		[settings]="smartTableSettings"
+		[source]="pipelines"
+		(selectedOption)="onUpdateOption($event)"
+		(selectedPage)="onPageChange($event)"
+		(onSelectedItem)="selectPipeline($event)"
+		[doEmit]="false"
+		[totalItems]="pagination?.totalItems"
+		[itemsPerPage]="pagination?.itemsPerPage"
+		[activePage]="pagination?.activePage"
+	></ga-card-grid>
 </ng-template>
