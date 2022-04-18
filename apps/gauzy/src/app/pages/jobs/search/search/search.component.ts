@@ -38,41 +38,14 @@ import { API_PREFIX } from 'apps/gauzy/src/app/@core/constants/app.constants';
 })
 export class SearchComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	loading = false;
 	autoRefresh = false;
 	settingsSmartTable: any = {
 		editable: false,
 		hideSubHeader: true,
-    actions: false,
-		// actions: {
-		// 	columnTitle: this.getTranslation('JOBS.ACTIONS'),
-		// 	add: false,
-		// 	edit: false,
-		// 	delete: false,
-		// 	position: 'right',
-		// 	mode: 'external',
-		// 	custom: [
-		// 		{
-		// 			name: 'view',
-		// 			title: `<span class="btn btn-primary">${this.getTranslation(
-		// 				'JOBS.VIEW'
-		// 			)}</span>`
-		// 		},
-		// 		{
-		// 			name: 'apply',
-		// 			title: `<span class="btn btn-success">${this.getTranslation(
-		// 				'JOBS.APPLY'
-		// 			)}</span>`
-		// 		},
-		// 		{
-		// 			name: 'hide',
-		// 			title: `<span class="btn btn-danger">${this.getTranslation(
-		// 				'JOBS.HIDE'
-		// 			)}</span>`
-		// 		}
-		// 	]
-		// }
+		actions: false
 	};
 	isOpenAdvancedFilter = false;
 	jobs: IEmployeeJobPost[] = [];
@@ -93,6 +66,11 @@ export class SearchComponent
 	selectedEmployee: ISelectedEmployee;
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
+
+	selectedJob = {
+		data: null,
+		isSelected: false
+	};
 
 	jobSearchTable: Ng2SmartTableComponent;
 	@ViewChild('jobSearchTable') set content(content: Ng2SmartTableComponent) {
@@ -146,7 +124,6 @@ export class SearchComponent
 	}
 
 	getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
-		console.log({ job });
 		return this.proposalTemplateService
 			.getAll({
 				where: {
@@ -231,9 +208,10 @@ export class SearchComponent
 					this.smartTableSource.refresh();
 
 					if (resp.isRedirectRequired) {
-						const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(
-							$event.data
-						);
+						const proposalTemplate =
+							await this.getEmployeeDefaultProposalTemplate(
+								$event.data
+							);
 						if (proposalTemplate) {
 							await this.copyTextToClipboard(
 								proposalTemplate.content
@@ -260,6 +238,59 @@ export class SearchComponent
 			default:
 				break;
 		}
+	}
+
+	onSelectJob(event: any) {
+		this.selectedJob = event;
+	}
+
+	public viewJob() {
+		if (this.selectedJob.data.jobPost) {
+			window.open(this.selectedJob.data.jobPost.url, '_blank');
+		}
+	}
+
+	public hideJob() {
+		if (!this.selectedJob) {
+			return;
+		}
+		const hideRequest: IVisibilityJobPostInput = {
+			hide: true,
+			employeeId: this.selectedJob.data.employeeId,
+			providerCode: this.selectedJob.data.jobPost.providerCode,
+			providerJobId: this.selectedJob.data.jobPost.providerJobId
+		};
+		this.jobService.hideJob(hideRequest).then(() => {
+			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
+			this.smartTableSource.refresh();
+		});
+	}
+
+	public applyToJob() {
+		if (!this.selectedJob) {
+			return;
+		}
+		const applyRequest: IApplyJobPostInput = {
+			applied: true,
+			employeeId: this.selectedJob.data.employeeId,
+			providerCode: this.selectedJob.data.jobPost.providerCode,
+			providerJobId: this.selectedJob.data.jobPost.providerJobId
+		};
+		this.jobService.applyJob(applyRequest).then(async (resp) => {
+			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+			this.smartTableSource.refresh();
+
+			if (resp.isRedirectRequired) {
+				const proposalTemplate =
+					await this.getEmployeeDefaultProposalTemplate(
+						this.selectedJob.data
+					);
+				if (proposalTemplate) {
+					await this.copyTextToClipboard(proposalTemplate.content);
+				}
+				window.open(this.selectedJob.data.jobPost.url, '_blank');
+			}
+		});
 	}
 
 	public getInstance(): ServerDataSource {
@@ -321,8 +352,8 @@ export class SearchComponent
 												? row.employee.user.imageUrl
 												: null,
 										id: row.employee
-												? row.employee.id
-												: null
+											? row.employee.id
+											: null
 									};
 								}
 							}
