@@ -67,38 +67,39 @@ button {
 }
 
 :host ::ng-deep {
-  .ng-select {
-    .ng-select-container {
-      border-radius: nb-theme(border-radius);
-      box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
-    }
-    .ng-arrow {
-      font-family: 'Font Awesome 6 Free' !important;
-      border-color: inherit !important;
-      border-width: 0 !important;
-      font-size: 11px;
-      top: 0 !important;
-      left: -4px;
-      @include nb-ltr(left, -4px);
-      @include nb-rtl(right, -4px);
-      color: inherit;
-      text-align: center;
-      transform: rotate(0deg);
-      transform-origin: 5.5px 8.6px;
-      @include nb-ltr(transform-origin, 5.5px 8.6px);
-      @include nb-rtl(transform-origin, -5.5px 8.6px);
-      transition: transform 0.2s ease;
-      &:before {
-        content: '\f078';
-      }
-    }
+  // TODO overrides perfectly chevron-down unicode
+  // .ng-select {
+  //   .ng-select-container {
+  //     border-radius: nb-theme(border-radius);
+  //     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
+  //   }
+  //   .ng-arrow {
+  //     font-family: 'Font Awesome 6 Free' !important;
+  //     border-color: inherit !important;
+  //     border-width: 0 !important;
+  //     font-size: 11px;
+  //     top: 0 !important;
+  //     left: -4px;
+  //     @include nb-ltr(left, -4px);
+  //     @include nb-rtl(right, -4px);
+  //     color: inherit;
+  //     text-align: center;
+  //     transform: rotate(0deg);
+  //     transform-origin: 5.5px 8.6px;
+  //     @include nb-ltr(transform-origin, 5.5px 8.6px);
+  //     @include nb-rtl(transform-origin, -5.5px 8.6px);
+  //     transition: transform 0.2s ease;
+  //     &:before {
+  //       content: '\f078';
+  //     }
+  //   }
 
-    &.ng-select-opened {
-      .ng-arrow {
-        transform: rotate(180deg);
-      }
-    }
-  }
+  //   &.ng-select-opened {
+  //     .ng-arrow {
+  //       transform: rotate(180deg);
+  //     }
+  //   }
+  // }
   input {
     border-radius: nb-theme(border-radius);
     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
