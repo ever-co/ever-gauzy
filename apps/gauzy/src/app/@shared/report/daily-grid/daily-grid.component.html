@@ -6,6 +6,7 @@
 		<nb-select 
 			[(ngModel)]="groupBy" 
 			(selectedChange)="groupByChange()"
+			optionsListClass="nb-options"
 		>
 			<nb-option 
 				[value]="ReportGroupFilterEnum.date"
