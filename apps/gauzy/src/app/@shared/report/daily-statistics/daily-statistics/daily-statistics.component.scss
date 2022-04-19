@@ -23,7 +23,7 @@ nb-card {
     width: 75%;
 }
 
-@include respond(dsk) {
+@include respond(xl) {
     .main-wrapper {
         grid-template-columns: repeat(auto-fit, calc(50% - 7.5px));
         grid-gap: 15px
