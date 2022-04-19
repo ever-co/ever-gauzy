@@ -6,9 +6,9 @@
 
 .main-wrapper {
     width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 23% 23% 19% 27%;
+    column-gap: 2.66%;
 }
 
 nb-card {
@@ -16,15 +16,7 @@ nb-card {
 }
 
 .daily-item {
-    width: 23%;
     box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.05);
-
-    &.activity {
-        width: 19%;
-    }
-    &.total-hours {
-        width: 27%;
-    }
 }
 
 .progress-container {
@@ -33,22 +25,16 @@ nb-card {
 
 @include respond(dsk) {
     .main-wrapper {
-        justify-content: space-around;
-    }
-    .daily-item {
-        margin-bottom: 10px;
-        &, &.activity, &.total-hours {
-            width: 49%;
-        }
+        grid-template-columns: repeat(auto-fit, calc(50% - 7.5px));
+        grid-gap: 15px
     }
 }
 
 @include respond(md) {
-    .daily-item {
-        &, &.activity, &.total-hours {
-            width: 100%;
-        }
-    }
+   .main-wrapper {
+       grid-template-columns: 100%;
+       row-gap: 10px;
+   }
 }
 
 @include respond(sm){
