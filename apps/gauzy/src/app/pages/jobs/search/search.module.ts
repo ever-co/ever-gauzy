@@ -24,6 +24,7 @@ import { DialogsModule } from '../../../@shared/dialogs';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule } from '@nebular/theme';
+import { PaginationModule } from '../../../@shared/pagination/pagination.module';
 
 @NgModule({
 	declarations: [SearchComponent],
@@ -48,7 +49,8 @@ import { NbTabsetModule } from '@nebular/theme';
 		NbToggleModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		NbTabsetModule
+		NbTabsetModule,
+		PaginationModule
 	]
 })
 export class SearchModule {}

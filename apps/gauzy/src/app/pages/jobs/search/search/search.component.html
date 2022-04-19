@@ -229,6 +229,19 @@
 			#jobSearchTable
 		></ng2-smart-table>
 	</div>
+  <div class="pagination-container">
+    <ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+      <ga-pagination
+        (selectedOption)="onUpdateOption($event)"
+        (selectedPage)="onPageChange($event)"
+        [doEmit]="false"
+        [totalItems]="pagination?.totalItems"
+        [itemsPerPage]="pagination?.itemsPerPage"
+        [activePage]="pagination?.activePage"
+      >
+      </ga-pagination>
+    </ng-container>
+  </div>
 </ng-template>
 <ng-template
 	#actionButtons
