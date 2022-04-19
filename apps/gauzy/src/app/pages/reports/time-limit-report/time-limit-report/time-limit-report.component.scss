@@ -14,28 +14,25 @@
   width: 20%;
 }
 .spent-column {
-  width: 45%;
+  width: 10%;
+}
+.activity-column {
+  width: 35%;
 }
 .remaining-column {
   width: 15%;
   text-align: right;
 }
 
-.progress-wrapper {
-  display: flex;
-  align-items: center;
-
-  @include respond(lg){
-    flex-wrap: wrap;
-  }
-  .duration-span {
-    margin-right: 50px;
-
-    @include respond(lg){
-      margin-bottom: 10px;
-    }
-  }
-}
 .remaining-content {
   text-align: right;
+}
+
+@include respond(xxl) {
+  .spent-column {
+    width: 15%;
+  }
+  .activity-column {
+    width: 30%;
+  }
 }

@@ -51,6 +51,9 @@
 								<div class="responsive-table-row spent-column">
 									{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
 								</div>
+								<div class="responsive-table-row activity-column">
+									{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+								</div>
 								<div class="responsive-table-row remaining-column">
 									{{ 'REPORT_PAGE.REMAINING_HOURS' | translate }}
 								</div>
@@ -83,14 +86,17 @@
 									<div class="responsive-table-row spent-column">
 										<div class="responsive-table-header">{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}</div>
 										<div class="responsive-table-content project-name">
-											<div class="progress-wrapper">
-												<span class="duration-span">{{ timeLogRow.duration | durationFormat }}</span>
-												<ngx-progress-status
-														class="w-100 report-progress"
-														defaultStatus="success"
-														[percentage]="timeLogRow.durationPercentage">
-												</ngx-progress-status>
-											</div>
+											<span class="duration-span">{{ timeLogRow.duration | durationFormat }}</span>
+										</div>
+									</div>
+									<div class="responsive-table-row activity-column">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
+										<div class="responsive-table-content project-name">
+											<ngx-progress-status
+													class="w-100 report-progress"
+													defaultStatus="success"
+													[percentage]="timeLogRow.durationPercentage">
+											</ngx-progress-status>
 										</div>
 									</div>
 									<div class="responsive-table-row remaining-column remaining-content">

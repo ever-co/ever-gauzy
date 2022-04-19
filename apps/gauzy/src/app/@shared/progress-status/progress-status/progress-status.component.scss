@@ -1,6 +1,7 @@
+@import "var";
+
 .wrapper {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
 }
 
@@ -51,5 +52,11 @@
         width: 100%;
         display: flex;
 
+    }
+}
+
+@include respond(sm) {
+    .wrapper {
+        flex-wrap: wrap;
     }
 }
