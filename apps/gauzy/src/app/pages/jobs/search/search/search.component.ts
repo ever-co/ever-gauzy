@@ -30,8 +30,8 @@ import {
 } from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
 import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/status-badge.component';
 import * as moment from 'moment';
-import { map, Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, filter, tap, finalize } from 'rxjs/operators';
+import { Subject, Subscription, timer } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { API_PREFIX } from 'apps/gauzy/src/app/@core/constants/app.constants';
 import { PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
@@ -130,8 +130,12 @@ export class SearchComponent
 			)
 			.subscribe();
 		this.updateJobs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => this.subject$.next(true));
+			.pipe(
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this),
+				debounceTime(500)
+			)
+			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),
