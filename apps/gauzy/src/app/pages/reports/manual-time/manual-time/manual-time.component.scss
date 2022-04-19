@@ -12,11 +12,6 @@
     .table-inner-wrapper {
         align-items: flex-start;
     }
-    ::ng-deep {
-        .action-select button {
-            background-color: nb-theme(gauzy-card-1) !important;
-        }
-    }
 }
 
 .employee-column {
