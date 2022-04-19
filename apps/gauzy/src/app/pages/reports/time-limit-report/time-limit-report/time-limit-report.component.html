@@ -1,28 +1,30 @@
 <nb-card class="card-scroll">
-	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ title | translate }}
-			</ngx-header-title>
-		</h4>
-		<ng-container
-			*ngIf="logRequest?.startDate && logRequest?.endDate"
-		>
-			<ngx-date-range-title
-				[start]="logRequest?.startDate"
-				[end]="logRequest?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="filters mt-4 mb-4">
+	<nb-card-header class="header-flex">
+		<div>
+			<h4>
+				<ngx-header-title>
+					{{ title | translate }}
+				</ngx-header-title>
+			</h4>
+			<ng-container
+					*ngIf="logRequest?.startDate && logRequest?.endDate"
+			>
+				<ngx-date-range-title
+						[start]="logRequest?.startDate"
+						[end]="logRequest?.endDate"
+						[format]="'dddd, LL'"
+				></ngx-date-range-title>
+			</ng-container>
+		</div>
+		<div class="filters">
 			<ngx-gauzy-filters
-        		[filters]="logRequest"
-        		[saveFilters]="false"
-        		(filtersChange)="filtersChange($event)">
+					[filters]="logRequest"
+					[saveFilters]="false"
+					(filtersChange)="filtersChange($event)">
 			</ngx-gauzy-filters>
 		</div>
+	</nb-card-header>
+	<nb-card-body>
 		<div class="table">
 			<div
 				class="time-logs row-table"
@@ -30,23 +32,6 @@
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
 			>
-				<div class="px-4" *ngIf="dailyData?.length > 0">
-					<div class="row py-3 font-weight-bold align-items-center">
-						<div class="col-sm-2">
-							{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-						</div>
-
-						<div class="col text-center day-col">
-							{{ 'REPORT_PAGE.LIMIT' | translate }}
-						</div>
-						<div class="col text-center day-col">
-							{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
-						</div>
-						<div class="col text-center day-col">
-							{{ 'REPORT_PAGE.REMAINING_HOURS' | translate }}
-						</div>
-					</div>
-				</div>
 			</div>
 
 			<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
@@ -54,45 +39,70 @@
 					<nb-card-header class="card-title">
 						{{ day.date | dateFormat }}
 					</nb-card-header>
-					<nb-card-body class="cart-body">
-						<div *ngIf="day.employees.length == 0">
-							{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
+					<nb-card-body>
+						<div class="columns-header" *ngIf="dailyData?.length > 0">
+							<div class="table-inner-wrapper font-weight-bold align-items-center">
+								<div class="responsive-table-row employee-column">
+									{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+								</div>
+								<div class="responsive-table-row limit-column">
+									{{ 'REPORT_PAGE.LIMIT' | translate }}
+								</div>
+								<div class="responsive-table-row spent-column">
+									{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
+								</div>
+								<div class="responsive-table-row remaining-column">
+									{{ 'REPORT_PAGE.REMAINING_HOURS' | translate }}
+								</div>
+							</div>
 						</div>
-						<div
-							class="row py-3"
-							*ngFor="let timeLogRow of day.employees"
-						>
-							<div class="col-sm-2">
-								<ng-container
-									*ngTemplateOutlet="
-										employeeEl;
-										context: {
-											$implicit: timeLogRow?.employee
-										}
-									"
-								>
-								</ng-container>
-							</div>
-							<div class="col text-center day-col">
-								{{ timeLogRow.limit | durationFormat }}
-							</div>
-							<div class="col text-center d-flex day-col">
-								<span class="mr-4">{{
-									timeLogRow.duration | durationFormat
-								}}</span>
-								<ngx-progress-status
-									class="w-100"
-									[percentage]="timeLogRow.durationPercentage"
-								></ngx-progress-status>
-							</div>
-							<div class="col text-center day-col">
-								{{
-									timeLogRow.limit - timeLogRow.duration > 0
-										? (timeLogRow.limit -
-												timeLogRow.duration
-										  | durationFormat)
-										: 0
-								}}
+						<div class="cart-body project-row">
+							<div class="table-row" *ngFor="let timeLogRow of day.employees">
+								<div class="table-inner-wrapper">
+									<div *ngIf="day.employees.length == 0">
+										{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
+									</div>
+									<div class="responsive-table-row employee-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											<ng-container
+													*ngTemplateOutlet="
+														employeeEl;
+														context: { $implicit: timeLogRow?.employee }">
+											</ng-container>
+										</div>
+									</div>
+									<div class="responsive-table-row limit-column">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.LIMIT' | translate }}</div>
+										<div class="responsive-table-content project-name">
+											{{ timeLogRow.limit | durationFormat }}
+										</div>
+									</div>
+									<div class="responsive-table-row spent-column">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}</div>
+										<div class="responsive-table-content project-name">
+											<div class="progress-wrapper">
+												<span class="duration-span">{{ timeLogRow.duration | durationFormat }}</span>
+												<ngx-progress-status
+														class="w-100 report-progress"
+														defaultStatus="success"
+														[percentage]="timeLogRow.durationPercentage">
+												</ngx-progress-status>
+											</div>
+										</div>
+									</div>
+									<div class="responsive-table-row remaining-column remaining-content">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
+										<div class="responsive-table-content day-col">
+											{{ timeLogRow.limit - timeLogRow.duration > 0
+													? (timeLogRow.limit - timeLogRow.duration | durationFormat)
+													: 0
+											}}
+										</div>
+									</div>
+								</div>
 							</div>
 						</div>
 					</nb-card-body>
@@ -101,9 +111,7 @@
 			<ng-template #notFound>
 				<nb-card>
 					<nb-card-body>
-						<div
-							class="row font-weight-bold py-5 align-items-center"
-						>
+						<div class="row font-weight-bold py-5 align-items-center">
 							<div class="col text-center">
 								{{ 'REPORT_PAGE.NO_EMPLOYEES' | translate }}
 							</div>
@@ -116,7 +124,7 @@
 </nb-card>
 
 <ng-template let-project #projectEl>
-	<span *ngIf="project; else noProjects">{{ project?.name }} </span>
+	<ga-organization *ngIf="project; else noProjects" [project]="project" members="1"></ga-organization>
 	<ng-template #noProjects>
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 	</ng-template>
@@ -130,12 +138,15 @@
 </ng-template>
 
 <ng-template let-employee #employeeEl>
-	<ngx-avatar
-		*ngIf="employee"
-		[src]="employee?.user?.imageUrl"
-		[name]="employee?.user?.name"
-		[id]="employee?.id"
-	></ngx-avatar>
+	<div class="avatar-wrapper-outer">
+		<ngx-avatar
+				class="report-table"
+				*ngIf="employee"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id">
+		</ngx-avatar>
+	</div>
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
 	</ng-template>
