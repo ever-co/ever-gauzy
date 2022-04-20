@@ -9,13 +9,13 @@
 		</h4>
 		<div>
 			<button status="primary" routerLink="/pages/jobs/employee" size="small" outline nbButton>
-				Employees
+				{{ 'JOBS.EMPLOYEES' | translate }}
 			</button>
 			<button status="primary" routerLink="/pages/jobs/matching" size="small" outline nbButton>
-				Matchings
+				{{ 'JOBS.MATCHINGS' | translate }}
 			</button>
 			<button status="primary" routerLink="/pages/jobs/proposal-template" size="small" outline nbButton>
-				Proposals Template
+				{{ 'JOBS.PROPOSALS_TEMPLATE' | translate }}
 			</button>
 		</div>
 	</nb-card-header>
@@ -53,10 +53,10 @@
 			</div>
 		</div>
 		<nb-tabset class="mt-4">
-			<nb-tab tabTitle="Browse">
+			<nb-tab tabTitle="{{ 'JOBS.BROWSE' | translate }}">
 				<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 			</nb-tab>
-			<nb-tab tabTitle="Search">
+			<nb-tab tabTitle="{{ 'JOBS.SEARCH' | translate }}">
 				<div class="job-filters">
 					<div class="advanced-filter">
 						<nb-card>
