@@ -11,6 +11,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
+import { OrganizationModule } from "../organization/organization.module";
 
 @NgModule({
 	declarations: [PaymentReportGridComponent],
@@ -24,7 +25,8 @@ import { FiltersModule } from '../../timesheet/filters/filters.module';
 		NbCardModule,
 		FiltersModule,
 		NbSelectModule,
-		FormsModule
-	]
+		FormsModule,
+		OrganizationModule,
+	],
 })
 export class PaymentReportGridModule {}
