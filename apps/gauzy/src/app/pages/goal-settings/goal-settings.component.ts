@@ -286,13 +286,14 @@ export class GoalSettingsComponent
 				);
 			}
 		);
-		if (selectedItem) {
-			this.selectRow({
-				isSelected: true,
-				data: selectedItem
-			});
-			if (source === 'add') {
-				this.selectedTimeFrame = null;
+		if (source === 'add') {
+			this.selectedTimeFrame = null;
+		} else {
+			if (selectedItem) {
+				this.selectRow({
+					isSelected: true,
+					data: selectedItem
+				});
 			}
 		}
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
