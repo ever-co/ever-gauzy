@@ -319,6 +319,7 @@
 			[settings]="smartTableSettings"
 			[source]="goalTimeFrames"
 			[buttonTemplate]="actionButtons"
+      (onSelectedItem)="selectRow($event)"
 		></ga-card-grid>
 	</div>
 </ng-template>
