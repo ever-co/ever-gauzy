@@ -24,6 +24,7 @@ import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-t
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -184,8 +185,15 @@ export class GoalSettingsComponent
 				.getAllTimeFrames(findObj)
 				.then((res) => {
 					if (!!res) {
-						this.smartTableData.load(res.items);
-						this.goalTimeFrames = res.items;
+						const mappedItems = [];
+						res.items.map((item) => {
+							item = Object.assign({}, item, {
+								status: this.statusMapper(item.status)
+							});
+							mappedItems.push(item);
+						});
+						this.smartTableData.load(mappedItems);
+						this.goalTimeFrames = mappedItems;
 					}
 				});
 		} else {
@@ -243,11 +251,6 @@ export class GoalSettingsComponent
 						title: this.getTranslation('SM_TABLE.NAME'),
 						type: 'string'
 					},
-					status: {
-						title: this.getTranslation('SM_TABLE.STATUS'),
-						type: 'string',
-						filter: false
-					},
 					startDate: {
 						title: this.getTranslation('SM_TABLE.START_DATE'),
 						type: 'custom',
@@ -259,6 +262,13 @@ export class GoalSettingsComponent
 						type: 'custom',
 						filter: false,
 						renderComponent: DateViewComponent
+					},
+					status: {
+						title: this.getTranslation('SM_TABLE.STATUS'),
+						type: 'custom',
+						width: '5%',
+						filter: false,
+						renderComponent: StatusBadgeComponent
 					}
 				}
 			};
@@ -465,4 +475,15 @@ export class GoalSettingsComponent
 			this.goalSettingsTable.grid.dataSet.deselectAll();
 		}
 	}
+
+	private statusMapper = (value: string | boolean) => {
+		const badgeClass = value === 'Active' ? 'success' : 'danger';
+		value = value === 'Active'
+			? this.getTranslation('PIPELINES_PAGE.ACTIVE')
+			: this.getTranslation('PIPELINES_PAGE.INACTIVE');
+		return {
+			text: value,
+			class: badgeClass
+		};
+	};
 }
