@@ -24,7 +24,7 @@
 			</ngx-gauzy-button-action>
 		</div>
 		<nb-tabset class="mt-4">
-			<nb-tab tabTitle="Browse">
+			<nb-tab tabTitle="{{ 'PIPELINES_PAGE.BROWSE' | translate }}">
 				<ng-container>
 					<ng-template
 						[ngTemplateOutlet]="
@@ -36,20 +36,22 @@
 					</ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab tabTitle="Search">
+			<nb-tab tabTitle="{{ 'PIPELINES_PAGE.SEARCH' | translate }}">
 				<nb-accordion class="mb-3">
 					<nb-accordion-item collapsed="false">
 						<nb-accordion-item-header>
-							Search Pipeline
+							{{ 'PIPELINES_PAGE.SEARCH_PIPELINE' | translate }}
 						</nb-accordion-item-header>
 						<nb-accordion-item-body>
 							<div class="row">
 								<div class="col-xl-4 col-lg-12">
-									<label for="name">Name</label>
+									<label for="name">{{
+										'PIPELINES_PAGE.NAME' | translate
+									}}</label>
 									<div class="w-100">
 										<input
 											[placeholder]="
-												'FORM.FILTER' | translate
+												'PIPELINES_PAGE.NAME' | translate
 											"
 											[formControl]="inputControl"
 											type="text"
@@ -59,10 +61,15 @@
 									</div>
 								</div>
 								<div class="col-xl-2 col-lg-4 col-12">
-									<label for="stage">Stage</label>
+									<label for="stage">{{
+										'PIPELINES_PAGE.STAGE' | translate
+									}}</label>
 									<div class="w-100">
 										<input
-											[placeholder]="'Stage 1'"
+											[placeholder]="
+												'PIPELINES_PAGE.SEARCH_STAGE'
+													| translate
+											"
 											type="text"
 											nbInput
 											fullWidth
@@ -70,21 +77,25 @@
 									</div>
 								</div>
 								<div class="col-xl-2 col-lg-4 col-12">
-									<label for="status">Status</label>
+									<label for="status">{{
+										'PIPELINES_PAGE.STATUS' | translate
+									}}</label>
 									<div class="w-100">
 										<nb-select
 											fullWidth
-											placeholder="All Status"
+											[placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
 											(selectedChange)="
 												onChangeStatus($event)
 											"
 										>
-											<nb-option value="1"
-												>Active</nb-option
-											>
-											<nb-option value="0"
-												>Inactive</nb-option
-											>
+											<nb-option value="1">{{
+												'PIPELINES_PAGE.ACTIVE'
+													| translate
+											}}</nb-option>
+											<nb-option value="0">{{
+												'PIPELINES_PAGE.INACTIVE'
+													| translate
+											}}</nb-option>
 										</nb-select>
 									</div>
 								</div>
@@ -96,7 +107,9 @@
 										size="small"
 										status="success"
 									>
-										Search
+										{{
+											'PIPELINES_PAGE.SEARCH' | translate
+										}}
 									</button>
 									<button
 										nbButton
@@ -104,7 +117,7 @@
 										status="basic"
 										outline
 									>
-										Reset
+										{{ 'PIPELINES_PAGE.RESET' | translate }}
 									</button>
 								</div>
 							</div>
