@@ -1,5 +1,38 @@
 @import 'report';
+@import "var";
 
 :host {
   display: block;
+}
+
+.employee-column {
+  width: 20%;
+  min-width: 165px;
+  max-width: 200px;
+}
+.limit-column {
+  width: 20%;
+}
+.spent-column {
+  width: 10%;
+}
+.activity-column {
+  width: 35%;
+}
+.remaining-column {
+  width: 15%;
+  text-align: right;
+}
+
+.remaining-content {
+  text-align: right;
+}
+
+@include respond(xxl) {
+  .spent-column {
+    width: 15%;
+  }
+  .activity-column {
+    width: 30%;
+  }
 }

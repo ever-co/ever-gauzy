@@ -1,3 +1,10 @@
+@import "var";
+
+.wrapper {
+    display: flex;
+    align-items: center;
+}
+
 :host {
     display: block;
     .percentage-col {
@@ -24,6 +31,15 @@
 :host-context(.report-progress) {
     width: 100%;
 
+    .percentage-col {
+        margin-right: 10px;
+        width: 60px;
+    }
+    .progress-col {
+        width: 75%;
+        display: flex;
+        align-items: flex-end;
+    }
     ::ng-deep {
         .progress-container {
             height: 10px !important;
@@ -36,14 +52,11 @@
         width: 100%;
         display: flex;
 
-        .percentage-column {
-            margin-right: 10px;
-            width: 65px;
-        }
-        .progress-bar-column {
-            width: 75%;
-            display: flex;
-            align-items: flex-end;
-        }
+    }
+}
+
+@include respond(sm) {
+    .wrapper {
+        flex-wrap: wrap;
     }
 }
