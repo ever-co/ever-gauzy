@@ -1,7 +1,11 @@
 <nb-card class="card-scroll">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
-			<h4><ngx-header-title [allowEmployee]="false"> {{ 'GOALS_PAGE.GOAL_SETTINGS' | translate }} </ngx-header-title></h4>
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'GOALS_PAGE.GOAL_SETTINGS' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
 		<div>
 			<ga-layout-selector
@@ -10,8 +14,7 @@
 			></ga-layout-selector>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="p-0
-  ">
+	<nb-card-body class="p-0">
 		<nb-tabset (changeTab)="tabChange($event)">
 			<nb-tab
 				tabId="general"
@@ -207,6 +210,15 @@
 						></ng-container>
 					</ng-container>
 				</div>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === 'TABLE'
+								? tableLayout
+								: gridLayout
+						"
+					></ng-template>
+				</ng-container>
 			</nb-tab>
 			<nb-tab
 				tabId="kpi"
@@ -227,32 +239,18 @@
 							*ngTemplateOutlet="actionButtons"
 						></ng-container>
 					</ng-container>
+					<ng-container>
+						<ng-template
+							[ngTemplateOutlet]="
+								dataLayoutStyle === 'TABLE'
+									? tableLayout
+									: gridLayout
+							"
+						></ng-template>
+					</ng-container>
 				</div>
 			</nb-tab>
 		</nb-tabset>
-		<div
-			[nbSpinner]="loading"
-			nbSpinnerStatus="primary"
-			nbSpinnerSize="large"
-		>
-			<ng-container *ngIf="selectedTab != 'general'">
-				<ng2-smart-table
-					[settings]="smartTableSettings"
-					[source]="smartTableData"
-					(userRowSelect)="selectRow($event)"
-					style="cursor: pointer"
-					*ngIf="dataLayoutStyle === 'TABLE'"
-					#goalSettingsTable
-				>
-				</ng2-smart-table>
-				<ga-card-grid
-					[settings]="smartTableSettings"
-					[source]="goalTimeFrames"
-					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-					[buttonTemplate]="actionButtons"
-				></ga-card-grid>
-			</ng-container>
-		</div>
 	</nb-card-body>
 </nb-card>
 <ng-template
@@ -309,4 +307,30 @@
 		<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
 		{{ 'BUTTONS.DELETE' | translate }}
 	</button>
+</ng-template>
+<ng-template #tableLayout>
+	<div
+		[nbSpinner]="loading"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="large"
+		class="table-scroll-container"
+	>
+		<ng2-smart-table
+			[settings]="smartTableSettings"
+			[source]="smartTableData"
+			(userRowSelect)="selectRow($event)"
+			style="cursor: pointer"
+			#goalSettingsTable
+		>
+		</ng2-smart-table>
+	</div>
+</ng-template>
+<ng-template #gridLayout>
+	<div [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		<ga-card-grid
+			[settings]="smartTableSettings"
+			[source]="goalTimeFrames"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+	</div>
 </ng-template>
