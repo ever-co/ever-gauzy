@@ -1,5 +1,14 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .main-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  .subtitle {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: center;
+  }
 }
