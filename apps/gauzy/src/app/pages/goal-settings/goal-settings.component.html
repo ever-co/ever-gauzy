@@ -14,6 +14,7 @@
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="!selectedItem && disableButton"
 				[buttonTemplate]="actionButtons"
+        [componentName]="viewComponentName"
 			>
 			</ngx-gauzy-button-action>
 		</div>
@@ -229,7 +230,7 @@
 		status="success"
 		*ngIf="selectedTab === 'timeframe'"
 		(click)="editTimeFrame('add')"
-		class="mr-2"
+		size="small"
 	>
 		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 		>{{ 'BUTTONS.ADD' | translate }}
@@ -239,7 +240,7 @@
 		*ngIf="selectedTab === 'kpi'"
 		status="success"
 		(click)="editKPI('add')"
-		class="mr-2"
+		size="small"
 	>
 		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 		>{{ 'BUTTONS.ADD' | translate }}
