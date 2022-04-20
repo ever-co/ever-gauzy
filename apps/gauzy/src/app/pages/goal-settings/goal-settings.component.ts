@@ -249,7 +249,8 @@ export class GoalSettingsComponent
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),
-						type: 'string'
+						type: 'string',
+						width: '50%'
 					},
 					startDate: {
 						title: this.getTranslation('SM_TABLE.START_DATE'),
@@ -478,9 +479,10 @@ export class GoalSettingsComponent
 
 	private statusMapper = (value: string | boolean) => {
 		const badgeClass = value === 'Active' ? 'success' : 'danger';
-		value = value === 'Active'
-			? this.getTranslation('PIPELINES_PAGE.ACTIVE')
-			: this.getTranslation('PIPELINES_PAGE.INACTIVE');
+		value =
+			value === 'Active'
+				? this.getTranslation('PIPELINES_PAGE.ACTIVE')
+				: this.getTranslation('PIPELINES_PAGE.INACTIVE');
 		return {
 			text: value,
 			class: badgeClass
