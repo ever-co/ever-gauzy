@@ -33,7 +33,8 @@ import { ToastrService } from '../../@core/services/toastr.service';
 })
 export class GoalSettingsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	smartTableData = new LocalDataSource();
 	generalSettingsForm: FormGroup;
 	smartTableSettings: object;
@@ -202,9 +203,13 @@ export class GoalSettingsComponent
 	}
 
 	private _loadTableSettings(tab: string | null) {
+		this.smartTableSettings = {
+			actions: false,
+			hideSubHeader: true
+		};
 		if (tab === 'kpi') {
 			this.smartTableSettings = {
-				actions: false,
+				...this.smartTableSettings,
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),
@@ -232,7 +237,7 @@ export class GoalSettingsComponent
 			};
 		} else if (tab === 'timeframe') {
 			this.smartTableSettings = {
-				actions: false,
+				...this.smartTableSettings,
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),
