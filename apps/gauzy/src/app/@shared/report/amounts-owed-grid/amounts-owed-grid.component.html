@@ -5,52 +5,72 @@
 		nbSpinnerSize="giant"
 		nbSpinnerStatus="primary"
 	>
-		<div class="px-4" *ngIf="dailyData?.length > 0">
-			<div class="row py-3 font-weight-bold align-items-center">
-				<div class="col-sm-3">
-					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-				</div>
-				<div class="col text-center day-col">
-					{{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
-				</div>
-				<div class="coltext-center day-col">
-					{{ 'REPORT_PAGE.HOURS' | translate }}
-				</div>
-				<div class="col text-center day-col">
-					{{ 'REPORT_PAGE.AMOUNT' | translate }}
-				</div>
-			</div>
-		</div>
-
 		<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
 			<nb-card class="card" *ngFor="let day of dailyData">
 				<nb-card-header class="card-title">
 					{{ day.date | dateFormat }}
 				</nb-card-header>
-				<nb-card-body
-					class="cart-body employee-row"
-					*ngFor="let employeeRow of day.employees"
-				>
-					<div class="row report-row py-1 align-items-center">
-						<div class="col-sm-3 employee-name">
-							<ng-container
-								*ngTemplateOutlet="
-									employeeEl;
-									context: {
-										$implicit: employeeRow?.employee
-									}
-								"
-							>
-							</ng-container>
+				<nb-card-body>
+					<div class="columns-header" *ngIf="dailyData?.length > 0">
+						<div class="table-inner-wrapper font-weight-bold align-items-center">
+							<div class="responsive-table-row employee-column">
+								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+							</div>
+							<div class="responsive-table-row rate-column">
+								{{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
+							</div>
+							<div class="responsive-table-row duration-column">
+								{{ 'REPORT_PAGE.HOURS' | translate }}
+							</div>
+							<div class="responsive-table-row amount-column">
+								{{ 'REPORT_PAGE.AMOUNT' | translate }}
+							</div>
 						</div>
-						<div class="col text-center day-col">
-							{{ employeeRow?.employee?.billRateValue | currency: employeeRow?.employee?.billRateCurrency | position: organization?.currencyPosition }}
-						</div>
-						<div class="coltext-center day-col">
-							{{ employeeRow?.duration | durationFormat }}
-						</div>
-						<div class="col text-center day-col">
-							{{ employeeRow?.amount| currency: employeeRow?.employee?.billRateCurrency | position: organization?.currencyPosition }}
+					</div>
+					<div class="cart-body employee-row" *ngFor="let employeeRow of day.employees">
+						<div class="table-row">
+							<div class="table-inner-wrapper">
+								<div class="responsive-table-row employee-column">
+									<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
+									<div class="responsive-table-content project-name">
+										<ng-container
+												*ngTemplateOutlet="
+													employeeEl;
+													context: { $implicit: employeeRow?.employee }">
+										</ng-container>
+									</div>
+								</div>
+								<div class="responsive-table-row rate-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
+									</div>
+									<div class="responsive-table-content day-col">
+										{{ employeeRow?.employee?.billRateValue
+											| currency: employeeRow?.employee?.billRateCurrency
+											| position: organization?.currencyPosition
+										}}
+									</div>
+								</div>
+								<div class="responsive-table-row duration-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.HOURS' | translate }}
+									</div>
+									<div class="responsive-table-content day-col">
+										{{ employeeRow?.duration | durationFormat }}
+									</div>
+								</div>
+								<div class="responsive-table-row amount-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.AMOUNT' | translate }}
+									</div>
+									<div class="responsive-table-content day-col">
+										{{ employeeRow?.amount
+											| currency: employeeRow?.employee?.billRateCurrency
+											| position: organization?.currencyPosition
+										}}
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 				</nb-card-body>
@@ -84,14 +104,17 @@
 	</ng-template>
 
 	<ng-template let-employee #employeeEl>
-		<ngx-avatar
-			*ngIf="employee"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id"
-		></ngx-avatar>
-		<ng-template #noEmployee>
-			<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
-		</ng-template>
+		<div class="avatar-wrapper-outer">
+			<ngx-avatar
+					class="report-table"
+					*ngIf="employee"
+					[src]="employee?.user?.imageUrl"
+					[name]="employee?.user?.name"
+					[id]="employee?.id"
+			></ngx-avatar>
+			<ng-template #noEmployee>
+				<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+			</ng-template>
+		</div>
 	</ng-template>
 </div>
