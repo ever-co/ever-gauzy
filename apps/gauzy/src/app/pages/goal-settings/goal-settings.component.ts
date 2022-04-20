@@ -314,13 +314,14 @@ export class GoalSettingsComponent
 	}
 
 	async editKPI(source, selectedItem?: any) {
-		if (selectedItem) {
-			this.selectRow({
-				isSelected: true,
-				data: selectedItem
-			});
-			if (source === 'add') {
-				this.selectedKPI = null;
+		if (source === 'add') {
+			this.selectedKPI = null;
+		} else {
+			if (selectedItem) {
+				this.selectRow({
+					isSelected: true,
+					data: selectedItem
+				});
 			}
 		}
 		const kpiDialog = this.dialogService.open(EditKpiComponent, {
