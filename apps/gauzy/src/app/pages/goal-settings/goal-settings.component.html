@@ -7,15 +7,17 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
-				*ngIf="selectedTab != 'general'"
-				[componentName]="viewComponentName"
-			></ga-layout-selector>
-		</div>
 	</nb-card-header>
 	<nb-card-body class="p-0">
-		<nb-tabset (changeTab)="tabChange($event)">
+		<div *ngIf="selectedTab != 'general'" class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="!selectedItem && disableButton"
+				[buttonTemplate]="actionButtons"
+			>
+			</ngx-gauzy-button-action>
+		</div>
+		<nb-tabset class="mt-4" (changeTab)="tabChange($event)">
 			<nb-tab
 				tabId="general"
 				tabTitle="{{ 'GOALS_PAGE.SETTINGS.GENERAL' | translate }}"
@@ -194,22 +196,6 @@
 					'GOALS_PAGE.SETTINGS.TIME_FRAME_PAGE_TITLE' | translate
 				}}"
 			>
-				<div class="mb-3">
-					<button
-						nbButton
-						status="success"
-						(click)="editTimeFrame('add')"
-						class="mr-2"
-					>
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-						>{{ 'BUTTONS.ADD' | translate }}
-					</button>
-					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-						<ng-container
-							*ngTemplateOutlet="actionButtons"
-						></ng-container>
-					</ng-container>
-				</div>
 				<ng-container>
 					<ng-template
 						[ngTemplateOutlet]="
@@ -224,89 +210,90 @@
 				tabId="kpi"
 				tabTitle="{{ 'GOALS_PAGE.SETTINGS.KPI' | translate }}"
 			>
-				<div class="mb-3">
-					<button
-						nbButton
-						status="success"
-						(click)="editKPI('add')"
-						class="mr-2"
-					>
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-						>{{ 'BUTTONS.ADD' | translate }}
-					</button>
-					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-						<ng-container
-							*ngTemplateOutlet="actionButtons"
-						></ng-container>
-					</ng-container>
-					<ng-container>
-						<ng-template
-							[ngTemplateOutlet]="
-								dataLayoutStyle === 'TABLE'
-									? tableLayout
-									: gridLayout
-							"
-						></ng-template>
-					</ng-container>
-				</div>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === 'TABLE'
+								? tableLayout
+								: gridLayout
+						"
+					></ng-template>
+				</ng-container>
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #visibleButton>
 	<button
-		*ngIf="selectedTab !== 'kpi'"
 		nbButton
-		status="info"
-		(click)="editTimeFrame('edit', selectedItem)"
+		status="success"
+		*ngIf="selectedTab === 'timeframe'"
+		(click)="editTimeFrame('add')"
 		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
 	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
+		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+		>{{ 'BUTTONS.ADD' | translate }}
 	</button>
 	<button
-		*ngIf="selectedTab !== 'kpi'"
 		nbButton
-		status="danger"
-		(click)="deleteTimeFrame(selectedItem)"
+		*ngIf="selectedTab === 'kpi'"
+		status="success"
+		(click)="editKPI('add')"
 		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
 	>
-		<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
+		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+		>{{ 'BUTTONS.ADD' | translate }}
 	</button>
+</ng-template>
+<ng-template #actionButtons let-selectedItem="selectedItem">
+	<div class="btn-group actions">
+		<button
+			*ngIf="selectedTab !== 'kpi'"
+			nbButton
+			status="basic"
+			(click)="editTimeFrame('edit', selectedItem)"
+			class="action primary"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			*ngIf="selectedTab !== 'kpi'"
+			nbButton
+			(click)="deleteTimeFrame(selectedItem)"
+			class="action"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
 
-	<button
-		*ngIf="selectedTab === 'kpi'"
-		nbButton
-		status="info"
-		(click)="editKPI('edit', selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		*ngIf="selectedTab === 'kpi'"
-		nbButton
-		status="danger"
-		(click)="deleteKPI(selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+		<button
+			*ngIf="selectedTab === 'kpi'"
+			nbButton
+			status="basic"
+			(click)="editKPI('edit', selectedItem)"
+			class="action primary"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			*ngIf="selectedTab === 'kpi'"
+			nbButton
+			status="basic"
+			(click)="deleteKPI(selectedItem)"
+			class="action"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
 </ng-template>
 <ng-template #tableLayout>
 	<div
