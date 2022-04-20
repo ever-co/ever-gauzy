@@ -10,7 +10,8 @@
 			></ga-layout-selector>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="p-0
+  ">
 		<nb-tabset (changeTab)="tabChange($event)">
 			<nb-tab
 				tabId="general"
@@ -18,7 +19,7 @@
 			>
 				<div>
 					<nb-card>
-						<nb-card-body>
+						<nb-card-body class="card-general">
 							<form
 								[formGroup]="generalSettingsForm"
 								(change)="saveGeneralSettings()"
