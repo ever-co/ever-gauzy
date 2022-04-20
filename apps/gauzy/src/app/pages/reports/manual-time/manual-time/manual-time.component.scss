@@ -37,12 +37,15 @@
     min-width: 5%;
 }
 .action-column{
-    text-align: right;
     width: 5%;
 }
 .filters {
     text-align: right;
     margin-bottom: 15px;
+}
+
+.justify-end {
+    text-align: right;
 }
 
 @include respond(ipad) {

@@ -80,6 +80,7 @@ nb-card, nb-card-header, nb-card-body, .card {
 
         .select-button.select-button {
             padding: 5px 12px !important;
+            height: 30px;
             border-radius: 20px;
             font-family: Inter;
             font-size: 12px;
@@ -89,21 +90,18 @@ nb-card, nb-card-header, nb-card-body, .card {
             letter-spacing: 0em;
             text-align: left;
             min-width: auto;
+            display: flex;
+            align-items: center;
 
             & > span {
                 margin-right: 25px;
             }
         }
     }
-    // .cdk-overlay-pane {
-    //     nb-option-list.size-medium {
-    //         width: auto !important;
 
-    //         .option-list > nb-option {
-    //             padding: 15px !important;
-    //         }
-    //     }
-    // }
+    .nb-options {
+        width: auto !important;
+    }
 }
 
 :host {

@@ -1,0 +1,15 @@
+@import "report";
+@import "themes";
+
+:host {
+    ::ng-deep {
+        .action-select button {
+            background-color: nb-theme(gauzy-card-1) !important;
+            border-radius: nb-theme(select-rectangle-border-radius);
+        }
+    }
+}
+
+.filters {
+    text-align: right;
+}
