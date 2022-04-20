@@ -2308,7 +2308,13 @@
 			"JOB_STATUS": "Job Status",
 			"BUDGET": "Budget",
 			"LESS_THAN": "Less than"
-		}
+		},
+    "BROWSE":"Browse",
+    "SEARCH":"Search",
+    "HISTORY":"History",
+    "EMPLOYEES": "Employees",
+    "MATCHINGS":"Matchings",
+    "PROPOSALS_TEMPLATE":"Proposals Template"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching",
