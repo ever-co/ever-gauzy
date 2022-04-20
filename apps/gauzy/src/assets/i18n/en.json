@@ -3660,7 +3660,16 @@
 		"HEADER_FORM_CREATE": "Create Pipeline",
 		"RECORD_TYPE": "pipeline \"{{ name }}\"",
 		"ACTIVE": "Active",
-		"INACTIVE": "Inactive"
+		"INACTIVE": "Inactive",
+    "BROWSE":"Browse",
+    "SEARCH":"Search",
+    "SEARCH_PIPELINE":"Search Pipeline",
+    "NAME":"Name",
+    "STAGE":"Stage",
+    "SEARCH_STAGE":"Search Stage",
+    "STATUS":"Status",
+    "ALL_STATUS":"All Status",
+    "RESET":"Reset"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
