@@ -1,3 +1,10 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .min-width-60vw {
   width: 60vw !important;
+}
+:host {
+  nb-card {
+    background-color: nb-theme(background-basic-color-1);
+  }
 }

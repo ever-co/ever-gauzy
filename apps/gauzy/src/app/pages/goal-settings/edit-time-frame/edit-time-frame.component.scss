@@ -12,3 +12,9 @@
     text-align: center;
   }
 }
+
+:host {
+  nb-card {
+    background-color: nb-theme(background-basic-color-1);
+  }
+}
