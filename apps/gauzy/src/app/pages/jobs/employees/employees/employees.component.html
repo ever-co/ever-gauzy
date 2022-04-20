@@ -21,16 +21,16 @@
 			</ngx-gauzy-button-action>
 		</div>
 		<nb-tabset>
-			<nb-tab tabTitle="Browse">
+			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.BROWSE' | translate }}">
 				<ng-container>
 					<ng-template [ngTemplateOutlet]="tableLayout">
 					</ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab tabTitle="Search">
+			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.SEARCH' | translate }}">
 				<p>Soon</p>
 			</nb-tab>
-			<nb-tab tabTitle="History">
+			<nb-tab tabTitle="{{ 'JOB_EMPLOYEE.HISTORY' | translate }}">
 				<p>Soon</p>
 			</nb-tab>
 		</nb-tabset>
