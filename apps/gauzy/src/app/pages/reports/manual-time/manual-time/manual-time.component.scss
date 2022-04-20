@@ -12,11 +12,6 @@
     .table-inner-wrapper {
         align-items: flex-start;
     }
-    ::ng-deep {
-        .action-select button {
-            background-color: nb-theme(gauzy-card-1) !important;
-        }
-    }
 }
 
 .employee-column {
@@ -37,12 +32,15 @@
     min-width: 5%;
 }
 .action-column{
-    text-align: right;
     width: 5%;
 }
 .filters {
     text-align: right;
     margin-bottom: 15px;
+}
+
+.justify-end {
+    text-align: right;
 }
 
 @include respond(ipad) {

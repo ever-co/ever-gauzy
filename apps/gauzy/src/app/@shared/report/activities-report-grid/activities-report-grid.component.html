@@ -3,7 +3,7 @@
 		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
 	</div>
 	<div class="ml-3">
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()">
+		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
 			<nb-option value="date">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</nb-option>

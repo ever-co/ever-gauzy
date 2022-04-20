@@ -80,7 +80,8 @@ nb-card, nb-card-header, nb-card-body, .card {
 
         .select-button.select-button {
             padding: 5px 12px !important;
-            border-radius: 20px;
+            border-radius: nb-theme(select-rectangle-border-radius);
+            height: 30px;
             font-family: Inter;
             font-size: 12px;
             font-style: normal;
@@ -89,12 +90,37 @@ nb-card, nb-card-header, nb-card-body, .card {
             letter-spacing: 0em;
             text-align: left;
             min-width: auto;
+            display: flex;
+            align-items: center;
 
             & > span {
                 margin-right: 25px;
             }
         }
     }
+
+    .action-select {
+        border-radius: nb-theme(select-rectangle-border-radius);
+        box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+        height: 30px;
+
+        & button.select-button {
+            background-color: nb-theme(gauzy-card-1) !important;
+            border-radius: nb-theme(select-rectangle-border-radius);
+            padding-top: 2px !important;
+            padding-bottom: 0px !important;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding-left: 12px !important;
+
+            & nb-icon {
+                color: nb-theme(text-basic-color) !important;
+            }
+        }
+
+    }
+
     // .cdk-overlay-pane {
     //     nb-option-list.size-medium {
     //         width: auto !important;
@@ -207,6 +233,12 @@ nb-card, nb-card-header, nb-card-body, .card {
         }
         .main-page-header {
             font-size: 1.3rem;
+        }
+    }
+
+    ::ng-deep {
+        .filter-item-list {
+            flex-wrap: wrap !important;
         }
     }
 }

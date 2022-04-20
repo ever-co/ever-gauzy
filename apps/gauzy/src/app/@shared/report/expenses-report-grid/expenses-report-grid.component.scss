@@ -1,8 +1,85 @@
 @import 'report';
+@import "themes";
+@import "var";
 
 :host {
   display: block;
+
   .report-row {
     min-height: 56px;
+  }
+
+  .table-row {
+    height: auto;
+    padding-bottom: 15px;
+  }
+
+  ::ng-deep {
+    .select-button {
+      background-color: nb-theme(gauzy-card-1) !important;
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);;
+    }
+    .names-wrapper {
+      max-width: 110px;
+    }
+  }
+}
+
+.employee-column {
+  width: 20%;
+  min-width: 165px;
+  max-width: 200px;
+}
+.project-column {
+  width: 15%;
+  min-width: 15%;
+}
+.category-column {
+  width: 15%;
+  min-width: 15%;
+}
+.description-column {
+  width: 35%;
+  min-width: 35%;
+}
+.amount-column {
+  width: 15%;
+  min-width: 15%;
+}
+
+.expanse-row  {
+  min-height: 37px;
+
+  .table-inner-wrapper {
+    min-height: 37px;
+  }
+}
+
+.category-span {
+  background: #00D68F1A;
+  border-radius: 20px;
+  padding: 3px 8px;
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0em;
+  text-align: left;
+  color: nb-theme(background-alternative-color-4);
+}
+
+.no-height {
+  height: 0;
+  padding: 0;
+}
+
+@include respond(lg) {
+  .responsive-heading-row {
+    background: nb-theme(background-basic-color-3);
+  }
+
+  .expanse-row {
+    margin-bottom: 15px;
+    margin-top: 15px;
   }
 }

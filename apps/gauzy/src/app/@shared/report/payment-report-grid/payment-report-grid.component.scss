@@ -2,7 +2,28 @@
 
 :host {
   display: block;
+
   .report-row {
     min-height: 56px;
   }
+}
+
+.employee-column {
+  width: 20%;
+  min-width: 165px;
+  max-width: 200px;
+}
+.project-column {
+  width: 35%;
+  min-width: 35%;
+
+}
+.currency-column {
+  width: 15%;
+}
+.note-column {
+  width: 20%;
+}
+.amount-column {
+  width: 10%;
 }
