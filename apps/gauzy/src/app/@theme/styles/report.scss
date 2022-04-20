@@ -81,6 +81,7 @@ nb-card, nb-card-header, nb-card-body, .card {
         .select-button.select-button {
             padding: 5px 12px !important;
             border-radius: nb-theme(select-rectangle-border-radius);
+            height: 30px;
             font-family: Inter;
             font-size: 12px;
             font-style: normal;
@@ -89,6 +90,8 @@ nb-card, nb-card-header, nb-card-body, .card {
             letter-spacing: 0em;
             text-align: left;
             min-width: auto;
+            display: flex;
+            align-items: center;
 
             & > span {
                 margin-right: 25px;
