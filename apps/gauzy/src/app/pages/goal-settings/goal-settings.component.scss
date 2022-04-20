@@ -1,0 +1,18 @@
+@import 'gauzy/_gauzy-table.scss';
+
+:host {
+  nb-tab.content-active {
+    padding: 1rem;
+  }
+  nb-card,
+  nb-tab {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  nb-tab {
+    height: calc(100vh - 21rem);
+  }
+}
+.card-general {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: nb-theme(border-radius);
+}
