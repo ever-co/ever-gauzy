@@ -1,21 +1,27 @@
-<nb-card size="large" class="max-width-60vw">
-	<nb-card-header>
-		{{
-			(!!data
-				? 'KEY_RESULT_PAGE.EDIT_KEY_RESULT'
-				: 'KEY_RESULT_PAGE.ADD_KEY_RESULT'
-			) | translate
-		}}
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
+<nb-card class="max-width-60vw">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<h4 class="title">
+			{{
+				(!!data
+					? 'KEY_RESULT_PAGE.EDIT_KEY_RESULT'
+					: 'KEY_RESULT_PAGE.ADD_KEY_RESULT'
+				) | translate
+			}}
+		</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="keyResultsForm">
+			<p
+				class="helper-text"
+				innerHtml="{{
+					'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_GENERAL' | translate
+				}}"
+			></p>
 			<div class="row">
-				<div class="col-md-7">
+				<div class="col-md-12">
 					<label for="key-result-title" class="label">
 						{{ 'FORM.LABELS.NAME' | translate }}
 					</label>
@@ -30,20 +36,10 @@
 						}}"
 					/>
 				</div>
-				<div class="col-md-5 position-relative mt-3">
-					<p
-						*ngIf="helperText == ''"
-						class="mt-3 position-absolute"
-						innerHtml="{{
-							'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_GENERAL'
-								| translate
-						}}"
-					></p>
-				</div>
 			</div>
 
 			<div class="row">
-				<div class="col-md-7">
+				<div class="col-md-12">
 					<label for="key-result-description" class="label mt-3">
 						{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
 					</label>
@@ -58,7 +54,6 @@
 						}}"
 					></textarea>
 				</div>
-				<div class="col-md-5 position-relative mt-3"></div>
 			</div>
 
 			<ga-keyresult-type-select
@@ -130,7 +125,7 @@
 				</div>
 				<div class="col-md-5 position-relative mt-3 helper-text">
 					<div
-						class="mt-3 position-absolute"
+						class="mt-3 helper-text position-absolute"
 						*ngIf="helperText == 'key-result-lead'"
 					>
 						<p>
@@ -250,19 +245,19 @@
 			<div class="row">
 				<div class="col-md-7">
 					<div class="row mt-3">
-						<div class="col-md-4">
-							<label for="updated-value" class="label mt-1">
-								{{
+						<div class="col-12">
+							<div class="d-flex flex-row align-items-start">
+								<nb-toggle
+									id="updated-value"
+									formControlName="assignAsObjective"
+									status="primary"
+								>
+								</nb-toggle>
+								<span class="mr-3 ml-3">{{
 									'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE'
 										| translate
-								}}
-							</label>
-							<nb-toggle
-								id="updated-value"
-								formControlName="assignAsObjective"
-								status="primary"
-							>
-							</nb-toggle>
+								}}</span>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -284,8 +279,14 @@
 			</ga-goal-level-select>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button status="danger" class="mr-2" nbButton (click)="closeDialog()">
+	<nb-card-footer class="text-left">
+		<button
+			status="basic"
+			outline
+			class="mr-2"
+			nbButton
+			(click)="closeDialog()"
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

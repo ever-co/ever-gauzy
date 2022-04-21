@@ -1,9 +1,23 @@
+@import 'gauzy/_gauzy-dialogs';
+
 .max-width-60vw {
-  width: 60vw;
+  width: 645px;
 }
 
 .helper-text {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0em;
+  text-align: left;
+
   p {
     padding-right: 5px;
+  }
+}
+
+:host {
+  nb-card {
+    background: nb-theme(background-basic-color-1);
   }
 }
