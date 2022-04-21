@@ -2,5 +2,9 @@
 @import 'gauzy/_gauzy-cards.scss';
 
 :host {
-  @include card-overrides(overlay, $default-card-height, $default-radius);
+  @include nb-card-overrides(
+    unset,
+    calc($default-card-height),
+    $default-radius
+  );
 }

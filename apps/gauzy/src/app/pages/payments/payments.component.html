@@ -21,12 +21,12 @@
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="card p-0">
+	<nb-card-body>
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll-container card-body">
+			<div class="table-scroll-container">
 				<ng2-smart-table
 					class="payments-table"
 					[settings]="settingsSmartTable"
@@ -39,7 +39,7 @@
 			</div>
 			<div
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-				class="pagination-container card-footer"
+				class="pagination-container"
 			>
 				<ng-container
 					*ngIf="pagination.totalItems > pagination.itemsPerPage"

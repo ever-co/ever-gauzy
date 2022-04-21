@@ -21,7 +21,6 @@ import { InvoicePaidComponent } from '../table-components/invoice-paid.component
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../../@core/constants';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import {
 	ErrorHandlingService,
 	InvoicesService,
@@ -40,6 +39,7 @@ import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge
 import { TagsColorFilterComponent } from '../../../@shared/table-filters';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
 import { NbDialogService } from '@nebular/theme';
+import { PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -48,7 +48,7 @@ import { NbDialogService } from '@nebular/theme';
 	styleUrls: ['./invoices-received.component.scss']
 })
 export class InvoicesReceivedComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
 	loading: boolean = false;
@@ -80,19 +80,6 @@ export class InvoicesReceivedComponent
 	}
 	get isEstimate() {
 		return this._isEstimate;
-	}
-
-	/*
-	 * getter setter for filters
-	 * getter setter for filters
-	 * getter setter for filters
-	 */
-	private _filters: any = {};
-	set filters(val: any) {
-		this._filters = val;
-	}
-	get filters() {
-		return this._filters;
 	}
 
 	invoiceReceivedTable: Ng2SmartTableComponent;
@@ -439,10 +426,10 @@ export class InvoicesReceivedComponent
 				},
 				filterFunction: (tags: ITag[]) => {
 					const tagIds = [];
-					for (const tag of tags) {
-						tagIds.push(tag.id);
-					}
-					this.filters = tagIds;
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
 				},
 				sort: false
 			};

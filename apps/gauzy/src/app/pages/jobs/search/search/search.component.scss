@@ -1,3 +1,6 @@
+@import 'gauzy/_gauzy-table.scss';
+@import 'gauzy/_gauzy-overrides';
+
 :host {
   .form-group {
     nb-select,
@@ -31,4 +34,55 @@
       }
     }
   }
+  ::ng-deep ngx-avatar {
+    .inner-wrapper {
+      background-color: nb-theme(color-primary-transparent-100);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      padding: 3px 9px 3px 3px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      .image-container {
+        height: 20px;
+        width: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img[type='user'] {
+          height: 18px;
+          width: 18px;
+        }
+      }
+      .link-text {
+        color: nb-theme(text-primary-color);
+        font-weight: normal;
+      }
+    }
+  }
+  nb-tab.content-active {
+    padding: 1rem;
+  }
+  nb-card,
+  nb-tab {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  ::ng-deep .advanced-filter {
+    @include nb-select-overrides(
+      2rem,
+      nb-theme(button-rectangle-border-radius),
+      $default-box-shadow
+    );
+  }
+}
+
+.gauzy-button-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.advanced-filter {
+  background: nb-theme(background-basic-color-1);
+  border-radius: nb-theme(border-radius);
 }
