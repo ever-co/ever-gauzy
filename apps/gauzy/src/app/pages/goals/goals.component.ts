@@ -563,19 +563,26 @@ export class GoalsComponent
 	}
 
 	onClickObjective(objective, index) {
-		this.selectedGoal.data = objective;
-		this.selectedGoal.index = index;
-		this.selectedGoal.isSelected = this.selectedGoal.isSelected
-			? this.selectedGoal.isSelected
-			: true;
+		this.selectedGoal =
+			this.selectedGoal.data && objective.id === this.selectedGoal.data.id
+				? {
+						isSelected: !this.selectedGoal.isSelected,
+						data: objective,
+						index: index
+				  }
+				: { isSelected: true, data: objective, index: index };
 	}
 
 	onClickKeyResult(keyResult, index) {
-		this.selectedKeyResult.data = keyResult;
-		this.selectedKeyResult.index = index;
-		this.selectedKeyResult.isSelected = this.selectedKeyResult.isSelected
-			? this.selectedKeyResult.isSelected
-			: true;
+		this.selectedKeyResult =
+			this.selectedKeyResult.data &&
+			keyResult.id === this.selectedKeyResult.data.id
+				? {
+						isSelected: !this.selectedKeyResult.isSelected,
+						data: keyResult,
+						index: index
+				  }
+				: { isSelected: true, data: keyResult, index: index };
 		this.selectedGoal.isSelected = this.selectedKeyResult.isSelected
 			? false
 			: true;
