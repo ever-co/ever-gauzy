@@ -13,21 +13,6 @@
 			</h4>
 		</div>
 		<div class="gauzy-button-container">
-			<div class="btn-group actions mr-2 ml-3">
-				<button
-					nbButton
-					status="success"
-					title="Add new Objective"
-					nbPopoverTrigger="click"
-					nbPopoverPlacement="bottom"
-					[nbPopover]="createObjectivePopover"
-					size="small"
-					class="custom-success"
-				>
-					<nb-icon icon="plus-outline"></nb-icon>
-					{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
-				</button>
-			</div>
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="
@@ -249,7 +234,7 @@
 		</button>
 	</div>
 </ng-template>
-<ng-template #actionButtonsObjective let-selectedItem="selectedItem">
+<ng-template #actionButtonsObjective>
 	<div class="btn-group actions">
 		<button
 			nbButton
@@ -285,6 +270,18 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
+	<button
+		nbButton
+		status="success"
+		nbPopoverTrigger="click"
+		nbPopoverPlacement="bottom"
+		[nbPopover]="createObjectivePopover"
+		size="small"
+		class="custom-success"
+	>
+		<nb-icon icon="plus-outline"></nb-icon>
+		{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
+	</button>
 	<button
 		nbButton
 		status="primary"
