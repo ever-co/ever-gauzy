@@ -260,7 +260,10 @@
 </ng-template>
 
 <ng-template let-project #projectEl>
-	<ga-organization *ngIf="project; else noProjects" [project]="project" members="1"></ga-organization>
+	<ga-organization
+		*ngIf="project; else noProjects"
+		[project]="project"
+	></ga-organization>
 	<ng-template #noProjects>
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 	</ng-template>

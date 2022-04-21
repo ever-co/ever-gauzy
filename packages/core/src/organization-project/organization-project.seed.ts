@@ -58,6 +58,9 @@ export const createDefaultOrganizationProjects = async (
 		tenant,
 		organization
 	);
+
+
+
 	return projects;
 };
 
@@ -151,3 +154,49 @@ export const assignOrganizationProjectToEmployee = async (
 	}
 	await connection.manager.save(employees);
 };
+
+export async function seedProjectMembersCount(
+	connection: Connection,
+	tenants: ITenant[]
+) {
+	/**
+	 * GET all tenants in the system
+	 */
+	for await (const tenant of tenants) {
+		const tenantId = tenant.id;
+		/**
+		 * GET all tenant projects for specific tenant
+		 */
+		const projects = await connection.manager.query(`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = $1`, [
+			tenantId
+		]);
+
+		for await (const project of projects) {
+			const projectId = project.id;
+			/**
+			 * GET member counts for organization project
+			 */
+			const [ members ] = await connection.manager.query(`
+				SELECT 
+					COUNT("organization_project_employee"."employeeId") 
+				FROM "organization_project_employee" 
+				INNER JOIN 
+					"employee" ON "employee"."id"="organization_project_employee"."employeeId"
+				INNER JOIN 
+					"organization_project" ON "organization_project"."id"="organization_project_employee"."organizationProjectId"
+				WHERE 
+					"organization_project_employee"."organizationProjectId" = $1
+			`, [ projectId ]);
+
+			const counts = members['count'];
+			await connection.manager.query(`
+				UPDATE "organization_project" SET 
+					"membersCount" = $1,
+					"updatedAt" = CURRENT_TIMESTAMP
+				WHERE 
+					"id" IN($2)
+				`, [counts, projectId]
+			);
+		}
+	}
+}
