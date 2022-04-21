@@ -116,13 +116,6 @@
 											{{ 'REPORT_PAGE.BUDGET' | translate }}
 										</div>
 										<div class="responsive-table-content day-col budget-row">
-											<div class="progress-wrapper">
-												<ngx-progress-status
-														class="report-progress"
-														[percentage]="client?.spentPercentage"
-														defaultStatus="success">
-												</ngx-progress-status>
-											</div>
 											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS" class="currency-span">
 												{{ (client?.budget * 3600) | durationFormat }}
 											</span>
@@ -132,6 +125,13 @@
 													| position : organization?.currencyPosition
 												}}
 											</span>
+											<div class="progress-wrapper">
+												<ngx-progress-status
+														class="report-progress"
+														[percentage]="client?.spentPercentage"
+														defaultStatus="success">
+												</ngx-progress-status>
+											</div>
 										</div>
 									</div>
 								</div>
