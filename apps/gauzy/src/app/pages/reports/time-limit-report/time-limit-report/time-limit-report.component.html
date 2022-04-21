@@ -40,74 +40,38 @@
 						{{ day.date | dateFormat }}
 					</nb-card-header>
 					<nb-card-body>
-						<div class="columns-header" *ngIf="dailyData?.length > 0">
+						<div class="columns-header" *ngIf="day.employees?.length > 0; else noEmployees">
 							<div class="table-inner-wrapper font-weight-bold align-items-center">
-								<div class="responsive-table-row employee-column">
-									{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-								</div>
-								<div class="responsive-table-row limit-column">
-									{{ 'REPORT_PAGE.LIMIT' | translate }}
-								</div>
-								<div class="responsive-table-row spent-column">
-									{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
-								</div>
-								<div class="responsive-table-row activity-column">
-									{{ 'REPORT_PAGE.ACTIVITY' | translate }}
-								</div>
-								<div class="responsive-table-row remaining-column">
-									{{ 'REPORT_PAGE.REMAINING_HOURS' | translate }}
-								</div>
+								<ng-template [ngIf]="duration === 'week'">
+									<ng-container *ngTemplateOutlet="weeklyHeadings"></ng-container>
+								</ng-template>
+								<ng-template [ngIf]="duration === 'day'">
+									<ng-container *ngTemplateOutlet="dailyHeadings"></ng-container>
+								</ng-template>
 							</div>
 						</div>
+						<ng-template #noEmployees>
+							<div class="ml-3">
+								{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
+							</div>
+						</ng-template>
 						<div class="cart-body project-row">
 							<div class="table-row" *ngFor="let timeLogRow of day.employees">
 								<div class="table-inner-wrapper">
-									<div *ngIf="day.employees.length == 0">
-										{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
-									</div>
-									<div class="responsive-table-row employee-column">
-										<div class="responsive-table-header">
-											{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-										</div>
-										<div class="responsive-table-content project-name">
-											<ng-container
-													*ngTemplateOutlet="
-														employeeEl;
-														context: { $implicit: timeLogRow?.employee }">
-											</ng-container>
-										</div>
-									</div>
-									<div class="responsive-table-row limit-column">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.LIMIT' | translate }}</div>
-										<div class="responsive-table-content project-name">
-											{{ timeLogRow.limit | durationFormat }}
-										</div>
-									</div>
-									<div class="responsive-table-row spent-column">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}</div>
-										<div class="responsive-table-content project-name">
-											<span class="duration-span">{{ timeLogRow.duration | durationFormat }}</span>
-										</div>
-									</div>
-									<div class="responsive-table-row activity-column">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
-										<div class="responsive-table-content project-name">
-											<ngx-progress-status
-													class="w-100 report-progress"
-													defaultStatus="success"
-													[percentage]="timeLogRow.durationPercentage">
-											</ngx-progress-status>
-										</div>
-									</div>
-									<div class="responsive-table-row remaining-column remaining-content">
-										<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
-										<div class="responsive-table-content day-col">
-											{{ timeLogRow.limit - timeLogRow.duration > 0
-													? (timeLogRow.limit - timeLogRow.duration | durationFormat)
-													: 0
-											}}
-										</div>
-									</div>
+									<ng-template [ngIf]="duration === 'week'">
+										<ng-container
+												*ngTemplateOutlet="
+													weeklyTable;
+													context: { $implicit: timeLogRow }">
+										</ng-container>
+									</ng-template>
+									<ng-template [ngIf]="duration === 'day'">
+										<ng-container
+												*ngTemplateOutlet="
+													dailyTable;
+													context: { $implicit: timeLogRow }">
+										</ng-container>
+									</ng-template>
 								</div>
 							</div>
 						</div>
@@ -156,4 +120,130 @@
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
 	</ng-template>
+</ng-template>
+
+<ng-template #weeklyHeadings>
+	<div class="responsive-table-row employee-column">
+		{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+	</div>
+	<div class="responsive-table-row limit-column">
+		{{ 'REPORT_PAGE.LIMIT' | translate }}
+	</div>
+	<div class="responsive-table-row spent-column">
+		{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
+	</div>
+	<div class="responsive-table-row activity-column">
+		{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+	</div>
+	<div class="responsive-table-row remaining-column">
+		{{ 'REPORT_PAGE.REMAINING_HOURS' | translate }}
+	</div>
+</ng-template>
+<ng-template let-timeLogRow #weeklyTable>
+	<div class="responsive-table-row employee-column">
+		<div class="responsive-table-header">
+			{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+		</div>
+		<div class="responsive-table-content project-name">
+			<ng-container
+					*ngTemplateOutlet="
+						employeeEl;
+						context: { $implicit: timeLogRow?.employee }">
+			</ng-container>
+		</div>
+	</div>
+	<div class="responsive-table-row limit-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.LIMIT' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			{{ timeLogRow.limit | durationFormat }}
+		</div>
+	</div>
+	<div class="responsive-table-row spent-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			<span class="duration-span">{{ timeLogRow.duration | durationFormat }}</span>
+		</div>
+	</div>
+	<div class="responsive-table-row activity-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			<ngx-progress-status
+					class="w-100 report-progress"
+					defaultStatus="success"
+					[percentage]="timeLogRow.durationPercentage">
+			</ngx-progress-status>
+		</div>
+	</div>
+	<div class="responsive-table-row remaining-column remaining-content">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
+		<div class="responsive-table-content day-col">
+			{{ timeLogRow.limit - timeLogRow.duration > 0
+				? (timeLogRow.limit - timeLogRow.duration | durationFormat)
+				: 0
+			}}
+		</div>
+	</div>
+</ng-template>
+
+<ng-template #dailyHeadings>
+	<div class="responsive-table-row employee-column">
+		{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+	</div>
+	<div class="responsive-table-row activity-column">
+		{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+	</div>
+	<div class="responsive-table-row spent-column">8
+		{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
+	</div>
+	<div class="responsive-table-row remaining-column">
+		{{ 'REPORT_PAGE.REMAINING_HOURS' | translate }}
+	</div>
+	<div class="responsive-table-row limit-column">
+		{{ 'REPORT_PAGE.LIMIT' | translate }}
+	</div>
+</ng-template>
+<ng-template let-timeLogRow #dailyTable>
+	<div class="responsive-table-row employee-column">
+		<div class="responsive-table-header">
+			{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+		</div>
+		<div class="responsive-table-content project-name">
+			<ng-container
+					*ngTemplateOutlet="
+						employeeEl;
+						context: { $implicit: timeLogRow?.employee }">
+			</ng-container>
+		</div>
+	</div>
+	<div class="responsive-table-row activity-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			<ngx-progress-status
+					class="w-100 report-progress"
+					defaultStatus="success"
+					[percentage]="timeLogRow.durationPercentage">
+			</ngx-progress-status>
+		</div>
+	</div>
+	<div class="responsive-table-row spent-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			<span class="duration-span">{{ timeLogRow.duration | durationFormat }}</span>
+		</div>
+	</div>
+	<div class="responsive-table-row remaining-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
+		<div class="responsive-table-content day-col">
+			{{ timeLogRow.limit - timeLogRow.duration > 0
+				? (timeLogRow.limit - timeLogRow.duration | durationFormat)
+				: 0
+			}}
+		</div>
+	</div>
+	<div class="responsive-table-row limit-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.LIMIT' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			{{ timeLogRow.limit | durationFormat }}
+		</div>
+	</div>
 </ng-template>
