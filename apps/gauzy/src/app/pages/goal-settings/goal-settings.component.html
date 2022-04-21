@@ -14,7 +14,7 @@
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="!selectedItem && disableButton"
 				[buttonTemplate]="actionButtons"
-        [componentName]="viewComponentName"
+				[componentName]="viewComponentName"
 			>
 			</ngx-gauzy-button-action>
 		</div>
@@ -249,6 +249,28 @@
 <ng-template #actionButtons let-selectedItem="selectedItem">
 	<div class="btn-group actions">
 		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="disableButton"
+			size="small"
+			*ngIf="selectedTab === 'kpi'"
+		>
+			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="disableButton"
+			size="small"
+			*ngIf="selectedTab !== 'kpi'"
+		>
+			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
 			*ngIf="selectedTab !== 'kpi'"
 			nbButton
 			status="basic"
@@ -319,7 +341,7 @@
 			[settings]="smartTableSettings"
 			[source]="goalTimeFrames"
 			[buttonTemplate]="actionButtons"
-      (onSelectedItem)="selectRow($event)"
+			(onSelectedItem)="selectRow($event)"
 		></ga-card-grid>
 	</div>
 </ng-template>
