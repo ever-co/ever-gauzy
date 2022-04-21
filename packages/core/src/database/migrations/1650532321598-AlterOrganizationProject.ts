@@ -5,11 +5,11 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
     name = 'AlterOrganizationProject1650532321598';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // if (queryRunner.connection.options.type === 'sqlite') {
-        //     await this.sqliteUpQueryRunner(queryRunner);
-        // } else {
-        //     await this.postgresUpQueryRunner(queryRunner);
-        // }
+        if (queryRunner.connection.options.type === 'sqlite') {
+            await this.sqliteUpQueryRunner(queryRunner);
+        } else {
+            await this.postgresUpQueryRunner(queryRunner);
+        }
         await this._calculateProjectMembersCount(queryRunner);
     }
 
