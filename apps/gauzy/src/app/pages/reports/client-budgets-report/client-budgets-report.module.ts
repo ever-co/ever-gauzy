@@ -33,7 +33,7 @@ import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gau
 		ProgressStatusModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-   		GauzyFiltersModule
-	]
+		GauzyFiltersModule,
+	],
 })
 export class ClientBudgetsReportModule {}

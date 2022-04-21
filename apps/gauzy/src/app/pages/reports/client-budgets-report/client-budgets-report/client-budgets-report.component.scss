@@ -1,1 +1,56 @@
 @import 'report';
+
+.contact-column {
+    width: 15%;
+    min-width: 165px;
+    max-width: 200px;
+}
+.project-column {
+    width: 20%;
+    min-width: 20%;
+}
+.employees-column {
+    width: 15%;
+}
+.spent-column {
+    width: 10%;
+}
+.remaining-column {
+    width: 10%;
+}
+.budget-column {
+    width: 30%;
+}
+
+.budget-row {
+    padding-right: 5%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+
+    .progress-wrapper {
+        width: 68%;
+        margin-left: 2%;
+    }
+
+    .currency-span {
+        white-space: nowrap;
+        text-align: right;
+    }
+}
+
+@include respond(dsk) {
+    .budget-row  {
+        .progress-wrapper {
+            width: 100%;
+        }
+    }
+}
+@include respond(md) {
+    .employees-header {
+        display: inline;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+}
