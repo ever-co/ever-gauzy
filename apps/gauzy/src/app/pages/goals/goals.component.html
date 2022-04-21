@@ -62,26 +62,34 @@
 			>
 				<nb-accordion-item>
 					<nb-accordion-item-header
-						>{{ goal.name }}
-						<span class="ml-auto float-right col-md-4 text-center"
-							><nb-progress-bar
-								nbTooltip="{{
-									'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate
-								}}"
-								class="ml-4"
-								[value]="goal.progress"
-								[status]="
-									goal.progress < 50
-										? 'warning'
-										: goal.progress < 75
-										? 'info'
-										: 'success'
-								"
-								size="small"
-								>{{ goal.progress }}%
-							</nb-progress-bar></span
+						><div
+							class="w-100 d-flex align-items-center justify-content-between"
 						>
-						<nb-actions
+							{{ goal.name }}
+							<div
+								class="w-25 d-flex align-items-center mr-5 ml-5"
+							>
+								<span>{{ goal.progress }}%</span>
+								<nb-progress-bar
+									nbTooltip="{{
+										'GOALS_PAGE.TOOLTIPS.PROGRESS'
+											| translate
+									}}"
+									class="ml-4"
+									[value]="goal.progress"
+									[status]="
+										goal.progress < 50
+											? 'warning'
+											: goal.progress < 75
+											? 'info'
+											: 'success'
+									"
+									size="small"
+								>
+								</nb-progress-bar>
+							</div>
+						</div>
+						<!-- <nb-actions
 							class="ml-auto ml-3 mt-1 float-right"
 							size="small"
 						>
@@ -99,13 +107,13 @@
 								}}"
 								(click)="createObjective(goal, index)"
 							></nb-action>
-						</nb-actions>
+						</nb-actions> -->
 					</nb-accordion-item-header>
 					<nb-accordion-item-body
-						class="ml-4"
+						class="mr-3 ml-3"
 						*ngFor="let keyResult of goal.keyResults"
 					>
-						{{ keyResult.name }}
+						<!-- {{ keyResult.name }}
 						<nb-actions class="ml-auto float-right" size="small">
 							<nb-action
 								nbTooltip="{{
@@ -132,45 +140,51 @@
 									openKeyResultParameters(index, keyResult)
 								"
 							></nb-action>
-						</nb-actions>
-						<span class="ml-auto float-right col-md-4 text-center"
-							><nb-progress-bar
-								nbTooltip="{{
-									'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
-										| translate
-											: {
-													weight: calculateKeyResultWeight(
-														keyResult.weight,
-														goal
-													)
-											  }
-								}}"
-								class="ml-3"
-								[value]="keyResult.progress"
-								[status]="
-									keyResult.progress < 50
-										? 'warning'
-										: keyResult.progress < 75
-										? 'info'
-										: 'success'
-								"
-								size="small"
-								>{{ keyResult.progress }}%
-							</nb-progress-bar></span
+						</nb-actions> -->
+						<div
+							class="w-100 d-flex align-items-center justify-content-between"
 						>
+							{{ keyResult.name }}
+							<div class="w-25 d-flex align-items-center">
+								<span>{{ keyResult.progress }}%</span>
+								<nb-progress-bar
+									nbTooltip="{{
+										'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
+											| translate
+												: {
+														weight: calculateKeyResultWeight(
+															keyResult.weight,
+															goal
+														)
+												  }
+									}}"
+									class="ml-3"
+									[value]="keyResult.progress"
+									[status]="
+										keyResult.progress < 50
+											? 'warning'
+											: keyResult.progress < 75
+											? 'info'
+											: 'success'
+									"
+									size="small"
+								>
+								</nb-progress-bar>
+							</div>
+						</div>
 					</nb-accordion-item-body>
 					<nb-accordion-item-body>
-						<nb-actions size="medium">
-							<nb-action
-								icon="plus-circle"
-								status="primary"
-								title="Add new key result"
-								(click)="addKeyResult(index, null)"
-							></nb-action>
-							<nb-action>{{
-								'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate
-							}}</nb-action>
-						</nb-actions>
+						<button
+							nbButton
+							status="success"
+							class="gen"
+							outline
+							size="small"
+							(click)="addKeyResult(index, null)"
+						>
+							<nb-icon icon="plus-outline"></nb-icon>
+							{{ 'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate }}
+						</button>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
 			</nb-accordion>
