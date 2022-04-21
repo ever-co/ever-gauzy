@@ -43,4 +43,15 @@
     width: 1.75rem;
     height: 1.75rem;
   }
+  nb-accordion {
+    box-shadow: unset;
+}
+}
+nb-accordion-item-body {
+  &:hover, &.item.selected {
+    background: rgba(50, 50, 50, 0.03);
+  }
+}
+.keyResult {
+  cursor: pointer;
 }

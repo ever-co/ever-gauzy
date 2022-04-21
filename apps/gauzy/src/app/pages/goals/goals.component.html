@@ -30,8 +30,16 @@
 			</div>
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
-				[isDisable]="!selectedItem && disableButton"
-				[buttonTemplate]="actionButtonsObjective"
+				[isDisable]="
+					!selectedGoal.isSelected && !selectedKeyResult.isSelected
+				"
+				[buttonTemplate]="
+					selectedGoal.isSelected
+						? actionButtonsObjective
+						: selectedKeyResult.isSelected
+						? actionButtons
+						: actionButtonsObjective
+				"
 				[hasLayoutSelector]="false"
 			>
 			</ngx-gauzy-button-action>
@@ -62,6 +70,7 @@
 			>
 				<nb-accordion-item>
 					<nb-accordion-item-header
+						(click)="onClickObjective(goal, index)"
 						><div
 							class="w-100 d-flex align-items-center justify-content-between"
 						>
@@ -110,7 +119,12 @@
 						</nb-actions> -->
 					</nb-accordion-item-header>
 					<nb-accordion-item-body
-						class="mr-3 ml-3"
+						[ngClass]="
+							selectedKeyResult.isSelected &&
+							selectedKeyResult.data.id === keyResult.id
+								? 'item selected'
+								: ''
+						"
 						*ngFor="let keyResult of goal.keyResults"
 					>
 						<!-- {{ keyResult.name }}
@@ -142,7 +156,8 @@
 							></nb-action>
 						</nb-actions> -->
 						<div
-							class="w-100 d-flex align-items-center justify-content-between"
+							(click)="onClickKeyResult(keyResult, index)"
+							class="w-100 d-flex align-items-center justify-content-between keyResult"
 						>
 							{{ keyResult.name }}
 							<div class="w-25 d-flex align-items-center">
@@ -191,14 +206,14 @@
 		</div>
 	</nb-card-body>
 </nb-card>
-<ng-template #actionButtons let-selectedItem="selectedItem">
+<ng-template #actionButtons>
 	<div class="btn-group actions">
 		<button
 			nbButton
 			status="basic"
 			class="action secondary"
-			[disabled]="disableButton"
 			size="small"
+			(click)="openKeyResultDetails()"
 		>
 			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
@@ -207,8 +222,8 @@
 			nbButton
 			status="basic"
 			class="action primary"
-			[disabled]="!selectedItem && disableButton"
 			size="small"
+			(click)="addKeyResult()"
 		>
 			<nb-icon icon="edit-outline"></nb-icon
 			>{{ 'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate }}
@@ -217,8 +232,8 @@
 			nbButton
 			status="basic"
 			class="action primary"
-			[disabled]="!selectedItem && disableButton"
 			size="small"
+			(click)="openKeyResultParameters()"
 		>
 			<span class="mr-1"><i class="fas fa-percentage"></i></span
 			>{{ 'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT' | translate }}
@@ -227,7 +242,6 @@
 			nbButton
 			status="basic"
 			class="action"
-			[disabled]="!selectedItem && disableButton"
 			size="small"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"
 		>
@@ -241,7 +255,7 @@
 			nbButton
 			status="basic"
 			class="action secondary"
-			[disabled]="disableButton"
+			(click)="openGoalDetails()"
 			size="small"
 			[nbTooltip]="'GOALS_PAGE.TOOLTIPS.DETAILS' | translate"
 		>
@@ -252,7 +266,7 @@
 			nbButton
 			status="basic"
 			class="action primary"
-			[disabled]="!selectedItem && disableButton"
+			(click)="createObjective()"
 			size="small"
 		>
 			<nb-icon icon="edit-outline"></nb-icon

@@ -36,7 +36,8 @@ import { ToastrService } from '../../@core/services/toastr.service';
 })
 export class GoalsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 	loading = true;
 	selectedOrganizationId: string;
@@ -84,6 +85,17 @@ export class GoalsComponent
 	keyResult: IKeyResult[];
 	organization: IOrganization;
 
+	selectedKeyResult = {
+		isSelected: false,
+		data: null,
+		index: null
+	};
+	selectedGoal = {
+		isSelected: false,
+		data: null,
+		index: null
+	};
+
 	constructor(
 		private store: Store,
 		readonly translateService: TranslateService,
@@ -101,7 +113,7 @@ export class GoalsComponent
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
-				tap((user: IUser) => this.isEmployee = !!user.employee),
+				tap((user: IUser) => (this.isEmployee = !!user.employee)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -198,7 +210,9 @@ export class GoalsComponent
 			});
 	}
 
-	async openKeyResultParameters(index, keyResult) {
+	async openKeyResultParameters() {
+		const index = this.selectedKeyResult.index;
+		const keyResult = this.selectedKeyResult.data;
 		const dialog = this.dialogService.open(KeyResultParametersComponent, {
 			context: {
 				data: {
@@ -241,7 +255,9 @@ export class GoalsComponent
 		this.goalTimeFrames.sort((a, b) => a.localeCompare(b));
 	}
 
-	async addKeyResult(index, keyResult) {
+	async addKeyResult() {
+		const index = this.selectedKeyResult.index;
+		const keyResult = this.selectedKeyResult.data;
 		if (
 			!keyResult &&
 			this.goalGeneralSettings?.maxKeyResults <=
@@ -292,8 +308,8 @@ export class GoalsComponent
 			} else {
 				const data = {
 					...response,
-					ownerId:response.ownerId,
-					leadId:response.leadId,
+					ownerId: response.ownerId,
+					leadId: response.leadId,
 					goalId: this.goals[index].id
 				};
 				await this.keyResultService
@@ -380,7 +396,8 @@ export class GoalsComponent
 		}
 	}
 
-	async createObjective(goal, index) {
+	async createObjective() {
+		const goal = this.selectedGoal.data;
 		if (
 			!goal &&
 			this.goalGeneralSettings &&
@@ -441,7 +458,8 @@ export class GoalsComponent
 		}
 	}
 
-	async openGoalDetails(data) {
+	async openGoalDetails() {
+		const { data } = this.selectedGoal;
 		const dialog = this.dialogService.open(GoalDetailsComponent, {
 			hasScroll: true,
 			context: {
@@ -476,7 +494,9 @@ export class GoalsComponent
 		}
 	}
 
-	async openKeyResultDetails(index, selectedKeyResult) {
+	async openKeyResultDetails() {
+		const index = this.selectedKeyResult.index;
+		const selectedKeyResult = this.selectedKeyResult.data;
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
@@ -540,6 +560,25 @@ export class GoalsComponent
 			this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 			this.loadPage();
 		}
+	}
+
+	onClickObjective(objective, index) {
+		this.selectedGoal.data = objective;
+		this.selectedGoal.index = index;
+		this.selectedGoal.isSelected = this.selectedGoal.isSelected
+			? this.selectedGoal.isSelected
+			: true;
+	}
+
+	onClickKeyResult(keyResult, index) {
+		this.selectedKeyResult.data = keyResult;
+		this.selectedKeyResult.index = index;
+		this.selectedKeyResult.isSelected = this.selectedKeyResult.isSelected
+			? this.selectedKeyResult.isSelected
+			: true;
+		this.selectedGoal.isSelected = this.selectedKeyResult.isSelected
+			? false
+			: true;
 	}
 
 	ngOnDestroy() {}
