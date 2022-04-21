@@ -2308,7 +2308,13 @@
 			"JOB_STATUS": "Job Status",
 			"BUDGET": "Budget",
 			"LESS_THAN": "Less than"
-		}
+		},
+		"BROWSE": "Browse",
+		"SEARCH": "Search",
+		"HISTORY": "History",
+		"EMPLOYEES": "Служители",
+		"MATCHINGS": "Matchings",
+		"PROPOSALS_TEMPLATE": "Proposals Template"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching",
@@ -2331,7 +2337,10 @@
 		"EMPLOYEES": "Служители",
 		"AVAILABLE_JOBS": "Available Jobs",
 		"APPLIED_JOBS": "Applied Jobs",
-		"JOB_SEARCH_STATUS": "Job Search Status"
+		"JOB_SEARCH_STATUS": "Job Search Status",
+		"BROWSE": "Browse",
+		"SEARCH": "Search",
+		"HISTORY": "History"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
@@ -3660,7 +3669,16 @@
 		"HEADER_FORM_CREATE": "Create Pipeline",
 		"RECORD_TYPE": "pipeline \"{{ name }}\"",
 		"ACTIVE": "Активен",
-		"INACTIVE": "Inactive"
+		"INACTIVE": "Inactive",
+		"BROWSE": "Browse",
+		"SEARCH": "Search",
+		"SEARCH_PIPELINE": "Search Pipeline",
+		"NAME": "Име",
+		"STAGE": "Stage",
+		"SEARCH_STAGE": "Search Stage",
+		"STATUS": "Статус",
+		"ALL_STATUS": "All Status",
+		"RESET": "Reset"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
