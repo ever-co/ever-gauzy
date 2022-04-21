@@ -1,5 +1,6 @@
 import { Component, Input } from "@angular/core";
 import { IOrganizationProject } from "@gauzy/contracts";
+import { DEFAULT_SVG } from "../../../@core/constants";
 
 @Component({
 	selector: 'ga-organization',
@@ -7,6 +8,10 @@ import { IOrganizationProject } from "@gauzy/contracts";
 	styleUrls: ['./organization.component.scss']
 })
 export class OrganizationComponent {
-	@Input() members: number
+
+	fallbackSvg = DEFAULT_SVG;
+
 	@Input() project: IOrganizationProject
+	
+	constructor() {}
 }
