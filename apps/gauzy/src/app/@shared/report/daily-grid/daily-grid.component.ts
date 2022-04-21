@@ -32,7 +32,6 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	
 	logRequest: ITimeLogFilters = this.request;
 	dailyLogs: IReportDayData[] = [];
-	projects: {[key: string]: number} = {}
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
@@ -92,26 +91,8 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 			...baseRequest,
 			groupBy: this.groupBy
 		}
-		const requestProject = {
-			...baseRequest,
-			groupBy: ReportGroupFilterEnum.project
-		}
-
 		try {
-			const [logs, projects] = await Promise.all([
-				this.timesheetService.getDailyReport(request),
-				this.timesheetService.getDailyReport(requestProject)
-			]);
-			this.dailyLogs = logs;
-
-			// calculating all the unique employees for each project
-			this.projects = projects.reduce((a,v) => {
-				if ("project" in v) {
-					const initial = [].concat(...v.logs.map(x => x.employeeLogs.map(y => y.employee.id)))
-					const uniqueEployees = initial.filter((v, i, arr) => arr.indexOf(v) === i)
-					return { ...a, [v.project.id]: uniqueEployees.length }
-				}
-			}, {});
+			this.dailyLogs = await this.timesheetService.getDailyReport(request);
 		} catch (error) {
 			console.log('Error while retrieving daily logs report', error);
 		} finally {
