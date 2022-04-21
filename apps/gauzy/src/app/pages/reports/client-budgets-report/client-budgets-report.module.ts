@@ -16,7 +16,6 @@ import { ProgressStatusModule } from '../../../@shared/progress-status/progress-
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
-import { OrganizationModule } from "../../../@shared/report/organization/organization.module";
 
 @NgModule({
 	declarations: [ClientBudgetsReportComponent],
@@ -35,7 +34,6 @@ import { OrganizationModule } from "../../../@shared/report/organization/organiz
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		GauzyFiltersModule,
-		OrganizationModule,
 	],
 })
 export class ClientBudgetsReportModule {}
