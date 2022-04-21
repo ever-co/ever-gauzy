@@ -5,11 +5,12 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
     name = 'AlterOrganizationProject1650532321598';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
-            await this.sqliteUpQueryRunner(queryRunner);
-        } else {
-            await this.postgresUpQueryRunner(queryRunner);
-        }
+        // if (queryRunner.connection.options.type === 'sqlite') {
+        //     await this.sqliteUpQueryRunner(queryRunner);
+        // } else {
+        //     await this.postgresUpQueryRunner(queryRunner);
+        // }
+        await this._calculateProjectMembersCount(queryRunner);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -80,5 +81,49 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
         await queryRunner.query(`CREATE INDEX "IDX_37215da8dee9503d759adb3538" ON "organization_project" ("name") `);
         await queryRunner.query(`CREATE INDEX "IDX_c210effeb6314d325bc024d21e" ON "organization_project" ("currency") `);
         await queryRunner.query(`CREATE INDEX "IDX_bc1e32c13683dbb16ada1c6da1" ON "organization_project" ("organizationContactId") `);
+    }
+
+    private async _calculateProjectMembersCount(queryRunner: QueryRunner) {
+        /**
+         * GET all tenants in the system
+         */
+	    const tenants = await queryRunner.connection.manager.query(`SELECT * FROM tenant`);
+        for await (const tenant of tenants) {
+            const tenantId = tenant.id;
+            /**
+             * GET all tenant projects for specific tenant
+             */
+            const projects = await queryRunner.connection.manager.query(`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = $1`, [
+                tenantId
+            ]);
+
+            for await (const project of projects) {
+                const projectId = project.id;
+                /**
+                 * GET member counts for organization project
+                 */
+                const [ members ] = await queryRunner.connection.manager.query(`
+                    SELECT 
+                        COUNT("organization_project_employee"."employeeId") 
+                    FROM "organization_project_employee" 
+                    INNER JOIN 
+                        "employee" ON "employee"."id"="organization_project_employee"."employeeId"
+                    INNER JOIN 
+                        "organization_project" ON "organization_project"."id"="organization_project_employee"."organizationProjectId"
+                    WHERE 
+                        "organization_project_employee"."organizationProjectId" = $1
+                `, [ projectId ]);
+
+                const counts = members['count'];
+                await queryRunner.connection.manager.query(`
+                    UPDATE "organization_project" SET 
+                        "membersCount" = $1,
+                        "updatedAt" = CURRENT_TIMESTAMP
+                    WHERE 
+                        "id" IN($2)
+                    `, [counts, projectId]
+                );
+            }
+        }
     }
 }
