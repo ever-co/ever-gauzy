@@ -1,7 +1,55 @@
 @import 'report';
+@import "var";
 
-:host {
-  ngx-progress-status {
-    width: 200px;
+.employees-column {
+  width: 25%;
+  max-width: 300px;
+}
+.project-column {
+  width: 20%;
+  min-width: 20%;
+
+  .project-cell {
+    display: inline;
+  }
+}
+.spent-column {
+  width: 10%;
+}
+.budget-column {
+  width: 35%;
+  max-width: 35%;
+}
+.remaining-column {
+  width: 10%;
+}
+
+.budget-row {
+  padding-right: 5%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+
+  .progress-wrapper {
+    width: 65%
+  }
+
+  .currency-span {
+    white-space: nowrap;
+    text-align: right;
+  }
+}
+
+@include respond(dsk) {
+  .budget-row .progress-wrapper {
+    width: 100%;
+  }
+}
+@include respond(md) {
+  .employees-header {
+    display: inline;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
   }
 }
