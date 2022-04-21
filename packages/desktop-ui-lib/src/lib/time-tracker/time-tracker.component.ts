@@ -888,13 +888,25 @@ export class TimeTrackerComponent implements AfterViewInit {
 				const screens = [];
 				sources.forEach(async (source, i) => {
 					log.info('screenshot_res', source);
-					screens.push({
-						img: source.thumbnail.toPNG(),
-						name: source.name,
-						id: source.display_id
-					});
-					log.info('screenshot data', screens);
+					if (this.appSetting && this.appSetting.monitor  
+						&& this.appSetting.monitor.captured
+						&& this.appSetting.monitor.captured === 'active-only') {
+							if (source.display_id === arg.activeWindow.id.toString()) {
+								screens.push({
+									img: source.thumbnail.toPNG(),
+									name: source.name,
+									id: source.display_id
+								});
+							}
+					} else {
+						screens.push({
+							img: source.thumbnail.toPNG(),
+							name: source.name,
+							id: source.display_id
+						});
+					}
 				});
+				log.info('screenshot data', screens);
 				return screens;
 			}).catch((err) => {
 				console.log('screenshot elecctron render error', err);
@@ -1167,5 +1179,5 @@ export class TimeTrackerComponent implements AfterViewInit {
 				status: 'danger'
 			});
 		}
-	}
+	};
 }

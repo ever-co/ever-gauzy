@@ -972,6 +972,7 @@
 		"ACTIVITY": "crwdns8246:0crwdne8246:0",
 		"TOTAL_HOURS": "crwdns8248:0crwdne8248:0",
 		"EMPLOYEE": "crwdns8250:0crwdne8250:0",
+		"EMPLOYEES/TEAMS": "crwdns11120:0crwdne11120:0",
 		"NO_PROJECT": "crwdns8252:0crwdne8252:0",
 		"NO_EMPLOYEE": "crwdns8254:0crwdne8254:0",
 		"NO_TIMELOG": "crwdns8256:0crwdne8256:0",
@@ -2308,7 +2309,13 @@
 			"JOB_STATUS": "crwdns8290:0crwdne8290:0",
 			"BUDGET": "crwdns8292:0crwdne8292:0",
 			"LESS_THAN": "crwdns8696:0crwdne8696:0"
-		}
+		},
+		"BROWSE": "crwdns11084:0crwdne11084:0",
+		"SEARCH": "crwdns11086:0crwdne11086:0",
+		"HISTORY": "crwdns11088:0crwdne11088:0",
+		"EMPLOYEES": "crwdns11090:0crwdne11090:0",
+		"MATCHINGS": "crwdns11092:0crwdne11092:0",
+		"PROPOSALS_TEMPLATE": "crwdns11094:0crwdne11094:0"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "crwdns8200:0crwdne8200:0",
@@ -2331,7 +2338,10 @@
 		"EMPLOYEES": "crwdns8344:0crwdne8344:0",
 		"AVAILABLE_JOBS": "crwdns8346:0crwdne8346:0",
 		"APPLIED_JOBS": "crwdns8348:0crwdne8348:0",
-		"JOB_SEARCH_STATUS": "crwdns8350:0crwdne8350:0"
+		"JOB_SEARCH_STATUS": "crwdns8350:0crwdne8350:0",
+		"BROWSE": "crwdns11096:0crwdne11096:0",
+		"SEARCH": "crwdns11098:0crwdne11098:0",
+		"HISTORY": "crwdns11100:0crwdne11100:0"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "crwdns8308:0crwdne8308:0",
@@ -3660,7 +3670,16 @@
 		"HEADER_FORM_CREATE": "crwdns4744:0crwdne4744:0",
 		"RECORD_TYPE": "crwdns4746:0{{ name }}crwdne4746:0",
 		"ACTIVE": "crwdns9830:0crwdne9830:0",
-		"INACTIVE": "crwdns9832:0crwdne9832:0"
+		"INACTIVE": "crwdns9832:0crwdne9832:0",
+		"BROWSE": "crwdns11102:0crwdne11102:0",
+		"SEARCH": "crwdns11104:0crwdne11104:0",
+		"SEARCH_PIPELINE": "crwdns11106:0crwdne11106:0",
+		"NAME": "crwdns11108:0crwdne11108:0",
+		"STAGE": "crwdns11110:0crwdne11110:0",
+		"SEARCH_STAGE": "crwdns11112:0crwdne11112:0",
+		"STATUS": "crwdns11114:0crwdne11114:0",
+		"ALL_STATUS": "crwdns11116:0crwdne11116:0",
+		"RESET": "crwdns11118:0crwdne11118:0"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "crwdns7198:0crwdne7198:0",

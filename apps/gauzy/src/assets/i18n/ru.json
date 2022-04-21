@@ -972,6 +972,7 @@
 		"ACTIVITY": "Активность",
 		"TOTAL_HOURS": "Всего часов",
 		"EMPLOYEE": "Сотрудник",
+		"EMPLOYEES/TEAMS": "Сотрудники /Команды",
 		"NO_PROJECT": "Нет проекта",
 		"NO_EMPLOYEE": "Нет сотрудника",
 		"NO_TIMELOG": "Нет Timelog",
@@ -2308,7 +2309,13 @@
 			"JOB_STATUS": "Статус Вакансии",
 			"BUDGET": "Бюджет",
 			"LESS_THAN": "Менее чем"
-		}
+		},
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать",
+		"HISTORY": "История",
+		"EMPLOYEES": "Сотрудники",
+		"MATCHINGS": "Совпадения",
+		"PROPOSALS_TEMPLATE": "Шаблон предложений"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Настройка соответствия заданий сотрудникам",
@@ -2331,7 +2338,10 @@
 		"EMPLOYEES": "Сотрудники",
 		"AVAILABLE_JOBS": "Доступные задания",
 		"APPLIED_JOBS": "Прикладные задания",
-		"JOB_SEARCH_STATUS": "Статус поиска Вакансии"
+		"JOB_SEARCH_STATUS": "Статус поиска Вакансии",
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать",
+		"HISTORY": "История"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Шаблон предложения",
@@ -3660,7 +3670,16 @@
 		"HEADER_FORM_CREATE": "Создать конвейер",
 		"RECORD_TYPE": "конвейер \"{{ name }}\"",
 		"ACTIVE": "Активный",
-		"INACTIVE": "Неактивный"
+		"INACTIVE": "Неактивный",
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать",
+		"SEARCH_PIPELINE": "Конвейер поиска",
+		"NAME": "Имя",
+		"STAGE": "Этап",
+		"SEARCH_STAGE": "Стадия поиска",
+		"STATUS": "Статус",
+		"ALL_STATUS": "Весь статус",
+		"RESET": "Reset"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Сделки Трубопровода",

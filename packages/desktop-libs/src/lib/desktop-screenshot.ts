@@ -234,7 +234,7 @@ const readOrCreateTempDir = (tempPath) => {
 	}
 };
 
-const detectActiveWindow = () => {
+export const detectActiveWindow = () => {
 	const allScreen = screen.getAllDisplays();
 	const cursorPosition = screen.getCursorScreenPoint();
 	let idx = null;

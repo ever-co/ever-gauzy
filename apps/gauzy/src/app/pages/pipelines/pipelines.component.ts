@@ -362,6 +362,10 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		}
 	}
 
+  onChangeStatus(event){
+    this.setFilter({ field: 'isActive', search: event });
+  }
+
 	ngOnDestroy(): void {
 		clearTimeout();
 	}

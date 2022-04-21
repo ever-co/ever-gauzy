@@ -22,6 +22,9 @@ import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.mo
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { DialogsModule } from '../../../@shared/dialogs';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { NbTabsetModule } from '@nebular/theme';
+import { PaginationModule } from '../../../@shared/pagination/pagination.module';
 
 @NgModule({
 	declarations: [SearchComponent],
@@ -44,7 +47,10 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		Ng2SmartTableModule,
 		StatusBadgeModule,
 		NbToggleModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		GauzyButtonActionModule,
+		NbTabsetModule,
+		PaginationModule
 	]
 })
 export class SearchModule {}

@@ -4,9 +4,12 @@ import { NbDialogRef } from '@nebular/theme';
 @Component({
 	selector: 'ga-action-confirmation',
 	template: `
-		<nb-card class="center">
+		<nb-card>
 			<nb-card-header>
-				<h6>
+				<span class="cancel"
+					><i class="fas fa-times" (click)="close()"></i
+				></span>
+				<h6 class="title">
 					{{ 'POP_UPS.CONFIRM' | translate }}
 				</h6>
 			</nb-card-header>
@@ -20,32 +23,33 @@ import { NbDialogRef } from '@nebular/theme';
 				</span>
 			</nb-card-body>
 			<nb-card-footer>
+				<button (click)="close()" status="basic" outline nbButton>
+					{{ 'POP_UPS.CANCEL' | translate }}
+				</button>
 				<button
 					(click)="confirm()"
-					class="mr-3"
+					class="mr-3 ml-3"
 					status="success"
 					nbButton
 				>
 					{{ 'POP_UPS.OK' | translate }}
-				</button>
-				<button (click)="close()" status="danger" nbButton>
-					{{ 'POP_UPS.CANCEL' | translate }}
 				</button>
 			</nb-card-footer>
 		</nb-card>
 	`,
 	styles: [
 		`
-			nb-card-body {
-				text-align: center;
+			nb-card-footer {
+				text-align: left;
+				width: 100%;
 			}
-
 			.center {
 				align-items: center;
 				width: 300px;
 			}
 		`
-	]
+	],
+	styleUrls: ['../delete-confirmation/delete-confirmation.component.scss']
 })
 export class ActionConfirmationComponent {
 	recordType: string;

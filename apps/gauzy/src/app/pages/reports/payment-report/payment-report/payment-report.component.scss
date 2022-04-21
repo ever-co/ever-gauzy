@@ -1,0 +1,21 @@
+@import "report";
+@import "themes";
+
+:host {
+    ::ng-deep {
+        .filters {
+            text-align: right;
+
+            .contact-select {
+                margin-right: 10px;
+
+                & span:first-of-type{
+                    margin-right: 60px;
+                }
+            }
+            .currency-select span:first-of-type {
+                margin-right: 40px;
+            }
+        }
+    }
+}

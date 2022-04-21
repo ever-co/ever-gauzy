@@ -22,6 +22,8 @@ import { SharedModule } from '../../../@shared/shared.module';
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { SmartTableToggleModule } from '../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { NbTabsetModule } from '@nebular/theme';
+import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	declarations: [EmployeesComponent],
@@ -45,7 +47,9 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		StatusBadgeModule,
 		NbToggleModule,
 		SmartTableToggleModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		NbTabsetModule,
+		GauzyButtonActionModule
 	]
 })
 export class EmployeesModule {}

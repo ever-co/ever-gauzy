@@ -1,3 +1,5 @@
+@import 'themes';
+
 :host {
   .category-icon {
     img {
@@ -6,25 +8,41 @@
   }
   .card-grid {
     display: grid;
-    gap: 16px;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    -webkit-box-align: center;
+    align-items: center;
+    -webkit-box-pack: start;
+    justify-content: start;
+    column-gap: 1rem;
+    grid-gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
   }
   a {
     text-decoration: none;
   }
+  .caption {
+    height: 27px;
+  }
   .image-container {
+    position: relative;
     margin-top: 10px;
     object-fit: cover;
-    & img{
-      width: 350px;
+    height: 183px;
+    & img {
+      position: absolute;
+      width: 450px;
     }
   }
 }
 
-.custom-view-report{
+.custom-view-report {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   position: relative;
-
-  & .custom-button{
+  border: nb-theme(border-radius);
+  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+  border-radius: nb-theme(border-radius);
+  & .custom-button {
     height: 40px;
     width: 120px;
     position: absolute;
@@ -35,24 +53,43 @@
     visibility: hidden;
   }
 
-  &:hover{
-    & .image-container{
-      opacity: 80%;
+  &:hover {
+    border-radius: nb-theme(border-radius);
+    & .image-container,
+    & .caption {
+      opacity: 30%;
     }
-    & .custom-view-report-content{
-      opacity: 80%;
-    }
-    & .custom-button{
+    & .custom-button {
       opacity: 100%;
-      transition: ease-out .5s;
-      z-index : 10;
+      transition: ease-out 0.5s;
+      z-index: 10;
       visibility: visible;
     }
   }
 }
 
-::-webkit-scrollbar{
+.content {
+  background-color: nb-theme(gauzy-card-2);
+}
+nb-card-body {
+  border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+}
+
+::-webkit-scrollbar {
   display: none;
 }
 
-
+.report-category-name {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+.report-name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
+}

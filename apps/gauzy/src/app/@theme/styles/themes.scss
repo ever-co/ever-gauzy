@@ -258,8 +258,8 @@ $nb-themes: nb-register-theme(
     route-tabset-tab-text-font-weight: 400,
     color-success-default: rgba(37, 184, 105, 1),
     color-info-default: rgba(0, 136, 254, 1),
-    color-danger-default: #FF0000
-
+    color-danger-default: #ff0000,
+    color-warning-default: rgba(255, 171, 45, 1)
   ),
   gauzy-light,
   default
