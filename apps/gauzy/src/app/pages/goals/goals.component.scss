@@ -1,5 +1,17 @@
+@import 'gauzy/_gauzy-table.scss';
+
 .main-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.gauzy-button-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 0;
+  .custom-success {
+    height: 2rem;
+  }
 }

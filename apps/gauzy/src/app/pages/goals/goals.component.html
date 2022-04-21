@@ -1,100 +1,40 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	class="card-scroll"
+>
 	<nb-card-header *ngIf="!loading">
 		<div class="main-header">
-			<h4> <ngx-header-title> {{ 'GOALS_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
+			<h4>
+				<ngx-header-title>
+					{{ 'GOALS_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
 		</div>
-		<div class="main-header mt-3">
-			<div>
-				<nb-actions
-					size="medium"
-					*ngIf="
-						!isEmployee
-							? true
-							: goalGeneralSettings?.employeeCanCreateObjective
-					"
-				>
-					<nb-action
-						icon="plus-circle"
-						status="primary"
-						title="Add new Objective"
-						nbPopoverTrigger="click"
-						nbPopoverPlacement="bottom"
-						[nbPopover]="createObjectivePopover"
-					></nb-action>
-					<nb-action>
-						{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
-					</nb-action>
-				</nb-actions>
-				<ng-template class="p-2" #createObjectivePopover>
-					<nb-list>
-						<nb-list-item
-							(click)="createObjective(null, null)"
-							style="cursor: pointer"
-							>Create New</nb-list-item
-						>
-						<nb-list-item
-							(click)="createObjectiveFromTemplate()"
-							style="cursor: pointer"
-							>Create from Preset</nb-list-item
-						>
-					</nb-list>
-				</ng-template>
-			</div>
-			<div>
-				<button
-					class="mr-3"
-					nbButton
-					status="primary"
-					nbPopoverTrigger="click"
-					nbPopoverPlacement="left"
-					[nbPopover]="groupByPopover"
-				>
-					<nb-icon icon="folder"></nb-icon
-					>{{ 'GOALS_PAGE.GROUP_BY' | translate }}
-				</button>
-				<ng-template class="p-2" #groupByPopover>
-					<nb-list>
-						<nb-list-item
-							(click)="groupBy(group.value)"
-							[ngStyle]="{
-								'font-weight':
-									objectiveGroup === group.value
-										? 'bold'
-										: 'normal'
-							}"
-							style="cursor: pointer"
-							*ngFor="let group of groupObjectivesBy"
-							>{{ group.title }}</nb-list-item
-						>
-					</nb-list>
-				</ng-template>
+		<div class="gauzy-button-container">
+			<div class="btn-group actions mr-2 ml-3">
 				<button
 					nbButton
-					status="primary"
+					status="success"
+					title="Add new Objective"
 					nbPopoverTrigger="click"
 					nbPopoverPlacement="bottom"
-					[nbPopover]="filterPopover"
+					[nbPopover]="createObjectivePopover"
+					size="small"
+					class="custom-success"
 				>
-					<nb-icon icon="funnel"></nb-icon
-					>{{ 'FORM.FILTER' | translate }}
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
 				</button>
-				<ng-template class="p-2" #filterPopover>
-					<nb-list>
-						<nb-list-item
-							(click)="filterGoals(filter.value, allGoals)"
-							[ngStyle]="{
-								'font-weight':
-									selectedFilter === filter.value
-										? 'bold'
-										: 'normal'
-							}"
-							style="cursor: pointer"
-							*ngFor="let filter of filters"
-							>{{ filter.title }}</nb-list-item
-						>
-					</nb-list>
-				</ng-template>
 			</div>
+			<ngx-gauzy-button-action
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="!selectedItem && disableButton"
+				[buttonTemplate]="actionButtonsObjective"
+				[hasLayoutSelector]="false"
+			>
+			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="!loading">
@@ -237,3 +177,155 @@
 		</div>
 	</nb-card-body>
 </nb-card>
+<ng-template #actionButtons let-selectedItem="selectedItem">
+	<div class="btn-group actions">
+		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="disableButton"
+			size="small"
+		>
+			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon icon="edit-outline"></nb-icon
+			>{{ 'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<span class="mr-1"><i class="fas fa-percentage"></i></span
+			>{{ 'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</ng-template>
+<ng-template #actionButtonsObjective let-selectedItem="selectedItem">
+	<div class="btn-group actions">
+		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="disableButton"
+			size="small"
+			[nbTooltip]="'GOALS_PAGE.TOOLTIPS.DETAILS' | translate"
+		>
+			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon icon="edit-outline"></nb-icon
+			>{{ 'GOALS_PAGE.TOOLTIPS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</ng-template>
+<ng-template #visibleButton>
+	<button
+		nbButton
+		status="primary"
+		nbPopoverTrigger="click"
+		nbPopoverPlacement="bottom"
+		[nbPopover]="groupByPopover"
+		size="small"
+		class="action"
+	>
+		<nb-icon icon="folder"></nb-icon>{{ 'GOALS_PAGE.GROUP_BY' | translate }}
+	</button>
+	<button
+		nbButton
+		status="primary"
+		nbPopoverTrigger="click"
+		nbPopoverPlacement="bottom"
+		[nbPopover]="filterPopover"
+		size="small"
+		class="action"
+	>
+		<nb-icon icon="funnel"></nb-icon>{{ 'FORM.FILTER' | translate }}
+	</button>
+</ng-template>
+
+<ng-template class="p-2" #groupByPopover>
+	<nb-list>
+		<nb-list-item
+			(click)="groupBy(group.value)"
+			[ngStyle]="{
+				'font-weight':
+					objectiveGroup === group.value ? 'bold' : 'normal'
+			}"
+			style="cursor: pointer"
+			*ngFor="let group of groupObjectivesBy"
+			>{{ group.title }}</nb-list-item
+		>
+	</nb-list>
+</ng-template>
+<ng-template class="p-2" #filterPopover>
+	<nb-list>
+		<nb-list-item
+			(click)="filterGoals(filter.value, allGoals)"
+			[ngStyle]="{
+				'font-weight':
+					selectedFilter === filter.value ? 'bold' : 'normal'
+			}"
+			style="cursor: pointer"
+			*ngFor="let filter of filters"
+			>{{ filter.title }}</nb-list-item
+		>
+	</nb-list>
+</ng-template>
+<ng-template class="p-2" #createObjectivePopover>
+	<div
+		*ngIf="
+			!isEmployee ? true : goalGeneralSettings?.employeeCanCreateObjective
+		"
+	>
+		<nb-list>
+			<nb-list-item
+				(click)="createObjective(null, null)"
+				style="cursor: pointer"
+				>Create New</nb-list-item
+			>
+			<nb-list-item
+				(click)="createObjectiveFromTemplate()"
+				style="cursor: pointer"
+				>Create from Preset</nb-list-item
+			>
+		</nb-list>
+	</div>
+</ng-template>
