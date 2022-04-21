@@ -1,11 +1,18 @@
 <form [formGroup]="form" (ngSubmit)="persist()">
 	<nb-card style="width: 750px">
 		<nb-card-header>
+			<div class="cancel">
+				<span
+					><i class="fas fa-times" (click)="dialogRef.close()"></i
+				></span>
+			</div>
 			<h4
+				class="title"
 				*ngIf="pipeline.id"
 				[innerHTML]="'PIPELINES_PAGE.HEADER_FORM_EDIT' | translate"
 			></h4>
 			<h4
+				class="title"
 				*ngIf="!pipeline.id"
 				[innerHTML]="'PIPELINES_PAGE.HEADER_FORM_CREATE' | translate"
 			></h4>
@@ -58,14 +65,14 @@
 				</div>
 			</div>
 		</nb-card-body>
-		<nb-card-footer class="text-right">
+		<nb-card-footer class="text-left">
 			<button
 				(click)="dialogRef.close()"
-				status="danger"
-				class="mr-3"
+				status="basic"
+				size="small"
+				outline
 				nbButton
 			>
-				<nb-icon pack="eva" icon="close-outline"></nb-icon>
 				<span [innerHTML]="'BUTTONS.CANCEL' | translate"></span>
 			</button>
 			<button
@@ -74,8 +81,8 @@
 				nbButton
 				status="info"
 				[disabled]="!form.valid"
+				class="mr-3 ml-3"
 			>
-				<nb-icon pack="eva" icon="edit-outline"></nb-icon>
 				<span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
 			</button>
 			<button
@@ -84,8 +91,8 @@
 				nbButton
 				status="primary"
 				[disabled]="!form.valid"
+				class="mr-3 ml-3"
 			>
-				<nb-icon pack="eva" icon="plus-circle-outline"></nb-icon>
 				<span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
 			</button>
 		</nb-card-footer>

@@ -12,6 +12,8 @@
 				</ngx-header-title>
 			</h4>
 		</div>
+	</nb-card-header>
+	<nb-card-body class="p-0">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
@@ -21,58 +23,119 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<!-- <div class="btn-container mb-3">
-			<input
-				[placeholder]="'FORM.FILTER' | translate"
-				[formControl]="inputControl"
-				class="mr-2"
-				type="text"
-				nbInput
-			/>
-		</div> -->
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container">
-				<ng2-smart-table
-					class="tags-table"
-					(userRowSelect)="selectPipeline($event)"
-					[settings]="smartTableSettings"
-					[source]="smartTableSource"
-					style="cursor: pointer"
-					#pipelineTable
-				>
-				</ng2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-					<ga-pagination
-						(selectedPage)="onPageChange($event)"
-						[doEmit]="false"
-						[totalItems]="pagination?.totalItems"
-						[itemsPerPage]="pagination?.itemsPerPage"
-						[activePage]="pagination?.activePage"
+		<nb-tabset class="mt-4">
+			<nb-tab tabTitle="{{ 'PIPELINES_PAGE.BROWSE' | translate }}">
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
 					>
-					</ga-pagination>
+					</ng-template>
 				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[settings]="smartTableSettings"
-				[source]="pipelines"
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				(onSelectedItem)="selectPipeline($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-			></ga-card-grid>
-		</ng-template>
+			</nb-tab>
+			<nb-tab tabTitle="{{ 'PIPELINES_PAGE.SEARCH' | translate }}">
+				<nb-accordion class="mb-3">
+					<nb-accordion-item collapsed="false">
+						<nb-accordion-item-header>
+							{{ 'PIPELINES_PAGE.SEARCH_PIPELINE' | translate }}
+						</nb-accordion-item-header>
+						<nb-accordion-item-body>
+							<div class="row">
+								<div class="col-xl-4 col-lg-12">
+									<label for="name">{{
+										'PIPELINES_PAGE.NAME' | translate
+									}}</label>
+									<div class="w-100">
+										<input
+											[placeholder]="
+												'PIPELINES_PAGE.NAME' | translate
+											"
+											[formControl]="inputControl"
+											type="text"
+											fullWidth
+											nbInput
+										/>
+									</div>
+								</div>
+								<div class="col-xl-2 col-lg-4 col-12">
+									<label for="stage">{{
+										'PIPELINES_PAGE.STAGE' | translate
+									}}</label>
+									<div class="w-100">
+										<input
+											[placeholder]="
+												'PIPELINES_PAGE.SEARCH_STAGE'
+													| translate
+											"
+											type="text"
+											nbInput
+											fullWidth
+										/>
+									</div>
+								</div>
+								<div class="col-xl-2 col-lg-4 col-12">
+									<label for="status">{{
+										'PIPELINES_PAGE.STATUS' | translate
+									}}</label>
+									<div class="w-100">
+										<nb-select
+											fullWidth
+											[placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
+											(selectedChange)="
+												onChangeStatus($event)
+											"
+										>
+											<nb-option value="1">{{
+												'PIPELINES_PAGE.ACTIVE'
+													| translate
+											}}</nb-option>
+											<nb-option value="0">{{
+												'PIPELINES_PAGE.INACTIVE'
+													| translate
+											}}</nb-option>
+										</nb-select>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-12 mt-3">
+									<button
+										nbButton
+										size="small"
+										status="success"
+									>
+										{{
+											'PIPELINES_PAGE.SEARCH' | translate
+										}}
+									</button>
+									<button
+										nbButton
+										size="small"
+										status="basic"
+										outline
+									>
+										{{ 'PIPELINES_PAGE.RESET' | translate }}
+									</button>
+								</div>
+							</div>
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+				</nb-accordion>
+				<ng-container>
+					<ng-template
+						[ngTemplateOutlet]="
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE
+								? tableLayout
+								: gridLayout
+						"
+					>
+					</ng-template>
+				</ng-container>
+			</nb-tab>
+		</nb-tabset>
 	</nb-card-body>
 </nb-card>
 
@@ -140,4 +203,43 @@
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
+</ng-template>
+
+<ng-template #tableLayout>
+	<div class="table-scroll-container">
+		<ng2-smart-table
+			class="tags-table"
+			(userRowSelect)="selectPipeline($event)"
+			[settings]="smartTableSettings"
+			[source]="smartTableSource"
+			style="cursor: pointer"
+			#pipelineTable
+		>
+		</ng2-smart-table>
+	</div>
+	<div class="pagination-container">
+		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+			<ga-pagination
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			>
+			</ga-pagination>
+		</ng-container>
+	</div>
+</ng-template>
+<ng-template #gridLayout>
+	<ga-card-grid
+		[settings]="smartTableSettings"
+		[source]="pipelines"
+		(selectedOption)="onUpdateOption($event)"
+		(selectedPage)="onPageChange($event)"
+		(onSelectedItem)="selectPipeline($event)"
+		[doEmit]="false"
+		[totalItems]="pagination?.totalItems"
+		[itemsPerPage]="pagination?.itemsPerPage"
+		[activePage]="pagination?.activePage"
+	></ga-card-grid>
 </ng-template>

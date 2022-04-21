@@ -118,18 +118,10 @@ nb-card, nb-card-header, nb-card-body, .card {
                 color: nb-theme(text-basic-color) !important;
             }
         }
-
     }
-
-    // .cdk-overlay-pane {
-    //     nb-option-list.size-medium {
-    //         width: auto !important;
-
-    //         .option-list > nb-option {
-    //             padding: 15px !important;
-    //         }
-    //     }
-    // }
+    .nb-options {
+        width: auto !important;
+    }
 }
 
 :host {

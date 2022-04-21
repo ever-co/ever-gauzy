@@ -77,6 +77,7 @@ export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent
 			.getProjectBudgetLimit(request)
 			.then((logs: IProjectBudgetLimitReport[]) => {
 				this.projects = logs;
+				console.log(logs)
 			})
 			.catch(() => {})
 			.finally(() => (this.loading = false));
