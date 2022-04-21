@@ -20,4 +20,27 @@
   nb-card {
     background: nb-theme(background-basic-color-1);
   }
+  nb-tab,
+  .content {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  nb-tab {
+    height: 20.75vh;
+  }
+  ::ng-deep {
+    nb-progress-bar {
+      width: 100%;
+      .progress-container {
+        height: 10px !important;
+      }
+      .progress-value {
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+}
+.info {
+  color: nb-theme(color-info-default);
 }
