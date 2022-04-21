@@ -83,25 +83,6 @@
 								</nb-progress-bar>
 							</div>
 						</div>
-						<!-- <nb-actions
-							class="ml-auto ml-3 mt-1 float-right"
-							size="small"
-						>
-							<nb-action
-								nbTooltip="{{
-									'GOALS_PAGE.TOOLTIPS.DETAILS' | translate
-								}}"
-								icon="eye"
-								(click)="openGoalDetails(goal)"
-							></nb-action>
-							<nb-action
-								icon="edit"
-								nbTooltip="{{
-									'GOALS_PAGE.TOOLTIPS.EDIT' | translate
-								}}"
-								(click)="createObjective(goal, index)"
-							></nb-action>
-						</nb-actions> -->
 					</nb-accordion-item-header>
 					<nb-accordion-item-body
 						[ngClass]="
@@ -112,34 +93,6 @@
 						"
 						*ngFor="let keyResult of goal.keyResults"
 					>
-						<!-- {{ keyResult.name }}
-						<nb-actions class="ml-auto float-right" size="small">
-							<nb-action
-								nbTooltip="{{
-									'KEY_RESULT_PAGE.TOOLTIPS.DETAILS'
-										| translate
-								}}"
-								icon="eye"
-								(click)="openKeyResultDetails(index, keyResult)"
-							></nb-action>
-							<nb-action
-								nbTooltip="{{
-									'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate
-								}}"
-								icon="edit"
-								(click)="addKeyResult(index, keyResult)"
-							></nb-action>
-							<nb-action
-								nbTooltip="{{
-									'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT'
-										| translate
-								}}"
-								icon="percent"
-								(click)="
-									openKeyResultParameters(index, keyResult)
-								"
-							></nb-action>
-						</nb-actions> -->
 						<div
 							(click)="onClickKeyResult(keyResult, index)"
 							class="w-100 d-flex align-items-center justify-content-between keyResult"
