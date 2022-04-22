@@ -13,12 +13,10 @@
 		</button>
 	</div>
 	<div class="col">
-		<ngx-filters
-			[hasDateRangeFilter]="false"
-			[hasEmployeeFilter]="false"
-			[hasProjectFilter]="false"
+		<ngx-gauzy-filters
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
-		></ngx-filters>
+		></ngx-gauzy-filters>
 	</div>
 </div>
 

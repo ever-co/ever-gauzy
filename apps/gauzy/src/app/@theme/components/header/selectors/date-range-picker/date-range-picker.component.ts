@@ -4,14 +4,14 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
-import { IDateRangePicker, ITimeLogFilters } from '@gauzy/contracts';
+import { IDateRangePicker, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, OrganizationsService, Store } from './../../../../../@core/services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { DateRangeKeyEnum } from './date-range-picker.setting';
+import { DateRangeKeyEnum, dayOfWeekAsString } from './date-range-picker.setting';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -44,7 +44,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	_locale: LocaleConfig = {
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
-		direction: 'ltr'
+		direction: 'ltr',
+		firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
 	};
 	get locale(): LocaleConfig {
 		return this._locale;
@@ -183,6 +184,12 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 							...this.locale,
 							displayFormat: format,
 							format: format
+						}
+					}
+					if (organization.startWeekOn) {
+						this.locale = {
+							...this.locale,
+							firstDay: dayOfWeekAsString(organization.startWeekOn)
 						}
 					}
 				}),
@@ -393,6 +400,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	openDatepicker() {
 		this.dateRangePickerDirective.toggle();
 	}
-	
+
 	ngOnDestroy() {}
 }
