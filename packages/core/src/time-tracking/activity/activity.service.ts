@@ -279,7 +279,6 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				}
 			})
 		);
-		console.log(query.getQueryAndParameters());
 		return query;
 	}
 }

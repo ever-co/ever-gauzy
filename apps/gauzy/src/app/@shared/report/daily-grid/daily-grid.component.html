@@ -371,7 +371,9 @@
 </ng-template>
 
 <ng-template let-project #projectEl>
-	<ga-organization [project]="project"></ga-organization>
+	<ga-project-column-view 
+		[project]="project"
+	></ga-project-column-view>
 </ng-template>
 
 <ng-template let-task #taskEl>

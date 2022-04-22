@@ -62,15 +62,14 @@ export class StatisticService {
 	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
 		const {
-			employeeId,
 			organizationId,
 			startDate,
 			endDate,
-			projectId,
 			logType = [],
 			source = [],
 			activityLevel
 		} = request;
+		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -87,7 +86,6 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
@@ -99,16 +97,8 @@ export class StatisticService {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
 				tenantId,
-				employeeId
+				employeeIds
 			);
-		}
-
-		// convert projectId String to Array
-		let projectIds: string[] = [];
-		if (typeof projectId === 'string') {
-			projectIds.push(projectId);
-		} else {
-			projectIds = projectId;
 		}
 
 		/*
@@ -446,12 +436,11 @@ export class StatisticService {
 	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
 		const {
-			employeeId,
 			organizationId,
-			projectId,
 			startDate,
 			endDate
 		} = request;
+		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -468,7 +457,6 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		let employeeIds = [];
 		if (
 			user.employeeId ||
 			!RequestContext.hasPermission(
@@ -480,16 +468,8 @@ export class StatisticService {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
 				tenantId,
-				employeeId
+				employeeIds
 			);
-		}
-
-		// convert projectId String to Array
-		let projectIds: string[] = [];
-		if (typeof projectId === 'string') {
-			projectIds.push(projectId);
-		} else {
-			projectIds = projectId;
 		}
 
 		const query = this.employeeRepository.createQueryBuilder();
@@ -772,12 +752,11 @@ export class StatisticService {
 	 */
 	async getProjects(request: IGetProjectsStatistics): Promise<IProjectsStatistics[]> {
 		const {
-			employeeId,
 			organizationId,
-			projectId,
 			startDate,
 			endDate
 		} = request;
+		let { employeeIds = [], projectIds = [] } = request;
 		
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -794,7 +773,6 @@ export class StatisticService {
 		/*
 		*  Get employees id of the organization or get current employee id
 		*/
-		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
@@ -807,16 +785,8 @@ export class StatisticService {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
 				tenantId,
-				employeeId
+				employeeIds
 			);
-		}
-		
-		// convert projectId String to Array
-		let projectIds: string[] = [];
-		if (typeof projectId === 'string') {
-			projectIds.push(projectId);
-		} else {
-			projectIds = projectId;
 		}
 
 		if (isNotEmpty(employeeIds)) {
@@ -930,12 +900,11 @@ export class StatisticService {
 	 */
 	async getTasks(request: IGetTasksStatistics) {
 		const {
-			employeeId,
 			organizationId,
-			projectId,
 			startDate,
 			endDate
 		} = request;
+		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -951,7 +920,6 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
@@ -963,16 +931,8 @@ export class StatisticService {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
 				tenantId,
-				employeeId
+				employeeIds
 			);
-		}
-
-		// convert projectId String to Array
-		let projectIds: string[] = [];
-		if (typeof projectId === 'string') {
-			projectIds.push(projectId);
-		} else {
-			projectIds = projectId;
 		}
 
 		if (employeeIds.length > 0) {
@@ -1085,12 +1045,11 @@ export class StatisticService {
 	 */
 	async manualTimes(request: IGetManualTimesStatistics): Promise<IManualTimesStatistics[]> {
 		const {
-			employeeId,
 			organizationId,
-			projectId,
 			startDate,
 			endDate
 		} = request;
+		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -1106,7 +1065,6 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
@@ -1118,16 +1076,8 @@ export class StatisticService {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
 				tenantId,
-				employeeId
+				employeeIds
 			);
-		}
-
-		// convert projectId String to Array
-		let projectIds: string[] = [];
-		if (typeof projectId === 'string') {
-			projectIds.push(projectId);
-		} else {
-			projectIds = projectId;
 		}
 
 		if (employeeIds.length > 0) {
@@ -1203,12 +1153,11 @@ export class StatisticService {
 	 */
 	async getActivities(request: IGetActivitiesStatistics): Promise<IActivitiesStatistics[]> {
 		const {
-			employeeId,
 			organizationId,
-			projectId,
 			startDate,
 			endDate
 		} = request;
+		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -1224,7 +1173,6 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
@@ -1236,19 +1184,11 @@ export class StatisticService {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
 				tenantId,
-				employeeId
+				employeeIds
 			);
 		}
 
-		// convert projectId String to Array
-		let projectIds: string[] = [];
-		if (typeof projectId === 'string') {
-			projectIds.push(projectId);
-		} else {
-			projectIds = projectId;
-		}
-
-		if (employeeIds.length > 0) {
+		if (isNotEmpty(employeeIds)) {
 			const query = this.activityRepository.createQueryBuilder();
 			query
 				.select(`COUNT("${query.alias}"."id")`, `sessions`)
@@ -1372,12 +1312,11 @@ export class StatisticService {
 	 */
 	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics): Promise<ITimeSlotStatistics[]> {
 		const {
-			employeeId,
 			organizationId,
-			projectId,
 			startDate,
 			endDate
 		} = request;
+		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -1394,7 +1333,6 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
@@ -1406,18 +1344,8 @@ export class StatisticService {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
 				tenantId,
-				employeeId
+				employeeIds
 			);
-		}
-
-		/**
-		 * GET project filter IDs
-		 */
-		let projectIds: string[] = [];
-		if (typeof projectId === 'string') {
-			projectIds.push(projectId);
-		} else {
-			projectIds = projectId;
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
@@ -1518,13 +1446,15 @@ export class StatisticService {
 	private async getEmployeesIds(
 		organizationId: string,
 		tenantId: string,
-		employeeId?: string
+		employeeIds?: string[]
 	) {
 		const query = this.employeeRepository.createQueryBuilder('employee');
 		query.select(['id']);
 
-		if (isNotEmpty(employeeId)) {
-			query.andWhere('"id" = :employeeId', { employeeId });
+		if (isNotEmpty(employeeIds)) {
+			query.andWhere(`"${query.alias}"."id" IN (:...employeeIds)`, {
+				employeeIds
+			});
 		} else {
 			query
 				.andWhere('"organizationId" = :organizationId', {

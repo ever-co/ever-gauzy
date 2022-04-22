@@ -178,7 +178,7 @@ export async function seedProjectMembersCount(
 			 */
 			const [ members ] = await connection.manager.query(`
 				SELECT 
-					COUNT("organization_project_employee"."employeeId") 
+					COUNT("organization_project_employee"."employeeId") AS count
 				FROM "organization_project_employee" 
 				INNER JOIN 
 					"employee" ON "employee"."id"="organization_project_employee"."employeeId"

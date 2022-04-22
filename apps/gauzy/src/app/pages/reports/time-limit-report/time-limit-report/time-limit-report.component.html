@@ -94,10 +94,10 @@
 </nb-card>
 
 <ng-template let-project #projectEl>
-	<ga-organization 
+	<ga-project-column-view 
 		*ngIf="project; else noProjects"
 		[project]="project"
-	></ga-organization>
+	></ga-project-column-view>
 	<ng-template #noProjects>
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 	</ng-template>
