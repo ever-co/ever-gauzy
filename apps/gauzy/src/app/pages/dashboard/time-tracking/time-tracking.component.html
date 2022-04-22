@@ -43,7 +43,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<ng-container *ngIf="!employeeId">
+				<ng-container *ngIf="!hideEmployeeBlock">
 					<ng-container
 						*ngxPermissionsOnly="
 							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -77,7 +77,7 @@
 						</div>
 					</ng-container>
 				</ng-container>
-				<ng-container *ngIf="!projectId">
+				<ng-container *ngIf="!hideProjectBlock">
 					<div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl">
 						<nb-card
 							[nbSpinner]="countsLoading"
