@@ -2,8 +2,7 @@
 :host {
   display: block;
   width: 550px;
-  nb-card-body,
-  nb-card-footer {
-    background-color: rgba(50, 50, 50, 0.03);
+  nb-card {
+    background-color: nb-theme(background-basic-color-1);
   }
 }

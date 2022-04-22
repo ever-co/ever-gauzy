@@ -1,10 +1,19 @@
-@import 'gauzy/_gauzy-cards';
+@import 'gauzy/_gauzy-table';
 
 :host {
   nb-tab {
     background-color: rgba(50, 50, 50, 0.03);
+    &.content-active {
+      padding: 1rem;
+    }
   }
   nb-card {
     background-color: nb-theme(gauzy-card-2);
   }
+}
+
+.gauzy-button-container {
+  position: absolute;
+  right: 1rem;
+  top: 0;
 }
