@@ -45,7 +45,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
 		direction: 'ltr',
-		firstDay: 1
+		firstDay: this.dayOfWeekAsString(WeekDaysEnum.MONDAY)
 	};
 	get locale(): LocaleConfig {
 		return this._locale;
@@ -184,6 +184,12 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 							...this.locale,
 							displayFormat: format,
 							format: format
+						}
+					}
+					if (organization.startWeekOn) {
+						this.locale = {
+							...this.locale,
+							firstDay: this.dayOfWeekAsString(organization.startWeekOn)
 						}
 					}
 				}),
