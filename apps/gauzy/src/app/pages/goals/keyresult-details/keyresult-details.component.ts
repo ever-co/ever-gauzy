@@ -37,7 +37,8 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class KeyResultDetailsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	src: string;
 	keyResult: IKeyResult;
 	updates: IKeyResultUpdate[];
@@ -94,7 +95,7 @@ export class KeyResultDetailsComponent
 			.getAllTimeFrames(findInput)
 			.then(async (res) => {
 				const timeFrame = res.items[0];
-				
+
 				if (timeFrame) {
 					this.startDate = new Date(timeFrame.startDate);
 					if (
@@ -112,7 +113,7 @@ export class KeyResultDetailsComponent
 							isPast(this.startDate);
 					}
 				}
-								
+
 				this.store.user$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((user) => {
@@ -198,11 +199,8 @@ export class KeyResultDetailsComponent
 			});
 			const taskResponse = await firstValueFrom(taskDialog.onClose);
 			if (!!taskResponse) {
-				const {
-					estimateDays,
-					estimateHours,
-					estimateMinutes
-				} = taskResponse;
+				const { estimateDays, estimateHours, estimateMinutes } =
+					taskResponse;
 				const estimate =
 					estimateDays * 24 * 60 * 60 +
 					estimateHours * 60 * 60 +
@@ -210,12 +208,13 @@ export class KeyResultDetailsComponent
 				estimate
 					? (taskResponse.estimate = estimate)
 					: (taskResponse.estimate = null);
-				this._store.editTask({
-					...taskResponse,
-					id: this.task.id
-				})
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe();
+				this._store
+					.editTask({
+						...taskResponse,
+						id: this.task.id
+					})
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe();
 				try {
 					this.keyResult.update =
 						taskResponse.status === TaskStatusEnum.COMPLETED
@@ -294,8 +293,8 @@ export class KeyResultDetailsComponent
 		}
 	}
 
-	closeDialog() {
-		this.dialogRef.close(this.keyResult);
+	closeDialog(isSaved: boolean) {
+		isSaved ? this.dialogRef.close(this.keyResult) : this.dialogRef.close();
 	}
 
 	ngOnDestroy() {

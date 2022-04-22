@@ -7,7 +7,7 @@
 	<nb-card-header>
 		<div class="d-flex flex-column">
 			<span class="cancel"
-				><i class="fas fa-times" (click)="closeDialog()"></i
+				><i class="fas fa-times" (click)="closeDialog(false)"></i
 			></span>
 			<h4 class="subtitle">{{ keyResult.name }}</h4>
 		</div>
@@ -200,7 +200,7 @@
 					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 				</button>
 			</div>
-			<button nbButton status="success" (click)="closeDialog()">
+			<button nbButton status="success" (click)="closeDialog(true)">
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>
