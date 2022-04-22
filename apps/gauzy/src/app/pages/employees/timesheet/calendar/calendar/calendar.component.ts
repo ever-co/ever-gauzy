@@ -19,8 +19,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-import { combineLatest, Observable, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
 import {
 	IGetTimeLogInput,
 	IOrganization,
@@ -28,7 +28,8 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { toUTC, toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
+import { toUTC, toLocal, isEmpty } from '@gauzy/common-angular';
+import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import {
 	EditTimeLogModalComponent,
@@ -38,14 +39,16 @@ import {
 } from './../../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { dayOfWeekAsString } from './../../../../../@theme/components/header/selectors/date-range-picker';
+import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { pick } from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-calendar-timesheet',
 	templateUrl: './calendar.component.html'
 })
-export class CalendarComponent implements 
-	OnInit, AfterViewInit, OnDestroy {
+export class CalendarComponent extends BaseSelectorFilterComponent 
+	implements OnInit, AfterViewInit, OnDestroy {
 
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	@ViewChild('viewLogTemplate', { static: true }) viewLogTemplate: TemplateRef<any>;
@@ -61,19 +64,21 @@ export class CalendarComponent implements
 	employeeId: string;
 	loading: boolean;
 	futureDateAllowed: boolean;
-	logRequest: ITimeLogFilters = {};
+	logRequest: ITimeLogFilters = this.request;
 	selectedEmployeeId: string | null = null;
 	projectId: string | null = null;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
-		private readonly store: Store,
+		protected readonly store: Store,
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly cdr: ChangeDetectorRef,
-		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		public readonly translateService: TranslateService
 	) {
+		super(store, translateService);
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {
@@ -106,29 +111,6 @@ export class CalendarComponent implements
 	}
 
 	ngOnInit() {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				debounceTime(200),
-				distinctUntilChange(),
-				filter(([organization]) => !!organization),
-				tap(([organization]) => {
-					this.organization = organization;
-					this.futureDateAllowed = organization.futureDateAllowed;
-					this.calendar.getApi().setOption('firstDay', dayOfWeekAsString(organization.startWeekOn));
-				}),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.selectedEmployeeId = employee ? employee.id : null;
-						this.projectId = project ? project.id : null;
-						this.subject$.next(true);
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.ngxPermissionsService.permissions$
 			.pipe(
 				untilDestroyed(this)
@@ -174,25 +156,27 @@ export class CalendarComponent implements
 		this.cdr.detectChanges();
 		this.subject$
 			.pipe(
-				debounceTime(800),
+				debounceTime(500),
+				tap(() => {
+					this.futureDateAllowed = this.organization.futureDateAllowed;
+					this.calendar.getApi().setOption('firstDay', dayOfWeekAsString(this.organization.startWeekOn));
+				}),
+				tap(() => {
+					if (this.calendar.getApi()) {
+						this.calendar.getApi().refetchEvents();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				if (this.calendar.getApi()) {
-					this.calendar.getApi().refetchEvents();
-				}
-			});
+			.subscribe();
 	}
 
 	getEvents(arg: any, callback) {
 		if (!this.organization || isEmpty(this.logRequest)) {
 			return null;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
 		const startDate = moment(arg.start).startOf('day').format('YYYY-MM-DD HH:mm:ss');
-		const endDate = moment(arg.end).endOf('day').format('YYYY-MM-DD HH:mm:ss');
+		const endDate = moment(arg.end).subtract(1, 'days').endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
 		const appliedFilter = _.pick(
 			this.logRequest,
@@ -200,25 +184,12 @@ export class CalendarComponent implements
 			'activityLevel',
 			'logType'
 		);
-
-		const employeeIds: string[] = [];
-		if (this.selectedEmployeeId) {
-			employeeIds.push(this.selectedEmployeeId);
-		}
-
-		const projectIds: string[] = [];
-		if (this.projectId) {
-			projectIds.push(this.projectId);
-		}
-
 		const request: IGetTimeLogInput = {
-			organizationId,
-			tenantId,
 			...appliedFilter,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeIds.length > 0 ? { employeeIds } : {}),
-			...(projectIds.length > 0 ? { projectIds } : {})
+			...this.getFilterRequest({
+				startDate,
+				endDate
+			})
 		};
 
 		this.loading = true;
