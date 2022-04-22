@@ -3,11 +3,11 @@ import { IOrganizationProject } from "@gauzy/contracts";
 import { DEFAULT_SVG } from "../../../@core/constants";
 
 @Component({
-	selector: 'ga-organization',
-	templateUrl: './organization.component.html',
-	styleUrls: ['./organization.component.scss']
+	selector: 'ga-project-column-view',
+	templateUrl: './project-column-view.component.html',
+	styleUrls: ['./project-column-view.component.scss']
 })
-export class OrganizationComponent {
+export class ProjectColumnViewComponent {
 
 	fallbackSvg = DEFAULT_SVG;
 

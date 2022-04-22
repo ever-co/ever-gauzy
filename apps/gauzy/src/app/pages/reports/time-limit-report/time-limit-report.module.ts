@@ -17,7 +17,7 @@ import { SharedModule } from '../../../@shared/shared.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
-import { OrganizationModule } from "../../../@shared/report/organization/organization.module";
+import { ProjectColumnViewModule } from "../../../@shared/report/project-column-view/project-column-view.module";
 
 @NgModule({
 	declarations: [TimeLimitReportComponent],
@@ -36,7 +36,7 @@ import { OrganizationModule } from "../../../@shared/report/organization/organiz
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		GauzyFiltersModule,
-		OrganizationModule,
+		ProjectColumnViewModule,
 	],
 })
 export class TimeLimitReportModule {}

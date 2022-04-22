@@ -12,7 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { ProgressStatusModule } from '../../progress-status/progress-status.module';
-import { OrganizationModule } from "../organization/organization.module";
+import { ProjectColumnViewModule } from "../project-column-view/project-column-view.module";
 
 @NgModule({
 	declarations: [ActivitiesReportGridComponent],
@@ -28,7 +28,7 @@ import { OrganizationModule } from "../organization/organization.module";
 		NbSelectModule,
 		FormsModule,
 		ProgressStatusModule,
-		OrganizationModule,
+		ProjectColumnViewModule,
 	],
 })
 export class ActivitiesReportGridModule {}
