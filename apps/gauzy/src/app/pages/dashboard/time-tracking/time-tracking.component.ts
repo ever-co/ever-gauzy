@@ -79,8 +79,8 @@ export class TimeTrackingComponent
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly RangePeriod = RangePeriod;
 
-	employeeId: string = null;
-	projectId: string = null;
+	employeeIds: string[] = [];
+	projectIds: string[] = [];
 	tenantId: string = null;
 	organizationId: string = null;
 
@@ -153,15 +153,15 @@ export class TimeTrackingComponent
 
 		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$])
 			.pipe(
-				debounceTime(500),
 				distinctUntilChange(),
+				debounceTime(500),
 				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee, project]) => {
 					this.organization = organization;
 					
 					this.organizationId = organization.id;
-					this.employeeId = employee ? employee.id : null;
-					this.projectId = project ? project.id : null;
+					this.employeeIds = employee ? [employee.id] : [];
+					this.projectIds = project ? [project.id] : [];
 					this.selectedDateRange = dateRange;
 					
 					this.logs$.next(true);
@@ -212,23 +212,24 @@ export class TimeTrackingComponent
 		const {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
+			employeeIds,
+			projectIds,
 			selectedDateRange
 		} = this;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const timeSlotRequest: IGetTimeSlotStatistics = {
+		const request: IGetTimeSlotStatistics = {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 
+		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
+		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+
 		this.timeSlotLoading = true;
 		this.timesheetStatisticsService
-			.getTimeSlots(timeSlotRequest)
+			.getTimeSlots(request)
 			.then((resp) => {
 				this.timeSlotEmployees = resp;
 			})
@@ -245,19 +246,21 @@ export class TimeTrackingComponent
 		const {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
+			employeeIds,
+			projectIds,
 			selectedDateRange
 		} = this;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const request: IGetCountsStatistics = {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
+
+		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
+		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+
 		this.countsLoading = true;
 		this.timesheetStatisticsService
 			.getCounts(request)
@@ -273,22 +276,24 @@ export class TimeTrackingComponent
 		const {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
+			employeeIds,
+			projectIds,
 			selectedDateRange
 		} = this;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const activityRequest: IGetActivitiesStatistics = {
+		const request: IGetActivitiesStatistics = {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
+
+		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
+		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+
 		this.activitiesLoading = true;
 		this.timesheetStatisticsService
-			.getActivities(activityRequest)
+			.getActivities(request)
 			.then((resp) => {
 				const sum = reduce(
 					resp,
@@ -311,22 +316,24 @@ export class TimeTrackingComponent
 		const {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
+			employeeIds,
+			projectIds,
 			selectedDateRange
 		} = this;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const projectRequest: IGetProjectsStatistics = {
+		const request: IGetProjectsStatistics = {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
+
+		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
+		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+
 		this.projectsLoading = true;
 		this.timesheetStatisticsService
-			.getProjects(projectRequest)
+			.getProjects(request)
 			.then((resp) => {
 				this.projects = resp;
 			})
@@ -339,22 +346,24 @@ export class TimeTrackingComponent
 		const {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
+			employeeIds,
+			projectIds,
 			selectedDateRange
 		} = this;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const taskRequest: IGetTasksStatistics = {
+		const request: IGetTasksStatistics = {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
+
+		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
+		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+
 		this.tasksLoading = true;
 		this.timesheetStatisticsService
-			.getTasks(taskRequest)
+			.getTasks(request)
 			.then((resp) => {
 				this.tasks = resp;
 			})
@@ -367,19 +376,21 @@ export class TimeTrackingComponent
 		const {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
+			employeeIds,
+			projectIds,
 			selectedDateRange
 		} = this;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 		const request: IGetManualTimesStatistics = {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
+
+		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
+		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+
 		this.manualTimeLoading = true;
 		this.timesheetStatisticsService
 			.getManualTimes(request)
@@ -400,22 +411,26 @@ export class TimeTrackingComponent
 		const {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
+			employeeIds,
+			projectIds,
 			selectedDateRange
 		} = this;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
-		const memberRequest: IGetMembersStatistics = {
+		const request: IGetMembersStatistics = {
 			tenantId,
 			organizationId,
-			employeeId,
-			projectId,
+			employeeIds,
+			projectIds,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
+
+		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
+		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+
 		this.memberLoading = true;
 		this.timesheetStatisticsService
-			.getMembers(memberRequest)
+			.getMembers(request)
 			.then((resp: any) => {
 				this.members = resp.map((member) => {
 					const week: any = indexBy(member.weekHours, 'day');
@@ -628,5 +643,19 @@ export class TimeTrackingComponent
 			organizationId,
 			tenantId
 		});
+	}
+
+	/**
+	 * Hide Project Worked Block, If project selected from header
+	 */
+	get hideProjectBlock() {
+		return this.projectIds.filter(Boolean).length;
+	}
+
+	/**
+	 * Hide Employee Worked Block, If employee selected from header
+	 */
+	get hideEmployeeBlock() {
+		return this.employeeIds.filter(Boolean).length;
 	}
 }
