@@ -25,6 +25,7 @@ import { CKEditorModule } from 'ng2-ckeditor';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { NbTabsetModule } from '@nebular/theme';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationModule } from '../../../@shared/pagination/pagination.module';
 
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
@@ -51,7 +52,8 @@ import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/ga
 		CKEditorModule,
 		HeaderTitleModule,
 		NbTabsetModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		PaginationModule
 	]
 })
 export class ProposalTemplateModule {}
