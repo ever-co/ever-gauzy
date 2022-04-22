@@ -5,7 +5,9 @@ import {
 } from '@gauzy/contracts';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ChartComponent } from 'angular2-chartjs';
+import { ChartComponent, ChartModule } from 'angular2-chartjs';
+import { ChartUtil } from "./chart-utils";
+import { Chart, LineController } from "chart.js";
 
 export interface IChartData {
 	labels?: any[];
@@ -14,6 +16,11 @@ export interface IChartData {
 		backgroundColor?: string;
 		borderColor?: string;
 		borderWidth?: number;
+		pointRadius?: number;
+		pointHoverRadius?: number;
+		pointBorderWidth?: number;
+		pointHoverBorderWidth?: number;
+		pointBorderColor?: string;
 		data?: any[];
 	}[];
 }
@@ -31,6 +38,8 @@ export class LineChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	selectedDate: Date;
 	noData = false;
+	chartUpdated = false;
+
 
 	logRequest: ITimeLogFilters = {};
 
@@ -109,23 +118,53 @@ export class LineChartComponent implements OnInit, OnDestroy {
 							fontColor: chartJs.textColor,
 						}
 					},
-					tooltips: this.selectedDate
-						? {
-								enabled: true,
-								mode: 'dataset',
-								callbacks: {
-									label: function (tooltipItem, data) {
-										const label =
-											data.datasets[
-												tooltipItem.datasetIndex
-											].label || '';
-										return label;
-									}
-								}
-						  }
-						: {
-								enabled: true
-						  }
+					hover: {
+						mode: 'point',
+						intersect: false,
+					},
+					onHover: (evt, activeElements) => {
+						if (!activeElements || !activeElements.length) {
+							this.data.datasets.forEach(x => {
+								x.borderWidth = 1
+								x.pointRadius = 2
+								x.pointBorderWidth = 1
+								x.pointBorderColor = x.borderColor
+								x.backgroundColor = ChartUtil.transparentize(x.backgroundColor, 1)
+								evt.target.style.cursor = 'default'
+							})
+							if (!this.chartUpdated) {
+								this.chart.chart.update()
+								this.chartUpdated = true
+							}
+						} else {
+							this.chartUpdated = false
+							evt.target.style.cursor = 'pointer'
+							const datasetIndex = activeElements[0]._datasetIndex
+							const activeDataset = this.data.datasets[datasetIndex]
+
+							activeDataset.borderWidth = 8
+							activeDataset.pointRadius = 7
+							activeDataset.pointBorderWidth = 6
+							activeDataset.pointBorderColor = 'rgb(255, 255, 255)'
+							activeDataset.backgroundColor = ChartUtil.transparentize(activeDataset.backgroundColor, 0.90)
+							this.chart.chart.update()
+						}
+					},
+					tooltips: this.selectedDate ? {
+						enabled: true,
+						mode: 'point',
+						intersect: false,
+						callbacks: {
+							label: function (tooltipItem, data) {
+								const label =
+									data.datasets[
+										tooltipItem.datasetIndex
+										].label || '';
+								return label;
+							}
+						}
+					} : { enabled: true },
+					plugins: {}
 				};
 				if (this.chart && this.chart.chart) {
 					this.chart.chart.update();
