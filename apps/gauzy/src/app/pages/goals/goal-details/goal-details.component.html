@@ -63,12 +63,16 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="p-0">
+	<nb-card-body class="p-0 card-body-content">
 		<nb-tabset>
 			<nb-tab tabTitle="{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}">
-				<nb-alert accent="warning" *ngIf="goal.keyResults.length == 0">
+				<div
+					class="card-key-result"
+					å
+					*ngIf="goal.keyResults.length == 0"
+				>
 					{{ 'GOALS_PAGE.MESSAGE.NO_KEY_RESULT' | translate }}
-				</nb-alert>
+				</div>
 				<ng-container
 					*ngFor="let keyResult of goal.keyResults; let i = index"
 				>
@@ -123,9 +127,9 @@
 				</ng-container>
 			</nb-tab>
 			<nb-tab tabTitle="{{ 'GOALS_PAGE.UPDATES' | translate }}">
-				<nb-alert accent="warning" *ngIf="updates.length == 0">
+				<div class="card-key-result" *ngIf="updates.length == 0">
 					{{ 'GOALS_PAGE.MESSAGE.NO_UPDATES' | translate }}
-				</nb-alert>
+				</div>
 				<div *ngIf="updates.length > 0">
 					<nb-card class="custom-card" *ngFor="let update of updates">
 						<nb-card-header class="custom-header">
@@ -264,14 +268,23 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<nb-card>
-			<nb-card-header>
-				<div class="main-header">
-					<h6>{{ 'GOALS_PAGE.COMMENTS' | translate }}</h6>
-					<button nbButton status="primary">
-						{{ 'BUTTONS.ADD_NEW' | translate }}
+			<nb-card-body class="p-0 row">
+				<div class="col-9">
+					<label class="smallText">
+						{{ 'GOALS_PAGE.COMMENTS' | translate }}
+					</label>
+					<textarea
+						nbInput
+						fullWidth
+						placeholder="Add Comment"
+					></textarea>
+				</div>
+				<div class="col-3 btn-comment">
+					<button nbButton status="info">
+						{{ 'BUTTONS.ADD_COMMENT' | translate }}
 					</button>
 				</div>
-			</nb-card-header>
+			</nb-card-body>
 		</nb-card>
 	</nb-card-footer>
 </nb-card>

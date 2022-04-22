@@ -52,4 +52,11 @@
     border-radius: nb-theme(button-rectangle-border-radius);
     margin-bottom: 4px;
   }
+  nb-tab {
+    height: 20rem;
+  }
+}
+
+.btn-comment {
+  align-self: flex-end;
 }
