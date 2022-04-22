@@ -1,4 +1,9 @@
+@import 'gauzy/_gauzy-dialogs';
 :host {
   display: block;
   width: 550px;
+  nb-card-body,
+  nb-card-footer {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
 }
