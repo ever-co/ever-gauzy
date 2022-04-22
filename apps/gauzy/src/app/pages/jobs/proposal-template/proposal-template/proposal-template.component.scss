@@ -1,0 +1,10 @@
+@import 'gauzy/_gauzy-cards';
+
+:host {
+  nb-tab {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  nb-card {
+    background-color: nb-theme(gauzy-card-2);
+  }
+}

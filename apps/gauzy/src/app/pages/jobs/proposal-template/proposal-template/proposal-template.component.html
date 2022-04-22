@@ -14,30 +14,19 @@
 			</h4>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="mb-3">
-			<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
-				<button
-					nbButton
-					status="success"
-					(click)="createProposal()"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</ng-template>
-			<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-		</div>
-		<div class="table-scroll-container">
-			<ng2-smart-table
-				style="cursor: pointer"
-				[settings]="smartTableSettings"
-				[source]="smartTableSource"
-				(userRowSelect)="selectItem($event)"
-				#proposalTemplateTable
-			></ng2-smart-table>
-		</div>		
+	<nb-card-body class="p-0">
+		<nb-tabset>
+			<nb-tab tabTitle="Browse">
+				<ng-container>
+					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
+				</ng-container>
+			</nb-tab>
+			<nb-tab tabTitle="Search">
+				<ng-container>
+					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
+				</ng-container>
+			</nb-tab>
+		</nb-tabset>
 	</nb-card-body>
 </nb-card>
 
@@ -83,4 +72,28 @@
 		<!-- <nb-icon class="mr-1" icon="edit-outline"></nb-icon> -->
 		{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
 	</button>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
+		<button
+			nbButton
+			status="success"
+			(click)="createProposal()"
+			class="mr-2"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
+</ng-template>
+<ng-template #tableLayout>
+	<div class="table-scroll-container">
+		<ng2-smart-table
+			style="cursor: pointer"
+			[settings]="smartTableSettings"
+			[source]="smartTableSource"
+			(userRowSelect)="selectItem($event)"
+			#proposalTemplateTable
+		></ng2-smart-table>
+	</div>
 </ng-template>
