@@ -19,7 +19,10 @@ import { ProposalTemplateService } from '../proposal-template.service';
 import { API_PREFIX } from './../../../../@core/constants';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 import { HttpClient } from '@angular/common/http';
-import { PaginationFilterBaseComponent, IPaginationBase } from '../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -68,7 +71,6 @@ export class ProposalTemplateComponent
 		this._loadSmartTableSettings();
 		this.subject$
 			.pipe(
-				tap(() => (this.loading = true)),
 				debounceTime(300),
 				tap(() => this.clearItem()),
 				tap(() => this.getProposalTemplates()),
@@ -118,6 +120,7 @@ export class ProposalTemplateComponent
 	 * Register Smart Table Source Config
 	 */
 	setSmartTableSource() {
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -147,11 +150,6 @@ export class ProposalTemplateComponent
 			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			await this.smartTableSource.getElements();
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -163,14 +161,14 @@ export class ProposalTemplateComponent
 	}
 
 	_loadSmartTableSettings() {
-    const pagination: IPaginationBase = this.getPagination();
+		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			editable: false,
 			actions: false,
 			hideSubHeader: true,
 			pager: {
 				display: false,
-        perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				employeeId: {
