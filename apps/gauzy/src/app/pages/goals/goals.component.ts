@@ -27,6 +27,7 @@ import { GoalSettingsService } from '../../@core/services/goal-settings.service'
 import { GoalTemplateSelectComponent } from '../../@shared/goal/goal-template-select/goal-template-select.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -586,6 +587,28 @@ export class GoalsComponent
 		this.selectedGoal.isSelected = this.selectedKeyResult.isSelected
 			? false
 			: true;
+	}
+
+	async deleteKeyResult() {
+		const dialog = this.dialogService.open(AlertModalComponent, {
+			context: {
+				alertOptions: {
+					title: this.getTranslation('GOALS_PAGE.DELETE_KEY_RESULT'),
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
+					status: 'danger'
+				}
+			},
+			closeOnBackdropClick: false
+		});
+		const response = await firstValueFrom(dialog.onClose);
+		if (!!response) {
+			if (response === 'yes') {
+				await this.keyResultService
+					.delete(this.selectedKeyResult.data.id)
+					.then(() => this.loadPage())
+					.catch((error) => console.log(error));
+			}
+		}
 	}
 
 	ngOnDestroy() {}
