@@ -397,8 +397,8 @@ export class GoalsComponent
 		}
 	}
 
-	async createObjective() {
-		const goal = this.selectedGoal.data;
+	async createObjective(isAdd?: boolean) {
+		const goal = isAdd ? null : this.selectedGoal.data;
 		if (
 			!goal &&
 			this.goalGeneralSettings &&
