@@ -26,7 +26,8 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class KeyResultProgressChartComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit
+{
 	data: any;
 	options: any;
 	loading = true;
@@ -88,6 +89,13 @@ export class KeyResultProgressChartComponent
 					const progressParts = labels.length;
 					this.calculateData(labels, keyResult);
 					this.options = {
+						legend: {
+							position: 'bottom',
+							align: 'start',
+              labels:{
+                textAlign:'center'
+              }
+						},
 						responsive: true,
 						maintainAspectRatio: false,
 						scales: {
@@ -139,7 +147,7 @@ export class KeyResultProgressChartComponent
 							: keyResult.targetValue,
 						labelsData
 					),
-					borderWidth: 2,
+					borderWidth: 4,
 					borderColor: 'rgb(76, 23, 33,0.25)',
 					borderDash: [10, 5],
 					fill: false
@@ -147,7 +155,7 @@ export class KeyResultProgressChartComponent
 				{
 					label: this.getTranslation('GOALS_PAGE.PROGRESS'),
 					data: this.progressData(keyResult, labelsData),
-					borderWidth: 3,
+					borderWidth: 4,
 					borderColor: '#00d68f',
 					fill: false
 				}

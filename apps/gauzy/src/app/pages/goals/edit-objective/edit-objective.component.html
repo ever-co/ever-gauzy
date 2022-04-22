@@ -1,16 +1,16 @@
-<nb-card size="large" class="max-width-50vw">
-	<nb-card-header>
-		{{
-			(!!data
-				? 'GOALS_PAGE.EDIT_OBJECTIVE'
-				: 'GOALS_PAGE.ADD_NEW_OBJECTIVE'
-			) | translate
-		}}
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
+<nb-card class="max-width-50vw">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<h4 class="title">
+			{{
+				(!!data
+					? 'GOALS_PAGE.EDIT_OBJECTIVE'
+					: 'GOALS_PAGE.ADD_NEW_OBJECTIVE'
+				) | translate
+			}}
+		</h4>
 	</nb-card-header>
 
 	<nb-card-body>
@@ -30,19 +30,26 @@
 						nbInput
 						fullWidth
 						formControlName="name"
-						[placeholder]="'GOALS_PAGE.FORM.PLACEHOLDERS.NAME' | translate"
+						[placeholder]="
+							'GOALS_PAGE.FORM.PLACEHOLDERS.NAME' | translate
+						"
 					/>
 				</div>
 				<div class="mt-3 col-md-5 position-relative helper-text">
 					<p
 						*ngIf="helperText == ''"
 						class="mt-3 position-absolute"
-						[innerHtml]="'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_GENERAL' | translate"
+						[innerHtml]="
+							'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_GENERAL'
+								| translate
+						"
 					></p>
 					<div
 						*ngIf="helperText == 'objective-title'"
 						class="mt-3 position-absolute"
-						[innerHtml]="'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_TITLE' | translate"
+						[innerHtml]="
+							'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_TITLE' | translate
+						"
 					></div>
 				</div>
 			</div>
@@ -61,7 +68,10 @@
 						nbInput
 						fullWidth
 						formControlName="description"
-						[placeholder]="'GOALS_PAGE.FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+						[placeholder]="
+							'GOALS_PAGE.FORM.PLACEHOLDERS.DESCRIPTION'
+								| translate
+						"
 					></textarea>
 				</div>
 				<div class="col-md-5 mt-3 position-relative helper-text">
@@ -147,8 +157,8 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button class="mr-3" nbButton (click)="closeDialog()">
+	<nb-card-footer class="text-left">
+		<button class="mr-3" nbButton outline status="basic" (click)="closeDialog()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
@@ -156,8 +166,7 @@
 			[disabled]="
 				form.invalid || hideOrg
 					? true
-					: this.form.value.level ===
-					  goalLevelEnum.ORGANIZATION
+					: this.form.value.level === goalLevelEnum.ORGANIZATION
 					? false
 					: true
 			"

@@ -1,31 +1,35 @@
-<nb-card  class="min-width-60vw card-scroll">
+<nb-card class="min-width-60vw card-scroll">
 	<nb-card-header>
-		<div class="main-header">
-			<h4>{{ goal.name }}</h4>
-			<nb-icon
-				class="ml-auto mt-1 close"
-				icon="close-outline"
-				(click)="closeDialog()"
-			></nb-icon>
+		<div class="d-flex flex-column">
+			<span class="cancel"
+				><i class="fas fa-times" (click)="closeDialog(false)"></i
+			></span>
+			<h4 class="subtitle">{{ goal.name }}</h4>
 		</div>
-		<div class="row mt-3">
-			<ngx-avatar class="ml-3" size="sm" [src]="src" [name]="ownerName">
+		<div class="row mt-3 d-flex align-items-center">
+			<ngx-avatar class="ml-3" [src]="src" [name]="ownerName">
 			</ngx-avatar>
-			<span class="ml-3 mt-1"
+			<span class="smallText ml-3 mt-1"
 				>{{ 'GOALS_PAGE.SESSION' | translate }}:
 				{{ goal.deadline }}</span
 			>
-			<span class="ml-5 mt-1"
-				><button
-					class="float-right"
-					status="danger"
-					nbButton
-					size="tiny"
-					(click)="deleteGoal()"
-				>
-					{{ 'BUTTONS.DELETE' | translate }}
-				</button></span
-			>
+			<span class="ml-5 mt-1">
+				<div class="button-container">
+					<button
+						status="basic"
+						nbButton
+						size="tiny"
+						class="action"
+						(click)="deleteGoal()"
+						[nbTooltip]="'BUTTONS.DELETE' | translate"
+					>
+						<nb-icon
+							status="danger"
+							icon="trash-2-outline"
+						></nb-icon>
+					</button>
+				</div>
+			</span>
 		</div>
 		<div class="row mt-3">
 			<p class="ml-3">
@@ -36,9 +40,12 @@
 				}}
 			</p>
 		</div>
-		<div class="row mt-3 text-center">
-			<p class="ml-3">{{ 'GOALS_PAGE.PROGRESS' | translate }}</p>
-			<div class="col-md-8">
+		<div class="row mt-3 align-items-center">
+			<div class="col-md-12 d-flex align-items-center">
+				<span class="mr-3 smallText">{{
+					'GOALS_PAGE.PROGRESS' | translate
+				}}</span>
+				<span>{{ goal.progress }}%</span>
 				<nb-progress-bar
 					class="ml-3"
 					nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
@@ -51,28 +58,35 @@
 							: 'success'
 					"
 					size="small"
-					>{{ goal.progress }}%
+				>
 				</nb-progress-bar>
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<nb-tabset fullWidth>
+	<nb-card-body class="p-0 card-body-content">
+		<nb-tabset>
 			<nb-tab tabTitle="{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}">
-				<nb-alert accent="warning" *ngIf="goal.keyResults.length == 0">
+				<div
+					class="card-key-result"
+					å
+					*ngIf="goal.keyResults.length == 0"
+				>
 					{{ 'GOALS_PAGE.MESSAGE.NO_KEY_RESULT' | translate }}
-				</nb-alert>
-				<nb-card
+				</div>
+				<ng-container
 					*ngFor="let keyResult of goal.keyResults; let i = index"
 				>
-					<nb-card-header>
-						<div class="row">
-							<div class="col-md-8">
-								<span class="p-1 flex-fill">{{
-									keyResult.name
-								}}</span>
-							</div>
-							<div class="col-md-2">
+					<div class="card-key-result">
+						<div
+							class="w-100 d-flex align-items-center justify-content-between keyResult"
+						>
+							<span class="p-1 smallText flex-fill">{{
+								keyResult.name
+							}}</span>
+							<div class="w-25 d-flex align-items-center">
+								<span class="mr-1"
+									>{{ keyResult.progress }}%</span
+								>
 								<nb-progress-bar
 									nbTooltip="{{
 										'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
@@ -93,10 +107,9 @@
 									"
 									[value]="keyResult.progress"
 									size="tiny"
-									>{{ keyResult.progress }}%</nb-progress-bar
-								>
+								></nb-progress-bar>
 							</div>
-							<div class="col-md-2">
+							<div class="border ml-1">
 								<nb-actions>
 									<nb-action
 										nbTooltip="{{
@@ -105,60 +118,73 @@
 										}}"
 										(click)="keyResultDetails(i, keyResult)"
 										icon="eye"
+										size="tiny"
 									></nb-action>
 								</nb-actions>
 							</div>
 						</div>
-					</nb-card-header>
-				</nb-card>
+					</div>
+				</ng-container>
 			</nb-tab>
 			<nb-tab tabTitle="{{ 'GOALS_PAGE.UPDATES' | translate }}">
-				<nb-alert accent="warning" *ngIf="updates.length == 0">
+				<div class="card-key-result" *ngIf="updates.length == 0">
 					{{ 'GOALS_PAGE.MESSAGE.NO_UPDATES' | translate }}
-				</nb-alert>
+				</div>
 				<div *ngIf="updates.length > 0">
-					<nb-card *ngFor="let update of updates">
-						<nb-card-header>
-							<div class="main-header">
-								<ngx-avatar
-									class="ml-2"
-									size="sm"
-									[src]="src"
-									[name]="ownerName"
-								>
+					<nb-card class="custom-card" *ngFor="let update of updates">
+						<nb-card-header class="custom-header">
+							<div
+								class="d-flex align-items-center justify-content-between"
+							>
+								<ngx-avatar [src]="src" [name]="ownerName">
 								</ngx-avatar>
-								<p>{{ update.createdAt | date }}</p>
+								<span class="smallText">{{
+									update.createdAt | date
+								}}</span>
 							</div>
 						</nb-card-header>
-						<nb-card-footer>
-							<div class="main-header p-3">
-								<p class="font-weight-bold">
+						<nb-card-footer class="custom-footer pt-2">
+							<div
+								class="d-flex align-items-center justify-content-between"
+							>
+								<span>
 									{{ 'GOALS_PAGE.UPDATE' | translate }}:
-									{{ update.update }}
-								</p>
-								<p class="font-weight-bold">
+									<span class="font-weight-bold">{{
+										update.update
+									}}</span>
+								</span>
+								<span>
 									{{ update.status }}
-								</p>
-								<p class="font-weight-bold">
-									{{ 'GOALS_PAGE.PROGRESS' | translate }}:
-									{{ update.progress }}%
-								</p>
+								</span>
+								<span>
+									{{ 'GOALS_PAGE.PROGRESS' | translate }} :
+									<span class="font-weight-bold"
+										>{{ update.progress }}%</span
+									>
+								</span>
 							</div>
 						</nb-card-footer>
 					</nb-card>
 				</div>
 			</nb-tab>
 			<nb-tab tabTitle="Alignments">
-				<nb-alert accent="warning" *ngIf="!goal.alignedKeyResult">
+				<div class="card-key-result" *ngIf="!goal.alignedKeyResult">
 					{{ 'GOALS_PAGE.MESSAGE.NO_ALIGNMENT' | translate }}
-				</nb-alert>
+				</div>
 				<nb-card *ngIf="!!goal.alignedKeyResult">
-					<nb-card-header class="row"
-						><span class="col-md-8">{{
-							goal.alignedKeyResult.goal.name
-						}}</span
-						><span class="col-md-4"
-							><nb-progress-bar
+					<nb-card-header
+						class="w-100 d-flex align-items-center justify-content-between"
+					>
+						<span class="smallText"
+							>{{ goal.alignedKeyResult.goal.name }}
+						</span>
+						<span class="w-25 d-flex align-items-center">
+							<span
+								>{{
+									goal.alignedKeyResult.goal.progress
+								}}%</span
+							>
+							<nb-progress-bar
 								class="mt-1"
 								[status]="
 									goal.alignedKeyResult.goal.progress < 50
@@ -169,12 +195,8 @@
 								"
 								[value]="goal.alignedKeyResult.goal.progress"
 								size="tiny"
-								>{{
-									goal.alignedKeyResult.goal.progress
-								}}%</nb-progress-bar
-							></span
-						></nb-card-header
-					>
+							></nb-progress-bar></span
+					></nb-card-header>
 					<nb-card-body>
 						<nb-card class="ml-2">
 							<nb-card-header class="row"
@@ -246,14 +268,23 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<nb-card>
-			<nb-card-header>
-				<div class="main-header">
-					<h6>{{ 'GOALS_PAGE.COMMENTS' | translate }}</h6>
-					<button nbButton status="primary">
-						{{ 'BUTTONS.ADD_NEW' | translate }}
+			<nb-card-body class="p-0 row">
+				<div class="col-9">
+					<label class="smallText">
+						{{ 'GOALS_PAGE.COMMENTS' | translate }}
+					</label>
+					<textarea
+						nbInput
+						fullWidth
+						placeholder="Add Comment"
+					></textarea>
+				</div>
+				<div class="col-3 btn-comment">
+					<button nbButton status="info">
+						{{ 'BUTTONS.ADD_COMMENT' | translate }}
 					</button>
 				</div>
-			</nb-card-header>
+			</nb-card-body>
 		</nb-card>
 	</nb-card-footer>
 </nb-card>

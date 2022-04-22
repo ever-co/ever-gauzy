@@ -19,7 +19,8 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class GoalDetailsComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit
+{
 	goal: IGoal;
 	src: string;
 	ownerName: string;
@@ -143,7 +144,7 @@ export class GoalDetailsComponent
 		return Math.round(progressTotal / weightTotal);
 	}
 
-	closeDialog() {
-		this.dialogRef.close(this.goal);
+	closeDialog(isSaved: boolean) {
+		isSaved ? this.dialogRef.close(this.goal) : this.dialogRef.close();
 	}
 }
