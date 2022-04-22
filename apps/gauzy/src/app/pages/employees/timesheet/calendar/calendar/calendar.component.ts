@@ -18,7 +18,7 @@ import bootstrapPlugin from '@fullcalendar/bootstrap';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import * as moment from 'moment';
-import * as _ from 'underscore';
+import { pick } from 'underscore';
 import { Observable, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 import {
@@ -28,7 +28,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { toUTC, toLocal, isEmpty } from '@gauzy/common-angular';
+import { toLocal, isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import {
@@ -40,7 +40,6 @@ import {
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { dayOfWeekAsString } from './../../../../../@theme/components/header/selectors/date-range-picker';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { pick } from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -178,7 +177,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		const startDate = moment(arg.start).startOf('day').format('YYYY-MM-DD HH:mm:ss');
 		const endDate = moment(arg.end).subtract(1, 'days').endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
-		const appliedFilter = _.pick(
+		const appliedFilter = pick(
 			this.logRequest,
 			'source',
 			'activityLevel',
