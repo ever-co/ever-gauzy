@@ -1,5 +1,6 @@
 @import 'gauzy/_gauzy-table';
 @import '../../search/search/search.component.scss';
+@import 'gauzy/_gauzy-cards';
 
 :host {
   nb-tab {
@@ -11,6 +12,11 @@
   nb-card {
     background-color: nb-theme(gauzy-card-2);
   }
+  @include nb-card-overrides(
+    unset,
+    calc($default-card-height + 3.5rem),
+    $default-radius
+  );
 }
 
 .gauzy-button-container {
