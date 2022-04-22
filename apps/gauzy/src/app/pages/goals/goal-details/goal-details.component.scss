@@ -1,3 +1,5 @@
+@import '../keyresult-details/keyresult-details.component.scss';
+@import '../edit-keyresults/edit-keyresults.component.scss';
 .main-header {
   display: flex;
   align-items: center;
@@ -5,5 +7,49 @@
 }
 
 .min-width-60vw {
-  min-width: 60vw !important;
+  min-width: 645px !important;
+}
+:host {
+  ::ng-deep {
+    nb-progress-bar {
+      width: 100%;
+      .progress-container {
+        height: 10px !important;
+      }
+      .progress-value {
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+  .custom-footer {
+    background-color: rgba(126, 126, 143, 0.1);
+    padding-bottom: 5px;
+  }
+  .custom-header {
+    padding: 5px 10px;
+  }
+  nb-action {
+    padding: 0;
+  }
+  .border {
+    border-radius: nb-theme(button-rectangle-border-radius);
+    border: 2px solid nb-theme(border-basic-color-3) !important;
+    padding: 6px;
+  }
+  .card-key-result {
+    /* Frame 499 */
+
+    /* Auto layout */
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 5px 6px 5px 14px;
+    height: 55px;
+    background: nb-theme(background-basic-color-1);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    margin-bottom: 4px;
+  }
 }
