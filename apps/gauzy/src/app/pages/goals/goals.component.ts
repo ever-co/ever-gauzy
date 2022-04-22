@@ -256,9 +256,9 @@ export class GoalsComponent
 		this.goalTimeFrames.sort((a, b) => a.localeCompare(b));
 	}
 
-	async addKeyResult() {
-		const index = this.selectedKeyResult.index;
-		const keyResult = this.selectedKeyResult.data;
+	async addKeyResult(index?, keyResult?) {
+		index = index ? index : this.selectedKeyResult.index;
+		keyResult = keyResult ? keyResult : this.selectedKeyResult.data;
 		if (
 			!keyResult &&
 			this.goalGeneralSettings?.maxKeyResults <=
