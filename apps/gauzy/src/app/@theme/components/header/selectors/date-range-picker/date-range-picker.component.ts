@@ -11,7 +11,7 @@ import { DateRangePickerBuilderService, OrganizationsService, Store } from './..
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { DateRangeKeyEnum } from './date-range-picker.setting';
+import { DateRangeKeyEnum, dayOfWeekAsString } from './date-range-picker.setting';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -45,7 +45,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
 		direction: 'ltr',
-		firstDay: this.dayOfWeekAsString(WeekDaysEnum.MONDAY)
+		firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
 	};
 	get locale(): LocaleConfig {
 		return this._locale;
@@ -189,7 +189,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 					if (organization.startWeekOn) {
 						this.locale = {
 							...this.locale,
-							firstDay: this.dayOfWeekAsString(organization.startWeekOn)
+							firstDay: dayOfWeekAsString(organization.startWeekOn)
 						}
 					}
 				}),
@@ -401,23 +401,5 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this.dateRangePickerDirective.toggle();
 	}
 
-	/**
-	* Converts a day string to a day number.
-	*
-	* @param {String} weekDay
-	* @return {Number} Returns day index as number
-	*/
-	dayOfWeekAsString(weekDay: WeekDaysEnum): number {
-		return [
-			WeekDaysEnum.SUNDAY,
-			WeekDaysEnum.MONDAY,
-			WeekDaysEnum.TUESDAY,
-			WeekDaysEnum.WEDNESDAY,
-			WeekDaysEnum.THURSDAY,
-			WeekDaysEnum.FRIDAY,
-			WeekDaysEnum.SATURDAY
-		].indexOf(weekDay);
-  	}
-	
 	ngOnDestroy() {}
 }
