@@ -4,7 +4,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
-import { IDateRangePicker, ITimeLogFilters } from '@gauzy/contracts';
+import { IDateRangePicker, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, OrganizationsService, Store } from './../../../../../@core/services';
@@ -44,7 +44,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	_locale: LocaleConfig = {
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
-		direction: 'ltr'
+		direction: 'ltr',
+		firstDay: 1
 	};
 	get locale(): LocaleConfig {
 		return this._locale;
@@ -393,6 +394,24 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	openDatepicker() {
 		this.dateRangePickerDirective.toggle();
 	}
+
+	/**
+	* Converts a day string to a day number.
+	*
+	* @param {String} weekDay
+	* @return {Number} Returns day index as number
+	*/
+	dayOfWeekAsString(weekDay: WeekDaysEnum): number {
+		return [
+			WeekDaysEnum.SUNDAY,
+			WeekDaysEnum.MONDAY,
+			WeekDaysEnum.TUESDAY,
+			WeekDaysEnum.WEDNESDAY,
+			WeekDaysEnum.THURSDAY,
+			WeekDaysEnum.FRIDAY,
+			WeekDaysEnum.SATURDAY
+		].indexOf(weekDay);
+  	}
 	
 	ngOnDestroy() {}
 }
