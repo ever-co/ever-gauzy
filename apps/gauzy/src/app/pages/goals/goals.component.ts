@@ -611,5 +611,27 @@ export class GoalsComponent
 		}
 	}
 
+	async deleteGoal() {
+		const dialog = this.dialogService.open(AlertModalComponent, {
+			context: {
+				alertOptions: {
+					title: this.getTranslation('GOALS_PAGE.DELETE_OBJECTIVE'),
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
+					status: 'danger'
+				}
+			},
+			closeOnBackdropClick: false
+		});
+		const response = await firstValueFrom(dialog.onClose);
+		if (!!response) {
+			if (response === 'yes') {
+				await this.goalService
+					.delete(this.selectedGoal.data.id)
+					.then(() => this.loadPage())
+					.catch((error) => console.log(error));
+			}
+		}
+	}
+
 	ngOnDestroy() {}
 }

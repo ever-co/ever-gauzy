@@ -217,6 +217,7 @@
 			class="action"
 			[disabled]="!selectedItem && disableButton"
 			size="small"
+			(click)="deleteGoal()"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
