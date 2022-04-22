@@ -1,16 +1,16 @@
-<nb-card size="large" class="max-width-30vw">
+<nb-card class="max-width-30vw">
 	<nb-card-header>
-		<div class="main-header">
-			<h4>{{ 'KEY_RESULT_PAGE.UPDATE_KEY_RESULT' | translate }}</h4>
-			<nb-icon
-				class="ml-auto mt-1 close"
-				icon="close-outline"
-				(click)="closeDialog()"
-			></nb-icon>
+		<div class="d-flex flex-column">
+			<span class="cancel"
+				><i class="fas fa-times" (click)="closeDialog()"></i
+			></span>
+			<h4 class="title">
+				{{ 'KEY_RESULT_PAGE.UPDATE_KEY_RESULT' | translate }}
+			</h4>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<h6>{{ keyResult.name }}</h6>
+		<h6 class="subtitle">{{ keyResult.name }}</h6>
 		<div
 			*ngIf="
 				keyResult.type == keyResultTypeEnum.NUMERICAL ||
@@ -113,8 +113,14 @@
 			</nb-select>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button class="mr-3" nbButton (click)="closeDialog()">
+	<nb-card-footer class="text-left">
+		<button
+			class="mr-3"
+			status="basic"
+			nbButton
+			outline
+			(click)="closeDialog()"
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
