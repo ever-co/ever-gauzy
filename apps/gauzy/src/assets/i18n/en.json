@@ -2360,7 +2360,9 @@
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default",
 		"YES": "Yes",
-		"NO": "No"
+		"NO": "No",
+    "BROWSE":"Browse",
+    "SEARCH":"Search"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",

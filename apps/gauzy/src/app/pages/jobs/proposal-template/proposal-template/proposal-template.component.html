@@ -24,12 +24,12 @@
 			></ngx-gauzy-button-action>
 		</div>
 		<nb-tabset class="mt-4">
-			<nb-tab tabTitle="Browse">
+			<nb-tab tabTitle="{{ 'PROPOSAL_TEMPLATE.BROWSE' | translate }}">
 				<ng-container>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab tabTitle="Search">
+			<nb-tab tabTitle="{{ 'PROPOSAL_TEMPLATE.SEARCH' | translate }}">
 				<ng-container>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
