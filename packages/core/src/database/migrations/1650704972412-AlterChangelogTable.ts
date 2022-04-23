@@ -26,6 +26,9 @@ export class AlterChangelogTable1650704972412 implements MigrationInterface {
     * @param queryRunner 
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`ALTER TABLE "changelog" ADD "isFeature" boolean`);
+        await queryRunner.query(`ALTER TABLE "changelog" ADD "imageUrl" character varying`);
+        await queryRunner.query(`ALTER TABLE "changelog" ALTER COLUMN "learnMoreUrl" DROP NOT NULL`);
     }
 
     /**
@@ -34,6 +37,9 @@ export class AlterChangelogTable1650704972412 implements MigrationInterface {
     * @param queryRunner 
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`ALTER TABLE "changelog" ALTER COLUMN "learnMoreUrl" SET NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "changelog" DROP COLUMN "imageUrl"`);
+        await queryRunner.query(`ALTER TABLE "changelog" DROP COLUMN "isFeature"`);
     }
     
     /**
