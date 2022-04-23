@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDate, IsOptional, IsString } from 'class-validator';
 import { Column, Entity } from 'typeorm';
 import { IChangelog } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '@gauzy/core';
@@ -32,9 +32,20 @@ export class Changelog
 	@Column()
 	content?: string;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsBoolean()
+	@Column({ type: Boolean, nullable: true })
+	isFeature?: boolean;
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@Column({ nullable: true })
 	learnMoreUrl?: string;
+
+	@ApiProperty({ type: () => String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	imageUrl?: string;
 }
