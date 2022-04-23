@@ -1,8 +1,14 @@
-<div class="feature-wrapper" *ngIf="feature">
-    <div class="headings-wrapper">
-      <nb-icon [icon]="feature.icon"></nb-icon>
-      <span class="heading">{{ feature.heading }}</span>
-    </div>
-    <p class="description">{{ feature.description }}</p>
-    <img *ngIf="feature.imageSrc" [src]="feature.imageSrc" alt="feature" class="feature-img">
-</div>
+<ng-template [ngIf]="feature">
+	<div class="feature-wrapper">
+		<div class="headings-wrapper">
+			<nb-icon [icon]="feature.icon"></nb-icon>
+			<span class="heading">
+				{{ feature.title }}
+			</span>
+		</div>
+		<p class="description">{{ feature.content }}</p>
+		<img *ngIf="feature.imageUrl" [src]="feature.imageUrl" alt="feature" class="feature-img">
+	</div>
+</ng-template>
+
+
