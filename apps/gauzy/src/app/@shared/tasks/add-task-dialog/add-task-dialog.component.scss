@@ -25,3 +25,8 @@
 .nb-radio {
   display: inline-block;
 }
+:host {
+  nb-card {
+    background-color: nb-theme(background-basic-color-1);
+  }
+}
