@@ -129,15 +129,18 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			const color = randomColor({ 
 				luminosity: 'light',
 				format: 'rgba',
-				alpha: 0.5
+				alpha: 1
 			});
 			employees = Object.keys(log.dates);
 			datasets.push({
 				label: log.employee.fullName,
 				data: pluck(log.dates, 'sum').map((val) => val ? parseFloat((val / 3600).toFixed(1)) : 0),
 				borderColor: color,
-				backgroundColor: ChartUtil.transparentize(color, 0.5),
-				borderWidth: 1
+				backgroundColor: ChartUtil.transparentize(color, 1),
+				borderWidth: 1,
+				pointRadius: 2,
+				pointHoverRadius: 7,
+				pointHoverBorderWidth: 6,
 			});
 		});
 

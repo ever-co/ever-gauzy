@@ -102,7 +102,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 						label: TimeLogType.MANUAL,
 						data: logs.map((log) => log.value[TimeLogType.MANUAL]),
 						borderColor: ChartUtil.CHART_COLORS.red,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.1),
 						...commonOptions,
 					},
 					{
@@ -124,6 +124,9 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 						data: logs.map((log) => log.value[TimeLogType.RESUMED]),
 						borderColor: ChartUtil.CHART_COLORS.green,
 						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 1),
+						tooltip: {
+							titleFontColor: 'pink'
+						},
 						...commonOptions,
 					}
 				];
