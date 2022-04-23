@@ -7,13 +7,15 @@ import {
 	Post,
 	Body,
 	Param,
-	Put
+	Put,
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	IChangelog,
 	IChangelogCreateInput,
+	IChangelogFindInput,
 	IChangelogUpdateInput,
 	IPagination
 } from '@gauzy/contracts';
@@ -50,8 +52,10 @@ export class ChangelogController extends CrudController<Changelog> {
 	})
 	@Public()
 	@Get()
-	async findAll(): Promise<IPagination<IChangelog>> {
-		return this.changelogService.findAll();
+	async findChangelog(@Query() findInput: IChangelogFindInput): Promise<IPagination<IChangelog>> {
+		return await this.changelogService.findAllChangelogs({
+			where: findInput
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

@@ -9,18 +9,18 @@ export const createChangelog = async (
 	return await new Promise<IChangelog[]>(async (resolve, reject) => {
 		try {
 			const changelogs: IChangelog[] = [];
-			const entries = INITIAL_CHANGELOG_TEMPLATE;
-			for (const key of Object.keys(entries)) {
-				if (entries.hasOwnProperty(key)) {
-					const entry: IChangelog = {
-						icon: entries[key].icon,
-						title: entries[key].title,
-						date: entries[key].date,
-						content: entries[key].content,
-						learnMoreUrl: entries[key].learnMoreUrl
-					};
-					changelogs.push(entry);
-				}
+			const templates: IChangelog[] = INITIAL_CHANGELOG_TEMPLATE;
+			for (const item of templates) {
+				const changelog: IChangelog = {
+					icon: item.icon,
+					title: item.title,
+					date: item.date,
+					content: item.content,
+					isFeature: item.isFeature,
+					learnMoreUrl: item.learnMoreUrl,
+					imageUrl: item.imageUrl
+				};
+				changelogs.push(changelog);
 			}
 			await insertChangelog(connection, changelogs);
 			resolve(changelogs);
