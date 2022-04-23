@@ -146,6 +146,9 @@ export class ProposalTemplateComponent
 	}
 
 	async getProposalTemplates() {
+		if (!this.organization) {
+			return;
+		}
 		try {
 			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
