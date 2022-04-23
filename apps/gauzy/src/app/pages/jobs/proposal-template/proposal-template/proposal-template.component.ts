@@ -1,5 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { IEmployeeProposalTemplate, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
+import {
+	IEmployeeProposalTemplate,
+	IOrganization,
+	ISelectedEmployee
+} from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,17 +12,17 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
-import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
-import {
-	Nl2BrPipe,
-	TruncatePipe
-} from './../../../../@shared/pipes';
+import { Nl2BrPipe, TruncatePipe } from './../../../../@shared/pipes';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
 import { Store, ToastrService } from './../../../../@core/services';
 import { ProposalTemplateService } from '../proposal-template.service';
 import { API_PREFIX } from './../../../../@core/constants';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 import { HttpClient } from '@angular/common/http';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,9 +31,9 @@ import { HttpClient } from '@angular/common/http';
 	styleUrls: ['./proposal-template.component.scss']
 })
 export class ProposalTemplateComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	smartTableSettings: object;
 	disableButton = true;
 	smartTableSource: ServerDataSource;
@@ -57,7 +61,7 @@ export class ProposalTemplateComponent
 		private readonly dialogService: NbDialogService,
 		private readonly nl2BrPipe: Nl2BrPipe,
 		private readonly truncatePipe: TruncatePipe,
-		private readonly httpClient: HttpClient,
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 	}
@@ -67,11 +71,18 @@ export class ProposalTemplateComponent
 		this._loadSmartTableSettings();
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
 				debounceTime(300),
 				tap(() => this.clearItem()),
 				tap(() => this.getProposalTemplates()),
-				untilDestroyed(this), 
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -84,7 +95,8 @@ export class ProposalTemplateComponent
 				distinctUntilChange(),
 				tap(([organization, employee]) => {
 					if (organization) {
-						this.selectedEmployee = (employee && employee.id) ? employee : null;
+						this.selectedEmployee =
+							employee && employee.id ? employee : null;
 						this.subject$.next(true);
 					}
 				}),
@@ -97,14 +109,18 @@ export class ProposalTemplateComponent
 		const { employeeId } = this.store.user;
 		if (employeeId) {
 			delete this.smartTableSettings['columns']['employeeId'];
-			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+			this.smartTableSettings = Object.assign(
+				{},
+				this.smartTableSettings
+			);
 		}
 	}
 
 	/*
-	* Register Smart Table Source Config 
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -114,23 +130,26 @@ export class ProposalTemplateComponent
 		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/employee-proposal-template/pagination`,
-			relations: [
-				'employee', 
-				'employee.user'
-			],
+			relations: ['employee', 'employee.user'],
 			where: {
 				...{ organizationId, tenantId },
-				...request,
+				...request
 			},
 			finalize: () => {
 				this.loading = false;
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
 			}
 		});
 	}
 
-	getProposalTemplates() {
-		try { 
+	async getProposalTemplates() {
+		try {
 			this.setSmartTableSource();
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -142,15 +161,18 @@ export class ProposalTemplateComponent
 	}
 
 	_loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			editable: false,
 			actions: false,
 			hideSubHeader: true,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				employeeId: {
-					title: this.getTranslation(
-						'PROPOSAL_TEMPLATE.EMPLOYEE'
-					),
+					title: this.getTranslation('PROPOSAL_TEMPLATE.EMPLOYEE'),
 					filter: false,
 					width: '20%',
 					type: 'custom',
@@ -161,8 +183,14 @@ export class ProposalTemplateComponent
 						row: IEmployeeProposalTemplate
 					) => {
 						return {
-							name: row.employee && row.employee.user ? row.employee.fullName : null,
-							src: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
+							name:
+								row.employee && row.employee.user
+									? row.employee.fullName
+									: null,
+							src:
+								row.employee && row.employee.user
+									? row.employee.user.imageUrl
+									: null,
 							id: row.employee ? row.employee.id : null
 						};
 					}
@@ -216,41 +244,51 @@ export class ProposalTemplateComponent
 		};
 	}
 
-	async createProposal():Promise <void> {
-		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
-			context: {
-				selectedEmployee: this.selectedEmployee
+	async createProposal(): Promise<void> {
+		const dialog = this.dialogService.open(
+			AddEditProposalTemplateComponent,
+			{
+				context: {
+					selectedEmployee: this.selectedEmployee
+				}
 			}
-		})
+		);
 
 		const data = await firstValueFrom(dialog.onClose);
-		if (data) {	
+		if (data) {
 			this.subject$.next(true);
 		}
 	}
 
 	async editProposal(): Promise<void> {
-		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
-			context: {
-				proposalTemplate: this.selectedItem,
-				selectedEmployee: this.selectedEmployee
+		const dialog = this.dialogService.open(
+			AddEditProposalTemplateComponent,
+			{
+				context: {
+					proposalTemplate: this.selectedItem,
+					selectedEmployee: this.selectedEmployee
+				}
 			}
-		})
+		);
 
 		const data = await firstValueFrom(dialog.onClose);
-		if (data) {	
+		if (data) {
 			this.subject$.next(true);
-		}	
-			
+		}
 	}
 
 	deleteProposal(): void {
-		this.proposalTemplateService.delete(this.selectedItem.id)
+		this.proposalTemplateService
+			.delete(this.selectedItem.id)
 			.then(() => {
-				this.toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE', {
-					name: this.selectedItem.name
-				});
-			}).finally(() => {
+				this.toastrService.success(
+					'PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE',
+					{
+						name: this.selectedItem.name
+					}
+				);
+			})
+			.finally(() => {
 				this.subject$.next(true);
 			});
 	}
@@ -259,9 +297,12 @@ export class ProposalTemplateComponent
 		this.proposalTemplateService
 			.makeDefault(this.selectedItem.id)
 			.then(() => {
-				this.toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE', { 
-					name: this.selectedItem.name 
-				});
+				this.toastrService.success(
+					'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE',
+					{
+						name: this.selectedItem.name
+					}
+				);
 			})
 			.finally(() => {
 				this.subject$.next(true);

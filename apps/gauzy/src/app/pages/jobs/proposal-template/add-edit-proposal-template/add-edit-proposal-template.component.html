@@ -1,6 +1,7 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+    <span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
+		<h5 class="title">
 			{{
 				(mode == 'update'
 					? 'PROPOSAL_TEMPLATE.EDIT_PROPOSAL_TEMPLATE'
@@ -8,11 +9,6 @@
 				) | translate
 			}}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="close()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
@@ -73,8 +69,8 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="close()" status="danger" class="mr-3" nbButton>
+	<nb-card-footer class="text-left">
+		<button (click)="close()" status="basic" outline class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

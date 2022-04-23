@@ -1,0 +1,26 @@
+@import 'gauzy/_gauzy-table';
+@import '../../search/search/search.component.scss';
+@import 'gauzy/_gauzy-cards';
+
+:host {
+  nb-tab {
+    background-color: rgba(50, 50, 50, 0.03);
+    &.content-active {
+      padding: 1rem;
+    }
+  }
+  nb-card {
+    background-color: nb-theme(gauzy-card-2);
+  }
+  @include nb-card-overrides(
+    unset,
+    calc($default-card-height + 3.5rem),
+    $default-radius
+  );
+}
+
+.gauzy-button-container {
+  position: absolute;
+  right: 1rem;
+  top: 0;
+}

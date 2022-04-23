@@ -14,30 +14,27 @@
 			</h4>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="mb-3">
-			<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
-				<button
-					nbButton
-					status="success"
-					(click)="createProposal()"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</ng-template>
-			<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+	<nb-card-body class="p-0">
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[hasLayoutSelector]="false"
+				[buttonTemplateVisible]="visibleButton"
+				[buttonTemplate]="actionButtons"
+				[isDisable]="!selectedItem && disableButton"
+			></ngx-gauzy-button-action>
 		</div>
-		<div class="table-scroll-container">
-			<ng2-smart-table
-				style="cursor: pointer"
-				[settings]="smartTableSettings"
-				[source]="smartTableSource"
-				(userRowSelect)="selectItem($event)"
-				#proposalTemplateTable
-			></ng2-smart-table>
-		</div>		
+		<nb-tabset class="mt-4">
+			<nb-tab tabTitle="Browse">
+				<ng-container>
+					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
+				</ng-container>
+			</nb-tab>
+			<nb-tab tabTitle="Search">
+				<ng-container>
+					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
+				</ng-container>
+			</nb-tab>
+		</nb-tabset>
 	</nb-card-body>
 </nb-card>
 
@@ -46,41 +43,96 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
+			<button
+				nbButton
+				status="basic"
+				[disabled]="!selectedItem && disableButton"
+				class="mr-2"
+				class="action secondary"
+				size="small"
+			>
+				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+			<button
+				nbButton
+				status="basic"
+				(click)="editProposal()"
+				[disabled]="!selectedItem && disableButton"
+				class="mr-2"
+				class="action primary"
+				size="small"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="basic"
+				ngxConfirmDialog
+				[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE' | translate"
+				(confirm)="deleteProposal()"
+				[disabled]="!selectedItem && disableButton"
+				class="mr-2"
+				class="action"
+				size="small"
+				[nbToolTip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</ng-template>
+		<button
+			nbButton
+			status="basic"
+			(click)="makeDefault()"
+			[disabled]="
+				!selectedItem && disableButton && !selectedItem?.isDefault
+			"
+			class="mr-2"
+			class="action primary"
+			size="small"
+		>
+			<!-- <nb-icon class="mr-1" icon="edit-outline"></nb-icon> -->
+			{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
+		</button>
+	</div>
+</ng-template>
+<ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
 		<button
 			nbButton
-			status="info"
-			(click)="editProposal()"
-			[disabled]="!selectedItem && disableButton"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
+			status="success"
+			size="small"
+			(click)="createProposal()"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="danger"
-			ngxConfirmDialog
-			[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE' | translate"
-			(confirm)="deleteProposal()"
-			[disabled]="!selectedItem && disableButton"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-			{{ 'BUTTONS.DELETE' | translate }}
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
-	<button
-		nbButton
-		status="info"
-		(click)="makeDefault()"
-		[disabled]="!selectedItem && disableButton && !selectedItem?.isDefault"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-	>
-		<!-- <nb-icon class="mr-1" icon="edit-outline"></nb-icon> -->
-		{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
-	</button>
+</ng-template>
+<ng-template #tableLayout>
+	<div class="table-scroll-container">
+		<ng2-smart-table
+			style="cursor: pointer"
+			[settings]="smartTableSettings"
+			[source]="smartTableSource"
+			(userRowSelect)="selectItem($event)"
+			#proposalTemplateTable
+		></ng2-smart-table>
+	</div>
+	<div class="pagination-container">
+		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+			<ga-pagination
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			>
+			</ga-pagination>
+		</ng-container>
+	</div>
 </ng-template>

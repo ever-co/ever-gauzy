@@ -1,0 +1,16 @@
+@import 'themes';
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  .form-group.row {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 10px 20px 18px 12px;
+    border-radius: nb-theme(border-radius);
+    width: 100%;
+  }
+}
