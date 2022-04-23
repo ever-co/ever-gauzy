@@ -46,6 +46,7 @@ import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal
 import { GoalTemplateSelectModule } from '../../@shared/goal/goal-template-select/goal-template-select.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	declarations: [
@@ -95,7 +96,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		TranslateModule,
 		EmployeeSelectorsModule,
 		EmployeeMultiSelectModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		GauzyButtonActionModule
 	]
 })
 export class GoalsModule {}

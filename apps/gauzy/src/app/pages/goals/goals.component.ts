@@ -27,6 +27,7 @@ import { GoalSettingsService } from '../../@core/services/goal-settings.service'
 import { GoalTemplateSelectComponent } from '../../@shared/goal/goal-template-select/goal-template-select.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,7 +37,8 @@ import { ToastrService } from '../../@core/services/toastr.service';
 })
 export class GoalsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 	loading = true;
 	selectedOrganizationId: string;
@@ -84,6 +86,17 @@ export class GoalsComponent
 	keyResult: IKeyResult[];
 	organization: IOrganization;
 
+	selectedKeyResult = {
+		isSelected: false,
+		data: null,
+		index: null
+	};
+	selectedGoal = {
+		isSelected: false,
+		data: null,
+		index: null
+	};
+
 	constructor(
 		private store: Store,
 		readonly translateService: TranslateService,
@@ -101,7 +114,7 @@ export class GoalsComponent
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
-				tap((user: IUser) => this.isEmployee = !!user.employee),
+				tap((user: IUser) => (this.isEmployee = !!user.employee)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -198,7 +211,9 @@ export class GoalsComponent
 			});
 	}
 
-	async openKeyResultParameters(index, keyResult) {
+	async openKeyResultParameters() {
+		const index = this.selectedKeyResult.index;
+		const keyResult = this.selectedKeyResult.data;
 		const dialog = this.dialogService.open(KeyResultParametersComponent, {
 			context: {
 				data: {
@@ -241,7 +256,9 @@ export class GoalsComponent
 		this.goalTimeFrames.sort((a, b) => a.localeCompare(b));
 	}
 
-	async addKeyResult(index, keyResult) {
+	async addKeyResult(index?, isAdd?) {
+		index = index ? index : this.selectedKeyResult.index;
+		const keyResult = isAdd ? null : this.selectedKeyResult.data;
 		if (
 			!keyResult &&
 			this.goalGeneralSettings?.maxKeyResults <=
@@ -292,8 +309,8 @@ export class GoalsComponent
 			} else {
 				const data = {
 					...response,
-					ownerId:response.ownerId,
-					leadId:response.leadId,
+					ownerId: response.ownerId,
+					leadId: response.leadId,
 					goalId: this.goals[index].id
 				};
 				await this.keyResultService
@@ -380,7 +397,8 @@ export class GoalsComponent
 		}
 	}
 
-	async createObjective(goal, index) {
+	async createObjective(isAdd?: boolean) {
+		const goal = isAdd ? null : this.selectedGoal.data;
 		if (
 			!goal &&
 			this.goalGeneralSettings &&
@@ -441,7 +459,8 @@ export class GoalsComponent
 		}
 	}
 
-	async openGoalDetails(data) {
+	async openGoalDetails() {
+		const { data } = this.selectedGoal;
 		const dialog = this.dialogService.open(GoalDetailsComponent, {
 			hasScroll: true,
 			context: {
@@ -476,7 +495,9 @@ export class GoalsComponent
 		}
 	}
 
-	async openKeyResultDetails(index, selectedKeyResult) {
+	async openKeyResultDetails() {
+		const index = this.selectedKeyResult.index;
+		const selectedKeyResult = this.selectedKeyResult.data;
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
@@ -539,6 +560,76 @@ export class GoalsComponent
 			);
 			this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 			this.loadPage();
+		}
+	}
+
+	onClickObjective(objective, index) {
+		this.selectedGoal =
+			this.selectedGoal.data && objective.id === this.selectedGoal.data.id
+				? {
+						isSelected: !this.selectedGoal.isSelected,
+						data: objective,
+						index: index
+				  }
+				: { isSelected: true, data: objective, index: index };
+	}
+
+	onClickKeyResult(keyResult, index) {
+		this.selectedKeyResult =
+			this.selectedKeyResult.data &&
+			keyResult.id === this.selectedKeyResult.data.id
+				? {
+						isSelected: !this.selectedKeyResult.isSelected,
+						data: keyResult,
+						index: index
+				  }
+				: { isSelected: true, data: keyResult, index: index };
+		this.selectedGoal.isSelected = this.selectedKeyResult.isSelected
+			? false
+			: true;
+	}
+
+	async deleteKeyResult() {
+		const dialog = this.dialogService.open(AlertModalComponent, {
+			context: {
+				alertOptions: {
+					title: this.getTranslation('GOALS_PAGE.DELETE_KEY_RESULT'),
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
+					status: 'danger'
+				}
+			},
+			closeOnBackdropClick: false
+		});
+		const response = await firstValueFrom(dialog.onClose);
+		if (!!response) {
+			if (response === 'yes') {
+				await this.keyResultService
+					.delete(this.selectedKeyResult.data.id)
+					.then(() => this.loadPage())
+					.catch((error) => console.log(error));
+			}
+		}
+	}
+
+	async deleteGoal() {
+		const dialog = this.dialogService.open(AlertModalComponent, {
+			context: {
+				alertOptions: {
+					title: this.getTranslation('GOALS_PAGE.DELETE_OBJECTIVE'),
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
+					status: 'danger'
+				}
+			},
+			closeOnBackdropClick: false
+		});
+		const response = await firstValueFrom(dialog.onClose);
+		if (!!response) {
+			if (response === 'yes') {
+				await this.goalService
+					.delete(this.selectedGoal.data.id)
+					.then(() => this.loadPage())
+					.catch((error) => console.log(error));
+			}
 		}
 	}
 

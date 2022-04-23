@@ -1,5 +1,5 @@
 import * as moment from 'moment';
-import { IDateRangePicker, ISelectedDateRange, ITimeLogFilters } from "@gauzy/contracts";
+import { IDateRangePicker, ISelectedDateRange, ITimeLogFilters, WeekDaysEnum } from "@gauzy/contracts";
 
 export enum DateRangeKeyEnum {
 	TODAY = 'Today',
@@ -45,4 +45,22 @@ export function getAdjustDateRangeFutureAllowed(request: ITimeLogFilters | IDate
         startDate: moment(startDate).toDate(),
         endDate: moment(endDate).toDate()
     } as ISelectedDateRange
+}
+
+/**
+* Converts a day string to a day number.
+*
+* @param {String} weekDay
+* @return {Number} Returns day index as number
+*/
+export function dayOfWeekAsString(weekDay: WeekDaysEnum): number {
+    return [
+        WeekDaysEnum.SUNDAY,
+        WeekDaysEnum.MONDAY,
+        WeekDaysEnum.TUESDAY,
+        WeekDaysEnum.WEDNESDAY,
+        WeekDaysEnum.THURSDAY,
+        WeekDaysEnum.FRIDAY,
+        WeekDaysEnum.SATURDAY
+    ].indexOf(weekDay);
 }

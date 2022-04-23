@@ -1,20 +1,23 @@
 <nb-card>
 	<nb-card-header>
-		<div class="main-header">
-			<h5>
-				{{ (timeFrame ? 'GOALS_PAGE.SETTINGS.EDIT_TIME_FRAME_TITLE' : 'GOALS_PAGE.SETTINGS.ADD_TIME_FRAME_TITLE' ) | translate }}
+		<div class="d-flex flex-column">
+			<span class="cancel"
+				><i class="fas fa-times" (click)="closeDialog(null)"></i
+			></span>
+			<h5 class="title">
+				{{
+					(timeFrame
+						? 'GOALS_PAGE.SETTINGS.EDIT_TIME_FRAME_TITLE'
+						: 'GOALS_PAGE.SETTINGS.ADD_TIME_FRAME_TITLE'
+					) | translate
+				}}
 			</h5>
-			<nb-icon
-				class="ml-auto mt-1 close"
-				icon="close-outline"
-				(click)="closeDialog(null)"
-			></nb-icon>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
 			<div class="col-md-4">
-				<h6>
+				<h6 class="subtitle">
 					{{
 						'GOALS_PAGE.SETTINGS.PREDEFINED_TIME_FRAMES' | translate
 					}}
@@ -121,11 +124,12 @@
 			</div>
 		</div>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			class="mr-3"
 			nbButton
-			status="danger"
+			status="basic"
+			outline
 			(click)="closeDialog(null)"
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}

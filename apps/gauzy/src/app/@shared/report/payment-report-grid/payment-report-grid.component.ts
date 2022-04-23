@@ -17,6 +17,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { isEmpty } from '@gauzy/common-angular';
 import { debounceTime } from 'rxjs/operators';
 import { PaymentService, Store } from '../../../@core/services';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -84,7 +85,7 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent
 	}
 
 	async getPayment() {
-		if (!this.organization || !this.logRequest) {
+		if (!this.organization || isEmpty(this.logRequest)) {
 			return;
 		}
 

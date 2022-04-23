@@ -1,9 +1,85 @@
+@import 'gauzy/_gauzy-dialogs';
+@import 'gauzy/_gauzy-table';
+
 .minmax-width-60vw {
-  width: 60vw;
+  width: 645px;
 }
 
 .main-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+:host ngx-avatar::ng-deep {
+  .inner-wrapper {
+    background-color: nb-theme(color-primary-transparent-100);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    padding: 3px 9px 3px 3px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    .image-container {
+      width: 28px;
+      img {
+        height: 18px;
+        width: 18px;
+        margin: 0 3px 3px 3px;
+      }
+    }
+
+    .link-text {
+      color: nb-theme(text-primary-color);
+      font-weight: normal;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 15px;
+      letter-spacing: 0em;
+      text-align: left;
+    }
+  }
+}
+
+.button-container {
+  background: rgba(50, 50, 50, 0.03);
+  padding: 5px;
+  border-radius: nb-theme(button-rectangle-border-radius);
+}
+.custom-card,
+.custom-footer {
+  background: rgba(50, 50, 50, 0.03);
+}
+.custom-header,
+.custom-footer {
+  padding: 0px 10px;
+}
+
+.custom-card {
+  padding: 0px;
+}
+.custom-badge {
+  position: absolute;
+  right: 0;
+  margin: -10px 20px;
+}
+
+.subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+.smallText {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 15px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+.border {
+  border-radius: nb-theme(border-radius);
+  margin: 3rem 0;
 }

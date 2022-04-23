@@ -189,7 +189,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
-	startWeekOn?: string;
+	startWeekOn?: WeekDaysEnum;
 
 	@ApiProperty({ type: () => String, maxLength: 256 })
 	@Column()

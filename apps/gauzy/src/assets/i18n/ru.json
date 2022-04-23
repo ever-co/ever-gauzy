@@ -2360,7 +2360,9 @@
 		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения '{{ name }}' ' был удален",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения '{{ name }}' ' установлено по умолчанию",
 		"YES": "Да",
-		"NO": "Нет"
+		"NO": "Нет",
+		"BROWSE": "Обзор",
+		"SEARCH": "Искать"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",

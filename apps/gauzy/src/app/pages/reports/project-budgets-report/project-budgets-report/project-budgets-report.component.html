@@ -150,7 +150,9 @@
 
 <ng-template let-project #projectEl>
 	<span *ngIf="project; else noProjects">
-		<ga-organization [project]="project" members="1"></ga-organization>
+		<ga-project-column-view
+			[project]="project"
+		></ga-project-column-view>
 	</span>
 	<ng-template #noProjects>
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>

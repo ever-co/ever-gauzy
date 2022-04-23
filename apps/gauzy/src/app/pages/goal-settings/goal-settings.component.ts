@@ -24,6 +24,7 @@ import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-t
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +34,8 @@ import { ToastrService } from '../../@core/services/toastr.service';
 })
 export class GoalSettingsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	smartTableData = new LocalDataSource();
 	generalSettingsForm: FormGroup;
 	smartTableSettings: object;
@@ -183,8 +185,15 @@ export class GoalSettingsComponent
 				.getAllTimeFrames(findObj)
 				.then((res) => {
 					if (!!res) {
-						this.smartTableData.load(res.items);
-						this.goalTimeFrames = res.items;
+						const mappedItems = [];
+						res.items.map((item) => {
+							item = Object.assign({}, item, {
+								status: this.statusMapper(item.status)
+							});
+							mappedItems.push(item);
+						});
+						this.smartTableData.load(mappedItems);
+						this.goalTimeFrames = mappedItems;
 					}
 				});
 		} else {
@@ -202,9 +211,13 @@ export class GoalSettingsComponent
 	}
 
 	private _loadTableSettings(tab: string | null) {
+		this.smartTableSettings = {
+			actions: false,
+			hideSubHeader: true
+		};
 		if (tab === 'kpi') {
 			this.smartTableSettings = {
-				actions: false,
+				...this.smartTableSettings,
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),
@@ -232,16 +245,12 @@ export class GoalSettingsComponent
 			};
 		} else if (tab === 'timeframe') {
 			this.smartTableSettings = {
-				actions: false,
+				...this.smartTableSettings,
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),
-						type: 'string'
-					},
-					status: {
-						title: this.getTranslation('SM_TABLE.STATUS'),
 						type: 'string',
-						filter: false
+						width: '50%'
 					},
 					startDate: {
 						title: this.getTranslation('SM_TABLE.START_DATE'),
@@ -254,6 +263,13 @@ export class GoalSettingsComponent
 						type: 'custom',
 						filter: false,
 						renderComponent: DateViewComponent
+					},
+					status: {
+						title: this.getTranslation('SM_TABLE.STATUS'),
+						type: 'custom',
+						width: '5%',
+						filter: false,
+						renderComponent: StatusBadgeComponent
 					}
 				}
 			};
@@ -270,13 +286,14 @@ export class GoalSettingsComponent
 				);
 			}
 		);
-		if (selectedItem) {
-			this.selectRow({
-				isSelected: true,
-				data: selectedItem
-			});
-			if (source === 'add') {
-				this.selectedTimeFrame = null;
+		if (source === 'add') {
+			this.selectedTimeFrame = null;
+		} else {
+			if (selectedItem) {
+				this.selectRow({
+					isSelected: true,
+					data: selectedItem
+				});
 			}
 		}
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
@@ -297,13 +314,14 @@ export class GoalSettingsComponent
 	}
 
 	async editKPI(source, selectedItem?: any) {
-		if (selectedItem) {
-			this.selectRow({
-				isSelected: true,
-				data: selectedItem
-			});
-			if (source === 'add') {
-				this.selectedKPI = null;
+		if (source === 'add') {
+			this.selectedKPI = null;
+		} else {
+			if (selectedItem) {
+				this.selectRow({
+					isSelected: true,
+					data: selectedItem
+				});
 			}
 		}
 		const kpiDialog = this.dialogService.open(EditKpiComponent, {
@@ -460,4 +478,16 @@ export class GoalSettingsComponent
 			this.goalSettingsTable.grid.dataSet.deselectAll();
 		}
 	}
+
+	private statusMapper = (value: string | boolean) => {
+		const badgeClass = value === 'Active' ? 'success' : 'danger';
+		value =
+			value === 'Active'
+				? this.getTranslation('PIPELINES_PAGE.ACTIVE')
+				: this.getTranslation('PIPELINES_PAGE.INACTIVE');
+		return {
+			text: value,
+			class: badgeClass
+		};
+	};
 }

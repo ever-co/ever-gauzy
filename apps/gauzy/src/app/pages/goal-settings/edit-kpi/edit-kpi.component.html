@@ -1,11 +1,16 @@
 <nb-card class="min-width-60vw">
-	<nb-card-header>
-		{{ (selectedKPI ? 'GOALS_PAGE.SETTINGS.EDIT_KPI' : 'GOALS_PAGE.SETTINGS.ADD_KPI' ) | translate }}
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog(null)"
-		></nb-icon>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog(null)"></i
+		></span>
+		<h6 class="title">
+			{{
+				(selectedKPI
+					? 'GOALS_PAGE.SETTINGS.EDIT_KPI'
+					: 'GOALS_PAGE.SETTINGS.ADD_KPI'
+				) | translate
+			}}
+		</h6>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="kpiForm">
@@ -255,11 +260,12 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			class="mr-3"
 			nbButton
-			status="danger"
+			outline
+			status="basic"
 			(click)="closeDialog(null)"
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}

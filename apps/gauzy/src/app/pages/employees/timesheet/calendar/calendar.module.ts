@@ -3,10 +3,10 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CalendarRoutingModule } from './calendar-routing.module';
 import { CalendarComponent } from './calendar/calendar.component';
-import { ShareModule } from 'apps/gauzy/src/app/share/share.module';
+import { ShareModule } from './../../../../share/share.module';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { TranslateModule } from '@ngx-translate/core';
-import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
+import { EmployeeSelectorsModule } from './../../../../@theme/components/header/selectors/employee/employee.module';
 import {
 	NbDialogModule,
 	NbCardModule,
@@ -14,10 +14,9 @@ import {
 	NbIconModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
-import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
-import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
-import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
+import { SharedModule } from './../../../../@shared/shared.module';
+import { EditTimeLogModalModule, ViewTimeLogModalModule } from './../../../../@shared/timesheet';
+import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
 	declarations: [CalendarComponent],
@@ -34,7 +33,7 @@ import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/vie
 		NbButtonModule,
 		EditTimeLogModalModule,
 		ViewTimeLogModalModule,
-		FiltersModule,
+		GauzyFiltersModule,
 		NbIconModule,
 		NbSpinnerModule
 	]

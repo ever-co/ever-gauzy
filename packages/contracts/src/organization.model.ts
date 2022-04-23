@@ -55,7 +55,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	brandColor?: string;
 	timeZone?: string;
 	officialName?: string;
-	startWeekOn?: string;
+	startWeekOn?: WeekDaysEnum;
 	taxId?: string;
 	numberFormat?: string;
 	bonusType?: string;
@@ -134,7 +134,7 @@ export interface IOrganizationCreateInput extends IContact {
 	dateFormat?: string;
 	timeZone?: string;
 	officialName?: string;
-	startWeekOn?: string;
+	startWeekOn?: WeekDaysEnum;
 	taxId?: string;
 	numberFormat?: string;
 	bonusType: BonusTypeEnum;
