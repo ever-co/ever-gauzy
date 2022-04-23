@@ -2360,7 +2360,9 @@
 		"PROPOSAL_DELETE_MESSAGE": "crwdns8834:0{{ name }}crwdne8834:0",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "crwdns8836:0{{ name }}crwdne8836:0",
 		"YES": "crwdns9664:0crwdne9664:0",
-		"NO": "crwdns9666:0crwdne9666:0"
+		"NO": "crwdns9666:0crwdne9666:0",
+		"BROWSE": "crwdns11122:0crwdne11122:0",
+		"SEARCH": "crwdns11124:0crwdne11124:0"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "crwdns7424:0crwdne7424:0",
