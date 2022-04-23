@@ -8,13 +8,31 @@
 			</ngx-header-title>
 		</h4>
 		<div>
-			<button status="primary" routerLink="/pages/jobs/employee" size="small" outline nbButton>
+			<button
+				status="primary"
+				routerLink="/pages/jobs/employee"
+				size="small"
+				outline
+				nbButton
+			>
 				{{ 'JOBS.EMPLOYEES' | translate }}
 			</button>
-			<button status="primary" routerLink="/pages/jobs/matching" size="small" outline nbButton>
+			<button
+				status="primary"
+				routerLink="/pages/jobs/matching"
+				size="small"
+				outline
+				nbButton
+			>
 				{{ 'JOBS.MATCHINGS' | translate }}
 			</button>
-			<button status="primary" routerLink="/pages/jobs/proposal-template" size="small" outline nbButton>
+			<button
+				status="primary"
+				routerLink="/pages/jobs/proposal-template"
+				size="small"
+				outline
+				nbButton
+			>
 				{{ 'JOBS.PROPOSALS_TEMPLATE' | translate }}
 			</button>
 		</div>
@@ -52,15 +70,15 @@
 				</button>
 			</div>
 		</div>
-		<nb-tabset class="mt-4">
+		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
 			<nb-tab tabTitle="{{ 'JOBS.BROWSE' | translate }}">
 				<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 			</nb-tab>
-			<nb-tab tabTitle="{{ 'JOBS.SEARCH' | translate }}">
+			<nb-tab tabId="ga-ak-1" tabTitle="{{ 'JOBS.SEARCH' | translate }}">
 				<div class="job-filters">
 					<div class="advanced-filter">
 						<nb-card>
-							<nb-card-body>
+							<nb-card-body class="body-filter">
 								<div class="row">
 									<div
 										class="col-xl-6 col-md-8 col-12 form-group m-0"
@@ -220,7 +238,13 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #tableLayout>
-	<div class="table-scroll-container">
+	<div
+		[ngClass]="
+			selectedTab?.tabId === 'ga-ak-1'
+				? 'table-search-scroll'
+				: 'table-scroll-container'
+		"
+	>
 		<ng2-smart-table
 			[settings]="settingsSmartTable"
 			(userRowSelect)="onSelectJob($event)"
@@ -229,19 +253,19 @@
 			#jobSearchTable
 		></ng2-smart-table>
 	</div>
-  <div class="pagination-container">
-    <ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
-      <ga-pagination
-        (selectedOption)="onUpdateOption($event)"
-        (selectedPage)="onPageChange($event)"
-        [doEmit]="false"
-        [totalItems]="pagination?.totalItems"
-        [itemsPerPage]="pagination?.itemsPerPage"
-        [activePage]="pagination?.activePage"
-      >
-      </ga-pagination>
-    </ng-container>
-  </div>
+	<div class="pagination-container">
+		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+			<ga-pagination
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			>
+			</ga-pagination>
+		</ng-container>
+	</div>
 </ng-template>
 <ng-template
 	#actionButtons
