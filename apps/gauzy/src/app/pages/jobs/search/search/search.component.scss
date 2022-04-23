@@ -1,6 +1,6 @@
 @import 'gauzy/_gauzy-table.scss';
 @import 'gauzy/_gauzy-overrides';
-
+@import 'gauzy/_gauzy-cards.scss';
 :host {
   .form-group {
     nb-select,
@@ -75,6 +75,11 @@
       $default-box-shadow
     );
   }
+  @include nb-card-overrides(
+    unset,
+    calc($default-card-height + 3.5rem),
+    $default-radius
+  );
 }
 
 .gauzy-button-container {
