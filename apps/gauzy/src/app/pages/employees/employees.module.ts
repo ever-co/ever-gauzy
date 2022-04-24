@@ -69,6 +69,7 @@ import {
 } from '../../@core/services';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -133,7 +134,8 @@ const COMPONENTS = [
 		LanguageSelectorModule,
 		GauzyButtonActionModule,
 		NbTabsetModule,
-		NbToggleModule
+		NbToggleModule,
+    PaginationModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [
