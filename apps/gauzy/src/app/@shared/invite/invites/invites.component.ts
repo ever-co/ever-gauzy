@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	Input,
+	OnDestroy,
+	OnInit,
+	ViewChild
+} from '@angular/core';
 import {
 	InvitationTypeEnum,
 	RolesEnum,
@@ -14,16 +21,25 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import * as moment from 'moment-timezone';
-import { InviteService, Store, ToastrService, RoleService } from '../../../@core/services';
+import {
+	InviteService,
+	Store,
+	ToastrService,
+	RoleService
+} from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ComponentEnum } from '../../../@core/constants';
 import { DateViewComponent } from '../../table-components';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../pagination/pagination-filter-base.component';
+import { distinctUntilChange } from '../../../../../../../packages/common-angular/src/utils/shared-utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,9 +48,9 @@ import { DateViewComponent } from '../../table-components';
 	styleUrls: ['invites.component.scss']
 })
 export class InvitesComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -66,7 +82,6 @@ export class InvitesComponent
 		private readonly translate: TranslateService,
 		private readonly inviteService: InviteService,
 		private readonly rolesService: RoleService
-
 	) {
 		super(translate);
 		this.setView();
@@ -78,9 +93,17 @@ export class InvitesComponent
 		this.invites$
 			.pipe(
 				debounceTime(200),
-				tap(() => this.loading = true),
 				tap(() => this.loadInvites()),
 				tap(() => this.clearItem()),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.invites$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -90,7 +113,10 @@ export class InvitesComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(() => this.invites$.next(true)),
 				untilDestroyed(this)
 			)
@@ -104,7 +130,10 @@ export class InvitesComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -133,9 +162,9 @@ export class InvitesComponent
 				invitationType: this.invitationType
 			}
 		});
-			
+
 		const data = await firstValueFrom(dialog.onClose);
-		if(data.length != 0){
+		if (data.length != 0) {
 			this.invites$.next(true);
 		}
 	}
@@ -161,18 +190,28 @@ export class InvitesComponent
 
 	private async loadInvites() {
 		let invites = [];
+		const { activePage, itemsPerPage } = this.getPagination();
+		this.loading = true;
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
 			const { items } = await this.inviteService.getAll(
-				[ 'projects', 'invitedBy', 'role', 'organizationContact', 'departments' ],
+				[
+					'projects',
+					'invitedBy',
+					'role',
+					'organizationContact',
+					'departments'
+				],
 				{ organizationId, tenantId }
 			);
 			invites = items.filter((invite) => {
-				if(this.invitationType === InvitationTypeEnum.EMPLOYEE) {
+				if (this.invitationType === InvitationTypeEnum.EMPLOYEE) {
 					return invite.role.name == RolesEnum.EMPLOYEE;
-				} else if (this.invitationType === InvitationTypeEnum.CANDIDATE) {
+				} else if (
+					this.invitationType === InvitationTypeEnum.CANDIDATE
+				) {
 					return invite.role.name === RolesEnum.CANDIDATE;
 				} else {
 					return invite.role.name !== RolesEnum.EMPLOYEE;
@@ -186,16 +225,22 @@ export class InvitesComponent
 		for (const invite of invites) {
 			invitesVm.push({
 				email: invite.email,
-				expireDate: invite.expireDate ? moment(invite.expireDate).fromNow() : InvitationExpirationEnum.NEVER,
+				expireDate: invite.expireDate
+					? moment(invite.expireDate).fromNow()
+					: InvitationExpirationEnum.NEVER,
 				createdDate: invite.createdAt,
 				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
 				fullName: `${
 					(invite.invitedBy && invite.invitedBy.firstName) || ''
 				} ${(invite.invitedBy && invite.invitedBy.lastName) || ''}`,
 				roleName: invite.role ? invite.role.name : '',
-				status: (!invite.expireDate || moment(invite.expireDate).isAfter(moment()))
-					? this.getTranslation(`INVITE_PAGE.STATUS.${invite.status}`)
-					: this.getTranslation(`INVITE_PAGE.STATUS.EXPIRED`),
+				status:
+					!invite.expireDate ||
+					moment(invite.expireDate).isAfter(moment())
+						? this.getTranslation(
+								`INVITE_PAGE.STATUS.${invite.status}`
+						  )
+						: this.getTranslation(`INVITE_PAGE.STATUS.EXPIRED`),
 				projectNames: (invite.projects || []).map(
 					(project) => project.name
 				),
@@ -210,13 +255,23 @@ export class InvitesComponent
 			});
 		}
 		this.invites = invitesVm;
+		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(invitesVm);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 		this.loading = false;
 	}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		const settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
@@ -262,10 +317,6 @@ export class InvitesComponent
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'text'
 				}
-			},
-			pager: {
-				display: true,
-				perPage: 8
 			}
 		};
 
@@ -304,21 +355,26 @@ export class InvitesComponent
 						)
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						if (!this.selectedInvite) {
-							this.toastrService.danger('Invitation is not selected');
+							this.toastrService.danger(
+								'Invitation is not selected'
+							);
 							return;
 						}
 						const { id, email } = this.selectedInvite;
-						await this.inviteService.delete(id)
+						await this.inviteService
+							.delete(id)
 							.then(() => {
-								this.toastrService.success('TOASTR.MESSAGE.INVITES_DELETE', {
-									email: email
-								});
+								this.toastrService.success(
+									'TOASTR.MESSAGE.INVITES_DELETE',
+									{
+										email: email
+									}
+								);
 							})
 							.finally(() => {
 								this.invites$.next(true);
@@ -345,36 +401,47 @@ export class InvitesComponent
 					email: this.selectedInvite.email
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						if (!this.selectedInvite) {
-							this.toastrService.danger('Invitation is not selected');
+							this.toastrService.danger(
+								'Invitation is not selected'
+							);
 							return;
 						}
 
-						const { id, email, departmentNames, roleName, clientNames } = this.selectedInvite;
-						
-						await this.inviteService.resendInvite({
+						const {
 							id,
-							invitedById: this.store.userId,
 							email,
-							roleName,
-							organization: this.organization,
 							departmentNames,
-							clientNames,
-							inviteType: this.invitationType
-							
-						}).then(() => {
-							this.toastrService.success('TOASTR.MESSAGE.INVITES_RESEND', {
-								email
+							roleName,
+							clientNames
+						} = this.selectedInvite;
+
+						await this.inviteService
+							.resendInvite({
+								id,
+								invitedById: this.store.userId,
+								email,
+								roleName,
+								organization: this.organization,
+								departmentNames,
+								clientNames,
+								inviteType: this.invitationType
+							})
+							.then(() => {
+								this.toastrService.success(
+									'TOASTR.MESSAGE.INVITES_RESEND',
+									{
+										email
+									}
+								);
+							})
+							.finally(() => {
+								this.invites$.next(true);
 							});
-						})
-						.finally(() => {
-							this.invites$.next(true);
-						});
 					} catch (error) {
 						this.toastrService.danger(error);
 					}
@@ -404,7 +471,8 @@ export class InvitesComponent
 			.pipe(
 				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 	}
 
 	/*
