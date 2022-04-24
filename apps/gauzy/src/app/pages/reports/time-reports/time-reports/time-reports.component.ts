@@ -102,7 +102,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 						label: TimeLogType.MANUAL,
 						data: logs.map((log) => log.value[TimeLogType.MANUAL]),
 						borderColor: ChartUtil.CHART_COLORS.red,
-						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.1),
+						backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
 						...commonOptions,
 					},
 					{

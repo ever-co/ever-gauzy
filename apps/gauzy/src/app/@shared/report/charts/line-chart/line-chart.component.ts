@@ -28,7 +28,7 @@ export interface IChartData {
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-line-chart',
+	selector: ' ngx-line-chart',
 	templateUrl: './line-chart.component.html',
 	styleUrls: ['./line-chart.component.scss']
 })
