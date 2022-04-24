@@ -2,21 +2,21 @@
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
-				<label 
-					for="emails" 
+				<label
+					for="emails"
 					class="label"
 				>
 					{{ 'FORM.LABELS.EMAILS' | translate }}
 				</label>
 				<nb-form-field>
-					<nb-tag-list (tagRemove)="onEmailRemove($event)">
-						<nb-tag 
+					<nb-tag-list class="custom-tag-list" (tagRemove)="onEmailRemove($event)">
+						<nb-tag
 							*ngFor="let email of emails"
 							[text]="email"
 							[size]="'tiny'"
 							removable
 						></nb-tag>
-						<input 
+						<input
 							id="emails"
 							type="text"
 							name="emails"
@@ -46,15 +46,15 @@
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="form-group">
-					<label 
+					<label
 						for="startedWorkOn"
 						class="label"
 					>
 						{{ 'FORM.LABELS.START_DATE' | translate }}
-						<nb-icon 
-							[nbTooltip]="'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate" 
+						<nb-icon
+							[nbTooltip]="'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate"
 							icon="question-mark-circle-outline"
-						></nb-icon>	
+						></nb-icon>
 					</label>
 					<nb-form-field>
 						<input
@@ -169,9 +169,9 @@
 			</div>
 		</div>
 	</ng-container>
-	<ng-container 
+	<ng-container
 		*ngIf="
-			invitationType === invitationTypeEnum.EMPLOYEE || 
+			invitationType === invitationTypeEnum.EMPLOYEE ||
 			invitationType === invitationTypeEnum.CANDIDATE
 	">
 		<div class="row">
