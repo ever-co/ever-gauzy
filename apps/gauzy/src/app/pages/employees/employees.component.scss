@@ -35,10 +35,7 @@ nb-card {
   }
   @include nb-card-overrides(
     unset,
-    calc($default-card-height + 3.5rem),
+    calc($default-card-height),
     $default-radius
   );
-  nb-tab {
-    border-radius: nb-theme(border-radius);
-  }
 }
