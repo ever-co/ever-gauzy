@@ -257,11 +257,17 @@ export class InvitesComponent
 		this.invites = invitesVm;
 		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(invitesVm);
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
+			this._loadGridLayoutData();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
 		});
 		this.loading = false;
+	}
+
+	private async _loadGridLayoutData() {
+		this.invites = await this.sourceSmartTable.getElements();
 	}
 
 	private _loadSmartTableSettings() {
