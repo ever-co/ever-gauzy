@@ -2,22 +2,15 @@
 @import 'gauzy/_gauzy-overrides';
 @import 'gauzy/_gauzy-cards.scss';
 
-nb-tab.content-active {
-  padding: 1rem;
-}
-
-nb-card,
-nb-tab {
+nb-card {
   background-color: rgba(50, 50, 50, 0.03);
 }
-
+.btn-group.actions {
+  padding: 0;
+}
 .gauzy-button-container {
-  position: absolute;
-  right: 0;
-  top: 0;
   display: flex;
   align-items: center;
-  margin: 0 1rem;
 }
 :host {
   .custom-toggle {
