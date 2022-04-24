@@ -494,7 +494,6 @@ export class EmployeesComponent
 					title: this.getTranslation('SM_TABLE.TIME_TRACKING'),
 					type: 'custom',
 					class: 'text-center',
-					width: '20%',
 					renderComponent: EmployeeTimeTrackingStatusComponent,
 					filter: false
 				},
@@ -502,7 +501,6 @@ export class EmployeesComponent
 					title: this.getTranslation('SM_TABLE.WORK_STATUS'),
 					type: 'custom',
 					class: 'text-center',
-					width: '20%',
 					renderComponent: EmployeeWorkStatusComponent,
 					filter: false
 				}
