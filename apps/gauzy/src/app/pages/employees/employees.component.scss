@@ -1,94 +1,98 @@
-/* Card grid */
-.grid-scroll-container {
-	.flex-container {
-		display: flex;
-		flex-flow: row wrap;
-		justify-content: flex-start;
-		padding: 0;
-		margin: 0;
-		list-style: none;
-		.flex-item {
-			border: 0.0625rem solid #e4e9f2;
-			border-radius: 0.25rem;
-			width: 23%;
-			margin: 10px;
-			.fullName {
-				display: flex;
-				flex-direction: row;
-				justify-content: space-between;
-				padding: 1rem 1.5rem;
-				line-height: 40px;
-				font-size: 1.5em;
-			}
-			.avatar {
-				width: 60px;
-				height: 60px;
-				border-radius: 50%;
-			}
-			.email {
-				text-align: right;
-				padding-right: 1.5rem;
-				bottom: 36px;
-				position: relative;
-			}
-			.info-line {
-				display: flex;
-				flex-direction: row;
-				justify-content: space-between;
-				font-size: 0.8em;
-				color: darkgray;
-				line-height: 0px;
-				padding: 1rem 1.5rem;
-				.info-meta {
-				  	margin-right: 10px;
-				}
-				.info-value {
-					display: flex;
-					justify-content: flex-end;
-					text-align: end;
-					color: black;
-					font-size: 1em;
-				}
-				/* work status */
-				.badge-danger {
-					text-align: center;
-					padding: 5px 30px;
-					background-color: #ff3d71;
-					margin-bottom: 20px;
-					border-radius: 0.25rem;
-				}
-				.badge-success {
-					text-align: center;
-					padding: 5px 30px;
-					background-color: #00d68f;
-					border-radius: 0.25rem;
-				}
-				.badge-disabled {
-					text-align: center;
-					padding: 5px 30px;
-					background-color: #ccc;
-					border-radius: 0.25rem;
-				}
-			}
-			.card-footer {
-				justify-content: space-around;
-				display: flex;
-			}
-		}
-	}
+@import 'gauzy/_gauzy-table.scss';
+@import 'gauzy/_gauzy-overrides';
+@import 'gauzy/_gauzy-cards.scss';
+// /* Card grid */
+// .grid-scroll-container {
+//   .flex-container {
+//     display: flex;
+//     flex-flow: row wrap;
+//     justify-content: flex-start;
+//     padding: 0;
+//     margin: 0;
+//     list-style: none;
+//     .flex-item {
+//       border: 0.0625rem solid #e4e9f2;
+//       border-radius: 0.25rem;
+//       width: 23%;
+//       margin: 10px;
+//       .fullName {
+//         display: flex;
+//         flex-direction: row;
+//         justify-content: space-between;
+//         padding: 1rem 1.5rem;
+//         line-height: 40px;
+//         font-size: 1.5em;
+//       }
+//       .avatar {
+//         width: 60px;
+//         height: 60px;
+//         border-radius: 50%;
+//       }
+//       .email {
+//         text-align: right;
+//         padding-right: 1.5rem;
+//         bottom: 36px;
+//         position: relative;
+//       }
+//       .info-line {
+//         display: flex;
+//         flex-direction: row;
+//         justify-content: space-between;
+//         font-size: 0.8em;
+//         color: darkgray;
+//         line-height: 0px;
+//         padding: 1rem 1.5rem;
+//         .info-meta {
+//           margin-right: 10px;
+//         }
+//         .info-value {
+//           display: flex;
+//           justify-content: flex-end;
+//           text-align: end;
+//           color: black;
+//           font-size: 1em;
+//         }
+//         /* work status */
+//         .badge-danger {
+//           text-align: center;
+//           padding: 5px 30px;
+//           background-color: #ff3d71;
+//           margin-bottom: 20px;
+//           border-radius: 0.25rem;
+//         }
+//         .badge-success {
+//           text-align: center;
+//           padding: 5px 30px;
+//           background-color: #00d68f;
+//           border-radius: 0.25rem;
+//         }
+//         .badge-disabled {
+//           text-align: center;
+//           padding: 5px 30px;
+//           background-color: #ccc;
+//           border-radius: 0.25rem;
+//         }
+//       }
+//       .card-footer {
+//         justify-content: space-around;
+//         display: flex;
+//       }
+//     }
+//   }
+// }
+nb-tab.content-active {
+  padding: 1rem;
 }
 
+nb-card,
+nb-tab {
+  background-color: rgba(50, 50, 50, 0.03);
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+.gauzy-button-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+}

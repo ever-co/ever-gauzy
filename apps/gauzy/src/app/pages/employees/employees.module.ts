@@ -27,7 +27,7 @@ import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invit
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { ThemeModule } from '../../@theme';
 import { InviteGuard } from './../../@core/guards';
-import { 
+import {
 	EditEmployeeContactComponent,
 	EditEmployeeEmploymentComponent,
 	EditEmployeeHiringComponent,
@@ -41,7 +41,7 @@ import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EmployeesRoutingModule } from './employees-routing.module';
 import { EmployeesComponent } from './employees.component';
 import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-employee-invite.component';
-import { 
+import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,
 	EmployeeAverageIncomeComponent,
@@ -61,7 +61,14 @@ import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-pro
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
-import { CandidatesService, OrganizationEmploymentTypesService, OrganizationsService, SkillsService } from '../../@core/services';
+import {
+	CandidatesService,
+	OrganizationEmploymentTypesService,
+	OrganizationsService,
+	SkillsService
+} from '../../@core/services';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { NbTabsetModule } from '@nebular/theme';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -124,6 +131,8 @@ const COMPONENTS = [
 		CKEditorModule,
 		HeaderTitleModule,
 		LanguageSelectorModule,
+		GauzyButtonActionModule,
+		NbTabsetModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [
