@@ -38,13 +38,14 @@
 				[buttonTemplateVisible]="visibleButtons"
 			>
 			</ngx-gauzy-button-action>
-			<nb-checkbox
+			<div class="custom-toggle">
+        <nb-toggle
 				(checkedChange)="changeIncludeDeleted($event)"
 				status="danger"
-				class="float-right py-auto"
 			>
 				{{ 'FORM.CHECKBOXES.INCLUDE_DELETED' | translate }}
-			</nb-checkbox>
+			</nb-toggle>
+      </div>
 			<ga-layout-selector
 				[componentName]="viewComponentName"
 			></ga-layout-selector>

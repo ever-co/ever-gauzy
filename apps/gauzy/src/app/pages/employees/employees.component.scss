@@ -96,3 +96,17 @@ nb-tab {
   display: flex;
   align-items: center;
 }
+:host .custom-toggle {
+  margin: 0 28px 0 12px;
+  padding-top: 5px;
+  ::ng-deep {
+    nb-toggle.status-danger .toggle.checked,
+    nb-toggle.status-danger .toggle {
+      background-color: rgba(245, 109, 88, 1);
+      border-color: rgba(245, 109, 88, 1);
+    }
+    nb-toggle.status-danger .text {
+      color: rgba(245, 109, 88, 1);
+    }
+  }
+}
