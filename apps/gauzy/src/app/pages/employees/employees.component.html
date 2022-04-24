@@ -77,12 +77,12 @@
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
-<ng-template #actionButtons let-selectedItem="selectedItem">
+<ng-template #actionButtons>
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				size="small"
 				(click)="edit(selectedItem)"
 				status="basic"
@@ -93,9 +93,7 @@
 			</button>
 			<button
 				nbButton
-				[disabled]="
-					(!selectedItem && disableButton) || !selectedItem?.isActive
-				"
+				[disabled]="disableButton || !selectedItem?.isActive"
 				size="small"
 				(click)="delete(selectedItem)"
 				status="basic"
@@ -106,12 +104,10 @@
 			</button>
 			<button
 				nbButton
-				[disabled]="
-					(!selectedItem && disableButton) || !selectedItem?.isActive
-				"
+				[disabled]="disableButton || !selectedItem?.isActive"
 				size="small"
 				(click)="
-					selectedItem.endWork
+					selectedItem?.endWork
 						? backToWork(selectedItem)
 						: endWork(selectedItem)
 				"
@@ -120,7 +116,7 @@
 			>
 				<nb-icon icon="person-delete-outline"></nb-icon>
 				{{
-					(selectedItem && selectedItem.endWork
+					(selectedItem && selectedItem?.endWork
 						? 'EMPLOYEES_PAGE.BACK_TO_WORK'
 						: 'EMPLOYEES_PAGE.END_WORK'
 					) | translate
@@ -146,13 +142,12 @@
 					debounceClick
 					(throttledClick)="timeTrackingAction(selectedItem)"
 					[status]="
-						selectedItem.isTrackingEnabled ? 'danger' : 'primary'
+						selectedItem?.isTrackingEnabled ? 'danger' : 'primary'
 					"
-					class="mr-2"
 				>
 					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 					{{
-						(selectedItem.isTrackingEnabled
+						(selectedItem?.isTrackingEnabled
 							? 'BUTTONS.TIME_TRACKING_DISABLE'
 							: 'BUTTONS.TIME_TRACKING_ENABLE'
 						) | translate

@@ -60,6 +60,7 @@ export class EmployeesComponent
 	organizationInvitesAllowed = false;
 	month: string;
 	year: number;
+  selectedItem: EmployeeViewModel;
 
 	employeesTable: Ng2SmartTableComponent;
 	@ViewChild('employeesTable') set content(content: Ng2SmartTableComponent) {
@@ -148,6 +149,7 @@ export class EmployeesComponent
 	selectEmployee({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
+    this.selectedItem = this.selectedEmployee;
 	}
 
 	async add() {
@@ -251,7 +253,7 @@ export class EmployeesComponent
 		try {
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
-			
+
 			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 				context: {
 					endWorkValue: this.selectedEmployee.endWork,
@@ -319,8 +321,8 @@ export class EmployeesComponent
 
 	/**
 	 * Restore deleted employee
-	 * 
-	 * @param selectedItem 
+	 *
+	 * @param selectedItem
 	 */
 	async restoreToWork(selectedItem?: EmployeeViewModel) {
 		if (!this.organization) {
@@ -355,8 +357,8 @@ export class EmployeesComponent
 
 	/**
 	 * Enabled/Disabled Time Tracking Status for each employee
-	 * 
-	 * @param selectedItem 
+	 *
+	 * @param selectedItem
 	 */
 	async timeTrackingAction(selectedItem?: EmployeeViewModel) {
 		if (selectedItem) {
@@ -374,7 +376,7 @@ export class EmployeesComponent
 				organizationId,
 				tenantId
 			});
- 
+
 			if (isTrackingEnabled) {
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED', {
 					name: this.selectedEmployee.fullName.trim()
