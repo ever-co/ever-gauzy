@@ -81,6 +81,66 @@
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
 			<button
+				status="basic"
+				class="action secondary"
+				size="small"
+				nbButton
+			>
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				<span> {{ 'BUTTONS.VIEW' | translate }} </span>
+			</button>
+			<ng-container *ngIf="selectedItem && !selectedItem?.isActive">
+				<button
+					nbButton
+					size="small"
+					debounceClick
+					(throttledClick)="restoreToWork(selectedItem)"
+					status="info"
+					class="action"
+				>
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.RESTORE' | translate }}
+				</button>
+			</ng-container>
+			<ng-container *ngIf="selectedItem">
+				<button
+					nbButton
+					size="small"
+					class="action warning"
+					debounceClick
+					(throttledClick)="timeTrackingAction(selectedItem)"
+					status="basic"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{
+						(selectedItem?.isTrackingEnabled
+							? 'BUTTONS.TIME_TRACKING_DISABLE'
+							: 'BUTTONS.TIME_TRACKING_ENABLE'
+						) | translate
+					}}
+				</button>
+			</ng-container>
+			<button
+				nbButton
+				[disabled]="disableButton || !selectedItem?.isActive"
+				size="small"
+				(click)="
+					selectedItem?.endWork
+						? backToWork(selectedItem)
+						: endWork(selectedItem)
+				"
+				status="basic"
+				class="action orange"
+			>
+				<nb-icon icon="person-delete-outline"></nb-icon>
+				{{
+					(selectedItem && selectedItem?.endWork
+						? 'EMPLOYEES_PAGE.BACK_TO_WORK'
+						: 'EMPLOYEES_PAGE.END_WORK'
+					) | translate
+				}}
+			</button>
+			<button
 				nbButton
 				[disabled]="disableButton"
 				size="small"
@@ -102,58 +162,6 @@
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 			</button>
-			<button
-				nbButton
-				[disabled]="disableButton || !selectedItem?.isActive"
-				size="small"
-				(click)="
-					selectedItem?.endWork
-						? backToWork(selectedItem)
-						: endWork(selectedItem)
-				"
-				status="basic"
-				class="action"
-			>
-				<nb-icon icon="person-delete-outline"></nb-icon>
-				{{
-					(selectedItem && selectedItem?.endWork
-						? 'EMPLOYEES_PAGE.BACK_TO_WORK'
-						: 'EMPLOYEES_PAGE.END_WORK'
-					) | translate
-				}}
-			</button>
-			<ng-container *ngIf="selectedItem && !selectedItem?.isActive">
-				<button
-					nbButton
-					size="small"
-					debounceClick
-					(throttledClick)="restoreToWork(selectedItem)"
-					status="info"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.RESTORE' | translate }}
-				</button>
-			</ng-container>
-			<ng-container *ngIf="selectedItem">
-				<button
-					nbButton
-					size="small"
-					debounceClick
-					(throttledClick)="timeTrackingAction(selectedItem)"
-					[status]="
-						selectedItem?.isTrackingEnabled ? 'danger' : 'primary'
-					"
-				>
-					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-					{{
-						(selectedItem?.isTrackingEnabled
-							? 'BUTTONS.TIME_TRACKING_DISABLE'
-							: 'BUTTONS.TIME_TRACKING_ENABLE'
-						) | translate
-					}}
-				</button>
-			</ng-container>
 		</ng-template>
 	</div>
 </ng-template>
@@ -163,7 +171,8 @@
 			<button
 				nbButton
 				*ngIf="organizationInvitesAllowed"
-				status="primary"
+				status="info"
+				class="action"
 				(click)="invite()"
 				size="small"
 			>
