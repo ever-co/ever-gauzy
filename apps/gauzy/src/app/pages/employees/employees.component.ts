@@ -6,7 +6,8 @@ import {
 	IOrganization,
 	EmployeeViewModel,
 	CrudActionEnum,
-	IEmployee
+	IEmployee,
+  ITag
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,6 +25,8 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
+import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
+import { TagsColorFilterComponent } from '../../@shared/table-filters/tags-color-filter.component';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
@@ -573,6 +576,24 @@ export class EmployeesComponent
 					class: 'text-center',
 					renderComponent: EmployeeTimeTrackingStatusComponent,
 					filter: false
+				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					width: '10%',
+					renderComponent: TagsOnlyComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
+					sort: false
 				},
 				workStatus: {
 					title: this.getTranslation('SM_TABLE.WORK_STATUS'),
