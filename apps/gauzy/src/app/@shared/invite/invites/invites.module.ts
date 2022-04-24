@@ -27,6 +27,7 @@ import { SharedModule } from '../../shared.module';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { HeaderTitleModule } from '../../components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../gauzy-button-action/gauzy-button-action.module';
 
 const COMPONENTS = [
 	InvitesComponent,
@@ -59,7 +60,8 @@ const COMPONENTS = [
 		InviteMutationModule,
 		UserFormsModule,
 		CardGridModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+    GauzyButtonActionModule
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS],
