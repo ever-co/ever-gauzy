@@ -70,6 +70,7 @@ import {
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -135,7 +136,8 @@ const COMPONENTS = [
 		GauzyButtonActionModule,
 		NbTabsetModule,
 		NbToggleModule,
-    PaginationModule
+    PaginationModule,
+    CardGridModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [

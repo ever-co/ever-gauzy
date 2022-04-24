@@ -505,11 +505,17 @@ export class EmployeesComponent
 		this.employees = employeesVm;
 		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(employeesVm);
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
+			this._loadGridLayoutData();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
 		});
 		this.loading = false;
+	}
+
+	private async _loadGridLayoutData() {
+		this.employees = await this.sourceSmartTable.getElements();
 	}
 
 	private _loadSmartTableSettings() {
