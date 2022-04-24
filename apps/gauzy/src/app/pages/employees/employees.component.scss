@@ -19,20 +19,29 @@ nb-tab {
   align-items: center;
   margin: 0 1rem;
 }
-:host .custom-toggle {
-  margin: 0 28px 0 12px;
-  padding-top: 5px;
-  ::ng-deep {
-    nb-toggle.status-danger .toggle.checked {
-      background-color: rgba(245, 109, 88, 1);
-      border-color: rgba(245, 109, 88, 1);
+:host {
+  .custom-toggle {
+    margin: 0 28px 0 12px;
+    padding-top: 5px;
+    ::ng-deep {
+      nb-toggle.status-danger .toggle.checked {
+        background-color: rgba(245, 109, 88, 1);
+        border-color: rgba(245, 109, 88, 1);
+      }
+      nb-toggle.status-danger .text {
+        color: rgba(245, 109, 88, 1);
+      }
+      nb-toggle.status-danger .toggle {
+        background-color: nb-theme(color-primary-transparent-default);
+        border-color: nb-theme(color-primary-transparent-default);
+      }
     }
-    nb-toggle.status-danger .text {
-      color: rgba(245, 109, 88, 1);
-    }
-    nb-toggle.status-danger .toggle {
-      background-color: nb-theme(color-primary-transparent-default);
-      border-color: nb-theme(color-primary-transparent-default);
-    }
+  }
+  .custom-table {
+    height: calc(100vh - 31.5rem);
+  }
+  @include nb-card-overrides(unset, $default-card-height, $default-radius);
+  nb-tab {
+    border-radius: nb-theme(border-radius);
   }
 }
