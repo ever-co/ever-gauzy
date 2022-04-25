@@ -1,86 +1,98 @@
-
 <div class="custom-card">
-<div class="filters mt-4 pr-2">
-	<ngx-gauzy-filters
-		[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-		(filtersChange)="filtersChange($event)"
-	></ngx-gauzy-filters>
-</div>
-<div
-	class="screenshot-container"
-	[nbSpinner]="loading"
-	nbSpinnerSize="giant"
-	nbSpinnerStatus="primary"
->
-	<ng-template [ngIf]="timeSlots?.length > 0" [ngIfElse]="notFound">
-		<div class="row" *ngFor="let hourSlot of timeSlots; let i = index">
-			<div class="col">
+	<div class="filters mt-0 mb-2">
+		<ngx-gauzy-filters
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+			(filtersChange)="filtersChange($event)"
+		></ngx-gauzy-filters>
+	</div>
+	<div class="custom-card-body">
+		<div
+			class="screenshot-container"
+			[nbSpinner]="loading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<ng-template [ngIf]="timeSlots?.length > 0" [ngIfElse]="notFound">
 				<div
-					class="hour-lable mt-3"
-					[ngClass]="{ 'border-top pt-3': i != 0 }"
+					class="row"
+					*ngFor="let hourSlot of timeSlots; let i = index"
 				>
-					<h6>
-						{{ hourSlot.startTime | timeFormat }} -
-						{{ hourSlot.endTime | timeFormat }}
-					</h6>
-				</div>
-
-				<div class="row my-3 align-items-center justify-content-center">
-					<div
-						class="col"
-						*ngFor="let timeSlot of hourSlot.timeSlots"
-					>
-						<ngx-screenshots-item
-							[timeSlot]="timeSlot"
-							[selectionMode]="selectedIdsCount > 0"
-							[isSelected]="selectedIds[timeSlot?.id]"
-							(delete)="deleteSlot()"
-							(toggle)="toggleSelect($event)"
+					<div class="col">
+						<div
+							class="hour-lable mt-3"
+							[ngClass]="{ 'border-top pt-3': i != 0 }"
 						>
-						</ngx-screenshots-item>
+							<h6>
+								{{ hourSlot.startTime | timeFormat }} -
+								{{ hourSlot.endTime | timeFormat }}
+							</h6>
+						</div>
+
+						<div
+							class="row my-3 align-items-center justify-content-center"
+						>
+							<div
+								class="col"
+								*ngFor="let timeSlot of hourSlot.timeSlots"
+							>
+								<ngx-screenshots-item
+									[timeSlot]="timeSlot"
+									[selectionMode]="selectedIdsCount > 0"
+									[isSelected]="selectedIds[timeSlot?.id]"
+									(delete)="deleteSlot()"
+									(toggle)="toggleSelect($event)"
+								>
+								</ngx-screenshots-item>
+							</div>
+						</div>
+					</div>
+				</div>
+			</ng-template>
+			<ng-template #notFound>
+				<ng-container *ngIf="!selectedEmployeeId; else blankScreenshot">
+					<div class="py-5 text-center">
+						<h6>
+							{{ 'ACTIVITY.NO_EMPLOYEES_SELECTED' | translate }}
+						</h6>
+					</div>
+				</ng-container>
+				<ng-template #blankScreenshot>
+					<div class="py-5 text-center">
+						<h6>{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}</h6>
+					</div>
+				</ng-template>
+			</ng-template>
+		</div>
+		<div class="selected-items-action" *ngIf="selectedIdsCount > 0">
+			<div class="card p-4 w-100">
+				<div class="row align-items-center">
+					<div class="col">
+						{{ this.selectedIdsCount }} Screen selected
+					</div>
+					<div class="col-auto">
+						<button
+							class="ml-auto mr-2 select-hidden"
+							status="info"
+							nbButton
+							size="small"
+							(click)="toggleAllSelect()"
+						>
+							{{
+								this.allSelected ? 'Unselect All' : 'Select All'
+							}}
+						</button>
+						<button
+							class="ml-auto select-hidden"
+							status="danger"
+							nbButton
+							size="small"
+							(click)="deleteSlots()"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
 					</div>
 				</div>
 			</div>
 		</div>
-	</ng-template>
-	<ng-template #notFound>
-		<ng-container *ngIf="!selectedEmployeeId; else blankScreenshot">
-			<div class="py-5 text-center">
-				<h6>{{ 'ACTIVITY.NO_EMPLOYEES_SELECTED' | translate }}</h6>
-			</div>
-		</ng-container>
-		<ng-template #blankScreenshot>
-			<div class="py-5 text-center">
-				<h6>{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}</h6>
-			</div>
-		</ng-template>
-	</ng-template>
-</div>
-<div class="selected-items-action" *ngIf="selectedIdsCount > 0">
-	<div class="card p-4 w-100">
-		<div class="row align-items-center">
-			<div class="col">{{ this.selectedIdsCount }} Screen selected</div>
-			<div class="col-auto">
-				<button
-					class="ml-auto mr-2 select-hidden"
-					status="info"
-					nbButton
-					size="small"
-					(click)="toggleAllSelect()"
-				>
-					{{ this.allSelected ? 'Unselect All' : 'Select All' }}
-				</button>
-				<button
-					class="ml-auto select-hidden"
-					status="danger"
-					nbButton
-					size="small"
-					(click)="deleteSlots()"
-				>
-					<nb-icon icon="trash-2-outline"></nb-icon>
-				</button>
-			</div>
-		</div>
 	</div>
-</div>
 </div>
