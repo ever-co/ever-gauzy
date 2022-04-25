@@ -1,0 +1,10 @@
+@import 'themes';
+
+.custom-card {
+  border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
+    nb-theme(border-radius);
+  background-color: nb-theme(gauzy-card-2);
+  padding: 0 1rem;
+  overflow-y: overlay;
+  height: calc(100vh - 20.75rem);
+}

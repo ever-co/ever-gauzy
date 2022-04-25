@@ -3,7 +3,7 @@
 :host {
   nb-card {
     nb-card-body {
-      height: 100%;
+      overflow: unset;
     }
   }
   ::ng-deep .route-tabset .route-tab a.tab-link {

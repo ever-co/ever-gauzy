@@ -1,14 +1,16 @@
-<div class="filters mt-4 pr-2">
-	<ngx-gauzy-filters
-		[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-		(filtersChange)="filtersChange($event)"
-	></ngx-gauzy-filters>
+<div class="custom-card">
+  <div class="filters mt-4 pr-2">
+    <ngx-gauzy-filters
+      [saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+      (filtersChange)="filtersChange($event)"
+    ></ngx-gauzy-filters>
+  </div>
+  <ga-daily-statistics
+    class="mt-4"
+    [filters]="filters"
+  ></ga-daily-statistics>
+  <ga-daily-grid
+    class="mt-4"
+    [filters]="filters"
+  ></ga-daily-grid>
 </div>
-<ga-daily-statistics
-	class="mt-4" 
-	[filters]="filters"
-></ga-daily-statistics>
-<ga-daily-grid
-	class="mt-4"
-	[filters]="filters"
-></ga-daily-grid>
