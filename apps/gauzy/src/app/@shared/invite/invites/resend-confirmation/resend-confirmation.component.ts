@@ -5,8 +5,11 @@ import { NbDialogRef } from '@nebular/theme';
 	selector: 'ga-resend-confirmation',
 	template: `
 		<nb-card class="center">
-			<nb-card-header>
-				<h6>{{ 'POP_UPS.CONFIRM' | translate }}</h6>
+			<nb-card-header class="d-flex flex-column">
+				<span class="cancel"
+					><i class="fas fa-times" (click)="close()"></i
+				></span>
+				<h6 class="title">{{ 'POP_UPS.CONFIRM' | translate }}</h6>
 			</nb-card-header>
 			<nb-card-body>
 				<span>
@@ -17,33 +20,29 @@ import { NbDialogRef } from '@nebular/theme';
 					{{ email }} ?
 				</span>
 			</nb-card-body>
-			<nb-card-footer>
+			<nb-card-footer class="text-align-left">
+				<button (click)="close()" status="basic" outline nbButton>
+					{{ 'POP_UPS.CANCEL' | translate }}
+				</button>
 				<button
 					(click)="confirm()"
-					class="mr-3"
+					class="mr-3 ml-3"
 					status="success"
 					nbButton
 				>
 					{{ 'POP_UPS.OK' | translate }}
-				</button>
-				<button (click)="close()" status="danger" nbButton>
-					{{ 'POP_UPS.CANCEL' | translate }}
 				</button>
 			</nb-card-footer>
 		</nb-card>
 	`,
 	styles: [
 		`
-			nb-card-body {
-				text-align: center;
-			}
-
 			.center {
-				align-items: center;
 				width: 300px;
 			}
 		`
-	]
+	],
+	styleUrls: ['resend-confirmation.component.scss']
 })
 export class ResendConfirmationComponent {
 	email: string;
