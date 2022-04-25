@@ -18,7 +18,10 @@
   }
 
   ::ng-deep .custom-tag-list.nb-tag-list-with-input.size-medium {
-    padding: 0;
+    box-shadow: 0 1px 1px 0 rgba(50, 50, 50, 0.03) inset;
+    input {
+      box-shadow: unset;
+    }
   }
 
   .item-invalid {
