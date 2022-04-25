@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import { v4 as uuidV4 } from 'uuid';
     
 export class AlterChangelogTable1650704972412 implements MigrationInterface {
 
@@ -129,10 +130,19 @@ export class AlterChangelogTable1650704972412 implements MigrationInterface {
 
         try {
             for await (const feature of features) {
-                await queryRunner.connection.manager.query(`
-                    INSERT INTO "changelog" ("icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl") VALUES($1, $2, $3, $4, $5, $6, $7)`,
-                    Object.values(feature)
-                );
+                const payload = Object.values(feature);
+                if (queryRunner.connection.options.type === 'sqlite') {
+                    payload.push(uuidV4());
+                    await queryRunner.connection.manager.query(`
+                        INSERT INTO "changelog" ("icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl", "id") VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
+                        payload
+                    );
+                } else {
+                    await queryRunner.connection.manager.query(`
+                        INSERT INTO "changelog" ("icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl") VALUES($1, $2, $3, $4, $5, $6, $7)`,
+                        payload
+                    );
+                }
             }
         } catch (error) {
             // since we have errors let's rollback changes we made
