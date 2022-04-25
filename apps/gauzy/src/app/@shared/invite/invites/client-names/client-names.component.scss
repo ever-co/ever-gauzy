@@ -1,4 +1,5 @@
 @import 'themes';
+@import 'apps/gauzy/src/app/@shared/table-components/contact-links/contact-links.component.scss';
 
 @include nb-install-component() {
 	.client-badge {

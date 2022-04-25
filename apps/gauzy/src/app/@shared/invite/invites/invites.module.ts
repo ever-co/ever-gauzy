@@ -63,7 +63,7 @@ const COMPONENTS = [
 		CardGridModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule
+		PaginationModule,
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS],
