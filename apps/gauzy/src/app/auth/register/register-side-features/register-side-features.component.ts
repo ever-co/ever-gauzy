@@ -1,28 +1,30 @@
-import { Component } from '@angular/core';
-import { IRegisterSideFeature } from "@gauzy/contracts";
+import { Component, OnInit } from '@angular/core';
+import { IChangelog } from "@gauzy/contracts";
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable } from 'rxjs/internal/Observable';
+import { Subject } from 'rxjs/internal/Subject';
+import { ChangelogService } from '../../../@core/services';
 
-
+@UntilDestroy({ checkProperties: true })
 @Component({
-  selector: 'ngx-register-side-features',
-  templateUrl: './register-side-features.component.html',
-  styleUrls: ['./register-side-features.component.scss'],
+	selector: 'ngx-register-side-features',
+	templateUrl: './register-side-features.component.html',
+	styleUrls: ['./register-side-features.component.scss'],
 })
-export class NgxRegisterSideFeaturesComponent {
-  featuresData: IRegisterSideFeature[] = [{
-    icon: 'cube-outline',
-    heading: 'New CRM',
-    description: 'Now you can read latest features changelog directly in Gauzy',
-    imageSrc: 'a',
-  }, {
-    icon: 'globe-outline',
-    heading: 'Most popular in 20 countries',
-    description: 'Europe, Americas and Asia get choise',
-    imageSrc: 'a',
-  }, {
-    icon: 'flash-outline',
-    heading: 'Visit our website',
-    description: 'You are welcome to check more information about the platform at our official website.',
-  }];
+export class NgxRegisterSideFeaturesComponent implements OnInit {
+	
+	subject$: Subject<any> = new Subject();
+	items$: Observable<IChangelog[]> = this._changelogService.changelogs$;
 
-  constructor () {}
+	constructor (
+		private readonly _changelogService: ChangelogService
+	) {}
+
+	ngOnInit() {
+		this._changelogService.getAll({ isFeature: true })
+			.pipe(
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 }

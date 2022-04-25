@@ -16,10 +16,15 @@ export class NgxWhatsNewComponent {
 	learnMore: string
 	items$: Observable<IChangelog[]> = this._changelogService.changelogs$;
 
-	constructor(private readonly _changelogService: ChangelogService) {}
+	constructor(
+		private readonly _changelogService: ChangelogService
+	) {}
 
 	ngOnInit () {
-		this._changelogService.getAll().pipe(untilDestroyed(this)).subscribe();
+		this._changelogService.getAll({ isFeature : false })
+			.pipe(
+				untilDestroyed(this)
+			).subscribe();
 		this.items$
 			.pipe(
 				tap(changeLogs => changeLogs.forEach(x => this.learnMore = x.learnMoreUrl)),
