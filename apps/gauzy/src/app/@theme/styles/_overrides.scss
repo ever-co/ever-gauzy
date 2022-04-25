@@ -233,7 +233,6 @@ body {
 
   .ng-dropdown-panel {
     transform: translateY(10px);
-    width: auto !important;
     box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.2);
     &.ng-select-bottom {
       border-radius: nb-theme(border-radius);

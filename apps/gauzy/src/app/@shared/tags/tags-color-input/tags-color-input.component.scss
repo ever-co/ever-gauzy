@@ -24,3 +24,7 @@ input{
     margin-right: 0;
   }
 }
+.text{
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}
