@@ -73,7 +73,10 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="btn-group actions">
+	<div
+		*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+		class="btn-group actions"
+	>
 		<button
 			nbButton
 			[disabled]="!selectedItem && disableButton"
