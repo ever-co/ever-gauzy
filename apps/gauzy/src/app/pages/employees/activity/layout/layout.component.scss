@@ -1,7 +1,19 @@
+@import 'themes';
+
 :host {
   nb-card {
     nb-card-body {
       height: 100%;
+    }
+  }
+  ::ng-deep .route-tabset .route-tab a.tab-link {
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    span.tab-text {
+      text-transform: lowercase;
+      display: block;
+      &:first-letter {
+        text-transform: uppercase;
+      }
     }
   }
 }
