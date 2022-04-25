@@ -1,14 +1,28 @@
 <div class="row align-items-center">
-	<div class="col-auto" *ngIf="allowChild">
-		<button nbButton ghost *ngIf="childOpen" (click)="toggleChild()">
-			<nb-icon icon="arrow-ios-downward-outline"></nb-icon>
-		</button>
-		<button nbButton ghost *ngIf="!childOpen" (click)="toggleChild()">
-			<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
-		</button>
-	</div>
 	<div class="col-4" [nbTooltip]="item.title">
-		{{ item.title | truncate: 13 }}
+		<div class="row align-items-center">
+			<div class="col-auto" *ngIf="allowChild">
+				<button
+					nbButton
+					ghost
+					*ngIf="childOpen"
+					(click)="toggleChild()"
+				>
+					<nb-icon icon="arrow-ios-downward-outline"></nb-icon>
+				</button>
+				<button
+					nbButton
+					ghost
+					*ngIf="!childOpen"
+					(click)="toggleChild()"
+				>
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="col font-weight-bold">
+				{{ item.title | truncate: 13 }}
+			</div>
+		</div>
 	</div>
 	<div class="col-5">
 		<div class="row align-items-center">
