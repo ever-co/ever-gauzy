@@ -68,6 +68,10 @@
   nb-tab {
     background-color: rgba(50, 50, 50, 0.03);
   }
+
+  nb-card-body.body-filter {
+    height: auto !important;
+  }
   ::ng-deep .advanced-filter {
     @include nb-select-overrides(
       2rem,
@@ -80,6 +84,10 @@
     calc($default-card-height + 3.5rem),
     $default-radius
   );
+  .table-search-scroll {
+    height: calc(100vh - 43rem);
+    overflow-y: overlay;
+  }
 }
 
 .gauzy-button-container {

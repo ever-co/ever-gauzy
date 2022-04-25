@@ -84,6 +84,8 @@ export class SearchComponent
 		isSelected: false
 	};
 
+	selectedTab: any;
+
 	jobSearchTable: Ng2SmartTableComponent;
 	@ViewChild('jobSearchTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -529,6 +531,10 @@ export class SearchComponent
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	onTabChange(event) {
+		this.selectedTab = event;
 	}
 
 	ngOnDestroy(): void {}

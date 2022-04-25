@@ -22,6 +22,9 @@
   &.warning {
     color: rgba(245, 109, 88, 1);
   }
+  &.orange {
+    color: rgba(255, 171, 45, 1);
+  }
   &.primary {
     &[nbButton].appearance-filled.status-basic,
     .appearance-filled.status-basic[nbButtonToggle] {

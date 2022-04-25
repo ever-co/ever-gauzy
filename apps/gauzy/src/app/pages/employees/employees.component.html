@@ -1,258 +1,216 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
-			<h4>
-				<ngx-header-title [allowEmployee]="false">
-					{{ 'EMPLOYEES_PAGE.HEADER' | translate }}
-				</ngx-header-title>
-			</h4>
-		</div>
-		<div class="card-header-title">
-			<div class="mr-2">
-				<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
-					<ng-template ngxPermissionsOnly="ORG_INVITE_VIEW">
-						<button
-							*ngIf="organizationInvitesAllowed"
-							nbButton
-							status="primary"
-							(click)="manageInvites()"
-						>
-							{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-						</button>
+			<div class="card-header-title">
+				<h4>
+					<ngx-header-title [allowEmployee]="false">
+						{{ 'EMPLOYEES_PAGE.HEADER' | translate }}
+					</ngx-header-title>
+				</h4>
+			</div>
+			<div class="card-header-title">
+				<div class="mr-2">
+					<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
+						<ng-template ngxPermissionsOnly="ORG_INVITE_VIEW">
+							<button
+								*ngIf="organizationInvitesAllowed"
+								nbButton
+								status="primary"
+								(click)="manageInvites()"
+							>
+								{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+							</button>
+						</ng-template>
 					</ng-template>
-				</ng-template>
+				</div>
 			</div>
-			<div>
-				<ga-layout-selector
-					[componentName]="viewComponentName"
-				></ga-layout-selector>
+		</div>
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[hasLayoutSelector]="false"
+				[isDisable]="disableButton"
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visibleButtons"
+			>
+			</ngx-gauzy-button-action>
+			<div class="custom-toggle">
+				<nb-toggle
+					(checkedChange)="changeIncludeDeleted($event)"
+					status="danger"
+				>
+					{{ 'FORM.CHECKBOXES.INCLUDE_DELETED' | translate }}
+				</nb-toggle>
 			</div>
+			<ga-layout-selector
+				[componentName]="viewComponentName"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
-			<div class="mb-3">
-				<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
-					<button
-						nbButton
-						*ngIf="organizationInvitesAllowed"
-						status="primary"
-						(click)="invite()"
-						class="mr-2"
-					>
-						<nb-icon class="mr-1" icon="email-outline"></nb-icon
-						>{{ 'BUTTONS.INVITE' | translate }}
-					</button>
-				</ng-template>
-				<button
-					nbButton status="success"
-					(click)="add()"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-					{{ 'BUTTONS.ADD' | translate }}
-				</button>
-				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-					<ng-container
-						*ngTemplateOutlet="actionButtons; context : {
-							selectedItem: selectedEmployee
-						}"
-					></ng-container>
-				</ng-container>
-				<nb-checkbox
-					(checkedChange)="changeIncludeDeleted($event)"
-					status="danger"
-					class="float-right py-auto"
-				>
-					{{ 'FORM.CHECKBOXES.INCLUDE_DELETED' | translate }}
-				</nb-checkbox>
-			</div>
-		</ng-template>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container">
-				<ng2-smart-table
-					class="employees-table"
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="sourceSmartTable"
-					(userRowSelect)="selectEmployee($event)"
-					#employeesTable
-				>
-				</ng2-smart-table>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<div class="grid-scroll-container">
-				<ul class="flex-container">
-					<li class="flex-item" *ngFor="let x of employees">
-						<div class="fullName">
-							<ga-notes-with-tags [rowData]="x"></ga-notes-with-tags>
-							<span>{{ x.fullName }}</span>
-						</div>
-						<div class="email">
-							<span class="info-value">{{ x.email }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">{{
-								'SM_TABLE.INCOME' | translate
-							}}</span>
-							<span class="info-value">{{ x.averageIncome }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">{{
-								'SM_TABLE.EXPENSES' | translate
-							}}</span>
-							<span class="info-value">{{ x.averageExpenses }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta">{{
-								'SM_TABLE.BONUS_AVG' | translate
-							}}</span>
-							<span class="info-value">{{ x.averageBonus }}</span>
-						</div>
-						<div class="info-line">
-							<span class="info-meta"
-								>{{ 'SM_TABLE.BONUS' | translate }} ({{ month }}
-								{{ year }})</span
-							>
-							<span class="info-value">{{ x.bonus }}</span>
-						</div>
-						<div class="info-line" style="height: 62px">
-							<span class="info-meta"
-								>{{ 'SM_TABLE.WORK_STATUS' | translate }}s</span
-							>
-							<div class="text-center d-block" *ngIf="x.workStatus">
-								<div class="badge badge-danger">
-									{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
-								</div>
-								{{ x.workStatus }}
-							</div>
-							<div
-								class="text-center d-block"
-								*ngIf="!x.startedWorkOn"
-								[nbTooltip]="'EMPLOYEES_PAGE.NOT_STARTED_HELP' | translate"
-							>
-								<div class="badge badge-disabled">
-									{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
-								</div>
-							</div>
-							<div
-								class="text-center d-block"
-								*ngIf="x.startedWorkOn && x.isActive && !x.workStatus"
-							>
-								<div class="badge badge-success">
-									{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
-								</div>
-							</div>
-							<div
-								class="text-center d-block"
-								*ngIf="x.startedWorkOn && !x.isActive"
-							>
-								<div class="badge badge-danger">
-									{{ 'EMPLOYEES_PAGE.DELETED' | translate }}
-								</div>
-							</div>
-						</div>
-	
-						<nb-card-footer class="card-footer">
-							<ng-container
-								*ngTemplateOutlet="
-									actionButtons;
-									context: {
-										buttonSize: 'tiny',
-										selectedItem: x
-									}
-								"
-							>
-							</ng-container>
-						</nb-card-footer>
-					</li>
-				</ul>
-			</div>
-		</ng-template>
+		<ng-container>
+			<ng-template
+				[ngTemplateOutlet]="
+					dataLayoutStyle === componentLayoutStyleEnum.TABLE
+						? tableLayout
+						: gridLayout
+				"
+			>
+			</ng-template>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons>
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
+			<button
+				status="basic"
+				class="action secondary"
+				size="small"
+				nbButton
+			>
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				<span> {{ 'BUTTONS.VIEW' | translate }} </span>
+			</button>
+			<ng-container *ngIf="selectedItem && !selectedItem?.isActive">
+				<button
+					nbButton
+					size="small"
+					debounceClick
+					(throttledClick)="restoreToWork(selectedItem)"
+					status="info"
+					class="action"
+				>
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.RESTORE' | translate }}
+				</button>
+			</ng-container>
+			<ng-container *ngIf="selectedItem">
+				<button
+					nbButton
+					size="small"
+					class="action warning"
+					debounceClick
+					(throttledClick)="timeTrackingAction(selectedItem)"
+					status="basic"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{
+						(selectedItem?.isTrackingEnabled
+							? 'BUTTONS.TIME_TRACKING_DISABLE'
+							: 'BUTTONS.TIME_TRACKING_ENABLE'
+						) | translate
+					}}
+				</button>
+			</ng-container>
+			<button
+				nbButton
+				[disabled]="disableButton || !selectedItem?.isActive"
+				size="small"
+				(click)="
+					selectedItem?.endWork
+						? backToWork(selectedItem)
+						: endWork(selectedItem)
+				"
+				status="basic"
+				class="action orange"
+			>
+				<nb-icon icon="person-delete-outline"></nb-icon>
+				{{
+					(selectedItem && selectedItem?.endWork
+						? 'EMPLOYEES_PAGE.BACK_TO_WORK'
+						: 'EMPLOYEES_PAGE.END_WORK'
+					) | translate
+				}}
+			</button>
+			<button
+				nbButton
+				[disabled]="disableButton"
+				size="small"
+				(click)="edit(selectedItem)"
+				status="basic"
+				class="action primary"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				[disabled]="disableButton || !selectedItem?.isActive"
+				size="small"
+				(click)="delete(selectedItem)"
+				status="basic"
+				class="action"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
+		</ng-template>
+	</div>
+</ng-template>
+<ng-template #visibleButtons>
 	<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
-		<button
-			nbButton
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-			(click)="edit(selectedItem)"
-			status="info"
-			class="mr-2"
-		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-			>{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			[disabled]="(!selectedItem && disableButton) || (!selectedItem?.isActive)"
-			[size]="buttonSize || 'medium'"
-			(click)="delete(selectedItem)"
-			status="danger"
-			class="mr-2"
-		>
-			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-			>{{ 'BUTTONS.DELETE' | translate }}
-		</button>
-		<button
-			nbButton
-			[disabled]="(!selectedItem && disableButton) || (!selectedItem?.isActive)"
-			[size]="buttonSize || 'medium'"
-			(click)="
-				selectedItem.endWork
-					? backToWork(selectedItem)
-					: endWork(selectedItem)
-			"
-			status="warning"
-			class="mr-2"
-		>
-			<nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>
-			{{
-				(selectedItem && selectedItem.endWork
-					? 'EMPLOYEES_PAGE.BACK_TO_WORK'
-					: 'EMPLOYEES_PAGE.END_WORK'
-				) | translate
-			}}
-		</button>
-		<ng-container *ngIf="selectedItem && !selectedItem?.isActive">
+		<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
 			<button
 				nbButton
-				[size]="buttonSize || 'medium'"
-				debounceClick
-				(throttledClick)="restoreToWork(selectedItem)"
+				*ngIf="organizationInvitesAllowed"
 				status="info"
-				class="mr-2"
+				class="action"
+				(click)="invite()"
+				size="small"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.RESTORE' | translate }}
+				<nb-icon class="mr-1" icon="email-outline"></nb-icon
+				>{{ 'BUTTONS.INVITE' | translate }}
 			</button>
-		</ng-container>
-		<ng-container *ngIf="selectedItem">
-			<button
-				nbButton
-				[size]="buttonSize || 'medium'"
-				debounceClick
-				(throttledClick)="timeTrackingAction(selectedItem)"
-				[status]="selectedItem.isTrackingEnabled ? 'danger' : 'primary'"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ (selectedItem.isTrackingEnabled ? 'BUTTONS.TIME_TRACKING_DISABLE' : 'BUTTONS.TIME_TRACKING_ENABLE' ) | translate }}
-			</button>
-		</ng-container>
+		</ng-template>
+		<button nbButton size="small" status="success" (click)="add()">
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
 	</ng-template>
+</ng-template>
+<ng-template #tableLayout>
+	<div class="table-scroll-container custom-table">
+		<ng2-smart-table
+			class="employees-table"
+			style="cursor: pointer"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectEmployee($event)"
+			#employeesTable
+		>
+		</ng2-smart-table>
+	</div>
+	<div class="pagination-container">
+		<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+			<ga-pagination
+				(selectedOption)="onUpdateOption($event)"
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems"
+				[itemsPerPage]="pagination?.itemsPerPage"
+				[activePage]="pagination?.activePage"
+			>
+			</ga-pagination>
+		</ng-container>
+	</div>
+</ng-template>
+<ng-template #gridLayout>
+	<div *ngIf="pagination.totalItems">
+		<ga-card-grid
+			(selectedOption)="onUpdateOption($event)"
+			(selectedPage)="onPageChange($event)"
+			[doEmit]="false"
+			[totalItems]="pagination?.totalItems"
+			[itemsPerPage]="pagination?.itemsPerPage"
+			[activePage]="pagination?.activePage"
+			[settings]="settingsSmartTable"
+			[source]="employees"
+			(onSelectedItem)="selectEmployee($event)"
+		></ga-card-grid>
+	</div>
 </ng-template>

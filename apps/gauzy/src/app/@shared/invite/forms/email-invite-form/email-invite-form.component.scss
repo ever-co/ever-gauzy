@@ -1,68 +1,75 @@
 @import 'themes';
 
 @include nb-install-component {
-	.remove-icon {
-		div {
-			cursor: pointer;
-		}
+  .remove-icon {
+    div {
+      cursor: pointer;
+    }
 
-		padding-left: 7px;
-		padding-right: 7px;
-		padding-top: 2px;
-	}
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-top: 2px;
+  }
 
-	.adjust-height {
-		::ng-deep .ng-select-container {
-			height: auto;
-		}
-	}
+  .adjust-height {
+    ::ng-deep .ng-select-container {
+      height: auto;
+    }
+  }
 
-	.item-invalid {
-		::ng-deep .ng-select-container {
-			border: 1px solid;
-			border-color: nb-theme(color-danger-default);
-		}
-	}
+  ::ng-deep .custom-tag-list.nb-tag-list-with-input.size-medium {
+    box-shadow: 0 1px 1px 0 rgba(50, 50, 50, 0.03) inset;
+    input {
+      box-shadow: unset;
+    }
+  }
 
-	.item-valid {
-		::ng-deep .ng-select-container {
-			border: 1px solid;
-			border-color: nb-theme(color-success-default);
-		}
-	}
+  .item-invalid {
+    ::ng-deep .ng-select-container {
+      border: 1px solid;
+      border-color: nb-theme(color-danger-default);
+    }
+  }
 
-	.label-with-select {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
+  .item-valid {
+    ::ng-deep .ng-select-container {
+      border: 1px solid;
+      border-color: nb-theme(color-success-default);
+    }
+  }
 
-	// Remove drop down arrow from email select
-	#emailsSelect {
-		::ng-deep {
-			.ng-clear-wrapper {
-				width: 20px;
-			}
-			.ng-arrow-wrapper {
-				display: none;
-			}
-		}
-	}
+  .label-with-select {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-	.employee-padding {
-		margin-bottom: 50px;
-	}
-	.notes {
-		text-indent: 1em;
-		p {
-			margin: 5px 0 0 2px;
-			color: #eac72d;
-			font-size: 0.75rem;
-			font-weight: 300;
-			line-height: initial;
-		}
-	}
-	nb-tag-list nb-tag::ng-deep {
-		text-transform: initial;
-	}
+  // Remove drop down arrow from email select
+  #emailsSelect {
+    ::ng-deep {
+      .ng-clear-wrapper {
+        width: 20px;
+      }
+      .ng-arrow-wrapper {
+        display: none;
+      }
+    }
+  }
+
+  .employee-padding {
+    margin-bottom: 50px;
+  }
+  .notes {
+    text-indent: 1em;
+    p {
+      margin: 5px 0 0 2px;
+      color: #eac72d;
+      font-size: 0.75rem;
+      font-weight: 300;
+      line-height: initial;
+    }
+  }
+  nb-tag-list nb-tag::ng-deep {
+    text-transform: initial;
+  }
 }

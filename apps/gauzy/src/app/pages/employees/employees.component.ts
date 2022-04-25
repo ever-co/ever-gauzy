@@ -6,7 +6,8 @@ import {
 	IOrganization,
 	EmployeeViewModel,
 	CrudActionEnum,
-	IEmployee
+	IEmployee,
+  ITag
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,12 +17,20 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { monthNames } from '../../@core/utils/date';
-import { EmployeeEndWorkComponent, EmployeeMutationComponent } from '../../@shared/employee';
+import {
+	EmployeeEndWorkComponent,
+	EmployeeMutationComponent
+} from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { TranslationBaseComponent } from '../../@shared/language-base';
 import { PictureNameTagsComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
+import { TagsOnlyComponent } from '../../@shared/table-components/tags-only/tags-only.component';
+import { TagsColorFilterComponent } from '../../@shared/table-filters/tags-color-filter.component';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -43,9 +52,9 @@ import {
 	styleUrls: ['./employees.component.scss']
 })
 export class EmployeesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedEmployee: EmployeeViewModel;
@@ -60,6 +69,7 @@ export class EmployeesComponent
 	organizationInvitesAllowed = false;
 	month: string;
 	year: number;
+	selectedItem: EmployeeViewModel;
 
 	employeesTable: Ng2SmartTableComponent;
 	@ViewChild('employeesTable') set content(content: Ng2SmartTableComponent) {
@@ -93,11 +103,17 @@ export class EmployeesComponent
 
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
 				debounceTime(300),
-				tap(() => this.getEmployees()),
 				tap(() => this.clearItem()),
-				tap(() => this.loading = false),
+				tap(() => this.getEmployees()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -106,15 +122,21 @@ export class EmployeesComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.organization = organization),
-				tap(({ invitesAllowed }) => this.organizationInvitesAllowed = invitesAllowed),
+				tap((organization) => (this.organization = organization)),
+				tap(
+					({ invitesAllowed }) =>
+						(this.organizationInvitesAllowed = invitesAllowed)
+				),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -127,7 +149,10 @@ export class EmployeesComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -148,6 +173,7 @@ export class EmployeesComponent
 	selectEmployee({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
+		this.selectedItem = this.selectedEmployee;
 	}
 
 	async add() {
@@ -161,10 +187,13 @@ export class EmployeesComponent
 					if (firstName || lastName) {
 						fullName = `${firstName} ${lastName}`;
 					}
-					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
-						name: fullName,
-						organization: employee.organization.name
-					});
+					this.toastrService.success(
+						'TOASTR.MESSAGE.EMPLOYEE_ADDED',
+						{
+							name: fullName,
+							organization: employee.organization.name
+						}
+					);
 				});
 				this.subject$.next(true);
 			}
@@ -180,7 +209,10 @@ export class EmployeesComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
+		this.router.navigate([
+			'/pages/employees/edit/',
+			this.selectedEmployee.id
+		]);
 	}
 
 	manageInvites() {
@@ -212,26 +244,31 @@ export class EmployeesComponent
 						this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { id: organizationId } = this.organization;
 						const { tenantId } = this.store.user;
 
-						await this.employeesService.setEmployeeProfileStatus(this.selectedEmployee.id, {
-							isActive: false,
-							tenantId,
-							organizationId
-						});
+						await this.employeesService.setEmployeeProfileStatus(
+							this.selectedEmployee.id,
+							{
+								isActive: false,
+								tenantId,
+								organizationId
+							}
+						);
 						this._employeeStore.employeeAction = {
 							action: CrudActionEnum.DELETED,
 							employees: [this.selectedEmployee as any]
 						};
-						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
-							name: this.selectedEmployee.fullName.trim()
-						});
+						this.toastrService.success(
+							'TOASTR.MESSAGE.EMPLOYEE_INACTIVE',
+							{
+								name: this.selectedEmployee.fullName.trim()
+							}
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					} finally {
@@ -251,7 +288,7 @@ export class EmployeesComponent
 		try {
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
-			
+
 			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 				context: {
 					endWorkValue: this.selectedEmployee.endWork,
@@ -319,14 +356,13 @@ export class EmployeesComponent
 
 	/**
 	 * Restore deleted employee
-	 * 
-	 * @param selectedItem 
+	 *
+	 * @param selectedItem
 	 */
 	async restoreToWork(selectedItem?: EmployeeViewModel) {
 		if (!this.organization) {
 			return;
 		}
-
 
 		if (selectedItem) {
 			this.selectEmployee({
@@ -338,11 +374,14 @@ export class EmployeesComponent
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
 
-			await this.employeesService.setEmployeeProfileStatus(this.selectedEmployee.id, {
-				isActive: true,
-				tenantId,
-				organizationId
-			});
+			await this.employeesService.setEmployeeProfileStatus(
+				this.selectedEmployee.id,
+				{
+					isActive: true,
+					tenantId,
+					organizationId
+				}
+			);
 			this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
 				name: this.selectedEmployee.fullName.trim()
 			});
@@ -355,8 +394,8 @@ export class EmployeesComponent
 
 	/**
 	 * Enabled/Disabled Time Tracking Status for each employee
-	 * 
-	 * @param selectedItem 
+	 *
+	 * @param selectedItem
 	 */
 	async timeTrackingAction(selectedItem?: EmployeeViewModel) {
 		if (selectedItem) {
@@ -370,19 +409,29 @@ export class EmployeesComponent
 			const { tenantId } = this.store.user;
 
 			const { isTrackingEnabled } = this.selectedEmployee;
-			await this.employeesService.setEmployeeTimeTrackingStatus(this.selectedEmployee.id, !isTrackingEnabled, {
-				organizationId,
-				tenantId
-			});
- 
+			await this.employeesService.setEmployeeTimeTrackingStatus(
+				this.selectedEmployee.id,
+				!isTrackingEnabled,
+				{
+					organizationId,
+					tenantId
+				}
+			);
+
 			if (isTrackingEnabled) {
-				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED', {
-					name: this.selectedEmployee.fullName.trim()
-				});
+				this.toastrService.success(
+					'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED',
+					{
+						name: this.selectedEmployee.fullName.trim()
+					}
+				);
 			} else {
-				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED', {
-					name: this.selectedEmployee.fullName.trim()
-				});
+				this.toastrService.success(
+					'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED',
+					{
+						name: this.selectedEmployee.fullName.trim()
+					}
+				);
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -395,24 +444,45 @@ export class EmployeesComponent
 		if (!this.organization) {
 			return;
 		}
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user', 'tags'], { organizationId, tenantId })
+		const { activePage, itemsPerPage } = this.getPagination();
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user', 'tags'], {
+				organizationId,
+				tenantId
+			})
 		);
 
 		let employeesVm = [];
 		const result = [];
 		for (const employee of items) {
-			const { id, user, isActive, endWork, tags, averageIncome, averageExpenses, averageBonus, startedWorkOn, isTrackingEnabled } = employee;
+			const {
+				id,
+				user,
+				isActive,
+				endWork,
+				tags,
+				averageIncome,
+				averageExpenses,
+				averageBonus,
+				startedWorkOn,
+				isTrackingEnabled
+			} = employee;
 			result.push({
 				fullName: `${user.name}`,
 				email: user.email,
 				id,
 				isActive,
 				endWork: endWork ? new Date(endWork) : '',
-				workStatus: endWork ? new Date(endWork).getDate() + ' ' + monthNames[new Date(endWork).getMonth()] + ' ' + new Date(endWork).getFullYear() : '',
+				workStatus: endWork
+					? new Date(endWork).getDate() +
+					  ' ' +
+					  monthNames[new Date(endWork).getMonth()] +
+					  ' ' +
+					  new Date(endWork).getFullYear()
+					: '',
 				imageUrl: user.imageUrl,
 				tags,
 				// TODO: load real bonus and bonusDate
@@ -435,11 +505,23 @@ export class EmployeesComponent
 			employeesVm = result;
 		}
 		this.employees = employeesVm;
+		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(employeesVm);
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
+			this._loadGridLayoutData();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.sourceSmartTable.count()
+		});
 		this.loading = false;
 	}
 
+	private async _loadGridLayoutData() {
+		this.employees = await this.sourceSmartTable.getElements();
+	}
+
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		const dateNow = new Date();
 		this.month =
 			monthNames[dateNow.getMonth() - 1] ||
@@ -492,22 +574,38 @@ export class EmployeesComponent
 					title: this.getTranslation('SM_TABLE.TIME_TRACKING'),
 					type: 'custom',
 					class: 'text-center',
-					width: '20%',
 					renderComponent: EmployeeTimeTrackingStatusComponent,
 					filter: false
+				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
+					type: 'custom',
+					width: '10%',
+					renderComponent: TagsOnlyComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags: ITag[]) => {
+						const tagIds = [];
+						for (const tag of tags) {
+							tagIds.push(tag.id);
+						}
+						this.setFilter({ field: 'tags', search: tagIds });
+					},
+					sort: false
 				},
 				workStatus: {
 					title: this.getTranslation('SM_TABLE.WORK_STATUS'),
 					type: 'custom',
 					class: 'text-center',
-					width: '20%',
 					renderComponent: EmployeeWorkStatusComponent,
 					filter: false
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 8
+				display: false,
+				perPage: pagination ? pagination : 10
 			}
 		};
 	}
@@ -547,5 +645,5 @@ export class EmployeesComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

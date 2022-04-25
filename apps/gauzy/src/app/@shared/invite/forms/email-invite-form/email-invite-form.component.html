@@ -2,21 +2,21 @@
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
-				<label 
-					for="emails" 
-					class="label"
-				>
+				<label for="emails" class="label">
 					{{ 'FORM.LABELS.EMAILS' | translate }}
 				</label>
 				<nb-form-field>
-					<nb-tag-list (tagRemove)="onEmailRemove($event)">
-						<nb-tag 
+					<nb-tag-list
+						class="custom-tag-list"
+						(tagRemove)="onEmailRemove($event)"
+					>
+						<nb-tag
 							*ngFor="let email of emails"
 							[text]="email"
 							[size]="'tiny'"
 							removable
 						></nb-tag>
-						<input 
+						<input
 							id="emails"
 							type="text"
 							name="emails"
@@ -29,7 +29,7 @@
 									? 'danger'
 									: 'basic'
 							"
-						>
+						/>
 					</nb-tag-list>
 					<nb-icon
 						*ngIf="emails.size > 0"
@@ -42,43 +42,11 @@
 			</div>
 		</div>
 	</div>
-	<ng-container *ngIf="invitationType !== invitationTypeEnum.CANDIDATE">
-		<div class="row">
-			<div class="col-sm-12">
-				<div class="form-group">
-					<label 
-						for="startedWorkOn"
-						class="label"
-					>
-						{{ 'FORM.LABELS.START_DATE' | translate }}
-						<nb-icon 
-							[nbTooltip]="'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate" 
-							icon="question-mark-circle-outline"
-						></nb-icon>	
-					</label>
-					<nb-form-field>
-						<input
-							id="startedWorkOn"
-							[nbDatepicker]="startedWorkDatepicker"
-							nbInput
-							fullWidth
-							[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
-							formControlName="startedWorkOn"
-						/>
-						<nb-datepicker #startedWorkDatepicker></nb-datepicker>
-					</nb-form-field>
-				</div>
-			</div>
-		</div>
-	</ng-container>
 	<ng-container *ngIf="invitationType === invitationTypeEnum.CANDIDATE">
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="form-group">
-					<label
-						for="appliedDate"
-						class="label"
-					>
+					<label for="appliedDate" class="label">
 						{{ 'FORM.LABELS.APPLIED_DATE_LABEL' | translate }}
 					</label>
 					<input
@@ -86,7 +54,9 @@
 						[nbDatepicker]="appliedDatePicker"
 						nbInput
 						fullWidth
-						[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
+						[placeholder]="
+							'FORM.PLACEHOLDERS.START_DATE' | translate
+						"
 						formControlName="appliedDate"
 					/>
 					<nb-datepicker #appliedDatePicker></nb-datepicker>
@@ -96,7 +66,7 @@
 	</ng-container>
 	<ng-container *ngIf="invitationType === invitationTypeEnum.EMPLOYEE">
 		<div class="row">
-			<div class="col-sm-12">
+			<div class="col-sm-6">
 				<div class="form-group">
 					<label
 						for="projectSelection"
@@ -132,7 +102,7 @@
 					</ng-select>
 				</div>
 			</div>
-			<div class="col-sm-12">
+			<div class="col-sm-6">
 				<div class="form-group">
 					<label
 						for="contactSelection"
@@ -169,11 +139,12 @@
 			</div>
 		</div>
 	</ng-container>
-	<ng-container 
+	<ng-container
 		*ngIf="
-			invitationType === invitationTypeEnum.EMPLOYEE || 
+			invitationType === invitationTypeEnum.EMPLOYEE ||
 			invitationType === invitationTypeEnum.CANDIDATE
-	">
+		"
+	>
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="form-group">
@@ -200,7 +171,9 @@
 						bindLabel="name"
 						appendTo="body"
 						formControlName="departments"
-						[placeholder]="'FORM.PLACEHOLDERS.DEPARTMENTS' | translate"
+						[placeholder]="
+							'FORM.PLACEHOLDERS.DEPARTMENTS' | translate
+						"
 					>
 						<ng-option
 							*ngFor="let department of organizationDepartments"
@@ -227,20 +200,50 @@
 			</div>
 		</div>
 	</ng-container>
+	<ng-container *ngIf="invitationType !== invitationTypeEnum.CANDIDATE">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<label for="startedWorkOn" class="label">
+						{{ 'FORM.LABELS.START_DATE' | translate }}
+						<nb-icon
+							[nbTooltip]="
+								'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate
+							"
+							icon="question-mark-circle-outline"
+						></nb-icon>
+					</label>
+					<nb-form-field>
+						<input
+							id="startedWorkOn"
+							[nbDatepicker]="startedWorkDatepicker"
+							nbInput
+							fullWidth
+							[placeholder]="
+								'FORM.PLACEHOLDERS.START_DATE' | translate
+							"
+							formControlName="startedWorkOn"
+						/>
+						<nb-datepicker #startedWorkDatepicker></nb-datepicker>
+					</nb-form-field>
+				</div>
+			</div>
+		</div>
+	</ng-container>
 	<ng-container *ngIf="invitationExpiryOptions.length > 0">
 		<div class="row">
-			<div class="col-sm-12">
+			<div class="col-sm-6">
 				<div class="form-group">
-					<label
-						for="invitationExpirationPeriod"
-						class="label"
-					>
+					<label for="invitationExpirationPeriod" class="label">
 						{{ 'FORM.LABELS.INVITATION_EXPIRATION' | translate }}
 					</label>
 					<nb-select
 						id="invitationExpirationPeriod"
 						fullWidth
-						[placeholder]="'FORM.PLACEHOLDERS.INVITATION_EXPIRATION' | translate"
+						[placeholder]="
+							'FORM.PLACEHOLDERS.INVITATION_EXPIRATION'
+								| translate
+						"
 						formControlName="invitationExpirationPeriod"
 					>
 						<nb-option

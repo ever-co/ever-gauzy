@@ -1,94 +1,41 @@
-/* Card grid */
-.grid-scroll-container {
-	.flex-container {
-		display: flex;
-		flex-flow: row wrap;
-		justify-content: flex-start;
-		padding: 0;
-		margin: 0;
-		list-style: none;
-		.flex-item {
-			border: 0.0625rem solid #e4e9f2;
-			border-radius: 0.25rem;
-			width: 23%;
-			margin: 10px;
-			.fullName {
-				display: flex;
-				flex-direction: row;
-				justify-content: space-between;
-				padding: 1rem 1.5rem;
-				line-height: 40px;
-				font-size: 1.5em;
-			}
-			.avatar {
-				width: 60px;
-				height: 60px;
-				border-radius: 50%;
-			}
-			.email {
-				text-align: right;
-				padding-right: 1.5rem;
-				bottom: 36px;
-				position: relative;
-			}
-			.info-line {
-				display: flex;
-				flex-direction: row;
-				justify-content: space-between;
-				font-size: 0.8em;
-				color: darkgray;
-				line-height: 0px;
-				padding: 1rem 1.5rem;
-				.info-meta {
-				  	margin-right: 10px;
-				}
-				.info-value {
-					display: flex;
-					justify-content: flex-end;
-					text-align: end;
-					color: black;
-					font-size: 1em;
-				}
-				/* work status */
-				.badge-danger {
-					text-align: center;
-					padding: 5px 30px;
-					background-color: #ff3d71;
-					margin-bottom: 20px;
-					border-radius: 0.25rem;
-				}
-				.badge-success {
-					text-align: center;
-					padding: 5px 30px;
-					background-color: #00d68f;
-					border-radius: 0.25rem;
-				}
-				.badge-disabled {
-					text-align: center;
-					padding: 5px 30px;
-					background-color: #ccc;
-					border-radius: 0.25rem;
-				}
-			}
-			.card-footer {
-				justify-content: space-around;
-				display: flex;
-			}
-		}
-	}
+@import 'gauzy/_gauzy-table.scss';
+@import 'gauzy/_gauzy-overrides';
+@import 'gauzy/_gauzy-cards.scss';
+
+nb-card {
+  background-color: rgba(50, 50, 50, 0.03);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.btn-group.actions {
+  padding: 0;
+}
+.gauzy-button-container {
+  display: flex;
+  align-items: center;
+}
+:host {
+  .custom-toggle {
+    margin: 0 28px 0 12px;
+    padding-top: 5px;
+    ::ng-deep {
+      nb-toggle.status-danger .toggle.checked {
+        background-color: rgba(245, 109, 88, 1);
+        border-color: rgba(245, 109, 88, 1);
+      }
+      nb-toggle.status-danger .text {
+        color: rgba(245, 109, 88, 1);
+      }
+      nb-toggle.status-danger .toggle {
+        background-color: nb-theme(color-primary-transparent-default);
+        border-color: nb-theme(color-primary-transparent-default);
+      }
+    }
+  }
+  .custom-table {
+    height: calc(100vh - 27.5rem);
+  }
+  @include nb-card-overrides(
+    unset,
+    calc($default-card-height),
+    $default-radius
+  );
+}
