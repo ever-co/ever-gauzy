@@ -20,6 +20,7 @@ import { SharedModule } from '../../shared.module';
 import { COMPONENTS } from './index';
 import { PasswordFormFieldModule } from './fields/password';
 import { RoleFormFieldModule } from './fields/role';
+import { NbIconModule } from '@nebular/theme';
 
 @NgModule({
 	imports: [
@@ -40,7 +41,8 @@ import { RoleFormFieldModule } from './fields/role';
 		CountdownModule,
 		SharedModule,
 		PasswordFormFieldModule,
-		RoleFormFieldModule
+		RoleFormFieldModule,
+    NbIconModule
 	],
 	exports: [
 		...COMPONENTS

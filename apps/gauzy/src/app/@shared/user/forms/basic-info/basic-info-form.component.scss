@@ -1,28 +1,49 @@
+@import 'themes';
+
 .preview-img {
-	padding-left: 14px;
-	padding-right: 16px;
+  padding-left: 14px;
+  padding-right: 16px;
 }
 
-.img-rounded {
-	max-height: 70px;
-}
 .remove-icon {
-	div {
-		cursor: pointer;
-	}
+  div {
+    cursor: pointer;
+  }
 
-	padding-left: 7px;
-	padding-right: 7px;
-	padding-top: 2px;
+  padding-left: 7px;
+  padding-right: 7px;
+  padding-top: 2px;
 }
 .notes {
-	text-indent: 1em;
-	max-width: 360px;
-	p {
-		margin: 0;
-		color: #eac72d;
-		font-size: 0.75rem;
-		font-weight: 300;
-		line-height: initial;
-	}
+  text-indent: 1em;
+  max-width: 360px;
+  p {
+    margin: 0;
+    color: #eac72d;
+    font-size: 0.75rem;
+    font-weight: 300;
+    line-height: initial;
+  }
+}
+
+.image {
+  position: relative;
+  height: 98px;
+  width: 130px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(126, 126, 143, 0.1);
+  object-fit: cover;
+  .img-rounded {
+    max-height: 98px;
+    max-width: 130px;
+    border-radius: nb-theme(border-radius) !important;
+  }
+  .trash-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
 }

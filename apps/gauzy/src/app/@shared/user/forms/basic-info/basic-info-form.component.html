@@ -4,31 +4,59 @@
 			<div class="form-group row" [hidden]="form.get('imageUrl').invalid">
 				<div class="col-sm-12">
 					<div class="row preview-img" [hidden]="!showImageMeta">
-						<div>
+						<div class="image">
 							<img
 								#imagePreview
 								[src]="form.get('imageUrl').value"
 								alt="Invalid image"
 								class="img-rounded"
 							/>
+							<button
+								class="trash-icon"
+								nbButton
+								status="basic"
+								size="small"
+                (click)="deleteImageUrl()"
+							>
+								<nb-icon
+									status="danger"
+									[title]="
+										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
+											| translate
+									"
+									icon="trash-2-outline"
+									[title]="
+										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
+											| translate
+									"
+								></nb-icon>
+							</button>
 						</div>
-						<div
-							class="remove-icon text-danger"
-							(click)="deleteImageUrl()"
-						>
-							<div
-								class="ion-md-remove-circle"
-								placeholder="Remove image"
-								[title]="
-									'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate
-								"
-							></div>
+					</div>
+					<div class="row preview-img" [hidden]="showImageMeta">
+						<div class="image">
+							<i class="far fa-image"></i>
+							<button
+								class="trash-icon"
+								nbButton
+								status="basic"
+								size="small"
+							>
+								<nb-icon
+									status="danger"
+									[title]="
+										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
+											| translate
+									"
+									icon="trash-2-outline"
+								></nb-icon>
+							</button>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-    <div class="col-9">
+		<div class="col-9">
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
