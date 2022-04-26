@@ -1,7 +1,10 @@
-<div class="row align-items-center">
+<div
+	class="row align-items-center clickable"
+	(click)="allowChild && toggleChild()"
+>
 	<div class="col-4" [nbTooltip]="item.title">
 		<div class="row align-items-center">
-			<div class="col-auto" *ngIf="allowChild">
+			<!-- <div class="col-auto" *ngIf="allowChild">
 				<button
 					nbButton
 					ghost
@@ -18,8 +21,8 @@
 				>
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 				</button>
-			</div>
-			<div class="col font-weight-bold">
+			</div> -->
+			<div [ngClass]="allowChild ? 'col child' : 'col no-child'">
 				{{ item.title | truncate: 13 }}
 			</div>
 		</div>
