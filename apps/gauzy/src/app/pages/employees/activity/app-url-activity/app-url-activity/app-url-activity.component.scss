@@ -19,10 +19,12 @@
 .mini-card {
   width: 99%;
   background-color: nb-theme(background-basic-color-1);
-  padding: 10px;
+  padding: 20px;
+  margin-bottom: 5px;
   border-radius: nb-theme(border-radius);
   &.head {
     background-color: rgba($color: white, $alpha: 0.5);
+    padding: 12px 20px;
   }
   .times {
     font-size: 12px;
