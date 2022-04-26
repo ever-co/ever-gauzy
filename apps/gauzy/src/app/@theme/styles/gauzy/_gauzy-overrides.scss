@@ -46,6 +46,34 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
   }
 }
 
+@mixin nb-stepper() {
+  nb-stepper .header .step.selected .label-index {
+    background-color: nb-theme(background-primary-color-1);
+    color: nb-theme(text-control-color);
+    border: unset;
+  }
+  nb-stepper .header .step .label {
+    display: none;
+  }
+  nb-stepper.horizontal .header .step {
+    margin: 0;
+  }
+  nb-stepper.header {
+    align-items: center !important;
+  }
+  nb-stepper .header .step.selected + .connector,
+  nb-stepper .header .step.completed + .connector {
+    background-color: nb-theme(background-primary-color-1);
+    height: 10px !important;
+    margin: 0 10px 0 -10px !important;
+    border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) 0;
+  }
+  nb-stepper .header {
+    align-items: baseline !important;
+    margin-bottom: 0px !important;
+  }
+}
+
 @mixin gauzy-overrides() {
   @include nb-select-overrides(
     $default-height,
@@ -58,4 +86,5 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
     $default-radius,
     $default-box-shadow-inset
   );
+  @include nb-stepper;
 }
