@@ -30,13 +30,13 @@
   position: relative;
   height: 98px;
   width: 130px;
-  border-radius: 8px;
+  border-radius: nb-theme(border-radius) !important;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: rgba(126, 126, 143, 0.1);
-  object-fit: cover;
   .img-rounded {
+    object-fit: cover;
     max-height: 98px;
     max-width: 130px;
     border-radius: nb-theme(border-radius) !important;
