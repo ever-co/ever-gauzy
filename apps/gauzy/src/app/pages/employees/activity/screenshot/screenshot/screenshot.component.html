@@ -7,20 +7,19 @@
 	</div>
 	<div class="custom-card-body">
 		<div
-			class="screenshot-container"
+      class="container"
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
 		>
 			<ng-template [ngIf]="timeSlots?.length > 0" [ngIfElse]="notFound">
 				<div
-					class="row"
+					class="row hour-slot-group"
 					*ngFor="let hourSlot of timeSlots; let i = index"
 				>
-					<div class="col">
+					<div class="col p-0">
 						<div
-							class="hour-lable mt-3"
-							[ngClass]="{ 'border-top pt-3': i != 0 }"
+							class="hour-lable mb-3"
 						>
 							<h6>
 								{{ hourSlot.startTime | timeFormat }} -
@@ -29,7 +28,7 @@
 						</div>
 
 						<div
-							class="row my-3 align-items-center justify-content-center"
+							class="row grid-container"
 						>
 							<div
 								class="col"

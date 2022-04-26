@@ -96,3 +96,19 @@
     }
   }
 }
+.hour-slot-group {
+  margin-bottom: 1rem;
+  padding: 15px;
+  border-radius: nb-theme(border-radius);
+  background-color: nb-theme(background-basic-color-1);
+}
+.grid-container {
+  display: grid;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: start;
+  justify-content: start;
+  column-gap: 1rem;
+  grid-gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
