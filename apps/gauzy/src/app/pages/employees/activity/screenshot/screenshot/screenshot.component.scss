@@ -109,6 +109,15 @@
   -webkit-box-pack: start;
   justify-content: start;
   column-gap: 1rem;
-  grid-gap: 0.5rem;
+  grid-gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  padding: 0 1rem;
+}
+.hour-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
+  text-transform: lowercase;
 }

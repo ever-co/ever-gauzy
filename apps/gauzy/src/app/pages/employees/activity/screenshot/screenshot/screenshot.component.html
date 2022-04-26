@@ -7,7 +7,7 @@
 	</div>
 	<div class="custom-card-body">
 		<div
-      class="container"
+      class="px-3"
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
@@ -19,9 +19,9 @@
 				>
 					<div class="col p-0">
 						<div
-							class="hour-lable mb-3"
+							class="hour-lable mb-4"
 						>
-							<h6>
+							<h6 class="hour-label">
 								{{ hourSlot.startTime | timeFormat }} -
 								{{ hourSlot.endTime | timeFormat }}
 							</h6>
@@ -31,7 +31,6 @@
 							class="row grid-container"
 						>
 							<div
-								class="col"
 								*ngFor="let timeSlot of hourSlot.timeSlots"
 							>
 								<ngx-screenshots-item
