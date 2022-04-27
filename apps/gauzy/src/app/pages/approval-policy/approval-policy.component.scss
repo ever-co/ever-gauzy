@@ -3,3 +3,9 @@
 .gauzy-button-container {
   align-self: flex-end;
 }
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+}
