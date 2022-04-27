@@ -1,3 +1,4 @@
+@import 'gauzy/_gauzy-table';
 :host {
   display: block;
   max-height: 100%;
@@ -161,4 +162,20 @@
   background-color: #fa0;
   border-radius: 0.45rem;
   color: #fff;
+}
+ngx-request-approval-action {
+  display: flex;
+  align-items: center;
+  margin: 0 5px;
+  ::ng-deep button {
+    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
+    &.req-green {
+      background-color: rgba(0, 214, 143, 1) !important;
+      border-color: rgba(0, 214, 143, 1) !important;
+    }
+    &.req-red {
+      background-color: rgba(255, 94, 94, 1) !important;
+      border-color: rgba(255, 94, 94, 1) !important;
+    }
+  }
 }

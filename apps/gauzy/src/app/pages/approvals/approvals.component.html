@@ -1,14 +1,16 @@
-<nb-card 
+<nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="d-flex flex-column">
 		<div class="card-header-title">
-			<h4> <ngx-header-title> {{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
-		</div>
-		<div class="card-header-title">
+			<h4>
+				<ngx-header-title>
+					{{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
 			<div class="mr-2">
 				<ng-template ngxPermissionsOnly="APPROVALS_POLICY_VIEW">
 					<button
@@ -17,36 +19,25 @@
 						status="primary"
 						(click)="manageApprovalPolicy()"
 					>
-						{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
+						{{
+							'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate
+						}}
 					</button>
 				</ng-template>
 			</div>
-			<div>
-				<ga-layout-selector
-					[componentName]="viewComponentName"
-				></ga-layout-selector>
-			</div>
+		</div>
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplateVisible]="visibleButton"
+				[buttonTemplate]="actionButtons"
+				[isDisable]="disableButton"
+				[componentName]="viewComponentName"
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
-			<ng-template ngxPermissionsOnly="REQUEST_APPROVAL_EDIT">
-				<button
-					(click)="save(true)"
-					nbButton
-					status="success"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</ng-template>
-			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
 		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
@@ -84,13 +75,17 @@
 								'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'
 									| translate
 							}}</span>
-							<span class="info-value">{{ x?.approvalPolicy?.name }}</span>
+							<span class="info-value">{{
+								x?.approvalPolicy?.name
+							}}</span>
 						</div>
 						<div class="info-line">
 							<span class="info-meta">{{
 								'APPROVAL_REQUEST_PAGE.CREATED_BY' | translate
 							}}</span>
-							<span class="info-value">{{ x.createdByName }}</span>
+							<span class="info-value">{{
+								x.createdByName
+							}}</span>
 						</div>
 						<div class="info-line" [ngSwitch]="x.status">
 							<span class="info-meta">{{
@@ -98,13 +93,20 @@
 									| translate
 							}}</span>
 							<span class="badge-warning-card" *ngSwitchCase="1">
-								{{ 'APPROVAL_REQUEST_PAGE.REQUESTED' | translate }}
+								{{
+									'APPROVAL_REQUEST_PAGE.REQUESTED'
+										| translate
+								}}
 							</span>
 							<span class="badge-success-card" *ngSwitchCase="2">
-								{{ 'APPROVAL_REQUEST_PAGE.APPROVED' | translate }}
+								{{
+									'APPROVAL_REQUEST_PAGE.APPROVED' | translate
+								}}
 							</span>
 							<span class="badge-danger-card" *ngSwitchCase="3">
-								{{ 'APPROVAL_REQUEST_PAGE.REFUSED' | translate }}
+								{{
+									'APPROVAL_REQUEST_PAGE.REFUSED' | translate
+								}}
 							</span>
 						</div>
 						<div class="info-line" style="height: 56px">
@@ -119,7 +121,10 @@
 									class="mr-3"
 									[size]="'tiny'"
 								>
-									{{ 'APPROVAL_REQUEST_PAGE.APPROVE' | translate }}
+									{{
+										'APPROVAL_REQUEST_PAGE.APPROVE'
+											| translate
+									}}
 								</button>
 								<button
 									nbButton
@@ -127,7 +132,10 @@
 									(click)="refuse(x)"
 									[size]="'tiny'"
 								>
-									{{ 'APPROVAL_REQUEST_PAGE.REFUSE' | translate }}
+									{{
+										'APPROVAL_REQUEST_PAGE.REFUSE'
+											| translate
+									}}
 								</button>
 							</div>
 						</div>
@@ -149,33 +157,54 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
-	<ng-template ngxPermissionsOnly="REQUEST_APPROVAL_EDIT">
-		<button
-			(click)="save(false, selectedItem)"
-			nbButton
-			status="info"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
+<ng-template #actionButtons let-selectedItem="selectedItem">
+	<div class="btn-group actions">
+		<ngx-request-approval-action
+			[rowData]="selectedRequestApproval"
+			(updateResult)="onUpdateResult($event)"
 		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
+		</ngx-request-approval-action>
+		<button
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+		>
+			<nb-icon icon="eye-outline"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<ng-template ngxPermissionsOnly="REQUEST_APPROVAL_EDIT">
+			<button
+				(click)="save(false, selectedItem)"
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>
+		<button
+			(click)="delete(selectedItem)"
+			nbButton
+			status="basic"
+			class="action"
+			[disabled]="!selectedItem && disableButton"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+		</button>
+	</div>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="REQUEST_APPROVAL_EDIT">
+		<button (click)="save(true)" nbButton status="success" size="small">
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
-	<button
-		(click)="delete(selectedItem)"
-		nbButton
-		status="danger"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
-	</button>
 </ng-template>
