@@ -16,7 +16,7 @@
 
   @include nb-card-overrides(
     unset,
-    calc($default-card-height - 2rem),
+    calc($default-card-height - 1rem),
     $default-radius
   );
 }

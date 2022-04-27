@@ -137,6 +137,7 @@ export class ApprovalsComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				tap(() => this.subject$.next(true)),
+				tap(() => this.refreshPagination()),
 				untilDestroyed(this)
 			)
 			.subscribe((componentLayout) => {
@@ -204,11 +205,17 @@ export class ApprovalsComponent
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.requestApprovalData = items;
 		this.smartTableSource.load(items);
+		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
+			this._loadGridLayoutData();
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.smartTableSource.count()
 		});
 		this.loading = false;
+	}
+
+	async _loadGridLayoutData() {
+		this.requestApprovalData = await this.smartTableSource.getElements();
 	}
 
 	async _loadSmartTableSettings() {
