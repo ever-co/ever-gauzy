@@ -11,12 +11,14 @@
 					{{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
-			<div class="mr-2">
+			<div>
 				<ng-template ngxPermissionsOnly="APPROVALS_POLICY_VIEW">
 					<button
 						class="float-right"
 						nbButton
+						outline
 						status="primary"
+						size="small"
 						(click)="manageApprovalPolicy()"
 					>
 						{{

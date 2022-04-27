@@ -16,15 +16,18 @@ import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
-import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
-import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
+import {
+	EmployeeWithLinksComponent,
+	TaskTeamsComponent
+} from '../../@shared/table-components';
 import { pluck } from 'underscore';
+import { CreateByComponent } from '../../@shared/table-components/create-by/create-by.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +37,8 @@ import { pluck } from 'underscore';
 })
 export class ApprovalsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	public settingsSmartTable: object;
 	public loading: boolean;
 	public selectedRequestApproval: IRequestApproval;
@@ -151,7 +155,14 @@ export class ApprovalsComponent
 		} else {
 			items = (
 				await this.approvalRequestService.getAll(
-					['employeeApprovals', 'employeeApprovals.employee', 'employee.user', 'teamApprovals', 'teamApprovals.team', 'tags'],
+					[
+						'employeeApprovals',
+						'employeeApprovals.employee',
+						'employee.user',
+						'teamApprovals',
+						'teamApprovals.team',
+						'tags'
+					],
 					{ organizationId, tenantId }
 				)
 			).items;
@@ -164,7 +175,7 @@ export class ApprovalsComponent
 				});
 			}
 		}
-
+		console.log(items);
 		this.loading = false;
 		this.requestApprovalData = items;
 		this.smartTableSource.load(items);
@@ -200,11 +211,14 @@ export class ApprovalsComponent
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.CREATED_BY'
 					),
-					type: 'string',
+					type: 'custom',
+					renderComponent: CreateByComponent,
 					filter: false
 				},
 				employees: {
-					title: this.getTranslation('APPROVAL_REQUEST_PAGE.EMPLOYEES'),
+					title: this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.EMPLOYEES'
+					),
 					type: 'custom',
 					filter: false,
 					renderComponent: EmployeeWithLinksComponent
@@ -213,13 +227,14 @@ export class ApprovalsComponent
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.TEAMS'),
 					type: 'custom',
 					filter: false,
-					renderComponent: TaskTeamsComponent,
+					renderComponent: TaskTeamsComponent
 				},
 				status: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
 					),
 					type: 'custom',
+					width: '5%',
 					renderComponent: StatusBadgeComponent,
 					valuePrepareFunction: (cell, row) => {
 						switch (cell) {
@@ -244,32 +259,21 @@ export class ApprovalsComponent
 						)
 							? 'success'
 							: ['requested'].includes(cell.toLowerCase())
-								? 'warning'
-								: 'danger';
+							? 'warning'
+							: 'danger';
 						return {
 							text: cell,
 							class: badgeClass
 						};
 					},
 					filter: false
-				},
-				actions: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_ACTIONS'
-					),
-					type: 'custom',
-					renderComponent: RequestApprovalActionComponent,
-					onComponentInitFunction: (instance) => {
-						instance.updateResult
-							.pipe(untilDestroyed(this))
-							.subscribe((params) => {
-								this.handleEvent(params);
-							});
-					},
-					filter: false
 				}
 			}
 		};
+	}
+
+	onUpdateResult(params) {
+		this.handleEvent(params);
 	}
 
 	approval(rowData) {
@@ -292,9 +296,10 @@ export class ApprovalsComponent
 			return;
 		}
 		if (params.isApproval) {
-			const request = await this.approvalRequestService.approvalRequestByAdmin(
-				params.data.id
-			);
+			const request =
+				await this.approvalRequestService.approvalRequestByAdmin(
+					params.data.id
+				);
 			if (request) {
 				this.toastrService.success(
 					'APPROVAL_REQUEST_PAGE.APPROVAL_SUCCESS',
@@ -302,9 +307,10 @@ export class ApprovalsComponent
 				);
 			}
 		} else {
-			const request = await this.approvalRequestService.refuseRequestByAdmin(
-				params.data.id
-			);
+			const request =
+				await this.approvalRequestService.refuseRequestByAdmin(
+					params.data.id
+				);
 			if (request) {
 				this.toastrService.success(
 					'APPROVAL_REQUEST_PAGE.REFUSE_SUCCESS',
@@ -346,7 +352,9 @@ export class ApprovalsComponent
 		} else {
 			dialog = this.dialogService.open(RequestApprovalMutationComponent);
 		}
-		const requestApproval: any = await firstValueFrom(dialog.onClose.pipe(first()));
+		const requestApproval: any = await firstValueFrom(
+			dialog.onClose.pipe(first())
+		);
 		if (requestApproval) {
 			this.toastrService.success(
 				isCreate
@@ -400,5 +408,5 @@ export class ApprovalsComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }
