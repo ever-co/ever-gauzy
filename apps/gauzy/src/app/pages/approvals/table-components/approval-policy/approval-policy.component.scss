@@ -1,0 +1,30 @@
+@import 'themes';
+
+div {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 3px 8px;
+
+  width: fit-content;
+  height: 21px;
+
+  background: rgba(126, 126, 143, 0.1);
+  border-radius: 12px;
+
+  /* Inside auto layout */
+
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  margin: 0px 10px;
+
+  /* Typography */
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0em;
+  text-align: left;
+}
