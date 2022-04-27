@@ -131,6 +131,13 @@ export class ApprovalPolicyComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => {
+					if (
+						this.componentLayoutStyleEnum.CARDS_GRID ===
+						this.dataLayoutStyle
+					)
+						this._loadGridLayoutData();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -161,6 +168,11 @@ export class ApprovalPolicyComponent
 			this.approvalPolicies = items;
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(items);
+			if (
+				this.componentLayoutStyleEnum.CARDS_GRID ===
+				this.dataLayoutStyle
+			)
+				this._loadGridLayoutData();
 		} catch (error) {
 			console.log('Error while retrieving approval policies', error);
 		} finally {
@@ -170,6 +182,10 @@ export class ApprovalPolicyComponent
 			});
 			this.loading = false;
 		}
+	}
+
+	private async _loadGridLayoutData() {
+		this.approvalPolicies = await this.smartTableSource.getElements();
 	}
 
 	private _loadSmartTableSettings() {
