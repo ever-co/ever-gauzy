@@ -33,6 +33,7 @@ import {
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '../../../../../../packages/common-angular/src/utils/shared-utils';
 import { Subject } from 'rxjs/internal/Subject';
+import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -211,6 +212,7 @@ export class ApprovalsComponent
 		});
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.requestApprovalData = buffersItems;
+		console.log(this.requestApprovalData);
 		this.smartTableSource.load(this.requestApprovalData);
 		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
 			this._loadGridLayoutData();
@@ -263,6 +265,12 @@ export class ApprovalsComponent
 					type: 'custom',
 					renderComponent: CreateByComponent,
 					filter: false
+				},
+				createdAt: {
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_AT'),
+					type: 'custom',
+					filter: false,
+					renderComponent: DateViewComponent
 				},
 				employees: {
 					title: this.getTranslation(
