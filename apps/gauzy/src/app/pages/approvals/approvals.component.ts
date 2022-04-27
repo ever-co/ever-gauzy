@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IRequestApproval,
@@ -11,7 +10,7 @@ import {
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { firstValueFrom } from 'rxjs';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, first, tap, debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
@@ -28,6 +27,12 @@ import {
 } from '../../@shared/table-components';
 import { pluck } from 'underscore';
 import { CreateByComponent } from '../../@shared/table-components/create-by/create-by.component';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
+import { distinctUntilChange } from '../../../../../../packages/common-angular/src/utils/shared-utils';
+import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,7 +41,7 @@ import { CreateByComponent } from '../../@shared/table-components/create-by/crea
 	styleUrls: ['./approvals.component.scss']
 })
 export class ApprovalsComponent
-	extends TranslationBaseComponent
+	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
 	public settingsSmartTable: object;
@@ -52,6 +57,7 @@ export class ApprovalsComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	requestApprovalData: IRequestApproval[];
 	organization: IOrganization;
+	subject$: Subject<any> = new Subject();
 
 	requestApprovalTable: Ng2SmartTableComponent;
 	@ViewChild('requestApprovalTable') set content(
@@ -72,30 +78,45 @@ export class ApprovalsComponent
 		private router: Router
 	) {
 		super(translateService);
-		this.setView();
 	}
 
 	ngOnInit() {
+		this.subject$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.getApprovals()),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
-					this.loadSettings();
 				}
 			});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe((org) => {
 				if (org) {
 					this.organization = org;
-					this.loadSettings();
 				}
 			});
 		this.router.events
@@ -105,15 +126,19 @@ export class ApprovalsComponent
 					this.setView();
 				}
 			});
-		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
+		this._loadSmartTableSettings();
+		this.setView();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.APPROVALS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -136,13 +161,14 @@ export class ApprovalsComponent
 		this.selectedRequestApproval = isSelected ? data : null;
 	}
 
-	async loadSettings() {
+	async getApprovals() {
 		if (!this.organization) {
 			return;
 		}
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { activePage, itemsPerPage } = this.getPagination();
 		let items: any = [];
 		if (this.selectedEmployeeId) {
 			items = (
@@ -175,15 +201,24 @@ export class ApprovalsComponent
 				});
 			}
 		}
-		console.log(items);
-		this.loading = false;
+		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.requestApprovalData = items;
 		this.smartTableSource.load(items);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
+		this.loading = false;
 	}
 
-	async loadSmartTable() {
+	async _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination : 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation(
@@ -319,14 +354,14 @@ export class ApprovalsComponent
 			}
 		}
 		this.clearItem();
-		this.loadSettings();
+		this.getApprovals();
 	}
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
-				this.loadSmartTable();
+				this.subject$.next(true);
 			});
 	}
 
@@ -363,7 +398,7 @@ export class ApprovalsComponent
 				{ name: requestApproval.name }
 			);
 			this.clearItem();
-			this.loadSettings();
+			this.getApprovals();
 		}
 	}
 
@@ -384,7 +419,7 @@ export class ApprovalsComponent
 			);
 		}
 		this.clearItem();
-		this.loadSettings();
+		this.getApprovals();
 	}
 
 	/*

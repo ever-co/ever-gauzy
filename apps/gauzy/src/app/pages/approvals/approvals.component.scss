@@ -1,9 +1,24 @@
 @import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-cards';
+
 :host {
   display: block;
   max-height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  nb-card,
+  nb-card-body {
+    background-color: rgba(50, 50, 50, 0.03);
+  }
+  .custom-table {
+    height: calc(100vh - 25rem);
+  }
+
+  @include nb-card-overrides(
+    unset,
+    calc($default-card-height - 2rem),
+    $default-radius
+  );
 }
 
 .card-row {

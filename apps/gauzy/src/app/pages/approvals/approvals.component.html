@@ -4,7 +4,7 @@
 	nbSpinnerSize="large"
 	class="card-scroll"
 >
-	<nb-card-header class="d-flex flex-column">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title>
@@ -37,12 +37,12 @@
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="pt-0">
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll-container">
+			<div class="table-scroll-container custom-table">
 				<ng2-smart-table
 					class="tags-table"
 					(userRowSelect)="selectRequestApproval($event)"
@@ -52,6 +52,21 @@
 					#requestApprovalTable
 				>
 				</ng2-smart-table>
+			</div>
+			<div class="pagination-container">
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
+					</ga-pagination>
+				</ng-container>
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
