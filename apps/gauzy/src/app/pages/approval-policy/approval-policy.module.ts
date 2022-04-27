@@ -25,6 +25,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
@@ -49,7 +50,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		BackNavigationModule,
 		TranslateModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule
+		HeaderTitleModule,
+    GauzyButtonActionModule
 	],
 	declarations: [ApprovalPolicyComponent],
 	providers: [ApprovalPolicyService]
