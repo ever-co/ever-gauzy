@@ -170,6 +170,7 @@ export class ApprovalsComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { activePage, itemsPerPage } = this.getPagination();
+		const buffersItems: any[] = [];
 		let items: any = [];
 		if (this.selectedEmployeeId) {
 			items = (
@@ -202,9 +203,15 @@ export class ApprovalsComponent
 				});
 			}
 		}
+		items.map((item: any) => {
+			buffersItems.push({
+				...item,
+				status: this.statusMapper(item.status)
+			});
+		});
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		this.requestApprovalData = items;
-		this.smartTableSource.load(items);
+		this.requestApprovalData = buffersItems;
+		this.smartTableSource.load(this.requestApprovalData);
 		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
 			this._loadGridLayoutData();
 		this.setPagination({
@@ -278,39 +285,32 @@ export class ApprovalsComponent
 					type: 'custom',
 					width: '5%',
 					renderComponent: StatusBadgeComponent,
-					valuePrepareFunction: (cell, row) => {
-						switch (cell) {
-							case RequestApprovalStatusTypesEnum.APPROVED:
-								cell = this.getTranslation(
-									'APPROVAL_REQUEST_PAGE.APPROVED'
-								);
-								break;
-							case RequestApprovalStatusTypesEnum.REFUSED:
-								cell = this.getTranslation(
-									'APPROVAL_REQUEST_PAGE.REFUSED'
-								);
-								break;
-							default:
-								cell = this.getTranslation(
-									'APPROVAL_REQUEST_PAGE.REQUESTED'
-								);
-								break;
-						}
-						const badgeClass = ['approved'].includes(
-							cell.toLowerCase()
-						)
-							? 'success'
-							: ['requested'].includes(cell.toLowerCase())
-							? 'warning'
-							: 'danger';
-						return {
-							text: cell,
-							class: badgeClass
-						};
-					},
 					filter: false
 				}
 			}
+		};
+	}
+
+	statusMapper(value: any) {
+		switch (value) {
+			case RequestApprovalStatusTypesEnum.APPROVED:
+				value = this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVED');
+				break;
+			case RequestApprovalStatusTypesEnum.REFUSED:
+				value = this.getTranslation('APPROVAL_REQUEST_PAGE.REFUSED');
+				break;
+			default:
+				value = this.getTranslation('APPROVAL_REQUEST_PAGE.REQUESTED');
+				break;
+		}
+		const badgeClass = ['approved'].includes(value.toLowerCase())
+			? 'success'
+			: ['requested'].includes(value.toLowerCase())
+			? 'warning'
+			: 'danger';
+		return {
+			text: value,
+			class: badgeClass
 		};
 	}
 
