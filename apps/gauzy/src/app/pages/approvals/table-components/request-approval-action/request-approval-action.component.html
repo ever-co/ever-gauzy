@@ -1,21 +1,20 @@
-<div>
-	<button
-		nbButton
-		status="success"
-		(click)="approval()"
-		*ngIf="isApproval"
-		class="mr-3"
-		[size]="layout === 'CARDS_GRID' ? 'tiny' : 'medium'"
-	>
-		{{ 'APPROVAL_REQUEST_PAGE.APPROVE' | translate }}
-	</button>
-	<button
-		nbButton
-		status="danger"
-		(click)="refuse()"
-		*ngIf="isRefuse"
-		[size]="layout === 'CARDS_GRID' ? 'tiny' : 'medium'"
-	>
-		{{ 'APPROVAL_REQUEST_PAGE.REFUSE' | translate }}
-	</button>
-</div>
+<button
+	nbButton
+	status="success"
+	(click)="approval()"
+	*ngIf="isRefuse"
+	size="small"
+  class="req-green"
+>
+	{{ 'APPROVAL_REQUEST_PAGE.APPROVE' | translate }}
+</button>
+<button
+	nbButton
+	status="danger"
+	(click)="refuse()"
+	*ngIf="isApproval"
+	size="small"
+	class="req-red ml-2"
+>
+	{{ 'APPROVAL_REQUEST_PAGE.REFUSE' | translate }}
+</button>
