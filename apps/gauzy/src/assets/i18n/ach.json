@@ -1944,7 +1944,8 @@
 		"APPROVED": "crwdns9608:0crwdne9608:0",
 		"REFUSED": "crwdns9610:0crwdne9610:0",
 		"REQUESTED": "crwdns9612:0crwdne9612:0",
-		"ACTION": "crwdns9614:0crwdne9614:0"
+		"ACTION": "crwdns9614:0crwdne9614:0",
+		"CREATED_AT": "crwdns11128:0crwdne11128:0"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "crwdns4846:0crwdne4846:0",
