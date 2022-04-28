@@ -41,6 +41,12 @@
   cursor: pointer;
 }
 
-.arrow{
+.arrow {
   width: 32px;
+}
+
+.title {
+  background-color: rgba(126, 126, 143, 0.1);
+  padding: 6px;
+  border-radius: nb-theme(border-radius);
 }
