@@ -51,8 +51,8 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	@ViewChild('viewLogTemplate', { static: true }) viewLogTemplate: TemplateRef<any>;
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
 
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;

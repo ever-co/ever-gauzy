@@ -1944,7 +1944,8 @@
 		"APPROVED": "Одобрено",
 		"REFUSED": "Отклонено",
 		"REQUESTED": "Запрошено",
-		"ACTION": "Действие"
+		"ACTION": "Действие",
+		"CREATED_AT": "Создано в"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Редактировать политику утверждения",
@@ -3538,7 +3539,7 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "Скриншот",
 		"PERCENT_USED": "Процент использованных",
-		"TIME_SPENT": "Прошло времени (в часах)",
+		"TIME_SPENT": "Проведенное время (в часах)",
 		"APPS": "Приложения",
 		"VISITED_SITES": "Посещенные сайты",
 		"NO_ACTIVITIES": "Нет активности",

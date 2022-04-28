@@ -1,47 +1,31 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
-	<nb-card-header class="card-header-title">
-		<div class="card-header-title">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="d-flex flex-column pb-0">
+		<div class="d-flex">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
-					{{ 'INVITE_PAGE.' + invitationType + '.MANAGE' | translate }}
+					{{
+						'INVITE_PAGE.' + invitationType + '.MANAGE' | translate
+					}}
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="align-self-end">
+			<ngx-gauzy-button-action
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+				[isDisable]="disableButton"
+				[buttonTemplate]="actionButtons"
+				[buttonTemplateVisible]="visibleButton"
+			>
+			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
-			<div class="mb-3">
-				<button
-					nbButton
-					status="primary"
-					(click)="invite()"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="email-outline"></nb-icon
-					>{{ 'BUTTONS.INVITE' | translate }}
-				</button>
-				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-					<ng-container
-						*ngTemplateOutlet="actionButtons"
-					></ng-container>
-				</ng-container>
-			</div>
-		</ng-template>
 		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			[ngIfElse]="gridLayout"
 		>
-			<div class="table-scroll-container">
+			<div class="table-scroll-container custom-table">
 				<ng2-smart-table
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
@@ -51,15 +35,36 @@
 				>
 				</ng2-smart-table>
 			</div>
+			<div class="pagination-container">
+				<ng-container
+					*ngIf="pagination.totalItems > pagination.itemsPerPage"
+				>
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
+					</ga-pagination>
+				</ng-container>
+			</div>
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid-scroll-container">
 				<ga-card-grid
 					[settings]="settingsSmartTable"
 					[source]="invites"
-					[buttonTemplate]="actionButtons"
+					[doEmit]="false"
+					[totalItems]="pagination?.totalItems"
+					[itemsPerPage]="pagination?.itemsPerPage"
+					[activePage]="pagination?.activePage"
+					(selectedOption)="onUpdateOption($event)"
+					(selectedPage)="onPageChange($event)"
+					(onSelectedItem)="selectInvite($event)"
 				></ga-card-grid>
-			</div>		
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -68,40 +73,53 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		status="success"
-		(click)="copyToClipboard(selectedItem)"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
+	<div
+		*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+		class="btn-group actions"
 	>
-		<nb-icon class="mr-1" icon="link-2-outline"></nb-icon
-		>{{ 'BUTTONS.COPY_LINK' | translate }}
-	</button>
-	<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
 		<button
 			nbButton
 			[disabled]="!selectedItem && disableButton"
-			status="warning"
-			(click)="resendInvite(selectedItem)"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
+			status="basic"
+			class="action success"
+			(click)="copyToClipboard(selectedItem)"
+			size="small"
 		>
-			<nb-icon class="mr-1" icon="flip-2-outline"></nb-icon
-			>{{ 'BUTTONS.RESEND' | translate }}
+			<i class="fas fa-link mr-1"></i>
+			{{ 'BUTTONS.COPY_LINK' | translate }}
 		</button>
+		<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+			<button
+				nbButton
+				[disabled]="!selectedItem && disableButton"
+				status="basic"
+				(click)="resendInvite(selectedItem)"
+				class="action warning"
+				size="small"
+			>
+				<i class="fas fa-repeat mr-1"></i>
+				{{ 'BUTTONS.RESEND' | translate }}
+			</button>
 
-		<button
-			nbButton
-			[disabled]="!selectedItem && disableButton"
-			status="danger"
-			(click)="deleteInvite(selectedItem)"
-			class="mr-2"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-			>{{ 'BUTTONS.DELETE' | translate }}
+			<button
+				nbButton
+				[disabled]="!selectedItem && disableButton"
+				status="basic"
+				(click)="deleteInvite(selectedItem)"
+				class="action"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
+			</button>
+		</ng-template>
+	</div>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+		<button nbButton status="success" (click)="invite()" size="small">
+			<i class="fas fa-envelope mr-1"></i
+			>{{ 'BUTTONS.INVITE' | translate }}
 		</button>
 	</ng-template>
 </ng-template>

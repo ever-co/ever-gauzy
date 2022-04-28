@@ -1944,7 +1944,8 @@
 		"APPROVED": "Approved",
 		"REFUSED": "Refused",
 		"REQUESTED": "Requested",
-		"ACTION": "Action"
+		"ACTION": "Action",
+		"CREATED_AT": "Created At"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
@@ -3538,7 +3539,7 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
 		"PERCENT_USED": "Percent used",
-		"TIME_SPENT": "Time spent (hrs)",
+		"TIME_SPENT": "Time spent (hours)",
 		"APPS": "Apps",
 		"VISITED_SITES": "Visited Sites",
 		"NO_ACTIVITIES": "No activities",

@@ -46,6 +46,49 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
   }
 }
 
+@mixin nb-stepper() {
+  nb-stepper .header .step.selected .label-index {
+    background-color: nb-theme(background-primary-color-1);
+    color: nb-theme(text-control-color);
+    border: unset;
+  }
+
+  nb-stepper .header .step .label-index {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    margin: 0 !important;
+    padding: 0;
+  }
+
+  nb-stepper .header .step .label {
+    display: none;
+  }
+  nb-stepper.horizontal .header .step {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  nb-stepper .header .step.selected + .connector,
+  nb-stepper .header .step.completed + .connector {
+    background-color: nb-theme(background-primary-color-1);
+    height: 10px !important;
+    margin: 0px 10px 0 -10px !important;
+    border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) 0;
+  }
+
+  nb-stepper .header {
+    align-items: center !important;
+    margin-bottom: 0px !important;
+  }
+}
+
 @mixin gauzy-overrides() {
   @include nb-select-overrides(
     $default-height,
@@ -58,4 +101,5 @@ $default-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
     $default-radius,
     $default-box-shadow-inset
   );
+  @include nb-stepper;
 }
