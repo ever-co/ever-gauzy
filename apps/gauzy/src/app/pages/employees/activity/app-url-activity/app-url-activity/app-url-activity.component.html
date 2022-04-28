@@ -39,8 +39,11 @@
 						[item]="app"
 					></ngx-activity-item>
 				</div>
-				<div class="times">
-					{{ values.hour | timeFormat }}
+				<div class="d-flex">
+					<div *ngIf="type === 'urls'" class="arrow"></div>
+					<div class="times">
+						{{ values.hour | timeFormat }}
+					</div>
 				</div>
 			</div>
 			<div class="py-5 text-center" *ngIf="!loading && apps?.length == 0">
