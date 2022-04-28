@@ -121,3 +121,8 @@
   text-align: left;
   text-transform: lowercase;
 }
+@media screen and (min-width: 1890px) {
+  .grid-container {
+    grid-template-columns: repeat(auto-fill, minmax(14.1rem, 1fr));
+  }
+}
