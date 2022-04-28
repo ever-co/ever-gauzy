@@ -1,5 +1,85 @@
 <form [formGroup]="form" autocomplete-off no-validate>
 	<div class="row">
+		<div class="col-3">
+			<div class="form-group row" [hidden]="form.get('imageUrl').invalid">
+				<div class="col-sm-12">
+					<div class="row preview-img" [hidden]="!showImageMeta">
+						<div class="image">
+							<img
+								#imagePreview
+								[src]="form.get('imageUrl').value"
+								alt="Invalid image"
+								class="img-rounded"
+							/>
+							<button
+								class="trash-icon"
+								nbButton
+								status="basic"
+								size="small"
+                (click)="deleteImageUrl()"
+							>
+								<nb-icon
+									status="danger"
+									[title]="
+										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
+											| translate
+									"
+									icon="trash-2-outline"
+									[title]="
+										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
+											| translate
+									"
+								></nb-icon>
+							</button>
+						</div>
+					</div>
+					<div class="row preview-img" [hidden]="showImageMeta">
+						<div class="image">
+							<i class="far fa-image"></i>
+							<button
+								class="trash-icon"
+								nbButton
+								status="basic"
+								size="small"
+							>
+								<nb-icon
+									status="danger"
+									[title]="
+										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
+											| translate
+									"
+									icon="trash-2-outline"
+								></nb-icon>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-9">
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label for="inputImageUrl" class="label">{{
+							'FORM.LABELS.IMAGE_URL' | translate
+						}}</label>
+						<ngx-file-uploader-input
+							id="inputImageUrl"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER'
+									| translate
+							"
+							[fileUrl]="form.get('imageUrl').value"
+							(uploadedImgUrl)="
+								form.get('imageUrl').setValue($event)
+							"
+						></ngx-file-uploader-input>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
 		<div class="col">
 			<div class="form-group">
 				<label for="firstName" class="label">{{
@@ -42,7 +122,7 @@
 		</div>
 	</div>
 	<div class="row">
-		<div class="col">
+		<div class="col-4">
 			<div class="form-group">
 				<label for="username" class="label">{{
 					'FORM.USERNAME' | translate
@@ -62,7 +142,7 @@
 				/>
 			</div>
 		</div>
-		<div class="col">
+		<div class="col-8">
 			<div class="form-group">
 				<label for="email" class="label">{{
 					'FORM.EMAIL' | translate
@@ -81,6 +161,16 @@
 					"
 				/>
 			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-8">
+			<ngx-password-form-field
+				id="password"
+				[placeholder]="'FORM.PASSWORD' | translate"
+				[ctrl]="form.controls.password"
+				formControlName="password"
+			></ngx-password-form-field>
 		</div>
 	</div>
 	<div class="row">
@@ -109,18 +199,18 @@
 					formControlName="startedWorkOn"
 				/>
 				<nb-datepicker #startWorkOnDatepicker></nb-datepicker>
-				<div class="notes" *ngIf="form.get('startedWorkOn').touched && form.get('startedWorkOn').value == null">
-					<p> {{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }} </p>
+				<div
+					class="notes"
+					*ngIf="
+						form.get('startedWorkOn').touched &&
+						form.get('startedWorkOn').value == null
+					"
+				>
+					<p>
+						{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
+					</p>
 				</div>
 			</div>
-		</div>
-		<div class="col">
-			<ngx-password-form-field
-				id="password"
-				[placeholder]="'FORM.PASSWORD' | translate"
-				[ctrl]="form.controls.password"
-				formControlName="password"
-			></ngx-password-form-field>
 		</div>
 		<div class="col" *ngIf="isCandidate">
 			<div class="form-group">
@@ -136,6 +226,27 @@
 					[placeholder]="'POP_UPS.PICK_DATE' | translate"
 				/>
 				<nb-datepicker #appliedDatePicker></nb-datepicker>
+			</div>
+		</div>
+		<div class="col" *ngIf="isEmployee || isCandidate">
+			<div class="form-group">
+				<label for="rejectDate" class="label">{{
+					'FORM.LABELS.REJECT_DATE' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="rejectDate"
+					formControlName="rejectDate"
+					nbInput
+					[nbDatepicker]="rejectDatePicker"
+					[placeholder]="'POP_UPS.PICK_DATE' | translate"
+					[status]="
+						FormHelpers.isInvalidControl(form, 'rejectDate')
+							? 'danger'
+							: 'basic'
+					"
+				/>
+				<nb-datepicker #rejectDatePicker></nb-datepicker>
 			</div>
 		</div>
 	</div>
@@ -178,28 +289,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="row" *ngIf="isEmployee || isCandidate">
-		<div class="col">
-			<div class="form-group">
-				<label for="rejectDate" class="label">{{
-					'FORM.LABELS.REJECT_DATE' | translate
-				}}</label>
-				<input
-					fullWidth
-					id="rejectDate"
-					formControlName="rejectDate"
-					nbInput
-					[nbDatepicker]="rejectDatePicker"
-					[placeholder]="'POP_UPS.PICK_DATE' | translate"
-					[status]="
-						FormHelpers.isInvalidControl(form, 'rejectDate')
-							? 'danger'
-							: 'basic'
-					"
-				/>
-				<nb-datepicker #rejectDatePicker></nb-datepicker>
-			</div>
-		</div>
+	<div class="row">
 		<div class="col">
 			<div class="form-group">
 				<ga-tags-color-input
@@ -227,21 +317,6 @@
 			</div>
 		</div>
 	</div>
-	<div class="row">
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="inputImageUrl" class="label">{{
-					'FORM.LABELS.IMAGE_URL' | translate
-				}}</label>
-				<ngx-file-uploader-input
-					id="inputImageUrl"
-					[placeholder]="'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER' | translate"
-					[fileUrl]="form.get('imageUrl').value"
-					(uploadedImgUrl)="form.get('imageUrl').setValue($event)"
-				></ngx-file-uploader-input>
-			</div>
-		</div>
-	</div>
 	<ng-container *ngIf="isShowRole">
 		<div class="row" *ngIf="enableEmployee()">
 			<div class="col-sm-12">
@@ -253,25 +328,4 @@
 			</div>
 		</div>
 	</ng-container>
-	<div class="form-group row" [hidden]="form.get('imageUrl').invalid">
-		<div class="col-sm-12">
-			<div class="row preview-img" [hidden]="!showImageMeta">
-				<div>
-					<img
-						#imagePreview
-						[src]="form.get('imageUrl').value"
-						alt="Invalid image"
-						class="img-rounded"
-					/>
-				</div>
-				<div class="remove-icon text-danger" (click)="deleteImageUrl()">
-					<div
-						class="ion-md-remove-circle"
-						placeholder="Remove image"
-						[title]="'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate"
-					></div>
-				</div>
-			</div>
-		</div>
-	</div>
 </form>

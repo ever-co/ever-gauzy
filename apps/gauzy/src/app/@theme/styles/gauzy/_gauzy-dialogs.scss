@@ -1,11 +1,18 @@
 @import 'themes';
 $orange: rgba(245, 109, 88, 1);
 $gray: rgba(126, 126, 143, 1);
+$green: rgba(37, 184, 105, 1);
+$shadow: 0 0 0 nb-theme(button-outline-width)
+    rgba(
+      $color: $green,
+      $alpha: 0.05
+    ),
+  inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
 :host {
-  i{
+  i {
     cursor: pointer;
   }
-  .cancel{
+  .cancel {
     width: 100%;
     display: flex;
     justify-content: flex-end;
@@ -55,6 +62,30 @@ $gray: rgba(126, 126, 143, 1);
       inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
   }
   [nbButton].gray.appearance-outline:focus:not(:hover):not(:active) {
+    box-shadow: unset;
+  }
+
+  [nbButton].green.appearance-outline.status-basic {
+    background-color: #ffffff;
+    border-color: rgba($color: $green, $alpha: 0.3);;
+    border-width: 2px;
+    color: $green;
+    &:hover {
+      border-color: $green;
+    }
+  }
+  [nbButton].green.appearance-outline:hover {
+    box-shadow: $shadow;
+  }
+  [nbButton].green.appearance-outline:focus:not(:hover):not(:active) {
+    box-shadow: unset;
+  }
+
+  [nbButton].green.appearance-outline.status-basic[disabled],
+  [nbButton].green.appearance-outline.status-basic.btn-disabled {
+    background-color: nb-theme(button-outline-basic-disabled-background-color);
+    border-color: nb-theme(button-outline-basic-disabled-border-color);
+    color: nb-theme(button-outline-basic-disabled-text-color);
     box-shadow: unset;
   }
 }
