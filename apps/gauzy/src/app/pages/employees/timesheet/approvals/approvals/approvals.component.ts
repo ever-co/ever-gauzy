@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {
 	ITimeLogFilters,
@@ -8,12 +8,14 @@ import {
 import { isEmpty } from '@gauzy/common-angular';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { Store, ToastrService } from './../../../../../@core/services';
-import { Subject } from 'rxjs/internal/Subject';
+import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
+import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,6 +39,9 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 
 	allChecked: boolean;
 
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
@@ -45,6 +50,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly nbMenuService: NbMenuService,
 		public readonly translateService: TranslateService,
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(store, translateService);
 	}
@@ -76,7 +82,9 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent
 
 	filtersChange(filters: ITimeLogFilters) {
 		this.logRequest = filters;
-		this.timesheetFilterService.filter = filters;
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
 		this.timesheets$.next(true);
 	}
 
