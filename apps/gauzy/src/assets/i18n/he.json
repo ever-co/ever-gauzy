@@ -1944,7 +1944,8 @@
 		"APPROVED": "Approved",
 		"REFUSED": "Refused",
 		"REQUESTED": "Requested",
-		"ACTION": "Action"
+		"ACTION": "Action",
+		"CREATED_AT": "Created At"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
