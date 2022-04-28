@@ -1,6 +1,9 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<h5>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+			><i class="fas fa-times" (click)="closeDialog()"></i
+		></span>
+		<h5 class="title">
 			{{
 				(requestApproval
 					? 'APPROVAL_REQUEST_PAGE.EDIT_APPROVAL_REQUEST'
@@ -8,28 +11,39 @@
 				) | translate
 			}}
 		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form" (ngSubmit)="onSubmit()" #formDirective="ngForm">
+		<form
+			[formGroup]="form"
+			(ngSubmit)="onSubmit()"
+			#formDirective="ngForm"
+		>
 			<div class="row">
 				<div class="col-12 mb-3">
 					<label for="name" class="label">
-						{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME' | translate }}
+						{{
+							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
+								| translate
+						}}
 					</label>
 					<input
 						nbInput
 						type="text"
 						formControlName="name"
 						fullWidth
-						[placeholder]="'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME' | translate"
+						[placeholder]="
+							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
+								| translate
+						"
 						[ngClass]="{
-							'status-danger': FormHelpers.isInvalidControl(form, 'name'),
-							'status-success': FormHelpers.isValidControl(form, 'name')
+							'status-danger': FormHelpers.isInvalidControl(
+								form,
+								'name'
+							),
+							'status-success': FormHelpers.isValidControl(
+								form,
+								'name'
+							)
 						}"
 					/>
 				</div>
@@ -49,7 +63,10 @@
 						[min]="0"
 						formControlName="min_count"
 						fullWidth
-						[placeholder]="'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT' | translate"
+						[placeholder]="
+							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
+								| translate
+						"
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
@@ -161,10 +178,11 @@
 		</form>
 	</nb-card-body>
 
-	<nb-card-footer class="text-right">
+	<nb-card-footer class="text-left">
 		<button
 			(click)="dialogRef.close()"
-			status="danger"
+			status="basic"
+			outline
 			class="mr-3"
 			nbButton
 		>
