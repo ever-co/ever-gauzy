@@ -165,7 +165,7 @@
 				<div class="col-sm-12"></div>
 				<button
 					class="delete mr-3 ml-3"
-					(click)="ref.close(); disabled = true"
+					(click)="disabled = true; ref.close()"
 					nbButton
 					status="basic"
 					outline
@@ -173,7 +173,7 @@
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
 				<button
-					(click)="save(addInput.value)"
+					(click)="save(addInput.value); disabled = true; ref.close()"
 					nbButton
 					status="success"
 					[disabled]="addInput.invalid"
@@ -231,7 +231,7 @@
 					<button
 						class="delete mr-3 ml-3"
 						outline
-						(click)="ref.close(); disabled = true"
+						(click)="disabled = true; ref.close()"
 						nbButton
 						status="basic"
 					>
@@ -242,7 +242,9 @@
 							editCategory(
 								selected.expenseCategory.id,
 								selected.expenseCategory.name
-							)
+							);
+							disabled = true;
+							ref.close()
 						"
 						nbButton
 						status="success"
