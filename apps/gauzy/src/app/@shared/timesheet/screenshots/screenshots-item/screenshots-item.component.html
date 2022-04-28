@@ -1,4 +1,4 @@
-<div class="card mb-3">
+<div class="card">
 	<div class="activity" *ngIf="timeSlot; else noActivity">
 		<div
 			class="image-contaer curser-pointer"
@@ -72,7 +72,7 @@
 			</ng-template>
 		</div>
 		<div class="slot-info text-left p-3">
-			<div class="time-span mb-3 mt-1">
+			<div class="time-span mb-4 mt-1 hour-label">
 				{{ timeSlot.localStartedAt | timeFormat }} -
 				{{ timeSlot.localStoppedAt | timeFormat }}
 			</div>
@@ -83,7 +83,7 @@
 				[displayValue]="true"
 				size="tiny"
 			></nb-progress-bar>
-			<div class="activity-count">
+			<div class="activity-count hour-label mt-2">
 				{{ timeSlot.percentage || 0 }}% of
 				{{
 					timeSlot.duration
