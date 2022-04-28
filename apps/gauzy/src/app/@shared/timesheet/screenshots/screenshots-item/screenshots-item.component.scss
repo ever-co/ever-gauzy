@@ -4,6 +4,7 @@
   ::ng-deep {
     nb-progress-bar.size-tiny .progress-container {
       height: 10px;
+      background-color: rgba(50, 50, 50, 0.03);
     }
   }
   .card {
@@ -113,4 +114,12 @@
       }
     }
   }
+}
+.hour-label {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 11px;
+  letter-spacing: 0em;
+  text-align: left;
+  text-transform: lowercase;
 }
