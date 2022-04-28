@@ -28,7 +28,7 @@ $radius: nb-theme(button-rectangle-border-radius);
       height: 18px;
       border-radius: $radius;
     }
-    &:hover {
+    &:hover, &.string {
       text-overflow: clip;
       width: fit-content;
       z-index: 3;
