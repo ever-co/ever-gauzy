@@ -1944,7 +1944,8 @@
 		"APPROVED": "Одобрено",
 		"REFUSED": "Отклонено",
 		"REQUESTED": "Запрошено",
-		"ACTION": "Действие"
+		"ACTION": "Действие",
+		"CREATED_AT": "Создано в"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Редактировать политику утверждения",
