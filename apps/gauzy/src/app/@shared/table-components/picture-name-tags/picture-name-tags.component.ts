@@ -19,7 +19,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 			>
 			</nb-badge>
 		</ng-template>
-		<div *ngIf="isTags">
+		<div class="badges-block" *ngIf="isTags">
 			<nb-badge
 				*ngFor="let tag of (data | async)?.tags"
 				class="color"
