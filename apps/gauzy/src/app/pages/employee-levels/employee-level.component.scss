@@ -1,13 +1,1 @@
-:host > nb-card {
-  min-height: 75vh;
-  nb-card,
-  nb-card-body {
-    background-color: rgba(50, 50, 50, 0.03);
-  }
-}
-
-.table-scroll-container,
-.grid-scroll-container {
-  overflow-y: auto;
-  max-height: calc(70vh - 110px);
-}
+@import 'apps/gauzy/src/app/pages/expenses/expense-categories/expense-categories.component.scss';
