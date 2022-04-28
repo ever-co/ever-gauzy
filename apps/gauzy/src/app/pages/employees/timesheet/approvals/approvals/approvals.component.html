@@ -1,6 +1,7 @@
 <div class="filters row mb-3">
 	<div class="col">
 		<ngx-gauzy-filters
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			[hasLogTypeFilter]="false"
 			[hasSourceFilter]="false"
 			[hasActivityLevelFilter]="false"

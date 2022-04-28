@@ -48,8 +48,7 @@ const routes: Routes = [
 					},
 					datePicker: {
 						unitOfTime: 'week',
-						isLockDatePicker: true,
-						isSaveDatePicker: true
+						isLockDatePicker: true
 					}
 				}
 			},

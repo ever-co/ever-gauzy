@@ -1,7 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs/internal/Observable';
 import * as _ from 'underscore';
 import {
 	IGetTimeLogInput,
@@ -13,10 +14,11 @@ import {
 import { isEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
-import { Store } from './../../../../../@core/services';
+import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;
@@ -42,12 +44,16 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 
 	futureDateAllowed: boolean;
 
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	datePickerConfig$: Observable<any> = this._dateRangePickerBuilderService.datePickerConfig$;
+
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly translateService: TranslateService,
-		protected readonly store: Store
+		protected readonly store: Store,
+		public readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(store, translateService);
 	}
@@ -89,7 +95,9 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 	filtersChange(filters: ITimeLogFilters) {
 		this.logRequest = filters;
 		this.updateWeekDayList();
-		this.timesheetFilterService.filter = filters;
+		if (this.gauzyFiltersComponent.saveFilters) {
+			this.timesheetFilterService.filter = filters;
+		}
 		this.subject$.next(true);
 	}
 

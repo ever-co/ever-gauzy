@@ -17,6 +17,7 @@
 	</div>
 	<div class="col">
 		<ngx-gauzy-filters
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
 		></ngx-gauzy-filters>
 	</div>
