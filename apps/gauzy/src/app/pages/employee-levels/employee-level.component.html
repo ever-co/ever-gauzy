@@ -194,9 +194,7 @@
 							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
 						"
 						fullWidth
-						[ngModel]="
-							isGridEdit ? selectedEmployeeLevel.level : ''
-						"
+						[(ngModel)]="selected.employeeLevel.level"
 						required
 					/>
 				</div>
