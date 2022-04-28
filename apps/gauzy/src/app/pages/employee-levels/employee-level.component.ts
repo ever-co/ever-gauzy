@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import {
 	IEmployeeLevelInput,
 	ITag,
@@ -15,7 +15,11 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeeLevelService, Store, ToastrService } from '../../@core/services';
+import {
+	EmployeeLevelService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,7 +29,8 @@ import { EmployeeLevelService, Store, ToastrService } from '../../@core/services
 })
 export class EmployeeLevelComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	organization: IOrganization;
 	showAddCard: boolean;
 	showEditDiv: boolean;
@@ -39,6 +44,11 @@ export class EmployeeLevelComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
+	disabled: boolean = true;
+	selected = {
+		employeeLevel: null,
+		state: false
+	};
 
 	constructor(
 		private readonly employeeLevelService: EmployeeLevelService,
@@ -57,7 +67,10 @@ export class EmployeeLevelComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(() => this.loadEmployeeLevels()),
 				untilDestroyed(this)
 			)
@@ -70,10 +83,10 @@ export class EmployeeLevelComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.employeeLevelService.getAll(
-			['tags'],
-			{ tenantId, organizationId }
-		);
+		const { items } = await this.employeeLevelService.getAll(['tags'], {
+			tenantId,
+			organizationId
+		});
 
 		if (items) {
 			this.employeeLevels = items;
@@ -163,26 +176,27 @@ export class EmployeeLevelComponent
 	edit(employeeLevel: IEmployeeLevelInput) {
 		this.showAddCard = true;
 		this.isGridEdit = true;
+		this.selected.employeeLevel = employeeLevel;
 		this.selectedEmployeeLevel = employeeLevel;
 		this.tags = employeeLevel.tags;
 	}
 
 	save(name: string) {
 		if (this.isGridEdit) {
-			this.editEmployeeLevel(this.selectedEmployeeLevel.id, name);
+			this.editEmployeeLevel(this.selected.employeeLevel.id, name);
 		} else {
 			this.addEmployeeLevel(name);
 		}
 	}
 
 	async removeEmployeeLevel(id: string, name: string) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Employee level'
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 		if (result) {
 			await this.employeeLevelService.delete(id);
 			this.toastrService.success(
@@ -196,6 +210,7 @@ export class EmployeeLevelComponent
 	showEditCard(employeeLevel: IEmployeeLevelInput) {
 		this.tags = employeeLevel.tags;
 		this.showEditDiv = true;
+		this.selected.employeeLevel = employeeLevel;
 		this.selectedEmployeeLevel = employeeLevel;
 	}
 
@@ -203,6 +218,10 @@ export class EmployeeLevelComponent
 		this.showEditDiv = false;
 		this.showAddCard = false;
 		this.selectedEmployeeLevel = null;
+		this.selected = {
+			employeeLevel: null,
+			state: false
+		};
 		this.isGridEdit = false;
 		this.tags = [];
 	}
@@ -227,5 +246,29 @@ export class EmployeeLevelComponent
 		if (this.employeeLevels.length === 0) {
 			this.cancel();
 		}
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate
+				? this.edit(this.selected.employeeLevel)
+				: this.cancel();
+			this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
+		}
+	}
+
+	selectEmployee(employeeLevel: any) {
+		if (employeeLevel.data) employeeLevel = employeeLevel.data;
+		const res =
+			this.selected.employeeLevel &&
+			employeeLevel === this.selected.employeeLevel
+				? { state: !this.selected.state }
+				: { state: true };
+		this.selected.state = res.state;
+		this.disabled = !res.state;
+		this.selected.employeeLevel = employeeLevel;
+    this.selectedEmployeeLevel =employeeLevel;
 	}
 }
