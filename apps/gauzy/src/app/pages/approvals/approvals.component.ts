@@ -31,7 +31,7 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '../../../../../../packages/common-angular/src/utils/shared-utils';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { Subject } from 'rxjs/internal/Subject';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 
@@ -212,7 +212,6 @@ export class ApprovalsComponent
 		});
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.requestApprovalData = buffersItems;
-		console.log(this.requestApprovalData);
 		this.smartTableSource.load(this.requestApprovalData);
 		if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID)
 			this._loadGridLayoutData();
