@@ -50,3 +50,10 @@
   padding: 6px;
   border-radius: nb-theme(border-radius);
 }
+.times{
+  display: block;
+  text-transform: lowercase;
+  &:first-letter{
+    text-transform: uppercase;
+  }
+}

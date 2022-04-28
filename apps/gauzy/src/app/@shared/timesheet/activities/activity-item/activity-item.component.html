@@ -1,5 +1,5 @@
 <div class="row align-items-center clickable">
-	<div class="col-4" [nbTooltip]="item.title">
+	<div class="col-sm-2 text-left" [nbTooltip]="item.title">
 		<div class="row align-items-center">
 			<div class="arrow" *ngIf="allowChild">
 				<button
@@ -24,7 +24,8 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-5">
+	<div class="col-sm-3 times">{{ visitedDate }}</div>
+  <div class="col-sm-5">
 		<div class="row align-items-center">
 			<div class="col-auto percentage-col">
 				{{ item.durationPercentage || 0 }}%
@@ -41,20 +42,21 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-3 text-right">
+	<div class="col-sm-2 text-right">
 		{{ item.duration | durationFormat }}
 	</div>
+
 </div>
-<div *ngIf="item?.childItems?.length && childOpen" class="child-items">
+<div *ngIf="item?.childItems?.length && childOpen" class="child-items pt-3">
 	<div class="row pt-2 title pb-2">
-		<div class="col-sm-4">{{ 'TIMESHEET.TITLE' | translate }}</div>
+		<div class="col-sm-3">{{ 'TIMESHEET.TITLE' | translate }}</div>
 		<div class="col-sm-6">{{ 'TIMESHEET.URL' | translate }}</div>
-		<div class="col-sm-2 text-right">
+		<div class="col-sm-3 text-right">
 			{{ 'TIMESHEET.TIME_SPENT' | translate }}
 		</div>
 	</div>
 	<div class="row pt-2 pb-2" *ngFor="let childItem of item.childItems">
-		<div class="col-sm-4">
+		<div class="col-sm-3">
 			{{ childItem.title }}
 		</div>
 		<div class="col-sm-6">
@@ -64,7 +66,7 @@
 				</span>
 			</a>
 		</div>
-		<div class="col-sm-2 text-right">
+		<div class="col-sm-3 text-right">
 			{{ childItem.duration | durationFormat }}
 		</div>
 	</div>
