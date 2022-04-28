@@ -1,10 +1,7 @@
-<div
-	class="row align-items-center clickable"
-	(click)="allowChild && toggleChild()"
->
+<div class="row align-items-center clickable">
 	<div class="col-4" [nbTooltip]="item.title">
 		<div class="row align-items-center">
-			<!-- <div class="col-auto" *ngIf="allowChild">
+			<div class="col-auto" *ngIf="allowChild">
 				<button
 					nbButton
 					ghost
@@ -21,7 +18,7 @@
 				>
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 				</button>
-			</div> -->
+			</div>
 			<div [ngClass]="allowChild ? 'col child' : 'col no-child'">
 				{{ item.title | truncate: 13 }}
 			</div>
@@ -49,21 +46,21 @@
 	</div>
 </div>
 <div *ngIf="item?.childItems?.length && childOpen" class="child-items">
-	<div class="row pt-2 pb-2 border-bottom font-weight-bold">
-		<div class="col-sm-2">{{ 'TIMESHEET.TITLE' | translate }}</div>
-		<div class="col-sm-8">{{ 'TIMESHEET.URL' | translate }}</div>
+	<div class="row pt-2 pb-2">
+		<div class="col-sm-3">{{ 'TIMESHEET.TITLE' | translate }}</div>
+		<div class="col-sm-7">{{ 'TIMESHEET.URL' | translate }}</div>
 		<div class="col-sm-2 text-right">
 			{{ 'TIMESHEET.TIME_SPENT' | translate }}
 		</div>
 	</div>
 	<div
-		class="row pt-2 pb-2 border-top"
+		class="row pt-2 pb-2"
 		*ngFor="let childItem of item.childItems"
 	>
-		<div class="col-sm-2">
+		<div class="col-sm-3">
 			{{ childItem.title }}
 		</div>
-		<div class="col-sm-8">
+		<div class="col-sm-7">
 			<a [title]="childItem.title" [href]="childItem.url" target="_blank">
 				<span class="menu-title">
 					{{ childItem.url }}
