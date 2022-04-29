@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import {
 	IOrganizationPosition,
 	ITag,
@@ -12,7 +12,11 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { firstValueFrom, filter, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { OrganizationPositionsService, Store, ToastrService } from '../../@core/services';
+import {
+	OrganizationPositionsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -23,8 +27,10 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 	templateUrl: './positions.component.html',
 	styleUrls: ['positions.component.scss']
 })
-export class PositionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-
+export class PositionsComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy
+{
 	showAddCard: boolean;
 	positions: IOrganizationPosition[];
 	selectedPosition: IOrganizationPosition;
@@ -38,6 +44,11 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	organization: IOrganization;
+	selected = {
+		position: null,
+		state: false
+	};
+	disabled: boolean = true;
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
@@ -57,14 +68,17 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				tap(() => this.loadPositions()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
@@ -82,15 +96,13 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 
 	async removePosition(id: string, name: string) {
 		const result = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent, {
-					context: {
-						recordType: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION'
-						)
-					}
-				})
-				.onClose
+			this.dialogService.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION'
+					)
+				}
+			}).onClose
 		);
 
 		if (result) {
@@ -118,8 +130,14 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				untilDestroyed(this)
 			)
 			.subscribe((componentLayout) => {
@@ -255,5 +273,26 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 		if (this.positions.length === 0) {
 			this.cancel();
 		}
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate ? this.edit(this.selectedPosition) : this.cancel();
+			this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
+		}
+	}
+
+	selectPosition(position: any) {
+		if (position.data) position = position.data;
+		const res =
+			this.selected.position && position.id === this.selected.position.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.disabled = !res.state;
+		this.selected.state = res.state;
+		this.selected.position = position;
+		this.selectedPosition = this.selected.position;
 	}
 }

@@ -1,5 +1,5 @@
 <nb-card class="card-scroll">
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
@@ -7,17 +7,19 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div>
-			<ga-layout-selector
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
-			></ga-layout-selector>
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disabled"
+			>
+			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
-			<ng-container
-				*ngIf="showAddCard; then editableTemplate; else buttonTemplate"
-			>
+		<!-- <div class="mb-3">
+			<ng-container *ngIf="showAddCard; then editableTemplate">
 			</ng-container>
 			<ng-template #editableTemplate>
 				<div class="row">
@@ -77,19 +79,28 @@
 					</div>
 				</div>
 			</ng-template>
-			<ng-template #buttonTemplate>
-				<button
-					(click)="showAddCard = !showAddCard"
-					nbButton
-					status="success"
+		</div> -->
+		<ng-template
+			[ngIf]="
+				dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
+				positions?.length
+			"
+		>
+			<nb-card class="p-0" *ngFor="let position of positions">
+				<nb-card-body
+					class="custom-table"
+					[ngClass]="
+						selected?.state && position === selected?.position
+							? 'custom-table selected'
+							: 'custom-table'
+					"
+					(click)="selectPosition(position)"
 				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-					{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</ng-template>
-		</div>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE && positions?.length">			
-			<div class="table-scroll-container">
+					<ga-notes-with-tags [rowData]="position">
+					</ga-notes-with-tags>
+				</nb-card-body>
+			</nb-card>
+			<!-- <div class="table-scroll-container">
 				<nb-card *ngFor="let p of positions">
 					<nb-card-body
 						style="
@@ -129,7 +140,9 @@
 							>
 								<ga-tags-color-input
 									[selectedTags]="tags"
-									(selectedTagsEvent)="selectedTagsEvent($event)"
+									(selectedTagsEvent)="
+										selectedTagsEvent($event)
+									"
 									[isOrgLevel]="true"
 								>
 								</ga-tags-color-input>
@@ -183,9 +196,14 @@
 						</nb-actions>
 					</nb-card-body>
 				</nb-card>
-			</div>			
+			</div> -->
 		</ng-template>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && positions?.length">
+		<ng-template
+			[ngIf]="
+				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
+				positions?.length
+			"
+		>
 			<div class="grid-scroll-container">
 				<ga-card-grid
 					[settings]="settingsSmartTable"
@@ -194,7 +212,7 @@
 				></ga-card-grid>
 			</div>
 		</ng-template>
-		<ng-template
+		<!-- <ng-template
 			#actionButtons
 			let-buttonSize="buttonSize"
 			let-selectedItem="selectedItem"
@@ -221,6 +239,186 @@
 				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 				{{ 'BUTTONS.DELETE' | translate }}
 			</button>
-		</ng-template>
+		</ng-template> -->
 	</nb-card-body>
 </nb-card>
+<ng-template #actionButtons>
+	<div class="actions">
+		<button
+			(click)="openDialog(editableTemplate, true)"
+			nbButton
+			status="basic"
+			class="action primary"
+			[disabled]="disabled"
+			size="small"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="
+				removePosition(selected.position.id, selected.position.name)
+			"
+			nbButton
+			status="basic"
+			class="action"
+			[disabled]="isDisabled"
+			size="small"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+		</button>
+	</div>
+</ng-template>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="">
+		<button
+			nbButton
+			status="success"
+			size="small"
+			(click)="openDialog(addTemplate, false)"
+		>
+			<nb-icon icon="plus-outline"> </nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
+</ng-template>
+<ng-template #addTemplate let-ref="dialogRef">
+	<div class="editable">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i
+						class="fas fa-times"
+						(click)="ref.close(); disabled = true"
+					></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">{{ 'POP_UPS.ADD' | translate }}</h5>
+			</div>
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column">
+					<label class="label">{{
+						'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
+					}}</label>
+					<input
+						#addInput="ngModel"
+						nbInput
+						type="text"
+						[placeholder]="
+							'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
+						"
+						fullWidth
+						[ngModel]="isGridEdit ? selectPosition.level : ''"
+						required
+					/>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column justify-content-end">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					>
+					</ga-tags-color-input>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<div class="col-sm-12"></div>
+				<button
+					class="delete mr-3 ml-3"
+					(click)="ref.close(); disabled = true"
+					nbButton
+					status="basic"
+					outline
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					(click)="save(addInput.value); disabled = true; ref.close()"
+					nbButton
+					status="success"
+					[disabled]="addInput.invalid"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</div>
+		</div>
+	</div>
+</ng-template>
+<ng-template #editableTemplate let-ref="dialogRef">
+	<div class="editable">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i
+						class="fas fa-times"
+						(click)="ref.close(); disabled = true"
+					></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">
+					{{ 'POP_UPS.EDIT' | translate }}
+				</h5>
+			</div>
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column">
+					<label class="label">{{
+						'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
+					}}</label>
+					<input
+						#addInput="ngModel"
+						nbInput
+						type="text"
+						[placeholder]="
+							'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
+						"
+						fullWidth
+						[ngModel]="isGridEdit ? selectedPosition.name : ''"
+						required
+					/>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<div class="col-sm-12 d-flex flex-column justify-content-end">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					>
+					</ga-tags-color-input>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<div class="d-flex">
+					<button
+						class="delete mr-3 ml-3"
+						outline
+						(click)="ref.close(); disabled = true"
+						nbButton
+						status="basic"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button
+						(click)="
+							editPosition(
+								selected.position.id,
+								selected.position.name
+							);
+							disabled = true;
+							ref.close()
+						"
+						nbButton
+						status="success"
+						[disabled]="disabled"
+					>
+						{{ 'BUTTONS.UPDATE' | translate }}
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</ng-template>
