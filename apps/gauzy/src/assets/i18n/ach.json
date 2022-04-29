@@ -3550,7 +3550,8 @@
 		"MINUTES": "crwdns8094:0crwdne8094:0",
 		"NO_SCREENSHOTS": "crwdns7152:0crwdne7152:0",
 		"NO_EMPLOYEES_SELECTED": "crwdns10256:0crwdne10256:0",
-		"DELETE_CONFIRM": "crwdns8096:0crwdne8096:0"
+		"DELETE_CONFIRM": "crwdns8096:0crwdne8096:0",
+		"VISITED_DATES": "crwdns11130:0crwdne11130:0"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "crwdns3476:0crwdne3476:0",
