@@ -22,11 +22,15 @@ import { Store } from '../../../@core/services/store.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { RequestApprovalIcon } from '../table-components/request-approval-icon';
 import { PaidIcon } from '../table-components/paid-icon';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,8 +39,9 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	styleUrls: ['./time-off-settings.component.scss']
 })
 export class TimeOffSettingsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	constructor(
 		private dialogService: NbDialogService,
 		private authService: AuthService,
@@ -77,8 +82,20 @@ export class TimeOffSettingsComponent
 	}
 
 	ngOnInit() {
-		this._loadSettingsSmartTable();
-		this._applyTranslationOnSmartTable();
+		this.subject$
+			.pipe(
+				tap(() => this._loadTableData(this._selectedOrganizationId)),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -88,7 +105,7 @@ export class TimeOffSettingsComponent
 				if (org) {
 					this.organization = org;
 					this._selectedOrganizationId = org.id;
-					this._loadTableData(this._selectedOrganizationId);
+					this.subject$.next(true);
 				}
 			});
 		this.authService
@@ -102,13 +119,18 @@ export class TimeOffSettingsComponent
 					this.setView();
 				}
 			});
+		this._loadSettingsSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.TIME_OFF_SETTINGS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -127,6 +149,7 @@ export class TimeOffSettingsComponent
 	}
 
 	private _loadSettingsSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
@@ -155,8 +178,8 @@ export class TimeOffSettingsComponent
 				}
 			},
 			pager: {
-				display: true,
-				perPage: 8
+				display: false,
+				perPage: pagination ? pagination : 10
 			}
 		};
 	}
@@ -176,13 +199,16 @@ export class TimeOffSettingsComponent
 		if (formData) {
 			this.timeOffService
 				.createPolicy(formData)
-				.pipe(first(), untilDestroyed(this))
+				.pipe(
+					first(),
+					tap(() => this.subject$.next(true)),
+					untilDestroyed(this)
+				)
 				.subscribe(
 					() => {
 						this.toastrService.success('NOTES.POLICY.ADD_POLICY', {
 							name: formData.name
 						});
-						this._loadTableData(this._selectedOrganizationId);
 					},
 					() => this.toastrService.danger('NOTES.POLICY.SAVE_ERROR')
 				);
@@ -222,7 +248,7 @@ export class TimeOffSettingsComponent
 						name: formData.name
 					});
 
-					this._loadTableData(this._selectedOrganizationId);
+					this.subject$.next(true);
 				},
 				(error) => this.errorHandler.handleError(error)
 			);
@@ -255,10 +281,7 @@ export class TimeOffSettingsComponent
 									'NOTES.POLICY.DELETE_POLICY',
 									{ name: this.selectedPolicy.name }
 								);
-								this._loadTableData(
-									this._selectedOrganizationId
-								);
-								this.clearItem();
+								this.subject$.next(true);
 							});
 					}
 				},
@@ -276,6 +299,7 @@ export class TimeOffSettingsComponent
 		this.showTable = false;
 		this.selectedPolicy = null;
 		let findObj: {};
+		const { itemsPerPage, activePage } = this.getPagination();
 
 		if (orgId) {
 			findObj = {
@@ -301,7 +325,16 @@ export class TimeOffSettingsComponent
 							};
 						});
 						this.timeOffPolicyData = policyVM;
+						this.smartTableSource.setPaging(
+							activePage,
+							itemsPerPage,
+							false
+						);
 						this.smartTableSource.load(policyVM);
+						this.setPagination({
+							...this.getPagination(),
+							totalItems: this.smartTableSource.count()
+						});
 						this.showTable = true;
 						this.clearItem();
 					},
@@ -352,4 +385,7 @@ export class TimeOffSettingsComponent
 	}
 
 	ngOnDestroy() {}
+}
+function next(next: any, arg1: () => void, arg2: () => void) {
+	throw new Error('Function not implemented.');
 }

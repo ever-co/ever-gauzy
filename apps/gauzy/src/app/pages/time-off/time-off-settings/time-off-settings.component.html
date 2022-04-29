@@ -19,16 +19,34 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng2-smart-table
-			class="income-table"
-			[settings]="smartTableSettings"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			[source]="smartTableSource"
-			(userRowSelect)="selectTimeOffPolicy($event)"
-			style="cursor: pointer"
-			#timeOffPolicySettingsTable
-		>
-		</ng2-smart-table>
+		<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<div class="table-scroll-container custom-table">
+				<ng2-smart-table
+					class="income-table"
+					[settings]="smartTableSettings"
+					[source]="smartTableSource"
+					(userRowSelect)="selectTimeOffPolicy($event)"
+					style="cursor: pointer"
+					#timeOffPolicySettingsTable
+				>
+				</ng2-smart-table>
+			</div>
+			<ng-container
+				*ngIf="pagination.totalItems > pagination.itemsPerPage"
+			>
+				<div class="pagination-container">
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					>
+					</ga-pagination>
+				</div>
+			</ng-container>
+		</ng-container>
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="smartTableSettings"
