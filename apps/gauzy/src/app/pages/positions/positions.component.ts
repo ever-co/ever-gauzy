@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import {
 	IOrganizationPosition,
 	ITag,
@@ -11,11 +11,18 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { LocalDataSource } from 'ng2-smart-table';
 import { firstValueFrom, filter, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { OrganizationPositionsService, Store, ToastrService } from '../../@core/services';
+import {
+	OrganizationPositionsService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,8 +30,10 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 	templateUrl: './positions.component.html',
 	styleUrls: ['positions.component.scss']
 })
-export class PositionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-
+export class PositionsComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	showAddCard: boolean;
 	positions: IOrganizationPosition[];
 	selectedPosition: IOrganizationPosition;
@@ -38,6 +47,11 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	organization: IOrganization;
+	selected = {
+		position: null,
+		state: false
+	};
+	disabled: boolean = true;
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
@@ -51,23 +65,42 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 	}
 
 	ngOnInit(): void {
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
-
-		this.store.selectedOrganization$
+		this.subject$
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.loadPositions()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				perPage: pagination ? pagination : 10
+			},
 			actions: false,
 			columns: {
 				name: {
@@ -82,15 +115,13 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 
 	async removePosition(id: string, name: string) {
 		const result = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent, {
-					context: {
-						recordType: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION'
-						)
-					}
-				})
-				.onClose
+			this.dialogService.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION'
+					)
+				}
+			}).onClose
 		);
 
 		if (result) {
@@ -101,7 +132,8 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 				{ name }
 			);
 
-			this.loadPositions();
+			this.subject$.next(true);
+			this.cancel();
 		}
 	}
 
@@ -118,8 +150,15 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe((componentLayout) => {
@@ -152,11 +191,12 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 			tenantId,
 			tags: this.tags
 		});
-		this.loadPositions();
+
 		this.toastrService.success(
 			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.UPDATED_POSITION',
 			{ name }
 		);
+		this.subject$.next(true);
 		this.cancel();
 	}
 
@@ -180,7 +220,7 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 				{ name }
 			);
 
-			this.loadPositions();
+			this.subject$.next(true);
 			this.cancel();
 		} else {
 			// TODO translate
@@ -199,6 +239,11 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 		this.selectedPosition = null;
 		this.isGridEdit = false;
 		this.tags = [];
+		this.selected = {
+			position: null,
+			state: false
+		};
+		this.disabled = true;
 	}
 
 	showEditCard(position: IOrganizationPosition) {
@@ -213,6 +258,7 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
+		const { activePage, itemsPerPage } = this.getPagination();
 
 		const res = await this.organizationPositionsService.getAll(
 			{
@@ -223,7 +269,13 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 		);
 		if (res) {
 			this.positions = res.items;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(res.items);
+			if (
+				this.componentLayoutStyleEnum.CARDS_GRID ===
+				this.dataLayoutStyle
+			)
+				this._loadGridLayoutData();
 
 			if (this.positions.length <= 0) {
 				this.positionsExist = false;
@@ -233,6 +285,14 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 
 			this.emptyListInvoke();
 		}
+	}
+
+	private async _loadGridLayoutData() {
+		this.positions = await this.smartTableSource.getElements();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	selectedTagsEvent(ev) {
@@ -255,5 +315,26 @@ export class PositionsComponent extends TranslationBaseComponent implements OnIn
 		if (this.positions.length === 0) {
 			this.cancel();
 		}
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate ? this.edit(this.selectedPosition) : this.cancel();
+			this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
+		}
+	}
+
+	selectPosition(position: any) {
+		if (position.data) position = position.data;
+		const res =
+			this.selected.position && position.id === this.selected.position.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.disabled = !res.state;
+		this.selected.state = res.state;
+		this.selected.position = position;
+		this.selectedPosition = this.selected.position;
 	}
 }

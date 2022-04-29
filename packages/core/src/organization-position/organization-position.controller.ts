@@ -67,7 +67,7 @@ export class OrganizationPositionController extends CrudController<OrganizationP
 	 * @returns 
 	 */
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() body: UpdateOrganizationPositionDTO

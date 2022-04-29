@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import {
 	IEmployeeLevelInput,
 	ITag,
@@ -10,12 +10,20 @@ import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeeLevelService, Store, ToastrService } from '../../@core/services';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase
+} from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	EmployeeLevelService,
+	Store,
+	ToastrService
+} from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,8 +32,9 @@ import { EmployeeLevelService, Store, ToastrService } from '../../@core/services
 	styleUrls: ['employee-level.component.scss']
 })
 export class EmployeeLevelComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy
+{
 	organization: IOrganization;
 	showAddCard: boolean;
 	showEditDiv: boolean;
@@ -39,6 +48,11 @@ export class EmployeeLevelComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
+	disabled: boolean = true;
+	selected = {
+		employeeLevel: null,
+		state: false
+	};
 
 	constructor(
 		private readonly employeeLevelService: EmployeeLevelService,
@@ -52,53 +66,94 @@ export class EmployeeLevelComponent
 	}
 
 	ngOnInit(): void {
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
-		this.store.selectedOrganization$
+		this.subject$
 			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.loadEmployeeLevels()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 	}
 
 	ngOnDestroy(): void {}
 
 	private async loadEmployeeLevels() {
+		if (!this.organization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { activePage, itemsPerPage } = this.getPagination();
 
-		const { items } = await this.employeeLevelService.getAll(
-			['tags'],
-			{ tenantId, organizationId }
-		);
+		const { items } = await this.employeeLevelService.getAll(['tags'], {
+			tenantId,
+			organizationId
+		});
 
 		if (items) {
 			this.employeeLevels = items;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(items);
+			if (
+				this.componentLayoutStyleEnum.CARDS_GRID ===
+				this.dataLayoutStyle
+			)
+				this._loadGridLayoutData();
 		}
-
 		await this.emptyListInvoke();
+	}
+
+	private async _loadGridLayoutData() {
+		this.employeeLevels = await this.smartTableSource.getElements();
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EMPLOYEE_LEVELS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedEmployeeLevel = null;
 
 				//when layout selector change then hide edit show card
 				this.showAddCard = false;
+				this.cancel();
 			});
 	}
 
 	_loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			pager: {
+				perPage: pagination ? pagination : 10
+			},
 			actions: false,
 			columns: {
 				level: {
@@ -127,7 +182,7 @@ export class EmployeeLevelComponent
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ADD_EMPLOYEE_LEVEL',
 				{ name: level }
 			);
-			this.loadEmployeeLevels();
+			this.subject$.next(true);
 			this.cancel();
 		} else {
 			this.toastrService.danger(
@@ -156,46 +211,49 @@ export class EmployeeLevelComponent
 			name: employeeLevelName
 		});
 
-		this.loadEmployeeLevels();
+		this.subject$.next(true);
 		this.cancel();
 	}
 
 	edit(employeeLevel: IEmployeeLevelInput) {
 		this.showAddCard = true;
 		this.isGridEdit = true;
+		this.selected.employeeLevel = employeeLevel;
 		this.selectedEmployeeLevel = employeeLevel;
 		this.tags = employeeLevel.tags;
 	}
 
 	save(name: string) {
 		if (this.isGridEdit) {
-			this.editEmployeeLevel(this.selectedEmployeeLevel.id, name);
+			this.editEmployeeLevel(this.selected.employeeLevel.id, name);
 		} else {
 			this.addEmployeeLevel(name);
 		}
 	}
 
 	async removeEmployeeLevel(id: string, name: string) {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Employee level'
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 		if (result) {
 			await this.employeeLevelService.delete(id);
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.REMOVE_EMPLOYEE_LEVEL',
 				{ name }
 			);
-			this.loadEmployeeLevels();
+			this.subject$.next(true);
+			this.cancel();
 		}
 	}
 
 	showEditCard(employeeLevel: IEmployeeLevelInput) {
 		this.tags = employeeLevel.tags;
 		this.showEditDiv = true;
+		this.selected.employeeLevel = employeeLevel;
 		this.selectedEmployeeLevel = employeeLevel;
 	}
 
@@ -203,8 +261,13 @@ export class EmployeeLevelComponent
 		this.showEditDiv = false;
 		this.showAddCard = false;
 		this.selectedEmployeeLevel = null;
+		this.selected = {
+			employeeLevel: null,
+			state: false
+		};
 		this.isGridEdit = false;
 		this.tags = [];
+    this.disabled = true;
 	}
 
 	selectedTagsEvent(ev) {
@@ -227,5 +290,29 @@ export class EmployeeLevelComponent
 		if (this.employeeLevels.length === 0) {
 			this.cancel();
 		}
+	}
+
+	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
+		try {
+			isEditTemplate
+				? this.edit(this.selected.employeeLevel)
+				: this.cancel();
+			this.dialogService.open(template);
+		} catch (error) {
+			console.log('An error occurred on open dialog');
+		}
+	}
+
+	selectEmployee(employeeLevel: any) {
+		if (employeeLevel.data) employeeLevel = employeeLevel.data;
+		const res =
+			this.selected.employeeLevel &&
+			employeeLevel.id === this.selected.employeeLevel.id
+				? { state: !this.selected.state }
+				: { state: true };
+		this.selected.state = res.state;
+		this.disabled = !res.state;
+		this.selected.employeeLevel = employeeLevel;
+		this.selectedEmployeeLevel = employeeLevel;
 	}
 }

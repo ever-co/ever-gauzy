@@ -52,10 +52,15 @@ nb-card-body {
 .custom-table {
   background-color: nb-theme(gauzy-card-1);
   border-radius: nb-theme(border-radius);
+  cursor: pointer;
   &.selected {
-    box-shadow: -6px 0px 0px 0px rgba(126, 126, 143, 0.1);
+    box-shadow: -6px 0px 0px 0px rgba(50, 50, 50, 0.05);
+    background: rgba(50, 50, 50, 0.03);
   }
   &:hover {
-    background: rgba(126, 126, 143, 0.1);
+    background: rgba(50, 50, 50, 0.03);
   }
+}
+nb-card {
+  margin-bottom: 0.5rem;
 }

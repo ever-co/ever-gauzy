@@ -15,7 +15,7 @@
 		>
 			<div class="mini-card head align-items-center">
 				<div class="row">
-					<div class="col-sm-4 py-2">
+					<div class="col-sm-2 py-2">
 						{{
 							(type == 'apps'
 								? 'ACTIVITY.APPS'
@@ -23,10 +23,11 @@
 							) | translate
 						}}
 					</div>
+					<div class="col-sm-3 py-2">	{{ 'ACTIVITY.VISITED_DATES' | translate }}</div>
 					<div class="col-sm-5 py-2">
 						{{ 'ACTIVITY.PERCENT_USED' | translate }}
 					</div>
-					<div class="col-sm-3 text-center py-2">
+					<div class="col-sm-2 text-right py-2">
 						{{ 'ACTIVITY.TIME_SPENT' | translate }}
 					</div>
 				</div>
@@ -37,10 +38,8 @@
 						(loadChild)="loadChild($event)"
 						[allowChild]="type === 'urls'"
 						[item]="app"
+						[visitedDate]="values.hour | dateTimeFormat"
 					></ngx-activity-item>
-				</div>
-				<div class="times">
-					{{ values.hour | timeFormat }}
 				</div>
 			</div>
 			<div class="py-5 text-center" *ngIf="!loading && apps?.length == 0">
