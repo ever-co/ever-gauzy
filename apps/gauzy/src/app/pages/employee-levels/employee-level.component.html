@@ -191,14 +191,16 @@
 						'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
 					}}</label>
 					<input
-						#addInput="ngModel"
+						#editInput="ngModel"
 						nbInput
 						type="text"
 						[placeholder]="
 							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
 						"
 						fullWidth
-						[(ngModel)]="selected.employeeLevel.level"
+						[ngModel]="
+							isGridEdit ? selectedEmployeeLevel.level : ''
+						"
 						required
 					/>
 				</div>
@@ -228,7 +230,7 @@
 						(click)="
 							editEmployeeLevel(
 								selected.employeeLevel.id,
-								selected.employeeLevel.level
+								editInput.value
 							);
 							disabled = true;
 							ref.close()
