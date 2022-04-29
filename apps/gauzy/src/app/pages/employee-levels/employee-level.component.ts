@@ -143,7 +143,7 @@ export class EmployeeLevelComponent
 
 				//when layout selector change then hide edit show card
 				this.showAddCard = false;
-        this.cancel();
+				this.cancel();
 			});
 	}
 
